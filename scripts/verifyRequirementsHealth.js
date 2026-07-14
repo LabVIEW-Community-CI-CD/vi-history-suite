@@ -190,6 +190,7 @@ function summarizeRequirementHealth(result) {
 function parseArgs(argv = []) {
   const options = {
     json: false,
+    markdown: false,
     strict: false,
     includeProvenance: false,
     outputPath: undefined,
@@ -207,17 +208,34 @@ function parseArgs(argv = []) {
     };
 
     if (arg === '--json') options.json = true;
+    else if (arg === '--markdown') options.markdown = true;
     else if (arg === '--strict') options.strict = true;
     else if (arg === '--include-provenance') options.includeProvenance = true;
     else if (arg === '--output') options.outputPath = next();
     else if (arg.startsWith('--')) throw new Error(`Unknown argument: ${arg}`);
     else options.positionals.push(arg);
   }
+  if (options.json && options.markdown) {
+    throw new Error('Use either --json or --markdown, not both');
+  }
   return options;
 }
 
 function outputModeForOptions(options = {}) {
+  if (options.markdown) return 'markdown';
   return options.json ? 'json' : 'text';
+}
+
+function markdownCell(value) {
+  return String(value ?? '').replace(/\r?\n/gu, ' ').replace(/\\/gu, '\\\\').replace(/\|/gu, '\\|');
+}
+
+function markdownCodeSpan(value) {
+  const content = String(value ?? '').replace(/\r?\n/gu, ' ');
+  const longestBacktickRun = Math.max(0, ...Array.from(content.matchAll(/`+/gu), (match) => match[0].length));
+  const fence = '`'.repeat(longestBacktickRun + 1);
+  const paddedContent = content.startsWith('`') || content.endsWith('`') ? ` ${content} ` : content;
+  return `${fence}${paddedContent}${fence}`;
 }
 
 function generatedAtForProvenance(deps = {}) {
@@ -252,6 +270,17 @@ function renderTextProvenance(provenance) {
     `argv: ${JSON.stringify(provenance.argv)}`,
     ''
   ].join('\n');
+}
+
+function provenanceMarkdownLines(provenance) {
+  if (!provenance) return [];
+  return [
+    `- Generated: ${markdownCodeSpan(provenance.generatedAt)}`,
+    `- Cwd: ${markdownCodeSpan(provenance.cwd)}`,
+    `- Output: ${markdownCodeSpan(provenance.outputMode)}`,
+    `- Strict: ${markdownCodeSpan(provenance.strict)}`,
+    `- Verification argv: ${markdownCodeSpan(JSON.stringify(provenance.argv))}`
+  ];
 }
 
 function resolveOutputPath(outputPath, deps = {}) {
@@ -442,10 +471,83 @@ function renderStepSummary(result) {
   return lines.join('\n');
 }
 
+function reasonDetailsForMarkdown(entry) {
+  return (Array.isArray(entry.attentionReasons)
+    ? entry.attentionReasons
+    : attentionReasonsForRequirement(entry)
+  ).map((reason) => {
+    if (reason.reasonId === ATTENTION_REASON_IDS.coverageRisk && Array.isArray(reason.files)) {
+      return `coverage risk: ${reason.files.map((file) => markdownCodeSpan(file)).join(' ')}`;
+    }
+    return reason.message;
+  });
+}
+
+function renderMarkdown(result, options = {}) {
+  const summary = result.summary || summarizeRequirementHealth(result);
+  const unavailableSignals = summary.unavailableSignals.length > 0 ? summary.unavailableSignals.join(', ') : 'none';
+  const lines = [
+    '## Requirement Verification Health',
+    '',
+    `- Result: ${summary.status}`,
+    `- Active requirements: ${result.activeRequirements}`,
+    `- Requirements needing attention: ${summary.attentionCount}`,
+    `- Unavailable signals: ${unavailableSignals}`
+  ];
+
+  if (options.strict) {
+    lines.push(`- Strict mode: ${result.healthy ? 'PASS' : 'FAIL'}`);
+  }
+
+  const provenanceLines = provenanceMarkdownLines(options.provenance);
+  if (provenanceLines.length > 0) {
+    lines.push(...provenanceLines);
+  }
+
+  lines.push(
+    '',
+    '| Signal | Value |',
+    '| --- | --- |',
+    `| Structural integrity | ${result.integrity.success ? 'PASS' : 'FAIL'} (${result.integrity.violationCount} violation(s)) |`,
+    `| Requirement-level linkage | ${result.linkage.linked}/${result.linkage.total} linked (${result.linkage.unlinked} unlinked, ${result.linkage.manualOnly} manual-only) |`,
+    `| Criterion-level citation | ${result.criteria.cited}/${result.criteria.total} cited |`,
+    result.coverage.available
+      ? `| Coverage risk | ${result.coverage.requirementsWithRisk} requirement(s) below ${result.coverage.riskThreshold}% |`
+      : '| Coverage risk | not available |',
+    result.mutation.available
+      ? `| Mutation | ${result.mutation.score}% (${result.mutation.killed + result.mutation.timeout} detected / ${result.mutation.survived} survived) |`
+      : '| Mutation | not available |'
+  );
+
+  if (result.attention.length === 0) {
+    lines.push('', 'No requirements need attention.');
+    return lines.join('\n');
+  }
+
+  lines.push(
+    '',
+    '### Requirements Needing Attention',
+    '',
+    '| Requirement | Reason IDs | Details |',
+    '| --- | --- | --- |'
+  );
+  for (const entry of result.attention) {
+    const reasons = Array.isArray(entry.attentionReasons) ? entry.attentionReasons : attentionReasonsForRequirement(entry);
+    const reasonIds = reasons.map((reason) => markdownCodeSpan(reason.reasonId)).join(', ');
+    lines.push(
+      `| ${markdownCodeSpan(entry.reqId)} | ${reasonIds} | ${markdownCell(reasonDetailsForMarkdown(entry).join('; '))} |`
+    );
+  }
+  return lines.join('\n');
+}
+
 function renderRequirementsHealthOutput(result, options = {}) {
   const provenance = options.provenance ? { provenance: options.provenance } : {};
   if (options.json) {
     return JSON.stringify({ ...result, ...provenance }, null, 2);
+  }
+  if (options.markdown) {
+    return renderMarkdown(result, options);
   }
   return `${renderTextProvenance(options.provenance)}${renderSummary(result, { strict: options.strict })}`;
 }
@@ -456,6 +558,7 @@ function main(argv = process.argv.slice(2), deps = {}) {
   try {
     const parsed = parseArgs(argv);
     const asJson = deps.json ?? parsed.json;
+    const asMarkdown = deps.markdown ?? parsed.markdown;
     const strict = deps.strict ?? parsed.strict;
     const includeProvenance = deps.includeProvenance ?? parsed.includeProvenance;
     const outputPath = deps.outputPath ?? parsed.outputPath;
@@ -473,9 +576,9 @@ function main(argv = process.argv.slice(2), deps = {}) {
     }
 
     const provenance = includeProvenance
-      ? buildRequirementsHealthProvenance({ cwd, json: asJson, strict }, { ...deps, argv })
+      ? buildRequirementsHealthProvenance({ cwd, json: asJson, markdown: asMarkdown, strict }, { ...deps, argv })
       : undefined;
-    const renderedOutput = renderRequirementsHealthOutput(result, { json: asJson, strict, provenance });
+    const renderedOutput = renderRequirementsHealthOutput(result, { json: asJson, markdown: asMarkdown, strict, provenance });
     if (outputPath) {
       writeRequirementsHealthOutput(outputPath, renderedOutput, { ...deps, cwd });
       stdout.write(`[requirements-verify] Wrote report output to ${outputPath}\n`);
@@ -511,14 +614,18 @@ module.exports = {
   summarizeRequirementHealth,
   parseArgs,
   outputModeForOptions,
+  markdownCell,
+  markdownCodeSpan,
   generatedAtForProvenance,
   buildRequirementsHealthProvenance,
   renderTextProvenance,
+  provenanceMarkdownLines,
   resolveOutputPath,
   writeRequirementsHealthOutput,
   verifyRequirementsHealth,
   renderSummary,
   renderStepSummary,
+  renderMarkdown,
   renderRequirementsHealthOutput,
   main
 };

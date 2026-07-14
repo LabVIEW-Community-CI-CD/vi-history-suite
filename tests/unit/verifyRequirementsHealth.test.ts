@@ -10,14 +10,18 @@ const {
   summarizeRequirementHealth,
   parseArgs,
   outputModeForOptions,
+  markdownCell,
+  markdownCodeSpan,
   generatedAtForProvenance,
   buildRequirementsHealthProvenance,
   renderTextProvenance,
+  provenanceMarkdownLines,
   resolveOutputPath,
   writeRequirementsHealthOutput,
   verifyRequirementsHealth,
   renderSummary,
   renderStepSummary,
+  renderMarkdown,
   renderRequirementsHealthOutput,
   main
 } = require('../../scripts/verifyRequirementsHealth.js') as {
@@ -57,15 +61,18 @@ const {
   };
   parseArgs: (argv?: string[]) => {
     json: boolean;
+    markdown: boolean;
     strict: boolean;
     includeProvenance: boolean;
     outputPath?: string;
     positionals: string[];
   };
-  outputModeForOptions: (options?: { json?: boolean }) => string;
+  outputModeForOptions: (options?: { json?: boolean; markdown?: boolean }) => string;
+  markdownCell: (value?: unknown) => string;
+  markdownCodeSpan: (value?: unknown) => string;
   generatedAtForProvenance: (deps?: { now?: () => Date | string; generatedAt?: Date | string }) => string;
   buildRequirementsHealthProvenance: (
-    options?: { cwd?: string; json?: boolean; strict?: boolean },
+    options?: { cwd?: string; json?: boolean; markdown?: boolean; strict?: boolean },
     deps?: { cwd?: string; now?: () => Date | string; generatedAt?: Date | string; argv?: string[] }
   ) => { generatedAt: string; cwd: string; outputMode: string; strict: boolean; argv: string[] };
   renderTextProvenance: (provenance?: {
@@ -75,15 +82,24 @@ const {
     strict: boolean;
     argv: string[];
   }) => string;
+  provenanceMarkdownLines: (provenance?: {
+    generatedAt: string;
+    cwd: string;
+    outputMode: string;
+    strict: boolean;
+    argv: string[];
+  }) => string[];
   resolveOutputPath: (outputPath: string, deps?: { cwd?: string }) => string;
   writeRequirementsHealthOutput: (outputPath: string, content: string, deps?: Record<string, unknown>) => void;
   verifyRequirementsHealth: (cwd?: string, deps?: Record<string, unknown>) => Record<string, unknown>;
   renderSummary: (result: unknown) => string;
   renderStepSummary: (result: unknown) => string;
+  renderMarkdown: (result: Record<string, unknown>, options?: Record<string, unknown>) => string;
   renderRequirementsHealthOutput: (
     result: Record<string, unknown>,
     options?: {
       json?: boolean;
+      markdown?: boolean;
       strict?: boolean;
       provenance?: { generatedAt: string; cwd: string; outputMode: string; strict: boolean; argv: string[] };
     }
@@ -291,16 +307,18 @@ describe('requirement verification health (VHS-REQ-601)', () => {
 
   it('parses output and provenance arguments without treating the output path as the target repository', () => {
     expect(
-      parseArgs(['--json', '--strict', '--include-provenance', '--output', 'evidence/requirements.json', '/repo'])
+      parseArgs(['--markdown', '--strict', '--include-provenance', '--output', 'evidence/requirements.md', '/repo'])
     ).toEqual({
-      json: true,
+      json: false,
+      markdown: true,
       strict: true,
       includeProvenance: true,
-      outputPath: 'evidence/requirements.json',
+      outputPath: 'evidence/requirements.md',
       positionals: ['/repo']
     });
     expect(() => parseArgs(['--output'])).toThrow(/requires a value/);
     expect(() => parseArgs(['--unknown'])).toThrow(/Unknown argument/);
+    expect(() => parseArgs(['--json', '--markdown'])).toThrow(/Use either --json or --markdown/);
   });
 
   it('resolves and writes retained report output inside the working directory', () => {
@@ -336,6 +354,7 @@ describe('requirement verification health (VHS-REQ-601)', () => {
     );
 
     expect(outputModeForOptions({ json: true })).toBe('json');
+    expect(outputModeForOptions({ markdown: true })).toBe('markdown');
     expect(outputModeForOptions()).toBe('text');
     expect(generatedAtForProvenance({ generatedAt: new Date('2026-07-14T12:00:00.000Z') })).toBe(
       '2026-07-14T12:00:00.000Z'
@@ -356,6 +375,32 @@ describe('requirement verification health (VHS-REQ-601)', () => {
       'argv: ["--json","--strict","--include-provenance"]',
       ''
     ].join('\n'));
+    expect(provenanceMarkdownLines({ ...provenance, outputMode: 'markdown' })).toEqual([
+      '- Generated: `2026-07-14T12:00:00.000Z`',
+      `- Cwd: \`${path.resolve('/repo')}\``,
+      '- Output: `markdown`',
+      '- Strict: `true`',
+      '- Verification argv: `["--json","--strict","--include-provenance"]`'
+    ]);
+    expect(markdownCell('a|b\\c\nd')).toBe('a\\|b\\\\c d');
+    expect(markdownCodeSpan('`value`')).toBe('`` `value` ``');
+  });
+
+  it('renders Markdown evidence with escaped attention details', () => {
+    const result = verifyRequirementsHealth('/repo', {
+      ...OUTPUT_FIXTURE,
+      coverage: { riskThreshold: 75, mappedBelowThreshold: [{ path: 'src/a|b.ts', requirementIds: ['VHS-REQ-001'] }] }
+    });
+
+    const markdown = renderMarkdown(result, { strict: true });
+
+    expect(markdown).toContain('## Requirement Verification Health');
+    expect(markdown).toContain('- Result: ATTENTION');
+    expect(markdown).toContain('- Strict mode: FAIL');
+    expect(markdown).toContain('| Coverage risk | 1 requirement(s) below 75% |');
+    expect(markdown).toContain(
+      '| `VHS-REQ-001` | `uncited-criteria`, `coverage-risk` | 1 uncited criterion/criteria; coverage risk: `src/a\\|b.ts` |'
+    );
   });
 
   it('reports ATTENTION when criterion citations are missing despite clean linkage and coverage (VHS-REQ-601)', () => {
@@ -479,6 +524,26 @@ describe('requirement verification health (VHS-REQ-601)', () => {
     ]);
   });
 
+  it('main writes retained Markdown output for paste-ready evidence', () => {
+    const stdoutChunks: string[] = [];
+    const writeCalls: unknown[] = [];
+
+    const code = main(['--markdown', '--output', 'evidence/requirements-health.md'], {
+      ...OUTPUT_FIXTURE,
+      cwd: '/repo',
+      stdout: { write: (chunk: string) => stdoutChunks.push(chunk) },
+      mkdirSync: () => undefined,
+      writeFileSync: (...args: unknown[]) => writeCalls.push(args)
+    });
+
+    expect(code).toBe(0);
+    expect(stdoutChunks.join('')).toBe(
+      '[requirements-verify] Wrote report output to evidence/requirements-health.md\n'
+    );
+    expect(String((writeCalls[0] as unknown[])[1])).toContain('## Requirement Verification Health');
+    expect(String((writeCalls[0] as unknown[])[1])).toContain('### Requirements Needing Attention');
+  });
+
   it('main includes provenance in retained JSON output when requested', () => {
     const stdoutChunks: string[] = [];
     const writeCalls: unknown[] = [];
@@ -525,6 +590,24 @@ describe('requirement verification health (VHS-REQ-601)', () => {
     expect(stdoutChunks.join('')).toContain('outputMode: text');
     expect(stdoutChunks.join('')).toContain('strict: true');
     expect(stdoutChunks.join('')).toContain('[requirements-verify] Strict mode: FAILING');
+  });
+
+  it('main includes provenance in Markdown output when requested', () => {
+    const stdoutChunks: string[] = [];
+
+    const code = main(['--markdown', '--strict', '--include-provenance'], {
+      ...OUTPUT_FIXTURE,
+      cwd: '/repo',
+      now: () => new Date('2026-07-14T12:00:00.000Z'),
+      stdout: { write: (chunk: string) => stdoutChunks.push(chunk) }
+    });
+
+    expect(code).toBe(1);
+    expect(stdoutChunks.join('')).toContain('- Output: `markdown`');
+    expect(stdoutChunks.join('')).toContain('- Strict: `true`');
+    expect(stdoutChunks.join('')).toContain(
+      '- Verification argv: `["--markdown","--strict","--include-provenance"]`'
+    );
   });
 
   it('main rejects unsafe retained output paths', () => {
