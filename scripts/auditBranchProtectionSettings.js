@@ -132,6 +132,7 @@ function parseArgs(argv) {
     requireFullHardening: false,
     emitJson: false,
     emitMarkdown: false,
+    includeProvenance: false,
     outputPath: undefined,
     help: false
   };
@@ -165,6 +166,7 @@ function parseArgs(argv) {
     }
     else if (arg === '--json') options.emitJson = true;
     else if (arg === '--markdown') options.emitMarkdown = true;
+    else if (arg === '--include-provenance') options.includeProvenance = true;
     else if (arg === '--output') options.outputPath = next();
     else if (arg === '--help' || arg === '-h') options.help = true;
     else throw new Error(`Unknown argument: ${arg}`);
@@ -208,6 +210,7 @@ function usage() {
     '  --require-full-hardening Fail unless every opt-in hardening check passes',
     '  --json                Emit machine-readable JSON instead of text',
     '  --markdown            Emit compact Markdown evidence instead of text',
+    '  --include-provenance  Include generated timestamp, argv, repo, branches, and output mode',
     '  --output <path>       Write rendered audit output to a relative file path',
     '  --help                Show this help'
   ].join('\n');
@@ -1092,6 +1095,55 @@ function markdownCell(value) {
   return String(value ?? '').replace(/\r?\n/gu, ' ').replace(/\\/gu, '\\\\').replace(/\|/gu, '\\|');
 }
 
+function outputModeForOptions(options = {}) {
+  if (options.emitJson) return 'json';
+  if (options.emitMarkdown) return 'markdown';
+  return 'text';
+}
+
+function generatedAtForProvenance(deps = {}) {
+  if (typeof deps.now === 'function') {
+    const now = deps.now();
+    return now instanceof Date ? now.toISOString() : String(now);
+  }
+  if (deps.generatedAt !== undefined) {
+    return deps.generatedAt instanceof Date ? deps.generatedAt.toISOString() : String(deps.generatedAt);
+  }
+  return new Date().toISOString();
+}
+
+function buildAuditProvenance(branchResults, options = {}, deps = {}) {
+  return {
+    generatedAt: generatedAtForProvenance(deps),
+    repo: options.repo || DEFAULT_REPO,
+    branches: branchResults.map((item) => item.branch),
+    outputMode: outputModeForOptions(options),
+    argv: Array.isArray(deps.argv) ? [...deps.argv] : []
+  };
+}
+
+function provenanceMarkdownLines(provenance) {
+  if (!provenance) return [];
+  return [
+    `- Generated: \`${markdownCell(provenance.generatedAt)}\``,
+    `- Output: \`${markdownCell(provenance.outputMode)}\``,
+    `- Audit argv: \`${markdownCell(JSON.stringify(provenance.argv))}\``
+  ];
+}
+
+function renderTextProvenance(provenance) {
+  if (!provenance) return '';
+  return [
+    '[branch-protection-audit] Provenance',
+    `generatedAt: ${provenance.generatedAt}`,
+    `repo: ${provenance.repo}`,
+    `branches: ${provenance.branches.join(', ')}`,
+    `outputMode: ${provenance.outputMode}`,
+    `argv: ${JSON.stringify(provenance.argv)}`,
+    ''
+  ].join('\n');
+}
+
 function renderMarkdown(branchResults, options = {}) {
   const repo = options.repo || DEFAULT_REPO;
   const summary = summarizeBranchResults(branchResults);
@@ -1108,6 +1160,11 @@ function renderMarkdown(branchResults, options = {}) {
     '| Branch | Result | Checks | Failed | Notices |',
     '| --- | --- | ---: | ---: | ---: |'
   ];
+
+  const provenanceLines = provenanceMarkdownLines(options.provenance);
+  if (provenanceLines.length > 0) {
+    lines.splice(7, 0, ...provenanceLines, '');
+  }
 
   for (const item of branchResults) {
     const branchSummary = summarizeAuditResult(item.result);
@@ -1131,24 +1188,27 @@ function renderMarkdown(branchResults, options = {}) {
 function renderAuditOutput(branchResults, options = {}) {
   const success = branchResults.every((item) => item.result.success);
   if (options.emitJson) {
+    const provenance = options.provenance ? { provenance: options.provenance } : {};
     if (options.allBranches) {
       return JSON.stringify({
         schemaVersion: 1,
         repo: options.repo,
+        ...provenance,
         success,
         summary: summarizeBranchResults(branchResults),
         branches: branchResults.map(auditResultJson)
       }, null, 2);
     }
     const [branchResult] = branchResults;
-    return JSON.stringify({ schemaVersion: 1, repo: options.repo, ...auditResultJson(branchResult) }, null, 2);
+    return JSON.stringify({ schemaVersion: 1, repo: options.repo, ...provenance, ...auditResultJson(branchResult) }, null, 2);
   }
   if (options.emitMarkdown) {
     return renderMarkdown(branchResults, options);
   }
-  return branchResults
+  const textOutput = branchResults
     .map((item) => renderResult(item.result, { ...options, branch: item.branch }))
     .join('\n');
+  return `${renderTextProvenance(options.provenance)}${textOutput}`;
 }
 
 function resolveOutputPath(outputPath, deps = {}) {
@@ -1219,7 +1279,10 @@ function main(argv = process.argv.slice(2), deps = {}) {
     }
     const branchResults = auditBranches(options, deps);
     const success = branchResults.every((item) => item.result.success);
-    const auditOutput = renderAuditOutput(branchResults, options);
+    const renderOptions = options.includeProvenance
+      ? { ...options, provenance: buildAuditProvenance(branchResults, options, { ...deps, argv }) }
+      : options;
+    const auditOutput = renderAuditOutput(branchResults, renderOptions);
     if (options.outputPath) {
       writeAuditOutput(options.outputPath, auditOutput, deps);
       stdout.write(`[branch-protection-audit] Wrote audit output to ${options.outputPath}\n`);
@@ -1292,6 +1355,11 @@ module.exports = {
   summarizeBranchResults,
   auditResultJson,
   markdownCell,
+  outputModeForOptions,
+  generatedAtForProvenance,
+  buildAuditProvenance,
+  provenanceMarkdownLines,
+  renderTextProvenance,
   renderMarkdown,
   renderAuditOutput,
   resolveOutputPath,

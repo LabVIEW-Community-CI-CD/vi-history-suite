@@ -50,6 +50,11 @@ const {
   summarizeAuditResult,
   summarizeBranchResults,
   markdownCell,
+  outputModeForOptions,
+  generatedAtForProvenance,
+  buildAuditProvenance,
+  provenanceMarkdownLines,
+  renderTextProvenance,
   renderMarkdown,
   renderAuditOutput,
   resolveOutputPath,
@@ -98,6 +103,7 @@ const {
     requireFullHardening: boolean;
     emitJson: boolean;
     emitMarkdown: boolean;
+    includeProvenance: boolean;
     outputPath?: string;
     help: boolean;
   };
@@ -196,19 +202,28 @@ const {
     failures: Array<{ branch: string; name: string; details: string }>;
   };
   markdownCell: (value: unknown) => string;
+  outputModeForOptions: (options?: { emitJson?: boolean; emitMarkdown?: boolean }) => string;
+  generatedAtForProvenance: (deps?: { now?: () => Date | string; generatedAt?: Date | string }) => string;
+  buildAuditProvenance: (
+    branchResults: Array<{ branch: string; result: { success: boolean; checks: Array<{ name: string; passed: boolean; details: string }>; notices: string[] } }>,
+    options?: { repo?: string; emitJson?: boolean; emitMarkdown?: boolean },
+    deps?: { now?: () => Date | string; generatedAt?: Date | string; argv?: string[] }
+  ) => { generatedAt: string; repo: string; branches: string[]; outputMode: string; argv: string[] };
+  provenanceMarkdownLines: (provenance?: { generatedAt: string; repo: string; branches: string[]; outputMode: string; argv: string[] }) => string[];
+  renderTextProvenance: (provenance?: { generatedAt: string; repo: string; branches: string[]; outputMode: string; argv: string[] }) => string;
   renderMarkdown: (
     branchResults: Array<{
       branch: string;
       result: { success: boolean; checks: Array<{ name: string; passed: boolean; details: string }>; notices: string[] };
     }>,
-    options?: { repo?: string }
+    options?: { repo?: string; provenance?: { generatedAt: string; repo: string; branches: string[]; outputMode: string; argv: string[] } }
   ) => string;
   renderAuditOutput: (
     branchResults: Array<{
       branch: string;
       result: { success: boolean; checks: Array<{ name: string; passed: boolean; details: string }>; notices: string[] };
     }>,
-    options?: { repo?: string; allBranches?: boolean; emitJson?: boolean; emitMarkdown?: boolean }
+    options?: { repo?: string; allBranches?: boolean; emitJson?: boolean; emitMarkdown?: boolean; provenance?: { generatedAt: string; repo: string; branches: string[]; outputMode: string; argv: string[] } }
   ) => string;
   resolveOutputPath: (outputPath: string, deps?: { cwd?: string }) => string;
   writeAuditOutput: (outputPath: string, content: string, deps?: Record<string, unknown>) => void;
@@ -346,13 +361,14 @@ describe('branch protection audit arguments', () => {
       requireFullHardening: false,
       emitJson: false,
       emitMarkdown: false,
+      includeProvenance: false,
       outputPath: undefined,
       help: false
     });
   });
 
   it('parses repo, branch, all, hardening, output, and help options', () => {
-    expect(parseArgs(['--repo', 'owner/repo', '--branch', 'release/v1.2.3', '--all', '--require-advisory', '--require-review', '--require-linear-history', '--require-conversation-resolution', '--require-signed-commits', '--require-stale-review-dismissal', '--require-code-owner-review', '--require-last-push-approval', '--require-branch-creation-block', '--json', '--output', 'reports/branch-protection.json'])).toMatchObject({
+    expect(parseArgs(['--repo', 'owner/repo', '--branch', 'release/v1.2.3', '--all', '--require-advisory', '--require-review', '--require-linear-history', '--require-conversation-resolution', '--require-signed-commits', '--require-stale-review-dismissal', '--require-code-owner-review', '--require-last-push-approval', '--require-branch-creation-block', '--json', '--include-provenance', '--output', 'reports/branch-protection.json'])).toMatchObject({
       repo: 'owner/repo',
       branch: 'release/v1.2.3',
       allBranches: true,
@@ -368,6 +384,7 @@ describe('branch protection audit arguments', () => {
       requireFullHardening: false,
       emitJson: true,
       emitMarkdown: false,
+      includeProvenance: true,
       outputPath: 'reports/branch-protection.json'
     });
     expect(FULL_HARDENING_OPTION_KEYS).toEqual([
@@ -927,6 +944,50 @@ describe('branch protection audit evaluation', () => {
 
     expect(mkdirSync).toHaveBeenCalledWith(path.dirname(resolvedOutput), { recursive: true });
     expect(writeFileSync).toHaveBeenCalledWith(resolvedOutput, 'audit body\n', 'utf8');
+  });
+
+  it('renders optional provenance for retained evidence', () => {
+    const passingResult = evaluateBranchProtection({ protection: protection(), rulesets: branchRulesets() });
+    const branchResults = [{ branch: 'develop', result: passingResult }];
+    const provenance = buildAuditProvenance(
+      branchResults,
+      { repo: DEFAULT_REPO, emitMarkdown: true },
+      { now: () => new Date('2026-07-14T12:00:00.000Z'), argv: ['--all', '--markdown', '--include-provenance'] }
+    );
+
+    expect(outputModeForOptions({ emitJson: true })).toBe('json');
+    expect(outputModeForOptions({ emitMarkdown: true })).toBe('markdown');
+    expect(outputModeForOptions()).toBe('text');
+    expect(generatedAtForProvenance({ generatedAt: new Date('2026-07-14T12:00:00.000Z') })).toBe('2026-07-14T12:00:00.000Z');
+    expect(provenance).toEqual({
+      generatedAt: '2026-07-14T12:00:00.000Z',
+      repo: DEFAULT_REPO,
+      branches: ['develop'],
+      outputMode: 'markdown',
+      argv: ['--all', '--markdown', '--include-provenance']
+    });
+    expect(provenanceMarkdownLines(provenance)).toEqual([
+      '- Generated: `2026-07-14T12:00:00.000Z`',
+      '- Output: `markdown`',
+      '- Audit argv: `["--all","--markdown","--include-provenance"]`'
+    ]);
+    expect(renderMarkdown(branchResults, { repo: DEFAULT_REPO, provenance })).toContain('- Generated: `2026-07-14T12:00:00.000Z`');
+    expect(renderTextProvenance(provenance)).toBe([
+      '[branch-protection-audit] Provenance',
+      'generatedAt: 2026-07-14T12:00:00.000Z',
+      `repo: ${DEFAULT_REPO}`,
+      'branches: develop',
+      'outputMode: markdown',
+      'argv: ["--all","--markdown","--include-provenance"]',
+      ''
+    ].join('\n'));
+    expect(JSON.parse(renderAuditOutput(branchResults, { repo: DEFAULT_REPO, emitJson: true, provenance }))).toMatchObject({
+      schemaVersion: 1,
+      repo: DEFAULT_REPO,
+      provenance,
+      branch: 'develop',
+      success: true
+    });
   });
 
   it('fails closed when expected active branch rulesets drift', () => {
@@ -1923,6 +1984,35 @@ describe('branch protection audit main', () => {
     expect(output.notices).toBeUndefined();
   });
 
+  it('emits aggregate JSON provenance when requested', () => {
+    const stdout = captureWrite();
+    const stderr = captureWrite();
+    const spawnSync = vi.fn((command: string, args: string[]) => {
+      const resource = args[1].includes('/rulesets') ? branchRulesetResource(args[1]) : protection();
+      return { status: 0, stdout: JSON.stringify(resource), stderr: '' };
+    });
+
+    const exitCode = main(['--all', '--json', '--include-provenance'], {
+      spawnSync,
+      stdout: stdout.stream,
+      stderr: stderr.stream,
+      now: () => new Date('2026-07-14T12:00:00.000Z')
+    });
+    const output = JSON.parse(stdout.read()) as {
+      provenance: { generatedAt: string; repo: string; branches: string[]; outputMode: string; argv: string[] };
+    };
+
+    expect(exitCode).toBe(0);
+    expect(stderr.read()).toBe('');
+    expect(output.provenance).toEqual({
+      generatedAt: '2026-07-14T12:00:00.000Z',
+      repo: DEFAULT_REPO,
+      branches: DEFAULT_AUDIT_BRANCHES,
+      outputMode: 'json',
+      argv: ['--all', '--json', '--include-provenance']
+    });
+  });
+
   it('emits aggregate JSON failure summaries when opt-in hardening checks fail', () => {
     const stdout = captureWrite();
     const stderr = captureWrite();
@@ -2013,13 +2103,14 @@ describe('branch protection audit main', () => {
       return { status: 0, stdout: JSON.stringify(resource), stderr: '' };
     });
 
-    const exitCode = main(['--all', '--markdown', '--output', 'evidence/branch-protection.md'], {
+    const exitCode = main(['--all', '--markdown', '--include-provenance', '--output', 'evidence/branch-protection.md'], {
       spawnSync,
       stdout: stdout.stream,
       stderr: stderr.stream,
       cwd,
       mkdirSync,
-      writeFileSync
+      writeFileSync,
+      now: () => new Date('2026-07-14T12:00:00.000Z')
     });
 
     expect(exitCode).toBe(0);
@@ -2032,6 +2123,8 @@ describe('branch protection audit main', () => {
       expect.stringContaining('## Branch Protection Audit'),
       'utf8'
     );
+    expect(writeFileSync.mock.calls[0][1]).toContain('- Generated: `2026-07-14T12:00:00.000Z`');
+    expect(writeFileSync.mock.calls[0][1]).toContain('- Audit argv: `["--all","--markdown","--include-provenance","--output","evidence/branch-protection.md"]`');
     expect(writeFileSync.mock.calls[0][1]).toContain('| develop | PASS | 33/33 | 0 | 3 |');
     expect(writeFileSync.mock.calls[0][1]).toContain('| main | PASS | 33/33 | 0 | 3 |');
   });
