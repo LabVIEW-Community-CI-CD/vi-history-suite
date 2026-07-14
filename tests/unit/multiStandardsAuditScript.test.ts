@@ -1249,6 +1249,19 @@ describe('multi standards audit script', () => {
             basis: 'REQ basis has missing proof and stays in detail summary.',
             standards: ['29148'],
             missingProof: ['RTM evidence']
+          },
+          arch: {
+            status: 'PASS',
+            basis: 'ARCH basis has no confidence and stays out of basis summary.',
+            standards: ['42010'],
+            missingProof: []
+          },
+          doc: {
+            status: 'PASS',
+            confidence: '',
+            basis: 'DOC basis has blank confidence and stays out of basis summary.',
+            standards: ['15289', '26514'],
+            missingProof: []
           }
         }
       }
