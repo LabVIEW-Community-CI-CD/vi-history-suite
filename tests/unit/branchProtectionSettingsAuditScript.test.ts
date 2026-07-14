@@ -310,6 +310,17 @@ type ProtectionOverrides = {
   blockCreations?: boolean;
 };
 
+type RequiredSchemaNode = {
+  required: string[];
+};
+
+function expectRequiredKeysPresent(
+  value: Record<string, unknown>,
+  requiredKeys: string[]
+) {
+  expect(requiredKeys.filter((key) => !(key in value))).toEqual([]);
+}
+
 function protection(overrides: ProtectionOverrides = {}) {
   const contexts = overrides.contexts || [...EXPECTED_REQUIRED_STATUS_CHECKS];
   const checkContexts = overrides.checkContexts || contexts;
@@ -1277,6 +1288,48 @@ describe('branch protection audit evaluation', () => {
       argv: ['--all', '--schema', '--include-provenance']
     });
     expect(schemaWithProvenance[BRANCH_PROTECTION_AUDIT_SCHEMA_PROVENANCE_KEY]).toEqual(provenance);
+  });
+
+  it('keeps emitted JSON shapes aligned with the published schema contract', () => {
+    const passingResult = evaluateBranchProtection({ protection: protection(), rulesets: branchRulesets() });
+    const branchResults = DEFAULT_AUDIT_BRANCHES.map((branch) => ({ branch, result: passingResult }));
+    const schema = JSON.parse(renderBranchProtectionAuditJsonSchema()) as {
+      oneOf: Array<{ required: string[] }>;
+      properties: {
+        $schema: { const: string };
+        branches: { items: { $ref: string } };
+        summary: { oneOf: Array<{ $ref: string }> };
+      };
+      $defs: Record<
+        'branchAuditResult' | 'branchSummary' | 'aggregateSummary',
+        RequiredSchemaNode
+      >;
+    };
+    const singleOutput = JSON.parse(
+      renderAuditOutput([branchResults[0]], { repo: DEFAULT_REPO, emitJson: true })
+    ) as Record<string, unknown>;
+    const aggregateOutput = JSON.parse(
+      renderAuditOutput(branchResults, { repo: DEFAULT_REPO, allBranches: true, emitJson: true })
+    ) as Record<string, unknown>;
+    const aggregateBranches = aggregateOutput.branches as Array<Record<string, unknown>>;
+    const singleRequiredKeys = schema.oneOf.find((candidate) => candidate.required.includes('branch'))?.required;
+    const aggregateRequiredKeys = schema.oneOf.find((candidate) => candidate.required.includes('branches'))?.required;
+
+    expect(singleRequiredKeys).toBeDefined();
+    expect(aggregateRequiredKeys).toBeDefined();
+    expectRequiredKeysPresent(singleOutput, singleRequiredKeys ?? []);
+    expectRequiredKeysPresent(aggregateOutput, aggregateRequiredKeys ?? []);
+    expect(singleOutput.$schema).toBe(schema.properties.$schema.const);
+    expect(aggregateOutput.$schema).toBe(schema.properties.$schema.const);
+    expect(schema.properties.branches.items.$ref).toBe('#/$defs/branchAuditResult');
+    expect(schema.properties.summary.oneOf.map((candidate) => candidate.$ref)).toEqual([
+      '#/$defs/branchSummary',
+      '#/$defs/aggregateSummary'
+    ]);
+    expectRequiredKeysPresent(aggregateBranches[0], schema.$defs.branchAuditResult.required);
+    expectRequiredKeysPresent(singleOutput.summary as Record<string, unknown>, schema.$defs.branchSummary.required);
+    expectRequiredKeysPresent(aggregateOutput.summary as Record<string, unknown>, schema.$defs.aggregateSummary.required);
+    expectRequiredKeysPresent(aggregateBranches[0].summary as Record<string, unknown>, schema.$defs.branchSummary.required);
   });
 
   it('fails closed when expected active branch rulesets drift', () => {
