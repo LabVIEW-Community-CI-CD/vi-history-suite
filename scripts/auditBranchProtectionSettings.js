@@ -98,11 +98,12 @@ const BRANCH_PROTECTION_AUDIT_JSON_SCHEMA = Object.freeze({
   description: 'Machine-readable schemaVersion 1 output from scripts/auditBranchProtectionSettings.js.',
   type: 'object',
   oneOf: [
-    { required: ['schemaVersion', 'repo', 'branch', 'success', 'checks', 'notices', 'noticeDetails', 'summary'] },
-    { required: ['schemaVersion', 'repo', 'success', 'summary', 'branches'] }
+    { required: ['$schema', 'schemaVersion', 'repo', 'branch', 'success', 'checks', 'notices', 'noticeDetails', 'summary'] },
+    { required: ['$schema', 'schemaVersion', 'repo', 'success', 'summary', 'branches'] }
   ],
-  required: ['schemaVersion', 'repo', 'success', 'summary'],
+  required: ['$schema', 'schemaVersion', 'repo', 'success', 'summary'],
   properties: {
+    $schema: { const: BRANCH_PROTECTION_AUDIT_SCHEMA_ID },
     schemaVersion: { const: BRANCH_PROTECTION_AUDIT_SCHEMA_VERSION },
     repo: { type: 'string' },
     branch: { type: 'string' },
@@ -1486,6 +1487,7 @@ function renderAuditOutput(branchResults, options = {}) {
     const provenance = options.provenance ? { provenance: options.provenance } : {};
     if (options.allBranches) {
       return JSON.stringify({
+        $schema: BRANCH_PROTECTION_AUDIT_SCHEMA_ID,
         schemaVersion: 1,
         repo: options.repo,
         ...provenance,
@@ -1495,7 +1497,7 @@ function renderAuditOutput(branchResults, options = {}) {
       }, null, 2);
     }
     const [branchResult] = branchResults;
-    return JSON.stringify({ schemaVersion: 1, repo: options.repo, ...provenance, ...auditResultJson(branchResult, options) }, null, 2);
+    return JSON.stringify({ $schema: BRANCH_PROTECTION_AUDIT_SCHEMA_ID, schemaVersion: 1, repo: options.repo, ...provenance, ...auditResultJson(branchResult, options) }, null, 2);
   }
   if (options.emitMarkdown) {
     return renderMarkdown(branchResults, options);

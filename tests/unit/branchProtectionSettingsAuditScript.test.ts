@@ -1144,6 +1144,7 @@ describe('branch protection audit evaluation', () => {
       renderMarkdown(branchResults, { repo: DEFAULT_REPO })
     );
     expect(JSON.parse(renderAuditOutput(branchResults, { repo: DEFAULT_REPO, emitJson: true }))).toMatchObject({
+      $schema: BRANCH_PROTECTION_AUDIT_SCHEMA_ID,
       schemaVersion: 1,
       repo: DEFAULT_REPO,
       branch: 'develop',
@@ -1162,6 +1163,7 @@ describe('branch protection audit evaluation', () => {
       notices: []
     };
     expect(JSON.parse(renderAuditOutput([{ branch: 'collision', result: duplicatePassingResult }], { repo: DEFAULT_REPO, emitJson: true }))).toMatchObject({
+      $schema: BRANCH_PROTECTION_AUDIT_SCHEMA_ID,
       branch: 'collision',
       success: true,
       summary: {
@@ -1172,6 +1174,7 @@ describe('branch protection audit evaluation', () => {
       }
     });
     expect(JSON.parse(renderAuditOutput([{ branch: 'collision', result: duplicatePassingResult }], { repo: DEFAULT_REPO, emitJson: true, failOnDuplicateCheckIds: true }))).toMatchObject({
+      $schema: BRANCH_PROTECTION_AUDIT_SCHEMA_ID,
       branch: 'collision',
       success: false,
       summary: {
@@ -1234,6 +1237,7 @@ describe('branch protection audit evaluation', () => {
       ''
     ].join('\n'));
     expect(JSON.parse(renderAuditOutput(branchResults, { repo: DEFAULT_REPO, emitJson: true, provenance }))).toMatchObject({
+      $schema: BRANCH_PROTECTION_AUDIT_SCHEMA_ID,
       schemaVersion: 1,
       repo: DEFAULT_REPO,
       provenance,
@@ -1247,7 +1251,7 @@ describe('branch protection audit evaluation', () => {
       $schema: string;
       $id: string;
       required: string[];
-      properties: { schemaVersion: { const: number } };
+      properties: { $schema: { const: string }; schemaVersion: { const: number } };
       $defs: { provenance: { properties: { outputMode: { enum: string[] } } } };
       [key: string]: unknown;
     };
@@ -1259,7 +1263,8 @@ describe('branch protection audit evaluation', () => {
 
     expect(schema.$schema).toBe('https://json-schema.org/draft/2020-12/schema');
     expect(schema.$id).toBe(BRANCH_PROTECTION_AUDIT_SCHEMA_ID);
-    expect(schema.required).toEqual(['schemaVersion', 'repo', 'success', 'summary']);
+    expect(schema.required).toEqual(['$schema', 'schemaVersion', 'repo', 'success', 'summary']);
+    expect(schema.properties.$schema.const).toBe(BRANCH_PROTECTION_AUDIT_SCHEMA_ID);
     expect(schema.properties.schemaVersion.const).toBe(BRANCH_PROTECTION_AUDIT_SCHEMA_VERSION);
     expect(schema.$defs.provenance.properties.outputMode.enum).toEqual(['text', 'json', 'markdown', 'schema']);
     expect(schema[BRANCH_PROTECTION_AUDIT_SCHEMA_PROVENANCE_KEY]).toBeUndefined();
@@ -2192,6 +2197,7 @@ describe('branch protection audit main', () => {
 
     const exitCode = main(['--json'], { spawnSync, stdout: stdout.stream, stderr: stderr.stream });
     const output = JSON.parse(stdout.read()) as {
+      $schema: string;
       schemaVersion: number;
       repo: string;
       branch: string;
@@ -2206,6 +2212,7 @@ describe('branch protection audit main', () => {
     expect(exitCode).toBe(0);
     expect(stderr.read()).toBe('');
     expect(output).toMatchObject({
+      $schema: BRANCH_PROTECTION_AUDIT_SCHEMA_ID,
       schemaVersion: 1,
       repo: DEFAULT_REPO,
       branch: DEFAULT_BRANCH,
@@ -2241,6 +2248,7 @@ describe('branch protection audit main', () => {
 
     const exitCode = main(['--all', '--json'], { spawnSync, stdout: stdout.stream, stderr: stderr.stream });
     const output = JSON.parse(stdout.read()) as {
+      $schema: string;
       schemaVersion: number;
       repo: string;
       success: boolean;
@@ -2254,6 +2262,7 @@ describe('branch protection audit main', () => {
     expect(exitCode).toBe(0);
     expect(stderr.read()).toBe('');
     expect(output).toMatchObject({
+      $schema: BRANCH_PROTECTION_AUDIT_SCHEMA_ID,
       schemaVersion: 1,
       repo: DEFAULT_REPO,
       success: true
