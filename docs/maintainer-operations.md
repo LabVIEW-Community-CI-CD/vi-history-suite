@@ -578,6 +578,31 @@ What this evidence proves:
 What this evidence does **not** prove:
 
 - diagnostic VSIX publication is Marketplace publication
+
+## Local Standards Issue Triage
+
+For newly filed issues, maintainers can run the local standards-review triage
+helper before selecting a requirement, branch, and validation lane:
+
+```shell
+npm run issue:standards-triage -- --issue <issue-number>
+```
+
+The helper captures `gh issue view` metadata, creates a Docker-visible tracked
+worktree snapshot, and runs the `repo-standards-review` workbench image against
+that snapshot with:
+
+- `requirements_quality_check.py --requirements-spec-scope system --json`
+- `repo_evidence_scan.py --profile quick-triage --include-snippets`
+- `run_assurance.py --profile quick-triage --output gate-scorecard`
+
+Artifacts are retained under
+`assurance-issue-triage-evidence/issue-<issue-number>/`, which is ignored by the
+repo. The default image is
+`registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main`;
+use `--image repo-standards-review-assurance-workbench:local` only when testing a
+locally built workbench. The output is advisory triage evidence, not a hosted CI
+gate or issue-closeout substitute.
 - self-hosted validation is a public PR gate
 - untrusted refs were ever allowed to execute maintainer validation
 - a diagnostic prerelease is a stable latest-download endpoint
