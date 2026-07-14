@@ -39,6 +39,12 @@ const { generateCoverageMap } = require('./mapCoverageToTraceability.js');
 
 const MUTATION_REPORT_PATH = 'reports/mutation/mutation.json';
 
+const ATTENTION_REASON_IDS = Object.freeze({
+  unlinked: 'unlinked',
+  uncitedCriteria: 'uncited-criteria',
+  coverageRisk: 'coverage-risk'
+});
+
 // Stryker mutation score = detected / valid, where detected = Killed + Timeout
 // and valid = detected + Survived + NoCoverage (Ignored/CompileError excluded).
 function computeMutationScore(report) {
@@ -80,6 +86,29 @@ function loadMutation(readRaw) {
   }
 }
 
+function attentionReasonsForRequirement(entry) {
+  const coverageRiskFiles = Array.isArray(entry.coverageRiskFiles) ? entry.coverageRiskFiles : [];
+  const reasons = [];
+  if (entry.linkState === 'unlinked') {
+    reasons.push({ reasonId: ATTENTION_REASON_IDS.unlinked, message: 'no citing test' });
+  }
+  if (entry.criteriaUncited > 0) {
+    reasons.push({
+      reasonId: ATTENTION_REASON_IDS.uncitedCriteria,
+      message: `${entry.criteriaUncited} uncited criterion/criteria`,
+      count: entry.criteriaUncited
+    });
+  }
+  if (coverageRiskFiles.length > 0) {
+    reasons.push({
+      reasonId: ATTENTION_REASON_IDS.coverageRisk,
+      message: `coverage risk (${coverageRiskFiles.join(', ')})`,
+      files: coverageRiskFiles
+    });
+  }
+  return reasons;
+}
+
 function aggregateRequirementHealth(linkage, criteria, coverage) {
   const criteriaByRequirement = new Map(criteria.requirements.map((entry) => [entry.reqId, entry]));
   const linkedSet = new Set(linkage.linked);
@@ -109,14 +138,19 @@ function aggregateRequirementHealth(linkage, criteria, coverage) {
     const criteriaTotal = criterion ? criterion.criteriaCount : 0;
     const criteriaCited = criterion ? criterion.criteria.filter((entry) => entry.cited).length : 0;
     const criteriaUncited = criteriaTotal - criteriaCited;
-    return {
+    const entry = {
       reqId,
       linkState,
       criteriaCited,
       criteriaTotal,
       criteriaUncited,
-      coverageRiskFiles,
-      attention: linkState === 'unlinked' || criteriaUncited > 0 || coverageRiskFiles.length > 0
+      coverageRiskFiles
+    };
+    const attentionReasons = attentionReasonsForRequirement(entry);
+    return {
+      ...entry,
+      attentionReasons,
+      attention: attentionReasons.length > 0
     };
   });
 }
@@ -130,9 +164,14 @@ function summarizeRequirementHealth(result) {
     coverageRisk: 0
   };
   for (const entry of attention) {
-    if (entry.linkState === 'unlinked') reasonCounts.unlinked += 1;
-    if (entry.criteriaUncited > 0) reasonCounts.uncitedCriteria += 1;
-    if (Array.isArray(entry.coverageRiskFiles) && entry.coverageRiskFiles.length > 0) {
+    const reasonIds = new Set(
+      (Array.isArray(entry.attentionReasons) ? entry.attentionReasons : attentionReasonsForRequirement(entry)).map(
+        (reason) => reason.reasonId
+      )
+    );
+    if (reasonIds.has(ATTENTION_REASON_IDS.unlinked)) reasonCounts.unlinked += 1;
+    if (reasonIds.has(ATTENTION_REASON_IDS.uncitedCriteria)) reasonCounts.uncitedCriteria += 1;
+    if (reasonIds.has(ATTENTION_REASON_IDS.coverageRisk)) {
       reasonCounts.coverageRisk += 1;
     }
   }
@@ -238,14 +277,10 @@ function renderSummary(result, options = {}) {
       `[requirements-verify] Overall: ATTENTION — ${result.attention.length} requirement(s) need attention:`
     );
     for (const entry of result.attention) {
-      const reasons = [];
-      if (entry.linkState === 'unlinked') reasons.push('no citing test');
-      if (entry.criteriaUncited > 0) {
-        reasons.push(`${entry.criteriaUncited} uncited criterion/criteria`);
-      }
-      if (entry.coverageRiskFiles.length > 0) {
-        reasons.push(`coverage risk (${entry.coverageRiskFiles.join(', ')})`);
-      }
+      const reasons = (Array.isArray(entry.attentionReasons)
+        ? entry.attentionReasons
+        : attentionReasonsForRequirement(entry)
+      ).map((reason) => reason.message);
       lines.push(`  - ${entry.reqId}: ${reasons.join('; ')}`);
     }
   }
@@ -299,14 +334,14 @@ function renderStepSummary(result) {
     lines.push('| Requirement | Reason |');
     lines.push('| --- | --- |');
     for (const entry of result.attention) {
-      const reasons = [];
-      if (entry.linkState === 'unlinked') reasons.push('no citing test');
-      if (entry.criteriaUncited > 0) {
-        reasons.push(`${entry.criteriaUncited} uncited criterion/criteria`);
-      }
-      if (entry.coverageRiskFiles.length > 0) {
-        reasons.push(`coverage risk: ${entry.coverageRiskFiles.map((file) => `\`${file}\``).join(' ')}`);
-      }
+      const reasons = (Array.isArray(entry.attentionReasons)
+        ? entry.attentionReasons
+        : attentionReasonsForRequirement(entry)
+      ).map((reason) =>
+        reason.reasonId === ATTENTION_REASON_IDS.coverageRisk && Array.isArray(reason.files)
+          ? `coverage risk: ${reason.files.map((file) => `\`${file}\``).join(' ')}`
+          : reason.message
+      );
       lines.push(`| \`${entry.reqId}\` | ${reasons.join('; ')} |`);
     }
     lines.push('');
@@ -349,7 +384,9 @@ if (require.main === module) {
 
 module.exports = {
   MUTATION_REPORT_PATH,
+  ATTENTION_REASON_IDS,
   computeMutationScore,
+  attentionReasonsForRequirement,
   aggregateRequirementHealth,
   summarizeRequirementHealth,
   verifyRequirementsHealth,
