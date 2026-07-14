@@ -47,6 +47,8 @@ const {
   rulesetRuleTypes,
   evaluateBranchProtection,
   renderResult,
+  checkIdForName,
+  checkResultJson,
   summarizeAuditResult,
   summarizeBranchResults,
   markdownCell,
@@ -178,6 +180,8 @@ const {
     result: { success: boolean; checks: Array<{ name: string; passed: boolean; details: string }>; notices: string[] },
     options?: { repo?: string; branch?: string }
   ) => string;
+  checkIdForName: (name: string) => string;
+  checkResultJson: (check: { id?: string; name: string; passed: boolean; details: string }) => { id: string; name: string; passed: boolean; details: string };
   summarizeAuditResult: (
     result: { success: boolean; checks: Array<{ name: string; passed: boolean; details: string }>; notices: string[] }
   ) => {
@@ -185,7 +189,7 @@ const {
     passedChecks: number;
     failedChecks: number;
     noticeCount: number;
-    failures: Array<{ name: string; details: string }>;
+    failures: Array<{ checkId: string; name: string; details: string }>;
   };
   summarizeBranchResults: (
     branchResults: Array<{
@@ -200,7 +204,7 @@ const {
     passedChecks: number;
     failedChecks: number;
     noticeCount: number;
-    failures: Array<{ branch: string; name: string; details: string }>;
+    failures: Array<{ branch: string; checkId: string; name: string; details: string }>;
   };
   markdownCell: (value: unknown) => string;
   markdownCodeSpan: (value: unknown) => string;
@@ -870,9 +874,17 @@ describe('branch protection audit evaluation', () => {
       failedChecks: 13,
       noticeCount: 3
     });
+    expect(checkIdForName('Required Status Check Contexts')).toBe('required-status-check-contexts');
+    expect(checkIdForName('  active branch ruleset ref_name keys  ')).toBe('active-branch-ruleset-ref-name-keys');
+    expect(checkResultJson({ name: 'required status checks are strict', passed: false, details: 'missing or disabled' })).toEqual({
+      id: 'required-status-checks-are-strict',
+      name: 'required status checks are strict',
+      passed: false,
+      details: 'missing or disabled'
+    });
     expect(failingSummary.failures.slice(0, 2)).toEqual([
-      { name: 'required status checks are strict', details: 'missing or disabled' },
-      { name: 'required status check contexts', details: 'missing: Windows Unit Tests, Integration Host (Linux); present: Build, Test, Package' }
+      { checkId: 'required-status-checks-are-strict', name: 'required status checks are strict', details: 'missing or disabled' },
+      { checkId: 'required-status-check-contexts', name: 'required status check contexts', details: 'missing: Windows Unit Tests, Integration Host (Linux); present: Build, Test, Package' }
     ]);
 
     const aggregateSummary = summarizeBranchResults([
@@ -888,7 +900,7 @@ describe('branch protection audit evaluation', () => {
       failedChecks: 13,
       noticeCount: 6
     });
-    expect(aggregateSummary.failures[0]).toEqual({ branch: 'develop', name: 'required status checks are strict', details: 'missing or disabled' });
+    expect(aggregateSummary.failures[0]).toEqual({ branch: 'develop', checkId: 'required-status-checks-are-strict', name: 'required status checks are strict', details: 'missing or disabled' });
   });
 
   it('renders compact Markdown audit evidence', () => {
@@ -917,8 +929,10 @@ describe('branch protection audit evaluation', () => {
       'No failures.'
     ].join('\n'));
 
-    expect(renderMarkdown([{ branch: 'main', result: failingResult }], { repo: DEFAULT_REPO })).toContain(
-      '| main | advisory status check contexts | missing: Requirements CSV Integrity, CodeQL; present: Build, Test, Package, Integration Host (Linux), Windows Unit Tests |'
+    const markdownFailureEvidence = renderMarkdown([{ branch: 'main', result: failingResult }], { repo: DEFAULT_REPO });
+    expect(markdownFailureEvidence).toContain('| Branch | Check ID | Check | Details |');
+    expect(markdownFailureEvidence).toContain(
+      '| main | advisory-status-check-contexts | advisory status check contexts | missing: Requirements CSV Integrity, CodeQL; present: Build, Test, Package, Integration Host (Linux), Windows Unit Tests |'
     );
   });
 
@@ -1960,7 +1974,7 @@ describe('branch protection audit main', () => {
       repo: string;
       success: boolean;
       summary: { totalBranches: number; passedBranches: number; failedBranches: number; totalChecks: number; passedChecks: number; failedChecks: number; noticeCount: number; failures: unknown[] };
-      branches: Array<{ branch: string; success: boolean; summary: { totalChecks: number; passedChecks: number; failedChecks: number; noticeCount: number; failures: unknown[] } }>;
+      branches: Array<{ branch: string; success: boolean; checks: Array<{ id: string; name: string }>; summary: { totalChecks: number; passedChecks: number; failedChecks: number; noticeCount: number; failures: unknown[] } }>;
       branch?: string;
       checks?: unknown[];
       notices?: unknown[];
@@ -1985,6 +1999,7 @@ describe('branch protection audit main', () => {
     });
     expect(output.branches.map((item) => item.branch)).toEqual(DEFAULT_AUDIT_BRANCHES);
     expect(output.branches.every((item) => item.success)).toBe(true);
+    expect(output.branches[0].checks[0]).toMatchObject({ id: 'required-status-checks-are-strict', name: 'required status checks are strict' });
     expect(output.branches.map((item) => item.summary.totalChecks)).toEqual([33, 33]);
     expect(output.branches.every((item) => item.summary.failedChecks === 0)).toBe(true);
     expect(output.branch).toBeUndefined();
@@ -2040,9 +2055,9 @@ describe('branch protection audit main', () => {
         passedChecks: number;
         failedChecks: number;
         noticeCount: number;
-        failures: Array<{ branch: string; name: string; details: string }>;
+        failures: Array<{ branch: string; checkId: string; name: string; details: string }>;
       };
-      branches: Array<{ branch: string; success: boolean; summary: { failedChecks: number; failures: Array<{ name: string; details: string }> } }>;
+      branches: Array<{ branch: string; success: boolean; checks: Array<{ id: string; name: string }>; summary: { failedChecks: number; failures: Array<{ checkId: string; name: string; details: string }> } }>;
     };
 
     expect(exitCode).toBe(1);
@@ -2059,19 +2074,25 @@ describe('branch protection audit main', () => {
       failures: [
         {
           branch: 'develop',
+          checkId: 'advisory-status-check-contexts',
           name: 'advisory status check contexts',
           details: 'missing: Requirements CSV Integrity, CodeQL; present: Build, Test, Package, Integration Host (Linux), Windows Unit Tests'
         },
         {
           branch: 'main',
+          checkId: 'advisory-status-check-contexts',
           name: 'advisory status check contexts',
           details: 'missing: Requirements CSV Integrity, CodeQL; present: Build, Test, Package, Integration Host (Linux), Windows Unit Tests'
         }
       ]
     });
     expect(output.branches.map((item) => item.summary.failedChecks)).toEqual([1, 1]);
+    expect(output.branches[0].checks.find((check) => check.name === 'advisory status check contexts')).toMatchObject({
+      id: 'advisory-status-check-contexts'
+    });
     expect(output.branches[0].summary.failures).toEqual([
       {
+        checkId: 'advisory-status-check-contexts',
         name: 'advisory status check contexts',
         details: 'missing: Requirements CSV Integrity, CodeQL; present: Build, Test, Package, Integration Host (Linux), Windows Unit Tests'
       }
