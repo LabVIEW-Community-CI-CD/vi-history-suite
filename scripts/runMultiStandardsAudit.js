@@ -688,7 +688,7 @@ function buildStandardsGateDetailSummary(profiles) {
     const details = profile.scorecardDetails || {};
     for (const [gate, detail] of Object.entries(details)) {
       const missingProof = arrayOfStrings(detail.missingProof);
-      const hasLowerConfidence = detail.confidence && detail.confidence !== 'High';
+      const hasLowerConfidence = detail.confidence !== 'High';
       if (!detail.basis || (!hasLowerConfidence && missingProof.length === 0)) {
         continue;
       }

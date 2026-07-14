@@ -1281,6 +1281,37 @@ describe('multi standards audit script', () => {
     expect(renderStandardsGateBasisSummary(summary, ['quick-triage', 'release-gate'])).toContain('| coverage | PASS | High | 29119-2/29119-3 | Coverage basis uses backslash \\\\ and a \\| delimiter. | all profiles |');
   });
 
+  it('routes unknown confidence gate basis rows to detail summary', () => {
+    const detailSummary = buildStandardsGateDetailSummary([
+      {
+        name: 'release-gate',
+        scoreFile: 'release-gate/target/score.json',
+        scorecardDetails: {
+          arch: {
+            status: 'PASS',
+            basis: 'ARCH basis has no confidence and stays visible for triage.',
+            standards: ['42010'],
+            missingProof: []
+          },
+          doc: {
+            status: 'PASS',
+            confidence: '',
+            basis: 'DOC basis has blank confidence and stays visible for triage.',
+            standards: ['15289', '26514'],
+            missingProof: []
+          }
+        }
+      }
+    ]);
+
+    expect(renderStandardsGateDetailSummary(detailSummary)).toEqual([
+      '| Gate | Status | Confidence | Standards | Basis | Missing Proof | Profiles |',
+      '| --- | --- | --- | --- | --- | --- | --- |',
+      '| arch | PASS | unknown | 42010 | ARCH basis has no confidence and stays visible for triage. | - | release-gate |',
+      '| doc | PASS | unknown | 15289/26514 | DOC basis has blank confidence and stays visible for triage. | - | release-gate |'
+    ]);
+  });
+
   it('groups and escapes retained gate detail Markdown cells', () => {
     const summary = buildStandardsGateDetailSummary([
       {
