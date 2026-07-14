@@ -4,6 +4,7 @@ const { spawnSync } = require('node:child_process');
 
 const DEFAULT_REPO = 'LabVIEW-Community-CI-CD/vi-history-suite';
 const DEFAULT_BRANCH = 'develop';
+const DEFAULT_AUDIT_BRANCHES = Object.freeze(['develop', 'main']);
 const GH_TIMEOUT_MS = 60000;
 const ALLOWED_EXECUTABLE_COMMANDS = Object.freeze(['gh']);
 const EXPECTED_REQUIRED_STATUS_CHECKS = Object.freeze([
@@ -40,6 +41,7 @@ function parseArgs(argv) {
   const options = {
     repo: DEFAULT_REPO,
     branch: DEFAULT_BRANCH,
+    allBranches: false,
     emitJson: false,
     help: false
   };
@@ -57,6 +59,7 @@ function parseArgs(argv) {
 
     if (arg === '--repo') options.repo = next();
     else if (arg === '--branch') options.branch = next();
+    else if (arg === '--all') options.allBranches = true;
     else if (arg === '--json') options.emitJson = true;
     else if (arg === '--help' || arg === '-h') options.help = true;
     else throw new Error(`Unknown argument: ${arg}`);
@@ -84,6 +87,7 @@ function usage() {
     'Options:',
     `  --repo <owner/repo>    Repository to inspect (default: ${DEFAULT_REPO})`,
     `  --branch <name>       Branch to inspect (default: ${DEFAULT_BRANCH})`,
+    `  --all                 Audit protected branches: ${DEFAULT_AUDIT_BRANCHES.join(', ')}`,
     '  --json                Emit machine-readable JSON instead of text',
     '  --help                Show this help'
   ].join('\n');
@@ -227,6 +231,10 @@ function renderResult(result, options = {}) {
   return lines.join('\n');
 }
 
+function branchesForOptions(options = {}) {
+  return options.allBranches ? [...DEFAULT_AUDIT_BRANCHES] : [options.branch || DEFAULT_BRANCH];
+}
+
 function auditBranchProtectionSettings(options = {}, deps = {}) {
   const normalizedOptions = {
     repo: options.repo || DEFAULT_REPO,
@@ -245,13 +253,24 @@ function main(argv = process.argv.slice(2), deps = {}) {
       stdout.write(`${usage()}\n`);
       return 0;
     }
-    const result = auditBranchProtectionSettings(options, deps);
+    const branchResults = branchesForOptions(options).map((branch) => ({
+      branch,
+      result: auditBranchProtectionSettings({ ...options, branch }, deps)
+    }));
+    const success = branchResults.every((item) => item.result.success);
     if (options.emitJson) {
-      stdout.write(`${JSON.stringify({ schemaVersion: 1, repo: options.repo, branch: options.branch, ...result }, null, 2)}\n`);
+      stdout.write(`${JSON.stringify({
+        schemaVersion: 1,
+        repo: options.repo,
+        branches: branchResults.map((item) => ({ branch: item.branch, ...item.result })),
+        success
+      }, null, 2)}\n`);
     } else {
-      stdout.write(`${renderResult(result, options)}\n`);
+      stdout.write(`${branchResults
+        .map((item) => renderResult(item.result, { ...options, branch: item.branch }))
+        .join('\n')}\n`);
     }
-    return result.success ? 0 : 1;
+    return success ? 0 : 1;
   } catch (error) {
     stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
     return 1;
@@ -265,6 +284,7 @@ if (require.main === module) {
 module.exports = {
   DEFAULT_REPO,
   DEFAULT_BRANCH,
+  DEFAULT_AUDIT_BRANCHES,
   EXPECTED_REQUIRED_STATUS_CHECKS,
   ADVISORY_STATUS_CHECKS,
   ALLOWED_EXECUTABLE_COMMANDS,
@@ -279,6 +299,7 @@ module.exports = {
   activeRulesetSummaries,
   evaluateBranchProtection,
   renderResult,
+  branchesForOptions,
   auditBranchProtectionSettings,
   main
 };
