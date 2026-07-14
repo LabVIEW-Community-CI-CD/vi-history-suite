@@ -38,6 +38,9 @@ const {
     requireLinearHistory: boolean;
     requireConversationResolution: boolean;
     requireSignedCommits: boolean;
+    requireStaleReviewDismissal: boolean;
+    requireCodeOwnerReview: boolean;
+    requireLastPushApproval: boolean;
     emitJson: boolean;
     help: boolean;
   };
@@ -56,6 +59,9 @@ const {
       requireLinearHistory?: boolean;
       requireConversationResolution?: boolean;
       requireSignedCommits?: boolean;
+      requireStaleReviewDismissal?: boolean;
+      requireCodeOwnerReview?: boolean;
+      requireLastPushApproval?: boolean;
       minimumApprovingReviews?: number;
       expectedActiveBranchRulesets?: string[];
     }
@@ -79,6 +85,9 @@ type ProtectionOverrides = {
   requiredLinearHistory?: boolean;
   requiredConversationResolution?: boolean;
   requiredSignedCommits?: boolean;
+  dismissStaleReviews?: boolean;
+  requireCodeOwnerReviews?: boolean;
+  requireLastPushApproval?: boolean;
 };
 
 function protection(overrides: ProtectionOverrides = {}) {
@@ -96,6 +105,9 @@ function protection(overrides: ProtectionOverrides = {}) {
     required_conversation_resolution: { enabled: overrides.requiredConversationResolution ?? false },
     required_signatures: { enabled: overrides.requiredSignedCommits ?? false },
     required_pull_request_reviews: {
+      dismiss_stale_reviews: overrides.dismissStaleReviews ?? false,
+      require_code_owner_reviews: overrides.requireCodeOwnerReviews ?? false,
+      require_last_push_approval: overrides.requireLastPushApproval ?? false,
       required_approving_review_count: overrides.requiredApprovingReviewCount ?? 0
     }
   };
@@ -129,13 +141,16 @@ describe('branch protection audit arguments', () => {
       requireLinearHistory: false,
       requireConversationResolution: false,
       requireSignedCommits: false,
+      requireStaleReviewDismissal: false,
+      requireCodeOwnerReview: false,
+      requireLastPushApproval: false,
       emitJson: false,
       help: false
     });
   });
 
   it('parses repo, branch, all, hardening, json, and help options', () => {
-    expect(parseArgs(['--repo', 'owner/repo', '--branch', 'release/v1.2.3', '--all', '--require-advisory', '--require-review', '--require-linear-history', '--require-conversation-resolution', '--require-signed-commits', '--json'])).toMatchObject({
+    expect(parseArgs(['--repo', 'owner/repo', '--branch', 'release/v1.2.3', '--all', '--require-advisory', '--require-review', '--require-linear-history', '--require-conversation-resolution', '--require-signed-commits', '--require-stale-review-dismissal', '--require-code-owner-review', '--require-last-push-approval', '--json'])).toMatchObject({
       repo: 'owner/repo',
       branch: 'release/v1.2.3',
       allBranches: true,
@@ -144,6 +159,9 @@ describe('branch protection audit arguments', () => {
       requireLinearHistory: true,
       requireConversationResolution: true,
       requireSignedCommits: true,
+      requireStaleReviewDismissal: true,
+      requireCodeOwnerReview: true,
+      requireLastPushApproval: true,
       emitJson: true
     });
     expect(parseArgs(['--help']).help).toBe(true);
@@ -153,6 +171,9 @@ describe('branch protection audit arguments', () => {
     expect(usage()).toContain('--require-linear-history');
     expect(usage()).toContain('--require-conversation-resolution');
     expect(usage()).toContain('--require-signed-commits');
+    expect(usage()).toContain('--require-stale-review-dismissal');
+    expect(usage()).toContain('--require-code-owner-review');
+    expect(usage()).toContain('--require-last-push-approval');
     expect(branchesForOptions({ allBranches: true })).toEqual(DEFAULT_AUDIT_BRANCHES);
     expect(branchesForOptions({ branch: 'main' })).toEqual(['main']);
   });
@@ -307,6 +328,78 @@ describe('branch protection audit evaluation', () => {
     expect(hardened.checks.find((check) => check.name === 'pull request approving reviews')).toMatchObject({
       passed: true,
       details: 'required approving reviews: 1'
+    });
+  });
+
+  it('can require stale review dismissal for branch-protection hardening audits', () => {
+    const result = evaluateBranchProtection(
+      { protection: protection(), rulesets: branchRulesets() },
+      { requireStaleReviewDismissal: true }
+    );
+
+    expect(result.success).toBe(false);
+    expect(result.checks.find((check) => check.name === 'stale review dismissal')).toMatchObject({
+      passed: false,
+      details: 'disabled or unavailable'
+    });
+
+    const hardened = evaluateBranchProtection(
+      { protection: protection({ dismissStaleReviews: true }), rulesets: branchRulesets() },
+      { requireStaleReviewDismissal: true }
+    );
+
+    expect(hardened.success).toBe(true);
+    expect(hardened.checks.find((check) => check.name === 'stale review dismissal')).toMatchObject({
+      passed: true,
+      details: 'enabled'
+    });
+  });
+
+  it('can require code-owner reviews for branch-protection hardening audits', () => {
+    const result = evaluateBranchProtection(
+      { protection: protection(), rulesets: branchRulesets() },
+      { requireCodeOwnerReview: true }
+    );
+
+    expect(result.success).toBe(false);
+    expect(result.checks.find((check) => check.name === 'code-owner review')).toMatchObject({
+      passed: false,
+      details: 'disabled or unavailable'
+    });
+
+    const hardened = evaluateBranchProtection(
+      { protection: protection({ requireCodeOwnerReviews: true }), rulesets: branchRulesets() },
+      { requireCodeOwnerReview: true }
+    );
+
+    expect(hardened.success).toBe(true);
+    expect(hardened.checks.find((check) => check.name === 'code-owner review')).toMatchObject({
+      passed: true,
+      details: 'enabled'
+    });
+  });
+
+  it('can require last-push approval for branch-protection hardening audits', () => {
+    const result = evaluateBranchProtection(
+      { protection: protection(), rulesets: branchRulesets() },
+      { requireLastPushApproval: true }
+    );
+
+    expect(result.success).toBe(false);
+    expect(result.checks.find((check) => check.name === 'last-push approval')).toMatchObject({
+      passed: false,
+      details: 'disabled or unavailable'
+    });
+
+    const hardened = evaluateBranchProtection(
+      { protection: protection({ requireLastPushApproval: true }), rulesets: branchRulesets() },
+      { requireLastPushApproval: true }
+    );
+
+    expect(hardened.success).toBe(true);
+    expect(hardened.checks.find((check) => check.name === 'last-push approval')).toMatchObject({
+      passed: true,
+      details: 'enabled'
     });
   });
 
@@ -539,6 +632,51 @@ describe('branch protection audit main', () => {
     expect(exitCode).toBe(1);
     expect(stderr.read()).toBe('');
     expect(stdout.read()).toContain('FAIL pull request approving reviews');
+  });
+
+  it('returns nonzero when stale review dismissal is required but absent', () => {
+    const stdout = captureWrite();
+    const stderr = captureWrite();
+    const spawnSync = vi.fn((command: string, args: string[]) => {
+      const resource = args[1].endsWith('/rulesets') ? branchRulesets() : protection();
+      return { status: 0, stdout: JSON.stringify(resource), stderr: '' };
+    });
+
+    const exitCode = main(['--require-stale-review-dismissal'], { spawnSync, stdout: stdout.stream, stderr: stderr.stream });
+
+    expect(exitCode).toBe(1);
+    expect(stderr.read()).toBe('');
+    expect(stdout.read()).toContain('FAIL stale review dismissal');
+  });
+
+  it('returns nonzero when code-owner review is required but absent', () => {
+    const stdout = captureWrite();
+    const stderr = captureWrite();
+    const spawnSync = vi.fn((command: string, args: string[]) => {
+      const resource = args[1].endsWith('/rulesets') ? branchRulesets() : protection();
+      return { status: 0, stdout: JSON.stringify(resource), stderr: '' };
+    });
+
+    const exitCode = main(['--require-code-owner-review'], { spawnSync, stdout: stdout.stream, stderr: stderr.stream });
+
+    expect(exitCode).toBe(1);
+    expect(stderr.read()).toBe('');
+    expect(stdout.read()).toContain('FAIL code-owner review');
+  });
+
+  it('returns nonzero when last-push approval is required but absent', () => {
+    const stdout = captureWrite();
+    const stderr = captureWrite();
+    const spawnSync = vi.fn((command: string, args: string[]) => {
+      const resource = args[1].endsWith('/rulesets') ? branchRulesets() : protection();
+      return { status: 0, stdout: JSON.stringify(resource), stderr: '' };
+    });
+
+    const exitCode = main(['--require-last-push-approval'], { spawnSync, stdout: stdout.stream, stderr: stderr.stream });
+
+    expect(exitCode).toBe(1);
+    expect(stderr.read()).toBe('');
+    expect(stdout.read()).toContain('FAIL last-push approval');
   });
 
   it('returns nonzero when linear history is required but absent', () => {
