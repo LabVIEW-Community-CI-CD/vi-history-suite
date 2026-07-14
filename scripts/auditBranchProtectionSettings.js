@@ -133,6 +133,7 @@ function parseArgs(argv) {
     emitJson: false,
     emitMarkdown: false,
     includeProvenance: false,
+    failOnDuplicateCheckIds: false,
     outputPath: undefined,
     help: false
   };
@@ -167,6 +168,7 @@ function parseArgs(argv) {
     else if (arg === '--json') options.emitJson = true;
     else if (arg === '--markdown') options.emitMarkdown = true;
     else if (arg === '--include-provenance') options.includeProvenance = true;
+    else if (arg === '--fail-on-duplicate-check-ids') options.failOnDuplicateCheckIds = true;
     else if (arg === '--output') options.outputPath = next();
     else if (arg === '--help' || arg === '-h') options.help = true;
     else throw new Error(`Unknown argument: ${arg}`);
@@ -211,6 +213,7 @@ function usage() {
     '  --json                Emit machine-readable JSON instead of text',
     '  --markdown            Emit compact Markdown evidence instead of text',
     '  --include-provenance  Include generated timestamp, argv, repo, branches, and output mode',
+    '  --fail-on-duplicate-check-ids Fail when stable check IDs are duplicated',
     '  --output <path>       Write rendered audit output to a relative file path',
     '  --help                Show this help'
   ].join('\n');
@@ -1082,14 +1085,23 @@ function duplicateCheckIdsForResult(result) {
   return [...checkIds.values()].filter((entry) => entry.count > 1);
 }
 
-function summarizeAuditResult(result) {
+function duplicateCheckIdFailureForResult(result, options = {}) {
+  return Boolean(options.failOnDuplicateCheckIds && duplicateCheckIdsForResult(result).length > 0);
+}
+
+function auditResultSuccess(result, options = {}) {
+  return Boolean(result && result.success) && !duplicateCheckIdFailureForResult(result, options);
+}
+
+function summarizeAuditResult(result, options = {}) {
   const checks = Array.isArray(result && result.checks) ? result.checks : [];
   const notices = Array.isArray(result && result.notices) ? result.notices : [];
   const duplicateCheckIds = duplicateCheckIdsForResult(result);
+  const duplicateCheckIdFailure = Boolean(options.failOnDuplicateCheckIds && duplicateCheckIds.length > 0);
   const failures = checks
     .filter((check) => !check.passed)
     .map((check) => ({ checkId: checkIdForCheck(check), name: check.name, details: check.details }));
-  return {
+  const summary = {
     totalChecks: checks.length,
     passedChecks: checks.length - failures.length,
     failedChecks: failures.length,
@@ -1098,18 +1110,22 @@ function summarizeAuditResult(result) {
     duplicateCheckIds,
     failures
   };
+  if (options.failOnDuplicateCheckIds) {
+    summary.duplicateCheckIdFailure = duplicateCheckIdFailure;
+  }
+  return summary;
 }
 
-function summarizeBranchResults(branchResults) {
+function summarizeBranchResults(branchResults, options = {}) {
   const branchSummaries = branchResults.map((item) => {
-    const summary = summarizeAuditResult(item.result);
+    const summary = summarizeAuditResult(item.result, options);
     return {
       branch: item.branch,
-      success: item.result.success,
+      success: auditResultSuccess(item.result, options),
       ...summary
     };
   });
-  return {
+  const summary = {
     totalBranches: branchSummaries.length,
     passedBranches: branchSummaries.filter((item) => item.success).length,
     failedBranches: branchSummaries.filter((item) => !item.success).length,
@@ -1121,15 +1137,19 @@ function summarizeBranchResults(branchResults) {
     duplicateCheckIds: branchSummaries.flatMap((item) => item.duplicateCheckIds.map((duplicate) => ({ branch: item.branch, ...duplicate }))),
     failures: branchSummaries.flatMap((item) => item.failures.map((failure) => ({ branch: item.branch, ...failure })))
   };
+  if (options.failOnDuplicateCheckIds) {
+    summary.duplicateCheckIdFailure = summary.duplicateCheckIdCount > 0;
+  }
+  return summary;
 }
 
-function auditResultJson(item) {
+function auditResultJson(item, options = {}) {
   return {
     branch: item.branch,
-    success: item.result.success,
+    success: auditResultSuccess(item.result, options),
     checks: Array.isArray(item.result.checks) ? item.result.checks.map(checkResultJson) : [],
     notices: Array.isArray(item.result.notices) ? item.result.notices : [],
-    summary: summarizeAuditResult(item.result)
+    summary: summarizeAuditResult(item.result, options)
   };
 }
 
@@ -1196,8 +1216,8 @@ function renderTextProvenance(provenance) {
 
 function renderMarkdown(branchResults, options = {}) {
   const repo = options.repo || DEFAULT_REPO;
-  const summary = summarizeBranchResults(branchResults);
-  const success = branchResults.every((item) => item.result.success);
+  const summary = summarizeBranchResults(branchResults, options);
+  const success = branchResults.every((item) => auditResultSuccess(item.result, options));
   const lines = [
     '## Branch Protection Audit',
     '',
@@ -1217,9 +1237,9 @@ function renderMarkdown(branchResults, options = {}) {
   }
 
   for (const item of branchResults) {
-    const branchSummary = summarizeAuditResult(item.result);
+    const branchSummary = summarizeAuditResult(item.result, options);
     lines.push(
-      `| ${markdownCell(item.branch)} | ${item.result.success ? 'PASS' : 'FAIL'} | ${branchSummary.passedChecks}/${branchSummary.totalChecks} | ${branchSummary.failedChecks} | ${branchSummary.noticeCount} |`
+      `| ${markdownCell(item.branch)} | ${auditResultSuccess(item.result, options) ? 'PASS' : 'FAIL'} | ${branchSummary.passedChecks}/${branchSummary.totalChecks} | ${branchSummary.failedChecks} | ${branchSummary.noticeCount} |`
     );
   }
 
@@ -1243,7 +1263,7 @@ function renderMarkdown(branchResults, options = {}) {
 }
 
 function renderAuditOutput(branchResults, options = {}) {
-  const success = branchResults.every((item) => item.result.success);
+  const success = branchResults.every((item) => auditResultSuccess(item.result, options));
   if (options.emitJson) {
     const provenance = options.provenance ? { provenance: options.provenance } : {};
     if (options.allBranches) {
@@ -1252,12 +1272,12 @@ function renderAuditOutput(branchResults, options = {}) {
         repo: options.repo,
         ...provenance,
         success,
-        summary: summarizeBranchResults(branchResults),
-        branches: branchResults.map(auditResultJson)
+        summary: summarizeBranchResults(branchResults, options),
+        branches: branchResults.map((item) => auditResultJson(item, options))
       }, null, 2);
     }
     const [branchResult] = branchResults;
-    return JSON.stringify({ schemaVersion: 1, repo: options.repo, ...provenance, ...auditResultJson(branchResult) }, null, 2);
+    return JSON.stringify({ schemaVersion: 1, repo: options.repo, ...provenance, ...auditResultJson(branchResult, options) }, null, 2);
   }
   if (options.emitMarkdown) {
     return renderMarkdown(branchResults, options);
@@ -1334,8 +1354,9 @@ function main(argv = process.argv.slice(2), deps = {}) {
       stdout.write(`${usage()}\n`);
       return 0;
     }
-    const branchResults = auditBranches(options, deps);
-    const success = branchResults.every((item) => item.result.success);
+    const runAuditBranches = deps.auditBranches || auditBranches;
+    const branchResults = runAuditBranches(options, deps);
+    const success = branchResults.every((item) => auditResultSuccess(item.result, options));
     const renderOptions = options.includeProvenance
       ? { ...options, provenance: buildAuditProvenance(branchResults, options, { ...deps, argv }) }
       : options;
@@ -1412,6 +1433,8 @@ module.exports = {
   checkIdForCheck,
   checkResultJson,
   duplicateCheckIdsForResult,
+  duplicateCheckIdFailureForResult,
+  auditResultSuccess,
   summarizeAuditResult,
   summarizeBranchResults,
   auditResultJson,
