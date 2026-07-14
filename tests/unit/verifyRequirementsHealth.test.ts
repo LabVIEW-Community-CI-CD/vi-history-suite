@@ -26,6 +26,7 @@ const {
     linkState: string;
     criteriaCited: number;
     criteriaTotal: number;
+    criteriaUncited: number;
     coverageRiskFiles: string[];
     attention: boolean;
   }>;
@@ -54,6 +55,28 @@ const CRITERIA = {
       criteria: [
         { criterionId: 'VHS-REQ-001.1', ordinal: 1, text: 'a', cited: true },
         { criterionId: 'VHS-REQ-001.2', ordinal: 2, text: 'b', cited: false }
+      ]
+    },
+    {
+      reqId: 'VHS-REQ-004',
+      criteriaCount: 1,
+      criteria: [{ criterionId: 'VHS-REQ-004.1', ordinal: 1, text: 'c', cited: true }]
+    }
+  ]
+};
+
+const CRITERIA_ALL_CITED = {
+  totalRequirements: 4,
+  totalCriteria: 3,
+  citedCriteria: 3,
+  uncitedCriteria: 0,
+  requirements: [
+    {
+      reqId: 'VHS-REQ-001',
+      criteriaCount: 2,
+      criteria: [
+        { criterionId: 'VHS-REQ-001.1', ordinal: 1, text: 'a', cited: true },
+        { criterionId: 'VHS-REQ-001.2', ordinal: 2, text: 'b', cited: true }
       ]
     },
     {
@@ -107,7 +130,12 @@ describe('requirement verification health (VHS-REQ-601)', () => {
     ]);
 
     const alpha = requirements.find((entry) => entry.reqId === 'VHS-REQ-001');
-    expect(alpha).toMatchObject({ linkState: 'linked', criteriaCited: 1, criteriaTotal: 2 });
+    expect(alpha).toMatchObject({
+      linkState: 'linked',
+      criteriaCited: 1,
+      criteriaTotal: 2,
+      criteriaUncited: 1
+    });
     expect(alpha?.coverageRiskFiles).toEqual(['src/a.ts']);
     expect(alpha?.attention).toBe(true); // coverage risk
 
@@ -140,7 +168,7 @@ describe('requirement verification health (VHS-REQ-601)', () => {
     expect(result.mutation).toMatchObject({ available: true, score: 81.63 });
   });
 
-  it('reports HEALTHY when linkage and coverage are clean', () => {
+  it('reports ATTENTION when criterion citations are missing despite clean linkage and coverage (VHS-REQ-601)', () => {
     const result = verifyRequirementsHealth('/repo', {
       linkage: { total: 2, linked: ['VHS-REQ-001', 'VHS-REQ-004'], unlinked: [], manualOnly: [] },
       criteria: CRITERIA,
@@ -149,17 +177,32 @@ describe('requirement verification health (VHS-REQ-601)', () => {
       mutation: MUTATION
     });
 
+    expect(result.healthy).toBe(false);
+    expect((result.attention as unknown[]).length).toBe(1);
+    const summary = renderSummary(result);
+    expect(summary).toContain('Overall: ATTENTION');
+    expect(summary).toContain('1 uncited criterion/criteria');
+    expect(summary).toContain('does not fail CI');
+  });
+
+  it('reports HEALTHY when linkage, criterion citation, and coverage are clean', () => {
+    const result = verifyRequirementsHealth('/repo', {
+      linkage: { total: 2, linked: ['VHS-REQ-001', 'VHS-REQ-004'], unlinked: [], manualOnly: [] },
+      criteria: CRITERIA_ALL_CITED,
+      integrity: INTEGRITY_PASS,
+      coverage: { riskThreshold: 50, mappedBelowThreshold: [] },
+      mutation: MUTATION
+    });
+
     expect(result.healthy).toBe(true);
     expect((result.attention as unknown[]).length).toBe(0);
-    const summary = renderSummary(result);
-    expect(summary).toContain('Overall: HEALTHY');
-    expect(summary).toContain('does not fail CI');
+    expect(renderSummary(result)).toContain('Overall: HEALTHY');
   });
 
   it('marks coverage and mutation unavailable when their artifacts are absent', () => {
     const result = verifyRequirementsHealth('/repo', {
       linkage: { total: 1, linked: ['VHS-REQ-001'], unlinked: [], manualOnly: [] },
-      criteria: CRITERIA,
+      criteria: CRITERIA_ALL_CITED,
       integrity: INTEGRITY_PASS,
       coverage: null,
       mutation: null
@@ -213,7 +256,7 @@ describe('requirement verification health (VHS-REQ-601)', () => {
 
     const code = main(['--strict'], {
       linkage: { total: 2, linked: ['VHS-REQ-001', 'VHS-REQ-004'], unlinked: [], manualOnly: [] },
-      criteria: CRITERIA,
+      criteria: CRITERIA_ALL_CITED,
       integrity: INTEGRITY_PASS,
       coverage: { riskThreshold: 50, mappedBelowThreshold: [] },
       mutation: MUTATION,
@@ -230,12 +273,13 @@ describe('requirement verification health (VHS-REQ-601)', () => {
       activeRequirements: number;
       integrity: { success: boolean };
       linkage: { unlinked: number };
-      criteria: { total: number };
+      criteria: { total: number; uncited: number };
     };
 
     expect(result.activeRequirements).toBeGreaterThan(20);
     expect(result.integrity.success).toBe(true);
     expect(result.linkage.unlinked).toBe(0);
     expect(result.criteria.total).toBeGreaterThan(100);
+    expect(result.criteria.uncited).toBe(0);
   });
 });
