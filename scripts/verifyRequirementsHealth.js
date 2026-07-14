@@ -46,6 +46,183 @@ const ATTENTION_REASON_IDS = Object.freeze({
   coverageRisk: 'coverage-risk'
 });
 
+const REQUIREMENTS_HEALTH_JSON_SCHEMA = Object.freeze({
+  $schema: 'https://json-schema.org/draft/2020-12/schema',
+  $id: 'https://labview-community-cicd.github.io/vi-history-suite/schemas/requirements-health-v1.schema.json',
+  title: 'vi-history-suite requirements health JSON report',
+  type: 'object',
+  required: [
+    'schemaVersion',
+    'activeRequirements',
+    'integrity',
+    'linkage',
+    'criteria',
+    'coverage',
+    'mutation',
+    'requirements',
+    'attention',
+    'healthy',
+    'summary'
+  ],
+  additionalProperties: true,
+  properties: {
+    schemaVersion: { const: REQUIREMENTS_HEALTH_SCHEMA_VERSION },
+    activeRequirements: { type: 'integer', minimum: 0 },
+    integrity: {
+      type: 'object',
+      required: ['success', 'violationCount'],
+      additionalProperties: true,
+      properties: {
+        success: { type: 'boolean' },
+        violationCount: { type: 'integer', minimum: 0 }
+      }
+    },
+    linkage: {
+      type: 'object',
+      required: ['linked', 'unlinked', 'manualOnly', 'total'],
+      additionalProperties: true,
+      properties: {
+        linked: { type: 'integer', minimum: 0 },
+        unlinked: { type: 'integer', minimum: 0 },
+        manualOnly: { type: 'integer', minimum: 0 },
+        total: { type: 'integer', minimum: 0 }
+      }
+    },
+    criteria: {
+      type: 'object',
+      required: ['cited', 'total', 'uncited'],
+      additionalProperties: true,
+      properties: {
+        cited: { type: 'integer', minimum: 0 },
+        total: { type: 'integer', minimum: 0 },
+        uncited: { type: 'integer', minimum: 0 }
+      }
+    },
+    coverage: { $ref: '#/$defs/coverageSignal' },
+    mutation: { $ref: '#/$defs/mutationSignal' },
+    requirements: { type: 'array', items: { $ref: '#/$defs/requirementHealth' } },
+    attention: { type: 'array', items: { $ref: '#/$defs/requirementHealth' } },
+    healthy: { type: 'boolean' },
+    summary: { $ref: '#/$defs/summary' },
+    provenance: { $ref: '#/$defs/provenance' }
+  },
+  $defs: {
+    coverageSignal: {
+      oneOf: [
+        {
+          type: 'object',
+          required: ['available'],
+          properties: { available: { const: false } },
+          additionalProperties: true
+        },
+        {
+          type: 'object',
+          required: ['available', 'riskThreshold', 'requirementsWithRisk', 'mappedBelowThreshold'],
+          additionalProperties: true,
+          properties: {
+            available: { const: true },
+            riskThreshold: { type: 'number' },
+            requirementsWithRisk: { type: 'integer', minimum: 0 },
+            mappedBelowThreshold: { type: 'integer', minimum: 0 }
+          }
+        }
+      ]
+    },
+    mutationSignal: {
+      oneOf: [
+        {
+          type: 'object',
+          required: ['available'],
+          properties: { available: { const: false } },
+          additionalProperties: true
+        },
+        {
+          type: 'object',
+          required: ['available', 'killed', 'timeout', 'survived', 'noCoverage', 'score'],
+          additionalProperties: true,
+          properties: {
+            available: { const: true },
+            killed: { type: 'integer', minimum: 0 },
+            timeout: { type: 'integer', minimum: 0 },
+            survived: { type: 'integer', minimum: 0 },
+            noCoverage: { type: 'integer', minimum: 0 },
+            score: { type: 'number' }
+          }
+        }
+      ]
+    },
+    requirementHealth: {
+      type: 'object',
+      required: [
+        'reqId',
+        'linkState',
+        'criteriaCited',
+        'criteriaTotal',
+        'criteriaUncited',
+        'coverageRiskFiles',
+        'attentionReasons',
+        'attention'
+      ],
+      additionalProperties: true,
+      properties: {
+        reqId: { type: 'string', pattern: '^VHS-REQ-[0-9]{3}$' },
+        linkState: { enum: ['linked', 'manual', 'unlinked'] },
+        criteriaCited: { type: 'integer', minimum: 0 },
+        criteriaTotal: { type: 'integer', minimum: 0 },
+        criteriaUncited: { type: 'integer', minimum: 0 },
+        coverageRiskFiles: { type: 'array', items: { type: 'string' } },
+        attentionReasons: { type: 'array', items: { $ref: '#/$defs/attentionReason' } },
+        attention: { type: 'boolean' }
+      }
+    },
+    attentionReason: {
+      type: 'object',
+      required: ['reasonId', 'message'],
+      additionalProperties: true,
+      properties: {
+        reasonId: { enum: Object.values(ATTENTION_REASON_IDS) },
+        message: { type: 'string' },
+        count: { type: 'integer', minimum: 0 },
+        files: { type: 'array', items: { type: 'string' } }
+      }
+    },
+    summary: {
+      type: 'object',
+      required: ['status', 'healthy', 'attentionCount', 'reasonCounts', 'unavailableSignals'],
+      additionalProperties: true,
+      properties: {
+        status: { enum: ['HEALTHY', 'ATTENTION'] },
+        healthy: { type: 'boolean' },
+        attentionCount: { type: 'integer', minimum: 0 },
+        reasonCounts: {
+          type: 'object',
+          required: ['structuralIntegrity', 'unlinked', 'uncitedCriteria', 'coverageRisk'],
+          additionalProperties: true,
+          properties: {
+            structuralIntegrity: { type: 'integer', minimum: 0 },
+            unlinked: { type: 'integer', minimum: 0 },
+            uncitedCriteria: { type: 'integer', minimum: 0 },
+            coverageRisk: { type: 'integer', minimum: 0 }
+          }
+        },
+        unavailableSignals: { type: 'array', items: { enum: ['coverage', 'mutation'] } }
+      }
+    },
+    provenance: {
+      type: 'object',
+      required: ['generatedAt', 'cwd', 'outputMode', 'strict', 'argv'],
+      additionalProperties: true,
+      properties: {
+        generatedAt: { type: 'string' },
+        cwd: { type: 'string' },
+        outputMode: { enum: ['text', 'json', 'markdown'] },
+        strict: { type: 'boolean' },
+        argv: { type: 'array', items: { type: 'string' } }
+      }
+    }
+  }
+});
+
 // Stryker mutation score = detected / valid, where detected = Killed + Timeout
 // and valid = detected + Survived + NoCoverage (Ignored/CompileError excluded).
 function computeMutationScore(report) {
@@ -192,6 +369,7 @@ function parseArgs(argv = []) {
   const options = {
     json: false,
     markdown: false,
+    schema: false,
     strict: false,
     includeProvenance: false,
     outputPath: undefined,
@@ -210,21 +388,27 @@ function parseArgs(argv = []) {
 
     if (arg === '--json') options.json = true;
     else if (arg === '--markdown') options.markdown = true;
+    else if (arg === '--schema') options.schema = true;
     else if (arg === '--strict') options.strict = true;
     else if (arg === '--include-provenance') options.includeProvenance = true;
     else if (arg === '--output') options.outputPath = next();
     else if (arg.startsWith('--')) throw new Error(`Unknown argument: ${arg}`);
     else options.positionals.push(arg);
   }
-  if (options.json && options.markdown) {
-    throw new Error('Use either --json or --markdown, not both');
+  if ([options.json, options.markdown, options.schema].filter(Boolean).length > 1) {
+    throw new Error('Use only one output mode: --json, --markdown, or --schema');
   }
   return options;
 }
 
 function outputModeForOptions(options = {}) {
+  if (options.schema) return 'schema';
   if (options.markdown) return 'markdown';
   return options.json ? 'json' : 'text';
+}
+
+function renderRequirementsHealthJsonSchema() {
+  return JSON.stringify(REQUIREMENTS_HEALTH_JSON_SCHEMA, null, 2);
 }
 
 function markdownCell(value) {
@@ -564,12 +748,26 @@ function main(argv = process.argv.slice(2), deps = {}) {
     const parsed = parseArgs(argv);
     const asJson = deps.json ?? parsed.json;
     const asMarkdown = deps.markdown ?? parsed.markdown;
+    const asSchema = deps.schema ?? parsed.schema;
     const strict = deps.strict ?? parsed.strict;
     const includeProvenance = deps.includeProvenance ?? parsed.includeProvenance;
     const outputPath = deps.outputPath ?? parsed.outputPath;
     const cwd = deps.cwd || parsed.positionals[0] || process.cwd();
+    if ([asJson, asMarkdown, asSchema].filter(Boolean).length > 1) {
+      throw new Error('Use only one output mode: --json, --markdown, or --schema');
+    }
     if (outputPath) {
       resolveOutputPath(outputPath, { ...deps, cwd });
+    }
+    if (asSchema) {
+      const renderedSchema = renderRequirementsHealthJsonSchema();
+      if (outputPath) {
+        writeRequirementsHealthOutput(outputPath, renderedSchema, { ...deps, cwd });
+        stdout.write(`[requirements-verify] Wrote schema output to ${outputPath}\n`);
+      } else {
+        stdout.write(`${renderedSchema}\n`);
+      }
+      return 0;
     }
     const result = verifyRequirementsHealth(cwd, deps);
 
@@ -613,6 +811,7 @@ if (require.main === module) {
 module.exports = {
   MUTATION_REPORT_PATH,
   REQUIREMENTS_HEALTH_SCHEMA_VERSION,
+  REQUIREMENTS_HEALTH_JSON_SCHEMA,
   ATTENTION_REASON_IDS,
   computeMutationScore,
   attentionReasonsForRequirement,
@@ -620,6 +819,7 @@ module.exports = {
   summarizeRequirementHealth,
   parseArgs,
   outputModeForOptions,
+  renderRequirementsHealthJsonSchema,
   markdownCell,
   markdownCodeSpan,
   generatedAtForProvenance,
