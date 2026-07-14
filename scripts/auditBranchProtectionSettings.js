@@ -44,6 +44,7 @@ function parseArgs(argv) {
     branch: DEFAULT_BRANCH,
     allBranches: false,
     requireAdvisory: false,
+    requireReview: false,
     emitJson: false,
     help: false
   };
@@ -63,6 +64,7 @@ function parseArgs(argv) {
     else if (arg === '--branch') options.branch = next();
     else if (arg === '--all') options.allBranches = true;
     else if (arg === '--require-advisory') options.requireAdvisory = true;
+    else if (arg === '--require-review') options.requireReview = true;
     else if (arg === '--json') options.emitJson = true;
     else if (arg === '--help' || arg === '-h') options.help = true;
     else throw new Error(`Unknown argument: ${arg}`);
@@ -92,6 +94,7 @@ function usage() {
     `  --branch <name>       Branch to inspect (default: ${DEFAULT_BRANCH})`,
     `  --all                 Audit protected branches: ${DEFAULT_AUDIT_BRANCHES.join(', ')}`,
     '  --require-advisory    Fail when advisory checks are not branch-protection-required',
+    '  --require-review      Fail when approving pull request reviews are not required',
     '  --json                Emit machine-readable JSON instead of text',
     '  --help                Show this help'
   ].join('\n');
@@ -147,6 +150,12 @@ function disabledFlag(value) {
   return Boolean(value && value.enabled === false);
 }
 
+function requiredApprovingReviewCount(protection) {
+  const reviews = protection && protection.required_pull_request_reviews;
+  const count = Number(reviews && reviews.required_approving_review_count);
+  return Number.isFinite(count) && count > 0 ? count : 0;
+}
+
 function requiredStatusContexts(protection) {
   const checks = protection && protection.required_status_checks;
   const contexts = new Set();
@@ -177,8 +186,13 @@ function evaluateBranchProtection(settings, options = {}) {
   const advisoryChecks = options.advisoryChecks || ADVISORY_STATUS_CHECKS;
   const expectedActiveBranchRulesets = options.expectedActiveBranchRulesets || EXPECTED_ACTIVE_BRANCH_RULESETS;
   const requireAdvisory = Boolean(options.requireAdvisory);
+  const requireReview = Boolean(options.requireReview);
+  const minimumApprovingReviews = Number.isFinite(Number(options.minimumApprovingReviews))
+    ? Number(options.minimumApprovingReviews)
+    : 1;
   const missingRequired = expectedRequiredChecks.filter((context) => !requiredContexts.includes(context));
   const advisoryNotRequired = advisoryChecks.filter((context) => !requiredContexts.includes(context));
+  const approvingReviewCount = requiredApprovingReviewCount(protection);
   const activeRulesets = activeRulesetSummaries(settings.rulesets);
   const activeRulesetNames = activeRulesets.map((ruleset) => ruleset.name).sort();
   const missingActiveRulesets = expectedActiveBranchRulesets.filter((name) => !activeRulesetNames.includes(name));
@@ -227,6 +241,16 @@ function evaluateBranchProtection(settings, options = {}) {
       details: advisoryNotRequired.length === 0
         ? `required: ${advisoryChecks.join(', ')}`
         : `missing: ${advisoryNotRequired.join(', ')}; present: ${requiredContexts.join(', ') || 'none'}`
+    });
+  }
+
+  if (requireReview) {
+    checks.push({
+      name: 'pull request approving reviews',
+      passed: approvingReviewCount >= minimumApprovingReviews,
+      details: approvingReviewCount >= minimumApprovingReviews
+        ? `required approving reviews: ${approvingReviewCount}`
+        : `required approving reviews: ${approvingReviewCount}; expected at least ${minimumApprovingReviews}`
     });
   }
 
@@ -352,6 +376,7 @@ module.exports = {
   buildGhApiArgs,
   fetchBranchProtection,
   fetchBranchRulesets,
+  requiredApprovingReviewCount,
   requiredStatusContexts,
   activeRulesetSummaries,
   evaluateBranchProtection,
