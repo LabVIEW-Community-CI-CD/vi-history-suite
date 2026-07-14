@@ -14,14 +14,15 @@
  *   - assertion quality      - Stryker mutation score (reports/mutation/mutation.json).
  *
  * It is ADVISORY (exit 0): the individual gates already fail closed where the
- * repository has decided to enforce (integrity, requirement linkage, coverage
- * risk). It is advisory by default; with --strict it exits non-zero when
- * requirement health is not green -- a one-command local pre-push check over
- * those already-enforced signals. It summarizes the enforced state plus the
- * advisory signals so a reader or agent sees requirement health at a glance and
- * knows which requirements still need attention. Coverage and mutation are
- * optional inputs: when their artifacts are absent (no `npm test` / no
- * `npm run test:mutation`) the report marks them unavailable instead of failing.
+ * repository has decided to enforce (integrity, requirement linkage, criterion
+ * citation, coverage risk). It is advisory by default; with --strict it exits
+ * non-zero when requirement health is not green -- a one-command local pre-push
+ * check over those already-enforced signals. It summarizes the enforced state
+ * plus the advisory signals so a reader or agent sees requirement health at a
+ * glance and knows which requirements still need attention. Coverage and
+ * mutation are optional inputs: when their artifacts are absent (no `npm test` /
+ * no `npm run test:mutation`) the report marks them unavailable instead of
+ * failing.
  *
  * Pure helpers stay separate from a thin CLI so the aggregation is unit-testable
  * with injected sub-results. It uses only Node built-ins plus the sibling
@@ -105,13 +106,17 @@ function aggregateRequirementHealth(linkage, criteria, coverage) {
         ? 'manual'
         : 'unlinked';
     const coverageRiskFiles = coverageRiskByRequirement.get(reqId) || [];
+    const criteriaTotal = criterion ? criterion.criteriaCount : 0;
+    const criteriaCited = criterion ? criterion.criteria.filter((entry) => entry.cited).length : 0;
+    const criteriaUncited = criteriaTotal - criteriaCited;
     return {
       reqId,
       linkState,
-      criteriaCited: criterion ? criterion.criteria.filter((entry) => entry.cited).length : 0,
-      criteriaTotal: criterion ? criterion.criteriaCount : 0,
+      criteriaCited,
+      criteriaTotal,
+      criteriaUncited,
       coverageRiskFiles,
-      attention: linkState === 'unlinked' || coverageRiskFiles.length > 0
+      attention: linkState === 'unlinked' || criteriaUncited > 0 || coverageRiskFiles.length > 0
     };
   });
 }
@@ -147,7 +152,11 @@ function verifyRequirementsHealth(cwd = process.cwd(), deps = {}) {
       manualOnly: linkage.manualOnly.length,
       total: linkage.total
     },
-    criteria: { cited: criteria.citedCriteria, total: criteria.totalCriteria },
+    criteria: {
+      cited: criteria.citedCriteria,
+      total: criteria.totalCriteria,
+      uncited: criteria.uncitedCriteria
+    },
     coverage: coverage
       ? {
           available: true,
@@ -163,6 +172,7 @@ function verifyRequirementsHealth(cwd = process.cwd(), deps = {}) {
     healthy:
       integrity.success &&
       linkage.unlinked.length === 0 &&
+      criteria.uncitedCriteria === 0 &&
       (!coverage || coverage.mappedBelowThreshold.length === 0)
   };
 }
@@ -199,6 +209,9 @@ function renderSummary(result, options = {}) {
     for (const entry of result.attention) {
       const reasons = [];
       if (entry.linkState === 'unlinked') reasons.push('no citing test');
+      if (entry.criteriaUncited > 0) {
+        reasons.push(`${entry.criteriaUncited} uncited criterion/criteria`);
+      }
       if (entry.coverageRiskFiles.length > 0) {
         reasons.push(`coverage risk (${entry.coverageRiskFiles.join(', ')})`);
       }
@@ -257,6 +270,9 @@ function renderStepSummary(result) {
     for (const entry of result.attention) {
       const reasons = [];
       if (entry.linkState === 'unlinked') reasons.push('no citing test');
+      if (entry.criteriaUncited > 0) {
+        reasons.push(`${entry.criteriaUncited} uncited criterion/criteria`);
+      }
       if (entry.coverageRiskFiles.length > 0) {
         reasons.push(`coverage risk: ${entry.coverageRiskFiles.map((file) => `\`${file}\``).join(' ')}`);
       }
@@ -287,9 +303,9 @@ function main(argv = process.argv.slice(2), deps = {}) {
 
   // Advisory by default (exit 0). With --strict the report exits non-zero when
   // requirement health is not green (structural integrity, requirement linkage,
-  // or coverage risk) -- a one-command local pre-push check over the signals the
-  // individual guards already fail closed on in CI, so strict is deliberately
-  // not wired into CI where it would be redundant.
+  // criterion citation, or coverage risk) -- a one-command local pre-push check
+  // over the signals the individual guards already fail closed on in CI, so
+  // strict is deliberately not wired into CI where it would be redundant.
   if (strict && !result.healthy) {
     return 1;
   }

@@ -1941,8 +1941,9 @@ Missing numeric IDs are intentional.
     integrity, requirement linkage, criterion citation, coverage risk, and
     mutation score into a single advisory per-requirement signal.
   - The unified report supports a strict mode that exits non-zero when a
-    requirement is unlinked, structural integrity fails, or a requirement-mapped
-    file is below the coverage risk threshold.
+    requirement is unlinked, structural integrity fails, a criterion lacks its
+    `VHS-REQ-NNN.M` citation, or a requirement-mapped file is below the coverage
+    risk threshold.
   - A committed traceability inventory defines classifications for mapped,
     supporting, dev-only, release-ci, asset-doc, and gap surfaces.
   - A repeatable local audit command reports unmapped implementation candidates,
