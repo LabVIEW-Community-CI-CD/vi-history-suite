@@ -48,7 +48,9 @@ const {
   evaluateBranchProtection,
   renderResult,
   checkIdForName,
+  checkIdForCheck,
   checkResultJson,
+  duplicateCheckIdsForResult,
   summarizeAuditResult,
   summarizeBranchResults,
   markdownCell,
@@ -181,14 +183,20 @@ const {
     options?: { repo?: string; branch?: string }
   ) => string;
   checkIdForName: (name: string) => string;
+  checkIdForCheck: (check: { id?: string; name: string; passed: boolean; details: string }) => string;
   checkResultJson: (check: { id?: string; name: string; passed: boolean; details: string }) => { id: string; name: string; passed: boolean; details: string };
+  duplicateCheckIdsForResult: (
+    result: { success: boolean; checks: Array<{ id?: string; name: string; passed: boolean; details: string }>; notices: string[] }
+  ) => Array<{ checkId: string; count: number; names: string[] }>;
   summarizeAuditResult: (
-    result: { success: boolean; checks: Array<{ name: string; passed: boolean; details: string }>; notices: string[] }
+    result: { success: boolean; checks: Array<{ id?: string; name: string; passed: boolean; details: string }>; notices: string[] }
   ) => {
     totalChecks: number;
     passedChecks: number;
     failedChecks: number;
     noticeCount: number;
+    duplicateCheckIdCount: number;
+    duplicateCheckIds: Array<{ checkId: string; count: number; names: string[] }>;
     failures: Array<{ checkId: string; name: string; details: string }>;
   };
   summarizeBranchResults: (
@@ -204,6 +212,8 @@ const {
     passedChecks: number;
     failedChecks: number;
     noticeCount: number;
+    duplicateCheckIdCount: number;
+    duplicateCheckIds: Array<{ branch: string; checkId: string; count: number; names: string[] }>;
     failures: Array<{ branch: string; checkId: string; name: string; details: string }>;
   };
   markdownCell: (value: unknown) => string;
@@ -211,7 +221,7 @@ const {
   outputModeForOptions: (options?: { emitJson?: boolean; emitMarkdown?: boolean }) => string;
   generatedAtForProvenance: (deps?: { now?: () => Date | string; generatedAt?: Date | string }) => string;
   buildAuditProvenance: (
-    branchResults: Array<{ branch: string; result: { success: boolean; checks: Array<{ name: string; passed: boolean; details: string }>; notices: string[] } }>,
+    branchResults: Array<{ branch: string; result: { success: boolean; checks: Array<{ id?: string; name: string; passed: boolean; details: string }>; notices: string[] } }>,
     options?: { repo?: string; emitJson?: boolean; emitMarkdown?: boolean },
     deps?: { now?: () => Date | string; generatedAt?: Date | string; argv?: string[] }
   ) => { generatedAt: string; repo: string; branches: string[]; outputMode: string; argv: string[] };
@@ -220,14 +230,14 @@ const {
   renderMarkdown: (
     branchResults: Array<{
       branch: string;
-      result: { success: boolean; checks: Array<{ name: string; passed: boolean; details: string }>; notices: string[] };
+      result: { success: boolean; checks: Array<{ id?: string; name: string; passed: boolean; details: string }>; notices: string[] };
     }>,
     options?: { repo?: string; provenance?: { generatedAt: string; repo: string; branches: string[]; outputMode: string; argv: string[] } }
   ) => string;
   renderAuditOutput: (
     branchResults: Array<{
       branch: string;
-      result: { success: boolean; checks: Array<{ name: string; passed: boolean; details: string }>; notices: string[] };
+      result: { success: boolean; checks: Array<{ id?: string; name: string; passed: boolean; details: string }>; notices: string[] };
     }>,
     options?: { repo?: string; allBranches?: boolean; emitJson?: boolean; emitMarkdown?: boolean; provenance?: { generatedAt: string; repo: string; branches: string[]; outputMode: string; argv: string[] } }
   ) => string;
@@ -876,16 +886,47 @@ describe('branch protection audit evaluation', () => {
     });
     expect(checkIdForName('Required Status Check Contexts')).toBe('required-status-check-contexts');
     expect(checkIdForName('  active branch ruleset ref_name keys  ')).toBe('active-branch-ruleset-ref-name-keys');
+    expect(checkIdForCheck({ id: 'custom-check-id', name: 'Custom Check', passed: true, details: 'ok' })).toBe('custom-check-id');
     expect(checkResultJson({ name: 'required status checks are strict', passed: false, details: 'missing or disabled' })).toEqual({
       id: 'required-status-checks-are-strict',
       name: 'required status checks are strict',
       passed: false,
       details: 'missing or disabled'
     });
+    expect(failingSummary.duplicateCheckIdCount).toBe(0);
+    expect(failingSummary.duplicateCheckIds).toEqual([]);
     expect(failingSummary.failures.slice(0, 2)).toEqual([
       { checkId: 'required-status-checks-are-strict', name: 'required status checks are strict', details: 'missing or disabled' },
       { checkId: 'required-status-check-contexts', name: 'required status check contexts', details: 'missing: Windows Unit Tests, Integration Host (Linux); present: Build, Test, Package' }
     ]);
+
+    const duplicateIdResult = {
+      success: false,
+      checks: [
+        { name: 'Ruleset detail keys', passed: true, details: 'ok' },
+        { name: 'ruleset_detail_keys', passed: false, details: 'collision' },
+        { id: 'explicit-check-id', name: 'Explicit Source A', passed: true, details: 'ok' },
+        { id: 'explicit-check-id', name: 'Explicit Source B', passed: false, details: 'collision' }
+      ],
+      notices: []
+    };
+    expect(duplicateCheckIdsForResult(duplicateIdResult)).toEqual([
+      { checkId: 'ruleset-detail-keys', count: 2, names: ['Ruleset detail keys', 'ruleset_detail_keys'] },
+      { checkId: 'explicit-check-id', count: 2, names: ['Explicit Source A', 'Explicit Source B'] }
+    ]);
+    expect(summarizeAuditResult(duplicateIdResult)).toMatchObject({
+      totalChecks: 4,
+      failedChecks: 2,
+      duplicateCheckIdCount: 2,
+      duplicateCheckIds: [
+        { checkId: 'ruleset-detail-keys', count: 2, names: ['Ruleset detail keys', 'ruleset_detail_keys'] },
+        { checkId: 'explicit-check-id', count: 2, names: ['Explicit Source A', 'Explicit Source B'] }
+      ],
+      failures: [
+        { checkId: 'ruleset-detail-keys', name: 'ruleset_detail_keys', details: 'collision' },
+        { checkId: 'explicit-check-id', name: 'Explicit Source B', details: 'collision' }
+      ]
+    });
 
     const aggregateSummary = summarizeBranchResults([
       { branch: 'develop', result: failingResult },
@@ -900,7 +941,13 @@ describe('branch protection audit evaluation', () => {
       failedChecks: 13,
       noticeCount: 6
     });
+    expect(aggregateSummary.duplicateCheckIdCount).toBe(0);
+    expect(aggregateSummary.duplicateCheckIds).toEqual([]);
     expect(aggregateSummary.failures[0]).toEqual({ branch: 'develop', checkId: 'required-status-checks-are-strict', name: 'required status checks are strict', details: 'missing or disabled' });
+    expect(summarizeBranchResults([{ branch: 'collision', result: duplicateIdResult }]).duplicateCheckIds).toEqual([
+      { branch: 'collision', checkId: 'ruleset-detail-keys', count: 2, names: ['Ruleset detail keys', 'ruleset_detail_keys'] },
+      { branch: 'collision', checkId: 'explicit-check-id', count: 2, names: ['Explicit Source A', 'Explicit Source B'] }
+    ]);
   });
 
   it('renders compact Markdown audit evidence', () => {
@@ -934,6 +981,19 @@ describe('branch protection audit evaluation', () => {
     expect(markdownFailureEvidence).toContain(
       '| main | advisory-status-check-contexts | advisory status check contexts | missing: Requirements CSV Integrity, CodeQL; present: Build, Test, Package, Integration Host (Linux), Windows Unit Tests |'
     );
+
+    const duplicateIdResult = {
+      success: false,
+      checks: [
+        { name: 'Rule|Set', passed: true, details: 'ok' },
+        { name: 'Rule Set', passed: false, details: 'collision' }
+      ],
+      notices: []
+    };
+    const duplicateIdEvidence = renderMarkdown([{ branch: 'feature|collision', result: duplicateIdResult }], { repo: DEFAULT_REPO });
+    expect(duplicateIdEvidence).toContain('### Duplicate Check IDs');
+    expect(duplicateIdEvidence).toContain('| Branch | Check ID | Count | Checks |');
+    expect(duplicateIdEvidence).toContain('| feature\\|collision | rule-set | 2 | Rule\\|Set, Rule Set |');
   });
 
   it('renders and writes audit output for file evidence consumers', () => {
@@ -951,7 +1011,11 @@ describe('branch protection audit evaluation', () => {
       schemaVersion: 1,
       repo: DEFAULT_REPO,
       branch: 'develop',
-      success: true
+      success: true,
+      summary: {
+        duplicateCheckIdCount: 0,
+        duplicateCheckIds: []
+      }
     });
     expect(resolveOutputPath('evidence/branch-protection.md', { cwd })).toBe(resolvedOutput);
     expect(() => resolveOutputPath('', { cwd })).toThrow(/non-empty path/);
@@ -1934,7 +1998,7 @@ describe('branch protection audit main', () => {
       repo: string;
       branch: string;
       success: boolean;
-      summary: { totalChecks: number; passedChecks: number; failedChecks: number; noticeCount: number; failures: unknown[] };
+      summary: { totalChecks: number; passedChecks: number; failedChecks: number; noticeCount: number; duplicateCheckIdCount: number; duplicateCheckIds: unknown[]; failures: unknown[] };
       checks: unknown[];
       notices: unknown[];
       branches?: unknown[];
@@ -1953,6 +2017,8 @@ describe('branch protection audit main', () => {
       passedChecks: 33,
       failedChecks: 0,
       noticeCount: 3,
+      duplicateCheckIdCount: 0,
+      duplicateCheckIds: [],
       failures: []
     });
     expect(output.checks).toHaveLength(33);
@@ -1973,8 +2039,8 @@ describe('branch protection audit main', () => {
       schemaVersion: number;
       repo: string;
       success: boolean;
-      summary: { totalBranches: number; passedBranches: number; failedBranches: number; totalChecks: number; passedChecks: number; failedChecks: number; noticeCount: number; failures: unknown[] };
-      branches: Array<{ branch: string; success: boolean; checks: Array<{ id: string; name: string }>; summary: { totalChecks: number; passedChecks: number; failedChecks: number; noticeCount: number; failures: unknown[] } }>;
+      summary: { totalBranches: number; passedBranches: number; failedBranches: number; totalChecks: number; passedChecks: number; failedChecks: number; noticeCount: number; duplicateCheckIdCount: number; duplicateCheckIds: unknown[]; failures: unknown[] };
+      branches: Array<{ branch: string; success: boolean; checks: Array<{ id: string; name: string }>; summary: { totalChecks: number; passedChecks: number; failedChecks: number; noticeCount: number; duplicateCheckIdCount: number; duplicateCheckIds: unknown[]; failures: unknown[] } }>;
       branch?: string;
       checks?: unknown[];
       notices?: unknown[];
@@ -1995,6 +2061,8 @@ describe('branch protection audit main', () => {
       passedChecks: 66,
       failedChecks: 0,
       noticeCount: 6,
+      duplicateCheckIdCount: 0,
+      duplicateCheckIds: [],
       failures: []
     });
     expect(output.branches.map((item) => item.branch)).toEqual(DEFAULT_AUDIT_BRANCHES);

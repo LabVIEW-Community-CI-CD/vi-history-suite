@@ -1055,24 +1055,47 @@ function checkIdForName(name) {
     .replace(/^-|-$/gu, '') || 'unnamed-check';
 }
 
+function checkIdForCheck(check) {
+  return check && check.id ? String(check.id) : checkIdForName(check && check.name);
+}
+
 function checkResultJson(check) {
   return {
     ...check,
-    id: check && check.id ? String(check.id) : checkIdForName(check && check.name)
+    id: checkIdForCheck(check)
   };
+}
+
+function duplicateCheckIdsForResult(result) {
+  const checks = Array.isArray(result && result.checks) ? result.checks : [];
+  const checkIds = new Map();
+  for (const check of checks) {
+    const checkId = checkIdForCheck(check);
+    const entry = checkIds.get(checkId) || { checkId, count: 0, names: [] };
+    entry.count += 1;
+    const name = String(check && check.name ? check.name : 'unnamed check');
+    if (!entry.names.includes(name)) {
+      entry.names.push(name);
+    }
+    checkIds.set(checkId, entry);
+  }
+  return [...checkIds.values()].filter((entry) => entry.count > 1);
 }
 
 function summarizeAuditResult(result) {
   const checks = Array.isArray(result && result.checks) ? result.checks : [];
   const notices = Array.isArray(result && result.notices) ? result.notices : [];
+  const duplicateCheckIds = duplicateCheckIdsForResult(result);
   const failures = checks
     .filter((check) => !check.passed)
-    .map((check) => ({ checkId: checkIdForName(check.name), name: check.name, details: check.details }));
+    .map((check) => ({ checkId: checkIdForCheck(check), name: check.name, details: check.details }));
   return {
     totalChecks: checks.length,
     passedChecks: checks.length - failures.length,
     failedChecks: failures.length,
     noticeCount: notices.length,
+    duplicateCheckIdCount: duplicateCheckIds.length,
+    duplicateCheckIds,
     failures
   };
 }
@@ -1094,7 +1117,9 @@ function summarizeBranchResults(branchResults) {
     passedChecks: branchSummaries.reduce((total, item) => total + item.passedChecks, 0),
     failedChecks: branchSummaries.reduce((total, item) => total + item.failedChecks, 0),
     noticeCount: branchSummaries.reduce((total, item) => total + item.noticeCount, 0),
-    failures: branchResults.flatMap((item) => summarizeAuditResult(item.result).failures.map((failure) => ({ branch: item.branch, ...failure })))
+    duplicateCheckIdCount: branchSummaries.reduce((total, item) => total + item.duplicateCheckIdCount, 0),
+    duplicateCheckIds: branchSummaries.flatMap((item) => item.duplicateCheckIds.map((duplicate) => ({ branch: item.branch, ...duplicate }))),
+    failures: branchSummaries.flatMap((item) => item.failures.map((failure) => ({ branch: item.branch, ...failure })))
   };
 }
 
@@ -1204,6 +1229,13 @@ function renderMarkdown(branchResults, options = {}) {
     lines.push('', '### Failures', '', '| Branch | Check ID | Check | Details |', '| --- | --- | --- | --- |');
     for (const failure of summary.failures) {
       lines.push(`| ${markdownCell(failure.branch)} | ${markdownCell(failure.checkId)} | ${markdownCell(failure.name)} | ${markdownCell(failure.details)} |`);
+    }
+  }
+
+  if (summary.duplicateCheckIds.length > 0) {
+    lines.push('', '### Duplicate Check IDs', '', '| Branch | Check ID | Count | Checks |', '| --- | --- | ---: | --- |');
+    for (const duplicate of summary.duplicateCheckIds) {
+      lines.push(`| ${markdownCell(duplicate.branch)} | ${markdownCell(duplicate.checkId)} | ${duplicate.count} | ${markdownCell(duplicate.names.join(', '))} |`);
     }
   }
 
@@ -1377,7 +1409,9 @@ module.exports = {
   evaluateBranchProtection,
   renderResult,
   checkIdForName,
+  checkIdForCheck,
   checkResultJson,
+  duplicateCheckIdsForResult,
   summarizeAuditResult,
   summarizeBranchResults,
   auditResultJson,
