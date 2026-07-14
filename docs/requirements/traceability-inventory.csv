@@ -205,6 +205,16 @@ docs/simplification/github-first-simplification-analysis.md,asset-doc,No,GitHub-
 docs/testing/test-plan.md,asset-doc,Yes,Test plan documentation including release evidence retention expectations; mapped through RTM.
 docs/vagrant.md,asset-doc,Yes,Vagrant documentation; mapped through RTM.
 docs/requirements/traceability-inventory.csv,mapped,Yes,Traceability inventory; mapped through RTM.
+docs/user-guide.md,asset-doc,No,Governed external user-information main guide for ISO 26514 audit posture; reference documentation not directly mapped in RTM.
+docs/faq.md,asset-doc,No,Governed external user-information FAQ for ISO 26514 support and fallback routes; reference documentation not directly mapped in RTM.
+docs/glossary.md,asset-doc,No,Governed external user-information glossary for shared terms; reference documentation not directly mapped in RTM.
+docs/quick-reference.md,asset-doc,No,Governed external user-information quick-reference routes and commands; reference documentation not directly mapped in RTM.
+docs/information-item-map.md,asset-doc,No,Governed external user-information item map for ownership triggers and proving evidence; reference documentation not directly mapped in RTM.
+docs/information-for-users/plan.md,asset-doc,No,Governed external user-information plan and ISO 26514 claim boundary; reference documentation not directly mapped in RTM.
+docs/information-for-users/audience-and-task-model.md,asset-doc,No,Governed external user-information audience and task model; reference documentation not directly mapped in RTM.
+docs/information-for-users/delivery-profile.md,asset-doc,No,Governed external user-information delivery profile; reference documentation not directly mapped in RTM.
+docs/information-for-users/navigation-and-search.md,asset-doc,No,Governed external user-information navigation and search policy; reference documentation not directly mapped in RTM.
+docs/information-for-users/style-guide.md,asset-doc,No,Governed external user-information style and accessibility baseline; reference documentation not directly mapped in RTM.
 resources/bundled-docs/manifest.json,mapped,Yes,Bundled documentation manifest asset delivered with the extension package; mapped to VHS-REQ-611.
 resources/bundled-docs/pages/comparison-reports-and-dashboard-review.html,mapped,Yes,Bundled comparison/dashboard documentation page asset; mapped to VHS-REQ-611.
 resources/bundled-docs/pages/install-and-release.html,mapped,Yes,Bundled install/release documentation page asset; mapped to VHS-REQ-611.
