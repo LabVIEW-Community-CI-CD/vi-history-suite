@@ -23,6 +23,13 @@ const EXPECTED_REQUIRED_STATUS_CHECKS = Object.freeze([
 const EXPECTED_REQUIRED_STATUS_CHECK_APP_ID = 15368;
 const EXPECTED_REQUIRED_STATUS_CHECK_SECTION_KEYS = Object.freeze(['checks', 'contexts', 'contexts_url', 'strict', 'url']);
 const EXPECTED_REQUIRED_STATUS_CHECK_KEYS = Object.freeze(['app_id', 'context']);
+const EXPECTED_PULL_REQUEST_REVIEW_SECTION_KEYS = Object.freeze([
+  'dismiss_stale_reviews',
+  'require_code_owner_reviews',
+  'require_last_push_approval',
+  'required_approving_review_count',
+  'url'
+]);
 const ADVISORY_STATUS_CHECKS = Object.freeze([
   'Requirements CSV Integrity',
   'CodeQL'
@@ -213,6 +220,14 @@ function requiredApprovingReviewCount(protection) {
   return Number.isFinite(count) && count > 0 ? count : 0;
 }
 
+function pullRequestReviewSectionKeys(protection) {
+  const reviews = protection && protection.required_pull_request_reviews;
+  if (!reviews || typeof reviews !== 'object' || Array.isArray(reviews)) {
+    return [];
+  }
+  return Object.keys(reviews).sort();
+}
+
 function requiredStatusContexts(protection) {
   const checks = protection && protection.required_status_checks;
   const contexts = new Set();
@@ -393,6 +408,7 @@ function evaluateBranchProtection(settings, options = {}) {
     : EXPECTED_REQUIRED_STATUS_CHECK_APP_ID;
   const expectedRequiredStatusCheckSectionKeys = options.expectedRequiredStatusCheckSectionKeys || EXPECTED_REQUIRED_STATUS_CHECK_SECTION_KEYS;
   const expectedRequiredStatusCheckKeys = options.expectedRequiredStatusCheckKeys || EXPECTED_REQUIRED_STATUS_CHECK_KEYS;
+  const expectedPullRequestReviewSectionKeys = options.expectedPullRequestReviewSectionKeys || EXPECTED_PULL_REQUEST_REVIEW_SECTION_KEYS;
   const advisoryChecks = options.advisoryChecks || ADVISORY_STATUS_CHECKS;
   const expectedActiveBranchRulesets = options.expectedActiveBranchRulesets || EXPECTED_ACTIVE_BRANCH_RULESETS;
   const expectedActiveRulesetTarget = options.expectedActiveRulesetTarget || EXPECTED_ACTIVE_RULESET_TARGET;
@@ -430,6 +446,9 @@ function evaluateBranchProtection(settings, options = {}) {
   const requiredStatusCheckKeys = requiredStatusCheckObjectKeys(protection);
   const missingRequiredStatusCheckKeys = expectedRequiredStatusCheckKeys.filter((key) => !requiredStatusCheckKeys.includes(key));
   const unexpectedRequiredStatusCheckKeys = requiredStatusCheckKeys.filter((key) => !expectedRequiredStatusCheckKeys.includes(key));
+  const observedPullRequestReviewSectionKeys = pullRequestReviewSectionKeys(protection);
+  const missingPullRequestReviewSectionKeys = expectedPullRequestReviewSectionKeys.filter((key) => !observedPullRequestReviewSectionKeys.includes(key));
+  const unexpectedPullRequestReviewSectionKeys = observedPullRequestReviewSectionKeys.filter((key) => !expectedPullRequestReviewSectionKeys.includes(key));
   const requiredAppBindingsByContext = new Map(requiredAppBindings.map((binding) => [binding.context, binding]));
   const mismatchedRequiredAppBindings = expectedRequiredChecks
     .map((context) => {
@@ -592,6 +611,13 @@ function evaluateBranchProtection(settings, options = {}) {
       details: missingRequiredStatusCheckKeys.length === 0 && unexpectedRequiredStatusCheckKeys.length === 0
         ? `${expectedRequiredStatusCheckKeys.join(', ') || 'none'} only`
         : `missing: ${missingRequiredStatusCheckKeys.join(', ') || 'none'}; unexpected: ${unexpectedRequiredStatusCheckKeys.join(', ') || 'none'}; observed: ${requiredStatusCheckKeys.join(', ') || 'none'}; allowed: ${expectedRequiredStatusCheckKeys.join(', ') || 'none'}`
+    },
+    {
+      name: 'pull request review section keys',
+      passed: missingPullRequestReviewSectionKeys.length === 0 && unexpectedPullRequestReviewSectionKeys.length === 0,
+      details: missingPullRequestReviewSectionKeys.length === 0 && unexpectedPullRequestReviewSectionKeys.length === 0
+        ? `${expectedPullRequestReviewSectionKeys.join(', ') || 'none'} only`
+        : `missing: ${missingPullRequestReviewSectionKeys.join(', ') || 'none'}; unexpected: ${unexpectedPullRequestReviewSectionKeys.join(', ') || 'none'}; observed: ${observedPullRequestReviewSectionKeys.join(', ') || 'none'}; allowed: ${expectedPullRequestReviewSectionKeys.join(', ') || 'none'}`
     },
     {
       name: 'admin enforcement',
@@ -947,6 +973,7 @@ module.exports = {
   EXPECTED_REQUIRED_STATUS_CHECK_APP_ID,
   EXPECTED_REQUIRED_STATUS_CHECK_SECTION_KEYS,
   EXPECTED_REQUIRED_STATUS_CHECK_KEYS,
+  EXPECTED_PULL_REQUEST_REVIEW_SECTION_KEYS,
   ADVISORY_STATUS_CHECKS,
   ALLOWED_EXECUTABLE_COMMANDS,
   isAllowedExecutableCommand,
@@ -960,6 +987,7 @@ module.exports = {
   fetchBranchProtection,
   fetchBranchRulesets,
   requiredApprovingReviewCount,
+  pullRequestReviewSectionKeys,
   requiredStatusContexts,
   requiredStatusCheckSectionKeys,
   requiredStatusCheckAppBindings,
