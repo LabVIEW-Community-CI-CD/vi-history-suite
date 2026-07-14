@@ -465,6 +465,14 @@ Docker can bind-mount. When running the CLI by hand on a snap-Docker host, set
 `TMPDIR` to a directory under your home (e.g. `TMPDIR="$HOME/vihs-tmp"`) before
 invoking `runViSemanticPrReview.js`. Native (non-snap) Docker is unaffected.
 
+The standards closeout (`npm run closeout:evidence -- ... --standards-runner
+docker`) is affected by the same confinement: its tracked-worktree audit
+snapshot must be bind-mounted into the assurance workbench container. It now
+defaults the snapshot base to a home-directory cache
+(`~/.cache/vi-history-suite`) that snap Docker can share, so no `TMPDIR`
+override is required. Override the base with `VIHS_CLOSEOUT_SNAPSHOT_DIR` if the
+home cache is not Docker-visible on a particular host.
+
 ### Cross-repository token
 
 `--post-comment` writes to the **target** repository (the `repository` input),

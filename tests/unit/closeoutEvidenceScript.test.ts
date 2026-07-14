@@ -26,6 +26,7 @@ const {
   parseArgs,
   parseGitTrackedFiles,
   parseLsRemote,
+  resolveAuditSnapshotBase,
   runCommand,
   runDockerStandards,
   summarizeDodGateEvidence,
@@ -65,6 +66,11 @@ const {
   };
   isAllowedExecutableCommand: (command: string) => boolean;
   assertAllowedExecutableCommand: (command: string) => void;
+  resolveAuditSnapshotBase: (deps?: {
+    tmpdir?: () => string;
+    homedir?: () => string;
+    env?: Record<string, string | undefined>;
+  }) => string;
   isTransientNetworkFailure: (commandResult: {
     stderr?: string;
     error?: string;
@@ -391,6 +397,42 @@ describe('closeout evidence script', () => {
     } finally {
       fs.rmSync(tempRoot, { recursive: true, force: true });
     }
+  });
+
+  it('resolves the audit snapshot base to a Docker-visible home cache by default (VHS-REQ-601.25)', () => {
+    // Snap-confined/rootless Docker cannot bind-mount host /tmp subpaths, so the
+    // snapshot base defaults to a home-directory cache that the Docker daemon can
+    // share, instead of os.tmpdir(). This keeps the standards scan non-empty
+    // without an operator-set TMPDIR.
+    const base = resolveAuditSnapshotBase({ homedir: () => '/home/agent', env: {} });
+    expect(base).toBe(path.join('/home/agent', '.cache', 'vi-history-suite'));
+  });
+
+  it('honors the VIHS_CLOSEOUT_SNAPSHOT_DIR override before the home cache (VHS-REQ-601.25)', () => {
+    const base = resolveAuditSnapshotBase({
+      homedir: () => '/home/agent',
+      env: { VIHS_CLOSEOUT_SNAPSHOT_DIR: '/mnt/docker-visible/snap' }
+    });
+    expect(base).toBe('/mnt/docker-visible/snap');
+  });
+
+  it('prefers an injected tmpdir seam above all other snapshot base sources', () => {
+    const base = resolveAuditSnapshotBase({
+      tmpdir: () => '/injected/tmp',
+      homedir: () => '/home/agent',
+      env: { VIHS_CLOSEOUT_SNAPSHOT_DIR: '/mnt/override' }
+    });
+    expect(base).toBe('/injected/tmp');
+  });
+
+  it('falls back to the OS temp dir when no home directory is resolvable', () => {
+    const base = resolveAuditSnapshotBase({
+      homedir: () => {
+        throw new Error('no home');
+      },
+      env: {}
+    });
+    expect(base).toBe(os.tmpdir());
   });
 
   it('verifies standards toolchain provenance as machine-readable evidence (VHS-REQ-601.26)', () => {
