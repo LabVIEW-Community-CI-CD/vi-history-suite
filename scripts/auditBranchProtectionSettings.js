@@ -208,7 +208,7 @@ function usage() {
     '  --require-full-hardening Fail unless every opt-in hardening check passes',
     '  --json                Emit machine-readable JSON instead of text',
     '  --markdown            Emit compact Markdown evidence instead of text',
-    '  --output <path>       Write the rendered audit output to a file',
+    '  --output <path>       Write rendered audit output to a relative file path',
     '  --help                Show this help'
   ].join('\n');
 }
@@ -1151,11 +1151,29 @@ function renderAuditOutput(branchResults, options = {}) {
     .join('\n');
 }
 
+function resolveOutputPath(outputPath, deps = {}) {
+  const requestedPath = String(outputPath || '');
+  if (requestedPath.trim() === '') {
+    throw new Error('--output requires a non-empty path');
+  }
+  if (path.isAbsolute(requestedPath)) {
+    throw new Error('--output must be a relative path inside the working directory');
+  }
+  const cwd = path.resolve(deps.cwd || process.cwd());
+  const resolvedPath = path.resolve(cwd, requestedPath);
+  const relativePath = path.relative(cwd, resolvedPath);
+  if (relativePath === '' || relativePath.startsWith('..') || path.isAbsolute(relativePath)) {
+    throw new Error('--output must stay inside the working directory');
+  }
+  return resolvedPath;
+}
+
 function writeAuditOutput(outputPath, content, deps = {}) {
   const mkdirSync = deps.mkdirSync || fs.mkdirSync;
   const writeFileSync = deps.writeFileSync || fs.writeFileSync;
-  mkdirSync(path.dirname(outputPath), { recursive: true });
-  writeFileSync(outputPath, `${content}\n`, 'utf8');
+  const resolvedPath = resolveOutputPath(outputPath, deps);
+  mkdirSync(path.dirname(resolvedPath), { recursive: true });
+  writeFileSync(resolvedPath, `${content}\n`, 'utf8');
 }
 
 function branchesForOptions(options = {}) {
@@ -1276,6 +1294,7 @@ module.exports = {
   markdownCell,
   renderMarkdown,
   renderAuditOutput,
+  resolveOutputPath,
   writeAuditOutput,
   branchesForOptions,
   auditBranches,
