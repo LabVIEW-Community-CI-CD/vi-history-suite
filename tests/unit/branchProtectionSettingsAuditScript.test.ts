@@ -1,3 +1,4 @@
+import * as path from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 
 const {
@@ -51,6 +52,7 @@ const {
   markdownCell,
   renderMarkdown,
   renderAuditOutput,
+  resolveOutputPath,
   writeAuditOutput,
   branchesForOptions,
   auditBranches,
@@ -208,6 +210,7 @@ const {
     }>,
     options?: { repo?: string; allBranches?: boolean; emitJson?: boolean; emitMarkdown?: boolean }
   ) => string;
+  resolveOutputPath: (outputPath: string, deps?: { cwd?: string }) => string;
   writeAuditOutput: (outputPath: string, content: string, deps?: Record<string, unknown>) => void;
   branchesForOptions: (options?: { branch?: string; allBranches?: boolean }) => string[];
   auditBranches: (options?: Record<string, unknown>, deps?: Record<string, unknown>) => Array<{ branch: string; result: { success: boolean } }>;
@@ -901,6 +904,8 @@ describe('branch protection audit evaluation', () => {
   it('renders and writes audit output for file evidence consumers', () => {
     const passingResult = evaluateBranchProtection({ protection: protection(), rulesets: branchRulesets() });
     const branchResults = [{ branch: 'develop', result: passingResult }];
+    const cwd = path.join(process.cwd(), 'fixture-root');
+    const resolvedOutput = path.join(cwd, 'evidence', 'branch-protection.md');
     const mkdirSync = vi.fn();
     const writeFileSync = vi.fn();
 
@@ -913,11 +918,15 @@ describe('branch protection audit evaluation', () => {
       branch: 'develop',
       success: true
     });
+    expect(resolveOutputPath('evidence/branch-protection.md', { cwd })).toBe(resolvedOutput);
+    expect(() => resolveOutputPath('', { cwd })).toThrow(/non-empty path/);
+    expect(() => resolveOutputPath('../branch-protection.md', { cwd })).toThrow(/stay inside/);
+    expect(() => resolveOutputPath(resolvedOutput, { cwd })).toThrow(/relative path/);
 
-    writeAuditOutput('evidence/branch-protection.md', 'audit body', { mkdirSync, writeFileSync });
+    writeAuditOutput('evidence/branch-protection.md', 'audit body', { cwd, mkdirSync, writeFileSync });
 
-    expect(mkdirSync).toHaveBeenCalledWith('evidence', { recursive: true });
-    expect(writeFileSync).toHaveBeenCalledWith('evidence/branch-protection.md', 'audit body\n', 'utf8');
+    expect(mkdirSync).toHaveBeenCalledWith(path.dirname(resolvedOutput), { recursive: true });
+    expect(writeFileSync).toHaveBeenCalledWith(resolvedOutput, 'audit body\n', 'utf8');
   });
 
   it('fails closed when expected active branch rulesets drift', () => {
@@ -1995,6 +2004,8 @@ describe('branch protection audit main', () => {
   it('writes Markdown evidence to an output file when requested', () => {
     const stdout = captureWrite();
     const stderr = captureWrite();
+    const cwd = path.join(process.cwd(), 'fixture-root');
+    const resolvedOutput = path.join(cwd, 'evidence', 'branch-protection.md');
     const mkdirSync = vi.fn();
     const writeFileSync = vi.fn();
     const spawnSync = vi.fn((command: string, args: string[]) => {
@@ -2006,6 +2017,7 @@ describe('branch protection audit main', () => {
       spawnSync,
       stdout: stdout.stream,
       stderr: stderr.stream,
+      cwd,
       mkdirSync,
       writeFileSync
     });
@@ -2013,10 +2025,10 @@ describe('branch protection audit main', () => {
     expect(exitCode).toBe(0);
     expect(stderr.read()).toBe('');
     expect(stdout.read()).toBe('[branch-protection-audit] Wrote audit output to evidence/branch-protection.md\n');
-    expect(mkdirSync).toHaveBeenCalledWith('evidence', { recursive: true });
+    expect(mkdirSync).toHaveBeenCalledWith(path.dirname(resolvedOutput), { recursive: true });
     expect(writeFileSync).toHaveBeenCalledTimes(1);
     expect(writeFileSync).toHaveBeenCalledWith(
-      'evidence/branch-protection.md',
+      resolvedOutput,
       expect.stringContaining('## Branch Protection Audit'),
       'utf8'
     );
@@ -2027,6 +2039,7 @@ describe('branch protection audit main', () => {
   it('writes failing JSON evidence before returning a nonzero audit status', () => {
     const stdout = captureWrite();
     const stderr = captureWrite();
+    const cwd = path.join(process.cwd(), 'fixture-root');
     const mkdirSync = vi.fn();
     const writeFileSync = vi.fn();
     const spawnSync = vi.fn((command: string, args: string[]) => {
@@ -2038,6 +2051,7 @@ describe('branch protection audit main', () => {
       spawnSync,
       stdout: stdout.stream,
       stderr: stderr.stream,
+      cwd,
       mkdirSync,
       writeFileSync
     });
@@ -2067,6 +2081,7 @@ describe('branch protection audit main', () => {
       spawnSync,
       stdout: stdout.stream,
       stderr: stderr.stream,
+      cwd: path.join(process.cwd(), 'fixture-root'),
       mkdirSync: vi.fn(),
       writeFileSync
     });
