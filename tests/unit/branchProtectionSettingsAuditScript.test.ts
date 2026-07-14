@@ -20,9 +20,11 @@ const {
   EXPECTED_REQUIRED_STATUS_CHECK_SECTION_KEYS,
   EXPECTED_REQUIRED_STATUS_CHECK_KEYS,
   EXPECTED_PULL_REQUEST_REVIEW_SECTION_KEYS,
+  FULL_HARDENING_OPTION_KEYS,
   isAllowedExecutableCommand,
   isValidBranchName,
   isValidRepoSlug,
+  enableFullHardeningOptions,
   parseArgs,
   usage,
   buildGhApiArgs,
@@ -67,9 +69,11 @@ const {
   EXPECTED_REQUIRED_STATUS_CHECK_SECTION_KEYS: string[];
   EXPECTED_REQUIRED_STATUS_CHECK_KEYS: string[];
   EXPECTED_PULL_REQUEST_REVIEW_SECTION_KEYS: string[];
+  FULL_HARDENING_OPTION_KEYS: string[];
   isAllowedExecutableCommand: (command: string) => boolean;
   isValidBranchName: (branch: string) => boolean;
   isValidRepoSlug: (repo: string) => boolean;
+  enableFullHardeningOptions: (options: Record<string, boolean>) => void;
   parseArgs: (argv: string[]) => {
     repo: string;
     branch: string;
@@ -83,6 +87,7 @@ const {
     requireCodeOwnerReview: boolean;
     requireLastPushApproval: boolean;
     requireBranchCreationBlock: boolean;
+    requireFullHardening: boolean;
     emitJson: boolean;
     help: boolean;
   };
@@ -287,6 +292,7 @@ describe('branch protection audit arguments', () => {
       requireCodeOwnerReview: false,
       requireLastPushApproval: false,
       requireBranchCreationBlock: false,
+      requireFullHardening: false,
       emitJson: false,
       help: false
     });
@@ -306,7 +312,34 @@ describe('branch protection audit arguments', () => {
       requireCodeOwnerReview: true,
       requireLastPushApproval: true,
       requireBranchCreationBlock: true,
+      requireFullHardening: false,
       emitJson: true
+    });
+    expect(FULL_HARDENING_OPTION_KEYS).toEqual([
+      'requireAdvisory',
+      'requireReview',
+      'requireLinearHistory',
+      'requireConversationResolution',
+      'requireSignedCommits',
+      'requireStaleReviewDismissal',
+      'requireCodeOwnerReview',
+      'requireLastPushApproval',
+      'requireBranchCreationBlock'
+    ]);
+    const fullHardeningOptions: Record<string, boolean> = { requireAdvisory: false, requireReview: false };
+    enableFullHardeningOptions(fullHardeningOptions);
+    expect(fullHardeningOptions).toMatchObject({ requireAdvisory: true, requireReview: true });
+    expect(parseArgs(['--require-full-hardening'])).toMatchObject({
+      requireAdvisory: true,
+      requireReview: true,
+      requireLinearHistory: true,
+      requireConversationResolution: true,
+      requireSignedCommits: true,
+      requireStaleReviewDismissal: true,
+      requireCodeOwnerReview: true,
+      requireLastPushApproval: true,
+      requireBranchCreationBlock: true,
+      requireFullHardening: true
     });
     expect(parseArgs(['--help']).help).toBe(true);
     expect(usage()).toContain('auditBranchProtectionSettings');
@@ -319,6 +352,7 @@ describe('branch protection audit arguments', () => {
     expect(usage()).toContain('--require-code-owner-review');
     expect(usage()).toContain('--require-last-push-approval');
     expect(usage()).toContain('--require-branch-creation-block');
+    expect(usage()).toContain('--require-full-hardening');
     expect(branchesForOptions({ allBranches: true })).toEqual(DEFAULT_AUDIT_BRANCHES);
     expect(branchesForOptions({ branch: 'main' })).toEqual(['main']);
   });
@@ -1839,6 +1873,30 @@ describe('branch protection audit main', () => {
     expect(exitCode).toBe(1);
     expect(stderr.read()).toBe('');
     expect(stdout.read()).toContain('FAIL signed commits');
+  });
+
+  it('returns nonzero when the full hardening profile is required but absent', () => {
+    const stdout = captureWrite();
+    const stderr = captureWrite();
+    const spawnSync = vi.fn((command: string, args: string[]) => {
+      const resource = args[1].includes('/rulesets') ? branchRulesetResource(args[1]) : protection();
+      return { status: 0, stdout: JSON.stringify(resource), stderr: '' };
+    });
+
+    const exitCode = main(['--require-full-hardening'], { spawnSync, stdout: stdout.stream, stderr: stderr.stream });
+    const output = stdout.read();
+
+    expect(exitCode).toBe(1);
+    expect(stderr.read()).toBe('');
+    expect(output).toContain('FAIL advisory status check contexts');
+    expect(output).toContain('FAIL pull request approving reviews');
+    expect(output).toContain('FAIL stale review dismissal');
+    expect(output).toContain('FAIL code-owner review');
+    expect(output).toContain('FAIL last-push approval');
+    expect(output).toContain('FAIL branch creation block');
+    expect(output).toContain('FAIL linear history');
+    expect(output).toContain('FAIL conversation resolution');
+    expect(output).toContain('FAIL signed commits');
   });
 
   it('returns nonzero when GitHub returns malformed JSON', () => {
