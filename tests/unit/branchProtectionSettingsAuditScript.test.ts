@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 const {
+  DEFAULT_AUDIT_BRANCHES,
   DEFAULT_BRANCH,
   DEFAULT_REPO,
   EXPECTED_REQUIRED_STATUS_CHECKS,
@@ -14,8 +15,10 @@ const {
   activeRulesetSummaries,
   evaluateBranchProtection,
   renderResult,
+  branchesForOptions,
   main
 } = require('../../scripts/auditBranchProtectionSettings.js') as {
+  DEFAULT_AUDIT_BRANCHES: string[];
   DEFAULT_BRANCH: string;
   DEFAULT_REPO: string;
   EXPECTED_REQUIRED_STATUS_CHECKS: string[];
@@ -35,6 +38,7 @@ const {
     result: { success: boolean; checks: Array<{ name: string; passed: boolean; details: string }>; notices: string[] },
     options?: { repo?: string; branch?: string }
   ) => string;
+  branchesForOptions: (options?: { branch?: string; allBranches?: boolean }) => string[];
   main: (argv: string[], deps?: Record<string, unknown>) => number;
 };
 
@@ -78,19 +82,23 @@ describe('branch protection audit arguments', () => {
     expect(parseArgs([])).toMatchObject({
       repo: DEFAULT_REPO,
       branch: DEFAULT_BRANCH,
+      allBranches: false,
       emitJson: false,
       help: false
     });
   });
 
-  it('parses repo, branch, json, and help options', () => {
-    expect(parseArgs(['--repo', 'owner/repo', '--branch', 'release/v1.2.3', '--json'])).toMatchObject({
+  it('parses repo, branch, all, json, and help options', () => {
+    expect(parseArgs(['--repo', 'owner/repo', '--branch', 'release/v1.2.3', '--all', '--json'])).toMatchObject({
       repo: 'owner/repo',
       branch: 'release/v1.2.3',
+      allBranches: true,
       emitJson: true
     });
     expect(parseArgs(['--help']).help).toBe(true);
     expect(usage()).toContain('auditBranchProtectionSettings');
+    expect(branchesForOptions({ allBranches: true })).toEqual(DEFAULT_AUDIT_BRANCHES);
+    expect(branchesForOptions({ branch: 'main' })).toEqual(['main']);
   });
 
   it('rejects invalid inputs and only allow-lists gh execution', () => {
@@ -195,6 +203,30 @@ describe('branch protection audit main', () => {
       ['gh', ...buildGhApiArgs(DEFAULT_REPO, DEFAULT_BRANCH, 'rulesets')]
     ]);
     expect(stdout.read()).toContain('[branch-protection-audit] Audit passed.');
+  });
+
+  it('audits all default protected branches with --all', () => {
+    const calls: string[][] = [];
+    const stdout = captureWrite();
+    const stderr = captureWrite();
+    const spawnSync = vi.fn((command: string, args: string[]) => {
+      calls.push([command, ...args]);
+      const resource = args[1].endsWith('/rulesets') ? [] : protection();
+      return { status: 0, stdout: JSON.stringify(resource), stderr: '' };
+    });
+
+    const exitCode = main(['--all'], { spawnSync, stdout: stdout.stream, stderr: stderr.stream });
+
+    expect(exitCode).toBe(0);
+    expect(stderr.read()).toBe('');
+    expect(calls).toEqual([
+      ['gh', ...buildGhApiArgs(DEFAULT_REPO, 'develop', 'protection')],
+      ['gh', ...buildGhApiArgs(DEFAULT_REPO, 'develop', 'rulesets')],
+      ['gh', ...buildGhApiArgs(DEFAULT_REPO, 'main', 'protection')],
+      ['gh', ...buildGhApiArgs(DEFAULT_REPO, 'main', 'rulesets')]
+    ]);
+    expect(stdout.read()).toContain(`${DEFAULT_REPO}:develop`);
+    expect(stdout.read()).toContain(`${DEFAULT_REPO}:main`);
   });
 
   it('returns nonzero when GitHub returns malformed JSON', () => {
