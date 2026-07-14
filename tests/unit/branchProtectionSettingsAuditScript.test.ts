@@ -282,6 +282,7 @@ describe('branch protection audit evaluation', () => {
     expect(result.checks.map((check) => check.name)).toEqual([
       'required status checks are strict',
       'required status check contexts',
+      'unexpected required status check contexts',
       'required status check app bindings',
       'admin enforcement',
       'force pushes disabled',
@@ -300,6 +301,10 @@ describe('branch protection audit evaluation', () => {
     expect(result.checks.find((check) => check.name === 'active branch ruleset rules')).toMatchObject({
       passed: true,
       details: 'present on develop, main: deletion, non_fast_forward'
+    });
+    expect(result.checks.find((check) => check.name === 'unexpected required status check contexts')).toMatchObject({
+      passed: true,
+      details: 'none beyond: Build, Test, Package, Windows Unit Tests, Integration Host (Linux)'
     });
     expect(activeRulesetSummaries([branchRulesets(['develop'])[0]])).toEqual([
       {
@@ -382,6 +387,19 @@ describe('branch protection audit evaluation', () => {
     expect(hardened.checks.find((check) => check.name === 'required status check app bindings')).toMatchObject({
       passed: true,
       details: 'app 12345: Build, Test, Package, Windows Unit Tests, Integration Host (Linux)'
+    });
+  });
+
+  it('fails closed when unexpected required status contexts drift', () => {
+    const result = evaluateBranchProtection({
+      protection: protection({ contexts: [...EXPECTED_REQUIRED_STATUS_CHECKS, 'Surprise Gate'] }),
+      rulesets: branchRulesets()
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.checks.find((check) => check.name === 'unexpected required status check contexts')).toMatchObject({
+      passed: false,
+      details: 'unexpected: Surprise Gate; allowed: Build, Test, Package, Windows Unit Tests, Integration Host (Linux)'
     });
   });
 
@@ -722,7 +740,7 @@ describe('branch protection audit main', () => {
       branch: DEFAULT_BRANCH,
       success: true
     });
-    expect(output.checks).toHaveLength(11);
+    expect(output.checks).toHaveLength(12);
     expect(output.notices.length).toBeGreaterThan(0);
     expect(output.branches).toBeUndefined();
   });
