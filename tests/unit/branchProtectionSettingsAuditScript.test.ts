@@ -12,6 +12,7 @@ const {
   parseArgs,
   usage,
   buildGhApiArgs,
+  requiredApprovingReviewCount,
   requiredStatusContexts,
   activeRulesetSummaries,
   evaluateBranchProtection,
@@ -33,11 +34,13 @@ const {
     branch: string;
     allBranches: boolean;
     requireAdvisory: boolean;
+    requireReview: boolean;
     emitJson: boolean;
     help: boolean;
   };
   usage: () => string;
   buildGhApiArgs: (repo: string, branch: string, resource: string) => string[];
+  requiredApprovingReviewCount: (protection: Record<string, unknown>) => number;
   requiredStatusContexts: (protection: Record<string, unknown>) => string[];
   activeRulesetSummaries: (rulesets: unknown[]) => Array<{ name: string; ruleCount: number }>;
   evaluateBranchProtection: (
@@ -46,6 +49,8 @@ const {
       expectedRequiredChecks?: string[];
       advisoryChecks?: string[];
       requireAdvisory?: boolean;
+      requireReview?: boolean;
+      minimumApprovingReviews?: number;
       expectedActiveBranchRulesets?: string[];
     }
   ) => { success: boolean; checks: Array<{ name: string; passed: boolean; details: string }>; notices: string[] };
@@ -64,6 +69,7 @@ type ProtectionOverrides = {
   enforceAdmins?: boolean;
   allowForcePushes?: boolean;
   allowDeletions?: boolean;
+  requiredApprovingReviewCount?: number;
 };
 
 function protection(overrides: ProtectionOverrides = {}) {
@@ -76,7 +82,10 @@ function protection(overrides: ProtectionOverrides = {}) {
     },
     enforce_admins: { enabled: overrides.enforceAdmins ?? true },
     allow_force_pushes: { enabled: overrides.allowForcePushes ?? false },
-    allow_deletions: { enabled: overrides.allowDeletions ?? false }
+    allow_deletions: { enabled: overrides.allowDeletions ?? false },
+    required_pull_request_reviews: {
+      required_approving_review_count: overrides.requiredApprovingReviewCount ?? 0
+    }
   };
 }
 
@@ -104,22 +113,25 @@ describe('branch protection audit arguments', () => {
       branch: DEFAULT_BRANCH,
       allBranches: false,
       requireAdvisory: false,
+      requireReview: false,
       emitJson: false,
       help: false
     });
   });
 
-  it('parses repo, branch, all, advisory, json, and help options', () => {
-    expect(parseArgs(['--repo', 'owner/repo', '--branch', 'release/v1.2.3', '--all', '--require-advisory', '--json'])).toMatchObject({
+  it('parses repo, branch, all, advisory, review, json, and help options', () => {
+    expect(parseArgs(['--repo', 'owner/repo', '--branch', 'release/v1.2.3', '--all', '--require-advisory', '--require-review', '--json'])).toMatchObject({
       repo: 'owner/repo',
       branch: 'release/v1.2.3',
       allBranches: true,
       requireAdvisory: true,
+      requireReview: true,
       emitJson: true
     });
     expect(parseArgs(['--help']).help).toBe(true);
     expect(usage()).toContain('auditBranchProtectionSettings');
     expect(usage()).toContain('--require-advisory');
+    expect(usage()).toContain('--require-review');
     expect(branchesForOptions({ allBranches: true })).toEqual(DEFAULT_AUDIT_BRANCHES);
     expect(branchesForOptions({ branch: 'main' })).toEqual(['main']);
   });
@@ -158,6 +170,8 @@ describe('branch protection audit evaluation', () => {
         }
       })
     ).toEqual(['Build, Test, Package', 'Windows Unit Tests']);
+    expect(requiredApprovingReviewCount(protection())).toBe(0);
+    expect(requiredApprovingReviewCount(protection({ requiredApprovingReviewCount: 2 }))).toBe(2);
   });
 
   it('passes for the current expected develop protection contract', () => {
@@ -248,6 +262,30 @@ describe('branch protection audit evaluation', () => {
     expect(hardened.checks.find((check) => check.name === 'advisory status check contexts')).toMatchObject({
       passed: true,
       details: 'required: Requirements CSV Integrity, CodeQL'
+    });
+  });
+
+  it('can require pull request approving reviews for branch-protection hardening audits', () => {
+    const result = evaluateBranchProtection(
+      { protection: protection(), rulesets: branchRulesets() },
+      { requireReview: true }
+    );
+
+    expect(result.success).toBe(false);
+    expect(result.checks.find((check) => check.name === 'pull request approving reviews')).toMatchObject({
+      passed: false,
+      details: 'required approving reviews: 0; expected at least 1'
+    });
+
+    const hardened = evaluateBranchProtection(
+      { protection: protection({ requiredApprovingReviewCount: 1 }), rulesets: branchRulesets() },
+      { requireReview: true }
+    );
+
+    expect(hardened.success).toBe(true);
+    expect(hardened.checks.find((check) => check.name === 'pull request approving reviews')).toMatchObject({
+      passed: true,
+      details: 'required approving reviews: 1'
     });
   });
 });
@@ -393,6 +431,21 @@ describe('branch protection audit main', () => {
     expect(exitCode).toBe(1);
     expect(stderr.read()).toBe('');
     expect(stdout.read()).toContain('FAIL advisory status check contexts');
+  });
+
+  it('returns nonzero when approving reviews are required but absent', () => {
+    const stdout = captureWrite();
+    const stderr = captureWrite();
+    const spawnSync = vi.fn((command: string, args: string[]) => {
+      const resource = args[1].endsWith('/rulesets') ? branchRulesets() : protection();
+      return { status: 0, stdout: JSON.stringify(resource), stderr: '' };
+    });
+
+    const exitCode = main(['--require-review'], { spawnSync, stdout: stdout.stream, stderr: stderr.stream });
+
+    expect(exitCode).toBe(1);
+    expect(stderr.read()).toBe('');
+    expect(stdout.read()).toContain('FAIL pull request approving reviews');
   });
 
   it('returns nonzero when GitHub returns malformed JSON', () => {
