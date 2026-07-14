@@ -187,6 +187,53 @@ function summarizeRequirementHealth(result) {
   };
 }
 
+function parseArgs(argv = []) {
+  const options = { json: false, strict: false, outputPath: undefined, positionals: [] };
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index];
+    const next = () => {
+      const value = argv[index + 1];
+      if (value === undefined || value.startsWith('--')) {
+        throw new Error(`${arg} requires a value`);
+      }
+      index += 1;
+      return value;
+    };
+
+    if (arg === '--json') options.json = true;
+    else if (arg === '--strict') options.strict = true;
+    else if (arg === '--output') options.outputPath = next();
+    else if (arg.startsWith('--')) throw new Error(`Unknown argument: ${arg}`);
+    else options.positionals.push(arg);
+  }
+  return options;
+}
+
+function resolveOutputPath(outputPath, deps = {}) {
+  const requestedPath = String(outputPath || '');
+  if (requestedPath.trim() === '') {
+    throw new Error('--output requires a non-empty path');
+  }
+  if (path.isAbsolute(requestedPath)) {
+    throw new Error('--output must be a relative path inside the working directory');
+  }
+  const cwd = path.resolve(deps.cwd || process.cwd());
+  const resolvedPath = path.resolve(cwd, requestedPath);
+  const relativePath = path.relative(cwd, resolvedPath);
+  if (relativePath === '' || relativePath.startsWith('..') || path.isAbsolute(relativePath)) {
+    throw new Error('--output must stay inside the working directory');
+  }
+  return resolvedPath;
+}
+
+function writeRequirementsHealthOutput(outputPath, content, deps = {}) {
+  const mkdirSync = deps.mkdirSync || fs.mkdirSync;
+  const writeFileSync = deps.writeFileSync || fs.writeFileSync;
+  const resolvedPath = resolveOutputPath(outputPath, deps);
+  mkdirSync(path.dirname(resolvedPath), { recursive: true });
+  writeFileSync(resolvedPath, `${content}\n`, 'utf8');
+}
+
 function verifyRequirementsHealth(cwd = process.cwd(), deps = {}) {
   const linkage = deps.linkage || auditRequirementVerificationLinkage(cwd, deps);
   const criteria = deps.criteria || auditRequirementCriteriaInventory(cwd, deps);
@@ -351,31 +398,47 @@ function renderStepSummary(result) {
 }
 
 function main(argv = process.argv.slice(2), deps = {}) {
-  const positionals = argv.filter((arg) => !arg.startsWith('--'));
-  const asJson = deps.json ?? argv.includes('--json');
-  const strict = deps.strict ?? argv.includes('--strict');
-  const cwd = deps.cwd || positionals[0] || process.cwd();
-  const result = verifyRequirementsHealth(cwd, deps);
-
-  const stepSummaryPath = deps.stepSummaryPath || process.env.GITHUB_STEP_SUMMARY;
-  if (stepSummaryPath) {
-    const appendStepSummary =
-      deps.appendStepSummary || ((filePath, content) => fs.appendFileSync(filePath, content));
-    appendStepSummary(stepSummaryPath, `${renderStepSummary(result)}\n`);
-  }
-
   const stdout = deps.stdout || process.stdout;
-  stdout.write(asJson ? `${JSON.stringify(result, null, 2)}\n` : `${renderSummary(result, { strict })}\n`);
+  const stderr = deps.stderr || process.stderr;
+  try {
+    const parsed = parseArgs(argv);
+    const asJson = deps.json ?? parsed.json;
+    const strict = deps.strict ?? parsed.strict;
+    const outputPath = deps.outputPath ?? parsed.outputPath;
+    const cwd = deps.cwd || parsed.positionals[0] || process.cwd();
+    if (outputPath) {
+      resolveOutputPath(outputPath, { ...deps, cwd });
+    }
+    const result = verifyRequirementsHealth(cwd, deps);
 
-  // Advisory by default (exit 0). With --strict the report exits non-zero when
-  // requirement health is not green (structural integrity, requirement linkage,
-  // criterion citation, or coverage risk) -- a one-command local pre-push check
-  // over the signals the individual guards already fail closed on in CI, so
-  // strict is deliberately not wired into CI where it would be redundant.
-  if (strict && !result.healthy) {
+    const stepSummaryPath = deps.stepSummaryPath || process.env.GITHUB_STEP_SUMMARY;
+    if (stepSummaryPath) {
+      const appendStepSummary =
+        deps.appendStepSummary || ((filePath, content) => fs.appendFileSync(filePath, content));
+      appendStepSummary(stepSummaryPath, `${renderStepSummary(result)}\n`);
+    }
+
+    const renderedOutput = asJson ? JSON.stringify(result, null, 2) : renderSummary(result, { strict });
+    if (outputPath) {
+      writeRequirementsHealthOutput(outputPath, renderedOutput, { ...deps, cwd });
+      stdout.write(`[requirements-verify] Wrote report output to ${outputPath}\n`);
+    } else {
+      stdout.write(`${renderedOutput}\n`);
+    }
+
+    // Advisory by default (exit 0). With --strict the report exits non-zero when
+    // requirement health is not green (structural integrity, requirement linkage,
+    // criterion citation, or coverage risk) -- a one-command local pre-push check
+    // over the signals the individual guards already fail closed on in CI, so
+    // strict is deliberately not wired into CI where it would be redundant.
+    if (strict && !result.healthy) {
+      return 1;
+    }
+    return 0;
+  } catch (error) {
+    stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
     return 1;
   }
-  return 0;
 }
 
 if (require.main === module) {
@@ -389,6 +452,9 @@ module.exports = {
   attentionReasonsForRequirement,
   aggregateRequirementHealth,
   summarizeRequirementHealth,
+  parseArgs,
+  resolveOutputPath,
+  writeRequirementsHealthOutput,
   verifyRequirementsHealth,
   renderSummary,
   renderStepSummary,
