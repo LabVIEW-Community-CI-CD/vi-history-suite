@@ -88,6 +88,168 @@ const FULL_HARDENING_OPTION_KEYS = Object.freeze([
   'requireLastPushApproval',
   'requireBranchCreationBlock'
 ]);
+const BRANCH_PROTECTION_AUDIT_SCHEMA_VERSION = 1;
+const BRANCH_PROTECTION_AUDIT_SCHEMA_ID = 'https://labview-community-cicd.github.io/vi-history-suite/schemas/branch-protection-audit-v1.schema.json';
+const BRANCH_PROTECTION_AUDIT_SCHEMA_PROVENANCE_KEY = 'x-vi-history-suite-provenance';
+const BRANCH_PROTECTION_AUDIT_JSON_SCHEMA = Object.freeze({
+  $schema: 'https://json-schema.org/draft/2020-12/schema',
+  $id: BRANCH_PROTECTION_AUDIT_SCHEMA_ID,
+  title: 'VI History Suite branch protection audit output',
+  description: 'Machine-readable schemaVersion 1 output from scripts/auditBranchProtectionSettings.js.',
+  type: 'object',
+  oneOf: [
+    { required: ['schemaVersion', 'repo', 'branch', 'success', 'checks', 'notices', 'noticeDetails', 'summary'] },
+    { required: ['schemaVersion', 'repo', 'success', 'summary', 'branches'] }
+  ],
+  required: ['schemaVersion', 'repo', 'success', 'summary'],
+  properties: {
+    schemaVersion: { const: BRANCH_PROTECTION_AUDIT_SCHEMA_VERSION },
+    repo: { type: 'string' },
+    branch: { type: 'string' },
+    success: { type: 'boolean' },
+    checks: { type: 'array', items: { $ref: '#/$defs/check' } },
+    notices: { type: 'array', items: { type: 'string' } },
+    noticeDetails: { type: 'array', items: { $ref: '#/$defs/notice' } },
+    summary: { oneOf: [{ $ref: '#/$defs/branchSummary' }, { $ref: '#/$defs/aggregateSummary' }] },
+    branches: { type: 'array', items: { $ref: '#/$defs/branchAuditResult' } },
+    provenance: { $ref: '#/$defs/provenance' }
+  },
+  additionalProperties: false,
+  $defs: {
+    check: {
+      type: 'object',
+      required: ['id', 'name', 'passed', 'details'],
+      properties: {
+        id: { type: 'string' },
+        name: { type: 'string' },
+        passed: { type: 'boolean' },
+        details: { type: 'string' }
+      },
+      additionalProperties: false
+    },
+    notice: {
+      type: 'object',
+      required: ['noticeId', 'message'],
+      properties: {
+        noticeId: { type: 'string' },
+        message: { type: 'string' }
+      },
+      additionalProperties: false
+    },
+    duplicateCheckId: {
+      type: 'object',
+      required: ['checkId', 'count', 'names'],
+      properties: {
+        checkId: { type: 'string' },
+        count: { type: 'integer', minimum: 2 },
+        names: { type: 'array', items: { type: 'string' } }
+      },
+      additionalProperties: false
+    },
+    branchDuplicateCheckId: {
+      type: 'object',
+      required: ['branch', 'checkId', 'count', 'names'],
+      properties: {
+        branch: { type: 'string' },
+        checkId: { type: 'string' },
+        count: { type: 'integer', minimum: 2 },
+        names: { type: 'array', items: { type: 'string' } }
+      },
+      additionalProperties: false
+    },
+    failure: {
+      type: 'object',
+      required: ['checkId', 'name', 'details'],
+      properties: {
+        checkId: { type: 'string' },
+        name: { type: 'string' },
+        details: { type: 'string' }
+      },
+      additionalProperties: false
+    },
+    branchFailure: {
+      type: 'object',
+      required: ['branch', 'checkId', 'name', 'details'],
+      properties: {
+        branch: { type: 'string' },
+        checkId: { type: 'string' },
+        name: { type: 'string' },
+        details: { type: 'string' }
+      },
+      additionalProperties: false
+    },
+    branchNotice: {
+      type: 'object',
+      required: ['branch', 'noticeId', 'message'],
+      properties: {
+        branch: { type: 'string' },
+        noticeId: { type: 'string' },
+        message: { type: 'string' }
+      },
+      additionalProperties: false
+    },
+    branchSummary: {
+      type: 'object',
+      required: ['totalChecks', 'passedChecks', 'failedChecks', 'noticeCount', 'noticeDetails', 'duplicateCheckIdCount', 'duplicateCheckIds', 'failures'],
+      properties: {
+        totalChecks: { type: 'integer', minimum: 0 },
+        passedChecks: { type: 'integer', minimum: 0 },
+        failedChecks: { type: 'integer', minimum: 0 },
+        noticeCount: { type: 'integer', minimum: 0 },
+        noticeDetails: { type: 'array', items: { $ref: '#/$defs/notice' } },
+        duplicateCheckIdCount: { type: 'integer', minimum: 0 },
+        duplicateCheckIds: { type: 'array', items: { $ref: '#/$defs/duplicateCheckId' } },
+        duplicateCheckIdFailure: { type: 'boolean' },
+        failures: { type: 'array', items: { $ref: '#/$defs/failure' } }
+      },
+      additionalProperties: false
+    },
+    aggregateSummary: {
+      type: 'object',
+      required: ['totalBranches', 'passedBranches', 'failedBranches', 'totalChecks', 'passedChecks', 'failedChecks', 'noticeCount', 'noticeDetails', 'duplicateCheckIdCount', 'duplicateCheckIds', 'failures'],
+      properties: {
+        totalBranches: { type: 'integer', minimum: 0 },
+        passedBranches: { type: 'integer', minimum: 0 },
+        failedBranches: { type: 'integer', minimum: 0 },
+        totalChecks: { type: 'integer', minimum: 0 },
+        passedChecks: { type: 'integer', minimum: 0 },
+        failedChecks: { type: 'integer', minimum: 0 },
+        noticeCount: { type: 'integer', minimum: 0 },
+        noticeDetails: { type: 'array', items: { $ref: '#/$defs/branchNotice' } },
+        duplicateCheckIdCount: { type: 'integer', minimum: 0 },
+        duplicateCheckIds: { type: 'array', items: { $ref: '#/$defs/branchDuplicateCheckId' } },
+        duplicateCheckIdFailure: { type: 'boolean' },
+        failures: { type: 'array', items: { $ref: '#/$defs/branchFailure' } }
+      },
+      additionalProperties: false
+    },
+    branchAuditResult: {
+      type: 'object',
+      required: ['branch', 'success', 'checks', 'notices', 'noticeDetails', 'summary'],
+      properties: {
+        branch: { type: 'string' },
+        success: { type: 'boolean' },
+        checks: { type: 'array', items: { $ref: '#/$defs/check' } },
+        notices: { type: 'array', items: { type: 'string' } },
+        noticeDetails: { type: 'array', items: { $ref: '#/$defs/notice' } },
+        summary: { $ref: '#/$defs/branchSummary' }
+      },
+      additionalProperties: false
+    },
+    provenance: {
+      type: 'object',
+      required: ['generatedAt', 'repo', 'branches', 'outputMode', 'argv'],
+      properties: {
+        generatedAt: { type: 'string', format: 'date-time' },
+        repo: { type: 'string' },
+        branches: { type: 'array', items: { type: 'string' } },
+        outputMode: { enum: ['text', 'json', 'markdown', 'schema'] },
+        argv: { type: 'array', items: { type: 'string' } }
+      },
+      additionalProperties: false
+    }
+  }
+});
 const REPO_SLUG_PATTERN = /^[A-Za-z0-9._-]+\/[A-Za-z0-9._-]+$/u;
 const BRANCH_NAME_PATTERN = /^[A-Za-z0-9._\/-]+$/u;
 
@@ -132,6 +294,7 @@ function parseArgs(argv) {
     requireFullHardening: false,
     emitJson: false,
     emitMarkdown: false,
+    emitSchema: false,
     includeProvenance: false,
     failOnDuplicateCheckIds: false,
     outputPath: undefined,
@@ -167,6 +330,7 @@ function parseArgs(argv) {
     }
     else if (arg === '--json') options.emitJson = true;
     else if (arg === '--markdown') options.emitMarkdown = true;
+    else if (arg === '--schema') options.emitSchema = true;
     else if (arg === '--include-provenance') options.includeProvenance = true;
     else if (arg === '--fail-on-duplicate-check-ids') options.failOnDuplicateCheckIds = true;
     else if (arg === '--output') options.outputPath = next();
@@ -177,8 +341,8 @@ function parseArgs(argv) {
   if (options.help) {
     return options;
   }
-  if (options.emitJson && options.emitMarkdown) {
-    throw new Error('Use either --json or --markdown, not both');
+  if ([options.emitJson, options.emitMarkdown, options.emitSchema].filter(Boolean).length > 1) {
+    throw new Error('Use only one of --json, --markdown, or --schema');
   }
   if (!isValidRepoSlug(options.repo)) {
     throw new Error(`--repo must be a valid owner/repo slug, got: ${options.repo}`);
@@ -212,6 +376,7 @@ function usage() {
     '  --require-full-hardening Fail unless every opt-in hardening check passes',
     '  --json                Emit machine-readable JSON instead of text',
     '  --markdown            Emit compact Markdown evidence instead of text',
+    '  --schema              Emit the schemaVersion 1 JSON Schema without auditing live settings',
     '  --include-provenance  Include generated timestamp, argv, repo, branches, and output mode',
     '  --fail-on-duplicate-check-ids Fail when stable check IDs are duplicated',
     '  --output <path>       Write rendered audit output to a relative file path',
@@ -1195,6 +1360,7 @@ function markdownCodeSpan(value) {
 function outputModeForOptions(options = {}) {
   if (options.emitJson) return 'json';
   if (options.emitMarkdown) return 'markdown';
+  if (options.emitSchema) return 'schema';
   return 'text';
 }
 
@@ -1210,13 +1376,31 @@ function generatedAtForProvenance(deps = {}) {
 }
 
 function buildAuditProvenance(branchResults, options = {}, deps = {}) {
+  return buildAuditProvenanceForBranches(branchResults.map((item) => item.branch), options, deps);
+}
+
+function buildAuditProvenanceForBranches(branches, options = {}, deps = {}) {
   return {
     generatedAt: generatedAtForProvenance(deps),
     repo: options.repo || DEFAULT_REPO,
-    branches: branchResults.map((item) => item.branch),
+    branches: Array.isArray(branches) ? [...branches] : [],
     outputMode: outputModeForOptions(options),
     argv: Array.isArray(deps.argv) ? [...deps.argv] : []
   };
+}
+
+function buildAuditSchemaProvenance(options = {}, deps = {}) {
+  return buildAuditProvenanceForBranches(branchesForOptions(options), options, deps);
+}
+
+function renderBranchProtectionAuditJsonSchema(options = {}) {
+  const schema = options.provenance
+    ? {
+        ...BRANCH_PROTECTION_AUDIT_JSON_SCHEMA,
+        [BRANCH_PROTECTION_AUDIT_SCHEMA_PROVENANCE_KEY]: options.provenance
+      }
+    : BRANCH_PROTECTION_AUDIT_JSON_SCHEMA;
+  return JSON.stringify(schema, null, 2);
 }
 
 function provenanceMarkdownLines(provenance) {
@@ -1388,6 +1572,19 @@ function main(argv = process.argv.slice(2), deps = {}) {
       stdout.write(`${usage()}\n`);
       return 0;
     }
+    if (options.emitSchema) {
+      const schemaOptions = options.includeProvenance
+        ? { provenance: buildAuditSchemaProvenance(options, { ...deps, argv }) }
+        : {};
+      const schemaOutput = renderBranchProtectionAuditJsonSchema(schemaOptions);
+      if (options.outputPath) {
+        writeAuditOutput(options.outputPath, schemaOutput, deps);
+        stdout.write(`[branch-protection-audit] Wrote audit output to ${options.outputPath}\n`);
+      } else {
+        stdout.write(`${schemaOutput}\n`);
+      }
+      return 0;
+    }
     const runAuditBranches = deps.auditBranches || auditBranches;
     const branchResults = runAuditBranches(options, deps);
     const success = branchResults.every((item) => auditResultSuccess(item.result, options));
@@ -1416,6 +1613,10 @@ module.exports = {
   DEFAULT_REPO,
   DEFAULT_BRANCH,
   DEFAULT_AUDIT_BRANCHES,
+  BRANCH_PROTECTION_AUDIT_SCHEMA_VERSION,
+  BRANCH_PROTECTION_AUDIT_SCHEMA_ID,
+  BRANCH_PROTECTION_AUDIT_SCHEMA_PROVENANCE_KEY,
+  BRANCH_PROTECTION_AUDIT_JSON_SCHEMA,
   EXPECTED_ACTIVE_BRANCH_RULESETS,
   EXPECTED_ACTIVE_RULESET_TARGET,
   EXPECTED_ACTIVE_RULESET_ENFORCEMENT,
@@ -1481,6 +1682,9 @@ module.exports = {
   outputModeForOptions,
   generatedAtForProvenance,
   buildAuditProvenance,
+  buildAuditProvenanceForBranches,
+  buildAuditSchemaProvenance,
+  renderBranchProtectionAuditJsonSchema,
   provenanceMarkdownLines,
   renderTextProvenance,
   renderMarkdown,
