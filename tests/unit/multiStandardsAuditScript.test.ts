@@ -15,6 +15,7 @@ const {
   directDockerSteps,
   profileDockerSteps,
   replaceAuditMounts,
+  summarizePortfolioTable,
   runMultiStandardsAudit
 } = require('../../scripts/runMultiStandardsAudit.js') as {
   DEFAULT_SAVE_DIR: string;
@@ -35,6 +36,13 @@ const {
     command: string;
     args: string[];
   }>;
+  summarizePortfolioTable: (text: string) => {
+    repo?: string;
+    overall?: string;
+    gates?: string;
+    areaScores?: Record<string, number | string>;
+    topRisk?: string;
+  } | undefined;
   profileDockerSteps: (options: { image: string }) => Array<{
     name: string;
     file: string;
@@ -71,7 +79,16 @@ const {
       imageAccess?: string;
       imagePreparation?: Array<{ name: string; status: number }>;
       directChecks: Array<{ status: number }>;
-      profiles: Array<{ status: number }>;
+      profiles: Array<{
+        status: number;
+        portfolio?: {
+          tableFile: string;
+          overall?: string;
+          gates?: string;
+          areaScores?: Record<string, number | string>;
+          topRisk?: string;
+        };
+      }>;
       success: boolean;
     };
   };
@@ -96,6 +113,15 @@ function gateScorecard(): string {
     '| arch | PASS | High | - |',
     '| doc | PASS | High | - |',
     '| dod | PASS | Med | - |'
+  ].join('\n');
+}
+
+function portfolioTable(): string {
+  return [
+    'Portfolio Table',
+    '| Repo | Overall | Gates | REQ | ARCH | TEST | CM | DOC | Top Risk |',
+    '| --- | --- | --- | --- | --- | --- | --- | --- | --- |',
+    '| target | High | 6P/0F | 5 | 5 | 5 | 5 | 5 | none |'
   ].join('\n');
 }
 
@@ -137,6 +163,22 @@ describe('multi standards audit script', () => {
     expect(replaceAuditMounts(profileSteps[0].args, '/snapshot', '/out')).toContain('/out:/out');
   });
 
+  it('summarizes portfolio table signals for prioritization output', () => {
+    expect(summarizePortfolioTable(portfolioTable())).toEqual({
+      repo: 'target',
+      overall: 'High',
+      gates: '6P/0F',
+      areaScores: {
+        REQ: 5,
+        ARCH: 5,
+        TEST: 5,
+        CM: 5,
+        DOC: 5
+      },
+      topRisk: 'none'
+    });
+  });
+
   it('runs direct checks and all standards profiles from a tracked snapshot', () => {
     const root = makeTempRoot();
     const snapshotPath = path.join(root, 'snapshot');
@@ -159,7 +201,7 @@ describe('multi standards audit script', () => {
       if (args.includes('scripts/run_assurance.py')) {
         return {
           status: 0,
-          stdout: args.includes('portfolio-table') ? 'Portfolio Table\n| Repo | Overall | Gates |\n| target | High | 6P/0F |' : gateScorecard()
+          stdout: args.includes('portfolio-table') ? portfolioTable() : gateScorecard()
         };
       }
       return { status: 99, stderr: `unexpected ${command} ${args.join(' ')}` };
@@ -185,6 +227,13 @@ describe('multi standards audit script', () => {
     expect(result.context.directChecks).toHaveLength(2);
     expect(result.context.profiles).toHaveLength(6);
     expect(result.markdown).toContain('External user information: ok (0 finding(s), 1 checked path(s))');
+    expect(result.markdown).toContain('portfolio-review: overall=High, gates=6P/0F, REQ=5, ARCH=5, TEST=5, CM=5, DOC=5, topRisk=none (see portfolio-review-table.txt)');
+    expect(result.context.profiles.find((profile) => profile.portfolio)?.portfolio).toMatchObject({
+      tableFile: 'portfolio-review-table.txt',
+      overall: 'High',
+      gates: '6P/0F',
+      topRisk: 'none'
+    });
     expect(fs.existsSync(path.join(root, 'evidence', 'run-1', 'audit-summary.json'))).toBe(true);
     expect(fs.existsSync(path.join(root, 'evidence', 'run-1', 'portfolio-review-table.txt'))).toBe(true);
     expect(calls.filter((call) => call.command === 'docker' && call.args[0] === 'run')).toHaveLength(8);
@@ -217,7 +266,7 @@ describe('multi standards audit script', () => {
         return { status: 0, stdout: JSON.stringify({ ok: true, findings: [], checkedPaths: [] }) };
       }
       if (args.includes('scripts/run_assurance.py')) {
-        return { status: 0, stdout: args.includes('portfolio-table') ? 'Portfolio Table' : gateScorecard() };
+        return { status: 0, stdout: args.includes('portfolio-table') ? portfolioTable() : gateScorecard() };
       }
       return { status: 99, stderr: `unexpected ${command} ${args.join(' ')}` };
     });

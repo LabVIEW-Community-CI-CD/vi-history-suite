@@ -269,6 +269,58 @@ function summarizeExternalUserInformation(payload) {
   };
 }
 
+function markdownTableCells(line) {
+  const trimmedLine = String(line || '').trim();
+  if (!trimmedLine.startsWith('|') || !trimmedLine.endsWith('|')) {
+    return [];
+  }
+  return trimmedLine.slice(1, -1).split('|').map((cell) => cell.trim());
+}
+
+function markdownDividerRow(cells) {
+  return cells.length > 0 && cells.every((cell) => /^:?-{3,}:?$/.test(cell));
+}
+
+function portfolioAreaScore(value) {
+  return /^\d+$/.test(value) ? Number(value) : value;
+}
+
+function summarizePortfolioTable(text) {
+  const lines = String(text || '').split(/\r?\n/);
+  for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
+    const headerCells = markdownTableCells(lines[lineIndex]);
+    if (!headerCells.includes('Repo') || !headerCells.includes('Overall') || !headerCells.includes('Gates')) {
+      continue;
+    }
+
+    for (let dataLineIndex = lineIndex + 1; dataLineIndex < lines.length; dataLineIndex += 1) {
+      const dataCells = markdownTableCells(lines[dataLineIndex]);
+      if (dataCells.length === 0 || markdownDividerRow(dataCells)) {
+        continue;
+      }
+
+      const row = {};
+      headerCells.forEach((header, headerIndex) => {
+        row[header] = dataCells[headerIndex];
+      });
+      const areaScores = {};
+      for (const area of ['REQ', 'ARCH', 'TEST', 'CM', 'DOC']) {
+        if (row[area]) {
+          areaScores[area] = portfolioAreaScore(row[area]);
+        }
+      }
+      return {
+        repo: row.Repo,
+        overall: row.Overall,
+        gates: row.Gates,
+        areaScores,
+        topRisk: row['Top Risk']
+      };
+    }
+  }
+  return undefined;
+}
+
 function summarizeDirectStep(step) {
   const payload = parseJsonOrUndefined(step.stdout);
   const summary = { name: step.name, status: step.status, file: step.file, command: commandLine(step.command, step.args) };
@@ -287,9 +339,31 @@ function summarizeProfileStep(step) {
     summary.scorecard = parseGateScorecard(step.stdout || '');
   }
   if (step.output === 'portfolio-table') {
-    summary.portfolio = { tableFile: step.file };
+    const portfolio = summarizePortfolioTable(step.stdout || '');
+    summary.portfolio = portfolio ? { tableFile: step.file, ...portfolio } : { tableFile: step.file };
   }
   return summary;
+}
+
+function renderPortfolioSummary(portfolio) {
+  const details = [];
+  if (portfolio.overall) {
+    details.push(`overall=${portfolio.overall}`);
+  }
+  if (portfolio.gates) {
+    details.push(`gates=${portfolio.gates}`);
+  }
+  if (portfolio.areaScores && typeof portfolio.areaScores === 'object') {
+    for (const area of ['REQ', 'ARCH', 'TEST', 'CM', 'DOC']) {
+      if (portfolio.areaScores[area] !== undefined) {
+        details.push(`${area}=${portfolio.areaScores[area]}`);
+      }
+    }
+  }
+  if (portfolio.topRisk) {
+    details.push(`topRisk=${portfolio.topRisk}`);
+  }
+  return details.length > 0 ? `${details.join(', ')} (see ${portfolio.tableFile})` : `see ${portfolio.tableFile}`;
 }
 
 function directStepIsClean(step) {
@@ -350,7 +424,7 @@ function renderMarkdown(context) {
     if (step.scorecard && Object.keys(step.scorecard).length > 0) {
       lines.push(`- ${step.name}: ${Object.entries(step.scorecard).map(([gate, status]) => `${gate}=${status}`).join(', ')}`);
     } else if (step.portfolio) {
-      lines.push(`- ${step.name}: see ${step.portfolio.tableFile}`);
+      lines.push(`- ${step.name}: ${renderPortfolioSummary(step.portfolio)}`);
     }
   }
   lines.push('');
@@ -447,6 +521,7 @@ module.exports = {
   profileDockerSteps,
   replaceAuditMounts,
   summarizeExternalUserInformation,
+  summarizePortfolioTable,
   summarizeDirectStep,
   summarizeProfileStep,
   renderMarkdown,
