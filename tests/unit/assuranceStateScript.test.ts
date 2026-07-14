@@ -290,6 +290,92 @@ describe('generateAssuranceState script', () => {
     expect(markdown).toContain('Gate detail: docs C:\\\\temp\\|packet');
   });
 
+  it('surfaces failed retained commands as candidate signals', () => {
+    const cwd = makeTempRoot();
+    const auditPath = path.join(cwd, 'assurance-multi-standards-evidence', 'audit-failed', 'audit-summary.json');
+    const auditSummary = {
+      schemaVersion: 1,
+      success: false,
+      options: { runId: 'audit-failed' },
+      snapshot: { mode: 'tracked-worktree-snapshot', trackedFileCount: 12, removed: true },
+      imagePreparation: [
+        { name: 'docker-image-inspect', status: 1, file: 'docker-image-inspect.stderr.txt', command: 'docker image inspect missing' }
+      ],
+      directChecks: [],
+      profiles: [
+        { name: 'release-gate', status: 2, file: 'release-gate-gate-scorecard.txt', command: 'docker run run_assurance.py --profile release-gate', scoreFile: 'release-gate/target/score.json' }
+      ],
+      standardsCoverageRationaleSummary: [],
+      standardsEvidenceSummary: [],
+      standardsGateStrengthSummary: [],
+      standardsGateBasisSummary: [],
+      standardsGateDetailSummary: []
+    };
+
+    const state = buildAssuranceState(auditSummary, {
+      cwd,
+      auditSummaryPath: auditPath,
+      runId: 'state-failed',
+      generatedAt: '2026-07-14T00:00:00.000Z',
+      metadata: { issueLinks: [], prLinks: [], mergeShas: [], requirements: ['VHS-REQ-615'] }
+    });
+
+    expect(state.countsByState.candidate).toBe(2);
+    expect(state.signals.map((signal) => signal.id)).toEqual([
+      'standards-audit:command:image:docker-image-inspect',
+      'standards-audit:command:profile:release-gate'
+    ]);
+    expect(state.signals[0]).toMatchObject({
+      state: 'candidate',
+      kind: 'retained-command-failure',
+      status: 'FAIL (1)',
+      confidence: 'High'
+    });
+    expect(state.signals[0].commandProvenance).toEqual([
+      expect.objectContaining({ stage: 'image', name: 'docker-image-inspect', status: 1 })
+    ]);
+    expect(state.signals[1].profiles).toEqual(['release-gate']);
+    expect(state.signals[1].scoreFiles).toEqual(['release-gate/target/score.json']);
+    expect(state.signals[1].sourceArtifacts).toEqual(expect.arrayContaining([
+      'assurance-multi-standards-evidence/audit-failed/audit-summary.json',
+      'assurance-multi-standards-evidence/audit-failed/release-gate-gate-scorecard.txt',
+      'assurance-multi-standards-evidence/audit-failed/release-gate/target/score.json'
+    ]));
+  });
+
+  it('surfaces failed summaries without command details as candidates', () => {
+    const cwd = makeTempRoot();
+    const auditPath = path.join(cwd, 'assurance-multi-standards-evidence', 'audit-failed', 'audit-summary.json');
+    const state = buildAssuranceState({
+      schemaVersion: 1,
+      success: false,
+      options: { runId: 'audit-failed' },
+      snapshot: { mode: 'tracked-worktree-snapshot', trackedFileCount: 12, removed: true },
+      imagePreparation: [],
+      directChecks: [],
+      profiles: []
+    }, {
+      cwd,
+      auditSummaryPath: auditPath,
+      runId: 'state-failed',
+      generatedAt: '2026-07-14T00:00:00.000Z',
+      metadata: { issueLinks: [], prLinks: [], mergeShas: [], requirements: ['VHS-REQ-615'] }
+    });
+
+    expect(state.countsByState.candidate).toBe(1);
+    expect(state.signals).toHaveLength(1);
+    expect(state.signals[0]).toMatchObject({
+      id: 'standards-audit:summary:failed',
+      state: 'candidate',
+      kind: 'standards-audit-summary',
+      status: 'FAIL',
+      confidence: 'High'
+    });
+    expect(state.signals[0].sourceArtifacts).toEqual([
+      'assurance-multi-standards-evidence/audit-failed/audit-summary.json'
+    ]);
+  });
+
   it('resolves the latest retained audit summary when no selector is provided', () => {
     const cwd = makeTempRoot();
     const olderPath = path.join(cwd, 'assurance-multi-standards-evidence', 'older', 'audit-summary.json');
