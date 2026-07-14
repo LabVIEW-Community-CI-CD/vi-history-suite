@@ -219,6 +219,29 @@ function requiredStatusContexts(protection) {
   return [...contexts].sort();
 }
 
+function requiredStatusCheckSourceContexts(protection) {
+  const checks = protection && protection.required_status_checks;
+  const legacyContexts = checks && Array.isArray(checks.contexts) ? checks.contexts.map((context) => String(context)).sort() : [];
+  const appBoundContexts = (checks && Array.isArray(checks.checks) ? checks.checks : [])
+    .filter((check) => check && check.context)
+    .map((check) => String(check.context))
+    .sort();
+  return {
+    legacyContexts: [...new Set(legacyContexts)],
+    appBoundContexts: [...new Set(appBoundContexts)]
+  };
+}
+
+function requiredStatusCheckSourceDiff(protection) {
+  const { legacyContexts, appBoundContexts } = requiredStatusCheckSourceContexts(protection);
+  return {
+    legacyContexts,
+    appBoundContexts,
+    missingFromAppBoundChecks: legacyContexts.filter((context) => !appBoundContexts.includes(context)),
+    missingFromLegacyContexts: appBoundContexts.filter((context) => !legacyContexts.includes(context))
+  };
+}
+
 function requiredStatusCheckAppBindings(protection) {
   const checks = protection && protection.required_status_checks;
   return (Array.isArray(checks && checks.checks) ? checks.checks : [])
@@ -290,6 +313,7 @@ function evaluateBranchProtection(settings, options = {}) {
     : 1;
   const missingRequired = expectedRequiredChecks.filter((context) => !requiredContexts.includes(context));
   const unexpectedRequired = requiredContexts.filter((context) => !allowedRequiredContexts.includes(context));
+  const requiredStatusSourceDiff = requiredStatusCheckSourceDiff(protection);
   const requiredAppBindings = requiredStatusCheckAppBindings(protection);
   const requiredAppBindingsByContext = new Map(requiredAppBindings.map((binding) => [binding.context, binding]));
   const mismatchedRequiredAppBindings = expectedRequiredChecks
@@ -342,6 +366,13 @@ function evaluateBranchProtection(settings, options = {}) {
       details: unexpectedRequired.length === 0
         ? `none beyond: ${allowedRequiredContexts.join(', ')}`
         : `unexpected: ${unexpectedRequired.join(', ')}; allowed: ${allowedRequiredContexts.join(', ')}`
+    },
+    {
+      name: 'required status check source consistency',
+      passed: requiredStatusSourceDiff.missingFromAppBoundChecks.length === 0 && requiredStatusSourceDiff.missingFromLegacyContexts.length === 0,
+      details: requiredStatusSourceDiff.missingFromAppBoundChecks.length === 0 && requiredStatusSourceDiff.missingFromLegacyContexts.length === 0
+        ? `aligned: ${requiredStatusSourceDiff.legacyContexts.join(', ') || 'none'}`
+        : `checks missing: ${requiredStatusSourceDiff.missingFromAppBoundChecks.join(', ') || 'none'}; contexts missing: ${requiredStatusSourceDiff.missingFromLegacyContexts.join(', ') || 'none'}`
     },
     {
       name: 'required status check app bindings',
