@@ -520,6 +520,23 @@ function buildStandardsCoverageMatrix(profiles) {
   }));
 }
 
+function buildStandardsScoreFileLegend(profiles) {
+  const rows = [];
+  const seen = new Set();
+  for (const profile of profiles) {
+    if (!profile.scoreFile) {
+      continue;
+    }
+    const key = `${profile.name}\u0001${profile.scoreFile}`;
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    rows.push({ profile: profile.name, scoreFile: profile.scoreFile });
+  }
+  return rows;
+}
+
 function buildStandardsEvidenceSummary(profiles) {
   const rowsByKey = new Map();
   for (const profile of profiles) {
@@ -641,16 +658,29 @@ function renderStandardsEvidenceSummary(summary) {
     return [];
   }
   const lines = [
-    '| Evidence | Standards | Profiles | Paths | Score Files |',
-    '| --- | --- | --- | --- | --- |'
+    '| Evidence | Standards | Profiles | Paths |',
+    '| --- | --- | --- | --- |'
   ];
   for (const row of summary) {
     const label = row.summary || row.id || 'Retained evidence';
     const standards = Array.isArray(row.standards) && row.standards.length > 0 ? row.standards.join('/') : 'none';
     const profiles = Array.isArray(row.profiles) && row.profiles.length > 0 ? row.profiles.join(', ') : 'none';
     const paths = Array.isArray(row.evidencePaths) && row.evidencePaths.length > 0 ? row.evidencePaths.map(markdownCell).join('<br>') : '-';
-    const scoreFiles = Array.isArray(row.scoreFiles) && row.scoreFiles.length > 0 ? row.scoreFiles.map(markdownCell).join('<br>') : '-';
-    lines.push(`| ${markdownCell(label)} | ${markdownCell(standards)} | ${markdownCell(profiles)} | ${paths} | ${scoreFiles} |`);
+    lines.push(`| ${markdownCell(label)} | ${markdownCell(standards)} | ${markdownCell(profiles)} | ${paths} |`);
+  }
+  return lines;
+}
+
+function renderStandardsScoreFileLegend(legend) {
+  if (!Array.isArray(legend) || legend.length === 0) {
+    return [];
+  }
+  const lines = [
+    '| Profile | Score File |',
+    '| --- | --- |'
+  ];
+  for (const row of legend) {
+    lines.push(`| ${markdownCell(row.profile || 'unknown')} | ${markdownCell(row.scoreFile || '-')} |`);
   }
   return lines;
 }
@@ -823,6 +853,14 @@ function renderMarkdown(context) {
     lines.push('');
     lines.push(...standardsCoverageLines);
   }
+  const standardsScoreFileLegend = buildStandardsScoreFileLegend(profileSummaries);
+  const standardsScoreFileLegendLines = renderStandardsScoreFileLegend(standardsScoreFileLegend);
+  if (standardsScoreFileLegendLines.length > 0) {
+    lines.push('');
+    lines.push('## Standards Score File Legend');
+    lines.push('');
+    lines.push(...standardsScoreFileLegendLines);
+  }
   const standardsEvidenceSummary = buildStandardsEvidenceSummary(profileSummaries);
   const standardsEvidenceLines = renderStandardsEvidenceSummary(standardsEvidenceSummary);
   if (standardsEvidenceLines.length > 0) {
@@ -906,6 +944,7 @@ function runMultiStandardsAudit(argv = process.argv.slice(2), deps = {}) {
       success: imageInspect.status === 0 && directChecks.every(directStepIsClean) && profiles.every((step) => step.status === 0)
     };
     summary.standardsCoverageMatrix = buildStandardsCoverageMatrix(summary.profiles);
+    summary.standardsScoreFileLegend = buildStandardsScoreFileLegend(summary.profiles);
     summary.standardsEvidenceSummary = buildStandardsEvidenceSummary(summary.profiles);
     summary.standardsGateStrengthSummary = buildStandardsGateStrengthSummary(summary.profiles);
     summary.standardsGateDetailSummary = buildStandardsGateDetailSummary(summary.profiles);
@@ -954,10 +993,12 @@ module.exports = {
   summarizeProfileStep,
   profileScoreFile,
   buildStandardsCoverageMatrix,
+  buildStandardsScoreFileLegend,
   buildStandardsEvidenceSummary,
   buildStandardsGateStrengthSummary,
   buildStandardsGateDetailSummary,
   renderStandardsEvidenceSummary,
+  renderStandardsScoreFileLegend,
   renderStandardsGateStrengthSummary,
   renderStandardsGateDetailSummary,
   renderMarkdown,
