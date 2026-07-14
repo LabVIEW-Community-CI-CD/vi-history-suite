@@ -3,7 +3,9 @@ import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const {
+  ATTENTION_REASON_IDS,
   computeMutationScore,
+  attentionReasonsForRequirement,
   aggregateRequirementHealth,
   summarizeRequirementHealth,
   verifyRequirementsHealth,
@@ -11,6 +13,7 @@ const {
   renderStepSummary,
   main
 } = require('../../scripts/verifyRequirementsHealth.js') as {
+  ATTENTION_REASON_IDS: { unlinked: string; uncitedCriteria: string; coverageRisk: string };
   computeMutationScore: (report: unknown) => {
     killed: number;
     timeout: number;
@@ -18,6 +21,11 @@ const {
     noCoverage: number;
     score: number | null;
   };
+  attentionReasonsForRequirement: (entry: {
+    linkState: string;
+    criteriaUncited: number;
+    coverageRiskFiles?: string[];
+  }) => Array<{ reasonId: string; message: string; count?: number; files?: string[] }>;
   aggregateRequirementHealth: (
     linkage: unknown,
     criteria: unknown,
@@ -29,6 +37,7 @@ const {
     criteriaTotal: number;
     criteriaUncited: number;
     coverageRiskFiles: string[];
+    attentionReasons: Array<{ reasonId: string; message: string; count?: number; files?: string[] }>;
     attention: boolean;
   }>;
   summarizeRequirementHealth: (result: unknown) => {
@@ -127,6 +136,28 @@ describe('requirement verification health (VHS-REQ-601)', () => {
     expect(computeMutationScore({ files: {} }).score).toBeNull();
   });
 
+  it('derives stable attention reason details for machine-readable health JSON', () => {
+    expect(
+      attentionReasonsForRequirement({
+        linkState: 'unlinked',
+        criteriaUncited: 2,
+        coverageRiskFiles: ['src/a.ts', 'src/b.ts']
+      })
+    ).toEqual([
+      { reasonId: ATTENTION_REASON_IDS.unlinked, message: 'no citing test' },
+      {
+        reasonId: ATTENTION_REASON_IDS.uncitedCriteria,
+        message: '2 uncited criterion/criteria',
+        count: 2
+      },
+      {
+        reasonId: ATTENTION_REASON_IDS.coverageRisk,
+        message: 'coverage risk (src/a.ts, src/b.ts)',
+        files: ['src/a.ts', 'src/b.ts']
+      }
+    ]);
+  });
+
   it('aggregates per-requirement link state, criterion citation, and coverage risk', () => {
     const requirements = aggregateRequirementHealth(LINKAGE, CRITERIA, COVERAGE_WITH_RISK);
 
@@ -145,10 +176,23 @@ describe('requirement verification health (VHS-REQ-601)', () => {
       criteriaUncited: 1
     });
     expect(alpha?.coverageRiskFiles).toEqual(['src/a.ts']);
+    expect(alpha?.attentionReasons).toEqual([
+      {
+        reasonId: ATTENTION_REASON_IDS.uncitedCriteria,
+        message: '1 uncited criterion/criteria',
+        count: 1
+      },
+      {
+        reasonId: ATTENTION_REASON_IDS.coverageRisk,
+        message: 'coverage risk (src/a.ts)',
+        files: ['src/a.ts']
+      }
+    ]);
     expect(alpha?.attention).toBe(true); // coverage risk
 
     expect(requirements.find((entry) => entry.reqId === 'VHS-REQ-002')).toMatchObject({
       linkState: 'unlinked',
+      attentionReasons: [{ reasonId: ATTENTION_REASON_IDS.unlinked, message: 'no citing test' }],
       attention: true
     });
     expect(requirements.find((entry) => entry.reqId === 'VHS-REQ-003')).toMatchObject({
@@ -317,8 +361,20 @@ describe('requirement verification health (VHS-REQ-601)', () => {
       stdout: { write: (chunk: string) => stdoutChunks.push(chunk) }
     });
 
-    const output = JSON.parse(stdoutChunks.join('')) as { summary: unknown };
+    const output = JSON.parse(stdoutChunks.join('')) as {
+      attention: Array<{
+        reqId: string;
+        attentionReasons: Array<{ reasonId: string; message: string }>;
+      }>;
+      summary: unknown;
+    };
     expect(code).toBe(0);
+    expect(
+      output.attention.map((entry) => [entry.reqId, entry.attentionReasons.map((reason) => reason.reasonId)])
+    ).toEqual([
+      ['VHS-REQ-001', [ATTENTION_REASON_IDS.uncitedCriteria, ATTENTION_REASON_IDS.coverageRisk]],
+      ['VHS-REQ-002', [ATTENTION_REASON_IDS.unlinked]]
+    ]);
     expect(output.summary).toEqual({
       status: 'ATTENTION',
       healthy: false,
