@@ -289,6 +289,47 @@ function commandSubset(commands, predicate) {
   }));
 }
 
+function failedCommandSignals(auditSummary, common) {
+  const failedCommands = common.commands.filter((command) => typeof command.status === 'number' && command.status !== 0);
+  const signals = failedCommands.map((command) => buildSignal({
+    id: `standards-audit:command:${command.stage || 'unknown'}:${command.name || 'unknown'}`,
+    state: 'candidate',
+    kind: 'retained-command-failure',
+    title: `Failed ${command.stage || 'command'}: ${command.name || 'unknown'}`,
+    status: `FAIL (${command.status})`,
+    confidence: 'High',
+    basis: `Retained ${command.stage || 'audit'} command exited non-zero.`,
+    standards: [],
+    profiles: command.stage === 'profile' && command.name ? [command.name] : [],
+    scoreFiles: command.scoreFile ? [command.scoreFile] : [],
+    checkedPaths: [],
+    evidencePaths: [],
+    sourceArtifactRelatives: [command.file, command.scoreFile].filter(Boolean),
+    commandProvenance: [command]
+  }, common));
+
+  if (auditSummary.success === false && failedCommands.length === 0) {
+    signals.push(buildSignal({
+      id: 'standards-audit:summary:failed',
+      state: 'candidate',
+      kind: 'standards-audit-summary',
+      title: 'Retained standards audit did not complete cleanly',
+      status: 'FAIL',
+      confidence: 'High',
+      basis: 'Retained audit summary reported success: false without command-level failure details.',
+      standards: [],
+      profiles: [],
+      scoreFiles: [],
+      checkedPaths: [],
+      evidencePaths: [],
+      sourceArtifactRelatives: [],
+      commandProvenance: []
+    }, common));
+  }
+
+  return signals;
+}
+
 function buildSignal(input, common) {
   const signal = {
     id: input.id,
@@ -459,6 +500,7 @@ function buildAssuranceState(auditSummary, options) {
     metadata
   };
   const signals = [
+    ...failedCommandSignals(auditSummary, common),
     ...directCheckSignals(auditSummary, common),
     ...coverageRationaleSignals(auditSummary, common),
     ...standardsEvidenceSignals(auditSummary, common),
