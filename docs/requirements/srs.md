@@ -2270,9 +2270,9 @@ Missing numeric IDs are intentional.
 - Area: Runtime Settings
 - Statement: The extension shall keep installed runtime settings CLI preparation
   available through `labviewViHistory.prepareLocalRuntimeSettingsCli` while
-  auto-materializing the local `vihs` launcher on every activation so users do
-  not need to rerun the prepare command after install or upgrade. Preparation
-  failures, including stale-launcher recovery, must surface actionable outcomes.
+  auto-materializing the local `vihs` launcher on every activation and surfacing
+  preparation failures, including stale-launcher recovery, as actionable outcomes
+  so users do not need to rerun the prepare command after install or upgrade.
 - Acceptance Criteria:
   - The extension manifest contributes
     `labviewViHistory.prepareLocalRuntimeSettingsCli` and activates on
@@ -3700,7 +3700,7 @@ Missing numeric IDs are intentional.
   Server configuration when `labviewViHistory.open` is invoked and refuse
   to open the VI History panel with a warning toast when that
   configuration does not explicitly enable VI Server TCP, so users learn
-  before selecting revisions that VI Server must be turned on instead of
+  before selecting revisions that VI Server TCP needs enabling instead of
   meeting a `-350000` connection failure at compare time. Per the
   maintainer decision the gate requires an explicit opt-in: an absent
   `server.tcp.enabled` key is treated as not enabled, a stricter rule than

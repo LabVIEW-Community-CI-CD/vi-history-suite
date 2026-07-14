@@ -54,7 +54,7 @@ const ID_INDEX_PATH = 'docs/requirements/id-index.csv';
 const INVENTORY_PATH = 'docs/requirements/traceability-inventory.csv';
 const ISO_29148_SINGULAR_ANCHOR = 'ISO/IEC/IEEE 29148:2018 5.2.5 Singular';
 const ISO_29148_LANGUAGE_ANCHOR = 'ISO/IEC/IEEE 29148:2018 5.2.7 Note 1 on and/or splitting';
-const SHALL_PATTERN = /\bshall\b/gi;
+const OBLIGATION_TERM_PATTERN = /\b(?:shall|must)\b/gi;
 const AND_OR_PATTERN = /\band\s*\/\s*or\b|\bor\s*\/\s*and\b/i;
 
 function normalizeNewlines(text) {
@@ -238,8 +238,8 @@ function extractBulletItems(text) {
   return items;
 }
 
-function countShalls(text) {
-  return (text.match(SHALL_PATTERN) || []).length;
+function countObligationTerms(text) {
+  return (text.match(OBLIGATION_TERM_PATTERN) || []).length;
 }
 
 function hasAndOr(text) {
@@ -253,11 +253,11 @@ function checkTextFor29148Quality(subject, label, text) {
   }
 
   const violations = [];
-  const shallCount = countShalls(normalized);
-  if (shallCount > 1) {
+  const obligationTermCount = countObligationTerms(normalized);
+  if (obligationTermCount > 1) {
     violations.push({
       subject,
-      detail: `${label} has ${shallCount} 'shall' terms; split into singular requirements or criteria (${ISO_29148_SINGULAR_ANCHOR})`
+      detail: `${label} has ${obligationTermCount} normative obligation terms; split into singular requirements or criteria (${ISO_29148_SINGULAR_ANCHOR})`
     });
   }
   if (hasAndOr(normalized)) {
