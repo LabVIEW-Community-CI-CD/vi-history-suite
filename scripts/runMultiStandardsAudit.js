@@ -268,14 +268,15 @@ function runAuditStep(outputDir, step, snapshotPath, deps = {}) {
 
 function summarizeExternalUserInformation(payload) {
   if (!payload || typeof payload !== 'object') {
-    return { ok: false, findingCount: undefined, checkedPathCount: undefined };
+    return { ok: false, findingCount: undefined, checkedPathCount: undefined, checkedPaths: [] };
   }
   const findings = Array.isArray(payload.findings) ? payload.findings : [];
   const checkedPaths = Array.isArray(payload.checkedPaths) ? payload.checkedPaths : [];
   return {
     ok: payload.ok === true,
     findingCount: findings.length,
-    checkedPathCount: checkedPaths.length
+    checkedPathCount: checkedPaths.length,
+    checkedPaths
   };
 }
 
@@ -837,6 +838,33 @@ function renderProfileSignalLines(profileSummaries) {
   ];
 }
 
+function renderDirectCheckEvidenceSummary(directCheckSummaries) {
+  if (!Array.isArray(directCheckSummaries) || directCheckSummaries.length === 0) {
+    return [];
+  }
+  const lines = [
+    '| Check | Artifact | Result | Findings | Checked Paths |',
+    '| --- | --- | --- | --- | --- |'
+  ];
+  for (const step of directCheckSummaries) {
+    let result = step.status === 0 ? 'pass' : `FAIL (${step.status})`;
+    let findings = '-';
+    let checkedPaths = '-';
+    if (step.requirementsQuality) {
+      result = step.requirementsQuality.ok ? 'ok' : 'not ok';
+      findings = typeof step.requirementsQuality.findingCount === 'number' ? String(step.requirementsQuality.findingCount) : '-';
+    }
+    if (step.externalUserInformation) {
+      result = step.externalUserInformation.ok ? 'ok' : 'not ok';
+      findings = typeof step.externalUserInformation.findingCount === 'number' ? String(step.externalUserInformation.findingCount) : '-';
+      const paths = arrayOfStrings(step.externalUserInformation.checkedPaths);
+      checkedPaths = paths.length > 0 ? paths.map(markdownCell).join('<br>') : '-';
+    }
+    lines.push(`| ${markdownCell(step.name || 'unknown')} | ${markdownCell(step.file || '-')} | ${markdownCell(result)} | ${markdownCell(findings)} | ${checkedPaths} |`);
+  }
+  return lines;
+}
+
 function directStepIsClean(step) {
   if (step.status !== 0) {
     return false;
@@ -880,7 +908,8 @@ function renderMarkdown(context) {
   lines.push('');
   lines.push('## Signals');
   lines.push('');
-  for (const step of context.directChecks.map(summarizeDirectStep)) {
+  const directCheckSummaries = context.directChecks.map(summarizeDirectStep);
+  for (const step of directCheckSummaries) {
     if (step.requirementsQuality) {
       lines.push(`- Requirements quality: ${step.requirementsQuality.ok ? 'ok' : 'not ok'}${typeof step.requirementsQuality.findingCount === 'number' ? ` (${step.requirementsQuality.findingCount} finding(s))` : ''}`);
     }
@@ -893,6 +922,13 @@ function renderMarkdown(context) {
   }
   const profileSummaries = context.profiles.map((step) => summarizeProfileStep(step, { outputDir: context.outputDir }));
   lines.push(...renderProfileSignalLines(profileSummaries));
+  const directCheckEvidenceLines = renderDirectCheckEvidenceSummary(directCheckSummaries);
+  if (directCheckEvidenceLines.length > 0) {
+    lines.push('');
+    lines.push('## Direct Check Evidence Summary');
+    lines.push('');
+    lines.push(...directCheckEvidenceLines);
+  }
   const standardsCoverageMatrix = buildStandardsCoverageMatrix(profileSummaries);
   const standardsCoverageLines = renderStandardsCoverageMatrix(standardsCoverageMatrix);
   if (standardsCoverageLines.length > 0) {
@@ -1052,6 +1088,7 @@ module.exports = {
   renderStandardsGateStrengthSummary,
   renderStandardsGateDetailSummary,
   renderProfileSignalLines,
+  renderDirectCheckEvidenceSummary,
   renderMarkdown,
   runMultiStandardsAudit,
   main
