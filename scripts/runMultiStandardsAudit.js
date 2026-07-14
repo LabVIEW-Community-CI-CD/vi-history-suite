@@ -549,6 +549,41 @@ function buildStandardsEvidenceSummary(profiles) {
   return Array.from(rowsByKey.values());
 }
 
+function buildStandardsGateStrengthSummary(profiles) {
+  const rowsByKey = new Map();
+  for (const profile of profiles) {
+    for (const item of profile.standardsEvidence || []) {
+      const evidencePaths = Array.isArray(item.evidencePaths) ? item.evidencePaths : [];
+      if (evidencePaths.length > 0) {
+        continue;
+      }
+      const standards = arrayOfStrings(item.standards);
+      if (!item.summary && standards.length === 0) {
+        continue;
+      }
+      const key = [item.id || item.summary || 'gate-strength', standards.join('/')].join('\u0001');
+      const existing = rowsByKey.get(key);
+      if (existing) {
+        if (!existing.profiles.includes(profile.name)) {
+          existing.profiles.push(profile.name);
+        }
+        if (profile.scoreFile && !existing.scoreFiles.includes(profile.scoreFile)) {
+          existing.scoreFiles.push(profile.scoreFile);
+        }
+        continue;
+      }
+      rowsByKey.set(key, {
+        id: item.id,
+        summary: item.summary,
+        standards,
+        profiles: [profile.name],
+        scoreFiles: profile.scoreFile ? [profile.scoreFile] : []
+      });
+    }
+  }
+  return Array.from(rowsByKey.values());
+}
+
 function markdownCell(value) {
   return String(value || '-').replace(/\r?\n/g, ' ').replace(/\\/g, '\\\\').replace(/\|/g, '\\|');
 }
@@ -567,6 +602,24 @@ function renderStandardsEvidenceSummary(summary) {
     const profiles = Array.isArray(row.profiles) && row.profiles.length > 0 ? row.profiles.join(', ') : 'none';
     const paths = Array.isArray(row.evidencePaths) && row.evidencePaths.length > 0 ? row.evidencePaths.map(markdownCell).join('<br>') : '-';
     lines.push(`| ${markdownCell(label)} | ${markdownCell(standards)} | ${markdownCell(profiles)} | ${paths} |`);
+  }
+  return lines;
+}
+
+function renderStandardsGateStrengthSummary(summary) {
+  if (!Array.isArray(summary) || summary.length === 0) {
+    return [];
+  }
+  const lines = [
+    '| Gate Strength | Standards | Profiles | Score Files |',
+    '| --- | --- | --- | --- |'
+  ];
+  for (const row of summary) {
+    const label = row.summary || row.id || 'Retained gate strength';
+    const standards = Array.isArray(row.standards) && row.standards.length > 0 ? row.standards.join('/') : 'none';
+    const profiles = Array.isArray(row.profiles) && row.profiles.length > 0 ? row.profiles.join(', ') : 'none';
+    const scoreFiles = Array.isArray(row.scoreFiles) && row.scoreFiles.length > 0 ? row.scoreFiles.map(markdownCell).join('<br>') : '-';
+    lines.push(`| ${markdownCell(label)} | ${markdownCell(standards)} | ${markdownCell(profiles)} | ${scoreFiles} |`);
   }
   return lines;
 }
@@ -731,6 +784,14 @@ function renderMarkdown(context) {
     lines.push('');
     lines.push(...standardsEvidenceLines);
   }
+  const standardsGateStrengthSummary = buildStandardsGateStrengthSummary(profileSummaries);
+  const standardsGateStrengthLines = renderStandardsGateStrengthSummary(standardsGateStrengthSummary);
+  if (standardsGateStrengthLines.length > 0) {
+    lines.push('');
+    lines.push('## Standards Gate Strength Summary');
+    lines.push('');
+    lines.push(...standardsGateStrengthLines);
+  }
   const gateDetailNotes = renderGateDetailNotes(profileSummaries);
   if (gateDetailNotes.length > 0) {
     lines.push('');
@@ -798,6 +859,7 @@ function runMultiStandardsAudit(argv = process.argv.slice(2), deps = {}) {
     };
     summary.standardsCoverageMatrix = buildStandardsCoverageMatrix(summary.profiles);
     summary.standardsEvidenceSummary = buildStandardsEvidenceSummary(summary.profiles);
+    summary.standardsGateStrengthSummary = buildStandardsGateStrengthSummary(summary.profiles);
     writeJson(path.join(outputDir, 'audit-summary.json'), summary, deps);
     writeText(path.join(outputDir, 'audit-summary.md'), markdown, deps);
     return { exitCode: summary.success ? 0 : 1, markdown, context: summary };
@@ -844,7 +906,9 @@ module.exports = {
   profileScoreFile,
   buildStandardsCoverageMatrix,
   buildStandardsEvidenceSummary,
+  buildStandardsGateStrengthSummary,
   renderStandardsEvidenceSummary,
+  renderStandardsGateStrengthSummary,
   renderMarkdown,
   runMultiStandardsAudit,
   main
