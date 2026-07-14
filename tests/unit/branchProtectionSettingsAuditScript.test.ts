@@ -290,6 +290,7 @@ describe('branch protection audit evaluation', () => {
       'branch lock disabled',
       'fork syncing disabled',
       'active branch rulesets',
+      'unexpected active branch rulesets',
       'active branch ruleset rules',
       'active branch ruleset bypasses disabled'
     ]);
@@ -297,6 +298,10 @@ describe('branch protection audit evaluation', () => {
     expect(result.checks.find((check) => check.name === 'active branch rulesets')).toMatchObject({
       passed: true,
       details: 'present: develop, main'
+    });
+    expect(result.checks.find((check) => check.name === 'unexpected active branch rulesets')).toMatchObject({
+      passed: true,
+      details: 'none beyond: develop, main'
     });
     expect(result.checks.find((check) => check.name === 'active branch ruleset rules')).toMatchObject({
       passed: true,
@@ -363,6 +368,19 @@ describe('branch protection audit evaluation', () => {
     expect(result.checks.find((check) => check.name === 'active branch rulesets')).toMatchObject({
       passed: false,
       details: 'missing: main; present: develop'
+    });
+  });
+
+  it('fails closed when unexpected active branch rulesets drift', () => {
+    const result = evaluateBranchProtection({
+      protection: protection(),
+      rulesets: branchRulesets([...EXPECTED_ACTIVE_BRANCH_RULESETS, 'release'])
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.checks.find((check) => check.name === 'unexpected active branch rulesets')).toMatchObject({
+      passed: false,
+      details: 'unexpected: release; allowed: develop, main'
     });
   });
 
@@ -740,7 +758,7 @@ describe('branch protection audit main', () => {
       branch: DEFAULT_BRANCH,
       success: true
     });
-    expect(output.checks).toHaveLength(12);
+    expect(output.checks).toHaveLength(13);
     expect(output.notices.length).toBeGreaterThan(0);
     expect(output.branches).toBeUndefined();
   });

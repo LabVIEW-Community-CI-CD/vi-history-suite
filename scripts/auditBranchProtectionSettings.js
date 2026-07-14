@@ -286,6 +286,7 @@ function evaluateBranchProtection(settings, options = {}) {
   const activeRulesets = activeRulesetSummaries(settings.rulesets);
   const activeRulesetNames = activeRulesets.map((ruleset) => ruleset.name).sort();
   const missingActiveRulesets = expectedActiveBranchRulesets.filter((name) => !activeRulesetNames.includes(name));
+  const unexpectedActiveRulesets = activeRulesetNames.filter((name) => !expectedActiveBranchRulesets.includes(name));
   const activeRulesetsByName = new Map(activeRulesets.map((ruleset) => [ruleset.name, ruleset]));
   const rulesetsMissingRuleTypes = expectedActiveBranchRulesets
     .map((name) => {
@@ -358,6 +359,13 @@ function evaluateBranchProtection(settings, options = {}) {
       details: missingActiveRulesets.length === 0
         ? `present: ${expectedActiveBranchRulesets.join(', ')}`
         : `missing: ${missingActiveRulesets.join(', ')}; present: ${activeRulesetNames.join(', ') || 'none'}`
+    },
+    {
+      name: 'unexpected active branch rulesets',
+      passed: unexpectedActiveRulesets.length === 0,
+      details: unexpectedActiveRulesets.length === 0
+        ? `none beyond: ${expectedActiveBranchRulesets.join(', ')}`
+        : `unexpected: ${unexpectedActiveRulesets.join(', ')}; allowed: ${expectedActiveBranchRulesets.join(', ')}`
     },
     {
       name: 'active branch ruleset rules',
