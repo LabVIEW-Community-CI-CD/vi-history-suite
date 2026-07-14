@@ -41,6 +41,7 @@ const {
     requireStaleReviewDismissal: boolean;
     requireCodeOwnerReview: boolean;
     requireLastPushApproval: boolean;
+    requireBranchCreationBlock: boolean;
     emitJson: boolean;
     help: boolean;
   };
@@ -62,6 +63,7 @@ const {
       requireStaleReviewDismissal?: boolean;
       requireCodeOwnerReview?: boolean;
       requireLastPushApproval?: boolean;
+      requireBranchCreationBlock?: boolean;
       minimumApprovingReviews?: number;
       expectedActiveBranchRulesets?: string[];
     }
@@ -88,6 +90,7 @@ type ProtectionOverrides = {
   dismissStaleReviews?: boolean;
   requireCodeOwnerReviews?: boolean;
   requireLastPushApproval?: boolean;
+  blockCreations?: boolean;
 };
 
 function protection(overrides: ProtectionOverrides = {}) {
@@ -104,6 +107,7 @@ function protection(overrides: ProtectionOverrides = {}) {
     required_linear_history: { enabled: overrides.requiredLinearHistory ?? false },
     required_conversation_resolution: { enabled: overrides.requiredConversationResolution ?? false },
     required_signatures: { enabled: overrides.requiredSignedCommits ?? false },
+    block_creations: { enabled: overrides.blockCreations ?? false },
     required_pull_request_reviews: {
       dismiss_stale_reviews: overrides.dismissStaleReviews ?? false,
       require_code_owner_reviews: overrides.requireCodeOwnerReviews ?? false,
@@ -144,13 +148,14 @@ describe('branch protection audit arguments', () => {
       requireStaleReviewDismissal: false,
       requireCodeOwnerReview: false,
       requireLastPushApproval: false,
+      requireBranchCreationBlock: false,
       emitJson: false,
       help: false
     });
   });
 
   it('parses repo, branch, all, hardening, json, and help options', () => {
-    expect(parseArgs(['--repo', 'owner/repo', '--branch', 'release/v1.2.3', '--all', '--require-advisory', '--require-review', '--require-linear-history', '--require-conversation-resolution', '--require-signed-commits', '--require-stale-review-dismissal', '--require-code-owner-review', '--require-last-push-approval', '--json'])).toMatchObject({
+    expect(parseArgs(['--repo', 'owner/repo', '--branch', 'release/v1.2.3', '--all', '--require-advisory', '--require-review', '--require-linear-history', '--require-conversation-resolution', '--require-signed-commits', '--require-stale-review-dismissal', '--require-code-owner-review', '--require-last-push-approval', '--require-branch-creation-block', '--json'])).toMatchObject({
       repo: 'owner/repo',
       branch: 'release/v1.2.3',
       allBranches: true,
@@ -162,6 +167,7 @@ describe('branch protection audit arguments', () => {
       requireStaleReviewDismissal: true,
       requireCodeOwnerReview: true,
       requireLastPushApproval: true,
+      requireBranchCreationBlock: true,
       emitJson: true
     });
     expect(parseArgs(['--help']).help).toBe(true);
@@ -174,6 +180,7 @@ describe('branch protection audit arguments', () => {
     expect(usage()).toContain('--require-stale-review-dismissal');
     expect(usage()).toContain('--require-code-owner-review');
     expect(usage()).toContain('--require-last-push-approval');
+    expect(usage()).toContain('--require-branch-creation-block');
     expect(branchesForOptions({ allBranches: true })).toEqual(DEFAULT_AUDIT_BRANCHES);
     expect(branchesForOptions({ branch: 'main' })).toEqual(['main']);
   });
@@ -398,6 +405,30 @@ describe('branch protection audit evaluation', () => {
 
     expect(hardened.success).toBe(true);
     expect(hardened.checks.find((check) => check.name === 'last-push approval')).toMatchObject({
+      passed: true,
+      details: 'enabled'
+    });
+  });
+
+  it('can require branch creation blocking for branch-protection hardening audits', () => {
+    const result = evaluateBranchProtection(
+      { protection: protection(), rulesets: branchRulesets() },
+      { requireBranchCreationBlock: true }
+    );
+
+    expect(result.success).toBe(false);
+    expect(result.checks.find((check) => check.name === 'branch creation block')).toMatchObject({
+      passed: false,
+      details: 'disabled or unavailable'
+    });
+
+    const hardened = evaluateBranchProtection(
+      { protection: protection({ blockCreations: true }), rulesets: branchRulesets() },
+      { requireBranchCreationBlock: true }
+    );
+
+    expect(hardened.success).toBe(true);
+    expect(hardened.checks.find((check) => check.name === 'branch creation block')).toMatchObject({
       passed: true,
       details: 'enabled'
     });
@@ -677,6 +708,21 @@ describe('branch protection audit main', () => {
     expect(exitCode).toBe(1);
     expect(stderr.read()).toBe('');
     expect(stdout.read()).toContain('FAIL last-push approval');
+  });
+
+  it('returns nonzero when branch creation blocking is required but absent', () => {
+    const stdout = captureWrite();
+    const stderr = captureWrite();
+    const spawnSync = vi.fn((command: string, args: string[]) => {
+      const resource = args[1].endsWith('/rulesets') ? branchRulesets() : protection();
+      return { status: 0, stdout: JSON.stringify(resource), stderr: '' };
+    });
+
+    const exitCode = main(['--require-branch-creation-block'], { spawnSync, stdout: stdout.stream, stderr: stderr.stream });
+
+    expect(exitCode).toBe(1);
+    expect(stderr.read()).toBe('');
+    expect(stdout.read()).toContain('FAIL branch creation block');
   });
 
   it('returns nonzero when linear history is required but absent', () => {
