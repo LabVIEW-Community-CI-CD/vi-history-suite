@@ -345,6 +345,9 @@ describe('generateAssuranceState script', () => {
     const markdown = renderAssuranceStateMarkdown(state);
     expect(markdown).toContain('| resolved | 1 |');
     expect(markdown).toContain('Avoid fallback when detailed candidates already exist');
+    expect(markdown).toContain('## Review Findings');
+    expect(markdown).toContain('| State | Title | Source | Basis | URL |');
+    expect(markdown).toContain('| resolved | Avoid fallback when detailed candidates already exist | chatgpt-codex-connector | Fixed by PR #1109. | https://github.com/LabVIEW-Community-CI-CD/vi-history-suite/pull/1107#discussion_r3578322495 |');
     expect(markdown).toContain('https://github.com/LabVIEW-Community-CI-CD/vi-history-suite/pull/1107#discussion_r3578322495');
   });
 
