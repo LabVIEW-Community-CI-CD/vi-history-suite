@@ -249,7 +249,16 @@ function writeCommandArtifacts(outputDir, step, result, deps = {}) {
   }
 }
 
+function removeStepSaveDir(outputDir, step, deps = {}) {
+  if (!step.saveDir) {
+    return;
+  }
+  const rmSync = deps.rmSync || fs.rmSync;
+  rmSync(path.join(outputDir, step.saveDir), { recursive: true, force: true });
+}
+
 function runAuditStep(outputDir, step, snapshotPath, deps = {}) {
+  removeStepSaveDir(outputDir, step, deps);
   const args = replaceAuditMounts(step.args, snapshotPath, outputDir);
   const result = runCommand(step.command, args, deps);
   writeCommandArtifacts(outputDir, step, result, deps);

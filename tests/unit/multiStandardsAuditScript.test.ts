@@ -96,6 +96,7 @@ const {
       imagePreparation?: Array<{ name: string; status: number }>;
       directChecks: Array<{ status: number }>;
       profiles: Array<{
+        name: string;
         status: number;
         portfolio?: {
           tableFile: string;
@@ -382,6 +383,58 @@ describe('multi standards audit script', () => {
       expect.objectContaining({ path: snapshotPath }),
       expect.any(Object)
     );
+  });
+
+  it('clears stale retained profile scores before reruns', () => {
+    const root = makeTempRoot();
+    const snapshotPath = path.join(root, 'snapshot');
+    const outputRoot = path.join(root, 'evidence');
+    const staleScorePath = path.join(outputRoot, 'run-1', 'quick-triage', 'target', 'score.json');
+    fs.mkdirSync(path.dirname(staleScorePath), { recursive: true });
+    fs.writeFileSync(staleScorePath, profileScore(), 'utf8');
+    fs.mkdirSync(snapshotPath, { recursive: true });
+    const spawnSync = vi.fn((command: string, args: string[]) => {
+      if (command === 'docker' && args[0] === 'image') {
+        return { status: 0, stdout: '[{"Id":"image"}]' };
+      }
+      if (args.includes('scripts/requirements_quality_check.py')) {
+        return { status: 0, stdout: JSON.stringify({ ok: true, findings: [] }) };
+      }
+      if (args.includes('scripts/external_user_information_check.py')) {
+        return { status: 0, stdout: JSON.stringify({ ok: true, findings: [], checkedPaths: [] }) };
+      }
+      if (args.includes('scripts/run_assurance.py')) {
+        const profileIndex = args.indexOf('--profile');
+        const profile = profileIndex >= 0 ? args[profileIndex + 1] : '';
+        if (profile === 'quick-triage') {
+          return { status: 1, stdout: '', stderr: 'profile failed before score write' };
+        }
+        writeProfileScoreFromDockerArgs(args);
+        return { status: 0, stdout: args.includes('portfolio-table') ? portfolioTable() : gateScorecard() };
+      }
+      return { status: 99, stderr: `unexpected ${command} ${args.join(' ')}` };
+    });
+
+    const result = runMultiStandardsAudit(['--save-dir', outputRoot, '--run-id', 'run-1'], {
+      cwd: repoRoot,
+      spawnSync,
+      createTrackedWorktreeSnapshot: () => ({
+        mode: 'tracked-worktree-snapshot',
+        path: snapshotPath,
+        trackedFileCount: 2,
+        symlinkFiles: [],
+        missingFiles: [],
+        generatedRootsExcluded: []
+      }),
+      removeTrackedWorktreeSnapshot: vi.fn()
+    });
+
+    const quickTriage = result.context.profiles.find((profile) => profile.name === 'quick-triage');
+    expect(result.exitCode).toBe(1);
+    expect(quickTriage?.scorecardDetails).toEqual({});
+    expect(quickTriage?.scoreFile).toBeUndefined();
+    expect(result.markdown).not.toContain('quick-triage dod:');
+    expect(fs.existsSync(staleScorePath)).toBe(false);
   });
 
   it('pulls the default standards image after an inspect miss', () => {
