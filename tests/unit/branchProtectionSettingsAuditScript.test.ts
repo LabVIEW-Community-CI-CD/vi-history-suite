@@ -37,6 +37,7 @@ const {
     requireReview: boolean;
     requireLinearHistory: boolean;
     requireConversationResolution: boolean;
+    requireSignedCommits: boolean;
     emitJson: boolean;
     help: boolean;
   };
@@ -54,6 +55,7 @@ const {
       requireReview?: boolean;
       requireLinearHistory?: boolean;
       requireConversationResolution?: boolean;
+      requireSignedCommits?: boolean;
       minimumApprovingReviews?: number;
       expectedActiveBranchRulesets?: string[];
     }
@@ -76,6 +78,7 @@ type ProtectionOverrides = {
   requiredApprovingReviewCount?: number;
   requiredLinearHistory?: boolean;
   requiredConversationResolution?: boolean;
+  requiredSignedCommits?: boolean;
 };
 
 function protection(overrides: ProtectionOverrides = {}) {
@@ -91,6 +94,7 @@ function protection(overrides: ProtectionOverrides = {}) {
     allow_deletions: { enabled: overrides.allowDeletions ?? false },
     required_linear_history: { enabled: overrides.requiredLinearHistory ?? false },
     required_conversation_resolution: { enabled: overrides.requiredConversationResolution ?? false },
+    required_signatures: { enabled: overrides.requiredSignedCommits ?? false },
     required_pull_request_reviews: {
       required_approving_review_count: overrides.requiredApprovingReviewCount ?? 0
     }
@@ -124,13 +128,14 @@ describe('branch protection audit arguments', () => {
       requireReview: false,
       requireLinearHistory: false,
       requireConversationResolution: false,
+      requireSignedCommits: false,
       emitJson: false,
       help: false
     });
   });
 
   it('parses repo, branch, all, hardening, json, and help options', () => {
-    expect(parseArgs(['--repo', 'owner/repo', '--branch', 'release/v1.2.3', '--all', '--require-advisory', '--require-review', '--require-linear-history', '--require-conversation-resolution', '--json'])).toMatchObject({
+    expect(parseArgs(['--repo', 'owner/repo', '--branch', 'release/v1.2.3', '--all', '--require-advisory', '--require-review', '--require-linear-history', '--require-conversation-resolution', '--require-signed-commits', '--json'])).toMatchObject({
       repo: 'owner/repo',
       branch: 'release/v1.2.3',
       allBranches: true,
@@ -138,6 +143,7 @@ describe('branch protection audit arguments', () => {
       requireReview: true,
       requireLinearHistory: true,
       requireConversationResolution: true,
+      requireSignedCommits: true,
       emitJson: true
     });
     expect(parseArgs(['--help']).help).toBe(true);
@@ -146,6 +152,7 @@ describe('branch protection audit arguments', () => {
     expect(usage()).toContain('--require-review');
     expect(usage()).toContain('--require-linear-history');
     expect(usage()).toContain('--require-conversation-resolution');
+    expect(usage()).toContain('--require-signed-commits');
     expect(branchesForOptions({ allBranches: true })).toEqual(DEFAULT_AUDIT_BRANCHES);
     expect(branchesForOptions({ branch: 'main' })).toEqual(['main']);
   });
@@ -350,6 +357,30 @@ describe('branch protection audit evaluation', () => {
       details: 'enabled'
     });
   });
+
+  it('can require signed commits for branch-protection hardening audits', () => {
+    const result = evaluateBranchProtection(
+      { protection: protection(), rulesets: branchRulesets() },
+      { requireSignedCommits: true }
+    );
+
+    expect(result.success).toBe(false);
+    expect(result.checks.find((check) => check.name === 'signed commits')).toMatchObject({
+      passed: false,
+      details: 'disabled or unavailable'
+    });
+
+    const hardened = evaluateBranchProtection(
+      { protection: protection({ requiredSignedCommits: true }), rulesets: branchRulesets() },
+      { requireSignedCommits: true }
+    );
+
+    expect(hardened.success).toBe(true);
+    expect(hardened.checks.find((check) => check.name === 'signed commits')).toMatchObject({
+      passed: true,
+      details: 'enabled'
+    });
+  });
 });
 
 describe('branch protection audit main', () => {
@@ -538,6 +569,21 @@ describe('branch protection audit main', () => {
     expect(exitCode).toBe(1);
     expect(stderr.read()).toBe('');
     expect(stdout.read()).toContain('FAIL conversation resolution');
+  });
+
+  it('returns nonzero when signed commits are required but absent', () => {
+    const stdout = captureWrite();
+    const stderr = captureWrite();
+    const spawnSync = vi.fn((command: string, args: string[]) => {
+      const resource = args[1].endsWith('/rulesets') ? branchRulesets() : protection();
+      return { status: 0, stdout: JSON.stringify(resource), stderr: '' };
+    });
+
+    const exitCode = main(['--require-signed-commits'], { spawnSync, stdout: stdout.stream, stderr: stderr.stream });
+
+    expect(exitCode).toBe(1);
+    expect(stderr.read()).toBe('');
+    expect(stdout.read()).toContain('FAIL signed commits');
   });
 
   it('returns nonzero when GitHub returns malformed JSON', () => {
