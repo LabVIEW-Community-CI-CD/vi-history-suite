@@ -677,6 +677,17 @@ function renderAssuranceStateMarkdown(state) {
   for (const signal of state.signals) {
     lines.push(`| ${markdownCell(signal.state)} | ${markdownCell(signal.title)} | ${markdownCell(signal.kind)} | ${markdownCell(signal.status)} | ${markdownCell(signal.confidence)} | ${renderList(signal.standards)} | ${renderList(signal.profiles)} | ${renderList(signal.sourceArtifacts)} | ${renderList(signal.evidencePaths)} |`);
   }
+  const reviewFindings = Array.isArray(state.reviewFindings) ? state.reviewFindings : [];
+  if (reviewFindings.length > 0) {
+    lines.push('');
+    lines.push('## Review Findings');
+    lines.push('');
+    lines.push('| State | Title | Source | Basis | URL |');
+    lines.push('| --- | --- | --- | --- | --- |');
+    for (const finding of reviewFindings) {
+      lines.push(`| ${markdownCell(finding.state)} | ${markdownCell(finding.title)} | ${markdownCell(finding.source)} | ${markdownCell(finding.basis)} | ${markdownCell(finding.url)} |`);
+    }
+  }
   lines.push('');
   lines.push('## Provenance');
   lines.push('');
