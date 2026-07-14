@@ -467,8 +467,8 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain('Coverage Traceability Map');
     expect(testPlan).toContain('npm run coverage:map');
     expect(testPlan).toContain('Criterion Closure Docket');
-    expect(testPlan).toContain('505/513 criterion-level citations');
-    expect(testPlan).toContain('8 uncited');
+    expect(testPlan).toContain('506/513 criterion-level citations');
+    expect(testPlan).toContain('7 uncited');
     expect(testPlan).toContain('`exact-testable`');
     expect(testPlan).toContain('`needs-new-behavior-test`');
     expect(testPlan).toContain('`manual/process`');
@@ -486,10 +486,10 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).not.toContain(`\`${['VHS-REQ-659', '12'].join('.')}\``);
     expect(testPlan).not.toContain(`\`${['VHS-REQ-659', '15'].join('.')}\``);
     expect(testPlan).not.toContain(`\`${['VHS-REQ-615', '2'].join('.')}\``);
-    expect(testPlan).toContain(`\`${['VHS-REQ-656', '5'].join('.')}\``);
+    expect(testPlan).not.toContain(`\`${['VHS-REQ-656', '5'].join('.')}\``);
     expect(testPlan).toContain(`\`${['VHS-REQ-644', '2'].join('.')}\``);
     expect(testPlan).toContain('Final advisory disposition for issue #1005');
-    expect(testPlan).toContain('the remaining 8 uncited criteria are');
+    expect(testPlan).toContain('the remaining 7 uncited criteria are');
     expect(testPlan).toContain('Keep criterion-linkage enforcement advisory');
     expect(testPlan).toContain('Open child behavior/product-decision issues');
     expect(testPlan).toContain('Recommended implementation order');
