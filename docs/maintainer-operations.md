@@ -651,6 +651,27 @@ rows, and lower-confidence or missing-proof gate-detail rows. Each grouped
 standards row must keep its retained `standards`, `profiles`, and `scoreFiles`
 arrays even when the Markdown rendering groups or compacts the same evidence.
 
+## Local Assurance State
+
+After retaining a multi-standard audit packet, maintainers can normalize it into
+a planning-ready local assurance state:
+
+```shell
+npm run assurance:state -- --audit-run-id <standards-audit-run-id>
+```
+
+The helper writes `assurance-state.json` and `assurance-state.md` under
+`assurance-state-evidence/<run-id>/`, which is ignored by the repo. The MVP reads
+the retained `audit-summary.json`, preserves the audit source path, standards,
+profiles, score files, checked paths, snapshot metadata, command provenance,
+confidence, basis, and optional issue/PR/merge metadata, then classifies each
+normalized signal as `green`, `candidate`, `known`, `resolved`, or
+`needs-review`. Use `--issue-link`, `--pr-link`, `--merge-sha`, and
+`--requirement` when connecting the local state packet to a triage, PR, or
+post-merge closeout loop. The state packet is advisory planning evidence; it
+does not replace hosted CI, requirements health, traceability, DoD, package, or
+PR-gate validation.
+
 ## External Marketplace Verification
 
 The Marketplace extension identity `svelderrainruiz.vi-history-suite` is tested

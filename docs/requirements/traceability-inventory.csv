@@ -11,6 +11,7 @@ scripts/checkDefinitionOfDone.js,mapped,Yes,Definition-of-Done gate checker; map
 scripts/checkDocumentationWorkbench.js,dev-only,No,Documentation workbench gate verifying the docs-authoring image documentation-workbench guide and docs:gate script surfaces exist and stay coherent; CI and dev documentation infrastructure.
 scripts/fileLinuxValidationGap.js,dev-only,No,Maintainer Linux-validation gap auto-filer (issue #259) so the session not the human authors fix issues; gh-only allow-list and injected fs/spawn boundaries.
 scripts/generateCloseoutEvidence.js,mapped,Yes,Closeout evidence automation with tracked-worktree standards audit snapshot mandatory standards runner published Docker workbench support standards toolchain provenance verification coverage-risk mapping and DoD evidence-source hygiene; mapped to VHS-REQ-601 VHS-REQ-613 and VHS-REQ-615.
+scripts/generateAssuranceState.js,mapped,Yes,Local assurance-state evidence model generator that normalizes retained standards audit packets into classified planning signals with provenance; mapped to VHS-REQ-615.
 scripts/runMultiStandardsAudit.js,mapped,Yes,Local multi-standard audit helper for direct 29148/26514 checks and standards-review profile evidence; mapped to VHS-REQ-615.
 scripts/runIssueStandardsTriage.js,dev-only,No,Local maintainer issue-triage helper that captures GitHub issue metadata and runs repo-standards-review quick-triage standards evidence against a Docker-visible tracked-worktree snapshot; advisory only.
 scripts/mapCoverageToTraceability.js,mapped,Yes,Coverage traceability map command; mapped to VHS-REQ-613.
@@ -73,6 +74,7 @@ tests/unit/bootstrapLinuxVsCodeHost.test.ts,dev-only,No,Tests for Linux VS Code 
 tests/unit/branchGovernanceWorkflow.test.ts,mapped,Yes,Branch governance workflow tests; mapped through RTM.
 tests/unit/buildInfo.test.ts,dev-only,No,Build info tests; development tooling.
 tests/unit/closeoutEvidenceScript.test.ts,mapped,Yes,Closeout evidence automation Docker runner standards audit snapshot standards toolchain provenance coverage-risk mapping and DoD evidence-source hygiene tests; mapped to VHS-REQ-601 VHS-REQ-613 and VHS-REQ-615.
+tests/unit/assuranceStateScript.test.ts,mapped,Yes,Local assurance-state evidence model generator unit tests for retained audit normalization classification and provenance; mapped to VHS-REQ-615.
 tests/unit/issueStandardsTriageScript.test.ts,dev-only,No,Local issue standards-triage helper tests covering argument parsing Docker command construction artifact capture and image-missing fail-fast behavior.
 tests/unit/fileLinuxValidationGapScript.test.ts,dev-only,No,Tests for the maintainer Linux-validation gap auto-filer script (issue #259); covers parse/detect/compose and the injected gh boundary.
 tests/unit/definitionOfDoneGate.test.ts,mapped,Yes,Definition-of-Done gate checker tests; mapped to VHS-REQ-615.
