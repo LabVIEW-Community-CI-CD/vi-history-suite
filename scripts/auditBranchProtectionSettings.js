@@ -51,6 +51,7 @@ function parseArgs(argv) {
     requireStaleReviewDismissal: false,
     requireCodeOwnerReview: false,
     requireLastPushApproval: false,
+    requireBranchCreationBlock: false,
     emitJson: false,
     help: false
   };
@@ -77,6 +78,7 @@ function parseArgs(argv) {
     else if (arg === '--require-stale-review-dismissal') options.requireStaleReviewDismissal = true;
     else if (arg === '--require-code-owner-review') options.requireCodeOwnerReview = true;
     else if (arg === '--require-last-push-approval') options.requireLastPushApproval = true;
+    else if (arg === '--require-branch-creation-block') options.requireBranchCreationBlock = true;
     else if (arg === '--json') options.emitJson = true;
     else if (arg === '--help' || arg === '-h') options.help = true;
     else throw new Error(`Unknown argument: ${arg}`);
@@ -113,6 +115,7 @@ function usage() {
     '  --require-stale-review-dismissal Fail when stale review dismissal is not required',
     '  --require-code-owner-review Fail when code-owner review is not required',
     '  --require-last-push-approval Fail when last-push approval is not required',
+    '  --require-branch-creation-block Fail when matching branch creation is not blocked',
     '  --json                Emit machine-readable JSON instead of text',
     '  --help                Show this help'
   ].join('\n');
@@ -211,6 +214,7 @@ function evaluateBranchProtection(settings, options = {}) {
   const requireStaleReviewDismissal = Boolean(options.requireStaleReviewDismissal);
   const requireCodeOwnerReview = Boolean(options.requireCodeOwnerReview);
   const requireLastPushApproval = Boolean(options.requireLastPushApproval);
+  const requireBranchCreationBlock = Boolean(options.requireBranchCreationBlock);
   const minimumApprovingReviews = Number.isFinite(Number(options.minimumApprovingReviews))
     ? Number(options.minimumApprovingReviews)
     : 1;
@@ -299,6 +303,14 @@ function evaluateBranchProtection(settings, options = {}) {
       name: 'last-push approval',
       passed: Boolean(protection.required_pull_request_reviews && protection.required_pull_request_reviews.require_last_push_approval === true),
       details: protection.required_pull_request_reviews && protection.required_pull_request_reviews.require_last_push_approval === true ? 'enabled' : 'disabled or unavailable'
+    });
+  }
+
+  if (requireBranchCreationBlock) {
+    checks.push({
+      name: 'branch creation block',
+      passed: enabledFlag(protection.block_creations),
+      details: enabledFlag(protection.block_creations) ? 'enabled' : 'disabled or unavailable'
     });
   }
 
