@@ -18,6 +18,7 @@ const {
   summarizeGateScorecard,
   summarizeRetainedGateScore,
   summarizeRetainedStandardsCoverage,
+  summarizeRetainedStandardsEvidence,
   summarizePortfolioTable,
   runMultiStandardsAudit
 } = require('../../scripts/runMultiStandardsAudit.js') as {
@@ -65,6 +66,12 @@ const {
     confidence?: string;
     standards: string[];
     rationale?: string;
+  }>;
+  summarizeRetainedStandardsEvidence: (payload: unknown) => Array<{
+    id?: string;
+    summary?: string;
+    standards: string[];
+    evidencePaths: string[];
   }>;
   profileDockerSteps: (options: { image: string }) => Array<{
     name: string;
@@ -125,6 +132,12 @@ const {
           standards: string[];
           rationale?: string;
         }>;
+        standardsEvidence?: Array<{
+          id?: string;
+          summary?: string;
+          standards: string[];
+          evidencePaths: string[];
+        }>;
         scoreFile?: string;
       }>;
       standardsCoverageMatrix?: Array<{
@@ -136,6 +149,13 @@ const {
           standards: string[];
           rationale?: string;
         }>;
+      }>;
+      standardsEvidenceSummary?: Array<{
+        id?: string;
+        summary?: string;
+        standards: string[];
+        evidencePaths: string[];
+        profiles: string[];
       }>;
       success: boolean;
     };
@@ -207,6 +227,44 @@ function profileScore(): string {
         rationale: 'Documentation includes information-item coverage, automated link checking, and reusable user-information signals.'
       }
     },
+    top_strengths: [
+      {
+        id: 'area-req',
+        summary: 'REQ maturity is 5/5 with High confidence.',
+        standards: ['29148'],
+        evidence_paths: [
+          '.github/instructions/requirements-and-test-docs.instructions.md',
+          '.github/prompts/requirement-target-execution.prompt.md',
+          '.github/skills/requirements-traceability/assets/requirement-target-scaffold.md'
+        ]
+      },
+      {
+        id: 'area-test',
+        summary: 'TEST maturity is 5/5 with High confidence.',
+        standards: ['29119-2', '29119-3'],
+        evidence_paths: [
+          '.github/skills/testing-automation/SKILL.md',
+          '.github/skills/testing-automation/scripts/run-pr-gates.sh',
+          '.github/workflows/ci.yml'
+        ]
+      },
+      {
+        id: 'area-doc',
+        summary: 'DOC maturity is 5/5 with High confidence.',
+        standards: ['15289', '26514'],
+        evidence_paths: [
+          'docs/user-guide.md',
+          'docs/quick-reference.md',
+          'docs/information-item-map.md'
+        ]
+      },
+      {
+        id: 'gate-coverage',
+        summary: 'coverage gate passes with High confidence.',
+        standards: ['29119-2', '29119-3'],
+        evidence_paths: []
+      }
+    ],
     gates: {
       coverage: {
         status: 'PASS',
@@ -384,6 +442,47 @@ describe('multi standards audit script', () => {
     });
   });
 
+  it('summarizes retained standards evidence paths from score JSON', () => {
+    expect(summarizeRetainedStandardsEvidence(JSON.parse(profileScore()))).toEqual([
+      {
+        id: 'area-req',
+        summary: 'REQ maturity is 5/5 with High confidence.',
+        standards: ['29148'],
+        evidencePaths: [
+          '.github/instructions/requirements-and-test-docs.instructions.md',
+          '.github/prompts/requirement-target-execution.prompt.md',
+          '.github/skills/requirements-traceability/assets/requirement-target-scaffold.md'
+        ]
+      },
+      {
+        id: 'area-test',
+        summary: 'TEST maturity is 5/5 with High confidence.',
+        standards: ['29119-2', '29119-3'],
+        evidencePaths: [
+          '.github/skills/testing-automation/SKILL.md',
+          '.github/skills/testing-automation/scripts/run-pr-gates.sh',
+          '.github/workflows/ci.yml'
+        ]
+      },
+      {
+        id: 'area-doc',
+        summary: 'DOC maturity is 5/5 with High confidence.',
+        standards: ['15289', '26514'],
+        evidencePaths: [
+          'docs/user-guide.md',
+          'docs/quick-reference.md',
+          'docs/information-item-map.md'
+        ]
+      },
+      {
+        id: 'gate-coverage',
+        summary: 'coverage gate passes with High confidence.',
+        standards: ['29119-2', '29119-3'],
+        evidencePaths: []
+      }
+    ]);
+  });
+
   it('runs direct checks and all standards profiles from a tracked snapshot', () => {
     const root = makeTempRoot();
     const snapshotPath = path.join(root, 'snapshot');
@@ -436,6 +535,9 @@ describe('multi standards audit script', () => {
     expect(result.markdown).toContain('quick-triage: coverage=PASS(High), cm=PASS(High), req=PASS(High), arch=PASS(High), doc=PASS(High), dod=PASS(Med)');
     expect(result.markdown).toContain('## Standards Coverage Matrix');
     expect(result.markdown).toContain('| quick-triage | 5/5 High (29148) | 5/5 High (42010) | 5/5 High (29119-2/29119-3) | 5/5 High (10007/12207) | 5/5 High (15289/26514) | quick-triage/target/score.json |');
+    expect(result.markdown).toContain('## Standards Evidence Summary');
+    expect(result.markdown).toContain('| REQ maturity is 5/5 with High confidence. | 29148 | quick-triage, release-gate, 26514-review, due-diligence, compliance-uplift | .github/instructions/requirements-and-test-docs.instructions.md<br>.github/prompts/requirement-target-execution.prompt.md<br>.github/skills/requirements-traceability/assets/requirement-target-scaffold.md |');
+    expect(result.markdown).not.toContain('coverage gate passes with High confidence.');
     expect(result.markdown).toContain('quick-triage dod: basis=Report DoD only when a DoD Gate / dod context is visible.; standards=none (see quick-triage/target/score.json)');
     expect(result.markdown).toContain('portfolio-review: overall=High, gates=6P/0F, REQ=5, ARCH=5, TEST=5, CM=5, DOC=5, topRisk=none (see portfolio-review-table.txt)');
     expect(result.context.profiles.find((profile) => profile.scorecardDetails)?.scorecardDetails?.dod).toEqual({
@@ -455,6 +557,27 @@ describe('multi standards audit script', () => {
       score: 5,
       confidence: 'High',
       standards: ['15289', '26514']
+    });
+    expect(result.context.profiles.find((profile) => profile.standardsEvidence)?.standardsEvidence?.[0]).toEqual({
+      id: 'area-req',
+      summary: 'REQ maturity is 5/5 with High confidence.',
+      standards: ['29148'],
+      evidencePaths: [
+        '.github/instructions/requirements-and-test-docs.instructions.md',
+        '.github/prompts/requirement-target-execution.prompt.md',
+        '.github/skills/requirements-traceability/assets/requirement-target-scaffold.md'
+      ]
+    });
+    expect(result.context.standardsEvidenceSummary?.find((row) => row.id === 'area-doc')).toEqual({
+      id: 'area-doc',
+      summary: 'DOC maturity is 5/5 with High confidence.',
+      standards: ['15289', '26514'],
+      evidencePaths: [
+        'docs/user-guide.md',
+        'docs/quick-reference.md',
+        'docs/information-item-map.md'
+      ],
+      profiles: ['quick-triage', 'release-gate', '26514-review', 'due-diligence', 'compliance-uplift']
     });
     expect(result.context.profiles.find((profile) => profile.scoreFile)?.scoreFile).toBe('quick-triage/target/score.json');
     expect(result.context.profiles.find((profile) => profile.portfolio)?.portfolio).toMatchObject({
@@ -522,6 +645,8 @@ describe('multi standards audit script', () => {
     expect(result.exitCode).toBe(1);
     expect(quickTriage?.scorecardDetails).toEqual({});
     expect(quickTriage?.scoreFile).toBeUndefined();
+    expect(quickTriage?.standardsEvidence).toBeUndefined();
+    expect(result.context.standardsEvidenceSummary?.some((row) => row.profiles.includes('quick-triage'))).toBe(false);
     expect(result.markdown).not.toContain('quick-triage dod:');
     expect(fs.existsSync(staleScorePath)).toBe(false);
   });
