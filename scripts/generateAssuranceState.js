@@ -498,6 +498,7 @@ function buildAssuranceState(auditSummary, options) {
 
 function markdownCell(value) {
   return String(value === undefined || value === null || value === '' ? '-' : value)
+    .replace(/\\/g, '\\\\')
     .replace(/\|/g, '\\|')
     .replace(/\r?\n/g, '<br>');
 }

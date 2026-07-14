@@ -261,6 +261,35 @@ describe('generateAssuranceState script', () => {
     expect(markdown).toContain('VHS-REQ-615');
   });
 
+  it('escapes backslashes before Markdown table pipes', () => {
+    const cwd = makeTempRoot();
+    const auditPath = path.join(cwd, 'assurance-multi-standards-evidence', 'audit-green', 'audit-summary.json');
+    const auditSummary = fixtureAuditSummary();
+    auditSummary.standardsGateDetailSummary = [
+      {
+        gate: 'docs C:\\temp|packet',
+        status: 'PASS',
+        confidence: 'Med',
+        basis: 'Rendered path must stay in one Markdown cell.',
+        standards: ['26514'],
+        missingProof: [],
+        profiles: ['quick-triage'],
+        scoreFiles: ['quick-triage/target/score.json']
+      }
+    ];
+    const state = buildAssuranceState(auditSummary, {
+      cwd,
+      auditSummaryPath: auditPath,
+      runId: 'state-green',
+      generatedAt: '2026-07-14T00:00:00.000Z',
+      metadata: { issueLinks: [], prLinks: [], mergeShas: [], requirements: ['VHS-REQ-615'] }
+    });
+
+    const markdown = renderAssuranceStateMarkdown(state);
+
+    expect(markdown).toContain('Gate detail: docs C:\\\\temp\\|packet');
+  });
+
   it('resolves the latest retained audit summary when no selector is provided', () => {
     const cwd = makeTempRoot();
     const olderPath = path.join(cwd, 'assurance-multi-standards-evidence', 'older', 'audit-summary.json');
