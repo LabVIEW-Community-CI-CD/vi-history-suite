@@ -298,6 +298,7 @@
     "test:integration": "npm run compile && npm run test:integration:compile && node out-tests/tests/integration/runTests.js",
     "test:integration:linux": "node scripts/runLinuxIntegrationHost.js",
     "test:integration:windows": "node scripts/runWindowsIntegrationHost.js",
+    "standards:audit": "node scripts/runMultiStandardsAudit.js",
     "issue:standards-triage": "node scripts/runIssueStandardsTriage.js",
     "package:audit": "node scripts/auditPackagedRuntimeSurface.js",
     "package": "npm run compile && npm run package:audit && node scripts/runPinnedVsce.js package",

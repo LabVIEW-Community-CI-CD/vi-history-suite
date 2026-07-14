@@ -766,8 +766,9 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain(
       '| VHS-REQ-615 | TEST-615 | package.json; .github/workflows/ci.yml; .github/workflows/marketplace-release.yml'
     );
-    expect(testPlan).toContain('tests/unit/definitionOfDoneGate.test.ts; tests/unit/closeoutEvidenceScript.test.ts; tests/unit/marketplaceReleaseWorkflow.test.ts');
+    expect(testPlan).toContain('tests/unit/definitionOfDoneGate.test.ts; tests/unit/closeoutEvidenceScript.test.ts; tests/unit/multiStandardsAuditScript.test.ts; tests/unit/marketplaceReleaseWorkflow.test.ts');
     expect(testPlan).toContain('scripts/checkDefinitionOfDone.js; scripts/auditCustomizationGovernance.js');
+    expect(testPlan).toContain('scripts/generateCloseoutEvidence.js; scripts/runMultiStandardsAudit.js; scripts/verifyMarketplaceListing.js');
     expect(testPlan).toContain('scripts/verifyMarketplaceListing.js; .github/pull_request_template.md');
     expect(testPlan).toContain('docs/maintainer-operations.md; docs/requirements/srs.md');
     expect(testPlan).toContain('.github/pull_request_template.md; docs/maintainer-operations.md');

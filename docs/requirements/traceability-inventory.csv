@@ -11,6 +11,7 @@ scripts/checkDefinitionOfDone.js,mapped,Yes,Definition-of-Done gate checker; map
 scripts/checkDocumentationWorkbench.js,dev-only,No,Documentation workbench gate verifying the docs-authoring image documentation-workbench guide and docs:gate script surfaces exist and stay coherent; CI and dev documentation infrastructure.
 scripts/fileLinuxValidationGap.js,dev-only,No,Maintainer Linux-validation gap auto-filer (issue #259) so the session not the human authors fix issues; gh-only allow-list and injected fs/spawn boundaries.
 scripts/generateCloseoutEvidence.js,mapped,Yes,Closeout evidence automation with tracked-worktree standards audit snapshot mandatory standards runner published Docker workbench support standards toolchain provenance verification coverage-risk mapping and DoD evidence-source hygiene; mapped to VHS-REQ-601 VHS-REQ-613 and VHS-REQ-615.
+scripts/runMultiStandardsAudit.js,mapped,Yes,Local multi-standard audit helper for direct 29148/26514 checks and standards-review profile evidence; mapped to VHS-REQ-615.
 scripts/runIssueStandardsTriage.js,dev-only,No,Local maintainer issue-triage helper that captures GitHub issue metadata and runs repo-standards-review quick-triage standards evidence against a Docker-visible tracked-worktree snapshot; advisory only.
 scripts/mapCoverageToTraceability.js,mapped,Yes,Coverage traceability map command; mapped to VHS-REQ-613.
 src/cli/runDevHost.ts,dev-only,No,Development host CLI for local debugging and testing.
@@ -136,6 +137,7 @@ tests/unit/requirementCriteriaInventory.test.ts,mapped,Yes,Requirement acceptanc
 tests/unit/verifyRequirementsHealth.test.ts,mapped,Yes,Unified requirement verification-health report unit tests (mutation-score aggregation per-requirement health and advisory rendering fixtures); mapped to VHS-REQ-601.
 tests/unit/mutationWorkflow.test.ts,mapped,Yes,Nightly mutation workflow contract unit tests (schedule dispatch advisory test:mutation invocation and report upload); mapped to VHS-REQ-613.
 tests/unit/customizationGovernanceAuditScript.test.ts,mapped,Yes,Customization governance audit unit tests for AGENTS and customization drift prevention; mapped to VHS-REQ-615.
+tests/unit/multiStandardsAuditScript.test.ts,mapped,Yes,Multi-standard local audit helper unit tests for tracked-snapshot standards evidence; mapped to VHS-REQ-615.
 tests/unit/vscodeTestHarness.ts,mapped,Yes,Reusable VS Code orchestration unit-test harness; mapped to VHS-REQ-614.
 tests/unit/vscodeTestHarness.test.ts,mapped,Yes,VS Code orchestration harness proof tests; mapped to VHS-REQ-614.
 tests/unit/runtimeSettingsLiveSessionProbe.test.ts,dev-only,No,Runtime settings probe tests; contributor validation tooling.
