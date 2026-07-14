@@ -9,6 +9,7 @@ const {
   EXPECTED_ACTIVE_RULESET_ENFORCEMENT,
   EXPECTED_ACTIVE_RULESET_SOURCE_TYPE,
   EXPECTED_ACTIVE_RULESET_CONDITION_KEYS,
+  EXPECTED_ACTIVE_RULESET_REF_NAME_KEYS,
   EXPECTED_ACTIVE_RULESET_RULE_TYPES,
   EXPECTED_REQUIRED_STATUS_CHECKS,
   EXPECTED_REQUIRED_STATUS_CHECK_APP_ID,
@@ -23,6 +24,7 @@ const {
   requiredStatusContexts,
   requiredStatusCheckAppBindings,
   rulesetConditionKeys,
+  rulesetRefNameKeys,
   rulesetTargetEnforcementSummaries,
   activeRulesetSummaries,
   rulesetRuleTypes,
@@ -40,6 +42,7 @@ const {
   EXPECTED_ACTIVE_RULESET_ENFORCEMENT: string;
   EXPECTED_ACTIVE_RULESET_SOURCE_TYPE: string;
   EXPECTED_ACTIVE_RULESET_CONDITION_KEYS: string[];
+  EXPECTED_ACTIVE_RULESET_REF_NAME_KEYS: string[];
   EXPECTED_ACTIVE_RULESET_RULE_TYPES: string[];
   EXPECTED_REQUIRED_STATUS_CHECKS: string[];
   EXPECTED_REQUIRED_STATUS_CHECK_APP_ID: number;
@@ -69,12 +72,14 @@ const {
   requiredStatusContexts: (protection: Record<string, unknown>) => string[];
   requiredStatusCheckAppBindings: (protection: Record<string, unknown>) => Array<{ context: string; appId: number | null }>;
   rulesetConditionKeys: (ruleset: unknown) => string[];
+  rulesetRefNameKeys: (ruleset: unknown) => string[];
   rulesetTargetEnforcementSummaries: (rulesets: unknown[]) => Array<{ name: string; target: string; enforcement: string }>;
   activeRulesetSummaries: (rulesets: unknown[]) => Array<{
     name: string;
     sourceType: string;
     source: string;
     conditionKeys: string[];
+    refNameKeys: string[];
     ruleCount: number;
     ruleTypes: string[];
     refNameExclusions: string[];
@@ -103,6 +108,7 @@ const {
       expectedActiveRulesetSourceType?: string;
       expectedActiveRulesetSource?: string;
       expectedActiveRulesetConditionKeys?: string[];
+      expectedActiveRulesetRefNameKeys?: string[];
       expectedActiveRulesetRuleTypes?: string[];
       expectedRequiredStatusCheckAppId?: number;
     }
@@ -309,6 +315,11 @@ describe('branch protection audit evaluation', () => {
       'ref_name',
       'repository_name'
     ]);
+    expect(rulesetRefNameKeys({ conditions: { ref_name: { include: [], exclude: [], update: [] } } })).toEqual([
+      'exclude',
+      'include',
+      'update'
+    ]);
   });
 
   it('passes for the current expected develop protection contract', () => {
@@ -338,6 +349,7 @@ describe('branch protection audit evaluation', () => {
       'active branch ruleset target/enforcement',
       'active branch ruleset sources',
       'active branch ruleset condition keys',
+      'active branch ruleset ref_name keys',
       'active branch ruleset rule count',
       'active branch ruleset rules',
       'unexpected active branch ruleset rules',
@@ -369,6 +381,10 @@ describe('branch protection audit evaluation', () => {
     expect(result.checks.find((check) => check.name === 'active branch ruleset condition keys')).toMatchObject({
       passed: true,
       details: 'ref_name only on develop, main'
+    });
+    expect(result.checks.find((check) => check.name === 'active branch ruleset ref_name keys')).toMatchObject({
+      passed: true,
+      details: 'exclude, include only on develop, main'
     });
     expect(result.checks.find((check) => check.name === 'active branch ruleset rule count')).toMatchObject({
       passed: true,
@@ -416,6 +432,7 @@ describe('branch protection audit evaluation', () => {
         sourceType: 'Repository',
         source: DEFAULT_REPO,
         conditionKeys: ['ref_name'],
+        refNameKeys: ['exclude', 'include'],
         ruleCount: 2,
         ruleTypes: ['deletion', 'non_fast_forward'],
         refNameExclusions: [],
@@ -560,6 +577,33 @@ describe('branch protection audit evaluation', () => {
     );
 
     expect(custom.checks.find((check) => check.name === 'active branch ruleset condition keys')).toMatchObject({
+      passed: true,
+      details: 'none only on develop, main'
+    });
+  });
+
+  it('fails closed when active branch rulesets use unexpected ref_name keys', () => {
+    const [developRuleset, mainRuleset] = branchRulesets();
+    const result = evaluateBranchProtection({
+      protection: protection(),
+      rulesets: [
+        { ...developRuleset, conditions: { ref_name: { include: [], exclude: [], update: [] } } },
+        mainRuleset
+      ]
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.checks.find((check) => check.name === 'active branch ruleset ref_name keys')).toMatchObject({
+      passed: false,
+      details: 'develop missing: none; unexpected: update; observed: exclude, include, update; allowed: exclude, include'
+    });
+
+    const custom = evaluateBranchProtection(
+      { protection: protection(), rulesets: [{ ...developRuleset, conditions: { ref_name: {} } }, { ...mainRuleset, conditions: { ref_name: {} } }] },
+      { expectedActiveRulesetRefNameKeys: [] }
+    );
+
+    expect(custom.checks.find((check) => check.name === 'active branch ruleset ref_name keys')).toMatchObject({
       passed: true,
       details: 'none only on develop, main'
     });
@@ -1064,7 +1108,7 @@ describe('branch protection audit main', () => {
       branch: DEFAULT_BRANCH,
       success: true
     });
-    expect(output.checks).toHaveLength(25);
+    expect(output.checks).toHaveLength(26);
     expect(output.notices.length).toBeGreaterThan(0);
     expect(output.branches).toBeUndefined();
   });
