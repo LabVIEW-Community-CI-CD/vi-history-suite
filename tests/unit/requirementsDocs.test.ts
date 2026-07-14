@@ -1074,7 +1074,8 @@ describe('requirements documentation coherence', () => {
     expect(cmPlan).toContain('Status Accounting');
     expect(cmPlan).toContain('Closeout evidence is the status-accounting packet');
     expect(cmPlan).toContain('User-Information Review Trigger');
-    expect(cmPlan).toContain('repo-standards-review --profile 26514-review');
+    expect(cmPlan).toContain('npm run closeout:evidence -- --kind release');
+    expect(cmPlan).toContain('release-26514-review-scorecard.txt');
     expect(cmPlan).toContain('Documentation Workbench Status');
     expect(cmPlan).toMatch(/standards\s+detector should report `supported: true`/);
     expect(cmPlan).toContain('docs/documentation-workbench.md');

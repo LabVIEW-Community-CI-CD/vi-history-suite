@@ -11,6 +11,7 @@ const {
   DEFAULT_STANDARDS_IMAGE,
   GENERATED_ROOTS_EXCLUDED_FROM_STANDARDS_AUDIT,
   LOCAL_STANDARDS_IMAGE,
+  RELEASE_STANDARDS_PROFILES,
   STANDARDS_TOOLCHAIN_EXPECTED_COMMIT,
   STANDARDS_TOOLCHAIN_GITHUB_TAG,
   STANDARDS_TOOLCHAIN_GITHUB_URL,
@@ -29,6 +30,7 @@ const {
   resolveAuditSnapshotBase,
   runCommand,
   runDockerStandards,
+  summarizeReleaseProfileResults,
   summarizeDodGateEvidence,
   verifyStandardsToolchainProvenance
 } = require('../../scripts/generateCloseoutEvidence.js') as {
@@ -36,6 +38,7 @@ const {
   DEFAULT_STANDARDS_IMAGE: string;
   GENERATED_ROOTS_EXCLUDED_FROM_STANDARDS_AUDIT: string[];
   LOCAL_STANDARDS_IMAGE: string;
+  RELEASE_STANDARDS_PROFILES: string[];
   STANDARDS_TOOLCHAIN_EXPECTED_COMMIT: string;
   STANDARDS_TOOLCHAIN_GITHUB_TAG: string;
   STANDARDS_TOOLCHAIN_GITHUB_URL: string;
@@ -86,6 +89,20 @@ const {
     runGates: boolean;
   };
   parseLsRemote: (stdout: string) => Array<{ commit: string; ref: string }>;
+  summarizeReleaseProfileResults: (results: Array<{
+    name: string;
+    file?: string;
+    status: number;
+    stdout?: string;
+  }>) => Array<{
+    profile: string;
+    status: number;
+    success: boolean;
+    gates: Array<{ gate: string; status: string }>;
+    failedGates: string[];
+    missingGates: string[];
+    file?: string;
+  }>;
   summarizeDodGateEvidence: (
     evidenceScan: Record<string, unknown> | undefined,
     scorecard: string
@@ -165,6 +182,7 @@ const {
             trustedSources: Array<{ path: string; classification: string }>;
             disqualifiedSources: Array<{ path: string; classification: string }>;
           };
+          releaseProfiles?: Array<{ profile: string; success: boolean }>;
         };
       };
       provenance: { success: boolean; failure?: string };
@@ -183,6 +201,9 @@ const {
             mode: string;
             trackedFileCount: number;
             generatedRootsExcluded: string[];
+          };
+          summary?: {
+            releaseProfiles?: Array<{ profile: string; success: boolean }>;
           };
         };
         provenance: { success: boolean };
@@ -258,6 +279,28 @@ const scorecardDodPass = [
   '| doc | PASS | High | - |',
   '| dod | PASS | Med | - |'
 ].join('\n');
+const releaseScorecardPass = [
+  'Gate Scorecard',
+  '| Gate | Status | Confidence | Missing Proof |',
+  '| --- | --- | --- | --- |',
+  '| coverage | PASS | High | - |',
+  '| cm | PASS | High | - |',
+  '| req | PASS | High | - |',
+  '| arch | PASS | High | - |',
+  '| doc | PASS | High | - |',
+  '| dod | PASS | Med | - |'
+].join('\n');
+const releaseScorecardDocFail = [
+  'Gate Scorecard',
+  '| Gate | Status | Confidence | Missing Proof |',
+  '| --- | --- | --- | --- |',
+  '| coverage | PASS | High | - |',
+  '| cm | PASS | High | - |',
+  '| req | PASS | High | - |',
+  '| arch | PASS | High | - |',
+  '| doc | FAIL | High | A docs link-check such as lychee |',
+  '| dod | PASS | Med | - |'
+].join('\n');
 
 function gitlabRemoteOk(): string {
   return [
@@ -304,6 +347,9 @@ function hostSuccessSpawnSync(options: { evidenceScan?: string; scorecard?: stri
     if (line.includes('preflight_local_dependencies.py')) return { status: 0, stdout: preflightOk };
     if (line.includes('requirements_quality_check.py')) return { status: 0, stdout: requirementsOk };
     if (line.includes('repo_evidence_scan.py')) return { status: 0, stdout: options.evidenceScan ?? evidenceWithTrustedDod };
+    if (line.includes('run_assurance.py') && args.includes('--profile') && args.some((arg) => RELEASE_STANDARDS_PROFILES.includes(arg))) {
+      return { status: 0, stdout: releaseScorecardPass };
+    }
     if (line.includes('run_assurance.py')) return { status: 0, stdout: options.scorecard ?? scorecardDodPass };
     return { status: 0, stdout: '' };
   });
@@ -610,6 +656,27 @@ describe('closeout evidence script', () => {
       doc: 'PASS',
       dod: 'PASS'
     });
+  });
+
+  it('summarizes release profile gate status failures', () => {
+    const profiles = summarizeReleaseProfileResults([
+      {
+        name: 'release-profile-26514-review',
+        file: 'release-26514-review-scorecard.txt',
+        status: 0,
+        stdout: releaseScorecardPass
+      },
+      {
+        name: 'release-profile-release-gate',
+        file: 'release-release-gate-scorecard.txt',
+        status: 0,
+        stdout: releaseScorecardDocFail
+      }
+    ]);
+
+    expect(profiles).toHaveLength(RELEASE_STANDARDS_PROFILES.length);
+    expect(profiles[0]).toMatchObject({ profile: '26514-review', success: true, failedGates: [], missingGates: [] });
+    expect(profiles[1]).toMatchObject({ profile: 'release-gate', success: false, failedGates: ['doc'], missingGates: [] });
   });
 
   it('does not let generated assurance evidence satisfy the DoD gate (VHS-REQ-615.5)', () => {
@@ -1104,6 +1171,80 @@ describe('closeout evidence script', () => {
     expect(result.exitCode).toBe(1);
     expect(result.markdown).toContain('Standards evidence failed');
     expect(result.context.standards.success).toBe(false);
+  });
+
+  it('captures release standards profiles in release closeout evidence', () => {
+    const saveDirRel = `.tmp-release-closeout-${Date.now()}-${process.pid}`;
+    const saveDirAbs = path.join(repoRoot, saveDirRel);
+    const spawnSync = hostSuccessSpawnSync();
+
+    try {
+      const result = generateCloseoutEvidence(
+        ['--kind', 'release', '--issue', '1032', '--run-gates', '--save-dir', saveDirRel],
+        {
+          platform: 'win32',
+          existsSync: () => true,
+          spawnSync
+        }
+      );
+      const profileCommands = spawnSync.mock.calls
+        .filter(([_command, args]) => args.includes('--profile'))
+        .map(([_command, args]) => args[args.indexOf('--profile') + 1]);
+      const summaryProfiles = result.context.machineReadableSummary?.standards.summary?.releaseProfiles;
+
+      expect(result.exitCode).toBe(0);
+      expect(profileCommands).toEqual(expect.arrayContaining(RELEASE_STANDARDS_PROFILES));
+      expect(result.markdown).toContain('Release/user-information profiles:');
+      expect(result.markdown).toContain('26514-review: PASS (coverage=PASS; cm=PASS; req=PASS; arch=PASS; doc=PASS; dod=PASS)');
+      expect(result.markdown).toContain('release-gate: PASS (coverage=PASS; cm=PASS; req=PASS; arch=PASS; doc=PASS; dod=PASS)');
+      expect(summaryProfiles).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ profile: '26514-review', success: true, missingGates: [] }),
+          expect.objectContaining({ profile: 'release-gate', success: true, missingGates: [] })
+        ])
+      );
+      expect(fs.existsSync(path.join(saveDirAbs, 'release-26514-review-scorecard.txt'))).toBe(true);
+      expect(fs.existsSync(path.join(saveDirAbs, 'release-release-gate-scorecard.txt'))).toBe(true);
+    } finally {
+      fs.rmSync(saveDirAbs, { recursive: true, force: true });
+    }
+  });
+
+  it('blocks release closeout when a release standards profile fails', () => {
+    const baseSpawnSync = hostSuccessSpawnSync();
+    const spawnSync = vi.fn((command: string, args: string[]) => {
+      const line = [command, ...args].join(' ');
+      if (line.includes('run_assurance.py') && args.includes('--profile') && args.includes('26514-review')) {
+        return { status: 0, stdout: releaseScorecardPass };
+      }
+      if (line.includes('run_assurance.py') && args.includes('--profile') && args.includes('release-gate')) {
+        return { status: 0, stdout: releaseScorecardDocFail };
+      }
+      return baseSpawnSync(command, args);
+    });
+
+    const result = generateCloseoutEvidence(['--kind', 'release', '--issue', '1032', '--run-gates'], {
+      platform: 'win32',
+      cwd: 'C:\repo',
+      existsSync: () => true,
+      spawnSync
+    });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.context.standards.success).toBe(false);
+    expect(result.markdown).toContain('Release/user-information profile failures: release-gate (doc=FAIL).');
+    expect(result.markdown).toContain('release-gate: FAIL (coverage=PASS; cm=PASS; req=PASS; arch=PASS; doc=FAIL; dod=PASS)');
+    expect(result.markdown).toContain('Closable: no');
+    expect(result.context.machineReadableSummary?.standards.summary?.releaseProfiles).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ profile: 'release-gate', success: false, failedGates: ['doc'] })
+      ])
+    );
+    expect(result.context.closureDecision?.reasons).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('Release/user-information profile failures: release-gate')
+      ])
+    );
   });
 
   it('renders release references in release mode', () => {
