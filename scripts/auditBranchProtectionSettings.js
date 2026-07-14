@@ -369,6 +369,16 @@ function evaluateBranchProtection(settings, options = {}) {
       return { name, unexpectedRuleTypes, observedRuleTypes: ruleset ? ruleset.ruleTypes : [] };
     })
     .filter((item) => item.unexpectedRuleTypes.length > 0);
+  const rulesetsWithDuplicateRuleTypes = expectedActiveBranchRulesets
+    .map((name) => {
+      const ruleset = activeRulesetsByName.get(name);
+      return {
+        name,
+        duplicateRuleTypes: ruleset ? duplicateNameCounts(ruleset.ruleTypes) : [],
+        observedRuleTypes: ruleset ? ruleset.ruleTypes : []
+      };
+    })
+    .filter((item) => item.duplicateRuleTypes.length > 0);
   const bypassableRulesets = expectedActiveBranchRulesets
     .map((name) => activeRulesetsByName.get(name))
     .filter((ruleset) => ruleset && (ruleset.bypassActorCount > 0 || ruleset.currentUserCanBypass !== 'never'));
@@ -488,6 +498,15 @@ function evaluateBranchProtection(settings, options = {}) {
         ? `none beyond ${expectedActiveRulesetRuleTypes.join(', ')} on ${expectedActiveBranchRulesets.join(', ')}`
         : rulesetsWithUnexpectedRuleTypes
           .map((item) => `${item.name} unexpected: ${item.unexpectedRuleTypes.join(', ')}; observed: ${item.observedRuleTypes.join(', ') || 'none'}`)
+          .join('; ')
+    },
+    {
+      name: 'duplicate active branch ruleset rules',
+      passed: rulesetsWithDuplicateRuleTypes.length === 0,
+      details: rulesetsWithDuplicateRuleTypes.length === 0
+        ? 'none'
+        : rulesetsWithDuplicateRuleTypes
+          .map((item) => `${item.name} duplicates: ${formatDuplicateNameCounts(item.duplicateRuleTypes)}; observed: ${item.observedRuleTypes.join(', ') || 'none'}`)
           .join('; ')
     },
     {
