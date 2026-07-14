@@ -191,6 +191,14 @@ function nullableDisabledFlag(value) {
   return value === null || value === undefined || disabledFlag(value);
 }
 
+function restrictionActorCount(restrictions, actorType) {
+  return Array.isArray(restrictions && restrictions[actorType]) ? restrictions[actorType].length : 0;
+}
+
+function pushRestrictionDetails(restrictions) {
+  return `users ${restrictionActorCount(restrictions, 'users')}, teams ${restrictionActorCount(restrictions, 'teams')}, apps ${restrictionActorCount(restrictions, 'apps')}`;
+}
+
 function requiredApprovingReviewCount(protection) {
   const reviews = protection && protection.required_pull_request_reviews;
   const count = Number(reviews && reviews.required_approving_review_count);
@@ -361,6 +369,11 @@ function evaluateBranchProtection(settings, options = {}) {
       name: 'required deployments disabled',
       passed: nullableDisabledFlag(protection.required_deployments),
       details: nullableDisabledFlag(protection.required_deployments) ? 'disabled' : 'enabled or unavailable'
+    },
+    {
+      name: 'push restrictions disabled',
+      passed: !protection.restrictions,
+      details: !protection.restrictions ? 'disabled' : `enabled: ${pushRestrictionDetails(protection.restrictions)}`
     },
     {
       name: 'active branch rulesets',
