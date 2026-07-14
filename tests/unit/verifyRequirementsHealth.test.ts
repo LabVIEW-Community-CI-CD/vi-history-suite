@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 const {
   computeMutationScore,
   aggregateRequirementHealth,
+  summarizeRequirementHealth,
   verifyRequirementsHealth,
   renderSummary,
   renderStepSummary,
@@ -30,6 +31,13 @@ const {
     coverageRiskFiles: string[];
     attention: boolean;
   }>;
+  summarizeRequirementHealth: (result: unknown) => {
+    status: string;
+    healthy: boolean;
+    attentionCount: number;
+    reasonCounts: { structuralIntegrity: number; unlinked: number; uncitedCriteria: number; coverageRisk: number };
+    unavailableSignals: string[];
+  };
   verifyRequirementsHealth: (cwd?: string, deps?: Record<string, unknown>) => Record<string, unknown>;
   renderSummary: (result: unknown) => string;
   renderStepSummary: (result: unknown) => string;
@@ -166,6 +174,29 @@ describe('requirement verification health (VHS-REQ-601)', () => {
     expect((result.attention as unknown[]).length).toBe(2);
     expect(result.coverage).toMatchObject({ available: true, requirementsWithRisk: 1 });
     expect(result.mutation).toMatchObject({ available: true, score: 81.63 });
+    expect(result.summary).toEqual({
+      status: 'ATTENTION',
+      healthy: false,
+      attentionCount: 2,
+      reasonCounts: { structuralIntegrity: 0, unlinked: 1, uncitedCriteria: 1, coverageRisk: 1 },
+      unavailableSignals: []
+    });
+  });
+
+  it('summarizes structural integrity failures without requiring per-requirement attention', () => {
+    expect(summarizeRequirementHealth({
+      healthy: false,
+      integrity: { success: false, violationCount: 2 },
+      coverage: { available: true },
+      mutation: { available: true },
+      attention: []
+    })).toEqual({
+      status: 'ATTENTION',
+      healthy: false,
+      attentionCount: 0,
+      reasonCounts: { structuralIntegrity: 1, unlinked: 0, uncitedCriteria: 0, coverageRisk: 0 },
+      unavailableSignals: []
+    });
   });
 
   it('reports ATTENTION when criterion citations are missing despite clean linkage and coverage (VHS-REQ-601)', () => {
@@ -211,6 +242,13 @@ describe('requirement verification health (VHS-REQ-601)', () => {
     expect(result.coverage).toEqual({ available: false });
     expect(result.mutation).toEqual({ available: false });
     expect(result.healthy).toBe(true);
+    expect(result.summary).toEqual({
+      status: 'HEALTHY',
+      healthy: true,
+      attentionCount: 0,
+      reasonCounts: { structuralIntegrity: 0, unlinked: 0, uncitedCriteria: 0, coverageRisk: 0 },
+      unavailableSignals: ['coverage', 'mutation']
+    });
     expect(renderSummary(result)).toContain('Coverage risk: not available');
     expect(renderStepSummary(result)).toContain('Mutation (advisory): not available');
   });
@@ -267,6 +305,29 @@ describe('requirement verification health (VHS-REQ-601)', () => {
     expect(stdoutChunks.join('')).toContain('Strict mode: requirement health is green.');
   });
 
+  it('includes the compact summary in --json output', () => {
+    const stdoutChunks: string[] = [];
+
+    const code = main(['--json'], {
+      linkage: LINKAGE,
+      criteria: CRITERIA,
+      integrity: INTEGRITY_PASS,
+      coverage: COVERAGE_WITH_RISK,
+      mutation: MUTATION,
+      stdout: { write: (chunk: string) => stdoutChunks.push(chunk) }
+    });
+
+    const output = JSON.parse(stdoutChunks.join('')) as { summary: unknown };
+    expect(code).toBe(0);
+    expect(output.summary).toEqual({
+      status: 'ATTENTION',
+      healthy: false,
+      attentionCount: 2,
+      reasonCounts: { structuralIntegrity: 0, unlinked: 1, uncitedCriteria: 1, coverageRisk: 1 },
+      unavailableSignals: []
+    });
+  });
+
   it('verifies the real repository aggregate is healthy', () => {
     const repoRoot = path.resolve(__dirname, '..', '..');
     const result = verifyRequirementsHealth(repoRoot) as {
@@ -274,6 +335,7 @@ describe('requirement verification health (VHS-REQ-601)', () => {
       integrity: { success: boolean };
       linkage: { unlinked: number };
       criteria: { total: number; uncited: number };
+      summary: { status: string; attentionCount: number };
     };
 
     expect(result.activeRequirements).toBeGreaterThan(20);
@@ -281,5 +343,6 @@ describe('requirement verification health (VHS-REQ-601)', () => {
     expect(result.linkage.unlinked).toBe(0);
     expect(result.criteria.total).toBeGreaterThan(100);
     expect(result.criteria.uncited).toBe(0);
+    expect(result.summary).toMatchObject({ status: 'HEALTHY', attentionCount: 0 });
   });
 });

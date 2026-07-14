@@ -121,6 +121,33 @@ function aggregateRequirementHealth(linkage, criteria, coverage) {
   });
 }
 
+function summarizeRequirementHealth(result) {
+  const attention = Array.isArray(result && result.attention) ? result.attention : [];
+  const reasonCounts = {
+    structuralIntegrity: result && result.integrity && result.integrity.success === false ? 1 : 0,
+    unlinked: 0,
+    uncitedCriteria: 0,
+    coverageRisk: 0
+  };
+  for (const entry of attention) {
+    if (entry.linkState === 'unlinked') reasonCounts.unlinked += 1;
+    if (entry.criteriaUncited > 0) reasonCounts.uncitedCriteria += 1;
+    if (Array.isArray(entry.coverageRiskFiles) && entry.coverageRiskFiles.length > 0) {
+      reasonCounts.coverageRisk += 1;
+    }
+  }
+  const unavailableSignals = [];
+  if (!result || !result.coverage || result.coverage.available === false) unavailableSignals.push('coverage');
+  if (!result || !result.mutation || result.mutation.available === false) unavailableSignals.push('mutation');
+  return {
+    status: result && result.healthy && attention.length === 0 ? 'HEALTHY' : 'ATTENTION',
+    healthy: Boolean(result && result.healthy),
+    attentionCount: attention.length,
+    reasonCounts,
+    unavailableSignals
+  };
+}
+
 function verifyRequirementsHealth(cwd = process.cwd(), deps = {}) {
   const linkage = deps.linkage || auditRequirementVerificationLinkage(cwd, deps);
   const criteria = deps.criteria || auditRequirementCriteriaInventory(cwd, deps);
@@ -143,7 +170,7 @@ function verifyRequirementsHealth(cwd = process.cwd(), deps = {}) {
     ? new Set(coverage.mappedBelowThreshold.flatMap((file) => file.requirementIds)).size
     : 0;
 
-  return {
+  const result = {
     activeRequirements: requirements.length,
     integrity: { success: integrity.success, violationCount: integrity.violationCount },
     linkage: {
@@ -174,6 +201,10 @@ function verifyRequirementsHealth(cwd = process.cwd(), deps = {}) {
       linkage.unlinked.length === 0 &&
       criteria.uncitedCriteria === 0 &&
       (!coverage || coverage.mappedBelowThreshold.length === 0)
+  };
+  return {
+    ...result,
+    summary: summarizeRequirementHealth(result)
   };
 }
 
@@ -320,6 +351,7 @@ module.exports = {
   MUTATION_REPORT_PATH,
   computeMutationScore,
   aggregateRequirementHealth,
+  summarizeRequirementHealth,
   verifyRequirementsHealth,
   renderSummary,
   renderStepSummary,
