@@ -306,6 +306,7 @@
     "requirements:linkage": "node scripts/auditRequirementVerificationLinkage.js",
     "requirements:linkage:enforce": "node scripts/auditRequirementVerificationLinkage.js --enforce",
     "requirements:criteria": "node scripts/auditRequirementCriteriaInventory.js",
+    "requirements:criteria:enforce": "node scripts/auditRequirementCriteriaInventory.js --enforce",
     "requirements:verify": "node scripts/verifyRequirementsHealth.js",
     "requirements:verify:strict": "node scripts/verifyRequirementsHealth.js --strict",
     "verify:preview": "npm run compile && node out/tooling/viPreviewVerifyCli.js",
