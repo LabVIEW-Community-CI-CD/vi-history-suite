@@ -6,7 +6,10 @@ vi.mock('vscode', async () => {
 });
 
 import type { DetectedRuntimes } from '../../src/tooling/runtimeAutoDetect';
-import type { RuntimeProcessObservation } from '../../src/reporting/comparisonReportRuntimeExecution';
+import {
+  resolveWindowsLabviewTcpSettingsForLabviewPath,
+  type RuntimeProcessObservation
+} from '../../src/reporting/comparisonReportRuntimeExecution';
 import * as vscode from 'vscode';
 import {
   BITNESS_OPEN_PICK_PROVIDER_ACTION,
@@ -636,6 +639,23 @@ describe('decideViServerOpenGate (VHS-REQ-631)', () => {
     expect(decision.kind).toBe('block');
     expect(decision.toastMessage).toBe(VI_SERVER_OPEN_BLOCKED_MESSAGE);
     expect(decision.inspectedConfigPaths?.[0]).toContain('LabVIEW.ini');
+  });
+
+  it('keeps the strict open gate separate from the compare-time Windows default (VHS-REQ-631.6)', async () => {
+    const snapshot = evaluateRuntimeAvailability(detectionHost);
+    const iniWithoutExplicitKey = 'server.tcp.port=3363\n';
+
+    const openDecision = await decideViServerOpenGate(detectionHost, snapshot, {
+      platform: 'win32',
+      readFile: winReadFile(iniWithoutExplicitKey)
+    });
+    const compareTimeSettings = await resolveWindowsLabviewTcpSettingsForLabviewPath(
+      'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
+      { readFile: vi.fn().mockResolvedValue(iniWithoutExplicitKey) as never }
+    );
+
+    expect(openDecision.kind).toBe('block');
+    expect(compareTimeSettings.viServerTcpEnabled).toBe(true);
   });
 
   it('blocks open when the selected Windows LabVIEW.ini disables VI Server (VHS-REQ-631.3)', async () => {

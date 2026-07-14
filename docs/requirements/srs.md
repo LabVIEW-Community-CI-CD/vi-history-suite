@@ -818,12 +818,12 @@ Missing numeric IDs are intentional.
     existing date, author, and subject facts. Because the packet export
     (VHS-REQ-626 fallback) copies this retained packet HTML, the exported packet
     carries the commit body as well.
-  - The in-panel comparison context cards render the same per-revision commit
-    body through the shared panel context markup. The preferred graphics-report
-    export (VHS-REQ-626/VHS-REQ-640) copies the LabVIEW-generated report file
-    unchanged and therefore renders no revision context cards at all (neither
-    body nor date/author/subject); embedding revision context into the generated
-    graphics report is out of scope for this requirement.
+  - The in-panel comparison context cards and the exported generated-report copy
+    render the same per-revision commit body through the shared panel context
+    markup. Per VHS-REQ-626, generated-report export injects revision context
+    into the exported copy only while leaving the retained LabVIEW-generated
+    source report unchanged; packet export copies the retained packet HTML,
+    which already renders the cards.
   - Commit body text is sourced from the in-memory retained-history commits
     already passed to comparison-report generation, without additional Git
     history reads (no regression of VHS-REQ-008).
@@ -844,9 +844,11 @@ Missing numeric IDs are intentional.
 - Implementation References:
   - `src/reporting/comparisonReportPacket.ts`
   - `src/reporting/comparisonReportAction.ts`
+  - `src/reporting/comparisonReportExport.ts`
 - Verification References:
   - `tests/unit/comparisonReportPacket.test.ts`
   - `tests/unit/comparisonReportAction.test.ts`
+  - `tests/unit/comparisonReportExport.test.ts`
 - Change Guidance:
   - Reuse the commit-body escaping, line-break preservation, and empty-body
     fallback pattern established for the history panel (VHS-REQ-639); do not

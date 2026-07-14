@@ -328,7 +328,7 @@ describe('exportComparisonReportBundle', () => {
     ).resolves.toContain('data:image/png;base64,AAAA');
   });
 
-  it('embeds the revision context into the exported generated report without mutating the source (multi-file) (VHS-REQ-626.3)', async () => {
+  it('embeds the revision context into the exported generated report without mutating the source (multi-file) (VHS-REQ-626.3, VHS-REQ-644.2)', async () => {
     const tempRoot = await makeTempRoot();
     const sourceDir = path.join(tempRoot, 'source');
     const assetsDir = path.join(sourceDir, 'diff-report-foo.vi_files');

@@ -467,8 +467,8 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain('Coverage Traceability Map');
     expect(testPlan).toContain('npm run coverage:map');
     expect(testPlan).toContain('Criterion Closure Docket');
-    expect(testPlan).toContain('506/513 criterion-level citations');
-    expect(testPlan).toContain('7 uncited');
+    expect(testPlan).toContain('513/513 criterion-level citations');
+    expect(testPlan).toContain('0 uncited');
     expect(testPlan).toContain('`exact-testable`');
     expect(testPlan).toContain('`needs-new-behavior-test`');
     expect(testPlan).toContain('`manual/process`');
@@ -487,11 +487,17 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).not.toContain(`\`${['VHS-REQ-659', '15'].join('.')}\``);
     expect(testPlan).not.toContain(`\`${['VHS-REQ-615', '2'].join('.')}\``);
     expect(testPlan).not.toContain(`\`${['VHS-REQ-656', '5'].join('.')}\``);
-    expect(testPlan).toContain(`\`${['VHS-REQ-644', '2'].join('.')}\``);
-    expect(testPlan).toContain('Final advisory disposition for issue #1005');
-    expect(testPlan).toContain('the remaining 7 uncited criteria are');
-    expect(testPlan).toContain('Keep criterion-linkage enforcement advisory');
-    expect(testPlan).toContain('Open child behavior/product-decision issues');
+    expect(testPlan).not.toContain(`\`${['VHS-REQ-631', '6'].join('.')}\``);
+    expect(testPlan).not.toContain(`\`${['VHS-REQ-636', '9'].join('.')}\``);
+    expect(testPlan).not.toContain(`\`${['VHS-REQ-642', '5'].join('.')}\``);
+    expect(testPlan).not.toContain(`\`${['VHS-REQ-644', '2'].join('.')}\``);
+    expect(testPlan).not.toContain(`\`${['VHS-REQ-644', '6'].join('.')}\``);
+    expect(testPlan).not.toContain(`\`${['VHS-REQ-614', '3'].join('.')}\``);
+    expect(testPlan).not.toContain(`\`${['VHS-REQ-614', '4'].join('.')}\``);
+    expect(testPlan).toContain('Final closure disposition for issue #1005');
+    expect(testPlan).toContain('no uncited criteria remain');
+    expect(testPlan).toContain('Criterion-linkage enforcement can become fail-closed');
+    expect(testPlan).toContain('Classify future uncited criteria before enforcement');
     expect(testPlan).toContain('Recommended implementation order');
     expect(testPlan).toContain('Do not add a `VHS-REQ-N.M` citation unless');
     expect(testPlan).toContain('node scripts/auditRequirementCriteriaInventory.js --json');
@@ -657,7 +663,7 @@ describe('requirements documentation coherence', () => {
     }
   });
 
-  it('keeps VS Code test harness architecture traceable for VHS-REQ-614', () => {
+  it('keeps VS Code test harness architecture traceable for VHS-REQ-614 (VHS-REQ-614.3, VHS-REQ-614.4)', () => {
     const srs = readRepoText('docs', 'requirements', 'srs.md');
     const testPlan = readRepoText('docs', 'testing', 'test-plan.md');
     const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
@@ -675,9 +681,14 @@ describe('requirements documentation coherence', () => {
     );
     expect(srs).toContain('commands, webviews, workspace storage, filesystem, clipboard');
     expect(srs).toContain('Runtime behavior, command IDs, persisted formats');
+    expect(srs).toContain('Production refactors for later coverage work remain limited');
+    expect(srs).toContain('Do not change');
+    expect(srs).toContain('extension command exposure');
+    expect(srs).toContain('runtime selection behavior');
     expect(testPlan).toContain('| VHS-REQ-614 | TEST-614 | tests/unit/vscodeTestHarness.ts');
     expect(requirementRow?.ParentID).toBe('VHS-SYS-REQ-017');
-    expect(requirementRow?.ImplementationRefs).toContain('tests/unit/vscodeTestHarness.ts');
+    expect(requirementRow?.ImplementationRefs).toBe('tests/unit/vscodeTestHarness.ts');
+    expect(requirementRow?.ImplementationRefs).not.toMatch(/(^|;)src\/|package\.json|marketplace|\.github\/workflows\//u);
     expect(requirementRow?.VerificationRefs).toContain('tests/unit/vscodeTestHarness.test.ts');
     expect(requirementRow?.VerificationRefs).toContain('tests/unit/requirementsDocs.test.ts');
     expect(indexRow?.CurrentAnchor).toBe(
