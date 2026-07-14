@@ -98,6 +98,7 @@ const {
 type ProtectionOverrides = {
   strict?: boolean;
   contexts?: string[];
+  checkContexts?: string[];
   checkAppId?: number;
   enforceAdmins?: boolean;
   allowForcePushes?: boolean;
@@ -118,11 +119,12 @@ type ProtectionOverrides = {
 
 function protection(overrides: ProtectionOverrides = {}) {
   const contexts = overrides.contexts || [...EXPECTED_REQUIRED_STATUS_CHECKS];
+  const checkContexts = overrides.checkContexts || contexts;
   return {
     required_status_checks: {
       strict: overrides.strict ?? true,
       contexts,
-      checks: contexts.map((context) => ({ context, app_id: overrides.checkAppId ?? EXPECTED_REQUIRED_STATUS_CHECK_APP_ID }))
+      checks: checkContexts.map((context) => ({ context, app_id: overrides.checkAppId ?? EXPECTED_REQUIRED_STATUS_CHECK_APP_ID }))
     },
     enforce_admins: { enabled: overrides.enforceAdmins ?? true },
     allow_force_pushes: { enabled: overrides.allowForcePushes ?? false },
@@ -289,6 +291,7 @@ describe('branch protection audit evaluation', () => {
       'required status checks are strict',
       'required status check contexts',
       'unexpected required status check contexts',
+      'required status check source consistency',
       'required status check app bindings',
       'admin enforcement',
       'force pushes disabled',
@@ -331,6 +334,10 @@ describe('branch protection audit evaluation', () => {
     expect(result.checks.find((check) => check.name === 'unexpected required status check contexts')).toMatchObject({
       passed: true,
       details: 'none beyond: Build, Test, Package, Windows Unit Tests, Integration Host (Linux)'
+    });
+    expect(result.checks.find((check) => check.name === 'required status check source consistency')).toMatchObject({
+      passed: true,
+      details: 'aligned: Build, Test, Package, Integration Host (Linux), Windows Unit Tests'
     });
     expect(activeRulesetSummaries([branchRulesets(['develop'])[0]])).toEqual([
       {
@@ -482,6 +489,21 @@ describe('branch protection audit evaluation', () => {
     expect(result.checks.find((check) => check.name === 'unexpected required status check contexts')).toMatchObject({
       passed: false,
       details: 'unexpected: Surprise Gate; allowed: Build, Test, Package, Windows Unit Tests, Integration Host (Linux)'
+    });
+  });
+
+  it('fails closed when required status check sources drift', () => {
+    const result = evaluateBranchProtection({
+      protection: protection({
+        checkContexts: EXPECTED_REQUIRED_STATUS_CHECKS.filter((context) => context !== 'Windows Unit Tests')
+      }),
+      rulesets: branchRulesets()
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.checks.find((check) => check.name === 'required status check source consistency')).toMatchObject({
+      passed: false,
+      details: 'checks missing: Windows Unit Tests; contexts missing: none'
     });
   });
 
@@ -822,7 +844,7 @@ describe('branch protection audit main', () => {
       branch: DEFAULT_BRANCH,
       success: true
     });
-    expect(output.checks).toHaveLength(16);
+    expect(output.checks).toHaveLength(17);
     expect(output.notices.length).toBeGreaterThan(0);
     expect(output.branches).toBeUndefined();
   });
