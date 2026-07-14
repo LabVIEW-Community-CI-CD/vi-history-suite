@@ -45,6 +45,7 @@ function parseArgs(argv) {
     allBranches: false,
     requireAdvisory: false,
     requireReview: false,
+    requireLinearHistory: false,
     emitJson: false,
     help: false
   };
@@ -65,6 +66,7 @@ function parseArgs(argv) {
     else if (arg === '--all') options.allBranches = true;
     else if (arg === '--require-advisory') options.requireAdvisory = true;
     else if (arg === '--require-review') options.requireReview = true;
+    else if (arg === '--require-linear-history') options.requireLinearHistory = true;
     else if (arg === '--json') options.emitJson = true;
     else if (arg === '--help' || arg === '-h') options.help = true;
     else throw new Error(`Unknown argument: ${arg}`);
@@ -95,6 +97,7 @@ function usage() {
     `  --all                 Audit protected branches: ${DEFAULT_AUDIT_BRANCHES.join(', ')}`,
     '  --require-advisory    Fail when advisory checks are not branch-protection-required',
     '  --require-review      Fail when approving pull request reviews are not required',
+    '  --require-linear-history Fail when linear history is not required',
     '  --json                Emit machine-readable JSON instead of text',
     '  --help                Show this help'
   ].join('\n');
@@ -187,6 +190,7 @@ function evaluateBranchProtection(settings, options = {}) {
   const expectedActiveBranchRulesets = options.expectedActiveBranchRulesets || EXPECTED_ACTIVE_BRANCH_RULESETS;
   const requireAdvisory = Boolean(options.requireAdvisory);
   const requireReview = Boolean(options.requireReview);
+  const requireLinearHistory = Boolean(options.requireLinearHistory);
   const minimumApprovingReviews = Number.isFinite(Number(options.minimumApprovingReviews))
     ? Number(options.minimumApprovingReviews)
     : 1;
@@ -251,6 +255,14 @@ function evaluateBranchProtection(settings, options = {}) {
       details: approvingReviewCount >= minimumApprovingReviews
         ? `required approving reviews: ${approvingReviewCount}`
         : `required approving reviews: ${approvingReviewCount}; expected at least ${minimumApprovingReviews}`
+    });
+  }
+
+  if (requireLinearHistory) {
+    checks.push({
+      name: 'linear history',
+      passed: enabledFlag(protection.required_linear_history),
+      details: enabledFlag(protection.required_linear_history) ? 'enabled' : 'disabled or unavailable'
     });
   }
 
