@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
 const { spawnSync } = require('node:child_process');
+const fs = require('node:fs');
+const path = require('node:path');
 
 const DEFAULT_REPO = 'LabVIEW-Community-CI-CD/vi-history-suite';
 const DEFAULT_BRANCH = 'develop';
@@ -130,6 +132,7 @@ function parseArgs(argv) {
     requireFullHardening: false,
     emitJson: false,
     emitMarkdown: false,
+    outputPath: undefined,
     help: false
   };
 
@@ -162,6 +165,7 @@ function parseArgs(argv) {
     }
     else if (arg === '--json') options.emitJson = true;
     else if (arg === '--markdown') options.emitMarkdown = true;
+    else if (arg === '--output') options.outputPath = next();
     else if (arg === '--help' || arg === '-h') options.help = true;
     else throw new Error(`Unknown argument: ${arg}`);
   }
@@ -204,6 +208,7 @@ function usage() {
     '  --require-full-hardening Fail unless every opt-in hardening check passes',
     '  --json                Emit machine-readable JSON instead of text',
     '  --markdown            Emit compact Markdown evidence instead of text',
+    '  --output <path>       Write the rendered audit output to a file',
     '  --help                Show this help'
   ].join('\n');
 }
@@ -1123,6 +1128,36 @@ function renderMarkdown(branchResults, options = {}) {
   return lines.join('\n');
 }
 
+function renderAuditOutput(branchResults, options = {}) {
+  const success = branchResults.every((item) => item.result.success);
+  if (options.emitJson) {
+    if (options.allBranches) {
+      return JSON.stringify({
+        schemaVersion: 1,
+        repo: options.repo,
+        success,
+        summary: summarizeBranchResults(branchResults),
+        branches: branchResults.map(auditResultJson)
+      }, null, 2);
+    }
+    const [branchResult] = branchResults;
+    return JSON.stringify({ schemaVersion: 1, repo: options.repo, ...auditResultJson(branchResult) }, null, 2);
+  }
+  if (options.emitMarkdown) {
+    return renderMarkdown(branchResults, options);
+  }
+  return branchResults
+    .map((item) => renderResult(item.result, { ...options, branch: item.branch }))
+    .join('\n');
+}
+
+function writeAuditOutput(outputPath, content, deps = {}) {
+  const mkdirSync = deps.mkdirSync || fs.mkdirSync;
+  const writeFileSync = deps.writeFileSync || fs.writeFileSync;
+  mkdirSync(path.dirname(outputPath), { recursive: true });
+  writeFileSync(outputPath, `${content}\n`, 'utf8');
+}
+
 function branchesForOptions(options = {}) {
   return options.allBranches ? [...DEFAULT_AUDIT_BRANCHES] : [options.branch || DEFAULT_BRANCH];
 }
@@ -1166,25 +1201,12 @@ function main(argv = process.argv.slice(2), deps = {}) {
     }
     const branchResults = auditBranches(options, deps);
     const success = branchResults.every((item) => item.result.success);
-    if (options.emitJson) {
-      if (options.allBranches) {
-        stdout.write(`${JSON.stringify({
-          schemaVersion: 1,
-          repo: options.repo,
-          success,
-          summary: summarizeBranchResults(branchResults),
-          branches: branchResults.map(auditResultJson)
-        }, null, 2)}\n`);
-      } else {
-        const [branchResult] = branchResults;
-        stdout.write(`${JSON.stringify({ schemaVersion: 1, repo: options.repo, ...auditResultJson(branchResult) }, null, 2)}\n`);
-      }
-    } else if (options.emitMarkdown) {
-      stdout.write(`${renderMarkdown(branchResults, options)}\n`);
+    const auditOutput = renderAuditOutput(branchResults, options);
+    if (options.outputPath) {
+      writeAuditOutput(options.outputPath, auditOutput, deps);
+      stdout.write(`[branch-protection-audit] Wrote audit output to ${options.outputPath}\n`);
     } else {
-      stdout.write(`${branchResults
-        .map((item) => renderResult(item.result, { ...options, branch: item.branch }))
-        .join('\n')}\n`);
+      stdout.write(`${auditOutput}\n`);
     }
     return success ? 0 : 1;
   } catch (error) {
@@ -1253,6 +1275,8 @@ module.exports = {
   auditResultJson,
   markdownCell,
   renderMarkdown,
+  renderAuditOutput,
+  writeAuditOutput,
   branchesForOptions,
   auditBranches,
   auditBranchProtectionSettings,

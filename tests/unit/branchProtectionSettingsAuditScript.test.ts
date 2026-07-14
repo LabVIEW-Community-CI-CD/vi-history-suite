@@ -50,6 +50,8 @@ const {
   summarizeBranchResults,
   markdownCell,
   renderMarkdown,
+  renderAuditOutput,
+  writeAuditOutput,
   branchesForOptions,
   auditBranches,
   main
@@ -94,6 +96,7 @@ const {
     requireFullHardening: boolean;
     emitJson: boolean;
     emitMarkdown: boolean;
+    outputPath?: string;
     help: boolean;
   };
   usage: () => string;
@@ -198,6 +201,14 @@ const {
     }>,
     options?: { repo?: string }
   ) => string;
+  renderAuditOutput: (
+    branchResults: Array<{
+      branch: string;
+      result: { success: boolean; checks: Array<{ name: string; passed: boolean; details: string }>; notices: string[] };
+    }>,
+    options?: { repo?: string; allBranches?: boolean; emitJson?: boolean; emitMarkdown?: boolean }
+  ) => string;
+  writeAuditOutput: (outputPath: string, content: string, deps?: Record<string, unknown>) => void;
   branchesForOptions: (options?: { branch?: string; allBranches?: boolean }) => string[];
   auditBranches: (options?: Record<string, unknown>, deps?: Record<string, unknown>) => Array<{ branch: string; result: { success: boolean } }>;
   rulesetRuleKeys: (ruleset: unknown) => string[];
@@ -332,12 +343,13 @@ describe('branch protection audit arguments', () => {
       requireFullHardening: false,
       emitJson: false,
       emitMarkdown: false,
+      outputPath: undefined,
       help: false
     });
   });
 
   it('parses repo, branch, all, hardening, output, and help options', () => {
-    expect(parseArgs(['--repo', 'owner/repo', '--branch', 'release/v1.2.3', '--all', '--require-advisory', '--require-review', '--require-linear-history', '--require-conversation-resolution', '--require-signed-commits', '--require-stale-review-dismissal', '--require-code-owner-review', '--require-last-push-approval', '--require-branch-creation-block', '--json'])).toMatchObject({
+    expect(parseArgs(['--repo', 'owner/repo', '--branch', 'release/v1.2.3', '--all', '--require-advisory', '--require-review', '--require-linear-history', '--require-conversation-resolution', '--require-signed-commits', '--require-stale-review-dismissal', '--require-code-owner-review', '--require-last-push-approval', '--require-branch-creation-block', '--json', '--output', 'reports/branch-protection.json'])).toMatchObject({
       repo: 'owner/repo',
       branch: 'release/v1.2.3',
       allBranches: true,
@@ -352,7 +364,8 @@ describe('branch protection audit arguments', () => {
       requireBranchCreationBlock: true,
       requireFullHardening: false,
       emitJson: true,
-      emitMarkdown: false
+      emitMarkdown: false,
+      outputPath: 'reports/branch-protection.json'
     });
     expect(FULL_HARDENING_OPTION_KEYS).toEqual([
       'requireAdvisory',
@@ -394,6 +407,7 @@ describe('branch protection audit arguments', () => {
     expect(usage()).toContain('--require-branch-creation-block');
     expect(usage()).toContain('--require-full-hardening');
     expect(usage()).toContain('--markdown');
+    expect(usage()).toContain('--output <path>');
     expect(branchesForOptions({ allBranches: true })).toEqual(DEFAULT_AUDIT_BRANCHES);
     expect(branchesForOptions({ branch: 'main' })).toEqual(['main']);
   });
@@ -408,6 +422,7 @@ describe('branch protection audit arguments', () => {
     expect(() => parseArgs(['--repo', 'owner'])).toThrow(/owner\/repo/);
     expect(() => parseArgs(['--branch', 'bad branch'])).toThrow(/without spaces/);
     expect(() => parseArgs(['--json', '--markdown'])).toThrow(/either --json or --markdown/);
+    expect(() => parseArgs(['--output'])).toThrow(/requires a value/);
     expect(() => parseArgs(['--bogus'])).toThrow(/Unknown argument/);
   });
 });
@@ -881,6 +896,28 @@ describe('branch protection audit evaluation', () => {
     expect(renderMarkdown([{ branch: 'main', result: failingResult }], { repo: DEFAULT_REPO })).toContain(
       '| main | advisory status check contexts | missing: Requirements CSV Integrity, CodeQL; present: Build, Test, Package, Integration Host (Linux), Windows Unit Tests |'
     );
+  });
+
+  it('renders and writes audit output for file evidence consumers', () => {
+    const passingResult = evaluateBranchProtection({ protection: protection(), rulesets: branchRulesets() });
+    const branchResults = [{ branch: 'develop', result: passingResult }];
+    const mkdirSync = vi.fn();
+    const writeFileSync = vi.fn();
+
+    expect(renderAuditOutput(branchResults, { repo: DEFAULT_REPO, emitMarkdown: true })).toBe(
+      renderMarkdown(branchResults, { repo: DEFAULT_REPO })
+    );
+    expect(JSON.parse(renderAuditOutput(branchResults, { repo: DEFAULT_REPO, emitJson: true }))).toMatchObject({
+      schemaVersion: 1,
+      repo: DEFAULT_REPO,
+      branch: 'develop',
+      success: true
+    });
+
+    writeAuditOutput('evidence/branch-protection.md', 'audit body', { mkdirSync, writeFileSync });
+
+    expect(mkdirSync).toHaveBeenCalledWith('evidence', { recursive: true });
+    expect(writeFileSync).toHaveBeenCalledWith('evidence/branch-protection.md', 'audit body\n', 'utf8');
   });
 
   it('fails closed when expected active branch rulesets drift', () => {
@@ -1953,6 +1990,90 @@ describe('branch protection audit main', () => {
     expect(output).toContain('| main | PASS | 33/33 | 0 | 3 |');
     expect(output).toContain('No failures.');
     expect(() => JSON.parse(output)).toThrow();
+  });
+
+  it('writes Markdown evidence to an output file when requested', () => {
+    const stdout = captureWrite();
+    const stderr = captureWrite();
+    const mkdirSync = vi.fn();
+    const writeFileSync = vi.fn();
+    const spawnSync = vi.fn((command: string, args: string[]) => {
+      const resource = args[1].includes('/rulesets') ? branchRulesetResource(args[1]) : protection();
+      return { status: 0, stdout: JSON.stringify(resource), stderr: '' };
+    });
+
+    const exitCode = main(['--all', '--markdown', '--output', 'evidence/branch-protection.md'], {
+      spawnSync,
+      stdout: stdout.stream,
+      stderr: stderr.stream,
+      mkdirSync,
+      writeFileSync
+    });
+
+    expect(exitCode).toBe(0);
+    expect(stderr.read()).toBe('');
+    expect(stdout.read()).toBe('[branch-protection-audit] Wrote audit output to evidence/branch-protection.md\n');
+    expect(mkdirSync).toHaveBeenCalledWith('evidence', { recursive: true });
+    expect(writeFileSync).toHaveBeenCalledTimes(1);
+    expect(writeFileSync).toHaveBeenCalledWith(
+      'evidence/branch-protection.md',
+      expect.stringContaining('## Branch Protection Audit'),
+      'utf8'
+    );
+    expect(writeFileSync.mock.calls[0][1]).toContain('| develop | PASS | 33/33 | 0 | 3 |');
+    expect(writeFileSync.mock.calls[0][1]).toContain('| main | PASS | 33/33 | 0 | 3 |');
+  });
+
+  it('writes failing JSON evidence before returning a nonzero audit status', () => {
+    const stdout = captureWrite();
+    const stderr = captureWrite();
+    const mkdirSync = vi.fn();
+    const writeFileSync = vi.fn();
+    const spawnSync = vi.fn((command: string, args: string[]) => {
+      const resource = args[1].includes('/rulesets') ? branchRulesetResource(args[1]) : protection();
+      return { status: 0, stdout: JSON.stringify(resource), stderr: '' };
+    });
+
+    const exitCode = main(['--all', '--json', '--require-advisory', '--output', 'evidence/branch-protection.json'], {
+      spawnSync,
+      stdout: stdout.stream,
+      stderr: stderr.stream,
+      mkdirSync,
+      writeFileSync
+    });
+    const output = JSON.parse(writeFileSync.mock.calls[0][1]) as {
+      success: boolean;
+      summary: { failedBranches: number; failedChecks: number };
+    };
+
+    expect(exitCode).toBe(1);
+    expect(stderr.read()).toBe('');
+    expect(stdout.read()).toBe('[branch-protection-audit] Wrote audit output to evidence/branch-protection.json\n');
+    expect(output).toMatchObject({ success: false, summary: { failedBranches: 2, failedChecks: 2 } });
+  });
+
+  it('returns nonzero when the requested output file cannot be written', () => {
+    const stdout = captureWrite();
+    const stderr = captureWrite();
+    const spawnSync = vi.fn((command: string, args: string[]) => {
+      const resource = args[1].includes('/rulesets') ? branchRulesetResource(args[1]) : protection();
+      return { status: 0, stdout: JSON.stringify(resource), stderr: '' };
+    });
+    const writeFileSync = vi.fn(() => {
+      throw new Error('disk full');
+    });
+
+    const exitCode = main(['--output', 'evidence/branch-protection.txt'], {
+      spawnSync,
+      stdout: stdout.stream,
+      stderr: stderr.stream,
+      mkdirSync: vi.fn(),
+      writeFileSync
+    });
+
+    expect(exitCode).toBe(1);
+    expect(stdout.read()).toBe('');
+    expect(stderr.read()).toBe('disk full\n');
   });
 
   it('returns nonzero when advisory contexts are required but absent', () => {
