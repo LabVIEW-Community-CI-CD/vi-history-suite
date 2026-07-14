@@ -83,6 +83,7 @@ type ProtectionOverrides = {
   enforceAdmins?: boolean;
   allowForcePushes?: boolean;
   allowDeletions?: boolean;
+  lockBranch?: boolean;
   requiredApprovingReviewCount?: number;
   requiredLinearHistory?: boolean;
   requiredConversationResolution?: boolean;
@@ -104,6 +105,7 @@ function protection(overrides: ProtectionOverrides = {}) {
     enforce_admins: { enabled: overrides.enforceAdmins ?? true },
     allow_force_pushes: { enabled: overrides.allowForcePushes ?? false },
     allow_deletions: { enabled: overrides.allowDeletions ?? false },
+    lock_branch: { enabled: overrides.lockBranch ?? false },
     required_linear_history: { enabled: overrides.requiredLinearHistory ?? false },
     required_conversation_resolution: { enabled: overrides.requiredConversationResolution ?? false },
     required_signatures: { enabled: overrides.requiredSignedCommits ?? false },
@@ -236,6 +238,7 @@ describe('branch protection audit evaluation', () => {
       'admin enforcement',
       'force pushes disabled',
       'branch deletions disabled',
+      'branch lock disabled',
       'active branch rulesets'
     ]);
     expect(result.notices).toContain('advisory checks not branch-protection-required: Requirements CSV Integrity, CodeQL');
@@ -255,7 +258,8 @@ describe('branch protection audit evaluation', () => {
         contexts: ['Build, Test, Package'],
         enforceAdmins: false,
         allowForcePushes: true,
-        allowDeletions: true
+        allowDeletions: true,
+        lockBranch: true
       }),
       rulesets: []
     });
@@ -267,6 +271,7 @@ describe('branch protection audit evaluation', () => {
       'admin enforcement',
       'force pushes disabled',
       'branch deletions disabled',
+      'branch lock disabled',
       'active branch rulesets'
     ]);
     expect(renderResult(result, { repo: DEFAULT_REPO, branch: DEFAULT_BRANCH })).toContain(
@@ -597,7 +602,7 @@ describe('branch protection audit main', () => {
       branch: DEFAULT_BRANCH,
       success: true
     });
-    expect(output.checks).toHaveLength(6);
+    expect(output.checks).toHaveLength(7);
     expect(output.notices.length).toBeGreaterThan(0);
     expect(output.branches).toBeUndefined();
   });
