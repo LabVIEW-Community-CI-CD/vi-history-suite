@@ -50,6 +50,7 @@ const {
   summarizeAuditResult,
   summarizeBranchResults,
   markdownCell,
+  markdownCodeSpan,
   outputModeForOptions,
   generatedAtForProvenance,
   buildAuditProvenance,
@@ -202,6 +203,7 @@ const {
     failures: Array<{ branch: string; name: string; details: string }>;
   };
   markdownCell: (value: unknown) => string;
+  markdownCodeSpan: (value: unknown) => string;
   outputModeForOptions: (options?: { emitJson?: boolean; emitMarkdown?: boolean }) => string;
   generatedAtForProvenance: (deps?: { now?: () => Date | string; generatedAt?: Date | string }) => string;
   buildAuditProvenance: (
@@ -897,6 +899,8 @@ describe('branch protection audit evaluation', () => {
     );
 
     expect(markdownCell('branch\\with|pipe\nnewline')).toBe('branch\\\\with\\|pipe newline');
+    expect(markdownCodeSpan('branch\\with|pipe\nnewline')).toBe('`branch\\with|pipe newline`');
+    expect(markdownCodeSpan('branch`with`ticks')).toBe('``branch`with`ticks``');
     expect(renderMarkdown([{ branch: 'develop', result: passingResult }], { repo: DEFAULT_REPO })).toBe([
       '## Branch Protection Audit',
       '',
@@ -971,6 +975,10 @@ describe('branch protection audit evaluation', () => {
       '- Output: `markdown`',
       '- Audit argv: `["--all","--markdown","--include-provenance"]`'
     ]);
+    expect(provenanceMarkdownLines({
+      ...provenance,
+      argv: ['--output', 'evidence\\branch-protection|audit.md']
+    })).toContain('- Audit argv: `["--output","evidence\\\\branch-protection|audit.md"]`');
     expect(renderMarkdown(branchResults, { repo: DEFAULT_REPO, provenance })).toContain('- Generated: `2026-07-14T12:00:00.000Z`');
     expect(renderTextProvenance(provenance)).toBe([
       '[branch-protection-audit] Provenance',

@@ -1095,6 +1095,14 @@ function markdownCell(value) {
   return String(value ?? '').replace(/\r?\n/gu, ' ').replace(/\\/gu, '\\\\').replace(/\|/gu, '\\|');
 }
 
+function markdownCodeSpan(value) {
+  const content = String(value ?? '').replace(/\r?\n/gu, ' ');
+  const longestBacktickRun = Math.max(0, ...Array.from(content.matchAll(/`+/gu), (match) => match[0].length));
+  const fence = '`'.repeat(longestBacktickRun + 1);
+  const paddedContent = content.startsWith('`') || content.endsWith('`') ? ` ${content} ` : content;
+  return `${fence}${paddedContent}${fence}`;
+}
+
 function outputModeForOptions(options = {}) {
   if (options.emitJson) return 'json';
   if (options.emitMarkdown) return 'markdown';
@@ -1125,9 +1133,9 @@ function buildAuditProvenance(branchResults, options = {}, deps = {}) {
 function provenanceMarkdownLines(provenance) {
   if (!provenance) return [];
   return [
-    `- Generated: \`${markdownCell(provenance.generatedAt)}\``,
-    `- Output: \`${markdownCell(provenance.outputMode)}\``,
-    `- Audit argv: \`${markdownCell(JSON.stringify(provenance.argv))}\``
+    `- Generated: ${markdownCodeSpan(provenance.generatedAt)}`,
+    `- Output: ${markdownCodeSpan(provenance.outputMode)}`,
+    `- Audit argv: ${markdownCodeSpan(JSON.stringify(provenance.argv))}`
   ];
 }
 
@@ -1355,6 +1363,7 @@ module.exports = {
   summarizeBranchResults,
   auditResultJson,
   markdownCell,
+  markdownCodeSpan,
   outputModeForOptions,
   generatedAtForProvenance,
   buildAuditProvenance,
