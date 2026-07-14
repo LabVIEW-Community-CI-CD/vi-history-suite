@@ -644,7 +644,7 @@ describe('multi standards audit script', () => {
     expect(renderStandardsScoreFileLegend(legend)).toContain('| release-gate | release-gate\\\\target\\|score.json |');
   });
 
-  it('renders standards coverage matrix without duplicate score-file paths', () => {
+  it('groups standards coverage matrix rows with identical area scores', () => {
     const lines = renderStandardsCoverageMatrix([
       {
         profile: 'quick-triage',
@@ -656,12 +656,24 @@ describe('multi standards audit script', () => {
           CM: { score: 5, confidence: 'High', standards: ['10007', '12207'] },
           DOC: { score: 5, confidence: 'High', standards: ['15289', '26514'] }
         }
+      },
+      {
+        profile: 'release-gate',
+        scoreFile: 'release-gate/target/score.json',
+        areas: {
+          REQ: { score: 5, confidence: 'High', standards: ['29148'] },
+          ARCH: { score: 5, confidence: 'High', standards: ['42010'] },
+          TEST: { score: 5, confidence: 'High', standards: ['29119-2', '29119-3'] },
+          CM: { score: 5, confidence: 'High', standards: ['10007', '12207'] },
+          DOC: { score: 5, confidence: 'High', standards: ['15289', '26514'] }
+        }
       }
     ]);
 
-    expect(lines).toContain('| Profile | REQ | ARCH | TEST | CM | DOC |');
-    expect(lines).toContain('| quick-triage | 5/5 High (29148) | 5/5 High (42010) | 5/5 High (29119-2/29119-3) | 5/5 High (10007/12207) | 5/5 High (15289/26514) |');
+    expect(lines).toContain('| Profiles | REQ | ARCH | TEST | CM | DOC |');
+    expect(lines).toContain('| quick-triage, release-gate | 5/5 High (29148) | 5/5 High (42010) | 5/5 High (29119-2/29119-3) | 5/5 High (10007/12207) | 5/5 High (15289/26514) |');
     expect(lines.join('\n')).not.toContain('quick-triage/target/score.json');
+    expect(lines).toHaveLength(3);
   });
 
   it('groups retained standards evidence score files by contributing profile', () => {
@@ -854,9 +866,8 @@ describe('multi standards audit script', () => {
     expect(result.markdown).toContain('External user information: ok (0 finding(s), 1 checked path(s))');
     expect(result.markdown).toContain('quick-triage: coverage=PASS(High), cm=PASS(High), req=PASS(High), arch=PASS(High), doc=PASS(High), dod=PASS(Med)');
     expect(result.markdown).toContain('## Standards Coverage Matrix');
-    expect(result.markdown).toContain('| Profile | REQ | ARCH | TEST | CM | DOC |');
-    expect(result.markdown).toContain('| quick-triage | 5/5 High (29148) | 5/5 High (42010) | 5/5 High (29119-2/29119-3) | 5/5 High (10007/12207) | 5/5 High (15289/26514) |');
-    expect(result.markdown).toContain('| portfolio-review | 5/5 High (29148) | 5/5 High (42010) | 5/5 High (29119-2/29119-3) | 5/5 High (10007/12207) | 5/5 High (15289/26514) |');
+    expect(result.markdown).toContain('| Profiles | REQ | ARCH | TEST | CM | DOC |');
+    expect(result.markdown).toContain('| quick-triage, release-gate, 26514-review, due-diligence, compliance-uplift, portfolio-review | 5/5 High (29148) | 5/5 High (42010) | 5/5 High (29119-2/29119-3) | 5/5 High (10007/12207) | 5/5 High (15289/26514) |');
     expect(result.markdown).toContain('## Standards Score File Legend');
     expect(result.markdown).toContain('| portfolio-review | portfolio-review/repos/target/score.json |');
     expect(result.markdown).toContain('## Standards Evidence Summary');
