@@ -62,6 +62,7 @@ const {
     name: string;
     ruleCount: number;
     ruleTypes: string[];
+    refNameExclusions: string[];
     bypassActorCount: number;
     currentUserCanBypass: string;
   }>;
@@ -307,6 +308,7 @@ describe('branch protection audit evaluation', () => {
       'active branch ruleset rules',
       'unexpected active branch ruleset rules',
       'duplicate active branch ruleset rules',
+      'active branch ruleset ref exclusions',
       'active branch ruleset bypasses disabled'
     ]);
     expect(result.notices).toContain('advisory checks not branch-protection-required: Requirements CSV Integrity, CodeQL');
@@ -342,6 +344,10 @@ describe('branch protection audit evaluation', () => {
       passed: true,
       details: 'none'
     });
+    expect(result.checks.find((check) => check.name === 'active branch ruleset ref exclusions')).toMatchObject({
+      passed: true,
+      details: 'none'
+    });
     expect(result.checks.find((check) => check.name === 'unexpected required status check contexts')).toMatchObject({
       passed: true,
       details: 'none beyond: Build, Test, Package, Windows Unit Tests, Integration Host (Linux)'
@@ -359,6 +365,7 @@ describe('branch protection audit evaluation', () => {
         name: 'develop',
         ruleCount: 2,
         ruleTypes: ['deletion', 'non_fast_forward'],
+        refNameExclusions: [],
         bypassActorCount: 0,
         currentUserCanBypass: 'never'
       }
@@ -590,6 +597,23 @@ describe('branch protection audit evaluation', () => {
     expect(result.checks.find((check) => check.name === 'duplicate active branch ruleset rules')).toMatchObject({
       passed: false,
       details: 'develop duplicates: deletion (2); observed: deletion, deletion, non_fast_forward'
+    });
+  });
+
+  it('fails closed when active branch rulesets exclude refs', () => {
+    const [developRuleset, mainRuleset] = branchRulesets();
+    const result = evaluateBranchProtection({
+      protection: protection(),
+      rulesets: [
+        { ...developRuleset, conditions: { ref_name: { include: ['~DEFAULT_BRANCH'], exclude: ['refs/heads/release/*'] } } },
+        mainRuleset
+      ]
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.checks.find((check) => check.name === 'active branch ruleset ref exclusions')).toMatchObject({
+      passed: false,
+      details: 'develop excludes: refs/heads/release/*'
     });
   });
 
@@ -909,7 +933,7 @@ describe('branch protection audit main', () => {
       branch: DEFAULT_BRANCH,
       success: true
     });
-    expect(output.checks).toHaveLength(20);
+    expect(output.checks).toHaveLength(21);
     expect(output.notices.length).toBeGreaterThan(0);
     expect(output.branches).toBeUndefined();
   });

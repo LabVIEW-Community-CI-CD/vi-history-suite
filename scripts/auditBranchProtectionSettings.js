@@ -268,6 +268,14 @@ function requiredStatusCheckAppBindings(protection) {
     .sort((left, right) => left.context.localeCompare(right.context));
 }
 
+function rulesetRefNameExclusions(ruleset) {
+  const conditions = ruleset && ruleset.conditions;
+  const refName = conditions && conditions.ref_name;
+  return (Array.isArray(refName && refName.exclude) ? refName.exclude : [])
+    .map((pattern) => String(pattern))
+    .sort();
+}
+
 function activeRulesetSummaries(rulesets) {
   return (Array.isArray(rulesets) ? rulesets : [])
     .filter((ruleset) => ruleset && ruleset.enforcement === 'active' && ruleset.target === 'branch')
@@ -275,6 +283,7 @@ function activeRulesetSummaries(rulesets) {
       name: String(ruleset.name || '(unnamed)'),
       ruleCount: Array.isArray(ruleset.rules) ? ruleset.rules.length : 0,
       ruleTypes: rulesetRuleTypes(ruleset),
+      refNameExclusions: rulesetRefNameExclusions(ruleset),
       bypassActorCount: Array.isArray(ruleset.bypass_actors) ? ruleset.bypass_actors.length : 0,
       currentUserCanBypass: String(ruleset.current_user_can_bypass || 'unknown')
     }));
@@ -379,6 +388,9 @@ function evaluateBranchProtection(settings, options = {}) {
       };
     })
     .filter((item) => item.duplicateRuleTypes.length > 0);
+  const rulesetsWithRefExclusions = expectedActiveBranchRulesets
+    .map((name) => activeRulesetsByName.get(name))
+    .filter((ruleset) => ruleset && ruleset.refNameExclusions.length > 0);
   const bypassableRulesets = expectedActiveBranchRulesets
     .map((name) => activeRulesetsByName.get(name))
     .filter((ruleset) => ruleset && (ruleset.bypassActorCount > 0 || ruleset.currentUserCanBypass !== 'never'));
@@ -507,6 +519,15 @@ function evaluateBranchProtection(settings, options = {}) {
         ? 'none'
         : rulesetsWithDuplicateRuleTypes
           .map((item) => `${item.name} duplicates: ${formatDuplicateNameCounts(item.duplicateRuleTypes)}; observed: ${item.observedRuleTypes.join(', ') || 'none'}`)
+          .join('; ')
+    },
+    {
+      name: 'active branch ruleset ref exclusions',
+      passed: rulesetsWithRefExclusions.length === 0,
+      details: rulesetsWithRefExclusions.length === 0
+        ? 'none'
+        : rulesetsWithRefExclusions
+          .map((ruleset) => `${ruleset.name} excludes: ${ruleset.refNameExclusions.join(', ')}`)
           .join('; ')
     },
     {
