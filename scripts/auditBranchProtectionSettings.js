@@ -1047,12 +1047,27 @@ function renderResult(result, options = {}) {
   return lines.join('\n');
 }
 
+function checkIdForName(name) {
+  return String(name || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/gu, '-')
+    .replace(/^-|-$/gu, '') || 'unnamed-check';
+}
+
+function checkResultJson(check) {
+  return {
+    ...check,
+    id: check && check.id ? String(check.id) : checkIdForName(check && check.name)
+  };
+}
+
 function summarizeAuditResult(result) {
   const checks = Array.isArray(result && result.checks) ? result.checks : [];
   const notices = Array.isArray(result && result.notices) ? result.notices : [];
   const failures = checks
     .filter((check) => !check.passed)
-    .map((check) => ({ name: check.name, details: check.details }));
+    .map((check) => ({ checkId: checkIdForName(check.name), name: check.name, details: check.details }));
   return {
     totalChecks: checks.length,
     passedChecks: checks.length - failures.length,
@@ -1086,7 +1101,9 @@ function summarizeBranchResults(branchResults) {
 function auditResultJson(item) {
   return {
     branch: item.branch,
-    ...item.result,
+    success: item.result.success,
+    checks: Array.isArray(item.result.checks) ? item.result.checks.map(checkResultJson) : [],
+    notices: Array.isArray(item.result.notices) ? item.result.notices : [],
     summary: summarizeAuditResult(item.result)
   };
 }
@@ -1184,9 +1201,9 @@ function renderMarkdown(branchResults, options = {}) {
   if (summary.failures.length === 0) {
     lines.push('', 'No failures.');
   } else {
-    lines.push('', '### Failures', '', '| Branch | Check | Details |', '| --- | --- | --- |');
+    lines.push('', '### Failures', '', '| Branch | Check ID | Check | Details |', '| --- | --- | --- | --- |');
     for (const failure of summary.failures) {
-      lines.push(`| ${markdownCell(failure.branch)} | ${markdownCell(failure.name)} | ${markdownCell(failure.details)} |`);
+      lines.push(`| ${markdownCell(failure.branch)} | ${markdownCell(failure.checkId)} | ${markdownCell(failure.name)} | ${markdownCell(failure.details)} |`);
     }
   }
 
@@ -1359,6 +1376,8 @@ module.exports = {
   rulesetRuleTypes,
   evaluateBranchProtection,
   renderResult,
+  checkIdForName,
+  checkResultJson,
   summarizeAuditResult,
   summarizeBranchResults,
   auditResultJson,
