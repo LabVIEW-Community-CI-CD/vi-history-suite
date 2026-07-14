@@ -467,8 +467,8 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain('Coverage Traceability Map');
     expect(testPlan).toContain('npm run coverage:map');
     expect(testPlan).toContain('Criterion Closure Docket');
-    expect(testPlan).toContain('504/513 criterion-level citations');
-    expect(testPlan).toContain('9 uncited');
+    expect(testPlan).toContain('505/513 criterion-level citations');
+    expect(testPlan).toContain('8 uncited');
     expect(testPlan).toContain('`exact-testable`');
     expect(testPlan).toContain('`needs-new-behavior-test`');
     expect(testPlan).toContain('`manual/process`');
@@ -485,10 +485,11 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).not.toContain(`\`${['VHS-REQ-659', '7'].join('.')}\``);
     expect(testPlan).not.toContain(`\`${['VHS-REQ-659', '12'].join('.')}\``);
     expect(testPlan).not.toContain(`\`${['VHS-REQ-659', '15'].join('.')}\``);
+    expect(testPlan).not.toContain(`\`${['VHS-REQ-615', '2'].join('.')}\``);
     expect(testPlan).toContain(`\`${['VHS-REQ-656', '5'].join('.')}\``);
     expect(testPlan).toContain(`\`${['VHS-REQ-644', '2'].join('.')}\``);
     expect(testPlan).toContain('Final advisory disposition for issue #1005');
-    expect(testPlan).toContain('the remaining 9 uncited criteria are');
+    expect(testPlan).toContain('the remaining 8 uncited criteria are');
     expect(testPlan).toContain('Keep criterion-linkage enforcement advisory');
     expect(testPlan).toContain('Open child behavior/product-decision issues');
     expect(testPlan).toContain('Recommended implementation order');
@@ -690,12 +691,13 @@ describe('requirements documentation coherence', () => {
     expect(harnessTestRow?.Notes).toContain('VHS-REQ-614');
   });
 
-  it('keeps Definition-of-Done operating requirement traceable for VHS-REQ-615 (VHS-REQ-615.8)', () => {
+  it('keeps Definition-of-Done operating requirement traceable for VHS-REQ-615 (VHS-REQ-615.2, VHS-REQ-615.8)', () => {
     const readme = readRepoText('docs', 'requirements', 'README.md');
     const maintainerOperations = readRepoText('docs', 'maintainer-operations.md');
     const cmPlan = readRepoText('docs', 'cm', 'cm-plan.md');
     const srs = readRepoText('docs', 'requirements', 'srs.md');
     const testPlan = readRepoText('docs', 'testing', 'test-plan.md');
+    const prTemplate = readRepoText('.github', 'pull_request_template.md');
     const troubleshooting = readRepoText('TROUBLESHOOTING.md');
     const packageJson = JSON.parse(readRepoText('package.json')) as {
       scripts: Record<string, string>;
@@ -759,6 +761,7 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain('.github/pull_request_template.md; docs/maintainer-operations.md');
     expect(testPlan).toContain('docs/requirements/traceability-inventory.csv');
     expect(testPlan).toContain('lightweight evidence surface');
+    expect(testPlan).toContain('name the linked issue with `Refs #...` unless');
     expect(testPlan).toContain('target requirement');
     expect(testPlan).toContain('validation commands');
     expect(testPlan).toContain('traceability/RTM impact');
@@ -782,6 +785,8 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain('non-retryable');
     expect(testPlan).toContain('hosted `DoD Gate / dod` enforcement in `.github/workflows/ci.yml`');
     expect(testPlan).toContain('release-evidence/release-evidence-contract.json');
+    expect(prTemplate).toContain('Linked issue (required):** `Refs #<issue>`');
+    expect(prTemplate).not.toContain('Closes #<issue>');
     expect(maintainerOperations).toContain('## Non-Interactive Closeout Authentication');
     expect(maintainerOperations).toContain('GIT_ASKPASS');
     expect(maintainerOperations).toContain('docker login registry.gitlab.com');
