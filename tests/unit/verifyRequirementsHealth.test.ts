@@ -9,11 +9,16 @@ const {
   aggregateRequirementHealth,
   summarizeRequirementHealth,
   parseArgs,
+  outputModeForOptions,
+  generatedAtForProvenance,
+  buildRequirementsHealthProvenance,
+  renderTextProvenance,
   resolveOutputPath,
   writeRequirementsHealthOutput,
   verifyRequirementsHealth,
   renderSummary,
   renderStepSummary,
+  renderRequirementsHealthOutput,
   main
 } = require('../../scripts/verifyRequirementsHealth.js') as {
   ATTENTION_REASON_IDS: { unlinked: string; uncitedCriteria: string; coverageRisk: string };
@@ -53,14 +58,36 @@ const {
   parseArgs: (argv?: string[]) => {
     json: boolean;
     strict: boolean;
+    includeProvenance: boolean;
     outputPath?: string;
     positionals: string[];
   };
+  outputModeForOptions: (options?: { json?: boolean }) => string;
+  generatedAtForProvenance: (deps?: { now?: () => Date | string; generatedAt?: Date | string }) => string;
+  buildRequirementsHealthProvenance: (
+    options?: { cwd?: string; json?: boolean; strict?: boolean },
+    deps?: { cwd?: string; now?: () => Date | string; generatedAt?: Date | string; argv?: string[] }
+  ) => { generatedAt: string; cwd: string; outputMode: string; strict: boolean; argv: string[] };
+  renderTextProvenance: (provenance?: {
+    generatedAt: string;
+    cwd: string;
+    outputMode: string;
+    strict: boolean;
+    argv: string[];
+  }) => string;
   resolveOutputPath: (outputPath: string, deps?: { cwd?: string }) => string;
   writeRequirementsHealthOutput: (outputPath: string, content: string, deps?: Record<string, unknown>) => void;
   verifyRequirementsHealth: (cwd?: string, deps?: Record<string, unknown>) => Record<string, unknown>;
   renderSummary: (result: unknown) => string;
   renderStepSummary: (result: unknown) => string;
+  renderRequirementsHealthOutput: (
+    result: Record<string, unknown>,
+    options?: {
+      json?: boolean;
+      strict?: boolean;
+      provenance?: { generatedAt: string; cwd: string; outputMode: string; strict: boolean; argv: string[] };
+    }
+  ) => string;
   main: (argv?: string[], deps?: Record<string, unknown>) => number;
 };
 
@@ -262,10 +289,13 @@ describe('requirement verification health (VHS-REQ-601)', () => {
     });
   });
 
-  it('parses output arguments without treating the output path as the target repository', () => {
-    expect(parseArgs(['--json', '--strict', '--output', 'evidence/requirements.json', '/repo'])).toEqual({
+  it('parses output and provenance arguments without treating the output path as the target repository', () => {
+    expect(
+      parseArgs(['--json', '--strict', '--include-provenance', '--output', 'evidence/requirements.json', '/repo'])
+    ).toEqual({
       json: true,
       strict: true,
+      includeProvenance: true,
       outputPath: 'evidence/requirements.json',
       positionals: ['/repo']
     });
@@ -294,6 +324,38 @@ describe('requirement verification health (VHS-REQ-601)', () => {
 
     expect(mkdirCalls).toEqual([[path.dirname(resolvedOutput), { recursive: true }]]);
     expect(writeCalls).toEqual([[resolvedOutput, '{"healthy":true}\n', 'utf8']]);
+  });
+
+  it('renders deterministic provenance for retained requirements health evidence', () => {
+    const provenance = buildRequirementsHealthProvenance(
+      { cwd: '/repo', json: true, strict: true },
+      {
+        now: () => new Date('2026-07-14T12:00:00.000Z'),
+        argv: ['--json', '--strict', '--include-provenance']
+      }
+    );
+
+    expect(outputModeForOptions({ json: true })).toBe('json');
+    expect(outputModeForOptions()).toBe('text');
+    expect(generatedAtForProvenance({ generatedAt: new Date('2026-07-14T12:00:00.000Z') })).toBe(
+      '2026-07-14T12:00:00.000Z'
+    );
+    expect(provenance).toEqual({
+      generatedAt: '2026-07-14T12:00:00.000Z',
+      cwd: path.resolve('/repo'),
+      outputMode: 'json',
+      strict: true,
+      argv: ['--json', '--strict', '--include-provenance']
+    });
+    expect(renderTextProvenance(provenance)).toBe([
+      '[requirements-verify] Provenance',
+      'generatedAt: 2026-07-14T12:00:00.000Z',
+      `cwd: ${path.resolve('/repo')}`,
+      'outputMode: json',
+      'strict: true',
+      'argv: ["--json","--strict","--include-provenance"]',
+      ''
+    ].join('\n'));
   });
 
   it('reports ATTENTION when criterion citations are missing despite clean linkage and coverage (VHS-REQ-601)', () => {
@@ -417,6 +479,54 @@ describe('requirement verification health (VHS-REQ-601)', () => {
     ]);
   });
 
+  it('main includes provenance in retained JSON output when requested', () => {
+    const stdoutChunks: string[] = [];
+    const writeCalls: unknown[] = [];
+
+    const code = main(['--json', '--include-provenance', '--output', 'evidence/requirements-health.json'], {
+      ...OUTPUT_FIXTURE,
+      cwd: '/repo',
+      now: () => new Date('2026-07-14T12:00:00.000Z'),
+      stdout: { write: (chunk: string) => stdoutChunks.push(chunk) },
+      mkdirSync: () => undefined,
+      writeFileSync: (...args: unknown[]) => writeCalls.push(args)
+    });
+
+    const output = JSON.parse(String((writeCalls[0] as unknown[])[1])) as {
+      provenance: { generatedAt: string; cwd: string; outputMode: string; strict: boolean; argv: string[] };
+      summary: { status: string };
+    };
+    expect(code).toBe(0);
+    expect(stdoutChunks.join('')).toBe(
+      '[requirements-verify] Wrote report output to evidence/requirements-health.json\n'
+    );
+    expect(output.provenance).toEqual({
+      generatedAt: '2026-07-14T12:00:00.000Z',
+      cwd: path.resolve('/repo'),
+      outputMode: 'json',
+      strict: false,
+      argv: ['--json', '--include-provenance', '--output', 'evidence/requirements-health.json']
+    });
+    expect(output.summary.status).toBe('ATTENTION');
+  });
+
+  it('main includes provenance in text output when requested', () => {
+    const stdoutChunks: string[] = [];
+
+    const code = main(['--strict', '--include-provenance'], {
+      ...OUTPUT_FIXTURE,
+      cwd: '/repo',
+      now: () => new Date('2026-07-14T12:00:00.000Z'),
+      stdout: { write: (chunk: string) => stdoutChunks.push(chunk) }
+    });
+
+    expect(code).toBe(1);
+    expect(stdoutChunks.join('')).toContain('[requirements-verify] Provenance');
+    expect(stdoutChunks.join('')).toContain('outputMode: text');
+    expect(stdoutChunks.join('')).toContain('strict: true');
+    expect(stdoutChunks.join('')).toContain('[requirements-verify] Strict mode: FAILING');
+  });
+
   it('main rejects unsafe retained output paths', () => {
     const stdoutChunks: string[] = [];
     const stderrChunks: string[] = [];
@@ -498,6 +608,17 @@ describe('requirement verification health (VHS-REQ-601)', () => {
       reasonCounts: { structuralIntegrity: 0, unlinked: 1, uncitedCriteria: 1, coverageRisk: 1 },
       unavailableSignals: []
     });
+  });
+
+  it('keeps provenance out of default JSON unless requested', () => {
+    const result = verifyRequirementsHealth('/repo', OUTPUT_FIXTURE);
+    const output = JSON.parse(renderRequirementsHealthOutput(result, { json: true })) as {
+      provenance?: unknown;
+      summary: { status: string };
+    };
+
+    expect(output.provenance).toBeUndefined();
+    expect(output.summary.status).toBe('ATTENTION');
   });
 
   it('verifies the real repository aggregate is healthy', () => {

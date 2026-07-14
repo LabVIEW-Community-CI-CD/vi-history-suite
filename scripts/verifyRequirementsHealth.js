@@ -188,7 +188,13 @@ function summarizeRequirementHealth(result) {
 }
 
 function parseArgs(argv = []) {
-  const options = { json: false, strict: false, outputPath: undefined, positionals: [] };
+  const options = {
+    json: false,
+    strict: false,
+    includeProvenance: false,
+    outputPath: undefined,
+    positionals: []
+  };
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
     const next = () => {
@@ -202,11 +208,50 @@ function parseArgs(argv = []) {
 
     if (arg === '--json') options.json = true;
     else if (arg === '--strict') options.strict = true;
+    else if (arg === '--include-provenance') options.includeProvenance = true;
     else if (arg === '--output') options.outputPath = next();
     else if (arg.startsWith('--')) throw new Error(`Unknown argument: ${arg}`);
     else options.positionals.push(arg);
   }
   return options;
+}
+
+function outputModeForOptions(options = {}) {
+  return options.json ? 'json' : 'text';
+}
+
+function generatedAtForProvenance(deps = {}) {
+  if (typeof deps.now === 'function') {
+    const now = deps.now();
+    return now instanceof Date ? now.toISOString() : String(now);
+  }
+  if (deps.generatedAt !== undefined) {
+    return deps.generatedAt instanceof Date ? deps.generatedAt.toISOString() : String(deps.generatedAt);
+  }
+  return new Date().toISOString();
+}
+
+function buildRequirementsHealthProvenance(options = {}, deps = {}) {
+  return {
+    generatedAt: generatedAtForProvenance(deps),
+    cwd: path.resolve(options.cwd || deps.cwd || process.cwd()),
+    outputMode: outputModeForOptions(options),
+    strict: Boolean(options.strict),
+    argv: Array.isArray(deps.argv) ? [...deps.argv] : []
+  };
+}
+
+function renderTextProvenance(provenance) {
+  if (!provenance) return '';
+  return [
+    '[requirements-verify] Provenance',
+    `generatedAt: ${provenance.generatedAt}`,
+    `cwd: ${provenance.cwd}`,
+    `outputMode: ${provenance.outputMode}`,
+    `strict: ${provenance.strict}`,
+    `argv: ${JSON.stringify(provenance.argv)}`,
+    ''
+  ].join('\n');
 }
 
 function resolveOutputPath(outputPath, deps = {}) {
@@ -397,6 +442,14 @@ function renderStepSummary(result) {
   return lines.join('\n');
 }
 
+function renderRequirementsHealthOutput(result, options = {}) {
+  const provenance = options.provenance ? { provenance: options.provenance } : {};
+  if (options.json) {
+    return JSON.stringify({ ...result, ...provenance }, null, 2);
+  }
+  return `${renderTextProvenance(options.provenance)}${renderSummary(result, { strict: options.strict })}`;
+}
+
 function main(argv = process.argv.slice(2), deps = {}) {
   const stdout = deps.stdout || process.stdout;
   const stderr = deps.stderr || process.stderr;
@@ -404,6 +457,7 @@ function main(argv = process.argv.slice(2), deps = {}) {
     const parsed = parseArgs(argv);
     const asJson = deps.json ?? parsed.json;
     const strict = deps.strict ?? parsed.strict;
+    const includeProvenance = deps.includeProvenance ?? parsed.includeProvenance;
     const outputPath = deps.outputPath ?? parsed.outputPath;
     const cwd = deps.cwd || parsed.positionals[0] || process.cwd();
     if (outputPath) {
@@ -418,7 +472,10 @@ function main(argv = process.argv.slice(2), deps = {}) {
       appendStepSummary(stepSummaryPath, `${renderStepSummary(result)}\n`);
     }
 
-    const renderedOutput = asJson ? JSON.stringify(result, null, 2) : renderSummary(result, { strict });
+    const provenance = includeProvenance
+      ? buildRequirementsHealthProvenance({ cwd, json: asJson, strict }, { ...deps, argv })
+      : undefined;
+    const renderedOutput = renderRequirementsHealthOutput(result, { json: asJson, strict, provenance });
     if (outputPath) {
       writeRequirementsHealthOutput(outputPath, renderedOutput, { ...deps, cwd });
       stdout.write(`[requirements-verify] Wrote report output to ${outputPath}\n`);
@@ -453,10 +510,15 @@ module.exports = {
   aggregateRequirementHealth,
   summarizeRequirementHealth,
   parseArgs,
+  outputModeForOptions,
+  generatedAtForProvenance,
+  buildRequirementsHealthProvenance,
+  renderTextProvenance,
   resolveOutputPath,
   writeRequirementsHealthOutput,
   verifyRequirementsHealth,
   renderSummary,
   renderStepSummary,
+  renderRequirementsHealthOutput,
   main
 };
