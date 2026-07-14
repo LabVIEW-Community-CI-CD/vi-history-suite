@@ -560,8 +560,8 @@ Maintainer evidence should be small and repeatable:
   surfaces and retained artifacts for release closeout
 - retained `coverage/**` output from the Marketplace release test run
 - closeout evidence generated with `npm run closeout:evidence`, including
-  mandatory standards-review output from host Python or the Docker assurance
-  workbench fallback
+  mandatory quick-triage, `release-gate`, and `26514-review` standards-review
+  output from host Python or the Docker assurance workbench fallback
 
 What this evidence proves:
 

@@ -45,14 +45,16 @@ making a closure decision. The `coverage:map` report is risk intelligence: it
 identifies low-coverage requirement-mapped files and zero-coverage supporting
 files tied to active requirements, while Vitest remains the threshold gate.
 
-For release readiness, retain the standards-review outputs for quick triage,
-release gate, and user-information review alongside closeout evidence:
+For release readiness, generate release closeout evidence so quick triage,
+release gate, and user-information review are retained in one packet:
 
 ```shell
-python3 /home/sergio/.codex/skills/repo-standards-review/scripts/run_assurance.py . --profile quick-triage
-python3 /home/sergio/.codex/skills/repo-standards-review/scripts/run_assurance.py . --profile release-gate
-python3 /home/sergio/.codex/skills/repo-standards-review/scripts/run_assurance.py . --profile 26514-review
+npm run closeout:evidence -- --kind release --issue <issue-number> --run-gates --save-dir assurance-closeout-evidence
 ```
+
+Release closeout writes `assurance-scorecard.txt` for quick triage plus
+`release-release-gate-scorecard.txt` and `release-26514-review-scorecard.txt`.
+Any non-PASS or missing release profile gate blocks the closeout decision.
 
 ## User-Information Review Trigger
 
@@ -84,4 +86,4 @@ documented in the closeout runbook remain available for standards review.
 | Change control | `CONTRIBUTING.md`, `docs/maintainer-operations.md`, `.github/workflows/ci.yml` |
 | Status accounting | `npm run closeout:evidence`, `closeout-summary.json`, release evidence artifacts |
 | Coverage risk follow-up | `npm run coverage:map`, `coverage/coverage-summary.json`, RTM and inventory |
-| User-information posture | `repo-standards-review --profile 26514-review` output |
+| User-information posture | `npm run closeout:evidence -- --kind release` output, including `release-26514-review-scorecard.txt` |

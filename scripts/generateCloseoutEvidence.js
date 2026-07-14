@@ -14,6 +14,8 @@ const STANDARDS_TOOLCHAIN_REGISTRY_IMAGE =
 const LOCAL_STANDARDS_IMAGE = 'repo-standards-review-assurance-workbench:local';
 const DEFAULT_STANDARDS_IMAGE = STANDARDS_TOOLCHAIN_REGISTRY_IMAGE;
 const DEFAULT_SAVE_DIR = 'assurance-closeout-evidence';
+const RELEASE_STANDARDS_PROFILES = ['26514-review', 'release-gate'];
+const RELEASE_STANDARDS_EXPECTED_GATES = ['coverage', 'cm', 'req', 'arch', 'doc', 'dod'];
 const DEFAULT_SKILL_ROOT = process.env.REPO_STANDARDS_REVIEW_ROOT ||
   'C:\\Users\\sveld\\.codex\\skills\\repo-standards-review';
 const TRUSTED_REPO_ROOT = path.resolve(__dirname, '..');
@@ -454,9 +456,26 @@ function removeTrackedWorktreeSnapshot(snapshot, deps = {}) {
   rmSyncImpl(snapshot.path, { recursive: true, force: true });
 }
 
-function hostStandardsCommands(skillRoot) {
+function releaseStandardsHostCommands(skillRoot) {
   const scripts = path.join(skillRoot, 'scripts');
-  return [
+  return RELEASE_STANDARDS_PROFILES.map((profile) => ({
+    name: `release-profile-${profile}`,
+    file: `release-${profile}-scorecard.txt`,
+    command: 'python3',
+    args: [
+      path.join(scripts, 'run_assurance.py'),
+      '.',
+      '--profile',
+      profile,
+      '--output',
+      'gate-scorecard'
+    ]
+  }));
+}
+
+function hostStandardsCommands(skillRoot, kind = 'standards') {
+  const scripts = path.join(skillRoot, 'scripts');
+  const commands = [
     {
       name: 'preflight',
       file: 'standards-preflight.json',
@@ -503,6 +522,12 @@ function hostStandardsCommands(skillRoot) {
       ]
     }
   ];
+
+  if (kind === 'release') {
+    commands.push(...releaseStandardsHostCommands(skillRoot));
+  }
+
+  return commands;
 }
 
 function parseJsonOrUndefined(text) {
@@ -805,6 +830,47 @@ function verifyStandardsToolchainProvenance(options, deps = {}) {
   };
 }
 
+function summarizeReleaseProfileResults(results) {
+  return RELEASE_STANDARDS_PROFILES.map((profile) => {
+    const result = results.find((entry) => entry.name === `release-profile-${profile}`);
+    const gateStatuses = parseGateScorecard(result?.stdout || '');
+    const gates = Object.entries(gateStatuses).map(([gate, status]) => ({ gate, status }));
+    const failedGates = gates.filter((entry) => entry.status !== 'PASS').map((entry) => entry.gate);
+    const missingGates = RELEASE_STANDARDS_EXPECTED_GATES.filter((gate) => !gateStatuses[gate]);
+    return {
+      profile,
+      status: result?.status ?? 1,
+      success: result?.status === 0 && failedGates.length === 0 && missingGates.length === 0,
+      gates,
+      failedGates,
+      missingGates,
+      file: result?.file
+    };
+  });
+}
+
+function summarizeStandardsFailure(summary) {
+  const profileFailures = summary.failedReleaseProfiles || [];
+  if (profileFailures.length > 0) {
+    const profiles = profileFailures.map((profile) => {
+      const gateDetails = [
+        ...profile.failedGates.map((gate) => `${gate}=FAIL`),
+        ...profile.missingGates.map((gate) => `${gate}=missing`)
+      ];
+      const commandDetails = profile.status === 0 ? [] : [`command status ${profile.status}`];
+      const details = [...gateDetails, ...commandDetails].join('; ') || 'unknown failure';
+      return `${profile.profile} (${details})`;
+    });
+    return `Release/user-information profile failures: ${profiles.join(', ')}.`;
+  }
+
+  if (summary.failed?.length > 0) {
+    return `Standards command failures: ${summary.failed.map((result) => result.name).join(', ')}.`;
+  }
+
+  return undefined;
+}
+
 function summarizeStandardsResults(results, runner) {
   const byName = new Map(results.map((result) => [result.name, result]));
   const preflight = parseJsonOrUndefined(byName.get('preflight')?.stdout || '');
@@ -814,10 +880,12 @@ function summarizeStandardsResults(results, runner) {
   const gateStatuses = parseGateScorecard(scorecard);
   const dodGateEvidence = summarizeDodGateEvidence(evidenceScan, scorecard);
   const failed = results.filter((result) => result.status !== 0);
+  const releaseProfiles = summarizeReleaseProfileResults(results).filter((profile) => profile.file);
+  const failedReleaseProfiles = releaseProfiles.filter((profile) => !profile.success);
 
   return {
     runner,
-    success: failed.length === 0,
+    success: failed.length === 0 && failedReleaseProfiles.length === 0,
     failed,
     preflight,
     requirementsQuality,
@@ -829,12 +897,14 @@ function summarizeStandardsResults(results, runner) {
     coverageGate: gateStatuses.coverage,
     docGate: gateStatuses.doc,
     dodGate: dodGateEvidence.status,
-    dodGateEvidence
+    dodGateEvidence,
+    releaseProfiles,
+    failedReleaseProfiles
   };
 }
 
 function runHostStandards(options, deps = {}) {
-  const results = hostStandardsCommands(options.skillRoot).map((step) => ({
+  const results = hostStandardsCommands(options.skillRoot, options.kind).map((step) => ({
     ...step,
     ...runCommand(step.command, step.args, withCommandPolicy(deps, {
       timeoutMs: COMMAND_TIMEOUT_MS.hostPython,
@@ -849,12 +919,34 @@ function runHostStandards(options, deps = {}) {
     success: summary.success && preflightOk,
     results,
     summary,
-    failure: preflightOk ? undefined : 'Host standards preflight did not return ok: true.'
+    failure: preflightOk ? summarizeStandardsFailure(summary) : 'Host standards preflight did not return ok: true.'
   };
 }
 
-function dockerStandardsCommands(image) {
-  return [
+function releaseStandardsDockerCommands(image) {
+  return RELEASE_STANDARDS_PROFILES.map((profile) => ({
+    name: `release-profile-${profile}`,
+    file: `release-${profile}-scorecard.txt`,
+    command: 'docker',
+    args: [
+      'run',
+      '--rm',
+      '-v',
+      '${REPO}:/target',
+      image,
+      'python3',
+      'scripts/run_assurance.py',
+      '/target',
+      '--profile',
+      profile,
+      '--output',
+      'gate-scorecard'
+    ]
+  }));
+}
+
+function dockerStandardsCommands(image, kind = 'standards') {
+  const commands = [
     {
       name: 'requirements-quality',
       file: 'requirements-quality.json',
@@ -913,6 +1005,12 @@ function dockerStandardsCommands(image) {
       ]
     }
   ];
+
+  if (kind === 'release') {
+    commands.push(...releaseStandardsDockerCommands(image));
+  }
+
+  return commands;
 }
 
 function replaceRepoMount(args, repoRoot) {
@@ -1074,7 +1172,7 @@ function runDockerStandards(options, deps = {}) {
   }
 
   results.push(
-    ...dockerStandardsCommands(options.standardsImage).map((step) => ({
+    ...dockerStandardsCommands(options.standardsImage, options.kind).map((step) => ({
       ...step,
       args: replaceRepoMount(step.args, repoRoot),
       ...runCommand(step.command, replaceRepoMount(step.args, repoRoot), withCommandPolicy(deps, {
@@ -1095,7 +1193,7 @@ function runDockerStandards(options, deps = {}) {
     success: imageAvailable && summary.success,
     results,
     summary,
-    failure: summary.success ? undefined : 'Docker standards evidence failed.'
+    failure: summary.success ? undefined : summarizeStandardsFailure(summary) || 'Docker standards evidence failed.'
   };
 }
 
@@ -1110,6 +1208,10 @@ function runStandardsEvidence(options, deps = {}) {
 
   const host = runHostStandards(options, deps);
   if (host.success) {
+    return host;
+  }
+
+  if (options.kind === 'release' && host.summary?.failedReleaseProfiles?.length > 0) {
     return host;
   }
 
@@ -1264,7 +1366,7 @@ function formatDodGateSummary(dodGateEvidence) {
 }
 
 function renderStandardsSummary(standards) {
-  if (!standards.success) {
+  if (!standards.success && !standards.summary) {
     return [
       `- Standards runner: ${standards.runner}`,
       `- Standards evidence failed: ${standards.failure || 'unknown failure'}`
@@ -1274,6 +1376,7 @@ function renderStandardsSummary(standards) {
   const summary = standards.summary;
   const lines = [
     `- Standards runner: ${summary.runner}`,
+    !standards.success ? `- Standards evidence failed: ${standards.failure || 'unknown failure'}` : undefined,
     standards.auditTarget
       ? `- Audit target: ${standards.auditTarget.mode}; ${standards.auditTarget.trackedFileCount} tracked files; generated roots excluded.`
       : undefined,
@@ -1284,6 +1387,15 @@ function renderStandardsSummary(standards) {
   ].filter(Boolean);
   if (standards.runner === 'docker') {
     lines.splice(1, 0, `- Docker image: ${standards.image}; image access=${standards.imageAccess}`);
+  }
+  if (summary.releaseProfiles?.length > 0) {
+    lines.push('- Release/user-information profiles:');
+    for (const profile of summary.releaseProfiles) {
+      const gates = profile.gates.length > 0
+        ? profile.gates.map((entry) => `${entry.gate}=${entry.status}`).join('; ')
+        : 'no scorecard gates parsed';
+      lines.push(`  - ${profile.profile}: ${profile.success ? 'PASS' : 'FAIL'} (${gates})`);
+    }
   }
   return lines.join('\n');
 }
@@ -1412,7 +1524,8 @@ function buildMachineReadableCloseoutSummary(context, exitCode) {
         coverageGate: standardsSummary.coverageGate,
         docGate: standardsSummary.docGate,
         dodGate: standardsSummary.dodGate,
-        dodGateEvidence: standardsSummary.dodGateEvidence
+        dodGateEvidence: standardsSummary.dodGateEvidence,
+        releaseProfiles: standardsSummary.releaseProfiles
       }
     },
     provenance: {
@@ -1634,6 +1747,7 @@ module.exports = {
   DEFAULT_STANDARDS_IMAGE,
   GENERATED_ROOTS_EXCLUDED_FROM_STANDARDS_AUDIT,
   LOCAL_STANDARDS_IMAGE,
+  RELEASE_STANDARDS_PROFILES,
   STANDARDS_TOOLCHAIN_EXPECTED_COMMIT,
   STANDARDS_TOOLCHAIN_GITHUB_TAG,
   STANDARDS_TOOLCHAIN_GITHUB_URL,
@@ -1656,6 +1770,7 @@ module.exports = {
   renderCloseoutMarkdown,
   removeTrackedWorktreeSnapshot,
   resolveAuditSnapshotBase,
+  summarizeReleaseProfileResults,
   isAllowedExecutableCommand,
   assertAllowedExecutableCommand,
   runCommand,

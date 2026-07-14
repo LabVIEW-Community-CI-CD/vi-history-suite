@@ -366,6 +366,9 @@ snapshot built from `git ls-files`, preserving symlink targets as text rather
 than following them into generated cache roots. It tries host Python first in
 `auto` mode and falls back to the published GitLab registry workbench image
 when host preflight is unavailable.
+For release closeout, use `--kind release`; the same packet retains quick-triage
+standards evidence plus `release-gate` and `26514-review` scorecards, and any
+non-PASS or missing release profile gate blocks closure.
 When `--save-dir` is provided, closeout evidence writes a machine-readable
 `closeout-summary.json` artifact with gate status, standards status, provenance
 status, closure-decision state, and `standards.auditTarget` fields for
