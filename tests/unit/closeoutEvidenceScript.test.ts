@@ -1150,6 +1150,54 @@ describe('closeout evidence script', () => {
     )).toBe(true);
   });
 
+  it('falls back to Docker release profile evidence when host preflight fails (VHS-REQ-601.25)', () => {
+    const spawnSync = vi.fn((command: string, args: string[]) => {
+      const line = [command, ...args].join(' ');
+      if (command === 'git' && args.includes('--show-current')) return { status: 0, stdout: 'feature/test\n' };
+      if (command === 'git' && args[0] === 'ls-remote' && args.includes(STANDARDS_TOOLCHAIN_GITLAB_URL)) {
+        return { status: 0, stdout: gitlabRemoteOk() };
+      }
+      if (command === 'git' && args[0] === 'ls-remote' && args.includes(STANDARDS_TOOLCHAIN_GITHUB_URL)) {
+        return { status: 0, stdout: githubRemoteOk() };
+      }
+      if (command === 'git' && args.join(' ') === 'ls-files -z') {
+        return { status: 0, stdout: 'package.json\0' };
+      }
+      if (command === 'git') return { status: 0, stdout: '1234567890abcdef\n' };
+      if (command === 'gh') return { status: 1, stderr: 'gh unavailable' };
+      if (command === 'python3') return { status: 1, stderr: 'python3 missing' };
+      if (command === 'docker' && args.join(' ') === `manifest inspect ${STANDARDS_TOOLCHAIN_REGISTRY_IMAGE}`) {
+        return { status: 0, stdout: json({ schemaVersion: 2 }) };
+      }
+      if (command === 'docker' && args.join(' ').startsWith('image inspect')) return { status: 0, stdout: '[]' };
+      if (line.includes('requirements_quality_check.py')) return { status: 0, stdout: requirementsOk };
+      if (line.includes('repo_evidence_scan.py')) return { status: 0, stdout: evidenceWithTrustedDod };
+      if (line.includes('run_assurance.py') && args.includes('--profile') && args.some((arg) => RELEASE_STANDARDS_PROFILES.includes(arg))) {
+        return { status: 0, stdout: releaseScorecardPass };
+      }
+      if (line.includes('run_assurance.py')) return { status: 0, stdout: scorecardDodPass };
+      return { status: 0, stdout: '' };
+    });
+
+    const result = generateCloseoutEvidence(['--kind', 'release', '--issue', '1034'], {
+      cwd: 'C:\\repo',
+      existsSync: () => true,
+      spawnSync
+    });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.context.standards.runner).toBe('docker');
+    expect(result.markdown).toContain('Standards runner: docker');
+    expect(result.markdown).toContain('26514-review: PASS (coverage=PASS; cm=PASS; req=PASS; arch=PASS; doc=PASS; dod=PASS)');
+    expect(result.markdown).toContain('release-gate: PASS (coverage=PASS; cm=PASS; req=PASS; arch=PASS; doc=PASS; dod=PASS)');
+    expect(result.context.machineReadableSummary?.standards.summary?.releaseProfiles).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ profile: '26514-review', success: true }),
+        expect.objectContaining({ profile: 'release-gate', success: true })
+      ])
+    );
+  });
+
   it('fails closeout when mandatory host and Docker standards evidence fail (VHS-REQ-601.25)', () => {
     const spawnSync = vi.fn((command: string, args: string[]) => {
       const line = [command, ...args].join(' ');
@@ -1225,7 +1273,7 @@ describe('closeout evidence script', () => {
 
     const result = generateCloseoutEvidence(['--kind', 'release', '--issue', '1032', '--run-gates'], {
       platform: 'win32',
-      cwd: 'C:\repo',
+      cwd: 'C:\\repo',
       existsSync: () => true,
       spawnSync
     });
