@@ -299,6 +299,7 @@ describe('branch protection audit evaluation', () => {
       'push restrictions disabled',
       'active branch rulesets',
       'unexpected active branch rulesets',
+      'duplicate active branch rulesets',
       'active branch ruleset rules',
       'active branch ruleset bypasses disabled'
     ]);
@@ -310,6 +311,10 @@ describe('branch protection audit evaluation', () => {
     expect(result.checks.find((check) => check.name === 'unexpected active branch rulesets')).toMatchObject({
       passed: true,
       details: 'none beyond: develop, main'
+    });
+    expect(result.checks.find((check) => check.name === 'duplicate active branch rulesets')).toMatchObject({
+      passed: true,
+      details: 'none'
     });
     expect(result.checks.find((check) => check.name === 'required deployments disabled')).toMatchObject({
       passed: true,
@@ -401,6 +406,19 @@ describe('branch protection audit evaluation', () => {
     expect(result.checks.find((check) => check.name === 'unexpected active branch rulesets')).toMatchObject({
       passed: false,
       details: 'unexpected: release; allowed: develop, main'
+    });
+  });
+
+  it('fails closed when duplicate active branch rulesets drift', () => {
+    const result = evaluateBranchProtection({
+      protection: protection(),
+      rulesets: branchRulesets([...EXPECTED_ACTIVE_BRANCH_RULESETS, 'develop'])
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.checks.find((check) => check.name === 'duplicate active branch rulesets')).toMatchObject({
+      passed: false,
+      details: 'duplicates: develop (2)'
     });
   });
 
@@ -804,7 +822,7 @@ describe('branch protection audit main', () => {
       branch: DEFAULT_BRANCH,
       success: true
     });
-    expect(output.checks).toHaveLength(15);
+    expect(output.checks).toHaveLength(16);
     expect(output.notices.length).toBeGreaterThan(0);
     expect(output.branches).toBeUndefined();
   });

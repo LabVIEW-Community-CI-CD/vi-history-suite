@@ -245,6 +245,17 @@ function activeRulesetSummaries(rulesets) {
     }));
 }
 
+function duplicateNameCounts(names) {
+  const counts = new Map();
+  for (const name of names) {
+    counts.set(name, (counts.get(name) || 0) + 1);
+  }
+  return [...counts]
+    .filter(([, count]) => count > 1)
+    .map(([name, count]) => ({ name, count }))
+    .sort((left, right) => left.name.localeCompare(right.name));
+}
+
 function rulesetRuleTypes(ruleset) {
   return (Array.isArray(ruleset && ruleset.rules) ? ruleset.rules : [])
     .map((rule) => String(rule && rule.type ? rule.type : ''))
@@ -299,6 +310,7 @@ function evaluateBranchProtection(settings, options = {}) {
   const activeRulesetNames = activeRulesets.map((ruleset) => ruleset.name).sort();
   const missingActiveRulesets = expectedActiveBranchRulesets.filter((name) => !activeRulesetNames.includes(name));
   const unexpectedActiveRulesets = activeRulesetNames.filter((name) => !expectedActiveBranchRulesets.includes(name));
+  const duplicateActiveRulesets = duplicateNameCounts(activeRulesetNames);
   const activeRulesetsByName = new Map(activeRulesets.map((ruleset) => [ruleset.name, ruleset]));
   const rulesetsMissingRuleTypes = expectedActiveBranchRulesets
     .map((name) => {
@@ -388,6 +400,13 @@ function evaluateBranchProtection(settings, options = {}) {
       details: unexpectedActiveRulesets.length === 0
         ? `none beyond: ${expectedActiveBranchRulesets.join(', ')}`
         : `unexpected: ${unexpectedActiveRulesets.join(', ')}; allowed: ${expectedActiveBranchRulesets.join(', ')}`
+    },
+    {
+      name: 'duplicate active branch rulesets',
+      passed: duplicateActiveRulesets.length === 0,
+      details: duplicateActiveRulesets.length === 0
+        ? 'none'
+        : `duplicates: ${duplicateActiveRulesets.map((item) => `${item.name} (${item.count})`).join(', ')}`
     },
     {
       name: 'active branch ruleset rules',
