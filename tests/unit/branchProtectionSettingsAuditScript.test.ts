@@ -48,6 +48,8 @@ const {
   renderResult,
   summarizeAuditResult,
   summarizeBranchResults,
+  markdownCell,
+  renderMarkdown,
   branchesForOptions,
   auditBranches,
   main
@@ -91,6 +93,7 @@ const {
     requireBranchCreationBlock: boolean;
     requireFullHardening: boolean;
     emitJson: boolean;
+    emitMarkdown: boolean;
     help: boolean;
   };
   usage: () => string;
@@ -187,6 +190,14 @@ const {
     noticeCount: number;
     failures: Array<{ branch: string; name: string; details: string }>;
   };
+  markdownCell: (value: unknown) => string;
+  renderMarkdown: (
+    branchResults: Array<{
+      branch: string;
+      result: { success: boolean; checks: Array<{ name: string; passed: boolean; details: string }>; notices: string[] };
+    }>,
+    options?: { repo?: string }
+  ) => string;
   branchesForOptions: (options?: { branch?: string; allBranches?: boolean }) => string[];
   auditBranches: (options?: Record<string, unknown>, deps?: Record<string, unknown>) => Array<{ branch: string; result: { success: boolean } }>;
   rulesetRuleKeys: (ruleset: unknown) => string[];
@@ -320,11 +331,12 @@ describe('branch protection audit arguments', () => {
       requireBranchCreationBlock: false,
       requireFullHardening: false,
       emitJson: false,
+      emitMarkdown: false,
       help: false
     });
   });
 
-  it('parses repo, branch, all, hardening, json, and help options', () => {
+  it('parses repo, branch, all, hardening, output, and help options', () => {
     expect(parseArgs(['--repo', 'owner/repo', '--branch', 'release/v1.2.3', '--all', '--require-advisory', '--require-review', '--require-linear-history', '--require-conversation-resolution', '--require-signed-commits', '--require-stale-review-dismissal', '--require-code-owner-review', '--require-last-push-approval', '--require-branch-creation-block', '--json'])).toMatchObject({
       repo: 'owner/repo',
       branch: 'release/v1.2.3',
@@ -339,7 +351,8 @@ describe('branch protection audit arguments', () => {
       requireLastPushApproval: true,
       requireBranchCreationBlock: true,
       requireFullHardening: false,
-      emitJson: true
+      emitJson: true,
+      emitMarkdown: false
     });
     expect(FULL_HARDENING_OPTION_KEYS).toEqual([
       'requireAdvisory',
@@ -367,6 +380,7 @@ describe('branch protection audit arguments', () => {
       requireBranchCreationBlock: true,
       requireFullHardening: true
     });
+    expect(parseArgs(['--markdown'])).toMatchObject({ emitMarkdown: true, emitJson: false });
     expect(parseArgs(['--help']).help).toBe(true);
     expect(usage()).toContain('auditBranchProtectionSettings');
     expect(usage()).toContain('--require-advisory');
@@ -379,6 +393,7 @@ describe('branch protection audit arguments', () => {
     expect(usage()).toContain('--require-last-push-approval');
     expect(usage()).toContain('--require-branch-creation-block');
     expect(usage()).toContain('--require-full-hardening');
+    expect(usage()).toContain('--markdown');
     expect(branchesForOptions({ allBranches: true })).toEqual(DEFAULT_AUDIT_BRANCHES);
     expect(branchesForOptions({ branch: 'main' })).toEqual(['main']);
   });
@@ -392,6 +407,7 @@ describe('branch protection audit arguments', () => {
     expect(isAllowedExecutableCommand('git')).toBe(false);
     expect(() => parseArgs(['--repo', 'owner'])).toThrow(/owner\/repo/);
     expect(() => parseArgs(['--branch', 'bad branch'])).toThrow(/without spaces/);
+    expect(() => parseArgs(['--json', '--markdown'])).toThrow(/either --json or --markdown/);
     expect(() => parseArgs(['--bogus'])).toThrow(/Unknown argument/);
   });
 });
@@ -836,6 +852,35 @@ describe('branch protection audit evaluation', () => {
       noticeCount: 6
     });
     expect(aggregateSummary.failures[0]).toEqual({ branch: 'develop', name: 'required status checks are strict', details: 'missing or disabled' });
+  });
+
+  it('renders compact Markdown audit evidence', () => {
+    const passingResult = evaluateBranchProtection({ protection: protection(), rulesets: branchRulesets() });
+    const failingResult = evaluateBranchProtection(
+      { protection: protection(), rulesets: branchRulesets() },
+      { requireAdvisory: true }
+    );
+
+    expect(markdownCell('branch|with\nnewline')).toBe('branch\\|with newline');
+    expect(renderMarkdown([{ branch: 'develop', result: passingResult }], { repo: DEFAULT_REPO })).toBe([
+      '## Branch Protection Audit',
+      '',
+      `- Repository: \`${DEFAULT_REPO}\``,
+      '- Result: PASS',
+      '- Branches: 1/1 passed',
+      '- Checks: 33/33 passed',
+      '- Notices: 3',
+      '',
+      '| Branch | Result | Checks | Failed | Notices |',
+      '| --- | --- | ---: | ---: | ---: |',
+      '| develop | PASS | 33/33 | 0 | 3 |',
+      '',
+      'No failures.'
+    ].join('\n'));
+
+    expect(renderMarkdown([{ branch: 'main', result: failingResult }], { repo: DEFAULT_REPO })).toContain(
+      '| main | advisory status check contexts | missing: Requirements CSV Integrity, CodeQL; present: Build, Test, Package, Integration Host (Linux), Windows Unit Tests |'
+    );
   });
 
   it('fails closed when expected active branch rulesets drift', () => {
@@ -1887,6 +1932,27 @@ describe('branch protection audit main', () => {
         details: 'missing: Requirements CSV Integrity, CodeQL; present: Build, Test, Package, Integration Host (Linux), Windows Unit Tests'
       }
     ]);
+  });
+
+  it('emits Markdown evidence when requested', () => {
+    const stdout = captureWrite();
+    const stderr = captureWrite();
+    const spawnSync = vi.fn((command: string, args: string[]) => {
+      const resource = args[1].includes('/rulesets') ? branchRulesetResource(args[1]) : protection();
+      return { status: 0, stdout: JSON.stringify(resource), stderr: '' };
+    });
+
+    const exitCode = main(['--all', '--markdown'], { spawnSync, stdout: stdout.stream, stderr: stderr.stream });
+    const output = stdout.read();
+
+    expect(exitCode).toBe(0);
+    expect(stderr.read()).toBe('');
+    expect(output).toContain('## Branch Protection Audit');
+    expect(output).toContain(`- Repository: \`${DEFAULT_REPO}\``);
+    expect(output).toContain('| develop | PASS | 33/33 | 0 | 3 |');
+    expect(output).toContain('| main | PASS | 33/33 | 0 | 3 |');
+    expect(output).toContain('No failures.');
+    expect(() => JSON.parse(output)).toThrow();
   });
 
   it('returns nonzero when advisory contexts are required but absent', () => {
