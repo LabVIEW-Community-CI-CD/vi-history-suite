@@ -25,14 +25,21 @@ const {
   isAllowedExecutableCommand: (command: string) => boolean;
   isValidBranchName: (branch: string) => boolean;
   isValidRepoSlug: (repo: string) => boolean;
-  parseArgs: (argv: string[]) => { repo: string; branch: string; emitJson: boolean; help: boolean };
+  parseArgs: (argv: string[]) => {
+    repo: string;
+    branch: string;
+    allBranches: boolean;
+    requireAdvisory: boolean;
+    emitJson: boolean;
+    help: boolean;
+  };
   usage: () => string;
   buildGhApiArgs: (repo: string, branch: string, resource: string) => string[];
   requiredStatusContexts: (protection: Record<string, unknown>) => string[];
   activeRulesetSummaries: (rulesets: unknown[]) => Array<{ name: string; ruleCount: number }>;
   evaluateBranchProtection: (
     settings: { protection?: Record<string, unknown>; rulesets?: unknown[] },
-    options?: { expectedRequiredChecks?: string[]; advisoryChecks?: string[] }
+    options?: { expectedRequiredChecks?: string[]; advisoryChecks?: string[]; requireAdvisory?: boolean }
   ) => { success: boolean; checks: Array<{ name: string; passed: boolean; details: string }>; notices: string[] };
   renderResult: (
     result: { success: boolean; checks: Array<{ name: string; passed: boolean; details: string }>; notices: string[] },
@@ -83,20 +90,23 @@ describe('branch protection audit arguments', () => {
       repo: DEFAULT_REPO,
       branch: DEFAULT_BRANCH,
       allBranches: false,
+      requireAdvisory: false,
       emitJson: false,
       help: false
     });
   });
 
-  it('parses repo, branch, all, json, and help options', () => {
-    expect(parseArgs(['--repo', 'owner/repo', '--branch', 'release/v1.2.3', '--all', '--json'])).toMatchObject({
+  it('parses repo, branch, all, advisory, json, and help options', () => {
+    expect(parseArgs(['--repo', 'owner/repo', '--branch', 'release/v1.2.3', '--all', '--require-advisory', '--json'])).toMatchObject({
       repo: 'owner/repo',
       branch: 'release/v1.2.3',
       allBranches: true,
+      requireAdvisory: true,
       emitJson: true
     });
     expect(parseArgs(['--help']).help).toBe(true);
     expect(usage()).toContain('auditBranchProtectionSettings');
+    expect(usage()).toContain('--require-advisory');
     expect(branchesForOptions({ allBranches: true })).toEqual(DEFAULT_AUDIT_BRANCHES);
     expect(branchesForOptions({ branch: 'main' })).toEqual(['main']);
   });
@@ -180,6 +190,33 @@ describe('branch protection audit evaluation', () => {
     expect(renderResult(result, { repo: DEFAULT_REPO, branch: DEFAULT_BRANCH })).toContain(
       '[branch-protection-audit] Audit failed.'
     );
+  });
+
+  it('can require advisory contexts for branch-protection hardening audits', () => {
+    const result = evaluateBranchProtection(
+      { protection: protection(), rulesets: [] },
+      { requireAdvisory: true }
+    );
+
+    expect(result.success).toBe(false);
+    expect(result.checks.find((check) => check.name === 'advisory status check contexts')).toMatchObject({
+      passed: false,
+      details: 'missing: Requirements CSV Integrity, CodeQL; present: Build, Test, Package, Integration Host (Linux), Windows Unit Tests'
+    });
+
+    const hardened = evaluateBranchProtection(
+      {
+        protection: protection({ contexts: [...EXPECTED_REQUIRED_STATUS_CHECKS, 'Requirements CSV Integrity', 'CodeQL'] }),
+        rulesets: []
+      },
+      { requireAdvisory: true }
+    );
+
+    expect(hardened.success).toBe(true);
+    expect(hardened.checks.find((check) => check.name === 'advisory status check contexts')).toMatchObject({
+      passed: true,
+      details: 'required: Requirements CSV Integrity, CodeQL'
+    });
   });
 });
 
@@ -292,6 +329,21 @@ describe('branch protection audit main', () => {
     expect(output.branch).toBeUndefined();
     expect(output.checks).toBeUndefined();
     expect(output.notices).toBeUndefined();
+  });
+
+  it('returns nonzero when advisory contexts are required but absent', () => {
+    const stdout = captureWrite();
+    const stderr = captureWrite();
+    const spawnSync = vi.fn((command: string, args: string[]) => {
+      const resource = args[1].endsWith('/rulesets') ? [] : protection();
+      return { status: 0, stdout: JSON.stringify(resource), stderr: '' };
+    });
+
+    const exitCode = main(['--require-advisory'], { spawnSync, stdout: stdout.stream, stderr: stderr.stream });
+
+    expect(exitCode).toBe(1);
+    expect(stderr.read()).toBe('');
+    expect(stdout.read()).toContain('FAIL advisory status check contexts');
   });
 
   it('returns nonzero when GitHub returns malformed JSON', () => {
