@@ -692,7 +692,7 @@ describe('multi standards audit script', () => {
         profiles: completeProfiles,
         scoreFiles: ['quick-triage/target/score.json', 'release-gate/target/score.json']
       }
-    ], completeProfiles)).toContain('| dod | PASS | Med | none | Report DoD only when a DoD Gate / dod context is visible. | - | all profiles |');
+    ], completeProfiles)).toContain('| dod | PASS | Med | unmapped | Report DoD only when a DoD Gate / dod context is visible. | - | all profiles |');
   });
 
   it('groups standards coverage matrix rows with identical area scores', () => {
@@ -863,7 +863,7 @@ describe('multi standards audit script', () => {
         scoreFiles: ['quick-triage/target/score.json', 'release-gate/target/score.json']
       }
     ]);
-    expect(renderStandardsGateDetailSummary(summary)).toContain('| dod | PASS | Med | none | DoD basis uses backslash \\\\ and a \\| delimiter. | - | quick-triage, release-gate |');
+    expect(renderStandardsGateDetailSummary(summary)).toContain('| dod | PASS | Med | unmapped | DoD basis uses backslash \\\\ and a \\| delimiter. | - | quick-triage, release-gate |');
   });
 
   it('runs direct checks and all standards profiles from a tracked snapshot', () => {
@@ -929,7 +929,7 @@ describe('multi standards audit script', () => {
     expect(result.markdown).toContain('| coverage gate passes with High confidence. | 29119-2/29119-3 | all profiles |');
     expect(result.markdown).toContain('## Standards Gate Detail Summary');
     expect(result.markdown).toContain('| Gate | Status | Confidence | Standards | Basis | Missing Proof | Profiles |');
-    expect(result.markdown).toContain('| dod | PASS | Med | none | Report DoD only when a DoD Gate / dod context is visible. | - | all profiles |');
+    expect(result.markdown).toContain('| dod | PASS | Med | unmapped | Report DoD only when a DoD Gate / dod context is visible. | - | all profiles |');
     expect(result.markdown).toContain('portfolio-review: overall=High, gates=6P/0F, REQ=5, ARCH=5, TEST=5, CM=5, DOC=5, topRisk=none (see portfolio-review-table.txt)');
     expect(result.context.profiles.find((profile) => profile.scorecardDetails)?.scorecardDetails?.dod).toEqual({
       status: 'PASS',
