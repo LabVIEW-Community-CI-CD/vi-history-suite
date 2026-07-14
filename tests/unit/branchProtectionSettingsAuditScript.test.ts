@@ -16,6 +16,7 @@ const {
   evaluateBranchProtection,
   renderResult,
   branchesForOptions,
+  auditBranches,
   main
 } = require('../../scripts/auditBranchProtectionSettings.js') as {
   DEFAULT_AUDIT_BRANCHES: string[];
@@ -46,6 +47,7 @@ const {
     options?: { repo?: string; branch?: string }
   ) => string;
   branchesForOptions: (options?: { branch?: string; allBranches?: boolean }) => string[];
+  auditBranches: (options?: Record<string, unknown>, deps?: Record<string, unknown>) => Array<{ branch: string; result: { success: boolean } }>;
   main: (argv: string[], deps?: Record<string, unknown>) => number;
 };
 
@@ -257,13 +259,30 @@ describe('branch protection audit main', () => {
     expect(exitCode).toBe(0);
     expect(stderr.read()).toBe('');
     expect(calls).toEqual([
-      ['gh', ...buildGhApiArgs(DEFAULT_REPO, 'develop', 'protection')],
       ['gh', ...buildGhApiArgs(DEFAULT_REPO, 'develop', 'rulesets')],
+      ['gh', ...buildGhApiArgs(DEFAULT_REPO, 'develop', 'protection')],
       ['gh', ...buildGhApiArgs(DEFAULT_REPO, 'main', 'protection')],
-      ['gh', ...buildGhApiArgs(DEFAULT_REPO, 'main', 'rulesets')]
     ]);
     expect(stdout.read()).toContain(`${DEFAULT_REPO}:develop`);
     expect(stdout.read()).toContain(`${DEFAULT_REPO}:main`);
+  });
+
+  it('reuses repository rulesets while auditing all default branches', () => {
+    const calls: string[][] = [];
+    const spawnSync = vi.fn((command: string, args: string[]) => {
+      calls.push([command, ...args]);
+      const resource = args[1].endsWith('/rulesets') ? [] : protection();
+      return { status: 0, stdout: JSON.stringify(resource), stderr: '' };
+    });
+
+    expect(auditBranches({ repo: DEFAULT_REPO, allBranches: true }, { spawnSync }).map((item) => item.branch)).toEqual(
+      DEFAULT_AUDIT_BRANCHES
+    );
+    expect(calls).toEqual([
+      ['gh', ...buildGhApiArgs(DEFAULT_REPO, 'develop', 'rulesets')],
+      ['gh', ...buildGhApiArgs(DEFAULT_REPO, 'develop', 'protection')],
+      ['gh', ...buildGhApiArgs(DEFAULT_REPO, 'main', 'protection')]
+    ]);
   });
 
   it('preserves the v1 single-branch JSON shape without --all', () => {

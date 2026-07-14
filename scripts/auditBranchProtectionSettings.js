@@ -123,10 +123,18 @@ function runGhJson(args, deps = {}) {
   }
 }
 
+function fetchBranchProtection(options, deps = {}) {
+  return runGhJson(buildGhApiArgs(options.repo, options.branch, 'protection'), deps);
+}
+
+function fetchBranchRulesets(options, deps = {}) {
+  return runGhJson(buildGhApiArgs(options.repo, options.branch || DEFAULT_BRANCH, 'rulesets'), deps);
+}
+
 function fetchBranchProtectionSettings(options, deps = {}) {
   return {
-    protection: runGhJson(buildGhApiArgs(options.repo, options.branch, 'protection'), deps),
-    rulesets: runGhJson(buildGhApiArgs(options.repo, options.branch, 'rulesets'), deps)
+    protection: fetchBranchProtection(options, deps),
+    rulesets: fetchBranchRulesets(options, deps)
   };
 }
 
@@ -258,6 +266,25 @@ function auditBranchProtectionSettings(options = {}, deps = {}) {
   return evaluateBranchProtection(settings, options);
 }
 
+function auditBranches(options = {}, deps = {}) {
+  const normalizedOptions = { ...options, repo: options.repo || DEFAULT_REPO };
+  const branches = branchesForOptions(normalizedOptions);
+  const sharedRulesets = normalizedOptions.allBranches && !deps.settings
+    ? fetchBranchRulesets({ ...normalizedOptions, branch: branches[0] || DEFAULT_BRANCH }, deps)
+    : undefined;
+
+  return branches.map((branch) => {
+    const branchOptions = { ...normalizedOptions, branch };
+    const branchDeps = sharedRulesets
+      ? { ...deps, settings: { protection: fetchBranchProtection(branchOptions, deps), rulesets: sharedRulesets } }
+      : deps;
+    return {
+      branch,
+      result: auditBranchProtectionSettings(branchOptions, branchDeps)
+    };
+  });
+}
+
 function main(argv = process.argv.slice(2), deps = {}) {
   const stdout = deps.stdout || process.stdout;
   const stderr = deps.stderr || process.stderr;
@@ -267,10 +294,7 @@ function main(argv = process.argv.slice(2), deps = {}) {
       stdout.write(`${usage()}\n`);
       return 0;
     }
-    const branchResults = branchesForOptions(options).map((branch) => ({
-      branch,
-      result: auditBranchProtectionSettings({ ...options, branch }, deps)
-    }));
+    const branchResults = auditBranches(options, deps);
     const success = branchResults.every((item) => item.result.success);
     if (options.emitJson) {
       if (options.allBranches) {
@@ -314,11 +338,14 @@ module.exports = {
   parseArgs,
   usage,
   buildGhApiArgs,
+  fetchBranchProtection,
+  fetchBranchRulesets,
   requiredStatusContexts,
   activeRulesetSummaries,
   evaluateBranchProtection,
   renderResult,
   branchesForOptions,
+  auditBranches,
   auditBranchProtectionSettings,
   main
 };
