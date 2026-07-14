@@ -39,6 +39,8 @@ const { generateCoverageMap } = require('./mapCoverageToTraceability.js');
 
 const MUTATION_REPORT_PATH = 'reports/mutation/mutation.json';
 const REQUIREMENTS_HEALTH_SCHEMA_VERSION = 1;
+const REQUIREMENTS_HEALTH_SCHEMA_ID =
+  'https://labview-community-cicd.github.io/vi-history-suite/schemas/requirements-health-v1.schema.json';
 
 const ATTENTION_REASON_IDS = Object.freeze({
   unlinked: 'unlinked',
@@ -48,7 +50,7 @@ const ATTENTION_REASON_IDS = Object.freeze({
 
 const REQUIREMENTS_HEALTH_JSON_SCHEMA = Object.freeze({
   $schema: 'https://json-schema.org/draft/2020-12/schema',
-  $id: 'https://labview-community-cicd.github.io/vi-history-suite/schemas/requirements-health-v1.schema.json',
+  $id: REQUIREMENTS_HEALTH_SCHEMA_ID,
   title: 'vi-history-suite requirements health JSON report',
   type: 'object',
   required: [
@@ -66,6 +68,7 @@ const REQUIREMENTS_HEALTH_JSON_SCHEMA = Object.freeze({
   ],
   additionalProperties: true,
   properties: {
+    $schema: { const: REQUIREMENTS_HEALTH_SCHEMA_ID },
     schemaVersion: { const: REQUIREMENTS_HEALTH_SCHEMA_VERSION },
     activeRequirements: { type: 'integer', minimum: 0 },
     integrity: {
@@ -730,7 +733,12 @@ function renderRequirementsHealthOutput(result, options = {}) {
   const provenance = options.provenance ? { provenance: options.provenance } : {};
   if (options.json) {
     return JSON.stringify(
-      { schemaVersion: REQUIREMENTS_HEALTH_SCHEMA_VERSION, ...result, ...provenance },
+      {
+        $schema: REQUIREMENTS_HEALTH_SCHEMA_ID,
+        schemaVersion: REQUIREMENTS_HEALTH_SCHEMA_VERSION,
+        ...result,
+        ...provenance
+      },
       null,
       2
     );
@@ -811,6 +819,7 @@ if (require.main === module) {
 module.exports = {
   MUTATION_REPORT_PATH,
   REQUIREMENTS_HEALTH_SCHEMA_VERSION,
+  REQUIREMENTS_HEALTH_SCHEMA_ID,
   REQUIREMENTS_HEALTH_JSON_SCHEMA,
   ATTENTION_REASON_IDS,
   computeMutationScore,
