@@ -5,6 +5,7 @@ const {
   DEFAULT_BRANCH,
   DEFAULT_REPO,
   EXPECTED_ACTIVE_BRANCH_RULESETS,
+  EXPECTED_ACTIVE_RULESET_RULE_TYPES,
   EXPECTED_REQUIRED_STATUS_CHECKS,
   isAllowedExecutableCommand,
   isValidBranchName,
@@ -12,9 +13,11 @@ const {
   parseArgs,
   usage,
   buildGhApiArgs,
+  buildGhRulesetDetailApiArgs,
   requiredApprovingReviewCount,
   requiredStatusContexts,
   activeRulesetSummaries,
+  rulesetRuleTypes,
   evaluateBranchProtection,
   renderResult,
   branchesForOptions,
@@ -25,6 +28,7 @@ const {
   DEFAULT_BRANCH: string;
   DEFAULT_REPO: string;
   EXPECTED_ACTIVE_BRANCH_RULESETS: string[];
+  EXPECTED_ACTIVE_RULESET_RULE_TYPES: string[];
   EXPECTED_REQUIRED_STATUS_CHECKS: string[];
   isAllowedExecutableCommand: (command: string) => boolean;
   isValidBranchName: (branch: string) => boolean;
@@ -47,9 +51,17 @@ const {
   };
   usage: () => string;
   buildGhApiArgs: (repo: string, branch: string, resource: string) => string[];
+  buildGhRulesetDetailApiArgs: (repo: string, rulesetId: number | string) => string[];
   requiredApprovingReviewCount: (protection: Record<string, unknown>) => number;
   requiredStatusContexts: (protection: Record<string, unknown>) => string[];
-  activeRulesetSummaries: (rulesets: unknown[]) => Array<{ name: string; ruleCount: number }>;
+  activeRulesetSummaries: (rulesets: unknown[]) => Array<{
+    name: string;
+    ruleCount: number;
+    ruleTypes: string[];
+    bypassActorCount: number;
+    currentUserCanBypass: string;
+  }>;
+  rulesetRuleTypes: (ruleset: unknown) => string[];
   evaluateBranchProtection: (
     settings: { protection?: Record<string, unknown>; rulesets?: unknown[] },
     options?: {
@@ -66,6 +78,7 @@ const {
       requireBranchCreationBlock?: boolean;
       minimumApprovingReviews?: number;
       expectedActiveBranchRulesets?: string[];
+      expectedActiveRulesetRuleTypes?: string[];
     }
   ) => { success: boolean; checks: Array<{ name: string; passed: boolean; details: string }>; notices: string[] };
   renderResult: (
@@ -135,7 +148,24 @@ function captureWrite() {
 }
 
 function branchRulesets(names = [...EXPECTED_ACTIVE_BRANCH_RULESETS]) {
-  return names.map((name) => ({ name, target: 'branch', enforcement: 'active', rules: [] }));
+  return names.map((name, index) => ({
+    id: 18415000 + index,
+    name,
+    target: 'branch',
+    enforcement: 'active',
+    rules: EXPECTED_ACTIVE_RULESET_RULE_TYPES.map((type) => ({ type })),
+    bypass_actors: [],
+    current_user_can_bypass: 'never'
+  }));
+}
+
+function branchRulesetResource(path: string) {
+  const rulesets = branchRulesets();
+  if (path.endsWith('/rulesets')) {
+    return rulesets;
+  }
+  const id = path.match(/\/rulesets\/(\d+)$/u)?.[1];
+  return rulesets.find((ruleset) => String(ruleset.id) === id) || rulesets[0];
 }
 
 describe('branch protection audit arguments', () => {
@@ -212,6 +242,10 @@ describe('branch protection audit evaluation', () => {
       'api',
       `repos/${DEFAULT_REPO}/rulesets`
     ]);
+    expect(buildGhRulesetDetailApiArgs(DEFAULT_REPO, 18415000)).toEqual([
+      'api',
+      `repos/${DEFAULT_REPO}/rulesets/18415000`
+    ]);
   });
 
   it('collects required contexts from both legacy contexts and check objects', () => {
@@ -242,15 +276,31 @@ describe('branch protection audit evaluation', () => {
       'branch deletions disabled',
       'branch lock disabled',
       'fork syncing disabled',
-      'active branch rulesets'
+      'active branch rulesets',
+      'active branch ruleset rules',
+      'active branch ruleset bypasses disabled'
     ]);
     expect(result.notices).toContain('advisory checks not branch-protection-required: Requirements CSV Integrity, CodeQL');
     expect(result.checks.find((check) => check.name === 'active branch rulesets')).toMatchObject({
       passed: true,
       details: 'present: develop, main'
     });
-    expect(activeRulesetSummaries([{ name: 'develop', target: 'branch', enforcement: 'active', rules: [] }])).toEqual([
-      { name: 'develop', ruleCount: 0 }
+    expect(result.checks.find((check) => check.name === 'active branch ruleset rules')).toMatchObject({
+      passed: true,
+      details: 'present on develop, main: deletion, non_fast_forward'
+    });
+    expect(activeRulesetSummaries([branchRulesets(['develop'])[0]])).toEqual([
+      {
+        name: 'develop',
+        ruleCount: 2,
+        ruleTypes: ['deletion', 'non_fast_forward'],
+        bypassActorCount: 0,
+        currentUserCanBypass: 'never'
+      }
+    ]);
+    expect(rulesetRuleTypes({ rules: [{ type: 'non_fast_forward' }, { type: 'deletion' }] })).toEqual([
+      'deletion',
+      'non_fast_forward'
     ]);
   });
 
@@ -277,7 +327,8 @@ describe('branch protection audit evaluation', () => {
       'branch deletions disabled',
       'branch lock disabled',
       'fork syncing disabled',
-      'active branch rulesets'
+      'active branch rulesets',
+      'active branch ruleset rules'
     ]);
     expect(renderResult(result, { repo: DEFAULT_REPO, branch: DEFAULT_BRANCH })).toContain(
       '[branch-protection-audit] Audit failed.'
@@ -294,6 +345,27 @@ describe('branch protection audit evaluation', () => {
     expect(result.checks.find((check) => check.name === 'active branch rulesets')).toMatchObject({
       passed: false,
       details: 'missing: main; present: develop'
+    });
+  });
+
+  it('fails closed when active branch ruleset details drift', () => {
+    const [developRuleset, mainRuleset] = branchRulesets();
+    const result = evaluateBranchProtection({
+      protection: protection(),
+      rulesets: [
+        { ...developRuleset, rules: [{ type: 'deletion' }] },
+        { ...mainRuleset, bypass_actors: [{ actor_id: 1, actor_type: 'Team', bypass_mode: 'always' }], current_user_can_bypass: 'always' }
+      ]
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.checks.find((check) => check.name === 'active branch ruleset rules')).toMatchObject({
+      passed: false,
+      details: 'develop missing: non_fast_forward; observed: deletion'
+    });
+    expect(result.checks.find((check) => check.name === 'active branch ruleset bypasses disabled')).toMatchObject({
+      passed: false,
+      details: 'main: bypass actors 1, current user can bypass always'
     });
   });
 
@@ -524,7 +596,7 @@ describe('branch protection audit main', () => {
     const stderr = captureWrite();
     const spawnSync = vi.fn((command: string, args: string[]) => {
       calls.push([command, ...args]);
-      const resource = args[1].endsWith('/rulesets') ? branchRulesets() : protection();
+      const resource = args[1].includes('/rulesets') ? branchRulesetResource(args[1]) : protection();
       return { status: 0, stdout: JSON.stringify(resource), stderr: '' };
     });
 
@@ -534,7 +606,9 @@ describe('branch protection audit main', () => {
     expect(stderr.read()).toBe('');
     expect(calls).toEqual([
       ['gh', ...buildGhApiArgs(DEFAULT_REPO, DEFAULT_BRANCH, 'protection')],
-      ['gh', ...buildGhApiArgs(DEFAULT_REPO, DEFAULT_BRANCH, 'rulesets')]
+      ['gh', ...buildGhApiArgs(DEFAULT_REPO, DEFAULT_BRANCH, 'rulesets')],
+      ['gh', ...buildGhRulesetDetailApiArgs(DEFAULT_REPO, 18415000)],
+      ['gh', ...buildGhRulesetDetailApiArgs(DEFAULT_REPO, 18415001)]
     ]);
     expect(stdout.read()).toContain('[branch-protection-audit] Audit passed.');
   });
@@ -545,7 +619,7 @@ describe('branch protection audit main', () => {
     const stderr = captureWrite();
     const spawnSync = vi.fn((command: string, args: string[]) => {
       calls.push([command, ...args]);
-      const resource = args[1].endsWith('/rulesets') ? branchRulesets() : protection();
+      const resource = args[1].includes('/rulesets') ? branchRulesetResource(args[1]) : protection();
       return { status: 0, stdout: JSON.stringify(resource), stderr: '' };
     });
 
@@ -555,6 +629,8 @@ describe('branch protection audit main', () => {
     expect(stderr.read()).toBe('');
     expect(calls).toEqual([
       ['gh', ...buildGhApiArgs(DEFAULT_REPO, 'develop', 'rulesets')],
+      ['gh', ...buildGhRulesetDetailApiArgs(DEFAULT_REPO, 18415000)],
+      ['gh', ...buildGhRulesetDetailApiArgs(DEFAULT_REPO, 18415001)],
       ['gh', ...buildGhApiArgs(DEFAULT_REPO, 'develop', 'protection')],
       ['gh', ...buildGhApiArgs(DEFAULT_REPO, 'main', 'protection')],
     ]);
@@ -566,7 +642,7 @@ describe('branch protection audit main', () => {
     const calls: string[][] = [];
     const spawnSync = vi.fn((command: string, args: string[]) => {
       calls.push([command, ...args]);
-      const resource = args[1].endsWith('/rulesets') ? branchRulesets() : protection();
+      const resource = args[1].includes('/rulesets') ? branchRulesetResource(args[1]) : protection();
       return { status: 0, stdout: JSON.stringify(resource), stderr: '' };
     });
 
@@ -575,6 +651,8 @@ describe('branch protection audit main', () => {
     );
     expect(calls).toEqual([
       ['gh', ...buildGhApiArgs(DEFAULT_REPO, 'develop', 'rulesets')],
+      ['gh', ...buildGhRulesetDetailApiArgs(DEFAULT_REPO, 18415000)],
+      ['gh', ...buildGhRulesetDetailApiArgs(DEFAULT_REPO, 18415001)],
       ['gh', ...buildGhApiArgs(DEFAULT_REPO, 'develop', 'protection')],
       ['gh', ...buildGhApiArgs(DEFAULT_REPO, 'main', 'protection')]
     ]);
@@ -584,7 +662,7 @@ describe('branch protection audit main', () => {
     const stdout = captureWrite();
     const stderr = captureWrite();
     const spawnSync = vi.fn((command: string, args: string[]) => {
-      const resource = args[1].endsWith('/rulesets') ? branchRulesets() : protection();
+      const resource = args[1].includes('/rulesets') ? branchRulesetResource(args[1]) : protection();
       return { status: 0, stdout: JSON.stringify(resource), stderr: '' };
     });
 
@@ -607,7 +685,7 @@ describe('branch protection audit main', () => {
       branch: DEFAULT_BRANCH,
       success: true
     });
-    expect(output.checks).toHaveLength(8);
+    expect(output.checks).toHaveLength(10);
     expect(output.notices.length).toBeGreaterThan(0);
     expect(output.branches).toBeUndefined();
   });
@@ -616,7 +694,7 @@ describe('branch protection audit main', () => {
     const stdout = captureWrite();
     const stderr = captureWrite();
     const spawnSync = vi.fn((command: string, args: string[]) => {
-      const resource = args[1].endsWith('/rulesets') ? branchRulesets() : protection();
+      const resource = args[1].includes('/rulesets') ? branchRulesetResource(args[1]) : protection();
       return { status: 0, stdout: JSON.stringify(resource), stderr: '' };
     });
 
@@ -649,7 +727,7 @@ describe('branch protection audit main', () => {
     const stdout = captureWrite();
     const stderr = captureWrite();
     const spawnSync = vi.fn((command: string, args: string[]) => {
-      const resource = args[1].endsWith('/rulesets') ? branchRulesets() : protection();
+      const resource = args[1].includes('/rulesets') ? branchRulesetResource(args[1]) : protection();
       return { status: 0, stdout: JSON.stringify(resource), stderr: '' };
     });
 
@@ -664,7 +742,7 @@ describe('branch protection audit main', () => {
     const stdout = captureWrite();
     const stderr = captureWrite();
     const spawnSync = vi.fn((command: string, args: string[]) => {
-      const resource = args[1].endsWith('/rulesets') ? branchRulesets() : protection();
+      const resource = args[1].includes('/rulesets') ? branchRulesetResource(args[1]) : protection();
       return { status: 0, stdout: JSON.stringify(resource), stderr: '' };
     });
 
@@ -679,7 +757,7 @@ describe('branch protection audit main', () => {
     const stdout = captureWrite();
     const stderr = captureWrite();
     const spawnSync = vi.fn((command: string, args: string[]) => {
-      const resource = args[1].endsWith('/rulesets') ? branchRulesets() : protection();
+      const resource = args[1].includes('/rulesets') ? branchRulesetResource(args[1]) : protection();
       return { status: 0, stdout: JSON.stringify(resource), stderr: '' };
     });
 
@@ -694,7 +772,7 @@ describe('branch protection audit main', () => {
     const stdout = captureWrite();
     const stderr = captureWrite();
     const spawnSync = vi.fn((command: string, args: string[]) => {
-      const resource = args[1].endsWith('/rulesets') ? branchRulesets() : protection();
+      const resource = args[1].includes('/rulesets') ? branchRulesetResource(args[1]) : protection();
       return { status: 0, stdout: JSON.stringify(resource), stderr: '' };
     });
 
@@ -709,7 +787,7 @@ describe('branch protection audit main', () => {
     const stdout = captureWrite();
     const stderr = captureWrite();
     const spawnSync = vi.fn((command: string, args: string[]) => {
-      const resource = args[1].endsWith('/rulesets') ? branchRulesets() : protection();
+      const resource = args[1].includes('/rulesets') ? branchRulesetResource(args[1]) : protection();
       return { status: 0, stdout: JSON.stringify(resource), stderr: '' };
     });
 
@@ -724,7 +802,7 @@ describe('branch protection audit main', () => {
     const stdout = captureWrite();
     const stderr = captureWrite();
     const spawnSync = vi.fn((command: string, args: string[]) => {
-      const resource = args[1].endsWith('/rulesets') ? branchRulesets() : protection();
+      const resource = args[1].includes('/rulesets') ? branchRulesetResource(args[1]) : protection();
       return { status: 0, stdout: JSON.stringify(resource), stderr: '' };
     });
 
@@ -739,7 +817,7 @@ describe('branch protection audit main', () => {
     const stdout = captureWrite();
     const stderr = captureWrite();
     const spawnSync = vi.fn((command: string, args: string[]) => {
-      const resource = args[1].endsWith('/rulesets') ? branchRulesets() : protection();
+      const resource = args[1].includes('/rulesets') ? branchRulesetResource(args[1]) : protection();
       return { status: 0, stdout: JSON.stringify(resource), stderr: '' };
     });
 
@@ -754,7 +832,7 @@ describe('branch protection audit main', () => {
     const stdout = captureWrite();
     const stderr = captureWrite();
     const spawnSync = vi.fn((command: string, args: string[]) => {
-      const resource = args[1].endsWith('/rulesets') ? branchRulesets() : protection();
+      const resource = args[1].includes('/rulesets') ? branchRulesetResource(args[1]) : protection();
       return { status: 0, stdout: JSON.stringify(resource), stderr: '' };
     });
 
@@ -769,7 +847,7 @@ describe('branch protection audit main', () => {
     const stdout = captureWrite();
     const stderr = captureWrite();
     const spawnSync = vi.fn((command: string, args: string[]) => {
-      const resource = args[1].endsWith('/rulesets') ? branchRulesets() : protection();
+      const resource = args[1].includes('/rulesets') ? branchRulesetResource(args[1]) : protection();
       return { status: 0, stdout: JSON.stringify(resource), stderr: '' };
     });
 

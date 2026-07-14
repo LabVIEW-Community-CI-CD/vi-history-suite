@@ -6,6 +6,7 @@ const DEFAULT_REPO = 'LabVIEW-Community-CI-CD/vi-history-suite';
 const DEFAULT_BRANCH = 'develop';
 const DEFAULT_AUDIT_BRANCHES = Object.freeze(['develop', 'main']);
 const EXPECTED_ACTIVE_BRANCH_RULESETS = Object.freeze(['develop', 'main']);
+const EXPECTED_ACTIVE_RULESET_RULE_TYPES = Object.freeze(['deletion', 'non_fast_forward']);
 const GH_TIMEOUT_MS = 60000;
 const ALLOWED_EXECUTABLE_COMMANDS = Object.freeze(['gh']);
 const EXPECTED_REQUIRED_STATUS_CHECKS = Object.freeze([
@@ -131,6 +132,10 @@ function buildGhApiArgs(repo, branch, resource) {
   throw new Error(`Unknown GitHub API resource: ${resource}`);
 }
 
+function buildGhRulesetDetailApiArgs(repo, rulesetId) {
+  return ['api', `repos/${repo}/rulesets/${encodeURIComponent(String(rulesetId))}`];
+}
+
 function runGhJson(args, deps = {}) {
   assertAllowedExecutableCommand('gh');
   const spawnSyncImpl = deps.spawnSync || spawnSync;
@@ -153,7 +158,17 @@ function fetchBranchProtection(options, deps = {}) {
 }
 
 function fetchBranchRulesets(options, deps = {}) {
-  return runGhJson(buildGhApiArgs(options.repo, options.branch || DEFAULT_BRANCH, 'rulesets'), deps);
+  const rulesets = runGhJson(buildGhApiArgs(options.repo, options.branch || DEFAULT_BRANCH, 'rulesets'), deps);
+  if (!Array.isArray(rulesets)) {
+    return rulesets;
+  }
+  return rulesets.map((ruleset) => {
+    const rulesetId = ruleset && ruleset.id;
+    if (rulesetId === undefined || rulesetId === null || String(rulesetId).trim() === '') {
+      return ruleset;
+    }
+    return runGhJson(buildGhRulesetDetailApiArgs(options.repo, rulesetId), deps);
+  });
 }
 
 function fetchBranchProtectionSettings(options, deps = {}) {
@@ -196,8 +211,18 @@ function activeRulesetSummaries(rulesets) {
     .filter((ruleset) => ruleset && ruleset.enforcement === 'active' && ruleset.target === 'branch')
     .map((ruleset) => ({
       name: String(ruleset.name || '(unnamed)'),
-      ruleCount: Array.isArray(ruleset.rules) ? ruleset.rules.length : 0
+      ruleCount: Array.isArray(ruleset.rules) ? ruleset.rules.length : 0,
+      ruleTypes: rulesetRuleTypes(ruleset),
+      bypassActorCount: Array.isArray(ruleset.bypass_actors) ? ruleset.bypass_actors.length : 0,
+      currentUserCanBypass: String(ruleset.current_user_can_bypass || 'unknown')
     }));
+}
+
+function rulesetRuleTypes(ruleset) {
+  return (Array.isArray(ruleset && ruleset.rules) ? ruleset.rules : [])
+    .map((rule) => String(rule && rule.type ? rule.type : ''))
+    .filter(Boolean)
+    .sort();
 }
 
 function evaluateBranchProtection(settings, options = {}) {
@@ -206,6 +231,7 @@ function evaluateBranchProtection(settings, options = {}) {
   const expectedRequiredChecks = options.expectedRequiredChecks || EXPECTED_REQUIRED_STATUS_CHECKS;
   const advisoryChecks = options.advisoryChecks || ADVISORY_STATUS_CHECKS;
   const expectedActiveBranchRulesets = options.expectedActiveBranchRulesets || EXPECTED_ACTIVE_BRANCH_RULESETS;
+  const expectedActiveRulesetRuleTypes = options.expectedActiveRulesetRuleTypes || EXPECTED_ACTIVE_RULESET_RULE_TYPES;
   const requireAdvisory = Boolean(options.requireAdvisory);
   const requireReview = Boolean(options.requireReview);
   const requireLinearHistory = Boolean(options.requireLinearHistory);
@@ -224,6 +250,17 @@ function evaluateBranchProtection(settings, options = {}) {
   const activeRulesets = activeRulesetSummaries(settings.rulesets);
   const activeRulesetNames = activeRulesets.map((ruleset) => ruleset.name).sort();
   const missingActiveRulesets = expectedActiveBranchRulesets.filter((name) => !activeRulesetNames.includes(name));
+  const activeRulesetsByName = new Map(activeRulesets.map((ruleset) => [ruleset.name, ruleset]));
+  const rulesetsMissingRuleTypes = expectedActiveBranchRulesets
+    .map((name) => {
+      const ruleset = activeRulesetsByName.get(name);
+      const missingRuleTypes = expectedActiveRulesetRuleTypes.filter((type) => !ruleset || !ruleset.ruleTypes.includes(type));
+      return { name, missingRuleTypes, observedRuleTypes: ruleset ? ruleset.ruleTypes : [] };
+    })
+    .filter((item) => item.missingRuleTypes.length > 0);
+  const bypassableRulesets = expectedActiveBranchRulesets
+    .map((name) => activeRulesetsByName.get(name))
+    .filter((ruleset) => ruleset && (ruleset.bypassActorCount > 0 || ruleset.currentUserCanBypass !== 'never'));
 
   const checks = [
     {
@@ -269,6 +306,24 @@ function evaluateBranchProtection(settings, options = {}) {
       details: missingActiveRulesets.length === 0
         ? `present: ${expectedActiveBranchRulesets.join(', ')}`
         : `missing: ${missingActiveRulesets.join(', ')}; present: ${activeRulesetNames.join(', ') || 'none'}`
+    },
+    {
+      name: 'active branch ruleset rules',
+      passed: rulesetsMissingRuleTypes.length === 0,
+      details: rulesetsMissingRuleTypes.length === 0
+        ? `present on ${expectedActiveBranchRulesets.join(', ')}: ${expectedActiveRulesetRuleTypes.join(', ')}`
+        : rulesetsMissingRuleTypes
+          .map((item) => `${item.name} missing: ${item.missingRuleTypes.join(', ')}; observed: ${item.observedRuleTypes.join(', ') || 'none'}`)
+          .join('; ')
+    },
+    {
+      name: 'active branch ruleset bypasses disabled',
+      passed: bypassableRulesets.length === 0,
+      details: bypassableRulesets.length === 0
+        ? `no bypass actors on ${expectedActiveBranchRulesets.join(', ')}; current user cannot bypass`
+        : bypassableRulesets
+          .map((ruleset) => `${ruleset.name}: bypass actors ${ruleset.bypassActorCount}, current user can bypass ${ruleset.currentUserCanBypass}`)
+          .join('; ')
     }
   ];
 
@@ -458,6 +513,7 @@ module.exports = {
   DEFAULT_BRANCH,
   DEFAULT_AUDIT_BRANCHES,
   EXPECTED_ACTIVE_BRANCH_RULESETS,
+  EXPECTED_ACTIVE_RULESET_RULE_TYPES,
   EXPECTED_REQUIRED_STATUS_CHECKS,
   ADVISORY_STATUS_CHECKS,
   ALLOWED_EXECUTABLE_COMMANDS,
@@ -468,11 +524,13 @@ module.exports = {
   parseArgs,
   usage,
   buildGhApiArgs,
+  buildGhRulesetDetailApiArgs,
   fetchBranchProtection,
   fetchBranchRulesets,
   requiredApprovingReviewCount,
   requiredStatusContexts,
   activeRulesetSummaries,
+  rulesetRuleTypes,
   evaluateBranchProtection,
   renderResult,
   branchesForOptions,
