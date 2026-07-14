@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 const {
   REQUIREMENTS_HEALTH_SCHEMA_VERSION,
   REQUIREMENTS_HEALTH_SCHEMA_ID,
+  REQUIREMENTS_HEALTH_SCHEMA_PROVENANCE_KEY,
   REQUIREMENTS_HEALTH_JSON_SCHEMA,
   ATTENTION_REASON_IDS,
   computeMutationScore,
@@ -31,6 +32,7 @@ const {
 } = require('../../scripts/verifyRequirementsHealth.js') as {
   REQUIREMENTS_HEALTH_SCHEMA_VERSION: number;
   REQUIREMENTS_HEALTH_SCHEMA_ID: string;
+  REQUIREMENTS_HEALTH_SCHEMA_PROVENANCE_KEY: string;
   REQUIREMENTS_HEALTH_JSON_SCHEMA: Record<string, unknown>;
   ATTENTION_REASON_IDS: { unlinked: string; uncitedCriteria: string; coverageRisk: string };
   computeMutationScore: (report: unknown) => {
@@ -76,12 +78,14 @@ const {
     positionals: string[];
   };
   outputModeForOptions: (options?: { json?: boolean; markdown?: boolean; schema?: boolean }) => string;
-  renderRequirementsHealthJsonSchema: () => string;
+  renderRequirementsHealthJsonSchema: (options?: {
+    provenance?: { generatedAt: string; cwd: string; outputMode: string; strict: boolean; argv: string[] };
+  }) => string;
   markdownCell: (value?: unknown) => string;
   markdownCodeSpan: (value?: unknown) => string;
   generatedAtForProvenance: (deps?: { now?: () => Date | string; generatedAt?: Date | string }) => string;
   buildRequirementsHealthProvenance: (
-    options?: { cwd?: string; json?: boolean; markdown?: boolean; strict?: boolean },
+    options?: { cwd?: string; json?: boolean; markdown?: boolean; schema?: boolean; strict?: boolean },
     deps?: { cwd?: string; now?: () => Date | string; generatedAt?: Date | string; argv?: string[] }
   ) => { generatedAt: string; cwd: string; outputMode: string; strict: boolean; argv: string[] };
   renderTextProvenance: (provenance?: {
@@ -377,6 +381,21 @@ describe('requirement verification health (VHS-REQ-601)', () => {
     expect(outputModeForOptions({ markdown: true })).toBe('markdown');
     expect(outputModeForOptions({ schema: true })).toBe('schema');
     expect(outputModeForOptions()).toBe('text');
+    expect(
+      buildRequirementsHealthProvenance(
+        { cwd: '/repo', schema: true },
+        {
+          now: () => new Date('2026-07-14T12:00:00.000Z'),
+          argv: ['--schema', '--include-provenance']
+        }
+      )
+    ).toEqual({
+      generatedAt: '2026-07-14T12:00:00.000Z',
+      cwd: path.resolve('/repo'),
+      outputMode: 'schema',
+      strict: false,
+      argv: ['--schema', '--include-provenance']
+    });
     expect(generatedAtForProvenance({ generatedAt: new Date('2026-07-14T12:00:00.000Z') })).toBe(
       '2026-07-14T12:00:00.000Z'
     );
@@ -437,7 +456,7 @@ describe('requirement verification health (VHS-REQ-601)', () => {
     expect(schema.properties.schemaVersion.const).toBe(REQUIREMENTS_HEALTH_SCHEMA_VERSION);
     expect(schema.properties.provenance.$ref).toBe('#/$defs/provenance');
     expect(schema.$defs.attentionReason.properties.reasonId.enum).toEqual(Object.values(ATTENTION_REASON_IDS));
-    expect(schema.$defs.provenance.properties.outputMode.enum).toEqual(['text', 'json', 'markdown']);
+    expect(schema.$defs.provenance.properties.outputMode.enum).toEqual(['text', 'json', 'markdown', 'schema']);
     expect(
       (REQUIREMENTS_HEALTH_JSON_SCHEMA.properties as { $schema: { const: string }; schemaVersion: { const: number } })
         .$schema.const
@@ -446,6 +465,22 @@ describe('requirement verification health (VHS-REQ-601)', () => {
       (REQUIREMENTS_HEALTH_JSON_SCHEMA.properties as { $schema: { const: string }; schemaVersion: { const: number } })
         .schemaVersion.const
     ).toBe(REQUIREMENTS_HEALTH_SCHEMA_VERSION);
+  });
+
+  it('adds schema provenance only when requested', () => {
+    const provenance = {
+      generatedAt: '2026-07-14T12:00:00.000Z',
+      cwd: path.resolve('/repo'),
+      outputMode: 'schema',
+      strict: false,
+      argv: ['--schema', '--include-provenance']
+    };
+    const defaultSchema = JSON.parse(renderRequirementsHealthJsonSchema()) as Record<string, unknown>;
+    const schema = JSON.parse(renderRequirementsHealthJsonSchema({ provenance })) as Record<string, unknown>;
+
+    expect(defaultSchema[REQUIREMENTS_HEALTH_SCHEMA_PROVENANCE_KEY]).toBeUndefined();
+    expect(schema.$id).toBe(REQUIREMENTS_HEALTH_SCHEMA_ID);
+    expect(schema[REQUIREMENTS_HEALTH_SCHEMA_PROVENANCE_KEY]).toEqual(provenance);
   });
 
   it('renders Markdown evidence with escaped attention details', () => {
@@ -635,6 +670,34 @@ describe('requirement verification health (VHS-REQ-601)', () => {
     expect(schema.properties.schemaVersion.const).toBe(REQUIREMENTS_HEALTH_SCHEMA_VERSION);
     expect(schema.required).toContain('$schema');
     expect(schema.required).toContain('summary');
+  });
+
+  it('main writes retained JSON Schema output with provenance when requested', () => {
+    const stdoutChunks: string[] = [];
+    const writeCalls: unknown[] = [];
+
+    const code = main(['--schema', '--include-provenance', '--output', 'evidence/requirements-health.schema.json'], {
+      cwd: '/repo',
+      linkage: {},
+      now: () => new Date('2026-07-14T12:00:00.000Z'),
+      stdout: { write: (chunk: string) => stdoutChunks.push(chunk) },
+      mkdirSync: () => undefined,
+      writeFileSync: (...args: unknown[]) => writeCalls.push(args)
+    });
+
+    const schema = JSON.parse(String((writeCalls[0] as unknown[])[1])) as Record<string, unknown>;
+    expect(code).toBe(0);
+    expect(stdoutChunks.join('')).toBe(
+      '[requirements-verify] Wrote schema output to evidence/requirements-health.schema.json\n'
+    );
+    expect(schema.$id).toBe(REQUIREMENTS_HEALTH_SCHEMA_ID);
+    expect(schema[REQUIREMENTS_HEALTH_SCHEMA_PROVENANCE_KEY]).toEqual({
+      generatedAt: '2026-07-14T12:00:00.000Z',
+      cwd: path.resolve('/repo'),
+      outputMode: 'schema',
+      strict: false,
+      argv: ['--schema', '--include-provenance', '--output', 'evidence/requirements-health.schema.json']
+    });
   });
 
   it('main includes provenance in retained JSON output when requested', () => {
