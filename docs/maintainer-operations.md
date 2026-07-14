@@ -642,6 +642,15 @@ fix candidates; profile gate failures are cross-standard candidates that should
 be reviewed with the saved profile evidence. The command is local advisory
 evidence, not a hosted CI gate or release substitute.
 
+Human review should start with `audit-summary.md`; automation and later triage
+should consume `audit-summary.json`. Schema version `1` retains the stable
+machine-consumer contract: direct-check status and checked paths, snapshot
+metadata, exact command provenance, per-profile score-file provenance, coverage
+rationale rows, evidence rows, gate-strength rows, high-confidence gate-basis
+rows, and lower-confidence or missing-proof gate-detail rows. Each grouped
+standards row must keep its retained `standards`, `profiles`, and `scoreFiles`
+arrays even when the Markdown rendering groups or compacts the same evidence.
+
 ## External Marketplace Verification
 
 The Marketplace extension identity `svelderrainruiz.vi-history-suite` is tested

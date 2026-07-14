@@ -1400,11 +1400,61 @@ describe('multi standards audit script', () => {
       }),
       removeTrackedWorktreeSnapshot
     });
+    const expectedProfiles = [...GATE_SCORECARD_PROFILES, PORTFOLIO_PROFILE];
+    const expectedScoreFiles = [
+      ...GATE_SCORECARD_PROFILES.map((profile) => `${profile}/target/score.json`),
+      `${PORTFOLIO_PROFILE}/repos/target/score.json`
+    ];
+    const auditSummaryPath = path.join(root, 'evidence', 'run-1', 'audit-summary.json');
+    type RetainedAuditSummary = typeof result.context & {
+      schemaVersion: number;
+      options: { runId: string };
+      snapshot: {
+        mode: string;
+        path: string;
+        trackedFileCount: number;
+        symlinkFiles: string[];
+        missingFiles: string[];
+        generatedRootsExcluded: string[];
+        removed: boolean;
+      };
+      imagePreparation: Array<{ name: string; status: number; command: string }>;
+      directChecks: Array<(typeof result.context.directChecks)[number] & { command: string }>;
+      profiles: Array<(typeof result.context.profiles)[number] & { command: string }>;
+    };
+    const retainedSummary = JSON.parse(fs.readFileSync(auditSummaryPath, 'utf8')) as RetainedAuditSummary;
 
     expect(result.exitCode).toBe(0);
     expect(result.context.success).toBe(true);
     expect(result.context.directChecks).toHaveLength(2);
     expect(result.context.profiles).toHaveLength(6);
+    expect(retainedSummary.schemaVersion).toBe(1);
+    expect(retainedSummary.options.runId).toBe('run-1');
+    expect(retainedSummary.success).toBe(true);
+    expect(retainedSummary.snapshot).toMatchObject({
+      mode: 'tracked-worktree-snapshot',
+      path: snapshotPath,
+      trackedFileCount: 12,
+      symlinkFiles: [],
+      missingFiles: [],
+      generatedRootsExcluded: ['assurance-*-evidence/'],
+      removed: true
+    });
+    expect(retainedSummary.imagePreparation).toEqual([
+      expect.objectContaining({
+        name: 'docker-image-inspect',
+        status: 0,
+        command: expect.stringContaining('docker image inspect')
+      })
+    ]);
+    expect(retainedSummary.directChecks.map((step) => step.command)).toEqual([
+      expect.stringContaining('scripts/requirements_quality_check.py /target --requirements-spec-scope system --json'),
+      expect.stringContaining('scripts/external_user_information_check.py /target --json')
+    ]);
+    expect(retainedSummary.profiles.map((profile) => profile.name)).toEqual(expectedProfiles);
+    expect(retainedSummary.profiles.map((profile) => profile.command)).toEqual(
+      expectedProfiles.map((profile) => expect.stringContaining(`scripts/run_assurance.py /target --profile ${profile}`))
+    );
     expect(result.markdown).toContain('External user information: ok (0 finding(s), 1 checked path(s))');
     expect(result.markdown).toContain('## Audit Run Provenance');
     expect(result.markdown).toContain('| Field | Value |');
@@ -1464,15 +1514,8 @@ describe('multi standards audit script', () => {
       area: 'TEST',
       rationale: 'Testing evidence includes automation, thresholds, artifacts, and gate context.',
       standards: ['29119-2', '29119-3'],
-      profiles: ['quick-triage', 'release-gate', '26514-review', 'due-diligence', 'compliance-uplift', 'portfolio-review'],
-      scoreFiles: [
-        'quick-triage/target/score.json',
-        'release-gate/target/score.json',
-        '26514-review/target/score.json',
-        'due-diligence/target/score.json',
-        'compliance-uplift/target/score.json',
-        'portfolio-review/repos/target/score.json'
-      ]
+      profiles: expectedProfiles,
+      scoreFiles: expectedScoreFiles
     });
     expect(result.context.standardsScoreFileLegend).toEqual([
       { profile: 'quick-triage', scoreFile: 'quick-triage/target/score.json' },
@@ -1501,29 +1544,15 @@ describe('multi standards audit script', () => {
         'docs/quick-reference.md',
         'docs/information-item-map.md'
       ],
-      profiles: ['quick-triage', 'release-gate', '26514-review', 'due-diligence', 'compliance-uplift', 'portfolio-review'],
-      scoreFiles: [
-        'quick-triage/target/score.json',
-        'release-gate/target/score.json',
-        '26514-review/target/score.json',
-        'due-diligence/target/score.json',
-        'compliance-uplift/target/score.json',
-        'portfolio-review/repos/target/score.json'
-      ]
+      profiles: expectedProfiles,
+      scoreFiles: expectedScoreFiles
     });
     expect(result.context.standardsGateStrengthSummary?.find((row) => row.id === 'gate-coverage')).toEqual({
       id: 'gate-coverage',
       summary: 'coverage gate passes with High confidence.',
       standards: ['29119-2', '29119-3'],
-      profiles: ['quick-triage', 'release-gate', '26514-review', 'due-diligence', 'compliance-uplift', 'portfolio-review'],
-      scoreFiles: [
-        'quick-triage/target/score.json',
-        'release-gate/target/score.json',
-        '26514-review/target/score.json',
-        'due-diligence/target/score.json',
-        'compliance-uplift/target/score.json',
-        'portfolio-review/repos/target/score.json'
-      ]
+      profiles: expectedProfiles,
+      scoreFiles: expectedScoreFiles
     });
     expect(result.context.standardsGateBasisSummary?.find((row) => row.gate === 'coverage')).toEqual({
       gate: 'coverage',
@@ -1531,15 +1560,8 @@ describe('multi standards audit script', () => {
       confidence: 'High',
       basis: 'Require tests, CI evidence, coverage artifacts, thresholds, and PR gate context.',
       standards: ['29119-2', '29119-3'],
-      profiles: ['quick-triage', 'release-gate', '26514-review', 'due-diligence', 'compliance-uplift', 'portfolio-review'],
-      scoreFiles: [
-        'quick-triage/target/score.json',
-        'release-gate/target/score.json',
-        '26514-review/target/score.json',
-        'due-diligence/target/score.json',
-        'compliance-uplift/target/score.json',
-        'portfolio-review/repos/target/score.json'
-      ]
+      profiles: expectedProfiles,
+      scoreFiles: expectedScoreFiles
     });
     expect(result.context.standardsGateBasisSummary?.some((row) => row.gate === 'dod')).toBe(false);
     expect(result.context.standardsGateDetailSummary?.find((row) => row.gate === 'dod')).toEqual({
@@ -1549,15 +1571,37 @@ describe('multi standards audit script', () => {
       basis: 'Report DoD only when a DoD Gate / dod context is visible.',
       standards: [],
       missingProof: [],
-      profiles: ['quick-triage', 'release-gate', '26514-review', 'due-diligence', 'compliance-uplift', 'portfolio-review'],
-      scoreFiles: [
-        'quick-triage/target/score.json',
-        'release-gate/target/score.json',
-        '26514-review/target/score.json',
-        'due-diligence/target/score.json',
-        'compliance-uplift/target/score.json',
-        'portfolio-review/repos/target/score.json'
-      ]
+      profiles: expectedProfiles,
+      scoreFiles: expectedScoreFiles
+    });
+    expect(
+      retainedSummary.directChecks.find((step) => step.name === 'external-user-information')?.externalUserInformation?.checkedPaths
+    ).toEqual(['docs/user-guide.md']);
+    expect(retainedSummary.standardsCoverageRationaleSummary?.find((row) => row.area === 'TEST')).toMatchObject({
+      standards: ['29119-2', '29119-3'],
+      profiles: expectedProfiles,
+      scoreFiles: expectedScoreFiles
+    });
+    expect(retainedSummary.standardsEvidenceSummary?.find((row) => row.id === 'area-doc')).toMatchObject({
+      standards: ['15289', '26514'],
+      profiles: expectedProfiles,
+      scoreFiles: expectedScoreFiles
+    });
+    expect(retainedSummary.standardsGateStrengthSummary?.find((row) => row.id === 'gate-coverage')).toMatchObject({
+      standards: ['29119-2', '29119-3'],
+      profiles: expectedProfiles,
+      scoreFiles: expectedScoreFiles
+    });
+    expect(retainedSummary.standardsGateBasisSummary?.find((row) => row.gate === 'coverage')).toMatchObject({
+      standards: ['29119-2', '29119-3'],
+      profiles: expectedProfiles,
+      scoreFiles: expectedScoreFiles
+    });
+    expect(retainedSummary.standardsGateDetailSummary?.find((row) => row.gate === 'dod')).toMatchObject({
+      standards: [],
+      missingProof: [],
+      profiles: expectedProfiles,
+      scoreFiles: expectedScoreFiles
     });
     expect(result.context.profiles.find((profile) => profile.scoreFile)?.scoreFile).toBe('quick-triage/target/score.json');
     expect(result.context.profiles.find((profile) => profile.portfolio)?.portfolio).toMatchObject({
@@ -1567,7 +1611,7 @@ describe('multi standards audit script', () => {
       topRisk: 'none'
     });
     expect(result.context.profiles.find((profile) => profile.portfolio)?.scoreFile).toBe('portfolio-review/repos/target/score.json');
-    expect(fs.existsSync(path.join(root, 'evidence', 'run-1', 'audit-summary.json'))).toBe(true);
+    expect(fs.existsSync(auditSummaryPath)).toBe(true);
     expect(fs.existsSync(path.join(root, 'evidence', 'run-1', 'portfolio-review-table.txt'))).toBe(true);
     expect(calls.filter((call) => call.command === 'docker' && call.args[0] === 'run')).toHaveLength(8);
     expect(calls.some((call) => call.args.includes(`${snapshotPath}:/target`))).toBe(true);
