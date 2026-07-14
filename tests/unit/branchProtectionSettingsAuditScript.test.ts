@@ -35,6 +35,7 @@ const {
     allBranches: boolean;
     requireAdvisory: boolean;
     requireReview: boolean;
+    requireLinearHistory: boolean;
     emitJson: boolean;
     help: boolean;
   };
@@ -50,6 +51,7 @@ const {
       advisoryChecks?: string[];
       requireAdvisory?: boolean;
       requireReview?: boolean;
+      requireLinearHistory?: boolean;
       minimumApprovingReviews?: number;
       expectedActiveBranchRulesets?: string[];
     }
@@ -70,6 +72,7 @@ type ProtectionOverrides = {
   allowForcePushes?: boolean;
   allowDeletions?: boolean;
   requiredApprovingReviewCount?: number;
+  requiredLinearHistory?: boolean;
 };
 
 function protection(overrides: ProtectionOverrides = {}) {
@@ -83,6 +86,7 @@ function protection(overrides: ProtectionOverrides = {}) {
     enforce_admins: { enabled: overrides.enforceAdmins ?? true },
     allow_force_pushes: { enabled: overrides.allowForcePushes ?? false },
     allow_deletions: { enabled: overrides.allowDeletions ?? false },
+    required_linear_history: { enabled: overrides.requiredLinearHistory ?? false },
     required_pull_request_reviews: {
       required_approving_review_count: overrides.requiredApprovingReviewCount ?? 0
     }
@@ -114,24 +118,27 @@ describe('branch protection audit arguments', () => {
       allBranches: false,
       requireAdvisory: false,
       requireReview: false,
+      requireLinearHistory: false,
       emitJson: false,
       help: false
     });
   });
 
-  it('parses repo, branch, all, advisory, review, json, and help options', () => {
-    expect(parseArgs(['--repo', 'owner/repo', '--branch', 'release/v1.2.3', '--all', '--require-advisory', '--require-review', '--json'])).toMatchObject({
+  it('parses repo, branch, all, hardening, json, and help options', () => {
+    expect(parseArgs(['--repo', 'owner/repo', '--branch', 'release/v1.2.3', '--all', '--require-advisory', '--require-review', '--require-linear-history', '--json'])).toMatchObject({
       repo: 'owner/repo',
       branch: 'release/v1.2.3',
       allBranches: true,
       requireAdvisory: true,
       requireReview: true,
+      requireLinearHistory: true,
       emitJson: true
     });
     expect(parseArgs(['--help']).help).toBe(true);
     expect(usage()).toContain('auditBranchProtectionSettings');
     expect(usage()).toContain('--require-advisory');
     expect(usage()).toContain('--require-review');
+    expect(usage()).toContain('--require-linear-history');
     expect(branchesForOptions({ allBranches: true })).toEqual(DEFAULT_AUDIT_BRANCHES);
     expect(branchesForOptions({ branch: 'main' })).toEqual(['main']);
   });
@@ -286,6 +293,30 @@ describe('branch protection audit evaluation', () => {
     expect(hardened.checks.find((check) => check.name === 'pull request approving reviews')).toMatchObject({
       passed: true,
       details: 'required approving reviews: 1'
+    });
+  });
+
+  it('can require linear history for branch-protection hardening audits', () => {
+    const result = evaluateBranchProtection(
+      { protection: protection(), rulesets: branchRulesets() },
+      { requireLinearHistory: true }
+    );
+
+    expect(result.success).toBe(false);
+    expect(result.checks.find((check) => check.name === 'linear history')).toMatchObject({
+      passed: false,
+      details: 'disabled or unavailable'
+    });
+
+    const hardened = evaluateBranchProtection(
+      { protection: protection({ requiredLinearHistory: true }), rulesets: branchRulesets() },
+      { requireLinearHistory: true }
+    );
+
+    expect(hardened.success).toBe(true);
+    expect(hardened.checks.find((check) => check.name === 'linear history')).toMatchObject({
+      passed: true,
+      details: 'enabled'
     });
   });
 });
@@ -446,6 +477,21 @@ describe('branch protection audit main', () => {
     expect(exitCode).toBe(1);
     expect(stderr.read()).toBe('');
     expect(stdout.read()).toContain('FAIL pull request approving reviews');
+  });
+
+  it('returns nonzero when linear history is required but absent', () => {
+    const stdout = captureWrite();
+    const stderr = captureWrite();
+    const spawnSync = vi.fn((command: string, args: string[]) => {
+      const resource = args[1].endsWith('/rulesets') ? branchRulesets() : protection();
+      return { status: 0, stdout: JSON.stringify(resource), stderr: '' };
+    });
+
+    const exitCode = main(['--require-linear-history'], { spawnSync, stdout: stdout.stream, stderr: stderr.stream });
+
+    expect(exitCode).toBe(1);
+    expect(stderr.read()).toBe('');
+    expect(stdout.read()).toContain('FAIL linear history');
   });
 
   it('returns nonzero when GitHub returns malformed JSON', () => {
