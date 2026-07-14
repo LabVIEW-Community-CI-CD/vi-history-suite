@@ -30,6 +30,7 @@ const {
   renderStandardsGateStrengthSummary,
   renderStandardsGateDetailSummary,
   renderProfileSignalLines,
+  renderDirectCheckEvidenceSummary,
   runMultiStandardsAudit
 } = require('../../scripts/runMultiStandardsAudit.js') as {
   DEFAULT_SAVE_DIR: string;
@@ -198,6 +199,21 @@ const {
       topRisk?: string;
     };
   }>) => string[];
+  renderDirectCheckEvidenceSummary: (directCheckSummaries: Array<{
+    name: string;
+    status: number;
+    file: string;
+    requirementsQuality?: {
+      ok: boolean;
+      findingCount?: number;
+    };
+    externalUserInformation?: {
+      ok: boolean;
+      findingCount?: number;
+      checkedPathCount?: number;
+      checkedPaths?: string[];
+    };
+  }>) => string[];
   profileDockerSteps: (options: { image: string }) => Array<{
     name: string;
     file: string;
@@ -234,7 +250,21 @@ const {
       outputDir: string;
       imageAccess?: string;
       imagePreparation?: Array<{ name: string; status: number }>;
-      directChecks: Array<{ status: number }>;
+      directChecks: Array<{
+        name: string;
+        status: number;
+        file: string;
+        requirementsQuality?: {
+          ok: boolean;
+          findingCount?: number;
+        };
+        externalUserInformation?: {
+          ok: boolean;
+          findingCount?: number;
+          checkedPathCount?: number;
+          checkedPaths?: string[];
+        };
+      }>;
       profiles: Array<{
         name: string;
         status: number;
@@ -661,6 +691,33 @@ describe('multi standards audit script', () => {
     expect(renderStandardsScoreFileLegend(legend)).toContain('| release-gate | release-gate\\\\target\\|score.json |');
   });
 
+  it('renders direct standards check evidence paths with artifacts', () => {
+    expect(renderDirectCheckEvidenceSummary([
+      {
+        name: 'requirements-quality-system',
+        status: 0,
+        file: 'requirements-quality-system.json',
+        requirementsQuality: { ok: true, findingCount: 0 }
+      },
+      {
+        name: 'external-user-information',
+        status: 0,
+        file: 'external-user-information.json',
+        externalUserInformation: {
+          ok: true,
+          findingCount: 0,
+          checkedPathCount: 2,
+          checkedPaths: ['docs\\user|guide.md', 'docs/information-for-users/style-guide.md']
+        }
+      }
+    ])).toEqual([
+      '| Check | Artifact | Result | Findings | Checked Paths |',
+      '| --- | --- | --- | --- | --- |',
+      '| requirements-quality-system | requirements-quality-system.json | ok | 0 | - |',
+      '| external-user-information | external-user-information.json | ok | 0 | docs\\\\user\\|guide.md<br>docs/information-for-users/style-guide.md |'
+    ]);
+  });
+
   it('compacts complete profile sets in retained summary Markdown only', () => {
     const completeProfiles = ['quick-triage', 'release-gate'];
 
@@ -977,6 +1034,9 @@ describe('multi standards audit script', () => {
     expect(result.context.directChecks).toHaveLength(2);
     expect(result.context.profiles).toHaveLength(6);
     expect(result.markdown).toContain('External user information: ok (0 finding(s), 1 checked path(s))');
+    expect(result.markdown).toContain('## Direct Check Evidence Summary');
+    expect(result.markdown).toContain('| requirements-quality-system | requirements-quality-system.json | ok | 0 | - |');
+    expect(result.markdown).toContain('| external-user-information | external-user-information.json | ok | 0 | docs/user-guide.md |');
     expect(result.markdown).toContain('quick-triage, release-gate, 26514-review, due-diligence, compliance-uplift: coverage=PASS(High), cm=PASS(High), req=PASS(High), arch=PASS(High), doc=PASS(High), dod=PASS(Med)');
     expect(result.markdown).not.toContain('- quick-triage: coverage=PASS(High)');
     expect(result.markdown).toContain('## Standards Coverage Matrix');
@@ -994,6 +1054,7 @@ describe('multi standards audit script', () => {
     expect(result.markdown).toContain('| Gate | Status | Confidence | Standards | Basis | Missing Proof | Profiles |');
     expect(result.markdown).toContain('| dod | PASS | Med | unmapped | Report DoD only when a DoD Gate / dod context is visible. | - | all profiles |');
     expect(result.markdown).toContain('portfolio-review: overall=High, gates=6P/0F, REQ=5, ARCH=5, TEST=5, CM=5, DOC=5, topRisk=none (see portfolio-review-table.txt)');
+    expect(result.context.directChecks.find((step) => step.name === 'external-user-information')?.externalUserInformation?.checkedPaths).toEqual(['docs/user-guide.md']);
     expect(result.context.profiles.find((profile) => profile.scorecardDetails)?.scorecardDetails?.dod).toEqual({
       status: 'PASS',
       confidence: 'Med',
