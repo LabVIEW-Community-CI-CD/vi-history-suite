@@ -16,6 +16,7 @@ const {
   profileDockerSteps,
   replaceAuditMounts,
   summarizeGateScorecard,
+  summarizeRetainedGateScore,
   summarizePortfolioTable,
   runMultiStandardsAudit
 } = require('../../scripts/runMultiStandardsAudit.js') as {
@@ -47,6 +48,15 @@ const {
   summarizeGateScorecard: (text: string) => Record<string, {
     status?: string;
     confidence?: string;
+    basis?: string;
+    standards?: string[];
+    missingProof: string[];
+  }>;
+  summarizeRetainedGateScore: (payload: unknown) => Record<string, {
+    status?: string;
+    confidence?: string;
+    basis?: string;
+    standards: string[];
     missingProof: string[];
   }>;
   profileDockerSteps: (options: { image: string }) => Array<{
@@ -97,8 +107,11 @@ const {
         scorecardDetails?: Record<string, {
           status?: string;
           confidence?: string;
+          basis?: string;
+          standards?: string[];
           missingProof: string[];
         }>;
+        scoreFile?: string;
       }>;
       success: boolean;
     };
@@ -134,6 +147,71 @@ function portfolioTable(): string {
     '| --- | --- | --- | --- | --- | --- | --- | --- | --- |',
     '| target | High | 6P/0F | 5 | 5 | 5 | 5 | 5 | none |'
   ].join('\n');
+}
+
+function profileScore(): string {
+  return JSON.stringify({
+    gates: {
+      coverage: {
+        status: 'PASS',
+        confidence: 'High',
+        basis: 'Require tests, CI evidence, coverage artifacts, thresholds, and PR gate context.',
+        standards: ['29119-2', '29119-3'],
+        missing: []
+      },
+      cm: {
+        status: 'PASS',
+        confidence: 'High',
+        basis: 'Require SemVer and baseline rules.',
+        standards: ['10007', '12207'],
+        missing: []
+      },
+      req: {
+        status: 'PASS',
+        confidence: 'High',
+        basis: 'Require critical capability IDs and at least one RTM row.',
+        standards: ['29148'],
+        missing: []
+      },
+      arch: {
+        status: 'PASS',
+        confidence: 'High',
+        basis: 'Require architecture description and decision rationale.',
+        standards: ['42010'],
+        missing: []
+      },
+      doc: {
+        status: 'PASS',
+        confidence: 'High',
+        basis: 'Require link-check evidence and reusable user-information signals.',
+        standards: ['15289', '26514'],
+        missing: []
+      },
+      dod: {
+        status: 'PASS',
+        confidence: 'Med',
+        basis: 'Report DoD only when a DoD Gate / dod context is visible.',
+        standards: [],
+        missing: []
+      }
+    }
+  });
+}
+
+function writeProfileScoreFromDockerArgs(args: string[]): void {
+  const outputMount = args.find((arg) => arg.endsWith(':/out'));
+  const saveDirIndex = args.indexOf('--save-dir');
+  if (!outputMount || saveDirIndex < 0) {
+    return;
+  }
+  const outputDir = outputMount.slice(0, -':/out'.length);
+  const profileSaveDir = args[saveDirIndex + 1]?.replace(/^\/out\//, '');
+  if (!profileSaveDir) {
+    return;
+  }
+  const scoreDir = path.join(outputDir, profileSaveDir, 'target');
+  fs.mkdirSync(scoreDir, { recursive: true });
+  fs.writeFileSync(path.join(scoreDir, 'score.json'), profileScore(), 'utf8');
 }
 
 afterEach(() => {
@@ -210,6 +288,25 @@ describe('multi standards audit script', () => {
     });
   });
 
+  it('summarizes retained gate basis and standards from score JSON', () => {
+    expect(summarizeRetainedGateScore(JSON.parse(profileScore()))).toMatchObject({
+      coverage: {
+        status: 'PASS',
+        confidence: 'High',
+        basis: 'Require tests, CI evidence, coverage artifacts, thresholds, and PR gate context.',
+        standards: ['29119-2', '29119-3'],
+        missingProof: []
+      },
+      dod: {
+        status: 'PASS',
+        confidence: 'Med',
+        basis: 'Report DoD only when a DoD Gate / dod context is visible.',
+        standards: [],
+        missingProof: []
+      }
+    });
+  });
+
   it('runs direct checks and all standards profiles from a tracked snapshot', () => {
     const root = makeTempRoot();
     const snapshotPath = path.join(root, 'snapshot');
@@ -230,6 +327,7 @@ describe('multi standards audit script', () => {
         };
       }
       if (args.includes('scripts/run_assurance.py')) {
+        writeProfileScoreFromDockerArgs(args);
         return {
           status: 0,
           stdout: args.includes('portfolio-table') ? portfolioTable() : gateScorecard()
@@ -259,12 +357,16 @@ describe('multi standards audit script', () => {
     expect(result.context.profiles).toHaveLength(6);
     expect(result.markdown).toContain('External user information: ok (0 finding(s), 1 checked path(s))');
     expect(result.markdown).toContain('quick-triage: coverage=PASS(High), cm=PASS(High), req=PASS(High), arch=PASS(High), doc=PASS(High), dod=PASS(Med)');
+    expect(result.markdown).toContain('quick-triage dod: basis=Report DoD only when a DoD Gate / dod context is visible.; standards=none (see quick-triage/target/score.json)');
     expect(result.markdown).toContain('portfolio-review: overall=High, gates=6P/0F, REQ=5, ARCH=5, TEST=5, CM=5, DOC=5, topRisk=none (see portfolio-review-table.txt)');
     expect(result.context.profiles.find((profile) => profile.scorecardDetails)?.scorecardDetails?.dod).toEqual({
       status: 'PASS',
       confidence: 'Med',
+      basis: 'Report DoD only when a DoD Gate / dod context is visible.',
+      standards: [],
       missingProof: []
     });
+    expect(result.context.profiles.find((profile) => profile.scoreFile)?.scoreFile).toBe('quick-triage/target/score.json');
     expect(result.context.profiles.find((profile) => profile.portfolio)?.portfolio).toMatchObject({
       tableFile: 'portfolio-review-table.txt',
       overall: 'High',
@@ -303,6 +405,7 @@ describe('multi standards audit script', () => {
         return { status: 0, stdout: JSON.stringify({ ok: true, findings: [], checkedPaths: [] }) };
       }
       if (args.includes('scripts/run_assurance.py')) {
+        writeProfileScoreFromDockerArgs(args);
         return { status: 0, stdout: args.includes('portfolio-table') ? portfolioTable() : gateScorecard() };
       }
       return { status: 99, stderr: `unexpected ${command} ${args.join(' ')}` };
