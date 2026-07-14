@@ -561,7 +561,7 @@ function buildStandardsGateStrengthSummary(profiles) {
       if (!item.summary && standards.length === 0) {
         continue;
       }
-      const key = [item.id || item.summary || 'gate-strength', standards.join('/')].join('\u0001');
+      const key = [item.id || 'gate-strength', item.summary || '', standards.join('/')].join('\u0001');
       const existing = rowsByKey.get(key);
       if (existing) {
         if (!existing.profiles.includes(profile.name)) {
@@ -576,6 +576,50 @@ function buildStandardsGateStrengthSummary(profiles) {
         id: item.id,
         summary: item.summary,
         standards,
+        profiles: [profile.name],
+        scoreFiles: profile.scoreFile ? [profile.scoreFile] : []
+      });
+    }
+  }
+  return Array.from(rowsByKey.values());
+}
+
+function buildStandardsGateDetailSummary(profiles) {
+  const rowsByKey = new Map();
+  for (const profile of profiles) {
+    const details = profile.scorecardDetails || {};
+    for (const [gate, detail] of Object.entries(details)) {
+      const missingProof = arrayOfStrings(detail.missingProof);
+      const hasLowerConfidence = detail.confidence && detail.confidence !== 'High';
+      if (!detail.basis || (!hasLowerConfidence && missingProof.length === 0)) {
+        continue;
+      }
+      const standards = arrayOfStrings(detail.standards);
+      const key = [
+        gate,
+        detail.status || '',
+        detail.confidence || '',
+        detail.basis || '',
+        standards.join('/'),
+        missingProof.join('\u0000')
+      ].join('\u0001');
+      const existing = rowsByKey.get(key);
+      if (existing) {
+        if (!existing.profiles.includes(profile.name)) {
+          existing.profiles.push(profile.name);
+        }
+        if (profile.scoreFile && !existing.scoreFiles.includes(profile.scoreFile)) {
+          existing.scoreFiles.push(profile.scoreFile);
+        }
+        continue;
+      }
+      rowsByKey.set(key, {
+        gate,
+        status: detail.status,
+        confidence: detail.confidence,
+        basis: detail.basis,
+        standards,
+        missingProof,
         profiles: [profile.name],
         scoreFiles: profile.scoreFile ? [profile.scoreFile] : []
       });
@@ -624,6 +668,24 @@ function renderStandardsGateStrengthSummary(summary) {
   return lines;
 }
 
+function renderStandardsGateDetailSummary(summary) {
+  if (!Array.isArray(summary) || summary.length === 0) {
+    return [];
+  }
+  const lines = [
+    '| Gate | Status | Confidence | Standards | Basis | Missing Proof | Profiles | Score Files |',
+    '| --- | --- | --- | --- | --- | --- | --- | --- |'
+  ];
+  for (const row of summary) {
+    const standards = Array.isArray(row.standards) && row.standards.length > 0 ? row.standards.join('/') : 'none';
+    const missingProof = Array.isArray(row.missingProof) && row.missingProof.length > 0 ? row.missingProof.map(markdownCell).join('<br>') : '-';
+    const profiles = Array.isArray(row.profiles) && row.profiles.length > 0 ? row.profiles.join(', ') : 'none';
+    const scoreFiles = Array.isArray(row.scoreFiles) && row.scoreFiles.length > 0 ? row.scoreFiles.map(markdownCell).join('<br>') : '-';
+    lines.push(`| ${markdownCell(row.gate || 'unknown')} | ${markdownCell(row.status || 'UNKNOWN')} | ${markdownCell(row.confidence || 'unknown')} | ${markdownCell(standards)} | ${markdownCell(row.basis || '-')} | ${missingProof} | ${markdownCell(profiles)} | ${scoreFiles} |`);
+  }
+  return lines;
+}
+
 function renderStandardsCoverageCell(detail) {
   if (!detail || typeof detail !== 'object') {
     return '-';
@@ -663,26 +725,6 @@ function renderGateScorecardSummary(step) {
     }).join(', ');
   }
   return Object.entries(step.scorecard).map(([gate, status]) => `${gate}=${status}`).join(', ');
-}
-
-function renderGateDetailNotes(profiles) {
-  const notes = [];
-  for (const profile of profiles) {
-    const details = profile.scorecardDetails || {};
-    for (const [gate, detail] of Object.entries(details)) {
-      const missingProof = Array.isArray(detail.missingProof) ? detail.missingProof : [];
-      const hasLowerConfidence = detail.confidence && detail.confidence !== 'High';
-      if (!detail.basis || (!hasLowerConfidence && missingProof.length === 0)) {
-        continue;
-      }
-      const standards = Array.isArray(detail.standards) && detail.standards.length > 0
-        ? detail.standards.join('/')
-        : 'none';
-      const missing = missingProof.length > 0 ? `; missing=${missingProof.join('; ')}` : '';
-      notes.push(`- ${profile.name} ${gate}: basis=${detail.basis}; standards=${standards}${missing} (see ${profile.scoreFile})`);
-    }
-  }
-  return notes;
 }
 
 function renderPortfolioSummary(portfolio) {
@@ -792,12 +834,13 @@ function renderMarkdown(context) {
     lines.push('');
     lines.push(...standardsGateStrengthLines);
   }
-  const gateDetailNotes = renderGateDetailNotes(profileSummaries);
-  if (gateDetailNotes.length > 0) {
+  const standardsGateDetailSummary = buildStandardsGateDetailSummary(profileSummaries);
+  const standardsGateDetailLines = renderStandardsGateDetailSummary(standardsGateDetailSummary);
+  if (standardsGateDetailLines.length > 0) {
     lines.push('');
-    lines.push('## Gate Detail Notes');
+    lines.push('## Standards Gate Detail Summary');
     lines.push('');
-    lines.push(...gateDetailNotes);
+    lines.push(...standardsGateDetailLines);
   }
   lines.push('');
   lines.push('## Prioritization Use');
@@ -860,6 +903,7 @@ function runMultiStandardsAudit(argv = process.argv.slice(2), deps = {}) {
     summary.standardsCoverageMatrix = buildStandardsCoverageMatrix(summary.profiles);
     summary.standardsEvidenceSummary = buildStandardsEvidenceSummary(summary.profiles);
     summary.standardsGateStrengthSummary = buildStandardsGateStrengthSummary(summary.profiles);
+    summary.standardsGateDetailSummary = buildStandardsGateDetailSummary(summary.profiles);
     writeJson(path.join(outputDir, 'audit-summary.json'), summary, deps);
     writeText(path.join(outputDir, 'audit-summary.md'), markdown, deps);
     return { exitCode: summary.success ? 0 : 1, markdown, context: summary };
@@ -907,8 +951,10 @@ module.exports = {
   buildStandardsCoverageMatrix,
   buildStandardsEvidenceSummary,
   buildStandardsGateStrengthSummary,
+  buildStandardsGateDetailSummary,
   renderStandardsEvidenceSummary,
   renderStandardsGateStrengthSummary,
+  renderStandardsGateDetailSummary,
   renderMarkdown,
   runMultiStandardsAudit,
   main
