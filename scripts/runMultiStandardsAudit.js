@@ -364,6 +364,60 @@ function summarizeGateScorecard(text) {
   return {};
 }
 
+function arrayOfStrings(value) {
+  return Array.isArray(value) ? value.filter((item) => typeof item === 'string') : [];
+}
+
+function summarizeRetainedGateScore(payload) {
+  if (!payload || typeof payload !== 'object' || !payload.gates || typeof payload.gates !== 'object') {
+    return {};
+  }
+  const details = {};
+  for (const [gate, data] of Object.entries(payload.gates)) {
+    if (!data || typeof data !== 'object') {
+      continue;
+    }
+    details[gate] = {
+      status: data.status,
+      confidence: data.confidence,
+      basis: data.basis,
+      standards: arrayOfStrings(data.standards),
+      missingProof: arrayOfStrings(data.missing)
+    };
+  }
+  return details;
+}
+
+function mergeGateDetails(scorecardDetails, retainedDetails) {
+  const merged = { ...scorecardDetails };
+  for (const [gate, retainedDetail] of Object.entries(retainedDetails || {})) {
+    const existingDetail = merged[gate] || {};
+    const existingMissing = Array.isArray(existingDetail.missingProof) ? existingDetail.missingProof : [];
+    const retainedMissing = Array.isArray(retainedDetail.missingProof) ? retainedDetail.missingProof : [];
+    merged[gate] = {
+      ...retainedDetail,
+      ...existingDetail,
+      standards: arrayOfStrings(retainedDetail.standards),
+      basis: retainedDetail.basis || existingDetail.basis,
+      missingProof: existingMissing.length > 0 ? existingMissing : retainedMissing
+    };
+  }
+  return merged;
+}
+
+function readProfileScore(outputDir, step, deps = {}) {
+  if (!outputDir || !step.saveDir) {
+    return undefined;
+  }
+  const readFileSync = deps.readFileSync || fs.readFileSync;
+  const scoreFilePath = path.join(outputDir, step.saveDir, 'target', 'score.json');
+  try {
+    return JSON.parse(readFileSync(scoreFilePath, 'utf8'));
+  } catch {
+    return undefined;
+  }
+}
+
 function summarizeDirectStep(step) {
   const payload = parseJsonOrUndefined(step.stdout);
   const summary = { name: step.name, status: step.status, file: step.file, command: commandLine(step.command, step.args) };
@@ -376,11 +430,15 @@ function summarizeDirectStep(step) {
   return summary;
 }
 
-function summarizeProfileStep(step) {
+function summarizeProfileStep(step, options = {}) {
   const summary = { name: step.name, status: step.status, file: step.file, command: commandLine(step.command, step.args) };
   if (step.output === 'gate-scorecard') {
     summary.scorecard = parseGateScorecard(step.stdout || '');
-    summary.scorecardDetails = summarizeGateScorecard(step.stdout || '');
+    const retainedDetails = summarizeRetainedGateScore(readProfileScore(options.outputDir, step, options.deps));
+    summary.scorecardDetails = mergeGateDetails(summarizeGateScorecard(step.stdout || ''), retainedDetails);
+    if (Object.keys(retainedDetails).length > 0) {
+      summary.scoreFile = path.posix.join(step.saveDir, 'target', 'score.json');
+    }
   }
   if (step.output === 'portfolio-table') {
     const portfolio = summarizePortfolioTable(step.stdout || '');
@@ -401,6 +459,26 @@ function renderGateScorecardSummary(step) {
     }).join(', ');
   }
   return Object.entries(step.scorecard).map(([gate, status]) => `${gate}=${status}`).join(', ');
+}
+
+function renderGateDetailNotes(profiles) {
+  const notes = [];
+  for (const profile of profiles) {
+    const details = profile.scorecardDetails || {};
+    for (const [gate, detail] of Object.entries(details)) {
+      const missingProof = Array.isArray(detail.missingProof) ? detail.missingProof : [];
+      const hasLowerConfidence = detail.confidence && detail.confidence !== 'High';
+      if (!detail.basis || (!hasLowerConfidence && missingProof.length === 0)) {
+        continue;
+      }
+      const standards = Array.isArray(detail.standards) && detail.standards.length > 0
+        ? detail.standards.join('/')
+        : 'none';
+      const missing = missingProof.length > 0 ? `; missing=${missingProof.join('; ')}` : '';
+      notes.push(`- ${profile.name} ${gate}: basis=${detail.basis}; standards=${standards}${missing} (see ${profile.scoreFile})`);
+    }
+  }
+  return notes;
 }
 
 function renderPortfolioSummary(portfolio) {
@@ -478,12 +556,20 @@ function renderMarkdown(context) {
       lines.push(`- External user information: ${step.externalUserInformation.ok ? 'ok' : 'not ok'}${typeof step.externalUserInformation.findingCount === 'number' ? ` (${step.externalUserInformation.findingCount} finding(s)${checked})` : ''}`);
     }
   }
-  for (const step of context.profiles.map(summarizeProfileStep)) {
+  const profileSummaries = context.profiles.map((step) => summarizeProfileStep(step, { outputDir: context.outputDir }));
+  for (const step of profileSummaries) {
     if (step.scorecard && Object.keys(step.scorecard).length > 0) {
       lines.push(`- ${step.name}: ${renderGateScorecardSummary(step)}`);
     } else if (step.portfolio) {
       lines.push(`- ${step.name}: ${renderPortfolioSummary(step.portfolio)}`);
     }
+  }
+  const gateDetailNotes = renderGateDetailNotes(profileSummaries);
+  if (gateDetailNotes.length > 0) {
+    lines.push('');
+    lines.push('## Gate Detail Notes');
+    lines.push('');
+    lines.push(...gateDetailNotes);
   }
   lines.push('');
   lines.push('## Prioritization Use');
@@ -540,7 +626,7 @@ function runMultiStandardsAudit(argv = process.argv.slice(2), deps = {}) {
     const summary = {
       ...context,
       directChecks: directChecks.map(summarizeDirectStep),
-      profiles: profiles.map(summarizeProfileStep),
+      profiles: profiles.map((step) => summarizeProfileStep(step, { outputDir })),
       success: imageInspect.status === 0 && directChecks.every(directStepIsClean) && profiles.every((step) => step.status === 0)
     };
     writeJson(path.join(outputDir, 'audit-summary.json'), summary, deps);
@@ -581,6 +667,7 @@ module.exports = {
   summarizeExternalUserInformation,
   summarizePortfolioTable,
   summarizeGateScorecard,
+  summarizeRetainedGateScore,
   summarizeDirectStep,
   summarizeProfileStep,
   renderMarkdown,
