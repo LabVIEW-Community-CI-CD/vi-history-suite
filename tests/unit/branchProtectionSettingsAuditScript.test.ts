@@ -51,6 +51,8 @@ const {
   checkIdForCheck,
   checkResultJson,
   duplicateCheckIdsForResult,
+  duplicateCheckIdFailureForResult,
+  auditResultSuccess,
   summarizeAuditResult,
   summarizeBranchResults,
   markdownCell,
@@ -109,6 +111,7 @@ const {
     emitJson: boolean;
     emitMarkdown: boolean;
     includeProvenance: boolean;
+    failOnDuplicateCheckIds: boolean;
     outputPath?: string;
     help: boolean;
   };
@@ -188,8 +191,17 @@ const {
   duplicateCheckIdsForResult: (
     result: { success: boolean; checks: Array<{ id?: string; name: string; passed: boolean; details: string }>; notices: string[] }
   ) => Array<{ checkId: string; count: number; names: string[] }>;
+  duplicateCheckIdFailureForResult: (
+    result: { success: boolean; checks: Array<{ id?: string; name: string; passed: boolean; details: string }>; notices: string[] },
+    options?: { failOnDuplicateCheckIds?: boolean }
+  ) => boolean;
+  auditResultSuccess: (
+    result: { success: boolean; checks: Array<{ id?: string; name: string; passed: boolean; details: string }>; notices: string[] },
+    options?: { failOnDuplicateCheckIds?: boolean }
+  ) => boolean;
   summarizeAuditResult: (
-    result: { success: boolean; checks: Array<{ id?: string; name: string; passed: boolean; details: string }>; notices: string[] }
+    result: { success: boolean; checks: Array<{ id?: string; name: string; passed: boolean; details: string }>; notices: string[] },
+    options?: { failOnDuplicateCheckIds?: boolean }
   ) => {
     totalChecks: number;
     passedChecks: number;
@@ -197,13 +209,15 @@ const {
     noticeCount: number;
     duplicateCheckIdCount: number;
     duplicateCheckIds: Array<{ checkId: string; count: number; names: string[] }>;
+    duplicateCheckIdFailure?: boolean;
     failures: Array<{ checkId: string; name: string; details: string }>;
   };
   summarizeBranchResults: (
     branchResults: Array<{
       branch: string;
-      result: { success: boolean; checks: Array<{ name: string; passed: boolean; details: string }>; notices: string[] };
-    }>
+      result: { success: boolean; checks: Array<{ id?: string; name: string; passed: boolean; details: string }>; notices: string[] };
+    }>,
+    options?: { failOnDuplicateCheckIds?: boolean }
   ) => {
     totalBranches: number;
     passedBranches: number;
@@ -214,6 +228,7 @@ const {
     noticeCount: number;
     duplicateCheckIdCount: number;
     duplicateCheckIds: Array<{ branch: string; checkId: string; count: number; names: string[] }>;
+    duplicateCheckIdFailure?: boolean;
     failures: Array<{ branch: string; checkId: string; name: string; details: string }>;
   };
   markdownCell: (value: unknown) => string;
@@ -232,14 +247,14 @@ const {
       branch: string;
       result: { success: boolean; checks: Array<{ id?: string; name: string; passed: boolean; details: string }>; notices: string[] };
     }>,
-    options?: { repo?: string; provenance?: { generatedAt: string; repo: string; branches: string[]; outputMode: string; argv: string[] } }
+    options?: { repo?: string; failOnDuplicateCheckIds?: boolean; provenance?: { generatedAt: string; repo: string; branches: string[]; outputMode: string; argv: string[] } }
   ) => string;
   renderAuditOutput: (
     branchResults: Array<{
       branch: string;
       result: { success: boolean; checks: Array<{ id?: string; name: string; passed: boolean; details: string }>; notices: string[] };
     }>,
-    options?: { repo?: string; allBranches?: boolean; emitJson?: boolean; emitMarkdown?: boolean; provenance?: { generatedAt: string; repo: string; branches: string[]; outputMode: string; argv: string[] } }
+    options?: { repo?: string; allBranches?: boolean; emitJson?: boolean; emitMarkdown?: boolean; failOnDuplicateCheckIds?: boolean; provenance?: { generatedAt: string; repo: string; branches: string[]; outputMode: string; argv: string[] } }
   ) => string;
   resolveOutputPath: (outputPath: string, deps?: { cwd?: string }) => string;
   writeAuditOutput: (outputPath: string, content: string, deps?: Record<string, unknown>) => void;
@@ -378,13 +393,14 @@ describe('branch protection audit arguments', () => {
       emitJson: false,
       emitMarkdown: false,
       includeProvenance: false,
+      failOnDuplicateCheckIds: false,
       outputPath: undefined,
       help: false
     });
   });
 
   it('parses repo, branch, all, hardening, output, and help options', () => {
-    expect(parseArgs(['--repo', 'owner/repo', '--branch', 'release/v1.2.3', '--all', '--require-advisory', '--require-review', '--require-linear-history', '--require-conversation-resolution', '--require-signed-commits', '--require-stale-review-dismissal', '--require-code-owner-review', '--require-last-push-approval', '--require-branch-creation-block', '--json', '--include-provenance', '--output', 'reports/branch-protection.json'])).toMatchObject({
+    expect(parseArgs(['--repo', 'owner/repo', '--branch', 'release/v1.2.3', '--all', '--require-advisory', '--require-review', '--require-linear-history', '--require-conversation-resolution', '--require-signed-commits', '--require-stale-review-dismissal', '--require-code-owner-review', '--require-last-push-approval', '--require-branch-creation-block', '--json', '--include-provenance', '--fail-on-duplicate-check-ids', '--output', 'reports/branch-protection.json'])).toMatchObject({
       repo: 'owner/repo',
       branch: 'release/v1.2.3',
       allBranches: true,
@@ -401,6 +417,7 @@ describe('branch protection audit arguments', () => {
       emitJson: true,
       emitMarkdown: false,
       includeProvenance: true,
+      failOnDuplicateCheckIds: true,
       outputPath: 'reports/branch-protection.json'
     });
     expect(FULL_HARDENING_OPTION_KEYS).toEqual([
@@ -433,6 +450,7 @@ describe('branch protection audit arguments', () => {
     expect(parseArgs(['--help']).help).toBe(true);
     expect(usage()).toContain('auditBranchProtectionSettings');
     expect(usage()).toContain('--require-advisory');
+    expect(usage()).toContain('--fail-on-duplicate-check-ids');
     expect(usage()).toContain('--require-review');
     expect(usage()).toContain('--require-linear-history');
     expect(usage()).toContain('--require-conversation-resolution');
@@ -928,6 +946,30 @@ describe('branch protection audit evaluation', () => {
       ]
     });
 
+    const duplicatePassingResult = {
+      success: true,
+      checks: [
+        { name: 'Ruleset detail keys', passed: true, details: 'ok' },
+        { name: 'ruleset_detail_keys', passed: true, details: 'also ok' }
+      ],
+      notices: []
+    };
+    expect(duplicateCheckIdFailureForResult(duplicatePassingResult)).toBe(false);
+    expect(duplicateCheckIdFailureForResult(duplicatePassingResult, { failOnDuplicateCheckIds: true })).toBe(true);
+    expect(auditResultSuccess(duplicatePassingResult)).toBe(true);
+    expect(auditResultSuccess(duplicatePassingResult, { failOnDuplicateCheckIds: true })).toBe(false);
+    expect(summarizeAuditResult(duplicatePassingResult, { failOnDuplicateCheckIds: true })).toMatchObject({
+      totalChecks: 2,
+      passedChecks: 2,
+      failedChecks: 0,
+      duplicateCheckIdCount: 1,
+      duplicateCheckIdFailure: true,
+      duplicateCheckIds: [
+        { checkId: 'ruleset-detail-keys', count: 2, names: ['Ruleset detail keys', 'ruleset_detail_keys'] }
+      ],
+      failures: []
+    });
+
     const aggregateSummary = summarizeBranchResults([
       { branch: 'develop', result: failingResult },
       { branch: 'main', result: passingResult }
@@ -948,6 +990,18 @@ describe('branch protection audit evaluation', () => {
       { branch: 'collision', checkId: 'ruleset-detail-keys', count: 2, names: ['Ruleset detail keys', 'ruleset_detail_keys'] },
       { branch: 'collision', checkId: 'explicit-check-id', count: 2, names: ['Explicit Source A', 'Explicit Source B'] }
     ]);
+    expect(summarizeBranchResults([{ branch: 'collision', result: duplicatePassingResult }], { failOnDuplicateCheckIds: true })).toMatchObject({
+      totalBranches: 1,
+      passedBranches: 0,
+      failedBranches: 1,
+      failedChecks: 0,
+      duplicateCheckIdCount: 1,
+      duplicateCheckIdFailure: true,
+      duplicateCheckIds: [
+        { branch: 'collision', checkId: 'ruleset-detail-keys', count: 2, names: ['Ruleset detail keys', 'ruleset_detail_keys'] }
+      ],
+      failures: []
+    });
   });
 
   it('renders compact Markdown audit evidence', () => {
@@ -994,6 +1048,23 @@ describe('branch protection audit evaluation', () => {
     expect(duplicateIdEvidence).toContain('### Duplicate Check IDs');
     expect(duplicateIdEvidence).toContain('| Branch | Check ID | Count | Checks |');
     expect(duplicateIdEvidence).toContain('| feature\\|collision | rule-set | 2 | Rule\\|Set, Rule Set |');
+
+    const duplicatePassingResult = {
+      success: true,
+      checks: [
+        { name: 'Rule Set', passed: true, details: 'ok' },
+        { name: 'Rule_Set', passed: true, details: 'also ok' }
+      ],
+      notices: []
+    };
+    const duplicateFailClosedEvidence = renderMarkdown([{ branch: 'feature-collision', result: duplicatePassingResult }], {
+      repo: DEFAULT_REPO,
+      failOnDuplicateCheckIds: true
+    });
+    expect(duplicateFailClosedEvidence).toContain('- Result: FAIL');
+    expect(duplicateFailClosedEvidence).toContain('| feature-collision | FAIL | 2/2 | 0 | 0 |');
+    expect(duplicateFailClosedEvidence).toContain('No failures.');
+    expect(duplicateFailClosedEvidence).toContain('| feature-collision | rule-set | 2 | Rule Set, Rule_Set |');
   });
 
   it('renders and writes audit output for file evidence consumers', () => {
@@ -1015,6 +1086,36 @@ describe('branch protection audit evaluation', () => {
       summary: {
         duplicateCheckIdCount: 0,
         duplicateCheckIds: []
+      }
+    });
+    const duplicatePassingResult = {
+      success: true,
+      checks: [
+        { name: 'Rule Set', passed: true, details: 'ok' },
+        { name: 'Rule_Set', passed: true, details: 'also ok' }
+      ],
+      notices: []
+    };
+    expect(JSON.parse(renderAuditOutput([{ branch: 'collision', result: duplicatePassingResult }], { repo: DEFAULT_REPO, emitJson: true }))).toMatchObject({
+      branch: 'collision',
+      success: true,
+      summary: {
+        duplicateCheckIdCount: 1,
+        duplicateCheckIds: [
+          { checkId: 'rule-set', count: 2, names: ['Rule Set', 'Rule_Set'] }
+        ]
+      }
+    });
+    expect(JSON.parse(renderAuditOutput([{ branch: 'collision', result: duplicatePassingResult }], { repo: DEFAULT_REPO, emitJson: true, failOnDuplicateCheckIds: true }))).toMatchObject({
+      branch: 'collision',
+      success: false,
+      summary: {
+        duplicateCheckIdCount: 1,
+        duplicateCheckIdFailure: true,
+        duplicateCheckIds: [
+          { checkId: 'rule-set', count: 2, names: ['Rule Set', 'Rule_Set'] }
+        ],
+        failures: []
       }
     });
     expect(resolveOutputPath('evidence/branch-protection.md', { cwd })).toBe(resolvedOutput);
@@ -2165,6 +2266,56 @@ describe('branch protection audit main', () => {
         details: 'missing: Requirements CSV Integrity, CodeQL; present: Build, Test, Package, Integration Host (Linux), Windows Unit Tests'
       }
     ]);
+  });
+
+  it('can fail closed when duplicate check IDs are present', () => {
+    const duplicatePassingResult = {
+      success: true,
+      checks: [
+        { name: 'Rule Set', passed: true, details: 'ok' },
+        { name: 'Rule_Set', passed: true, details: 'also ok' }
+      ],
+      notices: []
+    };
+    const auditBranchesStub = vi.fn(() => [{ branch: 'develop', result: duplicatePassingResult }]);
+
+    const defaultStdout = captureWrite();
+    const defaultStderr = captureWrite();
+    expect(main(['--json'], { auditBranches: auditBranchesStub, stdout: defaultStdout.stream, stderr: defaultStderr.stream })).toBe(0);
+    expect(defaultStderr.read()).toBe('');
+    expect(JSON.parse(defaultStdout.read())).toMatchObject({
+      success: true,
+      summary: {
+        duplicateCheckIdCount: 1,
+        duplicateCheckIds: [
+          { checkId: 'rule-set', count: 2, names: ['Rule Set', 'Rule_Set'] }
+        ]
+      }
+    });
+
+    const failClosedStdout = captureWrite();
+    const failClosedStderr = captureWrite();
+    expect(main(['--json', '--fail-on-duplicate-check-ids'], {
+      auditBranches: auditBranchesStub,
+      stdout: failClosedStdout.stream,
+      stderr: failClosedStderr.stream
+    })).toBe(1);
+    expect(failClosedStderr.read()).toBe('');
+    expect(JSON.parse(failClosedStdout.read())).toMatchObject({
+      success: false,
+      summary: {
+        duplicateCheckIdCount: 1,
+        duplicateCheckIdFailure: true,
+        duplicateCheckIds: [
+          { checkId: 'rule-set', count: 2, names: ['Rule Set', 'Rule_Set'] }
+        ],
+        failures: []
+      }
+    });
+    expect(auditBranchesStub).toHaveBeenLastCalledWith(
+      expect.objectContaining({ failOnDuplicateCheckIds: true }),
+      expect.objectContaining({ auditBranches: auditBranchesStub })
+    );
   });
 
   it('emits Markdown evidence when requested', () => {
