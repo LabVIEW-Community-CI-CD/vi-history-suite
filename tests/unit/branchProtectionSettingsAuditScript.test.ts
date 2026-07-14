@@ -12,6 +12,7 @@ const {
   EXPECTED_ACTIVE_RULESET_REF_NAME_KEYS,
   EXPECTED_ACTIVE_RULESET_RULE_KEYS,
   EXPECTED_ACTIVE_RULESET_RULE_TYPES,
+  EXPECTED_BRANCH_PROTECTION_SECTION_KEYS,
   EXPECTED_REQUIRED_STATUS_CHECKS,
   EXPECTED_REQUIRED_STATUS_CHECK_APP_ID,
   EXPECTED_REQUIRED_STATUS_CHECK_SECTION_KEYS,
@@ -25,6 +26,7 @@ const {
   buildGhApiArgs,
   buildGhRulesetDetailApiArgs,
   requiredApprovingReviewCount,
+  branchProtectionSectionKeys,
   pullRequestReviewSectionKeys,
   requiredStatusContexts,
   requiredStatusCheckSectionKeys,
@@ -53,6 +55,7 @@ const {
   EXPECTED_ACTIVE_RULESET_REF_NAME_KEYS: string[];
   EXPECTED_ACTIVE_RULESET_RULE_KEYS: string[];
   EXPECTED_ACTIVE_RULESET_RULE_TYPES: string[];
+  EXPECTED_BRANCH_PROTECTION_SECTION_KEYS: string[];
   EXPECTED_REQUIRED_STATUS_CHECKS: string[];
   EXPECTED_REQUIRED_STATUS_CHECK_APP_ID: number;
   EXPECTED_REQUIRED_STATUS_CHECK_SECTION_KEYS: string[];
@@ -81,6 +84,7 @@ const {
   buildGhApiArgs: (repo: string, branch: string, resource: string) => string[];
   buildGhRulesetDetailApiArgs: (repo: string, rulesetId: number | string) => string[];
   requiredApprovingReviewCount: (protection: Record<string, unknown>) => number;
+  branchProtectionSectionKeys: (protection: Record<string, unknown>) => string[];
   pullRequestReviewSectionKeys: (protection: Record<string, unknown>) => string[];
   requiredStatusContexts: (protection: Record<string, unknown>) => string[];
   requiredStatusCheckSectionKeys: (protection: Record<string, unknown>) => string[];
@@ -107,6 +111,7 @@ const {
     settings: { protection?: Record<string, unknown>; rulesets?: unknown[] },
     options?: {
       expectedRequiredChecks?: string[];
+      expectedBranchProtectionSectionKeys?: string[];
       expectedRequiredStatusCheckSectionKeys?: string[];
       expectedRequiredStatusCheckKeys?: string[];
       expectedPullRequestReviewSectionKeys?: string[];
@@ -169,6 +174,7 @@ function protection(overrides: ProtectionOverrides = {}) {
   const contexts = overrides.contexts || [...EXPECTED_REQUIRED_STATUS_CHECKS];
   const checkContexts = overrides.checkContexts || contexts;
   return {
+    url: `https://api.github.com/repos/${DEFAULT_REPO}/branches/develop/protection`,
     required_status_checks: {
       url: `https://api.github.com/repos/${DEFAULT_REPO}/branches/develop/protection/required_status_checks`,
       strict: overrides.strict ?? true,
@@ -181,10 +187,10 @@ function protection(overrides: ProtectionOverrides = {}) {
     allow_deletions: { enabled: overrides.allowDeletions ?? false },
     lock_branch: { enabled: overrides.lockBranch ?? false },
     allow_fork_syncing: { enabled: overrides.allowForkSyncing ?? false },
-    required_deployments: overrides.requiredDeployments ? { enabled: true } : null,
-    restrictions: overrides.pushRestrictions
-      ? { users: [{ login: 'maintainer' }], teams: [{ slug: 'release' }], apps: [{ slug: 'github-actions' }] }
-      : null,
+    ...(overrides.requiredDeployments ? { required_deployments: { enabled: true } } : {}),
+    ...(overrides.pushRestrictions
+      ? { restrictions: { users: [{ login: 'maintainer' }], teams: [{ slug: 'release' }], apps: [{ slug: 'github-actions' }] } }
+      : {}),
     required_linear_history: { enabled: overrides.requiredLinearHistory ?? false },
     required_conversation_resolution: { enabled: overrides.requiredConversationResolution ?? false },
     required_signatures: { enabled: overrides.requiredSignedCommits ?? false },
@@ -327,6 +333,49 @@ describe('branch protection audit evaluation', () => {
     ).toEqual(['Build, Test, Package', 'Windows Unit Tests']);
     expect(requiredApprovingReviewCount(protection())).toBe(0);
     expect(requiredApprovingReviewCount(protection({ requiredApprovingReviewCount: 2 }))).toBe(2);
+    expect(EXPECTED_BRANCH_PROTECTION_SECTION_KEYS).toEqual([
+      'allow_deletions',
+      'allow_force_pushes',
+      'allow_fork_syncing',
+      'block_creations',
+      'enforce_admins',
+      'lock_branch',
+      'required_conversation_resolution',
+      'required_linear_history',
+      'required_pull_request_reviews',
+      'required_signatures',
+      'required_status_checks',
+      'url'
+    ]);
+    expect(branchProtectionSectionKeys({
+      url: 'https://example.test/protection',
+      required_status_checks: {},
+      required_pull_request_reviews: {},
+      enforce_admins: {},
+      allow_force_pushes: {},
+      allow_deletions: {},
+      lock_branch: {},
+      allow_fork_syncing: {},
+      required_linear_history: {},
+      required_conversation_resolution: {},
+      required_signatures: {},
+      block_creations: {},
+      node_id: 'unexpected'
+    })).toEqual([
+      'allow_deletions',
+      'allow_force_pushes',
+      'allow_fork_syncing',
+      'block_creations',
+      'enforce_admins',
+      'lock_branch',
+      'node_id',
+      'required_conversation_resolution',
+      'required_linear_history',
+      'required_pull_request_reviews',
+      'required_signatures',
+      'required_status_checks',
+      'url'
+    ]);
     expect(EXPECTED_PULL_REQUEST_REVIEW_SECTION_KEYS).toEqual([
       'dismiss_stale_reviews',
       'require_code_owner_reviews',
@@ -409,6 +458,7 @@ describe('branch protection audit evaluation', () => {
       'required status check source consistency',
       'duplicate required status check contexts',
       'required status check app bindings',
+      'branch protection section keys',
       'required status checks section keys',
       'required status check object keys',
       'pull request review section keys',
@@ -442,6 +492,10 @@ describe('branch protection audit evaluation', () => {
     expect(result.checks.find((check) => check.name === 'required status checks section keys')).toMatchObject({
       passed: true,
       details: 'checks, contexts, contexts_url, strict, url only'
+    });
+    expect(result.checks.find((check) => check.name === 'branch protection section keys')).toMatchObject({
+      passed: true,
+      details: 'allow_deletions, allow_force_pushes, allow_fork_syncing, block_creations, enforce_admins, lock_branch, required_conversation_resolution, required_linear_history, required_pull_request_reviews, required_signatures, required_status_checks, url only'
     });
     expect(result.checks.find((check) => check.name === 'required status check object keys')).toMatchObject({
       passed: true,
@@ -561,6 +615,7 @@ describe('branch protection audit evaluation', () => {
       'required status checks are strict',
       'required status check contexts',
       'required status check app bindings',
+      'branch protection section keys',
       'admin enforcement',
       'force pushes disabled',
       'branch deletions disabled',
@@ -839,6 +894,55 @@ describe('branch protection audit evaluation', () => {
     expect(hardened.checks.find((check) => check.name === 'required status checks section keys')).toMatchObject({
       passed: true,
       details: 'checks, contexts, contexts_url, node_id, strict, url only'
+    });
+  });
+
+  it('fails closed when branch protection section keys drift', () => {
+    const baseProtection = protection();
+    const result = evaluateBranchProtection({
+      protection: {
+        ...baseProtection,
+        node_id: 'unexpected-section-key'
+      },
+      rulesets: branchRulesets()
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.checks.find((check) => check.name === 'branch protection section keys')).toMatchObject({
+      passed: false,
+      details: 'missing: none; unexpected: node_id; observed: allow_deletions, allow_force_pushes, allow_fork_syncing, block_creations, enforce_admins, lock_branch, node_id, required_conversation_resolution, required_linear_history, required_pull_request_reviews, required_signatures, required_status_checks, url; allowed: allow_deletions, allow_force_pushes, allow_fork_syncing, block_creations, enforce_admins, lock_branch, required_conversation_resolution, required_linear_history, required_pull_request_reviews, required_signatures, required_status_checks, url'
+    });
+
+    const hardened = evaluateBranchProtection(
+      {
+        protection: {
+          ...baseProtection,
+          node_id: 'expected-section-key'
+        },
+        rulesets: branchRulesets()
+      },
+      {
+        expectedBranchProtectionSectionKeys: [
+          'allow_deletions',
+          'allow_force_pushes',
+          'allow_fork_syncing',
+          'block_creations',
+          'enforce_admins',
+          'lock_branch',
+          'node_id',
+          'required_conversation_resolution',
+          'required_linear_history',
+          'required_pull_request_reviews',
+          'required_signatures',
+          'required_status_checks',
+          'url'
+        ]
+      }
+    );
+
+    expect(hardened.checks.find((check) => check.name === 'branch protection section keys')).toMatchObject({
+      passed: true,
+      details: 'allow_deletions, allow_force_pushes, allow_fork_syncing, block_creations, enforce_admins, lock_branch, node_id, required_conversation_resolution, required_linear_history, required_pull_request_reviews, required_signatures, required_status_checks, url only'
     });
   });
 
@@ -1367,7 +1471,7 @@ describe('branch protection audit main', () => {
       branch: DEFAULT_BRANCH,
       success: true
     });
-    expect(output.checks).toHaveLength(30);
+    expect(output.checks).toHaveLength(31);
     expect(output.notices.length).toBeGreaterThan(0);
     expect(output.branches).toBeUndefined();
   });
