@@ -20,12 +20,14 @@ const {
   summarizeRetainedStandardsCoverage,
   summarizeRetainedStandardsEvidence,
   summarizePortfolioTable,
+  buildAuditRunProvenanceSummary,
   buildStandardsCoverageRationaleSummary,
   buildStandardsScoreFileLegend,
   buildStandardsEvidenceSummary,
   buildStandardsGateStrengthSummary,
   buildStandardsGateDetailSummary,
   renderStandardsCoverageMatrix,
+  renderAuditRunProvenanceSummary,
   renderStandardsCoverageRationaleSummary,
   renderStandardsEvidenceSummary,
   renderStandardsScoreFileLegend,
@@ -86,6 +88,50 @@ const {
     standards: string[];
     evidencePaths: string[];
   }>;
+  buildAuditRunProvenanceSummary: (context: {
+    snapshot?: {
+      mode?: string;
+      path?: string;
+      trackedFileCount?: number;
+      removed?: boolean;
+      symlinkFiles?: string[];
+      missingFiles?: string[];
+      generatedRootsExcluded?: string[];
+    };
+    imagePreparation?: Array<{
+      name: string;
+      status: number;
+      file?: string;
+      command?: string;
+    }>;
+  }, directCheckSummaries?: Array<{
+    name: string;
+    status: number;
+    file?: string;
+    command?: string;
+  }>, profileSummaries?: Array<{
+    name: string;
+    status: number;
+    file?: string;
+    command?: string;
+  }>) => {
+    snapshot: {
+      mode?: string;
+      path?: string;
+      trackedFileCount?: number;
+      removed?: boolean;
+      symlinkFiles: string[];
+      missingFiles: string[];
+      generatedRootsExcluded: string[];
+    };
+    commands: Array<{
+      stage: string;
+      name: string;
+      status: number;
+      file?: string;
+      command?: string;
+    }>;
+  };
   renderStandardsEvidenceSummary: (summary: Array<{
     id?: string;
     summary?: string;
@@ -181,6 +227,24 @@ const {
     profile: string;
     scoreFile: string;
   }>) => string[];
+  renderAuditRunProvenanceSummary: (summary: {
+    snapshot?: {
+      mode?: string;
+      path?: string;
+      trackedFileCount?: number;
+      removed?: boolean;
+      symlinkFiles?: string[];
+      missingFiles?: string[];
+      generatedRootsExcluded?: string[];
+    };
+    commands?: Array<{
+      stage: string;
+      name: string;
+      status: number;
+      file?: string;
+      command?: string;
+    }>;
+  }) => string[];
   renderStandardsCoverageMatrix: (matrix: Array<{
     profile: string;
     scoreFile?: string;
@@ -750,6 +814,88 @@ describe('multi standards audit script', () => {
     ]);
   });
 
+  it('renders audit run provenance from retained snapshot and command fields', () => {
+    const summary = buildAuditRunProvenanceSummary({
+      snapshot: {
+        mode: 'tracked-worktree-snapshot',
+        path: '/tmp/audit|snapshot\\root',
+        trackedFileCount: 12,
+        removed: true,
+        symlinkFiles: ['.tools/bin/vagrant'],
+        missingFiles: ['docs\\missing|file.md'],
+        generatedRootsExcluded: ['assurance-*-evidence/', 'out|tests/']
+      },
+      imagePreparation: [
+        {
+          name: 'docker-image-inspect',
+          status: 0,
+          file: 'docker-image-inspect.stdout.json',
+          command: 'docker image inspect registry.gitlab.com/example|image'
+        }
+      ]
+    }, [
+      {
+        name: 'requirements-quality-system',
+        status: 0,
+        file: 'requirements-quality-system.json',
+        command: 'docker run --rm -v /tmp/audit|snapshot\\root:/target image python3 scripts/requirements_quality_check.py'
+      }
+    ], [
+      {
+        name: 'quick-triage',
+        status: 1,
+        file: 'quick-triage-gate-scorecard.txt',
+        command: 'docker run image python3 scripts/run_assurance.py --profile quick-triage'
+      }
+    ]);
+
+    expect(summary.commands).toEqual([
+      {
+        stage: 'image',
+        name: 'docker-image-inspect',
+        status: 0,
+        file: 'docker-image-inspect.stdout.json',
+        command: 'docker image inspect registry.gitlab.com/example|image'
+      },
+      {
+        stage: 'direct-check',
+        name: 'requirements-quality-system',
+        status: 0,
+        file: 'requirements-quality-system.json',
+        command: 'docker run --rm -v /tmp/audit|snapshot\\root:/target image python3 scripts/requirements_quality_check.py'
+      },
+      {
+        stage: 'profile',
+        name: 'quick-triage',
+        status: 1,
+        file: 'quick-triage-gate-scorecard.txt',
+        command: 'docker run image python3 scripts/run_assurance.py --profile quick-triage'
+      }
+    ]);
+
+    expect(renderAuditRunProvenanceSummary(summary)).toEqual([
+      'Snapshot:',
+      '',
+      '| Field | Value |',
+      '| --- | --- |',
+      '| Mode | tracked-worktree-snapshot |',
+      '| Path | /tmp/audit\\|snapshot\\\\root |',
+      '| Tracked Files | 12 |',
+      '| Removed After Run | yes |',
+      '| Symlink Files | .tools/bin/vagrant |',
+      '| Missing Files | docs\\\\missing\\|file.md |',
+      '| Generated Roots Excluded | assurance-*-evidence/<br>out\\|tests/ |',
+      '',
+      'Commands:',
+      '',
+      '| Stage | Step | Result | Artifact | Command |',
+      '| --- | --- | --- | --- | --- |',
+      '| image | docker-image-inspect | pass | docker-image-inspect.stdout.json | docker image inspect registry.gitlab.com/example\\|image |',
+      '| direct-check | requirements-quality-system | pass | requirements-quality-system.json | docker run --rm -v /tmp/audit\\|snapshot\\\\root:/target image python3 scripts/requirements_quality_check.py |',
+      '| profile | quick-triage | FAIL (1) | quick-triage-gate-scorecard.txt | docker run image python3 scripts/run_assurance.py --profile quick-triage |'
+    ]);
+  });
+
   it('compacts complete profile sets in retained summary Markdown only', () => {
     const completeProfiles = ['quick-triage', 'release-gate'];
 
@@ -1119,6 +1265,14 @@ describe('multi standards audit script', () => {
     expect(result.context.directChecks).toHaveLength(2);
     expect(result.context.profiles).toHaveLength(6);
     expect(result.markdown).toContain('External user information: ok (0 finding(s), 1 checked path(s))');
+    expect(result.markdown).toContain('## Audit Run Provenance');
+    expect(result.markdown).toContain('| Field | Value |');
+    expect(result.markdown).toContain(`| Path | ${snapshotPath.replace(/\\/g, '\\\\').replace(/\|/g, '\\|')} |`);
+    expect(result.markdown).toContain('| Generated Roots Excluded | assurance-*-evidence/ |');
+    expect(result.markdown).toContain('| Stage | Step | Result | Artifact | Command |');
+    expect(result.markdown).toContain('| image | docker-image-inspect | pass | docker-image-inspect.stdout.json | docker image inspect');
+    expect(result.markdown).toContain('scripts/requirements_quality_check.py /target --requirements-spec-scope system --json');
+    expect(result.markdown).toContain('scripts/run_assurance.py /target --profile quick-triage');
     expect(result.markdown).toContain('## Direct Check Evidence Summary');
     expect(result.markdown).toContain('| requirements-quality-system | requirements-quality-system.json | ok | 0 | - |');
     expect(result.markdown).toContain('| external-user-information | external-user-information.json | ok | 0 | docs/user-guide.md |');

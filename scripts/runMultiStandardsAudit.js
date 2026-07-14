@@ -770,6 +770,89 @@ function renderStandardsGateDetailSummary(summary, completeProfiles = []) {
   return lines;
 }
 
+function buildAuditRunProvenanceSummary(context, directCheckSummaries = [], profileSummaries = []) {
+  const snapshot = context.snapshot || {};
+  const commands = [];
+  const addCommand = (stage, step) => {
+    if (!step || !step.name) {
+      return;
+    }
+    commands.push({
+      stage,
+      name: step.name,
+      status: step.status,
+      file: step.file,
+      command: step.command
+    });
+  };
+
+  for (const step of context.imagePreparation || []) {
+    addCommand('image', step);
+  }
+  for (const step of directCheckSummaries || []) {
+    addCommand('direct-check', step);
+  }
+  for (const step of profileSummaries || []) {
+    addCommand('profile', step);
+  }
+
+  return {
+    snapshot: {
+      mode: snapshot.mode,
+      path: snapshot.path,
+      trackedFileCount: snapshot.trackedFileCount,
+      removed: snapshot.removed,
+      symlinkFiles: arrayOfStrings(snapshot.symlinkFiles),
+      missingFiles: arrayOfStrings(snapshot.missingFiles),
+      generatedRootsExcluded: arrayOfStrings(snapshot.generatedRootsExcluded)
+    },
+    commands
+  };
+}
+
+function renderValueList(values) {
+  return Array.isArray(values) && values.length > 0 ? values.map(markdownCell).join('<br>') : '-';
+}
+
+function renderAuditRunProvenanceSummary(summary) {
+  if (!summary || typeof summary !== 'object') {
+    return [];
+  }
+  const snapshot = summary.snapshot || {};
+  const commands = Array.isArray(summary.commands) ? summary.commands : [];
+  if (Object.keys(snapshot).length === 0 && commands.length === 0) {
+    return [];
+  }
+
+  const lines = [
+    'Snapshot:',
+    '',
+    '| Field | Value |',
+    '| --- | --- |',
+    `| Mode | ${markdownCell(snapshot.mode || '-')} |`,
+    `| Path | ${markdownCell(snapshot.path || '-')} |`,
+    `| Tracked Files | ${markdownCell(snapshot.trackedFileCount !== undefined ? snapshot.trackedFileCount : '-')} |`,
+    `| Removed After Run | ${markdownCell(snapshot.removed === true ? 'yes' : snapshot.removed === false ? 'no' : 'unknown')} |`,
+    `| Symlink Files | ${renderValueList(snapshot.symlinkFiles)} |`,
+    `| Missing Files | ${renderValueList(snapshot.missingFiles)} |`,
+    `| Generated Roots Excluded | ${renderValueList(snapshot.generatedRootsExcluded)} |`
+  ];
+
+  if (commands.length > 0) {
+    lines.push('');
+    lines.push('Commands:');
+    lines.push('');
+    lines.push('| Stage | Step | Result | Artifact | Command |');
+    lines.push('| --- | --- | --- | --- | --- |');
+    for (const command of commands) {
+      const result = command.status === 0 ? 'pass' : `FAIL (${command.status})`;
+      lines.push(`| ${markdownCell(command.stage || 'unknown')} | ${markdownCell(command.name || 'unknown')} | ${markdownCell(result)} | ${markdownCell(command.file || '-')} | ${markdownCell(command.command || '-')} |`);
+    }
+  }
+
+  return lines;
+}
+
 function renderStandardsCoverageCell(detail) {
   if (!detail || typeof detail !== 'object') {
     return '-';
@@ -956,10 +1039,18 @@ function renderMarkdown(context) {
   for (const step of context.profiles) {
     lines.push(`- ${step.name}: ${step.status === 0 ? 'pass' : `FAIL (${step.status})`} -> ${step.file}`);
   }
+  const directCheckSummaries = context.directChecks.map(summarizeDirectStep);
+  const profileSummaries = context.profiles.map((step) => summarizeProfileStep(step, { outputDir: context.outputDir }));
+  const auditRunProvenanceLines = renderAuditRunProvenanceSummary(buildAuditRunProvenanceSummary(context, directCheckSummaries, profileSummaries));
+  if (auditRunProvenanceLines.length > 0) {
+    lines.push('');
+    lines.push('## Audit Run Provenance');
+    lines.push('');
+    lines.push(...auditRunProvenanceLines);
+  }
   lines.push('');
   lines.push('## Signals');
   lines.push('');
-  const directCheckSummaries = context.directChecks.map(summarizeDirectStep);
   for (const step of directCheckSummaries) {
     if (step.requirementsQuality) {
       lines.push(`- Requirements quality: ${step.requirementsQuality.ok ? 'ok' : 'not ok'}${typeof step.requirementsQuality.findingCount === 'number' ? ` (${step.requirementsQuality.findingCount} finding(s))` : ''}`);
@@ -971,7 +1062,6 @@ function renderMarkdown(context) {
       lines.push(`- External user information: ${step.externalUserInformation.ok ? 'ok' : 'not ok'}${typeof step.externalUserInformation.findingCount === 'number' ? ` (${step.externalUserInformation.findingCount} finding(s)${checked})` : ''}`);
     }
   }
-  const profileSummaries = context.profiles.map((step) => summarizeProfileStep(step, { outputDir: context.outputDir }));
   lines.push(...renderProfileSignalLines(profileSummaries));
   const standardsProfileSet = profileSummaries.map((row) => row.name);
   const directCheckEvidenceLines = renderDirectCheckEvidenceSummary(directCheckSummaries);
@@ -1137,12 +1227,14 @@ module.exports = {
   summarizeDirectStep,
   summarizeProfileStep,
   profileScoreFile,
+  buildAuditRunProvenanceSummary,
   buildStandardsCoverageMatrix,
   buildStandardsCoverageRationaleSummary,
   buildStandardsScoreFileLegend,
   buildStandardsEvidenceSummary,
   buildStandardsGateStrengthSummary,
   buildStandardsGateDetailSummary,
+  renderAuditRunProvenanceSummary,
   renderStandardsCoverageMatrix,
   renderStandardsCoverageRationaleSummary,
   renderStandardsEvidenceSummary,
