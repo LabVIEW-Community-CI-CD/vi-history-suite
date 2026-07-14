@@ -46,6 +46,7 @@ function parseArgs(argv) {
     requireAdvisory: false,
     requireReview: false,
     requireLinearHistory: false,
+    requireConversationResolution: false,
     emitJson: false,
     help: false
   };
@@ -67,6 +68,7 @@ function parseArgs(argv) {
     else if (arg === '--require-advisory') options.requireAdvisory = true;
     else if (arg === '--require-review') options.requireReview = true;
     else if (arg === '--require-linear-history') options.requireLinearHistory = true;
+    else if (arg === '--require-conversation-resolution') options.requireConversationResolution = true;
     else if (arg === '--json') options.emitJson = true;
     else if (arg === '--help' || arg === '-h') options.help = true;
     else throw new Error(`Unknown argument: ${arg}`);
@@ -98,6 +100,7 @@ function usage() {
     '  --require-advisory    Fail when advisory checks are not branch-protection-required',
     '  --require-review      Fail when approving pull request reviews are not required',
     '  --require-linear-history Fail when linear history is not required',
+    '  --require-conversation-resolution Fail when conversation resolution is not required',
     '  --json                Emit machine-readable JSON instead of text',
     '  --help                Show this help'
   ].join('\n');
@@ -191,6 +194,7 @@ function evaluateBranchProtection(settings, options = {}) {
   const requireAdvisory = Boolean(options.requireAdvisory);
   const requireReview = Boolean(options.requireReview);
   const requireLinearHistory = Boolean(options.requireLinearHistory);
+  const requireConversationResolution = Boolean(options.requireConversationResolution);
   const minimumApprovingReviews = Number.isFinite(Number(options.minimumApprovingReviews))
     ? Number(options.minimumApprovingReviews)
     : 1;
@@ -263,6 +267,14 @@ function evaluateBranchProtection(settings, options = {}) {
       name: 'linear history',
       passed: enabledFlag(protection.required_linear_history),
       details: enabledFlag(protection.required_linear_history) ? 'enabled' : 'disabled or unavailable'
+    });
+  }
+
+  if (requireConversationResolution) {
+    checks.push({
+      name: 'conversation resolution',
+      passed: enabledFlag(protection.required_conversation_resolution),
+      details: enabledFlag(protection.required_conversation_resolution) ? 'enabled' : 'disabled or unavailable'
     });
   }
 
