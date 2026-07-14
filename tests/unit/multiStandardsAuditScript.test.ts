@@ -1091,6 +1091,8 @@ describe('multi standards audit script', () => {
     expect(result.context.standardsScoreFileLegend?.some((row) => row.profile === 'quick-triage')).toBe(false);
     expect(result.context.standardsGateStrengthSummary?.some((row) => row.profiles.includes('quick-triage'))).toBe(false);
     expect(result.context.standardsGateDetailSummary?.some((row) => row.profiles.includes('quick-triage'))).toBe(false);
+    expect(result.markdown).toContain('| REQ maturity is 5/5 with High confidence. | 29148 | release-gate, 26514-review, due-diligence, compliance-uplift, portfolio-review |');
+    expect(result.markdown).not.toContain('| all profiles |');
     expect(result.markdown).not.toContain('quick-triage dod:');
     expect(fs.existsSync(staleScorePath)).toBe(false);
   });

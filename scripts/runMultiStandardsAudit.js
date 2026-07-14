@@ -884,7 +884,7 @@ function renderMarkdown(context) {
     lines.push(...standardsCoverageLines);
   }
   const standardsScoreFileLegend = buildStandardsScoreFileLegend(profileSummaries);
-  const standardsProfileSet = standardsScoreFileLegend.map((row) => row.profile);
+  const standardsProfileSet = profileSummaries.map((row) => row.name);
   const standardsScoreFileLegendLines = renderStandardsScoreFileLegend(standardsScoreFileLegend);
   if (standardsScoreFileLegendLines.length > 0) {
     lines.push('');
