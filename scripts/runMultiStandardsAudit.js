@@ -535,6 +535,9 @@ function buildStandardsEvidenceSummary(profiles) {
         if (!existing.profiles.includes(profile.name)) {
           existing.profiles.push(profile.name);
         }
+        if (profile.scoreFile && !existing.scoreFiles.includes(profile.scoreFile)) {
+          existing.scoreFiles.push(profile.scoreFile);
+        }
         continue;
       }
       rowsByKey.set(key, {
@@ -542,7 +545,8 @@ function buildStandardsEvidenceSummary(profiles) {
         summary: item.summary,
         standards,
         evidencePaths,
-        profiles: [profile.name]
+        profiles: [profile.name],
+        scoreFiles: profile.scoreFile ? [profile.scoreFile] : []
       });
     }
   }
@@ -637,15 +641,16 @@ function renderStandardsEvidenceSummary(summary) {
     return [];
   }
   const lines = [
-    '| Evidence | Standards | Profiles | Paths |',
-    '| --- | --- | --- | --- |'
+    '| Evidence | Standards | Profiles | Paths | Score Files |',
+    '| --- | --- | --- | --- | --- |'
   ];
   for (const row of summary) {
     const label = row.summary || row.id || 'Retained evidence';
     const standards = Array.isArray(row.standards) && row.standards.length > 0 ? row.standards.join('/') : 'none';
     const profiles = Array.isArray(row.profiles) && row.profiles.length > 0 ? row.profiles.join(', ') : 'none';
     const paths = Array.isArray(row.evidencePaths) && row.evidencePaths.length > 0 ? row.evidencePaths.map(markdownCell).join('<br>') : '-';
-    lines.push(`| ${markdownCell(label)} | ${markdownCell(standards)} | ${markdownCell(profiles)} | ${paths} |`);
+    const scoreFiles = Array.isArray(row.scoreFiles) && row.scoreFiles.length > 0 ? row.scoreFiles.map(markdownCell).join('<br>') : '-';
+    lines.push(`| ${markdownCell(label)} | ${markdownCell(standards)} | ${markdownCell(profiles)} | ${paths} | ${scoreFiles} |`);
   }
   return lines;
 }
