@@ -231,11 +231,11 @@ trusted Windows/LabVIEW validation, and optional Vagrant local validation.
 - Status: Active
 - Area: Runtime
 - Statement: The system shall let users select among the LabVIEW container image
-  versions that are actually available — across release year, quarter, and patch
-  revision, for both the Windows-container and Linux-container providers — and
-  shall derive the selectable set from published registry tags and locally
-  present images, so newly published images (including future release years and
-  new patch revisions) become selectable without modifying extension source.
+  versions that are actually available across release year, quarter, and patch
+  revision for both the Windows-container and Linux-container providers by
+  deriving the selectable set from published registry tags and locally present
+  images, so newly published images become selectable without modifying extension
+  source.
 - Acceptance Criteria:
   - Selectable container versions are derived at runtime from discovered image
     tags, not from a single hardcoded tag per platform.

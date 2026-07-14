@@ -28,6 +28,9 @@
  *                          least one Verification Reference (symmetric with 6, so
  *                          a software requirement can never lose its verification
  *                          evidence to an empty cell).
+ *   8. requirementQuality29148 - governed Statements and Acceptance Criteria stay
+ *                          singular and avoid ambiguous and/or wording per
+ *                          ISO/IEC/IEEE 29148:2018 5.2.5 and 5.2.7 Note 1.
  *
  * The guard reuses the canonical implementations so it validates against exactly
  * the logic the real consumers use: parseCsv (traceability audit) and
@@ -49,6 +52,10 @@ const SYRS_PATH = 'docs/requirements/syrs.md';
 const RTM_PATH = 'docs/requirements/rtm.csv';
 const ID_INDEX_PATH = 'docs/requirements/id-index.csv';
 const INVENTORY_PATH = 'docs/requirements/traceability-inventory.csv';
+const ISO_29148_SINGULAR_ANCHOR = 'ISO/IEC/IEEE 29148:2018 5.2.5 Singular';
+const ISO_29148_LANGUAGE_ANCHOR = 'ISO/IEC/IEEE 29148:2018 5.2.7 Note 1 on and/or splitting';
+const SHALL_PATTERN = /\bshall\b/gi;
+const AND_OR_PATTERN = /\band\s*\/\s*or\b|\bor\s*\/\s*and\b/i;
 
 function normalizeNewlines(text) {
   return text.replace(/\r\n/g, '\n');
@@ -176,6 +183,113 @@ function extractSectionReferences(blockBody, label) {
     }
   }
   return references;
+}
+
+function extractRequirementBlocks(specText) {
+  const blocks = [];
+  const headingPattern = /^### ((?:VHS-SYS-REQ|VHS-REQ)-\d+):[^\n]*$/gm;
+  const headings = [...specText.matchAll(headingPattern)];
+  for (let index = 0; index < headings.length; index += 1) {
+    const id = headings[index][1];
+    const start = headings[index].index;
+    const end = index + 1 < headings.length ? headings[index + 1].index : specText.length;
+    blocks.push({ id, body: specText.slice(start, end) });
+  }
+  return blocks;
+}
+
+function extractRequirementFields(blockBody) {
+  const fields = new Map();
+  let activeField;
+  for (const line of blockBody.split('\n')) {
+    const fieldMatch = /^- ([A-Za-z][A-Za-z -]*):\s*(.*)$/.exec(line);
+    if (fieldMatch) {
+      activeField = fieldMatch[1].trim();
+      fields.set(activeField, fieldMatch[2] || '');
+      continue;
+    }
+
+    if (activeField && (/^\s+/.test(line) || line.trim().length === 0)) {
+      fields.set(activeField, `${fields.get(activeField)}\n${line}`);
+    }
+  }
+  return fields;
+}
+
+function extractBulletItems(text) {
+  const items = [];
+  let activeItem;
+  for (const line of text.split('\n')) {
+    const bulletMatch = /^\s+-\s+(.*)$/.exec(line);
+    if (bulletMatch) {
+      if (activeItem) {
+        items.push(activeItem.trim());
+      }
+      activeItem = bulletMatch[1];
+      continue;
+    }
+    if (activeItem && /^\s+\S/.test(line)) {
+      activeItem += ` ${line.trim()}`;
+    }
+  }
+  if (activeItem) {
+    items.push(activeItem.trim());
+  }
+  return items;
+}
+
+function countShalls(text) {
+  return (text.match(SHALL_PATTERN) || []).length;
+}
+
+function hasAndOr(text) {
+  return AND_OR_PATTERN.test(text);
+}
+
+function checkTextFor29148Quality(subject, label, text) {
+  const normalized = text.replace(/\s+/g, ' ').trim();
+  if (normalized.length === 0) {
+    return [];
+  }
+
+  const violations = [];
+  const shallCount = countShalls(normalized);
+  if (shallCount > 1) {
+    violations.push({
+      subject,
+      detail: `${label} has ${shallCount} 'shall' terms; split into singular requirements or criteria (${ISO_29148_SINGULAR_ANCHOR})`
+    });
+  }
+  if (hasAndOr(normalized)) {
+    violations.push({
+      subject,
+      detail: `${label} uses and/or wording; split or clarify the alternatives (${ISO_29148_LANGUAGE_ANCHOR})`
+    });
+  }
+  return violations;
+}
+
+function checkRequirementQuality29148(specs) {
+  const violations = [];
+  for (const spec of specs) {
+    for (const block of extractRequirementBlocks(spec.text)) {
+      const fields = extractRequirementFields(block.body);
+      const statement = fields.get('Statement') || '';
+      violations.push(...checkTextFor29148Quality(block.id, `${spec.path} Statement`, statement));
+
+      const criteria = extractBulletItems(fields.get('Acceptance Criteria') || '');
+      criteria.forEach((criterion, index) => {
+        violations.push(
+          ...checkTextFor29148Quality(
+            `${block.id}.${index + 1}`,
+            `${spec.path} Acceptance Criterion ${index + 1}`,
+            criterion
+          )
+        );
+      });
+    }
+  }
+  return violations;
 }
 
 function extractSrsReferenceSections(srsText) {
@@ -367,6 +481,14 @@ function checkRequirementsIntegrity(cwd = process.cwd(), deps = {}) {
       key: 'requirementVerificationEvidence',
       title: 'Active requirement declares a Verification Reference',
       violations: checkRequirementVerificationEvidence(rtmRows)
+    },
+    {
+      key: 'requirementQuality29148',
+      title: 'Requirements satisfy 29148 singularity and language guidance',
+      violations: checkRequirementQuality29148([
+        { path: SRS_PATH, text: srsText },
+        { path: SYRS_PATH, text: syrsText }
+      ])
     }
   ];
 
@@ -406,8 +528,9 @@ function renderStepSummary(result) {
       'traceability-inventory Path must exist on disk, every id-index ReplacementID must resolve ' +
       'to a defined ID, the Implementation and Verification References in every SRS block must ' +
       'match the RTM evidence map, every Active system requirement must declare Verification ' +
-      'References that resolve on disk, and every Active requirement must declare a Verification ' +
-      'Reference.'
+      'References that resolve on disk, every Active requirement must declare a Verification ' +
+      'Reference, and governed Statements and Acceptance Criteria must satisfy ISO/IEC/IEEE ' +
+      '29148 singularity and and/or language guidance.'
   );
   lines.push('');
   lines.push(`**Result:** ${result.success ? 'PASS' : 'FAIL'} — ${result.violationCount} violation(s).`);
@@ -473,6 +596,10 @@ module.exports = {
   extractSyrsVerificationReferences,
   checkSystemRequirementReferences,
   checkRequirementVerificationEvidence,
+  extractRequirementBlocks,
+  extractRequirementFields,
+  extractBulletItems,
+  checkRequirementQuality29148,
   checkRequirementsIntegrity,
   renderSummary,
   renderStepSummary,

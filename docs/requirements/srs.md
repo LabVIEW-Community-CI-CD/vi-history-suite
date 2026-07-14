@@ -988,9 +988,9 @@ Missing numeric IDs are intentional.
 - Parent: VHS-SYS-REQ-019
 - Area: Runtime Discovery
 - Statement: The extension shall discover available LabVIEW container versions
-  from images already present on the local Docker host, so already-pulled images
-  are selectable offline and are not needlessly re-pulled, and shall merge them
-  with published results into one availability catalog.
+  from images already present on the local Docker host, merge them with published
+  results into one availability catalog, and keep already-pulled images
+  selectable offline without needless re-pulls.
 - Acceptance Criteria:
   - Local discovery enumerates `nationalinstruments/labview` images on the host
     and parses each reference through VHS-REQ-646.
@@ -1086,9 +1086,9 @@ Missing numeric IDs are intentional.
 - Parent: VHS-SYS-REQ-019
 - Area: Runtime Discovery
 - Statement: The comparison runtime locator shall consume the selected container
-  image version for both the Windows-container and Linux-container providers, and
-  shall fail closed when a selected version cannot be launched rather than
-  silently substituting a different version.
+  image version for both the Windows-container and Linux-container providers and
+  fail closed when a selected version cannot be launched rather than silently
+  substituting a different version.
 - Acceptance Criteria:
   - When `viHistorySuite.container.imageVersion` is set to a valid version for
     the active container platform, the locator resolves it to the concrete
@@ -1542,13 +1542,13 @@ Missing numeric IDs are intentional.
 - Parent: VHS-SYS-REQ-007
 - Area: Comparison Reports
 - Statement: When the active runtime selection is host-native LabVIEW CLI on
-  Linux, the comparison execution plan shall keep the invocation
-  non-headless by default and only pass `-Headless` when the operator
-  explicitly opts in via `LV_RTE_LINUX_HEADLESS=1`. Runtime classification
-  shall recognize a broken `HeadlessManager` (LabVIEW logs `Failed to
-  initialize headless LabVIEW.`) and the `(Hex 0x8) File permission error.`
-  + `CreateComparisonReport operation failed.` stderr signature so operators
-  receive an actionable, classified failure instead of an unbounded stall.
+  Linux, the comparison execution path shall provide opt-in headless invocation
+  and actionable headless-failure classification by keeping the invocation
+  non-headless by default, passing `-Headless` only when the operator explicitly
+  opts in via `LV_RTE_LINUX_HEADLESS=1`, and recognizing a broken
+  `HeadlessManager` (LabVIEW logs `Failed to initialize headless LabVIEW.`) plus
+  the `(Hex 0x8) File permission error.` + `CreateComparisonReport operation
+  failed.` stderr signature instead of allowing an unbounded stall.
 - Acceptance Criteria:
   - Linux host-native LabVIEWCLI args do not include `-Headless` unless
     `LV_RTE_LINUX_HEADLESS=1` is set in the extension host environment.
@@ -2011,9 +2011,9 @@ Missing numeric IDs are intentional.
 - Parent: VHS-SYS-REQ-012
 - Area: CI And Developer Environment
 - Statement: Dependency maintenance automation shall keep routine dependency
-  updates reviewable while preserving package-audit diagnostics for failed VSIX
-  runtime-surface checks. CodeQL security analysis shall run on main, develop,
-  pull requests, weekly schedule, and manual dispatch.
+  updates and security-analysis coverage reviewable by preserving package-audit
+  diagnostics for failed VSIX runtime-surface checks and running CodeQL security
+  analysis on main, develop, pull requests, weekly schedule, and manual dispatch.
 - Acceptance Criteria:
   - Dependabot groups npm development minor and patch updates separately from
     npm runtime minor and patch updates.
@@ -2268,12 +2268,11 @@ Missing numeric IDs are intentional.
 - Status: Active
 - Parent: VHS-SYS-REQ-004
 - Area: Runtime Settings
-- Statement: The extension shall expose installed runtime settings CLI
-  preparation through `labviewViHistory.prepareLocalRuntimeSettingsCli` and
-  shall additionally auto-materialize the local `vihs` launcher on every
-  activation so users do not need to rerun the prepare command after install
-  or upgrade. Preparation failures, including stale-launcher recovery, must
-  surface actionable outcomes.
+- Statement: The extension shall keep installed runtime settings CLI preparation
+  available through `labviewViHistory.prepareLocalRuntimeSettingsCli` while
+  auto-materializing the local `vihs` launcher on every activation so users do
+  not need to rerun the prepare command after install or upgrade. Preparation
+  failures, including stale-launcher recovery, must surface actionable outcomes.
 - Acceptance Criteria:
   - The extension manifest contributes
     `labviewViHistory.prepareLocalRuntimeSettingsCli` and activates on
@@ -2485,7 +2484,7 @@ Missing numeric IDs are intentional.
 - Area: Runtime Settings
 - Statement: The extension shall detect installed comparison runtimes
   (LabVIEW host \u22652025 and Docker CLI) on activation through a bounded
-  filesystem-only probe, and shall seed or repair the persisted
+  filesystem-only probe and seed or repair the persisted
   `viHistorySuite.runtimeProvider`, `viHistorySuite.labviewVersion`, and
   `viHistorySuite.labviewBitness` user settings so a working comparison
   selection is in place after fresh installs and upgrades without requiring a
@@ -2533,10 +2532,10 @@ Missing numeric IDs are intentional.
 - Parent: VHS-SYS-REQ-004
 - Area: Runtime Settings
 - Statement: The extension shall surface comparison runtime availability in
-  the VS Code status bar and shall raise a one-time first-run notification
-  when no comparison runtime is detected, with a focus-event re-detect that is
-  throttled so users learn promptly when they install LabVIEW or Docker
-  without paying repeated detection costs.
+  the VS Code status bar and raise a one-time first-run notification when no
+  comparison runtime is detected, with a focus-event re-detect that is throttled
+  so users learn promptly when they install LabVIEW or Docker without paying
+  repeated detection costs.
 - Acceptance Criteria:
   - A status bar item titled `VI History runtime` is shown after activation
     and reflects the latest detection outcome. When a runtime is available,
@@ -2653,28 +2652,18 @@ Missing numeric IDs are intentional.
 - Status: Active
 - Parent: VHS-SYS-REQ-004
 - Area: Runtime Settings
-- Statement: The extension shall source the `VI History runtime` status bar
-  label from the user's persisted runtime selection
-  (`viHistorySuite.runtimeProvider`, `viHistorySuite.labviewVersion`,
-  `viHistorySuite.labviewBitness`) when the selection is complete and the
-  combination is satisfiable on this host — a host selection requires all three
-  keys, while a docker selection is LabVIEW-agnostic and complete with
-  `runtimeProvider` alone (VHS-REQ-657) — fall back silently to the
-  auto-detection recommendation otherwise, refresh the label immediately on
-  `vscode.workspace.onDidChangeConfiguration` so a `vihs --provider …` CLI
-  invocation or a manual `settings.json` edit is reflected without waiting
-  for the focus-event throttle, and open a status-bar-targeted Runtime &
-  Report Settings panel (`labviewViHistory.pickRuntimeProvider`) whose runtime
-  provider section writes the same three settings keys to
-  `ConfigurationTarget.Global` (or clears them). For the
-  docker provider the `VI History runtime` status bar label shall additionally
-  name the active LabVIEW container image (`Docker @ <tag>`), sourced from
-  `viHistorySuite.container.imageVersion` when selected and a built-in default
-  tag otherwise, and refresh it on the same `onDidChangeConfiguration` event.
-  When the selected docker image platform conflicts with the confirmed active
-  Docker daemon container mode, the label shall render a warning state
-  (`$(warning) …`) with a conflict tooltip so the misconfiguration is visible
-  before a comparison is attempted (VHS-REQ-650).
+- Statement: The extension shall keep the `VI History runtime` status bar label
+  and Runtime & Report Settings panel synchronized with persisted runtime and
+  container-image selection by sourcing the label from the user's complete and
+  satisfiable persisted runtime selection (`viHistorySuite.runtimeProvider`,
+  `viHistorySuite.labviewVersion`, `viHistorySuite.labviewBitness`), falling
+  back silently to the auto-detection recommendation otherwise, refreshing the
+  label immediately on `vscode.workspace.onDidChangeConfiguration`, opening the
+  status-bar-targeted `labviewViHistory.pickRuntimeProvider` panel to write or
+  clear the same settings keys at `ConfigurationTarget.Global`, naming the active
+  Docker container image as `Docker @ <tag>`, and rendering a warning label with
+  a conflict tooltip when the selected docker image platform conflicts with the
+  confirmed active Docker daemon container mode (VHS-REQ-650).
 - Acceptance Criteria:
   - `selectActiveRuntime(detection, persisted)` honors a persisted selection
     only when it is complete and satisfiable per
@@ -3212,11 +3201,11 @@ Missing numeric IDs are intentional.
 - Status: Active
 - Parent: VHS-SYS-REQ-019
 - Area: Runtime Discovery
-- Statement: The Linux-container comparison provider shall derive the
-  in-container LabVIEW executable and headless-engagement mechanism from the
-  selected container image's LabVIEW release year, and the Docker runtime
-  provider shall be LabVIEW-version-agnostic in its settings and labels because
-  the selected container image already determines the LabVIEW version.
+- Statement: Container runtime behavior shall derive the in-container LabVIEW
+  executable and headless-engagement mechanism from the selected container
+  image's LabVIEW release year while treating the Docker runtime provider as
+  LabVIEW-version-agnostic in settings and labels because the selected container
+  image already determines the LabVIEW version.
 - Acceptance Criteria:
   - For a Linux container image of LabVIEW 2026 Q1 or later, the LabVIEWCLI
     `CreateComparisonReport` invocation targets
@@ -3950,7 +3939,7 @@ Missing numeric IDs are intentional.
 - Parent: VHS-SYS-REQ-018
 - Area: Git History Eligibility
 - Statement: The `labviewViHistory.open` command shall evaluate eligibility for
-  the selected URI on demand and shall not wait for or require a repository-wide
+  the selected URI on demand without waiting for or requiring a repository-wide
   VI eligibility index before opening that file's history or returning a factual
   ineligibility message.
 - Acceptance Criteria:
@@ -4446,14 +4435,12 @@ Missing numeric IDs are intentional.
 - Status: Active
 - Parent: VHS-SYS-REQ-013
 - Area: CI And Developer Environment
-- Statement: A maintainer-dispatched GitHub Actions workflow shall run the VI
-  semantic PR review against any target repository and pull request on a
-  GitHub-hosted Linux runner (docker provided) that pulls the NI LabVIEW image,
-  and post the result as a sticky comment (created once, updated in place on
-  re-runs) on the target pull request using a cross-repository token supplied
-  through a secret. The review logic shall live in a reusable `workflow_call`
-  unit so any LabVIEW repository can consume it and the maintainer dispatch and
-  external callers share a single source of truth.
+- Statement: VI semantic PR review automation shall run against any target
+  repository and pull request on a GitHub-hosted Linux runner (docker provided),
+  pull the NI LabVIEW image, post the result as a sticky comment on the target
+  pull request using a cross-repository token supplied through a secret, and
+  expose the review logic through a reusable `workflow_call` unit so any LabVIEW
+  repository can consume the same source of truth as the maintainer dispatch.
 - Acceptance Criteria:
   - VHS-REQ-661.1: The workflow triggers only through `workflow_dispatch` and
     never through `pull_request` or `push`, so running untrusted target-repo VIs
