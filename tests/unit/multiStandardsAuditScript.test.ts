@@ -17,6 +17,7 @@ const {
   replaceAuditMounts,
   summarizeGateScorecard,
   summarizeRetainedGateScore,
+  summarizeRetainedStandardsCoverage,
   summarizePortfolioTable,
   runMultiStandardsAudit
 } = require('../../scripts/runMultiStandardsAudit.js') as {
@@ -58,6 +59,12 @@ const {
     basis?: string;
     standards: string[];
     missingProof: string[];
+  }>;
+  summarizeRetainedStandardsCoverage: (payload: unknown) => Record<string, {
+    score?: number | string;
+    confidence?: string;
+    standards: string[];
+    rationale?: string;
   }>;
   profileDockerSteps: (options: { image: string }) => Array<{
     name: string;
@@ -112,7 +119,23 @@ const {
           standards?: string[];
           missingProof: string[];
         }>;
+        standardsCoverage?: Record<string, {
+          score?: number | string;
+          confidence?: string;
+          standards: string[];
+          rationale?: string;
+        }>;
         scoreFile?: string;
+      }>;
+      standardsCoverageMatrix?: Array<{
+        profile: string;
+        scoreFile?: string;
+        areas: Record<string, {
+          score?: number | string;
+          confidence?: string;
+          standards: string[];
+          rationale?: string;
+        }>;
       }>;
       success: boolean;
     };
@@ -152,6 +175,38 @@ function portfolioTable(): string {
 
 function profileScore(): string {
   return JSON.stringify({
+    areas: {
+      REQ: {
+        score: 5,
+        confidence: 'High',
+        standards: ['29148'],
+        rationale: 'Requirements are identifiable, testable, and trace to code.'
+      },
+      ARCH: {
+        score: 5,
+        confidence: 'High',
+        standards: ['42010'],
+        rationale: 'Architecture description covers views, stakeholders, concerns, and retained decision rationale.'
+      },
+      TEST: {
+        score: 5,
+        confidence: 'High',
+        standards: ['29119-2', '29119-3'],
+        rationale: 'Testing evidence includes automation, thresholds, artifacts, and gate context.'
+      },
+      CM: {
+        score: 5,
+        confidence: 'High',
+        standards: ['10007', '12207'],
+        rationale: 'CM evidence covers baselines, GitFlow branch governance, release automation, and release evidence retention.'
+      },
+      DOC: {
+        score: 5,
+        confidence: 'High',
+        standards: ['15289', '26514'],
+        rationale: 'Documentation includes information-item coverage, automated link checking, and reusable user-information signals.'
+      }
+    },
     gates: {
       coverage: {
         status: 'PASS',
@@ -308,6 +363,27 @@ describe('multi standards audit script', () => {
     });
   });
 
+  it('summarizes retained area coverage by standard from score JSON', () => {
+    expect(summarizeRetainedStandardsCoverage(JSON.parse(profileScore()))).toMatchObject({
+      REQ: {
+        score: 5,
+        confidence: 'High',
+        standards: ['29148'],
+        rationale: 'Requirements are identifiable, testable, and trace to code.'
+      },
+      TEST: {
+        score: 5,
+        confidence: 'High',
+        standards: ['29119-2', '29119-3']
+      },
+      DOC: {
+        score: 5,
+        confidence: 'High',
+        standards: ['15289', '26514']
+      }
+    });
+  });
+
   it('runs direct checks and all standards profiles from a tracked snapshot', () => {
     const root = makeTempRoot();
     const snapshotPath = path.join(root, 'snapshot');
@@ -358,6 +434,8 @@ describe('multi standards audit script', () => {
     expect(result.context.profiles).toHaveLength(6);
     expect(result.markdown).toContain('External user information: ok (0 finding(s), 1 checked path(s))');
     expect(result.markdown).toContain('quick-triage: coverage=PASS(High), cm=PASS(High), req=PASS(High), arch=PASS(High), doc=PASS(High), dod=PASS(Med)');
+    expect(result.markdown).toContain('## Standards Coverage Matrix');
+    expect(result.markdown).toContain('| quick-triage | 5/5 High (29148) | 5/5 High (42010) | 5/5 High (29119-2/29119-3) | 5/5 High (10007/12207) | 5/5 High (15289/26514) | quick-triage/target/score.json |');
     expect(result.markdown).toContain('quick-triage dod: basis=Report DoD only when a DoD Gate / dod context is visible.; standards=none (see quick-triage/target/score.json)');
     expect(result.markdown).toContain('portfolio-review: overall=High, gates=6P/0F, REQ=5, ARCH=5, TEST=5, CM=5, DOC=5, topRisk=none (see portfolio-review-table.txt)');
     expect(result.context.profiles.find((profile) => profile.scorecardDetails)?.scorecardDetails?.dod).toEqual({
@@ -366,6 +444,17 @@ describe('multi standards audit script', () => {
       basis: 'Report DoD only when a DoD Gate / dod context is visible.',
       standards: [],
       missingProof: []
+    });
+    expect(result.context.profiles.find((profile) => profile.standardsCoverage)?.standardsCoverage?.TEST).toEqual({
+      score: 5,
+      confidence: 'High',
+      standards: ['29119-2', '29119-3'],
+      rationale: 'Testing evidence includes automation, thresholds, artifacts, and gate context.'
+    });
+    expect(result.context.standardsCoverageMatrix?.find((row) => row.profile === 'quick-triage')?.areas.DOC).toMatchObject({
+      score: 5,
+      confidence: 'High',
+      standards: ['15289', '26514']
     });
     expect(result.context.profiles.find((profile) => profile.scoreFile)?.scoreFile).toBe('quick-triage/target/score.json');
     expect(result.context.profiles.find((profile) => profile.portfolio)?.portfolio).toMatchObject({

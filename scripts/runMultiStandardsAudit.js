@@ -397,6 +397,25 @@ function summarizeRetainedGateScore(payload) {
   return details;
 }
 
+function summarizeRetainedStandardsCoverage(payload) {
+  if (!payload || typeof payload !== 'object' || !payload.areas || typeof payload.areas !== 'object') {
+    return {};
+  }
+  const coverage = {};
+  for (const [area, data] of Object.entries(payload.areas)) {
+    if (!data || typeof data !== 'object') {
+      continue;
+    }
+    coverage[area] = {
+      score: data.score,
+      confidence: data.confidence,
+      standards: arrayOfStrings(data.standards),
+      rationale: data.rationale
+    };
+  }
+  return coverage;
+}
+
 function mergeGateDetails(scorecardDetails, retainedDetails) {
   const merged = { ...scorecardDetails };
   for (const [gate, retainedDetail] of Object.entries(retainedDetails || {})) {
@@ -443,9 +462,14 @@ function summarizeProfileStep(step, options = {}) {
   const summary = { name: step.name, status: step.status, file: step.file, command: commandLine(step.command, step.args) };
   if (step.output === 'gate-scorecard') {
     summary.scorecard = parseGateScorecard(step.stdout || '');
-    const retainedDetails = summarizeRetainedGateScore(readProfileScore(options.outputDir, step, options.deps));
+    const retainedScore = readProfileScore(options.outputDir, step, options.deps);
+    const retainedDetails = summarizeRetainedGateScore(retainedScore);
+    const standardsCoverage = summarizeRetainedStandardsCoverage(retainedScore);
     summary.scorecardDetails = mergeGateDetails(summarizeGateScorecard(step.stdout || ''), retainedDetails);
-    if (Object.keys(retainedDetails).length > 0) {
+    if (Object.keys(standardsCoverage).length > 0) {
+      summary.standardsCoverage = standardsCoverage;
+    }
+    if (Object.keys(retainedDetails).length > 0 || Object.keys(standardsCoverage).length > 0) {
       summary.scoreFile = path.posix.join(step.saveDir, 'target', 'score.json');
     }
   }
@@ -454,6 +478,41 @@ function summarizeProfileStep(step, options = {}) {
     summary.portfolio = portfolio ? { tableFile: step.file, ...portfolio } : { tableFile: step.file };
   }
   return summary;
+}
+
+function buildStandardsCoverageMatrix(profiles) {
+  return profiles.filter((profile) => profile.standardsCoverage && Object.keys(profile.standardsCoverage).length > 0).map((profile) => ({
+    profile: profile.name,
+    scoreFile: profile.scoreFile,
+    areas: profile.standardsCoverage
+  }));
+}
+
+function renderStandardsCoverageCell(detail) {
+  if (!detail || typeof detail !== 'object') {
+    return '-';
+  }
+  const score = detail.score !== undefined ? `${detail.score}/5` : '?/5';
+  const confidence = detail.confidence || 'unknown';
+  const standards = Array.isArray(detail.standards) && detail.standards.length > 0
+    ? ` (${detail.standards.join('/')})`
+    : '';
+  return `${score} ${confidence}${standards}`;
+}
+
+function renderStandardsCoverageMatrix(matrix) {
+  if (!Array.isArray(matrix) || matrix.length === 0) {
+    return [];
+  }
+  const lines = [
+    '| Profile | REQ | ARCH | TEST | CM | DOC | Evidence |',
+    '| --- | --- | --- | --- | --- | --- | --- |'
+  ];
+  for (const row of matrix) {
+    const areas = row.areas || {};
+    lines.push(`| ${row.profile} | ${renderStandardsCoverageCell(areas.REQ)} | ${renderStandardsCoverageCell(areas.ARCH)} | ${renderStandardsCoverageCell(areas.TEST)} | ${renderStandardsCoverageCell(areas.CM)} | ${renderStandardsCoverageCell(areas.DOC)} | ${row.scoreFile || '-'} |`);
+  }
+  return lines;
 }
 
 function renderGateScorecardSummary(step) {
@@ -573,6 +632,14 @@ function renderMarkdown(context) {
       lines.push(`- ${step.name}: ${renderPortfolioSummary(step.portfolio)}`);
     }
   }
+  const standardsCoverageMatrix = buildStandardsCoverageMatrix(profileSummaries);
+  const standardsCoverageLines = renderStandardsCoverageMatrix(standardsCoverageMatrix);
+  if (standardsCoverageLines.length > 0) {
+    lines.push('');
+    lines.push('## Standards Coverage Matrix');
+    lines.push('');
+    lines.push(...standardsCoverageLines);
+  }
   const gateDetailNotes = renderGateDetailNotes(profileSummaries);
   if (gateDetailNotes.length > 0) {
     lines.push('');
@@ -638,6 +705,7 @@ function runMultiStandardsAudit(argv = process.argv.slice(2), deps = {}) {
       profiles: profiles.map((step) => summarizeProfileStep(step, { outputDir })),
       success: imageInspect.status === 0 && directChecks.every(directStepIsClean) && profiles.every((step) => step.status === 0)
     };
+    summary.standardsCoverageMatrix = buildStandardsCoverageMatrix(summary.profiles);
     writeJson(path.join(outputDir, 'audit-summary.json'), summary, deps);
     writeText(path.join(outputDir, 'audit-summary.md'), markdown, deps);
     return { exitCode: summary.success ? 0 : 1, markdown, context: summary };
@@ -677,8 +745,10 @@ module.exports = {
   summarizePortfolioTable,
   summarizeGateScorecard,
   summarizeRetainedGateScore,
+  summarizeRetainedStandardsCoverage,
   summarizeDirectStep,
   summarizeProfileStep,
+  buildStandardsCoverageMatrix,
   renderMarkdown,
   runMultiStandardsAudit,
   main
