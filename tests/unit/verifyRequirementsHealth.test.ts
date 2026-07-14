@@ -3,6 +3,7 @@ import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const {
+  REQUIREMENTS_HEALTH_SCHEMA_VERSION,
   ATTENTION_REASON_IDS,
   computeMutationScore,
   attentionReasonsForRequirement,
@@ -25,6 +26,7 @@ const {
   renderRequirementsHealthOutput,
   main
 } = require('../../scripts/verifyRequirementsHealth.js') as {
+  REQUIREMENTS_HEALTH_SCHEMA_VERSION: number;
   ATTENTION_REASON_IDS: { unlinked: string; uncitedCriteria: string; coverageRisk: string };
   computeMutationScore: (report: unknown) => {
     killed: number;
@@ -510,6 +512,7 @@ describe('requirement verification health (VHS-REQ-601)', () => {
     });
 
     const output = JSON.parse(String((writeCalls[0] as unknown[])[1])) as {
+      schemaVersion: number;
       summary: { status: string; reasonCounts: { coverageRisk: number } };
       attention: Array<{ attentionReasons: Array<{ reasonId: string }> }>;
     };
@@ -517,6 +520,7 @@ describe('requirement verification health (VHS-REQ-601)', () => {
     expect(stdoutChunks.join('')).toBe(
       '[requirements-verify] Wrote report output to evidence/requirements-health.json\n'
     );
+    expect(output.schemaVersion).toBe(REQUIREMENTS_HEALTH_SCHEMA_VERSION);
     expect(output.summary).toMatchObject({ status: 'ATTENTION', reasonCounts: { coverageRisk: 1 } });
     expect(output.attention[0].attentionReasons.map((reason) => reason.reasonId)).toEqual([
       ATTENTION_REASON_IDS.uncitedCriteria,
@@ -558,6 +562,7 @@ describe('requirement verification health (VHS-REQ-601)', () => {
     });
 
     const output = JSON.parse(String((writeCalls[0] as unknown[])[1])) as {
+      schemaVersion: number;
       provenance: { generatedAt: string; cwd: string; outputMode: string; strict: boolean; argv: string[] };
       summary: { status: string };
     };
@@ -565,6 +570,7 @@ describe('requirement verification health (VHS-REQ-601)', () => {
     expect(stdoutChunks.join('')).toBe(
       '[requirements-verify] Wrote report output to evidence/requirements-health.json\n'
     );
+    expect(output.schemaVersion).toBe(REQUIREMENTS_HEALTH_SCHEMA_VERSION);
     expect(output.provenance).toEqual({
       generatedAt: '2026-07-14T12:00:00.000Z',
       cwd: path.resolve('/repo'),
@@ -671,6 +677,7 @@ describe('requirement verification health (VHS-REQ-601)', () => {
     });
 
     const output = JSON.parse(stdoutChunks.join('')) as {
+      schemaVersion: number;
       attention: Array<{
         reqId: string;
         attentionReasons: Array<{ reasonId: string; message: string }>;
@@ -678,6 +685,7 @@ describe('requirement verification health (VHS-REQ-601)', () => {
       summary: unknown;
     };
     expect(code).toBe(0);
+    expect(output.schemaVersion).toBe(REQUIREMENTS_HEALTH_SCHEMA_VERSION);
     expect(
       output.attention.map((entry) => [entry.reqId, entry.attentionReasons.map((reason) => reason.reasonId)])
     ).toEqual([
@@ -696,10 +704,12 @@ describe('requirement verification health (VHS-REQ-601)', () => {
   it('keeps provenance out of default JSON unless requested', () => {
     const result = verifyRequirementsHealth('/repo', OUTPUT_FIXTURE);
     const output = JSON.parse(renderRequirementsHealthOutput(result, { json: true })) as {
+      schemaVersion: number;
       provenance?: unknown;
       summary: { status: string };
     };
 
+    expect(output.schemaVersion).toBe(REQUIREMENTS_HEALTH_SCHEMA_VERSION);
     expect(output.provenance).toBeUndefined();
     expect(output.summary.status).toBe('ATTENTION');
   });

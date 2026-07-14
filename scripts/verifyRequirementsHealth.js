@@ -38,6 +38,7 @@ const { checkRequirementsIntegrity } = require('./checkRequirementsIntegrity.js'
 const { generateCoverageMap } = require('./mapCoverageToTraceability.js');
 
 const MUTATION_REPORT_PATH = 'reports/mutation/mutation.json';
+const REQUIREMENTS_HEALTH_SCHEMA_VERSION = 1;
 
 const ATTENTION_REASON_IDS = Object.freeze({
   unlinked: 'unlinked',
@@ -544,7 +545,11 @@ function renderMarkdown(result, options = {}) {
 function renderRequirementsHealthOutput(result, options = {}) {
   const provenance = options.provenance ? { provenance: options.provenance } : {};
   if (options.json) {
-    return JSON.stringify({ ...result, ...provenance }, null, 2);
+    return JSON.stringify(
+      { schemaVersion: REQUIREMENTS_HEALTH_SCHEMA_VERSION, ...result, ...provenance },
+      null,
+      2
+    );
   }
   if (options.markdown) {
     return renderMarkdown(result, options);
@@ -607,6 +612,7 @@ if (require.main === module) {
 
 module.exports = {
   MUTATION_REPORT_PATH,
+  REQUIREMENTS_HEALTH_SCHEMA_VERSION,
   ATTENTION_REASON_IDS,
   computeMutationScore,
   attentionReasonsForRequirement,
