@@ -48,6 +48,9 @@ function parseArgs(argv) {
     requireLinearHistory: false,
     requireConversationResolution: false,
     requireSignedCommits: false,
+    requireStaleReviewDismissal: false,
+    requireCodeOwnerReview: false,
+    requireLastPushApproval: false,
     emitJson: false,
     help: false
   };
@@ -71,6 +74,9 @@ function parseArgs(argv) {
     else if (arg === '--require-linear-history') options.requireLinearHistory = true;
     else if (arg === '--require-conversation-resolution') options.requireConversationResolution = true;
     else if (arg === '--require-signed-commits') options.requireSignedCommits = true;
+    else if (arg === '--require-stale-review-dismissal') options.requireStaleReviewDismissal = true;
+    else if (arg === '--require-code-owner-review') options.requireCodeOwnerReview = true;
+    else if (arg === '--require-last-push-approval') options.requireLastPushApproval = true;
     else if (arg === '--json') options.emitJson = true;
     else if (arg === '--help' || arg === '-h') options.help = true;
     else throw new Error(`Unknown argument: ${arg}`);
@@ -104,6 +110,9 @@ function usage() {
     '  --require-linear-history Fail when linear history is not required',
     '  --require-conversation-resolution Fail when conversation resolution is not required',
     '  --require-signed-commits Fail when signed commits are not required',
+    '  --require-stale-review-dismissal Fail when stale review dismissal is not required',
+    '  --require-code-owner-review Fail when code-owner review is not required',
+    '  --require-last-push-approval Fail when last-push approval is not required',
     '  --json                Emit machine-readable JSON instead of text',
     '  --help                Show this help'
   ].join('\n');
@@ -199,6 +208,9 @@ function evaluateBranchProtection(settings, options = {}) {
   const requireLinearHistory = Boolean(options.requireLinearHistory);
   const requireConversationResolution = Boolean(options.requireConversationResolution);
   const requireSignedCommits = Boolean(options.requireSignedCommits);
+  const requireStaleReviewDismissal = Boolean(options.requireStaleReviewDismissal);
+  const requireCodeOwnerReview = Boolean(options.requireCodeOwnerReview);
+  const requireLastPushApproval = Boolean(options.requireLastPushApproval);
   const minimumApprovingReviews = Number.isFinite(Number(options.minimumApprovingReviews))
     ? Number(options.minimumApprovingReviews)
     : 1;
@@ -263,6 +275,30 @@ function evaluateBranchProtection(settings, options = {}) {
       details: approvingReviewCount >= minimumApprovingReviews
         ? `required approving reviews: ${approvingReviewCount}`
         : `required approving reviews: ${approvingReviewCount}; expected at least ${minimumApprovingReviews}`
+    });
+  }
+
+  if (requireStaleReviewDismissal) {
+    checks.push({
+      name: 'stale review dismissal',
+      passed: Boolean(protection.required_pull_request_reviews && protection.required_pull_request_reviews.dismiss_stale_reviews === true),
+      details: protection.required_pull_request_reviews && protection.required_pull_request_reviews.dismiss_stale_reviews === true ? 'enabled' : 'disabled or unavailable'
+    });
+  }
+
+  if (requireCodeOwnerReview) {
+    checks.push({
+      name: 'code-owner review',
+      passed: Boolean(protection.required_pull_request_reviews && protection.required_pull_request_reviews.require_code_owner_reviews === true),
+      details: protection.required_pull_request_reviews && protection.required_pull_request_reviews.require_code_owner_reviews === true ? 'enabled' : 'disabled or unavailable'
+    });
+  }
+
+  if (requireLastPushApproval) {
+    checks.push({
+      name: 'last-push approval',
+      passed: Boolean(protection.required_pull_request_reviews && protection.required_pull_request_reviews.require_last_push_approval === true),
+      details: protection.required_pull_request_reviews && protection.required_pull_request_reviews.require_last_push_approval === true ? 'enabled' : 'disabled or unavailable'
     });
   }
 
