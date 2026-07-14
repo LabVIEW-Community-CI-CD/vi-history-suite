@@ -641,6 +641,48 @@ function buildStandardsGateStrengthSummary(profiles) {
   return Array.from(rowsByKey.values());
 }
 
+function buildStandardsGateBasisSummary(profiles) {
+  const rowsByKey = new Map();
+  for (const profile of profiles) {
+    const details = profile.scorecardDetails || {};
+    for (const [gate, detail] of Object.entries(details)) {
+      const missingProof = arrayOfStrings(detail.missingProof);
+      const hasLowerConfidence = detail.confidence && detail.confidence !== 'High';
+      if (!detail.basis || hasLowerConfidence || missingProof.length > 0) {
+        continue;
+      }
+      const standards = arrayOfStrings(detail.standards);
+      const key = [
+        gate,
+        detail.status || '',
+        detail.confidence || '',
+        detail.basis || '',
+        standards.join('/')
+      ].join('\u0001');
+      const existing = rowsByKey.get(key);
+      if (existing) {
+        if (!existing.profiles.includes(profile.name)) {
+          existing.profiles.push(profile.name);
+        }
+        if (profile.scoreFile && !existing.scoreFiles.includes(profile.scoreFile)) {
+          existing.scoreFiles.push(profile.scoreFile);
+        }
+        continue;
+      }
+      rowsByKey.set(key, {
+        gate,
+        status: detail.status,
+        confidence: detail.confidence,
+        basis: detail.basis,
+        standards,
+        profiles: [profile.name],
+        scoreFiles: profile.scoreFile ? [profile.scoreFile] : []
+      });
+    }
+  }
+  return Array.from(rowsByKey.values());
+}
+
 function buildStandardsGateDetailSummary(profiles) {
   const rowsByKey = new Map();
   for (const profile of profiles) {
@@ -749,6 +791,22 @@ function renderStandardsGateStrengthSummary(summary, completeProfiles = []) {
     const standards = Array.isArray(row.standards) && row.standards.length > 0 ? row.standards.join('/') : 'none';
     const profiles = renderProfileList(row.profiles, completeProfiles);
     lines.push(`| ${markdownCell(label)} | ${markdownCell(standards)} | ${markdownCell(profiles)} |`);
+  }
+  return lines;
+}
+
+function renderStandardsGateBasisSummary(summary, completeProfiles = []) {
+  if (!Array.isArray(summary) || summary.length === 0) {
+    return [];
+  }
+  const lines = [
+    '| Gate | Status | Confidence | Standards | Basis | Profiles |',
+    '| --- | --- | --- | --- | --- | --- |'
+  ];
+  for (const row of summary) {
+    const standards = Array.isArray(row.standards) && row.standards.length > 0 ? row.standards.join('/') : 'none';
+    const profiles = renderProfileList(row.profiles, completeProfiles);
+    lines.push(`| ${markdownCell(row.gate || 'unknown')} | ${markdownCell(row.status || 'UNKNOWN')} | ${markdownCell(row.confidence || 'unknown')} | ${markdownCell(standards)} | ${markdownCell(row.basis || '-')} | ${markdownCell(profiles)} |`);
   }
   return lines;
 }
@@ -1111,6 +1169,14 @@ function renderMarkdown(context) {
     lines.push('');
     lines.push(...standardsGateStrengthLines);
   }
+  const standardsGateBasisSummary = buildStandardsGateBasisSummary(profileSummaries);
+  const standardsGateBasisLines = renderStandardsGateBasisSummary(standardsGateBasisSummary, standardsProfileSet);
+  if (standardsGateBasisLines.length > 0) {
+    lines.push('');
+    lines.push('## Standards Gate Basis Summary');
+    lines.push('');
+    lines.push(...standardsGateBasisLines);
+  }
   const standardsGateDetailSummary = buildStandardsGateDetailSummary(profileSummaries);
   const standardsGateDetailLines = renderStandardsGateDetailSummary(standardsGateDetailSummary, standardsProfileSet);
   if (standardsGateDetailLines.length > 0) {
@@ -1182,6 +1248,7 @@ function runMultiStandardsAudit(argv = process.argv.slice(2), deps = {}) {
     summary.standardsScoreFileLegend = buildStandardsScoreFileLegend(summary.profiles);
     summary.standardsEvidenceSummary = buildStandardsEvidenceSummary(summary.profiles);
     summary.standardsGateStrengthSummary = buildStandardsGateStrengthSummary(summary.profiles);
+    summary.standardsGateBasisSummary = buildStandardsGateBasisSummary(summary.profiles);
     summary.standardsGateDetailSummary = buildStandardsGateDetailSummary(summary.profiles);
     writeJson(path.join(outputDir, 'audit-summary.json'), summary, deps);
     writeText(path.join(outputDir, 'audit-summary.md'), markdown, deps);
@@ -1233,6 +1300,7 @@ module.exports = {
   buildStandardsScoreFileLegend,
   buildStandardsEvidenceSummary,
   buildStandardsGateStrengthSummary,
+  buildStandardsGateBasisSummary,
   buildStandardsGateDetailSummary,
   renderAuditRunProvenanceSummary,
   renderStandardsCoverageMatrix,
@@ -1240,6 +1308,7 @@ module.exports = {
   renderStandardsEvidenceSummary,
   renderStandardsScoreFileLegend,
   renderStandardsGateStrengthSummary,
+  renderStandardsGateBasisSummary,
   renderStandardsGateDetailSummary,
   renderProfileSignalLines,
   renderDirectCheckEvidenceSummary,
