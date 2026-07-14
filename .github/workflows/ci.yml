@@ -235,9 +235,11 @@ jobs:
       # their enforced contract to the run summary so the requirements are
       # front-facing on every pull request. The verification-linkage guard
       # additionally fails closed (in --enforce mode) when an Active requirement's
-      # verification-reference tests do not cite its ID. They need no dependency
-      # install; all use only Node built-ins (plus the sibling audit and
-      # docs-link modules).
+      # verification-reference tests do not cite its ID. The criterion-inventory
+      # guard then fails closed (in --enforce mode) when an Active acceptance
+      # criterion is not cited at the criterion level (VHS-REQ-NNN.M). They need
+      # no dependency install; all use only Node built-ins (plus the sibling
+      # audit and docs-link modules).
       - name: Checkout
         uses: actions/checkout@v7
 
@@ -254,3 +256,6 @@ jobs:
 
       - name: Enforce requirement verification linkage
         run: node scripts/auditRequirementVerificationLinkage.js --enforce
+
+      - name: Enforce requirement criterion citation
+        run: node scripts/auditRequirementCriteriaInventory.js --enforce
