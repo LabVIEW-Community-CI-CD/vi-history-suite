@@ -736,12 +736,12 @@ function renderStandardsCoverageMatrix(matrix) {
     return [];
   }
   const lines = [
-    '| Profile | REQ | ARCH | TEST | CM | DOC | Evidence |',
-    '| --- | --- | --- | --- | --- | --- | --- |'
+    '| Profile | REQ | ARCH | TEST | CM | DOC |',
+    '| --- | --- | --- | --- | --- | --- |'
   ];
   for (const row of matrix) {
     const areas = row.areas || {};
-    lines.push(`| ${row.profile} | ${renderStandardsCoverageCell(areas.REQ)} | ${renderStandardsCoverageCell(areas.ARCH)} | ${renderStandardsCoverageCell(areas.TEST)} | ${renderStandardsCoverageCell(areas.CM)} | ${renderStandardsCoverageCell(areas.DOC)} | ${row.scoreFile || '-'} |`);
+    lines.push(`| ${row.profile} | ${renderStandardsCoverageCell(areas.REQ)} | ${renderStandardsCoverageCell(areas.ARCH)} | ${renderStandardsCoverageCell(areas.TEST)} | ${renderStandardsCoverageCell(areas.CM)} | ${renderStandardsCoverageCell(areas.DOC)} |`);
   }
   return lines;
 }
@@ -995,6 +995,7 @@ module.exports = {
   buildStandardsEvidenceSummary,
   buildStandardsGateStrengthSummary,
   buildStandardsGateDetailSummary,
+  renderStandardsCoverageMatrix,
   renderStandardsEvidenceSummary,
   renderStandardsScoreFileLegend,
   renderStandardsGateStrengthSummary,
