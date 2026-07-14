@@ -135,10 +135,13 @@ gate semantics.
 
 ## Criterion Closure Docket
 
-`npm run requirements:criteria` remains advisory. It is useful for finding
+`npm run requirements:criteria` remains advisory (exit 0). It is useful for finding
 acceptance criteria that lack a literal `VHS-REQ-N.M` citation in a verification
 reference test, but the remaining Phase-3b backlog should not be closed by
-adding citation text alone. As of 2026-07-13, after the LabVIEW CLI open-gate,
+adding citation text alone. `npm run requirements:criteria:enforce` (or the
+`--enforce` flag) makes the same guard fail closed (exit 1) when any Active
+criterion is not yet cited at the criterion level, so maintainers can gate the
+baseline once it is stable; it is not wired into CI yet. As of 2026-07-13, after the LabVIEW CLI open-gate,
 Definition-of-Done governance, VI Server gate, registry-fallback, container
 image mismatch remediation, Linux container headless-recovery evidence,
 staged-tree working-tree evidence, VI Preview lifecycle, PR evidence contract,
@@ -177,7 +180,9 @@ by their dedicated requirements.
 Recommended implementation order:
 
 1. Criterion-linkage enforcement can become fail-closed once maintainers decide
-   the 513/513 advisory baseline is stable enough for CI enforcement.
+   the 513/513 advisory baseline is stable enough for CI enforcement. The
+   `npm run requirements:criteria:enforce` guard already fails closed locally;
+   wiring it into CI is tracked separately.
 2. Classify future uncited criteria before enforcement changes; do not add a
    citation unless a verification test demonstrates the criterion.
 

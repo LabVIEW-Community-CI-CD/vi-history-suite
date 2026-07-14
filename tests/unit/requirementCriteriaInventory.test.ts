@@ -35,13 +35,14 @@ const {
     cwd?: string,
     deps?: { readFile?: (relativePath: string) => string | undefined }
   ) => CriteriaInventory;
-  renderSummary: (result: CriteriaInventory) => string;
-  renderStepSummary: (result: CriteriaInventory) => string;
+  renderSummary: (result: CriteriaInventory, options?: { enforce?: boolean }) => string;
+  renderStepSummary: (result: CriteriaInventory, options?: { enforce?: boolean }) => string;
   main: (
     argv?: string[],
     deps?: {
       cwd?: string;
       json?: boolean;
+      enforce?: boolean;
       readFile?: (relativePath: string) => string | undefined;
       stdout?: { write: (chunk: string) => void };
       stepSummaryPath?: string;
@@ -211,6 +212,66 @@ describe('requirement acceptance-criteria inventory (VHS-REQ-601)', () => {
     const parsed = JSON.parse(stdoutChunks.join('')) as CriteriaInventory;
     expect(parsed.totalCriteria).toBe(4);
     expect(parsed.requirements[0].criteria[0].criterionId).toBe('VHS-REQ-001.1');
+  });
+
+  it('renders the enforce contract in both summaries', () => {
+    const result = auditRequirementCriteriaInventory('/repo', {
+      readFile: makeReadFile(FIXTURE_FILES)
+    });
+
+    const summary = renderSummary(result, { enforce: true });
+    expect(summary).toContain('Enforcing (--enforce)');
+    expect(summary).toContain('failing because at least one Active criterion is not cited');
+    expect(summary).not.toContain('does not fail CI');
+
+    const stepSummary = renderStepSummary(result, { enforce: true });
+    expect(stepSummary).toContain('**Enforced check.**');
+    expect(stepSummary).toContain('this step fails when any');
+  });
+
+  it('main --enforce fails closed (exit 1) when a criterion is not cited', () => {
+    const stdoutChunks: string[] = [];
+
+    const code = main(['--enforce'], {
+      readFile: makeReadFile(FIXTURE_FILES),
+      stdout: { write: (chunk) => stdoutChunks.push(chunk) }
+    });
+
+    expect(code).toBe(1);
+    expect(stdoutChunks.join('')).toContain('[requirements-criteria] Enforcing (--enforce): failing');
+  });
+
+  it('main --enforce passes (exit 0) when every criterion is cited', () => {
+    const stdoutChunks: string[] = [];
+    // Cite every alpha and gamma criterion at the criterion level.
+    const files: Record<string, string> = {
+      ...FIXTURE_FILES,
+      'tests/unit/a.test.ts':
+        'it("alpha VHS-REQ-001.1 VHS-REQ-001.2 VHS-REQ-001.3", () => {});',
+      'tests/unit/g.test.ts': 'it("gamma VHS-REQ-003.1", () => {});'
+    };
+
+    const code = main(['--enforce'], {
+      readFile: makeReadFile(files),
+      stdout: { write: (chunk) => stdoutChunks.push(chunk) }
+    });
+
+    expect(code).toBe(0);
+    expect(stdoutChunks.join('')).toContain(
+      '[requirements-criteria] Enforcing (--enforce): all Active criteria are cited'
+    );
+  });
+
+  it('main honors deps.enforce as an alternative to the --enforce flag', () => {
+    const stdoutChunks: string[] = [];
+
+    const code = main([], {
+      enforce: true,
+      readFile: makeReadFile(FIXTURE_FILES),
+      stdout: { write: (chunk) => stdoutChunks.push(chunk) }
+    });
+
+    expect(code).toBe(1);
   });
 
   it('inventories the real repository with derived positional criterion ids', () => {

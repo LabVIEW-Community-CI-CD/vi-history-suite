@@ -13,12 +13,13 @@
  * of the requirement's RTM verification-reference tests (a test file that
  * contains the exact `VHS-REQ-NNN.M` string).
  *
- * This is Phase 3a of the criterion-traceability rollout and is ADVISORY only
- * (exit 0): it does NOT modify srs.md and does NOT fail CI. The positional `.M`
- * convention is derived, not annotated, so the criteria text is untouched; run
- * this command (or `--json`) to resolve a criterion id to its text before
- * citing it in a test. Later phases backfill criterion citations (3b) and
- * enforce criterion linkage fail-closed (3c).
+ * This is Phase 3a of the criterion-traceability rollout and is ADVISORY by
+ * default (exit 0): it does NOT modify srs.md and does NOT fail CI. Passing
+ * `--enforce` makes it fail closed (exit 1) when any Active criterion is not yet
+ * cited at the criterion level, so the guard can gate the baseline once every
+ * criterion is backfilled. The positional `.M` convention is derived, not
+ * annotated, so the criteria text is untouched; run this command (or `--json`)
+ * to resolve a criterion id to its text before citing it in a test.
  *
  * Pure helpers stay separate from a thin CLI so the parsing and classification
  * are unit-testable with injected fixtures. It uses only Node built-ins plus the
@@ -183,7 +184,7 @@ function auditRequirementCriteriaInventory(cwd = process.cwd(), deps = {}) {
   };
 }
 
-function renderSummary(result) {
+function renderSummary(result, options = {}) {
   const lines = [];
   lines.push(`[requirements-criteria] Active requirements with acceptance criteria: ${result.totalRequirements}`);
   lines.push(`[requirements-criteria] Total acceptance criteria: ${result.totalCriteria}`);
@@ -193,23 +194,38 @@ function renderSummary(result) {
   lines.push(
     `[requirements-criteria] Criteria not yet cited at criterion level: ${result.uncitedCriteria}`
   );
-  lines.push(
-    '[requirements-criteria] Advisory report; criterion linkage does not fail CI. Positional .M ids are derived from srs.md bullet order.'
-  );
+  if (options.enforce) {
+    lines.push(
+      result.uncitedCriteria > 0
+        ? '[requirements-criteria] Enforcing (--enforce): failing because at least one Active criterion is not cited at the criterion level. Positional .M ids are derived from srs.md bullet order.'
+        : '[requirements-criteria] Enforcing (--enforce): all Active criteria are cited at the criterion level. Positional .M ids are derived from srs.md bullet order.'
+    );
+  } else {
+    lines.push(
+      '[requirements-criteria] Advisory report; criterion linkage does not fail CI. Positional .M ids are derived from srs.md bullet order.'
+    );
+  }
   return lines.join('\n');
 }
 
-function renderStepSummary(result) {
+function renderStepSummary(result, options = {}) {
   const lines = [];
   lines.push('## Requirement Acceptance-Criteria Inventory');
   lines.push('');
   lines.push(
-    '**Advisory report.** Each Active requirement acceptance-criteria bullet in ' +
-      '`srs.md` is assigned a positional id `VHS-REQ-NNN.M` (M is the 1-based bullet ' +
-      'position). A criterion is counted as cited when one of the requirement\'s RTM ' +
-      'verification-reference tests contains the exact `VHS-REQ-NNN.M` string. The RTM ' +
-      'remains the authoritative requirement-to-test linkage; this criterion-level ' +
-      'signal is the backfill target for later phases and does not fail CI.'
+    options.enforce
+      ? '**Enforced check.** Each Active requirement acceptance-criteria bullet in ' +
+          '`srs.md` is assigned a positional id `VHS-REQ-NNN.M` (M is the 1-based bullet ' +
+          'position) and must be cited at the criterion level by one of the requirement\'s RTM ' +
+          'verification-reference tests (a test file containing the exact `VHS-REQ-NNN.M` string). ' +
+          'The RTM remains the authoritative requirement-to-test linkage; this step fails when any ' +
+          'Active criterion is not yet cited at the criterion level.'
+      : '**Advisory report.** Each Active requirement acceptance-criteria bullet in ' +
+          '`srs.md` is assigned a positional id `VHS-REQ-NNN.M` (M is the 1-based bullet ' +
+          'position). A criterion is counted as cited when one of the requirement\'s RTM ' +
+          'verification-reference tests contains the exact `VHS-REQ-NNN.M` string. The RTM ' +
+          'remains the authoritative requirement-to-test linkage; this criterion-level ' +
+          'signal is the backfill target for later phases and does not fail CI.'
   );
   lines.push('');
   lines.push(`- Active requirements with acceptance criteria: ${result.totalRequirements}`);
@@ -231,6 +247,7 @@ function renderStepSummary(result) {
 function main(argv = process.argv.slice(2), deps = {}) {
   const positionals = argv.filter((arg) => !arg.startsWith('--'));
   const asJson = deps.json ?? argv.includes('--json');
+  const enforce = deps.enforce ?? argv.includes('--enforce');
   const cwd = deps.cwd || positionals[0] || process.cwd();
   const result = auditRequirementCriteriaInventory(cwd, deps);
 
@@ -238,15 +255,20 @@ function main(argv = process.argv.slice(2), deps = {}) {
   if (stepSummaryPath) {
     const appendStepSummary =
       deps.appendStepSummary || ((filePath, content) => fs.appendFileSync(filePath, content));
-    appendStepSummary(stepSummaryPath, `${renderStepSummary(result)}\n`);
+    appendStepSummary(stepSummaryPath, `${renderStepSummary(result, { enforce })}\n`);
   }
 
   const stdout = deps.stdout || process.stdout;
-  stdout.write(asJson ? `${JSON.stringify(result, null, 2)}\n` : `${renderSummary(result)}\n`);
+  stdout.write(asJson ? `${JSON.stringify(result, null, 2)}\n` : `${renderSummary(result, { enforce })}\n`);
 
-  // Advisory: criterion inventory never fails the build in Phase 3a. The RTM
-  // remains the authoritative requirement-to-test linkage; this report is the
-  // criterion-level backfill target for the 3b citation phase.
+  // Advisory by default (exit 0): criterion inventory does not fail the build.
+  // With --enforce the guard fails closed (exit 1) when any Active criterion is
+  // not yet cited at the criterion level. The RTM remains the authoritative
+  // requirement-to-test linkage; the advisory report is the criterion-level
+  // backfill target for closing citation gaps incrementally.
+  if (enforce && result.uncitedCriteria > 0) {
+    return 1;
+  }
   return 0;
 }
 
