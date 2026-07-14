@@ -26,6 +26,7 @@ const GATE_SCORECARD_PROFILES = [
   'compliance-uplift'
 ];
 const PORTFOLIO_PROFILE = 'portfolio-review';
+const STANDARDS_COVERAGE_AREAS = ['REQ', 'ARCH', 'TEST', 'CM', 'DOC'];
 
 function usage() {
   return [
@@ -521,6 +522,40 @@ function buildStandardsCoverageMatrix(profiles) {
   }));
 }
 
+function buildStandardsCoverageRationaleSummary(matrix) {
+  const rowsByKey = new Map();
+  for (const row of matrix || []) {
+    const areas = row.areas || {};
+    const areaNames = [...STANDARDS_COVERAGE_AREAS, ...Object.keys(areas).filter((area) => !STANDARDS_COVERAGE_AREAS.includes(area))];
+    for (const area of areaNames) {
+      const detail = areas[area];
+      if (!detail || !detail.rationale) {
+        continue;
+      }
+      const standards = arrayOfStrings(detail.standards);
+      const key = [area, detail.rationale, standards.join('/')].join('\u0001');
+      const existing = rowsByKey.get(key);
+      if (existing) {
+        if (!existing.profiles.includes(row.profile || 'unknown')) {
+          existing.profiles.push(row.profile || 'unknown');
+        }
+        if (row.scoreFile && !existing.scoreFiles.includes(row.scoreFile)) {
+          existing.scoreFiles.push(row.scoreFile);
+        }
+        continue;
+      }
+      rowsByKey.set(key, {
+        area,
+        rationale: detail.rationale,
+        standards,
+        profiles: [row.profile || 'unknown'],
+        scoreFiles: row.scoreFile ? [row.scoreFile] : []
+      });
+    }
+  }
+  return Array.from(rowsByKey.values());
+}
+
 function buildStandardsScoreFileLegend(profiles) {
   const rows = [];
   const seen = new Set();
@@ -779,6 +814,22 @@ function renderStandardsCoverageMatrix(matrix) {
   return lines;
 }
 
+function renderStandardsCoverageRationaleSummary(summary, completeProfiles = []) {
+  if (!Array.isArray(summary) || summary.length === 0) {
+    return [];
+  }
+  const lines = [
+    '| Area | Rationale | Standards | Profiles |',
+    '| --- | --- | --- | --- |'
+  ];
+  for (const row of summary) {
+    const standards = Array.isArray(row.standards) && row.standards.length > 0 ? row.standards.join('/') : 'none';
+    const profiles = renderProfileList(row.profiles, completeProfiles);
+    lines.push(`| ${markdownCell(row.area || 'unknown')} | ${markdownCell(row.rationale || '-')} | ${markdownCell(standards)} | ${markdownCell(profiles)} |`);
+  }
+  return lines;
+}
+
 function renderGateScorecardSummary(step) {
   const details = step.scorecardDetails || {};
   if (Object.keys(details).length > 0) {
@@ -922,6 +973,7 @@ function renderMarkdown(context) {
   }
   const profileSummaries = context.profiles.map((step) => summarizeProfileStep(step, { outputDir: context.outputDir }));
   lines.push(...renderProfileSignalLines(profileSummaries));
+  const standardsProfileSet = profileSummaries.map((row) => row.name);
   const directCheckEvidenceLines = renderDirectCheckEvidenceSummary(directCheckSummaries);
   if (directCheckEvidenceLines.length > 0) {
     lines.push('');
@@ -937,8 +989,15 @@ function renderMarkdown(context) {
     lines.push('');
     lines.push(...standardsCoverageLines);
   }
+  const standardsCoverageRationaleSummary = buildStandardsCoverageRationaleSummary(standardsCoverageMatrix);
+  const standardsCoverageRationaleLines = renderStandardsCoverageRationaleSummary(standardsCoverageRationaleSummary, standardsProfileSet);
+  if (standardsCoverageRationaleLines.length > 0) {
+    lines.push('');
+    lines.push('## Standards Coverage Rationale Summary');
+    lines.push('');
+    lines.push(...standardsCoverageRationaleLines);
+  }
   const standardsScoreFileLegend = buildStandardsScoreFileLegend(profileSummaries);
-  const standardsProfileSet = profileSummaries.map((row) => row.name);
   const standardsScoreFileLegendLines = renderStandardsScoreFileLegend(standardsScoreFileLegend);
   if (standardsScoreFileLegendLines.length > 0) {
     lines.push('');
@@ -1029,6 +1088,7 @@ function runMultiStandardsAudit(argv = process.argv.slice(2), deps = {}) {
       success: imageInspect.status === 0 && directChecks.every(directStepIsClean) && profiles.every((step) => step.status === 0)
     };
     summary.standardsCoverageMatrix = buildStandardsCoverageMatrix(summary.profiles);
+    summary.standardsCoverageRationaleSummary = buildStandardsCoverageRationaleSummary(summary.standardsCoverageMatrix);
     summary.standardsScoreFileLegend = buildStandardsScoreFileLegend(summary.profiles);
     summary.standardsEvidenceSummary = buildStandardsEvidenceSummary(summary.profiles);
     summary.standardsGateStrengthSummary = buildStandardsGateStrengthSummary(summary.profiles);
@@ -1078,11 +1138,13 @@ module.exports = {
   summarizeProfileStep,
   profileScoreFile,
   buildStandardsCoverageMatrix,
+  buildStandardsCoverageRationaleSummary,
   buildStandardsScoreFileLegend,
   buildStandardsEvidenceSummary,
   buildStandardsGateStrengthSummary,
   buildStandardsGateDetailSummary,
   renderStandardsCoverageMatrix,
+  renderStandardsCoverageRationaleSummary,
   renderStandardsEvidenceSummary,
   renderStandardsScoreFileLegend,
   renderStandardsGateStrengthSummary,
