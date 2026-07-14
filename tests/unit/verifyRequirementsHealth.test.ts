@@ -419,6 +419,7 @@ describe('requirement verification health (VHS-REQ-601)', () => {
     };
 
     expect(schema.required).toEqual([
+      '$schema',
       'schemaVersion',
       'activeRequirements',
       'integrity',
@@ -632,6 +633,7 @@ describe('requirement verification health (VHS-REQ-601)', () => {
     );
     expect(schema.$id).toBe(REQUIREMENTS_HEALTH_SCHEMA_ID);
     expect(schema.properties.schemaVersion.const).toBe(REQUIREMENTS_HEALTH_SCHEMA_VERSION);
+    expect(schema.required).toContain('$schema');
     expect(schema.required).toContain('summary');
   });
 

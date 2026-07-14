@@ -54,6 +54,7 @@ const REQUIREMENTS_HEALTH_JSON_SCHEMA = Object.freeze({
   title: 'vi-history-suite requirements health JSON report',
   type: 'object',
   required: [
+    '$schema',
     'schemaVersion',
     'activeRequirements',
     'integrity',
