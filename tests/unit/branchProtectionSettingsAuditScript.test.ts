@@ -12,6 +12,7 @@ const {
   EXPECTED_ACTIVE_RULESET_REF_NAME_KEYS,
   EXPECTED_ACTIVE_RULESET_RULE_KEYS,
   EXPECTED_ACTIVE_RULESET_RULE_TYPES,
+  EXPECTED_BRANCH_PROTECTION_FLAG_SECTION_KEYS,
   EXPECTED_BRANCH_PROTECTION_SECTION_KEYS,
   EXPECTED_REQUIRED_STATUS_CHECKS,
   EXPECTED_REQUIRED_STATUS_CHECK_APP_ID,
@@ -26,6 +27,7 @@ const {
   buildGhApiArgs,
   buildGhRulesetDetailApiArgs,
   requiredApprovingReviewCount,
+  branchProtectionFlagSectionKeySummaries,
   branchProtectionSectionKeys,
   pullRequestReviewSectionKeys,
   requiredStatusContexts,
@@ -55,6 +57,7 @@ const {
   EXPECTED_ACTIVE_RULESET_REF_NAME_KEYS: string[];
   EXPECTED_ACTIVE_RULESET_RULE_KEYS: string[];
   EXPECTED_ACTIVE_RULESET_RULE_TYPES: string[];
+  EXPECTED_BRANCH_PROTECTION_FLAG_SECTION_KEYS: Record<string, string[]>;
   EXPECTED_BRANCH_PROTECTION_SECTION_KEYS: string[];
   EXPECTED_REQUIRED_STATUS_CHECKS: string[];
   EXPECTED_REQUIRED_STATUS_CHECK_APP_ID: number;
@@ -84,6 +87,10 @@ const {
   buildGhApiArgs: (repo: string, branch: string, resource: string) => string[];
   buildGhRulesetDetailApiArgs: (repo: string, rulesetId: number | string) => string[];
   requiredApprovingReviewCount: (protection: Record<string, unknown>) => number;
+  branchProtectionFlagSectionKeySummaries: (
+    protection: Record<string, unknown>,
+    expectedFlagSectionKeys?: Record<string, string[]>
+  ) => Array<{ section: string; expectedKeys: string[]; observedKeys: string[]; missingKeys: string[]; unexpectedKeys: string[] }>;
   branchProtectionSectionKeys: (protection: Record<string, unknown>) => string[];
   pullRequestReviewSectionKeys: (protection: Record<string, unknown>) => string[];
   requiredStatusContexts: (protection: Record<string, unknown>) => string[];
@@ -112,6 +119,7 @@ const {
     options?: {
       expectedRequiredChecks?: string[];
       expectedBranchProtectionSectionKeys?: string[];
+      expectedBranchProtectionFlagSectionKeys?: Record<string, string[]>;
       expectedRequiredStatusCheckSectionKeys?: string[];
       expectedRequiredStatusCheckKeys?: string[];
       expectedPullRequestReviewSectionKeys?: string[];
@@ -182,7 +190,10 @@ function protection(overrides: ProtectionOverrides = {}) {
       contexts_url: `https://api.github.com/repos/${DEFAULT_REPO}/branches/develop/protection/required_status_checks/contexts`,
       checks: checkContexts.map((context) => ({ context, app_id: overrides.checkAppId ?? EXPECTED_REQUIRED_STATUS_CHECK_APP_ID }))
     },
-    enforce_admins: { enabled: overrides.enforceAdmins ?? true },
+    enforce_admins: {
+      url: `https://api.github.com/repos/${DEFAULT_REPO}/branches/develop/protection/enforce_admins`,
+      enabled: overrides.enforceAdmins ?? true
+    },
     allow_force_pushes: { enabled: overrides.allowForcePushes ?? false },
     allow_deletions: { enabled: overrides.allowDeletions ?? false },
     lock_branch: { enabled: overrides.lockBranch ?? false },
@@ -193,7 +204,10 @@ function protection(overrides: ProtectionOverrides = {}) {
       : {}),
     required_linear_history: { enabled: overrides.requiredLinearHistory ?? false },
     required_conversation_resolution: { enabled: overrides.requiredConversationResolution ?? false },
-    required_signatures: { enabled: overrides.requiredSignedCommits ?? false },
+    required_signatures: {
+      url: `https://api.github.com/repos/${DEFAULT_REPO}/branches/develop/protection/required_signatures`,
+      enabled: overrides.requiredSignedCommits ?? false
+    },
     block_creations: { enabled: overrides.blockCreations ?? false },
     required_pull_request_reviews: {
       url: `https://api.github.com/repos/${DEFAULT_REPO}/branches/develop/protection/required_pull_request_reviews`,
@@ -376,6 +390,31 @@ describe('branch protection audit evaluation', () => {
       'required_status_checks',
       'url'
     ]);
+    expect(EXPECTED_BRANCH_PROTECTION_FLAG_SECTION_KEYS).toEqual({
+      allow_deletions: ['enabled'],
+      allow_force_pushes: ['enabled'],
+      allow_fork_syncing: ['enabled'],
+      block_creations: ['enabled'],
+      enforce_admins: ['enabled', 'url'],
+      lock_branch: ['enabled'],
+      required_conversation_resolution: ['enabled'],
+      required_linear_history: ['enabled'],
+      required_signatures: ['enabled', 'url']
+    });
+    expect(branchProtectionFlagSectionKeySummaries(
+      {
+        allow_force_pushes: { enabled: false, node_id: 'unexpected' }
+      },
+      { allow_force_pushes: ['enabled'] }
+    )).toEqual([
+      {
+        section: 'allow_force_pushes',
+        expectedKeys: ['enabled'],
+        observedKeys: ['enabled', 'node_id'],
+        missingKeys: [],
+        unexpectedKeys: ['node_id']
+      }
+    ]);
     expect(EXPECTED_PULL_REQUEST_REVIEW_SECTION_KEYS).toEqual([
       'dismiss_stale_reviews',
       'require_code_owner_reviews',
@@ -459,6 +498,7 @@ describe('branch protection audit evaluation', () => {
       'duplicate required status check contexts',
       'required status check app bindings',
       'branch protection section keys',
+      'branch protection flag section keys',
       'required status checks section keys',
       'required status check object keys',
       'pull request review section keys',
@@ -496,6 +536,10 @@ describe('branch protection audit evaluation', () => {
     expect(result.checks.find((check) => check.name === 'branch protection section keys')).toMatchObject({
       passed: true,
       details: 'allow_deletions, allow_force_pushes, allow_fork_syncing, block_creations, enforce_admins, lock_branch, required_conversation_resolution, required_linear_history, required_pull_request_reviews, required_signatures, required_status_checks, url only'
+    });
+    expect(result.checks.find((check) => check.name === 'branch protection flag section keys')).toMatchObject({
+      passed: true,
+      details: 'allow_deletions: enabled; allow_force_pushes: enabled; allow_fork_syncing: enabled; block_creations: enabled; enforce_admins: enabled, url; lock_branch: enabled; required_conversation_resolution: enabled; required_linear_history: enabled; required_signatures: enabled, url only'
     });
     expect(result.checks.find((check) => check.name === 'required status check object keys')).toMatchObject({
       passed: true,
@@ -943,6 +987,50 @@ describe('branch protection audit evaluation', () => {
     expect(hardened.checks.find((check) => check.name === 'branch protection section keys')).toMatchObject({
       passed: true,
       details: 'allow_deletions, allow_force_pushes, allow_fork_syncing, block_creations, enforce_admins, lock_branch, node_id, required_conversation_resolution, required_linear_history, required_pull_request_reviews, required_signatures, required_status_checks, url only'
+    });
+  });
+
+  it('fails closed when branch protection flag section keys drift', () => {
+    const baseProtection = protection();
+    const result = evaluateBranchProtection({
+      protection: {
+        ...baseProtection,
+        allow_force_pushes: {
+          enabled: false,
+          node_id: 'unexpected-section-key'
+        }
+      },
+      rulesets: branchRulesets()
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.checks.find((check) => check.name === 'branch protection flag section keys')).toMatchObject({
+      passed: false,
+      details: 'allow_force_pushes missing: none; unexpected: node_id; observed: enabled, node_id; allowed: enabled'
+    });
+
+    const hardened = evaluateBranchProtection(
+      {
+        protection: {
+          ...baseProtection,
+          allow_force_pushes: {
+            enabled: false,
+            node_id: 'expected-section-key'
+          }
+        },
+        rulesets: branchRulesets()
+      },
+      {
+        expectedBranchProtectionFlagSectionKeys: {
+          ...EXPECTED_BRANCH_PROTECTION_FLAG_SECTION_KEYS,
+          allow_force_pushes: ['enabled', 'node_id']
+        }
+      }
+    );
+
+    expect(hardened.checks.find((check) => check.name === 'branch protection flag section keys')).toMatchObject({
+      passed: true,
+      details: 'allow_deletions: enabled; allow_force_pushes: enabled, node_id; allow_fork_syncing: enabled; block_creations: enabled; enforce_admins: enabled, url; lock_branch: enabled; required_conversation_resolution: enabled; required_linear_history: enabled; required_signatures: enabled, url only'
     });
   });
 
@@ -1471,7 +1559,7 @@ describe('branch protection audit main', () => {
       branch: DEFAULT_BRANCH,
       success: true
     });
-    expect(output.checks).toHaveLength(31);
+    expect(output.checks).toHaveLength(32);
     expect(output.notices.length).toBeGreaterThan(0);
     expect(output.branches).toBeUndefined();
   });

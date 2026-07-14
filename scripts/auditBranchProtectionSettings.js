@@ -29,6 +29,17 @@ const EXPECTED_BRANCH_PROTECTION_SECTION_KEYS = Object.freeze([
   'required_status_checks',
   'url'
 ]);
+const EXPECTED_BRANCH_PROTECTION_FLAG_SECTION_KEYS = Object.freeze({
+  allow_deletions: Object.freeze(['enabled']),
+  allow_force_pushes: Object.freeze(['enabled']),
+  allow_fork_syncing: Object.freeze(['enabled']),
+  block_creations: Object.freeze(['enabled']),
+  enforce_admins: Object.freeze(['enabled', 'url']),
+  lock_branch: Object.freeze(['enabled']),
+  required_conversation_resolution: Object.freeze(['enabled']),
+  required_linear_history: Object.freeze(['enabled']),
+  required_signatures: Object.freeze(['enabled', 'url'])
+});
 const EXPECTED_REQUIRED_STATUS_CHECKS = Object.freeze([
   'Build, Test, Package',
   'Windows Unit Tests',
@@ -241,6 +252,25 @@ function branchProtectionSectionKeys(protection) {
   return Object.keys(protection).sort();
 }
 
+function branchProtectionFlagSectionKeySummaries(protection, expectedFlagSectionKeys = EXPECTED_BRANCH_PROTECTION_FLAG_SECTION_KEYS) {
+  return Object.keys(expectedFlagSectionKeys)
+    .sort()
+    .map((section) => {
+      const value = protection && protection[section];
+      const observedKeys = value && typeof value === 'object' && !Array.isArray(value)
+        ? Object.keys(value).sort()
+        : [];
+      const expectedKeys = expectedFlagSectionKeys[section];
+      return {
+        section,
+        expectedKeys,
+        observedKeys,
+        missingKeys: expectedKeys.filter((key) => !observedKeys.includes(key)),
+        unexpectedKeys: observedKeys.filter((key) => !expectedKeys.includes(key))
+      };
+    });
+}
+
 function pullRequestReviewSectionKeys(protection) {
   const reviews = protection && protection.required_pull_request_reviews;
   if (!reviews || typeof reviews !== 'object' || Array.isArray(reviews)) {
@@ -428,6 +458,7 @@ function evaluateBranchProtection(settings, options = {}) {
     ? Number(options.expectedRequiredStatusCheckAppId)
     : EXPECTED_REQUIRED_STATUS_CHECK_APP_ID;
   const expectedBranchProtectionSectionKeys = options.expectedBranchProtectionSectionKeys || EXPECTED_BRANCH_PROTECTION_SECTION_KEYS;
+  const expectedBranchProtectionFlagSectionKeys = options.expectedBranchProtectionFlagSectionKeys || EXPECTED_BRANCH_PROTECTION_FLAG_SECTION_KEYS;
   const expectedRequiredStatusCheckSectionKeys = options.expectedRequiredStatusCheckSectionKeys || EXPECTED_REQUIRED_STATUS_CHECK_SECTION_KEYS;
   const expectedRequiredStatusCheckKeys = options.expectedRequiredStatusCheckKeys || EXPECTED_REQUIRED_STATUS_CHECK_KEYS;
   const expectedPullRequestReviewSectionKeys = options.expectedPullRequestReviewSectionKeys || EXPECTED_PULL_REQUEST_REVIEW_SECTION_KEYS;
@@ -465,6 +496,8 @@ function evaluateBranchProtection(settings, options = {}) {
   const observedBranchProtectionSectionKeys = branchProtectionSectionKeys(protection);
   const missingBranchProtectionSectionKeys = expectedBranchProtectionSectionKeys.filter((key) => !observedBranchProtectionSectionKeys.includes(key));
   const unexpectedBranchProtectionSectionKeys = observedBranchProtectionSectionKeys.filter((key) => !expectedBranchProtectionSectionKeys.includes(key));
+  const branchProtectionFlagSectionKeyDrift = branchProtectionFlagSectionKeySummaries(protection, expectedBranchProtectionFlagSectionKeys)
+    .filter((item) => item.missingKeys.length > 0 || item.unexpectedKeys.length > 0);
   const observedRequiredStatusCheckSectionKeys = requiredStatusCheckSectionKeys(protection);
   const missingRequiredStatusCheckSectionKeys = expectedRequiredStatusCheckSectionKeys.filter((key) => !observedRequiredStatusCheckSectionKeys.includes(key));
   const unexpectedRequiredStatusCheckSectionKeys = observedRequiredStatusCheckSectionKeys.filter((key) => !expectedRequiredStatusCheckSectionKeys.includes(key));
@@ -629,6 +662,17 @@ function evaluateBranchProtection(settings, options = {}) {
       details: missingBranchProtectionSectionKeys.length === 0 && unexpectedBranchProtectionSectionKeys.length === 0
         ? `${expectedBranchProtectionSectionKeys.join(', ') || 'none'} only`
         : `missing: ${missingBranchProtectionSectionKeys.join(', ') || 'none'}; unexpected: ${unexpectedBranchProtectionSectionKeys.join(', ') || 'none'}; observed: ${observedBranchProtectionSectionKeys.join(', ') || 'none'}; allowed: ${expectedBranchProtectionSectionKeys.join(', ') || 'none'}`
+    },
+    {
+      name: 'branch protection flag section keys',
+      passed: branchProtectionFlagSectionKeyDrift.length === 0,
+      details: branchProtectionFlagSectionKeyDrift.length === 0
+        ? branchProtectionFlagSectionKeySummaries(protection, expectedBranchProtectionFlagSectionKeys)
+          .map((item) => `${item.section}: ${item.expectedKeys.join(', ') || 'none'}`)
+          .join('; ') + ' only'
+        : branchProtectionFlagSectionKeyDrift
+          .map((item) => `${item.section} missing: ${item.missingKeys.join(', ') || 'none'}; unexpected: ${item.unexpectedKeys.join(', ') || 'none'}; observed: ${item.observedKeys.join(', ') || 'none'}; allowed: ${item.expectedKeys.join(', ') || 'none'}`)
+          .join('; ')
     },
     {
       name: 'required status checks section keys',
@@ -1002,6 +1046,7 @@ module.exports = {
   EXPECTED_ACTIVE_RULESET_RULE_KEYS,
   EXPECTED_ACTIVE_RULESET_RULE_TYPES,
   EXPECTED_BRANCH_PROTECTION_SECTION_KEYS,
+  EXPECTED_BRANCH_PROTECTION_FLAG_SECTION_KEYS,
   EXPECTED_REQUIRED_STATUS_CHECKS,
   EXPECTED_REQUIRED_STATUS_CHECK_APP_ID,
   EXPECTED_REQUIRED_STATUS_CHECK_SECTION_KEYS,
@@ -1021,6 +1066,7 @@ module.exports = {
   fetchBranchRulesets,
   requiredApprovingReviewCount,
   branchProtectionSectionKeys,
+  branchProtectionFlagSectionKeySummaries,
   pullRequestReviewSectionKeys,
   requiredStatusContexts,
   requiredStatusCheckSectionKeys,
