@@ -20,11 +20,13 @@ const {
   summarizeRetainedStandardsCoverage,
   summarizeRetainedStandardsEvidence,
   summarizePortfolioTable,
+  buildStandardsCoverageRationaleSummary,
   buildStandardsScoreFileLegend,
   buildStandardsEvidenceSummary,
   buildStandardsGateStrengthSummary,
   buildStandardsGateDetailSummary,
   renderStandardsCoverageMatrix,
+  renderStandardsCoverageRationaleSummary,
   renderStandardsEvidenceSummary,
   renderStandardsScoreFileLegend,
   renderStandardsGateStrengthSummary,
@@ -109,6 +111,22 @@ const {
     profiles: string[];
     scoreFiles: string[];
   }>;
+  buildStandardsCoverageRationaleSummary: (matrix: Array<{
+    profile: string;
+    scoreFile?: string;
+    areas: Record<string, {
+      score?: number | string;
+      confidence?: string;
+      standards: string[];
+      rationale?: string;
+    }>;
+  }>) => Array<{
+    area: string;
+    rationale: string;
+    standards: string[];
+    profiles: string[];
+    scoreFiles: string[];
+  }>;
   buildStandardsScoreFileLegend: (profiles: Array<{
     name: string;
     scoreFile?: string;
@@ -173,6 +191,13 @@ const {
       rationale?: string;
     }>;
   }>) => string[];
+  renderStandardsCoverageRationaleSummary: (summary: Array<{
+    area: string;
+    rationale: string;
+    standards: string[];
+    profiles: string[];
+    scoreFiles: string[];
+  }>, completeProfiles?: string[]) => string[];
   renderStandardsGateDetailSummary: (summary: Array<{
     gate: string;
     status?: string;
@@ -305,6 +330,13 @@ const {
           standards: string[];
           rationale?: string;
         }>;
+      }>;
+      standardsCoverageRationaleSummary?: Array<{
+        area: string;
+        rationale: string;
+        standards: string[];
+        profiles: string[];
+        scoreFiles: string[];
       }>;
       standardsScoreFileLegend?: Array<{
         profile: string;
@@ -801,6 +833,59 @@ describe('multi standards audit script', () => {
     expect(lines).toHaveLength(3);
   });
 
+  it('groups retained standards coverage rationale with provenance', () => {
+    const summary = buildStandardsCoverageRationaleSummary([
+      {
+        profile: 'quick-triage',
+        scoreFile: 'quick-triage/target/score.json',
+        areas: {
+          REQ: { score: 5, confidence: 'High', standards: ['29148'], rationale: 'Requirements | trace \\ code.' },
+          DOC: { score: 5, confidence: 'High', standards: ['15289', '26514'], rationale: 'Documentation has guided navigation.' }
+        }
+      },
+      {
+        profile: 'release-gate',
+        scoreFile: 'release-gate/target/score.json',
+        areas: {
+          REQ: { score: 5, confidence: 'High', standards: ['29148'], rationale: 'Requirements | trace \\ code.' },
+          DOC: { score: 4, confidence: 'Med', standards: ['15289', '26514'], rationale: 'Documentation needs stronger task examples.' }
+        }
+      }
+    ]);
+
+    expect(summary).toEqual([
+      {
+        area: 'REQ',
+        rationale: 'Requirements | trace \\ code.',
+        standards: ['29148'],
+        profiles: ['quick-triage', 'release-gate'],
+        scoreFiles: ['quick-triage/target/score.json', 'release-gate/target/score.json']
+      },
+      {
+        area: 'DOC',
+        rationale: 'Documentation has guided navigation.',
+        standards: ['15289', '26514'],
+        profiles: ['quick-triage'],
+        scoreFiles: ['quick-triage/target/score.json']
+      },
+      {
+        area: 'DOC',
+        rationale: 'Documentation needs stronger task examples.',
+        standards: ['15289', '26514'],
+        profiles: ['release-gate'],
+        scoreFiles: ['release-gate/target/score.json']
+      }
+    ]);
+
+    expect(renderStandardsCoverageRationaleSummary(summary, ['quick-triage', 'release-gate'])).toEqual([
+      '| Area | Rationale | Standards | Profiles |',
+      '| --- | --- | --- | --- |',
+      '| REQ | Requirements \\| trace \\\\ code. | 29148 | all profiles |',
+      '| DOC | Documentation has guided navigation. | 15289/26514 | quick-triage |',
+      '| DOC | Documentation needs stronger task examples. | 15289/26514 | release-gate |'
+    ]);
+  });
+
   it('groups identical gate-scorecard profile signals without compacting portfolio signals', () => {
     const lines = renderProfileSignalLines([
       {
@@ -1042,6 +1127,9 @@ describe('multi standards audit script', () => {
     expect(result.markdown).toContain('## Standards Coverage Matrix');
     expect(result.markdown).toContain('| Profiles | REQ | ARCH | TEST | CM | DOC |');
     expect(result.markdown).toContain('| quick-triage, release-gate, 26514-review, due-diligence, compliance-uplift, portfolio-review | 5/5 High (29148) | 5/5 High (42010) | 5/5 High (29119-2/29119-3) | 5/5 High (10007/12207) | 5/5 High (15289/26514) |');
+    expect(result.markdown).toContain('## Standards Coverage Rationale Summary');
+    expect(result.markdown).toContain('| Area | Rationale | Standards | Profiles |');
+    expect(result.markdown).toContain('| TEST | Testing evidence includes automation, thresholds, artifacts, and gate context. | 29119-2/29119-3 | all profiles |');
     expect(result.markdown).toContain('## Standards Score File Legend');
     expect(result.markdown).toContain('| portfolio-review | portfolio-review/repos/target/score.json |');
     expect(result.markdown).toContain('## Standards Evidence Summary');
@@ -1074,6 +1162,20 @@ describe('multi standards audit script', () => {
       standards: ['15289', '26514']
     });
     expect(result.context.standardsCoverageMatrix?.find((row) => row.profile === 'portfolio-review')?.scoreFile).toBe('portfolio-review/repos/target/score.json');
+    expect(result.context.standardsCoverageRationaleSummary?.find((row) => row.area === 'TEST')).toEqual({
+      area: 'TEST',
+      rationale: 'Testing evidence includes automation, thresholds, artifacts, and gate context.',
+      standards: ['29119-2', '29119-3'],
+      profiles: ['quick-triage', 'release-gate', '26514-review', 'due-diligence', 'compliance-uplift', 'portfolio-review'],
+      scoreFiles: [
+        'quick-triage/target/score.json',
+        'release-gate/target/score.json',
+        '26514-review/target/score.json',
+        'due-diligence/target/score.json',
+        'compliance-uplift/target/score.json',
+        'portfolio-review/repos/target/score.json'
+      ]
+    });
     expect(result.context.standardsScoreFileLegend).toEqual([
       { profile: 'quick-triage', scoreFile: 'quick-triage/target/score.json' },
       { profile: 'release-gate', scoreFile: 'release-gate/target/score.json' },
