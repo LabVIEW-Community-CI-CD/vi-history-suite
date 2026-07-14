@@ -242,6 +242,18 @@ function requiredStatusCheckSourceDiff(protection) {
   };
 }
 
+function requiredStatusCheckDuplicateContexts(protection) {
+  const checks = protection && protection.required_status_checks;
+  const legacyContexts = checks && Array.isArray(checks.contexts) ? checks.contexts.map((context) => String(context)) : [];
+  const appBoundContexts = (checks && Array.isArray(checks.checks) ? checks.checks : [])
+    .filter((check) => check && check.context)
+    .map((check) => String(check.context));
+  return {
+    legacyContexts: duplicateNameCounts(legacyContexts),
+    appBoundContexts: duplicateNameCounts(appBoundContexts)
+  };
+}
+
 function requiredStatusCheckAppBindings(protection) {
   const checks = protection && protection.required_status_checks;
   return (Array.isArray(checks && checks.checks) ? checks.checks : [])
@@ -279,6 +291,10 @@ function duplicateNameCounts(names) {
     .sort((left, right) => left.name.localeCompare(right.name));
 }
 
+function formatDuplicateNameCounts(duplicates) {
+  return duplicates.map(({ name, count }) => `${name} (${count})`).join(', ') || 'none';
+}
+
 function rulesetRuleTypes(ruleset) {
   return (Array.isArray(ruleset && ruleset.rules) ? ruleset.rules : [])
     .map((rule) => String(rule && rule.type ? rule.type : ''))
@@ -314,6 +330,7 @@ function evaluateBranchProtection(settings, options = {}) {
   const missingRequired = expectedRequiredChecks.filter((context) => !requiredContexts.includes(context));
   const unexpectedRequired = requiredContexts.filter((context) => !allowedRequiredContexts.includes(context));
   const requiredStatusSourceDiff = requiredStatusCheckSourceDiff(protection);
+  const duplicateRequiredStatusContexts = requiredStatusCheckDuplicateContexts(protection);
   const requiredAppBindings = requiredStatusCheckAppBindings(protection);
   const requiredAppBindingsByContext = new Map(requiredAppBindings.map((binding) => [binding.context, binding]));
   const mismatchedRequiredAppBindings = expectedRequiredChecks
@@ -373,6 +390,13 @@ function evaluateBranchProtection(settings, options = {}) {
       details: requiredStatusSourceDiff.missingFromAppBoundChecks.length === 0 && requiredStatusSourceDiff.missingFromLegacyContexts.length === 0
         ? `aligned: ${requiredStatusSourceDiff.legacyContexts.join(', ') || 'none'}`
         : `checks missing: ${requiredStatusSourceDiff.missingFromAppBoundChecks.join(', ') || 'none'}; contexts missing: ${requiredStatusSourceDiff.missingFromLegacyContexts.join(', ') || 'none'}`
+    },
+    {
+      name: 'duplicate required status check contexts',
+      passed: duplicateRequiredStatusContexts.legacyContexts.length === 0 && duplicateRequiredStatusContexts.appBoundContexts.length === 0,
+      details: duplicateRequiredStatusContexts.legacyContexts.length === 0 && duplicateRequiredStatusContexts.appBoundContexts.length === 0
+        ? 'none'
+        : `contexts duplicates: ${formatDuplicateNameCounts(duplicateRequiredStatusContexts.legacyContexts)}; checks duplicates: ${formatDuplicateNameCounts(duplicateRequiredStatusContexts.appBoundContexts)}`
     },
     {
       name: 'required status check app bindings',
@@ -437,7 +461,7 @@ function evaluateBranchProtection(settings, options = {}) {
       passed: duplicateActiveRulesets.length === 0,
       details: duplicateActiveRulesets.length === 0
         ? 'none'
-        : `duplicates: ${duplicateActiveRulesets.map((item) => `${item.name} (${item.count})`).join(', ')}`
+        : `duplicates: ${formatDuplicateNameCounts(duplicateActiveRulesets)}`
     },
     {
       name: 'active branch ruleset rules',

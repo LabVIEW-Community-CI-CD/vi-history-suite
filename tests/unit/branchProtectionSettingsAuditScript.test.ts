@@ -292,6 +292,7 @@ describe('branch protection audit evaluation', () => {
       'required status check contexts',
       'unexpected required status check contexts',
       'required status check source consistency',
+      'duplicate required status check contexts',
       'required status check app bindings',
       'admin enforcement',
       'force pushes disabled',
@@ -338,6 +339,10 @@ describe('branch protection audit evaluation', () => {
     expect(result.checks.find((check) => check.name === 'required status check source consistency')).toMatchObject({
       passed: true,
       details: 'aligned: Build, Test, Package, Integration Host (Linux), Windows Unit Tests'
+    });
+    expect(result.checks.find((check) => check.name === 'duplicate required status check contexts')).toMatchObject({
+      passed: true,
+      details: 'none'
     });
     expect(activeRulesetSummaries([branchRulesets(['develop'])[0]])).toEqual([
       {
@@ -504,6 +509,22 @@ describe('branch protection audit evaluation', () => {
     expect(result.checks.find((check) => check.name === 'required status check source consistency')).toMatchObject({
       passed: false,
       details: 'checks missing: Windows Unit Tests; contexts missing: none'
+    });
+  });
+
+  it('fails closed when required status check contexts are duplicated', () => {
+    const result = evaluateBranchProtection({
+      protection: protection({
+        contexts: [...EXPECTED_REQUIRED_STATUS_CHECKS, 'Windows Unit Tests'],
+        checkContexts: [...EXPECTED_REQUIRED_STATUS_CHECKS, 'Build, Test, Package']
+      }),
+      rulesets: branchRulesets()
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.checks.find((check) => check.name === 'duplicate required status check contexts')).toMatchObject({
+      passed: false,
+      details: 'contexts duplicates: Windows Unit Tests (2); checks duplicates: Build, Test, Package (2)'
     });
   });
 
@@ -844,7 +865,7 @@ describe('branch protection audit main', () => {
       branch: DEFAULT_BRANCH,
       success: true
     });
-    expect(output.checks).toHaveLength(17);
+    expect(output.checks).toHaveLength(18);
     expect(output.notices.length).toBeGreaterThan(0);
     expect(output.branches).toBeUndefined();
   });
