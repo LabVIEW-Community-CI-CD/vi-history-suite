@@ -259,12 +259,17 @@ function main(argv = process.argv.slice(2), deps = {}) {
     }));
     const success = branchResults.every((item) => item.result.success);
     if (options.emitJson) {
-      stdout.write(`${JSON.stringify({
-        schemaVersion: 1,
-        repo: options.repo,
-        branches: branchResults.map((item) => ({ branch: item.branch, ...item.result })),
-        success
-      }, null, 2)}\n`);
+      if (options.allBranches) {
+        stdout.write(`${JSON.stringify({
+          schemaVersion: 1,
+          repo: options.repo,
+          branches: branchResults.map((item) => ({ branch: item.branch, ...item.result })),
+          success
+        }, null, 2)}\n`);
+      } else {
+        const [{ branch, result }] = branchResults;
+        stdout.write(`${JSON.stringify({ schemaVersion: 1, repo: options.repo, branch, ...result }, null, 2)}\n`);
+      }
     } else {
       stdout.write(`${branchResults
         .map((item) => renderResult(item.result, { ...options, branch: item.branch }))
