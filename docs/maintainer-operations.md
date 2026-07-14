@@ -578,6 +578,12 @@ What this evidence proves:
 What this evidence does **not** prove:
 
 - diagnostic VSIX publication is Marketplace publication
+- self-hosted validation is a public PR gate
+- untrusted refs were ever allowed to execute maintainer validation
+- a diagnostic prerelease is a stable latest-download endpoint
+
+Do not claim Vagrant evidence unless the Vagrant issue is run on a
+Vagrant-capable host and recorded separately.
 
 ## Local Standards Issue Triage
 
@@ -600,15 +606,11 @@ Artifacts are retained under
 `assurance-issue-triage-evidence/issue-<issue-number>/`, which is ignored by the
 repo. The default image is
 `registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main`;
-use `--image repo-standards-review-assurance-workbench:local` only when testing a
-locally built workbench. The output is advisory triage evidence, not a hosted CI
-gate or issue-closeout substitute.
-- self-hosted validation is a public PR gate
-- untrusted refs were ever allowed to execute maintainer validation
-- a diagnostic prerelease is a stable latest-download endpoint
-
-Do not claim Vagrant evidence unless the Vagrant issue is run on a
-Vagrant-capable host and recorded separately.
+the helper pulls that published image after a local inspect miss. Use
+`--image repo-standards-review-assurance-workbench:local` only when testing a
+locally built workbench that is already present in the local Docker image cache.
+The output is advisory triage evidence, not a hosted CI gate or issue-closeout
+substitute.
 
 ## External Marketplace Verification
 
