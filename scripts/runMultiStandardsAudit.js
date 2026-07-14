@@ -736,12 +736,29 @@ function renderStandardsCoverageMatrix(matrix) {
     return [];
   }
   const lines = [
-    '| Profile | REQ | ARCH | TEST | CM | DOC |',
+    '| Profiles | REQ | ARCH | TEST | CM | DOC |',
     '| --- | --- | --- | --- | --- | --- |'
   ];
+  const rowsByKey = new Map();
   for (const row of matrix) {
     const areas = row.areas || {};
-    lines.push(`| ${row.profile} | ${renderStandardsCoverageCell(areas.REQ)} | ${renderStandardsCoverageCell(areas.ARCH)} | ${renderStandardsCoverageCell(areas.TEST)} | ${renderStandardsCoverageCell(areas.CM)} | ${renderStandardsCoverageCell(areas.DOC)} |`);
+    const cells = {
+      req: renderStandardsCoverageCell(areas.REQ),
+      arch: renderStandardsCoverageCell(areas.ARCH),
+      test: renderStandardsCoverageCell(areas.TEST),
+      cm: renderStandardsCoverageCell(areas.CM),
+      doc: renderStandardsCoverageCell(areas.DOC)
+    };
+    const key = [cells.req, cells.arch, cells.test, cells.cm, cells.doc].join('\u0001');
+    const existing = rowsByKey.get(key);
+    if (existing) {
+      existing.profiles.push(row.profile || 'unknown');
+      continue;
+    }
+    rowsByKey.set(key, { profiles: [row.profile || 'unknown'], ...cells });
+  }
+  for (const row of rowsByKey.values()) {
+    lines.push(`| ${markdownCell(row.profiles.join(', '))} | ${markdownCell(row.req)} | ${markdownCell(row.arch)} | ${markdownCell(row.test)} | ${markdownCell(row.cm)} | ${markdownCell(row.doc)} |`);
   }
   return lines;
 }
