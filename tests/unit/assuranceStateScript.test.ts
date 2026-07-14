@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 const {
   DEFAULT_SAVE_DIR,
   parseArgs,
+  parseReviewFinding,
   buildAssuranceState,
   renderAssuranceStateMarkdown,
   resolveAuditSummaryPath,
@@ -22,8 +23,10 @@ const {
     prLinks: string[];
     mergeShas: string[];
     requirements: string[];
+    reviewFindings: ReviewFinding[];
     help: boolean;
   };
+  parseReviewFinding: (value: string) => ReviewFinding;
   buildAssuranceState: (auditSummary: unknown, options: {
     cwd: string;
     auditSummaryPath: string;
@@ -34,6 +37,7 @@ const {
       prLinks: string[];
       mergeShas: string[];
       requirements: string[];
+      reviewFindings?: ReviewFinding[];
     };
   }) => {
     schemaVersion: number;
@@ -46,6 +50,7 @@ const {
     scoreFiles: string[];
     checkedPaths: string[];
     sourceArtifacts: string[];
+    reviewFindings: ReviewFinding[];
     issueLinks: string[];
     prLinks: string[];
     mergeShas: string[];
@@ -62,6 +67,7 @@ const {
       profiles: string[];
       scoreFiles: string[];
       checkedPaths: string[];
+      evidencePaths: string[];
       sourceArtifacts: string[];
       issueLinks: string[];
       prLinks: string[];
@@ -79,6 +85,14 @@ const {
       state: ReturnType<typeof buildAssuranceState>;
     };
   };
+};
+
+type ReviewFinding = {
+  state: string;
+  url: string;
+  title: string;
+  source: string;
+  basis?: string;
 };
 
 const tempRoots: string[] = [];
@@ -171,7 +185,14 @@ describe('generateAssuranceState script', () => {
       '--issue-link', 'https://github.com/example/repo/issues/2',
       '--pr-link', 'https://github.com/example/repo/pull/3',
       '--merge-sha', 'abc123',
-      '--requirement', 'VHS-REQ-615'
+      '--requirement', 'VHS-REQ-615',
+      '--review-finding', JSON.stringify({
+        state: 'resolved',
+        url: 'https://github.com/example/repo/pull/3#discussion_r1',
+        title: 'Post-merge review finding closed',
+        source: 'chatgpt-codex-connector',
+        basis: 'Fixed by follow-up PR.'
+      })
     ]);
 
     expect(options.auditRunId).toBe('audit-green');
@@ -181,6 +202,22 @@ describe('generateAssuranceState script', () => {
     expect(options.prLinks).toEqual(['https://github.com/example/repo/pull/3']);
     expect(options.mergeShas).toEqual(['abc123']);
     expect(options.requirements).toEqual(['VHS-REQ-615']);
+    expect(options.reviewFindings).toEqual([
+      {
+        state: 'resolved',
+        url: 'https://github.com/example/repo/pull/3#discussion_r1',
+        title: 'Post-merge review finding closed',
+        source: 'chatgpt-codex-connector',
+        basis: 'Fixed by follow-up PR.'
+      }
+    ]);
+  });
+
+  it('rejects malformed review finding metadata', () => {
+    expect(() => parseReviewFinding('{')).toThrow('--review-finding must be JSON');
+    expect(() => parseReviewFinding(JSON.stringify({ state: 'done', url: 'https://example.test', title: 'Finding' }))).toThrow('--review-finding state must be one of');
+    expect(() => parseReviewFinding(JSON.stringify({ state: 'resolved', title: 'Finding' }))).toThrow('--review-finding url must be a non-empty string');
+    expect(() => parseReviewFinding(JSON.stringify({ state: 'resolved', url: 'https://example.test' }))).toThrow('--review-finding title must be a non-empty string');
   });
 
   it('rejects ambiguous audit summary selectors', () => {
@@ -259,6 +296,104 @@ describe('generateAssuranceState script', () => {
     expect(markdown).toContain('Gate detail: dod');
     expect(markdown).toContain('assurance-multi-standards-evidence/audit-green/audit-summary.json');
     expect(markdown).toContain('VHS-REQ-615');
+  });
+
+  it('retains post-merge review findings as classified signals (VHS-REQ-615.12)', () => {
+    const cwd = makeTempRoot();
+    const auditPath = path.join(cwd, 'assurance-multi-standards-evidence', 'audit-green', 'audit-summary.json');
+    const auditSummary = fixtureAuditSummary();
+    auditSummary.standardsEvidenceSummary = [];
+    const reviewFinding = parseReviewFinding(JSON.stringify({
+      state: 'resolved',
+      url: 'https://github.com/LabVIEW-Community-CI-CD/vi-history-suite/pull/1107#discussion_r3578322495',
+      title: 'Avoid fallback when detailed candidates already exist',
+      source: 'chatgpt-codex-connector',
+      basis: 'Fixed by PR #1109.'
+    }));
+    const state = buildAssuranceState(auditSummary, {
+      cwd,
+      auditSummaryPath: auditPath,
+      runId: 'state-green',
+      generatedAt: '2026-07-14T00:00:00.000Z',
+      metadata: {
+        issueLinks: ['https://github.com/LabVIEW-Community-CI-CD/vi-history-suite/issues/1110'],
+        prLinks: ['https://github.com/LabVIEW-Community-CI-CD/vi-history-suite/pull/1109'],
+        mergeShas: ['162cb1cf37dea2d42a60c7ed98cb277b347bf2f9'],
+        requirements: ['VHS-REQ-615'],
+        reviewFindings: [reviewFinding]
+      }
+    });
+
+    const signal = state.signals.find((candidate) => candidate.kind === 'post-merge-review');
+
+    expect(state.reviewFindings).toEqual([reviewFinding]);
+    expect(state.countsByState.resolved).toBe(1);
+    expect(signal?.id).toMatch(/^post-merge-review:chatgpt-codex-connector:avoid-fallback-when-detailed-candidates-already-exist:[a-f0-9]{12}$/);
+    expect(signal).toMatchObject({
+      state: 'resolved',
+      kind: 'post-merge-review',
+      title: 'Avoid fallback when detailed candidates already exist',
+      status: 'RESOLVED',
+      confidence: 'High',
+      basis: 'Fixed by PR #1109.',
+      evidencePaths: ['https://github.com/LabVIEW-Community-CI-CD/vi-history-suite/pull/1107#discussion_r3578322495'],
+      issueLinks: ['https://github.com/LabVIEW-Community-CI-CD/vi-history-suite/issues/1110'],
+      prLinks: ['https://github.com/LabVIEW-Community-CI-CD/vi-history-suite/pull/1109'],
+      mergeShas: ['162cb1cf37dea2d42a60c7ed98cb277b347bf2f9']
+    });
+
+    const markdown = renderAssuranceStateMarkdown(state);
+    expect(markdown).toContain('| resolved | 1 |');
+    expect(markdown).toContain('Avoid fallback when detailed candidates already exist');
+    expect(markdown).toContain('https://github.com/LabVIEW-Community-CI-CD/vi-history-suite/pull/1107#discussion_r3578322495');
+  });
+
+  it('keeps same-title review finding signals distinct (VHS-REQ-615.12)', () => {
+    const cwd = makeTempRoot();
+    const auditPath = path.join(cwd, 'assurance-multi-standards-evidence', 'audit-green', 'audit-summary.json');
+    const auditSummary = fixtureAuditSummary();
+    auditSummary.standardsEvidenceSummary = [];
+    const findings = [
+      parseReviewFinding(JSON.stringify({
+        state: 'candidate',
+        url: 'https://github.com/LabVIEW-Community-CI-CD/vi-history-suite/pull/1107#discussion_r1',
+        title: 'Review finding needs follow-up',
+        source: 'chatgpt-codex-connector'
+      })),
+      parseReviewFinding(JSON.stringify({
+        state: 'candidate',
+        url: 'https://github.com/LabVIEW-Community-CI-CD/vi-history-suite/pull/1108#discussion_r2',
+        title: 'Review finding needs follow-up',
+        source: 'chatgpt-codex-connector'
+      }))
+    ];
+    const state = buildAssuranceState(auditSummary, {
+      cwd,
+      auditSummaryPath: auditPath,
+      runId: 'state-green',
+      generatedAt: '2026-07-14T00:00:00.000Z',
+      metadata: {
+        issueLinks: ['https://github.com/LabVIEW-Community-CI-CD/vi-history-suite/issues/1110'],
+        prLinks: [],
+        mergeShas: [],
+        requirements: ['VHS-REQ-615'],
+        reviewFindings: findings
+      }
+    });
+
+    const reviewSignals = state.signals.filter((signal) => signal.kind === 'post-merge-review');
+    const reviewSignalIds = reviewSignals.map((signal) => signal.id);
+
+    expect(reviewSignals).toHaveLength(2);
+    expect(new Set(reviewSignalIds).size).toBe(2);
+    expect(reviewSignalIds).toEqual([
+      expect.stringMatching(/^post-merge-review:chatgpt-codex-connector:review-finding-needs-follow-up:[a-f0-9]{12}$/),
+      expect.stringMatching(/^post-merge-review:chatgpt-codex-connector:review-finding-needs-follow-up:[a-f0-9]{12}$/)
+    ]);
+    expect(reviewSignals.map((signal) => signal.evidencePaths)).toEqual([
+      ['https://github.com/LabVIEW-Community-CI-CD/vi-history-suite/pull/1107#discussion_r1'],
+      ['https://github.com/LabVIEW-Community-CI-CD/vi-history-suite/pull/1108#discussion_r2']
+    ]);
   });
 
   it('escapes backslashes before Markdown table pipes', () => {

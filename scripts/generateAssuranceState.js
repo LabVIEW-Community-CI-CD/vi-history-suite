@@ -2,6 +2,7 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
+const crypto = require('node:crypto');
 
 const DEFAULT_SAVE_DIR = 'assurance-state-evidence';
 const DEFAULT_STANDARDS_AUDIT_DIR = 'assurance-multi-standards-evidence';
@@ -22,6 +23,7 @@ function usage() {
     '  --pr-link <url>               PR link to retain in state provenance; repeatable',
     '  --merge-sha <sha>             Merge SHA to retain in state provenance; repeatable',
     '  --requirement <id>            Requirement id to retain in state provenance; repeatable',
+    '  --review-finding <json>       Review finding JSON with state, url, title; repeatable',
     '  --help                        Show this help'
   ].join('\n');
 }
@@ -45,6 +47,7 @@ function parseArgs(argv) {
     prLinks: [],
     mergeShas: [],
     requirements: [],
+    reviewFindings: [],
     help: false
   };
 
@@ -85,6 +88,10 @@ function parseArgs(argv) {
         break;
       case '--requirement':
         options.requirements.push(takeValue(argv, index, arg));
+        index += 1;
+        break;
+      case '--review-finding':
+        options.reviewFindings.push(parseReviewFinding(takeValue(argv, index, arg)));
         index += 1;
         break;
       case '--help':
@@ -148,6 +155,70 @@ function uniqueStrings(values) {
   return [...new Set(arrayOfStrings(values).filter(Boolean))];
 }
 
+function parseReviewFinding(value) {
+  let parsed;
+  try {
+    parsed = JSON.parse(value);
+  } catch (error) {
+    throw new Error(`--review-finding must be JSON: ${error instanceof Error ? error.message : String(error)}`);
+  }
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw new Error('--review-finding must be a JSON object.');
+  }
+  const state = normalizeState(parsed.state);
+  if (!state) {
+    throw new Error(`--review-finding state must be one of: ${SIGNAL_STATES.join(', ')}.`);
+  }
+  if (typeof parsed.url !== 'string' || parsed.url.trim() === '') {
+    throw new Error('--review-finding url must be a non-empty string.');
+  }
+  if (typeof parsed.title !== 'string' || parsed.title.trim() === '') {
+    throw new Error('--review-finding title must be a non-empty string.');
+  }
+  return {
+    state,
+    url: parsed.url.trim(),
+    title: parsed.title.trim(),
+    source: typeof parsed.source === 'string' && parsed.source.trim() ? parsed.source.trim() : 'post-merge-review',
+    basis: typeof parsed.basis === 'string' && parsed.basis.trim() ? parsed.basis.trim() : undefined
+  };
+}
+
+function uniqueReviewFindings(findings) {
+  const seen = new Set();
+  const unique = [];
+  for (const finding of Array.isArray(findings) ? findings : []) {
+    if (!finding || typeof finding !== 'object') {
+      continue;
+    }
+    const key = [finding.state, finding.url, finding.title, finding.source].join('\u0000');
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    unique.push(finding);
+  }
+  return unique;
+}
+
+function slugifySignalPart(value) {
+  const slug = String(value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80);
+  return slug || 'finding';
+}
+
+function reviewFindingSignalId(finding) {
+  const digest = crypto
+    .createHash('sha256')
+    .update([finding.state, finding.source, finding.title, finding.url].join('\u0000'))
+    .digest('hex')
+    .slice(0, 12);
+  return `post-merge-review:${slugifySignalPart(finding.source)}:${slugifySignalPart(finding.title)}:${digest}`;
+}
+
 function normalizeState(value) {
   return SIGNAL_STATES.includes(value) ? value : undefined;
 }
@@ -161,7 +232,8 @@ function metadataFromOptions(options) {
     issueLinks: uniqueStrings(options.issueLinks),
     prLinks: uniqueStrings(options.prLinks),
     mergeShas: uniqueStrings(options.mergeShas),
-    requirements: uniqueStrings(options.requirements)
+    requirements: uniqueStrings(options.requirements),
+    reviewFindings: uniqueReviewFindings(options.reviewFindings)
   };
 }
 
@@ -481,6 +553,25 @@ function gateDetailSignals(auditSummary, common) {
   }, common));
 }
 
+function reviewFindingSignals(common) {
+  return uniqueReviewFindings(common.metadata.reviewFindings).map((finding) => buildSignal({
+    id: reviewFindingSignalId(finding),
+    state: finding.state,
+    kind: 'post-merge-review',
+    title: finding.title,
+    status: finding.state.toUpperCase(),
+    confidence: 'High',
+    basis: finding.basis || 'Post-merge review finding supplied as assurance-state provenance.',
+    standards: [],
+    profiles: [],
+    scoreFiles: [],
+    checkedPaths: [],
+    evidencePaths: [finding.url],
+    sourceArtifactRelatives: [],
+    commandProvenance: []
+  }, common));
+}
+
 function countsByState(signals) {
   return Object.fromEntries(SIGNAL_STATES.map((state) => [state, signals.filter((signal) => signal.state === state).length]));
 }
@@ -510,7 +601,8 @@ function buildAssuranceState(auditSummary, options) {
   ];
   const signals = [
     ...failedCommandSignals(auditSummary, common, detailedSignals),
-    ...detailedSignals
+    ...detailedSignals,
+    ...reviewFindingSignals(common)
   ];
   const source = {
     type: 'standards-audit',
@@ -531,6 +623,7 @@ function buildAssuranceState(auditSummary, options) {
     scoreFiles: unionField(signals, 'scoreFiles'),
     checkedPaths: unionField(signals, 'checkedPaths'),
     sourceArtifacts: unionField(signals, 'sourceArtifacts'),
+    reviewFindings: metadata.reviewFindings || [],
     issueLinks: metadata.issueLinks,
     prLinks: metadata.prLinks,
     mergeShas: metadata.mergeShas,
@@ -579,10 +672,10 @@ function renderAssuranceStateMarkdown(state) {
   lines.push('');
   lines.push('## Signals');
   lines.push('');
-  lines.push('| State | Signal | Kind | Status | Confidence | Standards | Profiles | Source Artifacts |');
-  lines.push('| --- | --- | --- | --- | --- | --- | --- | --- |');
+  lines.push('| State | Signal | Kind | Status | Confidence | Standards | Profiles | Source Artifacts | Evidence Paths |');
+  lines.push('| --- | --- | --- | --- | --- | --- | --- | --- | --- |');
   for (const signal of state.signals) {
-    lines.push(`| ${markdownCell(signal.state)} | ${markdownCell(signal.title)} | ${markdownCell(signal.kind)} | ${markdownCell(signal.status)} | ${markdownCell(signal.confidence)} | ${renderList(signal.standards)} | ${renderList(signal.profiles)} | ${renderList(signal.sourceArtifacts)} |`);
+    lines.push(`| ${markdownCell(signal.state)} | ${markdownCell(signal.title)} | ${markdownCell(signal.kind)} | ${markdownCell(signal.status)} | ${markdownCell(signal.confidence)} | ${renderList(signal.standards)} | ${renderList(signal.profiles)} | ${renderList(signal.sourceArtifacts)} | ${renderList(signal.evidencePaths)} |`);
   }
   lines.push('');
   lines.push('## Provenance');
@@ -597,6 +690,7 @@ function renderAssuranceStateMarkdown(state) {
   lines.push(`| Issue Links | ${renderList(state.issueLinks)} |`);
   lines.push(`| PR Links | ${renderList(state.prLinks)} |`);
   lines.push(`| Merge SHAs | ${renderList(state.mergeShas)} |`);
+  lines.push(`| Review Findings | ${renderList((state.reviewFindings || []).map((finding) => `${finding.state}: ${finding.title} (${finding.url})`))} |`);
   return `${lines.join('\n')}\n`;
 }
 
@@ -680,6 +774,7 @@ module.exports = {
   parseArgs,
   buildRunId,
   metadataFromOptions,
+  parseReviewFinding,
   commandProvenance,
   classifyDirectCheck,
   classifyGateBasis,

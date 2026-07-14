@@ -2445,6 +2445,8 @@ Missing numeric IDs are intentional.
   - Release-readiness evidence remains decision-complete by naming traceability
     audit, docs link check, tests, package validation, Marketplace listing
     evidence, and closeout expectation for release closeout review.
+  - Local assurance-state evidence retains supplied post-merge review findings
+    as classified planning signals with URL, issue, PR, and merge provenance.
 - Agent Work Scope:
   - Change requirements docs, RTM, ID index, test plan, and requirements
     coherence tests together.
