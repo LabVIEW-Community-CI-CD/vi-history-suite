@@ -350,6 +350,42 @@ function parseGitTrackedFiles(output) {
     .map((entry) => entry.replace(/\\/g, '/'));
 }
 
+// Resolve the base directory that the tracked-worktree audit snapshot is created
+// under. The snapshot is bind-mounted into the Docker standards workbench, so the
+// base must be a path the Docker daemon can share. Snap-confined and rootless
+// Docker daemons run in a private mount namespace and cannot bind-mount host
+// `/tmp` subpaths, which silently mounts an empty directory (the workbench then
+// scans 0 files and every gate fails "not confirmed"). Defaulting to a
+// home-directory cache keeps the snapshot Docker-visible on snap/rootless hosts
+// without requiring an operator-set `TMPDIR`, while remaining valid on
+// `/tmp`-capable hosts. Priority: an injected `deps.tmpdir` seam (unit tests),
+// then the explicit `VIHS_CLOSEOUT_SNAPSHOT_DIR` override (documented escape
+// hatch), then the home cache, falling back to `os.tmpdir()` only when no home
+// directory is resolvable.
+function resolveAuditSnapshotBase(deps = {}) {
+  if (deps.tmpdir) {
+    return deps.tmpdir();
+  }
+
+  const override = (deps.env || process.env).VIHS_CLOSEOUT_SNAPSHOT_DIR;
+  if (override && override.trim().length > 0) {
+    return override.trim();
+  }
+
+  const homedirImpl = deps.homedir || os.homedir;
+  let homeDir = '';
+  try {
+    homeDir = homedirImpl() || '';
+  } catch {
+    homeDir = '';
+  }
+  if (homeDir.length > 0) {
+    return path.join(homeDir, '.cache', 'vi-history-suite');
+  }
+
+  return os.tmpdir();
+}
+
 function createTrackedWorktreeSnapshot(repoRoot, deps = {}) {
   const resolvedRepoRoot = path.resolve(repoRoot);
   const listFiles = runCommand('git', ['ls-files', '-z'], withCommandPolicy({ ...deps, cwd: resolvedRepoRoot }, {
@@ -362,13 +398,17 @@ function createTrackedWorktreeSnapshot(repoRoot, deps = {}) {
   }
 
   const trackedFiles = parseGitTrackedFiles(listFiles.stdout);
-  const tmpRoot = deps.tmpdir ? deps.tmpdir() : os.tmpdir();
+  const tmpRoot = resolveAuditSnapshotBase(deps);
   const mkdtempSyncImpl = deps.mkdtempSync || fs.mkdtempSync;
   const mkdirSyncImpl = deps.mkdirSync || fs.mkdirSync;
   const lstatSyncImpl = deps.lstatSync || fs.lstatSync;
   const copyFileSyncImpl = deps.copyFileSync || fs.copyFileSync;
   const readlinkSyncImpl = deps.readlinkSync || fs.readlinkSync;
   const writeFileSyncImpl = deps.writeFileSync || fs.writeFileSync;
+  // The snapshot base may not exist yet (for example the home cache on a fresh
+  // host); create it before mkdtemp so snapshot creation never fails on a
+  // missing parent. Creating an existing directory recursively is a no-op.
+  mkdirSyncImpl(tmpRoot, { recursive: true });
   const snapshotPath = mkdtempSyncImpl(path.join(tmpRoot, 'vi-history-suite-audit-snapshot-'));
   const symlinkFiles = [];
   const missingFiles = [];
@@ -1615,6 +1655,7 @@ module.exports = {
   parseTraceabilitySummary,
   renderCloseoutMarkdown,
   removeTrackedWorktreeSnapshot,
+  resolveAuditSnapshotBase,
   isAllowedExecutableCommand,
   assertAllowedExecutableCommand,
   runCommand,
