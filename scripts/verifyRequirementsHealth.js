@@ -41,6 +41,7 @@ const MUTATION_REPORT_PATH = 'reports/mutation/mutation.json';
 const REQUIREMENTS_HEALTH_SCHEMA_VERSION = 1;
 const REQUIREMENTS_HEALTH_SCHEMA_ID =
   'https://labview-community-cicd.github.io/vi-history-suite/schemas/requirements-health-v1.schema.json';
+const REQUIREMENTS_HEALTH_SCHEMA_PROVENANCE_KEY = 'x-vi-history-suite-provenance';
 
 const ATTENTION_REASON_IDS = Object.freeze({
   unlinked: 'unlinked',
@@ -219,7 +220,7 @@ const REQUIREMENTS_HEALTH_JSON_SCHEMA = Object.freeze({
       properties: {
         generatedAt: { type: 'string' },
         cwd: { type: 'string' },
-        outputMode: { enum: ['text', 'json', 'markdown'] },
+        outputMode: { enum: ['text', 'json', 'markdown', 'schema'] },
         strict: { type: 'boolean' },
         argv: { type: 'array', items: { type: 'string' } }
       }
@@ -411,8 +412,14 @@ function outputModeForOptions(options = {}) {
   return options.json ? 'json' : 'text';
 }
 
-function renderRequirementsHealthJsonSchema() {
-  return JSON.stringify(REQUIREMENTS_HEALTH_JSON_SCHEMA, null, 2);
+function renderRequirementsHealthJsonSchema(options = {}) {
+  const schema = options.provenance
+    ? {
+        ...REQUIREMENTS_HEALTH_JSON_SCHEMA,
+        [REQUIREMENTS_HEALTH_SCHEMA_PROVENANCE_KEY]: options.provenance
+      }
+    : REQUIREMENTS_HEALTH_JSON_SCHEMA;
+  return JSON.stringify(schema, null, 2);
 }
 
 function markdownCell(value) {
@@ -769,7 +776,10 @@ function main(argv = process.argv.slice(2), deps = {}) {
       resolveOutputPath(outputPath, { ...deps, cwd });
     }
     if (asSchema) {
-      const renderedSchema = renderRequirementsHealthJsonSchema();
+      const provenance = includeProvenance
+        ? buildRequirementsHealthProvenance({ cwd, schema: true, strict }, { ...deps, argv })
+        : undefined;
+      const renderedSchema = renderRequirementsHealthJsonSchema({ provenance });
       if (outputPath) {
         writeRequirementsHealthOutput(outputPath, renderedSchema, { ...deps, cwd });
         stdout.write(`[requirements-verify] Wrote schema output to ${outputPath}\n`);
@@ -821,6 +831,7 @@ module.exports = {
   MUTATION_REPORT_PATH,
   REQUIREMENTS_HEALTH_SCHEMA_VERSION,
   REQUIREMENTS_HEALTH_SCHEMA_ID,
+  REQUIREMENTS_HEALTH_SCHEMA_PROVENANCE_KEY,
   REQUIREMENTS_HEALTH_JSON_SCHEMA,
   ATTENTION_REASON_IDS,
   computeMutationScore,
