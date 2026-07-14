@@ -289,7 +289,7 @@ function commandSubset(commands, predicate) {
   }));
 }
 
-function failedCommandSignals(auditSummary, common) {
+function failedCommandSignals(auditSummary, common, detailedSignals = []) {
   const failedCommands = common.commands.filter((command) => typeof command.status === 'number' && command.status !== 0);
   const signals = failedCommands.map((command) => buildSignal({
     id: `standards-audit:command:${command.stage || 'unknown'}:${command.name || 'unknown'}`,
@@ -308,7 +308,8 @@ function failedCommandSignals(auditSummary, common) {
     commandProvenance: [command]
   }, common));
 
-  if (auditSummary.success === false && failedCommands.length === 0) {
+  const hasDetailedCandidateSignals = detailedSignals.some((signal) => signal.state === 'candidate');
+  if (auditSummary.success === false && failedCommands.length === 0 && !hasDetailedCandidateSignals) {
     signals.push(buildSignal({
       id: 'standards-audit:summary:failed',
       state: 'candidate',
@@ -499,14 +500,17 @@ function buildAssuranceState(auditSummary, options) {
     commands,
     metadata
   };
-  const signals = [
-    ...failedCommandSignals(auditSummary, common),
+  const detailedSignals = [
     ...directCheckSignals(auditSummary, common),
     ...coverageRationaleSignals(auditSummary, common),
     ...standardsEvidenceSignals(auditSummary, common),
     ...gateStrengthSignals(auditSummary, common),
     ...gateBasisSignals(auditSummary, common),
     ...gateDetailSignals(auditSummary, common)
+  ];
+  const signals = [
+    ...failedCommandSignals(auditSummary, common, detailedSignals),
+    ...detailedSignals
   ];
   const source = {
     type: 'standards-audit',
