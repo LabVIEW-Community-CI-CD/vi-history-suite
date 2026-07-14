@@ -690,15 +690,14 @@ function renderStandardsGateStrengthSummary(summary) {
     return [];
   }
   const lines = [
-    '| Gate Strength | Standards | Profiles | Score Files |',
-    '| --- | --- | --- | --- |'
+    '| Gate Strength | Standards | Profiles |',
+    '| --- | --- | --- |'
   ];
   for (const row of summary) {
     const label = row.summary || row.id || 'Retained gate strength';
     const standards = Array.isArray(row.standards) && row.standards.length > 0 ? row.standards.join('/') : 'none';
     const profiles = Array.isArray(row.profiles) && row.profiles.length > 0 ? row.profiles.join(', ') : 'none';
-    const scoreFiles = Array.isArray(row.scoreFiles) && row.scoreFiles.length > 0 ? row.scoreFiles.map(markdownCell).join('<br>') : '-';
-    lines.push(`| ${markdownCell(label)} | ${markdownCell(standards)} | ${markdownCell(profiles)} | ${scoreFiles} |`);
+    lines.push(`| ${markdownCell(label)} | ${markdownCell(standards)} | ${markdownCell(profiles)} |`);
   }
   return lines;
 }
@@ -708,15 +707,14 @@ function renderStandardsGateDetailSummary(summary) {
     return [];
   }
   const lines = [
-    '| Gate | Status | Confidence | Standards | Basis | Missing Proof | Profiles | Score Files |',
-    '| --- | --- | --- | --- | --- | --- | --- | --- |'
+    '| Gate | Status | Confidence | Standards | Basis | Missing Proof | Profiles |',
+    '| --- | --- | --- | --- | --- | --- | --- |'
   ];
   for (const row of summary) {
     const standards = Array.isArray(row.standards) && row.standards.length > 0 ? row.standards.join('/') : 'none';
     const missingProof = Array.isArray(row.missingProof) && row.missingProof.length > 0 ? row.missingProof.map(markdownCell).join('<br>') : '-';
     const profiles = Array.isArray(row.profiles) && row.profiles.length > 0 ? row.profiles.join(', ') : 'none';
-    const scoreFiles = Array.isArray(row.scoreFiles) && row.scoreFiles.length > 0 ? row.scoreFiles.map(markdownCell).join('<br>') : '-';
-    lines.push(`| ${markdownCell(row.gate || 'unknown')} | ${markdownCell(row.status || 'UNKNOWN')} | ${markdownCell(row.confidence || 'unknown')} | ${markdownCell(standards)} | ${markdownCell(row.basis || '-')} | ${missingProof} | ${markdownCell(profiles)} | ${scoreFiles} |`);
+    lines.push(`| ${markdownCell(row.gate || 'unknown')} | ${markdownCell(row.status || 'UNKNOWN')} | ${markdownCell(row.confidence || 'unknown')} | ${markdownCell(standards)} | ${markdownCell(row.basis || '-')} | ${missingProof} | ${markdownCell(profiles)} |`);
   }
   return lines;
 }
