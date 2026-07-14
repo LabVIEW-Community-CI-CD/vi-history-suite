@@ -360,6 +360,15 @@ function evaluateBranchProtection(settings, options = {}) {
       return { name, missingRuleTypes, observedRuleTypes: ruleset ? ruleset.ruleTypes : [] };
     })
     .filter((item) => item.missingRuleTypes.length > 0);
+  const rulesetsWithUnexpectedRuleTypes = expectedActiveBranchRulesets
+    .map((name) => {
+      const ruleset = activeRulesetsByName.get(name);
+      const unexpectedRuleTypes = ruleset
+        ? [...new Set(ruleset.ruleTypes.filter((type) => !expectedActiveRulesetRuleTypes.includes(type)))]
+        : [];
+      return { name, unexpectedRuleTypes, observedRuleTypes: ruleset ? ruleset.ruleTypes : [] };
+    })
+    .filter((item) => item.unexpectedRuleTypes.length > 0);
   const bypassableRulesets = expectedActiveBranchRulesets
     .map((name) => activeRulesetsByName.get(name))
     .filter((ruleset) => ruleset && (ruleset.bypassActorCount > 0 || ruleset.currentUserCanBypass !== 'never'));
@@ -470,6 +479,15 @@ function evaluateBranchProtection(settings, options = {}) {
         ? `present on ${expectedActiveBranchRulesets.join(', ')}: ${expectedActiveRulesetRuleTypes.join(', ')}`
         : rulesetsMissingRuleTypes
           .map((item) => `${item.name} missing: ${item.missingRuleTypes.join(', ')}; observed: ${item.observedRuleTypes.join(', ') || 'none'}`)
+          .join('; ')
+    },
+    {
+      name: 'unexpected active branch ruleset rules',
+      passed: rulesetsWithUnexpectedRuleTypes.length === 0,
+      details: rulesetsWithUnexpectedRuleTypes.length === 0
+        ? `none beyond ${expectedActiveRulesetRuleTypes.join(', ')} on ${expectedActiveBranchRulesets.join(', ')}`
+        : rulesetsWithUnexpectedRuleTypes
+          .map((item) => `${item.name} unexpected: ${item.unexpectedRuleTypes.join(', ')}; observed: ${item.observedRuleTypes.join(', ') || 'none'}`)
           .join('; ')
     },
     {
