@@ -813,6 +813,30 @@ function renderPortfolioSummary(portfolio) {
   return details.length > 0 ? `${details.join(', ')} (see ${portfolio.tableFile})` : `see ${portfolio.tableFile}`;
 }
 
+function renderProfileSignalLines(profileSummaries) {
+  const scorecardRowsBySummary = new Map();
+  const portfolioRows = [];
+
+  for (const step of profileSummaries) {
+    if (step.scorecard && Object.keys(step.scorecard).length > 0) {
+      const summary = renderGateScorecardSummary(step);
+      const existing = scorecardRowsBySummary.get(summary);
+      if (existing) {
+        existing.profiles.push(step.name);
+        continue;
+      }
+      scorecardRowsBySummary.set(summary, { profiles: [step.name], summary });
+    } else if (step.portfolio) {
+      portfolioRows.push(`- ${step.name}: ${renderPortfolioSummary(step.portfolio)}`);
+    }
+  }
+
+  return [
+    ...Array.from(scorecardRowsBySummary.values()).map((row) => `- ${row.profiles.join(', ')}: ${row.summary}`),
+    ...portfolioRows
+  ];
+}
+
 function directStepIsClean(step) {
   if (step.status !== 0) {
     return false;
@@ -868,13 +892,7 @@ function renderMarkdown(context) {
     }
   }
   const profileSummaries = context.profiles.map((step) => summarizeProfileStep(step, { outputDir: context.outputDir }));
-  for (const step of profileSummaries) {
-    if (step.scorecard && Object.keys(step.scorecard).length > 0) {
-      lines.push(`- ${step.name}: ${renderGateScorecardSummary(step)}`);
-    } else if (step.portfolio) {
-      lines.push(`- ${step.name}: ${renderPortfolioSummary(step.portfolio)}`);
-    }
-  }
+  lines.push(...renderProfileSignalLines(profileSummaries));
   const standardsCoverageMatrix = buildStandardsCoverageMatrix(profileSummaries);
   const standardsCoverageLines = renderStandardsCoverageMatrix(standardsCoverageMatrix);
   if (standardsCoverageLines.length > 0) {
@@ -1033,6 +1051,7 @@ module.exports = {
   renderStandardsScoreFileLegend,
   renderStandardsGateStrengthSummary,
   renderStandardsGateDetailSummary,
+  renderProfileSignalLines,
   renderMarkdown,
   runMultiStandardsAudit,
   main

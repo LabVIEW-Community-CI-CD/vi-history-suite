@@ -29,6 +29,7 @@ const {
   renderStandardsScoreFileLegend,
   renderStandardsGateStrengthSummary,
   renderStandardsGateDetailSummary,
+  renderProfileSignalLines,
   runMultiStandardsAudit
 } = require('../../scripts/runMultiStandardsAudit.js') as {
   DEFAULT_SAVE_DIR: string;
@@ -180,6 +181,22 @@ const {
     missingProof: string[];
     profiles: string[];
     scoreFiles: string[];
+  }>) => string[];
+  renderProfileSignalLines: (profileSummaries: Array<{
+    name: string;
+    scorecard?: Record<string, string>;
+    scorecardDetails?: Record<string, {
+      status?: string;
+      confidence?: string;
+      missingProof: string[];
+    }>;
+    portfolio?: {
+      tableFile: string;
+      overall?: string;
+      gates?: string;
+      areaScores?: Record<string, number | string>;
+      topRisk?: string;
+    };
   }>) => string[];
   profileDockerSteps: (options: { image: string }) => Array<{
     name: string;
@@ -727,6 +744,51 @@ describe('multi standards audit script', () => {
     expect(lines).toHaveLength(3);
   });
 
+  it('groups identical gate-scorecard profile signals without compacting portfolio signals', () => {
+    const lines = renderProfileSignalLines([
+      {
+        name: 'quick-triage',
+        scorecard: { coverage: 'PASS', dod: 'PASS' },
+        scorecardDetails: {
+          coverage: { status: 'PASS', confidence: 'High', missingProof: [] },
+          dod: { status: 'PASS', confidence: 'Med', missingProof: [] }
+        }
+      },
+      {
+        name: 'release-gate',
+        scorecard: { coverage: 'PASS', dod: 'PASS' },
+        scorecardDetails: {
+          coverage: { status: 'PASS', confidence: 'High', missingProof: [] },
+          dod: { status: 'PASS', confidence: 'Med', missingProof: [] }
+        }
+      },
+      {
+        name: 'due-diligence',
+        scorecard: { coverage: 'PASS', dod: 'PASS' },
+        scorecardDetails: {
+          coverage: { status: 'PASS', confidence: 'High', missingProof: ['CI evidence'] },
+          dod: { status: 'PASS', confidence: 'Med', missingProof: [] }
+        }
+      },
+      {
+        name: 'portfolio-review',
+        portfolio: {
+          tableFile: 'portfolio-review-table.txt',
+          overall: 'High',
+          gates: '6P/0F',
+          areaScores: { REQ: 5, ARCH: 5, TEST: 5, CM: 5, DOC: 5 },
+          topRisk: 'none'
+        }
+      }
+    ]);
+
+    expect(lines).toEqual([
+      '- quick-triage, release-gate: coverage=PASS(High), dod=PASS(Med)',
+      '- due-diligence: coverage=PASS(High) missing=CI evidence, dod=PASS(Med)',
+      '- portfolio-review: overall=High, gates=6P/0F, REQ=5, ARCH=5, TEST=5, CM=5, DOC=5, topRisk=none (see portfolio-review-table.txt)'
+    ]);
+  });
+
   it('groups retained standards evidence score files by contributing profile', () => {
     expect(buildStandardsEvidenceSummary([
       {
@@ -915,7 +977,8 @@ describe('multi standards audit script', () => {
     expect(result.context.directChecks).toHaveLength(2);
     expect(result.context.profiles).toHaveLength(6);
     expect(result.markdown).toContain('External user information: ok (0 finding(s), 1 checked path(s))');
-    expect(result.markdown).toContain('quick-triage: coverage=PASS(High), cm=PASS(High), req=PASS(High), arch=PASS(High), doc=PASS(High), dod=PASS(Med)');
+    expect(result.markdown).toContain('quick-triage, release-gate, 26514-review, due-diligence, compliance-uplift: coverage=PASS(High), cm=PASS(High), req=PASS(High), arch=PASS(High), doc=PASS(High), dod=PASS(Med)');
+    expect(result.markdown).not.toContain('- quick-triage: coverage=PASS(High)');
     expect(result.markdown).toContain('## Standards Coverage Matrix');
     expect(result.markdown).toContain('| Profiles | REQ | ARCH | TEST | CM | DOC |');
     expect(result.markdown).toContain('| quick-triage, release-gate, 26514-review, due-diligence, compliance-uplift, portfolio-review | 5/5 High (29148) | 5/5 High (42010) | 5/5 High (29119-2/29119-3) | 5/5 High (10007/12207) | 5/5 High (15289/26514) |');
