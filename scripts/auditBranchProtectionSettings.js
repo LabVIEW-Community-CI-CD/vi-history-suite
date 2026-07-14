@@ -1084,7 +1084,7 @@ function auditResultJson(item) {
 }
 
 function markdownCell(value) {
-  return String(value ?? '').replace(/\r?\n/gu, ' ').replace(/\|/gu, '\\|');
+  return String(value ?? '').replace(/\r?\n/gu, ' ').replace(/\\/gu, '\\\\').replace(/\|/gu, '\\|');
 }
 
 function renderMarkdown(branchResults, options = {}) {

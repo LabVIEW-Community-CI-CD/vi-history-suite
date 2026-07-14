@@ -861,7 +861,7 @@ describe('branch protection audit evaluation', () => {
       { requireAdvisory: true }
     );
 
-    expect(markdownCell('branch|with\nnewline')).toBe('branch\\|with newline');
+    expect(markdownCell('branch\\with|pipe\nnewline')).toBe('branch\\\\with\\|pipe newline');
     expect(renderMarkdown([{ branch: 'develop', result: passingResult }], { repo: DEFAULT_REPO })).toBe([
       '## Branch Protection Audit',
       '',
