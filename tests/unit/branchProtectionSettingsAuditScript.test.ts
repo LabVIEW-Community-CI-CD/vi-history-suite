@@ -104,6 +104,7 @@ type ProtectionOverrides = {
   allowDeletions?: boolean;
   lockBranch?: boolean;
   allowForkSyncing?: boolean;
+  requiredDeployments?: boolean;
   requiredApprovingReviewCount?: number;
   requiredLinearHistory?: boolean;
   requiredConversationResolution?: boolean;
@@ -127,6 +128,7 @@ function protection(overrides: ProtectionOverrides = {}) {
     allow_deletions: { enabled: overrides.allowDeletions ?? false },
     lock_branch: { enabled: overrides.lockBranch ?? false },
     allow_fork_syncing: { enabled: overrides.allowForkSyncing ?? false },
+    required_deployments: overrides.requiredDeployments ? { enabled: true } : null,
     required_linear_history: { enabled: overrides.requiredLinearHistory ?? false },
     required_conversation_resolution: { enabled: overrides.requiredConversationResolution ?? false },
     required_signatures: { enabled: overrides.requiredSignedCommits ?? false },
@@ -289,6 +291,7 @@ describe('branch protection audit evaluation', () => {
       'branch deletions disabled',
       'branch lock disabled',
       'fork syncing disabled',
+      'required deployments disabled',
       'active branch rulesets',
       'unexpected active branch rulesets',
       'active branch ruleset rules',
@@ -302,6 +305,10 @@ describe('branch protection audit evaluation', () => {
     expect(result.checks.find((check) => check.name === 'unexpected active branch rulesets')).toMatchObject({
       passed: true,
       details: 'none beyond: develop, main'
+    });
+    expect(result.checks.find((check) => check.name === 'required deployments disabled')).toMatchObject({
+      passed: true,
+      details: 'disabled'
     });
     expect(result.checks.find((check) => check.name === 'active branch ruleset rules')).toMatchObject({
       passed: true,
@@ -335,7 +342,8 @@ describe('branch protection audit evaluation', () => {
         allowForcePushes: true,
         allowDeletions: true,
         lockBranch: true,
-        allowForkSyncing: true
+        allowForkSyncing: true,
+        requiredDeployments: true
       }),
       rulesets: []
     });
@@ -350,6 +358,7 @@ describe('branch protection audit evaluation', () => {
       'branch deletions disabled',
       'branch lock disabled',
       'fork syncing disabled',
+      'required deployments disabled',
       'active branch rulesets',
       'active branch ruleset rules'
     ]);
@@ -381,6 +390,19 @@ describe('branch protection audit evaluation', () => {
     expect(result.checks.find((check) => check.name === 'unexpected active branch rulesets')).toMatchObject({
       passed: false,
       details: 'unexpected: release; allowed: develop, main'
+    });
+  });
+
+  it('fails closed when required deployments are enabled', () => {
+    const result = evaluateBranchProtection({
+      protection: protection({ requiredDeployments: true }),
+      rulesets: branchRulesets()
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.checks.find((check) => check.name === 'required deployments disabled')).toMatchObject({
+      passed: false,
+      details: 'enabled or unavailable'
     });
   });
 
@@ -758,7 +780,7 @@ describe('branch protection audit main', () => {
       branch: DEFAULT_BRANCH,
       success: true
     });
-    expect(output.checks).toHaveLength(13);
+    expect(output.checks).toHaveLength(14);
     expect(output.notices.length).toBeGreaterThan(0);
     expect(output.branches).toBeUndefined();
   });
