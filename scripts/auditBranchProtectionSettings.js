@@ -75,6 +75,17 @@ const ADVISORY_STATUS_CHECKS = Object.freeze([
   'Requirements CSV Integrity',
   'CodeQL'
 ]);
+const FULL_HARDENING_OPTION_KEYS = Object.freeze([
+  'requireAdvisory',
+  'requireReview',
+  'requireLinearHistory',
+  'requireConversationResolution',
+  'requireSignedCommits',
+  'requireStaleReviewDismissal',
+  'requireCodeOwnerReview',
+  'requireLastPushApproval',
+  'requireBranchCreationBlock'
+]);
 const REPO_SLUG_PATTERN = /^[A-Za-z0-9._-]+\/[A-Za-z0-9._-]+$/u;
 const BRANCH_NAME_PATTERN = /^[A-Za-z0-9._\/-]+$/u;
 
@@ -96,6 +107,12 @@ function isValidBranchName(branch) {
   return BRANCH_NAME_PATTERN.test(String(branch || ''));
 }
 
+function enableFullHardeningOptions(options) {
+  for (const key of FULL_HARDENING_OPTION_KEYS) {
+    options[key] = true;
+  }
+}
+
 function parseArgs(argv) {
   const options = {
     repo: DEFAULT_REPO,
@@ -110,6 +127,7 @@ function parseArgs(argv) {
     requireCodeOwnerReview: false,
     requireLastPushApproval: false,
     requireBranchCreationBlock: false,
+    requireFullHardening: false,
     emitJson: false,
     help: false
   };
@@ -137,6 +155,10 @@ function parseArgs(argv) {
     else if (arg === '--require-code-owner-review') options.requireCodeOwnerReview = true;
     else if (arg === '--require-last-push-approval') options.requireLastPushApproval = true;
     else if (arg === '--require-branch-creation-block') options.requireBranchCreationBlock = true;
+    else if (arg === '--require-full-hardening') {
+      options.requireFullHardening = true;
+      enableFullHardeningOptions(options);
+    }
     else if (arg === '--json') options.emitJson = true;
     else if (arg === '--help' || arg === '-h') options.help = true;
     else throw new Error(`Unknown argument: ${arg}`);
@@ -174,6 +196,7 @@ function usage() {
     '  --require-code-owner-review Fail when code-owner review is not required',
     '  --require-last-push-approval Fail when last-push approval is not required',
     '  --require-branch-creation-block Fail when matching branch creation is not blocked',
+    '  --require-full-hardening Fail unless every opt-in hardening check passes',
     '  --json                Emit machine-readable JSON instead of text',
     '  --help                Show this help'
   ].join('\n');
@@ -1102,11 +1125,13 @@ module.exports = {
   EXPECTED_REQUIRED_STATUS_CHECK_KEYS,
   EXPECTED_PULL_REQUEST_REVIEW_SECTION_KEYS,
   ADVISORY_STATUS_CHECKS,
+  FULL_HARDENING_OPTION_KEYS,
   ALLOWED_EXECUTABLE_COMMANDS,
   isAllowedExecutableCommand,
   assertAllowedExecutableCommand,
   isValidRepoSlug,
   isValidBranchName,
+  enableFullHardeningOptions,
   parseArgs,
   usage,
   buildGhApiArgs,
