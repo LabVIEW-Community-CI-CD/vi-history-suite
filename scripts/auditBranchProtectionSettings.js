@@ -259,6 +259,11 @@ function evaluateBranchProtection(settings, options = {}) {
       details: disabledFlag(protection.lock_branch) ? 'disabled' : 'enabled or unavailable'
     },
     {
+      name: 'fork syncing disabled',
+      passed: disabledFlag(protection.allow_fork_syncing),
+      details: disabledFlag(protection.allow_fork_syncing) ? 'disabled' : 'enabled or unavailable'
+    },
+    {
       name: 'active branch rulesets',
       passed: missingActiveRulesets.length === 0,
       details: missingActiveRulesets.length === 0
