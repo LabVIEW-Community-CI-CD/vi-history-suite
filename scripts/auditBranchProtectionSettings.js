@@ -1033,6 +1033,50 @@ function renderResult(result, options = {}) {
   return lines.join('\n');
 }
 
+function summarizeAuditResult(result) {
+  const checks = Array.isArray(result && result.checks) ? result.checks : [];
+  const notices = Array.isArray(result && result.notices) ? result.notices : [];
+  const failures = checks
+    .filter((check) => !check.passed)
+    .map((check) => ({ name: check.name, details: check.details }));
+  return {
+    totalChecks: checks.length,
+    passedChecks: checks.length - failures.length,
+    failedChecks: failures.length,
+    noticeCount: notices.length,
+    failures
+  };
+}
+
+function summarizeBranchResults(branchResults) {
+  const branchSummaries = branchResults.map((item) => {
+    const summary = summarizeAuditResult(item.result);
+    return {
+      branch: item.branch,
+      success: item.result.success,
+      ...summary
+    };
+  });
+  return {
+    totalBranches: branchSummaries.length,
+    passedBranches: branchSummaries.filter((item) => item.success).length,
+    failedBranches: branchSummaries.filter((item) => !item.success).length,
+    totalChecks: branchSummaries.reduce((total, item) => total + item.totalChecks, 0),
+    passedChecks: branchSummaries.reduce((total, item) => total + item.passedChecks, 0),
+    failedChecks: branchSummaries.reduce((total, item) => total + item.failedChecks, 0),
+    noticeCount: branchSummaries.reduce((total, item) => total + item.noticeCount, 0),
+    failures: branchResults.flatMap((item) => summarizeAuditResult(item.result).failures.map((failure) => ({ branch: item.branch, ...failure })))
+  };
+}
+
+function auditResultJson(item) {
+  return {
+    branch: item.branch,
+    ...item.result,
+    summary: summarizeAuditResult(item.result)
+  };
+}
+
 function branchesForOptions(options = {}) {
   return options.allBranches ? [...DEFAULT_AUDIT_BRANCHES] : [options.branch || DEFAULT_BRANCH];
 }
@@ -1081,12 +1125,13 @@ function main(argv = process.argv.slice(2), deps = {}) {
         stdout.write(`${JSON.stringify({
           schemaVersion: 1,
           repo: options.repo,
-          branches: branchResults.map((item) => ({ branch: item.branch, ...item.result })),
-          success
+          success,
+          summary: summarizeBranchResults(branchResults),
+          branches: branchResults.map(auditResultJson)
         }, null, 2)}\n`);
       } else {
-        const [{ branch, result }] = branchResults;
-        stdout.write(`${JSON.stringify({ schemaVersion: 1, repo: options.repo, branch, ...result }, null, 2)}\n`);
+        const [branchResult] = branchResults;
+        stdout.write(`${JSON.stringify({ schemaVersion: 1, repo: options.repo, ...auditResultJson(branchResult) }, null, 2)}\n`);
       }
     } else {
       stdout.write(`${branchResults
@@ -1155,6 +1200,9 @@ module.exports = {
   rulesetRuleTypes,
   evaluateBranchProtection,
   renderResult,
+  summarizeAuditResult,
+  summarizeBranchResults,
+  auditResultJson,
   branchesForOptions,
   auditBranches,
   auditBranchProtectionSettings,
