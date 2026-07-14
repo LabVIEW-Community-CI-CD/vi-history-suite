@@ -6,6 +6,8 @@ const DEFAULT_REPO = 'LabVIEW-Community-CI-CD/vi-history-suite';
 const DEFAULT_BRANCH = 'develop';
 const DEFAULT_AUDIT_BRANCHES = Object.freeze(['develop', 'main']);
 const EXPECTED_ACTIVE_BRANCH_RULESETS = Object.freeze(['develop', 'main']);
+const EXPECTED_ACTIVE_RULESET_TARGET = 'branch';
+const EXPECTED_ACTIVE_RULESET_ENFORCEMENT = 'active';
 const EXPECTED_ACTIVE_RULESET_SOURCE_TYPE = 'Repository';
 const EXPECTED_ACTIVE_RULESET_RULE_TYPES = Object.freeze(['deletion', 'non_fast_forward']);
 const GH_TIMEOUT_MS = 60000;
@@ -277,9 +279,19 @@ function rulesetRefNameExclusions(ruleset) {
     .sort();
 }
 
+function rulesetTargetEnforcementSummaries(rulesets) {
+  return (Array.isArray(rulesets) ? rulesets : [])
+    .filter(Boolean)
+    .map((ruleset) => ({
+      name: String(ruleset.name || '(unnamed)'),
+      target: String(ruleset.target || 'unknown'),
+      enforcement: String(ruleset.enforcement || 'unknown')
+    }));
+}
+
 function activeRulesetSummaries(rulesets) {
   return (Array.isArray(rulesets) ? rulesets : [])
-    .filter((ruleset) => ruleset && ruleset.enforcement === 'active' && ruleset.target === 'branch')
+    .filter((ruleset) => ruleset && ruleset.enforcement === EXPECTED_ACTIVE_RULESET_ENFORCEMENT && ruleset.target === EXPECTED_ACTIVE_RULESET_TARGET)
     .map((ruleset) => ({
       name: String(ruleset.name || '(unnamed)'),
       sourceType: String(ruleset.source_type || 'unknown'),
@@ -323,6 +335,8 @@ function evaluateBranchProtection(settings, options = {}) {
     : EXPECTED_REQUIRED_STATUS_CHECK_APP_ID;
   const advisoryChecks = options.advisoryChecks || ADVISORY_STATUS_CHECKS;
   const expectedActiveBranchRulesets = options.expectedActiveBranchRulesets || EXPECTED_ACTIVE_BRANCH_RULESETS;
+  const expectedActiveRulesetTarget = options.expectedActiveRulesetTarget || EXPECTED_ACTIVE_RULESET_TARGET;
+  const expectedActiveRulesetEnforcement = options.expectedActiveRulesetEnforcement || EXPECTED_ACTIVE_RULESET_ENFORCEMENT;
   const expectedActiveRulesetSourceType = options.expectedActiveRulesetSourceType || EXPECTED_ACTIVE_RULESET_SOURCE_TYPE;
   const expectedActiveRulesetSource = options.expectedActiveRulesetSource || options.repo || DEFAULT_REPO;
   const expectedActiveRulesetRuleTypes = options.expectedActiveRulesetRuleTypes || EXPECTED_ACTIVE_RULESET_RULE_TYPES;
@@ -362,12 +376,16 @@ function evaluateBranchProtection(settings, options = {}) {
     .filter(Boolean);
   const advisoryNotRequired = advisoryChecks.filter((context) => !requiredContexts.includes(context));
   const approvingReviewCount = requiredApprovingReviewCount(protection);
+  const rulesetTargetEnforcements = rulesetTargetEnforcementSummaries(settings.rulesets);
   const activeRulesets = activeRulesetSummaries(settings.rulesets);
   const activeRulesetNames = activeRulesets.map((ruleset) => ruleset.name).sort();
   const missingActiveRulesets = expectedActiveBranchRulesets.filter((name) => !activeRulesetNames.includes(name));
   const unexpectedActiveRulesets = activeRulesetNames.filter((name) => !expectedActiveBranchRulesets.includes(name));
   const duplicateActiveRulesets = duplicateNameCounts(activeRulesetNames);
   const activeRulesetsByName = new Map(activeRulesets.map((ruleset) => [ruleset.name, ruleset]));
+  const rulesetsWithUnexpectedTargetEnforcement = expectedActiveBranchRulesets
+    .flatMap((name) => rulesetTargetEnforcements.filter((ruleset) => ruleset.name === name))
+    .filter((ruleset) => ruleset.target !== expectedActiveRulesetTarget || ruleset.enforcement !== expectedActiveRulesetEnforcement);
   const rulesetsWithUnexpectedSources = expectedActiveBranchRulesets
     .map((name) => activeRulesetsByName.get(name))
     .filter((ruleset) => ruleset && (ruleset.sourceType !== expectedActiveRulesetSourceType || ruleset.source !== expectedActiveRulesetSource));
@@ -505,6 +523,15 @@ function evaluateBranchProtection(settings, options = {}) {
       details: duplicateActiveRulesets.length === 0
         ? 'none'
         : `duplicates: ${formatDuplicateNameCounts(duplicateActiveRulesets)}`
+    },
+    {
+      name: 'active branch ruleset target/enforcement',
+      passed: rulesetsWithUnexpectedTargetEnforcement.length === 0,
+      details: rulesetsWithUnexpectedTargetEnforcement.length === 0
+        ? `target ${expectedActiveRulesetTarget} and enforcement ${expectedActiveRulesetEnforcement} on ${expectedActiveBranchRulesets.join(', ')}`
+        : rulesetsWithUnexpectedTargetEnforcement
+          .map((ruleset) => `${ruleset.name} target ${ruleset.target}, enforcement ${ruleset.enforcement}; expected target ${expectedActiveRulesetTarget} and enforcement ${expectedActiveRulesetEnforcement}`)
+          .join('; ')
     },
     {
       name: 'active branch ruleset sources',
@@ -757,6 +784,8 @@ module.exports = {
   DEFAULT_BRANCH,
   DEFAULT_AUDIT_BRANCHES,
   EXPECTED_ACTIVE_BRANCH_RULESETS,
+  EXPECTED_ACTIVE_RULESET_TARGET,
+  EXPECTED_ACTIVE_RULESET_ENFORCEMENT,
   EXPECTED_ACTIVE_RULESET_SOURCE_TYPE,
   EXPECTED_ACTIVE_RULESET_RULE_TYPES,
   EXPECTED_REQUIRED_STATUS_CHECKS,
@@ -776,6 +805,7 @@ module.exports = {
   requiredApprovingReviewCount,
   requiredStatusContexts,
   requiredStatusCheckAppBindings,
+  rulesetTargetEnforcementSummaries,
   activeRulesetSummaries,
   rulesetRuleTypes,
   evaluateBranchProtection,
