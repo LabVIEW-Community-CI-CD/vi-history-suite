@@ -42,6 +42,7 @@ function parseArgs(argv) {
     repo: DEFAULT_REPO,
     branch: DEFAULT_BRANCH,
     allBranches: false,
+    requireAdvisory: false,
     emitJson: false,
     help: false
   };
@@ -60,6 +61,7 @@ function parseArgs(argv) {
     if (arg === '--repo') options.repo = next();
     else if (arg === '--branch') options.branch = next();
     else if (arg === '--all') options.allBranches = true;
+    else if (arg === '--require-advisory') options.requireAdvisory = true;
     else if (arg === '--json') options.emitJson = true;
     else if (arg === '--help' || arg === '-h') options.help = true;
     else throw new Error(`Unknown argument: ${arg}`);
@@ -88,6 +90,7 @@ function usage() {
     `  --repo <owner/repo>    Repository to inspect (default: ${DEFAULT_REPO})`,
     `  --branch <name>       Branch to inspect (default: ${DEFAULT_BRANCH})`,
     `  --all                 Audit protected branches: ${DEFAULT_AUDIT_BRANCHES.join(', ')}`,
+    '  --require-advisory    Fail when advisory checks are not branch-protection-required',
     '  --json                Emit machine-readable JSON instead of text',
     '  --help                Show this help'
   ].join('\n');
@@ -163,6 +166,7 @@ function evaluateBranchProtection(settings, options = {}) {
   const requiredContexts = requiredStatusContexts(protection);
   const expectedRequiredChecks = options.expectedRequiredChecks || EXPECTED_REQUIRED_STATUS_CHECKS;
   const advisoryChecks = options.advisoryChecks || ADVISORY_STATUS_CHECKS;
+  const requireAdvisory = Boolean(options.requireAdvisory);
   const missingRequired = expectedRequiredChecks.filter((context) => !requiredContexts.includes(context));
   const advisoryNotRequired = advisoryChecks.filter((context) => !requiredContexts.includes(context));
   const activeRulesets = activeRulesetSummaries(settings.rulesets);
@@ -196,6 +200,16 @@ function evaluateBranchProtection(settings, options = {}) {
       details: disabledFlag(protection.allow_deletions) ? 'disabled' : 'enabled or unavailable'
     }
   ];
+
+  if (requireAdvisory) {
+    checks.push({
+      name: 'advisory status check contexts',
+      passed: advisoryNotRequired.length === 0,
+      details: advisoryNotRequired.length === 0
+        ? `required: ${advisoryChecks.join(', ')}`
+        : `missing: ${advisoryNotRequired.join(', ')}; present: ${requiredContexts.join(', ') || 'none'}`
+    });
+  }
 
   const notices = [];
   notices.push(`required contexts observed: ${requiredContexts.join(', ') || 'none'}`);
