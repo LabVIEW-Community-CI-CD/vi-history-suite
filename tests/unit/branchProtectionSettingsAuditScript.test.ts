@@ -84,6 +84,7 @@ type ProtectionOverrides = {
   allowForcePushes?: boolean;
   allowDeletions?: boolean;
   lockBranch?: boolean;
+  allowForkSyncing?: boolean;
   requiredApprovingReviewCount?: number;
   requiredLinearHistory?: boolean;
   requiredConversationResolution?: boolean;
@@ -106,6 +107,7 @@ function protection(overrides: ProtectionOverrides = {}) {
     allow_force_pushes: { enabled: overrides.allowForcePushes ?? false },
     allow_deletions: { enabled: overrides.allowDeletions ?? false },
     lock_branch: { enabled: overrides.lockBranch ?? false },
+    allow_fork_syncing: { enabled: overrides.allowForkSyncing ?? false },
     required_linear_history: { enabled: overrides.requiredLinearHistory ?? false },
     required_conversation_resolution: { enabled: overrides.requiredConversationResolution ?? false },
     required_signatures: { enabled: overrides.requiredSignedCommits ?? false },
@@ -239,6 +241,7 @@ describe('branch protection audit evaluation', () => {
       'force pushes disabled',
       'branch deletions disabled',
       'branch lock disabled',
+      'fork syncing disabled',
       'active branch rulesets'
     ]);
     expect(result.notices).toContain('advisory checks not branch-protection-required: Requirements CSV Integrity, CodeQL');
@@ -259,7 +262,8 @@ describe('branch protection audit evaluation', () => {
         enforceAdmins: false,
         allowForcePushes: true,
         allowDeletions: true,
-        lockBranch: true
+        lockBranch: true,
+        allowForkSyncing: true
       }),
       rulesets: []
     });
@@ -272,6 +276,7 @@ describe('branch protection audit evaluation', () => {
       'force pushes disabled',
       'branch deletions disabled',
       'branch lock disabled',
+      'fork syncing disabled',
       'active branch rulesets'
     ]);
     expect(renderResult(result, { repo: DEFAULT_REPO, branch: DEFAULT_BRANCH })).toContain(
@@ -602,7 +607,7 @@ describe('branch protection audit main', () => {
       branch: DEFAULT_BRANCH,
       success: true
     });
-    expect(output.checks).toHaveLength(7);
+    expect(output.checks).toHaveLength(8);
     expect(output.notices.length).toBeGreaterThan(0);
     expect(output.branches).toBeUndefined();
   });
