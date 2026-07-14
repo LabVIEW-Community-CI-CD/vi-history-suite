@@ -5,6 +5,7 @@ const { spawnSync } = require('node:child_process');
 const DEFAULT_REPO = 'LabVIEW-Community-CI-CD/vi-history-suite';
 const DEFAULT_BRANCH = 'develop';
 const DEFAULT_AUDIT_BRANCHES = Object.freeze(['develop', 'main']);
+const EXPECTED_ACTIVE_BRANCH_RULESETS = Object.freeze(['develop', 'main']);
 const GH_TIMEOUT_MS = 60000;
 const ALLOWED_EXECUTABLE_COMMANDS = Object.freeze(['gh']);
 const EXPECTED_REQUIRED_STATUS_CHECKS = Object.freeze([
@@ -174,10 +175,13 @@ function evaluateBranchProtection(settings, options = {}) {
   const requiredContexts = requiredStatusContexts(protection);
   const expectedRequiredChecks = options.expectedRequiredChecks || EXPECTED_REQUIRED_STATUS_CHECKS;
   const advisoryChecks = options.advisoryChecks || ADVISORY_STATUS_CHECKS;
+  const expectedActiveBranchRulesets = options.expectedActiveBranchRulesets || EXPECTED_ACTIVE_BRANCH_RULESETS;
   const requireAdvisory = Boolean(options.requireAdvisory);
   const missingRequired = expectedRequiredChecks.filter((context) => !requiredContexts.includes(context));
   const advisoryNotRequired = advisoryChecks.filter((context) => !requiredContexts.includes(context));
   const activeRulesets = activeRulesetSummaries(settings.rulesets);
+  const activeRulesetNames = activeRulesets.map((ruleset) => ruleset.name).sort();
+  const missingActiveRulesets = expectedActiveBranchRulesets.filter((name) => !activeRulesetNames.includes(name));
 
   const checks = [
     {
@@ -206,6 +210,13 @@ function evaluateBranchProtection(settings, options = {}) {
       name: 'branch deletions disabled',
       passed: disabledFlag(protection.allow_deletions),
       details: disabledFlag(protection.allow_deletions) ? 'disabled' : 'enabled or unavailable'
+    },
+    {
+      name: 'active branch rulesets',
+      passed: missingActiveRulesets.length === 0,
+      details: missingActiveRulesets.length === 0
+        ? `present: ${expectedActiveBranchRulesets.join(', ')}`
+        : `missing: ${missingActiveRulesets.join(', ')}; present: ${activeRulesetNames.join(', ') || 'none'}`
     }
   ];
 
@@ -328,6 +339,7 @@ module.exports = {
   DEFAULT_REPO,
   DEFAULT_BRANCH,
   DEFAULT_AUDIT_BRANCHES,
+  EXPECTED_ACTIVE_BRANCH_RULESETS,
   EXPECTED_REQUIRED_STATUS_CHECKS,
   ADVISORY_STATUS_CHECKS,
   ALLOWED_EXECUTABLE_COMMANDS,

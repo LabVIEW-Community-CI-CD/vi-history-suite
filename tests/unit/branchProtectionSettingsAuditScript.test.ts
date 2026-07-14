@@ -4,6 +4,7 @@ const {
   DEFAULT_AUDIT_BRANCHES,
   DEFAULT_BRANCH,
   DEFAULT_REPO,
+  EXPECTED_ACTIVE_BRANCH_RULESETS,
   EXPECTED_REQUIRED_STATUS_CHECKS,
   isAllowedExecutableCommand,
   isValidBranchName,
@@ -22,6 +23,7 @@ const {
   DEFAULT_AUDIT_BRANCHES: string[];
   DEFAULT_BRANCH: string;
   DEFAULT_REPO: string;
+  EXPECTED_ACTIVE_BRANCH_RULESETS: string[];
   EXPECTED_REQUIRED_STATUS_CHECKS: string[];
   isAllowedExecutableCommand: (command: string) => boolean;
   isValidBranchName: (branch: string) => boolean;
@@ -40,7 +42,12 @@ const {
   activeRulesetSummaries: (rulesets: unknown[]) => Array<{ name: string; ruleCount: number }>;
   evaluateBranchProtection: (
     settings: { protection?: Record<string, unknown>; rulesets?: unknown[] },
-    options?: { expectedRequiredChecks?: string[]; advisoryChecks?: string[]; requireAdvisory?: boolean }
+    options?: {
+      expectedRequiredChecks?: string[];
+      advisoryChecks?: string[];
+      requireAdvisory?: boolean;
+      expectedActiveBranchRulesets?: string[];
+    }
   ) => { success: boolean; checks: Array<{ name: string; passed: boolean; details: string }>; notices: string[] };
   renderResult: (
     result: { success: boolean; checks: Array<{ name: string; passed: boolean; details: string }>; notices: string[] },
@@ -84,6 +91,10 @@ function captureWrite() {
     },
     read: () => output
   };
+}
+
+function branchRulesets(names = [...EXPECTED_ACTIVE_BRANCH_RULESETS]) {
+  return names.map((name) => ({ name, target: 'branch', enforcement: 'active', rules: [] }));
 }
 
 describe('branch protection audit arguments', () => {
@@ -152,7 +163,7 @@ describe('branch protection audit evaluation', () => {
   it('passes for the current expected develop protection contract', () => {
     const result = evaluateBranchProtection({
       protection: protection(),
-      rulesets: [{ name: 'develop', target: 'branch', enforcement: 'active', rules: [] }]
+      rulesets: branchRulesets()
     });
 
     expect(result.success).toBe(true);
@@ -161,9 +172,14 @@ describe('branch protection audit evaluation', () => {
       'required status check contexts',
       'admin enforcement',
       'force pushes disabled',
-      'branch deletions disabled'
+      'branch deletions disabled',
+      'active branch rulesets'
     ]);
     expect(result.notices).toContain('advisory checks not branch-protection-required: Requirements CSV Integrity, CodeQL');
+    expect(result.checks.find((check) => check.name === 'active branch rulesets')).toMatchObject({
+      passed: true,
+      details: 'present: develop, main'
+    });
     expect(activeRulesetSummaries([{ name: 'develop', target: 'branch', enforcement: 'active', rules: [] }])).toEqual([
       { name: 'develop', ruleCount: 0 }
     ]);
@@ -187,16 +203,30 @@ describe('branch protection audit evaluation', () => {
       'required status check contexts',
       'admin enforcement',
       'force pushes disabled',
-      'branch deletions disabled'
+      'branch deletions disabled',
+      'active branch rulesets'
     ]);
     expect(renderResult(result, { repo: DEFAULT_REPO, branch: DEFAULT_BRANCH })).toContain(
       '[branch-protection-audit] Audit failed.'
     );
   });
 
+  it('fails closed when expected active branch rulesets drift', () => {
+    const result = evaluateBranchProtection({
+      protection: protection(),
+      rulesets: branchRulesets(['develop'])
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.checks.find((check) => check.name === 'active branch rulesets')).toMatchObject({
+      passed: false,
+      details: 'missing: main; present: develop'
+    });
+  });
+
   it('can require advisory contexts for branch-protection hardening audits', () => {
     const result = evaluateBranchProtection(
-      { protection: protection(), rulesets: [] },
+      { protection: protection(), rulesets: branchRulesets() },
       { requireAdvisory: true }
     );
 
@@ -209,7 +239,7 @@ describe('branch protection audit evaluation', () => {
     const hardened = evaluateBranchProtection(
       {
         protection: protection({ contexts: [...EXPECTED_REQUIRED_STATUS_CHECKS, 'Requirements CSV Integrity', 'CodeQL'] }),
-        rulesets: []
+        rulesets: branchRulesets()
       },
       { requireAdvisory: true }
     );
@@ -229,7 +259,7 @@ describe('branch protection audit main', () => {
     const stderr = captureWrite();
     const spawnSync = vi.fn((command: string, args: string[]) => {
       calls.push([command, ...args]);
-      const resource = args[1].endsWith('/rulesets') ? [] : protection();
+      const resource = args[1].endsWith('/rulesets') ? branchRulesets() : protection();
       return { status: 0, stdout: JSON.stringify(resource), stderr: '' };
     });
 
@@ -250,7 +280,7 @@ describe('branch protection audit main', () => {
     const stderr = captureWrite();
     const spawnSync = vi.fn((command: string, args: string[]) => {
       calls.push([command, ...args]);
-      const resource = args[1].endsWith('/rulesets') ? [] : protection();
+      const resource = args[1].endsWith('/rulesets') ? branchRulesets() : protection();
       return { status: 0, stdout: JSON.stringify(resource), stderr: '' };
     });
 
@@ -271,7 +301,7 @@ describe('branch protection audit main', () => {
     const calls: string[][] = [];
     const spawnSync = vi.fn((command: string, args: string[]) => {
       calls.push([command, ...args]);
-      const resource = args[1].endsWith('/rulesets') ? [] : protection();
+      const resource = args[1].endsWith('/rulesets') ? branchRulesets() : protection();
       return { status: 0, stdout: JSON.stringify(resource), stderr: '' };
     });
 
@@ -289,7 +319,7 @@ describe('branch protection audit main', () => {
     const stdout = captureWrite();
     const stderr = captureWrite();
     const spawnSync = vi.fn((command: string, args: string[]) => {
-      const resource = args[1].endsWith('/rulesets') ? [] : protection();
+      const resource = args[1].endsWith('/rulesets') ? branchRulesets() : protection();
       return { status: 0, stdout: JSON.stringify(resource), stderr: '' };
     });
 
@@ -312,7 +342,7 @@ describe('branch protection audit main', () => {
       branch: DEFAULT_BRANCH,
       success: true
     });
-    expect(output.checks).toHaveLength(5);
+    expect(output.checks).toHaveLength(6);
     expect(output.notices.length).toBeGreaterThan(0);
     expect(output.branches).toBeUndefined();
   });
@@ -321,7 +351,7 @@ describe('branch protection audit main', () => {
     const stdout = captureWrite();
     const stderr = captureWrite();
     const spawnSync = vi.fn((command: string, args: string[]) => {
-      const resource = args[1].endsWith('/rulesets') ? [] : protection();
+      const resource = args[1].endsWith('/rulesets') ? branchRulesets() : protection();
       return { status: 0, stdout: JSON.stringify(resource), stderr: '' };
     });
 
@@ -354,7 +384,7 @@ describe('branch protection audit main', () => {
     const stdout = captureWrite();
     const stderr = captureWrite();
     const spawnSync = vi.fn((command: string, args: string[]) => {
-      const resource = args[1].endsWith('/rulesets') ? [] : protection();
+      const resource = args[1].endsWith('/rulesets') ? branchRulesets() : protection();
       return { status: 0, stdout: JSON.stringify(resource), stderr: '' };
     });
 
