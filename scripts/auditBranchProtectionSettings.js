@@ -11,6 +11,7 @@ const EXPECTED_ACTIVE_RULESET_ENFORCEMENT = 'active';
 const EXPECTED_ACTIVE_RULESET_SOURCE_TYPE = 'Repository';
 const EXPECTED_ACTIVE_RULESET_CONDITION_KEYS = Object.freeze(['ref_name']);
 const EXPECTED_ACTIVE_RULESET_REF_NAME_KEYS = Object.freeze(['exclude', 'include']);
+const EXPECTED_ACTIVE_RULESET_RULE_KEYS = Object.freeze(['type']);
 const EXPECTED_ACTIVE_RULESET_RULE_TYPES = Object.freeze(['deletion', 'non_fast_forward']);
 const GH_TIMEOUT_MS = 60000;
 const ALLOWED_EXECUTABLE_COMMANDS = Object.freeze(['gh']);
@@ -298,6 +299,18 @@ function rulesetRefNameKeys(ruleset) {
   return Object.keys(refName).sort();
 }
 
+function rulesetRuleKeys(ruleset) {
+  const keys = new Set();
+  for (const rule of Array.isArray(ruleset && ruleset.rules) ? ruleset.rules : []) {
+    if (rule && typeof rule === 'object' && !Array.isArray(rule)) {
+      for (const key of Object.keys(rule)) {
+        keys.add(String(key));
+      }
+    }
+  }
+  return [...keys].sort();
+}
+
 function rulesetTargetEnforcementSummaries(rulesets) {
   return (Array.isArray(rulesets) ? rulesets : [])
     .filter(Boolean)
@@ -318,6 +331,7 @@ function activeRulesetSummaries(rulesets) {
       conditionKeys: rulesetConditionKeys(ruleset),
       refNameKeys: rulesetRefNameKeys(ruleset),
       ruleCount: Array.isArray(ruleset.rules) ? ruleset.rules.length : 0,
+      ruleKeys: rulesetRuleKeys(ruleset),
       ruleTypes: rulesetRuleTypes(ruleset),
       refNameExclusions: rulesetRefNameExclusions(ruleset),
       bypassActorCount: Array.isArray(ruleset.bypass_actors) ? ruleset.bypass_actors.length : 0,
@@ -362,6 +376,7 @@ function evaluateBranchProtection(settings, options = {}) {
   const expectedActiveRulesetSource = options.expectedActiveRulesetSource || options.repo || DEFAULT_REPO;
   const expectedActiveRulesetConditionKeys = options.expectedActiveRulesetConditionKeys || EXPECTED_ACTIVE_RULESET_CONDITION_KEYS;
   const expectedActiveRulesetRefNameKeys = options.expectedActiveRulesetRefNameKeys || EXPECTED_ACTIVE_RULESET_REF_NAME_KEYS;
+  const expectedActiveRulesetRuleKeys = options.expectedActiveRulesetRuleKeys || EXPECTED_ACTIVE_RULESET_RULE_KEYS;
   const expectedActiveRulesetRuleTypes = options.expectedActiveRulesetRuleTypes || EXPECTED_ACTIVE_RULESET_RULE_TYPES;
   const expectedActiveRulesetRuleCount = expectedActiveRulesetRuleTypes.length;
   const requireAdvisory = Boolean(options.requireAdvisory);
@@ -443,6 +458,20 @@ function evaluateBranchProtection(settings, options = {}) {
   const rulesetsWithUnexpectedRuleCounts = expectedActiveBranchRulesets
     .map((name) => activeRulesetsByName.get(name))
     .filter((ruleset) => ruleset && ruleset.ruleCount !== expectedActiveRulesetRuleCount);
+  const rulesetsWithRuleKeyDrift = expectedActiveBranchRulesets
+    .map((name) => {
+      const ruleset = activeRulesetsByName.get(name);
+      if (!ruleset) {
+        return undefined;
+      }
+      return {
+        name,
+        missingRuleKeys: expectedActiveRulesetRuleKeys.filter((key) => !ruleset.ruleKeys.includes(key)),
+        unexpectedRuleKeys: ruleset.ruleKeys.filter((key) => !expectedActiveRulesetRuleKeys.includes(key)),
+        observedRuleKeys: ruleset.ruleKeys
+      };
+    })
+    .filter((item) => item && (item.missingRuleKeys.length > 0 || item.unexpectedRuleKeys.length > 0));
   const rulesetsMissingRuleTypes = expectedActiveBranchRulesets
     .map((name) => {
       const ruleset = activeRulesetsByName.get(name);
@@ -618,6 +647,15 @@ function evaluateBranchProtection(settings, options = {}) {
         ? `${expectedActiveRulesetRuleCount} rules on ${expectedActiveBranchRulesets.join(', ')}`
         : rulesetsWithUnexpectedRuleCounts
           .map((ruleset) => `${ruleset.name} rule count ${ruleset.ruleCount}; expected ${expectedActiveRulesetRuleCount}; observed: ${ruleset.ruleTypes.join(', ') || 'none'}`)
+          .join('; ')
+    },
+    {
+      name: 'active branch ruleset rule keys',
+      passed: rulesetsWithRuleKeyDrift.length === 0,
+      details: rulesetsWithRuleKeyDrift.length === 0
+        ? `${expectedActiveRulesetRuleKeys.join(', ') || 'none'} only on ${expectedActiveBranchRulesets.join(', ')}`
+        : rulesetsWithRuleKeyDrift
+          .map((item) => `${item.name} missing: ${item.missingRuleKeys.join(', ') || 'none'}; unexpected: ${item.unexpectedRuleKeys.join(', ') || 'none'}; observed: ${item.observedRuleKeys.join(', ') || 'none'}; allowed: ${expectedActiveRulesetRuleKeys.join(', ') || 'none'}`)
           .join('; ')
     },
     {
@@ -858,6 +896,7 @@ module.exports = {
   EXPECTED_ACTIVE_RULESET_SOURCE_TYPE,
   EXPECTED_ACTIVE_RULESET_CONDITION_KEYS,
   EXPECTED_ACTIVE_RULESET_REF_NAME_KEYS,
+  EXPECTED_ACTIVE_RULESET_RULE_KEYS,
   EXPECTED_ACTIVE_RULESET_RULE_TYPES,
   EXPECTED_REQUIRED_STATUS_CHECKS,
   EXPECTED_REQUIRED_STATUS_CHECK_APP_ID,
@@ -878,6 +917,7 @@ module.exports = {
   requiredStatusCheckAppBindings,
   rulesetConditionKeys,
   rulesetRefNameKeys,
+  rulesetRuleKeys,
   rulesetTargetEnforcementSummaries,
   activeRulesetSummaries,
   rulesetRuleTypes,
