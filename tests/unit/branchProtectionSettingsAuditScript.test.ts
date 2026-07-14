@@ -14,6 +14,7 @@ const {
   EXPECTED_ACTIVE_RULESET_RULE_TYPES,
   EXPECTED_REQUIRED_STATUS_CHECKS,
   EXPECTED_REQUIRED_STATUS_CHECK_APP_ID,
+  EXPECTED_REQUIRED_STATUS_CHECK_SECTION_KEYS,
   EXPECTED_REQUIRED_STATUS_CHECK_KEYS,
   isAllowedExecutableCommand,
   isValidBranchName,
@@ -24,6 +25,7 @@ const {
   buildGhRulesetDetailApiArgs,
   requiredApprovingReviewCount,
   requiredStatusContexts,
+  requiredStatusCheckSectionKeys,
   requiredStatusCheckAppBindings,
   requiredStatusCheckObjectKeys,
   rulesetConditionKeys,
@@ -51,6 +53,7 @@ const {
   EXPECTED_ACTIVE_RULESET_RULE_TYPES: string[];
   EXPECTED_REQUIRED_STATUS_CHECKS: string[];
   EXPECTED_REQUIRED_STATUS_CHECK_APP_ID: number;
+  EXPECTED_REQUIRED_STATUS_CHECK_SECTION_KEYS: string[];
   EXPECTED_REQUIRED_STATUS_CHECK_KEYS: string[];
   isAllowedExecutableCommand: (command: string) => boolean;
   isValidBranchName: (branch: string) => boolean;
@@ -76,6 +79,7 @@ const {
   buildGhRulesetDetailApiArgs: (repo: string, rulesetId: number | string) => string[];
   requiredApprovingReviewCount: (protection: Record<string, unknown>) => number;
   requiredStatusContexts: (protection: Record<string, unknown>) => string[];
+  requiredStatusCheckSectionKeys: (protection: Record<string, unknown>) => string[];
   requiredStatusCheckAppBindings: (protection: Record<string, unknown>) => Array<{ context: string; appId: number | null }>;
   requiredStatusCheckObjectKeys: (protection: Record<string, unknown>) => string[];
   rulesetConditionKeys: (ruleset: unknown) => string[];
@@ -99,6 +103,7 @@ const {
     settings: { protection?: Record<string, unknown>; rulesets?: unknown[] },
     options?: {
       expectedRequiredChecks?: string[];
+      expectedRequiredStatusCheckSectionKeys?: string[];
       expectedRequiredStatusCheckKeys?: string[];
       advisoryChecks?: string[];
       requireAdvisory?: boolean;
@@ -160,8 +165,10 @@ function protection(overrides: ProtectionOverrides = {}) {
   const checkContexts = overrides.checkContexts || contexts;
   return {
     required_status_checks: {
+      url: `https://api.github.com/repos/${DEFAULT_REPO}/branches/develop/protection/required_status_checks`,
       strict: overrides.strict ?? true,
       contexts,
+      contexts_url: `https://api.github.com/repos/${DEFAULT_REPO}/branches/develop/protection/required_status_checks/contexts`,
       checks: checkContexts.map((context) => ({ context, app_id: overrides.checkAppId ?? EXPECTED_REQUIRED_STATUS_CHECK_APP_ID }))
     },
     enforce_admins: { enabled: overrides.enforceAdmins ?? true },
@@ -319,6 +326,17 @@ describe('branch protection audit evaluation', () => {
       { context: 'Integration Host (Linux)', appId: EXPECTED_REQUIRED_STATUS_CHECK_APP_ID },
       { context: 'Windows Unit Tests', appId: EXPECTED_REQUIRED_STATUS_CHECK_APP_ID }
     ]);
+    expect(EXPECTED_REQUIRED_STATUS_CHECK_SECTION_KEYS).toEqual(['checks', 'contexts', 'contexts_url', 'strict', 'url']);
+    expect(requiredStatusCheckSectionKeys({
+      required_status_checks: {
+        url: 'https://example.test/status-checks',
+        strict: true,
+        contexts: [],
+        contexts_url: 'https://example.test/status-checks/contexts',
+        checks: [],
+        node_id: 'unexpected'
+      }
+    })).toEqual(['checks', 'contexts', 'contexts_url', 'node_id', 'strict', 'url']);
     expect(EXPECTED_REQUIRED_STATUS_CHECK_KEYS).toEqual(['app_id', 'context']);
     expect(requiredStatusCheckObjectKeys({
       required_status_checks: {
@@ -361,6 +379,7 @@ describe('branch protection audit evaluation', () => {
       'required status check source consistency',
       'duplicate required status check contexts',
       'required status check app bindings',
+      'required status checks section keys',
       'required status check object keys',
       'admin enforcement',
       'force pushes disabled',
@@ -388,6 +407,10 @@ describe('branch protection audit evaluation', () => {
     expect(result.checks.find((check) => check.name === 'active branch rulesets')).toMatchObject({
       passed: true,
       details: 'present: develop, main'
+    });
+    expect(result.checks.find((check) => check.name === 'required status checks section keys')).toMatchObject({
+      passed: true,
+      details: 'checks, contexts, contexts_url, strict, url only'
     });
     expect(result.checks.find((check) => check.name === 'required status check object keys')).toMatchObject({
       passed: true,
@@ -742,6 +765,45 @@ describe('branch protection audit evaluation', () => {
     expect(hardened.checks.find((check) => check.name === 'required status check app bindings')).toMatchObject({
       passed: true,
       details: 'app 12345: Build, Test, Package, Windows Unit Tests, Integration Host (Linux)'
+    });
+  });
+
+  it('fails closed when required status checks section keys drift', () => {
+    const baseProtection = protection();
+    const result = evaluateBranchProtection({
+      protection: {
+        ...baseProtection,
+        required_status_checks: {
+          ...baseProtection.required_status_checks,
+          node_id: 'unexpected-section-key'
+        }
+      },
+      rulesets: branchRulesets()
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.checks.find((check) => check.name === 'required status checks section keys')).toMatchObject({
+      passed: false,
+      details: 'missing: none; unexpected: node_id; observed: checks, contexts, contexts_url, node_id, strict, url; allowed: checks, contexts, contexts_url, strict, url'
+    });
+
+    const hardened = evaluateBranchProtection(
+      {
+        protection: {
+          ...baseProtection,
+          required_status_checks: {
+            ...baseProtection.required_status_checks,
+            node_id: 'expected-section-key'
+          }
+        },
+        rulesets: branchRulesets()
+      },
+      { expectedRequiredStatusCheckSectionKeys: ['checks', 'contexts', 'contexts_url', 'node_id', 'strict', 'url'] }
+    );
+
+    expect(hardened.checks.find((check) => check.name === 'required status checks section keys')).toMatchObject({
+      passed: true,
+      details: 'checks, contexts, contexts_url, node_id, strict, url only'
     });
   });
 
@@ -1222,7 +1284,7 @@ describe('branch protection audit main', () => {
       branch: DEFAULT_BRANCH,
       success: true
     });
-    expect(output.checks).toHaveLength(28);
+    expect(output.checks).toHaveLength(29);
     expect(output.notices.length).toBeGreaterThan(0);
     expect(output.branches).toBeUndefined();
   });

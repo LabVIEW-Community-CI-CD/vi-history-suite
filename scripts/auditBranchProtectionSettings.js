@@ -21,6 +21,7 @@ const EXPECTED_REQUIRED_STATUS_CHECKS = Object.freeze([
   'Integration Host (Linux)'
 ]);
 const EXPECTED_REQUIRED_STATUS_CHECK_APP_ID = 15368;
+const EXPECTED_REQUIRED_STATUS_CHECK_SECTION_KEYS = Object.freeze(['checks', 'contexts', 'contexts_url', 'strict', 'url']);
 const EXPECTED_REQUIRED_STATUS_CHECK_KEYS = Object.freeze(['app_id', 'context']);
 const ADVISORY_STATUS_CHECKS = Object.freeze([
   'Requirements CSV Integrity',
@@ -261,6 +262,14 @@ function requiredStatusCheckDuplicateContexts(protection) {
   };
 }
 
+function requiredStatusCheckSectionKeys(protection) {
+  const checks = protection && protection.required_status_checks;
+  if (!checks || typeof checks !== 'object' || Array.isArray(checks)) {
+    return [];
+  }
+  return Object.keys(checks).sort();
+}
+
 function requiredStatusCheckAppBindings(protection) {
   const checks = protection && protection.required_status_checks;
   return (Array.isArray(checks && checks.checks) ? checks.checks : [])
@@ -382,6 +391,7 @@ function evaluateBranchProtection(settings, options = {}) {
   const expectedRequiredStatusCheckAppId = Number.isFinite(Number(options.expectedRequiredStatusCheckAppId))
     ? Number(options.expectedRequiredStatusCheckAppId)
     : EXPECTED_REQUIRED_STATUS_CHECK_APP_ID;
+  const expectedRequiredStatusCheckSectionKeys = options.expectedRequiredStatusCheckSectionKeys || EXPECTED_REQUIRED_STATUS_CHECK_SECTION_KEYS;
   const expectedRequiredStatusCheckKeys = options.expectedRequiredStatusCheckKeys || EXPECTED_REQUIRED_STATUS_CHECK_KEYS;
   const advisoryChecks = options.advisoryChecks || ADVISORY_STATUS_CHECKS;
   const expectedActiveBranchRulesets = options.expectedActiveBranchRulesets || EXPECTED_ACTIVE_BRANCH_RULESETS;
@@ -414,6 +424,9 @@ function evaluateBranchProtection(settings, options = {}) {
   const requiredStatusSourceDiff = requiredStatusCheckSourceDiff(protection);
   const duplicateRequiredStatusContexts = requiredStatusCheckDuplicateContexts(protection);
   const requiredAppBindings = requiredStatusCheckAppBindings(protection);
+  const observedRequiredStatusCheckSectionKeys = requiredStatusCheckSectionKeys(protection);
+  const missingRequiredStatusCheckSectionKeys = expectedRequiredStatusCheckSectionKeys.filter((key) => !observedRequiredStatusCheckSectionKeys.includes(key));
+  const unexpectedRequiredStatusCheckSectionKeys = observedRequiredStatusCheckSectionKeys.filter((key) => !expectedRequiredStatusCheckSectionKeys.includes(key));
   const requiredStatusCheckKeys = requiredStatusCheckObjectKeys(protection);
   const missingRequiredStatusCheckKeys = expectedRequiredStatusCheckKeys.filter((key) => !requiredStatusCheckKeys.includes(key));
   const unexpectedRequiredStatusCheckKeys = requiredStatusCheckKeys.filter((key) => !expectedRequiredStatusCheckKeys.includes(key));
@@ -565,6 +578,13 @@ function evaluateBranchProtection(settings, options = {}) {
         : mismatchedRequiredAppBindings
           .map((item) => `${item.context} app ${item.observedAppId}; expected app ${expectedRequiredStatusCheckAppId}`)
           .join('; ')
+    },
+    {
+      name: 'required status checks section keys',
+      passed: missingRequiredStatusCheckSectionKeys.length === 0 && unexpectedRequiredStatusCheckSectionKeys.length === 0,
+      details: missingRequiredStatusCheckSectionKeys.length === 0 && unexpectedRequiredStatusCheckSectionKeys.length === 0
+        ? `${expectedRequiredStatusCheckSectionKeys.join(', ') || 'none'} only`
+        : `missing: ${missingRequiredStatusCheckSectionKeys.join(', ') || 'none'}; unexpected: ${unexpectedRequiredStatusCheckSectionKeys.join(', ') || 'none'}; observed: ${observedRequiredStatusCheckSectionKeys.join(', ') || 'none'}; allowed: ${expectedRequiredStatusCheckSectionKeys.join(', ') || 'none'}`
     },
     {
       name: 'required status check object keys',
@@ -925,6 +945,7 @@ module.exports = {
   EXPECTED_ACTIVE_RULESET_RULE_TYPES,
   EXPECTED_REQUIRED_STATUS_CHECKS,
   EXPECTED_REQUIRED_STATUS_CHECK_APP_ID,
+  EXPECTED_REQUIRED_STATUS_CHECK_SECTION_KEYS,
   EXPECTED_REQUIRED_STATUS_CHECK_KEYS,
   ADVISORY_STATUS_CHECKS,
   ALLOWED_EXECUTABLE_COMMANDS,
@@ -940,6 +961,7 @@ module.exports = {
   fetchBranchRulesets,
   requiredApprovingReviewCount,
   requiredStatusContexts,
+  requiredStatusCheckSectionKeys,
   requiredStatusCheckAppBindings,
   requiredStatusCheckObjectKeys,
   rulesetConditionKeys,
