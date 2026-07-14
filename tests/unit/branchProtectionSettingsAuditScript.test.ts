@@ -16,6 +16,7 @@ const {
   EXPECTED_REQUIRED_STATUS_CHECK_APP_ID,
   EXPECTED_REQUIRED_STATUS_CHECK_SECTION_KEYS,
   EXPECTED_REQUIRED_STATUS_CHECK_KEYS,
+  EXPECTED_PULL_REQUEST_REVIEW_SECTION_KEYS,
   isAllowedExecutableCommand,
   isValidBranchName,
   isValidRepoSlug,
@@ -24,6 +25,7 @@ const {
   buildGhApiArgs,
   buildGhRulesetDetailApiArgs,
   requiredApprovingReviewCount,
+  pullRequestReviewSectionKeys,
   requiredStatusContexts,
   requiredStatusCheckSectionKeys,
   requiredStatusCheckAppBindings,
@@ -55,6 +57,7 @@ const {
   EXPECTED_REQUIRED_STATUS_CHECK_APP_ID: number;
   EXPECTED_REQUIRED_STATUS_CHECK_SECTION_KEYS: string[];
   EXPECTED_REQUIRED_STATUS_CHECK_KEYS: string[];
+  EXPECTED_PULL_REQUEST_REVIEW_SECTION_KEYS: string[];
   isAllowedExecutableCommand: (command: string) => boolean;
   isValidBranchName: (branch: string) => boolean;
   isValidRepoSlug: (repo: string) => boolean;
@@ -78,6 +81,7 @@ const {
   buildGhApiArgs: (repo: string, branch: string, resource: string) => string[];
   buildGhRulesetDetailApiArgs: (repo: string, rulesetId: number | string) => string[];
   requiredApprovingReviewCount: (protection: Record<string, unknown>) => number;
+  pullRequestReviewSectionKeys: (protection: Record<string, unknown>) => string[];
   requiredStatusContexts: (protection: Record<string, unknown>) => string[];
   requiredStatusCheckSectionKeys: (protection: Record<string, unknown>) => string[];
   requiredStatusCheckAppBindings: (protection: Record<string, unknown>) => Array<{ context: string; appId: number | null }>;
@@ -105,6 +109,7 @@ const {
       expectedRequiredChecks?: string[];
       expectedRequiredStatusCheckSectionKeys?: string[];
       expectedRequiredStatusCheckKeys?: string[];
+      expectedPullRequestReviewSectionKeys?: string[];
       advisoryChecks?: string[];
       requireAdvisory?: boolean;
       requireReview?: boolean;
@@ -185,6 +190,7 @@ function protection(overrides: ProtectionOverrides = {}) {
     required_signatures: { enabled: overrides.requiredSignedCommits ?? false },
     block_creations: { enabled: overrides.blockCreations ?? false },
     required_pull_request_reviews: {
+      url: `https://api.github.com/repos/${DEFAULT_REPO}/branches/develop/protection/required_pull_request_reviews`,
       dismiss_stale_reviews: overrides.dismissStaleReviews ?? false,
       require_code_owner_reviews: overrides.requireCodeOwnerReviews ?? false,
       require_last_push_approval: overrides.requireLastPushApproval ?? false,
@@ -321,6 +327,30 @@ describe('branch protection audit evaluation', () => {
     ).toEqual(['Build, Test, Package', 'Windows Unit Tests']);
     expect(requiredApprovingReviewCount(protection())).toBe(0);
     expect(requiredApprovingReviewCount(protection({ requiredApprovingReviewCount: 2 }))).toBe(2);
+    expect(EXPECTED_PULL_REQUEST_REVIEW_SECTION_KEYS).toEqual([
+      'dismiss_stale_reviews',
+      'require_code_owner_reviews',
+      'require_last_push_approval',
+      'required_approving_review_count',
+      'url'
+    ]);
+    expect(pullRequestReviewSectionKeys({
+      required_pull_request_reviews: {
+        url: 'https://example.test/reviews',
+        dismiss_stale_reviews: false,
+        require_code_owner_reviews: false,
+        require_last_push_approval: false,
+        required_approving_review_count: 0,
+        node_id: 'unexpected'
+      }
+    })).toEqual([
+      'dismiss_stale_reviews',
+      'node_id',
+      'require_code_owner_reviews',
+      'require_last_push_approval',
+      'required_approving_review_count',
+      'url'
+    ]);
     expect(requiredStatusCheckAppBindings(protection())).toEqual([
       { context: 'Build, Test, Package', appId: EXPECTED_REQUIRED_STATUS_CHECK_APP_ID },
       { context: 'Integration Host (Linux)', appId: EXPECTED_REQUIRED_STATUS_CHECK_APP_ID },
@@ -381,6 +411,7 @@ describe('branch protection audit evaluation', () => {
       'required status check app bindings',
       'required status checks section keys',
       'required status check object keys',
+      'pull request review section keys',
       'admin enforcement',
       'force pushes disabled',
       'branch deletions disabled',
@@ -415,6 +446,10 @@ describe('branch protection audit evaluation', () => {
     expect(result.checks.find((check) => check.name === 'required status check object keys')).toMatchObject({
       passed: true,
       details: 'app_id, context only'
+    });
+    expect(result.checks.find((check) => check.name === 'pull request review section keys')).toMatchObject({
+      passed: true,
+      details: 'dismiss_stale_reviews, require_code_owner_reviews, require_last_push_approval, required_approving_review_count, url only'
     });
     expect(result.checks.find((check) => check.name === 'unexpected active branch rulesets')).toMatchObject({
       passed: true,
@@ -852,6 +887,54 @@ describe('branch protection audit evaluation', () => {
     });
   });
 
+  it('fails closed when pull request review section keys drift', () => {
+    const baseProtection = protection();
+    const result = evaluateBranchProtection({
+      protection: {
+        ...baseProtection,
+        required_pull_request_reviews: {
+          ...baseProtection.required_pull_request_reviews,
+          node_id: 'unexpected-section-key'
+        }
+      },
+      rulesets: branchRulesets()
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.checks.find((check) => check.name === 'pull request review section keys')).toMatchObject({
+      passed: false,
+      details: 'missing: none; unexpected: node_id; observed: dismiss_stale_reviews, node_id, require_code_owner_reviews, require_last_push_approval, required_approving_review_count, url; allowed: dismiss_stale_reviews, require_code_owner_reviews, require_last_push_approval, required_approving_review_count, url'
+    });
+
+    const hardened = evaluateBranchProtection(
+      {
+        protection: {
+          ...baseProtection,
+          required_pull_request_reviews: {
+            ...baseProtection.required_pull_request_reviews,
+            node_id: 'expected-section-key'
+          }
+        },
+        rulesets: branchRulesets()
+      },
+      {
+        expectedPullRequestReviewSectionKeys: [
+          'dismiss_stale_reviews',
+          'node_id',
+          'require_code_owner_reviews',
+          'require_last_push_approval',
+          'required_approving_review_count',
+          'url'
+        ]
+      }
+    );
+
+    expect(hardened.checks.find((check) => check.name === 'pull request review section keys')).toMatchObject({
+      passed: true,
+      details: 'dismiss_stale_reviews, node_id, require_code_owner_reviews, require_last_push_approval, required_approving_review_count, url only'
+    });
+  });
+
   it('fails closed when unexpected required status contexts drift', () => {
     const result = evaluateBranchProtection({
       protection: protection({ contexts: [...EXPECTED_REQUIRED_STATUS_CHECKS, 'Surprise Gate'] }),
@@ -1284,7 +1367,7 @@ describe('branch protection audit main', () => {
       branch: DEFAULT_BRANCH,
       success: true
     });
-    expect(output.checks).toHaveLength(29);
+    expect(output.checks).toHaveLength(30);
     expect(output.notices.length).toBeGreaterThan(0);
     expect(output.branches).toBeUndefined();
   });
