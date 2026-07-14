@@ -653,7 +653,22 @@ function markdownCell(value) {
   return String(value || '-').replace(/\r?\n/g, ' ').replace(/\\/g, '\\\\').replace(/\|/g, '\\|');
 }
 
-function renderStandardsEvidenceSummary(summary) {
+function profilesMatchCompleteSet(profiles, completeProfiles) {
+  return Array.isArray(profiles)
+    && Array.isArray(completeProfiles)
+    && profiles.length > 0
+    && profiles.length === completeProfiles.length
+    && profiles.every((profile, index) => profile === completeProfiles[index]);
+}
+
+function renderProfileList(profiles, completeProfiles) {
+  if (!Array.isArray(profiles) || profiles.length === 0) {
+    return 'none';
+  }
+  return profilesMatchCompleteSet(profiles, completeProfiles) ? 'all profiles' : profiles.join(', ');
+}
+
+function renderStandardsEvidenceSummary(summary, completeProfiles = []) {
   if (!Array.isArray(summary) || summary.length === 0) {
     return [];
   }
@@ -664,7 +679,7 @@ function renderStandardsEvidenceSummary(summary) {
   for (const row of summary) {
     const label = row.summary || row.id || 'Retained evidence';
     const standards = Array.isArray(row.standards) && row.standards.length > 0 ? row.standards.join('/') : 'none';
-    const profiles = Array.isArray(row.profiles) && row.profiles.length > 0 ? row.profiles.join(', ') : 'none';
+    const profiles = renderProfileList(row.profiles, completeProfiles);
     const paths = Array.isArray(row.evidencePaths) && row.evidencePaths.length > 0 ? row.evidencePaths.map(markdownCell).join('<br>') : '-';
     lines.push(`| ${markdownCell(label)} | ${markdownCell(standards)} | ${markdownCell(profiles)} | ${paths} |`);
   }
@@ -685,7 +700,7 @@ function renderStandardsScoreFileLegend(legend) {
   return lines;
 }
 
-function renderStandardsGateStrengthSummary(summary) {
+function renderStandardsGateStrengthSummary(summary, completeProfiles = []) {
   if (!Array.isArray(summary) || summary.length === 0) {
     return [];
   }
@@ -696,13 +711,13 @@ function renderStandardsGateStrengthSummary(summary) {
   for (const row of summary) {
     const label = row.summary || row.id || 'Retained gate strength';
     const standards = Array.isArray(row.standards) && row.standards.length > 0 ? row.standards.join('/') : 'none';
-    const profiles = Array.isArray(row.profiles) && row.profiles.length > 0 ? row.profiles.join(', ') : 'none';
+    const profiles = renderProfileList(row.profiles, completeProfiles);
     lines.push(`| ${markdownCell(label)} | ${markdownCell(standards)} | ${markdownCell(profiles)} |`);
   }
   return lines;
 }
 
-function renderStandardsGateDetailSummary(summary) {
+function renderStandardsGateDetailSummary(summary, completeProfiles = []) {
   if (!Array.isArray(summary) || summary.length === 0) {
     return [];
   }
@@ -713,7 +728,7 @@ function renderStandardsGateDetailSummary(summary) {
   for (const row of summary) {
     const standards = Array.isArray(row.standards) && row.standards.length > 0 ? row.standards.join('/') : 'none';
     const missingProof = Array.isArray(row.missingProof) && row.missingProof.length > 0 ? row.missingProof.map(markdownCell).join('<br>') : '-';
-    const profiles = Array.isArray(row.profiles) && row.profiles.length > 0 ? row.profiles.join(', ') : 'none';
+    const profiles = renderProfileList(row.profiles, completeProfiles);
     lines.push(`| ${markdownCell(row.gate || 'unknown')} | ${markdownCell(row.status || 'UNKNOWN')} | ${markdownCell(row.confidence || 'unknown')} | ${markdownCell(standards)} | ${markdownCell(row.basis || '-')} | ${missingProof} | ${markdownCell(profiles)} |`);
   }
   return lines;
@@ -869,6 +884,7 @@ function renderMarkdown(context) {
     lines.push(...standardsCoverageLines);
   }
   const standardsScoreFileLegend = buildStandardsScoreFileLegend(profileSummaries);
+  const standardsProfileSet = standardsScoreFileLegend.map((row) => row.profile);
   const standardsScoreFileLegendLines = renderStandardsScoreFileLegend(standardsScoreFileLegend);
   if (standardsScoreFileLegendLines.length > 0) {
     lines.push('');
@@ -877,7 +893,7 @@ function renderMarkdown(context) {
     lines.push(...standardsScoreFileLegendLines);
   }
   const standardsEvidenceSummary = buildStandardsEvidenceSummary(profileSummaries);
-  const standardsEvidenceLines = renderStandardsEvidenceSummary(standardsEvidenceSummary);
+  const standardsEvidenceLines = renderStandardsEvidenceSummary(standardsEvidenceSummary, standardsProfileSet);
   if (standardsEvidenceLines.length > 0) {
     lines.push('');
     lines.push('## Standards Evidence Summary');
@@ -885,7 +901,7 @@ function renderMarkdown(context) {
     lines.push(...standardsEvidenceLines);
   }
   const standardsGateStrengthSummary = buildStandardsGateStrengthSummary(profileSummaries);
-  const standardsGateStrengthLines = renderStandardsGateStrengthSummary(standardsGateStrengthSummary);
+  const standardsGateStrengthLines = renderStandardsGateStrengthSummary(standardsGateStrengthSummary, standardsProfileSet);
   if (standardsGateStrengthLines.length > 0) {
     lines.push('');
     lines.push('## Standards Gate Strength Summary');
@@ -893,7 +909,7 @@ function renderMarkdown(context) {
     lines.push(...standardsGateStrengthLines);
   }
   const standardsGateDetailSummary = buildStandardsGateDetailSummary(profileSummaries);
-  const standardsGateDetailLines = renderStandardsGateDetailSummary(standardsGateDetailSummary);
+  const standardsGateDetailLines = renderStandardsGateDetailSummary(standardsGateDetailSummary, standardsProfileSet);
   if (standardsGateDetailLines.length > 0) {
     lines.push('');
     lines.push('## Standards Gate Detail Summary');
