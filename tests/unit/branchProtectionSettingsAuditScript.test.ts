@@ -10,6 +10,7 @@ const {
   EXPECTED_ACTIVE_RULESET_SOURCE_TYPE,
   EXPECTED_ACTIVE_RULESET_CONDITION_KEYS,
   EXPECTED_ACTIVE_RULESET_REF_NAME_KEYS,
+  EXPECTED_ACTIVE_RULESET_SECTION_KEYS,
   EXPECTED_ACTIVE_RULESET_RULE_KEYS,
   EXPECTED_ACTIVE_RULESET_RULE_TYPES,
   EXPECTED_BRANCH_PROTECTION_FLAG_SECTION_KEYS,
@@ -36,6 +37,7 @@ const {
   requiredStatusCheckObjectKeys,
   rulesetConditionKeys,
   rulesetRefNameKeys,
+  rulesetSectionKeys,
   rulesetTargetEnforcementSummaries,
   activeRulesetSummaries,
   rulesetRuleKeys,
@@ -55,6 +57,7 @@ const {
   EXPECTED_ACTIVE_RULESET_SOURCE_TYPE: string;
   EXPECTED_ACTIVE_RULESET_CONDITION_KEYS: string[];
   EXPECTED_ACTIVE_RULESET_REF_NAME_KEYS: string[];
+  EXPECTED_ACTIVE_RULESET_SECTION_KEYS: string[];
   EXPECTED_ACTIVE_RULESET_RULE_KEYS: string[];
   EXPECTED_ACTIVE_RULESET_RULE_TYPES: string[];
   EXPECTED_BRANCH_PROTECTION_FLAG_SECTION_KEYS: Record<string, string[]>;
@@ -99,11 +102,13 @@ const {
   requiredStatusCheckObjectKeys: (protection: Record<string, unknown>) => string[];
   rulesetConditionKeys: (ruleset: unknown) => string[];
   rulesetRefNameKeys: (ruleset: unknown) => string[];
+  rulesetSectionKeys: (ruleset: unknown) => string[];
   rulesetTargetEnforcementSummaries: (rulesets: unknown[]) => Array<{ name: string; target: string; enforcement: string }>;
   activeRulesetSummaries: (rulesets: unknown[]) => Array<{
     name: string;
     sourceType: string;
     source: string;
+    sectionKeys: string[];
     conditionKeys: string[];
     refNameKeys: string[];
     ruleCount: number;
@@ -139,6 +144,7 @@ const {
       expectedActiveRulesetEnforcement?: string;
       expectedActiveRulesetSourceType?: string;
       expectedActiveRulesetSource?: string;
+      expectedActiveRulesetSectionKeys?: string[];
       expectedActiveRulesetConditionKeys?: string[];
       expectedActiveRulesetRefNameKeys?: string[];
       expectedActiveRulesetRuleKeys?: string[];
@@ -233,18 +239,28 @@ function captureWrite() {
 }
 
 function branchRulesets(names = [...EXPECTED_ACTIVE_BRANCH_RULESETS]) {
-  return names.map((name, index) => ({
-    id: 18415000 + index,
-    name,
-    target: EXPECTED_ACTIVE_RULESET_TARGET,
-    enforcement: EXPECTED_ACTIVE_RULESET_ENFORCEMENT,
-    source_type: EXPECTED_ACTIVE_RULESET_SOURCE_TYPE,
-    source: DEFAULT_REPO,
-    conditions: { ref_name: { include: [], exclude: [] } },
-    rules: EXPECTED_ACTIVE_RULESET_RULE_TYPES.map((type) => ({ type })),
-    bypass_actors: [],
-    current_user_can_bypass: 'never'
-  }));
+  return names.map((name, index) => {
+    const rulesetId = 18415000 + index;
+    return {
+      id: rulesetId,
+      node_id: `RRS_${rulesetId}`,
+      name,
+      target: EXPECTED_ACTIVE_RULESET_TARGET,
+      enforcement: EXPECTED_ACTIVE_RULESET_ENFORCEMENT,
+      source_type: EXPECTED_ACTIVE_RULESET_SOURCE_TYPE,
+      source: DEFAULT_REPO,
+      conditions: { ref_name: { include: [], exclude: [] } },
+      rules: EXPECTED_ACTIVE_RULESET_RULE_TYPES.map((type) => ({ type })),
+      bypass_actors: [],
+      current_user_can_bypass: 'never',
+      created_at: '2026-07-14T00:00:00Z',
+      updated_at: '2026-07-14T00:00:00Z',
+      _links: {
+        self: { href: `https://api.github.com/repos/${DEFAULT_REPO}/rulesets/${rulesetId}` },
+        html: { href: `https://github.com/${DEFAULT_REPO}/rules/${rulesetId}` }
+      }
+    };
+  });
 }
 
 function branchRulesetResource(path: string) {
@@ -476,6 +492,27 @@ describe('branch protection audit evaluation', () => {
       'include',
       'update'
     ]);
+    expect(EXPECTED_ACTIVE_RULESET_SECTION_KEYS).toEqual([
+      '_links',
+      'bypass_actors',
+      'conditions',
+      'created_at',
+      'current_user_can_bypass',
+      'enforcement',
+      'id',
+      'name',
+      'node_id',
+      'rules',
+      'source',
+      'source_type',
+      'target',
+      'updated_at'
+    ]);
+    expect(rulesetSectionKeys({ id: 1, name: 'develop', html_url: 'unexpected' })).toEqual([
+      'html_url',
+      'id',
+      'name'
+    ]);
     expect(EXPECTED_ACTIVE_RULESET_RULE_KEYS).toEqual(['type']);
     expect(rulesetRuleKeys({ rules: [{ type: 'deletion', parameters: {} }, { type: 'non_fast_forward' }] })).toEqual([
       'parameters',
@@ -514,6 +551,7 @@ describe('branch protection audit evaluation', () => {
       'duplicate active branch rulesets',
       'active branch ruleset target/enforcement',
       'active branch ruleset sources',
+      'active branch ruleset section keys',
       'active branch ruleset condition keys',
       'active branch ruleset ref_name keys',
       'active branch ruleset rule count',
@@ -564,6 +602,10 @@ describe('branch protection audit evaluation', () => {
     expect(result.checks.find((check) => check.name === 'active branch ruleset sources')).toMatchObject({
       passed: true,
       details: 'Repository LabVIEW-Community-CI-CD/vi-history-suite on develop, main'
+    });
+    expect(result.checks.find((check) => check.name === 'active branch ruleset section keys')).toMatchObject({
+      passed: true,
+      details: '_links, bypass_actors, conditions, created_at, current_user_can_bypass, enforcement, id, name, node_id, rules, source, source_type, target, updated_at only on develop, main'
     });
     expect(result.checks.find((check) => check.name === 'active branch ruleset condition keys')).toMatchObject({
       passed: true,
@@ -622,6 +664,22 @@ describe('branch protection audit evaluation', () => {
         name: 'develop',
         sourceType: 'Repository',
         source: DEFAULT_REPO,
+        sectionKeys: [
+          '_links',
+          'bypass_actors',
+          'conditions',
+          'created_at',
+          'current_user_can_bypass',
+          'enforcement',
+          'id',
+          'name',
+          'node_id',
+          'rules',
+          'source',
+          'source_type',
+          'target',
+          'updated_at'
+        ],
         conditionKeys: ['ref_name'],
         refNameKeys: ['exclude', 'include'],
         ruleCount: 2,
@@ -728,6 +786,57 @@ describe('branch protection audit evaluation', () => {
     expect(result.checks.find((check) => check.name === 'active branch ruleset sources')).toMatchObject({
       passed: false,
       details: 'develop source Organization LabVIEW-Community-CI-CD; expected Repository LabVIEW-Community-CI-CD/vi-history-suite'
+    });
+  });
+
+  it('fails closed when active branch rulesets use unexpected section keys', () => {
+    const [developRuleset, mainRuleset] = branchRulesets();
+    const result = evaluateBranchProtection({
+      protection: protection(),
+      rulesets: [
+        { ...developRuleset, html_url: 'https://example.test/unexpected' },
+        mainRuleset
+      ]
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.checks.find((check) => check.name === 'active branch ruleset section keys')).toMatchObject({
+      passed: false,
+      details: 'develop missing: none; unexpected: html_url; observed: _links, bypass_actors, conditions, created_at, current_user_can_bypass, enforcement, html_url, id, name, node_id, rules, source, source_type, target, updated_at; allowed: _links, bypass_actors, conditions, created_at, current_user_can_bypass, enforcement, id, name, node_id, rules, source, source_type, target, updated_at'
+    });
+
+    const hardened = evaluateBranchProtection(
+      {
+        protection: protection(),
+        rulesets: [
+          { ...developRuleset, html_url: 'https://example.test/expected' },
+          { ...mainRuleset, html_url: 'https://example.test/expected' }
+        ]
+      },
+      {
+        expectedActiveRulesetSectionKeys: [
+          '_links',
+          'bypass_actors',
+          'conditions',
+          'created_at',
+          'current_user_can_bypass',
+          'enforcement',
+          'html_url',
+          'id',
+          'name',
+          'node_id',
+          'rules',
+          'source',
+          'source_type',
+          'target',
+          'updated_at'
+        ]
+      }
+    );
+
+    expect(hardened.checks.find((check) => check.name === 'active branch ruleset section keys')).toMatchObject({
+      passed: true,
+      details: '_links, bypass_actors, conditions, created_at, current_user_can_bypass, enforcement, html_url, id, name, node_id, rules, source, source_type, target, updated_at only on develop, main'
     });
   });
 
@@ -1559,7 +1668,7 @@ describe('branch protection audit main', () => {
       branch: DEFAULT_BRANCH,
       success: true
     });
-    expect(output.checks).toHaveLength(32);
+    expect(output.checks).toHaveLength(33);
     expect(output.notices.length).toBeGreaterThan(0);
     expect(output.branches).toBeUndefined();
   });
