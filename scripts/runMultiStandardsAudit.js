@@ -416,6 +416,18 @@ function summarizeRetainedStandardsCoverage(payload) {
   return coverage;
 }
 
+function summarizeRetainedStandardsEvidence(payload) {
+  if (!payload || typeof payload !== 'object' || !Array.isArray(payload.top_strengths)) {
+    return [];
+  }
+  return payload.top_strengths.filter((item) => item && typeof item === 'object').map((item) => ({
+    id: typeof item.id === 'string' ? item.id : undefined,
+    summary: typeof item.summary === 'string' ? item.summary : undefined,
+    standards: arrayOfStrings(item.standards),
+    evidencePaths: arrayOfStrings(item.evidence_paths)
+  })).filter((item) => item.summary || item.evidencePaths.length > 0 || item.standards.length > 0);
+}
+
 function mergeGateDetails(scorecardDetails, retainedDetails) {
   const merged = { ...scorecardDetails };
   for (const [gate, retainedDetail] of Object.entries(retainedDetails || {})) {
@@ -465,11 +477,15 @@ function summarizeProfileStep(step, options = {}) {
     const retainedScore = readProfileScore(options.outputDir, step, options.deps);
     const retainedDetails = summarizeRetainedGateScore(retainedScore);
     const standardsCoverage = summarizeRetainedStandardsCoverage(retainedScore);
+    const standardsEvidence = summarizeRetainedStandardsEvidence(retainedScore);
     summary.scorecardDetails = mergeGateDetails(summarizeGateScorecard(step.stdout || ''), retainedDetails);
     if (Object.keys(standardsCoverage).length > 0) {
       summary.standardsCoverage = standardsCoverage;
     }
-    if (Object.keys(retainedDetails).length > 0 || Object.keys(standardsCoverage).length > 0) {
+    if (standardsEvidence.length > 0) {
+      summary.standardsEvidence = standardsEvidence;
+    }
+    if (Object.keys(retainedDetails).length > 0 || Object.keys(standardsCoverage).length > 0 || standardsEvidence.length > 0) {
       summary.scoreFile = path.posix.join(step.saveDir, 'target', 'score.json');
     }
   }
@@ -486,6 +502,57 @@ function buildStandardsCoverageMatrix(profiles) {
     scoreFile: profile.scoreFile,
     areas: profile.standardsCoverage
   }));
+}
+
+function buildStandardsEvidenceSummary(profiles) {
+  const rowsByKey = new Map();
+  for (const profile of profiles) {
+    for (const item of profile.standardsEvidence || []) {
+      const evidencePaths = Array.isArray(item.evidencePaths) ? item.evidencePaths : [];
+      if (evidencePaths.length === 0) {
+        continue;
+      }
+      const standards = arrayOfStrings(item.standards);
+      const key = [item.id || item.summary || 'evidence', standards.join('/'), evidencePaths.join('\u0000')].join('\u0001');
+      const existing = rowsByKey.get(key);
+      if (existing) {
+        if (!existing.profiles.includes(profile.name)) {
+          existing.profiles.push(profile.name);
+        }
+        continue;
+      }
+      rowsByKey.set(key, {
+        id: item.id,
+        summary: item.summary,
+        standards,
+        evidencePaths,
+        profiles: [profile.name]
+      });
+    }
+  }
+  return Array.from(rowsByKey.values());
+}
+
+function markdownCell(value) {
+  return String(value || '-').replace(/\r?\n/g, ' ').replace(/\|/g, '\\|');
+}
+
+function renderStandardsEvidenceSummary(summary) {
+  if (!Array.isArray(summary) || summary.length === 0) {
+    return [];
+  }
+  const lines = [
+    '| Evidence | Standards | Profiles | Paths |',
+    '| --- | --- | --- | --- |'
+  ];
+  for (const row of summary) {
+    const label = row.summary || row.id || 'Retained evidence';
+    const standards = Array.isArray(row.standards) && row.standards.length > 0 ? row.standards.join('/') : 'none';
+    const profiles = Array.isArray(row.profiles) && row.profiles.length > 0 ? row.profiles.join(', ') : 'none';
+    const paths = Array.isArray(row.evidencePaths) && row.evidencePaths.length > 0 ? row.evidencePaths.map(markdownCell).join('<br>') : '-';
+    lines.push(`| ${markdownCell(label)} | ${markdownCell(standards)} | ${markdownCell(profiles)} | ${paths} |`);
+  }
+  return lines;
 }
 
 function renderStandardsCoverageCell(detail) {
@@ -640,6 +707,14 @@ function renderMarkdown(context) {
     lines.push('');
     lines.push(...standardsCoverageLines);
   }
+  const standardsEvidenceSummary = buildStandardsEvidenceSummary(profileSummaries);
+  const standardsEvidenceLines = renderStandardsEvidenceSummary(standardsEvidenceSummary);
+  if (standardsEvidenceLines.length > 0) {
+    lines.push('');
+    lines.push('## Standards Evidence Summary');
+    lines.push('');
+    lines.push(...standardsEvidenceLines);
+  }
   const gateDetailNotes = renderGateDetailNotes(profileSummaries);
   if (gateDetailNotes.length > 0) {
     lines.push('');
@@ -706,6 +781,7 @@ function runMultiStandardsAudit(argv = process.argv.slice(2), deps = {}) {
       success: imageInspect.status === 0 && directChecks.every(directStepIsClean) && profiles.every((step) => step.status === 0)
     };
     summary.standardsCoverageMatrix = buildStandardsCoverageMatrix(summary.profiles);
+    summary.standardsEvidenceSummary = buildStandardsEvidenceSummary(summary.profiles);
     writeJson(path.join(outputDir, 'audit-summary.json'), summary, deps);
     writeText(path.join(outputDir, 'audit-summary.md'), markdown, deps);
     return { exitCode: summary.success ? 0 : 1, markdown, context: summary };
@@ -746,9 +822,11 @@ module.exports = {
   summarizeGateScorecard,
   summarizeRetainedGateScore,
   summarizeRetainedStandardsCoverage,
+  summarizeRetainedStandardsEvidence,
   summarizeDirectStep,
   summarizeProfileStep,
   buildStandardsCoverageMatrix,
+  buildStandardsEvidenceSummary,
   renderMarkdown,
   runMultiStandardsAudit,
   main
