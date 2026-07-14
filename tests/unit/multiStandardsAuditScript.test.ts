@@ -119,6 +119,9 @@ describe('multi standards audit script', () => {
     const options = { image: 'registry/image:tag', requirementsSpecScope: 'system' };
     const directSteps = directDockerSteps(options);
     const profileSteps = profileDockerSteps(options);
+    const quickTriageSaveDirIndex = profileSteps[0].args.indexOf('--save-dir');
+    const portfolioStep = profileSteps.find((step) => step.name === PORTFOLIO_PROFILE);
+    const portfolioSaveDirIndex = portfolioStep?.args.indexOf('--save-dir') ?? -1;
 
     expect(directSteps.map((step) => step.name)).toEqual([
       'requirements-quality-system',
@@ -127,7 +130,9 @@ describe('multi standards audit script', () => {
     expect(directSteps[0].args).toContain('scripts/requirements_quality_check.py');
     expect(directSteps[1].args).toContain('scripts/external_user_information_check.py');
     expect(profileSteps.map((step) => step.name)).toEqual([...GATE_SCORECARD_PROFILES, PORTFOLIO_PROFILE]);
-    expect(profileSteps.find((step) => step.name === PORTFOLIO_PROFILE)?.args).toContain('portfolio-table');
+    expect(portfolioStep?.args).toContain('portfolio-table');
+    expect(profileSteps[0].args[quickTriageSaveDirIndex + 1]).toBe('/out/quick-triage');
+    expect(portfolioStep?.args[portfolioSaveDirIndex + 1]).toBe('/out/portfolio-review');
     expect(replaceAuditMounts(profileSteps[0].args, '/snapshot', '/out')).toContain('/snapshot:/target');
     expect(replaceAuditMounts(profileSteps[0].args, '/snapshot', '/out')).toContain('/out:/out');
   });

@@ -188,7 +188,7 @@ function profileDockerSteps(options) {
   const gateSteps = GATE_SCORECARD_PROFILES.map((profile) => ({
     name: profile,
     file: `${profile}-gate-scorecard.txt`,
-    saveDir: `${profile}/target`,
+    saveDir: profile,
     output: 'gate-scorecard'
   }));
   const portfolioStep = {
