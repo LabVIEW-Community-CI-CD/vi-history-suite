@@ -187,6 +187,10 @@ function disabledFlag(value) {
   return Boolean(value && value.enabled === false);
 }
 
+function nullableDisabledFlag(value) {
+  return value === null || value === undefined || disabledFlag(value);
+}
+
 function requiredApprovingReviewCount(protection) {
   const reviews = protection && protection.required_pull_request_reviews;
   const count = Number(reviews && reviews.required_approving_review_count);
@@ -352,6 +356,11 @@ function evaluateBranchProtection(settings, options = {}) {
       name: 'fork syncing disabled',
       passed: disabledFlag(protection.allow_fork_syncing),
       details: disabledFlag(protection.allow_fork_syncing) ? 'disabled' : 'enabled or unavailable'
+    },
+    {
+      name: 'required deployments disabled',
+      passed: nullableDisabledFlag(protection.required_deployments),
+      details: nullableDisabledFlag(protection.required_deployments) ? 'disabled' : 'enabled or unavailable'
     },
     {
       name: 'active branch rulesets',
