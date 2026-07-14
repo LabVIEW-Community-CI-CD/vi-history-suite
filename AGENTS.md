@@ -17,7 +17,7 @@ This file provides concise, actionable guidance for AI coding agents working in 
 - Customization-surface edits (`AGENTS.md`, `.github/skills/**`, `.github/prompts/**`, `.github/instructions/**`, `.github/agents/**`): run `npm run customization:audit` before PR handoff and include it in PR evidence validation commands.
 - General implementation and test work: start with `.github/skills/testing-automation/SKILL.md`, then run `npm run check` and `npm test`.
 - First-run/setup questions: start with `.github/skills/onboarding/SKILL.md`.
-- Requirement-verification health at a glance: run `npm run requirements:verify` for the single-pane signal (structural integrity, requirement linkage, criterion citation, coverage risk, mutation); use `npm run requirements:verify:strict` as a local pre-push gate.
+- Requirement-verification health at a glance: run `npm run requirements:verify` for the single-pane signal (structural integrity, requirement linkage, criterion citation, coverage risk, mutation); use `npm run requirements:verify:strict` as a local pre-push gate. When piping `--json`, invoke `node scripts/verifyRequirementsHealth.js --json` directly or run npm with `--silent` so npm's command banner does not precede the JSON.
 
 ### Build & Test Commands
 - **Build:** `npm run compile`
