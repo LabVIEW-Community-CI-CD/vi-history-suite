@@ -2365,6 +2365,86 @@ describe('comparisonReportRuntimeExecution', () => {
     );
   });
 
+  it('retains the retried failure as authoritative when the cold-launch retry also fails (VHS-REQ-148.7)', async () => {
+    // createReadyRecord() is already win32 / host-native / labview-cli.
+    const record = createReadyRecord();
+    const readFile = vi.fn(async (filePath: string) => {
+      if (typeof filePath === 'string' && filePath.endsWith('LabVIEW.ini')) {
+        return 'server.tcp.enabled=True\r\nserver.tcp.port=3364\r\n';
+      }
+      return '';
+    });
+    const pathExists = vi.fn(async () => false);
+    // Attempt 1 loses the VI Server connect race (-350000) so the cold-launch
+    // retry fires; attempt 2 fails with a generic nonzero error (the resident
+    // LabVIEW did not recover). The retried result must be authoritative.
+    const runCommand = vi
+      .fn()
+      .mockResolvedValueOnce({
+        exitCode: 1,
+        stdout: 'LabVIEWCLI started logging in file:  C:\\Temp\\lv.log\nLabVIEW launched successfully.',
+        stderr: [
+          'Error code : -350000',
+          'Error message : LabVIEW CLI: (Hex 0xFFFAA8D0) The CLI for LabVIEW failed to establish a connection with LabVIEW.',
+          'An error occurred while running the LabVIEW CLI.'
+        ].join('\r\n')
+      })
+      .mockResolvedValueOnce({
+        exitCode: 55,
+        stdout: '',
+        stderr: 'Error code : 1055\r\nError message : Object reference is invalid.\r\n'
+      });
+
+    const result = await executeComparisonReport(
+      { record, repositoryRoot: 'C:\\workspace\\repo' },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        materializeSelectedRevisionTree: vi.fn().mockResolvedValue(undefined),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
+        readdir: vi.fn().mockResolvedValue([]) as never,
+        readFile: readFile as never,
+        pathExists: pathExists as never,
+        runCommand,
+        nowIso: vi.fn().mockReturnValue('2026-07-15T09:00:00.000Z'),
+        // Sequenced clock: attempt 1 spans 1000->2000 (1000ms), attempt 2 spans
+        // 2000->5000 (3000ms); the combined duration must be their sum (4000ms).
+        nowMs: vi
+          .fn()
+          .mockReturnValueOnce(1000)
+          .mockReturnValueOnce(2000)
+          .mockReturnValueOnce(2000)
+          .mockReturnValueOnce(5000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32',
+        enforceWindowsHostPreflight: false
+      }
+    );
+
+    // The cold-launch retry still fired (2 attempts), but the second attempt is
+    // authoritative: the final failure is attempt 2's generic classification, not
+    // the first attempt's connection-failed reason.
+    expect(runCommand).toHaveBeenCalledTimes(2);
+    expect(result.record.runtimeExecution.state).toBe('failed');
+    expect(result.record.runtimeExecution.reportExists).toBe(false);
+    expect(result.record.runtimeExecution.exitCode).toBe(55);
+    expect(result.record.runtimeExecution.failureReason).toBe('command-exited-nonzero');
+    // Duration accumulates across both attempts.
+    expect(result.record.runtimeExecution.durationMs).toBe(4000);
+    // The cold-launch recovery note is retained even though the retry failed, so
+    // the evidence records that a one-shot retry was attempted.
+    expect(result.record.runtimeExecution.diagnosticNotes).toContain(
+      'Windows host-native cold-launch retry: the first attempt launched LabVIEW but the VI Server was not ready within the LabVIEW CLI connect window (-350000). Retried once against the now-resident LabVIEW on the same derived VI Server port.'
+    );
+  });
+
   describe('failed execution evidence retention (VHS-REQ-148)', () => {
     it('retains all evidence fields when execution fails with nonzero exit code (VHS-REQ-148.2, VHS-REQ-658.1)', async () => {
       const record = createReadyRecord();
