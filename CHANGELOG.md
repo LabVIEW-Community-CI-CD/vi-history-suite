@@ -46,6 +46,16 @@ This changelog records user-facing release history for `vi-history-suite`.
   as first-class classified signals, including the review URL, title, source,
   and basis in the generated JSON and Markdown assurance-state packet
   (VHS-REQ-615; #1110).
+- Comparisons of **uncommitted working-tree changes** are now **retained in the
+  VI Review Dashboard**. Each uncommitted comparison is saved as a
+  content-addressed snapshot of the exact on-disk bytes that were compared, so
+  it appears in the dashboard as an **"Uncommitted snapshot"** entry alongside
+  committed-revision pairs. Because a re-run would compare whatever is on disk
+  at that later moment, retained snapshots are clearly flagged as **not
+  reproducible**. VI History keeps the most recent snapshots per VI (default
+  5); set `viHistorySuite.comparison.worktreeSnapshotRetentionLimit` to `0` to
+  turn retention off, or to a higher number to keep more
+  (VHS-REQ-641; #1386, #1387, #1388, #1389, #1390, #1391).
 
 ## [1.33.2] - 2026-06-25
 
