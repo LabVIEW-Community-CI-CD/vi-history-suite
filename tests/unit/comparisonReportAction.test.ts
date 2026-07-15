@@ -2555,3 +2555,119 @@ describe('ensureComparisonReportEvidence lifecycle and container-acquisition pat
     expect(persistComparisonReport).not.toHaveBeenCalled();
   });
 });
+
+describe('openPersistedComparisonReportPanel result assembly and render fallback (VHS-REQ-621, VHS-REQ-644)', () => {
+  beforeEach(() => {
+    harness.reset();
+  });
+
+  it('surfaces the full runtime diagnostic and observation field set on the opened result', async () => {
+    const context = harness.createContext();
+    const runtimeSelection = createRuntimeSelection();
+    const executedRecord = createPacketRecord({
+      runtimeSelection,
+      runtimeExecutionState: 'failed',
+      runtimeExecution: {
+        state: 'failed',
+        attempted: true,
+        reportExists: false,
+        failureReason: 'labview-cli-connection-failed',
+        diagnosticReason: 'labview-cli-connection-failed',
+        diagnosticNotes: ['Runtime could not connect to the VI Server.'],
+        diagnosticLogSourcePath: '/tmp/run/labviewcli.log',
+        diagnosticLogArtifactPath: '/workspace/storage/labviewcli.log',
+        doctorSummaryLines: ['Selected provider=host-native; blocked=none'],
+        executable: 'LabVIEWCLI',
+        args: ['-OperationName', 'CreateComparisonReport'],
+        processObservationArtifactPath: '/workspace/storage/process-observation.json',
+        processObservationCapturedAt: '2026-07-15T00:00:00.000Z',
+        processObservationTrigger: 'post-launch',
+        observedProcessNames: ['LabVIEW', 'LabVIEWCLI'],
+        labviewProcessObserved: true,
+        labviewCliProcessObserved: true,
+        lvcompareProcessObserved: false,
+        exitProcessObservationCapturedAt: '2026-07-15T00:01:00.000Z',
+        exitProcessObservationTrigger: 'post-exit',
+        exitObservedProcessNames: ['LabVIEW'],
+        labviewProcessObservedAtExit: true,
+        labviewCliProcessObservedAtExit: false,
+        lvcompareProcessObservedAtExit: false
+      }
+    });
+    const readFile = vi
+      .fn()
+      .mockResolvedValue('<html><body>Packet diagnostics</body></html>');
+    const action = createComparisonReportAction(context as never, {
+      preflightComparisonReport: vi.fn().mockResolvedValue(createPreflight()),
+      locateRuntime: vi.fn().mockResolvedValue(runtimeSelection),
+      persistComparisonReport: vi.fn().mockResolvedValue(createPacketResult(executedRecord)),
+      executeComparisonReport: vi.fn().mockResolvedValue(createPacketResult(executedRecord)),
+      archiveComparisonReportSource: vi.fn().mockResolvedValue(undefined),
+      readFile: readFile as never
+    });
+
+    const result = await action({ model: createModel(), selectedHash: 'c3', baseHash: 'a1' });
+
+    expect(result.outcome).toBe('opened-comparison-report');
+    expect(result.runtimeDiagnosticReason).toBe('labview-cli-connection-failed');
+    expect(result.runtimeDiagnosticNotes).toEqual(['Runtime could not connect to the VI Server.']);
+    expect(result.runtimeDiagnosticLogSourcePath).toBe('/tmp/run/labviewcli.log');
+    expect(result.runtimeDiagnosticLogArtifactPath).toBe('/workspace/storage/labviewcli.log');
+    expect(result.runtimeDoctorSummaryLines).toEqual(['Selected provider=host-native; blocked=none']);
+    expect(result.runtimeExecutable).toBe('LabVIEWCLI');
+    expect(result.runtimeArgs).toEqual(['-OperationName', 'CreateComparisonReport']);
+    expect(result.runtimeProcessObservationArtifactPath).toBe(
+      '/workspace/storage/process-observation.json'
+    );
+    expect(result.runtimeProcessObservationCapturedAt).toBe('2026-07-15T00:00:00.000Z');
+    expect(result.runtimeProcessObservationTrigger).toBe('post-launch');
+    expect(result.runtimeObservedProcessNames).toEqual(['LabVIEW', 'LabVIEWCLI']);
+    expect(result.runtimeLabviewProcessObserved).toBe(true);
+    expect(result.runtimeLabviewCliProcessObserved).toBe(true);
+    expect(result.runtimeLvcompareProcessObserved).toBe(false);
+    expect(result.runtimeExitProcessObservationCapturedAt).toBe('2026-07-15T00:01:00.000Z');
+    expect(result.runtimeExitProcessObservationTrigger).toBe('post-exit');
+    expect(result.runtimeExitObservedProcessNames).toEqual(['LabVIEW']);
+    expect(result.runtimeLabviewProcessObservedAtExit).toBe(true);
+    expect(result.runtimeLabviewCliProcessObservedAtExit).toBe(false);
+    expect(result.runtimeLvcompareProcessObservedAtExit).toBe(false);
+  });
+
+  it('falls back to the packet view when generated-report rendering fails to read the report file', async () => {
+    const context = harness.createContext();
+    const runtimeSelection = createRuntimeSelection();
+    const generatedRecord = createPacketRecord({
+      runtimeSelection,
+      runtimeExecutionState: 'succeeded',
+      runtimeExecution: {
+        state: 'succeeded',
+        attempted: true,
+        reportExists: true
+      }
+    });
+    // The generated-report read fails; the packet read (fallback) succeeds.
+    const readFile = vi.fn(async (targetPath: string) => {
+      if (String(targetPath).includes('report')) {
+        if (String(targetPath).endsWith('.html') && !String(targetPath).includes('packet')) {
+          throw new Error('report file missing');
+        }
+      }
+      return '<html><body>Packet fallback view</body></html>';
+    });
+    const action = createComparisonReportAction(context as never, {
+      preflightComparisonReport: vi.fn().mockResolvedValue(createPreflight()),
+      locateRuntime: vi.fn().mockResolvedValue(runtimeSelection),
+      persistComparisonReport: vi.fn().mockResolvedValue(createPacketResult(generatedRecord)),
+      executeComparisonReport: vi.fn().mockResolvedValue(createPacketResult(generatedRecord)),
+      archiveComparisonReportSource: vi.fn().mockResolvedValue(undefined),
+      readFile: readFile as never
+    });
+
+    const result = await action({ model: createModel(), selectedHash: 'c3', baseHash: 'a1' });
+
+    expect(result.outcome).toBe('opened-comparison-report');
+    // Generated render threw, so the panel degrades to the packet evidence view.
+    expect(result.displayedEvidenceKind).toBe('packet');
+    expect(harness.panels[0]?.webview.html).toContain('Packet fallback view');
+  });
+});
