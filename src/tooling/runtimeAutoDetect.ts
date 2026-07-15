@@ -151,7 +151,7 @@ async function detectDockerCli(
   const rawPath = env.PATH ?? env.Path ?? env.path ?? '';
   const directories = rawPath
     .split(pathSeparator)
-    .map((entry) => entry.trim())
+    .map((entry) => stripSurroundingQuotes(entry.trim()))
     .filter((entry) => entry.length > 0);
 
   for (const directory of directories) {
@@ -173,6 +173,18 @@ async function isFile(fs: RuntimeAutoDetectFs, filePath: string): Promise<boolea
   } catch {
     return false;
   }
+}
+
+// VHS-REQ-616: Windows PATH segments containing spaces are commonly quoted, e.g.
+// `"C:\Program Files\Docker\Docker\resources\bin"`. Node returns the raw quoted
+// string, and joining a quoted directory with a candidate filename yields a path
+// that never stats, so a real Docker install would be missed. Strip one matching
+// pair of surrounding double quotes so the join/stat sees the real directory.
+function stripSurroundingQuotes(entry: string): string {
+  if (entry.length >= 2 && entry.startsWith('"') && entry.endsWith('"')) {
+    return entry.slice(1, -1);
+  }
+  return entry;
 }
 
 async function firstExistingFile(
