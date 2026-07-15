@@ -335,7 +335,8 @@ gate; the cache, recorder, and decoration-resolution logic are covered by
 
 ## Marketplace Release Check
 
-Marketplace publication is tag-only. Create an exact `vX.Y.Z` tag on the
+Marketplace publication is tag-only and runs only from a manual maintainer
+dispatch (no automatic trigger). Create an exact `vX.Y.Z` tag on the
 merged `main` commit after release evidence is complete. The `Marketplace
 Release` workflow verifies the tag, package version, `origin/main`
 reachability, lightweight package checks, pinned VSIX publication, bounded live

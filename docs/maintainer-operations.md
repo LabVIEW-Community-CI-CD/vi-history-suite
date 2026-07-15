@@ -52,7 +52,8 @@ Bootstrap sequence:
 5. Open a pull request from `release/vX.Y.Z` to `main`.
 6. Merge only after CI, review, and release evidence are complete.
 7. Tag the merged `main` commit as `vX.Y.Z`.
-8. Let the `Marketplace Release` workflow publish from that exact tag.
+8. Manually dispatch the `Marketplace Release` workflow on that exact tag
+   (maintainer-only; agents must never dispatch or approve it).
 9. Verify the Marketplace version and links with:
 
    ```powershell
@@ -77,7 +78,7 @@ Bootstrap sequence:
     back-sync branch fails the gate and wastes a CI cycle.
 
 Hotfixes use the same release evidence and tag-only Marketplace publication
-path, but branch from `main` as `hotfix/vX.Y.Z` and back-sync to `develop`
+path (manual maintainer dispatch on the exact tag), but branch from `main` as `hotfix/vX.Y.Z` and back-sync to `develop`
 after publication using the same `head=main` back-sync mechanic described in
 step 10.
 
@@ -104,7 +105,7 @@ Marketplace publishing path.
 
 It must:
 
-- run from an exact `vX.Y.Z` tag or manual dispatch using an exact tag ref
+- run from a manual maintainer `workflow_dispatch` on an exact `vX.Y.Z` tag ref, with no automatic push/tag trigger, and agents must never dispatch or approve it
 - fail closed unless `package.json` version equals the tag without `v`
 - fail closed unless the tagged commit is reachable from `origin/main`
 - run `npm ci`, `npm run check`, `npm test`, and `npm run package`
@@ -219,7 +220,7 @@ Operational guidance:
 | --- | --- | --- |
 | Hosted GitHub CI | Required public merge gate on Ubuntu | Required before `develop` and `main` merges |
 | Branch governance in CI | Source-target branch policy | Required before `main` and `develop` pull requests merge |
-| Marketplace Release workflow | Tag-only Marketplace publication | Required for Marketplace publication |
+| Marketplace Release workflow | Manual-dispatch, tag-only Marketplace publication | Required for Marketplace publication |
 | Codespaces/devcontainer | Primary source-evaluation path | Human/source confidence |
 | Diagnostic test VSIX workflow | Reporter retest package from a trusted ref | Diagnostic evidence only |
 | Maintainer Windows/LabVIEW runner | Trusted installed-user validation | Maintainer evidence only |
@@ -568,7 +569,7 @@ What this evidence proves:
 - a trusted maintainer workflow run executed on the maintainer runner label
 - the run captured factual host/tooling context and trusted-ref gating outcome
 - the run produced or explicitly failed to produce the expected VSIX evidence
-- a protected environment approved tag-only Marketplace publication
+- a protected environment approved tag-only Marketplace publication triggered by manual maintainer dispatch
 - the live Marketplace listing contained the released version after publication
 - optional diagnostic prerelease evidence is unique per workflow run attempt
   and not an edited or clobbered prior release
