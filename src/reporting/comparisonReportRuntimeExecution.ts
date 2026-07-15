@@ -1569,6 +1569,24 @@ async function runHostNativeExecutionWithContext(
     );
   }
 
+  if (shouldAttemptWindowsColdLaunchRecovery(record, initialResult)) {
+    // VHS-REQ-148 (Windows host-native parity): the first attempt launched a cold
+    // LabVIEW that lost the VI Server connect race (-350000) but left LabVIEW
+    // resident and warming. Retry once against the now-resident instance using the
+    // same derived -PortNumber / -LabVIEWPath; do NOT close LabVIEW first (that
+    // would kill the instance the retry connects to). Mirrors the windows-container
+    // in-script retry and the VI-preview cold-launch retry (both one-shot on -350000).
+    const retriedResult = await executeAttempt(2);
+    if (deps.diagnosticsRecorder) {
+      await deps.diagnosticsRecorder.archiveAttemptArtifacts(record, 2);
+    }
+    return buildColdLaunchRetryExecutionResult(
+      initialResult,
+      retriedResult,
+      WINDOWS_COLD_LAUNCH_RECOVERY_NOTE
+    );
+  }
+
   return initialResult;
 }
 
@@ -1726,6 +1744,8 @@ const LINUX_HEADLESS_RECOVERY_NOTE =
   'Attempted Linux headless session reset via LabVIEWCLI CloseLabVIEW after recursive-load diagnosis, then retried the pair once.';
 const WINDOWS_HEADLESS_RECOVERY_NOTE =
   'Attempted Windows headless session reset via LabVIEWCLI CloseLabVIEW after call-by-reference diagnosis, then retried the pair once.';
+const WINDOWS_COLD_LAUNCH_RECOVERY_NOTE =
+  'Windows host-native cold-launch retry: the first attempt launched LabVIEW but the VI Server was not ready within the LabVIEW CLI connect window (-350000). Retried once against the now-resident LabVIEW on the same derived VI Server port.';
 const HEADLESS_SESSION_RESET_STDOUT_FILENAME = 'headless-session-reset-stdout.txt';
 const HEADLESS_SESSION_RESET_STDERR_FILENAME = 'headless-session-reset-stderr.txt';
 const DEFAULT_WINDOWS_LABVIEW_TCP_PORT = 3363;
@@ -2344,6 +2364,28 @@ function shouldAttemptWindowsHeadlessRecovery(
   );
 }
 
+/**
+ * VHS-REQ-148 (Windows host-native parity): a Windows host-native `labview-cli`
+ * compare whose first attempt failed with the cold-launch VI Server connect race
+ * (`labview-cli-connection-failed` / `-350000`) is retried exactly once. Attempt 1
+ * launches LabVIEW and leaves it resident and warming, so attempt 2 connects on the
+ * same derived `-PortNumber`. The windows-container provider (its own in-script
+ * retry) and the Linux paths are deliberately excluded; container/headless failures
+ * are handled by the dedicated recovery branches above.
+ */
+function shouldAttemptWindowsColdLaunchRecovery(
+  record: ComparisonReportPacketRecord,
+  execution: ComparisonReportRuntimeExecution
+): boolean {
+  return (
+    record.runtimeSelection.platform === 'win32' &&
+    record.runtimeSelection.provider === 'host-native' &&
+    record.runtimeSelection.engine === 'labview-cli' &&
+    execution.state === 'failed' &&
+    execution.failureReason === 'labview-cli-connection-failed'
+  );
+}
+
 function wasWindowsHeadlessLabviewCliExecutionRequested(
   record: ComparisonReportPacketRecord,
   execution: ComparisonReportRuntimeExecution
@@ -2558,6 +2600,27 @@ function buildRecoveredExecutionResult(
     headlessSessionResetExitCode: recovery.exitCode,
     headlessSessionResetStdoutFilePath: recovery.stdoutFilePath,
     headlessSessionResetStderrFilePath: recovery.stderrFilePath
+  };
+}
+
+/**
+ * VHS-REQ-148 (Windows host-native parity): combine the initial cold-launch failure
+ * and the warm retry for the Windows host-native `-350000` one-shot retry. Unlike
+ * the headless-session-reset recovery, no CloseLabVIEW command runs (the resident
+ * LabVIEW must survive for the retry to connect), so there are no session-reset
+ * artifacts to attach — only the accumulated duration and the recovery note. The
+ * retried attempt's outcome (succeeded or failed) is authoritative.
+ */
+function buildColdLaunchRetryExecutionResult(
+  initialResult: ComparisonReportRuntimeExecution,
+  retriedResult: ComparisonReportRuntimeExecution,
+  recoveryNote: string
+): ComparisonReportRuntimeExecution {
+  return {
+    ...retriedResult,
+    startedAt: initialResult.startedAt ?? retriedResult.startedAt,
+    durationMs: (initialResult.durationMs ?? 0) + (retriedResult.durationMs ?? 0),
+    diagnosticNotes: mergeDiagnosticNotes(retriedResult.diagnosticNotes, [recoveryNote])
   };
 }
 
