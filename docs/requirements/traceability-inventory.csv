@@ -145,6 +145,7 @@ tests/unit/requirementCriteriaInventory.test.ts,mapped,Yes,Requirement acceptanc
 tests/unit/verifyRequirementsHealth.test.ts,mapped,Yes,Unified requirement verification-health report unit tests (mutation-score aggregation per-requirement health and advisory rendering fixtures); mapped to VHS-REQ-601.
 tests/unit/requirementsManifestExport.test.ts,mapped,Yes,Versioned requirements manifest exporter unit tests (SRS parsing positional criterion ids stable content digest and version/commit stamping fixtures); mapped to VHS-REQ-601.
 tests/unit/riskLedgerScript.test.ts,mapped,Yes,Ranked risk-ledger aggregator unit tests (severity tiers deterministic ranking nextTarget selection parked platform-proof gate JSON markdown schema and output fixtures); mapped to VHS-REQ-601.
+tests/unit/recordRuntimeValidationScript.test.ts,mapped,Yes,Runtime-validation ledger recorder unit tests (track update round-trip fail-closed unknown-track and malformed-version rejection safe ledger path); mapped to VHS-REQ-601.
 tests/unit/mutationWorkflow.test.ts,mapped,Yes,Nightly mutation workflow contract unit tests (schedule dispatch advisory test:mutation invocation and report upload); mapped to VHS-REQ-613.
 tests/unit/customizationGovernanceAuditScript.test.ts,mapped,Yes,Customization governance audit unit tests for AGENTS and customization drift prevention; mapped to VHS-REQ-615.
 tests/unit/multiStandardsAuditScript.test.ts,mapped,Yes,Multi-standard local audit helper unit tests for tracked-snapshot standards evidence; mapped to VHS-REQ-615.
@@ -202,6 +203,7 @@ docs/requirements/syrs.md,mapped,Yes,System requirements specification; mapped t
 docs/requirements/rtm.csv,mapped,Yes,Requirements traceability matrix; mapped through RTM.
 docs/requirements/id-index.csv,mapped,Yes,ID index; mapped through RTM.
 docs/requirements/runtime-validation-ledger.json,mapped,Yes,Committed real-runtime validation freshness ledger read by the risk-ledger runtime-fidelity dimension; mapped to VHS-REQ-601.
+scripts/recordRuntimeValidation.js,mapped,Yes,Runtime-validation ledger recorder; safely records a comparison-runtime track's validated build version into the committed ledger read by the risk-ledger runtime-fidelity dimension; mapped to VHS-REQ-601.
 docs/requirements/copilot-web-issue-generation-prompt.md,mapped,Yes,Copilot web issue generation prompt; mapped through RTM.
 docs/development.md,asset-doc,Yes,Development documentation; mapped through RTM.
 docs/maintainer-operations.md,asset-doc,Yes,Maintainer operations documentation including Marketplace release evidence contract guidance; mapped through RTM including VHS-REQ-609 and VHS-REQ-615.

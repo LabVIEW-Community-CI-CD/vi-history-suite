@@ -317,6 +317,7 @@
     "requirements:manifest": "node scripts/exportRequirementsManifest.js",
     "risk:ledger": "node scripts/buildRiskLedger.js",
     "risk:ledger:strict": "node scripts/buildRiskLedger.js --strict",
+    "runtime:validation:record": "node scripts/recordRuntimeValidation.js",
     "release:readiness": "node scripts/checkReleaseReadiness.js",
     "release:readiness:strict": "node scripts/checkReleaseReadiness.js --strict",
     "verify:preview": "npm run compile && node out/tooling/viPreviewVerifyCli.js",
