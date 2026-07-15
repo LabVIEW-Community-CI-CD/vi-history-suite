@@ -8,6 +8,7 @@ vi.mock('vscode', async () => {
 import type { BuildMultiReportDashboardResult, MultiReportDashboardRecord } from '../../src/dashboard/multiReportDashboard';
 import {
   buildDecisionRecordMissingOrBlockedFacts,
+  buildReviewDecisionRecordArtifactPlan,
   collectDecisionRecordPairwiseReportPaths,
   persistReviewDecisionRecord,
   renderReviewDecisionRecordMarkdown
@@ -305,5 +306,79 @@ describe('review decision records (VHS-REQ-610 supporting evidence)', () => {
       mismatchSummary: expect.stringContaining('requires at least 2 comparison pairs')
     });
     expect(persistDecisionRecord).not.toHaveBeenCalled();
+  });
+});
+
+describe('buildReviewDecisionRecordArtifactPlan', () => {
+  it('nests the decision directory under the dashboard artifact plan ids and derives file paths', () => {
+    const dashboardRecord = createDashboardRecord();
+    const plan = buildReviewDecisionRecordArtifactPlan(
+      '/workspace/storage',
+      dashboardRecord,
+      'SCENARIO-VHS-001',
+      'Reviewer One',
+      '2026-05-04T12:00:00.000Z'
+    );
+
+    expect(plan.scenarioId).toBe('SCENARIO-VHS-001');
+    expect(plan.decisionId).toMatch(/^[0-9a-f]{12}$/);
+    const expectedDir = [
+      '/workspace/storage',
+      'decision-records',
+      'repo',
+      'file',
+      'window',
+      'SCENARIO-VHS-001',
+      plan.decisionId
+    ].join('/');
+    expect(plan.decisionDirectory.replace(/\\/g, '/')).toBe(expectedDir);
+    expect(plan.jsonFilePath.replace(/\\/g, '/')).toBe(`${expectedDir}/decision-record.json`);
+    expect(plan.markdownFilePath.replace(/\\/g, '/')).toBe(`${expectedDir}/decision-record.md`);
+  });
+
+  it('is deterministic for identical inputs and differs when the reviewer changes', () => {
+    const dashboardRecord = createDashboardRecord();
+    const a = buildReviewDecisionRecordArtifactPlan(
+      '/root',
+      dashboardRecord,
+      'SCENARIO-VHS-001',
+      'Reviewer One',
+      '2026-05-04T12:00:00.000Z'
+    );
+    const b = buildReviewDecisionRecordArtifactPlan(
+      '/root',
+      dashboardRecord,
+      'SCENARIO-VHS-001',
+      'Reviewer One',
+      '2026-05-04T12:00:00.000Z'
+    );
+    const c = buildReviewDecisionRecordArtifactPlan(
+      '/root',
+      dashboardRecord,
+      'SCENARIO-VHS-001',
+      'Reviewer Two',
+      '2026-05-04T12:00:00.000Z'
+    );
+    expect(a.decisionId).toBe(b.decisionId);
+    expect(a.decisionId).not.toBe(c.decisionId);
+  });
+
+  it('folds empty commit-window hashes into the decision id without throwing', () => {
+    const dashboardRecord = createDashboardRecord({
+      commitWindow: {
+        commitCount: 3,
+        pairCount: 2,
+        newestHash: undefined,
+        oldestHash: undefined
+      }
+    });
+    const plan = buildReviewDecisionRecordArtifactPlan(
+      '/root',
+      dashboardRecord,
+      'SCENARIO-VHS-001',
+      'Reviewer One',
+      '2026-05-04T12:00:00.000Z'
+    );
+    expect(plan.decisionId).toMatch(/^[0-9a-f]{12}$/);
   });
 });
