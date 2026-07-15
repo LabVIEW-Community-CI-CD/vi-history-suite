@@ -6521,3 +6521,122 @@ describe('rewriteLabviewCliArgsForContainerWorkspace (VHS-REQ-621)', () => {
     expect(result.slice(0, 2)).toEqual(['-OperationName', 'CreateComparisonReport']);
   });
 });
+
+describe('observeWindowsTcpListeners netstat/tasklist observation (VHS-REQ-621, VHS-REQ-623)', () => {
+  // Fake execFile(file, args, options, callback) that answers netstat and
+  // tasklist from canned stdout keyed on the first argument flag.
+  function fakeExecFile(outputs: { netstat: string; tasklist: string }) {
+    return vi.fn(
+      (
+        _file: string,
+        args: readonly string[],
+        _options: unknown,
+        callback: (error: Error | null, stdout: string) => void
+      ) => {
+        const stdout = args[0] === '-nao' ? outputs.netstat : outputs.tasklist;
+        callback(null, stdout);
+      }
+    );
+  }
+
+  it('returns [] without spawning a process for a non-win32 runtime platform', async () => {
+    const execFileImpl = vi.fn();
+    const result = await observeWindowsTcpListeners(
+      { hostPlatform: 'linux', runtimePlatform: 'linux', localPorts: [3363] },
+      { execFileImpl: execFileImpl as never }
+    );
+
+    expect(result).toEqual([]);
+    expect(execFileImpl).not.toHaveBeenCalled();
+  });
+
+  it('returns [] without spawning a process when no valid local ports are requested', async () => {
+    const execFileImpl = vi.fn();
+    const result = await observeWindowsTcpListeners(
+      { hostPlatform: 'win32', runtimePlatform: 'win32', localPorts: [0, -1] },
+      { execFileImpl: execFileImpl as never }
+    );
+
+    expect(result).toEqual([]);
+    expect(execFileImpl).not.toHaveBeenCalled();
+  });
+
+  it('parses netstat listeners, filters to requested ports, and joins PIDs to image names', async () => {
+    const execFileImpl = fakeExecFile({
+      netstat: [
+        '  Proto  Local Address          Foreign Address        State           PID',
+        '  TCP    0.0.0.0:3363           0.0.0.0:0              LISTENING       1234',
+        // A listener on an unrequested port is excluded.
+        '  TCP    0.0.0.0:8080           0.0.0.0:0              LISTENING       9999',
+        // Non-LISTENING rows are ignored.
+        '  TCP    0.0.0.0:5555           10.0.0.1:52000        ESTABLISHED     4321'
+      ].join('\r\n'),
+      tasklist: '"LabVIEW.exe","1234","Console","1","500 K"'
+    });
+
+    const result = await observeWindowsTcpListeners(
+      { hostPlatform: 'win32', runtimePlatform: 'win32', localPorts: [3363] },
+      { execFileImpl: execFileImpl as never }
+    );
+
+    expect(result).toEqual([
+      { localAddress: '0.0.0.0', localPort: 3363, pid: 1234, processName: 'LabVIEW.exe' }
+    ]);
+  });
+
+  it('leaves processName undefined when no tasklist row matches the listener PID', async () => {
+    const execFileImpl = fakeExecFile({
+      netstat: '  TCP    127.0.0.1:3363         0.0.0.0:0              LISTENING       4242',
+      // Tasklist has a different PID, so the join misses.
+      tasklist: '"Other.exe","1111","Console","1","10 K"'
+    });
+
+    const result = await observeWindowsTcpListeners(
+      { hostPlatform: 'win32', runtimePlatform: 'win32', localPorts: [3363] },
+      { execFileImpl: execFileImpl as never }
+    );
+
+    expect(result).toEqual([
+      { localAddress: '127.0.0.1', localPort: 3363, pid: 4242, processName: undefined }
+    ]);
+  });
+
+  it('returns [] when no LISTENING row matches a requested port (tasklist not queried)', async () => {
+    const execFileImpl = fakeExecFile({
+      netstat: '  TCP    0.0.0.0:8080           0.0.0.0:0              LISTENING       9999',
+      tasklist: '"ShouldNotBeRead.exe","9999","Console","1","1 K"'
+    });
+
+    const result = await observeWindowsTcpListeners(
+      { hostPlatform: 'win32', runtimePlatform: 'win32', localPorts: [3363] },
+      { execFileImpl: execFileImpl as never }
+    );
+
+    expect(result).toEqual([]);
+    // Only the netstat probe ran; tasklist is skipped when there are no listeners.
+    expect(execFileImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it('resolves the WSL system32 path when the host platform is not win32', async () => {
+    const seen: string[] = [];
+    const execFileImpl = vi.fn(
+      (
+        file: string,
+        args: readonly string[],
+        _options: unknown,
+        callback: (error: Error | null, stdout: string) => void
+      ) => {
+        seen.push(file);
+        callback(null, args[0] === '-nao' ? '' : '');
+      }
+    );
+
+    await observeWindowsTcpListeners(
+      // runtimePlatform win32 (a Windows container/interop run) but the host is Linux (WSL bridge).
+      { hostPlatform: 'linux', runtimePlatform: 'win32', localPorts: [3363] },
+      { execFileImpl: execFileImpl as never }
+    );
+
+    expect(seen[0]).toBe('/mnt/c/Windows/System32/netstat.exe');
+  });
+});
