@@ -102,7 +102,28 @@ describe('buildViRepositoryIndex', () => {
     expect(index.viCount).toBe(3);
     expect(index.indexedCount).toBe(2);
     expect(index.narrative).toContain('tracks 3 VIs (showing 2)');
-    expect(harness.getFileHistoryCount).toHaveBeenCalledTimes(2);
+    // All VIs are counted so ranking is correct before capping; only the top
+    // `maxVis` pay the expensive latest-commit fetch.
+    expect(harness.getFileHistoryCount).toHaveBeenCalledTimes(3);
+    expect(harness.getFileHistoryEntries).toHaveBeenCalledTimes(2);
+  });
+
+  it('ranks by revision activity across ALL VIs before capping to maxVis', async () => {
+    // The most active VI is LAST in path order; a cap-before-rank would miss it.
+    const harness = makeHarness(
+      ['aaa/low.vi', 'bbb/mid.vi', 'zzz/high.vi'],
+      { 'aaa/low.vi': 1, 'bbb/mid.vi': 4, 'zzz/high.vi': 9 },
+      {}
+    );
+    const index = await buildViRepositoryIndex(input({ maxVis: 2 }), harness.deps);
+    expect(index.viCount).toBe(3);
+    expect(index.indexedCount).toBe(2);
+    // Top 2 by revisionCount, not by path order.
+    expect(index.vis.map((entryItem) => entryItem.relativePath)).toEqual([
+      'zzz/high.vi',
+      'bbb/mid.vi'
+    ]);
+    expect(index.narrative).toContain('Most revised: zzz/high.vi (9 revisions)');
   });
 
   it('floors maxVis at 1', async () => {

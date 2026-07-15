@@ -81,13 +81,28 @@ export async function buildViRepositoryIndex(
   const tracked = await listFiles(resolvedRoot);
   const viPaths = tracked.filter((relativePath) => relativePath.toLowerCase().endsWith('.vi'));
   const viCount = viPaths.length;
-  const selected = viPaths.slice(0, maxVis);
+
+  // Rank by revision activity across ALL tracked VIs before capping, so the
+  // model honors its "activity-ranked" contract even when the repository has
+  // more VIs than `maxVis`. `countHistory` is a cheap `git rev-list --count`;
+  // the expensive latest-commit fetch is deferred until after ranking so it
+  // runs only for the top `maxVis` entries.
+  const ranked: Array<{ relativePath: string; revisionCount: number }> = [];
+  for (const relativePath of viPaths) {
+    const revisionCount = await countHistory(resolvedRoot, relativePath);
+    ranked.push({ relativePath, revisionCount });
+  }
+  ranked.sort(
+    (a, b) => b.revisionCount - a.revisionCount || a.relativePath.localeCompare(b.relativePath)
+  );
 
   const vis: ViRepositoryIndexEntry[] = [];
-  for (const relativePath of selected) {
-    const revisionCount = await countHistory(resolvedRoot, relativePath);
-    const latest = await listHistory(resolvedRoot, relativePath, 1);
-    const entry: ViRepositoryIndexEntry = { relativePath, revisionCount };
+  for (const candidate of ranked.slice(0, maxVis)) {
+    const latest = await listHistory(resolvedRoot, candidate.relativePath, 1);
+    const entry: ViRepositoryIndexEntry = {
+      relativePath: candidate.relativePath,
+      revisionCount: candidate.revisionCount
+    };
     if (latest[0]) {
       entry.latestCommit = {
         hash: latest[0].hash,
@@ -98,10 +113,6 @@ export async function buildViRepositoryIndex(
     }
     vis.push(entry);
   }
-
-  vis.sort(
-    (a, b) => b.revisionCount - a.revisionCount || a.relativePath.localeCompare(b.relativePath)
-  );
 
   const index: Omit<ViRepositoryIndex, 'narrative'> = {
     schema: VI_REPOSITORY_INDEX_SCHEMA,
