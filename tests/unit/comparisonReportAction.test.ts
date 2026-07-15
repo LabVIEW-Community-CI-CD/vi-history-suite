@@ -23,7 +23,10 @@ import {
   isHostVersionConflictBlock,
   isViVersionTooNewFailure,
   readComparisonReportOptions,
-  readComparisonRuntimeSettings
+  readComparisonRuntimeSettings,
+  readCliConnectTimeoutSeconds,
+  resolveRuntimePlatform,
+  DEFAULT_CLI_CONNECT_TIMEOUT_SECONDS
 } from '../../src/reporting/comparisonReportAction';
 import { buildComparisonReportArchivePlanFromSelection } from '../../src/dashboard/comparisonReportArchive';
 import {
@@ -857,6 +860,140 @@ describe('readComparisonReportOptions (VHS-REQ-645.3)', () => {
 
     expect(options.ignoreViAttributes).toBe(false);
     expect(options.ignoreBlockDiagram).toBe(false);
+  });
+});
+
+describe('readComparisonRuntimeSettings provider and bitness parsing (VHS-REQ-621, VHS-REQ-633.2)', () => {
+  function fakeConfiguration(values: Record<string, unknown>) {
+    return {
+      get: (key: string) => values[key]
+    } as never;
+  }
+
+  it('falls back to the host provider when runtimeProvider is unset', () => {
+    const settings = readComparisonRuntimeSettings(fakeConfiguration({}));
+
+    expect(settings.requestedProvider).toBe('host');
+    expect(settings.invalidRequestedProvider).toBeUndefined();
+    // Host (non-docker) keeps the existing-Windows-host allowance on.
+    expect(settings.allowExistingWindowsHostRuntime).toBe(true);
+  });
+
+  it('carries an invalid runtimeProvider through without defaulting to host', () => {
+    const settings = readComparisonRuntimeSettings(
+      fakeConfiguration({ runtimeProvider: 'bad-provider' })
+    );
+
+    // An invalid provider must not silently resolve to host: the requested
+    // provider is undefined and the invalid value is retained for diagnostics.
+    expect(settings.requestedProvider).toBeUndefined();
+    expect(settings.invalidRequestedProvider).toBe('bad-provider');
+  });
+
+  it('disables allowExistingWindowsHostRuntime when the docker provider is selected', () => {
+    const settings = readComparisonRuntimeSettings(
+      fakeConfiguration({ runtimeProvider: 'docker' })
+    );
+
+    expect(settings.requestedProvider).toBe('docker');
+    expect(settings.allowExistingWindowsHostRuntime).toBe(false);
+  });
+
+  it('accepts a valid labviewBitness and rejects an unsupported one', () => {
+    expect(
+      readComparisonRuntimeSettings(fakeConfiguration({ runtimeProvider: 'host', labviewBitness: 'x86' }))
+        .bitness
+    ).toBe('x86');
+    expect(
+      readComparisonRuntimeSettings(fakeConfiguration({ runtimeProvider: 'host', labviewBitness: 'arm64' }))
+        .bitness
+    ).toBeUndefined();
+  });
+
+  it('trims the containerImageVersion override and drops a blank one', () => {
+    expect(
+      readComparisonRuntimeSettings(
+        fakeConfiguration({ runtimeProvider: 'docker', 'container.imageVersion': '  2026q1-linux  ' })
+      ).containerImageVersion
+    ).toBe('2026q1-linux');
+    expect(
+      readComparisonRuntimeSettings(
+        fakeConfiguration({ runtimeProvider: 'docker', 'container.imageVersion': '   ' })
+      ).containerImageVersion
+    ).toBeUndefined();
+  });
+});
+
+describe('readCliConnectTimeoutSeconds clamping (VHS-REQ-148)', () => {
+  function fakeConfiguration(value: unknown) {
+    return {
+      get: (key: string) => (key === 'runtime.cliConnectTimeoutSeconds' ? value : undefined)
+    } as never;
+  }
+
+  it('accepts an in-range integer', () => {
+    expect(readCliConnectTimeoutSeconds(fakeConfiguration(240))).toBe(240);
+  });
+
+  it('falls back to the default for a non-integer value', () => {
+    expect(readCliConnectTimeoutSeconds(fakeConfiguration(180.5))).toBe(
+      DEFAULT_CLI_CONNECT_TIMEOUT_SECONDS
+    );
+  });
+
+  it('falls back to the default for a below-minimum value', () => {
+    expect(readCliConnectTimeoutSeconds(fakeConfiguration(29))).toBe(
+      DEFAULT_CLI_CONNECT_TIMEOUT_SECONDS
+    );
+  });
+
+  it('falls back to the default for an above-maximum value', () => {
+    expect(readCliConnectTimeoutSeconds(fakeConfiguration(601))).toBe(
+      DEFAULT_CLI_CONNECT_TIMEOUT_SECONDS
+    );
+  });
+
+  it('falls back to the default for a non-number value (misconfigured settings.json)', () => {
+    expect(readCliConnectTimeoutSeconds(fakeConfiguration('240'))).toBe(
+      DEFAULT_CLI_CONNECT_TIMEOUT_SECONDS
+    );
+  });
+});
+
+describe('resolveRuntimePlatform (VHS-REQ-621)', () => {
+  it('passes through the supported platforms', () => {
+    expect(resolveRuntimePlatform('win32')).toBe('win32');
+    expect(resolveRuntimePlatform('linux')).toBe('linux');
+    expect(resolveRuntimePlatform('darwin')).toBe('darwin');
+  });
+
+  it('maps an unsupported platform to linux', () => {
+    expect(resolveRuntimePlatform('freebsd' as NodeJS.Platform)).toBe('linux');
+  });
+});
+
+describe('buildContainerImagePlatformMismatchMessage fallback wording (VHS-REQ-650)', () => {
+  it('names the concrete switch and pick targets for a linux image under windows-container mode', () => {
+    const message = buildContainerImagePlatformMismatchMessage({
+      selectedImagePlatform: 'linux',
+      activeEnginePlatform: 'windows'
+    });
+
+    expect(message).toContain('Windows-container mode');
+    expect(message).toContain('Switch Docker to Linux containers');
+    expect(message).toContain('pick a Windows image version');
+  });
+
+  it('degrades to generic wording when the platforms are unknown', () => {
+    const message = buildContainerImagePlatformMismatchMessage({});
+
+    // Undefined facts must not produce "undefined" in the surfaced message; the
+    // helper falls back to generic phrasing while staying actionable.
+    expect(message).not.toContain('undefined');
+    expect(message).toContain('a different mode');
+    // Default switch/pick targets when nothing is known.
+    expect(message).toContain('Switch Docker to Windows containers');
+    expect(message).toContain('pick a Linux image version');
   });
 });
 
