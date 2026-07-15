@@ -9,6 +9,7 @@ import {
   ComparisonReportType,
   buildComparisonArtifactPlan
 } from '../reporting/comparisonReportPlan';
+import { isWorktreeRevision } from '../git/gitCli';
 
 const REPORT_HISTORY_DIRECTORY = 'report-history';
 const SOURCE_RECORD_FILENAME = 'source-record.json';
@@ -90,6 +91,16 @@ export function buildComparisonReportArchivePlanFromSelection(options: {
   runtimeProcessObservationFilename?: string;
   repoId?: string;
   fileId?: string;
+  /**
+   * VHS-REQ-641 (Phase 3, issue #1366): content-addressed identity of the
+   * staged working-tree bytes for a side that is the `WORKTREE` sentinel. When
+   * provided, the sentinel is replaced by `WORKTREE:<id>` in the deterministic
+   * pair-ID so repeated comparisons of unchanged uncommitted content resolve to
+   * the same retained pair (idempotent) while changed content yields a distinct
+   * pair — instead of every working-tree compare colliding on the bare
+   * `WORKTREE` token. Ignored for a side that is a committed hash.
+   */
+  worktreeSnapshotId?: string;
 }): ComparisonReportArchivePlan {
   const artifactPlan = buildComparisonArtifactPlan({
     storageRoot: options.storageRoot,
@@ -99,7 +110,10 @@ export function buildComparisonReportArchivePlanFromSelection(options: {
   });
   const reportFilename = options.reportFilename ?? artifactPlan.reportFilename;
   const pairId = createDeterministicId(
-    `${options.reportType}\n${options.baseHash}\n${options.selectedHash}`
+    `${options.reportType}\n${contentAddressRevisionForPairId(
+      options.baseHash,
+      options.worktreeSnapshotId
+    )}\n${contentAddressRevisionForPairId(options.selectedHash, options.worktreeSnapshotId)}`
   );
   const archiveDirectory = joinPreservingExplicitPathStyle(
     options.storageRoot,
@@ -267,6 +281,24 @@ export function buildReportAssetsDirectoryName(reportFilename: string): string {
 
 function createDeterministicId(value: string): string {
   return createHash('sha256').update(value).digest('hex').slice(0, 12);
+}
+
+/**
+ * VHS-REQ-641 (Phase 3): maps a revision id to the token used in the
+ * deterministic pair-ID. A committed hash is used verbatim. The `WORKTREE`
+ * sentinel is content-addressed as `WORKTREE:<snapshotId>` when a snapshot id
+ * is available so distinct uncommitted snapshots produce distinct retained
+ * pairs; without a snapshot id it falls back to the bare sentinel (preserving
+ * the pre-Phase-3 pair-ID for any legacy caller).
+ */
+function contentAddressRevisionForPairId(
+  revisionId: string,
+  worktreeSnapshotId: string | undefined
+): string {
+  if (isWorktreeRevision(revisionId) && worktreeSnapshotId && worktreeSnapshotId.length > 0) {
+    return `${revisionId}:${worktreeSnapshotId}`;
+  }
+  return revisionId;
 }
 
 function joinPreservingExplicitPathStyle(rootPath: string, ...segments: string[]): string {

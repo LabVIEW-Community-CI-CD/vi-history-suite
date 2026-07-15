@@ -42,6 +42,65 @@ describe('comparisonReportArchive', () => {
     );
   });
 
+  it('content-addresses the pair-ID for working-tree snapshots (VHS-REQ-641.7)', () => {
+    const base = {
+      storageRoot: '/workspace/storage',
+      repositoryRoot: '/workspace/repo',
+      relativePath: 'src/My.vi',
+      reportType: 'diff' as const,
+      baseHash: 'base-hash',
+      repoId: 'repo-id',
+      fileId: 'file-id'
+    };
+
+    // Two distinct working-tree snapshots (different staged bytes) must produce
+    // distinct retained pair-IDs instead of colliding on the bare WORKTREE token.
+    const first = buildComparisonReportArchivePlanFromSelection({
+      ...base,
+      selectedHash: 'WORKTREE',
+      worktreeSnapshotId: 'aaaa000000000000'
+    });
+    const second = buildComparisonReportArchivePlanFromSelection({
+      ...base,
+      selectedHash: 'WORKTREE',
+      worktreeSnapshotId: 'bbbb111111111111'
+    });
+    expect(first.pairId).not.toBe(second.pairId);
+
+    // Re-running the same snapshot content resolves to the SAME pair-ID (idempotent).
+    const firstAgain = buildComparisonReportArchivePlanFromSelection({
+      ...base,
+      selectedHash: 'WORKTREE',
+      worktreeSnapshotId: 'aaaa000000000000'
+    });
+    expect(firstAgain.pairId).toBe(first.pairId);
+
+    // Without a snapshot id the bare-sentinel pair-ID is preserved (legacy shape).
+    const legacy = buildComparisonReportArchivePlanFromSelection({
+      ...base,
+      selectedHash: 'WORKTREE'
+    });
+    const legacyExpected = buildComparisonReportArchivePlanFromSelection({
+      ...base,
+      selectedHash: 'WORKTREE',
+      worktreeSnapshotId: ''
+    });
+    expect(legacy.pairId).toBe(legacyExpected.pairId);
+    expect(legacy.pairId).not.toBe(first.pairId);
+
+    // A committed selected hash ignores the snapshot id entirely.
+    const committed = buildComparisonReportArchivePlanFromSelection({
+      ...base,
+      selectedHash: 'selected-hash'
+    });
+    const committedWithId = buildComparisonReportArchivePlanFromSelection({
+      ...base,
+      selectedHash: 'selected-hash',
+      worktreeSnapshotId: 'aaaa000000000000'
+    });
+    expect(committed.pairId).toBe(committedWithId.pairId);
+  });
+
   it('archives available source artifacts and writes source-record metadata (VHS-REQ-610.5)', async () => {
     const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-archive-test-'));
     tempRoots.push(tempRoot);
