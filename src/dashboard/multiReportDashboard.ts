@@ -5,6 +5,7 @@ import * as path from 'node:path';
 import {
   ArchivedComparisonReportSourceRecord,
   buildComparisonReportArchivePlanFromSelection,
+  buildWorktreeSnapshotIndexFilePath,
   ComparisonReportArchivePlan
 } from './comparisonReportArchive';
 import {
@@ -14,8 +15,10 @@ import {
   ParsedNiComparisonReport,
   parseNiComparisonReportFile
 } from './niComparisonReportParser';
+import { parseWorktreeSnapshotIndex } from './worktreeSnapshotIndex';
 import { buildViSemanticComparisonModel } from '../semantic/viSemanticModel';
 import { ViHistoryCommit, ViHistoryViewModel } from '../services/viHistoryModel';
+import { WORKTREE_REVISION_SENTINEL } from '../git/gitCli';
 
 const DASHBOARDS_DIRECTORY = 'dashboards';
 
@@ -128,6 +131,20 @@ export interface MultiReportDashboardEntry {
   overviewImageCount: number;
   detailItemCount: number;
   evidenceCount: number;
+  /**
+   * VHS-REQ-641 (Phase 3, issue #1366): content-addressed identity of a retained
+   * working-tree (uncommitted) snapshot, present only for worktree-snapshot
+   * entries discovered through the per-VI retention index. Undefined for
+   * committed pairs.
+   */
+  worktreeSnapshotId?: string;
+  /**
+   * VHS-REQ-641: false for a retained working-tree snapshot — its source
+   * on-disk bytes are a point-in-time capture that a later re-run cannot
+   * reproduce (the file may have changed), so the dashboard flags it and the
+   * re-run affordance is disabled. Undefined/true for reproducible committed pairs.
+   */
+  reproducible?: boolean;
 }
 
 export interface MultiReportDashboardRecord {
@@ -245,6 +262,15 @@ export async function buildAndPersistMultiReportDashboard(
       increment: pairIncrement
     });
   }
+  // VHS-REQ-641 (Phase 3, issue #1366): a working-tree comparison's selected side
+  // is the WORKTREE sentinel with no commit, so it is not discoverable from the
+  // commit list. Read the per-VI retention index and append any retained
+  // working-tree snapshots so they surface in the dashboard alongside commit pairs.
+  const worktreeEntries = await buildRetainedWorktreeSnapshotEntries(storageRoot, model, {
+    pathExists,
+    readFile
+  });
+  entries.push(...worktreeEntries);
   const record: MultiReportDashboardRecord = {
     generatedAt: now(),
     repositoryName: model.repositoryName,
@@ -624,6 +650,13 @@ export function renderMultiReportDashboardHtml(
           )} vs ${escapeHtml(
 	            entry.baseHash.slice(0, 8)
 	          )}</h2>
+          ${
+            entry.worktreeSnapshotId
+              ? `<div class="entry-worktree-snapshot-badge" data-testid="dashboard-entry-worktree-snapshot"><strong>⚠ Uncommitted snapshot @ ${escapeHtml(
+                  entry.worktreeSnapshotId
+                )}</strong> — content-addressed capture of on-disk bytes; not reproducible by re-run.</div>`
+              : ''
+          }
           <div class="entry-state">
             <strong>Evidence state:</strong> ${escapeHtml(entry.pairEvidenceState)} ·
             <strong>Archive:</strong> ${escapeHtml(entry.archiveStatus)} ·
@@ -1186,6 +1219,107 @@ async function buildDashboardEntry(
     detailItemCount: parsedReport?.detailItemCount ?? 0,
     evidenceCount: (parsedReport?.overviewImageCount ?? 0) + (parsedReport?.detailItemCount ?? 0)
   };
+}
+
+/**
+ * VHS-REQ-641 (Phase 3, issue #1366): discover retained working-tree
+ * (uncommitted) snapshots from the per-VI retention index and build dashboard
+ * entries for them. Their content-addressed pair-ID round-trips from the stored
+ * snapshot identity (`WORKTREE:<id>`), so each retained pair's source-record is
+ * locatable without the commit list. Missing/malformed index or a missing
+ * source-record is skipped (fail-soft). Each entry is flagged
+ * `reproducible: false` because re-running a working-tree comparison compares
+ * current on-disk bytes, which may differ from the retained capture.
+ */
+async function buildRetainedWorktreeSnapshotEntries(
+  storageRoot: string,
+  model: ViHistoryViewModel,
+  deps: {
+    pathExists: (targetPath: string) => Promise<boolean>;
+    readFile: typeof fs.readFile;
+  }
+): Promise<MultiReportDashboardEntry[]> {
+  const indexReferencePlan = buildComparisonReportArchivePlanFromSelection({
+    storageRoot,
+    repositoryRoot: model.repositoryRoot,
+    relativePath: model.relativePath,
+    reportType: 'diff',
+    selectedHash: WORKTREE_REVISION_SENTINEL,
+    baseHash: WORKTREE_REVISION_SENTINEL
+  });
+  const indexFilePath = buildWorktreeSnapshotIndexFilePath(indexReferencePlan);
+  if (!(await deps.pathExists(indexFilePath))) {
+    return [];
+  }
+  const index = parseWorktreeSnapshotIndex(await deps.readFile(indexFilePath, 'utf8'));
+  if (!index) {
+    return [];
+  }
+
+  const entries: MultiReportDashboardEntry[] = [];
+  for (const snapshot of index.snapshots) {
+    const archivePlan = buildComparisonReportArchivePlanFromSelection({
+      storageRoot,
+      repositoryRoot: model.repositoryRoot,
+      relativePath: model.relativePath,
+      reportType: snapshot.reportType,
+      selectedHash: WORKTREE_REVISION_SENTINEL,
+      baseHash: snapshot.baseHash,
+      worktreeSnapshotId: snapshot.snapshotId
+    });
+    if (!(await deps.pathExists(archivePlan.sourceRecordFilePath))) {
+      continue;
+    }
+    const sourceRecord = JSON.parse(
+      await deps.readFile(archivePlan.sourceRecordFilePath, 'utf8')
+    ) as ArchivedComparisonReportSourceRecord;
+    const generatedReportExists =
+      sourceRecord.packetRecord.runtimeExecution.reportExists &&
+      (await deps.pathExists(sourceRecord.archivePlan.reportFilePath));
+    const parsedReport = generatedReportExists
+      ? await parseNiComparisonReportFile(sourceRecord.archivePlan.reportFilePath, {
+          readFile: deps.readFile
+        })
+      : undefined;
+
+    entries.push({
+      pairId: sourceRecord.archivePlan.pairId,
+      selectedHash: WORKTREE_REVISION_SENTINEL,
+      baseHash: snapshot.baseHash,
+      selectedAuthorDate: snapshot.retainedAt,
+      selectedAuthorName: 'Working tree (uncommitted)',
+      selectedSubject: `Uncommitted snapshot @ ${snapshot.snapshotId}`,
+      baseAuthorDate: undefined,
+      baseAuthorName: undefined,
+      baseSubject: undefined,
+      archiveStatus: 'archived',
+      archivePlan: sourceRecord.archivePlan,
+      packetRecordPath: sourceRecord.archivePlan.sourceRecordFilePath,
+      packetFilePath: sourceRecord.archivePlan.packetFilePath,
+      reportFilePath: sourceRecord.archivePlan.reportFilePath,
+      metadataFilePath: sourceRecord.archivePlan.metadataFilePath,
+      reportStatus: sourceRecord.packetRecord.reportStatus,
+      runtimeExecutionState: sourceRecord.packetRecord.runtimeExecutionState,
+      runtimeFailureReason: sourceRecord.packetRecord.runtimeExecution.failureReason,
+      runtimeDiagnosticReason: sourceRecord.packetRecord.runtimeExecution.diagnosticReason,
+      runtimeProvider: sourceRecord.packetRecord.runtimeSelection.provider,
+      runtimeEngine: sourceRecord.packetRecord.runtimeSelection.engine,
+      runtimePlatform: sourceRecord.packetRecord.runtimeSelection.platform,
+      runtimeBitness: sourceRecord.packetRecord.runtimeSelection.bitness,
+      runtimeProviderLabel: buildProviderLabel(sourceRecord.packetRecord),
+      pairEvidenceState: derivePairEvidenceState(sourceRecord, generatedReportExists),
+      generatedReportExists,
+      parsedReport,
+      dashboardImageAssets: [],
+      artifactLinks: buildArtifactLinks(sourceRecord, generatedReportExists),
+      overviewImageCount: parsedReport?.overviewImageCount ?? 0,
+      detailItemCount: parsedReport?.detailItemCount ?? 0,
+      evidenceCount: (parsedReport?.overviewImageCount ?? 0) + (parsedReport?.detailItemCount ?? 0),
+      worktreeSnapshotId: snapshot.snapshotId,
+      reproducible: false
+    });
+  }
+  return entries;
 }
 
 function buildDashboardSummary(entries: MultiReportDashboardEntry[]) {
