@@ -1233,8 +1233,11 @@ Missing numeric IDs are intentional.
     is invoked.
   - The working-tree side resolves in-repo dependencies against the committed
     tree so the loose VI loads its siblings.
-  - Working-tree comparisons are labeled as uncommitted and are excluded from
-    retained dashboard pair evidence; committed-pair behavior is unchanged.
+  - Working-tree comparisons are labeled as uncommitted; committed-pair
+    behavior is unchanged. A working-tree comparison that produces a
+    content-addressed snapshot identity is retained (see the retention-index
+    criterion below) rather than discarded, and is surfaced in the dashboard as
+    a non-reproducible uncommitted snapshot.
   - The working-tree comparison is read-only and never writes into the user's
     working directory, and the comparison-report webview keeps scripts disabled.
   - A working-tree comparison records the content-addressed identity of the
@@ -1250,9 +1253,16 @@ Missing numeric IDs are intentional.
     comparison of unchanged content so it is idempotent while changed content
     yields a distinct entry, and fails closed when parsing a malformed index; it
     lets retained working-tree snapshots be enumerated independently of the
-    commit list. This slice is the index data model and garbage-collection core;
-    wiring it into archiving and dashboard discovery is delivered by subsequent
-    Phase 3 slices (issue #1366).
+    commit list. When a working-tree comparison produces a content-addressed
+    snapshot identity, it is archived under a content-addressed retained pair-ID,
+    appended to that index, and surfaced in the dashboard as a non-reproducible
+    "uncommitted snapshot" entry (re-running compares current on-disk bytes and
+    may differ), while evicted snapshots beyond the retention limit have their
+    retained archive directories garbage-collected; the retention limit is
+    user-configurable through `viHistorySuite.comparison.worktreeSnapshotRetentionLimit`
+    (default 5, 0 disables). A working-tree comparison that produced no snapshot
+    identity (for example a blocked or daemon-down run that never staged bytes)
+    stays unarchived.
 - Agent Work Scope:
   - Change the eligibility model, panel working-tree selection row,
     preflight/runtime revision readers, and their tests together; use the
@@ -1263,9 +1273,13 @@ Missing numeric IDs are intentional.
   - `src/reporting/comparisonReportPreflight.ts`
   - `src/reporting/comparisonReportRuntimeExecution.ts`
   - `src/reporting/comparisonReportAction.ts`
+  - `src/reporting/comparisonReportPacket.ts`
   - `src/commands/openViHistoryCommand.ts`
   - `src/ui/historyPanel.ts`
   - `src/dashboard/worktreeSnapshotIndex.ts`
+  - `src/dashboard/comparisonReportArchive.ts`
+  - `src/dashboard/multiReportDashboard.ts`
+  - `package.json`
 - Verification References:
   - `tests/unit/gitCli.test.ts`
   - `tests/unit/viHistoryModel.test.ts`
@@ -1274,10 +1288,14 @@ Missing numeric IDs are intentional.
   - `tests/unit/comparisonReportAction.test.ts`
   - `tests/unit/openViHistoryCommand.test.ts`
   - `tests/unit/worktreeSnapshotIndex.test.ts`
+  - `tests/unit/comparisonReportArchive.test.ts`
+  - `tests/unit/multiReportDashboard.test.ts`
 - Change Guidance:
   - Keep the working-tree side read-only (never write to the user's working
-    directory) and keep working-tree comparisons out of the reproducible
-    retained-evidence path; do not weaken the committed two-revision flow.
+    directory). Working-tree comparisons are retained only when a
+    content-addressed snapshot identity is available, under a content-addressed
+    pair-ID and a bounded keep-last-N index; do not weaken the committed
+    two-revision flow.
 
 ### VHS-REQ-638: Comparison Report VI History Re-Entry Action
 
@@ -1353,7 +1371,8 @@ Missing numeric IDs are intentional.
     (`archiveFailureReason === 'retained-archive-write-failed'`); on a real
     archive write failure the action falls through to open the webview directly
     so the user is never left without a diagnostics surface. A working-tree
-    comparison that is intentionally not archived (VHS-REQ-641,
+    comparison that is not archived because a blocked/daemon-down run produced no
+    content-addressed snapshot identity (VHS-REQ-641,
     `archiveFailureReason === 'retained-archive-unavailable'`,
     `retainedArchiveAvailable === false`) is still suppressed — the guard keys on
     the genuine write-failure reason, not on `retainedArchiveAvailable`, so a
@@ -1418,7 +1437,8 @@ Missing numeric IDs are intentional.
     (`archiveFailureReason === 'retained-archive-write-failed'`), in which case
     it falls through to open the webview directly so diagnostics are never lost
     (parity with the VHS-REQ-642 archive-failure fallback). A working-tree
-    comparison intentionally not archived (VHS-REQ-641,
+    comparison not archived because a blocked/daemon-down run produced no
+    content-addressed snapshot identity (VHS-REQ-641,
     `retained-archive-unavailable`) is still suppressed.
   - The comparison-report command shows a single warning notification whose copy
     is built by `buildDockerNotInstalledMessage(platform)` and names the

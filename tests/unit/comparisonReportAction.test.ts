@@ -25,6 +25,7 @@ import {
   readComparisonReportOptions,
   readComparisonRuntimeSettings,
   readCliConnectTimeoutSeconds,
+  readWorktreeSnapshotRetentionLimit,
   clampCliConnectTimeoutSeconds,
   applyCliConnectTimeoutSelection,
   renderComparisonReportPanelHtml,
@@ -299,7 +300,9 @@ describe('comparison report action orchestration (VHS-REQ-133/148/155)', () => {
         materializeSelectedRevisionTree: expect.any(Function)
       })
     );
-    expect(archiveComparisonReportSource).toHaveBeenCalledWith(executedRecord);
+    expect(archiveComparisonReportSource).toHaveBeenCalledWith(executedRecord, {
+      worktreeSnapshotRetentionLimit: 5
+    });
     expect(result).toMatchObject({
       outcome: 'opened-comparison-report',
       reportStatus: 'ready-for-runtime',
@@ -543,7 +546,9 @@ describe('comparison report action orchestration (VHS-REQ-133/148/155)', () => {
     expect(result.outcome).toBe('opened-comparison-report');
     // The snapshot identity makes the retained pair reproducible/collision-free,
     // so the working-tree comparison IS archived.
-    expect(archiveComparisonReportSource).toHaveBeenCalledWith(worktreeRecord);
+    expect(archiveComparisonReportSource).toHaveBeenCalledWith(worktreeRecord, {
+      worktreeSnapshotRetentionLimit: 5
+    });
     expect(result.retainedArchiveAvailable).toBe(true);
   });
 
@@ -1024,6 +1029,30 @@ describe('readCliConnectTimeoutSeconds clamping (VHS-REQ-148)', () => {
     expect(readCliConnectTimeoutSeconds(fakeConfiguration('240'))).toBe(
       DEFAULT_CLI_CONNECT_TIMEOUT_SECONDS
     );
+  });
+});
+
+describe('readWorktreeSnapshotRetentionLimit (VHS-REQ-641.7)', () => {
+  function fakeConfiguration(value: unknown) {
+    return {
+      get: (key: string) =>
+        key === 'comparison.worktreeSnapshotRetentionLimit' ? value : undefined
+    } as never;
+  }
+
+  it('accepts a non-negative integer, including 0 (retention disabled)', () => {
+    expect(readWorktreeSnapshotRetentionLimit(fakeConfiguration(10))).toBe(10);
+    expect(readWorktreeSnapshotRetentionLimit(fakeConfiguration(0))).toBe(0);
+  });
+
+  it('defaults to 5 when unset', () => {
+    expect(readWorktreeSnapshotRetentionLimit(fakeConfiguration(undefined))).toBe(5);
+  });
+
+  it('falls back to the default for negative, fractional, or non-number values', () => {
+    expect(readWorktreeSnapshotRetentionLimit(fakeConfiguration(-1))).toBe(5);
+    expect(readWorktreeSnapshotRetentionLimit(fakeConfiguration(2.5))).toBe(5);
+    expect(readWorktreeSnapshotRetentionLimit(fakeConfiguration('3'))).toBe(5);
   });
 });
 
