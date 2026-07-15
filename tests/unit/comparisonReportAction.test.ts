@@ -25,6 +25,7 @@ import {
   readComparisonReportOptions,
   readComparisonRuntimeSettings,
   readCliConnectTimeoutSeconds,
+  renderComparisonReportPanelHtml,
   resolveRuntimePlatform,
   DEFAULT_CLI_CONNECT_TIMEOUT_SECONDS
 } from '../../src/reporting/comparisonReportAction';
@@ -1967,5 +1968,92 @@ describe('Docker not installed comparison gate (VHS-REQ-643)', () => {
     expect(result.outcome).toBe('opened-comparison-report');
     expect(result.retainedArchiveAvailable).toBe(false);
     expect(harness.panels).toHaveLength(1);
+  });
+});
+
+describe('renderComparisonReportPanelHtml (VHS-REQ-621, VHS-REQ-644)', () => {
+  function baseOptions(): Parameters<typeof renderComparisonReportPanelHtml>[0] {
+    return {
+      title: 'Comparison report',
+      reportWebviewUri: 'https://file.example/report.html',
+      reportStatus: 'ready-for-runtime',
+      runtimeExecutionState: 'succeeded',
+      generatedReportExists: true,
+      retainedArchiveAvailable: false,
+      displayedEvidenceKind: 'generated-report',
+      cspSource: 'vscode-resource://authority'
+    };
+  }
+
+  it('renders a full HTML document with the CSP frame-src, title, and report iframe', () => {
+    const html = renderComparisonReportPanelHtml(baseOptions());
+
+    expect(html.startsWith('<!DOCTYPE html>')).toBe(true);
+    expect(html).toContain('frame-src vscode-resource://authority https:;');
+    expect(html).toContain('<title>Comparison report</title>');
+    expect(html).toContain(
+      '<iframe data-testid="comparison-report-panel-frame" src="https://file.example/report.html" title="Comparison report">'
+    );
+    // The shared revision-context block is embedded.
+    expect(html).toContain('data-testid="comparison-report-panel-context"');
+  });
+
+  it('escapes HTML-special characters in the title', () => {
+    const html = renderComparisonReportPanelHtml({
+      ...baseOptions(),
+      title: 'A <b>"bold"</b> & risky title'
+    });
+
+    expect(html).toContain('<title>A &lt;b&gt;&quot;bold&quot;&lt;/b&gt; &amp; risky title</title>');
+    // The raw, unescaped markup must not leak into the document.
+    expect(html).not.toContain('<b>"bold"</b>');
+  });
+
+  it('escapes the report webview URI and CSP source so attributes cannot be broken out of', () => {
+    const html = renderComparisonReportPanelHtml({
+      ...baseOptions(),
+      reportWebviewUri: 'https://x/report.html?a=1&b="2"',
+      cspSource: 'vscode-resource://a"b'
+    });
+
+    expect(html).toContain('src="https://x/report.html?a=1&amp;b=&quot;2&quot;"');
+    expect(html).toContain('frame-src vscode-resource://a&quot;b https:;');
+  });
+
+  it('renders supplied relative path and revision metadata in the context cards', () => {
+    const html = renderComparisonReportPanelHtml({
+      ...baseOptions(),
+      relativePath: 'src/Widget.vi',
+      selectedHash: 'fc09736a',
+      baseHash: '53768339',
+      selectedRevision: {
+        hash: 'fc09736a',
+        authorName: 'Ada Lovelace',
+        authorDate: '2026-07-15',
+        subject: 'Update widget',
+        body: 'Detailed body'
+      },
+      baseRevision: {
+        hash: '53768339',
+        authorName: 'Grace Hopper',
+        authorDate: '2026-07-01',
+        subject: 'Initial widget',
+        body: ''
+      }
+    });
+
+    expect(html).toContain('src/Widget.vi');
+    expect(html).toContain('Ada Lovelace');
+    expect(html).toContain('Update widget');
+    expect(html).toContain('<code>fc09736a</code>');
+    expect(html).toContain('<code>53768339</code>');
+    // An empty commit body falls back to the muted placeholder.
+    expect(html).toContain('No commit body');
+  });
+
+  it('falls back to "not retained" when the relative path and revisions are absent', () => {
+    const html = renderComparisonReportPanelHtml(baseOptions());
+
+    expect(html).toContain('not retained');
   });
 });
