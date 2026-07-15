@@ -16,7 +16,19 @@ import {
   runLocalRuntimeSettingsCli,
   runLocalRuntimeSettingsCliMain,
   writeVsCodeSettingsFile,
-  readPersistedRuntimeSettingsFacts
+  readPersistedRuntimeSettingsFacts,
+  normalizeLabviewBitness,
+  normalizeProvider,
+  isSupportedInstalledLabviewVersion,
+  buildReportableEnvironment,
+  isSecretLikeEnvironmentKey,
+  formatPersistedFact,
+  resolveCliRuntimePlatform,
+  resolveCurrentPlatformLauncherPath,
+  buildPathPrependValue,
+  quoteLauncherPathForShell,
+  escapeWindowsBatchEcho,
+  escapeSingleQuotedShellString
 } from '../../src/tooling/localRuntimeSettingsCli';
 import type { ComparisonRuntimeSelection } from '../../src/reporting/comparisonRuntimeLocator';
 
@@ -891,5 +903,124 @@ describe('writeVsCodeSettingsFile / readPersistedRuntimeSettingsFacts (VHS-REQ-6
     memory.seed(settingsPath, '{ "viHistorySuite.labviewBitness": "x86" }');
     const valid = await readPersistedRuntimeSettingsFacts(settingsPath, memory);
     expect(valid.runtimeSettings.bitness).toBe('x86');
+  });
+});
+
+describe('localRuntimeSettingsCli pure helpers (VHS-REQ-623 coverage)', () => {
+  describe('normalizeLabviewBitness', () => {
+    it('accepts x86/x64 case- and whitespace-insensitively', () => {
+      expect(normalizeLabviewBitness(' X64 ')).toBe('x64');
+      expect(normalizeLabviewBitness('x86')).toBe('x86');
+    });
+    it('throws for an unsupported bitness', () => {
+      expect(() => normalizeLabviewBitness('arm64')).toThrow(/Unsupported LabVIEW bitness/);
+    });
+  });
+
+  describe('normalizeProvider', () => {
+    it('accepts host/docker case- and whitespace-insensitively', () => {
+      expect(normalizeProvider(' Host ')).toBe('host');
+      expect(normalizeProvider('DOCKER')).toBe('docker');
+    });
+    it('throws for an unsupported provider', () => {
+      expect(() => normalizeProvider('podman')).toThrow(/Unsupported compare provider/);
+    });
+  });
+
+  describe('isSupportedInstalledLabviewVersion', () => {
+    it('is true only for a parseable year >= 2025', () => {
+      expect(isSupportedInstalledLabviewVersion('2025')).toBe(true);
+      expect(isSupportedInstalledLabviewVersion('2026')).toBe(true);
+      expect(isSupportedInstalledLabviewVersion('2024')).toBe(false);
+      expect(isSupportedInstalledLabviewVersion('nope')).toBe(false);
+      expect(isSupportedInstalledLabviewVersion(undefined)).toBe(false);
+    });
+  });
+
+  describe('isSecretLikeEnvironmentKey', () => {
+    it('never redacts PATH-family keys', () => {
+      expect(isSecretLikeEnvironmentKey('PATH')).toBe(false);
+      expect(isSecretLikeEnvironmentKey('GOPATH')).toBe(false);
+      expect(isSecretLikeEnvironmentKey('LD_LIBRARY_PATH')).toBe(false);
+    });
+    it('flags token/secret/password/credential/auth/key-like keys', () => {
+      for (const key of ['GITHUB_TOKEN', 'MY_PAT', 'DB_PASSWORD', 'PASSWD', 'API_SECRET', 'PRIVATE_THING', 'AWS_CREDENTIAL', 'GH_AUTH', 'SIGNING_KEY']) {
+        expect(isSecretLikeEnvironmentKey(key)).toBe(true);
+      }
+    });
+    it('does not flag ordinary keys', () => {
+      expect(isSecretLikeEnvironmentKey('HOME')).toBe(false);
+      expect(isSecretLikeEnvironmentKey('LANG')).toBe(false);
+    });
+  });
+
+  describe('buildReportableEnvironment', () => {
+    it('redacts secret-like values, keeps others, and sorts keys', () => {
+      const result = buildReportableEnvironment({
+        ZED: 'last',
+        GITHUB_TOKEN: 'ghp_xxx',
+        ALPHA: 'first',
+        PATH: '/usr/bin'
+      });
+      expect(Object.keys(result)).toEqual(['ALPHA', 'GITHUB_TOKEN', 'PATH', 'ZED']);
+      expect(result.GITHUB_TOKEN).toBe('<redacted-secret-like-env-var>');
+      expect(result.PATH).toBe('/usr/bin');
+      expect(result.ALPHA).toBe('first');
+    });
+    it('coerces an undefined value to an empty string', () => {
+      expect(buildReportableEnvironment({ EMPTY: undefined })).toEqual({ EMPTY: '' });
+    });
+  });
+
+  describe('formatPersistedFact', () => {
+    it('returns the value or a <missing> placeholder', () => {
+      expect(formatPersistedFact('host')).toBe('host');
+      expect(formatPersistedFact(undefined)).toBe('<missing>');
+    });
+  });
+
+  describe('resolveCliRuntimePlatform', () => {
+    it('passes through supported platforms', () => {
+      expect(resolveCliRuntimePlatform('win32')).toBe('win32');
+      expect(resolveCliRuntimePlatform('linux')).toBe('linux');
+      expect(resolveCliRuntimePlatform('darwin')).toBe('darwin');
+    });
+    it('throws for an unsupported platform', () => {
+      expect(() => resolveCliRuntimePlatform('aix' as NodeJS.Platform)).toThrow(
+        /Unsupported runtime platform/
+      );
+    });
+  });
+
+  describe('resolveCurrentPlatformLauncherPath', () => {
+    it('picks the windows launcher on win32, else posix', () => {
+      expect(resolveCurrentPlatformLauncherPath('W.cmd', 'p.sh', 'win32')).toBe('W.cmd');
+      expect(resolveCurrentPlatformLauncherPath('W.cmd', 'p.sh', 'linux')).toBe('p.sh');
+    });
+  });
+
+  describe('buildPathPrependValue', () => {
+    it('appends the platform PATH separator', () => {
+      expect(buildPathPrependValue('C:\\bin', 'win32')).toBe('C:\\bin;');
+      expect(buildPathPrependValue('/usr/bin', 'linux')).toBe('/usr/bin:');
+    });
+  });
+
+  describe('quoteLauncherPathForShell', () => {
+    it('double-quotes and escapes embedded quotes on win32', () => {
+      expect(quoteLauncherPathForShell('C:\\a "b".cmd', 'win32')).toBe('"C:\\a ""b"".cmd"');
+    });
+    it('single-quotes and escapes for posix', () => {
+      expect(quoteLauncherPathForShell("/a/it's.sh", 'linux')).toBe(`'/a/it'"'"'s.sh'`);
+    });
+  });
+
+  describe('escapeWindowsBatchEcho / escapeSingleQuotedShellString', () => {
+    it('escapes double quotes for batch echo', () => {
+      expect(escapeWindowsBatchEcho('say "hi"')).toBe('say ""hi""');
+    });
+    it('escapes single quotes for a POSIX single-quoted string', () => {
+      expect(escapeSingleQuotedShellString("a'b")).toBe(`a'"'"'b`);
+    });
   });
 });

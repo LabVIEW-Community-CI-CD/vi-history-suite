@@ -589,7 +589,7 @@ function readRequiredArgValue(argv: readonly string[], flag: string, index: numb
   return trimmedValue;
 }
 
-function normalizeLabviewBitness(value: string): LocalRuntimeSettingsCliBitness {
+export function normalizeLabviewBitness(value: string): LocalRuntimeSettingsCliBitness {
   const normalized = value.trim().toLowerCase();
   if (normalized === 'x86' || normalized === 'x64') {
     return normalized;
@@ -598,7 +598,7 @@ function normalizeLabviewBitness(value: string): LocalRuntimeSettingsCliBitness 
   throw new Error(`Unsupported LabVIEW bitness: ${value}`);
 }
 
-function normalizeProvider(value: string): LocalRuntimeSettingsCliProvider {
+export function normalizeProvider(value: string): LocalRuntimeSettingsCliProvider {
   const normalized = value.trim().toLowerCase();
   if (normalized === 'host' || normalized === 'docker') {
     return normalized;
@@ -694,7 +694,7 @@ async function promptLabviewVersion(
   }
 }
 
-function isSupportedInstalledLabviewVersion(value: string | undefined): value is string {
+export function isSupportedInstalledLabviewVersion(value: string | undefined): value is string {
   const requestedYear = Number.parseInt(value ?? '', 10);
   return (
     Number.isFinite(requestedYear) &&
@@ -1114,7 +1114,7 @@ function safeUserName(): string | null {
   }
 }
 
-function buildReportableEnvironment(env: NodeJS.ProcessEnv): Record<string, string> {
+export function buildReportableEnvironment(env: NodeJS.ProcessEnv): Record<string, string> {
   const reportable: Record<string, string> = {};
   for (const [key, value] of Object.entries(env).sort(([left], [right]) =>
     left.localeCompare(right)
@@ -1126,7 +1126,7 @@ function buildReportableEnvironment(env: NodeJS.ProcessEnv): Record<string, stri
   return reportable;
 }
 
-function isSecretLikeEnvironmentKey(key: string): boolean {
+export function isSecretLikeEnvironmentKey(key: string): boolean {
   const normalized = key.toUpperCase();
   if (normalized === 'PATH' || normalized.endsWith('PATH')) {
     return false;
@@ -1379,11 +1379,11 @@ function readTrimmedSettingsProperty(
   return trimmedValue ? trimmedValue : undefined;
 }
 
-function formatPersistedFact(value: string | undefined): string {
+export function formatPersistedFact(value: string | undefined): string {
   return value ?? '<missing>';
 }
 
-function resolveCliRuntimePlatform(platform: NodeJS.Platform): RuntimePlatform {
+export function resolveCliRuntimePlatform(platform: NodeJS.Platform): RuntimePlatform {
   if (platform === 'win32' || platform === 'linux' || platform === 'darwin') {
     return platform;
   }
@@ -1393,7 +1393,7 @@ function resolveCliRuntimePlatform(platform: NodeJS.Platform): RuntimePlatform {
   );
 }
 
-function resolveCurrentPlatformLauncherPath(
+export function resolveCurrentPlatformLauncherPath(
   windowsLauncherPath: string,
   posixLauncherPath: string,
   platform: NodeJS.Platform
@@ -1401,7 +1401,7 @@ function resolveCurrentPlatformLauncherPath(
   return platform === 'win32' ? windowsLauncherPath : posixLauncherPath;
 }
 
-function buildPathPrependValue(rootDirectoryPath: string, platform: NodeJS.Platform): string {
+export function buildPathPrependValue(rootDirectoryPath: string, platform: NodeJS.Platform): string {
   return `${rootDirectoryPath}${platform === 'win32' ? WINDOWS_PATH_SEPARATOR : POSIX_PATH_SEPARATOR}`;
 }
 
@@ -1503,7 +1503,7 @@ function renderTerminalEntrypointDiscoveryText(): string {
   ].join('\n');
 }
 
-function quoteLauncherPathForShell(launcherPath: string, platform: NodeJS.Platform): string {
+export function quoteLauncherPathForShell(launcherPath: string, platform: NodeJS.Platform): string {
   if (platform === 'win32') {
     return `"${launcherPath.replace(/"/g, '""')}"`;
   }
@@ -1691,11 +1691,11 @@ function renderPosixLauncher(): string {
   ].join('\n');
 }
 
-function escapeWindowsBatchEcho(value: string): string {
+export function escapeWindowsBatchEcho(value: string): string {
   return value.replace(/"/g, '""');
 }
 
-function escapeSingleQuotedShellString(value: string): string {
+export function escapeSingleQuotedShellString(value: string): string {
   return value.replace(/'/g, `'\"'\"'`);
 }
 
