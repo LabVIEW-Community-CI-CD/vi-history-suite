@@ -201,6 +201,7 @@ docs/requirements/srs.md,mapped,Yes,Software requirements specification; mapped 
 docs/requirements/syrs.md,mapped,Yes,System requirements specification; mapped through RTM.
 docs/requirements/rtm.csv,mapped,Yes,Requirements traceability matrix; mapped through RTM.
 docs/requirements/id-index.csv,mapped,Yes,ID index; mapped through RTM.
+docs/requirements/runtime-validation-ledger.json,mapped,Yes,Committed real-runtime validation freshness ledger read by the risk-ledger runtime-fidelity dimension; mapped to VHS-REQ-601.
 docs/requirements/copilot-web-issue-generation-prompt.md,mapped,Yes,Copilot web issue generation prompt; mapped through RTM.
 docs/development.md,asset-doc,Yes,Development documentation; mapped through RTM.
 docs/maintainer-operations.md,asset-doc,Yes,Maintainer operations documentation including Marketplace release evidence contract guidance; mapped through RTM including VHS-REQ-609 and VHS-REQ-615.

@@ -11,6 +11,10 @@
  *   - requirement health: verifyRequirementsHealth() (verifyRequirementsHealth.js)
  *   - standards:          audit-summary.json from `npm run standards:audit`
  *                         (OPTIONAL; graceful-degrade when absent — no Docker here)
+ *   - runtime-fidelity:   docs/requirements/runtime-validation-ledger.json — the
+ *                         committed record of which Linux-executable real-runtime
+ *                         comparison tracks are validated at the current build;
+ *                         stale tracks become selectable re-validation risks.
  *
  * Decision B: the ledger only SELECTS work that is fully executable and
  * verifiable on a Linux host. Platform-proof risk (Windows host-native /
@@ -46,6 +50,7 @@ const DIMENSIONS = [
   'verification',
   'requirement-quality',
   'coverage',
+  'runtime-fidelity',
   'requirements-drift',
   'platform-proof'
 ];
@@ -332,6 +337,50 @@ function buildPlatformProofEntries() {
   );
 }
 
+// runtime-fidelity dimension (VHS-REQ-601.31): real-runtime validation freshness.
+// Reads the committed runtime-validation ledger (docs/requirements/
+// runtime-validation-ledger.json) and surfaces any Linux-executable
+// comparison-runtime track whose last-validated build version is not the current
+// build as a SELECTABLE MEDIUM re-validation risk. This turns per-build real-HW
+// validation into a self-directing signal instead of an ad-hoc issue comment.
+// Windows tracks are intentionally NOT modeled here — they remain in the parked
+// platform-proof awareness list because they are not executable on a Linux host.
+function buildRuntimeFidelityEntries(manifest, currentVersion) {
+  if (!manifest || typeof manifest !== 'object' || !Array.isArray(manifest.tracks)) {
+    return [];
+  }
+  const entries = [];
+  for (const track of manifest.tracks) {
+    if (!track || typeof track !== 'object' || track.linuxExecutable === false) {
+      continue;
+    }
+    const trackId = typeof track.trackId === 'string' ? track.trackId : undefined;
+    if (!trackId) {
+      continue;
+    }
+    const lastValidatedVersion =
+      typeof track.lastValidatedVersion === 'string' ? track.lastValidatedVersion : undefined;
+    if (lastValidatedVersion === currentVersion) {
+      // Fresh: this track was validated at the current build. No risk.
+      continue;
+    }
+    const validatedText = lastValidatedVersion ?? '<never>';
+    entries.push(
+      makeEntry({
+        id: `runtime-fidelity/${trackId}`,
+        dimension: 'runtime-fidelity',
+        severityTier: 'MEDIUM',
+        requirementIds: ['VHS-REQ-621'],
+        title: `Real-runtime track "${trackId}" was last validated at ${validatedText}, not the current build ${currentVersion}`,
+        source: 'runtime-validation-ledger',
+        provenance: typeof track.evidence === 'string' ? track.evidence : '',
+        suggestedAction: `Re-run the ${trackId} real-runtime comparison for build ${currentVersion} and update its lastValidatedVersion in docs/requirements/runtime-validation-ledger.json.`
+      })
+    );
+  }
+  return entries;
+}
+
 function compareEntries(left, right) {
   if (right.severityScore !== left.severityScore) {
     return right.severityScore - left.severityScore;
@@ -364,6 +413,10 @@ function buildRiskLedger(signals = {}, meta = {}) {
   const entries = [
     ...buildVerificationEntries(signals.requirements?.available ? signals.requirements.health : undefined),
     ...buildCoverageEntries(signals.coverage?.available ? signals.coverage.map : undefined, options),
+    ...buildRuntimeFidelityEntries(
+      signals.runtimeValidation?.available ? signals.runtimeValidation.manifest : undefined,
+      meta.extensionVersion
+    ),
     ...buildStandardsEntries(signals.standards?.available ? signals.standards.summary : undefined),
     ...buildPlatformProofEntries()
   ];
@@ -378,7 +431,11 @@ function buildRiskLedger(signals = {}, meta = {}) {
       available: Boolean(signals.requirements?.available),
       source: signals.requirements?.source ?? null
     },
-    standards: { available: Boolean(signals.standards?.available), source: signals.standards?.source ?? null }
+    standards: { available: Boolean(signals.standards?.available), source: signals.standards?.source ?? null },
+    runtimeValidation: {
+      available: Boolean(signals.runtimeValidation?.available),
+      source: signals.runtimeValidation?.source ?? null
+    }
   };
 
   return {
@@ -457,6 +514,20 @@ function loadStandardsSignal(cwd, deps = {}) {
 
 function defaultReadFile(cwd) {
   return (relativePath) => fs.readFileSync(path.isAbsolute(relativePath) ? relativePath : path.join(cwd, relativePath), 'utf8');
+}
+
+// runtime-validation ledger: committed manifest of real-runtime track freshness.
+// Defaults to docs/requirements/runtime-validation-ledger.json; graceful-degrade
+// (available:false) when absent so the dimension simply contributes no entries.
+const DEFAULT_RUNTIME_VALIDATION_LEDGER_PATH = 'docs/requirements/runtime-validation-ledger.json';
+function loadRuntimeValidationSignal(cwd, deps = {}) {
+  const targetPath = deps.runtimeValidationJsonPath ?? DEFAULT_RUNTIME_VALIDATION_LEDGER_PATH;
+  try {
+    const raw = (deps.readFile ?? defaultReadFile(cwd))(targetPath);
+    return { available: true, manifest: JSON.parse(raw), source: targetPath };
+  } catch (error) {
+    return { available: false, source: targetPath, error: String(error && error.message) };
+  }
 }
 
 // ---- rendering ----
@@ -604,6 +675,7 @@ function parseArgs(argv = []) {
     coverageJsonPath: undefined,
     requirementsJsonPath: undefined,
     standardsSummaryPath: undefined,
+    runtimeValidationJsonPath: undefined,
     maxCoverageDebtEntries: 10,
     positionals: []
   };
@@ -626,6 +698,7 @@ function parseArgs(argv = []) {
     else if (arg === '--coverage-json') options.coverageJsonPath = next();
     else if (arg === '--requirements-json') options.requirementsJsonPath = next();
     else if (arg === '--standards-summary') options.standardsSummaryPath = next();
+    else if (arg === '--runtime-validation-json') options.runtimeValidationJsonPath = next();
     else if (arg === '--max-coverage-debt-entries') options.maxCoverageDebtEntries = Number(next());
     else if (arg.startsWith('--')) throw new Error(`Unknown argument: ${arg}`);
     else options.positionals.push(arg);
@@ -699,7 +772,11 @@ function main(argv = process.argv.slice(2), deps = {}) {
   const signals = {
     coverage: loadCoverageSignal(cwd, { ...deps, coverageJsonPath: options.coverageJsonPath }),
     requirements: loadRequirementsSignal(cwd, { ...deps, requirementsJsonPath: options.requirementsJsonPath }),
-    standards: loadStandardsSignal(cwd, { ...deps, standardsSummaryPath: options.standardsSummaryPath })
+    standards: loadStandardsSignal(cwd, { ...deps, standardsSummaryPath: options.standardsSummaryPath }),
+    runtimeValidation: loadRuntimeValidationSignal(cwd, {
+      ...deps,
+      runtimeValidationJsonPath: options.runtimeValidationJsonPath
+    })
   };
 
   const ledger = buildRiskLedger(signals, {
@@ -757,6 +834,7 @@ module.exports = {
   buildCoverageEntries,
   buildStandardsEntries,
   buildPlatformProofEntries,
+  buildRuntimeFidelityEntries,
   buildRiskLedger,
   hasSelectableHighRisk,
   compareEntries,
@@ -764,6 +842,7 @@ module.exports = {
   loadCoverageSignal,
   loadRequirementsSignal,
   loadStandardsSignal,
+  loadRuntimeValidationSignal,
   renderSummary,
   renderMarkdown,
   renderSchema,
