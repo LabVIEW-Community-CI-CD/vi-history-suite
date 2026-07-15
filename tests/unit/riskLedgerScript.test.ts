@@ -13,7 +13,7 @@ const ledgerModule = require('../../scripts/buildRiskLedger.js') as {
   SCHEMA_VERSION: number;
   RISK_LEDGER_SCHEMA_ID: string;
   DIMENSIONS: string[];
-  PLATFORM_PROOF_RISKS: Array<{ id: string }>;
+  PLATFORM_PROOF_RISKS: Array<{ id: string; provenance: string; title: string; suggestedAction: string }>;
   buildRiskLedger: (signals?: Record<string, unknown>, meta?: Record<string, unknown>) => any;
   buildCoverageEntries: (coverageMap: unknown, options?: Record<string, unknown>) => any[];
   buildVerificationEntries: (health: unknown) => any[];
@@ -108,6 +108,17 @@ describe('buildRiskLedger', () => {
       expect(ledger.ranking.selectable).not.toContain(risk.id);
     }
     expect(ledger.ranking.nextTarget).toBeNull();
+  });
+
+  it('frames platform-proof risk as a recurring per-release Windows re-validation sourced to the current tracking issue (VHS-REQ-601.30)', () => {
+    // Windows comparison-runtime correctness is not a one-time close: it must be
+    // re-validated on a Windows host every release. Guard the provenance so it
+    // cannot silently drift back to stale/closed issue references.
+    for (const risk of PLATFORM_PROOF_RISKS) {
+      expect(risk.provenance).toBe('issue:#1316');
+      expect(risk.title).toContain('per-release re-validation');
+      expect(risk.suggestedAction).toContain('Re-validate');
+    }
   });
 
   it('ranks coverage debt deterministically and picks the highest-debt requirement as nextTarget (VHS-REQ-601.30)', () => {
