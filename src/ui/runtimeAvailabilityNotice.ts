@@ -83,6 +83,29 @@ export const STATUS_BAR_TEXT_WARNING = '$(warning) VI History runtime';
  */
 export const DEFAULT_DOCKER_IMAGE_LABEL_TAG = '2026q1-linux';
 
+/**
+ * VHS-REQ-620/650: Windows-container counterpart of
+ * `DEFAULT_DOCKER_IMAGE_LABEL_TAG`. Used for the `Docker @ <tag>` fallback when
+ * no image version is selected and the Docker daemon mode is CONFIRMED as
+ * Windows, so the label names the image that would actually run instead of the
+ * Linux stand-in.
+ */
+export const DEFAULT_WINDOWS_DOCKER_IMAGE_LABEL_TAG = '2026q1-windows';
+
+/**
+ * Resolves the `Docker @ <tag>` fallback tag for an unset image-version
+ * selection. Uses the Windows default only when the container platform is
+ * CONFIRMED as Windows; an unknown platform keeps the Linux stand-in (matching
+ * the "never guess against an unconfirmed daemon" posture of VHS-REQ-650).
+ */
+export function resolveDefaultDockerImageLabelTag(
+  confirmedContainerPlatform?: ContainerImagePlatform
+): string {
+  return confirmedContainerPlatform === 'windows'
+    ? DEFAULT_WINDOWS_DOCKER_IMAGE_LABEL_TAG
+    : DEFAULT_DOCKER_IMAGE_LABEL_TAG;
+}
+
 export const STATUS_BAR_TOOLTIP_AVAILABLE =
   'A LabVIEW or Docker comparison runtime is available.';
 export const STATUS_BAR_TOOLTIP_MISSING =
@@ -114,12 +137,15 @@ export const RUNTIME_CONFIGURATION_SECTION = 'viHistorySuite';
  * VHS-REQ-620: the docker suffix names the LabVIEW container image so the label
  * is symmetric with the host case (which already shows version + bitness). It
  * uses the selected `viHistorySuite.container.imageVersion` tag when set and
- * falls back to `DEFAULT_DOCKER_IMAGE_LABEL_TAG` otherwise. The recommendation
+ * falls back to the platform-appropriate default otherwise: the Windows default
+ * when `confirmedContainerPlatform` is Windows, else the Linux stand-in
+ * (`DEFAULT_DOCKER_IMAGE_LABEL_TAG`). The recommendation
  * shape does not carry a container image selection, so it always renders the
  * default.
  */
 export function buildAvailableStatusBarSuffix(
-  source: RuntimeRecommendation | ActiveRuntimeLabel
+  source: RuntimeRecommendation | ActiveRuntimeLabel,
+  confirmedContainerPlatform?: ContainerImagePlatform
 ): string {
   if (source.provider === 'host') {
     if (!source.labviewVersion || !source.labviewBitness) {
@@ -130,7 +156,8 @@ export function buildAvailableStatusBarSuffix(
   if (source.provider === 'docker') {
     const selectedTag =
       'containerImageVersion' in source ? source.containerImageVersion?.trim() : undefined;
-    return `Docker @ ${selectedTag && selectedTag.length > 0 ? selectedTag : DEFAULT_DOCKER_IMAGE_LABEL_TAG}`;
+    const fallbackTag = resolveDefaultDockerImageLabelTag(confirmedContainerPlatform);
+    return `Docker @ ${selectedTag && selectedTag.length > 0 ? selectedTag : fallbackTag}`;
   }
   return '';
 }
@@ -346,7 +373,7 @@ export function buildStatusBarPresentation(
   confirmedContainerPlatform?: ContainerImagePlatform
 ): StatusBarPresentation {
   if (snapshot.kind === 'available') {
-    const suffix = buildAvailableStatusBarSuffix(snapshot.label);
+    const suffix = buildAvailableStatusBarSuffix(snapshot.label, confirmedContainerPlatform);
     const sourceLine =
       snapshot.source === 'persisted'
         ? '\nSelected via settings.json. Click to change.'

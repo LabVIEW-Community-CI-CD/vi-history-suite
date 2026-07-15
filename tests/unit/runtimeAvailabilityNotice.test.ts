@@ -208,7 +208,23 @@ describe('runtime availability notice (VHS-REQ-617)', () => {
       labviewBitness: 'x64'
     });
     const presentation = buildStatusBarPresentation(snapshot, 'windows');
+    // Unset selection + confirmed Windows daemon: label names the Windows
+    // default that would actually run, not the Linux stand-in.
+    expect(presentation.text).toBe(`${STATUS_BAR_TEXT_AVAILABLE}: Docker @ 2026q1-windows`);
     expect(presentation.text).not.toContain('$(warning)');
+  });
+
+  it('uses the Linux default for an unset docker selection when the daemon platform is unknown (VHS-REQ-620.7)', () => {
+    const snapshot = selectActiveRuntime(detectionAvailable, {
+      runtimeProvider: 'docker',
+      labviewVersion: '2026',
+      labviewBitness: 'x64'
+    });
+    const confirmedLinux = buildStatusBarPresentation(snapshot, 'linux');
+    expect(confirmedLinux.text).toBe(`${STATUS_BAR_TEXT_AVAILABLE}: Docker @ 2026q1-linux`);
+    // Unknown daemon platform keeps the Linux stand-in (no host-OS guessing).
+    const unknown = buildStatusBarPresentation(snapshot, undefined);
+    expect(unknown.text).toBe(`${STATUS_BAR_TEXT_AVAILABLE}: Docker @ 2026q1-linux`);
   });
 
   it('throttles re-detect within the configured window and allows it after', () => {
