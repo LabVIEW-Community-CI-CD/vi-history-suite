@@ -49,6 +49,7 @@ import {
   resolveEffectiveCommandTimeoutMs,
   appendLabviewCliPortNumberArg,
   rewriteLabviewCliArgsForContainerWorkspace,
+  buildLinuxContainerBindMountVisibilityNote,
   LINUX_HOST_NATIVE_HEADLESS_OPT_IN_DEFAULT_TIMEOUT_MS
 } from '../../src/reporting/comparisonReportRuntimeExecution';
 import { ComparisonReportPacketRecord } from '../../src/reporting/comparisonReportPacket';
@@ -6638,5 +6639,133 @@ describe('observeWindowsTcpListeners netstat/tasklist observation (VHS-REQ-621, 
     );
 
     expect(seen[0]).toBe('/mnt/c/Windows/System32/netstat.exe');
+  });
+});
+
+describe('buildLinuxContainerBindMountVisibilityNote (VHS-REQ-663)', () => {
+  const HOME = '/home/dev';
+
+  // VHS-REQ-663.1: the helper returns a note only under the container +
+  // invalid-vi-path + outside-home conditions, and undefined otherwise.
+  // VHS-REQ-663.2: the note names the path/home, snap-Docker confinement, and both remediations.
+  it('returns an actionable note when a linux-container invalid-vi-path failure bind-mounts outside $HOME (VHS-REQ-663.1, VHS-REQ-663.2)', () => {
+    const note = buildLinuxContainerBindMountVisibilityNote({
+      provider: 'linux-container',
+      diagnosticReason: 'labview-cli-invalid-vi-path',
+      hostBindMountPath: '/tmp/vihs-compare-abc/reports/x/y',
+      homeDir: HOME
+    });
+
+    expect(note).toBeDefined();
+    expect(note).toContain('/tmp/vihs-compare-abc/reports/x/y');
+    expect(note).toContain('outside your home directory /home/dev');
+    expect(note).toContain('Snap-packaged Docker');
+    expect(note).toContain('snap connect docker:removable-media');
+  });
+  it('matches on the failureReason arm as well as diagnosticReason (VHS-REQ-663.1)', () => {
+    const note = buildLinuxContainerBindMountVisibilityNote({
+      provider: 'linux-container',
+      failureReason: 'labview-cli-invalid-vi-path',
+      hostBindMountPath: '/mnt/data/reports/x',
+      homeDir: HOME
+    });
+    expect(note).toBeDefined();
+  });
+
+  it('returns undefined when the bind-mount source is inside $HOME (VHS-REQ-663.1)', () => {
+    expect(
+      buildLinuxContainerBindMountVisibilityNote({
+        provider: 'linux-container',
+        diagnosticReason: 'labview-cli-invalid-vi-path',
+        hostBindMountPath: '/home/dev/.config/Code/User/workspaceStorage/x/reports/y',
+        homeDir: HOME
+      })
+    ).toBeUndefined();
+  });
+
+  it('returns undefined for a non-container provider (VHS-REQ-663.1)', () => {
+    expect(
+      buildLinuxContainerBindMountVisibilityNote({
+        provider: 'host-native',
+        diagnosticReason: 'labview-cli-invalid-vi-path',
+        hostBindMountPath: '/tmp/reports/y',
+        homeDir: HOME
+      })
+    ).toBeUndefined();
+  });
+
+  it('returns undefined when the failure is not an invalid-vi-path signature (VHS-REQ-663.1)', () => {
+    expect(
+      buildLinuxContainerBindMountVisibilityNote({
+        provider: 'linux-container',
+        diagnosticReason: 'labview-cli-connection-failed',
+        failureReason: 'command-exited-nonzero',
+        hostBindMountPath: '/tmp/reports/y',
+        homeDir: HOME
+      })
+    ).toBeUndefined();
+  });
+
+  it('returns undefined when the host path or home directory is missing (VHS-REQ-663.1)', () => {
+    expect(
+      buildLinuxContainerBindMountVisibilityNote({
+        provider: 'linux-container',
+        diagnosticReason: 'labview-cli-invalid-vi-path',
+        hostBindMountPath: '   ',
+        homeDir: HOME
+      })
+    ).toBeUndefined();
+    expect(
+      buildLinuxContainerBindMountVisibilityNote({
+        provider: 'linux-container',
+        diagnosticReason: 'labview-cli-invalid-vi-path',
+        hostBindMountPath: '/tmp/reports/y',
+        homeDir: undefined
+      })
+    ).toBeUndefined();
+  });
+
+  it('executeComparisonReport appends the bind-mount visibility note to a failed linux-container run (VHS-REQ-663.3)', async () => {
+    const record = createLinuxContainerReadyRecord();
+    // The fixture report directory (/workspace/.storage/...) is outside any real
+    // home directory, so the note fires deterministically regardless of CI $HOME.
+    const result = await executeComparisonReport(
+      { record, repositoryRoot: '/workspace/repo' },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
+        readdir: vi.fn().mockResolvedValue([]) as never,
+        readFile: vi.fn().mockResolvedValue('') as never,
+        // No generated report exists -> the run fails.
+        pathExists: vi.fn().mockResolvedValue(false),
+        runCommand: vi.fn().mockResolvedValue({
+          exitCode: 1,
+          stdout: '',
+          stderr:
+            'Error: VI 1 path invalid or does not exist: /workspace/staging/right-abcdef123456-foo.vi'
+        }),
+        nowIso: vi
+          .fn()
+          .mockReturnValueOnce('2026-05-28T10:00:00.000Z')
+          .mockReturnValueOnce('2026-05-28T10:00:02.000Z'),
+        nowMs: vi.fn().mockReturnValueOnce(1000).mockReturnValueOnce(3000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'linux'
+      }
+    );
+
+    expect(result.record.runtimeExecution.state).toBe('failed');
+    expect(result.record.runtimeExecution.diagnosticReason).toBe('labview-cli-invalid-vi-path');
+    const notes = result.record.runtimeExecution.diagnosticNotes ?? [];
+    expect(notes.some((note) => note.includes('Snap-packaged Docker'))).toBe(true);
+    expect(notes.some((note) => note.includes('outside your home directory'))).toBe(true);
   });
 });

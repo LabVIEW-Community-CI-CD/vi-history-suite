@@ -3686,6 +3686,55 @@ Missing numeric IDs are intentional.
     connect with `-350000` (`labview-cli-connection-failed`), the failed
     next-action also names VI Server.
 
+### VHS-REQ-663: Linux Container Bind-Mount Visibility Diagnostic
+
+- Status: Active
+- Parent: VHS-SYS-REQ-007
+- Area: Comparison Reports
+- Statement: When a Linux container comparison fails with an invalid-VI-path
+  signature (`labview-cli-invalid-vi-path`) and the host report directory that
+  is bind-mounted into the container is outside the user's home directory, the
+  extension shall attach an actionable diagnostic note naming snap-Docker
+  bind-mount confinement as the likely cause and the remediation (keep report
+  storage under the home directory, or connect the required snap interface), so
+  the operator is not left decoding a generic path error for a mount-visibility
+  problem.
+- Acceptance Criteria:
+  - `buildLinuxContainerBindMountVisibilityNote(options)` returns an actionable
+    remediation note only when `provider === 'linux-container'`, the
+    `diagnosticReason` or `failureReason` is `labview-cli-invalid-vi-path`, and
+    the supplied host bind-mount path is a non-empty path outside the supplied
+    home directory; it returns `undefined` for any other provider, any other
+    failure signature, a bind-mount path inside the home directory, or a missing
+    host path or home directory.
+  - The note names the offending host bind-mount path and home directory,
+    identifies snap-packaged Docker confinement (only the connected `home`
+    interface is mounted by default) as the cause, and offers the two
+    remediations (keep report storage under the home directory, or
+    `sudo snap connect docker:removable-media`), noting native Docker is
+    unaffected.
+  - `executeComparisonReport` appends the note to the failed run's
+    `diagnosticNotes` for a `linux-container` provider only, and never for a
+    successful run; the note is derived from `record.artifactPlan.reportDirectory`
+    (the bind-mount source) and the resolved home directory, and does not change
+    the `failureReason` or `diagnosticReason`.
+- Agent Work Scope:
+  - Keep the detection a pure exported helper next to
+    `classifyLabviewCliDiagnosticText` and wire it through the existing
+    `mergeDiagnosticNotes` assembly, gated on run failure; do not add a new
+    provider probe or spawn `snap` at runtime. Detection of the invalid-path
+    signature stays in `classifyLabviewCliDiagnosticText`; this requirement owns
+    only the added remediation note.
+- Implementation References:
+  - `src/reporting/comparisonReportRuntimeExecution.ts`
+- Verification References:
+  - `tests/unit/comparisonReportRuntimeExecution.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - Scope strictly to the Linux container invalid-VI-path case; never attach the
+    note to other providers or other failure signatures. Keep the remediation
+    copy aligned with the TROUBLESHOOTING snap-Docker bind-mount section.
+
 ### VHS-REQ-630: Actionable VI Server Guidance For LabVIEW CLI Connection Failure
 
 - Status: Active

@@ -334,6 +334,12 @@ default VS Code `workspaceStorage` location already qualifies), or connect the
 required snap interface (for removable media, `sudo snap connect
 docker:removable-media`). Native (non-snap) Docker is unaffected.
 
+When this happens, the comparison report's retained diagnostics now name this
+cause directly: a failed Linux **container** compare whose bind-mounted report
+directory is outside your home directory attaches an actionable
+bind-mount-visibility note pointing at the fix above (VHS-REQ-663), so you do
+not have to infer it from the raw `path invalid` error.
+
 ## Source Evaluation
 
 Inside a devcontainer or Codespace, reset the basic loop with:
