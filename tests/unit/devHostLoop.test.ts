@@ -101,6 +101,12 @@ describe('devHostLoop', () => {
       expect(toWindowsPath('rel/seg')).toBe(path.win32.normalize('rel\\seg'));
       expect(() => toWindowsPath('/usr/x')).toThrow(/Unsupported non-Windows path/);
     });
+
+    it('converts a bare /mnt drive root (no subpath) instead of rejecting it', () => {
+      expect(toWindowsPath('/mnt/c')).toBe(path.win32.normalize('C:\\'));
+      expect(toWindowsPath('/mnt/c/')).toBe(path.win32.normalize('C:\\'));
+      expect(toWindowsPath('/mnt/d')).toBe(path.win32.normalize('D:\\'));
+    });
   });
 
   describe('canWriteDirectory', () => {
