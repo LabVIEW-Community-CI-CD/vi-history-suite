@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import * as path from 'node:path';
 
 // Requirement coverage: VHS-REQ-601 (Requirements As Agent Work Contracts).
 // Criterion coverage: VHS-REQ-601.32 — a committed helper records a
@@ -127,7 +128,9 @@ describe('serializeManifest (VHS-REQ-601.32)', () => {
 
 describe('resolveLedgerPath (VHS-REQ-601.32)', () => {
   it('defaults to the committed ledger path and rejects absolute/escaping paths', () => {
-    expect(resolveLedgerPath('/repo')).toBe(`/repo/${DEFAULT_LEDGER_PATH}`);
+    // Compute the expected path the same portable way production does so the
+    // assertion is separator- and drive-agnostic (passes on the Windows CI leg).
+    expect(resolveLedgerPath('/repo')).toBe(path.resolve('/repo', DEFAULT_LEDGER_PATH));
     expect(() => resolveLedgerPath('/repo', '/etc/passwd')).toThrow(/relative path/);
     expect(() => resolveLedgerPath('/repo', '../escape.json')).toThrow(/inside the working directory/);
   });
@@ -156,7 +159,7 @@ describe('main (VHS-REQ-601.32)', () => {
 
     expect(code).toBe(0);
     expect(written).toHaveLength(1);
-    expect(written[0].path).toBe(`/repo/${DEFAULT_LEDGER_PATH}`);
+    expect(written[0].path).toBe(path.resolve('/repo', DEFAULT_LEDGER_PATH));
     const persisted = JSON.parse(written[0].content);
     expect(persisted.tracks[0].lastValidatedVersion).toBe('1.34.0');
     expect(persisted.tracks[0].lastValidatedCommit).toBe('abc1234');
