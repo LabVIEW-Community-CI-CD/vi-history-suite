@@ -67,6 +67,7 @@ src/ui/historyPanelTracker.ts,mapped,Yes,History panel tracker; mapped through R
 scripts/auditPackagedRuntimeSurface.js,mapped,Yes,Package audit script; mapped through RTM.
 scripts/bootstrapLinuxVsCodeHost.js,dev-only,No,Linux VS Code host bootstrap; CI/dev infrastructure.
 scripts/generateBuildInfo.js,dev-only,No,Build info generator; development tooling.
+scripts/checkDevDependencies.js,dev-only,No,Contributor dev-loop dependency preflight; precompile/precheck hook that fails closed with npm ci remediation when node_modules or the local typescript toolchain is missing before tsc runs; development tooling.
 scripts/preparePublicRepoClone.js,dev-only,No,Public repo clone preparation; CI infrastructure.
 scripts/preparePublicTestFixture.js,dev-only,No,Public test fixture preparation; testing infrastructure.
 scripts/publicRepoCloneCore.js,dev-only,No,Public repo clone core; CI infrastructure.
@@ -79,6 +80,7 @@ tests/unit/bootstrapLinuxVsCodeHost.test.ts,dev-only,No,Tests for Linux VS Code 
 tests/unit/branchGovernanceWorkflow.test.ts,mapped,Yes,Branch governance workflow tests; mapped through RTM.
 tests/unit/branchProtectionSettingsAuditScript.test.ts,dev-only,No,Tests for the maintainer branch protection settings audit command with mocked GitHub CLI execution and drift rendering.
 tests/unit/buildInfo.test.ts,dev-only,No,Build info tests; development tooling.
+tests/unit/checkDevDependencies.test.ts,dev-only,No,Contributor dev-loop dependency preflight tests; development tooling.
 tests/unit/closeoutEvidenceScript.test.ts,mapped,Yes,Closeout evidence automation Docker runner standards audit snapshot standards toolchain provenance coverage-risk mapping and DoD evidence-source hygiene tests; mapped to VHS-REQ-601 VHS-REQ-613 and VHS-REQ-615.
 tests/unit/assuranceStateScript.test.ts,mapped,Yes,Local assurance-state evidence model generator unit tests for retained audit normalization classification and provenance; mapped to VHS-REQ-615.
 tests/unit/issueStandardsTriageScript.test.ts,dev-only,No,Local issue standards-triage helper tests covering argument parsing Docker command construction artifact capture and image-missing fail-fast behavior.
