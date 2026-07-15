@@ -1277,7 +1277,7 @@ describe('branch protection audit evaluation', () => {
       $id: string;
       required: string[];
       properties: { $schema: { const: string }; schemaVersion: { const: number } };
-      $defs: { provenance: { properties: { outputMode: { enum: string[] } } } };
+      $defs: { provenance: ObjectSchemaNode & { properties: { outputMode: { enum: string[] } } } };
       [key: string]: unknown;
     };
     const provenance = buildAuditSchemaProvenance(
@@ -1302,6 +1302,10 @@ describe('branch protection audit evaluation', () => {
       argv: ['--all', '--schema', '--include-provenance']
     });
     expect(schemaWithProvenance[BRANCH_PROTECTION_AUDIT_SCHEMA_PROVENANCE_KEY]).toEqual(provenance);
+    expectOnlySchemaProperties(
+      schemaWithProvenance[BRANCH_PROTECTION_AUDIT_SCHEMA_PROVENANCE_KEY] as Record<string, unknown>,
+      schema.$defs.provenance
+    );
   });
 
   it('keeps emitted JSON shapes aligned with the published schema contract', () => {
