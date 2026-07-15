@@ -37,6 +37,7 @@ describe('Mutation workflow (VHS-REQ-613)', () => {
     expect(workflow).toContain('name: Upload mutation report');
     expect(workflow).toContain('path: reports/mutation/');
     expect(strykerConfig).toContain("mutate: ['src/domain/**/*.ts']");
+    expect(strykerConfig).toContain('inPlace: true');
     expect(workflow.indexOf('run: npm run test:mutation')).toBeLessThan(
       workflow.indexOf('name: Upload mutation report')
     );
