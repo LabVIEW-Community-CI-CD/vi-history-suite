@@ -14,9 +14,9 @@
  *
  * Decision B: the ledger only SELECTS work that is fully executable and
  * verifiable on a Linux host. Platform-proof risk (Windows host-native /
- * windows-container comparison runtime, issues #296/#378) is a DECLARED,
- * non-selectable "parked" awareness list — it is ranked and reported but never
- * chosen as `nextTarget`.
+ * windows-container comparison runtime, tracked by the recurring per-release
+ * Windows validation, issue #1316) is a DECLARED, non-selectable "parked"
+ * awareness list — it is ranked and reported but never chosen as `nextTarget`.
  *
  * Advisory by default (exit 0). `--strict` exits non-zero only when a selectable
  * CRITICAL/HIGH risk exists. Pure helpers stay separate from a thin CLI so the
@@ -52,23 +52,26 @@ const DIMENSIONS = [
 const DIMENSION_ORDER = new Map(DIMENSIONS.map((dimension, index) => [dimension, index]));
 
 // Declared platform-proof awareness list (decision B): highest real risk but not
-// selectable on a Linux host. Sourced to real tracking issues, never fabricated.
+// selectable on a Linux host. Windows comparison-runtime correctness is not a
+// one-time close — it must be RE-VALIDATED on a Windows host every release (the
+// last sweep at 1.33.2 in #1316 found and fixed a real cold-launch defect,
+// #1322/#1323). Sourced to the recurring tracking issue, never fabricated.
 const PLATFORM_PROOF_RISKS = [
   {
     id: 'platform-proof/windows-host-native',
-    title: 'Windows host-native comparison runtime is unproven',
+    title: 'Windows host-native comparison runtime needs per-release re-validation',
     requirementIds: ['VHS-REQ-634'],
-    provenance: 'issue:#296',
+    provenance: 'issue:#1316',
     suggestedAction:
-      'Run the Windows maintainer validation runbook on a Windows host with native LabVIEW; triage results.'
+      'Re-validate on a Windows host with native LabVIEW for the current build (see #1316 runbook); triage results.'
   },
   {
     id: 'platform-proof/windows-container',
-    title: 'Windows-container comparison runtime is unproven',
+    title: 'Windows-container comparison runtime needs per-release re-validation',
     requirementIds: ['VHS-REQ-622'],
-    provenance: 'issue:#378',
+    provenance: 'issue:#1316',
     suggestedAction:
-      'Run the windows-container comparison matrix on a Windows host with Docker Desktop (Windows containers); triage results.'
+      'Re-validate the windows-container comparison on a Windows host with Docker Desktop (Windows containers) for the current build; triage results.'
   }
 ];
 
