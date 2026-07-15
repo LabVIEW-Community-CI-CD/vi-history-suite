@@ -9,6 +9,7 @@ const repoRoot = path.resolve(__dirname, '..', '..');
 const {
   DEFAULT_REPO,
   DEFAULT_SAVE_DIR,
+  ISSUE_JSON_FIELDS,
   parseArgs,
   issueViewArgs,
   standardsDockerSteps,
@@ -17,6 +18,7 @@ const {
 } = require('../../scripts/runIssueStandardsTriage.js') as {
   DEFAULT_REPO: string;
   DEFAULT_SAVE_DIR: string;
+  ISSUE_JSON_FIELDS: string[];
   parseArgs: (argv: string[]) => {
     issue?: string;
     repo: string;
@@ -130,12 +132,16 @@ describe('issue standards triage script', () => {
         return {
           status: 0,
           stdout: JSON.stringify({
-            number: 1040,
-            title: 'Add local standards-review issue triage helper',
-            state: 'OPEN',
-            url: 'https://example.test/issues/1040',
+            author: { login: 'copilot' },
+            body: 'Use standards review locally.',
+            createdAt: '2026-07-14T00:00:00Z',
             labels: [{ name: 'enhancement' }],
-            body: 'Use standards review locally.'
+            milestone: { title: 'MVP' },
+            number: 1040,
+            state: 'OPEN',
+            title: 'Add local standards-review issue triage helper',
+            updatedAt: '2026-07-14T01:00:00Z',
+            url: 'https://example.test/issues/1040'
           })
         };
       }
@@ -185,7 +191,20 @@ describe('issue standards triage script', () => {
     expect(result.exitCode).toBe(0);
     expect(result.markdown).toContain('Issue: #1040 Add local standards-review issue triage helper');
     expect(result.markdown).toContain('REQ=strong');
-    expect(fs.existsSync(path.join(root, 'evidence', 'issue-1040', 'issue.json'))).toBe(true);
+    const issueJsonPath = path.join(root, 'evidence', 'issue-1040', 'issue.json');
+    expect(fs.existsSync(issueJsonPath)).toBe(true);
+    const retainedIssue = JSON.parse(fs.readFileSync(issueJsonPath, 'utf8')) as {
+      author: { login: string };
+      body: string;
+      createdAt: string;
+      labels: Array<{ name: string }>;
+      milestone: { title: string };
+      number: number;
+      state: string;
+      title: string;
+      updatedAt: string;
+      url: string;
+    };
     expect(fs.readFileSync(path.join(root, 'evidence', 'issue-1040', 'assurance-scorecard.txt'), 'utf8')).toContain('| req | PASS |');
     const triageSummaryPath = path.join(root, 'evidence', 'issue-1040', 'triage-summary.json');
     expect(fs.existsSync(triageSummaryPath)).toBe(true);
@@ -207,12 +226,16 @@ describe('issue standards triage script', () => {
         skipped: boolean;
         status: number;
         json: {
-          number: number;
-          title: string;
-          state: string;
-          url: string;
-          labels: Array<{ name: string }>;
+          author: { login: string };
           body: string;
+          createdAt: string;
+          labels: Array<{ name: string }>;
+          milestone: { title: string };
+          number: number;
+          state: string;
+          title: string;
+          updatedAt: string;
+          url: string;
         };
         command: string;
       };
@@ -265,8 +288,14 @@ describe('issue standards triage script', () => {
       'keepSnapshot',
       'help'
     ]);
+    expect(Object.keys(retainedIssue)).toEqual(ISSUE_JSON_FIELDS);
+    expect(Object.keys(retainedIssue.author)).toEqual(['login']);
+    expect(Object.keys(retainedIssue.labels[0])).toEqual(['name']);
+    expect(Object.keys(retainedIssue.milestone)).toEqual(['title']);
     expect(Object.keys(triageSummary.issue)).toEqual(['skipped', 'status', 'json', 'command']);
-    expect(Object.keys(triageSummary.issue.json)).toEqual(['number', 'title', 'state', 'url', 'labels', 'body']);
+    expect(Object.keys(triageSummary.issue.json)).toEqual(ISSUE_JSON_FIELDS);
+    expect(triageSummary.issue.json).toEqual(retainedIssue);
+    expect(Object.keys(triageSummary.issue.json.author)).toEqual(['login']);
     expect(Object.keys(triageSummary.issue.json.labels[0])).toEqual(['name']);
     expect(Object.keys(triageSummary.imageInspect)).toEqual(['status', 'command']);
     expect(Object.keys(triageSummary.imagePreparation[0])).toEqual(['name', 'file', 'status', 'command']);
