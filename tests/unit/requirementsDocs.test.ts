@@ -760,6 +760,9 @@ describe('requirements documentation coherence', () => {
     expect(srs).toContain('The repo-native `npm run dod:gate` command verifies the DoD contract');
     expect(srs).toContain('coverage-to-traceability mapping');
     expect(srs).toContain('Standards closeout evidence runs `npm run coverage:map`');
+    expect(packageJson.scripts['quality:local']).toBe(
+      'npm run check && npm test && npm run traceability:audit && npm run customization:audit && npm run docs:links && npm run coverage:map && npm run requirements:verify'
+    );
     expect(srs).toContain('Hosted CI includes `DoD Gate / dod` running `npm run dod:gate`');
     expect(srs).toContain('`scripts/generateCloseoutEvidence.js`');
     expect(srs).toContain('`.github/workflows/ci.yml`');
