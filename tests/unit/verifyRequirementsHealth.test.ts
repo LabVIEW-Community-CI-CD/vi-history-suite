@@ -783,19 +783,24 @@ describe('requirement verification health (VHS-REQ-601)', () => {
       writeFileSync: (...args: unknown[]) => writeCalls.push(args)
     });
 
-    const schema = JSON.parse(String((writeCalls[0] as unknown[])[1])) as Record<string, unknown>;
+    const schema = JSON.parse(String((writeCalls[0] as unknown[])[1])) as Record<string, unknown> & {
+      $defs: { provenance: RequiredSchemaNode & { properties: { outputMode: { enum: string[] } } } };
+    };
+    const provenance = schema[REQUIREMENTS_HEALTH_SCHEMA_PROVENANCE_KEY] as Record<string, unknown>;
     expect(code).toBe(0);
     expect(stdoutChunks.join('')).toBe(
       '[requirements-verify] Wrote schema output to evidence/requirements-health.schema.json\n'
     );
     expect(schema.$id).toBe(REQUIREMENTS_HEALTH_SCHEMA_ID);
-    expect(schema[REQUIREMENTS_HEALTH_SCHEMA_PROVENANCE_KEY]).toEqual({
+    expect(provenance).toEqual({
       generatedAt: '2026-07-14T12:00:00.000Z',
       cwd: path.resolve('/repo'),
       outputMode: 'schema',
       strict: false,
       argv: ['--schema', '--include-provenance', '--output', 'evidence/requirements-health.schema.json']
     });
+    expectRequiredKeysPresent(provenance, schema.$defs.provenance.required);
+    expect(schema.$defs.provenance.properties.outputMode.enum).toContain(provenance.outputMode);
   });
 
   it('main includes provenance in retained JSON output when requested', () => {
