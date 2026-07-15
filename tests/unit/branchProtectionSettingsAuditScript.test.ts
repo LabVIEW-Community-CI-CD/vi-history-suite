@@ -1332,6 +1332,80 @@ describe('branch protection audit evaluation', () => {
     expectRequiredKeysPresent(aggregateBranches[0].summary as Record<string, unknown>, schema.$defs.branchSummary.required);
   });
 
+  it('keeps emitted JSON nested evidence aligned with the published schema contract', () => {
+    const duplicateFailingResult = {
+      success: false,
+      checks: [
+        { name: 'Rule Set', passed: true, details: 'ok' },
+        { name: 'Rule_Set', passed: false, details: 'collision' }
+      ],
+      notices: ['active branch rulesets: none']
+    };
+    const output = JSON.parse(
+      renderAuditOutput([{ branch: 'collision', result: duplicateFailingResult }], {
+        repo: DEFAULT_REPO,
+        allBranches: true,
+        emitJson: true
+      })
+    ) as { summary: Record<string, unknown>; branches: Array<Record<string, unknown>> };
+    const schema = JSON.parse(renderBranchProtectionAuditJsonSchema()) as {
+      $defs: {
+        check: RequiredSchemaNode;
+        notice: RequiredSchemaNode;
+        duplicateCheckId: RequiredSchemaNode;
+        failure: RequiredSchemaNode;
+        branchNotice: RequiredSchemaNode;
+        branchDuplicateCheckId: RequiredSchemaNode;
+        branchFailure: RequiredSchemaNode;
+        branchAuditResult: {
+          properties: {
+            checks: { items: { $ref: string } };
+            noticeDetails: { items: { $ref: string } };
+          };
+        };
+        branchSummary: {
+          properties: {
+            noticeDetails: { items: { $ref: string } };
+            duplicateCheckIds: { items: { $ref: string } };
+            failures: { items: { $ref: string } };
+          };
+        };
+        aggregateSummary: {
+          properties: {
+            noticeDetails: { items: { $ref: string } };
+            duplicateCheckIds: { items: { $ref: string } };
+            failures: { items: { $ref: string } };
+          };
+        };
+      };
+    };
+    const branchOutput = output.branches[0];
+    const branchSummary = branchOutput.summary as Record<string, unknown>;
+    const checks = branchOutput.checks as Array<Record<string, unknown>>;
+    const notices = branchOutput.noticeDetails as Array<Record<string, unknown>>;
+    const branchDuplicates = branchSummary.duplicateCheckIds as Array<Record<string, unknown>>;
+    const branchFailures = branchSummary.failures as Array<Record<string, unknown>>;
+    const aggregateNotices = output.summary.noticeDetails as Array<Record<string, unknown>>;
+    const aggregateDuplicates = output.summary.duplicateCheckIds as Array<Record<string, unknown>>;
+    const aggregateFailures = output.summary.failures as Array<Record<string, unknown>>;
+
+    expect(schema.$defs.branchAuditResult.properties.checks.items.$ref).toBe('#/$defs/check');
+    expect(schema.$defs.branchAuditResult.properties.noticeDetails.items.$ref).toBe('#/$defs/notice');
+    expect(schema.$defs.branchSummary.properties.noticeDetails.items.$ref).toBe('#/$defs/notice');
+    expect(schema.$defs.branchSummary.properties.duplicateCheckIds.items.$ref).toBe('#/$defs/duplicateCheckId');
+    expect(schema.$defs.branchSummary.properties.failures.items.$ref).toBe('#/$defs/failure');
+    expect(schema.$defs.aggregateSummary.properties.noticeDetails.items.$ref).toBe('#/$defs/branchNotice');
+    expect(schema.$defs.aggregateSummary.properties.duplicateCheckIds.items.$ref).toBe('#/$defs/branchDuplicateCheckId');
+    expect(schema.$defs.aggregateSummary.properties.failures.items.$ref).toBe('#/$defs/branchFailure');
+    expectRequiredKeysPresent(checks[0], schema.$defs.check.required);
+    expectRequiredKeysPresent(notices[0], schema.$defs.notice.required);
+    expectRequiredKeysPresent(branchDuplicates[0], schema.$defs.duplicateCheckId.required);
+    expectRequiredKeysPresent(branchFailures[0], schema.$defs.failure.required);
+    expectRequiredKeysPresent(aggregateNotices[0], schema.$defs.branchNotice.required);
+    expectRequiredKeysPresent(aggregateDuplicates[0], schema.$defs.branchDuplicateCheckId.required);
+    expectRequiredKeysPresent(aggregateFailures[0], schema.$defs.branchFailure.required);
+  });
+
   it('keeps emitted JSON provenance aligned with the published schema contract', () => {
     const passingResult = evaluateBranchProtection({ protection: protection(), rulesets: branchRulesets() });
     const branchResults = DEFAULT_AUDIT_BRANCHES.map((branch) => ({ branch, result: passingResult }));
