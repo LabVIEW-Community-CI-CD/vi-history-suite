@@ -111,7 +111,15 @@ vi.mock('vscode', () => ({
     }),
     onDidChangeConfiguration: onDidChangeConfigurationMock,
     onDidChangeWorkspaceFolders: onDidChangeWorkspaceFoldersMock,
-    onDidGrantWorkspaceTrust: onDidGrantWorkspaceTrustMock
+    onDidGrantWorkspaceTrust: onDidGrantWorkspaceTrustMock,
+    // VHS-REQ-664: the on-change warmer registers a FileSystemWatcher during
+    // activation; the watcher callbacks never fire in these activation tests.
+    createFileSystemWatcher: () => ({
+      onDidChange: () => ({ dispose: () => {} }),
+      onDidCreate: () => ({ dispose: () => {} }),
+      onDidDelete: () => ({ dispose: () => {} }),
+      dispose: () => {}
+    })
   },
   // The VHS-REQ-660 Source Control decoration provider constructs an
   // EventEmitter and registers a file-decoration provider during activation.

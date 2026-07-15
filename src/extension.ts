@@ -16,6 +16,7 @@ import {
 } from './git/gitCli';
 import { registerViSemanticMcpServerProvider } from './mcp/viSemanticMcpServerProvider';
 import {
+  computeViSemanticNarrativeCacheKey,
   createFileViSemanticNarrativeCache,
   recordViSemanticNarrativeFromReport
 } from './semantic/viSemanticNarrativeCache';
@@ -75,8 +76,15 @@ import { registerOpenRuntimeReportPanelCommand } from './commands/openRuntimeRep
 import { registerPickContainerImageVersionCommand } from './commands/pickContainerImageVersionCommand';
 import { registerViPreviewCustomEditor } from './ui/viPreviewEditor';
 import { createViPreviewCacheWarmerService } from './ui/viPreviewCacheWarmerService';
+import { createViChangeWarmerService } from './ui/viChangeWarmerService';
 import { createViPreviewSessionManager } from './ui/viPreviewSessionManager';
 import { createViPreviewCache, getViPreviewOperationDirectory, isViPreviewEnabled, resolvePreviewRuntime } from './ui/viPreviewRenderHost';
+import { toViPreviewSessionRuntime } from './reporting/viPreview/viPreviewSessionRuntime';
+import {
+  isViChangeWarmPlanEmpty,
+  resolveViChangeWarmPlan,
+  warmChangedVi
+} from './reporting/viPreview/viChangeWarmScheduler';
 import { buildRuntimeSettingsLiveSessionProbeSummary } from './tooling/runtimeSettingsLiveSessionProbe';
 import { persistRuntimeSettingsLiveSessionProbePacket } from './tooling/runtimeSettingsLiveSessionProbePacket';
 import {
@@ -537,6 +545,90 @@ export async function activate(
 
     return workspaceRuntimePromise;
   };
+
+  // VHS-REQ-664: warm the preview render cache and the semantic comparison
+  // narrative cache for a VI as soon as it changes on disk, so a reviewer finds
+  // the preview and the Source Control "what changed" hover ready. Docker-only
+  // and opt-in: the preview warm needs `preview.enabled`, the comparison warm
+  // needs workspace trust (it launches LabVIEW), and the whole feature is gated
+  // on `viHistorySuite.preview.warmOnChange` (default true). The warmer service
+  // debounces and serializes changes so a burst of LabVIEW saves never starts
+  // overlapping background runs.
+  const resolveIsDockerPreviewRuntime = async (): Promise<boolean> => {
+    try {
+      const runtime = await resolvePreviewRuntime();
+      return runtime.outcome === 'ready' && runtime.runtime.provider !== 'host-native';
+    } catch {
+      return false;
+    }
+  };
+  const warmChangedViPreview = async (viFsPath: string): Promise<void> => {
+    const runtime = await resolvePreviewRuntime();
+    if (runtime.outcome !== 'ready') {
+      return;
+    }
+    const sessionRuntime = toViPreviewSessionRuntime(runtime.runtime, process.platform);
+    if (!sessionRuntime) {
+      return;
+    }
+    await viPreviewSessionManager.renderVi(sessionRuntime, viFsPath, 'warm');
+  };
+  const warmChangedViComparison = async (viFsPath: string): Promise<void> => {
+    if (!semanticNarrativeCache) {
+      return;
+    }
+    const repositoryRoot = await resolveGitToplevel(viFsPath);
+    if (!repositoryRoot) {
+      return;
+    }
+    const relativePath = path.relative(repositoryRoot, viFsPath).replace(/\\/g, '/');
+    const [baseSignature, selectedSignature] = await Promise.all([
+      resolveViContentBlobId(repositoryRoot, 'HEAD', relativePath),
+      resolveViContentBlobId(repositoryRoot, WORKTREE_REVISION_SENTINEL, relativePath)
+    ]);
+    // Only compare a VI that actually differs from HEAD, and skip when the hover
+    // cache already holds this exact change (avoids a redundant LabVIEW run).
+    if (!baseSignature || !selectedSignature || baseSignature === selectedSignature) {
+      return;
+    }
+    const existing = await semanticNarrativeCache.get(
+      computeViSemanticNarrativeCacheKey(relativePath, baseSignature, selectedSignature)
+    );
+    if (existing) {
+      return;
+    }
+    const { historyService } = await ensureWorkspaceRuntime();
+    const model = await historyService.load(vscode.Uri.file(viFsPath));
+    const headCommit = model.commits[0];
+    if (!headCommit) {
+      return;
+    }
+    await comparisonReportAction({
+      model,
+      selectedHash: WORKTREE_REVISION_SENTINEL,
+      baseHash: headCommit.hash
+    });
+  };
+  const viChangeWarmer = createViChangeWarmerService(context, {
+    onSettledChange: async (viFsPath) => {
+      const plan = resolveViChangeWarmPlan({
+        warmOnChangeEnabled: vscode.workspace
+          .getConfiguration('viHistorySuite')
+          .get<boolean>('preview.warmOnChange', true),
+        isDocker: await resolveIsDockerPreviewRuntime(),
+        previewEnabled: isViPreviewEnabled(),
+        isTrusted: vscode.workspace.isTrusted
+      });
+      if (isViChangeWarmPlanEmpty(plan)) {
+        return;
+      }
+      await warmChangedVi(viFsPath, plan, {
+        warmPreview: warmChangedViPreview,
+        warmComparison: warmChangedViComparison
+      });
+    }
+  });
+  context.subscriptions.push(viChangeWarmer);
 
   context.subscriptions.push(
     vscode.commands.registerCommand(

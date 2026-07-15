@@ -4810,3 +4810,63 @@ Missing numeric IDs are intentional.
     `VI_SEMANTIC_MCP_TOOLS` and the handler together, and keep the schema ids
     versioned so external consumers of the open VI-diff standard are not
     broken.
+
+### VHS-REQ-664: Preview And Comparison Cache Warming On VI Change
+
+- Status: Active
+- Parent: VHS-SYS-REQ-008
+- Area: Comparison Reports
+- Statement: When the Docker comparison runtime is selected, the extension shall
+  warm the caches for a LabVIEW VI as soon as it changes on disk so a reviewer
+  finds both its preview and its Source Control change hover ready without
+  waiting on a cold LabVIEW run. A `FileSystemWatcher` observes
+  `.vi`/`.vit`/`.vim`/`.ctl` create and change events, debounces the burst of
+  writes LabVIEW makes per save, and processes settled changes one at a time so
+  overlapping background LabVIEW runs never start. For a settled change it warms
+  the VI's preview render through the shared warm session (VHS-REQ-659) and runs
+  a background HEAD-versus-working-tree comparison whose produced report records
+  the semantic narrative (VHS-REQ-660), so the hover updates from its pending
+  badge to the change summary without a manual comparison. The feature is opt-in
+  and Docker-only: it is governed by `viHistorySuite.preview.warmOnChange`
+  (default true), the preview warm additionally requires
+  `viHistorySuite.preview.enabled`, and the comparison warm additionally requires
+  a trusted workspace because it launches LabVIEW. Warming is best-effort and
+  never surfaces an error.
+- Acceptance Criteria:
+  - `createViChangeWarmScheduler` debounces change notifications per path so the
+    several writes LabVIEW makes while saving one VI coalesce into a single
+    settled warm, and `dispose` cancels every pending timer so no warm fires
+    after disposal.
+  - `resolveViChangeWarmPlan` warms nothing unless the runtime is Docker and
+    `viHistorySuite.preview.warmOnChange` is on; when it warms, the preview
+    render warm additionally requires `viHistorySuite.preview.enabled` and the
+    comparison narrative warm additionally requires workspace trust.
+  - `warmChangedVi` performs the permitted warms best-effort and independently:
+    a preview-warm failure never blocks the comparison warm, a comparison-warm
+    failure is swallowed, and neither throws to the caller so a background warm
+    never surfaces an error.
+- Agent Work Scope:
+  - Keep the debounce scheduler, the gating decision, and the warm orchestrator
+    pure and dependency-injected in
+    `src/reporting/viPreview/viChangeWarmScheduler.ts` so they are unit-testable
+    without VS Code or a runtime, and keep the `FileSystemWatcher` registration
+    and the concrete preview/comparison warm wiring thin in
+    `src/ui/viChangeWarmerService.ts` and `src/extension.ts`. Reuse the shared
+    warm session (VHS-REQ-659) for the preview warm and the existing worktree
+    comparison path that records the narrative (VHS-REQ-660) for the comparison
+    warm rather than introducing a new execution transport; skip the comparison
+    when the VI is unchanged versus HEAD or its narrative is already cached.
+- Implementation References:
+  - `src/reporting/viPreview/viChangeWarmScheduler.ts`
+  - `src/ui/viChangeWarmerService.ts`
+  - `src/extension.ts`
+  - `package.json`
+- Verification References:
+  - `tests/unit/viChangeWarmScheduler.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+  - `manual:warm-changed-vi-caches`
+- Change Guidance:
+  - Warming must stay Docker-only, opt-in, and best-effort: never launch host
+    LabVIEW on change, never let a warm failure surface to the user, and keep
+    the per-path debounce and single-flight serialization so a burst of LabVIEW
+    saves cannot start overlapping background runs.
