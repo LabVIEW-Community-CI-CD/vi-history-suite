@@ -1023,7 +1023,21 @@ function normalizeDashboardArtifactMessage(message: unknown): DashboardArtifactM
 
 function isDescendantPath(rootPath: string, candidatePath: string): boolean {
   const relativePath = relativePreservingExplicitPathStyle(rootPath, candidatePath);
-  return relativePath !== '' && !relativePath.startsWith('..') && !isAbsolutePreservingExplicitPathStyle(relativePath);
+  return (
+    relativePath !== '' &&
+    !startsWithParentTraversalSegment(relativePath) &&
+    !isAbsolutePreservingExplicitPathStyle(relativePath)
+  );
+}
+
+/**
+ * Rejects a relative path only when its first component is an actual `..`
+ * traversal segment. A bare `startsWith('..')` wrongly rejected legitimate
+ * descendants whose first component merely begins with two dots (e.g. an
+ * artifact under a directory named `..cache` -> `..cache/report.html`).
+ */
+function startsWithParentTraversalSegment(relativePath: string): boolean {
+  return relativePath.split(/[\\/]/)[0] === '..';
 }
 
 function usesExplicitPosixPathStyle(rootPath: string): boolean {

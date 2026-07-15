@@ -952,6 +952,50 @@ describe('multi-report dashboard action routing (VHS-REQ-610)', () => {
     expect(harness.panels.at(-1)?.webview.html).toContain('packet');
   });
 
+  it('opens a dashboard artifact whose in-storage path has a component starting with two dots (VHS-REQ-610.2)', async () => {
+    const context = harness.createContext();
+    const model = createModel();
+    const panelTracker = {
+      recordDashboard: vi.fn(),
+      recordDashboardArtifactAction: vi.fn()
+    };
+    const action = createMultiReportDashboardAction(
+      context as never,
+      {
+        buildDashboard: vi.fn().mockResolvedValue(createDashboardResult(model)),
+        seedRetainedDashboardEvidence: vi.fn().mockResolvedValue(EMPTY_SEED_RESULT),
+        readArchivedComparisonReportSourceRecord: vi.fn().mockResolvedValue(undefined),
+        ensureComparisonReportEvidence: vi.fn().mockResolvedValue(comparisonResult()) as never,
+        pathExists: async () => true,
+        writeFile: vi.fn(),
+        readFile: vi.fn().mockResolvedValue('<html></html>'),
+        now: incrementingClock(),
+        getHistoryServiceSettings: () => HISTORY_SETTINGS,
+        getRuntimeSettings: () => RUNTIME_SETTINGS
+      },
+      panelTracker as never
+    );
+
+    await action({ model });
+    const dashboardPanel = harness.panels[0];
+
+    // The artifact lives under a directory named "..evidence" — a legitimate
+    // descendant whose relative path begins with ".." but is NOT a traversal.
+    await dashboardPanel.dispatchMessage({
+      command: 'openDashboardArtifact',
+      filePath: '/workspace/storage/..evidence/dashboards/review/report-metadata.json',
+      kind: 'metadata-json',
+      label: 'Report metadata under dotted directory'
+    });
+
+    expect(panelTracker.recordDashboardArtifactAction).toHaveBeenCalledWith(
+      expect.objectContaining({ outcome: 'opened-artifact-editor', kind: 'metadata-json' })
+    );
+    expect(panelTracker.recordDashboardArtifactAction).not.toHaveBeenCalledWith(
+      expect.objectContaining({ outcome: 'ignored-outside-storage' })
+    );
+  });
+
   it('renders an iframe fallback when a dashboard artifact cannot be inlined (VHS-REQ-610)', async () => {
     const context = harness.createContext();
     const model = createModel();
