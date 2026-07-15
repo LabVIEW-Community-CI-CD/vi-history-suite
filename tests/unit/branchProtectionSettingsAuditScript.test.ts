@@ -1332,6 +1332,30 @@ describe('branch protection audit evaluation', () => {
     expectRequiredKeysPresent(aggregateBranches[0].summary as Record<string, unknown>, schema.$defs.branchSummary.required);
   });
 
+  it('keeps emitted JSON provenance aligned with the published schema contract', () => {
+    const passingResult = evaluateBranchProtection({ protection: protection(), rulesets: branchRulesets() });
+    const branchResults = DEFAULT_AUDIT_BRANCHES.map((branch) => ({ branch, result: passingResult }));
+    const provenance = buildAuditProvenance(
+      branchResults,
+      { repo: DEFAULT_REPO, emitJson: true },
+      { now: () => new Date('2026-07-14T12:00:00.000Z'), argv: ['--all', '--json', '--include-provenance'] }
+    );
+    const output = JSON.parse(
+      renderAuditOutput(branchResults, { repo: DEFAULT_REPO, allBranches: true, emitJson: true, provenance })
+    ) as { provenance: Record<string, unknown> };
+    const schema = JSON.parse(renderBranchProtectionAuditJsonSchema()) as {
+      properties: { provenance: { $ref: string } };
+      $defs: {
+        provenance: RequiredSchemaNode & { properties: { outputMode: { enum: string[] } } };
+      };
+    };
+
+    expect(schema.properties.provenance.$ref).toBe('#/$defs/provenance');
+    expectRequiredKeysPresent(output.provenance, schema.$defs.provenance.required);
+    expect(output.provenance).toEqual(provenance);
+    expect(schema.$defs.provenance.properties.outputMode.enum).toContain(output.provenance.outputMode);
+  });
+
   it('fails closed when expected active branch rulesets drift', () => {
     const result = evaluateBranchProtection({
       protection: protection(),
