@@ -77,6 +77,25 @@ describe('buildViRepositoryIndex', () => {
     expect(index.narrative).toContain('Most recently changed: src/B.VI');
   });
 
+  it('selects the most recently changed VI chronologically across timezone offsets', async () => {
+    // Same calendar day, different offsets: A is 17:00 UTC (later), B is 10:00
+    // UTC (earlier). A lexicographic compare of the %aI strings wrongly ranks
+    // "T12:00:00+02:00" ahead of "T09:00:00-08:00".
+    const harness = makeHarness(
+      ['vis/A.vi', 'vis/B.vi'],
+      { 'vis/A.vi': 3, 'vis/B.vi': 3 },
+      {
+        'vis/A.vi': entry('a1', '2026-07-15T09:00:00-08:00', 'later in real time'),
+        'vis/B.vi': entry('b1', '2026-07-15T12:00:00+02:00', 'earlier in real time')
+      }
+    );
+
+    const index = await buildViRepositoryIndex(input(), harness.deps);
+
+    expect(index.narrative).toContain('Most recently changed: vis/A.vi');
+    expect(index.narrative).not.toContain('Most recently changed: vis/B.vi');
+  });
+
   it('caps the number of detailed VIs but reports the true total', async () => {
     const harness = makeHarness(['a.vi', 'b.vi', 'c.vi'], { 'a.vi': 1, 'b.vi': 1, 'c.vi': 1 }, {});
     const index = await buildViRepositoryIndex(input({ maxVis: 2 }), harness.deps);
