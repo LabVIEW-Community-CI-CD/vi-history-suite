@@ -10,6 +10,7 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 
 import { createMultiReportDashboardAction } from '../../src/dashboard/multiReportDashboardAction';
+import { renderDashboardArtifactHtml } from '../../src/dashboard/multiReportDashboardAction';
 import type { BuildMultiReportDashboardResult } from '../../src/dashboard/multiReportDashboard';
 import type { ComparisonReportActionResult } from '../../src/reporting/comparisonReportAction';
 import type { SeedRetainedDashboardEvidenceResult } from '../../src/dashboard/retainedDashboardEvidence';
@@ -1041,5 +1042,23 @@ describe('multi-report dashboard action routing (VHS-REQ-610)', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe('renderDashboardArtifactHtml body injection with $-sequences (VHS-REQ-610)', () => {
+  it('inserts an artifact title containing $-sequences literally into the header', async () => {
+    // The title flows from the artifact label (arbitrary user text). escapeHtml
+    // does not escape `$`, so a string .replace() would misinterpret `$&`/`$1`/`$$`
+    // in the replacement and corrupt the dashboard artifact header.
+    const html = await renderDashboardArtifactHtml({
+      title: 'Report $1 and $& and $$x',
+      artifactFilePath: '/workspace/storage/dashboards/review/diff-report-Sample.vi.html',
+      artifactDirectoryWebviewUri: 'https://vscode-resource/authority/dashboards/review/',
+      cspSource: 'vscode-resource://authority',
+      readFile: (async () => '<html><head></head><body><p>report</p></body></html>') as never
+    });
+
+    expect(html).toContain('Report $1 and $&amp; and $$x');
+    expect(html).toContain('<p>report</p>');
   });
 });
