@@ -5,7 +5,11 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import {
   archiveComparisonReportSource,
-  buildComparisonReportArchivePlanFromSelection
+  buildComparisonReportArchivePlan,
+  buildComparisonReportArchivePlanFromSelection,
+  buildReportAssetsDirectoryName,
+  buildWorktreeSnapshotIndexFilePath,
+  readArchivedComparisonReportSourceRecordFromSelection
 } from '../../src/dashboard/comparisonReportArchive';
 import { ComparisonReportPacketRecord } from '../../src/reporting/comparisonReportPacket';
 
@@ -419,5 +423,239 @@ describe('comparisonReportArchive', () => {
     // ...but no sibling `_files` assets directory is created, because the
     // single-file report has none to copy.
     await expect(fs.access(archived.archivePlan.reportAssetsDirectoryPath)).rejects.toThrow();
+  });
+
+  it('maps report filenames to their assets directory name (VHS-REQ-610.5)', () => {
+    expect(buildReportAssetsDirectoryName('diff-report-My.vi.html')).toBe('diff-report-My.vi_files');
+    // The trailing .html match is case-insensitive.
+    expect(buildReportAssetsDirectoryName('REPORT.HTML')).toBe('REPORT_files');
+    // A non-.html name is not stripped; _files is appended verbatim.
+    expect(buildReportAssetsDirectoryName('report.txt')).toBe('report.txt_files');
+  });
+
+  it('builds a record-based archive plan content-addressed by the worktree snapshot id (VHS-REQ-641.7)', () => {
+    const baseArtifactPlan = {
+      allowedLocalRootPaths: ['/workspace/storage'],
+      repoId: 'repo-id',
+      fileId: 'file-id',
+      normalizedRelativePath: 'src/My.vi',
+      reportFilename: 'diff-report-My.vi.html',
+      packetFilename: 'report-packet.html',
+      metadataFilePath: '/source/report-metadata.json',
+      runtimeStdoutFilePath: '/source/runtime-stdout.txt',
+      runtimeStderrFilePath: '/source/runtime-stderr.txt',
+      runtimeDiagnosticLogFilePath: '/source/runtime-diagnostic-log.txt',
+      runtimeProcessObservationFilePath: '/source/runtime-process-observation.json'
+    };
+    const worktreeRecord = {
+      reportType: 'diff',
+      selectedHash: 'WORKTREE',
+      baseHash: 'base-sha',
+      runtimeExecution: { worktreeSnapshotId: 'aaaa000000000000' },
+      artifactPlan: baseArtifactPlan
+    } as unknown as ComparisonReportPacketRecord;
+
+    const plan = buildComparisonReportArchivePlan(worktreeRecord);
+    expect(plan.repoId).toBe('repo-id');
+    expect(plan.fileId).toBe('file-id');
+    expect(plan.pairId).toMatch(/^[a-f0-9]{12}$/);
+    expect(plan.archiveDirectory).toBe(
+      path.posix.join('/workspace/storage', 'report-history', 'repo-id', 'file-id', 'pairs', plan.pairId)
+    );
+
+    // The same snapshot content resolves to the same pair (idempotent); a
+    // different snapshot id yields a distinct pair.
+    expect(buildComparisonReportArchivePlan(worktreeRecord).pairId).toBe(plan.pairId);
+    const otherSnapshot = buildComparisonReportArchivePlan({
+      ...worktreeRecord,
+      runtimeExecution: { worktreeSnapshotId: 'bbbb111111111111' }
+    } as unknown as ComparisonReportPacketRecord);
+    expect(otherSnapshot.pairId).not.toBe(plan.pairId);
+  });
+
+  it('throws when a record carries no storage root (VHS-REQ-610.5)', () => {
+    const record = {
+      reportType: 'diff',
+      selectedHash: 'selected-sha',
+      baseHash: 'base-sha',
+      artifactPlan: {
+        allowedLocalRootPaths: [],
+        repoId: 'repo-id',
+        fileId: 'file-id',
+        normalizedRelativePath: 'src/My.vi',
+        reportFilename: 'diff-report-My.vi.html',
+        packetFilename: 'report-packet.html',
+        metadataFilePath: '/source/report-metadata.json',
+        runtimeStdoutFilePath: '/source/runtime-stdout.txt',
+        runtimeStderrFilePath: '/source/runtime-stderr.txt',
+        runtimeDiagnosticLogFilePath: '/source/runtime-diagnostic-log.txt',
+        runtimeProcessObservationFilePath: '/source/runtime-process-observation.json'
+      }
+    } as unknown as ComparisonReportPacketRecord;
+    expect(() => buildComparisonReportArchivePlan(record)).toThrow(/storageRoot must be non-empty/);
+  });
+
+  it('locates the worktree snapshot index for POSIX and Windows-style storage roots (VHS-REQ-641.7)', () => {
+    const posixPlan = buildComparisonReportArchivePlanFromSelection({
+      storageRoot: '/workspace/storage',
+      repositoryRoot: '/workspace/repo',
+      relativePath: 'src/My.vi',
+      reportType: 'diff',
+      selectedHash: 'WORKTREE',
+      baseHash: 'base-hash',
+      repoId: 'repo-id',
+      fileId: 'file-id'
+    });
+    expect(buildWorktreeSnapshotIndexFilePath(posixPlan)).toBe(
+      path.posix.join(
+        '/workspace/storage',
+        'report-history',
+        'repo-id',
+        'file-id',
+        'worktree-snapshots.json'
+      )
+    );
+
+    // A non-POSIX (Windows-style) root takes the platform path.join branch.
+    const windowsPlan = buildComparisonReportArchivePlanFromSelection({
+      storageRoot: 'C:\\workspace\\storage',
+      repositoryRoot: 'C:\\workspace\\repo',
+      relativePath: 'src/My.vi',
+      reportType: 'diff',
+      selectedHash: 'WORKTREE',
+      baseHash: 'base-hash',
+      repoId: 'repo-id',
+      fileId: 'file-id'
+    });
+    expect(buildWorktreeSnapshotIndexFilePath(windowsPlan)).toBe(
+      path.join(
+        'C:\\workspace\\storage',
+        'report-history',
+        'repo-id',
+        'file-id',
+        'worktree-snapshots.json'
+      )
+    );
+  });
+
+  it('reads an archived source record, returning undefined when none is retained (VHS-REQ-610.5)', async () => {
+    const selection = {
+      storageRoot: '/workspace/storage',
+      repositoryRoot: '/workspace/repo',
+      relativePath: 'src/My.vi',
+      reportType: 'diff' as const,
+      selectedHash: 'selected-hash',
+      baseHash: 'base-hash'
+    };
+    // Missing retained record -> undefined (readFile must not be reached).
+    expect(
+      await readArchivedComparisonReportSourceRecordFromSelection(selection, {
+        pathExists: async () => false,
+        readFile: (async () => {
+          throw new Error('readFile should not be called when the record is absent');
+        }) as unknown as typeof fs.readFile
+      })
+    ).toBeUndefined();
+
+    // Present retained record -> parsed JSON.
+    const stored = {
+      archivedAt: '2026-05-01T00:00:00.000Z',
+      archivePlan: { pairId: 'p' },
+      packetRecord: { reportType: 'diff' }
+    };
+    const result = await readArchivedComparisonReportSourceRecordFromSelection(selection, {
+      pathExists: async () => true,
+      readFile: (async () => JSON.stringify(stored)) as unknown as typeof fs.readFile
+    });
+    expect(result).toEqual(stored);
+  });
+
+  it('self-evicts and garbage-collects the just-written snapshot when retention is disabled (VHS-REQ-641.7)', async () => {
+    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-archive-zero-'));
+    tempRoots.push(tempRoot);
+    const storageRoot = path.join(tempRoot, 'workspace-storage');
+    const sourceRoot = path.join(tempRoot, 'source');
+    await fs.mkdir(sourceRoot, { recursive: true });
+    const packetFilePath = path.join(sourceRoot, 'report-packet.html');
+    await fs.writeFile(packetFilePath, '<html>packet</html>', 'utf8');
+    const record = {
+      reportType: 'diff',
+      selectedHash: 'WORKTREE',
+      baseHash: 'base-sha',
+      runtimeExecution: { worktreeSnapshotId: 'aaaa000000000000' },
+      artifactPlan: {
+        allowedLocalRootPaths: [storageRoot],
+        repoId: 'repo-id',
+        fileId: 'file-id',
+        normalizedRelativePath: 'src/My.vi',
+        reportFilename: 'diff-report-My.vi.html',
+        packetFilename: 'report-packet.html',
+        packetFilePath,
+        reportFilePath: path.join(sourceRoot, 'diff-report-My.vi.html'),
+        metadataFilePath: path.join(sourceRoot, 'report-metadata.json'),
+        runtimeStdoutFilePath: path.join(sourceRoot, 'runtime-stdout.txt'),
+        runtimeStderrFilePath: path.join(sourceRoot, 'runtime-stderr.txt'),
+        runtimeDiagnosticLogFilePath: path.join(sourceRoot, 'runtime-diagnostic-log.txt'),
+        runtimeProcessObservationFilePath: path.join(sourceRoot, 'runtime-process-observation.json')
+      }
+    } as unknown as ComparisonReportPacketRecord;
+
+    const archived = await archiveComparisonReportSource(record, {
+      now: () => '2026-05-01T00:00:00.000Z',
+      worktreeSnapshotRetentionLimit: 0
+    });
+
+    const indexFilePath = buildWorktreeSnapshotIndexFilePath(archived.archivePlan);
+    const index = JSON.parse(await fs.readFile(indexFilePath, 'utf8')) as { snapshots: unknown[] };
+    // Retention disabled (limit 0): the index is written but empty, and the
+    // just-written pair directory is garbage-collected.
+    expect(index.snapshots).toEqual([]);
+    await expect(fs.access(archived.archivePlan.archiveDirectory)).rejects.toThrow();
+  });
+
+  it('recovers from a corrupt worktree snapshot index by starting fresh (VHS-REQ-641.7)', async () => {
+    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-archive-corrupt-'));
+    tempRoots.push(tempRoot);
+    const storageRoot = path.join(tempRoot, 'workspace-storage');
+    const sourceRoot = path.join(tempRoot, 'source');
+    await fs.mkdir(sourceRoot, { recursive: true });
+    const packetFilePath = path.join(sourceRoot, 'report-packet.html');
+    await fs.writeFile(packetFilePath, '<html>packet</html>', 'utf8');
+    const record = {
+      reportType: 'diff',
+      selectedHash: 'WORKTREE',
+      baseHash: 'base-sha',
+      runtimeExecution: { worktreeSnapshotId: 'aaaa000000000000' },
+      artifactPlan: {
+        allowedLocalRootPaths: [storageRoot],
+        repoId: 'repo-id',
+        fileId: 'file-id',
+        normalizedRelativePath: 'src/My.vi',
+        reportFilename: 'diff-report-My.vi.html',
+        packetFilename: 'report-packet.html',
+        packetFilePath,
+        reportFilePath: path.join(sourceRoot, 'diff-report-My.vi.html'),
+        metadataFilePath: path.join(sourceRoot, 'report-metadata.json'),
+        runtimeStdoutFilePath: path.join(sourceRoot, 'runtime-stdout.txt'),
+        runtimeStderrFilePath: path.join(sourceRoot, 'runtime-stderr.txt'),
+        runtimeDiagnosticLogFilePath: path.join(sourceRoot, 'runtime-diagnostic-log.txt'),
+        runtimeProcessObservationFilePath: path.join(sourceRoot, 'runtime-process-observation.json')
+      }
+    } as unknown as ComparisonReportPacketRecord;
+
+    const indexFilePath = buildWorktreeSnapshotIndexFilePath(buildComparisonReportArchivePlan(record));
+    await fs.mkdir(path.dirname(indexFilePath), { recursive: true });
+    await fs.writeFile(indexFilePath, '{ this is not valid json', 'utf8');
+
+    await archiveComparisonReportSource(record, {
+      now: () => '2026-05-01T00:00:00.000Z',
+      worktreeSnapshotRetentionLimit: 5
+    });
+
+    const index = JSON.parse(await fs.readFile(indexFilePath, 'utf8')) as {
+      snapshots: { snapshotId: string }[];
+    };
+    // The corrupt index was discarded (fail-soft) and rebuilt with just the new snapshot.
+    expect(index.snapshots.map((snapshot) => snapshot.snapshotId)).toEqual(['aaaa000000000000']);
   });
 });

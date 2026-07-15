@@ -44,6 +44,7 @@ import {
   resolveMappedRuntimeDiagnosticPath,
   parseLabviewCliDiagnosticLogPath,
   runComparisonCommandPlanWithObservation,
+  runComparisonCommandPlan,
   prepareWindowsContainerExecutionContext,
   prepareLinuxContainerExecutionContext,
   resolveEffectiveCommandTimeoutMs,
@@ -6897,5 +6898,291 @@ describe('working-tree snapshot provenance (VHS-REQ-641.6)', () => {
         rightBytes: Buffer.from('selected')
       })
     ).toBeUndefined();
+  });
+});
+
+describe('comparison-runtime execution primitives (VHS-REQ-621)', () => {
+  function makeFakeChild(pid = 4321) {
+    const stdout = Object.assign(new EventEmitter(), { setEncoding: vi.fn(), destroy: vi.fn() });
+    const stderr = Object.assign(new EventEmitter(), { setEncoding: vi.fn(), destroy: vi.fn() });
+    const child = Object.assign(new EventEmitter(), { stdout, stderr, pid, kill: vi.fn() });
+    return { child, stdout, stderr };
+  }
+
+  function makeCancellationToken() {
+    const listeners: Array<() => void> = [];
+    const token = {
+      isCancellationRequested: false,
+      onCancellationRequested: (listener: () => void) => {
+        listeners.push(listener);
+        return { dispose: vi.fn() };
+      }
+    };
+    return { token, fire: () => listeners.forEach((listener) => listener()) };
+  }
+
+  describe('runComparisonCommandPlanWithObservation', () => {
+    it('kills the process tree and reports a timeout after timeoutMs elapses (VHS-REQ-621)', async () => {
+      vi.useFakeTimers();
+      try {
+        const { child } = makeFakeChild(4321);
+        const terminateProcessTree = vi.fn().mockResolvedValue(undefined);
+        const resultPromise = runComparisonCommandPlanWithObservation(
+          { executable: 'LabVIEWCLI', args: ['-OperationName', 'CreateComparisonReport'] },
+          {
+            spawnImpl: (() => child) as never,
+            hostPlatform: 'win32',
+            runtimePlatform: 'win32',
+            engine: 'labview-cli',
+            timeoutMs: 5000,
+            terminateProcessTree,
+            observeWindowsProcesses: vi.fn().mockResolvedValue(undefined)
+          }
+        );
+        child.emit('spawn');
+        vi.advanceTimersByTime(5000);
+        expect(child.kill).toHaveBeenCalledWith('SIGKILL');
+        expect(terminateProcessTree).toHaveBeenCalledWith(4321, 'win32');
+        child.emit('exit', null, 'SIGKILL');
+        const result = await resultPromise;
+        expect(result.timedOut).toBe(true);
+        expect(result.exitCode).toBe(124);
+        expect(result.stderr).toContain('timed out after 5000ms');
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('reports a cancelled outcome when the cancellation token fires (VHS-REQ-621)', async () => {
+      const { child } = makeFakeChild(0);
+      const { token, fire } = makeCancellationToken();
+      const resultPromise = runComparisonCommandPlanWithObservation(
+        { executable: 'LabVIEWCLI', args: [] },
+        {
+          spawnImpl: (() => child) as never,
+          hostPlatform: 'linux',
+          runtimePlatform: 'linux',
+          engine: 'labview-cli',
+          cancellationToken: token as never,
+          observeWindowsProcesses: vi.fn().mockResolvedValue(undefined)
+        }
+      );
+      child.emit('spawn');
+      fire();
+      expect(child.kill).toHaveBeenCalledWith('SIGKILL');
+      child.emit('exit', null, 'SIGKILL');
+      const result = await resultPromise;
+      expect(result.cancelled).toBe(true);
+      expect(result.exitCode).toBe(130);
+      expect(result.stderr).toContain('comparison-command cancelled by user');
+    });
+
+    it('terminates immediately when the token is already cancelled at spawn (VHS-REQ-621)', async () => {
+      const { child } = makeFakeChild();
+      const token = {
+        isCancellationRequested: true,
+        onCancellationRequested: () => ({ dispose: vi.fn() })
+      };
+      const resultPromise = runComparisonCommandPlanWithObservation(
+        { executable: 'LabVIEWCLI', args: [] },
+        {
+          spawnImpl: (() => child) as never,
+          hostPlatform: 'linux',
+          runtimePlatform: 'linux',
+          engine: 'labview-cli',
+          cancellationToken: token as never,
+          observeWindowsProcesses: vi.fn().mockResolvedValue(undefined)
+        }
+      );
+      expect(child.kill).toHaveBeenCalledWith('SIGKILL');
+      child.emit('exit', null, 'SIGKILL');
+      const result = await resultPromise;
+      expect(result.cancelled).toBe(true);
+      expect(result.exitCode).toBe(130);
+    });
+
+    it('rejects when the child process emits an error (VHS-REQ-621)', async () => {
+      const { child } = makeFakeChild();
+      const resultPromise = runComparisonCommandPlanWithObservation(
+        { executable: 'LabVIEWCLI', args: [] },
+        {
+          spawnImpl: (() => child) as never,
+          hostPlatform: 'linux',
+          runtimePlatform: 'linux',
+          engine: 'labview-cli',
+          observeWindowsProcesses: vi.fn().mockResolvedValue(undefined)
+        }
+      );
+      child.emit('spawn');
+      child.emit('error', new Error('spawn ENOENT'));
+      await expect(resultPromise).rejects.toThrow('spawn ENOENT');
+    });
+
+    it('rejects when the process closes with no exit code, timeout, or cancellation (VHS-REQ-621)', async () => {
+      const { child } = makeFakeChild();
+      const resultPromise = runComparisonCommandPlanWithObservation(
+        { executable: 'LabVIEWCLI', args: [] },
+        {
+          spawnImpl: (() => child) as never,
+          hostPlatform: 'linux',
+          runtimePlatform: 'linux',
+          engine: 'labview-cli',
+          observeWindowsProcesses: vi.fn().mockResolvedValue(undefined)
+        }
+      );
+      child.emit('spawn');
+      child.emit('exit', null, null);
+      await expect(resultPromise).rejects.toThrow('comparison-command-closed-without-exit-code');
+    });
+
+    it('captures process-spawn and process-exit observations for the lvcompare engine (VHS-REQ-621)', async () => {
+      const { child } = makeFakeChild();
+      const bannerObservation = { observedProcessNames: ['LVCompare.exe'], trigger: 'process-spawn' };
+      const exitObservation = { observedProcessNames: [], trigger: 'process-exit' };
+      const observeWindowsProcesses = vi
+        .fn()
+        .mockResolvedValueOnce(bannerObservation)
+        .mockResolvedValueOnce(exitObservation);
+      const resultPromise = runComparisonCommandPlanWithObservation(
+        { executable: 'LVCompare', args: ['left.vi', 'right.vi'] },
+        {
+          spawnImpl: (() => child) as never,
+          hostPlatform: 'win32',
+          runtimePlatform: 'win32',
+          engine: 'lvcompare',
+          observeWindowsProcesses: observeWindowsProcesses as never
+        }
+      );
+      child.emit('spawn');
+      child.emit('exit', 0, null);
+      const result = await resultPromise;
+      expect(observeWindowsProcesses).toHaveBeenCalledTimes(2);
+      expect(observeWindowsProcesses.mock.calls[0][0].trigger).toBe('process-spawn');
+      expect(observeWindowsProcesses.mock.calls[1][0].trigger).toBe('process-exit');
+      expect(result.processObservation).toBe(bannerObservation);
+      expect(result.exitProcessObservation).toBe(exitObservation);
+    });
+
+    it('rejects when runtime process observation fails (VHS-REQ-621)', async () => {
+      const { child } = makeFakeChild();
+      const resultPromise = runComparisonCommandPlanWithObservation(
+        { executable: 'LVCompare', args: ['left.vi', 'right.vi'] },
+        {
+          spawnImpl: (() => child) as never,
+          hostPlatform: 'win32',
+          runtimePlatform: 'win32',
+          engine: 'lvcompare',
+          observeWindowsProcesses: vi.fn().mockRejectedValue(new Error('tasklist failed')) as never
+        }
+      );
+      child.emit('spawn');
+      child.emit('exit', 0, null);
+      await expect(resultPromise).rejects.toThrow('tasklist failed');
+    });
+  });
+
+  describe('runComparisonCommandPlan (execFile)', () => {
+    it('resolves exit code 0 on a successful run (VHS-REQ-621)', async () => {
+      const execFileImpl = vi.fn((_exe, _args, _opts, cb) => {
+        cb(null, 'operation succeeded', '');
+        return { pid: 1, kill: vi.fn() };
+      });
+      const result = await runComparisonCommandPlan(
+        { executable: 'LVCompare', args: [] },
+        { execFileImpl: execFileImpl as never }
+      );
+      expect(result).toMatchObject({ exitCode: 0, stdout: 'operation succeeded', stderr: '' });
+    });
+
+    it('maps a numeric execError code to the exit code (VHS-REQ-621)', async () => {
+      const execError = Object.assign(new Error('CLI failed'), { code: 66 });
+      const execFileImpl = vi.fn((_exe, _args, _opts, cb) => {
+        cb(execError, 'stdout-text', 'stderr-text');
+        return { pid: 1, kill: vi.fn() };
+      });
+      const result = await runComparisonCommandPlan(
+        { executable: 'LVCompare', args: [] },
+        { execFileImpl: execFileImpl as never }
+      );
+      expect(result).toMatchObject({ exitCode: 66, stdout: 'stdout-text', stderr: 'stderr-text' });
+    });
+
+    it('rejects when execError has no numeric code and is not a timeout/cancel (VHS-REQ-621)', async () => {
+      const execError = Object.assign(new Error('spawn ENOENT'), { code: 'ENOENT' });
+      const execFileImpl = vi.fn((_exe, _args, _opts, cb) => {
+        cb(execError, '', '');
+        return { pid: 1, kill: vi.fn() };
+      });
+      await expect(
+        runComparisonCommandPlan(
+          { executable: 'LVCompare', args: [] },
+          { execFileImpl: execFileImpl as never }
+        )
+      ).rejects.toThrow('spawn ENOENT');
+    });
+
+    it('reports a timeout when execFile is killed by its timeout (VHS-REQ-621)', async () => {
+      const execError = Object.assign(new Error('Command failed: timed out'), {
+        killed: true,
+        signal: 'SIGKILL'
+      });
+      const execFileImpl = vi.fn((_exe, _args, _opts, cb) => {
+        cb(execError, 'so', 'se');
+        return { pid: 1, kill: vi.fn() };
+      });
+      const result = await runComparisonCommandPlan(
+        { executable: 'LVCompare', args: [] },
+        { execFileImpl: execFileImpl as never, timeoutMs: 1000 }
+      );
+      expect(result.timedOut).toBe(true);
+      expect(result.exitCode).toBe(124);
+      expect(result.timeoutMs).toBe(1000);
+    });
+
+    it('resolves exit code 130 with a cancellation note when cancelled (VHS-REQ-621)', async () => {
+      let capturedCallback: ((error: unknown, stdout: string, stderr: string) => void) | undefined;
+      const kill = vi.fn();
+      const execFileImpl = vi.fn((_exe, _args, _opts, cb) => {
+        capturedCallback = cb;
+        return { pid: 5, kill };
+      });
+      const { token, fire } = makeCancellationToken();
+      const resultPromise = runComparisonCommandPlan(
+        { executable: 'LVCompare', args: [] },
+        { execFileImpl: execFileImpl as never, cancellationToken: token as never, hostPlatform: 'linux' }
+      );
+      fire();
+      expect(kill).toHaveBeenCalledWith('SIGKILL');
+      capturedCallback?.(null, 'so', 'se');
+      const result = await resultPromise;
+      expect(result.cancelled).toBe(true);
+      expect(result.exitCode).toBe(130);
+      expect(result.stderr).toContain('comparison-command cancelled by user');
+    });
+
+    it('invokes terminateProcessTree on a win32 cancellation (VHS-REQ-621)', async () => {
+      let capturedCallback: ((error: unknown, stdout: string, stderr: string) => void) | undefined;
+      const execFileImpl = vi.fn((_exe, _args, _opts, cb) => {
+        capturedCallback = cb;
+        return { pid: 7, kill: vi.fn() };
+      });
+      const terminateProcessTree = vi.fn().mockResolvedValue(undefined);
+      const { token, fire } = makeCancellationToken();
+      const resultPromise = runComparisonCommandPlan(
+        { executable: 'LVCompare', args: [] },
+        {
+          execFileImpl: execFileImpl as never,
+          cancellationToken: token as never,
+          hostPlatform: 'win32',
+          terminateProcessTree
+        }
+      );
+      fire();
+      expect(terminateProcessTree).toHaveBeenCalledWith(7, 'win32');
+      capturedCallback?.(null, 'so', 'se');
+      const result = await resultPromise;
+      expect(result.cancelled).toBe(true);
+      expect(result.exitCode).toBe(130);
+    });
   });
 });
