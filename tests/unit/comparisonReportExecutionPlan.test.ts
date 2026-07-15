@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
 import { buildComparisonReportExecutionPlan } from '../../src/reporting/comparisonReportExecutionPlan';
+import {
+  buildComparisonReportFilename,
+  buildLabviewCliCreateComparisonReportPlan,
+  buildLvComparePlan,
+  buildStagedRevisionPlan
+} from '../../src/reporting/comparisonReportPlan';
 import type { ComparisonReportPacketRecord } from '../../src/reporting/comparisonReportPacket';
 
 function createBaseRecord(
@@ -406,5 +412,104 @@ describe('buildComparisonReportExecutionPlan', () => {
       outcome: 'blocked',
       blockedReason: 'runtime-engine-not-selected'
     });
+  });
+});
+
+describe('comparisonReportPlan builders (direct option branches)', () => {
+  const baseCliOptions = {
+    leftViPath: '/stage/left-foo.vi',
+    rightViPath: '/stage/right-foo.vi',
+    reportFilePath: '/stage/diff-report-foo.vi.html'
+  };
+
+  it('emits LogToConsole FALSE when logToConsole is explicitly false', () => {
+    const plan = buildLabviewCliCreateComparisonReportPlan({ ...baseCliOptions, logToConsole: false });
+    const idx = plan.args.indexOf('-LogToConsole');
+    expect(plan.args[idx + 1]).toBe('FALSE');
+  });
+
+  it('omits -c and -o when createOutputDirectory and overwrite are false', () => {
+    const plan = buildLabviewCliCreateComparisonReportPlan({
+      ...baseCliOptions,
+      createOutputDirectory: false,
+      overwrite: false
+    });
+    expect(plan.args).not.toContain('-c');
+    expect(plan.args).not.toContain('-o');
+  });
+
+  it('appends -LabVIEWPath, -PortNumber, and -description when provided', () => {
+    const plan = buildLabviewCliCreateComparisonReportPlan({
+      ...baseCliOptions,
+      labviewPath: '  /opt/labview  ',
+      portNumber: 3363,
+      description: '  a compare  '
+    });
+    expect(plan.args).toContain('-LabVIEWPath');
+    expect(plan.args[plan.args.indexOf('-LabVIEWPath') + 1]).toBe('/opt/labview');
+    expect(plan.args).toContain('-PortNumber');
+    expect(plan.args[plan.args.indexOf('-PortNumber') + 1]).toBe('3363');
+    expect(plan.args).toContain('-description');
+    expect(plan.args[plan.args.indexOf('-description') + 1]).toBe('a compare');
+  });
+
+  it('omits -PortNumber for a zero or non-integer port and blank optional strings', () => {
+    const plan = buildLabviewCliCreateComparisonReportPlan({
+      ...baseCliOptions,
+      labviewPath: '   ',
+      portNumber: 0,
+      description: '   '
+    });
+    expect(plan.args).not.toContain('-PortNumber');
+    expect(plan.args).not.toContain('-LabVIEWPath');
+    expect(plan.args).not.toContain('-description');
+  });
+
+  it('throws when a required VI path is empty', () => {
+    expect(() =>
+      buildLabviewCliCreateComparisonReportPlan({ ...baseCliOptions, leftViPath: '   ' })
+    ).toThrow(/leftViPath must be non-empty/);
+  });
+
+  it('buildComparisonReportFilename composes report-type and filename', () => {
+    expect(buildComparisonReportFilename('diff', 'foo.vi')).toBe('diff-report-foo.vi.html');
+    expect(() => buildComparisonReportFilename('diff', '  ')).toThrow(/fullFilename must be non-empty/);
+  });
+
+  it('buildLvComparePlan includes -lvpath only when a labviewPath is supplied', () => {
+    const withPath = buildLvComparePlan({
+      leftViPath: '/l.vi',
+      rightViPath: '/r.vi',
+      labviewPath: '/opt/lv'
+    });
+    expect(withPath.args).toContain('-lvpath');
+    const withoutPath = buildLvComparePlan({ leftViPath: '/l.vi', rightViPath: '/r.vi' });
+    expect(withoutPath.args).not.toContain('-lvpath');
+  });
+
+  it('buildStagedRevisionPlan labels sides and nests staged VIs at repo-relative depth', () => {
+    const plan = buildStagedRevisionPlan({
+      stagingDirectory: '/stage',
+      fullFilename: 'icon.vi',
+      leftRevisionId: 'abcdef1234567890',
+      rightRevisionId: 'fedcba0987654321',
+      normalizedRelativePath: 'resource/plugins/icon.vi'
+    });
+    expect(plan.relativeDirectory).toBe('resource/plugins');
+    expect(plan.leftFilename.startsWith('left-abcdef123456-')).toBe(true);
+    expect(plan.rightFilename.startsWith('right-fedcba098765-')).toBe(true);
+    expect(plan.treeRevisionId).toBe('fedcba0987654321');
+  });
+
+  it('buildStagedRevisionPlan falls back to flat, bare-side labels for missing/unsafe inputs', () => {
+    const plan = buildStagedRevisionPlan({
+      stagingDirectory: '/stage',
+      fullFilename: 'icon.vi',
+      normalizedRelativePath: '../escape/icon.vi'
+    });
+    expect(plan.relativeDirectory).toBe('');
+    expect(plan.leftFilename).toBe('left-icon.vi');
+    expect(plan.rightFilename).toBe('right-icon.vi');
+    expect(plan.treeRevisionId).toBe('');
   });
 });
