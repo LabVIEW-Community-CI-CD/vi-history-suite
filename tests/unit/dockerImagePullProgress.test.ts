@@ -324,6 +324,13 @@ describe('formatBytes', () => {
     expect(formatBytes(1536)).toBe('1.5 KB');
     expect(formatBytes(Math.round(8.1 * GB))).toBe('8.1 GB');
   });
+
+  it('promotes to the next unit when rounding reaches a unit boundary', () => {
+    // 1 MB minus 1 byte rounds to 1024 KB, which must promote to 1 MB.
+    expect(formatBytes(1024 * 1024 - 1)).toBe('1 MB');
+    // Just under 1 GB likewise promotes instead of showing 1024 MB.
+    expect(formatBytes(1024 * 1024 * 1024 - 1)).toBe('1 GB');
+  });
 });
 
 describe('formatPullProgressMessage', () => {

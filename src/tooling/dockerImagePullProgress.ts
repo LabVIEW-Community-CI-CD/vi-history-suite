@@ -495,7 +495,14 @@ export function formatBytes(bytes: number): string {
     value /= 1024;
     unitIndex += 1;
   }
-  const rounded = unitIndex === 0 ? Math.round(value) : Math.round(value * 10) / 10;
+  let rounded = unitIndex === 0 ? Math.round(value) : Math.round(value * 10) / 10;
+  // Rounding can push a value just below a unit boundary up to 1024 of the
+  // lower unit (e.g. 1048575 -> 1023.999 KB -> rounds to 1024 KB). Promote once
+  // to the next unit so the label never shows an out-of-range magnitude.
+  if (rounded >= 1024 && unitIndex < units.length - 1) {
+    unitIndex += 1;
+    rounded = Math.round((value / 1024) * 10) / 10;
+  }
   return `${rounded} ${units[unitIndex]}`;
 }
 
