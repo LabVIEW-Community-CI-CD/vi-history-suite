@@ -1024,6 +1024,40 @@ describe('closeout evidence script', () => {
   it('writes closeout-summary.json when save-dir is provided (VHS-REQ-615.6)', () => {
     const saveDirRel = `.tmp-closeout-summary-${Date.now()}-${process.pid}`;
     const saveDirAbs = path.join(repoRoot, saveDirRel);
+    const hygieneEvidenceScan = json({
+      inventory: { file_count: 251 },
+      areas: {
+        REQ: { signal: 'strong' },
+        TEST: { signal: 'strong' }
+      },
+      evidence: [
+        {
+          path: '.github/workflows/ci.yml',
+          rule_source: 'GATE:dod:context',
+          matched_text: 'name: DoD Gate / dod'
+        },
+        {
+          path: 'assurance-closeout-evidence/assurance-scorecard.txt',
+          rule_source: 'GATE:dod:context',
+          matched_text: 'DoD Gate / dod'
+        },
+        {
+          path: 'coverage/lcov.info',
+          rule_source: 'GATE:dod:context',
+          matched_text: 'DoD Gate / dod'
+        },
+        {
+          path: 'tests/unit/closeoutEvidenceScript.test.ts',
+          rule_source: 'GATE:dod:context',
+          matched_text: 'DoD Gate / dod'
+        },
+        {
+          path: 'docs/requirements/srs.md',
+          rule_source: 'GATE:dod:context',
+          matched_text: 'DoD Gate / dod'
+        }
+      ]
+    });
 
     try {
       const result = generateCloseoutEvidence(
@@ -1039,13 +1073,15 @@ describe('closeout evidence script', () => {
         {
           platform: 'win32',
           existsSync: () => true,
-          spawnSync: hostSuccessSpawnSync()
+          spawnSync: hostSuccessSpawnSync({ evidenceScan: hygieneEvidenceScan })
         }
       );
 
       const summaryPath = path.join(saveDirAbs, 'closeout-summary.json');
+      const hygienePath = path.join(saveDirAbs, 'standards-evidence-hygiene.json');
       const auditTargetPath = path.join(saveDirAbs, 'standards-audit-target.json');
       expect(fs.existsSync(summaryPath)).toBe(true);
+      expect(fs.existsSync(hygienePath)).toBe(true);
       expect(fs.existsSync(auditTargetPath)).toBe(true);
 
       const summary = JSON.parse(fs.readFileSync(summaryPath, 'utf8')) as {
@@ -1142,6 +1178,31 @@ describe('closeout evidence script', () => {
         symlinkFiles: string[];
         missingFiles: string[];
       };
+      const hygiene = JSON.parse(fs.readFileSync(hygienePath, 'utf8')) as {
+        auditTarget: typeof auditTarget;
+        dodGate: {
+          status: string;
+          scorecardStatus: string;
+          source: string;
+          trustedSources: Array<{
+            path: string;
+            ruleSource: string;
+            matchedText: string;
+            classification: string;
+          }>;
+          disqualifiedSources: Array<{
+            path: string;
+            ruleSource: string;
+            matchedText: string;
+            classification: string;
+          }>;
+          reason: string;
+        };
+        policy: {
+          passSource: string;
+          disqualifiedSources: string[];
+        };
+      };
 
       expect(Object.keys(summary)).toEqual([
         'schemaVersion',
@@ -1177,6 +1238,35 @@ describe('closeout evidence script', () => {
         'symlinkFiles',
         'missingFiles'
       ]);
+      expect(Object.keys(hygiene)).toEqual(['auditTarget', 'dodGate', 'policy']);
+      expect(Object.keys(hygiene.auditTarget)).toEqual([
+        'mode',
+        'trackedFileCount',
+        'generatedRootsExcluded',
+        'symlinkFiles',
+        'missingFiles'
+      ]);
+      expect(Object.keys(hygiene.dodGate)).toEqual([
+        'status',
+        'scorecardStatus',
+        'source',
+        'trustedSources',
+        'disqualifiedSources',
+        'reason'
+      ]);
+      expect(Object.keys(hygiene.dodGate.trustedSources[0])).toEqual([
+        'path',
+        'ruleSource',
+        'matchedText',
+        'classification'
+      ]);
+      expect(Object.keys(hygiene.dodGate.disqualifiedSources[0])).toEqual([
+        'path',
+        'ruleSource',
+        'matchedText',
+        'classification'
+      ]);
+      expect(Object.keys(hygiene.policy)).toEqual(['passSource', 'disqualifiedSources']);
       expect(Object.keys(summary.standards.summary)).toEqual([
         'fileCount',
         'reqSignal',
@@ -1269,6 +1359,27 @@ describe('closeout evidence script', () => {
       expect(Array.isArray(auditTarget.symlinkFiles)).toBe(true);
       expect(Array.isArray(auditTarget.missingFiles)).toBe(true);
       expect(auditTarget.path).toBeUndefined();
+      expect(hygiene.auditTarget).toEqual(auditTarget);
+      expect(hygiene.auditTarget.path).toBeUndefined();
+      expect(hygiene.dodGate).toEqual(summary.standards.summary.dodGateEvidence);
+      expect(hygiene.dodGate.disqualifiedSources).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            path: 'assurance-closeout-evidence/assurance-scorecard.txt',
+            classification: 'generated-assurance-evidence'
+          }),
+          expect.objectContaining({ path: 'coverage/lcov.info', classification: 'generated-build-output' }),
+          expect.objectContaining({ path: 'tests/unit/closeoutEvidenceScript.test.ts', classification: 'test-fixture' }),
+          expect.objectContaining({ path: 'docs/requirements/srs.md', classification: 'untrusted-source' })
+        ])
+      );
+      expect(hygiene.policy.passSource).toContain('.github/workflows/ci.yml');
+      expect(hygiene.policy.disqualifiedSources).toEqual([
+        'assurance-*-evidence generated evidence',
+        'out/dist/build/coverage generated output',
+        'tests/ unit or integration fixture text',
+        'documentation-only references'
+      ]);
       expect(summary.provenance.success).toBe(true);
       expect(summary.closureDecision.closable).toBe(true);
       expect(summary.exitCode).toBe(0);
