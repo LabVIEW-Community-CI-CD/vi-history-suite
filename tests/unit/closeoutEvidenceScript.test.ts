@@ -1139,6 +1139,8 @@ describe('closeout evidence script', () => {
         mode: string;
         trackedFileCount: number;
         generatedRootsExcluded: string[];
+        symlinkFiles: string[];
+        missingFiles: string[];
       };
 
       expect(Object.keys(summary)).toEqual([
@@ -1167,6 +1169,13 @@ describe('closeout evidence script', () => {
         'mode',
         'trackedFileCount',
         'generatedRootsExcluded'
+      ]);
+      expect(Object.keys(auditTarget)).toEqual([
+        'mode',
+        'trackedFileCount',
+        'generatedRootsExcluded',
+        'symlinkFiles',
+        'missingFiles'
       ]);
       expect(Object.keys(summary.standards.summary)).toEqual([
         'fileCount',
@@ -1257,6 +1266,8 @@ describe('closeout evidence script', () => {
         trackedFileCount: 2,
         generatedRootsExcluded: expect.arrayContaining(['win-validation/', 'assurance-*-evidence/'])
       });
+      expect(Array.isArray(auditTarget.symlinkFiles)).toBe(true);
+      expect(Array.isArray(auditTarget.missingFiles)).toBe(true);
       expect(auditTarget.path).toBeUndefined();
       expect(summary.provenance.success).toBe(true);
       expect(summary.closureDecision.closable).toBe(true);
