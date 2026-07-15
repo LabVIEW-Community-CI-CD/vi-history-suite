@@ -144,15 +144,58 @@ function checkVersionChangelog(version, changelogTop) {
   );
 }
 
-// DISPLAY-ONLY: never affects the verdict. Reports whether a human-supplied
-// real-hardware validation record for this version exists. Absence is expected
-// in CI (evidence is local/gitignored), so this is informational, not a gate.
+// DISPLAY-ONLY: never affects the verdict. Reports whether a real-hardware
+// validation record for this version exists. Absence is expected in CI (evidence
+// is local/gitignored), so this is informational, not a gate. When the evidence
+// is derived from the committed runtime-validation ledger it can also name the
+// Linux-executable tracks that are stale (not validated at this build version).
 function describeRuntimeAttestation(version, runtimeEvidence) {
+  const stale = Array.isArray(runtimeEvidence && runtimeEvidence.staleTracks)
+    ? runtimeEvidence.staleTracks
+    : [];
   if (!runtimeEvidence || runtimeEvidence.present !== true) {
+    if (stale.length > 0) {
+      return `No runtime track is validated at ${version}; stale tracks needing re-validation: ${stale.join(', ')} (informational; not gating).`;
+    }
     return `No human-attested real-hardware record supplied for ${version} (informational; not gating).`;
   }
   const tracks = Array.isArray(runtimeEvidence.tracks) ? runtimeEvidence.tracks.join(', ') : 'unspecified tracks';
-  return `Human-attested real-hardware record present for ${version}: ${tracks}.`;
+  const staleSuffix =
+    stale.length > 0 ? ` Stale tracks needing re-validation at ${version}: ${stale.join(', ')}.` : '';
+  return `Human-attested real-hardware record present for ${version}: ${tracks}.${staleSuffix}`;
+}
+
+// Derive a display-only runtime-attestation record from the committed
+// runtime-validation ledger (docs/requirements/runtime-validation-ledger.json).
+// Linux-executable tracks validated at `version` are "fresh"; the rest are
+// "stale" (need re-validation for this build). Returns undefined when the
+// manifest is missing/malformed so the caller falls back to "no record".
+function deriveRuntimeAttestationFromLedger(manifest, version) {
+  if (!manifest || typeof manifest !== 'object' || !Array.isArray(manifest.tracks)) {
+    return undefined;
+  }
+  const fresh = [];
+  const stale = [];
+  for (const track of manifest.tracks) {
+    if (!track || typeof track !== 'object' || track.linuxExecutable === false) {
+      continue;
+    }
+    const trackId = typeof track.trackId === 'string' ? track.trackId : undefined;
+    if (!trackId) {
+      continue;
+    }
+    if (track.lastValidatedVersion === version) {
+      fresh.push(trackId);
+    } else {
+      stale.push(trackId);
+    }
+  }
+  return {
+    present: fresh.length > 0,
+    tracks: fresh,
+    staleTracks: stale,
+    source: 'runtime-validation-ledger'
+  };
 }
 
 function buildReleaseReadiness(inputs = {}, meta = {}) {
@@ -245,6 +288,21 @@ function loadSignals(cwd, deps = {}) {
       } catch {
         runtimeEvidence = undefined;
       }
+    }
+  }
+  // Default source of truth: derive the display-only attestation from the
+  // committed runtime-validation ledger the risk-ledger runtime-fidelity
+  // dimension also reads, so release readiness names fresh/stale runtime tracks
+  // for this build without a hand-supplied blob. Explicit runtimeEvidence /
+  // runtimeEvidencePath still override.
+  if (runtimeEvidence === undefined) {
+    try {
+      const runtimeSignal = ledgerModule.loadRuntimeValidationSignal(cwd, {});
+      if (runtimeSignal && runtimeSignal.available) {
+        runtimeEvidence = deriveRuntimeAttestationFromLedger(runtimeSignal.manifest, getPackageVersion(cwd));
+      }
+    } catch {
+      runtimeEvidence = undefined;
     }
   }
 
@@ -485,6 +543,7 @@ module.exports = {
   checkManifestDigest,
   checkVersionChangelog,
   describeRuntimeAttestation,
+  deriveRuntimeAttestationFromLedger,
   buildReleaseReadiness,
   loadSignals,
   renderSummary,

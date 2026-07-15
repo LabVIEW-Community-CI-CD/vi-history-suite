@@ -18,6 +18,7 @@ const readinessModule = require('../../scripts/checkReleaseReadiness.js') as {
   checkManifestDigest: (builtDigest: string, shipped: unknown) => { name: string; passed: boolean; details: string };
   checkVersionChangelog: (version: string, top: { released?: string; unreleased: boolean }) => { name: string; passed: boolean; details: string };
   describeRuntimeAttestation: (version: string, evidence: unknown) => string;
+  deriveRuntimeAttestationFromLedger: (manifest: unknown, version: string) => any;
   buildReleaseReadiness: (inputs?: Record<string, unknown>, meta?: Record<string, unknown>) => any;
   renderMarkdown: (verdict: unknown) => string;
   renderSchema: (options?: Record<string, unknown>) => string;
@@ -34,6 +35,7 @@ const {
   checkManifestDigest,
   checkVersionChangelog,
   describeRuntimeAttestation,
+  deriveRuntimeAttestationFromLedger,
   buildReleaseReadiness,
   renderMarkdown,
   renderSchema,
@@ -232,5 +234,68 @@ describe('checkReleaseReadiness', () => {
       stderr: { write: () => undefined }
     });
     expect(strictCode).toBe(1);
+  });
+});
+
+// Criterion coverage: VHS-REQ-615.14 — the release-readiness runtime line is
+// derived by default from the committed runtime-validation ledger, naming tracks
+// validated at the candidate build and any stale tracks, and stays display-only.
+describe('deriveRuntimeAttestationFromLedger (VHS-REQ-615.14)', () => {
+  const MANIFEST = {
+    schemaVersion: 1,
+    tracks: [
+      { trackId: 'linux-host-native', linuxExecutable: true, lastValidatedVersion: '1.33.2' },
+      { trackId: 'linux-container-2026q1', linuxExecutable: true, lastValidatedVersion: '1.33.2' },
+      { trackId: 'windows-host-native', linuxExecutable: false, lastValidatedVersion: '1.0.0' }
+    ]
+  };
+
+  it('marks every Linux track fresh at the matching build version (no stale)', () => {
+    const evidence = deriveRuntimeAttestationFromLedger(MANIFEST, '1.33.2');
+    expect(evidence.present).toBe(true);
+    expect(evidence.tracks).toEqual(['linux-host-native', 'linux-container-2026q1']);
+    expect(evidence.staleTracks).toEqual([]);
+    // Windows (non-Linux-executable) tracks are excluded entirely.
+    expect(evidence.tracks).not.toContain('windows-host-native');
+  });
+
+  it('marks Linux tracks stale at a newer build version', () => {
+    const evidence = deriveRuntimeAttestationFromLedger(MANIFEST, '1.34.0');
+    expect(evidence.present).toBe(false);
+    expect(evidence.tracks).toEqual([]);
+    expect(evidence.staleTracks).toEqual(['linux-host-native', 'linux-container-2026q1']);
+  });
+
+  it('returns undefined for a missing or malformed manifest', () => {
+    expect(deriveRuntimeAttestationFromLedger(undefined, '1.33.2')).toBeUndefined();
+    expect(deriveRuntimeAttestationFromLedger({}, '1.33.2')).toBeUndefined();
+  });
+
+  it('describeRuntimeAttestation names fresh and stale tracks but never gates (VHS-REQ-615.14)', () => {
+    const fresh = deriveRuntimeAttestationFromLedger(MANIFEST, '1.33.2');
+    const freshText = describeRuntimeAttestation('1.33.2', fresh);
+    expect(freshText).toContain('present for 1.33.2');
+    expect(freshText).toContain('linux-host-native, linux-container-2026q1');
+
+    const stale = deriveRuntimeAttestationFromLedger(MANIFEST, '1.34.0');
+    const staleText = describeRuntimeAttestation('1.34.0', stale);
+    expect(staleText).toContain('stale tracks needing re-validation');
+    expect(staleText).toContain('not gating');
+
+    // Derived evidence must not add a gating check: the verdict still has 3 checks.
+    const verdict = buildReleaseReadiness(
+      {
+        ledger: CLEAN_LEDGER,
+        hasSelectableHighRisk,
+        builtManifestDigest: 'abc123',
+        shippedManifest: { integrityDigest: 'abc123' },
+        changelogTop: { released: undefined, unreleased: true },
+        runtimeEvidence: stale
+      },
+      { generatedAt: '2026-07-15T00:00:00.000Z', version: '1.34.0', commit: 'deadbeef' }
+    );
+    expect(verdict.status).toBe('READY');
+    expect(verdict.checks).toHaveLength(3);
+    expect(verdict.runtimeAttestation).toContain('stale tracks needing re-validation');
   });
 });

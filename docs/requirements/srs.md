@@ -2488,6 +2488,10 @@ Missing numeric IDs are intentional.
     advisory `READY`/`ATTENTION` status bound to the extension version and
     commit, with a display-only human-attested runtime line that never gates,
     so a maintainer can read one signal before the separate manual release.
+  - The release-readiness runtime line is derived by default from the committed
+    runtime-validation ledger, naming the real-runtime tracks validated at the
+    candidate build version and any stale tracks needing re-validation, and
+    remains display-only.
 - Agent Work Scope:
   - Change requirements docs, RTM, ID index, test plan, and requirements
     coherence tests together.
