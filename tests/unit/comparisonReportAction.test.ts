@@ -2057,3 +2057,247 @@ describe('renderComparisonReportPanelHtml (VHS-REQ-621, VHS-REQ-644)', () => {
     expect(html).toContain('not retained');
   });
 });
+
+describe('ensureComparisonReportEvidence guard and cancellation outcomes (VHS-REQ-621, VHS-REQ-644)', () => {
+  beforeEach(() => {
+    harness.reset();
+  });
+
+  const runtimeSettings = () => ({
+    requestedProvider: 'host' as const,
+    labviewVersion: '2026',
+    bitness: 'x64' as const
+  });
+
+  it('returns workspace-untrusted before touching the model', async () => {
+    const context = harness.createContext();
+    harness.setWorkspaceTrusted(false);
+    const preflightComparisonReport = vi.fn();
+    const action = createEnsureComparisonReportEvidenceAction(context as never, {
+      preflightComparisonReport
+    });
+
+    const result = await action({ model: createModel(), selectedHash: 'c3', baseHash: 'a1' });
+
+    expect(result.outcome).toBe('workspace-untrusted');
+    // The guard short-circuits before any preflight work.
+    expect(preflightComparisonReport).not.toHaveBeenCalled();
+  });
+
+  it('returns missing-storage-uri when the extension context has no storage URI', async () => {
+    const context = harness.createContext({ storageUri: undefined });
+    const action = createEnsureComparisonReportEvidenceAction(context as never, {});
+
+    const result = await action({ model: createModel(), selectedHash: 'c3', baseHash: 'a1' });
+
+    expect(result.outcome).toBe('missing-storage-uri');
+  });
+
+  it('returns missing-selected-commit when the selected hash is not a committed revision', async () => {
+    const context = harness.createContext();
+    const action = createEnsureComparisonReportEvidenceAction(context as never, {});
+
+    const result = await action({ model: createModel(), selectedHash: 'not-a-commit' });
+
+    expect(result.outcome).toBe('missing-selected-commit');
+  });
+
+  it('returns missing-previous-hash when the base revision cannot be derived', async () => {
+    const context = harness.createContext();
+    const action = createEnsureComparisonReportEvidenceAction(context as never, {});
+
+    // 'a1' is the oldest commit (no previousHash) and no explicit baseHash is supplied.
+    const result = await action({ model: createModel(), selectedHash: 'a1' });
+
+    expect(result.outcome).toBe('missing-previous-hash');
+  });
+
+  it('returns cancelled/before-revision-pair-resolution when the token is already cancelled', async () => {
+    const context = harness.createContext();
+    const action = createEnsureComparisonReportEvidenceAction(context as never, {});
+
+    const result = await action({
+      model: createModel(),
+      selectedHash: 'c3',
+      baseHash: 'a1',
+      cancellationToken: harness.createCancellationToken(true) as never
+    });
+
+    expect(result).toEqual({
+      outcome: 'cancelled',
+      cancellationStage: 'before-revision-pair-resolution'
+    });
+  });
+
+  it('returns cancelled/before-preflight when cancelled during pair resolution', async () => {
+    const context = harness.createContext();
+    const token = harness.createCancellationToken(false);
+    const preflightComparisonReport = vi.fn();
+    const action = createEnsureComparisonReportEvidenceAction(context as never, {
+      preflightComparisonReport
+    });
+
+    const result = await action({
+      model: createModel(),
+      selectedHash: 'c3',
+      baseHash: 'a1',
+      cancellationToken: token as never,
+      // Flip cancellation while resolving the pair, before the preflight checkpoint.
+      reportProgress: (report) => {
+        if (report.message === 'Resolving retained revision pair.') {
+          (token as { isCancellationRequested: boolean }).isCancellationRequested = true;
+        }
+      }
+    });
+
+    expect(result).toEqual({ outcome: 'cancelled', cancellationStage: 'before-preflight' });
+    expect(preflightComparisonReport).not.toHaveBeenCalled();
+  });
+
+  it('returns cancelled/after-preflight when cancelled during preflight', async () => {
+    const context = harness.createContext();
+    const token = harness.createCancellationToken(false);
+    const preflightComparisonReport = vi.fn().mockImplementation(async () => {
+      (token as { isCancellationRequested: boolean }).isCancellationRequested = true;
+      return createPreflight();
+    });
+    const locateRuntime = vi.fn();
+    const action = createEnsureComparisonReportEvidenceAction(context as never, {
+      preflightComparisonReport,
+      locateRuntime,
+      getRuntimeSettings: runtimeSettings
+    });
+
+    const result = await action({
+      model: createModel(),
+      selectedHash: 'c3',
+      baseHash: 'a1',
+      cancellationToken: token as never
+    });
+
+    expect(result).toEqual({ outcome: 'cancelled', cancellationStage: 'after-preflight' });
+    // Runtime selection is not reached once cancellation is observed after preflight.
+    expect(locateRuntime).not.toHaveBeenCalled();
+  });
+
+  it('returns cancelled/after-runtime-selection when cancelled during runtime selection', async () => {
+    const context = harness.createContext();
+    const token = harness.createCancellationToken(false);
+    const preflightComparisonReport = vi.fn().mockResolvedValue(createPreflight());
+    const locateRuntime = vi.fn().mockImplementation(async () => {
+      (token as { isCancellationRequested: boolean }).isCancellationRequested = true;
+      return createRuntimeSelection();
+    });
+    const action = createEnsureComparisonReportEvidenceAction(context as never, {
+      preflightComparisonReport,
+      locateRuntime,
+      getRuntimeSettings: runtimeSettings
+    });
+
+    const result = await action({
+      model: createModel(),
+      selectedHash: 'c3',
+      baseHash: 'a1',
+      cancellationToken: token as never
+    });
+
+    expect(result).toEqual({ outcome: 'cancelled', cancellationStage: 'after-runtime-selection' });
+  });
+});
+
+describe('createOpenRetainedComparisonReportAction guard and cancellation outcomes (VHS-REQ-621, VHS-REQ-644)', () => {
+  beforeEach(() => {
+    harness.reset();
+  });
+
+  it('returns cancelled/before-retained-comparison-resolution when the token is already cancelled', async () => {
+    const context = harness.createContext();
+    const action = createOpenRetainedComparisonReportAction(context as never, {});
+
+    const result = await action({
+      model: createModel(),
+      selectedHash: 'c3',
+      baseHash: 'a1',
+      cancellationToken: harness.createCancellationToken(true) as never
+    });
+
+    expect(result).toEqual({
+      outcome: 'cancelled',
+      cancellationStage: 'before-retained-comparison-resolution'
+    });
+  });
+
+  it('returns workspace-untrusted for an untrusted workspace', async () => {
+    const context = harness.createContext();
+    harness.setWorkspaceTrusted(false);
+    const action = createOpenRetainedComparisonReportAction(context as never, {});
+
+    const result = await action({ model: createModel(), selectedHash: 'c3', baseHash: 'a1' });
+
+    expect(result.outcome).toBe('workspace-untrusted');
+  });
+
+  it('returns missing-storage-uri when the context has no storage URI', async () => {
+    const context = harness.createContext({ storageUri: undefined });
+    const action = createOpenRetainedComparisonReportAction(context as never, {});
+
+    const result = await action({ model: createModel(), selectedHash: 'c3', baseHash: 'a1' });
+
+    expect(result.outcome).toBe('missing-storage-uri');
+  });
+
+  it('returns missing-selected-commit for an unknown selected hash', async () => {
+    const context = harness.createContext();
+    const action = createOpenRetainedComparisonReportAction(context as never, {});
+
+    const result = await action({ model: createModel(), selectedHash: 'not-a-commit' });
+
+    expect(result.outcome).toBe('missing-selected-commit');
+  });
+
+  it('returns missing-previous-hash when no base revision can be derived', async () => {
+    const context = harness.createContext();
+    const action = createOpenRetainedComparisonReportAction(context as never, {});
+
+    const result = await action({ model: createModel(), selectedHash: 'a1' });
+
+    expect(result.outcome).toBe('missing-previous-hash');
+  });
+
+  it('returns missing-retained-comparison-report when no retained source record exists', async () => {
+    const context = harness.createContext();
+    const pathExists = vi.fn().mockResolvedValue(false);
+    const action = createOpenRetainedComparisonReportAction(context as never, { pathExists });
+
+    const result = await action({ model: createModel(), selectedHash: 'c3', baseHash: 'a1' });
+
+    expect(result.outcome).toBe('missing-retained-comparison-report');
+    expect(pathExists).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns cancelled/before-retained-comparison-open when cancelled during evidence resolution', async () => {
+    const context = harness.createContext();
+    const token = harness.createCancellationToken(false);
+    const pathExists = vi.fn().mockResolvedValue(false);
+    const action = createOpenRetainedComparisonReportAction(context as never, { pathExists });
+
+    const result = await action({
+      model: createModel(),
+      selectedHash: 'c3',
+      baseHash: 'a1',
+      cancellationToken: token as never,
+      reportProgress: (report) => {
+        if (report.message === 'Resolving retained pair comparison evidence.') {
+          (token as { isCancellationRequested: boolean }).isCancellationRequested = true;
+        }
+      }
+    });
+
+    expect(result).toEqual({
+      outcome: 'cancelled',
+      cancellationStage: 'before-retained-comparison-open'
+    });
+    // Cancellation short-circuits before the archive plan is probed.
+    expect(pathExists).not.toHaveBeenCalled();
+  });
+});
