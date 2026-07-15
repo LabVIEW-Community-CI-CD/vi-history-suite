@@ -1475,7 +1475,10 @@ async function renderGeneratedComparisonReportPanelHtml(options: {
   const contextMarkup = renderComparisonReportPanelContextMarkup(options);
 
   if (/<body\b[^>]*>/i.test(withHead)) {
-    return withHead.replace(/<body\b([^>]*)>/i, `<body$1>${contextMarkup}`);
+    // Function replacer: contextMarkup embeds commit subject/body (arbitrary user
+    // text, HTML-escaped but escapeHtml does not escape `$`), so a string
+    // replacement would misinterpret `$&`/`$1`/`$$` etc. and corrupt the panel.
+    return withHead.replace(/<body\b[^>]*>/i, (match) => `${match}${contextMarkup}`);
   }
 
   return `<!DOCTYPE html><html><head><meta charset="UTF-8" />${headInjection}<title>${escapeHtml(
@@ -1552,7 +1555,10 @@ async function renderPersistedComparisonReportPacketPanelHtml(options: {
     const contextMarkup = renderComparisonReportPanelContextMarkup(options);
 
     if (/<body\b[^>]*>/i.test(withHead)) {
-      return withHead.replace(/<body\b([^>]*)>/i, `<body$1>${contextMarkup}`);
+      // Function replacer: contextMarkup embeds commit subject/body (arbitrary
+      // user text, HTML-escaped but `$` is not), so a string replacement would
+      // misinterpret `$&`/`$1`/`$$` etc. and corrupt the packet panel.
+      return withHead.replace(/<body\b[^>]*>/i, (match) => `${match}${contextMarkup}`);
     }
 
     return `<!DOCTYPE html><html><head><meta charset="UTF-8" />${headInjection}<title>${escapeHtml(

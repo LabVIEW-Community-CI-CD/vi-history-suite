@@ -2719,3 +2719,74 @@ describe('openPersistedComparisonReportPanel result assembly and render fallback
     expect(harness.panels[0]?.webview.html).toContain('Packet fallback view');
   });
 });
+
+describe('comparison report panel body injection with $-sequences (VHS-REQ-644)', () => {
+  beforeEach(() => {
+    harness.reset();
+  });
+
+  it('inserts a commit body containing $-sequences literally into the generated report panel', async () => {
+    const context = harness.createContext();
+    const runtimeSelection = createRuntimeSelection();
+    const executedRecord = createPacketRecord({
+      runtimeSelection,
+      runtimeExecutionState: 'succeeded',
+      runtimeExecution: { state: 'succeeded', attempted: true, reportExists: true }
+    });
+    // A commit body with $-sequences: escapeHtml does not escape `$`, so a string
+    // .replace() would misinterpret these in the replacement and corrupt the panel.
+    executedRecord.selectedRevision = {
+      ...executedRecord.selectedRevision,
+      body: 'Fix $1 and $& parsing'
+    };
+    const action = createComparisonReportAction(context as never, {
+      preflightComparisonReport: vi.fn().mockResolvedValue(createPreflight()),
+      locateRuntime: vi.fn().mockResolvedValue(runtimeSelection),
+      getRuntimeSettings: () => ({ requestedProvider: 'host', labviewVersion: '2026', bitness: 'x64' }),
+      persistComparisonReport: vi.fn().mockResolvedValue(createPacketResult(executedRecord)),
+      executeComparisonReport: vi.fn().mockResolvedValue(createPacketResult(executedRecord)),
+      archiveComparisonReportSource: vi.fn().mockResolvedValue(undefined),
+      readFile: vi
+        .fn()
+        .mockResolvedValue('<html><head></head><body><h1>Generated</h1></body></html>') as never
+    });
+
+    await action({ model: createModel(), selectedHash: 'c3', baseHash: 'a1' });
+
+    expect(harness.panels[0]?.webview.html).toContain('Fix $1 and $&amp; parsing');
+  });
+
+  it('inserts a commit body containing $-sequences literally into the packet panel', async () => {
+    const context = harness.createContext();
+    const runtimeSelection = createRuntimeSelection();
+    const blockedRecord = createPacketRecord({
+      runtimeSelection,
+      reportStatus: 'blocked-runtime',
+      runtimeExecutionState: 'not-available',
+      runtimeExecution: {
+        state: 'not-available',
+        attempted: false,
+        reportExists: false,
+        blockedReason: 'labview-exe-not-found'
+      }
+    });
+    blockedRecord.selectedRevision = {
+      ...blockedRecord.selectedRevision,
+      body: 'Refund $$5 for $`x`'
+    };
+    const action = createComparisonReportAction(context as never, {
+      preflightComparisonReport: vi.fn().mockResolvedValue(createPreflight()),
+      locateRuntime: vi.fn().mockResolvedValue(runtimeSelection),
+      getRuntimeSettings: () => ({ requestedProvider: 'host', labviewVersion: '2026', bitness: 'x64' }),
+      persistComparisonReport: vi.fn().mockResolvedValue(createPacketResult(blockedRecord)),
+      archiveComparisonReportSource: vi.fn().mockResolvedValue(undefined),
+      readFile: vi
+        .fn()
+        .mockResolvedValue('<html><head></head><body>Packet</body></html>') as never
+    });
+
+    await action({ model: createModel(), selectedHash: 'c3', baseHash: 'a1' });
+
+    expect(harness.panels[0]?.webview.html).toContain('Refund $$5 for $`x`');
+  });
+});

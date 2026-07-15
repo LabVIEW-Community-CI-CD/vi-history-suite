@@ -1130,7 +1130,10 @@ async function renderInlineDashboardArtifactHtml(options: {
     )}</strong></div>`;
 
     if (/<body\b[^>]*>/i.test(withHead)) {
-      return withHead.replace(/<body\b([^>]*)>/i, `<body$1>${headerMarkup}`);
+      // Function replacer: headerMarkup embeds the report title (arbitrary user
+      // text, HTML-escaped but `$` is not), so a string replacement would
+      // misinterpret `$&`/`$1`/`$$` etc. and corrupt the dashboard artifact.
+      return withHead.replace(/<body\b[^>]*>/i, (match) => `${match}${headerMarkup}`);
     }
 
     return `<!DOCTYPE html><html><head><meta charset="UTF-8" />${headInjection}<title>${escapeHtml(
