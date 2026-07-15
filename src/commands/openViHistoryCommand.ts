@@ -1568,7 +1568,7 @@ function isComparisonRuntimeBlocked(result: ComparisonReportActionResult): boole
   );
 }
 
-function deriveComparisonRuntimeProgressStatus(
+export function deriveComparisonRuntimeProgressStatus(
   message: string
 ): 'running' | 'acquiring' | undefined {
   if (
@@ -1601,7 +1601,7 @@ function deriveComparisonCommandLabel(actionCommand: string): string {
   return 'Generate compare';
 }
 
-function resolveExplicitComparisonPair(
+export function resolveExplicitComparisonPair(
   model: ViHistoryViewModel,
   selectedHashes: string[]
 ): { selectedHash: string; baseHash: string } | undefined {
@@ -1664,7 +1664,7 @@ function deriveRuntimeProviderFromDoctorSummary(
   return match?.[1];
 }
 
-function deriveRuntimeProviderRequestFromDoctorSummary(
+export function deriveRuntimeProviderRequestFromDoctorSummary(
   summaryLines: string[] | undefined
 ): string | undefined {
   const providerRequestLine = summaryLines?.find((line) =>
@@ -1698,11 +1698,11 @@ function deriveWindowsContainerAcquisitionStateFromDoctorSummary(
   return match?.[1];
 }
 
-function stripTerminalPunctuation(value: string): string {
+export function stripTerminalPunctuation(value: string): string {
   return value.replace(/[.!?]+$/u, '');
 }
 
-function deriveRejectedProviderSummaryFromDoctorSummary(
+export function deriveRejectedProviderSummaryFromDoctorSummary(
   summaryLines: string[] | undefined
 ): string | undefined {
   const rejectedProviderDetails = summaryLines
@@ -1789,7 +1789,7 @@ function buildComparisonRuntimePanelDetails(
   return details;
 }
 
-function mapLegacyExecutionModeToProviderRequest(
+export function mapLegacyExecutionModeToProviderRequest(
   executionMode: string | undefined
 ): string | undefined {
   if (!executionMode) {
@@ -1822,7 +1822,7 @@ function buildHistoryLoadFailureMessage(
   return 'VI History could not load the selected file.';
 }
 
-function isInstalledProgramFilesLvIconPath(targetFsPath: string): boolean {
+export function isInstalledProgramFilesLvIconPath(targetFsPath: string): boolean {
   const normalizedPath = targetFsPath.replaceAll('/', '\\');
   const lowerPath = normalizedPath.toLowerCase();
 
@@ -1833,7 +1833,7 @@ function isInstalledProgramFilesLvIconPath(targetFsPath: string): boolean {
   );
 }
 
-function isGitRepositoryResolutionFailure(error: unknown): boolean {
+export function isGitRepositoryResolutionFailure(error: unknown): boolean {
   if (!(error instanceof Error)) {
     return false;
   }
