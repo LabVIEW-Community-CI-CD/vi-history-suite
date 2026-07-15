@@ -47,6 +47,8 @@ import {
   prepareWindowsContainerExecutionContext,
   prepareLinuxContainerExecutionContext,
   resolveEffectiveCommandTimeoutMs,
+  appendLabviewCliPortNumberArg,
+  rewriteLabviewCliArgsForContainerWorkspace,
   LINUX_HOST_NATIVE_HEADLESS_OPT_IN_DEFAULT_TIMEOUT_MS
 } from '../../src/reporting/comparisonReportRuntimeExecution';
 import { ComparisonReportPacketRecord } from '../../src/reporting/comparisonReportPacket';
@@ -6372,5 +6374,150 @@ describe('classifyRuntimeFailure log-only and bitness-guard arms (VHS-REQ-621)',
 
     expect(result.reason).toBe('command-exited-nonzero');
     expect(result.notes).toEqual([]);
+  });
+});
+
+describe('appendLabviewCliPortNumberArg (VHS-REQ-621)', () => {
+  it('returns an unchanged copy when the port is undefined', () => {
+    const args = ['-VI1', 'a.vi'];
+    const result = appendLabviewCliPortNumberArg(args, undefined);
+
+    expect(result).toEqual(['-VI1', 'a.vi']);
+    // The helper must not mutate the caller's array.
+    expect(result).not.toBe(args);
+  });
+
+  it('returns an unchanged copy for a zero or negative port', () => {
+    expect(appendLabviewCliPortNumberArg(['-x'], 0)).toEqual(['-x']);
+    expect(appendLabviewCliPortNumberArg(['-x'], -3363)).toEqual(['-x']);
+  });
+
+  it('returns an unchanged copy for a non-integer port', () => {
+    expect(appendLabviewCliPortNumberArg(['-x'], 3363.5)).toEqual(['-x']);
+  });
+
+  it('appends -PortNumber and the value when no port arg is present', () => {
+    expect(appendLabviewCliPortNumberArg(['-VI1', 'a.vi'], 3363)).toEqual([
+      '-VI1',
+      'a.vi',
+      '-PortNumber',
+      '3363'
+    ]);
+  });
+
+  it('replaces the value of an existing case-insensitive -portnumber arg in place', () => {
+    const result = appendLabviewCliPortNumberArg(
+      ['-VI1', 'a.vi', '-portnumber', '1111'],
+      3363
+    );
+
+    expect(result).toEqual(['-VI1', 'a.vi', '-portnumber', '3363']);
+    // No duplicate -PortNumber flag is appended.
+    expect(result.filter((token) => token.toLowerCase() === '-portnumber')).toHaveLength(1);
+  });
+});
+
+describe('rewriteLabviewCliArgsForContainerWorkspace (VHS-REQ-621)', () => {
+  const options = {
+    containerWorkspaceRoot: 'C:\\ws',
+    leftFilename: 'left.vi',
+    rightFilename: 'right.vi',
+    reportFilename: 'report.html'
+  };
+
+  it('rewrites -VI1/-VI2/-ReportPath to container staging and report paths', () => {
+    const result = rewriteLabviewCliArgsForContainerWorkspace(
+      ['-VI1', 'host-left.vi', '-VI2', 'host-right.vi', '-ReportPath', 'host-report.html'],
+      options
+    );
+
+    expect(result).toEqual([
+      '-VI1',
+      'C:\\ws\\staging\\left.vi',
+      '-VI2',
+      'C:\\ws\\staging\\right.vi',
+      '-ReportPath',
+      'C:\\ws\\report.html',
+      '-Headless'
+    ]);
+  });
+
+  it('honors the lowercase -vi1/-vi2/-reportPath aliases', () => {
+    const result = rewriteLabviewCliArgsForContainerWorkspace(
+      ['-vi1', 'x.vi', '-vi2', 'y.vi', '-reportPath', 'r.html'],
+      options
+    );
+
+    expect(result).toEqual([
+      '-vi1',
+      'C:\\ws\\staging\\left.vi',
+      '-vi2',
+      'C:\\ws\\staging\\right.vi',
+      '-reportPath',
+      'C:\\ws\\report.html',
+      '-Headless'
+    ]);
+  });
+
+  it('drops any incoming -LabVIEWPath flag and its value', () => {
+    const result = rewriteLabviewCliArgsForContainerWorkspace(
+      ['-LabVIEWPath', 'C:\\host\\LabVIEW.exe', '-VI1', 'a.vi'],
+      options
+    );
+
+    expect(result).not.toContain('C:\\host\\LabVIEW.exe');
+    expect(result).toEqual(['-VI1', 'C:\\ws\\staging\\left.vi', '-Headless']);
+  });
+
+  it('re-appends a trimmed -LabVIEWPath when provided in options', () => {
+    const result = rewriteLabviewCliArgsForContainerWorkspace(['-VI1', 'a.vi'], {
+      ...options,
+      labviewPath: '  C:\\lv\\LabVIEW.exe  '
+    });
+
+    expect(result).toEqual([
+      '-VI1',
+      'C:\\ws\\staging\\left.vi',
+      '-LabVIEWPath',
+      'C:\\lv\\LabVIEW.exe',
+      '-Headless'
+    ]);
+  });
+
+  it('does not append -LabVIEWPath for a blank labviewPath option', () => {
+    const result = rewriteLabviewCliArgsForContainerWorkspace(['-VI1', 'a.vi'], {
+      ...options,
+      labviewPath: '   '
+    });
+
+    expect(result).not.toContain('-LabVIEWPath');
+  });
+
+  it('drops -c and an incoming -Headless (with its value) then re-appends a single -Headless', () => {
+    const result = rewriteLabviewCliArgsForContainerWorkspace(
+      ['-c', '-Headless', 'true', '-VI1', 'a.vi'],
+      options
+    );
+
+    expect(result).not.toContain('-c');
+    expect(result).not.toContain('true');
+    expect(result.filter((token) => token === '-Headless')).toHaveLength(1);
+    // -Headless is always the final token.
+    expect(result[result.length - 1]).toBe('-Headless');
+  });
+
+  it('leaves an incoming -Headless with no following value intact (single re-append)', () => {
+    const result = rewriteLabviewCliArgsForContainerWorkspace(['-VI1', 'a.vi', '-Headless'], options);
+
+    expect(result.filter((token) => token === '-Headless')).toHaveLength(1);
+  });
+
+  it('preserves unrelated passthrough arguments in order', () => {
+    const result = rewriteLabviewCliArgsForContainerWorkspace(
+      ['-OperationName', 'CreateComparisonReport', '-VI1', 'a.vi'],
+      options
+    );
+
+    expect(result.slice(0, 2)).toEqual(['-OperationName', 'CreateComparisonReport']);
   });
 });
