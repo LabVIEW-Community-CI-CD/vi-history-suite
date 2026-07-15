@@ -283,6 +283,7 @@
     "clean": "rimraf out out-tests coverage",
     "compile": "tsc -p . && node scripts/generateBuildInfo.js",
     "check": "tsc -p . --noEmit",
+    "quality:local": "npm run check && npm test && npm run traceability:audit && npm run customization:audit && npm run docs:links && npm run coverage:map && npm run requirements:verify",
     "branch-protection:audit": "node scripts/auditBranchProtectionSettings.js",
     "customization:audit": "node scripts/auditCustomizationGovernance.js",
     "dev:watch": "tsc -p . --watch --preserveWatchOutput",
