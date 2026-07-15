@@ -10,6 +10,15 @@ import {
   buildComparisonArtifactPlan
 } from '../reporting/comparisonReportPlan';
 import { isWorktreeRevision } from '../git/gitCli';
+import {
+  DEFAULT_WORKTREE_SNAPSHOT_RETENTION_LIMIT,
+  WORKTREE_SNAPSHOT_INDEX_FILENAME,
+  appendWorktreeSnapshotRecord,
+  createEmptyWorktreeSnapshotIndex,
+  parseWorktreeSnapshotIndex,
+  serializeWorktreeSnapshotIndex,
+  type WorktreeSnapshotRecord
+} from './worktreeSnapshotIndex';
 
 const REPORT_HISTORY_DIRECTORY = 'report-history';
 const SOURCE_RECORD_FILENAME = 'source-record.json';
@@ -46,6 +55,14 @@ export interface ArchiveComparisonReportSourceDeps {
   copyFile?: typeof fs.copyFile;
   copyDirectory?: typeof fs.cp;
   pathExists?: (targetPath: string) => Promise<boolean>;
+  readFile?: typeof fs.readFile;
+  removePath?: typeof fs.rm;
+  /**
+   * VHS-REQ-641 (Phase 3): keep-last-N limit applied to the working-tree
+   * snapshot retention index (0 disables retention). Defaults to
+   * `DEFAULT_WORKTREE_SNAPSHOT_RETENTION_LIMIT`.
+   */
+  worktreeSnapshotRetentionLimit?: number;
 }
 
 export interface ReadArchivedComparisonReportSourceRecordDeps {
@@ -250,7 +267,94 @@ export async function archiveComparisonReportSource(
     JSON.stringify(archivedRecord, null, 2),
     'utf8'
   );
+
+  // VHS-REQ-641 (Phase 3, issue #1366): when this is a working-tree comparison,
+  // append it to the per-VI retention index so the dashboard can rediscover the
+  // retained snapshot (its pair-ID is content-addressed, not derivable from the
+  // commit list), and garbage-collect evicted snapshots' archive directories.
+  const worktreeSnapshotId = record.runtimeExecution?.worktreeSnapshotId;
+  if (worktreeSnapshotId) {
+    await updateWorktreeSnapshotIndexForArchive(
+      { archivePlan, worktreeSnapshotId, record, archivedAt: archivedRecord.archivedAt },
+      { mkdir, writeFile, pathExists, readFile: deps.readFile ?? fs.readFile, removePath: deps.removePath ?? fs.rm },
+      deps.worktreeSnapshotRetentionLimit ?? DEFAULT_WORKTREE_SNAPSHOT_RETENTION_LIMIT
+    );
+  }
   return archivedRecord;
+}
+
+/** Absolute path of a VI's working-tree snapshot retention index file. */
+export function buildWorktreeSnapshotIndexFilePath(archivePlan: ComparisonReportArchivePlan): string {
+  return joinPreservingExplicitPathStyle(
+    archivePlan.storageRoot,
+    REPORT_HISTORY_DIRECTORY,
+    archivePlan.repoId,
+    archivePlan.fileId,
+    WORKTREE_SNAPSHOT_INDEX_FILENAME
+  );
+}
+
+function buildRetainedPairDirectory(
+  archivePlan: ComparisonReportArchivePlan,
+  pairId: string
+): string {
+  return joinPreservingExplicitPathStyle(
+    archivePlan.storageRoot,
+    REPORT_HISTORY_DIRECTORY,
+    archivePlan.repoId,
+    archivePlan.fileId,
+    'pairs',
+    pairId
+  );
+}
+
+async function updateWorktreeSnapshotIndexForArchive(
+  context: {
+    archivePlan: ComparisonReportArchivePlan;
+    worktreeSnapshotId: string;
+    record: ComparisonReportPacketRecord;
+    archivedAt: string;
+  },
+  deps: {
+    mkdir: typeof fs.mkdir;
+    writeFile: typeof fs.writeFile;
+    pathExists: (targetPath: string) => Promise<boolean>;
+    readFile: typeof fs.readFile;
+    removePath: typeof fs.rm;
+  },
+  retentionLimit: number
+): Promise<void> {
+  const indexFilePath = buildWorktreeSnapshotIndexFilePath(context.archivePlan);
+  let index = createEmptyWorktreeSnapshotIndex();
+  if (await deps.pathExists(indexFilePath)) {
+    const parsed = parseWorktreeSnapshotIndex(await deps.readFile(indexFilePath, 'utf8'));
+    if (parsed) {
+      index = parsed;
+    }
+  }
+
+  const newRecord: WorktreeSnapshotRecord = {
+    snapshotId: context.worktreeSnapshotId,
+    pairId: context.archivePlan.pairId,
+    baseHash: context.record.baseHash,
+    reportType: context.archivePlan.reportType,
+    retainedAt: context.archivedAt,
+    relativePath: context.record.artifactPlan.normalizedRelativePath
+  };
+  const { index: nextIndex, evicted } = appendWorktreeSnapshotRecord(index, newRecord, retentionLimit);
+
+  await deps.mkdir(path.dirname(indexFilePath), { recursive: true });
+  await deps.writeFile(indexFilePath, serializeWorktreeSnapshotIndex(nextIndex), 'utf8');
+
+  // Delete the archive directory of each evicted snapshot (keep-last-N GC). The
+  // just-written record is never evicted unless the limit is 0, in which case
+  // its own archive is removed too — matching the "0 disables retention" contract.
+  for (const removed of evicted) {
+    const pairDirectory = buildRetainedPairDirectory(context.archivePlan, removed.pairId);
+    if (await deps.pathExists(pairDirectory)) {
+      await deps.removePath(pairDirectory, { recursive: true, force: true });
+    }
+  }
 }
 
 export async function readArchivedComparisonReportSourceRecordFromSelection(
