@@ -1,4 +1,5 @@
 import type { ComparisonReportRevisionMetadata } from './comparisonReportPacket';
+import { formatComparisonRevisionHashDisplay } from './comparisonReportPacket';
 
 /**
  * Shared revision-context rendering for comparison reports.
@@ -57,7 +58,7 @@ function renderComparisonReportPanelRevisionCard(
 ): string {
   return `<div class="vihs-compare-context-card" data-testid="${testId}">
       <strong>${escapeHtml(label)}</strong>
-      <div><code>${escapeHtml(revision?.hash ?? hash ?? 'not retained')}</code></div>
+      <div><code>${escapeHtml(formatComparisonRevisionHashDisplay(revision?.hash ?? hash))}</code></div>
       <div><strong>Date:</strong> ${renderPanelRevisionMetadataValue(revision?.authorDate)}</div>
       <div><strong>Author:</strong> ${renderPanelRevisionMetadataValue(revision?.authorName)}</div>
       <div><strong>Subject:</strong> ${renderPanelRevisionMetadataValue(revision?.subject)}</div>
