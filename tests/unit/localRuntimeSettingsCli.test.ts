@@ -14,7 +14,9 @@ import {
   resolveLocalRuntimeSettingsCliContract,
   runInteractiveLocalRuntimeSettingsCli,
   runLocalRuntimeSettingsCli,
-  runLocalRuntimeSettingsCliMain
+  runLocalRuntimeSettingsCliMain,
+  writeVsCodeSettingsFile,
+  readPersistedRuntimeSettingsFacts
 } from '../../src/tooling/localRuntimeSettingsCli';
 import type { ComparisonRuntimeSelection } from '../../src/reporting/comparisonRuntimeLocator';
 
@@ -805,5 +807,89 @@ describe('local runtime settings CLI validation taxonomy and argument guards (VH
     expect(() =>
       resolveDefaultVsCodeSettingsPath('freebsd' as NodeJS.Platform, {}, () => '/home/test')
     ).toThrow('Unsupported platform for VI History settings CLI: freebsd');
+  });
+});
+
+describe('writeVsCodeSettingsFile / readPersistedRuntimeSettingsFacts (VHS-REQ-623)', () => {
+  const settingsPath = '/home/test/.config/Code/User/settings.json';
+
+  it('creates the parent directory and writes the three viHistorySuite keys', async () => {
+    const memory = new MemoryFs();
+
+    await writeVsCodeSettingsFile(settingsPath, 'host', '2026', 'x64', memory);
+
+    expect(memory.mkdir).toHaveBeenCalledWith(path.dirname(settingsPath), { recursive: true });
+    const written = memory.text(settingsPath);
+    expect(written).toContain('"viHistorySuite.runtimeProvider": "host"');
+    expect(written).toContain('"viHistorySuite.labviewVersion": "2026"');
+    expect(written).toContain('"viHistorySuite.labviewBitness": "x64"');
+  });
+
+  it('preserves unrelated pre-existing settings keys when upserting', async () => {
+    const memory = new MemoryFs();
+    memory.seed(
+      settingsPath,
+      '{\n  "editor.fontSize": 14,\n  "viHistorySuite.runtimeProvider": "docker"\n}\n'
+    );
+
+    await writeVsCodeSettingsFile(settingsPath, 'host', '2025', 'x86', memory);
+
+    const written = memory.text(settingsPath);
+    // Unrelated keys survive the edit.
+    expect(written).toContain('"editor.fontSize": 14');
+    // The provider is updated in place, not duplicated.
+    expect(written).toContain('"viHistorySuite.runtimeProvider": "host"');
+    expect(written).not.toContain('"docker"');
+  });
+
+  it('round-trips written settings back through readPersistedRuntimeSettingsFacts', async () => {
+    const memory = new MemoryFs();
+
+    await writeVsCodeSettingsFile(settingsPath, 'docker', '2026', 'x64', memory);
+    const facts = await readPersistedRuntimeSettingsFacts(settingsPath, memory);
+
+    expect(facts.persistedProvider).toBe('docker');
+    expect(facts.persistedLabviewVersion).toBe('2026');
+    expect(facts.persistedLabviewBitness).toBe('x64');
+    expect(facts.runtimeSettings.requestedProvider).toBe('docker');
+    // The docker provider clears the existing-Windows-host allowance.
+    expect(facts.runtimeSettings.allowExistingWindowsHostRuntime).toBe(false);
+    expect(facts.runtimeSettings.bitness).toBe('x64');
+  });
+
+  it('returns undefined persisted values with defaulted runtime settings for a missing file', async () => {
+    const memory = new MemoryFs();
+
+    const facts = await readPersistedRuntimeSettingsFacts(settingsPath, memory);
+
+    expect(facts.persistedProvider).toBeUndefined();
+    expect(facts.persistedLabviewVersion).toBeUndefined();
+    expect(facts.persistedLabviewBitness).toBeUndefined();
+    expect(facts.runtimeSettings.requestedProvider).toBeUndefined();
+    expect(facts.runtimeSettings.invalidRequestedProvider).toBeUndefined();
+    // A missing/non-docker provider keeps the existing-Windows-host allowance on.
+    expect(facts.runtimeSettings.allowExistingWindowsHostRuntime).toBe(true);
+    expect(facts.runtimeSettings.bitness).toBeUndefined();
+  });
+
+  it('captures an invalid provider without resolving a requested provider', async () => {
+    const memory = new MemoryFs();
+    memory.seed(settingsPath, '{ "viHistorySuite.runtimeProvider": "bogus" }');
+
+    const facts = await readPersistedRuntimeSettingsFacts(settingsPath, memory);
+
+    expect(facts.runtimeSettings.requestedProvider).toBeUndefined();
+    expect(facts.runtimeSettings.invalidRequestedProvider).toBe('bogus');
+  });
+
+  it('drops an unsupported bitness while keeping a supported one', async () => {
+    const memory = new MemoryFs();
+    memory.seed(settingsPath, '{ "viHistorySuite.labviewBitness": "arm64" }');
+    const invalid = await readPersistedRuntimeSettingsFacts(settingsPath, memory);
+    expect(invalid.runtimeSettings.bitness).toBeUndefined();
+
+    memory.seed(settingsPath, '{ "viHistorySuite.labviewBitness": "x86" }');
+    const valid = await readPersistedRuntimeSettingsFacts(settingsPath, memory);
+    expect(valid.runtimeSettings.bitness).toBe('x86');
   });
 });
