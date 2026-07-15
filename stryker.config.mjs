@@ -27,6 +27,9 @@ const config = {
   thresholds: { high: 80, low: 60, break: null },
   tempDirName: '.stryker-tmp',
   cleanTempDir: true,
+  // Native TypeScript 7 omits the legacy Compiler API that Stryker's sandbox
+  // tsconfig preprocessor expects. In-place mode skips that preprocessor path.
+  inPlace: true,
   concurrency: 4
 };
 
