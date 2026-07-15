@@ -224,6 +224,145 @@ describe('comparisonReportArchive', () => {
     });
   });
 
+  it('appends to the working-tree snapshot index and garbage-collects evicted archives (VHS-REQ-641.7)', async () => {
+    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-archive-wt-'));
+    tempRoots.push(tempRoot);
+    const storageRoot = path.join(tempRoot, 'workspace-storage');
+    const sourceRoot = path.join(tempRoot, 'source');
+    await fs.mkdir(sourceRoot, { recursive: true });
+    const packetFilePath = path.join(sourceRoot, 'report-packet.html');
+    const reportFilePath = path.join(sourceRoot, 'diff-report-My.vi.html');
+    await fs.writeFile(packetFilePath, '<html>packet</html>', 'utf8');
+    await fs.writeFile(reportFilePath, '<html>report</html>', 'utf8');
+
+    const pathExists = async (targetPath: string): Promise<boolean> => {
+      try {
+        await fs.access(targetPath);
+        return true;
+      } catch {
+        return false;
+      }
+    };
+
+    function worktreeRecord(snapshotId: string): ComparisonReportPacketRecord {
+      return {
+        reportType: 'diff',
+        selectedHash: 'WORKTREE',
+        baseHash: 'base-sha',
+        runtimeExecution: {
+          state: 'succeeded',
+          attempted: true,
+          reportExists: true,
+          worktreeSnapshotId: snapshotId
+        },
+        artifactPlan: {
+          allowedLocalRootPaths: [storageRoot],
+          repoId: 'repo-id',
+          fileId: 'file-id',
+          normalizedRelativePath: 'src/My.vi',
+          reportFilename: 'diff-report-My.vi.html',
+          packetFilename: 'report-packet.html',
+          packetFilePath,
+          reportFilePath,
+          metadataFilePath: path.join(sourceRoot, 'report-metadata.json'),
+          runtimeStdoutFilePath: path.join(sourceRoot, 'runtime-stdout.txt'),
+          runtimeStderrFilePath: path.join(sourceRoot, 'runtime-stderr.txt'),
+          runtimeDiagnosticLogFilePath: path.join(sourceRoot, 'runtime-diagnostic-log.txt'),
+          runtimeProcessObservationFilePath: path.join(sourceRoot, 'runtime-process-observation.json')
+        }
+      } as unknown as ComparisonReportPacketRecord;
+    }
+
+    const indexFilePath = path.join(
+      storageRoot,
+      'report-history',
+      'repo-id',
+      'file-id',
+      'worktree-snapshots.json'
+    );
+
+    // Retain three distinct snapshots with a keep-last-2 limit.
+    const archivedA = await archiveComparisonReportSource(worktreeRecord('aaaa000000000000'), {
+      now: () => '2026-05-01T00:00:00.000Z',
+      pathExists,
+      worktreeSnapshotRetentionLimit: 2
+    });
+    await archiveComparisonReportSource(worktreeRecord('bbbb111111111111'), {
+      now: () => '2026-05-01T01:00:00.000Z',
+      pathExists,
+      worktreeSnapshotRetentionLimit: 2
+    });
+    await archiveComparisonReportSource(worktreeRecord('cccc222222222222'), {
+      now: () => '2026-05-01T02:00:00.000Z',
+      pathExists,
+      worktreeSnapshotRetentionLimit: 2
+    });
+
+    const index = JSON.parse(await fs.readFile(indexFilePath, 'utf8')) as {
+      snapshots: { snapshotId: string }[];
+    };
+    // Newest two retained, oldest evicted.
+    expect(index.snapshots.map((snapshot) => snapshot.snapshotId)).toEqual([
+      'cccc222222222222',
+      'bbbb111111111111'
+    ]);
+    // The evicted snapshot's archive directory was garbage-collected.
+    await expect(fs.access(archivedA.archivePlan.archiveDirectory)).rejects.toThrow();
+  });
+
+  it('does not write a snapshot index for a committed comparison (VHS-REQ-641.7)', async () => {
+    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-archive-committed-'));
+    tempRoots.push(tempRoot);
+    const storageRoot = path.join(tempRoot, 'workspace-storage');
+    const sourceRoot = path.join(tempRoot, 'source');
+    await fs.mkdir(sourceRoot, { recursive: true });
+    const packetFilePath = path.join(sourceRoot, 'report-packet.html');
+    await fs.writeFile(packetFilePath, '<html>packet</html>', 'utf8');
+
+    const record = {
+      reportType: 'diff',
+      selectedHash: 'selected-sha',
+      baseHash: 'base-sha',
+      runtimeExecution: { state: 'succeeded', attempted: true, reportExists: true },
+      artifactPlan: {
+        allowedLocalRootPaths: [storageRoot],
+        repoId: 'repo-id',
+        fileId: 'file-id',
+        normalizedRelativePath: 'src/My.vi',
+        reportFilename: 'diff-report-My.vi.html',
+        packetFilename: 'report-packet.html',
+        packetFilePath,
+        reportFilePath: path.join(sourceRoot, 'diff-report-My.vi.html'),
+        metadataFilePath: path.join(sourceRoot, 'report-metadata.json'),
+        runtimeStdoutFilePath: path.join(sourceRoot, 'runtime-stdout.txt'),
+        runtimeStderrFilePath: path.join(sourceRoot, 'runtime-stderr.txt'),
+        runtimeDiagnosticLogFilePath: path.join(sourceRoot, 'runtime-diagnostic-log.txt'),
+        runtimeProcessObservationFilePath: path.join(sourceRoot, 'runtime-process-observation.json')
+      }
+    } as unknown as ComparisonReportPacketRecord;
+
+    await archiveComparisonReportSource(record, {
+      now: () => '2026-05-01T00:00:00.000Z',
+      pathExists: async (targetPath) => {
+        try {
+          await fs.access(targetPath);
+          return true;
+        } catch {
+          return false;
+        }
+      }
+    });
+
+    const indexFilePath = path.join(
+      storageRoot,
+      'report-history',
+      'repo-id',
+      'file-id',
+      'worktree-snapshots.json'
+    );
+    await expect(fs.access(indexFilePath)).rejects.toThrow();
+  });
+
   it('archives single-file reports without creating a sibling assets directory (VHS-REQ-640)', async () => {
     const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-archive-sf-'));
     tempRoots.push(tempRoot);

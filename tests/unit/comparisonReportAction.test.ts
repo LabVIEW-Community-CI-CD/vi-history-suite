@@ -476,11 +476,75 @@ describe('comparison report action orchestration (VHS-REQ-133/148/155)', () => {
       })
     );
     expect(result.outcome).toBe('opened-comparison-report');
-    // VHS-REQ-641: working-tree comparisons are not reproducible, so they are
-    // never archived into retained dashboard evidence.
+    // VHS-REQ-641 (Phase 3): a working-tree comparison whose record carries no
+    // content-addressed snapshot identity (e.g. the runtime did not stage the
+    // bytes) is still not archived — its evidence could not be content-addressed.
     expect(archiveComparisonReportSource).not.toHaveBeenCalled();
     expect(result.retainedArchiveAvailable).toBe(false);
     expect(harness.panels[0]?.options).toMatchObject({ enableScripts: false });
+  });
+
+  it('archives a working-tree comparison when the record carries a content-addressed snapshot identity (VHS-REQ-641.7)', async () => {
+    const context = harness.createContext();
+    const preflight = createPreflight();
+    const runtimeSelection = createRuntimeSelection();
+    const executedRecord = createPacketRecord({
+      preflight,
+      runtimeSelection,
+      runtimeExecution: {
+        state: 'succeeded',
+        attempted: true,
+        reportExists: true,
+        worktreeSnapshotId: 'aaaa000000000000',
+        stdoutFilePath: '/workspace/storage/runtime-stdout.log',
+        stderrFilePath: '/workspace/storage/runtime-stderr.log'
+      }
+    });
+    const worktreeRecord: ComparisonReportPacketRecord = {
+      ...executedRecord,
+      selectedHash: 'WORKTREE',
+      baseHash: 'c3'
+    };
+    const preflightComparisonReport = vi.fn().mockResolvedValue(preflight);
+    const locateRuntime = vi.fn().mockResolvedValue(runtimeSelection);
+    const persistComparisonReport = vi.fn().mockResolvedValue(createPacketResult(worktreeRecord));
+    const executeComparisonReport = vi.fn().mockResolvedValue(createPacketResult(worktreeRecord));
+    const archiveComparisonReportSource = vi.fn().mockResolvedValue(undefined);
+    const readFile = vi
+      .fn()
+      .mockResolvedValue('<html><head></head><body>worktree report</body></html>');
+
+    const action = createComparisonReportAction(context as never, {
+      preflightComparisonReport,
+      locateRuntime,
+      getRuntimeSettings: () => ({
+        requestedProvider: 'host',
+        labviewVersion: '2026',
+        bitness: 'x64'
+      }),
+      persistComparisonReport,
+      executeComparisonReport,
+      archiveComparisonReportSource,
+      readFile: readFile as never
+    });
+
+    const model: ViHistoryViewModel = {
+      ...createModel(),
+      workingTree: { hasUncommittedChanges: true, headHash: 'c3' }
+    };
+
+    const result = await action({
+      model,
+      selectedHash: 'WORKTREE',
+      baseHash: 'c3',
+      reportProgress: vi.fn()
+    });
+
+    expect(result.outcome).toBe('opened-comparison-report');
+    // The snapshot identity makes the retained pair reproducible/collision-free,
+    // so the working-tree comparison IS archived.
+    expect(archiveComparisonReportSource).toHaveBeenCalledWith(worktreeRecord);
+    expect(result.retainedArchiveAvailable).toBe(true);
   });
 
   it('opens the report Beside and threads the source VI path for re-entry (VHS-REQ-638.4)', async () => {

@@ -993,10 +993,16 @@ function buildCancelledComparisonReportResult(
 function canArchiveComparisonReport(
   record: Parameters<typeof archiveComparisonReportSource>[0]
 ): boolean {
-  // VHS-REQ-641: working-tree comparisons compare uncommitted on-disk bytes that
-  // mutate over time, so their evidence is not reproducible and is intentionally
-  // excluded from the retained dashboard pair ledger.
-  if (isWorktreeRevision(record.selectedHash) || isWorktreeRevision(record.baseHash)) {
+  // VHS-REQ-641 (Phase 3, issue #1366): working-tree comparisons compare
+  // uncommitted on-disk bytes. They are retained only when a content-addressed
+  // snapshot identity is available (the exact bytes that were compared), which
+  // makes the retained pair reproducible/collision-free and lets the dashboard
+  // rediscover it through the per-VI snapshot index. A working-tree pair without
+  // a snapshot identity (e.g. the runtime did not stage the bytes) stays
+  // unarchived, since its evidence could not be content-addressed.
+  const hasWorktreeSide =
+    isWorktreeRevision(record.selectedHash) || isWorktreeRevision(record.baseHash);
+  if (hasWorktreeSide && !record.runtimeExecution?.worktreeSnapshotId) {
     return false;
   }
   return Boolean(
