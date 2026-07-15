@@ -1450,12 +1450,13 @@ describe('branch protection audit evaluation', () => {
     const schema = JSON.parse(renderBranchProtectionAuditJsonSchema()) as {
       properties: { provenance: { $ref: string } };
       $defs: {
-        provenance: RequiredSchemaNode & { properties: { outputMode: { enum: string[] } } };
+        provenance: ObjectSchemaNode & { properties: { outputMode: { enum: string[] } } };
       };
     };
 
     expect(schema.properties.provenance.$ref).toBe('#/$defs/provenance');
     expectRequiredKeysPresent(output.provenance, schema.$defs.provenance.required);
+    expectOnlySchemaProperties(output.provenance, schema.$defs.provenance);
     expect(output.provenance).toEqual(provenance);
     expect(schema.$defs.provenance.properties.outputMode.enum).toContain(output.provenance.outputMode);
   });
