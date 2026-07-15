@@ -279,6 +279,14 @@ export function renderHistoryPanelHtml(
           return undefined;
         }
 
+        // VHS-REQ-133: require two DISTINCT revisions, mirroring the tested
+        // resolveSelectedComparePair guard. Without this a duplicate-hash
+        // selection (e.g. a rendering regression that emits two rows with the
+        // same data-hash) would enable Compare and post a self-compare pair.
+        if (ranked[0].hash === ranked[1].hash) {
+          return undefined;
+        }
+
         return {
           selectedHash: ranked[0].hash,
           baseHash: ranked[1].hash
