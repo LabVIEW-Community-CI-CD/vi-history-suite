@@ -2556,7 +2556,9 @@ describe('branch protection audit main', () => {
       writeFileSync,
       now: () => new Date('2026-07-14T12:00:00.000Z')
     });
-    const retainedSchema = JSON.parse(writeFileSync.mock.calls[0][1] as string) as Record<string, unknown>;
+    const retainedSchema = JSON.parse(writeFileSync.mock.calls[0][1] as string) as Record<string, unknown> & {
+      $defs: { provenance: ObjectSchemaNode };
+    };
 
     expect(exitCode).toBe(0);
     expect(stderr.read()).toBe('');
@@ -2571,6 +2573,10 @@ describe('branch protection audit main', () => {
       outputMode: 'schema',
       argv: ['--all', '--schema', '--include-provenance', '--output', 'evidence/branch-protection.schema.json']
     });
+    expectOnlySchemaProperties(
+      retainedSchema[BRANCH_PROTECTION_AUDIT_SCHEMA_PROVENANCE_KEY] as Record<string, unknown>,
+      retainedSchema.$defs.provenance
+    );
   });
 
   it('emits aggregate JSON failure summaries when opt-in hardening checks fail', () => {
