@@ -817,6 +817,9 @@ describe('requirement verification health (VHS-REQ-601)', () => {
       provenance: { generatedAt: string; cwd: string; outputMode: string; strict: boolean; argv: string[] };
       summary: { status: string };
     };
+    const schema = JSON.parse(renderRequirementsHealthJsonSchema()) as {
+      $defs: { provenance: RequiredSchemaNode & { properties: { outputMode: { enum: string[] } } } };
+    };
     expect(code).toBe(0);
     expect(stdoutChunks.join('')).toBe(
       '[requirements-verify] Wrote report output to evidence/requirements-health.json\n'
@@ -830,6 +833,8 @@ describe('requirement verification health (VHS-REQ-601)', () => {
       strict: false,
       argv: ['--json', '--include-provenance', '--output', 'evidence/requirements-health.json']
     });
+    expectRequiredKeysPresent(output.provenance, schema.$defs.provenance.required);
+    expect(schema.$defs.provenance.properties.outputMode.enum).toContain(output.provenance.outputMode);
     expect(output.summary.status).toBe('ATTENTION');
   });
 
