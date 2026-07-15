@@ -4862,7 +4862,10 @@ function appendLaunchConfirmationNote(notes: string[], launchSucceeded: boolean)
   return notes;
 }
 
-function classifyRuntimeFailure(options: {
+// VHS-REQ-621 / VHS-REQ-658: classify a nonzero/no-report runtime failure into an
+// explicit, actionable reason. Exported for direct deterministic unit testing of
+// its classification arms, consistent with the other exported helpers in this file.
+export function classifyRuntimeFailure(options: {
   engine?: 'labview-cli' | 'lvcompare';
   exitCode: number;
   reportExists: boolean;
