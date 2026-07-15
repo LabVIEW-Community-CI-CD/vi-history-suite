@@ -315,6 +315,8 @@
     "requirements:verify": "node scripts/verifyRequirementsHealth.js",
     "requirements:verify:strict": "node scripts/verifyRequirementsHealth.js --strict",
     "requirements:manifest": "node scripts/exportRequirementsManifest.js",
+    "risk:ledger": "node scripts/buildRiskLedger.js",
+    "risk:ledger:strict": "node scripts/buildRiskLedger.js --strict",
     "verify:preview": "npm run compile && node out/tooling/viPreviewVerifyCli.js",
     "docs:links": "node scripts/checkDocsLinks.js",
     "docs:gate": "node scripts/checkDocumentationWorkbench.js",
