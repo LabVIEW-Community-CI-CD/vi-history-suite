@@ -22,6 +22,7 @@ import {
   type ViPreviewRuntimeResolution
 } from '../reporting/viPreview/viPreviewRuntimeAdapter';
 import { isLabviewSourceFile } from '../reporting/viPreview/viPreviewStaging';
+import type { ResolveViPreviewRenderSourceDeps } from '../reporting/viPreview/viPreviewRenderSource';
 
 /**
  * VHS-REQ-659: shared VS Code host bindings for single-VI preview rendering.
@@ -105,6 +106,22 @@ async function runViPreviewCommand(
       stderr: failure.stderr ?? failure.message ?? String(error)
     };
   }
+}
+
+/**
+ * Builds the injected deps that materialize a non-`file` preview document URI
+ * (for example the `git`-scheme base side of a Source Control diff) to a
+ * throwaway temp file, so it renders its own committed bytes rather than the
+ * working-tree file. (VHS-REQ-659.)
+ */
+export function buildViPreviewRenderSourceDeps(uri: vscode.Uri): ResolveViPreviewRenderSourceDeps {
+  return {
+    readBytes: async () => vscode.workspace.fs.readFile(uri),
+    createTempDirectory: () => fs.mkdtemp(path.join(os.tmpdir(), 'vihs-vi-preview-src-')),
+    writeFile: (filePath, data) => fs.writeFile(filePath, data),
+    removeDirectory: (directory) => fs.rm(directory, { recursive: true, force: true }),
+    joinPath: (directory, name) => path.join(directory, name)
+  };
 }
 
 /** Builds the injected filesystem/process render dependencies bound to `cache`. */

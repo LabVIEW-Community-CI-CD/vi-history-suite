@@ -11,11 +11,13 @@ import { buildViPreviewWebviewHtml } from '../reporting/viPreview/viPreviewWebvi
 import { toViPreviewSessionRuntime } from '../reporting/viPreview/viPreviewSessionRuntime';
 import {
   buildViPreviewRenderDeps,
+  buildViPreviewRenderSourceDeps,
   createViPreviewCache,
   getViPreviewOperationDirectory,
   isViPreviewEnabled,
   resolvePreviewRuntime
 } from './viPreviewRenderHost';
+import { resolveViPreviewRenderSource } from '../reporting/viPreview/viPreviewRenderSource';
 import type { ViPreviewSessionManager } from './viPreviewSessionManager';
 
 /**
@@ -150,44 +152,58 @@ class ViPreviewEditorProvider implements vscode.CustomReadonlyEditorProvider<ViP
       const sessionRuntime = this.sessionManager
         ? toViPreviewSessionRuntime(runtime.runtime, process.platform)
         : undefined;
-      let result: RenderViPreviewForFileResult;
-      if (sessionRuntime && this.sessionManager) {
-        // Reuse the shared warm session so an un-cached open renders in seconds
-        // once the session is warm; interactive priority jumps the warm queue.
-        result = await this.sessionManager.renderVi(
-          sessionRuntime,
-          document.uri.fsPath,
-          'interactive'
-        );
-      } else {
-        result = await renderViPreviewForFile(
-          {
-            runtime: runtime.runtime,
-            viFilePath: document.uri.fsPath,
-            operationDirectory: getViPreviewOperationDirectory(this.context)
-          },
-          buildViPreviewRenderDeps(this.cache)
-        );
-      }
 
-      if (result.outcome === 'rendered' && result.html) {
+      // A Source Control diff opens the base (committed) side as a non-`file`
+      // URI (scheme `git`) whose bytes live in the Git blob, not on disk; its
+      // `fsPath` resolves to the working-tree file, so without this the base and
+      // modified previews would render identically. Materialize non-`file` URIs
+      // to a temp copy so each side renders its own content. (VHS-REQ-659.)
+      const renderSource = await resolveViPreviewRenderSource(
+        document.uri,
+        buildViPreviewRenderSourceDeps(document.uri)
+      );
+      try {
+        let result: RenderViPreviewForFileResult;
+        if (sessionRuntime && this.sessionManager) {
+          // Reuse the shared warm session so an un-cached open renders in seconds
+          // once the session is warm; interactive priority jumps the warm queue.
+          result = await this.sessionManager.renderVi(
+            sessionRuntime,
+            renderSource.renderPath,
+            'interactive'
+          );
+        } else {
+          result = await renderViPreviewForFile(
+            {
+              runtime: runtime.runtime,
+              viFilePath: renderSource.renderPath,
+              operationDirectory: getViPreviewOperationDirectory(this.context)
+            },
+            buildViPreviewRenderDeps(this.cache)
+          );
+        }
+
+        if (result.outcome === 'rendered' && result.html) {
+          webviewPanel.webview.html = buildViPreviewWebviewHtml({
+            kind: 'rendered',
+            labviewHtml: result.html
+          });
+          // Successful open signals user intent; warm the rest of the workspace.
+          this.onPreviewOpened?.(document.uri.fsPath);
+          return;
+        }
+
         webviewPanel.webview.html = buildViPreviewWebviewHtml({
-          kind: 'rendered',
-          labviewHtml: result.html
+          kind: 'error',
+          title: 'Preview failed',
+          message:
+            result.outcome === 'blocked'
+              ? describeUnavailable(result.failureReason ?? 'runtime-unavailable')
+              : describeFailure(result.failureReason, result.stderr)
         });
-        // Successful open signals user intent; warm the rest of the workspace.
-        this.onPreviewOpened?.(document.uri.fsPath);
-        return;
+      } finally {
+        await renderSource.cleanup();
       }
-
-      webviewPanel.webview.html = buildViPreviewWebviewHtml({
-        kind: 'error',
-        title: 'Preview failed',
-        message:
-          result.outcome === 'blocked'
-            ? describeUnavailable(result.failureReason ?? 'runtime-unavailable')
-            : describeFailure(result.failureReason, result.stderr)
-      });
     } catch (error) {
       webviewPanel.webview.html = buildViPreviewWebviewHtml({
         kind: 'error',
