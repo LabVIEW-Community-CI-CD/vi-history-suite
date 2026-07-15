@@ -1428,6 +1428,24 @@ describe('multi standards audit script', () => {
     expect(result.context.success).toBe(true);
     expect(result.context.directChecks).toHaveLength(2);
     expect(result.context.profiles).toHaveLength(6);
+    expect(Object.keys(retainedSummary)).toEqual([
+      'schemaVersion',
+      'options',
+      'outputDir',
+      'imageAccess',
+      'imagePreparation',
+      'snapshot',
+      'directChecks',
+      'profiles',
+      'success',
+      'standardsCoverageMatrix',
+      'standardsCoverageRationaleSummary',
+      'standardsScoreFileLegend',
+      'standardsEvidenceSummary',
+      'standardsGateStrengthSummary',
+      'standardsGateBasisSummary',
+      'standardsGateDetailSummary'
+    ]);
     expect(retainedSummary.schemaVersion).toBe(1);
     expect(retainedSummary.options.runId).toBe('run-1');
     expect(retainedSummary.success).toBe(true);
