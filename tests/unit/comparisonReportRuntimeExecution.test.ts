@@ -50,6 +50,8 @@ import {
   appendLabviewCliPortNumberArg,
   rewriteLabviewCliArgsForContainerWorkspace,
   buildLinuxContainerBindMountVisibilityNote,
+  deriveWorktreeSnapshotIdentity,
+  buildWorktreeSnapshotProvenanceNote,
   LINUX_HOST_NATIVE_HEADLESS_OPT_IN_DEFAULT_TIMEOUT_MS
 } from '../../src/reporting/comparisonReportRuntimeExecution';
 import { ComparisonReportPacketRecord } from '../../src/reporting/comparisonReportPacket';
@@ -6767,5 +6769,99 @@ describe('buildLinuxContainerBindMountVisibilityNote (VHS-REQ-663)', () => {
     const notes = result.record.runtimeExecution.diagnosticNotes ?? [];
     expect(notes.some((note) => note.includes('Snap-packaged Docker'))).toBe(true);
     expect(notes.some((note) => note.includes('outside your home directory'))).toBe(true);
+  });
+});
+
+describe('working-tree snapshot provenance (VHS-REQ-641.6)', () => {
+  it('deriveWorktreeSnapshotIdentity is a stable 16-hex content hash', () => {
+    const a = deriveWorktreeSnapshotIdentity(Buffer.from('vi-bytes-one'));
+    const b = deriveWorktreeSnapshotIdentity(Buffer.from('vi-bytes-one'));
+    const c = deriveWorktreeSnapshotIdentity(Buffer.from('vi-bytes-two'));
+
+    expect(a).toMatch(/^[0-9a-f]{16}$/);
+    // Same bytes -> same identity (idempotent); different bytes -> different.
+    expect(a).toBe(b);
+    expect(a).not.toBe(c);
+  });
+
+  it('names the selected working-tree snapshot identity from the right (selected) bytes', () => {
+    const note = buildWorktreeSnapshotProvenanceNote({
+      selectedHash: 'WORKTREE',
+      baseHash: 'abcdef1234567890',
+      normalizedRelativePath: 'src/Widget.vi',
+      leftBytes: Buffer.from('base'),
+      rightBytes: Buffer.from('uncommitted-widget')
+    });
+
+    expect(note).toBeDefined();
+    expect(note).toContain('src/Widget.vi');
+    expect(note).toContain(deriveWorktreeSnapshotIdentity(Buffer.from('uncommitted-widget')));
+    expect(note).toContain('not retained in the dashboard');
+  });
+
+  it('uses the left (base) bytes when the base side is the working-tree sentinel', () => {
+    const note = buildWorktreeSnapshotProvenanceNote({
+      selectedHash: 'abcdef1234567890',
+      baseHash: 'WORKTREE',
+      normalizedRelativePath: 'src/Widget.vi',
+      leftBytes: Buffer.from('uncommitted-base'),
+      rightBytes: Buffer.from('selected')
+    });
+
+    expect(note).toContain(deriveWorktreeSnapshotIdentity(Buffer.from('uncommitted-base')));
+  });
+
+  it('returns undefined for a committed pair (no working-tree side)', () => {
+    expect(
+      buildWorktreeSnapshotProvenanceNote({
+        selectedHash: 'aaaaaaaaaaaa',
+        baseHash: 'bbbbbbbbbbbb',
+        normalizedRelativePath: 'src/Widget.vi',
+        leftBytes: Buffer.from('base'),
+        rightBytes: Buffer.from('selected')
+      })
+    ).toBeUndefined();
+  });
+
+  it('executeComparisonReport attaches the provenance note for a working-tree comparison', async () => {
+    const record = createReadyRecord();
+    record.selectedHash = 'WORKTREE';
+    record.stagedRevisionPlan = buildStagedRevisionPlan({
+      stagingDirectory: record.artifactPlan.stagingDirectory,
+      fullFilename: record.artifactPlan.fullFilename,
+      leftRevisionId: record.baseHash,
+      rightRevisionId: 'WORKTREE'
+    });
+    const result = await executeComparisonReport(
+      { record, repositoryRoot: '/workspace/repo' },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('base-bytes'))
+          .mockResolvedValueOnce(Buffer.from('uncommitted-on-disk-bytes')),
+        materializeSelectedRevisionTree: vi.fn().mockResolvedValue(undefined),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
+        readdir: vi.fn().mockResolvedValue([]) as never,
+        readFile: vi.fn().mockResolvedValue('') as never,
+        pathExists: vi.fn().mockResolvedValue(false),
+        runCommand: vi.fn().mockResolvedValue({ exitCode: 1, stdout: '', stderr: 'boom' }),
+        nowIso: vi.fn().mockReturnValue('2026-07-15T00:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValueOnce(1000).mockReturnValueOnce(3000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32'
+      }
+    );
+
+    const notes = result.record.runtimeExecution.diagnosticNotes ?? [];
+    const expectedIdentity = deriveWorktreeSnapshotIdentity(
+      Buffer.from('uncommitted-on-disk-bytes')
+    );
+    expect(notes.some((note) => note.includes('uncommitted working-tree snapshot'))).toBe(true);
+    expect(notes.some((note) => note.includes(expectedIdentity))).toBe(true);
   });
 });

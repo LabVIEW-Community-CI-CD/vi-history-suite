@@ -2,6 +2,7 @@ import { execFile, ExecFileException, spawn } from 'node:child_process';
 import * as fs from 'node:fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
+import { createHash } from 'node:crypto';
 
 import { ComparisonCommandPlan, ComparisonReportOptions } from './comparisonReportPlan';
 import { buildComparisonReportExecutionPlan } from './comparisonReportExecutionPlan';
@@ -1153,6 +1154,24 @@ async function runHostNativeExecution(
       executionResult.materializedTree = materializedTree;
     } else if (executionContext.materializedTree) {
       executionResult.materializedTree = executionContext.materializedTree;
+    }
+    // VHS-REQ-641: when a working-tree (uncommitted) side was compared, record the
+    // content-addressed identity of the staged snapshot as provenance so the
+    // retained evidence names which on-disk bytes were used. Additive only; does
+    // not affect retention (working-tree pairs remain unarchived, issue #1366).
+    const worktreeSnapshotNote = buildWorktreeSnapshotProvenanceNote({
+      selectedHash: record.selectedHash,
+      baseHash: record.baseHash,
+      normalizedRelativePath:
+        record.preflight.normalizedRelativePath ?? record.artifactPlan.normalizedRelativePath,
+      leftBytes: leftBlob,
+      rightBytes: rightBlob
+    });
+    if (worktreeSnapshotNote) {
+      executionResult.diagnosticNotes = [
+        ...(executionResult.diagnosticNotes ?? []),
+        worktreeSnapshotNote
+      ];
     }
     return executionResult;
   } finally {
@@ -4982,6 +5001,44 @@ export function buildLinuxContainerBindMountVisibilityNote(options: {
     `report storage under your home directory, or connect the required snap ` +
     `interface (for removable media, \`sudo snap connect docker:removable-media\`). ` +
     `Native (non-snap) Docker is unaffected.`
+  );
+}
+
+// VHS-REQ-641: content-address the exact working-tree bytes that were compared.
+// A working-tree comparison stages uncommitted on-disk bytes (the WORKTREE
+// sentinel side), which are not identified by any git hash. Hashing the staged
+// bytes gives a stable, collision-free identity for that snapshot so the retained
+// evidence can name WHICH uncommitted content was compared (provenance today;
+// the reproducible-retention follow-up, issue #1366, will also key the retained
+// pair on it). Pure + exported for deterministic unit testing.
+export function deriveWorktreeSnapshotIdentity(bytes: Buffer): string {
+  return createHash('sha256').update(bytes).digest('hex').slice(0, 16);
+}
+
+// VHS-REQ-641: build the provenance note naming the content-addressed identity of
+// the compared uncommitted working-tree snapshot. Returns undefined when neither
+// compared side is the working-tree sentinel (a committed pair needs no such
+// note). `leftBytes` are the base/older side, `rightBytes` the selected/newer
+// side, matching the staged left/right revisions.
+export function buildWorktreeSnapshotProvenanceNote(options: {
+  selectedHash: string;
+  baseHash: string;
+  normalizedRelativePath: string;
+  leftBytes: Buffer;
+  rightBytes: Buffer;
+}): string | undefined {
+  const selectedIsWorktree = isWorktreeRevision(options.selectedHash);
+  const baseIsWorktree = isWorktreeRevision(options.baseHash);
+  if (!selectedIsWorktree && !baseIsWorktree) {
+    return undefined;
+  }
+  const snapshotBytes = selectedIsWorktree ? options.rightBytes : options.leftBytes;
+  const identity = deriveWorktreeSnapshotIdentity(snapshotBytes);
+  return (
+    `Compared uncommitted working-tree snapshot ${identity} for ` +
+    `${options.normalizedRelativePath}. This snapshot is content-addressed by its ` +
+    `on-disk bytes; the comparison is not retained in the dashboard because ` +
+    `uncommitted content is not reproducible (VHS-REQ-641).`
   );
 }
 
