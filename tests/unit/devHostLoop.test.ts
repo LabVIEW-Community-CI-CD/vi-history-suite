@@ -356,5 +356,24 @@ describe('devHostLoop', () => {
       expect(withoutMeta.some((line) => line.startsWith('Eligible fixture:'))).toBe(false);
       expect(withoutMeta.some((line) => line.startsWith('Ineligible fixture:'))).toBe(false);
     });
+
+    it('surfaces a release-readiness pointer line for the F5 dev host (VHS-REQ-615.13)', () => {
+      const plan = buildViHistoryDevHostLaunchPlan({
+        codeExecutablePath: 'C:\\Code.exe',
+        runtimeRoot: 'C:\\rt',
+        repoRoot: 'C:\\repo',
+        workspacePath: 'C:\\ws',
+        extensionDevelopmentPath: 'C:\\ext',
+        preparedFixtureWorkspace: true,
+        extensionMode: 'staged'
+      });
+
+      const summary = formatViHistoryDevHostSummary(plan);
+      const readiness = summary.find((line) => line.startsWith('Release readiness:'));
+      expect(readiness).toBeDefined();
+      expect(readiness).toContain('npm run release:readiness');
+      // The dev host must not imply it can release; the lever stays maintainer-only.
+      expect(readiness).toContain('maintainer-only');
+    });
   });
 });
