@@ -46,7 +46,15 @@ vi.mock('node:fs/promises', async (importOriginal) => {
 
 import {
   createCopyReviewPacketCommand,
-  createOpenViHistoryCommand
+  createOpenViHistoryCommand,
+  deriveComparisonRuntimeProgressStatus,
+  resolveExplicitComparisonPair,
+  deriveRuntimeProviderRequestFromDoctorSummary,
+  mapLegacyExecutionModeToProviderRequest,
+  deriveRejectedProviderSummaryFromDoctorSummary,
+  stripTerminalPunctuation,
+  isInstalledProgramFilesLvIconPath,
+  isGitRepositoryResolutionFailure
 } from '../../src/commands/openViHistoryCommand';
 
 const showInformationMessageMock = vscodeHarness.vscode.window.showInformationMessage;
@@ -2491,6 +2499,192 @@ describe('openViHistoryCommand git-uri, preview, and plain-diff branches (VHS-RE
     expect(panelTracker.getLastActionSummary()).toMatchObject({
       command: 'somethingUnhandled',
       outcome: 'unsupported-command'
+    });
+  });
+});
+
+describe('openViHistoryCommand pure helpers (VHS-REQ-621 coverage)', () => {
+  function makeModel(hashes: string[]): ViHistoryViewModel {
+    return {
+      repositoryName: 'repo',
+      repositoryRoot: '/workspace/repo',
+      relativePath: 'file.vi',
+      signature: 'LVIN',
+      eligible: true,
+      commits: hashes.map((hash, index) => ({
+        hash,
+        authorDate: `2024-01-0${index + 1}`,
+        authorName: 'Dev',
+        subject: `Commit ${index + 1}`
+      }))
+    };
+  }
+
+  describe('deriveComparisonRuntimeProgressStatus (VHS-REQ-133)', () => {
+    it('classifies acquiring messages', () => {
+      expect(deriveComparisonRuntimeProgressStatus('Acquiring container image n="foo".')).toBe(
+        'acquiring'
+      );
+      expect(deriveComparisonRuntimeProgressStatus('Pulling container image: x')).toBe('acquiring');
+      expect(deriveComparisonRuntimeProgressStatus('Container image ready: x')).toBe('acquiring');
+    });
+
+    it('classifies running phase messages', () => {
+      expect(deriveComparisonRuntimeProgressStatus('Selecting comparison-report runtime.')).toBe(
+        'running'
+      );
+      expect(deriveComparisonRuntimeProgressStatus('Persisting comparison-report packet.')).toBe(
+        'running'
+      );
+      expect(
+        deriveComparisonRuntimeProgressStatus('Executing LabVIEW comparison-report runtime.')
+      ).toBe('running');
+      expect(deriveComparisonRuntimeProgressStatus('Archiving comparison-report evidence.')).toBe(
+        'running'
+      );
+    });
+
+    it('returns undefined for an unrecognized message', () => {
+      expect(deriveComparisonRuntimeProgressStatus('Doing something else.')).toBeUndefined();
+    });
+  });
+
+  describe('resolveExplicitComparisonPair (VHS-REQ-133, VHS-REQ-641)', () => {
+    it('returns undefined unless exactly two distinct hashes are selected', () => {
+      const model = makeModel(['a1', 'b2', 'c3']);
+      expect(resolveExplicitComparisonPair(model, ['a1'])).toBeUndefined();
+      expect(resolveExplicitComparisonPair(model, ['a1', 'a1'])).toBeUndefined();
+      expect(resolveExplicitComparisonPair(model, ['a1', 'b2', 'c3'])).toBeUndefined();
+    });
+
+    it('orders two committed hashes newest-selected / older-base by commit index', () => {
+      const model = makeModel(['a1', 'b2', 'c3']);
+      // a1 is index 0 (newest), c3 is index 2 (oldest).
+      expect(resolveExplicitComparisonPair(model, ['c3', 'a1'])).toEqual({
+        selectedHash: 'a1',
+        baseHash: 'c3'
+      });
+    });
+
+    it('returns undefined when a selected hash is not in the commit list', () => {
+      const model = makeModel(['a1', 'b2']);
+      expect(resolveExplicitComparisonPair(model, ['a1', 'zz'])).toBeUndefined();
+    });
+
+    it('pairs the working-tree sentinel against the other committed revision', () => {
+      const model = makeModel(['a1', 'b2']);
+      expect(resolveExplicitComparisonPair(model, ['WORKTREE', 'b2'])).toEqual({
+        selectedHash: 'WORKTREE',
+        baseHash: 'b2'
+      });
+    });
+
+    it('returns undefined for a working-tree pair whose other side is not a known commit', () => {
+      const model = makeModel(['a1', 'b2']);
+      expect(resolveExplicitComparisonPair(model, ['WORKTREE', 'zz'])).toBeUndefined();
+    });
+  });
+
+  describe('deriveRuntimeProviderRequestFromDoctorSummary + mapLegacyExecutionModeToProviderRequest (VHS-REQ-133)', () => {
+    it('reads an explicit provider-request line', () => {
+      expect(
+        deriveRuntimeProviderRequestFromDoctorSummary(['Provider request=docker.'])
+      ).toBe('docker');
+    });
+
+    it('falls back to the legacy execution-mode line', () => {
+      expect(
+        deriveRuntimeProviderRequestFromDoctorSummary(['Selected execution mode=host-only.'])
+      ).toBe('host');
+      expect(
+        deriveRuntimeProviderRequestFromDoctorSummary(['Selected execution mode=docker-only.'])
+      ).toBe('docker');
+    });
+
+    it('returns undefined when neither line is present', () => {
+      expect(deriveRuntimeProviderRequestFromDoctorSummary(['Something else'])).toBeUndefined();
+      expect(deriveRuntimeProviderRequestFromDoctorSummary(undefined)).toBeUndefined();
+    });
+
+    it('mapLegacyExecutionModeToProviderRequest maps known modes and passes others through', () => {
+      expect(mapLegacyExecutionModeToProviderRequest('host-only')).toBe('host');
+      expect(mapLegacyExecutionModeToProviderRequest('docker-only')).toBe('docker');
+      expect(mapLegacyExecutionModeToProviderRequest('auto')).toBe('auto');
+      expect(mapLegacyExecutionModeToProviderRequest(undefined)).toBeUndefined();
+    });
+  });
+
+  describe('deriveRejectedProviderSummaryFromDoctorSummary (VHS-REQ-133)', () => {
+    it('joins parsed rejected-provider decision lines', () => {
+      expect(
+        deriveRejectedProviderSummaryFromDoctorSummary([
+          'Provider decision: rejected docker because the daemon is unreachable.',
+          'Provider decision: rejected host because no LabVIEW was found.'
+        ])
+      ).toBe('docker because the daemon is unreachable | host because no LabVIEW was found');
+    });
+
+    it('returns undefined when there are no rejected-provider lines', () => {
+      expect(deriveRejectedProviderSummaryFromDoctorSummary(['Selected provider=host;'])).toBeUndefined();
+      expect(deriveRejectedProviderSummaryFromDoctorSummary(undefined)).toBeUndefined();
+    });
+
+    it('skips lines that do not match the rejected-provider grammar', () => {
+      expect(
+        deriveRejectedProviderSummaryFromDoctorSummary([
+          'Provider decision: rejected malformed-without-because'
+        ])
+      ).toBeUndefined();
+    });
+  });
+
+  describe('stripTerminalPunctuation', () => {
+    it('strips trailing sentence punctuation only', () => {
+      expect(stripTerminalPunctuation('Hello world.')).toBe('Hello world');
+      expect(stripTerminalPunctuation('Really?!')).toBe('Really');
+      expect(stripTerminalPunctuation('No punctuation')).toBe('No punctuation');
+      expect(stripTerminalPunctuation('Mid. sentence dots')).toBe('Mid. sentence dots');
+    });
+  });
+
+  describe('isInstalledProgramFilesLvIconPath (VHS-REQ-006)', () => {
+    it('is true only for an installed Program Files lv_icon.vi', () => {
+      expect(
+        isInstalledProgramFilesLvIconPath(
+          'C:\\Program Files\\National Instruments\\LabVIEW 2026\\resource\\plugins\\lv_icon.vi'
+        )
+      ).toBe(true);
+      // Forward slashes normalize too.
+      expect(
+        isInstalledProgramFilesLvIconPath(
+          'C:/Program Files/National Instruments/LabVIEW 2026/resource/plugins/lv_icon.vi'
+        )
+      ).toBe(true);
+    });
+
+    it('is false for a repo-clone lv_icon.vi or a non-lv_icon file', () => {
+      expect(
+        isInstalledProgramFilesLvIconPath('/home/dev/labview-icon-editor/resource/plugins/lv_icon.vi')
+      ).toBe(false);
+      expect(
+        isInstalledProgramFilesLvIconPath(
+          'C:\\Program Files\\National Instruments\\LabVIEW 2026\\resource\\plugins\\other.vi'
+        )
+      ).toBe(false);
+    });
+  });
+
+  describe('isGitRepositoryResolutionFailure (VHS-REQ-006)', () => {
+    it('is true for git-resolution error messages', () => {
+      expect(isGitRepositoryResolutionFailure(new Error('fatal: not a git repository'))).toBe(true);
+      expect(isGitRepositoryResolutionFailure(new Error('git rev-parse failed'))).toBe(true);
+      expect(isGitRepositoryResolutionFailure(new Error('git --show-toplevel error'))).toBe(true);
+    });
+
+    it('is false for unrelated errors or non-Error values', () => {
+      expect(isGitRepositoryResolutionFailure(new Error('disk full'))).toBe(false);
+      expect(isGitRepositoryResolutionFailure('not a git repository')).toBe(false);
+      expect(isGitRepositoryResolutionFailure(undefined)).toBe(false);
     });
   });
 });
