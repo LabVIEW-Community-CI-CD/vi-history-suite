@@ -76,4 +76,30 @@ describe('parseNiComparisonReportHtml', () => {
       }
     ]);
   });
+
+  it('decodes named, numeric, and non-breaking-space entities without double-decoding (VHS-REQ-610.3)', () => {
+    const report = parseNiComparisonReportHtml(
+      `<!DOCTYPE html>
+      <html>
+      <body>
+      <div class="report">
+      <h1 class="report-title">Label&nbsp;with&#32;spaces &amp; &#x2018;quotes&#x2019;</h1>
+      <h2 class="section-header">Detailed Information</h2>
+      <details open>
+      <summary class="difference-heading">1. Detail</summary>
+      <ol class="detailed-description-list" type="A">
+      <li class="diff-detail">Literal entity stays escaped: &amp;lt;tag&amp;gt;</li>
+      </ol>
+      </details>
+      </div>
+      </body>
+      </html>`,
+      '/workspace/reports/diff-report-Base.vi.html'
+    );
+
+    // &nbsp; and &#32; -> spaces; &amp; -> &; &#x2018;/&#x2019; -> curly quotes.
+    expect(report.reportTitle).toBe('Label with spaces & \u2018quotes\u2019');
+    // &amp;lt; must decode to the literal `&lt;`, NOT be double-decoded to `<`.
+    expect(report.detailSections[0].items).toEqual(['Literal entity stays escaped: &lt;tag&gt;']);
+  });
 });
