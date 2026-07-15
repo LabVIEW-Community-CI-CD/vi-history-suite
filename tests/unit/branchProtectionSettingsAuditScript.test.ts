@@ -314,11 +314,25 @@ type RequiredSchemaNode = {
   required: string[];
 };
 
+type ObjectSchemaNode = RequiredSchemaNode & {
+  additionalProperties?: boolean;
+  properties: Record<string, unknown>;
+};
+
 function expectRequiredKeysPresent(
   value: Record<string, unknown>,
   requiredKeys: string[]
 ) {
   expect(requiredKeys.filter((key) => !(key in value))).toEqual([]);
+}
+
+function expectOnlySchemaProperties(
+  value: Record<string, unknown>,
+  schemaNode: ObjectSchemaNode
+) {
+  expect(schemaNode.additionalProperties).toBe(false);
+  const allowedKeys = Object.keys(schemaNode.properties);
+  expect(Object.keys(value).filter((key) => !allowedKeys.includes(key))).toEqual([]);
 }
 
 function protection(overrides: ProtectionOverrides = {}) {
@@ -1293,7 +1307,7 @@ describe('branch protection audit evaluation', () => {
   it('keeps emitted JSON shapes aligned with the published schema contract', () => {
     const passingResult = evaluateBranchProtection({ protection: protection(), rulesets: branchRulesets() });
     const branchResults = DEFAULT_AUDIT_BRANCHES.map((branch) => ({ branch, result: passingResult }));
-    const schema = JSON.parse(renderBranchProtectionAuditJsonSchema()) as {
+    const schema = JSON.parse(renderBranchProtectionAuditJsonSchema()) as ObjectSchemaNode & {
       oneOf: Array<{ required: string[] }>;
       properties: {
         $schema: { const: string };
@@ -1302,7 +1316,7 @@ describe('branch protection audit evaluation', () => {
       };
       $defs: Record<
         'branchAuditResult' | 'branchSummary' | 'aggregateSummary',
-        RequiredSchemaNode
+        ObjectSchemaNode
       >;
     };
     const singleOutput = JSON.parse(
@@ -1319,6 +1333,8 @@ describe('branch protection audit evaluation', () => {
     expect(aggregateRequiredKeys).toBeDefined();
     expectRequiredKeysPresent(singleOutput, singleRequiredKeys ?? []);
     expectRequiredKeysPresent(aggregateOutput, aggregateRequiredKeys ?? []);
+    expectOnlySchemaProperties(singleOutput, schema);
+    expectOnlySchemaProperties(aggregateOutput, schema);
     expect(singleOutput.$schema).toBe(schema.properties.$schema.const);
     expect(aggregateOutput.$schema).toBe(schema.properties.$schema.const);
     expect(schema.properties.branches.items.$ref).toBe('#/$defs/branchAuditResult');
@@ -1330,6 +1346,10 @@ describe('branch protection audit evaluation', () => {
     expectRequiredKeysPresent(singleOutput.summary as Record<string, unknown>, schema.$defs.branchSummary.required);
     expectRequiredKeysPresent(aggregateOutput.summary as Record<string, unknown>, schema.$defs.aggregateSummary.required);
     expectRequiredKeysPresent(aggregateBranches[0].summary as Record<string, unknown>, schema.$defs.branchSummary.required);
+    expectOnlySchemaProperties(aggregateBranches[0], schema.$defs.branchAuditResult);
+    expectOnlySchemaProperties(singleOutput.summary as Record<string, unknown>, schema.$defs.branchSummary);
+    expectOnlySchemaProperties(aggregateOutput.summary as Record<string, unknown>, schema.$defs.aggregateSummary);
+    expectOnlySchemaProperties(aggregateBranches[0].summary as Record<string, unknown>, schema.$defs.branchSummary);
   });
 
   it('keeps emitted JSON nested evidence aligned with the published schema contract', () => {
@@ -1350,27 +1370,27 @@ describe('branch protection audit evaluation', () => {
     ) as { summary: Record<string, unknown>; branches: Array<Record<string, unknown>> };
     const schema = JSON.parse(renderBranchProtectionAuditJsonSchema()) as {
       $defs: {
-        check: RequiredSchemaNode;
-        notice: RequiredSchemaNode;
-        duplicateCheckId: RequiredSchemaNode;
-        failure: RequiredSchemaNode;
-        branchNotice: RequiredSchemaNode;
-        branchDuplicateCheckId: RequiredSchemaNode;
-        branchFailure: RequiredSchemaNode;
-        branchAuditResult: {
+        check: ObjectSchemaNode;
+        notice: ObjectSchemaNode;
+        duplicateCheckId: ObjectSchemaNode;
+        failure: ObjectSchemaNode;
+        branchNotice: ObjectSchemaNode;
+        branchDuplicateCheckId: ObjectSchemaNode;
+        branchFailure: ObjectSchemaNode;
+        branchAuditResult: ObjectSchemaNode & {
           properties: {
             checks: { items: { $ref: string } };
             noticeDetails: { items: { $ref: string } };
           };
         };
-        branchSummary: {
+        branchSummary: ObjectSchemaNode & {
           properties: {
             noticeDetails: { items: { $ref: string } };
             duplicateCheckIds: { items: { $ref: string } };
             failures: { items: { $ref: string } };
           };
         };
-        aggregateSummary: {
+        aggregateSummary: ObjectSchemaNode & {
           properties: {
             noticeDetails: { items: { $ref: string } };
             duplicateCheckIds: { items: { $ref: string } };
@@ -1404,6 +1424,16 @@ describe('branch protection audit evaluation', () => {
     expectRequiredKeysPresent(aggregateNotices[0], schema.$defs.branchNotice.required);
     expectRequiredKeysPresent(aggregateDuplicates[0], schema.$defs.branchDuplicateCheckId.required);
     expectRequiredKeysPresent(aggregateFailures[0], schema.$defs.branchFailure.required);
+    expectOnlySchemaProperties(branchOutput, schema.$defs.branchAuditResult);
+    expectOnlySchemaProperties(branchSummary, schema.$defs.branchSummary);
+    expectOnlySchemaProperties(output.summary, schema.$defs.aggregateSummary);
+    expectOnlySchemaProperties(checks[0], schema.$defs.check);
+    expectOnlySchemaProperties(notices[0], schema.$defs.notice);
+    expectOnlySchemaProperties(branchDuplicates[0], schema.$defs.duplicateCheckId);
+    expectOnlySchemaProperties(branchFailures[0], schema.$defs.failure);
+    expectOnlySchemaProperties(aggregateNotices[0], schema.$defs.branchNotice);
+    expectOnlySchemaProperties(aggregateDuplicates[0], schema.$defs.branchDuplicateCheckId);
+    expectOnlySchemaProperties(aggregateFailures[0], schema.$defs.branchFailure);
   });
 
   it('keeps emitted JSON provenance aligned with the published schema contract', () => {
