@@ -1298,6 +1298,48 @@ describe('comparisonRuntimeLocator fail-closed branch coverage (VHS-REQ-155, VHS
     );
   });
 
+  it('fails closed on the symmetric polarity: a windows image token under a linux Docker host mode (VHS-REQ-650.5)', async () => {
+    // Symmetric to the linux-token/windows-mode case above: a windows image
+    // token is selected, but the active Docker engine is in linux-container
+    // mode with no linux image override, so it must fail closed rather than
+    // silently running the default linux image.
+    const query = vi.fn().mockResolvedValue(
+      windowsContainerFacts({
+        windowsContainerHostMode: 'linux',
+        provider: 'linux-container',
+        runtimePlatform: 'linux'
+      })
+    );
+    const selection = await locateComparisonRuntime(
+      'win32',
+      {
+        executionMode: 'docker-only',
+        labviewVersion: '2026',
+        bitness: 'x64',
+        containerImageVersion: '2026q1-windows'
+      },
+      { queryWindowsContainerProviderFacts: query }
+    );
+
+    expect(selection).toMatchObject({
+      provider: 'unavailable',
+      blockedReason: 'container-image-platform-mismatch'
+    });
+    expect(selection.containerImageVersionConflict).toMatchObject({
+      selectedTag: '2026q1-windows',
+      selectedPlatform: 'windows',
+      activePlatform: 'linux'
+    });
+    expect(selection.providerDecisions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          outcome: 'rejected',
+          reason: 'container-image-platform-mismatch'
+        })
+      ])
+    );
+  });
+
   it('does not flag a platform mismatch when a full image override governs the active platform (VHS-REQ-650.1, VHS-REQ-650.5)', async () => {
     // A raw windowsContainerImage override governs the windows host mode, so the
     // conflicting linux version token is moot and must not block.
