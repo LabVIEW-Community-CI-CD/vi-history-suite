@@ -1400,6 +1400,20 @@ async function runHostNativeExecutionWithContext(
         timeoutDiagnostic.notes,
         finalizedReport.validationNotes,
         failureClassification.notes,
+        // VHS-REQ-623: when a Linux container compare fails with an invalid-VI-path
+        // signature and the bind-mount source is outside $HOME, name the likely
+        // snap-Docker confinement cause instead of leaving the opaque path error.
+        succeeded
+          ? []
+          : [
+              buildLinuxContainerBindMountVisibilityNote({
+                provider: record.runtimeSelection.provider,
+                diagnosticReason: diagnostics.reason,
+                failureReason: failureClassification.reason,
+                hostBindMountPath: record.artifactPlan.reportDirectory,
+                homeDir: os.homedir()
+              })
+            ].filter((note): note is string => Boolean(note)),
         executionContext.preparationNotes
       );
 
@@ -4923,6 +4937,52 @@ function appendLaunchConfirmationNote(notes: string[], launchSucceeded: boolean)
   }
 
   return notes;
+}
+
+// VHS-REQ-623: a Linux container comparison bind-mounts the host report directory
+// into the container at /workspace. When that host path is OUTSIDE the user's home
+// directory and Docker is the snap-packaged build (private mount namespace, only
+// the `home` interface connected by default), the bind mount silently resolves to
+// an empty tmpfs, so LabVIEWCLI reports `... path invalid or does not exist:
+// /workspace/staging/...` even though the staged VIs exist on the host. The opaque
+// path error hides the real cause. This pure helper returns an actionable
+// remediation note for exactly that situation so the failure names the fix
+// (keep report storage under $HOME, or connect the snap interface) instead of
+// leaving the user to decode a generic path error. Returns undefined when the
+// situation does not apply (non-container provider, non-invalid-path failure, or a
+// bind-mount source already inside the home directory).
+export function buildLinuxContainerBindMountVisibilityNote(options: {
+  provider?: string;
+  diagnosticReason?: string;
+  failureReason?: string;
+  hostBindMountPath?: string;
+  homeDir?: string;
+}): string | undefined {
+  if (options.provider !== 'linux-container') {
+    return undefined;
+  }
+  const reasons = [options.diagnosticReason, options.failureReason];
+  if (!reasons.includes('labview-cli-invalid-vi-path')) {
+    return undefined;
+  }
+  const hostPath = options.hostBindMountPath?.trim();
+  const homeDir = options.homeDir?.trim();
+  if (!hostPath || !homeDir) {
+    return undefined;
+  }
+  if (isPathInsideDirectory(hostPath, homeDir)) {
+    return undefined;
+  }
+  return (
+    `The Linux container bind-mounts the report directory ${hostPath}, which is ` +
+    `outside your home directory ${homeDir}. Snap-packaged Docker cannot see such ` +
+    `paths by default (only the connected \`home\` interface is mounted), so the ` +
+    `container receives an empty /workspace and LabVIEW CLI reports the VI path as ` +
+    `invalid even though the staged files exist on the host. Keep the extension's ` +
+    `report storage under your home directory, or connect the required snap ` +
+    `interface (for removable media, \`sudo snap connect docker:removable-media\`). ` +
+    `Native (non-snap) Docker is unaffected.`
+  );
 }
 
 // VHS-REQ-621 / VHS-REQ-658: classify a nonzero/no-report runtime failure into an
