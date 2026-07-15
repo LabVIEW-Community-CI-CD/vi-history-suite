@@ -380,6 +380,17 @@ describe('main (VHS-REQ-659)', () => {
       const written = JSON.parse(
         await fs.readFile(path.join(proofRoot, PREVIEW_VERIFICATION_PROOF_FILE_NAME), 'utf8')
       );
+      expect(Object.keys(written)).toEqual([
+        'schema',
+        'generatedAt',
+        'passing',
+        'outcome',
+        'provider',
+        'sampleViPath',
+        'htmlBytes',
+        'inlineImageCount',
+        'cached'
+      ]);
       expect(written.schema).toBe(PREVIEW_VERIFICATION_PROOF_SCHEMA);
       expect(written.passing).toBe(true);
       expect(written.outcome).toBe('rendered');
