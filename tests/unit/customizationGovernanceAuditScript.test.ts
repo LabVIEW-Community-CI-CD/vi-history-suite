@@ -983,6 +983,110 @@ Instruction body.
     expect(commandCategory?.remediation).toContain('package.json');
   });
 
+  it('keeps the machine-readable JSON category contract stable for every finding type', () => {
+    const findings: AuditFindings = {
+      runtimeIssues: [{ issue: 'package.json is missing' }],
+      missingAgentsReferences: ['.github/skills/new-skill/SKILL.md'],
+      staleAgentsReferences: ['.github/prompts/removed.prompt.md'],
+      frontmatterIssues: [
+        {
+          path: '.github/prompts/pr-handoff.prompt.md',
+          issue: 'description is required'
+        }
+      ],
+      applyToIssues: [
+        {
+          path: '.github/instructions/unit-tests.instructions.md',
+          pattern: '**/*',
+          issue: 'applyTo pattern is an unsafe catch-all'
+        }
+      ],
+      linkIssues: [
+        {
+          source: 'AGENTS.md',
+          line: 42,
+          target: 'docs/missing.md',
+          issue: 'link target file does not exist'
+        }
+      ],
+      commandIssues: [
+        {
+          source: 'AGENTS.md',
+          script: 'not-a-script',
+          issue: 'referenced npm script does not exist in package.json'
+        }
+      ]
+    };
+
+    const report = toMachineReadableReport(
+      {
+        success: false,
+        customizationFilesChecked: 17,
+        findings
+      },
+      new Date('2026-07-14T12:00:00.000Z')
+    );
+
+    expect(report).toEqual({
+      schemaVersion: 1,
+      generatedAt: '2026-07-14T12:00:00.000Z',
+      success: false,
+      customizationFilesChecked: 17,
+      totals: { issues: 7, failingCategories: 7 },
+      categories: [
+        {
+          key: 'runtimeIssues',
+          label: 'runtime',
+          count: 1,
+          remediation: 'Resolve missing foundational files or invalid JSON before triaging other findings.',
+          items: findings.runtimeIssues
+        },
+        {
+          key: 'missingAgentsReferences',
+          label: 'agents-sync-missing',
+          count: 1,
+          remediation: 'Add discovered customization files to AGENTS workspace sections.',
+          items: findings.missingAgentsReferences
+        },
+        {
+          key: 'staleAgentsReferences',
+          label: 'agents-sync-stale',
+          count: 1,
+          remediation: 'Remove stale AGENTS references or restore deleted customization files.',
+          items: findings.staleAgentsReferences
+        },
+        {
+          key: 'frontmatterIssues',
+          label: 'frontmatter-schema',
+          count: 1,
+          remediation: 'Fix required frontmatter keys and safe defaults for each customization artifact type.',
+          items: findings.frontmatterIssues
+        },
+        {
+          key: 'applyToIssues',
+          label: 'instruction-applyto',
+          count: 1,
+          remediation: 'Adjust instruction applyTo globs to avoid catch-all patterns and match committed files.',
+          items: findings.applyToIssues
+        },
+        {
+          key: 'linkIssues',
+          label: 'markdown-links',
+          count: 1,
+          remediation: 'Fix local markdown targets so links resolve to existing in-repo files.',
+          items: findings.linkIssues
+        },
+        {
+          key: 'commandIssues',
+          label: 'command-references',
+          count: 1,
+          remediation: 'Align npm run command references in AGENTS/onboarding with package.json scripts.',
+          items: findings.commandIssues
+        }
+      ]
+    });
+  });
+
   it('emits deterministic JSON for a successful audit', () => {
     const fixtureRoot = createFixture(baseFixtureFiles());
     let output = '';
