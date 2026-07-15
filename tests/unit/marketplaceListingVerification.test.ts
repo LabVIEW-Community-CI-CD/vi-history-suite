@@ -423,11 +423,52 @@ describe('Marketplace listing verification', () => {
     );
 
     expect(exitCode).toBe(0);
-    expect(JSON.parse(fs.readFileSync(reportOut, 'utf8'))).toMatchObject({
-      success: true,
-      configuredAttempts: 1,
-      boundedWindowMs: 0
+    const retainedReport = JSON.parse(fs.readFileSync(reportOut, 'utf8')) as {
+      extensionId: string;
+      expectedVersion: string;
+      configuredAttempts: number;
+      configuredDelayMs: number;
+      boundedWindowMs: number;
+      success: boolean;
+      message: string;
+      attempts: Array<{
+        attempt: number;
+        command: string;
+        status: number;
+        outcome: string;
+        message: string;
+      }>;
+    };
+
+    expect(Object.keys(retainedReport)).toEqual([
+      'extensionId',
+      'expectedVersion',
+      'configuredAttempts',
+      'configuredDelayMs',
+      'boundedWindowMs',
+      'success',
+      'message',
+      'attempts'
+    ]);
+    expect(Object.keys(retainedReport.attempts[0])).toEqual([
+      'attempt',
+      'command',
+      'status',
+      'outcome',
+      'message'
+    ]);
+    expect(retainedReport.extensionId).toBe('svelderrainruiz.vi-history-suite');
+    expect(retainedReport.expectedVersion).toBe('1.4.2');
+    expect(retainedReport.configuredAttempts).toBe(1);
+    expect(retainedReport.configuredDelayMs).toBe(0);
+    expect(retainedReport.boundedWindowMs).toBe(0);
+    expect(retainedReport.success).toBe(true);
+    expect(retainedReport.attempts[0]).toMatchObject({
+      attempt: 1,
+      status: 0,
+      outcome: 'version-found'
     });
+    expect(retainedReport.attempts[0].command).toContain('show svelderrainruiz.vi-history-suite --json');
     expect(stdoutWrite).toHaveBeenCalledWith(
       expect.stringContaining('Marketplace listing contains version 1.4.2.')
     );
