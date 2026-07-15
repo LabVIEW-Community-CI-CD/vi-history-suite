@@ -6,12 +6,15 @@ import { promisify } from 'node:util';
 
 import * as vscode from 'vscode';
 
+import { runGit } from '../git/gitCli';
+import { materializeRevisionViTree, parseLsTreeOutput } from '../git/revisionViTree';
 import type { ComparisonCommandPlan } from '../reporting/comparisonReportPlan';
 import {
   readComparisonRuntimeSettings,
   resolveRuntimePlatform
 } from '../reporting/comparisonReportAction';
 import { locateComparisonRuntime } from '../reporting/comparisonRuntimeLocator';
+import { readRevisionBlob } from '../reporting/comparisonReportPreflight';
 import {
   createFileViPreviewCache,
   type ViPreviewCache
@@ -22,7 +25,11 @@ import {
   type ViPreviewRuntimeResolution
 } from '../reporting/viPreview/viPreviewRuntimeAdapter';
 import { isLabviewSourceFile } from '../reporting/viPreview/viPreviewStaging';
-import type { ResolveViPreviewRenderSourceDeps } from '../reporting/viPreview/viPreviewRenderSource';
+import {
+  parseGitPreviewRef,
+  type ResolveViPreviewRenderSourceDeps,
+  type ViPreviewMaterializedTree
+} from '../reporting/viPreview/viPreviewRenderSource';
 
 /**
  * VHS-REQ-659: shared VS Code host bindings for single-VI preview rendering.
@@ -120,8 +127,95 @@ export function buildViPreviewRenderSourceDeps(uri: vscode.Uri): ResolveViPrevie
     createTempDirectory: () => fs.mkdtemp(path.join(os.tmpdir(), 'vihs-vi-preview-src-')),
     writeFile: (filePath, data) => fs.writeFile(filePath, data),
     removeDirectory: (directory) => fs.rm(directory, { recursive: true, force: true }),
-    joinPath: (directory, name) => path.join(directory, name)
+    joinPath: (directory, name) => path.join(directory, name),
+    materializeTree: () => materializeBaseRevisionTree(uri)
   };
+}
+
+/**
+ * VHS-REQ-659: materialize the base revision's VI plus its project dependency
+ * tree for a `git`-scheme preview URI (the base side of a Source Control diff),
+ * so the base preview resolves its subVIs rather than rendering a lone VI with
+ * broken references. Returns undefined when the ref or repository cannot be
+ * resolved, so the resolver falls back to single-blob materialization (never
+ * worse than reading the lone committed blob).
+ */
+async function materializeBaseRevisionTree(
+  uri: vscode.Uri
+): Promise<ViPreviewMaterializedTree | undefined> {
+  const ref = parseGitPreviewRef({ scheme: uri.scheme, query: uri.query });
+  if (!ref) {
+    return undefined;
+  }
+
+  let repoRoot: string;
+  try {
+    repoRoot = String(
+      await runGit(['rev-parse', '--show-toplevel'], path.dirname(uri.fsPath), 'utf8')
+    ).trim();
+  } catch {
+    return undefined;
+  }
+  if (!repoRoot) {
+    return undefined;
+  }
+
+  const relativePath = path.relative(repoRoot, uri.fsPath).split(path.sep).join('/');
+  if (!relativePath || relativePath.startsWith('../')) {
+    return undefined;
+  }
+
+  // Validate the ref resolves to a commit before materializing; an unknown ref
+  // returns undefined so the caller falls back to single-blob materialization.
+  try {
+    await runGit(['rev-parse', '--verify', '--quiet', `${ref}^{commit}`], repoRoot, 'utf8');
+  } catch {
+    return undefined;
+  }
+
+  const destinationDirectory = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-vi-preview-tree-'));
+  try {
+    const materialized = await materializeRevisionViTree(
+      {
+        revisionId: ref,
+        relativePath,
+        destinationDirectory
+      },
+      {
+        listTreeFiles: async (revisionId, repoRelativeDirectory) =>
+          parseLsTreeOutput(
+            String(
+              await runGit(
+                [
+                  'ls-tree',
+                  '-r',
+                  '-l',
+                  revisionId,
+                  ...(repoRelativeDirectory ? ['--', repoRelativeDirectory] : [])
+                ],
+                repoRoot,
+                'utf8'
+              )
+            )
+          ),
+        readBlob: (revisionId, repoRelativePath) =>
+          readRevisionBlob(repoRoot, revisionId, repoRelativePath),
+        ensureDirectory: async (directory) => {
+          await fs.mkdir(directory, { recursive: true });
+        },
+        writeFile: (filePath, data) => fs.writeFile(filePath, data)
+      }
+    );
+    return {
+      viFilePath: materialized.viFilePath,
+      cleanup: async () => {
+        await fs.rm(destinationDirectory, { recursive: true, force: true }).catch(() => undefined);
+      }
+    };
+  } catch (error) {
+    await fs.rm(destinationDirectory, { recursive: true, force: true }).catch(() => undefined);
+    throw error;
+  }
 }
 
 /** Builds the injected filesystem/process render dependencies bound to `cache`. */

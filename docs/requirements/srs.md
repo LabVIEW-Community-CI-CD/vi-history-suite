@@ -4383,10 +4383,14 @@ Missing numeric IDs are intentional.
     Docker" prompt and does not render (Docker-only feature). In an untrusted
     workspace the editor shows a disabled-preview message and never launches an
     external process. For a non-`file` document URI (for example the base side of
-    a Source Control diff, served under the `git` scheme) the editor reads the
-    document bytes through the VS Code filesystem API and renders a materialized
-    temporary copy (`resolveViPreviewRenderSource`), so the committed revision
-    renders its own content rather than the on-disk working-tree file.
+    a Source Control diff, served under the `git` scheme) the editor materializes
+    the base revision's VI together with its project dependency tree —
+    `resolveViPreviewRenderSource` runs `materializeRevisionViTree` at the ref
+    resolved by `parseGitPreviewRef` — and renders that, so the committed revision
+    renders with its subVIs resolved rather than the on-disk working-tree file;
+    when the ref or repository cannot be resolved it falls back to materializing
+    the single committed blob so behavior is never worse than reading the lone
+    blob.
   - `buildViPreviewWebviewHtml` injects a strict Content-Security-Policy
     (`script-src 'none'`, `img-src data:`, inline styles only) into the rendered
     LabVIEW document, and renders themed loading and error states carrying the

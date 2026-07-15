@@ -22,6 +22,13 @@ export interface ViPreviewRenderSourceUri {
   fsPath: string;
 }
 
+export interface ViPreviewMaterializedTree {
+  /** Absolute path of the materialized VI (with its base-revision dependency tree). */
+  viFilePath: string;
+  /** Disposes the materialized tree's scratch directory. Never throws. */
+  cleanup: () => Promise<void>;
+}
+
 export interface ResolveViPreviewRenderSourceDeps {
   /** Reads the full document bytes for a non-`file` URI (e.g. via `workspace.fs.readFile`). */
   readBytes: () => Promise<Uint8Array>;
@@ -31,6 +38,13 @@ export interface ResolveViPreviewRenderSourceDeps {
   removeDirectory: (directory: string) => Promise<void>;
   /** Joins a directory and a file name (host `path.join`). */
   joinPath: (directory: string, name: string) => string;
+  /**
+   * Optionally materializes the base revision's VI plus its project dependency
+   * tree (VHS-REQ-659 fuller base render). Returns undefined when the revision
+   * or repository cannot be resolved; the resolver then falls back to a single
+   * committed blob so behavior is never worse than the minimal fix.
+   */
+  materializeTree?: () => Promise<ViPreviewMaterializedTree | undefined>;
 }
 
 export interface ViPreviewRenderSource {
@@ -62,6 +76,21 @@ export async function resolveViPreviewRenderSource(
     return { renderPath: uri.fsPath, materialized: false, cleanup: NO_OP_CLEANUP };
   }
 
+  // Prefer materializing the base revision's VI plus its project dependency tree
+  // so the base preview resolves its subVIs (a faithful diff); fall back to a
+  // single committed blob when the tree cannot be materialized, so behavior is
+  // never worse than reading the lone blob.
+  if (deps.materializeTree) {
+    try {
+      const tree = await deps.materializeTree();
+      if (tree && tree.viFilePath) {
+        return { renderPath: tree.viFilePath, materialized: true, cleanup: tree.cleanup };
+      }
+    } catch {
+      /* fall through to single-blob materialization */
+    }
+  }
+
   // Preserve the VI's basename and extension so LabVIEW sees the real file name;
   // the URI path carries it even for non-`file` schemes.
   const fileName = path.basename(uri.fsPath) || FALLBACK_VI_FILENAME;
@@ -81,4 +110,38 @@ export async function resolveViPreviewRenderSource(
       }
     }
   };
+}
+
+/** Minimal `git`-scheme URI shape needed to extract the preview revision. */
+export interface ViPreviewGitUri {
+  scheme: string;
+  query: string;
+}
+
+/**
+ * Extracts the Git revision from a `git`-scheme preview URI. VS Code's built-in
+ * Git provider encodes `{ path, ref }` as JSON in the URI query. The working-tree
+ * diff base carries an empty ref or `~` (both meaning the HEAD-committed
+ * version), so those normalize to `HEAD`; an explicit commit ref is returned
+ * unchanged. Returns undefined when the URI is not a resolvable git-ref preview
+ * URI, so the caller falls back to single-blob materialization.
+ */
+export function parseGitPreviewRef(uri: ViPreviewGitUri): string | undefined {
+  if (uri.scheme !== 'git' || !uri.query) {
+    return undefined;
+  }
+  let ref: unknown;
+  try {
+    ref = (JSON.parse(uri.query) as { ref?: unknown }).ref;
+  } catch {
+    return undefined;
+  }
+  if (typeof ref !== 'string') {
+    return undefined;
+  }
+  const trimmed = ref.trim();
+  if (trimmed === '' || trimmed === '~' || trimmed === 'HEAD') {
+    return 'HEAD';
+  }
+  return trimmed;
 }
