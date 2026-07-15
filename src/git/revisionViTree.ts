@@ -73,6 +73,17 @@ function toPosix(value: string): string {
 }
 
 /**
+ * A staged path is rejected only when an actual `..` path segment could escape
+ * the destination directory (the final write is `path.join(dest, ...split('/'))`).
+ * A bare substring check wrongly drops legitimate tracked files whose names merely
+ * contain two dots (e.g. `lib/v1..2/Dep.vi` or `Foo..Bar.vi`), silently omitting
+ * real dependencies from the materialized tree.
+ */
+function hasParentTraversalSegment(relativePath: string): boolean {
+  return relativePath.split('/').some((segment) => segment === '..');
+}
+
+/**
  * Materializes the VI at `revisionId` plus its sibling LabVIEW source files into
  * `destinationDirectory`. The VI blob is required (its failure throws); sibling
  * blobs are best-effort (a missing sibling is skipped). Returns the on-disk VI
@@ -96,7 +107,7 @@ export async function materializeRevisionViTree(
 
   const stagingEntries: ViPreviewStagingEntry[] = treeEntries
     .map((entry) => ({ relativePath: toPosix(entry.repoRelativePath), sizeBytes: entry.sizeBytes }))
-    .filter((entry) => entry.relativePath.length > 0 && !entry.relativePath.includes('..'));
+    .filter((entry) => entry.relativePath.length > 0 && !hasParentTraversalSegment(entry.relativePath));
 
   const selection = planViPreviewStagingWithProjectRoot(relativePathPosix, stagingEntries);
   const stagingRoot = selection.stagingRoot;
