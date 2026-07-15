@@ -135,8 +135,9 @@ function renderIndexNarrative(index: Omit<ViRepositoryIndex, 'narrative'>): stri
 
   const mostRecent = index.vis
     .filter((entry) => entry.latestCommit !== undefined)
-    .sort((a, b) =>
-      (b.latestCommit?.authorDate ?? '').localeCompare(a.latestCommit?.authorDate ?? '')
+    .sort(
+      (a, b) =>
+        authorDateEpoch(b.latestCommit?.authorDate) - authorDateEpoch(a.latestCommit?.authorDate)
     )[0];
   if (mostRecent?.latestCommit) {
     parts.push(
@@ -145,4 +146,19 @@ function renderIndexNarrative(index: Omit<ViRepositoryIndex, 'narrative'>): stri
   }
 
   return parts.join(' ');
+}
+
+/**
+ * Parses a git `%aI` (strict ISO 8601 with timezone offset) author date to an
+ * epoch millisecond value for chronological ordering. A lexicographic string
+ * compare misorders two commits made on the same calendar day in different
+ * timezone offsets (e.g. `...T09:00:00-08:00` is later than `...T12:00:00+02:00`
+ * in real time but sorts earlier as a string). Unparseable dates sort oldest.
+ */
+function authorDateEpoch(authorDate: string | undefined): number {
+  if (!authorDate) {
+    return Number.NEGATIVE_INFINITY;
+  }
+  const epoch = Date.parse(authorDate);
+  return Number.isNaN(epoch) ? Number.NEGATIVE_INFINITY : epoch;
 }
