@@ -81,16 +81,31 @@ function joinPreservingExplicitPathStyle(rootPath: string, ...segments: string[]
   return path.join(rootPath, ...segments);
 }
 
+/**
+ * Converts a WSL `/mnt/<drive>` mount path to its Windows drive-letter form,
+ * or returns `undefined` when the value is not a WSL mount path. Accepts the
+ * bare drive root (`/mnt/c`, `/mnt/c/`) as well as subpaths (`/mnt/c/foo/bar`);
+ * the earlier `length > 7` guard wrongly rejected the drive root.
+ */
+function convertWslMountPathToWindows(trimmed: string): string | undefined {
+  const match = /^\/mnt\/([A-Za-z])(?:\/(.*))?$/.exec(trimmed);
+  if (!match) {
+    return undefined;
+  }
+  const driveLetter = match[1].toUpperCase();
+  const remainder = (match[2] ?? '').replaceAll('/', '\\');
+  return path.win32.normalize(`${driveLetter}:\\${remainder}`);
+}
+
 function normalizeDevHostLaunchPath(value: string): string {
   const trimmed = value.trim();
   if (usesExplicitWindowsPathStyle(trimmed)) {
     return path.win32.normalize(trimmed);
   }
 
-  if (trimmed.startsWith('/mnt/') && trimmed.length > 7) {
-    const driveLetter = trimmed[5].toUpperCase();
-    const remainder = trimmed.slice(7).replaceAll('/', '\\');
-    return path.win32.normalize(`${driveLetter}:\\${remainder}`);
+  const wslWindowsPath = convertWslMountPathToWindows(trimmed);
+  if (wslWindowsPath !== undefined) {
+    return wslWindowsPath;
   }
 
   if (usesExplicitPosixPathStyle(trimmed)) {
@@ -175,10 +190,9 @@ export function toWindowsPath(value: string): string {
     return path.win32.normalize(trimmed);
   }
 
-  if (trimmed.startsWith('/mnt/') && trimmed.length > 7) {
-    const driveLetter = trimmed[5].toUpperCase();
-    const remainder = trimmed.slice(7).replaceAll('/', '\\');
-    return path.win32.normalize(`${driveLetter}:\\${remainder}`);
+  const wslWindowsPath = convertWslMountPathToWindows(trimmed);
+  if (wslWindowsPath !== undefined) {
+    return wslWindowsPath;
   }
 
   if (trimmed.startsWith('/')) {
