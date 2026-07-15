@@ -18,7 +18,10 @@ import * as vscode from 'vscode';
 
 import {
   OPEN_RUNTIME_REPORT_PANEL_COMMAND_ID,
-  registerOpenRuntimeReportPanelCommand
+  registerOpenRuntimeReportPanelCommand,
+  presenceLabel,
+  toPanelProviderOption,
+  buildActiveProviderSummary
 } from '../../src/commands/openRuntimeReportPanelCommand';
 import type { DetectedRuntimes } from '../../src/tooling/runtimeAutoDetect';
 
@@ -413,5 +416,114 @@ describe('registerOpenRuntimeReportPanelCommand (VHS-REQ-620 / VHS-REQ-645)', ()
     const callsBefore = sharedUpdate.mock.calls.length;
     await panel.dispatchMessage({ command: 'setCliConnectTimeout' });
     expect(sharedUpdate.mock.calls.length).toBe(callsBefore);
+  });
+});
+
+describe('openRuntimeReportPanelCommand pure helpers (VHS-REQ-657 / VHS-REQ-649 / VHS-REQ-620 coverage)', () => {
+  function version(overrides: Partial<{ locallyPresent: boolean; publishedToRegistry: boolean }>) {
+    return {
+      year: 2026,
+      quarter: 1,
+      platform: 'windows' as const,
+      tag: '2026q1-windows',
+      reference: 'nationalinstruments/labview:2026q1-windows',
+      locallyPresent: false,
+      publishedToRegistry: false,
+      ...overrides
+    };
+  }
+
+  describe('presenceLabel (VHS-REQ-649)', () => {
+    it('reports pulled-locally first, regardless of engine-offline flag', () => {
+      expect(presenceLabel(version({ locallyPresent: true }))).toBe('Pulled locally');
+      expect(presenceLabel(version({ locallyPresent: true }), true)).toBe('Pulled locally');
+    });
+
+    it('reports unknown presence when the Docker engine is offline (not pulled locally)', () => {
+      expect(presenceLabel(version({ locallyPresent: false }), true)).toBe(
+        'Local presence unknown (Docker engine offline)'
+      );
+    });
+
+    it('distinguishes available-to-pull from available when the engine is online', () => {
+      expect(presenceLabel(version({ publishedToRegistry: true }))).toBe('Available to pull');
+      expect(presenceLabel(version({ publishedToRegistry: false }))).toBe('Available');
+    });
+  });
+
+  describe('toPanelProviderOption (VHS-REQ-657)', () => {
+    it('maps a host option with a version/bitness label', () => {
+      expect(
+        toPanelProviderOption({
+          kind: 'host',
+          label: 'ignored',
+          description: 'desc',
+          detail: 'det',
+          labviewVersion: '2026',
+          labviewBitness: 'x64'
+        })
+      ).toEqual({ kind: 'host', label: 'Host LabVIEW 2026 x64', description: 'desc', detail: 'det' });
+    });
+
+    it('maps a docker option to a version-agnostic "Docker" label', () => {
+      expect(
+        toPanelProviderOption({ kind: 'docker', label: 'ignored', description: 'd', detail: 't' })
+      ).toEqual({ kind: 'docker', label: 'Docker', description: 'd', detail: 't' });
+    });
+
+    it('maps a clear option', () => {
+      expect(toPanelProviderOption({ kind: 'clear', label: 'ignored', detail: 't' })).toEqual({
+        kind: 'clear',
+        label: 'Clear (auto-detect each session)',
+        detail: 't'
+      });
+    });
+  });
+
+  describe('buildActiveProviderSummary (VHS-REQ-620)', () => {
+    function watcherWith(snapshot: unknown) {
+      return { getLastSnapshot: () => snapshot } as never;
+    }
+
+    it('reports "None detected" when there is no snapshot', () => {
+      expect(buildActiveProviderSummary(watcherWith(undefined))).toEqual({ summary: 'None detected' });
+    });
+
+    it('reports "None detected" (with source) for a none-provider snapshot', () => {
+      expect(
+        buildActiveProviderSummary(
+          watcherWith({ label: { provider: 'none' }, source: 'auto-detected' })
+        )
+      ).toEqual({ summary: 'None detected' });
+    });
+
+    it('prefixes "Host" for a host provider snapshot', () => {
+      const result = buildActiveProviderSummary(
+        watcherWith({
+          label: { provider: 'host', labviewVersion: '2026', labviewBitness: 'x64' },
+          source: 'persisted'
+        })
+      );
+      expect(result.summary.startsWith('Host ')).toBe(true);
+      expect(result.source).toBe('persisted');
+    });
+
+    it('uses the bare suffix for a docker provider snapshot', () => {
+      const result = buildActiveProviderSummary(
+        watcherWith({
+          label: { provider: 'docker', containerImageVersion: '2026q1-windows' },
+          source: 'auto-detected'
+        })
+      );
+      expect(result.summary).toContain('Docker');
+      expect(result.summary.startsWith('Host ')).toBe(false);
+    });
+
+    it('falls back to "None detected" (with source) when the suffix is empty', () => {
+      // A host snapshot missing version/bitness yields an empty suffix.
+      expect(
+        buildActiveProviderSummary(watcherWith({ label: { provider: 'host' }, source: 'persisted' }))
+      ).toEqual({ summary: 'None detected', source: 'persisted' });
+    });
   });
 });

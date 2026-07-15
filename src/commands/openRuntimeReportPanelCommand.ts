@@ -111,7 +111,7 @@ export interface RegisterOpenRuntimeReportPanelCommandDeps {
   readonly containerPlatform?: ContainerImagePlatform;
 }
 
-function presenceLabel(
+export function presenceLabel(
   version: AvailableContainerImageVersion,
   localPresenceUnknown = false
 ): string {
@@ -126,7 +126,7 @@ function presenceLabel(
   return version.publishedToRegistry ? 'Available to pull' : 'Available';
 }
 
-function toPanelProviderOption(
+export function toPanelProviderOption(
   option: PickRuntimeProviderOption
 ): RuntimeProviderPanelOption {
   if (option.kind === 'host') {
@@ -155,7 +155,7 @@ function toPanelProviderOption(
   };
 }
 
-function buildActiveProviderSummary(
+export function buildActiveProviderSummary(
   watcher: RuntimeAvailabilityWatcher
 ): { summary: string; source?: 'persisted' | 'auto-detected' } {
   const snapshot = watcher.getLastSnapshot();
