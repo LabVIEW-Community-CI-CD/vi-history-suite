@@ -4382,7 +4382,11 @@ Missing numeric IDs are intentional.
     document; when the resolved runtime is host-native it shows a "requires
     Docker" prompt and does not render (Docker-only feature). In an untrusted
     workspace the editor shows a disabled-preview message and never launches an
-    external process.
+    external process. For a non-`file` document URI (for example the base side of
+    a Source Control diff, served under the `git` scheme) the editor reads the
+    document bytes through the VS Code filesystem API and renders a materialized
+    temporary copy (`resolveViPreviewRenderSource`), so the committed revision
+    renders its own content rather than the on-disk working-tree file.
   - `buildViPreviewWebviewHtml` injects a strict Content-Security-Policy
     (`script-src 'none'`, `img-src data:`, inline styles only) into the rendered
     LabVIEW document, and renders themed loading and error states carrying the
@@ -4471,6 +4475,7 @@ Missing numeric IDs are intentional.
   - `src/reporting/viPreview/viPreviewCacheWarmer.ts`
   - `src/reporting/viPreview/viPreviewRuntimeAdapter.ts`
   - `src/reporting/viPreview/viPreviewWebview.ts`
+  - `src/reporting/viPreview/viPreviewRenderSource.ts`
   - `src/ui/viPreviewEditor.ts`
   - `src/ui/viPreviewRenderHost.ts`
   - `src/ui/viPreviewCacheWarmerService.ts`
@@ -4492,6 +4497,7 @@ Missing numeric IDs are intentional.
   - `tests/unit/viPreviewCacheWarmer.test.ts`
   - `tests/unit/viPreviewRuntimeAdapter.test.ts`
   - `tests/unit/viPreviewWebview.test.ts`
+  - `tests/unit/viPreviewRenderSource.test.ts`
   - `tests/unit/viPreviewSessionManager.test.ts`
   - `tests/unit/viPreviewSessionRuntime.test.ts`
   - `tests/unit/viPreviewVerification.test.ts`

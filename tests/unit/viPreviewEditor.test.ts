@@ -6,14 +6,16 @@ const {
   isViPreviewEnabledMock,
   resolvePreviewRuntimeMock,
   renderViPreviewForFileMock,
-  createViPreviewCacheMock
+  createViPreviewCacheMock,
+  buildViPreviewRenderSourceDepsMock
 } = vi.hoisted(() => ({
   registerCustomEditorProviderMock: vi.fn(),
   workspaceTrusted: { value: true },
   isViPreviewEnabledMock: vi.fn(),
   resolvePreviewRuntimeMock: vi.fn(),
   renderViPreviewForFileMock: vi.fn(),
-  createViPreviewCacheMock: vi.fn()
+  createViPreviewCacheMock: vi.fn(),
+  buildViPreviewRenderSourceDepsMock: vi.fn()
 }));
 
 vi.mock('vscode', () => ({
@@ -33,6 +35,7 @@ vi.mock('../../src/reporting/viPreview/viPreviewFileRender', () => ({
 
 vi.mock('../../src/ui/viPreviewRenderHost', () => ({
   buildViPreviewRenderDeps: vi.fn(() => ({})),
+  buildViPreviewRenderSourceDeps: buildViPreviewRenderSourceDepsMock,
   createViPreviewCache: createViPreviewCacheMock,
   getViPreviewOperationDirectory: vi.fn(() => '/ops'),
   isViPreviewEnabled: isViPreviewEnabledMock,
@@ -45,8 +48,8 @@ import {
 } from '../../src/ui/viPreviewEditor';
 
 type RegisteredProvider = {
-  openCustomDocument(uri: { fsPath: string }): { uri: { fsPath: string } };
-  resolveCustomEditor(document: { uri: { fsPath: string } }, panel: FakePanel): Promise<void>;
+  openCustomDocument(uri: { fsPath: string; scheme?: string }): { uri: { fsPath: string; scheme?: string } };
+  resolveCustomEditor(document: { uri: { fsPath: string; scheme?: string } }, panel: FakePanel): Promise<void>;
 };
 
 type FakePanel = {
@@ -75,9 +78,10 @@ function providerFromLastRegistration(): RegisteredProvider {
 async function resolveEditor(
   provider: RegisteredProvider,
   panel: FakePanel = createPanel(),
-  fsPath = '/workspace/repo/Foo.vi'
+  fsPath = '/workspace/repo/Foo.vi',
+  scheme = 'file'
 ): Promise<FakePanel> {
-  const document = provider.openCustomDocument({ fsPath });
+  const document = provider.openCustomDocument({ fsPath, scheme });
   await provider.resolveCustomEditor(document, panel);
   return panel;
 }
@@ -96,6 +100,7 @@ describe('VI Preview custom editor (VHS-REQ-659.8)', () => {
     });
     renderViPreviewForFileMock.mockResolvedValue({ outcome: 'rendered', html: '<html>rendered</html>' });
     createViPreviewCacheMock.mockReturnValue({});
+    buildViPreviewRenderSourceDepsMock.mockReturnValue({});
     registerCustomEditorProviderMock.mockReturnValue({ dispose: vi.fn() });
   });
 
@@ -179,6 +184,32 @@ describe('VI Preview custom editor (VHS-REQ-659.8)', () => {
     expect(panel.webview.html).toContain('docker preview');
     expect(onPreviewOpened).toHaveBeenCalledWith('/workspace/repo/Foo.vit');
     expect(renderViPreviewForFileMock).not.toHaveBeenCalled();
+  });
+
+  it('materializes a non-file (git) base URI and renders the committed bytes, not the working file (VHS-REQ-659.8)', async () => {
+    const removeDirectory = vi.fn(async () => {});
+    buildViPreviewRenderSourceDepsMock.mockReturnValue({
+      readBytes: vi.fn(async () => new Uint8Array([0x52, 0x53, 0x52, 0x43])),
+      createTempDirectory: vi.fn(async () => '/tmp/vihs-src'),
+      writeFile: vi.fn(async () => {}),
+      removeDirectory,
+      joinPath: (directory: string, name: string) => `${directory}/${name}`
+    });
+    const provider = providerFromLastRegistrationAfterRegister();
+
+    const panel = await resolveEditor(
+      provider,
+      createPanel(),
+      '/workspace/repo/Dequeue Trace.vi',
+      'git'
+    );
+
+    expect(renderViPreviewForFileMock).toHaveBeenCalledWith(
+      expect.objectContaining({ viFilePath: '/tmp/vihs-src/Dequeue Trace.vi' }),
+      expect.anything()
+    );
+    expect(panel.webview.html).toContain('rendered');
+    expect(removeDirectory).toHaveBeenCalledWith('/tmp/vihs-src');
   });
 });
 
