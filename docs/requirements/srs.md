@@ -1513,6 +1513,12 @@ Missing numeric IDs are intentional.
   - The compact summary includes outcome, failure/blocked reason, exit code,
     duration, report existence, artifact paths, and doctor summary lines.
   - HTML rendering escapes all user-controlled or path-derived values.
+  - Windows host-native `labview-cli` comparisons retry exactly once when the
+    first attempt fails with the cold-launch `labview-cli-connection-failed`
+    (`-350000`) VI Server connect race, reusing the port derived from the
+    selected install's `LabVIEW.ini` (`-PortNumber`) against the now-resident
+    LabVIEW without closing it first. The windows-container (in-script) and
+    Linux retry paths keep their existing behavior.
 - Agent Work Scope:
   - Change execution result shape, packet rendering, and runtime tests together.
 - Implementation References:

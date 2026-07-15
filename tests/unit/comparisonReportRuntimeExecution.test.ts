@@ -2228,6 +2228,143 @@ describe('comparisonReportRuntimeExecution', () => {
     );
   });
 
+  it('retries a Windows host-native cold-launch -350000 VI Server connect race once against the resident LabVIEW (VHS-REQ-148.7)', async () => {
+    // createReadyRecord() is already win32 / host-native / labview-cli.
+    const record = createReadyRecord();
+    let reportAvailable = false;
+    const readFile = vi.fn(async (filePath: string) => {
+      if (typeof filePath === 'string' && filePath.endsWith('LabVIEW.ini')) {
+        return 'server.tcp.enabled=True\r\nserver.tcp.port=3364\r\n';
+      }
+      return '';
+    });
+    const pathExists = vi.fn(async (filePath: string) =>
+      typeof filePath === 'string' && filePath.endsWith(record.artifactPlan.reportFilename)
+        ? reportAvailable
+        : false
+    );
+    // Attempt 1 launches a cold LabVIEW that loses the VI Server connect race
+    // (-350000); attempt 2 connects to the now-resident LabVIEW and succeeds. There
+    // is deliberately NO CloseLabVIEW between the two attempts.
+    const runCommand = vi
+      .fn()
+      .mockResolvedValueOnce({
+        exitCode: 1,
+        stdout:
+          'LabVIEWCLI started logging in file:  C:\\Temp\\lv.log\nLabVIEW launched successfully.',
+        stderr: [
+          'Error code : -350000',
+          'Error message : LabVIEW CLI: (Hex 0xFFFAA8D0) The CLI for LabVIEW failed to establish a connection with LabVIEW.',
+          'An error occurred while running the LabVIEW CLI.'
+        ].join('\r\n')
+      })
+      .mockImplementationOnce(async () => {
+        reportAvailable = true;
+        return {
+          exitCode: 0,
+          stdout: 'CreateComparisonReport operation succeeded.',
+          stderr: ''
+        };
+      });
+
+    const result = await executeComparisonReport(
+      { record, repositoryRoot: 'C:\\workspace\\repo' },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        materializeSelectedRevisionTree: vi.fn().mockResolvedValue(undefined),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
+        readdir: vi.fn().mockResolvedValue([]) as never,
+        readFile: readFile as never,
+        pathExists: pathExists as never,
+        runCommand,
+        nowIso: vi.fn().mockReturnValue('2026-07-15T09:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32',
+        // Deterministic regardless of host: bypass the Windows host-surface
+        // preflight (which observes real processes/TCP on a win32 dev host) so the
+        // test exercises only the cold-launch retry logic downstream of it.
+        enforceWindowsHostPreflight: false
+      }
+    );
+
+    // Exactly two compare attempts, and no CloseLabVIEW between them.
+    expect(runCommand).toHaveBeenCalledTimes(2);
+    for (const call of runCommand.mock.calls) {
+      const plan = call[0] as { executable: string; args: string[] };
+      expect(plan.executable).toBe(record.runtimeSelection.labviewCli?.path);
+      expect(plan.args).toEqual(
+        expect.arrayContaining(['-OperationName', 'CreateComparisonReport'])
+      );
+      // The VI Server port stays derived from the selected install's LabVIEW.ini on
+      // both attempts (no hardcoded fallback) — the retry only changes timing.
+      expect(plan.args).toEqual(expect.arrayContaining(['-PortNumber', '3364']));
+    }
+    expect(result.record.runtimeExecution.state).toBe('succeeded');
+    expect(result.record.runtimeExecution.reportExists).toBe(true);
+    expect(result.record.runtimeExecution.headlessSessionResetExecutable).toBeUndefined();
+    expect(result.record.runtimeExecution.diagnosticNotes).toContain(
+      'Windows host-native cold-launch retry: the first attempt launched LabVIEW but the VI Server was not ready within the LabVIEW CLI connect window (-350000). Retried once against the now-resident LabVIEW on the same derived VI Server port.'
+    );
+  });
+
+  it('does not cold-launch retry a Windows host-native failure that is not the -350000 connect race (VHS-REQ-148.7)', async () => {
+    const record = createReadyRecord();
+    const readFile = vi.fn(async (filePath: string) => {
+      if (typeof filePath === 'string' && filePath.endsWith('LabVIEW.ini')) {
+        return 'server.tcp.enabled=True\r\nserver.tcp.port=3364\r\n';
+      }
+      return '';
+    });
+    const pathExists = vi.fn(async () => false);
+    // A generic non-connection failure must not trigger the cold-launch retry.
+    const runCommand = vi.fn().mockResolvedValue({
+      exitCode: 1,
+      stdout: '',
+      stderr: 'Error code : 1055\r\nError message : Object reference is invalid.\r\n'
+    });
+
+    const result = await executeComparisonReport(
+      { record, repositoryRoot: 'C:\\workspace\\repo' },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        materializeSelectedRevisionTree: vi.fn().mockResolvedValue(undefined),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
+        readdir: vi.fn().mockResolvedValue([]) as never,
+        readFile: readFile as never,
+        pathExists: pathExists as never,
+        runCommand,
+        nowIso: vi.fn().mockReturnValue('2026-07-15T09:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32',
+        enforceWindowsHostPreflight: false
+      }
+    );
+
+    expect(runCommand).toHaveBeenCalledTimes(1);
+    expect(result.record.runtimeExecution.state).toBe('failed');
+    expect(result.record.runtimeExecution.diagnosticNotes ?? []).not.toContain(
+      'Windows host-native cold-launch retry: the first attempt launched LabVIEW but the VI Server was not ready within the LabVIEW CLI connect window (-350000). Retried once against the now-resident LabVIEW on the same derived VI Server port.'
+    );
+  });
+
   describe('failed execution evidence retention (VHS-REQ-148)', () => {
     it('retains all evidence fields when execution fails with nonzero exit code (VHS-REQ-148.2, VHS-REQ-658.1)', async () => {
       const record = createReadyRecord();
