@@ -49,6 +49,12 @@ function baseModel(
         blockDiagramCosmetic: true
       }
     },
+    advanced: {
+      cliConnectTimeoutSeconds: 180,
+      defaultTimeoutSeconds: 180,
+      minSeconds: 30,
+      maxSeconds: 600
+    },
     ...overrides
   };
 }
@@ -274,5 +280,43 @@ describe('renderRuntimeReportPanelHtml (VHS-REQ-620 / VHS-REQ-645)', () => {
     expect(html).toContain('data-testid="runtime-report-no-detection"');
     // The report section remains available even without runtime detection.
     expect(html).toContain('data-testid="runtime-report-report-section"');
+  });
+});
+
+describe('renderRuntimeReportPanelHtml advanced runtime section (VHS-REQ-620.8)', () => {
+  it('renders the CLI connect-timeout number input with the current value and bounds', () => {
+    const html = renderRuntimeReportPanelHtml(
+      baseModel({
+        advanced: {
+          cliConnectTimeoutSeconds: 240,
+          defaultTimeoutSeconds: 180,
+          minSeconds: 30,
+          maxSeconds: 600
+        }
+      })
+    );
+
+    expect(html).toContain('data-testid="runtime-report-advanced-section"');
+    expect(html).toContain('data-command="setCliConnectTimeout"');
+    expect(html).toContain('data-testid="runtime-report-cli-timeout-input"');
+    expect(html).toContain('value="240"');
+    expect(html).toContain('min="30"');
+    expect(html).toContain('max="600"');
+    // The default is named in the hint copy.
+    expect(html).toContain('the default is 180s');
+  });
+
+  it('reflects the current persisted timeout value in the input', () => {
+    const html = renderRuntimeReportPanelHtml(
+      baseModel({
+        advanced: {
+          cliConnectTimeoutSeconds: 45,
+          defaultTimeoutSeconds: 180,
+          minSeconds: 30,
+          maxSeconds: 600
+        }
+      })
+    );
+    expect(html).toContain('value="45"');
   });
 });

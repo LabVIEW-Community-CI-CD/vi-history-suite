@@ -154,6 +154,18 @@ export interface ReportSectionViewModel {
 }
 
 /**
+ * VHS-REQ-148: Advanced runtime section state. Surfaces the LabVIEW CLI
+ * connect-window timeout (`viHistorySuite.runtime.cliConnectTimeoutSeconds`),
+ * which previously could only be changed by hand-editing settings.json.
+ */
+export interface AdvancedSectionViewModel {
+  readonly cliConnectTimeoutSeconds: number;
+  readonly defaultTimeoutSeconds: number;
+  readonly minSeconds: number;
+  readonly maxSeconds: number;
+}
+
+/**
  * VI Preview section state. Hidden entirely when `visible` is false: the toggle
  * is offered only when Docker is the effective comparison runtime (VHS-REQ-659),
  * because preview rendering and its background caching run through Docker.
@@ -175,6 +187,7 @@ export interface RuntimeReportPanelViewModel {
   readonly container: ContainerSectionViewModel;
   readonly preview: PreviewSectionViewModel;
   readonly report: ReportSectionViewModel;
+  readonly advanced: AdvancedSectionViewModel;
 }
 
 function escapeHtml(value: string): string {
@@ -362,6 +375,30 @@ function renderReportSection(report: ReportSectionViewModel): string {
     </section>`;
 }
 
+function renderAdvancedSection(advanced: AdvancedSectionViewModel): string {
+  return `
+    <section class="card" data-testid="runtime-report-advanced-section">
+      <h2>Advanced runtime</h2>
+      <p class="hint" data-testid="runtime-report-advanced-hint">Tune how long the extension waits for LabVIEW CLI to connect to the VI Server before giving up. Increase it on slow or cold-launch machines; the default is ${advanced.defaultTimeoutSeconds}s.</p>
+      <label class="field-row" data-testid="runtime-report-cli-timeout-row">
+        <span class="checkbox-text">
+          <span class="checkbox-label">LabVIEW CLI connect timeout (seconds)</span>
+          <span class="checkbox-help">Allowed range ${advanced.minSeconds}–${advanced.maxSeconds}s. Values outside the range are clamped when saved.</span>
+        </span>
+        <input
+          type="number"
+          class="number-input"
+          data-testid="runtime-report-cli-timeout-input"
+          data-command="setCliConnectTimeout"
+          min="${advanced.minSeconds}"
+          max="${advanced.maxSeconds}"
+          step="1"
+          value="${advanced.cliConnectTimeoutSeconds}"
+        />
+      </label>
+    </section>`;
+}
+
 /**
  * Render the complete Runtime &amp; Report Settings panel HTML for a view model.
  * Pure: no `vscode` access, so it can be asserted directly in unit tests.
@@ -381,7 +418,8 @@ export function renderRuntimeReportPanelHtml(model: RuntimeReportPanelViewModel)
     ${renderProviderSection(model)}
     ${renderPreviewSection(model.preview)}
     ${renderContainerSection(model.container)}
-    ${renderReportSection(model.report)}`
+    ${renderReportSection(model.report)}
+    ${renderAdvancedSection(model.advanced)}`
     : '';
 
   return `<!DOCTYPE html>
@@ -468,6 +506,21 @@ export function renderRuntimeReportPanelHtml(model: RuntimeReportPanelViewModel)
         display: flex;
         flex-direction: column;
         gap: 8px;
+      }
+      .field-row {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 8px;
+      }
+      .number-input {
+        width: 6em;
+        padding: 4px 6px;
+        background: var(--vscode-input-background);
+        color: var(--vscode-input-foreground);
+        border: 1px solid var(--vscode-input-border, var(--vscode-panel-border));
+        font: inherit;
       }
       .radio-row,
       .checkbox-row {
@@ -561,6 +614,13 @@ export function renderRuntimeReportPanelHtml(model: RuntimeReportPanelViewModel)
         }
         if (command === 'selectContainerVersion' && target instanceof HTMLSelectElement) {
           vscode.postMessage({ command, tag: target.value });
+          return;
+        }
+        if (command === 'setCliConnectTimeout' && target instanceof HTMLInputElement) {
+          const seconds = Number(target.value);
+          if (Number.isFinite(seconds)) {
+            vscode.postMessage({ command, seconds });
+          }
           return;
         }
       });

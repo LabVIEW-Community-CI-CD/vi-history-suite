@@ -25,6 +25,8 @@ import {
   readComparisonReportOptions,
   readComparisonRuntimeSettings,
   readCliConnectTimeoutSeconds,
+  clampCliConnectTimeoutSeconds,
+  applyCliConnectTimeoutSelection,
   renderComparisonReportPanelHtml,
   resolveRuntimePlatform,
   DEFAULT_CLI_CONNECT_TIMEOUT_SECONDS
@@ -957,6 +959,52 @@ describe('readCliConnectTimeoutSeconds clamping (VHS-REQ-148)', () => {
   it('falls back to the default for a non-number value (misconfigured settings.json)', () => {
     expect(readCliConnectTimeoutSeconds(fakeConfiguration('240'))).toBe(
       DEFAULT_CLI_CONNECT_TIMEOUT_SECONDS
+    );
+  });
+});
+
+describe('clampCliConnectTimeoutSeconds (VHS-REQ-620.8)', () => {
+  it('passes an in-range integer through unchanged', () => {
+    expect(clampCliConnectTimeoutSeconds(240)).toBe(240);
+  });
+
+  it('rounds a fractional value to an integer', () => {
+    expect(clampCliConnectTimeoutSeconds(180.5)).toBe(181);
+  });
+
+  it('clamps below-min and above-max values to the bounds', () => {
+    expect(clampCliConnectTimeoutSeconds(5)).toBe(30);
+    expect(clampCliConnectTimeoutSeconds(9999)).toBe(600);
+  });
+
+  it('falls back to the default for a non-finite or non-number request', () => {
+    expect(clampCliConnectTimeoutSeconds(Number.NaN)).toBe(DEFAULT_CLI_CONNECT_TIMEOUT_SECONDS);
+    expect(clampCliConnectTimeoutSeconds('240')).toBe(DEFAULT_CLI_CONNECT_TIMEOUT_SECONDS);
+  });
+});
+
+describe('applyCliConnectTimeoutSelection (VHS-REQ-620.8)', () => {
+  it('writes the clamped value to the runtime setting at global scope and returns it', async () => {
+    const update = vi.fn().mockResolvedValue(undefined);
+
+    const written = await applyCliConnectTimeoutSelection(9999, { update });
+
+    expect(written).toBe(600);
+    expect(update).toHaveBeenCalledWith(
+      'runtime.cliConnectTimeoutSeconds',
+      600,
+      harness.vscode.ConfigurationTarget.Global
+    );
+  });
+
+  it('normalizes a fractional in-range entry before persisting', async () => {
+    const update = vi.fn().mockResolvedValue(undefined);
+    const written = await applyCliConnectTimeoutSelection(240.4, { update });
+    expect(written).toBe(240);
+    expect(update).toHaveBeenCalledWith(
+      'runtime.cliConnectTimeoutSeconds',
+      240,
+      harness.vscode.ConfigurationTarget.Global
     );
   });
 });

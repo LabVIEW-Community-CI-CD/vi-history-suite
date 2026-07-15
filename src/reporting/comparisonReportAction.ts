@@ -1841,8 +1841,8 @@ export async function applyComparisonReportOptionSelection(
 }
 
 export const DEFAULT_CLI_CONNECT_TIMEOUT_SECONDS = 180;
-const MIN_CLI_CONNECT_TIMEOUT_SECONDS = 30;
-const MAX_CLI_CONNECT_TIMEOUT_SECONDS = 600;
+export const MIN_CLI_CONNECT_TIMEOUT_SECONDS = 30;
+export const MAX_CLI_CONNECT_TIMEOUT_SECONDS = 600;
 
 /**
  * VHS-REQ-148: read the configured LabVIEW CLI connect-window timeout (seconds) from
@@ -1863,6 +1863,53 @@ export function readCliConnectTimeoutSeconds(
     return DEFAULT_CLI_CONNECT_TIMEOUT_SECONDS;
   }
   return raw;
+}
+
+/**
+ * VHS-REQ-148: clamp an arbitrary requested CLI connect-timeout (seconds) into the
+ * supported `[MIN, MAX]` window, rounding to an integer. A non-finite/NaN request
+ * falls back to the shipped default so the panel never persists an unusable value.
+ */
+export function clampCliConnectTimeoutSeconds(requestedSeconds: unknown): number {
+  if (typeof requestedSeconds !== 'number' || !Number.isFinite(requestedSeconds)) {
+    return DEFAULT_CLI_CONNECT_TIMEOUT_SECONDS;
+  }
+  const rounded = Math.round(requestedSeconds);
+  if (rounded < MIN_CLI_CONNECT_TIMEOUT_SECONDS) {
+    return MIN_CLI_CONNECT_TIMEOUT_SECONDS;
+  }
+  if (rounded > MAX_CLI_CONNECT_TIMEOUT_SECONDS) {
+    return MAX_CLI_CONNECT_TIMEOUT_SECONDS;
+  }
+  return rounded;
+}
+
+export interface ApplyCliConnectTimeoutSelectionDeps {
+  readonly update: (
+    key: string,
+    value: number,
+    target: vscode.ConfigurationTarget
+  ) => Thenable<void>;
+}
+
+/**
+ * VHS-REQ-148: persist the Runtime &amp; Report Settings panel's CLI connect-timeout
+ * edit to `viHistorySuite.runtime.cliConnectTimeoutSeconds`, clamped into the
+ * supported window so an out-of-range or fractional entry is normalized before it
+ * reaches user settings. Global-scoped like the other panel writers. Returns the
+ * value actually written so the caller can re-render the normalized number.
+ */
+export async function applyCliConnectTimeoutSelection(
+  requestedSeconds: unknown,
+  deps: ApplyCliConnectTimeoutSelectionDeps
+): Promise<number> {
+  const clamped = clampCliConnectTimeoutSeconds(requestedSeconds);
+  await deps.update(
+    'runtime.cliConnectTimeoutSeconds',
+    clamped,
+    vscode.ConfigurationTarget.Global
+  );
+  return clamped;
 }
 
 export function resolveRuntimePlatform(platform: NodeJS.Platform): RuntimePlatform {
