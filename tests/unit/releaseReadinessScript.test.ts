@@ -23,6 +23,7 @@ const readinessModule = require('../../scripts/checkReleaseReadiness.js') as {
   renderMarkdown: (verdict: unknown) => string;
   renderSchema: (options?: Record<string, unknown>) => string;
   parseArgs: (argv: string[]) => Record<string, unknown>;
+  outputModeForOptions: (options?: Record<string, unknown>) => string;
   resolveOutputPath: (cwd: string, relativePath: string) => string;
   main: (argv?: string[], deps?: Record<string, unknown>) => number;
 };
@@ -40,6 +41,7 @@ const {
   renderMarkdown,
   renderSchema,
   parseArgs,
+  outputModeForOptions,
   resolveOutputPath,
   main
 } = readinessModule;
@@ -297,5 +299,48 @@ describe('deriveRuntimeAttestationFromLedger (VHS-REQ-615.14)', () => {
     expect(verdict.status).toBe('READY');
     expect(verdict.checks).toHaveLength(3);
     expect(verdict.runtimeAttestation).toContain('stale tracks needing re-validation');
+  });
+});
+
+describe('outputModeForOptions', () => {
+  it('returns schema when --schema is set (highest precedence)', () => {
+    expect(outputModeForOptions({ schema: true, markdown: true, json: true })).toBe('schema');
+  });
+
+  it('returns markdown when --markdown is set and --schema is not', () => {
+    expect(outputModeForOptions({ markdown: true, json: true })).toBe('markdown');
+  });
+
+  it('returns json when only --json is set', () => {
+    expect(outputModeForOptions({ json: true })).toBe('json');
+  });
+
+  it('returns text when no output mode is set (default and empty options)', () => {
+    expect(outputModeForOptions({})).toBe('text');
+    expect(outputModeForOptions()).toBe('text');
+  });
+});
+
+describe('parseArgs value and provenance branches', () => {
+  it('throws when an option requiring a value is given none', () => {
+    expect(() => parseArgs(['--output'])).toThrow(/--output requires a value/);
+    expect(() => parseArgs(['--runtime-evidence'])).toThrow(/--runtime-evidence requires a value/);
+  });
+
+  it('throws when an option requiring a value is followed by another flag', () => {
+    expect(() => parseArgs(['--output', '--json'])).toThrow(/--output requires a value/);
+  });
+
+  it('captures option values and positionals', () => {
+    const options = parseArgs(['--output', 'out/readiness.json', '--strict', 'pos1']);
+    expect(options.outputPath).toBe('out/readiness.json');
+    expect(options.strict).toBe(true);
+    expect(options.positionals).toEqual(['pos1']);
+  });
+
+  it('renderSchema omits the provenance key when no provenance is supplied', () => {
+    const schema = JSON.parse(renderSchema());
+    expect(schema['x-vi-history-suite-provenance']).toBeUndefined();
+    expect(schema.$id).toBe(RELEASE_READINESS_SCHEMA_ID);
   });
 });
