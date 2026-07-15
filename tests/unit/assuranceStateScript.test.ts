@@ -650,6 +650,29 @@ describe('generateAssuranceState script', () => {
       'prLinks',
       'mergeShas'
     ]);
+    expect(Object.keys(json.metadata)).toEqual([
+      'issueLinks',
+      'prLinks',
+      'mergeShas',
+      'requirements',
+      'reviewFindings'
+    ]);
+    expect(Object.keys(json.countsByState)).toEqual([
+      'green',
+      'candidate',
+      'known',
+      'resolved',
+      'needs-review'
+    ]);
+    const profileCommand = json.commandProvenance.find((command: { stage?: string }) => command.stage === 'profile');
+    expect(Object.keys(profileCommand)).toEqual([
+      'stage',
+      'name',
+      'status',
+      'file',
+      'command',
+      'scoreFile'
+    ]);
     expect(json.runId).toBe('state-green');
     expect(json.sources[0]).toMatchObject({ type: 'standards-audit', runId: 'audit-green', success: true });
     expect(json.signals.length).toBeGreaterThan(0);
