@@ -600,6 +600,28 @@ describe('generateAssuranceState script', () => {
 
     expect(result.exitCode).toBe(0);
     expect(result.context.outputDir).toBe(path.dirname(jsonPath));
+    expect(Object.keys(json)).toEqual([
+      'schemaVersion',
+      'runId',
+      'generatedAt',
+      'sources',
+      'metadata',
+      'standards',
+      'requirements',
+      'profiles',
+      'scoreFiles',
+      'checkedPaths',
+      'sourceArtifacts',
+      'reviewFindings',
+      'issueLinks',
+      'prLinks',
+      'mergeShas',
+      'snapshotMetadata',
+      'commandProvenance',
+      'countsByState',
+      'signalCount',
+      'signals'
+    ]);
     expect(json.runId).toBe('state-green');
     expect(json.sources[0]).toMatchObject({ type: 'standards-audit', runId: 'audit-green', success: true });
     expect(json.signals.length).toBeGreaterThan(0);
