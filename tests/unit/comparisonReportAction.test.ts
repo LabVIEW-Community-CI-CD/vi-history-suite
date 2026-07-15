@@ -2301,3 +2301,257 @@ describe('createOpenRetainedComparisonReportAction guard and cancellation outcom
     expect(pathExists).not.toHaveBeenCalled();
   });
 });
+
+describe('ensureComparisonReportEvidence lifecycle and container-acquisition paths (VHS-REQ-621, VHS-REQ-644)', () => {
+  beforeEach(() => {
+    harness.reset();
+  });
+
+  const runtimeSettings = () => ({
+    requestedProvider: 'host' as const,
+    labviewVersion: '2026',
+    bitness: 'x64' as const
+  });
+
+  function baseDeps(overrides: Record<string, unknown> = {}) {
+    return {
+      preflightComparisonReport: vi.fn().mockResolvedValue(createPreflight()),
+      locateRuntime: vi.fn().mockResolvedValue(createRuntimeSelection()),
+      getRuntimeSettings: runtimeSettings,
+      ...overrides
+    };
+  }
+
+  it('returns cancelled/after-packet-persist when cancelled during persistence', async () => {
+    const context = harness.createContext();
+    const token = harness.createCancellationToken(false);
+    const persistComparisonReport = vi.fn().mockImplementation(async () => {
+      (token as { isCancellationRequested: boolean }).isCancellationRequested = true;
+      return createPacketResult(createPacketRecord({ reportStatus: 'blocked-runtime' }));
+    });
+    const executeComparisonReport = vi.fn();
+    const action = createEnsureComparisonReportEvidenceAction(
+      context as never,
+      baseDeps({ persistComparisonReport, executeComparisonReport }) as never
+    );
+
+    const result = await action({
+      model: createModel(),
+      selectedHash: 'c3',
+      baseHash: 'a1',
+      cancellationToken: token as never
+    });
+
+    expect(result).toEqual(
+      expect.objectContaining({ outcome: 'cancelled', cancellationStage: 'after-packet-persist' })
+    );
+    expect(executeComparisonReport).not.toHaveBeenCalled();
+  });
+
+  it('returns cancelled/after-runtime-execution when cancelled during runtime execution', async () => {
+    const context = harness.createContext();
+    const token = harness.createCancellationToken(false);
+    const persistComparisonReport = vi
+      .fn()
+      .mockResolvedValue(createPacketResult(createPacketRecord({ reportStatus: 'ready-for-runtime' })));
+    const executeComparisonReport = vi.fn().mockImplementation(async () => {
+      (token as { isCancellationRequested: boolean }).isCancellationRequested = true;
+      return createPacketResult(createPacketRecord({ reportStatus: 'ready-for-runtime' }));
+    });
+    const action = createEnsureComparisonReportEvidenceAction(
+      context as never,
+      baseDeps({ persistComparisonReport, executeComparisonReport }) as never
+    );
+
+    const result = await action({
+      model: createModel(),
+      selectedHash: 'c3',
+      baseHash: 'a1',
+      cancellationToken: token as never
+    });
+
+    expect(result).toEqual(
+      expect.objectContaining({ outcome: 'cancelled', cancellationStage: 'after-runtime-execution' })
+    );
+  });
+
+  it('returns cancelled/after-archive when cancelled after a successful archive write', async () => {
+    const context = harness.createContext();
+    const token = harness.createCancellationToken(false);
+    const persistComparisonReport = vi
+      .fn()
+      .mockResolvedValue(createPacketResult(createPacketRecord({ reportStatus: 'blocked-runtime' })));
+    const archiveComparisonReportSource = vi.fn().mockImplementation(async () => {
+      (token as { isCancellationRequested: boolean }).isCancellationRequested = true;
+    });
+    const action = createEnsureComparisonReportEvidenceAction(
+      context as never,
+      baseDeps({ persistComparisonReport, archiveComparisonReportSource }) as never
+    );
+
+    const result = await action({
+      model: createModel(),
+      selectedHash: 'c3',
+      baseHash: 'a1',
+      cancellationToken: token as never
+    });
+
+    expect(archiveComparisonReportSource).toHaveBeenCalledTimes(1);
+    expect(result).toEqual(
+      expect.objectContaining({
+        outcome: 'cancelled',
+        cancellationStage: 'after-archive',
+        retainedArchiveAvailable: true
+      })
+    );
+  });
+
+  it('records retained-archive-write-failed when the archive write throws', async () => {
+    const context = harness.createContext();
+    const persistComparisonReport = vi
+      .fn()
+      .mockResolvedValue(createPacketResult(createPacketRecord({ reportStatus: 'blocked-runtime' })));
+    const archiveComparisonReportSource = vi.fn().mockRejectedValue(new Error('disk full'));
+    const action = createEnsureComparisonReportEvidenceAction(
+      context as never,
+      baseDeps({ persistComparisonReport, archiveComparisonReportSource }) as never
+    );
+
+    const result = await action({ model: createModel(), selectedHash: 'c3', baseHash: 'a1' });
+
+    expect(result.outcome).toBe('retained-comparison-report-evidence');
+    expect(result.archiveFailureReason).toBe('retained-archive-write-failed');
+    expect(result.retainedArchiveAvailable).toBe(false);
+  });
+
+  it('records retained-archive-unavailable for a non-archivable working-tree comparison', async () => {
+    const context = harness.createContext();
+    const worktreeRecord = createPacketRecord({ reportStatus: 'blocked-runtime' });
+    worktreeRecord.selectedHash = 'WORKTREE';
+    const persistComparisonReport = vi.fn().mockResolvedValue(createPacketResult(worktreeRecord));
+    const archiveComparisonReportSource = vi.fn();
+    const action = createEnsureComparisonReportEvidenceAction(
+      context as never,
+      baseDeps({ persistComparisonReport, archiveComparisonReportSource }) as never
+    );
+
+    const result = await action({ model: createModel(), selectedHash: 'WORKTREE', baseHash: 'c3' });
+
+    expect(result.outcome).toBe('retained-comparison-report-evidence');
+    expect(result.archiveFailureReason).toBe('retained-archive-unavailable');
+    // A working-tree comparison is intentionally never archived.
+    expect(archiveComparisonReportSource).not.toHaveBeenCalled();
+  });
+
+  it('acquires a required container image before launch and continues to persistence', async () => {
+    const context = harness.createContext();
+    const locateRuntime = vi.fn().mockResolvedValue(
+      createRuntimeSelection({
+        provider: 'linux-container',
+        containerImage: 'nationalinstruments/labview:2026q1-linux',
+        containerAcquisitionState: 'required'
+      })
+    );
+    const acquireWindowsContainerImage = vi.fn().mockResolvedValue({
+      acquisitionState: 'acquired',
+      image: 'nationalinstruments/labview:2026q1-linux',
+      notes: []
+    });
+    const persistComparisonReport = vi
+      .fn()
+      .mockResolvedValue(createPacketResult(createPacketRecord({ reportStatus: 'blocked-runtime' })));
+    const action = createEnsureComparisonReportEvidenceAction(
+      context as never,
+      baseDeps({ locateRuntime, acquireWindowsContainerImage, persistComparisonReport }) as never
+    );
+
+    const result = await action({ model: createModel(), selectedHash: 'c3', baseHash: 'a1' });
+
+    expect(acquireWindowsContainerImage).toHaveBeenCalledWith(
+      'nationalinstruments/labview:2026q1-linux',
+      process.platform,
+      expect.objectContaining({ reportProgress: undefined })
+    );
+    // The acquired runtime selection flows into persistence.
+    expect(persistComparisonReport).toHaveBeenCalledWith(
+      expect.objectContaining({
+        runtimeSelection: expect.objectContaining({ containerAcquisitionState: 'acquired' })
+      })
+    );
+    expect(result.outcome).toBe('retained-comparison-report-evidence');
+  });
+
+  it('marks the runtime container-image-acquisition-failed when acquisition fails', async () => {
+    const context = harness.createContext();
+    const locateRuntime = vi.fn().mockResolvedValue(
+      createRuntimeSelection({
+        provider: 'linux-container',
+        containerImage: 'nationalinstruments/labview:2026q1-linux',
+        containerAcquisitionState: 'required'
+      })
+    );
+    const acquireWindowsContainerImage = vi.fn().mockResolvedValue({
+      acquisitionState: 'failed',
+      image: 'nationalinstruments/labview:2026q1-linux',
+      notes: ['pull failed']
+    });
+    const persistComparisonReport = vi
+      .fn()
+      .mockResolvedValue(createPacketResult(createPacketRecord({ reportStatus: 'blocked-runtime' })));
+    const action = createEnsureComparisonReportEvidenceAction(
+      context as never,
+      baseDeps({ locateRuntime, acquireWindowsContainerImage, persistComparisonReport }) as never
+    );
+
+    await action({ model: createModel(), selectedHash: 'c3', baseHash: 'a1' });
+
+    expect(persistComparisonReport).toHaveBeenCalledWith(
+      expect.objectContaining({
+        runtimeSelection: expect.objectContaining({
+          blockedReason: 'container-image-acquisition-failed',
+          containerAcquisitionState: 'failed'
+        })
+      })
+    );
+  });
+
+  it('returns cancelled/after-runtime-acquisition when cancelled during image acquisition', async () => {
+    const context = harness.createContext();
+    const token = harness.createCancellationToken(false);
+    const locateRuntime = vi.fn().mockResolvedValue(
+      createRuntimeSelection({
+        provider: 'linux-container',
+        containerImage: 'nationalinstruments/labview:2026q1-linux',
+        containerAcquisitionState: 'required'
+      })
+    );
+    const acquireWindowsContainerImage = vi.fn().mockImplementation(async () => {
+      (token as { isCancellationRequested: boolean }).isCancellationRequested = true;
+      return {
+        acquisitionState: 'acquired',
+        image: 'nationalinstruments/labview:2026q1-linux',
+        notes: []
+      };
+    });
+    const persistComparisonReport = vi.fn();
+    const action = createEnsureComparisonReportEvidenceAction(
+      context as never,
+      baseDeps({ locateRuntime, acquireWindowsContainerImage, persistComparisonReport }) as never
+    );
+
+    const result = await action({
+      model: createModel(),
+      selectedHash: 'c3',
+      baseHash: 'a1',
+      cancellationToken: token as never
+    });
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        outcome: 'cancelled',
+        cancellationStage: 'after-runtime-acquisition'
+      })
+    );
+    expect(persistComparisonReport).not.toHaveBeenCalled();
+  });
+});
