@@ -1173,6 +1173,18 @@ async function runHostNativeExecution(
         worktreeSnapshotNote
       ];
     }
+    // VHS-REQ-641 (Phase 3): surface the content-addressed snapshot identity on
+    // the execution result so the archive seam can content-address the retained
+    // pair-ID for a working-tree comparison (issue #1366).
+    const worktreeSnapshotId = deriveComparedWorktreeSnapshotId({
+      selectedHash: record.selectedHash,
+      baseHash: record.baseHash,
+      leftBytes: leftBlob,
+      rightBytes: rightBlob
+    });
+    if (worktreeSnapshotId) {
+      executionResult.worktreeSnapshotId = worktreeSnapshotId;
+    }
     return executionResult;
   } finally {
     await cleanupPreparedExecutionContext(executionContext, deps.removePath);
@@ -5027,19 +5039,36 @@ export function buildWorktreeSnapshotProvenanceNote(options: {
   leftBytes: Buffer;
   rightBytes: Buffer;
 }): string | undefined {
-  const selectedIsWorktree = isWorktreeRevision(options.selectedHash);
-  const baseIsWorktree = isWorktreeRevision(options.baseHash);
-  if (!selectedIsWorktree && !baseIsWorktree) {
+  const identity = deriveComparedWorktreeSnapshotId(options);
+  if (!identity) {
     return undefined;
   }
-  const snapshotBytes = selectedIsWorktree ? options.rightBytes : options.leftBytes;
-  const identity = deriveWorktreeSnapshotIdentity(snapshotBytes);
   return (
     `Compared uncommitted working-tree snapshot ${identity} for ` +
     `${options.normalizedRelativePath}. This snapshot is content-addressed by its ` +
     `on-disk bytes; the comparison is not retained in the dashboard because ` +
     `uncommitted content is not reproducible (VHS-REQ-641).`
   );
+}
+
+// VHS-REQ-641: resolve the content-addressed identity of the compared
+// working-tree snapshot, or undefined when neither side is the working-tree
+// sentinel (a committed pair has no snapshot). `leftBytes` are the base/older
+// side, `rightBytes` the selected/newer side; the snapshot is whichever side is
+// the WORKTREE sentinel (selected takes precedence when both are).
+export function deriveComparedWorktreeSnapshotId(options: {
+  selectedHash: string;
+  baseHash: string;
+  leftBytes: Buffer;
+  rightBytes: Buffer;
+}): string | undefined {
+  const selectedIsWorktree = isWorktreeRevision(options.selectedHash);
+  const baseIsWorktree = isWorktreeRevision(options.baseHash);
+  if (!selectedIsWorktree && !baseIsWorktree) {
+    return undefined;
+  }
+  const snapshotBytes = selectedIsWorktree ? options.rightBytes : options.leftBytes;
+  return deriveWorktreeSnapshotIdentity(snapshotBytes);
 }
 
 // VHS-REQ-621 / VHS-REQ-658: classify a nonzero/no-report runtime failure into an

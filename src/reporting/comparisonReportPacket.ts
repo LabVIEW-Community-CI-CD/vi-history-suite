@@ -43,6 +43,13 @@ export interface ComparisonReportRuntimeExecution {
   failureReason?: string;
   diagnosticReason?: string;
   diagnosticNotes?: string[];
+  /**
+   * VHS-REQ-641 (Phase 3, issue #1366): content-addressed identity of the staged
+   * working-tree bytes when a compared side was the WORKTREE sentinel; undefined
+   * for a committed pair. Carries the snapshot identity to the archive seam so a
+   * retained working-tree comparison gets a content-addressed pair-ID.
+   */
+  worktreeSnapshotId?: string;
   diagnosticLogSourcePath?: string;
   diagnosticLogArtifactPath?: string;
   labviewIniPath?: string;

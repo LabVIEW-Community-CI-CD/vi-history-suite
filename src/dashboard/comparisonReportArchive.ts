@@ -71,7 +71,8 @@ export function buildComparisonReportArchivePlan(
     selectedHash: record.selectedHash,
     baseHash: record.baseHash,
     repoId: record.artifactPlan.repoId,
-    fileId: record.artifactPlan.fileId
+    fileId: record.artifactPlan.fileId,
+    worktreeSnapshotId: record.runtimeExecution?.worktreeSnapshotId
   });
 }
 
