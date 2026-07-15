@@ -1968,6 +1968,11 @@ Missing numeric IDs are intentional.
   - Closeout summaries treat Definition-of-Done evidence as active closeout
     evidence and separate any unresolved findings into blocking follow-up
     issues.
+  - A versioned requirements manifest is generated under `out/requirements/` at
+    build time, stamped with the extension version, commit, and a stable
+    content digest, so the packaged VSIX ships the exact active requirements it
+    was built from and a future consumer can detect requirements drift between
+    shipped versions.
 - Agent Work Scope:
   - Change requirements docs, GitHub issue templates, and the coherence test
     together.
@@ -1989,6 +1994,7 @@ Missing numeric IDs are intentional.
   - `scripts/auditRequirementVerificationLinkage.js`
   - `scripts/auditRequirementCriteriaInventory.js`
   - `scripts/verifyRequirementsHealth.js`
+  - `scripts/exportRequirementsManifest.js`
   - `.github/ISSUE_TEMPLATE/requirement_target.yml`
 - Verification References:
   - `tests/unit/requirementsDocs.test.ts`
@@ -1999,6 +2005,7 @@ Missing numeric IDs are intentional.
   - `tests/unit/requirementVerificationLinkage.test.ts`
   - `tests/unit/requirementCriteriaInventory.test.ts`
   - `tests/unit/verifyRequirementsHealth.test.ts`
+  - `tests/unit/requirementsManifestExport.test.ts`
   - `manual:requirements-quality-check-system-scope`
 - Change Guidance:
   - Do not silently remove requirement IDs; retire or supersede them through the

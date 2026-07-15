@@ -156,6 +156,21 @@ jobs:
           if-no-files-found: ignore
           retention-days: 30
 
+      # Ephemeral requirements-manifest artifact (VHS-REQ-601): the manifest is
+      # generated under out/ by `npm run package` (compile), so it also ships in
+      # the VSIX. Uploading it here lets a future agent download the exact
+      # requirements set for a commit without waiting on a Marketplace release.
+      - name: Requirements Manifest / requirements-manifest
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: requirements-manifest-${{ github.run_id }}
+          path: |
+            out/requirements/requirements-manifest.json
+            out/requirements/requirements-manifest.md
+          if-no-files-found: ignore
+          retention-days: 30
+
   windows-unit-test:
     name: Windows Unit Tests
     runs-on: windows-latest
