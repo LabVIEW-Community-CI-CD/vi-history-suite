@@ -212,7 +212,12 @@ export function injectRevisionContextIntoExportedReportHtml(
     : `<!DOCTYPE html><html><head><meta charset="UTF-8" />${styleInjection}</head><body>${html}</body></html>`;
 
   if (/<body\b[^>]*>/i.test(withHead)) {
-    return withHead.replace(/<body\b([^>]*)>/i, `<body$1>${contextMarkup}`);
+    // Use a function replacer so `contextMarkup` is inserted literally: a commit
+    // subject/body can contain `$`-sequences ($&, $1, $', $`, $$) that
+    // String.prototype.replace would otherwise interpret as special patterns in
+    // a string replacement, corrupting the exported revision context. escapeHtml
+    // does not escape `$`, so this defense is required.
+    return withHead.replace(/<body\b[^>]*>/i, (match) => `${match}${contextMarkup}`);
   }
 
   return `<!DOCTYPE html><html><head><meta charset="UTF-8" />${styleInjection}</head><body>${contextMarkup}${withHead}</body></html>`;
