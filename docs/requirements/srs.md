@@ -1988,6 +1988,9 @@ Missing numeric IDs are intentional.
     comparison-runtime track's last-validated build version, and any track not
     validated at the current build version is ranked as a selectable
     re-validation risk.
+  - A committed helper records a comparison-runtime track's validation for a
+    build version into the runtime-validation ledger and fails closed on an
+    unknown track or a malformed version.
 - Agent Work Scope:
   - Change requirements docs, GitHub issue templates, and the coherence test
     together.
@@ -2012,6 +2015,7 @@ Missing numeric IDs are intentional.
   - `scripts/exportRequirementsManifest.js`
   - `scripts/buildRiskLedger.js`
   - `docs/requirements/runtime-validation-ledger.json`
+  - `scripts/recordRuntimeValidation.js`
   - `.github/ISSUE_TEMPLATE/requirement_target.yml`
 - Verification References:
   - `tests/unit/requirementsDocs.test.ts`
@@ -2024,6 +2028,7 @@ Missing numeric IDs are intentional.
   - `tests/unit/verifyRequirementsHealth.test.ts`
   - `tests/unit/requirementsManifestExport.test.ts`
   - `tests/unit/riskLedgerScript.test.ts`
+  - `tests/unit/recordRuntimeValidationScript.test.ts`
   - `manual:requirements-quality-check-system-scope`
 - Change Guidance:
   - Do not silently remove requirement IDs; retire or supersede them through the
