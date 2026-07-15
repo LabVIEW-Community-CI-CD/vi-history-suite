@@ -1237,6 +1237,11 @@ Missing numeric IDs are intentional.
     retained dashboard pair evidence; committed-pair behavior is unchanged.
   - The working-tree comparison is read-only and never writes into the user's
     working directory, and the comparison-report webview keeps scripts disabled.
+  - A working-tree comparison records the content-addressed identity of the
+    compared uncommitted snapshot (a hash of the staged on-disk bytes) as
+    provenance in the retained runtime diagnostic notes, so the evidence names
+    which uncommitted content was compared; this is provenance only and does not
+    add the comparison to the reproducible retained dashboard pair evidence.
 - Agent Work Scope:
   - Change the eligibility model, panel working-tree selection row,
     preflight/runtime revision readers, and their tests together; use the
