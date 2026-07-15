@@ -127,4 +127,24 @@ describe('materializeRevisionViTree (VHS-REQ-659.15)', () => {
     expect(deps.writeFile).toHaveBeenCalledWith(path.join('/dest', 'shared', 'Dep.vi'), expect.any(Buffer));
     expect(result.stagedFileCount).toBe(3);
   });
+
+  it('stages tracked files whose names contain non-traversal double dots while rejecting real traversal segments', async () => {
+    const deps = makeDeps([
+      { repoRelativePath: 'lib/Foo.vi', sizeBytes: 10 },
+      { repoRelativePath: 'lib/v1..2/Dep.vi', sizeBytes: 12 },
+      { repoRelativePath: 'lib/Bar..Baz.ctl', sizeBytes: 8 },
+      { repoRelativePath: 'lib/../escape/Evil.vi', sizeBytes: 4 }
+    ]);
+    const result = await materializeRevisionViTree(
+      { revisionId: 'rev', relativePath: 'lib/Foo.vi', destinationDirectory: '/dest' },
+      deps
+    );
+
+    // Legitimate files whose names merely contain `..` are staged.
+    expect(deps.readBlob).toHaveBeenCalledWith('rev', 'lib/v1..2/Dep.vi');
+    expect(deps.readBlob).toHaveBeenCalledWith('rev', 'lib/Bar..Baz.ctl');
+    // A genuine `..` traversal segment is dropped before staging.
+    expect(deps.readBlob).not.toHaveBeenCalledWith('rev', 'lib/../escape/Evil.vi');
+    expect(result.stagedFileCount).toBe(3);
+  });
 });
