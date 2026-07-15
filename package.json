@@ -281,7 +281,7 @@
   },
   "scripts": {
     "clean": "rimraf out out-tests coverage",
-    "compile": "tsc -p . && node scripts/generateBuildInfo.js",
+    "compile": "tsc -p . && node scripts/generateBuildInfo.js && node scripts/exportRequirementsManifest.js",
     "check": "tsc -p . --noEmit",
     "quality:local": "npm run check && npm test && npm run traceability:audit && npm run customization:audit && npm run docs:links && npm run coverage:map && npm run requirements:verify",
     "branch-protection:audit": "node scripts/auditBranchProtectionSettings.js",
@@ -314,6 +314,7 @@
     "requirements:criteria:enforce": "node scripts/auditRequirementCriteriaInventory.js --enforce",
     "requirements:verify": "node scripts/verifyRequirementsHealth.js",
     "requirements:verify:strict": "node scripts/verifyRequirementsHealth.js --strict",
+    "requirements:manifest": "node scripts/exportRequirementsManifest.js",
     "verify:preview": "npm run compile && node out/tooling/viPreviewVerifyCli.js",
     "docs:links": "node scripts/checkDocsLinks.js",
     "docs:gate": "node scripts/checkDocumentationWorkbench.js",

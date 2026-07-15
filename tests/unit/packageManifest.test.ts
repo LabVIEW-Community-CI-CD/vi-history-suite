@@ -349,7 +349,7 @@ describe('extension manifest public metadata', () => {
     expect(manifest.devDependencies).toHaveProperty('@vscode/vsce', '3.9.2');
     expect(manifest.scripts).toMatchObject({
       clean: 'rimraf out out-tests coverage',
-      compile: 'tsc -p . && node scripts/generateBuildInfo.js',
+      compile: 'tsc -p . && node scripts/generateBuildInfo.js && node scripts/exportRequirementsManifest.js',
       check: 'tsc -p . --noEmit',
       test: 'vitest run --coverage',
       package: 'npm run compile && npm run package:audit && node scripts/runPinnedVsce.js package',
