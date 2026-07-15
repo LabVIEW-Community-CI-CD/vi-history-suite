@@ -88,6 +88,14 @@ describe('historyPanelRendering', () => {
       expect(html).not.toContain('<script>Test</script>');
       expect(html).toContain('Examples/&lt;script&gt;Test&lt;/script&gt;.vi');
     });
+
+    it('embeds the distinct-hash guard in the webview compare-pair resolver (VHS-REQ-133.3)', () => {
+      // The webview resolveSelectedPair must reject a duplicate-hash selection,
+      // mirroring the tested resolveSelectedComparePair guard, so a self-compare
+      // pair can never be posted from the panel.
+      const html = renderHistoryPanelHtml(createTestViewModel());
+      expect(html).toContain('ranked[0].hash === ranked[1].hash');
+    });
   });
 
   describe('per-revision preview button (VHS-REQ-659.7, VHS-REQ-659.15)', () => {
