@@ -52,6 +52,7 @@ import {
   buildLinuxContainerBindMountVisibilityNote,
   deriveWorktreeSnapshotIdentity,
   buildWorktreeSnapshotProvenanceNote,
+  deriveComparedWorktreeSnapshotId,
   LINUX_HOST_NATIVE_HEADLESS_OPT_IN_DEFAULT_TIMEOUT_MS
 } from '../../src/reporting/comparisonReportRuntimeExecution';
 import { ComparisonReportPacketRecord } from '../../src/reporting/comparisonReportPacket';
@@ -6863,5 +6864,38 @@ describe('working-tree snapshot provenance (VHS-REQ-641.6)', () => {
     );
     expect(notes.some((note) => note.includes('uncommitted working-tree snapshot'))).toBe(true);
     expect(notes.some((note) => note.includes(expectedIdentity))).toBe(true);
+    // VHS-REQ-641.7: the content-addressed identity is also surfaced as a
+    // structured field so the archive seam can content-address the pair-ID.
+    expect(result.record.runtimeExecution.worktreeSnapshotId).toBe(expectedIdentity);
+  });
+
+  it('deriveComparedWorktreeSnapshotId resolves the sentinel side and skips committed pairs (VHS-REQ-641.7)', () => {
+    // Selected side is the working tree -> use the right (selected) bytes.
+    expect(
+      deriveComparedWorktreeSnapshotId({
+        selectedHash: 'WORKTREE',
+        baseHash: 'abcdef1234567890',
+        leftBytes: Buffer.from('base'),
+        rightBytes: Buffer.from('uncommitted-widget')
+      })
+    ).toBe(deriveWorktreeSnapshotIdentity(Buffer.from('uncommitted-widget')));
+    // Base side is the working tree -> use the left (base) bytes.
+    expect(
+      deriveComparedWorktreeSnapshotId({
+        selectedHash: 'abcdef1234567890',
+        baseHash: 'WORKTREE',
+        leftBytes: Buffer.from('uncommitted-base'),
+        rightBytes: Buffer.from('selected')
+      })
+    ).toBe(deriveWorktreeSnapshotIdentity(Buffer.from('uncommitted-base')));
+    // Committed pair -> no snapshot identity.
+    expect(
+      deriveComparedWorktreeSnapshotId({
+        selectedHash: 'aaaaaaaaaaaa',
+        baseHash: 'bbbbbbbbbbbb',
+        leftBytes: Buffer.from('base'),
+        rightBytes: Buffer.from('selected')
+      })
+    ).toBeUndefined();
   });
 });
