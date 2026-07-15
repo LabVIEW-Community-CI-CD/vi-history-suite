@@ -382,4 +382,36 @@ describe('registerOpenRuntimeReportPanelCommand (VHS-REQ-620 / VHS-REQ-645)', ()
     // no container section.
     expect(panel.webview.html).not.toContain('data-testid="runtime-report-container-section"');
   });
+
+  it('clamps and persists a CLI connect-timeout edit from the panel (VHS-REQ-620.8)', async () => {
+    const panel = createMockPanel();
+    vi.spyOn(vscode.window, 'createWebviewPanel').mockReturnValue(panel as never);
+    registerOpenRuntimeReportPanelCommand(
+      createFakeContext() as never,
+      createFakeWatcher(detectionBoth) as never,
+      { isTrusted: () => true, containerPlatform: 'linux' }
+    );
+    await vscode.commands.executeCommand(OPEN_RUNTIME_REPORT_PANEL_COMMAND_ID);
+
+    // An in-range integer is persisted verbatim.
+    await panel.dispatchMessage({ command: 'setCliConnectTimeout', seconds: 300 });
+    expect(sharedUpdate).toHaveBeenCalledWith(
+      'runtime.cliConnectTimeoutSeconds',
+      300,
+      vscode.ConfigurationTarget.Global
+    );
+
+    // An above-max value is clamped before persisting.
+    await panel.dispatchMessage({ command: 'setCliConnectTimeout', seconds: 9999 });
+    expect(sharedUpdate).toHaveBeenCalledWith(
+      'runtime.cliConnectTimeoutSeconds',
+      600,
+      vscode.ConfigurationTarget.Global
+    );
+
+    // A non-number seconds payload is ignored (no additional write).
+    const callsBefore = sharedUpdate.mock.calls.length;
+    await panel.dispatchMessage({ command: 'setCliConnectTimeout' });
+    expect(sharedUpdate.mock.calls.length).toBe(callsBefore);
+  });
 });

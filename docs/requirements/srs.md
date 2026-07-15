@@ -2782,6 +2782,15 @@ Missing numeric IDs are intentional.
     warning; other `viHistorySuite` changes re-render from the cached mode
     without a probe. An unset image selection is never flagged because the
     compare-time default adapts to the active platform.
+  - The Runtime & Report Settings panel exposes an Advanced runtime control that
+    edits the LabVIEW CLI connect timeout
+    (`viHistorySuite.runtime.cliConnectTimeoutSeconds`): the panel renders the
+    current value with the supported range, and applying an edit clamps the
+    requested value into the supported window (rounding fractional entries and
+    substituting the shipped default for a non-numeric request) before
+    persisting to `ConfigurationTarget.Global`, so an out-of-range or fractional
+    entry never reaches user settings and the panel re-renders the normalized
+    value.
 - Agent Work Scope:
   - Keep the persisted-selection arbitration in
     `src/ui/runtimeAvailabilityNotice.ts::selectActiveRuntime` reusing
@@ -2798,6 +2807,7 @@ Missing numeric IDs are intentional.
   - `src/ui/runtimeAvailabilityNotice.ts`
   - `src/ui/runtimeReportPanel.ts`
   - `src/commands/openRuntimeReportPanelCommand.ts`
+  - `src/reporting/comparisonReportAction.ts`
   - `src/tooling/dockerDaemonPlatform.ts`
   - `src/tooling/containerImageCatalog.ts`
   - `src/commands/pickRuntimeProviderCommand.ts`
@@ -2807,6 +2817,7 @@ Missing numeric IDs are intentional.
   - `tests/unit/runtimeAvailabilityWatcher.test.ts`
   - `tests/unit/runtimeReportPanel.test.ts`
   - `tests/unit/openRuntimeReportPanelCommand.test.ts`
+  - `tests/unit/comparisonReportAction.test.ts`
   - `tests/unit/dockerDaemonPlatform.test.ts`
   - `tests/unit/containerImageCatalog.test.ts`
   - `tests/unit/pickRuntimeProviderCommand.test.ts`

@@ -49,7 +49,12 @@ import {
 } from '../tooling/dockerDaemonPlatform';
 import {
   applyComparisonReportOptionSelection,
-  readComparisonReportOptions
+  applyCliConnectTimeoutSelection,
+  readCliConnectTimeoutSeconds,
+  readComparisonReportOptions,
+  DEFAULT_CLI_CONNECT_TIMEOUT_SECONDS,
+  MIN_CLI_CONNECT_TIMEOUT_SECONDS,
+  MAX_CLI_CONNECT_TIMEOUT_SECONDS
 } from '../reporting/comparisonReportAction';
 import {
   buildAvailableStatusBarSuffix,
@@ -93,6 +98,7 @@ interface RuntimeReportPanelMessage {
   readonly include?: boolean;
   readonly tag?: string;
   readonly enabled?: boolean;
+  readonly seconds?: number;
 }
 
 export interface RegisterOpenRuntimeReportPanelCommandDeps {
@@ -251,6 +257,12 @@ export function registerOpenRuntimeReportPanelCommand(
       },
       report: {
         includeFlags: deriveReportIncludeFlags(reportOptions)
+      },
+      advanced: {
+        cliConnectTimeoutSeconds: readCliConnectTimeoutSeconds(configuration),
+        defaultTimeoutSeconds: DEFAULT_CLI_CONNECT_TIMEOUT_SECONDS,
+        minSeconds: MIN_CLI_CONNECT_TIMEOUT_SECONDS,
+        maxSeconds: MAX_CLI_CONNECT_TIMEOUT_SECONDS
       }
     };
   };
@@ -333,6 +345,16 @@ export function registerOpenRuntimeReportPanelCommand(
       }
       case 'setPreviewEnabled': {
         await applyViPreviewEnabledSelection(message.enabled === true, { update });
+        return;
+      }
+      case 'setCliConnectTimeout': {
+        if (typeof message.seconds !== 'number') {
+          return;
+        }
+        await applyCliConnectTimeoutSelection(message.seconds, { update });
+        // Re-render so an out-of-range or fractional entry snaps back to the
+        // clamped value the setting now holds.
+        rerender();
         return;
       }
       default:
