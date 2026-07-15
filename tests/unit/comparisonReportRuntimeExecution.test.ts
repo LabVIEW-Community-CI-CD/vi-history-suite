@@ -54,6 +54,7 @@ import {
   deriveWorktreeSnapshotIdentity,
   buildWorktreeSnapshotProvenanceNote,
   deriveComparedWorktreeSnapshotId,
+  extractCommandOptionValue,
   LINUX_HOST_NATIVE_HEADLESS_OPT_IN_DEFAULT_TIMEOUT_MS
 } from '../../src/reporting/comparisonReportRuntimeExecution';
 import { ComparisonReportPacketRecord } from '../../src/reporting/comparisonReportPacket';
@@ -7184,5 +7185,33 @@ describe('comparison-runtime execution primitives (VHS-REQ-621)', () => {
       expect(result.cancelled).toBe(true);
       expect(result.exitCode).toBe(130);
     });
+  });
+});
+
+describe('extractCommandOptionValue (VHS-REQ-621)', () => {
+  it('returns the trimmed value following the option flag', () => {
+    expect(extractCommandOptionValue(['-PortNumber', ' 3363 ', '-o'], '-PortNumber')).toBe('3363');
+  });
+
+  it('returns the first match when the option appears more than once', () => {
+    expect(
+      extractCommandOptionValue(['-VI1', 'first.vi', '-VI1', 'second.vi'], '-VI1')
+    ).toBe('first.vi');
+  });
+
+  it('returns undefined when the option is missing', () => {
+    expect(extractCommandOptionValue(['-o', '-c'], '-PortNumber')).toBeUndefined();
+  });
+
+  it('returns undefined when the option is the last argument (no value follows)', () => {
+    expect(extractCommandOptionValue(['-o', '-PortNumber'], '-PortNumber')).toBeUndefined();
+  });
+
+  it('returns undefined when the following value is blank', () => {
+    expect(extractCommandOptionValue(['-PortNumber', '   ', '-o'], '-PortNumber')).toBeUndefined();
+  });
+
+  it('returns undefined for an empty argument list', () => {
+    expect(extractCommandOptionValue([], '-PortNumber')).toBeUndefined();
   });
 });
