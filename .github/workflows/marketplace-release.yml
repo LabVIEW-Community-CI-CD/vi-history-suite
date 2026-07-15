@@ -1,9 +1,12 @@
 name: Marketplace Release
 
+# VHS-REQ-609: This is the single manual release lever. It has NO automatic
+# trigger: it runs ONLY from a manual maintainer `workflow_dispatch` on an exact
+# `vX.Y.Z` tag ref (dispatch on the tag preserves GITHUB_REF, so the exact-tag,
+# package-version, and origin/main-reachability guards below stay intact), and it
+# publishes only after the protected `marketplace-release` environment approval.
+# Agents must never dispatch or approve this workflow; releasing is maintainer-only.
 on:
-  push:
-    tags:
-      - 'v*'
   workflow_dispatch:
 
 permissions:
