@@ -542,6 +542,29 @@ describe('requirement verification health (VHS-REQ-601)', () => {
     ).toBe(true);
   });
 
+  it('keeps emitted JSON provenance aligned with the published schema contract', () => {
+    const provenance = {
+      generatedAt: '2026-07-14T12:00:00.000Z',
+      cwd: path.resolve('/repo'),
+      outputMode: 'json',
+      strict: true,
+      argv: ['--json', '--strict', '--include-provenance']
+    };
+    const result = verifyRequirementsHealth('/repo', OUTPUT_FIXTURE);
+    const output = JSON.parse(
+      renderRequirementsHealthOutput(result, { json: true, strict: true, provenance })
+    ) as { provenance: Record<string, unknown> };
+    const schema = JSON.parse(renderRequirementsHealthJsonSchema()) as {
+      $defs: {
+        provenance: RequiredSchemaNode & { properties: { outputMode: { enum: string[] } } };
+      };
+    };
+
+    expectRequiredKeysPresent(output.provenance, schema.$defs.provenance.required);
+    expect(output.provenance).toEqual(provenance);
+    expect(schema.$defs.provenance.properties.outputMode.enum).toContain(output.provenance.outputMode);
+  });
+
   it('adds schema provenance only when requested', () => {
     const provenance = {
       generatedAt: '2026-07-14T12:00:00.000Z',
