@@ -12,6 +12,7 @@ import {
 import {
   classifyLabviewCliDiagnosticText,
   classifySelectedTreeMaterializeError,
+  classifyRuntimeFailure,
   SELECTED_TREE_MATERIALIZE_LONG_PATH_DIAGNOSTIC,
   buildDefaultRunCommand,
   normalizeComparisonProcessError,
@@ -6063,5 +6064,96 @@ describe('prepareWindowsContainerExecutionContext interop staging (VHS-REQ-624)'
       '/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe'
     );
     expect(context.diagnosticPathMapping?.runtimeRoot).toBeTruthy();
+  });
+});
+
+describe('classifyRuntimeFailure log-only and bitness-guard arms (VHS-REQ-621)', () => {
+  const LOG_ONLY_STDOUT = 'LabVIEWCLI started logging in file: C:\\temp\\vihs\\diag.log';
+
+  function observation(
+    trigger: RuntimeProcessObservation['trigger'],
+    overrides: Partial<RuntimeProcessObservation> = {}
+  ): RuntimeProcessObservation {
+    return {
+      capturedAt: '2026-07-15T00:00:00.000Z',
+      hostPlatform: 'win32',
+      runtimePlatform: 'win32',
+      trigger,
+      observedProcesses: [],
+      observedProcessNames: [],
+      labviewProcessObserved: false,
+      labviewCliProcessObserved: true,
+      lvcompareProcessObserved: false,
+      ...overrides
+    };
+  }
+
+  it('classifies a log-only CLI failure with LabVIEW absent through exit as labview-cli-log-only-no-labview-through-exit', () => {
+    const result = classifyRuntimeFailure({
+      engine: 'labview-cli',
+      exitCode: 1,
+      reportExists: false,
+      stdout: LOG_ONLY_STDOUT,
+      stderr: '',
+      processObservation: observation('cli-log-banner'),
+      exitProcessObservation: observation('process-exit')
+    });
+
+    expect(result.reason).toBe('labview-cli-log-only-no-labview-through-exit');
+    expect(result.notes.join(' ')).toContain('cli-log-banner and process-exit snapshots');
+  });
+
+  it('classifies a log-only CLI failure observed only at the banner snapshot as labview-cli-log-only-no-labview-at-banner-snapshot', () => {
+    const result = classifyRuntimeFailure({
+      engine: 'labview-cli',
+      exitCode: 1,
+      reportExists: false,
+      stdout: LOG_ONLY_STDOUT,
+      stderr: '',
+      // Banner snapshot qualifies, but the exit snapshot does not observe the CLI,
+      // so the through-exit arm is not taken and this falls to the banner arm.
+      processObservation: observation('cli-log-banner'),
+      exitProcessObservation: observation('process-exit', { labviewCliProcessObserved: false })
+    });
+
+    expect(result.reason).toBe('labview-cli-log-only-no-labview-at-banner-snapshot');
+    expect(result.notes.join(' ')).toContain('cli-log-banner snapshot');
+  });
+
+  it('falls back to labview-cli-exited-nonzero-log-only-no-report when no qualifying snapshot exists', () => {
+    const result = classifyRuntimeFailure({
+      engine: 'labview-cli',
+      exitCode: 1,
+      reportExists: false,
+      stdout: LOG_ONLY_STDOUT,
+      stderr: '',
+      // No process observations at all -> neither log-only snapshot arm qualifies.
+      processObservation: undefined,
+      exitProcessObservation: undefined
+    });
+
+    expect(result.reason).toBe('labview-cli-exited-nonzero-log-only-no-report');
+    expect(result.notes.join(' ')).toContain('only advertised the diagnostic log path');
+  });
+
+  it('does not rewrite to labview-host-bitness-conflict when no LabVIEW.exe was observed (VHS-REQ-621 guard)', () => {
+    const result = classifyRuntimeFailure({
+      engine: 'labview-cli',
+      exitCode: 1,
+      reportExists: false,
+      selectedBitness: 'x86',
+      // Non-log-only stdout so the CLI log-only block is skipped and the generic
+      // nonzero arm is reached; the exit snapshot carries a mismatched bitness but
+      // labviewProcessObserved is false, so the conflict guard must NOT fire.
+      stdout: '',
+      stderr: 'some unrelated failure',
+      exitProcessObservation: observation('process-exit', {
+        labviewProcessObserved: false,
+        labviewProcessBitness: 'x64'
+      })
+    });
+
+    expect(result.reason).toBe('command-exited-nonzero');
+    expect(result.notes).toEqual([]);
   });
 });
