@@ -152,7 +152,16 @@ describe('issue standards triage script', () => {
         };
       }
       if (args.includes('scripts/run_assurance.py')) {
-        return { status: 0, stdout: 'REQ: PASS\nTEST: PASS\n' };
+        return {
+          status: 0,
+          stdout: [
+            'Gate Scorecard',
+            '| Gate | Status |',
+            '| --- | --- |',
+            '| req | PASS |',
+            '| test | PASS |'
+          ].join('\n')
+        };
       }
       return { status: 99, stderr: `unexpected ${command} ${args.join(' ')}` };
     });
@@ -177,8 +186,114 @@ describe('issue standards triage script', () => {
     expect(result.markdown).toContain('Issue: #1040 Add local standards-review issue triage helper');
     expect(result.markdown).toContain('REQ=strong');
     expect(fs.existsSync(path.join(root, 'evidence', 'issue-1040', 'issue.json'))).toBe(true);
-    expect(fs.readFileSync(path.join(root, 'evidence', 'issue-1040', 'assurance-scorecard.txt'), 'utf8')).toContain('REQ: PASS');
-    expect(fs.existsSync(path.join(root, 'evidence', 'issue-1040', 'triage-summary.json'))).toBe(true);
+    expect(fs.readFileSync(path.join(root, 'evidence', 'issue-1040', 'assurance-scorecard.txt'), 'utf8')).toContain('| req | PASS |');
+    const triageSummaryPath = path.join(root, 'evidence', 'issue-1040', 'triage-summary.json');
+    expect(fs.existsSync(triageSummaryPath)).toBe(true);
+    const triageSummary = JSON.parse(fs.readFileSync(triageSummaryPath, 'utf8')) as {
+      schemaVersion: number;
+      options: {
+        issue: string;
+        repo: string;
+        image: string;
+        profile: string;
+        requirementsSpecScope: string;
+        saveDir: string;
+        skipIssueFetch: boolean;
+        keepSnapshot: boolean;
+        help: boolean;
+      };
+      outputDir: string;
+      issue: {
+        skipped: boolean;
+        status: number;
+        json: {
+          number: number;
+          title: string;
+          state: string;
+          url: string;
+          labels: Array<{ name: string }>;
+          body: string;
+        };
+        command: string;
+      };
+      imageInspect: { status: number; command: string };
+      imageAccess: string;
+      imagePreparation: Array<{ name: string; file: string; status: number; command: string }>;
+      snapshot: {
+        mode: string;
+        path: string;
+        trackedFileCount: number;
+        symlinkFiles: string[];
+        missingFiles: string[];
+        generatedRootsExcluded: string[];
+        removed: boolean;
+      };
+      standards: Array<{
+        name: string;
+        status: number;
+        file: string;
+        command: string;
+        requirementsQuality?: { ok: boolean; findingCount: number };
+        evidenceScan?: { fileCount: number; areas: Record<string, string> };
+        scorecard?: Record<string, string>;
+      }>;
+      success: boolean;
+    };
+    const requirementsQuality = triageSummary.standards.find((step) => step.name === 'requirements-quality')!;
+    const evidenceScan = triageSummary.standards.find((step) => step.name === 'evidence-scan')!;
+    const assuranceScorecard = triageSummary.standards.find((step) => step.name === 'assurance-scorecard')!;
+    expect(Object.keys(triageSummary)).toEqual([
+      'schemaVersion',
+      'options',
+      'outputDir',
+      'issue',
+      'imageInspect',
+      'imageAccess',
+      'imagePreparation',
+      'snapshot',
+      'standards',
+      'success'
+    ]);
+    expect(Object.keys(triageSummary.options)).toEqual([
+      'issue',
+      'repo',
+      'image',
+      'profile',
+      'requirementsSpecScope',
+      'saveDir',
+      'skipIssueFetch',
+      'keepSnapshot',
+      'help'
+    ]);
+    expect(Object.keys(triageSummary.issue)).toEqual(['skipped', 'status', 'json', 'command']);
+    expect(Object.keys(triageSummary.issue.json)).toEqual(['number', 'title', 'state', 'url', 'labels', 'body']);
+    expect(Object.keys(triageSummary.issue.json.labels[0])).toEqual(['name']);
+    expect(Object.keys(triageSummary.imageInspect)).toEqual(['status', 'command']);
+    expect(Object.keys(triageSummary.imagePreparation[0])).toEqual(['name', 'file', 'status', 'command']);
+    expect(Object.keys(triageSummary.snapshot)).toEqual([
+      'mode',
+      'path',
+      'trackedFileCount',
+      'symlinkFiles',
+      'missingFiles',
+      'generatedRootsExcluded',
+      'removed'
+    ]);
+    expect(Object.keys(requirementsQuality)).toEqual([
+      'name',
+      'status',
+      'file',
+      'command',
+      'requirementsQuality'
+    ]);
+    expect(Object.keys(requirementsQuality.requirementsQuality ?? {})).toEqual(['ok', 'findingCount']);
+    expect(Object.keys(evidenceScan)).toEqual(['name', 'status', 'file', 'command', 'evidenceScan']);
+    expect(Object.keys(evidenceScan.evidenceScan ?? {})).toEqual(['fileCount', 'areas']);
+    expect(Object.keys(evidenceScan.evidenceScan?.areas ?? {})).toEqual(['REQ']);
+    expect(Object.keys(assuranceScorecard)).toEqual(['name', 'status', 'file', 'command', 'scorecard']);
+    expect(Object.keys(assuranceScorecard.scorecard ?? {})).toEqual(['req', 'test']);
+    expect(triageSummary.schemaVersion).toBe(1);
+    expect(triageSummary.success).toBe(true);
     expect(calls.filter((call) => call.command === 'docker' && call.args[0] === 'run')).toHaveLength(3);
     expect(calls.some((call) => call.args.includes(`${snapshotPath}:/target`))).toBe(true);
     expect(removeTrackedWorktreeSnapshot).toHaveBeenCalledWith(
