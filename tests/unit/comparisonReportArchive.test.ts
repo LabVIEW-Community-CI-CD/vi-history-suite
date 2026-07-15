@@ -109,10 +109,57 @@ describe('comparisonReportArchive', () => {
       await fs.readFile(archived.archivePlan.sourceRecordFilePath, 'utf8')
     ) as {
       archivedAt: string;
-      packetRecord: { selectedHash: string; baseHash: string };
+      archivePlan: Record<string, unknown>;
+      packetRecord: {
+        reportType: string;
+        selectedHash: string;
+        baseHash: string;
+        artifactPlan: Record<string, unknown>;
+      };
     };
+    expect(Object.keys(sourceRecord)).toEqual(['archivedAt', 'archivePlan', 'packetRecord']);
+    expect(Object.keys(sourceRecord.archivePlan)).toEqual([
+      'storageRoot',
+      'repoId',
+      'fileId',
+      'pairId',
+      'reportType',
+      'archiveDirectory',
+      'packetFilePath',
+      'reportFilePath',
+      'metadataFilePath',
+      'sourceRecordFilePath',
+      'runtimeStdoutFilePath',
+      'runtimeStderrFilePath',
+      'runtimeDiagnosticLogFilePath',
+      'runtimeProcessObservationFilePath',
+      'reportAssetsDirectoryName',
+      'reportAssetsDirectoryPath'
+    ]);
+    expect(Object.keys(sourceRecord.packetRecord)).toEqual([
+      'reportType',
+      'selectedHash',
+      'baseHash',
+      'artifactPlan'
+    ]);
+    expect(Object.keys(sourceRecord.packetRecord.artifactPlan)).toEqual([
+      'allowedLocalRootPaths',
+      'repoId',
+      'fileId',
+      'normalizedRelativePath',
+      'reportFilename',
+      'packetFilename',
+      'packetFilePath',
+      'reportFilePath',
+      'metadataFilePath',
+      'runtimeStdoutFilePath',
+      'runtimeStderrFilePath',
+      'runtimeDiagnosticLogFilePath',
+      'runtimeProcessObservationFilePath'
+    ]);
     expect(sourceRecord.archivedAt).toBe('2026-05-01T00:00:00.000Z');
     expect(sourceRecord.packetRecord).toMatchObject({
+      reportType: 'diff',
       selectedHash: 'selected-sha',
       baseHash: 'base-sha'
     });
