@@ -287,7 +287,10 @@
   },
   "scripts": {
     "clean": "rimraf out out-tests coverage",
+    "deps:check": "node scripts/checkDevDependencies.js",
+    "precompile": "node scripts/checkDevDependencies.js",
     "compile": "tsc -p . && node scripts/generateBuildInfo.js && node scripts/exportRequirementsManifest.js",
+    "precheck": "node scripts/checkDevDependencies.js",
     "check": "tsc -p . --noEmit",
     "quality:local": "npm run check && npm test && npm run traceability:audit && npm run customization:audit && npm run docs:links && npm run coverage:map && npm run requirements:verify",
     "branch-protection:audit": "node scripts/auditBranchProtectionSettings.js",

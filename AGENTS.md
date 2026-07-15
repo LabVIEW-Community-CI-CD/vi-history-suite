@@ -71,6 +71,7 @@ This file provides concise, actionable guidance for AI coding agents working in 
 ### Common Pitfalls / Environment Issues
 - Requires Node.js and npm (see [INSTALL.md](./INSTALL.md))
 - On Windows, if `npm` is missing but `winget` is available, install Node.js LTS with `winget install --id OpenJS.NodeJS.LTS --exact --source winget`.
+- `npm run compile`, `npm run check`, or F5 failing with `'tsc' is not recognized` (Windows) or `tsc: command not found` (POSIX) means `node_modules` is missing or dev dependencies were omitted (fresh clone, wiped `node_modules`, or an omit-dev install). The `precompile`/`precheck` preflight (`scripts/checkDevDependencies.js`, also `npm run deps:check`) fails closed first with the `npm ci` remedy so the raw `tsc` error no longer surfaces. Run `npm ci` from the repo root; if that still does not restore `typescript`, confirm `NODE_ENV`/`npm_config_omit` are not set to omit dev dependencies. See [TROUBLESHOOTING.md](./TROUBLESHOOTING.md).
 - Some scripts/tools expect a Linux environment (see [scripts/](./scripts/))
 - Integration tests may require specific Git setup; Vagrant is an optional local helper, not a release gate (see [docs/vagrant.md](./docs/vagrant.md))
 - Workflow contract tests can become brittle if they assert exact single-line `run:` snippets; prefer step-name ordering checks when CI steps use multiline `run: |` blocks.

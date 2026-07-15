@@ -340,6 +340,32 @@ directory is outside your home directory attaches an actionable
 bind-mount-visibility note pointing at the fix above (VHS-REQ-663), so you do
 not have to infer it from the raw `path invalid` error.
 
+## `npm run compile` Cannot Find tsc
+
+If `npm run compile`, `npm run check`, or the F5 **Run VI History Suite** launch
+fails with:
+
+- Windows: `'tsc' is not recognized as an internal or external command`
+- macOS / Linux: `tsc: command not found`
+
+then the local development dependencies are missing or incomplete. The build
+uses the `typescript` compiler installed under `node_modules`, so this happens
+after a fresh clone, after `node_modules` is deleted, or when an install omitted
+dev dependencies.
+
+The `precompile` / `precheck` preflight (`scripts/checkDevDependencies.js`, also
+runnable as `npm run deps:check`) detects this and prints the remedy before the
+raw compiler runs. Install dependencies from the repository root:
+
+```bash
+npm ci
+```
+
+Then re-run your command. If `npm ci` still does not restore `typescript`,
+confirm dev dependencies are not being omitted (neither `NODE_ENV` nor
+`npm_config_omit` should be set to `dev` or `production`). See
+[INSTALL.md](./INSTALL.md) for the full source-evaluation setup.
+
 ## Source Evaluation
 
 Inside a devcontainer or Codespace, reset the basic loop with:
