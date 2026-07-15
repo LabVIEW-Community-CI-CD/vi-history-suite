@@ -410,6 +410,7 @@ export function formatViHistoryDevHostSummary(
   }
 
   lines.push('Next step: keep `npm run dev:watch` running, then use `Developer: Reload Window` inside the dev host after code changes.');
+  lines.push('Release readiness: run `npm run release:readiness` to verify this candidate before any release (advisory; the marketplace release stays a separate maintainer-only manual action).');
   return lines;
 }
 

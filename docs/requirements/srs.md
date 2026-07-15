@@ -2460,6 +2460,11 @@ Missing numeric IDs are intentional.
     evidence, and closeout expectation for release closeout review.
   - Local assurance-state evidence retains supplied post-merge review findings
     as classified planning signals with URL, issue, PR, and merge provenance.
+  - A release-readiness verdict composes existing signals (risk ledger,
+    requirements-manifest digest, and version/CHANGELOG coherence) into one
+    advisory `READY`/`ATTENTION` status bound to the extension version and
+    commit, with a display-only human-attested runtime line that never gates,
+    so a maintainer can read one signal before the separate manual release.
 - Agent Work Scope:
   - Change requirements docs, RTM, ID index, test plan, and requirements
     coherence tests together.
@@ -2473,6 +2478,7 @@ Missing numeric IDs are intentional.
   - `scripts/generateAssuranceState.js`
   - `scripts/runMultiStandardsAudit.js`
   - `scripts/verifyMarketplaceListing.js`
+  - `scripts/checkReleaseReadiness.js`
   - `.github/pull_request_template.md`
   - `docs/maintainer-operations.md`
   - `docs/cm/cm-plan.md`
@@ -2488,6 +2494,7 @@ Missing numeric IDs are intentional.
   - `tests/unit/assuranceStateScript.test.ts`
   - `tests/unit/multiStandardsAuditScript.test.ts`
   - `tests/unit/marketplaceReleaseWorkflow.test.ts`
+  - `tests/unit/releaseReadinessScript.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
   - `tests/unit/traceabilityAuditScript.test.ts`
   - `tests/unit/customizationGovernanceAuditScript.test.ts`
