@@ -1973,6 +1973,10 @@ Missing numeric IDs are intentional.
     content digest, so the packaged VSIX ships the exact active requirements it
     was built from and a future consumer can detect requirements drift between
     shipped versions.
+  - A ranked risk-ledger aggregator combines coverage, requirement-health, and
+    optional standards signals into one advisory ledger with a single
+    selectable next target, parking platform-proof risk that cannot be executed
+    on the host as a non-selectable awareness list.
 - Agent Work Scope:
   - Change requirements docs, GitHub issue templates, and the coherence test
     together.
@@ -1995,6 +1999,7 @@ Missing numeric IDs are intentional.
   - `scripts/auditRequirementCriteriaInventory.js`
   - `scripts/verifyRequirementsHealth.js`
   - `scripts/exportRequirementsManifest.js`
+  - `scripts/buildRiskLedger.js`
   - `.github/ISSUE_TEMPLATE/requirement_target.yml`
 - Verification References:
   - `tests/unit/requirementsDocs.test.ts`
@@ -2006,6 +2011,7 @@ Missing numeric IDs are intentional.
   - `tests/unit/requirementCriteriaInventory.test.ts`
   - `tests/unit/verifyRequirementsHealth.test.ts`
   - `tests/unit/requirementsManifestExport.test.ts`
+  - `tests/unit/riskLedgerScript.test.ts`
   - `manual:requirements-quality-check-system-scope`
 - Change Guidance:
   - Do not silently remove requirement IDs; retire or supersede them through the
