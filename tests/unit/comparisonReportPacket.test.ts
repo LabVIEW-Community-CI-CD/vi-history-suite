@@ -7,6 +7,7 @@ import {
   PersistComparisonReportPacketOptions,
   persistComparisonReportPacket,
   renderComparisonReportPacketHtml,
+  formatComparisonRevisionHashDisplay,
   writeComparisonReportPacketRecord
 } from '../../src/reporting/comparisonReportPacket';
 
@@ -113,6 +114,20 @@ function extractCompactEvidenceSummary(html: string): string {
   }
   return compactSummaryMatch[0];
 }
+
+describe('formatComparisonRevisionHashDisplay (VHS-REQ-641.6)', () => {
+  it('renders the WORKTREE sentinel as a human-readable label', () => {
+    expect(formatComparisonRevisionHashDisplay('WORKTREE')).toBe('Working tree (uncommitted)');
+  });
+
+  it('renders a committed hash verbatim', () => {
+    expect(formatComparisonRevisionHashDisplay('abcdef1234567890')).toBe('abcdef1234567890');
+  });
+
+  it('falls back to "not retained" for an absent id', () => {
+    expect(formatComparisonRevisionHashDisplay(undefined)).toBe('not retained');
+  });
+});
 
 describe('comparisonReportPacket retained evidence (VHS-REQ-148)', () => {
   describe('retained metadata completeness', () => {

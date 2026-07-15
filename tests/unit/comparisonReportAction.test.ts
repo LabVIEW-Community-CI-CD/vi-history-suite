@@ -2104,6 +2104,33 @@ describe('renderComparisonReportPanelHtml (VHS-REQ-621, VHS-REQ-644)', () => {
 
     expect(html).toContain('not retained');
   });
+
+  it('renders the working-tree sentinel as a human-readable label, not the raw token (VHS-REQ-641.6)', () => {
+    const html = renderComparisonReportPanelHtml({
+      ...baseOptions(),
+      relativePath: 'src/Widget.vi',
+      selectedHash: 'WORKTREE',
+      baseHash: '53768339',
+      selectedRevision: {
+        hash: 'WORKTREE',
+        authorName: 'Working tree',
+        authorDate: '',
+        subject: 'Uncommitted working-tree changes',
+        body: ''
+      },
+      baseRevision: {
+        hash: '53768339',
+        authorName: 'Grace Hopper',
+        authorDate: '2026-07-01',
+        subject: 'Base',
+        body: 'Base body'
+      }
+    });
+
+    expect(html).toContain('<code>Working tree (uncommitted)</code>');
+    // The raw sentinel token is not shown inside a code chip.
+    expect(html).not.toContain('<code>WORKTREE</code>');
+  });
 });
 
 describe('ensureComparisonReportEvidence guard and cancellation outcomes (VHS-REQ-621, VHS-REQ-644)', () => {
