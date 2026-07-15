@@ -8,6 +8,7 @@ import {
   buildComparisonReportArchivePlanFromSelection,
   ComparisonReportArchivePlan
 } from '../dashboard/comparisonReportArchive';
+import { DEFAULT_WORKTREE_SNAPSHOT_RETENTION_LIMIT } from '../dashboard/worktreeSnapshotIndex';
 import {
   acquireWindowsContainerImage,
   ComparisonRuntimeSettings,
@@ -146,6 +147,12 @@ export interface ComparisonReportActionDeps {
    * flags. When omitted, `readComparisonReportOptions` reads `viHistorySuite.report.*`.
    */
   getReportOptions?: () => ComparisonReportOptions;
+  /**
+   * VHS-REQ-641 (Phase 3): optional override for the working-tree snapshot
+   * retention limit. When omitted, `readWorktreeSnapshotRetentionLimit` reads
+   * `viHistorySuite.comparison.worktreeSnapshotRetentionLimit`.
+   */
+  getWorktreeSnapshotRetentionLimit?: () => number;
   archiveComparisonReportSource?: typeof archiveComparisonReportSource;
   exportRegistry?: ComparisonReportExportRegistry;
 }
@@ -899,7 +906,11 @@ async function ensureComparisonReportEvidence(
       increment: 5
     });
     try {
-      await (deps.archiveComparisonReportSource ?? archiveComparisonReportSource)(packet.record);
+      await (deps.archiveComparisonReportSource ?? archiveComparisonReportSource)(packet.record, {
+        worktreeSnapshotRetentionLimit: (
+          deps.getWorktreeSnapshotRetentionLimit ?? readWorktreeSnapshotRetentionLimit
+        )()
+      });
       retainedArchiveAvailable = true;
     } catch {
       archiveFailureReason = 'retained-archive-write-failed';
@@ -1853,8 +1864,7 @@ export async function applyComparisonReportOptionSelection(
 }
 
 export const DEFAULT_CLI_CONNECT_TIMEOUT_SECONDS = 180;
-export const MIN_CLI_CONNECT_TIMEOUT_SECONDS = 30;
-export const MAX_CLI_CONNECT_TIMEOUT_SECONDS = 600;
+export const MIN_CLI_CONNECT_TIMEOUT_SECONDS = 30;export const MAX_CLI_CONNECT_TIMEOUT_SECONDS = 600;
 
 /**
  * VHS-REQ-148: read the configured LabVIEW CLI connect-window timeout (seconds) from
@@ -1873,6 +1883,27 @@ export function readCliConnectTimeoutSeconds(
   }
   if (raw < MIN_CLI_CONNECT_TIMEOUT_SECONDS || raw > MAX_CLI_CONNECT_TIMEOUT_SECONDS) {
     return DEFAULT_CLI_CONNECT_TIMEOUT_SECONDS;
+  }
+  return raw;
+}
+
+/**
+ * VHS-REQ-641 (Phase 3, issue #1366): read the configured keep-last-N retention
+ * limit for working-tree snapshots from
+ * `viHistorySuite.comparison.worktreeSnapshotRetentionLimit`. A value of 0
+ * disables retention; a negative or non-integer value falls back to the shipped
+ * default (`DEFAULT_WORKTREE_SNAPSHOT_RETENTION_LIMIT`). The archive layer
+ * applies the same clamp, so this reader only needs to reject clearly invalid
+ * input.
+ */
+export function readWorktreeSnapshotRetentionLimit(
+  configuration: Pick<vscode.WorkspaceConfiguration, 'get'> = vscode.workspace.getConfiguration(
+    'viHistorySuite'
+  )
+): number {
+  const raw = configuration.get<unknown>('comparison.worktreeSnapshotRetentionLimit');
+  if (typeof raw !== 'number' || !Number.isFinite(raw) || !Number.isInteger(raw) || raw < 0) {
+    return DEFAULT_WORKTREE_SNAPSHOT_RETENTION_LIMIT;
   }
   return raw;
 }

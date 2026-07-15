@@ -251,6 +251,12 @@
           "maximum": 600,
           "description": "How long (in seconds) to wait for LabVIEW to start before a comparison gives up. Increase this if the first comparison after opening VS Code times out on a slow machine. Default is 180."
         },
+        "viHistorySuite.comparison.worktreeSnapshotRetentionLimit": {
+          "type": "integer",
+          "default": 5,
+          "minimum": 0,
+          "description": "How many working-tree (uncommitted) comparison snapshots to keep per VI in the retained dashboard history. Each uncommitted comparison is saved as a content-addressed snapshot; older ones beyond this limit are pruned. Set to 0 to turn off retaining uncommitted comparisons entirely. Default is 5."
+        },
         "viHistorySuite.report.ignoreViAttributes": {
           "type": "boolean",
           "default": false,
