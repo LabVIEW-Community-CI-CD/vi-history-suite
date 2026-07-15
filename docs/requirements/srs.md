@@ -1242,6 +1242,17 @@ Missing numeric IDs are intentional.
     provenance in the retained runtime diagnostic notes, so the evidence names
     which uncommitted content was compared; this is provenance only and does not
     add the comparison to the reproducible retained dashboard pair evidence.
+  - A persisted per-VI working-tree snapshot retention index
+    (`vi-history-suite/worktree-snapshot-index@v1`) provides a pure, I/O-free
+    data model that records each retained working-tree comparison
+    content-addressed by the staged on-disk bytes and applies a keep-last-N
+    retention limit (a limit of 0 disables retention), de-duplicating a repeated
+    comparison of unchanged content so it is idempotent while changed content
+    yields a distinct entry, and fails closed when parsing a malformed index; it
+    lets retained working-tree snapshots be enumerated independently of the
+    commit list. This slice is the index data model and garbage-collection core;
+    wiring it into archiving and dashboard discovery is delivered by subsequent
+    Phase 3 slices (issue #1366).
 - Agent Work Scope:
   - Change the eligibility model, panel working-tree selection row,
     preflight/runtime revision readers, and their tests together; use the
@@ -1254,6 +1265,7 @@ Missing numeric IDs are intentional.
   - `src/reporting/comparisonReportAction.ts`
   - `src/commands/openViHistoryCommand.ts`
   - `src/ui/historyPanel.ts`
+  - `src/dashboard/worktreeSnapshotIndex.ts`
 - Verification References:
   - `tests/unit/gitCli.test.ts`
   - `tests/unit/viHistoryModel.test.ts`
@@ -1261,6 +1273,7 @@ Missing numeric IDs are intentional.
   - `tests/unit/comparisonReportRuntimeExecution.test.ts`
   - `tests/unit/comparisonReportAction.test.ts`
   - `tests/unit/openViHistoryCommand.test.ts`
+  - `tests/unit/worktreeSnapshotIndex.test.ts`
 - Change Guidance:
   - Keep the working-tree side read-only (never write to the user's working
     directory) and keep working-tree comparisons out of the reproducible

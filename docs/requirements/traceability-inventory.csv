@@ -27,6 +27,7 @@ src/dashboard/multiReportDashboard.ts,mapped,Yes,Multi-report dashboard; mapped 
 src/dashboard/multiReportDashboardAction.ts,mapped,Yes,Multi-report dashboard action; mapped to VHS-REQ-610.
 src/dashboard/niComparisonReportParser.ts,mapped,Yes,NI comparison report parser; mapped to VHS-REQ-610.
 src/dashboard/retainedDashboardEvidence.ts,mapped,Yes,Retained dashboard evidence; mapped to VHS-REQ-610.
+src/dashboard/worktreeSnapshotIndex.ts,mapped,Yes,Working-tree snapshot retention index data model and garbage collection; mapped to VHS-REQ-641.
 src/docs/bundledDocumentation.ts,mapped,Yes,Bundled documentation manifest/page loading and rendering behavior; mapped to VHS-REQ-611.
 src/docs/bundledDocumentationAction.ts,mapped,Yes,Bundled documentation command/action routing behavior; mapped to VHS-REQ-611.
 src/domain/viFile.ts,mapped,Yes,VI file domain; mapped through RTM.
@@ -341,6 +342,7 @@ tests/unit/viComparisonModelCache.test.ts,mapped,Yes,Comparison-model cache key 
 tests/unit/viSemanticHistory.test.ts,mapped,Yes,VI semantic history orchestrator unit tests covering timeline aggregation blocked-step handling depth bounding and input validation mapped to VHS-REQ-662.
 tests/unit/viSemanticReviewMarkdown.test.ts,mapped,Yes,Semantic review Markdown renderer unit tests covering comparison facts and history table formatting with pipe escaping mapped to VHS-REQ-661.
 tests/unit/viRepositoryIndex.test.ts,mapped,Yes,Repository VI index orchestrator unit tests covering activity ranking cap and floor bounds empty-repo and history-less VI handling mapped to VHS-REQ-662.
+tests/unit/worktreeSnapshotIndex.test.ts,mapped,Yes,Working-tree snapshot retention index data model unit tests covering idempotent insert keep-last-N garbage collection disable-at-zero and fail-closed parsing mapped to VHS-REQ-641.
 tests/unit/viSemanticSchemas.test.ts,mapped,Yes,VI semantic JSON Schema standard unit tests covering the subset validator constructs schema-id drift and real-model conformance mapped to VHS-REQ-662.
 tests/unit/viSemanticPrReview.test.ts,mapped,Yes,VI semantic PR review aggregator and renderer unit tests mapped to VHS-REQ-661.
 tests/unit/stickyPrComment.test.ts,mapped,Yes,Sticky pull-request comment planner unit tests covering create-vs-update marker matching idempotent marker prepend and earliest-match selection mapped to VHS-REQ-661.
