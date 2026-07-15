@@ -806,4 +806,29 @@ describe('injectRevisionContextIntoExportedReportHtml', () => {
     expect(out).toContain('<p>loose</p>');
     expect(out).toContain('.vihs-compare-context {');
   });
+
+  it('inserts a commit subject/body containing $-sequences literally (no replacement-pattern corruption)', () => {
+    // `$&`, `$1`, `$'`, `` $` ``, `$$` are special patterns in a
+    // String.prototype.replace string replacement. escapeHtml does not escape
+    // `$`, so a commit message containing them must still appear verbatim in the
+    // exported revision context.
+    const out = injectRevisionContextIntoExportedReportHtml(
+      '<html><head></head><body><p>report</p></body></html>',
+      {
+        selectedRevision: {
+          hash: 'aaaaaaaaaaaa',
+          subject: 'Fix $1 and $& parsing',
+          body: 'Refund $$5 for $`code` and $\' issues'
+        },
+        baseRevision: { hash: 'bbbbbbbbbbbb', subject: 'Base', body: 'Base body' }
+      }
+    );
+
+    // The literal dollar-sequences survive verbatim (escapeHtml leaves `$` as-is).
+    expect(out).toContain('Fix $1 and $&amp; parsing');
+    expect(out).toContain("Refund $$5 for $`code` and $&#39; issues");
+    // The matched <body> tag is preserved exactly once and the report content remains.
+    expect(out).toContain('<body>');
+    expect(out).toContain('<p>report</p>');
+  });
 });
