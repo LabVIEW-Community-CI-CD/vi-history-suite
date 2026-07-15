@@ -1053,19 +1053,85 @@ describe('closeout evidence script', () => {
         localGates: {
           ran: boolean;
           passed: boolean;
+          failed: string[];
           traceabilitySummary: { inventoryEntries?: number };
-          results: Array<{ name: string; status: string }>;
+          results: Array<{ name: string; status: string; command: string; durationMs: number }>;
         };
+        git: { branch: string; commit: string; shortCommit: string };
         standards: {
+          runner: string;
           success: boolean;
           auditTarget?: {
             mode: string;
             trackedFileCount: number;
             generatedRootsExcluded: string[];
           };
+          summary: {
+            fileCount: number;
+            reqSignal: string;
+            testSignal: string;
+            coverageGate: string;
+            docGate: string;
+            dodGate: string;
+            dodGateEvidence: {
+              status: string;
+              scorecardStatus: string;
+              source: string;
+              trustedSources: Array<{
+                path: string;
+                ruleSource: string;
+                matchedText: string;
+                classification: string;
+              }>;
+              disqualifiedSources: Array<{ path: string; classification: string }>;
+              reason: string;
+            };
+            releaseProfiles: Array<{ profile: string; success: boolean }>;
+          };
         };
-        provenance: { success: boolean };
-        closureDecision: { closable: boolean };
+        provenance: {
+          success: boolean;
+          expectedCommit: string;
+          checks: Array<{
+            name: string;
+            success: boolean;
+            expectedCommit: string;
+            actualCommit: string;
+            message: string;
+            status: number;
+            timedOut: boolean;
+            attempts: number;
+            maxAttempts: number;
+            timeoutMs: number;
+          }>;
+          skillCache: {
+            path: string;
+            exists: boolean;
+            authority: string;
+            success: boolean;
+            message: string;
+          };
+          registry: {
+            image: string;
+            success: boolean;
+            failureCategory: string;
+            message: string;
+            timedOut: boolean;
+            attempts: number;
+            maxAttempts: number;
+            timeoutMs: number;
+          };
+        };
+        closureDecision: {
+          closable: boolean;
+          requirements: {
+            localGates: boolean;
+            standardsEvidence: boolean;
+            definitionOfDoneEvidence: boolean;
+            standardsProvenance: boolean;
+          };
+          reasons: string[];
+        };
         exitCode: number;
       };
       const auditTarget = JSON.parse(fs.readFileSync(auditTargetPath, 'utf8')) as {
@@ -1075,6 +1141,100 @@ describe('closeout evidence script', () => {
         generatedRootsExcluded: string[];
       };
 
+      expect(Object.keys(summary)).toEqual([
+        'schemaVersion',
+        'kind',
+        'issueNumber',
+        'git',
+        'localGates',
+        'standards',
+        'provenance',
+        'closureDecision',
+        'exitCode'
+      ]);
+      expect(Object.keys(summary.git)).toEqual(['branch', 'commit', 'shortCommit']);
+      expect(Object.keys(summary.localGates)).toEqual([
+        'ran',
+        'passed',
+        'failed',
+        'traceabilitySummary',
+        'results'
+      ]);
+      expect(Object.keys(summary.localGates.traceabilitySummary)).toEqual(['inventoryEntries', 'gapEntries']);
+      expect(Object.keys(summary.localGates.results[0])).toEqual(['name', 'status', 'command', 'durationMs']);
+      expect(Object.keys(summary.standards)).toEqual(['runner', 'success', 'auditTarget', 'summary']);
+      expect(Object.keys(summary.standards.auditTarget ?? {})).toEqual([
+        'mode',
+        'trackedFileCount',
+        'generatedRootsExcluded'
+      ]);
+      expect(Object.keys(summary.standards.summary)).toEqual([
+        'fileCount',
+        'reqSignal',
+        'testSignal',
+        'coverageGate',
+        'docGate',
+        'dodGate',
+        'dodGateEvidence',
+        'releaseProfiles'
+      ]);
+      expect(Object.keys(summary.standards.summary.dodGateEvidence)).toEqual([
+        'status',
+        'scorecardStatus',
+        'source',
+        'trustedSources',
+        'disqualifiedSources',
+        'reason'
+      ]);
+      expect(Object.keys(summary.standards.summary.dodGateEvidence.trustedSources[0])).toEqual([
+        'path',
+        'ruleSource',
+        'matchedText',
+        'classification'
+      ]);
+      expect(Object.keys(summary.provenance)).toEqual([
+        'success',
+        'expectedCommit',
+        'checks',
+        'skillCache',
+        'registry'
+      ]);
+      expect(Object.keys(summary.provenance.checks[0])).toEqual([
+        'name',
+        'success',
+        'expectedCommit',
+        'actualCommit',
+        'message',
+        'status',
+        'timedOut',
+        'attempts',
+        'maxAttempts',
+        'timeoutMs'
+      ]);
+      expect(Object.keys(summary.provenance.skillCache)).toEqual([
+        'path',
+        'exists',
+        'authority',
+        'success',
+        'message'
+      ]);
+      expect(Object.keys(summary.provenance.registry)).toEqual([
+        'image',
+        'success',
+        'failureCategory',
+        'message',
+        'timedOut',
+        'attempts',
+        'maxAttempts',
+        'timeoutMs'
+      ]);
+      expect(Object.keys(summary.closureDecision)).toEqual(['closable', 'requirements', 'reasons']);
+      expect(Object.keys(summary.closureDecision.requirements)).toEqual([
+        'localGates',
+        'standardsEvidence',
+        'definitionOfDoneEvidence',
+        'standardsProvenance'
+      ]);
       expect(summary.schemaVersion).toBe(1);
       expect(summary.localGates.ran).toBe(true);
       expect(summary.localGates.passed).toBe(true);
