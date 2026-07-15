@@ -116,6 +116,40 @@ describe('integrationHostRuntime', () => {
     ).toBe('/mnt/c/Users/sveld/AppData/Local/Programs/Microsoft VS Code/bin/code');
   });
 
+  it('derives a user-agnostic LOCALAPPDATA fallback when the environment is absent', () => {
+    // With no LOCALAPPDATA, fall back to <USERPROFILE>\AppData\Local, never a
+    // developer-specific hardcoded profile.
+    expect(
+      resolveStandardWindowsCodeCliPath(
+        'win32',
+        undefined,
+        {
+          existsSync: (candidate) =>
+            candidate ===
+            'C:\\Users\\alice\\AppData\\Local\\Programs\\Microsoft VS Code\\bin\\code.cmd'
+        },
+        'C:\\Users\\alice'
+      )
+    ).toBe('C:\\Users\\alice\\AppData\\Local\\Programs\\Microsoft VS Code\\bin\\code.cmd');
+
+    // With neither LOCALAPPDATA nor USERPROFILE, fall back to the built-in
+    // Windows Default profile (user-agnostic), and never to a real person's name.
+    const resolvedWithoutEnv = resolveStandardWindowsCodeCliPath('win32', undefined, {
+      existsSync: () => false
+    }, undefined);
+    expect(resolvedWithoutEnv).not.toContain('sveld');
+    expect(resolvedWithoutEnv).toBe('C:\\Program Files\\Microsoft VS Code\\bin\\code.cmd');
+    // The LOCALAPPDATA-derived candidate uses the Default profile.
+    const defaultProfileResolved = resolveStandardWindowsCodeCliPath('win32', undefined, {
+      existsSync: (candidate) =>
+        candidate ===
+        'C:\\Users\\Default\\AppData\\Local\\Programs\\Microsoft VS Code\\bin\\code.cmd'
+    }, undefined);
+    expect(defaultProfileResolved).toBe(
+      'C:\\Users\\Default\\AppData\\Local\\Programs\\Microsoft VS Code\\bin\\code.cmd'
+    );
+  });
+
   it('deduplicates missing Linux runtime libraries across the VS Code runtime tree', async () => {
     const runtimeRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-linux-runtime-'));
     const runtimeCodePath = path.join(runtimeRoot, 'code');
