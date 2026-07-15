@@ -622,6 +622,34 @@ describe('generateAssuranceState script', () => {
       'signalCount',
       'signals'
     ]);
+    expect(Object.keys(json.sources[0])).toEqual([
+      'type',
+      'schemaVersion',
+      'runId',
+      'success',
+      'artifactPath'
+    ]);
+    expect(Object.keys(json.signals[0])).toEqual([
+      'id',
+      'state',
+      'kind',
+      'title',
+      'status',
+      'confidence',
+      'basis',
+      'standards',
+      'requirements',
+      'profiles',
+      'scoreFiles',
+      'checkedPaths',
+      'evidencePaths',
+      'snapshotMetadata',
+      'commandProvenance',
+      'sourceArtifacts',
+      'issueLinks',
+      'prLinks',
+      'mergeShas'
+    ]);
     expect(json.runId).toBe('state-green');
     expect(json.sources[0]).toMatchObject({ type: 'standards-audit', runId: 'audit-green', success: true });
     expect(json.signals.length).toBeGreaterThan(0);
