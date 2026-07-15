@@ -35,6 +35,10 @@ export default defineConfig({
         'src/ui/viPreviewCacheWarmerService.ts',
         'src/ui/viPreviewContainerSession.ts',
         'src/ui/viPreviewSessionManager.ts',
+        // VHS-REQ-664: on-change warmer host binding (FileSystemWatcher + wiring);
+        // its scheduler/gating/orchestrator core in src/reporting/viPreview stays
+        // measured. Excluded on the same rationale as the preview host bindings.
+        'src/ui/viChangeWarmerService.ts',
         // VHS-REQ-613: dev-only host/CI-infrastructure runner scripts require a
         // real VS Code host, integration host, or git remote/network to
         // exercise, so their thin CLI wrappers cannot be meaningfully unit

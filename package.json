@@ -244,6 +244,11 @@
           "default": "docker-only",
           "description": "After you open a VI preview, whether VI History quietly pre-renders the other VIs in the workspace so they open instantly, shown as a caching percentage in the status bar. Docker-only (default) skips this when using Host so your LabVIEW stays free; choose Always to see caching progress on Host too."
         },
+        "viHistorySuite.preview.warmOnChange": {
+          "type": "boolean",
+          "default": true,
+          "description": "When Docker is selected, automatically cache a VI as soon as you change it on disk so its preview opens instantly and the Source Control change summary is ready. Warms the preview render (requires VI Preview to be on) and runs a background comparison against the last commit (requires a trusted workspace). On by default; only runs on the Docker runtime."
+        },
         "viHistorySuite.runtime.cliConnectTimeoutSeconds": {
           "type": "integer",
           "default": 180,
