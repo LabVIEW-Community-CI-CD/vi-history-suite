@@ -106,6 +106,29 @@ describe('runtime auto-detect (VHS-REQ-616)', () => {
     });
   });
 
+  it('detects docker when its Windows PATH segment is quoted (VHS-REQ-616.6)', async () => {
+    const fs = createFakeFs([
+      'C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe'
+    ]);
+
+    const detection = await detectAvailableRuntimes({
+      fs,
+      platform: 'win32',
+      env: {
+        ProgramFiles: 'C:\\Program Files',
+        'ProgramFiles(x86)': 'C:\\Program Files (x86)',
+        // The Docker segment is wrapped in double quotes, as Windows commonly
+        // does for PATH entries containing spaces.
+        PATH: '"C:\\Program Files\\Docker\\Docker\\resources\\bin";C:\\Windows'
+      }
+    });
+
+    expect(detection.docker).toEqual({
+      cliAvailable: true,
+      cliPath: 'C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe'
+    });
+  });
+
   it('reports no runtime when neither LabVIEW nor docker is present (VHS-REQ-616.6)', async () => {
     const fs = createFakeFs([]);
 
