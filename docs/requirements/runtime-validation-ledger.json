@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "description": "Committed record of the last real-runtime comparison validation for each Linux-executable comparison-runtime track. The risk ledger (scripts/buildRiskLedger.js, VHS-REQ-601) reads this file and surfaces any track whose lastValidatedVersion is not the current build version as a selectable runtime-fidelity re-validation risk. Windows host-native and windows-container tracks are intentionally NOT listed here: they are covered by the parked platform-proof awareness list (issue #1316) because they are not executable on a Linux host. Update a track's lastValidatedVersion/lastValidatedCommit/evidence after re-running its driver against a new build.",
+  "tracks": [
+    {
+      "trackId": "linux-host-native",
+      "platform": "linux",
+      "provider": "host-native",
+      "linuxExecutable": true,
+      "lastValidatedVersion": "1.33.2",
+      "lastValidatedCommit": "9ea4ab13",
+      "evidence": "issue:#1317",
+      "fixture": "labview-icon-editor resource/plugins/lv_icon.vi"
+    },
+    {
+      "trackId": "linux-container-2026q1",
+      "platform": "linux",
+      "provider": "linux-container",
+      "image": "nationalinstruments/labview:2026q1-linux",
+      "linuxExecutable": true,
+      "lastValidatedVersion": "1.33.2",
+      "lastValidatedCommit": "9ea4ab13",
+      "evidence": "issue:#1317",
+      "fixture": "labview-icon-editor resource/plugins/lv_icon.vi"
+    },
+    {
+      "trackId": "linux-container-2026q1patch2",
+      "platform": "linux",
+      "provider": "linux-container",
+      "image": "nationalinstruments/labview:2026q1patch2-linux",
+      "linuxExecutable": true,
+      "lastValidatedVersion": "1.33.2",
+      "lastValidatedCommit": "9ea4ab13",
+      "evidence": "issue:#1317",
+      "fixture": "labview-icon-editor resource/plugins/lv_icon.vi"
+    },
+    {
+      "trackId": "linux-container-2025q3",
+      "platform": "linux",
+      "provider": "linux-container",
+      "image": "nationalinstruments/labview:2025q3-linux",
+      "linuxExecutable": true,
+      "lastValidatedVersion": "1.33.2",
+      "lastValidatedCommit": "9ea4ab13",
+      "evidence": "issue:#1317",
+      "fixture": "labview-icon-editor resource/plugins/lv_icon.vi"
+    },
+    {
+      "trackId": "linux-container-2025q3patch1",
+      "platform": "linux",
+      "provider": "linux-container",
+      "image": "nationalinstruments/labview:2025q3patch1-linux",
+      "linuxExecutable": true,
+      "lastValidatedVersion": "1.33.2",
+      "lastValidatedCommit": "48e00d7",
+      "evidence": "issue:#1317",
+      "fixture": "labview-icon-editor resource/plugins/lv_icon.vi"
+    }
+  ]
+}

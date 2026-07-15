@@ -310,3 +310,95 @@ describe('buildRiskLedger rendering and CLI', () => {
     expect(code).toBe(1);
   });
 });
+
+// Criterion coverage: VHS-REQ-601.31 — the risk ledger surfaces real-runtime
+// validation freshness from a committed runtime-validation ledger; tracks not
+// validated at the current build become selectable re-validation risks.
+describe('buildRuntimeFidelityEntries (VHS-REQ-601.31)', () => {
+  const {
+    buildRuntimeFidelityEntries,
+    loadRuntimeValidationSignal
+  } = ledgerModule as unknown as {
+    buildRuntimeFidelityEntries: (manifest: unknown, currentVersion: string) => any[];
+    loadRuntimeValidationSignal: (cwd: string, deps?: Record<string, unknown>) => any;
+  };
+
+  const MANIFEST = {
+    schemaVersion: 1,
+    tracks: [
+      { trackId: 'linux-host-native', linuxExecutable: true, lastValidatedVersion: '1.33.2', evidence: 'issue:#1317' },
+      { trackId: 'linux-container-2026q1', linuxExecutable: true, lastValidatedVersion: '1.33.2', evidence: 'issue:#1317' }
+    ]
+  };
+
+  it('emits no entries when every track is validated at the current build (VHS-REQ-601.31)', () => {
+    expect(buildRuntimeFidelityEntries(MANIFEST, '1.33.2')).toEqual([]);
+  });
+
+  it('emits a selectable MEDIUM re-validation risk per stale Linux track at a newer build (VHS-REQ-601.31)', () => {
+    const entries = buildRuntimeFidelityEntries(MANIFEST, '1.34.0');
+    expect(entries).toHaveLength(2);
+    for (const entry of entries) {
+      expect(entry.dimension).toBe('runtime-fidelity');
+      expect(entry.severityTier).toBe('MEDIUM');
+      expect(entry.selectable).toBe(true);
+      expect(entry.linuxExecutable).toBe(true);
+      expect(entry.requirementIds).toContain('VHS-REQ-621');
+    }
+    expect(entries[0].id).toBe('runtime-fidelity/linux-host-native');
+    expect(entries[0].title).toContain('1.33.2');
+    expect(entries[0].title).toContain('1.34.0');
+  });
+
+  it('ignores non-Linux-executable tracks and malformed rows (VHS-REQ-601.31)', () => {
+    const entries = buildRuntimeFidelityEntries(
+      {
+        tracks: [
+          { trackId: 'windows-host-native', linuxExecutable: false, lastValidatedVersion: '1.0.0' },
+          { linuxExecutable: true, lastValidatedVersion: '1.0.0' },
+          null
+        ]
+      },
+      '1.34.0'
+    );
+    expect(entries).toEqual([]);
+  });
+
+  it('treats a never-validated track as stale with a <never> marker (VHS-REQ-601.31)', () => {
+    const entries = buildRuntimeFidelityEntries(
+      { tracks: [{ trackId: 'linux-container-new', linuxExecutable: true }] },
+      '1.34.0'
+    );
+    expect(entries).toHaveLength(1);
+    expect(entries[0].title).toContain('<never>');
+  });
+
+  it('graceful-degrades to no entries when the manifest is missing or malformed (VHS-REQ-601.31)', () => {
+    expect(buildRuntimeFidelityEntries(undefined, '1.34.0')).toEqual([]);
+    expect(buildRuntimeFidelityEntries({}, '1.34.0')).toEqual([]);
+    expect(buildRuntimeFidelityEntries({ tracks: 'nope' }, '1.34.0')).toEqual([]);
+  });
+
+  it('loadRuntimeValidationSignal reports available:false without throwing when the ledger is absent (VHS-REQ-601.31)', () => {
+    const signal = loadRuntimeValidationSignal(makeTempDir());
+    expect(signal.available).toBe(false);
+    expect(signal.source).toBe('docs/requirements/runtime-validation-ledger.json');
+  });
+
+  it('the ledger integrates a stale runtime track as the nextTarget when no higher risk exists (VHS-REQ-601.31)', () => {
+    const ledger = buildRiskLedger(
+      {
+        coverage: { available: false, source: null },
+        requirements: { available: true, health: HEALTHY_HEALTH, source: 'fixture' },
+        standards: { available: false, source: null },
+        runtimeValidation: { available: true, manifest: MANIFEST, source: 'fixture' }
+      },
+      { ...META, extensionVersion: '1.34.0' }
+    );
+    expect(ledger.countsByDimension['runtime-fidelity']).toBe(2);
+    // Same-tier runtime-fidelity entries tie-break alphabetically by id, so the
+    // container track sorts ahead of the host-native track.
+    expect(ledger.ranking.nextTarget).toBe('runtime-fidelity/linux-container-2026q1');
+    expect(ledger.inputs.runtimeValidation.available).toBe(true);
+  });
+});

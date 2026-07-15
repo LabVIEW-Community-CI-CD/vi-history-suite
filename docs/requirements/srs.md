@@ -1983,6 +1983,11 @@ Missing numeric IDs are intentional.
     optional standards signals into one advisory ledger with a single
     selectable next target, parking platform-proof risk that cannot be executed
     on the host as a non-selectable awareness list.
+  - The risk ledger surfaces real-runtime validation freshness from a committed
+    runtime-validation ledger that records each Linux-executable
+    comparison-runtime track's last-validated build version, and any track not
+    validated at the current build version is ranked as a selectable
+    re-validation risk.
 - Agent Work Scope:
   - Change requirements docs, GitHub issue templates, and the coherence test
     together.
@@ -2006,6 +2011,7 @@ Missing numeric IDs are intentional.
   - `scripts/verifyRequirementsHealth.js`
   - `scripts/exportRequirementsManifest.js`
   - `scripts/buildRiskLedger.js`
+  - `docs/requirements/runtime-validation-ledger.json`
   - `.github/ISSUE_TEMPLATE/requirement_target.yml`
 - Verification References:
   - `tests/unit/requirementsDocs.test.ts`
