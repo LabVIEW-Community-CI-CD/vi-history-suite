@@ -686,8 +686,72 @@ describe('runWindowsRuntimeMatrix.runRuntimeMatrix', () => {
       failed: 0,
       raceCoverage: harness.RACE_COVERAGE_NOTE
     });
-    // Evidence file write recorded.
-    expect(Array.from(fake.writes.keys()).some((key) => key.endsWith('manual-vhs-req-621.json'))).toBe(true);
+    const evidenceWrites = Array.from(fake.writes.entries()).filter(([target]) =>
+      target.endsWith('manual-vhs-req-621.json')
+    );
+    expect(evidenceWrites).toHaveLength(1);
+    const retainedEvidence = JSON.parse(evidenceWrites[0]?.[1] ?? '{}') as {
+      schema: string;
+      runId: string;
+      host: { platform: string; hostname: string };
+      labviewVersion: string;
+      scenarios: Array<{
+        id: string;
+        expected: Record<string, string | number>;
+        observed: Record<string, unknown>;
+        pass: boolean;
+        durationMs: number;
+        artifacts: { proofPath: string; scenarioLogPath: string };
+        portOracle?: {
+          selectedLabviewIniPath: string;
+          derivedExpectedTcpPort: number;
+          isNonDefaultPort: boolean;
+          observedLabviewIniPath: string;
+          observedTcpPort: number;
+        };
+      }>;
+      summary: { passed: number; failed: number; raceCoverage: string };
+    };
+    const retainedPortScenario = retainedEvidence.scenarios.find((scenario) => scenario.id === 'port-A');
+
+    expect(Object.keys(retainedEvidence)).toEqual([
+      'schema',
+      'runId',
+      'host',
+      'labviewVersion',
+      'scenarios',
+      'summary'
+    ]);
+    expect(Object.keys(retainedEvidence.host)).toEqual(['platform', 'hostname']);
+    expect(Object.keys(retainedEvidence.scenarios[0])).toEqual([
+      'id',
+      'expected',
+      'observed',
+      'pass',
+      'durationMs',
+      'artifacts'
+    ]);
+    expect(Object.keys(retainedEvidence.scenarios[0].artifacts)).toEqual(['proofPath', 'scenarioLogPath']);
+    expect(Object.keys(retainedPortScenario ?? {})).toEqual([
+      'id',
+      'expected',
+      'observed',
+      'pass',
+      'durationMs',
+      'artifacts',
+      'portOracle'
+    ]);
+    expect(Object.keys(retainedPortScenario?.portOracle ?? {})).toEqual([
+      'selectedLabviewIniPath',
+      'derivedExpectedTcpPort',
+      'isNonDefaultPort',
+      'observedLabviewIniPath',
+      'observedTcpPort'
+    ]);
+    expect(Object.keys(retainedEvidence.summary)).toEqual(['passed', 'failed', 'raceCoverage']);
+    expect(retainedEvidence.schema).toBe(harness.EVIDENCE_SCHEMA);
+    expect(retainedEvidence.runId).toBe('2026-05-31T00:00:00.000Z');
+    expect(retainedEvidence.summary.failed).toBe(0);
   });
 
   it('tolerates a UTF-8 BOM in the scenario log (Windows PowerShell Set-Content)', () => {
