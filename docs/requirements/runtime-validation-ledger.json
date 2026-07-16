@@ -62,9 +62,9 @@
       "provider": "vagrant",
       "linuxExecutable": false,
       "releaseGating": true,
-      "lastValidatedVersion": "0.0.0",
-      "lastValidatedCommit": "none",
-      "evidence": "pending: run npm run vagrant:validate:release",
+      "lastValidatedVersion": "1.33.2",
+      "lastValidatedCommit": "ee8d6cbc",
+      "evidence": "vagrant local validation 2026-07-16T21:38:25.763Z",
       "fixture": "labview-icon-editor resource/plugins/lv_icon.vi (x86 host-native headless, VHS-REQ-665)"
     }
   ]
