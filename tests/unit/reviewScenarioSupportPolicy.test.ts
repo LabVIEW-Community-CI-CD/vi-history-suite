@@ -48,6 +48,24 @@ describe('review scenario registry and repository support policy (VHS-REQ-610 su
     });
   });
 
+  it('normalizes and classifies www.github.com remotes as canonical GitHub (VHS-REQ-610 supporting evidence)', () => {
+    // www.github.com is a valid GitHub remote host (git redirects it); it must
+    // normalize to the canonical github.com coordinates, not fall back to
+    // generic-repository.
+    expect(normalizeGitHubRepositoryUrl('https://www.github.com/ni/labview-icon-editor.git')).toBe(
+      'https://github.com/ni/labview-icon-editor.git'
+    );
+    expect(normalizeGitHubRepositoryUrl('git@www.github.com:NI/LabVIEW-Icon-Editor.git')).toBe(
+      'https://github.com/ni/labview-icon-editor.git'
+    );
+    expect(
+      classifyRepositorySupportPolicy('https://www.github.com/ni/labview-icon-editor.git')
+    ).toMatchObject({
+      tier: 'known-upstream',
+      familyId: 'labview-icon-editor'
+    });
+  });
+
   it('selects review scenarios and reports evidence contract mismatches', () => {
     const scenarios = listReviewScenarios();
 
