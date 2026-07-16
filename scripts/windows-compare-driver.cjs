@@ -25,6 +25,13 @@
 //   WIN_LABEL          evidence label (default W-run)
 //   WIN_STORAGE_ROOT   storage root (default <cwd>\win-validation\<label>\storage)
 //
+// VHS-REQ-665: to drive host-native LabVIEW headlessly from a NON-interactive
+// session (e.g. a Vagrant WinRM session with no desktop), set the opt-in toggle
+// so the runtime prelaunches LabVIEW `--headless` before the CLI connects:
+//   $env:LV_RTE_WIN_HOSTNATIVE_HEADLESS='1'
+// Combine with WIN_PROVIDER='host' + WIN_LV_BITNESS='x86' to exercise 32-bit
+// LabVIEW 2026 parity, the bitness the x64-only windows-container cannot cover.
+//
 // Example (PowerShell), host-native x64:
 //   $env:WIN_REPO_ROOT='C:\repos\labview-icon-editor'
 //   $env:WIN_VI_PATH='resource/plugins/lv_icon.vi'

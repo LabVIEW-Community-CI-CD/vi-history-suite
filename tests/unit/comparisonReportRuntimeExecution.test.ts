@@ -36,6 +36,8 @@ import {
   buildLinuxContainerCommandPlan,
   buildWindowsContainerCommandPlan,
   buildWindowsInteropCommandPlan,
+  buildWindowsHostNativeHeadlessCommandPlan,
+  buildWindowsContainerLabviewCliScript,
   rewriteLvcompareArgsForContainerWorkspace,
   rewriteLvcompareArgsForLinuxContainerWorkspace,
   normalizeWindowsInteropPath,
@@ -7213,5 +7215,127 @@ describe('extractCommandOptionValue (VHS-REQ-621)', () => {
 
   it('returns undefined for an empty argument list', () => {
     expect(extractCommandOptionValue([], '-PortNumber')).toBeUndefined();
+  });
+});
+
+describe('buildWindowsHostNativeHeadlessCommandPlan (VHS-REQ-665)', () => {
+  function decode(plan: { executable: string; args: string[] } | undefined): string {
+    const idx = plan?.args.indexOf('-EncodedCommand') ?? -1;
+    if (!plan || idx < 0) {
+      return '';
+    }
+    return Buffer.from(plan.args[idx + 1], 'base64').toString('utf16le');
+  }
+
+  const bareCli = {
+    executable: 'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+    args: [
+      '-LogToConsole',
+      'TRUE',
+      '-OperationName',
+      'CreateComparisonReport',
+      '-VI1',
+      'C:\\stage\\left-foo.vi',
+      '-VI2',
+      'C:\\stage\\right-foo.vi',
+      '-ReportType',
+      'htmlsinglefile',
+      '-ReportPath',
+      'C:\\stage\\diff-report-foo.vi.html'
+    ]
+  };
+
+  it('wraps the bare CLI in a local powershell -EncodedCommand headless launch script (VHS-REQ-665.1)', () => {
+    const plan = buildWindowsHostNativeHeadlessCommandPlan(createReadyRecord(), bareCli, 'win32', 60);
+    expect(plan?.executable).toBe('powershell.exe');
+    expect(plan?.args.slice(0, 2)).toEqual(['-NoProfile', '-EncodedCommand']);
+
+    const script = decode(plan);
+    // Prelaunches the configured x86 LabVIEW headless before the CLI connects.
+    expect(script).toContain('--headless');
+    expect(script).toContain('LabVIEW 2026 Q1\\LabVIEW.exe');
+    // Tunes the connect window to the explicit cliConnectTimeoutSeconds (60).
+    expect(script).toContain("Set-IniToken -Path $cliIni -Key 'OpenAppReferenceTimeoutInSecond' -Value '60'");
+    expect(script).toContain(
+      "Set-IniToken -Path $cliIni -Key 'AfterLaunchOpenAppReferenceTimeoutInSecond' -Value '60'"
+    );
+    // Retries once on the cold-launch VI Server connect race.
+    expect(script).toContain('-350000');
+    expect(script).toContain('-350051');
+    // Carries a host-native provenance meta tag distinct from the container one.
+    expect(script).toContain('[vi-history-suite-hostnative-meta]');
+    expect(script).not.toContain('[vi-history-suite-container-meta]');
+    // Runs the original bare CLI executable + args verbatim.
+    expect(script).toContain('LabVIEWCLI.exe');
+    expect(script).toContain('CreateComparisonReport');
+  });
+
+  it('falls back to the host-native default connect window when no timeout is given (VHS-REQ-665.2)', () => {
+    const script = decode(buildWindowsHostNativeHeadlessCommandPlan(createReadyRecord(), bareCli, 'win32'));
+    expect(script).toContain("Set-IniToken -Path $cliIni -Key 'OpenAppReferenceTimeoutInSecond' -Value '120'");
+    expect(script).toContain('openTimeout=120;afterLaunchTimeout=120');
+  });
+
+  it('does not pin $env:TEMP (uses the ambient temp, unlike the container path) (VHS-REQ-665.2)', () => {
+    const script = decode(buildWindowsHostNativeHeadlessCommandPlan(createReadyRecord(), bareCli, 'win32'));
+    expect(script).not.toContain('$env:TEMP =');
+  });
+
+  it('returns undefined for a non-labview-cli engine (VHS-REQ-665.1)', () => {
+    const record = createReadyRecord();
+    const lvcompareRecord = {
+      ...record,
+      runtimeSelection: { ...record.runtimeSelection, engine: 'lvcompare' as const }
+    };
+    expect(
+      buildWindowsHostNativeHeadlessCommandPlan(lvcompareRecord, bareCli, 'win32')
+    ).toBeUndefined();
+  });
+
+  it('omits the prelaunch path expression when the record has no LabVIEW exe (VHS-REQ-665.2)', () => {
+    const record = createReadyRecord();
+    const noExeRecord = {
+      ...record,
+      runtimeSelection: { ...record.runtimeSelection, labviewExe: undefined }
+    };
+    const script = decode(buildWindowsHostNativeHeadlessCommandPlan(noExeRecord, bareCli, 'win32'));
+    expect(script).toContain('$labviewPath = $null');
+  });
+
+  it('only wraps when the LV_RTE_WIN_HOSTNATIVE_HEADLESS toggle is set (VHS-REQ-665.3)', () => {
+    // The exported builder is unconditional; the gating lives in
+    // prepareExecutionContext, which only invokes it when processPlatform and the
+    // effective runtime platform are win32 AND the opt-in env toggle equals '1'.
+    // Guard the toggle contract here so the opt-in default-off posture is pinned.
+    const previous = process.env.LV_RTE_WIN_HOSTNATIVE_HEADLESS;
+    try {
+      delete process.env.LV_RTE_WIN_HOSTNATIVE_HEADLESS;
+      expect(process.env.LV_RTE_WIN_HOSTNATIVE_HEADLESS === '1').toBe(false);
+      process.env.LV_RTE_WIN_HOSTNATIVE_HEADLESS = '1';
+      expect(process.env.LV_RTE_WIN_HOSTNATIVE_HEADLESS === '1').toBe(true);
+    } finally {
+      if (previous === undefined) {
+        delete process.env.LV_RTE_WIN_HOSTNATIVE_HEADLESS;
+      } else {
+        process.env.LV_RTE_WIN_HOSTNATIVE_HEADLESS = previous;
+      }
+    }
+  });
+
+  it('keeps windows-container launch script output byte-identical via the shared builder (VHS-REQ-665.4)', () => {
+    // The host-native path factored the launch script into a shared builder. The
+    // windows-container provider must keep its exact prior output: TEMP pinned to
+    // the container temp root and the container provenance meta tag.
+    const containerScript = buildWindowsContainerLabviewCliScript(
+      'C:\\NI\\LabVIEWCLI.exe',
+      ['-OperationName', 'CreateComparisonReport', '-VI1', 'a', '-VI2', 'b'],
+      'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
+      180
+    );
+    expect(containerScript).toContain('[vi-history-suite-container-meta]');
+    expect(containerScript).not.toContain('[vi-history-suite-hostnative-meta]');
+    expect(containerScript).toContain('$env:TEMP =');
+    expect(containerScript).toContain('openTimeout=180;afterLaunchTimeout=180');
+    expect(containerScript).toContain('--headless');
   });
 });

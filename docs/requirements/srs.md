@@ -4874,3 +4874,60 @@ Missing numeric IDs are intentional.
     LabVIEW on change, never let a warm failure surface to the user, and keep
     the per-path debounce and single-flight serialization so a burst of LabVIEW
     saves cannot start overlapping background runs.
+
+### VHS-REQ-665: Win32 Host-Native Headless Comparison For 32-bit LabVIEW Parity
+
+- Status: Active
+- Parent: VHS-SYS-REQ-007
+- Area: Comparison Reports
+- Statement: When the extension runs natively on Windows against a host-native
+  LabVIEWCLI comparison and the opt-in `LV_RTE_WIN_HOSTNATIVE_HEADLESS=1`
+  environment toggle is set, the runtime shall prelaunch the selected LabVIEW
+  with `--headless` (binding the VI Server without an interactive desktop),
+  tune the LabVIEWCLI.ini connect window, run the CLI, and retry once on the
+  cold-launch VI Server connect race (`-350000`/`-350051`), reusing the same
+  launch technique as the authoritative windows-container provider so a
+  non-interactive session (for example a Vagrant WinRM session) can drive a
+  real comparison against a locally installed 32-bit LabVIEW 2026 — the bitness
+  the x64-only windows-container provider cannot exercise. The default
+  host-native path (no toggle) is unchanged.
+- Acceptance Criteria:
+  - `buildWindowsHostNativeHeadlessCommandPlan(record, commandPlan, processPlatform, cliConnectTimeoutSeconds?)`
+    returns a `powershell -NoProfile -EncodedCommand <script>` command plan only
+    for the `labview-cli` engine when a PowerShell host is resolvable, and
+    `undefined` otherwise (e.g. the `lvcompare` engine), leaving the caller's
+    bare command plan unchanged.
+  - The generated script prelaunches the configured LabVIEW `--headless`
+    hidden, sets the `OpenAppReferenceTimeoutInSecond` and
+    `AfterLaunchOpenAppReferenceTimeoutInSecond` LabVIEWCLI.ini tokens (to the
+    explicit `cliConnectTimeoutSeconds` when supplied, else the host-native
+    default), runs the original CLI executable and arguments verbatim, retries
+    once on `-350000`/`-350051`/"failed to establish a connection", and emits a
+    `[vi-history-suite-hostnative-meta]` provenance line distinct from the
+    container `[vi-history-suite-container-meta]` line; it does not pin
+    `$env:TEMP` (it uses the ambient temp directory, unlike the container path).
+  - `prepareExecutionContext` wraps the bare host-native command plan with this
+    headless plan only when `processPlatform === 'win32'`, the effective runtime
+    platform is `win32`, and `LV_RTE_WIN_HOSTNATIVE_HEADLESS === '1'`; otherwise
+    the bare command plan is used unchanged.
+  - The shared launch script builder produces byte-identical output for the
+    pre-existing windows-container provider (regression-guarded by the container
+    execution-context tests).
+- Agent Work Scope:
+  - Factor the windows-container launch script into a shared builder and reuse
+    it for the host-native headless path; keep the toggle opt-in and the default
+    interactive host-native path untouched. Do not add a docker/container
+    dependency to the host-native path. The Vagrant lane that exercises this is
+    a local maintainer helper only and never a CI gate.
+- Implementation References:
+  - `src/reporting/comparisonReportRuntimeExecution.ts`
+- Verification References:
+  - `tests/unit/comparisonReportRuntimeExecution.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+  - `manual:vagrant-hostnative-x86-headless`
+- Change Guidance:
+  - Keep the headless launch technique aligned with the windows-container
+    provider (prelaunch, ini connect-window tuning, single cold-launch retry);
+    when the container defaults change, review the host-native defaults for
+    parity. Never make the toggle default-on and never wire the Vagrant lane
+    into `.github/workflows` (VHS-REQ-599).
