@@ -682,3 +682,4 @@ VHS-REQ-661,Software,Active,srs.md#vhs-req-661-on-demand-vi-semantic-pr-review-w
 VHS-REQ-662,Software,Active,srs.md#vhs-req-662-vi-semantic-comparison-model-and-agent-mcp-surface,,,docs/requirements/srs.md
 VHS-REQ-664,Software,Active,srs.md#vhs-req-664-preview-and-comparison-cache-warming-on-vi-change,,,docs/requirements/srs.md
 VHS-REQ-665,Software,Active,srs.md#vhs-req-665-win32-host-native-headless-comparison-for-32-bit-labview-parity,,,docs/requirements/srs.md
+VHS-REQ-666,Software,Active,srs.md#vhs-req-666-mandatory-local-vagrant-release-attestation,,,docs/requirements/srs.md

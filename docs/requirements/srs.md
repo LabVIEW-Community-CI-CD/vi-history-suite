@@ -1870,12 +1870,16 @@ Missing numeric IDs are intentional.
 - Status: Active
 - Parent: VHS-SYS-REQ-013
 - Area: CI And Developer Environment
-- Statement: Vagrant shall remain an optional human-run local validation helper,
-  not a release requirement.
+- Statement: Vagrant shall remain an optional, human-run local validation helper
+  that hosted CI never requires and that is never wired into
+  `.github/workflows`. The mandatory local release attestation the Vagrant lane
+  produces is governed separately by VHS-REQ-666; Vagrant itself imposes no
+  hosted-CI hypervisor dependency.
 - Acceptance Criteria:
-  - Vagrant documentation states the optional role.
+  - Vagrant documentation states its CI-independent role and its
+    release-attestation relationship to VHS-REQ-666.
   - `npm run vagrant:validate` remains available.
-  - Hosted CI does not require Vagrant.
+  - Hosted CI does not require a Vagrant or hypervisor install.
   - Vagrant provisioning scripts prepare the guest environment without CI
     dependency.
 - Agent Work Scope:
@@ -1890,7 +1894,9 @@ Missing numeric IDs are intentional.
   - `tests/unit/packageManifest.test.ts`
   - `manual:vagrant-validate-when-installed`
 - Change Guidance:
-  - Keep Vagrant useful for humans without making it a public release gate.
+  - Keep Vagrant useful for humans and free of any hosted-CI hypervisor
+    dependency; the release gate it feeds (VHS-REQ-666) is enforced by reading a
+    committed ledger, never by invoking Vagrant inside `.github/workflows`.
 
 ### VHS-REQ-600: Marketplace Identity And Public Source Metadata
 
@@ -4931,3 +4937,56 @@ Missing numeric IDs are intentional.
     when the container defaults change, review the host-native defaults for
     parity. Never make the toggle default-on and never wire the Vagrant lane
     into `.github/workflows` (VHS-REQ-599).
+
+### VHS-REQ-666: Mandatory Local Vagrant Release Attestation
+
+- Status: Active
+- Parent: VHS-SYS-REQ-013
+- Area: CI And Developer Environment
+- Statement: Kicking off a marketplace release shall require a fresh local
+  Vagrant Windows/LabVIEW validation attestation for the exact release version.
+  The maintainer runs the Vagrant lane locally and records a release-gating
+  attestation into the committed runtime-validation ledger; the
+  release-readiness check exposes an opt-in gate that fails closed unless that
+  attestation matches the release version, and the marketplace-release workflow
+  runs that gate before publishing. Enforcement reads the committed ledger, so
+  hosted CI needs no hypervisor and the workflow YAML never names the Vagrant
+  helper (VHS-REQ-599 alignment).
+- Acceptance Criteria:
+  - `scripts/checkReleaseReadiness.js --require-release-attestation` appends a
+    gating `release-attestation` check that passes only when a `releaseGating`
+    track in the runtime-validation ledger has `lastValidatedVersion` equal to
+    the release version; an absent or stale gating track fails the check and, in
+    `--strict` mode, exits nonzero.
+  - Without `--require-release-attestation` the readiness verdict is unchanged
+    (the three advisory checks plus the display-only runtime line), preserving
+    the VHS-REQ-615.13 contract.
+  - The marketplace-release workflow runs the attestation gate
+    (`--strict --require-release-attestation`) before the publish step, reading
+    the committed runtime-validation ledger, and the workflow YAML contains no
+    Vagrant reference.
+  - `npm run vagrant:validate:release` runs the Vagrant lane and, on a passing
+    in-guest comparison, records the release-gating attestation into the ledger
+    via `scripts/recordRuntimeValidation.js`.
+- Agent Work Scope:
+  - Change the readiness gate, the release workflow gate step, the ledger
+    release-gating track, and the maintainer/vagrant docs together; keep the
+    gate enforced by reading the committed ledger and never invoke Vagrant from
+    `.github/workflows`.
+- Implementation References:
+  - `scripts/checkReleaseReadiness.js`
+  - `.github/workflows/marketplace-release.yml`
+  - `docs/requirements/runtime-validation-ledger.json`
+  - `package.json`
+  - `docs/vagrant.md`
+  - `docs/maintainer-operations.md`
+- Verification References:
+  - `tests/unit/releaseReadinessScript.test.ts`
+  - `tests/unit/marketplaceReleaseWorkflow.test.ts`
+  - `tests/unit/packageManifest.test.ts`
+  - `manual:vagrant-validate-release`
+- Change Guidance:
+  - Keep the mandatory attestation enforced through the committed ledger and the
+    readiness gate; never satisfy it by naming or invoking Vagrant inside
+    `.github/workflows`, and never make the gate default-on for local advisory
+    readiness runs.

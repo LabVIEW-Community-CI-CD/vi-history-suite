@@ -72,6 +72,18 @@ describe('Marketplace release workflow', () => {
     }
   });
 
+  it('enforces the mandatory release runtime attestation gate before publish (VHS-REQ-666.3)', () => {
+    const workflow = readWorkflow();
+    const gateCommand = 'node scripts/checkReleaseReadiness.js --strict --require-release-attestation';
+    const gateIndex = workflow.indexOf(gateCommand);
+    const publishIndex = workflow.indexOf('node scripts/runPinnedVsce.js publish --packagePath');
+
+    expect(workflow).toContain('Verify Release Runtime Attestation');
+    expect(workflow).toContain(gateCommand);
+    expect(gateIndex, 'attestation gate should exist').toBeGreaterThan(-1);
+    expect(gateIndex, 'attestation gate must run before publish').toBeLessThan(publishIndex);
+  });
+
   it('verifies the live Marketplace listing after publish and uploads retained release evidence (VHS-REQ-609.6, VHS-REQ-609.10, VHS-REQ-609.12)', () => {
     const workflow = readWorkflow();
     const publishIndex = workflow.indexOf('node scripts/runPinnedVsce.js publish --packagePath');

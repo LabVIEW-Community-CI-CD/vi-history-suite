@@ -198,12 +198,58 @@ function deriveRuntimeAttestationFromLedger(manifest, version) {
   };
 }
 
+// GATING (opt-in): unlike the display-only runtime line, this is a hard check for
+// the marketplace-release path. A release-gating track (releaseGating === true) in
+// the committed runtime-validation ledger must be validated at the release version.
+// This is how the mandatory local Vagrant release validation (VHS-REQ-666) blocks a
+// publish: the maintainer records the attestation into the ledger, and the release
+// workflow runs this check in --strict mode. Hosted CI reads the committed ledger,
+// so no hypervisor is needed in CI and the workflow YAML never names the helper.
+function checkReleaseAttestation(runtimeManifest, version) {
+  const tracks =
+    runtimeManifest && typeof runtimeManifest === 'object' && Array.isArray(runtimeManifest.tracks)
+      ? runtimeManifest.tracks
+      : [];
+  const gating = tracks.filter((track) => track && typeof track === 'object' && track.releaseGating === true);
+  if (gating.length === 0) {
+    return makeCheck(
+      'release-attestation',
+      false,
+      'No release-gating runtime track in the runtime-validation ledger; record a local release-validation attestation (npm run vagrant:validate:release) before publishing.'
+    );
+  }
+  const fresh = gating
+    .filter((track) => track.lastValidatedVersion === version)
+    .map((track) => (typeof track.trackId === 'string' ? track.trackId : 'unnamed-track'));
+  const stale = gating
+    .filter((track) => track.lastValidatedVersion !== version)
+    .map((track) => (typeof track.trackId === 'string' ? track.trackId : 'unnamed-track'));
+  if (stale.length > 0) {
+    return makeCheck(
+      'release-attestation',
+      false,
+      `Release-gating track(s) not validated at ${version}: ${stale.join(', ')}; re-run the local release validation and record the attestation before publishing.`
+    );
+  }
+  return makeCheck(
+    'release-attestation',
+    true,
+    `Release-gating runtime attestation present for ${version}: ${fresh.join(', ')}.`
+  );
+}
+
 function buildReleaseReadiness(inputs = {}, meta = {}) {
   const checks = [
     checkRiskLedger(inputs.ledger, inputs.hasSelectableHighRisk),
     checkManifestDigest(inputs.builtManifestDigest, inputs.shippedManifest),
     checkVersionChangelog(meta.version, inputs.changelogTop ?? { released: undefined, unreleased: false })
   ];
+  // Opt-in release-attestation gate (release workflow path only). Default readiness
+  // stays the advisory three-check verdict with a display-only runtime line so the
+  // VHS-REQ-615.13 contract is preserved for local/CI advisory runs.
+  if (inputs.requireReleaseAttestation) {
+    checks.push(checkReleaseAttestation(inputs.runtimeManifest, meta.version));
+  }
   const status = checks.every((check) => check.passed) ? 'READY' : 'ATTENTION';
   return {
     $schema: RELEASE_READINESS_SCHEMA_ID,
@@ -277,6 +323,19 @@ function loadSignals(cwd, deps = {}) {
 
   const changelogTop = parseChangelogTop(readFile('CHANGELOG.md'));
 
+  // Raw committed runtime-validation ledger manifest, used by the opt-in
+  // release-attestation gate (releaseGating tracks). Kept separate from the
+  // derived display-only runtimeEvidence.
+  let runtimeManifest;
+  try {
+    const gatingSignal = ledgerModule.loadRuntimeValidationSignal(cwd, {});
+    if (gatingSignal && gatingSignal.available) {
+      runtimeManifest = gatingSignal.manifest;
+    }
+  } catch {
+    runtimeManifest = undefined;
+  }
+
   let runtimeEvidence;
   if (deps.runtimeEvidence !== undefined) {
     runtimeEvidence = deps.runtimeEvidence;
@@ -312,6 +371,8 @@ function loadSignals(cwd, deps = {}) {
     builtManifestDigest,
     shippedManifest,
     changelogTop,
+    runtimeManifest,
+    requireReleaseAttestation: deps.requireReleaseAttestation === true,
     runtimeEvidence
   };
 }
@@ -410,6 +471,7 @@ function parseArgs(argv = []) {
     schema: false,
     strict: false,
     includeProvenance: false,
+    requireReleaseAttestation: false,
     outputPath: undefined,
     runtimeEvidencePath: undefined,
     positionals: []
@@ -429,6 +491,7 @@ function parseArgs(argv = []) {
     else if (arg === '--schema') options.schema = true;
     else if (arg === '--strict') options.strict = true;
     else if (arg === '--include-provenance') options.includeProvenance = true;
+    else if (arg === '--require-release-attestation') options.requireReleaseAttestation = true;
     else if (arg === '--output') options.outputPath = next();
     else if (arg === '--runtime-evidence') options.runtimeEvidencePath = next();
     else if (arg.startsWith('--')) throw new Error(`Unknown argument: ${arg}`);
@@ -491,7 +554,11 @@ function main(argv = process.argv.slice(2), deps = {}) {
     return 0;
   }
 
-  const signals = loadSignals(cwd, { ...deps, runtimeEvidencePath: options.runtimeEvidencePath });
+  const signals = loadSignals(cwd, {
+    ...deps,
+    runtimeEvidencePath: options.runtimeEvidencePath,
+    requireReleaseAttestation: options.requireReleaseAttestation
+  });
   const verdict = buildReleaseReadiness(signals, {
     generatedAt: generatedAtFor(deps),
     version: (deps.getPackageVersion ?? getPackageVersion)(cwd),
@@ -544,6 +611,7 @@ module.exports = {
   checkVersionChangelog,
   describeRuntimeAttestation,
   deriveRuntimeAttestationFromLedger,
+  checkReleaseAttestation,
   buildReleaseReadiness,
   loadSignals,
   renderSummary,

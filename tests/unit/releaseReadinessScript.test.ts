@@ -19,6 +19,7 @@ const readinessModule = require('../../scripts/checkReleaseReadiness.js') as {
   checkVersionChangelog: (version: string, top: { released?: string; unreleased: boolean }) => { name: string; passed: boolean; details: string };
   describeRuntimeAttestation: (version: string, evidence: unknown) => string;
   deriveRuntimeAttestationFromLedger: (manifest: unknown, version: string) => any;
+  checkReleaseAttestation: (manifest: unknown, version: string) => { name: string; passed: boolean; details: string };
   buildReleaseReadiness: (inputs?: Record<string, unknown>, meta?: Record<string, unknown>) => any;
   renderMarkdown: (verdict: unknown) => string;
   renderSchema: (options?: Record<string, unknown>) => string;
@@ -37,6 +38,7 @@ const {
   checkVersionChangelog,
   describeRuntimeAttestation,
   deriveRuntimeAttestationFromLedger,
+  checkReleaseAttestation,
   buildReleaseReadiness,
   renderMarkdown,
   renderSchema,
@@ -342,5 +344,112 @@ describe('parseArgs value and provenance branches', () => {
     const schema = JSON.parse(renderSchema());
     expect(schema['x-vi-history-suite-provenance']).toBeUndefined();
     expect(schema.$id).toBe(RELEASE_READINESS_SCHEMA_ID);
+  });
+});
+
+// Criterion coverage: VHS-REQ-666 — a mandatory local release-validation
+// attestation (produced by the Vagrant Windows/LabVIEW lane) is an opt-in
+// GATING check. It reads a releaseGating track from the committed
+// runtime-validation ledger and fails closed unless that track was validated at
+// the release version. The default advisory verdict (no flag) stays three checks
+// with a display-only runtime line, preserving VHS-REQ-615.13.
+describe('checkReleaseAttestation release gate (VHS-REQ-666)', () => {
+  const GATING_FRESH = {
+    tracks: [
+      { trackId: 'linux-host-native', linuxExecutable: true, lastValidatedVersion: '1.33.2' },
+      { trackId: 'vagrant-win-x86-hostnative', releaseGating: true, lastValidatedVersion: '1.33.2' }
+    ]
+  };
+  const GATING_STALE = {
+    tracks: [{ trackId: 'vagrant-win-x86-hostnative', releaseGating: true, lastValidatedVersion: '0.0.0' }]
+  };
+  const GATING_ABSENT = {
+    tracks: [{ trackId: 'linux-host-native', linuxExecutable: true, lastValidatedVersion: '1.33.2' }]
+  };
+
+  it('passes only when a release-gating track is validated at the release version (VHS-REQ-666.1)', () => {
+    expect(checkReleaseAttestation(GATING_FRESH, '1.33.2').passed).toBe(true);
+    const stale = checkReleaseAttestation(GATING_STALE, '1.33.2');
+    expect(stale.passed).toBe(false);
+    expect(stale.details).toContain('not validated at 1.33.2');
+  });
+
+  it('fails closed when no release-gating track exists (VHS-REQ-666.1)', () => {
+    const absent = checkReleaseAttestation(GATING_ABSENT, '1.33.2');
+    expect(absent.passed).toBe(false);
+    expect(absent.details).toContain('No release-gating runtime track');
+    expect(checkReleaseAttestation(undefined, '1.33.2').passed).toBe(false);
+  });
+
+  it('appends the gating check ONLY when requireReleaseAttestation is set (VHS-REQ-666.2)', () => {
+    const base = {
+      ledger: CLEAN_LEDGER,
+      hasSelectableHighRisk,
+      builtManifestDigest: 'abc123',
+      shippedManifest: { integrityDigest: 'abc123' },
+      changelogTop: { released: undefined, unreleased: true }
+    };
+    const meta = { generatedAt: '2026-07-16T00:00:00.000Z', version: '1.33.2', commit: 'deadbeef' };
+
+    // Default: three checks, READY, no gate.
+    const advisory = buildReleaseReadiness(base, meta);
+    expect(advisory.checks).toHaveLength(3);
+    expect(advisory.status).toBe('READY');
+
+    // Gated + fresh attestation: four checks, READY.
+    const gatedReady = buildReleaseReadiness(
+      { ...base, requireReleaseAttestation: true, runtimeManifest: GATING_FRESH },
+      meta
+    );
+    expect(gatedReady.checks).toHaveLength(4);
+    expect(gatedReady.status).toBe('READY');
+    expect(gatedReady.checks.map((c: { name: string }) => c.name)).toContain('release-attestation');
+
+    // Gated + stale attestation: four checks, ATTENTION (fails closed).
+    const gatedStale = buildReleaseReadiness(
+      { ...base, requireReleaseAttestation: true, runtimeManifest: GATING_STALE },
+      meta
+    );
+    expect(gatedStale.checks).toHaveLength(4);
+    expect(gatedStale.status).toBe('ATTENTION');
+  });
+
+  it('main --require-release-attestation --strict blocks a stale attestation and passes a fresh one (VHS-REQ-666.1)', () => {
+    const cwd = makeTempDir();
+    fs.mkdirSync(path.join(cwd, 'out', 'requirements'), { recursive: true });
+    fs.writeFileSync(path.join(cwd, 'CHANGELOG.md'), '# Changelog\n\n## [Unreleased]\n', 'utf8');
+    fs.writeFileSync(
+      path.join(cwd, 'out', 'requirements', 'requirements-manifest.json'),
+      JSON.stringify({ integrityDigest: 'DIGEST123' }),
+      'utf8'
+    );
+
+    const baseDeps = (manifest: unknown) => ({
+      cwd,
+      riskLedgerModule: {
+        loadCoverageSignal: () => ({ available: true, map: {}, source: 'fixture' }),
+        loadRequirementsSignal: () => ({ available: true, health: {}, source: 'fixture' }),
+        loadRuntimeValidationSignal: () => ({ available: true, manifest }),
+        buildRiskLedger: () => CLEAN_LEDGER,
+        hasSelectableHighRisk
+      },
+      manifestModule: { buildRequirementsManifest: () => ({ integrityDigest: 'DIGEST123' }) },
+      getPackageVersion: () => '1.33.2',
+      getGitCommit: () => 'deadbeefcafef00d',
+      now: () => new Date('2026-07-16T00:00:00.000Z'),
+      stdout: { write: () => undefined },
+      stderr: { write: () => undefined }
+    });
+
+    const staleCode = main(['--strict', '--require-release-attestation'], baseDeps(GATING_STALE));
+    expect(staleCode).toBe(1);
+
+    const freshCode = main(['--strict', '--require-release-attestation'], baseDeps(GATING_FRESH));
+    expect(freshCode).toBe(0);
+  });
+
+  it('parseArgs captures --require-release-attestation', () => {
+    expect(parseArgs(['--require-release-attestation']).requireReleaseAttestation).toBe(true);
+    expect(parseArgs([]).requireReleaseAttestation).toBe(false);
   });
 });

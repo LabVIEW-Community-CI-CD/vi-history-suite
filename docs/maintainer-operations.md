@@ -49,18 +49,33 @@ Bootstrap sequence:
 3. Confirm hosted CI passes on the release branch.
 4. Optionally dispatch the Windows/LabVIEW maintainer workflow on
    `release/vX.Y.Z` for installed-user confidence evidence.
-5. Open a pull request from `release/vX.Y.Z` to `main`.
-6. Merge only after CI, review, and release evidence are complete.
-7. Tag the merged `main` commit as `vX.Y.Z`.
-8. Manually dispatch the `Marketplace Release` workflow on that exact tag
+5. **Mandatory local Vagrant release attestation (VHS-REQ-666).** Run the
+   Vagrant Windows/LabVIEW validation locally and record the release-gating
+   attestation for `X.Y.Z`:
+
+   ```bash
+   npm run vagrant:validate:release
+   npm run release:readiness:gate   # must print Verdict: READY
+   ```
+
+   Commit the updated `docs/requirements/runtime-validation-ledger.json` on the
+   release branch. The `Marketplace Release` workflow fails closed (before
+   publish) unless this attestation's `lastValidatedVersion` equals `X.Y.Z`;
+   the gate reads the committed ledger, so no hypervisor runs in hosted CI and
+   the workflow never invokes Vagrant.
+6. Open a pull request from `release/vX.Y.Z` to `main`.
+7. Merge only after CI, review, and release evidence (including the attestation
+   from step 5) are complete.
+8. Tag the merged `main` commit as `vX.Y.Z`.
+9. Manually dispatch the `Marketplace Release` workflow on that exact tag
    (maintainer-only; agents must never dispatch or approve it).
-9. Verify the Marketplace version and links with:
+10. Verify the Marketplace version and links with:
 
    ```powershell
    node scripts/runPinnedVsce.js show svelderrainruiz.vi-history-suite --json
    ```
 
-10. Back-sync `main` to `develop` after release publication. Open the
+11. Back-sync `main` to `develop` after release publication. Open the
     back-sync pull request **directly with `head=main`** — do not create an
     intermediate `chore/*` or `backsync/*` branch:
 
