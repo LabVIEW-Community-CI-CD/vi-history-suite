@@ -27,8 +27,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.guest = :windows
   config.vm.communicator = "winrm"
 
-  config.winrm.username = "vagrant"
-  config.winrm.password = "Vagrant1234!"
+  config.winrm.username = ENV.fetch("VIHS_VAGRANT_WINRM_USER", "vagrant")
+  config.winrm.password = ENV.fetch("VIHS_VAGRANT_WINRM_PASSWORD", "Vagrant1234!")
   config.winrm.transport = :negotiate
   config.winrm.timeout = WINRM_TIMEOUT
   config.vm.boot_timeout = BOOT_TIMEOUT
