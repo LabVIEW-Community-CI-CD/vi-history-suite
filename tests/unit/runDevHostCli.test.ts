@@ -98,6 +98,64 @@ describe('runDevHostCli', () => {
     expect(launchPlan?.extensionMode).toBe('staged');
     expect(write).toHaveBeenCalled();
   });
+
+  it('launches with a user-supplied --workspace in direct extension mode (no fixture prepared)', async () => {
+    const write = vi.fn();
+    const prepareFixtureWorkspace = vi.fn<
+      (workspacePath: string) => Promise<ViHistoryDevHostWorkspaceMetadata>
+    >();
+    const launcher = vi.fn<(plan: ViHistoryDevHostLaunchPlan) => Promise<void>>().mockResolvedValue();
+
+    const outcome = await runDevHostCli(['--workspace-path', '/home/dev/my-workspace'], {
+      repoRoot: '/repo',
+      resolveRuntimeRoot: vi.fn().mockResolvedValue('/tmp/runtime'),
+      prepareFixtureWorkspace,
+      resolveCodeExecutablePath: vi.fn().mockReturnValue('/opt/vscode/code'),
+      launcher,
+      stdout: { write }
+    });
+
+    expect(outcome).toBe('launched');
+    // A user-supplied workspace path bypasses fixture preparation entirely.
+    expect(prepareFixtureWorkspace).not.toHaveBeenCalled();
+    const launchPlan = launcher.mock.calls[0]?.[0];
+    expect(launchPlan?.workspacePath.replace(/\\/g, '/')).toContain('my-workspace');
+    expect(launchPlan?.preparedFixtureWorkspace).toBe(false);
+    // No --stage-extension -> direct mode, extension development path is the repo root.
+    expect(launchPlan?.extensionMode).toBe('direct');
+    expect(launchPlan?.extensionDevelopmentPath).toBe('/repo');
+  });
+
+  it('re-prepares the fixture workspace for --prepare-workspace-only when a workspace path is also supplied', async () => {
+    const write = vi.fn();
+    const prepareFixtureWorkspace = vi
+      .fn<(workspacePath: string) => Promise<ViHistoryDevHostWorkspaceMetadata>>()
+      .mockResolvedValue({
+        workspacePath: '/tmp/runtime/workspace-fixture',
+        eligibleRelativePath: 'fixtures/eligible.vi',
+        ineligibleRelativePath: 'fixtures/ineligible.txt',
+        metadataPath: '/tmp/runtime/workspace-fixture/.vihs-metadata.json'
+      });
+    const launcher = vi.fn<(plan: ViHistoryDevHostLaunchPlan) => Promise<void>>().mockResolvedValue();
+
+    const outcome = await runDevHostCli(
+      ['--prepare-workspace-only', '--workspace-path', '/home/dev/my-workspace'],
+      {
+        repoRoot: '/repo',
+        resolveRuntimeRoot: vi.fn().mockResolvedValue('/tmp/runtime'),
+        prepareFixtureWorkspace,
+        launcher,
+        stdout: { write }
+      }
+    );
+
+    expect(outcome).toBe('prepared');
+    // The supplied workspace path skips the inline fixture prepare, so the
+    // prepare-workspace-only branch must call prepareFixtureWorkspace itself.
+    expect(prepareFixtureWorkspace).toHaveBeenCalledTimes(1);
+    expect(launcher).not.toHaveBeenCalled();
+    expect(write).toHaveBeenCalled();
+  });
 });
 
 describe('runDevHostCliMain', () => {
