@@ -286,3 +286,110 @@ describe('resolveImageDownloadSize', () => {
     ).toBeUndefined();
   });
 });
+
+describe('resolveImageDownloadSize auth/manifest error branches (VHS-REQ-655.3)', () => {
+  const IMAGE = 'nationalinstruments/labview:tag';
+  const challengeResponse = (): RegistryHttpResponse => ({
+    statusCode: 401,
+    headers: {
+      'www-authenticate': `Bearer realm="https://${DOCKER_HUB_TOKEN_HOST}/token",service="registry.docker.io"`
+    },
+    body: ''
+  });
+  const isTokenUrl = (url: string): boolean => url.startsWith(`https://${DOCKER_HUB_TOKEN_HOST}/token`);
+
+  it('returns undefined on a 401 with no Bearer challenge header', async () => {
+    const requestJson: RegistryHttpRequest = vi.fn(async () => ({
+      statusCode: 401,
+      headers: {},
+      body: ''
+    }));
+    expect(await resolveImageDownloadSize({ image: IMAGE, requestJson })).toBeUndefined();
+    expect(requestJson).toHaveBeenCalledOnce();
+  });
+
+  it('returns undefined when the challenge realm is not a parseable URL', async () => {
+    const requestJson: RegistryHttpRequest = vi.fn(async () => ({
+      statusCode: 401,
+      headers: { 'www-authenticate': 'Bearer realm="::not a url::",service="x"' },
+      body: ''
+    }));
+    expect(await resolveImageDownloadSize({ image: IMAGE, requestJson })).toBeUndefined();
+  });
+
+  it('returns undefined when the token endpoint answers non-2xx', async () => {
+    const requestJson: RegistryHttpRequest = vi.fn(async ({ url }) =>
+      isTokenUrl(url) ? { statusCode: 503, headers: {}, body: '' } : challengeResponse()
+    );
+    expect(await resolveImageDownloadSize({ image: IMAGE, requestJson })).toBeUndefined();
+  });
+
+  it('returns undefined when the token response body has no token', async () => {
+    const requestJson: RegistryHttpRequest = vi.fn(async ({ url }) =>
+      isTokenUrl(url)
+        ? { statusCode: 200, headers: {}, body: JSON.stringify({ unrelated: true }) }
+        : challengeResponse()
+    );
+    expect(await resolveImageDownloadSize({ image: IMAGE, requestJson })).toBeUndefined();
+  });
+
+  it('returns undefined when the authenticated manifest answers non-2xx', async () => {
+    const requestJson: RegistryHttpRequest = vi.fn(async ({ url, headers }) => {
+      if (isTokenUrl(url)) {
+        return { statusCode: 200, headers: {}, body: JSON.stringify({ token: 'TKN' }) };
+      }
+      if (headers.Authorization) {
+        return { statusCode: 404, headers: {}, body: '' };
+      }
+      return challengeResponse();
+    });
+    expect(await resolveImageDownloadSize({ image: IMAGE, requestJson })).toBeUndefined();
+  });
+
+  it('returns undefined when the manifest body is not valid JSON', async () => {
+    const requestJson: RegistryHttpRequest = vi.fn(async () => ({
+      statusCode: 200,
+      headers: {},
+      body: 'not-json{'
+    }));
+    expect(await resolveImageDownloadSize({ image: IMAGE, requestJson })).toBeUndefined();
+  });
+
+  it('returns undefined when the platform manifest (from an index) answers non-2xx', async () => {
+    const indexBody = JSON.stringify({
+      mediaType: 'application/vnd.docker.distribution.manifest.list.v2+json',
+      manifests: [{ digest: 'sha256:winman', platform: { os: 'windows', architecture: 'amd64' } }]
+    });
+    const requestJson: RegistryHttpRequest = vi.fn(async ({ url }) =>
+      url.includes('/manifests/sha256%3Awinman')
+        ? { statusCode: 500, headers: {}, body: '' }
+        : { statusCode: 200, headers: {}, body: indexBody }
+    );
+    expect(
+      await resolveImageDownloadSize({
+        image: IMAGE,
+        platform: { os: 'windows', architecture: 'amd64' },
+        requestJson
+      })
+    ).toBeUndefined();
+  });
+
+  it('returns undefined when the platform manifest body is not valid JSON', async () => {
+    const indexBody = JSON.stringify({
+      mediaType: 'application/vnd.docker.distribution.manifest.list.v2+json',
+      manifests: [{ digest: 'sha256:winman', platform: { os: 'windows', architecture: 'amd64' } }]
+    });
+    const requestJson: RegistryHttpRequest = vi.fn(async ({ url }) =>
+      url.includes('/manifests/sha256%3Awinman')
+        ? { statusCode: 200, headers: {}, body: 'broken{' }
+        : { statusCode: 200, headers: {}, body: indexBody }
+    );
+    expect(
+      await resolveImageDownloadSize({
+        image: IMAGE,
+        platform: { os: 'windows', architecture: 'amd64' },
+        requestJson
+      })
+    ).toBeUndefined();
+  });
+});
