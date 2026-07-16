@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "description": "Committed record of the last real-runtime comparison validation for each Linux-executable comparison-runtime track. The risk ledger (scripts/buildRiskLedger.js, VHS-REQ-601) reads this file and surfaces any track whose lastValidatedVersion is not the current build version as a selectable runtime-fidelity re-validation risk. Windows host-native and windows-container tracks are intentionally NOT listed here: they are covered by the parked platform-proof awareness list (issue #1316) because they are not executable on a Linux host. Update a track's lastValidatedVersion/lastValidatedCommit/evidence after re-running its driver against a new build.",
+  "description": "Committed record of the last real-runtime comparison validation for each Linux-executable comparison-runtime track. The risk ledger (scripts/buildRiskLedger.js, VHS-REQ-601) reads this file and surfaces any track whose lastValidatedVersion is not the current build version as a selectable runtime-fidelity re-validation risk. Windows host-native and windows-container tracks are intentionally NOT listed as Linux-executable tracks: they are covered by the parked platform-proof awareness list (issue #1316) because they are not executable on a Linux host. EXCEPTION: a track marked releaseGating:true (linuxExecutable:false) is the mandatory local Vagrant release attestation (VHS-REQ-666) read by scripts/checkReleaseReadiness.js --require-release-attestation; the marketplace-release workflow fails closed unless its lastValidatedVersion equals the release version. Update a track's lastValidatedVersion/lastValidatedCommit/evidence after re-running its driver against a new build (use scripts/recordRuntimeValidation.js).",
   "tracks": [
     {
       "trackId": "linux-host-native",
@@ -55,6 +55,17 @@
       "lastValidatedCommit": "48e00d7",
       "evidence": "issue:#1317",
       "fixture": "labview-icon-editor resource/plugins/lv_icon.vi"
+    },
+    {
+      "trackId": "vagrant-win-x86-hostnative",
+      "platform": "windows",
+      "provider": "vagrant",
+      "linuxExecutable": false,
+      "releaseGating": true,
+      "lastValidatedVersion": "0.0.0",
+      "lastValidatedCommit": "none",
+      "evidence": "pending: run npm run vagrant:validate:release",
+      "fixture": "labview-icon-editor resource/plugins/lv_icon.vi (x86 host-native headless, VHS-REQ-665)"
     }
   ]
 }

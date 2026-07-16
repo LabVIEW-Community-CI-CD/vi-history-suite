@@ -1,10 +1,13 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 #
-# Optional local Vagrant helper for VI History Suite.
+# Local Vagrant helper for VI History Suite.
 #
-# This VM is for human-maintainer local testing only. It is not a required
-# release gate and is not run by the lightweight GitHub CI workflow.
+# This VM is for human-maintainer local testing only and is never run by the
+# lightweight GitHub CI workflow (no hosted CI hypervisor dependency;
+# VHS-REQ-599). It produces the mandatory local release attestation that gates a
+# marketplace release (VHS-REQ-666); enforcement reads the committed
+# runtime-validation ledger, so this VM itself is never invoked from CI.
 
 VAGRANTFILE_API_VERSION = "2"
 require 'fileutils'
@@ -65,5 +68,14 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     type: "shell",
     privileged: true,
     path: "provision/prepare-cold-labview.ps1",
+    run: "never"
+
+  # Interactive repair for a restricted `vagrant` guest account that blocks the
+  # WinRM handshake. Run manually from inside the VM console (see docs/vagrant.md),
+  # or via `vagrant provision --provision-with repair-account` once WinRM works.
+  config.vm.provision "repair-account",
+    type: "shell",
+    privileged: true,
+    path: "provision/repair-vagrant-account.ps1",
     run: "never"
 end

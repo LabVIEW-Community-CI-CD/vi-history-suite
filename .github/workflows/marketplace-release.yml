@@ -92,6 +92,12 @@ jobs:
       - name: Package
         run: npm run package
 
+      - name: Verify Release Runtime Attestation
+        run: |
+          set -euo pipefail
+          echo "Enforcing the mandatory release runtime attestation (VHS-REQ-666) from the committed runtime-validation ledger." | tee -a "$GITHUB_STEP_SUMMARY"
+          node scripts/checkReleaseReadiness.js --strict --require-release-attestation
+
       - name: Locate VSIX
         id: locate-vsix
         run: |

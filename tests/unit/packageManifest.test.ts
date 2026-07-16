@@ -378,7 +378,17 @@ describe('extension manifest public metadata', () => {
     }
   });
 
-  it('documents Vagrant as optional and keeps provisioning independent of CI (VHS-REQ-599.1, VHS-REQ-599.4)', () => {
+  it('exposes the mandatory local Vagrant release-validation and gate scripts (VHS-REQ-666.4)', () => {
+    // VHS-REQ-666.4: npm run vagrant:validate:release runs the Vagrant lane and
+    // records the release-gating attestation; the readiness gate enforces it.
+    const manifest = readManifest();
+    expect(manifest.scripts['vagrant:validate:release']).toBe('node scripts/vagrantReleaseValidate.cjs');
+    expect(manifest.scripts['release:readiness:gate']).toBe(
+      'node scripts/checkReleaseReadiness.js --strict --require-release-attestation'
+    );
+  });
+
+  it('documents Vagrant as CI-independent and its mandatory release attestation (VHS-REQ-599.1, VHS-REQ-599.4)', () => {
     const vagrantDoc = readRepoText('docs', 'vagrant.md');
     const vagrantfile = readRepoText('vagrant', 'Vagrantfile');
     const bootstrapProvisioner = readRepoText('vagrant', 'provision', 'bootstrap.ps1');
@@ -388,12 +398,12 @@ describe('extension manifest public metadata', () => {
       'prepare-cold-labview.ps1'
     );
 
-    expect(vagrantDoc).toContain('optional isolation helper');
-    expect(vagrantDoc).toContain('not part of required CI');
-    expect(vagrantDoc).toMatch(/not\s+a release gate/);
+    expect(vagrantDoc).toContain('hosted CI needs no hypervisor');
+    expect(vagrantDoc).toContain('VHS-REQ-666');
+    expect(vagrantDoc).toContain('VHS-REQ-599');
     expect(vagrantDoc).toContain('npm run vagrant:validate');
     expect(vagrantfile).toContain('human-maintainer local testing only');
-    expect(vagrantfile).toMatch(/not a required\s+#\s+release gate/);
+    expect(vagrantfile).toMatch(/never run by the\s+#\s+lightweight GitHub CI workflow/);
     expect(vagrantfile).toContain('provision/bootstrap.ps1');
     expect(vagrantfile).toContain('provision/prepare-cold-labview.ps1');
 

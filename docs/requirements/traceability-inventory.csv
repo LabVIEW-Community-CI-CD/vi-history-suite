@@ -76,6 +76,7 @@ scripts/runPinnedVsce.js,supporting,No,Pinned VSCE runner; packaging support.
 scripts/verifyMarketplaceListing.js,mapped,Yes,Marketplace listing verification retry helper with retained bounded attempt evidence report; mapped to VHS-REQ-609 and VHS-REQ-615.
 scripts/checkReleaseReadiness.js,mapped,Yes,Release-readiness verdict aggregator; composes risk ledger requirements-manifest digest and version/CHANGELOG coherence into one advisory READY/ATTENTION status with a display-only human-attested runtime line; mapped to VHS-REQ-615.
 scripts/runWindowsIntegrationHost.js,dev-only,No,Windows integration host runner; CI infrastructure.
+scripts/vagrantLanePreflight.js,dev-only,No,Optional Vagrant lane preflight and status reporter; injected command/fs boundaries; local maintainer helper only and never a CI gate.
 tests/unit/bootstrapLinuxVsCodeHost.test.ts,dev-only,No,Tests for Linux VS Code host bootstrap.
 tests/unit/branchGovernanceWorkflow.test.ts,mapped,Yes,Branch governance workflow tests; mapped through RTM.
 tests/unit/branchProtectionSettingsAuditScript.test.ts,dev-only,No,Tests for the maintainer branch protection settings audit command with mocked GitHub CLI execution and drift rendering.
@@ -138,6 +139,7 @@ tests/unit/reviewDecisionRecord.test.ts,mapped,Yes,Review decision record persis
 tests/unit/reviewDecisionRecordAction.test.ts,supporting,No,Decision record action orchestration unit tests covering outcome branches; supporting VHS-REQ-610 dashboard aggregate review.
 tests/unit/reviewScenarioSupportPolicy.test.ts,mapped,Yes,Review scenario and repository support policy tests; mapped to VHS-REQ-610.
 tests/unit/runLinuxIntegrationHost.test.ts,dev-only,No,Linux integration host tests; CI infrastructure.
+tests/unit/vagrantLanePreflight.test.ts,dev-only,No,Optional Vagrant lane preflight/status tests covering banner and box-list parsing readiness checks and CLI exit behavior; local maintainer tooling.
 tests/unit/runDevHostCli.test.ts,dev-only,No,Development host CLI tests; development tooling.
 tests/unit/runPinnedVsce.test.ts,supporting,No,Pinned VSCE runner tests; packaging support.
 tests/unit/traceabilityAuditScript.test.ts,mapped,Yes,Traceability audit script tests; mapped through RTM.
@@ -242,6 +244,7 @@ resources/bundled-docs/pages/copilot-agent-mode.html,mapped,Yes,Bundled Copilot 
 vagrant/Vagrantfile,supporting,Yes,Vagrant configuration; mapped through RTM.
 vagrant/provision/bootstrap.ps1,supporting,Yes,Vagrant bootstrap provisioner; mapped to VHS-REQ-599.
 vagrant/provision/prepare-cold-labview.ps1,supporting,Yes,Vagrant cold LabVIEW preparation; mapped to VHS-REQ-599.
+vagrant/provision/repair-vagrant-account.ps1,supporting,No,Interactive in-guest repair for a restricted vagrant account blocking WinRM/guest-control logon; local maintainer helper only.
 .devcontainer/devcontainer.json,supporting,Yes,Devcontainer configuration; mapped through RTM.
 .vscode/extensions.json,dev-only,No,VS Code recommended extensions; workspace configuration.
 .vscode/launch.json,dev-only,No,VS Code debug launch configurations; workspace configuration.

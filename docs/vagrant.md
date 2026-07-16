@@ -1,14 +1,33 @@
-# Optional Vagrant
+# Vagrant
 
-Vagrant is retained as an optional isolation helper for maintainers who already
-have a compatible Windows/LabVIEW box. It is not part of required CI and is not
-a release gate. The maintainer Windows/LabVIEW self-hosted runner is the normal
-local installed-user validation lane once it is available.
+Vagrant is a maintainer-run local Windows/LabVIEW isolation helper. It is never
+wired into hosted CI (no workflow invokes it and hosted CI needs no hypervisor —
+VHS-REQ-599), but it is **not optional for a marketplace release**: kicking off a
+release requires a fresh local Vagrant validation attestation for the exact
+release version (VHS-REQ-666). The maintainer runs the lane, records the
+attestation into the committed runtime-validation ledger, and the
+`Marketplace Release` workflow fails closed (before publish) unless that
+attestation matches the release version. See
+[Mandatory release attestation](#mandatory-release-attestation-vhs-req-666)
+below and the [Release Flow](./maintainer-operations.md#release-flow).
 
 Validate the Vagrantfile:
 
 ```bash
 npm run vagrant:validate
+```
+
+Check host readiness before the heavy `vagrant up` (verifies the Vagrant and
+VirtualBox CLIs, the `Vagrantfile`, and that the expected box is registered):
+
+```bash
+npm run vagrant:preflight
+```
+
+Report the current VM lifecycle state:
+
+```bash
+npm run vagrant:status
 ```
 
 Start the VM manually:
@@ -23,6 +42,99 @@ Expected host prerequisites:
 - Vagrant
 - VirtualBox
 - a registered Windows 11 plus LabVIEW 2026 box named by `VIHS_VAGRANT_BOX`
+
+## Mandatory release attestation (VHS-REQ-666)
+
+A marketplace release cannot be published without a fresh local Vagrant
+validation attestation for the exact release version. Produce it with:
+
+```bash
+npm run vagrant:validate:release
+```
+
+This brings the guest up (self-healing its account at boot), runs the shipped
+comparison primitives in-guest against the icon-editor `lv_icon.vi` fixture
+(x86 host-native headless, VHS-REQ-665), and — only on a passing comparison —
+records a release-gating attestation into
+`docs/requirements/runtime-validation-ledger.json` (track
+`vagrant-win-x86-hostnative`) via `scripts/recordRuntimeValidation.js`. Commit
+the updated ledger.
+
+Verify the gate locally before opening the release PR:
+
+```bash
+npm run release:readiness:gate   # node scripts/checkReleaseReadiness.js --strict --require-release-attestation
+```
+
+It exits nonzero (and prints `Verdict: ATTENTION`) until the gating track's
+`lastValidatedVersion` equals the release version. The `Marketplace Release`
+workflow runs this same gate before publishing and reads the committed ledger,
+so enforcement needs no hypervisor in hosted CI and the workflow YAML never
+names Vagrant. Default advisory `npm run release:readiness` is unchanged (it
+does not enable the gate).
+
+## Host recovery and the box store
+
+The box artifact is large (~49 GB) and may live on an external drive. If the
+lane stops working after a host reboot or a VirtualBox config corruption, check
+these first (all observed at least once on the maintainer host):
+
+- A zeroed `~/.config/VirtualBox/VirtualBox.xml` or golden `*.vbox` file —
+  restore from the `*-prev` sibling VirtualBox keeps.
+- `~/.vagrant.d/boxes` pointing at an unmounted drive — mount the box-store
+  drive, then confirm with `vagrant box list`.
+- Make the box-store mount persistent (an `fstab` entry with
+  `nofail,x-systemd.automount`) so `vagrant box list` triggers an automount
+  instead of failing after a reboot.
+
+`npm run vagrant:preflight` surfaces a missing box or missing CLI as a `FAIL`
+line so you can catch these before spending time on `vagrant up`.
+
+## WinRM handshake and the restricted `vagrant` account
+
+A packaged box can boot to the Windows 11 desktop while the WinRM handshake
+never completes — `vagrant up` loops on `Authentication failure. Retrying...`.
+The usual root cause is guest-side: the local `vagrant` account is **restricted
+from logon** (disabled, expired password, missing logon right, logon-hours
+restriction, or "must change password at next logon"). VirtualBox guest-control
+reports the same underlying problem as:
+
+```
+The specified user account on the guest is RESTRICTED and can't be used to logon
+(VBOX_E_IPRT_ERROR 0x80bb0005)
+```
+
+Because both WinRM and guest-control are blocked, this cannot be fixed from the
+host automation lane. Fix it interactively:
+
+1. Boot the VM with a GUI console (`VBoxManage startvm <vm> --type gui`, or open
+   VirtualBox and start the VM), and log in at the lock screen as `vagrant` or a
+   local administrator. You will need to type the account password directly in
+   the VM console.
+2. Open an elevated PowerShell and run the repair provisioner:
+
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File C:\vihs-workspace\vagrant\provision\repair-vagrant-account.ps1
+   ```
+
+   It activates the account, clears logon-hours and password-expiry
+   restrictions, ensures local-administrator membership, grants the interactive
+   and network logon rights, re-asserts autologon, and enables the WinRM
+   listener. It is idempotent and only touches the local `vagrant` account.
+3. Sign out and back in once so the cleared logon flags take effect, then re-run
+   `vagrant up` (or `vagrant reload --provision`) from the host.
+
+Once WinRM is working again, the same script can be re-applied non-interactively
+with `vagrant provision --provision-with repair-account`.
+
+### Automatic boot-time self-heal
+
+The `bootstrap` provisioner installs a `VIHSVagrantSelfHeal` scheduled task that
+runs `repair-vagrant-account.ps1` as `SYSTEM` at every startup, before the WinRM
+handshake. This means a freshly imported box repairs a restricted `vagrant`
+account on its own — the interactive console fix above is only needed to recover
+a box that predates the self-heal task (or if the task itself is removed). The
+task and its script live under `C:\vagrant-selfheal\` in the guest.
 
 ## 32-bit LabVIEW 2026 host-native headless lane (VHS-REQ-665)
 
