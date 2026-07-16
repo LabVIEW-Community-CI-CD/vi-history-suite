@@ -130,7 +130,7 @@ export async function buildViSemanticHistory(
       selectedHash: newer.hash,
       runtime: input.runtime
     });
-    steps.push(toStep(newer, result));
+    steps.push(toStep(newer, older, result));
     if (result.status === 'completed' && title === undefined) {
       title = result.model.vi.title;
     }
@@ -149,9 +149,13 @@ export async function buildViSemanticHistory(
   return { ...history, narrative: renderHistoryNarrative(history) };
 }
 
-function toStep(newer: GitHistoryEntry, result: CompareViRevisionsResult): ViSemanticHistoryStep {
+function toStep(
+  newer: GitHistoryEntry,
+  older: GitHistoryEntry,
+  result: CompareViRevisionsResult
+): ViSemanticHistoryStep {
   const base = {
-    baseHash: '',
+    baseHash: older.hash,
     selectedHash: newer.hash,
     authorDate: newer.authorDate,
     authorName: newer.authorName,
@@ -160,7 +164,7 @@ function toStep(newer: GitHistoryEntry, result: CompareViRevisionsResult): ViSem
   if (result.status === 'completed') {
     return {
       ...base,
-      baseHash: result.model.revisions?.baseHash ?? '',
+      baseHash: result.model.revisions?.baseHash ?? older.hash,
       status: 'completed',
       hasDifferences: result.hasDifferences,
       changedSurfaces: result.model.changedSurfaces,
