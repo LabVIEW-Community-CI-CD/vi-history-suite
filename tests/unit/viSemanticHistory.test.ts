@@ -111,6 +111,10 @@ describe('buildViSemanticHistory', () => {
       hasDifferences: false,
       reason: 'docker-daemon-unreachable'
     });
+    // A blocked/failed step still identifies both endpoints of the transition:
+    // baseHash is the older revision (step i=1 compares newer 'bbbb' vs older 'aaaa').
+    expect(history.steps[1].baseHash).toBe('aaaa');
+    expect(history.steps[1].selectedHash).toBe('bbbb');
     expect(history.steps[1].narrative).toContain('blocked-selection');
     expect(history.totals).toMatchObject({ changingStepCount: 1, blockedOrFailedStepCount: 1 });
     expect(history.narrative).toContain('1 comparison could not be completed');
