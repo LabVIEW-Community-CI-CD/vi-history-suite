@@ -164,6 +164,22 @@ describe('gitCli parsing', () => {
     );
   });
 
+  it('preserves a commit body that itself contains the field-separator byte', () => {
+    // %b (body) is the last format field. A commit body that contains the field
+    // separator (\x1f) must be preserved verbatim, not truncated at the first
+    // occurrence.
+    const stdout = 'abc123\x1f2026-04-02T10:00:00Z\x1fA User\x1fSubject\x1fLine A\x1fLine B\x1e';
+    expect(parseHistoryEntries(stdout)).toEqual([
+      {
+        hash: 'abc123',
+        authorDate: '2026-04-02T10:00:00Z',
+        authorName: 'A User',
+        subject: 'Subject',
+        body: 'Line A\x1fLine B'
+      }
+    ]);
+  });
+
   it('prefers an explicit git executable override', () => {
     expect(
       resolveGitExecutable(

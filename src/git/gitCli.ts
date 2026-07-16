@@ -301,7 +301,12 @@ export function parseHistoryEntries(output: string): GitHistoryEntry[] {
     .map((record) => record.trim())
     .filter((record) => record.length > 0)
     .map((record) => {
-      const [hash, authorDate, authorName, subject, body] = record.split(HISTORY_FIELD_SEPARATOR);
+      const fields = record.split(HISTORY_FIELD_SEPARATOR);
+      const [hash, authorDate, authorName, subject] = fields;
+      // Body (%b) is the last format field; rejoin any remaining pieces so a
+      // commit body that itself contains the field-separator byte is preserved
+      // verbatim rather than truncated at the first occurrence.
+      const body = fields.slice(4).join(HISTORY_FIELD_SEPARATOR);
       return {
         hash,
         authorDate,
