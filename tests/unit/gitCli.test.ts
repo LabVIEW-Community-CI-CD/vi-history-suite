@@ -107,6 +107,26 @@ describe('gitCli parsing', () => {
     expect(parseCommitHashes('abc123\n\ndef456\n')).toEqual(['abc123', 'def456']);
   });
 
+  it('drops staged ls-files entries whose metadata is malformed (VHS-REQ-641.1)', () => {
+    // Tab present but metadata is invalid: non-integer stage, missing fields, or
+    // an empty path after the tab -> the entry is filtered out (second guard).
+    expect(
+      parseLsFilesStageZ(
+        '100644 abcdef1234567890abcdef1234567890abcdef12 X\tbad-stage.vi\0' +
+          '100644\tmissing-fields.vi\0' +
+          '100644 abcdef1234567890abcdef1234567890abcdef12 0\t\0' +
+          '100644 abcdef1234567890abcdef1234567890abcdef12 0\tgood.vi\0'
+      )
+    ).toEqual([
+      {
+        mode: '100644',
+        objectId: 'abcdef1234567890abcdef1234567890abcdef12',
+        stage: 0,
+        relativePath: 'good.vi'
+      }
+    ]);
+  });
+
   it('parses history entry records including single-line, multi-line, and empty commit bodies', () => {
     const stdout =
       'abc123\x1f2026-04-02T10:00:00Z\x1fA User\x1fFirst subject\x1fFirst body line\x1e' +
@@ -367,6 +387,17 @@ describe('gitCli parsing', () => {
     expect(historyEntries[0]?.hash).toBe(commitHashes[0]);
     expect(historyEntries[0]?.authorName).toBe('VI History Suite Test');
     expect(historyEntries[0]?.authorDate).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+  });
+
+  it('returns the first existing Windows Git candidate before falling back (VHS-REQ-641.1)', () => {
+    // pathExists true for the cmd/git.exe candidate -> that path is returned
+    // (win32 candidate-found branch), not the bare "git" fallback.
+    const chosen = resolveGitExecutable(
+      { ProgramFiles: 'C:\\Program Files' },
+      'win32',
+      (candidate) => candidate === 'C:\\Program Files\\Git\\cmd\\git.exe'
+    );
+    expect(chosen).toBe('C:\\Program Files\\Git\\cmd\\git.exe');
   });
 
   it('falls back to bare git when no Windows candidate exists and rejects Git subprocess failures', async () => {
