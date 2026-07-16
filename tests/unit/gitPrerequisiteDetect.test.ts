@@ -4,11 +4,32 @@
  * deterministic in CI.
  */
 import { describe, expect, it } from 'vitest';
+import { EventEmitter } from 'node:events';
 
 import {
+  createRunGitVersion,
   detectGitPrerequisite,
   parseGitVersionOutput
 } from '../../src/tooling/gitPrerequisiteDetect';
+
+// Minimal fake ChildProcess: an EventEmitter with stdout/stderr emitters and a
+// no-op kill, so createRunGitVersion's stdio/close/error branches can be driven
+// deterministically without spawning a real process.
+function createFakeChild(): EventEmitter & {
+  stdout: EventEmitter;
+  stderr: EventEmitter;
+  kill: () => void;
+} {
+  const child = new EventEmitter() as EventEmitter & {
+    stdout: EventEmitter;
+    stderr: EventEmitter;
+    kill: () => void;
+  };
+  child.stdout = new EventEmitter();
+  child.stderr = new EventEmitter();
+  child.kill = () => undefined;
+  return child;
+}
 
 describe('detectGitPrerequisite', () => {
   it('returns available with the parsed version when git --version succeeds (VHS-REQ-619.1)', async () => {
@@ -123,5 +144,47 @@ describe('detectGitPrerequisite', () => {
     if (detection.available) {
       expect(detection.version).toMatch(/^\d+\.\d+/u);
     }
+  });
+});
+
+describe('createRunGitVersion (VHS-REQ-619.1)', () => {
+  it('resolves the captured stdio and exit code on a normal close', async () => {
+    const child = createFakeChild();
+    const runGitVersion = createRunGitVersion((() => child) as never);
+    const promise = runGitVersion();
+    child.stdout.emit('data', Buffer.from('git version 2.4'));
+    child.stdout.emit('data', Buffer.from('6.0\n'));
+    child.stderr.emit('data', Buffer.from('warn'));
+    child.emit('close', 0);
+    await expect(promise).resolves.toEqual({
+      exitCode: 0,
+      stdout: 'git version 2.46.0\n',
+      stderr: 'warn'
+    });
+  });
+
+  it('rejects when the child emits an error', async () => {
+    const child = createFakeChild();
+    const runGitVersion = createRunGitVersion((() => child) as never);
+    const promise = runGitVersion();
+    child.emit('error', new Error('spawn git ENOENT'));
+    await expect(promise).rejects.toThrow('spawn git ENOENT');
+  });
+
+  it('rejects when spawn throws synchronously', async () => {
+    const runGitVersion = createRunGitVersion(((() => {
+      throw new Error('spawn threw');
+    }) as never));
+    await expect(runGitVersion()).rejects.toThrow('spawn threw');
+  });
+
+  it('ignores a late close after an error has already settled the probe', async () => {
+    const child = createFakeChild();
+    const runGitVersion = createRunGitVersion((() => child) as never);
+    const promise = runGitVersion();
+    child.emit('error', new Error('first'));
+    // A subsequent close must not throw or change the already-rejected result.
+    child.emit('close', 0);
+    await expect(promise).rejects.toThrow('first');
   });
 });
