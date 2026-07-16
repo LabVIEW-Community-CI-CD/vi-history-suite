@@ -2864,13 +2864,18 @@ function extractLabviewMajorVersion(filePath: string): string | undefined {
   return yearMatch?.[1];
 }
 
-function inferBitnessFromPath(filePath: string): RuntimeBitness | undefined {
-  const normalized = normalizeCandidatePath(filePath);
-  if (normalized.includes('\\program files (x86)\\')) {
+export function inferBitnessFromPath(filePath: string): RuntimeBitness | undefined {
+  // Normalize to forward slashes so the check works for both Windows
+  // (backslash) and POSIX (forward-slash) install paths. The shared
+  // normalizeCandidatePath normalizes to backslashes for Windows CLI dedup,
+  // which would make the POSIX markers below unmatchable — so infer bitness
+  // with a forward-slash form here instead.
+  const normalized = filePath.replaceAll('\\', '/').toLowerCase();
+  if (normalized.includes('/program files (x86)/')) {
     return 'x86';
   }
   if (
-    normalized.includes('\\program files\\') ||
+    normalized.includes('/program files/') ||
     normalized.includes('/usr/local/natinst/') ||
     normalized.includes('/applications/national instruments/')
   ) {

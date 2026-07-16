@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   acquireWindowsContainerImage,
   buildDocumentedRuntimeCandidates,
+  inferBitnessFromPath,
   locateComparisonRuntime,
   parseWindowsRegistryLabviewCandidates,
   probeWindowsRegistryHostLabviewAvailable,
@@ -52,6 +53,34 @@ function quietWindowsHostSurfaceDeps() {
     observeWindowsTcpListeners: vi.fn().mockResolvedValue([]) as never
   };
 }
+
+describe('inferBitnessFromPath (VHS-REQ-633.2)', () => {
+  it('infers x64 from POSIX National Instruments install paths', () => {
+    // Regression: the shared candidate normalizer converts '/' -> '\', which made
+    // these forward-slash POSIX markers unmatchable, so a configured Linux/macOS
+    // LabVIEW path resolved to undefined bitness and could be ignored in favor of
+    // a scanned candidate.
+    expect(inferBitnessFromPath('/usr/local/natinst/LabVIEW-2026-64/labview')).toBe('x64');
+    expect(
+      inferBitnessFromPath('/Applications/National Instruments/LabVIEW 2026/LabVIEW.app')
+    ).toBe('x64');
+  });
+
+  it('still infers Windows bitness from Program Files paths', () => {
+    expect(
+      inferBitnessFromPath('C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe')
+    ).toBe('x64');
+    expect(
+      inferBitnessFromPath(
+        'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+      )
+    ).toBe('x86');
+  });
+
+  it('returns undefined for an unrecognized install location', () => {
+    expect(inferBitnessFromPath('/opt/custom/labview')).toBeUndefined();
+  });
+});
 
 describe('comparisonRuntimeLocator diagnostics', () => {
   it('documents only the canonical shared Windows LabVIEWCLI scan path', () => {
