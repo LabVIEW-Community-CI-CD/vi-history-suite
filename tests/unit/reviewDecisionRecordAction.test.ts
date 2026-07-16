@@ -538,6 +538,37 @@ describe('review decision record action interactive prompts (VHS-REQ-610 support
     });
     expect(prompts.showInputBox).toHaveBeenCalledTimes(3);
   });
+
+  it('enforces required-field validateInput rules on every text prompt (VHS-REQ-610 supporting evidence)', async () => {
+    const dashboard = createDashboardResult(createCleanDashboardRecord());
+    const mocks = createOrchestrationMocks(dashboard);
+    const prompts = createInteractivePromptMocks();
+    const action = createReviewDecisionRecordAction(harness.createContext() as never, {
+      ...mocks,
+      uriFile: harness.vscode.Uri.file,
+      showInputBox: prompts.showInputBox as never,
+      showQuickPick: prompts.showQuickPick as never,
+      reviewerNameProvider: () => 'Fallback Reviewer',
+      automationInputs: {}
+    });
+
+    await action({ model: createModel() });
+
+    // The reviewer, review-question, and rationale prompts each pass a
+    // validateInput guard: blank/whitespace is rejected with a message, a real
+    // value is accepted (undefined). Exercise both branches directly.
+    const expectedMessages = [
+      'Reviewer name is required.',
+      'A review question is required.',
+      'A decision rationale is required.'
+    ];
+    expect(prompts.showInputBox).toHaveBeenCalledTimes(3);
+    prompts.showInputBox.mock.calls.forEach((call, index) => {
+      const validateInput = call[0].validateInput as (value: string) => string | undefined;
+      expect(validateInput('   ')).toBe(expectedMessages[index]);
+      expect(validateInput('a real value')).toBeUndefined();
+    });
+  });
 });
 
 describe('review decision record action evidence-validation outcomes (VHS-REQ-610 supporting evidence)', () => {
