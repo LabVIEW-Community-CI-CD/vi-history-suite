@@ -36,6 +36,8 @@ const crypto = require('node:crypto');
 const { execSync } = require('node:child_process');
 
 const { parseCsv, splitReferences } = require('./auditTraceabilitySteward.js');
+const { JSON_SCHEMA_DIALECT, renderSchemaDocument } = require('./lib/schemaEnvelope.js');
+const { parseSharedOutputArgs } = require('./lib/outputContract.js');
 
 const SRS_PATH = 'docs/requirements/srs.md';
 const RTM_PATH = 'docs/requirements/rtm.csv';
@@ -310,9 +312,73 @@ function exportRequirementsManifest(deps = {}) {
   return { jsonPath, markdownPath, manifest };
 }
 
+// Published JSON Schema for the retained requirements-manifest.json packet, so
+// consumers can validate the manifest and the `--schema` mode can publish the
+// contract without exporting. The manifest is already self-describing ($schema +
+// schemaVersion); this documents the top-level shape (permissive nested
+// requirement records for forward-compatibility).
+const REQUIREMENTS_MANIFEST_JSON_SCHEMA = {
+  $schema: JSON_SCHEMA_DIALECT,
+  $id: MANIFEST_SCHEMA_ID,
+  title: 'vi-history-suite requirements manifest',
+  type: 'object',
+  additionalProperties: true,
+  required: [
+    '$schema',
+    'schemaVersion',
+    'extensionVersion',
+    'extensionCommit',
+    'generatedAt',
+    'counts',
+    'requirements',
+    'integrityDigest'
+  ],
+  properties: {
+    $schema: { const: MANIFEST_SCHEMA_ID },
+    schemaVersion: { const: SCHEMA_VERSION },
+    extensionVersion: { type: 'string' },
+    extensionCommit: { type: 'string' },
+    generatedAt: { type: 'string' },
+    counts: {
+      type: 'object',
+      required: ['requirements', 'criteria'],
+      properties: {
+        requirements: { type: 'integer' },
+        criteria: { type: 'integer' }
+      }
+    },
+    requirements: { type: 'array', items: { type: 'object' } },
+    integrityDigest: { type: 'string' }
+  }
+};
+
+function renderSchema(options = {}) {
+  return renderSchemaDocument(REQUIREMENTS_MANIFEST_JSON_SCHEMA, options);
+}
+
 function main(argv = process.argv.slice(2), deps = {}) {
   const stdout = deps.stdout ?? process.stdout;
-  const includeMarkdown = deps.includeMarkdown ?? !argv.includes('--no-markdown');
+  let parsed;
+  try {
+    parsed = parseSharedOutputArgs(argv, {
+      defaults: { schema: false, noMarkdown: false },
+      // This CLI only shares --schema; --no-markdown is its own toggle.
+      excludeCommonFlags: ['--json', '--markdown', '--strict', '--include-provenance', '--output'],
+      boolFlags: { '--no-markdown': 'noMarkdown' },
+      enforceSingleOutputMode: false
+    }).options;
+  } catch (error) {
+    (deps.stderr ?? process.stderr).write(`${error instanceof Error ? error.message : String(error)}\n`);
+    return 1;
+  }
+
+  // --schema publishes the JSON Schema without exporting the manifest.
+  if (deps.schema ?? parsed.schema) {
+    stdout.write(`${renderSchema()}\n`);
+    return 0;
+  }
+
+  const includeMarkdown = deps.includeMarkdown ?? !parsed.noMarkdown;
   try {
     const result = exportRequirementsManifest({ ...deps, includeMarkdown });
     stdout.write(
@@ -338,6 +404,7 @@ module.exports = {
   MANIFEST_BASENAME,
   SCHEMA_VERSION,
   MANIFEST_SCHEMA_ID,
+  REQUIREMENTS_MANIFEST_JSON_SCHEMA,
   UNKNOWN_COMMIT,
   normalizeText,
   sliceRequirementBlocks,
@@ -349,6 +416,7 @@ module.exports = {
   computeIntegrityDigest,
   buildRequirementsManifest,
   renderManifestMarkdown,
+  renderSchema,
   exportRequirementsManifest,
   main
 };
