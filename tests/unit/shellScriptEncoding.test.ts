@@ -4,7 +4,9 @@ import {
   resolveWindowsPowerShellHostExecutable,
   encodeWindowsPowerShellScript,
   quotePowerShellLiteral,
-  quoteBashLiteral
+  quoteBashLiteral,
+  buildWindowsPowerShellArrayLiteral,
+  buildBashArrayLiteral
 } from '../../src/reporting/runtime/shellScriptEncoding';
 
 describe('resolveWindowsPowerShellHostExecutable', () => {
@@ -43,5 +45,25 @@ describe('quoteBashLiteral', () => {
   it('wraps in single quotes and escapes embedded single quotes', () => {
     expect(quoteBashLiteral("it's")).toBe(`'it'"'"'s'`);
     expect(quoteBashLiteral('plain')).toBe("'plain'");
+  });
+});
+
+describe('buildWindowsPowerShellArrayLiteral', () => {
+  it('renders a quoted @() array literal', () => {
+    expect(buildWindowsPowerShellArrayLiteral(['a', "b's"])).toBe("@('a', 'b''s')");
+  });
+
+  it('renders an empty array literal for no values', () => {
+    expect(buildWindowsPowerShellArrayLiteral([])).toBe('@()');
+  });
+});
+
+describe('buildBashArrayLiteral', () => {
+  it('renders a quoted () array literal', () => {
+    expect(buildBashArrayLiteral(['a', 'b'])).toBe("('a' 'b')");
+  });
+
+  it('renders an empty array literal for no values', () => {
+    expect(buildBashArrayLiteral([])).toBe('()');
   });
 });

@@ -42,7 +42,9 @@ import {
   resolveWindowsPowerShellHostExecutable,
   encodeWindowsPowerShellScript,
   quotePowerShellLiteral,
-  quoteBashLiteral
+  quoteBashLiteral,
+  buildWindowsPowerShellArrayLiteral,
+  buildBashArrayLiteral
 } from './runtime/shellScriptEncoding';
 import { parseWindowsContainerRuntimeFacts } from './runtime/windowsContainerRuntimeFacts';
 import {
@@ -4272,14 +4274,6 @@ export function rewriteLabviewCliArgsForLinuxContainerWorkspace(
   }
 
   return rewritten.length > 0 ? rewritten : undefined;
-}
-
-function buildWindowsPowerShellArrayLiteral(values: string[]): string {
-  return `@(${values.map((value) => quotePowerShellLiteral(value)).join(', ')})`;
-}
-
-function buildBashArrayLiteral(values: string[]): string {
-  return `(${values.map((value) => quoteBashLiteral(value)).join(' ')})`;
 }
 
 export function buildWindowsContainerLabviewCliScript(
