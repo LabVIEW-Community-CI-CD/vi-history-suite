@@ -24,6 +24,7 @@ import {
   type ViPreviewSessionProvider
 } from '../reporting/viPreview/viPreviewSessionRuntime';
 import { buildViPreviewRenderDeps } from './viPreviewRenderHost';
+import { runExecFileText } from '../tooling/execFileText';
 
 /**
  * VHS-REQ-659: warm LabVIEW container session for fast preview rendering.
@@ -70,20 +71,10 @@ export interface StartViPreviewSessionOptions {
 async function docker(
   args: string[]
 ): Promise<{ exitCode: number; stdout: string; stderr: string }> {
-  try {
-    const { stdout, stderr } = await execFileAsync('docker', args, {
-      timeout: EXEC_TIMEOUT_MS,
-      maxBuffer: MAX_BUFFER_BYTES
-    });
-    return { exitCode: 0, stdout, stderr };
-  } catch (error) {
-    const failure = error as { code?: number | string; stdout?: string; stderr?: string; message?: string };
-    return {
-      exitCode: typeof failure.code === 'number' ? failure.code : 1,
-      stdout: failure.stdout ?? '',
-      stderr: failure.stderr ?? failure.message ?? String(error)
-    };
-  }
+  return runExecFileText('docker', args, {
+    timeoutMs: EXEC_TIMEOUT_MS,
+    maxBufferBytes: MAX_BUFFER_BYTES
+  });
 }
 
 /** Starts a warm preview container session, hardening VI Server once up. */

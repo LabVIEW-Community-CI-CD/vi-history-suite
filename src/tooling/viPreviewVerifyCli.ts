@@ -1,8 +1,6 @@
-import { execFile } from 'node:child_process';
 import * as fs from 'node:fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
-import { promisify } from 'node:util';
 
 import type { ComparisonCommandPlan } from '../reporting/comparisonReportPlan';
 import {
@@ -17,6 +15,7 @@ import {
   verifyViPreviewRender,
   type ViPreviewVerificationProof
 } from '../reporting/viPreview/viPreviewVerification';
+import { runExecFileText } from './execFileText';
 
 /**
  * VHS-REQ-659: proof-emitting CLI preview verification (real verification).
@@ -30,7 +29,6 @@ import {
  * without a real runtime.
  */
 
-const execFileAsync = promisify(execFile);
 const VERIFY_COMMAND_TIMEOUT_MS = 15 * 60 * 1000;
 const VERIFY_MAX_BUFFER_BYTES = 64 * 1024 * 1024;
 
@@ -96,25 +94,10 @@ export function buildNodeViPreviewRenderDeps(): RenderViPreviewForFileDeps {
     removeDirectory: (directory) => fs.rm(directory, { recursive: true, force: true }),
     execution: {
       runCommand: async (plan: ComparisonCommandPlan) => {
-        try {
-          const { stdout, stderr } = await execFileAsync(plan.executable, plan.args, {
-            timeout: VERIFY_COMMAND_TIMEOUT_MS,
-            maxBuffer: VERIFY_MAX_BUFFER_BYTES
-          });
-          return { exitCode: 0, stdout, stderr };
-        } catch (error) {
-          const failure = error as {
-            code?: number | string;
-            stdout?: string;
-            stderr?: string;
-            message?: string;
-          };
-          return {
-            exitCode: typeof failure.code === 'number' ? failure.code : 1,
-            stdout: failure.stdout ?? '',
-            stderr: failure.stderr ?? failure.message ?? String(error)
-          };
-        }
+        return runExecFileText(plan.executable, plan.args, {
+          timeoutMs: VERIFY_COMMAND_TIMEOUT_MS,
+          maxBufferBytes: VERIFY_MAX_BUFFER_BYTES
+        });
       },
       pathExists: async (filePath) => {
         try {
