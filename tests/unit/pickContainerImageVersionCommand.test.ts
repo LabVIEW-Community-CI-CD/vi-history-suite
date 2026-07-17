@@ -18,6 +18,7 @@ import * as vscode from 'vscode';
 import {
   applyContainerImageVersionSelection,
   buildContainerImageVersionItems,
+  createHttpsGetJson,
   defaultFetchPublishedTags,
   defaultListLocalImages,
   discoverAvailableContainerImageVersions,
@@ -645,3 +646,94 @@ describe('defaultFetchPublishedTags (VHS-REQ-647)', () => {
     expect(httpGetJson).toHaveBeenCalledTimes(5);
   });
 });
+
+describe('createHttpsGetJson (VHS-REQ-647)', () => {
+  // Fake https.get: sets response.statusCode BEFORE invoking the callback, then
+  // (after the callback attaches its data/end handlers) emits body chunks / end /
+  // request timeout / request error, so the status/size-cap/parse/timeout/error
+  // branches run without real network.
+  function fakeHttpGet(options: {
+    statusCode?: number;
+    chunks?: string[];
+    end?: boolean;
+    timeout?: boolean;
+    error?: Error;
+  }) {
+    const get = ((_url: string, _opts: unknown, callback: (response: never) => void) => {
+      const request = new EventEmitter() as EventEmitter & { destroy: (error?: Error) => void };
+      const response = new EventEmitter() as EventEmitter & {
+        statusCode?: number;
+        setEncoding: () => void;
+        resume: () => void;
+      };
+      response.setEncoding = () => undefined;
+      response.resume = () => undefined;
+      response.statusCode = options.statusCode;
+      request.destroy = (error?: Error) => {
+        request.emit('error', error ?? new Error('destroyed'));
+      };
+      // Attach the callback's response handlers synchronously, then emit events
+      // in a microtask so `const request = httpGet(...)` has been assigned and
+      // the request-level handlers are attached (mirrors real async https.get).
+      callback(response as never);
+      queueMicrotask(() => {
+        for (const chunk of options.chunks ?? []) {
+          response.emit('data', chunk);
+        }
+        if (options.end) {
+          response.emit('end');
+        }
+        if (options.timeout) {
+          request.emit('timeout');
+        }
+        if (options.error) {
+          request.emit('error', options.error);
+        }
+      });
+      return request;
+    }) as unknown as typeof import('node:https').get;
+    return get;
+  }
+
+  it('resolves parsed JSON on a 200 response', async () => {
+    const getJson = createHttpsGetJson(
+      fakeHttpGet({ statusCode: 200, chunks: ['{"results":[{"name":"2026q1-linux"}]}'], end: true })
+    );
+    await expect(getJson('https://hub.docker.com/x')).resolves.toEqual({
+      results: [{ name: '2026q1-linux' }]
+    });
+  });
+
+  it('rejects on a non-2xx status', async () => {
+    const getJson = createHttpsGetJson(fakeHttpGet({ statusCode: 503 }));
+    await expect(getJson('https://hub.docker.com/x')).rejects.toThrow('HTTP 503');
+  });
+
+  it('rejects when the body is not valid JSON', async () => {
+    const getJson = createHttpsGetJson(
+      fakeHttpGet({ statusCode: 200, chunks: ['not-json{'], end: true })
+    );
+    await expect(getJson('https://hub.docker.com/x')).rejects.toThrow();
+  });
+
+  it('destroys the request when the body exceeds the size cap', async () => {
+    const getJson = createHttpsGetJson(
+      fakeHttpGet({ statusCode: 200, chunks: ['x'.repeat(2_000_001)] })
+    );
+    await expect(getJson('https://hub.docker.com/x')).rejects.toThrow('too large');
+  });
+
+  it('rejects on a request timeout', async () => {
+    const getJson = createHttpsGetJson(fakeHttpGet({ statusCode: 200, timeout: true }));
+    await expect(getJson('https://hub.docker.com/x')).rejects.toThrow('timed out');
+  });
+
+  it('rejects when the request emits an error', async () => {
+    const getJson = createHttpsGetJson(
+      fakeHttpGet({ statusCode: 200, error: new Error('socket hang up') })
+    );
+    await expect(getJson('https://hub.docker.com/x')).rejects.toThrow('socket hang up');
+  });
+});
+
+

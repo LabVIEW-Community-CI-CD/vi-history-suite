@@ -175,7 +175,9 @@ function parseGitHubRepositoryCoordinates(
     return undefined;
   }
 
-  const scpMatch = /^git@github\.com:(?<owner>[^/]+)\/(?<repo>[^/]+?)(?:\.git)?$/iu.exec(trimmed);
+  const scpMatch = /^git@(?:www\.)?github\.com:(?<owner>[^/]+)\/(?<repo>[^/]+?)(?:\.git)?$/iu.exec(
+    trimmed
+  );
   if (scpMatch?.groups?.owner && scpMatch.groups.repo) {
     return buildNormalizedCoordinates(scpMatch.groups.owner, scpMatch.groups.repo);
   }
@@ -187,7 +189,8 @@ function parseGitHubRepositoryCoordinates(
     return undefined;
   }
 
-  if (parsed.hostname.toLowerCase() !== 'github.com') {
+  const hostname = parsed.hostname.toLowerCase();
+  if (hostname !== 'github.com' && hostname !== 'www.github.com') {
     return undefined;
   }
 
