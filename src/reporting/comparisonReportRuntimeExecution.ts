@@ -5,6 +5,7 @@ import * as path from 'node:path';
 import { createHash } from 'node:crypto';
 
 import { joinPreservingExplicitPathStyle } from '../support/pathStyle';
+import { errorMessage } from '../support/errorMessage';
 import { nowIso } from '../support/clock';
 import { ComparisonCommandPlan, ComparisonReportOptions } from './comparisonReportPlan';
 import { buildComparisonReportExecutionPlan } from './comparisonReportExecutionPlan';
@@ -2615,7 +2616,7 @@ async function attemptLabviewCliHeadlessSessionReset(
     };
   } catch (error) {
     const durationMs = Math.max(0, deps.nowMs() - startedMs);
-    const message = error instanceof Error ? error.message : String(error);
+    const message = errorMessage(error);
     return {
       notes: [
         `${platformLabel} headless session reset via LabVIEWCLI CloseLabVIEW failed before retry: ${message}.`

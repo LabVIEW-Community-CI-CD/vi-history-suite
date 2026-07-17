@@ -2,6 +2,7 @@ import * as fs from 'node:fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
 
+import { errorMessage } from '../support/errorMessage';
 import type { ComparisonCommandPlan } from '../reporting/comparisonReportPlan';
 import {
   locateComparisonRuntime,
@@ -310,7 +311,7 @@ if (require.main === module) {
     })
     .catch((error) => {
       // eslint-disable-next-line no-console
-      console.error(`[preview-verify] error: ${error instanceof Error ? error.message : String(error)}`);
+      console.error(`[preview-verify] error: ${errorMessage(error)}`);
       process.exitCode = 1;
     });
 }

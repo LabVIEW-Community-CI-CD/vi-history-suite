@@ -9,6 +9,8 @@
 
 import { spawn } from 'node:child_process';
 
+import { errorMessage } from '../support/errorMessage';
+
 /**
  * Reason a Git probe came back negative. Distinguishing "not on PATH" from
  * "spawn failed unexpectedly" lets the UX explain itself precisely.
@@ -133,7 +135,7 @@ export async function detectGitPrerequisite(
   try {
     result = await runGitVersion();
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = errorMessage(error);
     return {
       available: false,
       reason: looksLikeNotFound(message) ? 'not-found' : 'probe-failed',

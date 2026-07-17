@@ -4,6 +4,7 @@ import {
   ViSemanticRuntimeFacts,
   VI_SEMANTIC_COMPARISON_SCHEMA
 } from './viSemanticModel';
+import { errorMessage } from '../support/errorMessage';
 // Type-only import: the async handler runs the orchestrator through an injected
 // dependency, so this module stays runtime-pure and free of reporting imports.
 import type {
@@ -485,7 +486,7 @@ export function handleViSemanticMcpMessage(
       } catch (error) {
         // Tool-level failures are reported through the result envelope (isError)
         // per MCP, not as protocol errors, so the agent can read the message.
-        const detail = error instanceof Error ? error.message : String(error);
+        const detail = errorMessage(error);
         return success(id, toolTextResult(`Tool error: ${detail}`, true));
       }
     }
@@ -670,7 +671,7 @@ async function invokeInjectedTool<TInput, TResult>(
     const result = await orchestrator(parseArguments());
     return success(id, render(result));
   } catch (error) {
-    const detail = error instanceof Error ? error.message : String(error);
+    const detail = errorMessage(error);
     return success(id, toolTextResult(`Tool error: ${detail}`, true));
   }
 }
