@@ -10,8 +10,16 @@ const {
   removeTrackedWorktreeSnapshot,
   parseGateScorecard
 } = require('./generateCloseoutEvidence.js');
+const {
+  JSON_SCHEMA_DIALECT,
+  renderSchemaDocument,
+  schemaEnvelopeFields,
+  schemaEnvelopePropertyNodes
+} = require('./lib/schemaEnvelope.js');
 
 const DEFAULT_REPO = 'LabVIEW-Community-CI-CD/vi-history-suite';
+const TRIAGE_SUMMARY_SCHEMA_ID = 'vi-history-suite/issue-standards-triage@v1';
+const SCHEMA_VERSION = 1;
 const DEFAULT_SAVE_DIR = 'assurance-issue-triage-evidence';
 const DEFAULT_PROFILE = 'quick-triage';
 const DEFAULT_REQUIREMENTS_SPEC_SCOPE = 'system';
@@ -63,6 +71,7 @@ function parseArgs(argv) {
     saveDir: DEFAULT_SAVE_DIR,
     skipIssueFetch: false,
     keepSnapshot: false,
+    schema: false,
     help: false
   };
 
@@ -99,6 +108,9 @@ function parseArgs(argv) {
       case '--keep-snapshot':
         options.keepSnapshot = true;
         break;
+      case '--schema':
+        options.schema = true;
+        break;
       case '--help':
       case '-h':
         options.help = true;
@@ -112,11 +124,48 @@ function parseArgs(argv) {
     }
   }
 
-  if (!options.help && !options.issue) {
+  if (!options.help && !options.schema && !options.issue) {
     throw new Error('--issue <number> is required.');
   }
 
   return options;
+}
+
+// Published JSON Schema for the retained triage-summary.json packet, so consumers
+// can validate it and the `--schema` mode can publish the contract without running
+// the triage. Shares the self-describing envelope via scripts/lib/schemaEnvelope.js;
+// the rich nested issue/standards records use permissive shapes for forward-compat.
+const TRIAGE_SUMMARY_JSON_SCHEMA = {
+  $schema: JSON_SCHEMA_DIALECT,
+  $id: TRIAGE_SUMMARY_SCHEMA_ID,
+  title: 'vi-history-suite issue standards triage summary',
+  type: 'object',
+  additionalProperties: true,
+  required: [
+    '$schema',
+    'schemaVersion',
+    'options',
+    'outputDir',
+    'issue',
+    'standards',
+    'success'
+  ],
+  properties: {
+    ...schemaEnvelopePropertyNodes(TRIAGE_SUMMARY_SCHEMA_ID, SCHEMA_VERSION),
+    options: { type: 'object' },
+    outputDir: { type: 'string' },
+    issue: { type: 'object' },
+    imageInspect: { type: 'object' },
+    imageAccess: { type: 'string' },
+    imagePreparation: { type: 'array', items: { type: 'object' } },
+    snapshot: { type: 'object' },
+    standards: { type: 'array', items: { type: 'object' } },
+    success: { type: 'boolean' }
+  }
+};
+
+function renderSchema(options = {}) {
+  return renderSchemaDocument(TRIAGE_SUMMARY_JSON_SCHEMA, options);
 }
 
 function runCommand(command, args, deps = {}) {
@@ -397,6 +446,10 @@ function runIssueStandardsTriage(argv = process.argv.slice(2), deps = {}) {
   if (options.help) {
     return { exitCode: 0, markdown: usage(), context: { options } };
   }
+  // --schema publishes the JSON Schema without fetching the issue or running docker.
+  if (options.schema) {
+    return { exitCode: 0, markdown: renderSchema(), context: { options, schema: true } };
+  }
 
   const cwd = deps.cwd || process.cwd();
   const outputDir = path.resolve(cwd, options.saveDir, `issue-${options.issue}`);
@@ -449,7 +502,7 @@ function runIssueStandardsTriage(argv = process.argv.slice(2), deps = {}) {
     context.snapshot.removed = !options.keepSnapshot;
     const markdown = renderMarkdown(context);
     const summary = {
-      schemaVersion: 1,
+      ...schemaEnvelopeFields(TRIAGE_SUMMARY_SCHEMA_ID, SCHEMA_VERSION),
       options,
       outputDir,
       issue: issueContext,
@@ -495,8 +548,12 @@ module.exports = {
   DEFAULT_SAVE_DIR,
   DEFAULT_PROFILE,
   DEFAULT_REQUIREMENTS_SPEC_SCOPE,
+  TRIAGE_SUMMARY_SCHEMA_ID,
+  TRIAGE_SUMMARY_JSON_SCHEMA,
+  SCHEMA_VERSION,
   ISSUE_JSON_FIELDS,
   parseArgs,
+  renderSchema,
   issueViewArgs,
   standardsDockerSteps,
   replaceSnapshotMount,
