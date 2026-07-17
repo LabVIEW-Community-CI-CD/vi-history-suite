@@ -4999,3 +4999,58 @@ Missing numeric IDs are intentional.
     readiness gate; never satisfy it by naming or invoking Vagrant inside
     `.github/workflows`, and never make the gate default-on for local advisory
     readiness runs.
+
+### VHS-REQ-667: Versioned Dev-Tools GitHub Release Channel
+
+- Status: Active
+- Parent: VHS-SYS-REQ-013
+- Area: CI And Developer Environment
+- Statement: The development toolset (scripts CLIs, maintainer drivers, the
+  compiled MCP server, requirements documents, and agent-customization surfaces)
+  shall be distributable as a versioned, content-addressed GitHub Release
+  artifact independent of the marketplace release, so that maintainers and
+  agents can pin and verify a known-good toolset bound to its requirements
+  state. A committed toolset manifest defines exactly which files ship; a
+  builder produces a deterministic content digest and a provenance manifest; a
+  fail-closed verifier confirms a downloaded or in-tree toolset matches that
+  manifest; and a release workflow publishes to GitHub Releases only when the
+  content digest changes.
+- Acceptance Criteria:
+  - `docs/devtools-release.manifest.json` is the committed source of truth for
+    the bundled toolset (include globs grouped by category plus exclude
+    patterns) under schema `vi-history-suite/devtools-release@v1`.
+  - `scripts/buildDevToolsRelease.js` resolves the manifest into a deterministic
+    sorted file list, hashes each file, folds those into a single aggregate
+    `contentDigest`, and emits a provenance manifest binding the toolset to its
+    requirements state (requirements-manifest digest, per-file sha256, git
+    commit, build version, channel); identical inputs yield an identical digest.
+  - `scripts/buildDevToolsRelease.js --pack` produces a reproducible (POSIX
+    ustar plus gzip) tarball using Node built-ins only, so identical inputs
+    yield a byte-identical archive.
+  - `scripts/verifyDevToolsRelease.js` fails closed unless an extracted toolset
+    (`--manifest`/`--root`) or the in-tree toolset (`--verify-self`) matches the
+    provenance manifest's per-file sha256 and aggregate content digest.
+  - `.github/workflows/devtools-release.yml` builds and self-verifies the
+    toolset, deduplicates on the content digest against the latest release of
+    the channel, defaults `workflow_dispatch` to a dry run, maps `develop` to a
+    prerelease channel and `main` to the stable channel, and names no Vagrant
+    helper (VHS-REQ-599 alignment).
+- Agent Work Scope:
+  - Change the toolset manifest, the builder/verifier scripts, and the release
+    workflow together; keep the builder and verifier pure/injectable with thin
+    CLIs and keep the workflow content-digest deduplicated and dry-run-first.
+- Implementation References:
+  - `docs/devtools-release.manifest.json`
+  - `scripts/buildDevToolsRelease.js`
+  - `scripts/verifyDevToolsRelease.js`
+  - `.github/workflows/devtools-release.yml`
+  - `package.json`
+- Verification References:
+  - `tests/unit/buildDevToolsReleaseScript.test.ts`
+  - `tests/unit/verifyDevToolsReleaseScript.test.ts`
+  - `tests/unit/devToolsReleaseWorkflow.test.ts`
+- Change Guidance:
+  - Keep the content digest deterministic (sorted inputs, normalized archive
+    metadata) and the release workflow dry-run-first; never publish on a no-op
+    content digest, and never bundle a file not declared in the committed
+    toolset manifest.

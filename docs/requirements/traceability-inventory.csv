@@ -77,8 +77,8 @@ scripts/verifyMarketplaceListing.js,mapped,Yes,Marketplace listing verification 
 scripts/checkReleaseReadiness.js,mapped,Yes,Release-readiness verdict aggregator; composes risk ledger requirements-manifest digest and version/CHANGELOG coherence into one advisory READY/ATTENTION status with a display-only human-attested runtime line; mapped to VHS-REQ-615.
 scripts/runWindowsIntegrationHost.js,dev-only,No,Windows integration host runner; CI infrastructure.
 scripts/vagrantLanePreflight.js,dev-only,No,Optional Vagrant lane preflight and status reporter; injected command/fs boundaries; local maintainer helper only and never a CI gate.
-scripts/buildDevToolsRelease.js,dev-only,No,"Dev-tools GitHub Release content-digest and provenance builder (DS1); resolves the committed toolset manifest into a deterministic content digest binding shipped tools to their requirements state; local/CI packaging helper pending its release-channel requirement."
-scripts/verifyDevToolsRelease.js,dev-only,No,"Dev-tools GitHub Release fail-closed verifier (DS2); confirms an extracted toolset or the in-tree toolset matches a provenance manifest's per-file sha256 and aggregate content digest; local/consumer helper pending its release-channel requirement."
+scripts/buildDevToolsRelease.js,mapped,Yes,"Dev-tools GitHub Release content-digest and provenance builder; resolves the committed toolset manifest into a deterministic content digest binding shipped tools to their requirements state; mapped to VHS-REQ-667."
+scripts/verifyDevToolsRelease.js,mapped,Yes,"Dev-tools GitHub Release fail-closed verifier; confirms an extracted or in-tree toolset matches a provenance manifest's per-file sha256 and aggregate content digest; mapped to VHS-REQ-667."
 tests/unit/bootstrapLinuxVsCodeHost.test.ts,dev-only,No,Tests for Linux VS Code host bootstrap.
 tests/unit/branchGovernanceWorkflow.test.ts,mapped,Yes,Branch governance workflow tests; mapped through RTM.
 tests/unit/branchProtectionSettingsAuditScript.test.ts,dev-only,No,Tests for the maintainer branch protection settings audit command with mocked GitHub CLI execution and drift rendering.
@@ -142,8 +142,9 @@ tests/unit/reviewDecisionRecordAction.test.ts,supporting,No,Decision record acti
 tests/unit/reviewScenarioSupportPolicy.test.ts,mapped,Yes,Review scenario and repository support policy tests; mapped to VHS-REQ-610.
 tests/unit/runLinuxIntegrationHost.test.ts,dev-only,No,Linux integration host tests; CI infrastructure.
 tests/unit/vagrantLanePreflight.test.ts,dev-only,No,Optional Vagrant lane preflight/status tests covering banner and box-list parsing readiness checks and CLI exit behavior; local maintainer tooling.
-tests/unit/buildDevToolsReleaseScript.test.ts,dev-only,No,"Dev-tools release builder (DS1) tests covering manifest resolution, deterministic content digest, provenance binding, and CLI output-path safety."
-tests/unit/verifyDevToolsReleaseScript.test.ts,dev-only,No,"Dev-tools release verifier (DS2) tests covering deterministic tarball packing, ustar header/checksum, and fail-closed tamper/missing/self-verify branches."
+tests/unit/buildDevToolsReleaseScript.test.ts,mapped,Yes,"Dev-tools release builder tests covering manifest resolution, deterministic content digest, provenance binding, and CLI output-path safety; mapped to VHS-REQ-667."
+tests/unit/verifyDevToolsReleaseScript.test.ts,mapped,Yes,"Dev-tools release verifier tests covering deterministic tarball packing, ustar header/checksum, and fail-closed tamper/missing/self-verify branches; mapped to VHS-REQ-667."
+tests/unit/devToolsReleaseWorkflow.test.ts,mapped,Yes,"Dev-tools release workflow contract tests covering trigger, dry-run default, build/self-verify/dedup ordering, and no-Vagrant assertion; mapped to VHS-REQ-667."
 tests/unit/runDevHostCli.test.ts,dev-only,No,Development host CLI tests; development tooling.
 tests/unit/runPinnedVsce.test.ts,supporting,No,Pinned VSCE runner tests; packaging support.
 tests/unit/traceabilityAuditScript.test.ts,mapped,Yes,Traceability audit script tests; mapped through RTM.
@@ -177,6 +178,7 @@ tests/integration/runTests.ts,dev-only,No,Integration test runner; testing infra
 tests/integration/prepareTestWorkspace.ts,dev-only,No,Integration test workspace preparation; testing infrastructure.
 .github/workflows/ci.yml,release-ci,Yes,CI workflow with hosted DoD Gate / dod; mapped through RTM including VHS-REQ-597 and VHS-REQ-615.
 .github/workflows/codeql.yml,mapped,Yes,CodeQL analysis workflow; mapped to VHS-REQ-602.
+.github/workflows/devtools-release.yml,release-ci,Yes,"Dev-tools GitHub Release workflow; builds, self-verifies, and content-digest-dedups the versioned toolset artifact (dispatch dry-run default; develop=prerelease/main=stable); mapped to VHS-REQ-667."
 .github/workflows/mutation.yml,mapped,Yes,Nightly advisory mutation-testing workflow running Stryker on the pure detection core; mapped to VHS-REQ-613.
 .github/workflows/marketplace-release.yml,release-ci,Yes,Marketplace release workflow with retained evidence naming validation surfaces and artifacts; mapped through RTM including VHS-REQ-609 and VHS-REQ-615.
 .github/workflows/package-test-vsix.yml,release-ci,Yes,Package test VSIX workflow; mapped through RTM.

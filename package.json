@@ -335,6 +335,8 @@
     "risk:ledger": "node scripts/buildRiskLedger.js",
     "risk:ledger:strict": "node scripts/buildRiskLedger.js --strict",
     "runtime:validation:record": "node scripts/recordRuntimeValidation.js",
+    "devtools:release": "node scripts/buildDevToolsRelease.js",
+    "devtools:release:verify": "node scripts/verifyDevToolsRelease.js",
     "release:readiness": "node scripts/checkReleaseReadiness.js",
     "release:readiness:strict": "node scripts/checkReleaseReadiness.js --strict",
     "release:readiness:gate": "node scripts/checkReleaseReadiness.js --strict --require-release-attestation",
