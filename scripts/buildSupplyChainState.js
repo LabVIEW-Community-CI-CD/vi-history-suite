@@ -39,6 +39,13 @@ const {
   schemaEnvelopeFields,
   schemaEnvelopePropertyNodes
 } = require('./lib/schemaEnvelope.js');
+const {
+  outputModeForOptions,
+  parseSharedOutputArgs,
+  buildProvenance,
+  resolveOutputPath,
+  writeOutput
+} = require('./lib/outputContract.js');
 
 const SCHEMA_ID = 'vi-history-suite/supply-chain-state@v1';
 const SCHEMA_VERSION = 1;
@@ -452,57 +459,17 @@ function renderSchema(options = {}) {
 // --- CLI ---
 
 function parseArgs(argv = []) {
-  const options = {
-    json: false,
-    markdown: false,
-    schema: false,
-    strict: false,
-    includeProvenance: false,
-    outputPath: undefined
-  };
-  for (let index = 0; index < argv.length; index += 1) {
-    const arg = argv[index];
-    const next = () => {
-      const value = argv[index + 1];
-      if (value === undefined || value.startsWith('--')) {
-        throw new Error(`${arg} requires a value`);
-      }
-      index += 1;
-      return value;
-    };
-    if (arg === '--json') options.json = true;
-    else if (arg === '--markdown') options.markdown = true;
-    else if (arg === '--schema') options.schema = true;
-    else if (arg === '--strict') options.strict = true;
-    else if (arg === '--include-provenance') options.includeProvenance = true;
-    else if (arg === '--output') options.outputPath = next();
-    else if (arg.startsWith('--')) throw new Error(`Unknown argument: ${arg}`);
-  }
-  if ([options.json, options.markdown, options.schema].filter(Boolean).length > 1) {
-    throw new Error('Use only one output mode: --json, --markdown, or --schema');
-  }
+  const { options } = parseSharedOutputArgs(argv, {
+    defaults: {
+      json: false,
+      markdown: false,
+      schema: false,
+      strict: false,
+      includeProvenance: false,
+      outputPath: undefined
+    }
+  });
   return options;
-}
-
-function outputModeForOptions(options = {}) {
-  if (options.schema) return 'schema';
-  if (options.markdown) return 'markdown';
-  return options.json ? 'json' : 'text';
-}
-
-function resolveOutputPath(cwd, relativePath) {
-  if (typeof relativePath !== 'string' || relativePath.trim().length === 0) {
-    throw new Error('--output requires a non-empty relative path');
-  }
-  if (path.isAbsolute(relativePath)) {
-    throw new Error('--output must be a relative path inside the working directory');
-  }
-  const resolved = path.resolve(cwd, relativePath);
-  const normalizedRoot = path.resolve(cwd) + path.sep;
-  if (!resolved.startsWith(normalizedRoot)) {
-    throw new Error('--output must stay inside the working directory');
-  }
-  return resolved;
 }
 
 function main(argv = process.argv.slice(2), deps = {}) {
@@ -518,29 +485,13 @@ function main(argv = process.argv.slice(2), deps = {}) {
   const cwd = deps.cwd || process.cwd();
   const outputMode = outputModeForOptions(options);
   const provenance = options.includeProvenance
-    ? {
-        generatedAt:
-          typeof deps.now === 'function' ? new Date(deps.now()).toISOString() : new Date().toISOString(),
-        cwd,
-        outputMode,
-        strict: options.strict,
-        argv: [...argv]
-      }
+    ? buildProvenance({ cwd, outputMode, strict: options.strict, argv }, deps)
     : undefined;
 
   // --schema publishes the JSON Schema without running the aggregation.
   if (options.schema) {
     const rendered = renderSchema({ provenance });
-    if (options.outputPath) {
-      const resolved = resolveOutputPath(cwd, options.outputPath);
-      const mkdirSync = deps.mkdirSync ?? fs.mkdirSync;
-      const writeFile = deps.writeFile ?? fs.writeFileSync;
-      mkdirSync(path.dirname(resolved), { recursive: true });
-      writeFile(resolved, `${rendered}\n`, 'utf8');
-      stdout.write(`[supply-chain-state] Wrote ${options.outputPath}\n`);
-    } else {
-      stdout.write(`${rendered}\n`);
-    }
+    writeOutput(rendered, { outputPath: options.outputPath, cwd, stdout, deps, label: 'supply-chain-state' });
     return 0;
   }
 
@@ -551,16 +502,7 @@ function main(argv = process.argv.slice(2), deps = {}) {
     : options.markdown
       ? renderMarkdown(state, provenance)
       : renderSummary(state, provenance);
-  if (options.outputPath) {
-    const resolved = resolveOutputPath(cwd, options.outputPath);
-    const mkdirSync = deps.mkdirSync ?? fs.mkdirSync;
-    const writeFile = deps.writeFile ?? fs.writeFileSync;
-    mkdirSync(path.dirname(resolved), { recursive: true });
-    writeFile(resolved, `${rendered}\n`, 'utf8');
-    stdout.write(`[supply-chain-state] Wrote ${options.outputPath}\n`);
-  } else {
-    stdout.write(`${rendered}\n`);
-  }
+  writeOutput(rendered, { outputPath: options.outputPath, cwd, stdout, deps, label: 'supply-chain-state' });
   if (options.strict && state.status !== 'fresh') {
     return 1;
   }
