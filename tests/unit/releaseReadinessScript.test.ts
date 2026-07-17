@@ -18,6 +18,7 @@ const readinessModule = require('../../scripts/checkReleaseReadiness.js') as {
   checkManifestDigest: (builtDigest: string, shipped: unknown) => { name: string; passed: boolean; details: string };
   checkVersionChangelog: (version: string, top: { released?: string; unreleased: boolean }) => { name: string; passed: boolean; details: string };
   describeRuntimeAttestation: (version: string, evidence: unknown) => string;
+  describeSupplyChainState: (state: unknown) => string;
   deriveRuntimeAttestationFromLedger: (manifest: unknown, version: string) => any;
   checkReleaseAttestation: (manifest: unknown, version: string) => { name: string; passed: boolean; details: string };
   checkBoxManifestIntegrity: (boxManifest: unknown, version: string) => { name: string; passed: boolean; details: string };
@@ -39,6 +40,7 @@ const {
   checkManifestDigest,
   checkVersionChangelog,
   describeRuntimeAttestation,
+  describeSupplyChainState,
   deriveRuntimeAttestationFromLedger,
   checkReleaseAttestation,
   checkBoxManifestIntegrity,
@@ -158,7 +160,8 @@ describe('checkReleaseReadiness', () => {
       'status',
       'manifestDigest',
       'checks',
-      'runtimeAttestation'
+      'runtimeAttestation',
+      'supplyChain'
     ]);
     expect(verdict.$schema).toBe(RELEASE_READINESS_SCHEMA_ID);
     expect(verdict.schemaVersion).toBe(SCHEMA_VERSION);
@@ -182,6 +185,18 @@ describe('checkReleaseReadiness', () => {
     expect(JSON.parse(renderSchema({ provenance: { generatedAt: 'x' } }))['x-vi-history-suite-provenance']).toEqual({
       generatedAt: 'x'
     });
+  });
+
+  it('describeSupplyChainState summarizes the read-model advisory line without gating (VHS-REQ-668)', () => {
+    expect(describeSupplyChainState({ status: 'fresh', attentionCount: 0, artifactCount: 4 })).toBe(
+      'Supply-chain provenance fresh: 0 attention of 4 artifact(s) (informational; not gating).'
+    );
+    expect(describeSupplyChainState({ status: 'attention', attentionCount: 2, artifactCount: 4 })).toContain(
+      'attention: 2 attention of 4'
+    );
+    // Unavailable / malformed inputs degrade to an informational, non-gating note.
+    expect(describeSupplyChainState(undefined)).toContain('unavailable');
+    expect(describeSupplyChainState({})).toContain('unavailable');
   });
 
   it('parseArgs and resolveOutputPath enforce output-mode and path safety (VHS-REQ-615)', () => {
