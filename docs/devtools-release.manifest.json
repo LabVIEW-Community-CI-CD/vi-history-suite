@@ -1,0 +1,55 @@
+{
+  "schema": "vi-history-suite/devtools-release@v1",
+  "schemaVersion": 1,
+  "description": "Source of truth for the development-tools GitHub Release channel. Lists the include globs (grouped by category) and exclude patterns that scripts/buildDevToolsRelease.js resolves into a deterministic, content-addressed toolset. Compiled output (out/**) must be built with `npm run compile` before packaging. Byte-for-byte edits to this file change which files ship and therefore the release content digest.",
+  "categories": [
+    {
+      "id": "scripts-cli",
+      "description": "Node CLI tools under scripts/ (risk ledger, release readiness, traceability/requirements audits, etc.).",
+      "include": ["scripts/*.js"]
+    },
+    {
+      "id": "drivers",
+      "description": "Maintainer-run .cjs validation/vagrant drivers.",
+      "include": ["scripts/*.cjs"]
+    },
+    {
+      "id": "mcp",
+      "description": "Compiled Model Context Protocol server.",
+      "include": ["out/mcp/**/*.js", "out/cli/runViSemanticMcpServer.js"]
+    },
+    {
+      "id": "cli",
+      "description": "Compiled standalone CLI entrypoints.",
+      "include": ["out/cli/*.js"]
+    },
+    {
+      "id": "requirements",
+      "description": "Requirements and traceability documents plus the compiled requirements manifest.",
+      "include": [
+        "docs/requirements/srs.md",
+        "docs/requirements/syrs.md",
+        "docs/requirements/rtm.csv",
+        "docs/requirements/id-index.csv",
+        "docs/requirements/traceability-inventory.csv",
+        "out/requirements/requirements-manifest.json"
+      ]
+    },
+    {
+      "id": "customization",
+      "description": "Agent customization surfaces: AGENTS.md and .github skills/prompts/instructions/agents.",
+      "include": [
+        "AGENTS.md",
+        ".github/skills/**/*",
+        ".github/prompts/**/*",
+        ".github/instructions/**/*",
+        ".github/agents/**/*"
+      ]
+    }
+  ],
+  "exclude": [
+    "**/*.map",
+    "**/*.test.js",
+    "**/*.test.cjs"
+  ]
+}

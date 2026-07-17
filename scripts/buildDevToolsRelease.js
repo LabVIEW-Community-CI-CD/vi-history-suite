@@ -1,0 +1,281 @@
+#!/usr/bin/env node
+
+/*
+ * Dev-tools release content-digest + provenance builder (DS1).
+ *
+ * Distributing the development tooling (scripts CLIs, .cjs drivers, the compiled
+ * MCP server, requirements docs, and agent-customization surfaces) via GitHub
+ * Releases needs a deterministic, content-addressed fingerprint of exactly what
+ * ships, bound to the requirements state it was cut from. This module resolves
+ * the committed toolset manifest (docs/devtools-release.manifest.json) into a
+ * sorted file list, hashes each file, folds those into a single aggregate
+ * `contentDigest`, and emits a provenance manifest.
+ *
+ * It is pure/injectable (all I/O behind deps) with a thin CLI entrypoint so the
+ * DS3 release workflow and unit tests can drive it deterministically. No
+ * network, no tarball packing yet (that is DS2).
+ *
+ * Usage:
+ *   node scripts/buildDevToolsRelease.js [--channel stable|prerelease] \
+ *     [--manifest <path>] [--output <relative-path>] [--json]
+ */
+
+'use strict';
+
+const fs = require('node:fs');
+const path = require('node:path');
+const crypto = require('node:crypto');
+const { execSync } = require('node:child_process');
+const { globSync } = require('glob');
+
+const SCHEMA_ID = 'vi-history-suite/devtools-release@v1';
+const SCHEMA_VERSION = 1;
+const DEFAULT_TOOLSET_MANIFEST = 'docs/devtools-release.manifest.json';
+const REQUIREMENTS_MANIFEST_RELATIVE_PATH = 'out/requirements/requirements-manifest.json';
+const CHANNELS = ['stable', 'prerelease'];
+const UNKNOWN_COMMIT = '<unknown>';
+
+function sha256Hex(buffer) {
+  return crypto.createHash('sha256').update(buffer).digest('hex');
+}
+
+function getGitCommit(cwd, deps = {}) {
+  const run = deps.execSync ?? execSync;
+  try {
+    return run('git rev-parse HEAD', { cwd, encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
+  } catch {
+    return UNKNOWN_COMMIT;
+  }
+}
+
+function getPackageVersion(cwd, deps = {}) {
+  const readFile = deps.readFile ?? ((p) => fs.readFileSync(p, 'utf8'));
+  try {
+    return JSON.parse(readFile(path.join(cwd, 'package.json'))).version;
+  } catch {
+    return '0.0.0';
+  }
+}
+
+// Read + parse the committed toolset manifest (the source of truth for globs).
+function loadToolsetManifest(cwd, relativePath, deps = {}) {
+  const readFile = deps.readFile ?? ((p) => fs.readFileSync(p, 'utf8'));
+  const raw = readFile(path.join(cwd, ...relativePath.split('/')));
+  const parsed = JSON.parse(raw);
+  if (!parsed || parsed.schema !== SCHEMA_ID) {
+    throw new Error(`Toolset manifest schema must be ${SCHEMA_ID}`);
+  }
+  if (!Array.isArray(parsed.categories) || parsed.categories.length === 0) {
+    throw new Error('Toolset manifest must declare a non-empty categories array');
+  }
+  return parsed;
+}
+
+// Resolve the manifest globs into a deterministic, de-duplicated, sorted list of
+// repo-relative POSIX paths. Excludes are applied globally.
+function resolveToolsetFiles(cwd, manifest, deps = {}) {
+  const glob = deps.globSync ?? globSync;
+  const exclude = Array.isArray(manifest.exclude) ? manifest.exclude : [];
+  const found = new Set();
+  for (const category of manifest.categories) {
+    const include = Array.isArray(category.include) ? category.include : [];
+    for (const pattern of include) {
+      const matches = glob(pattern, { cwd, nodir: true, ignore: exclude, dot: true });
+      for (const match of matches) {
+        found.add(match.split(path.sep).join('/'));
+      }
+    }
+  }
+  return [...found].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+}
+
+// Per-file sha256 + byte size for every resolved file.
+function computeFileDigests(cwd, relativePaths, deps = {}) {
+  const readFileBuffer = deps.readFileBuffer ?? ((p) => fs.readFileSync(p));
+  return relativePaths.map((relativePath) => {
+    const buffer = readFileBuffer(path.join(cwd, ...relativePath.split('/')));
+    return { path: relativePath, sha256: sha256Hex(buffer), bytes: buffer.length };
+  });
+}
+
+// Fold the per-file digests into one aggregate content digest. Deterministic:
+// hashes the sorted "path:sha256" lines, so the digest is independent of glob
+// ordering and stable across hosts/runs for identical file bytes.
+function computeContentDigest(fileDigests) {
+  const lines = fileDigests
+    .map((entry) => `${entry.path}:${entry.sha256}`)
+    .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))
+    .join('\n');
+  return sha256Hex(Buffer.from(lines, 'utf8'));
+}
+
+// Read the compiled requirements-manifest integrity digest, binding the release
+// to its requirements state. Returns null when the manifest is not built.
+function readRequirementsManifestDigest(cwd, deps = {}) {
+  const readFile = deps.readFile ?? ((p) => fs.readFileSync(p, 'utf8'));
+  try {
+    const raw = readFile(path.join(cwd, ...REQUIREMENTS_MANIFEST_RELATIVE_PATH.split('/')));
+    const parsed = JSON.parse(raw);
+    return typeof parsed.integrityDigest === 'string' ? parsed.integrityDigest : null;
+  } catch {
+    return null;
+  }
+}
+
+function normalizeChannel(channel) {
+  if (channel === undefined) {
+    return 'prerelease';
+  }
+  if (!CHANNELS.includes(channel)) {
+    throw new Error(`--channel must be one of: ${CHANNELS.join(', ')}`);
+  }
+  return channel;
+}
+
+// Assemble the full provenance manifest for a resolved toolset.
+function buildDevToolsReleaseManifest(inputs = {}, meta = {}) {
+  const fileDigests = inputs.fileDigests ?? [];
+  return {
+    schema: SCHEMA_ID,
+    schemaVersion: SCHEMA_VERSION,
+    channel: meta.channel ?? 'prerelease',
+    generatedAt: meta.generatedAt,
+    buildVersion: meta.buildVersion,
+    gitCommit: meta.gitCommit,
+    contentDigest: computeContentDigest(fileDigests),
+    requirementsManifestDigest: inputs.requirementsManifestDigest ?? null,
+    traceabilityAudit: inputs.traceabilityAudit ?? null,
+    fileCount: fileDigests.length,
+    files: fileDigests
+  };
+}
+
+function collectDevToolsRelease(cwd, options = {}, deps = {}) {
+  const manifestPath = options.manifestPath ?? DEFAULT_TOOLSET_MANIFEST;
+  const toolset = loadToolsetManifest(cwd, manifestPath, deps);
+  const files = resolveToolsetFiles(cwd, toolset, deps);
+  const fileDigests = computeFileDigests(cwd, files, deps);
+  const requirementsManifestDigest = readRequirementsManifestDigest(cwd, deps);
+  return buildDevToolsReleaseManifest(
+    {
+      fileDigests,
+      requirementsManifestDigest,
+      traceabilityAudit: deps.traceabilityAudit ?? null
+    },
+    {
+      channel: normalizeChannel(options.channel),
+      generatedAt:
+        typeof deps.now === 'function'
+          ? new Date(deps.now()).toISOString()
+          : new Date().toISOString(),
+      buildVersion: (deps.getPackageVersion ?? ((c) => getPackageVersion(c, deps)))(cwd),
+      gitCommit: (deps.getGitCommit ?? ((c) => getGitCommit(c, deps)))(cwd)
+    }
+  );
+}
+
+function parseArgs(argv = []) {
+  const options = { channel: undefined, manifestPath: undefined, outputPath: undefined, json: false };
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index];
+    const next = () => {
+      const value = argv[index + 1];
+      if (value === undefined || value.startsWith('--')) {
+        throw new Error(`${arg} requires a value`);
+      }
+      index += 1;
+      return value;
+    };
+    if (arg === '--json') options.json = true;
+    else if (arg === '--channel') options.channel = next();
+    else if (arg === '--manifest') options.manifestPath = next();
+    else if (arg === '--output') options.outputPath = next();
+    else if (arg.startsWith('--')) throw new Error(`Unknown argument: ${arg}`);
+  }
+  return options;
+}
+
+function resolveOutputPath(cwd, relativePath) {
+  if (typeof relativePath !== 'string' || relativePath.trim().length === 0) {
+    throw new Error('--output requires a non-empty relative path');
+  }
+  if (path.isAbsolute(relativePath)) {
+    throw new Error('--output must be a relative path inside the working directory');
+  }
+  const resolved = path.resolve(cwd, relativePath);
+  const normalizedRoot = path.resolve(cwd) + path.sep;
+  if (!resolved.startsWith(normalizedRoot)) {
+    throw new Error('--output must stay inside the working directory');
+  }
+  return resolved;
+}
+
+function renderSummary(manifest) {
+  const lines = [];
+  lines.push('[devtools-release] Development-tools release provenance (DS1 content digest).');
+  lines.push(`[devtools-release] Channel: ${manifest.channel}`);
+  lines.push(`[devtools-release] Build: ${manifest.buildVersion} (${manifest.gitCommit})`);
+  lines.push(`[devtools-release] Files: ${manifest.fileCount}`);
+  lines.push(`[devtools-release] Content digest: ${manifest.contentDigest}`);
+  lines.push(`[devtools-release] Requirements digest: ${manifest.requirementsManifestDigest ?? 'n/a'}`);
+  return lines.join('\n');
+}
+
+function main(argv = process.argv.slice(2), deps = {}) {
+  const stdout = deps.stdout ?? process.stdout;
+  const stderr = deps.stderr ?? process.stderr;
+  let options;
+  try {
+    options = parseArgs(argv);
+  } catch (error) {
+    stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
+    return 1;
+  }
+
+  const cwd = deps.cwd || process.cwd();
+  let manifest;
+  try {
+    manifest = collectDevToolsRelease(cwd, options, deps);
+  } catch (error) {
+    stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
+    return 1;
+  }
+
+  const rendered = options.json ? JSON.stringify(manifest, null, 2) : renderSummary(manifest);
+  if (options.outputPath) {
+    const resolved = resolveOutputPath(cwd, options.outputPath);
+    const mkdirSync = deps.mkdirSync ?? fs.mkdirSync;
+    const writeFile = deps.writeFile ?? fs.writeFileSync;
+    mkdirSync(path.dirname(resolved), { recursive: true });
+    writeFile(resolved, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+    stdout.write(`[devtools-release] Wrote ${options.outputPath}\n`);
+    return 0;
+  }
+  stdout.write(`${rendered}\n`);
+  return 0;
+}
+
+if (require.main === module) {
+  process.exitCode = main();
+}
+
+module.exports = {
+  SCHEMA_ID,
+  SCHEMA_VERSION,
+  DEFAULT_TOOLSET_MANIFEST,
+  REQUIREMENTS_MANIFEST_RELATIVE_PATH,
+  CHANNELS,
+  sha256Hex,
+  loadToolsetManifest,
+  resolveToolsetFiles,
+  computeFileDigests,
+  computeContentDigest,
+  readRequirementsManifestDigest,
+  normalizeChannel,
+  buildDevToolsReleaseManifest,
+  collectDevToolsRelease,
+  parseArgs,
+  resolveOutputPath,
+  renderSummary,
+  main
+};
