@@ -4,7 +4,15 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
+const {
+  JSON_SCHEMA_DIALECT,
+  renderSchemaDocument,
+  schemaEnvelopeFields,
+  schemaEnvelopePropertyNodes
+} = require('./lib/schemaEnvelope.js');
 
+const CLOSEOUT_SUMMARY_SCHEMA_ID = 'vi-history-suite/closeout-evidence@v1';
+const CLOSEOUT_SCHEMA_VERSION = 1;
 const STANDARDS_TOOLCHAIN_EXPECTED_COMMIT = 'd44f210ded557cda6d4598cdaffe938da51d873e';
 const STANDARDS_TOOLCHAIN_GITLAB_URL = 'https://gitlab.com/svelderrainruiz/repo-standards-review.git';
 const STANDARDS_TOOLCHAIN_GITHUB_URL = 'https://github.com/svelderrainruiz/repo-standards-review.git';
@@ -101,11 +109,12 @@ function parseArgs(argv) {
     else if (arg === '--release-pr') options.releasePr = next();
     else if (arg === '--back-sync-pr') options.backSyncPr = next();
     else if (arg === '--marketplace-run') options.marketplaceRun = next();
+    else if (arg === '--schema') options.schema = true;
     else if (arg === '--help' || arg === '-h') options.help = true;
     else throw new Error(`Unknown argument: ${arg}`);
   }
 
-  if (options.help) {
+  if (options.help || options.schema) {
     return options;
   }
 
@@ -1481,7 +1490,7 @@ function buildMachineReadableCloseoutSummary(context, exitCode) {
   const standardsSummary = context.standards?.summary || {};
 
   return {
-    schemaVersion: 1,
+    ...schemaEnvelopeFields(CLOSEOUT_SUMMARY_SCHEMA_ID, CLOSEOUT_SCHEMA_VERSION),
     kind: context.options.kind,
     issueNumber: context.options.issue ? Number(context.options.issue) : undefined,
     githubIssueUrl: context.githubContext.issue?.url,
@@ -1618,10 +1627,54 @@ function renderCloseoutMarkdown(context) {
   ].filter((line) => line !== undefined).join('\n');
 }
 
+// Published JSON Schema for the retained closeout-summary.json packet, so consumers
+// can validate it and the `--schema` mode can publish the contract without
+// collecting evidence. Shares the self-describing envelope via
+// scripts/lib/schemaEnvelope.js; the rich nested gate/standards/provenance records
+// use permissive shapes for forward-compatibility.
+const CLOSEOUT_SUMMARY_JSON_SCHEMA = {
+  $schema: JSON_SCHEMA_DIALECT,
+  $id: CLOSEOUT_SUMMARY_SCHEMA_ID,
+  title: 'vi-history-suite closeout evidence summary',
+  type: 'object',
+  additionalProperties: true,
+  required: [
+    '$schema',
+    'schemaVersion',
+    'kind',
+    'git',
+    'localGates',
+    'standards',
+    'provenance',
+    'closureDecision',
+    'exitCode'
+  ],
+  properties: {
+    ...schemaEnvelopePropertyNodes(CLOSEOUT_SUMMARY_SCHEMA_ID, CLOSEOUT_SCHEMA_VERSION),
+    kind: { type: 'string' },
+    issueNumber: { type: ['integer', 'null'] },
+    githubIssueUrl: { type: ['string', 'null'] },
+    git: { type: 'object' },
+    localGates: { type: 'object' },
+    standards: { type: 'object' },
+    provenance: { type: 'object' },
+    closureDecision: { type: 'object' },
+    exitCode: { type: 'integer' }
+  }
+};
+
+function renderSchema(options = {}) {
+  return renderSchemaDocument(CLOSEOUT_SUMMARY_JSON_SCHEMA, options);
+}
+
 function generateCloseoutEvidence(argv, deps = {}) {
   const options = parseArgs(argv);
   if (options.help) {
     return { exitCode: 0, markdown: usage(), context: { options } };
+  }
+  // --schema publishes the JSON Schema without collecting any evidence.
+  if (options.schema) {
+    return { exitCode: 0, markdown: renderSchema(), context: { options, schema: true } };
   }
 
   const cwd = TRUSTED_REPO_ROOT;
@@ -1777,6 +1830,10 @@ module.exports = {
   runCommand,
   evaluateClosureDecision,
   buildMachineReadableCloseoutSummary,
+  renderSchema,
+  CLOSEOUT_SUMMARY_SCHEMA_ID,
+  CLOSEOUT_SUMMARY_JSON_SCHEMA,
+  CLOSEOUT_SCHEMA_VERSION,
   runDockerStandards,
   runGateCommands,
   runHostStandards,
