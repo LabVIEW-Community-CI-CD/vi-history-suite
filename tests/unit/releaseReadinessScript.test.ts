@@ -189,6 +189,44 @@ describe('checkReleaseReadiness', () => {
     });
   });
 
+  it('keeps emitted JSON aligned with the published schema contract (VHS-REQ-615)', () => {
+    const verdict = buildReleaseReadiness(
+      {
+        ledger: CLEAN_LEDGER,
+        hasSelectableHighRisk,
+        builtManifestDigest: 'abc123',
+        shippedManifest: { integrityDigest: 'abc123' },
+        changelogTop: { released: undefined, unreleased: true }
+      },
+      { generatedAt: '2026-07-15T00:00:00.000Z', version: '1.33.2', commit: 'deadbeef' }
+    ) as Record<string, unknown>;
+    const schema = JSON.parse(renderSchema()) as {
+      required: string[];
+      properties: {
+        $schema: { const: string };
+        schemaVersion: { const: number };
+        status: { enum: string[] };
+        checks: { items: { required: string[] } };
+      };
+    };
+
+    // Top-level required keys present and self-describing.
+    expect(schema.required.filter((key) => !(key in verdict))).toEqual([]);
+    expect(verdict.$schema).toBe(schema.properties.$schema.const);
+    expect(verdict.$schema).toBe(RELEASE_READINESS_SCHEMA_ID);
+    expect(verdict.schemaVersion).toBe(schema.properties.schemaVersion.const);
+    expect(verdict.schemaVersion).toBe(SCHEMA_VERSION);
+    expect(schema.properties.status.enum).toContain(verdict.status);
+
+    // Every check record carries the schema's required keys.
+    const checks = verdict.checks as Array<Record<string, unknown>>;
+    expect(checks.length).toBeGreaterThan(0);
+    const checkRequired = schema.properties.checks.items.required;
+    for (const check of checks) {
+      expect(checkRequired.filter((key) => !(key in check))).toEqual([]);
+    }
+  });
+
   it('describeSupplyChainState summarizes the read-model advisory line without gating (VHS-REQ-668)', () => {
     expect(describeSupplyChainState({ status: 'fresh', attentionCount: 0, artifactCount: 4 })).toBe(
       'Supply-chain provenance fresh: 0 attention of 4 artifact(s) (informational; not gating).'
