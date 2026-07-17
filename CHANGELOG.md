@@ -6,6 +6,18 @@ This changelog records user-facing release history for `vi-history-suite`.
 
 ### Added
 
+- The development toolset (scripts CLIs, maintainer drivers, the compiled MCP
+  server, requirements documents, and agent-customization surfaces) can now be
+  distributed as a versioned, content-addressed **GitHub Release** artifact,
+  independent of the marketplace release. A committed toolset manifest
+  (`docs/devtools-release.manifest.json`) defines what ships;
+  `npm run devtools:release` emits a deterministic content digest plus a
+  provenance manifest binding the toolset to its requirements state and can pack
+  a reproducible tarball; `scripts/verifyDevToolsRelease.js` fails closed unless
+  a downloaded or in-tree toolset matches that manifest; and a dry-run-first
+  release workflow publishes only when the content digest changes
+  (VHS-REQ-667). See [docs/devtools-release.md](./docs/devtools-release.md)
+  (#1510, #1513, #1515, #1517).
 - The release-readiness gate (`node scripts/checkReleaseReadiness.js
   --require-release-attestation`) now also verifies the committed Vagrant box
   integrity manifest (`vagrant/box-manifest.json`): it fails closed unless the
