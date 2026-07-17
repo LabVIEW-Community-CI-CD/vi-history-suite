@@ -312,6 +312,40 @@ describe('supply-chain CLI', () => {
     expect(emitted.$id).toBe(sc.SCHEMA_ID);
   });
 
+  it('main --include-provenance is honored in text and Markdown output, not only JSON (VHS-REQ-668)', () => {
+    const cwd = makeRepo({
+      'vagrant/box-manifest.json': JSON.stringify({ sha256: 'a'.repeat(64), sizeBytes: 123, recordedForVersion: VERSION }),
+      'out/requirements/requirements-manifest.json': JSON.stringify({ integrityDigest: 'r', extensionVersion: VERSION, counts: { requirements: 1 } })
+    });
+    const baseDeps = {
+      cwd,
+      getPackageVersion: () => VERSION,
+      getGitCommit: () => 'deadbeef',
+      loadRuntimeValidationSignal: () => ({ available: false }),
+      collectDevToolsRelease: () => ({ contentDigest: 'd', fileCount: 1 }),
+      now: () => new Date('2026-07-15T00:00:00.000Z')
+    };
+
+    const textOut: string[] = [];
+    sc.main(['--include-provenance'], { ...baseDeps, stdout: { write: (t: string) => textOut.push(t) }, stderr: { write: () => undefined } });
+    const text = textOut.join('');
+    expect(text).toContain('provenance generatedAt: 2026-07-15T00:00:00.000Z');
+    expect(text).toContain('provenance outputMode: text');
+    expect(text).toContain('provenance argv: ["--include-provenance"]');
+
+    const mdOut: string[] = [];
+    sc.main(['--markdown', '--include-provenance'], { ...baseDeps, stdout: { write: (t: string) => mdOut.push(t) }, stderr: { write: () => undefined } });
+    const md = mdOut.join('');
+    expect(md).toContain('## Provenance');
+    expect(md).toContain('- Output: `markdown`');
+    expect(md).toContain('2026-07-15T00:00:00.000Z');
+
+    // Default (no flag) stays provenance-free.
+    const plainOut: string[] = [];
+    sc.main([], { ...baseDeps, stdout: { write: (t: string) => plainOut.push(t) }, stderr: { write: () => undefined } });
+    expect(plainOut.join('')).not.toContain('provenance generatedAt');
+  });
+
   it('main --strict returns 1 on attention and --output writes the packet (VHS-REQ-668.4)', () => {
     // Absent box manifest => gating artifact absent => attention.
     const cwd = makeRepo({

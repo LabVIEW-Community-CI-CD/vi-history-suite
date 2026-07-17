@@ -42,7 +42,6 @@ const {
 
 const SCHEMA_ID = 'vi-history-suite/supply-chain-state@v1';
 const SCHEMA_VERSION = 1;
-const SUPPLY_CHAIN_STATE_SCHEMA_PROVENANCE_KEY = SCHEMA_PROVENANCE_KEY;
 const UNKNOWN_COMMIT = '<unknown>';
 
 const BOX_MANIFEST_PATH = 'vagrant/box-manifest.json';
@@ -299,7 +298,34 @@ function collectSupplyChainState(cwd, options = {}, deps = {}) {
 
 // --- rendering ---
 
-function renderSummary(state) {
+// Optional provenance footer lines shared by the text and Markdown renderers, so
+// --include-provenance is honored in every output mode (not only JSON/schema).
+function provenanceTextLines(provenance) {
+  if (!provenance) return [];
+  return [
+    `[supply-chain-state] provenance generatedAt: ${provenance.generatedAt}`,
+    `[supply-chain-state] provenance cwd: ${provenance.cwd}`,
+    `[supply-chain-state] provenance outputMode: ${provenance.outputMode}`,
+    `[supply-chain-state] provenance strict: ${provenance.strict}`,
+    `[supply-chain-state] provenance argv: ${JSON.stringify(provenance.argv)}`
+  ];
+}
+
+function provenanceMarkdownLines(provenance) {
+  if (!provenance) return [];
+  return [
+    '## Provenance',
+    '',
+    `- Generated: \`${markdownCell(provenance.generatedAt)}\``,
+    `- Cwd: \`${markdownCell(provenance.cwd)}\``,
+    `- Output: \`${markdownCell(provenance.outputMode)}\``,
+    `- Strict: \`${markdownCell(provenance.strict)}\``,
+    `- Argv: \`${markdownCell(JSON.stringify(provenance.argv))}\``,
+    ''
+  ];
+}
+
+function renderSummary(state, provenance) {
   const lines = [];
   lines.push('[supply-chain-state] Supply-chain provenance state (read-only).');
   lines.push(`[supply-chain-state] Build: ${state.buildVersion} (${state.gitCommit})`);
@@ -309,6 +335,7 @@ function renderSummary(state) {
     lines.push(`[supply-chain-state] ${artifact.gates ? 'gate ' : '     '}${artifact.id}: ${availLabel} - ${artifact.detail}`);
   }
   lines.push(`[supply-chain-state] Status: ${state.status} (${state.attentionCount} attention of ${state.artifactCount}).`);
+  lines.push(...provenanceTextLines(provenance));
   return lines.join('\n');
 }
 
@@ -320,7 +347,7 @@ function markdownCell(value) {
     .replace(/\n/g, '<br>');
 }
 
-function renderMarkdown(state) {
+function renderMarkdown(state, provenance) {
   const lines = [];
   lines.push('# Supply-Chain State');
   lines.push('');
@@ -339,6 +366,7 @@ function renderMarkdown(state) {
   lines.push('');
   lines.push('_Read-only provenance summary; it mutates no source and gates nothing._');
   lines.push('');
+  lines.push(...provenanceMarkdownLines(provenance));
   return lines.join('\n');
 }
 
@@ -509,8 +537,8 @@ function main(argv = process.argv.slice(2), deps = {}) {
   const rendered = options.json
     ? JSON.stringify(stateWithProvenance, null, 2)
     : options.markdown
-      ? renderMarkdown(state)
-      : renderSummary(state);
+      ? renderMarkdown(state, provenance)
+      : renderSummary(state, provenance);
   if (options.outputPath) {
     const resolved = resolveOutputPath(cwd, options.outputPath);
     const mkdirSync = deps.mkdirSync ?? fs.mkdirSync;
