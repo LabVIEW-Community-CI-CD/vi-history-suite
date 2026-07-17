@@ -127,6 +127,21 @@ function readyRuntimeSelection(): ComparisonRuntimeSelection {
   };
 }
 
+function dockerReadyRuntimeSelection(): ComparisonRuntimeSelection {
+  return {
+    platform: 'win32',
+    executionMode: 'docker-only',
+    requestedProvider: 'docker',
+    requestedLabviewVersion: '2026',
+    bitness: 'x64',
+    provider: 'windows-container',
+    engine: 'labview-cli',
+    notes: ['Windows container runtime selected.'],
+    registryQueryPlans: [],
+    candidates: []
+  };
+}
+
 function blockedRuntimeSelection(blockedReason: string): ComparisonRuntimeSelection {
   return {
     platform: 'linux',
@@ -674,6 +689,129 @@ describe('local runtime settings CLI (VHS-REQ-612)', () => {
     expect(stdout.text()).toContain('Created default VI History runtime settings');
     expect(stdout.text()).toContain('Current VI History settings');
     expect(promptLine).toHaveBeenCalledTimes(4);
+  });
+
+  it('drives the interactive docker provider branch and persists docker defaults', async () => {
+    const memoryFs = new MemoryFs();
+    const stdout = createWritable();
+    memoryFs.seed('/build/buildInfo.json', JSON.stringify({
+      extensionVersion: '1.4.2',
+      extensionCommit: 'abcdef1234567890'
+    }));
+    const locateRuntime = vi.fn().mockResolvedValue(dockerReadyRuntimeSelection());
+    // provider=docker, then platform / year / bitness accept the docker defaults.
+    const promptLine = vi
+      .fn()
+      .mockResolvedValueOnce('docker')
+      .mockResolvedValueOnce('')
+      .mockResolvedValueOnce('')
+      .mockResolvedValueOnce('');
+
+    const result = await runInteractiveLocalRuntimeSettingsCli({
+      fs: memoryFs as never,
+      stdout: stdout.stream,
+      promptLine,
+      platform: 'win32',
+      env: { APPDATA: 'C:\\Users\\Test\\AppData\\Roaming' },
+      homedir: () => 'C:\\Users\\Test',
+      locateRuntime,
+      buildInfoDeps: {
+        fs: memoryFs as never,
+        buildInfoPath: '/build/buildInfo.json',
+        packageJsonPath: '/package.json'
+      }
+    });
+
+    expect(result).toMatchObject({
+      outcome: 'validated-settings',
+      persistedProvider: 'docker',
+      persistedLabviewVersion: '2026',
+      persistedLabviewBitness: 'x64',
+      runtimeValidationOutcome: 'ready'
+    });
+    expect(promptLine).toHaveBeenCalledTimes(4);
+  });
+
+  it('drives the interactive linux host branch and defaults host bitness to x64', async () => {
+    const memoryFs = new MemoryFs();
+    const stdout = createWritable();
+    memoryFs.seed('/build/buildInfo.json', JSON.stringify({
+      extensionVersion: '1.4.2',
+      extensionCommit: 'abcdef1234567890'
+    }));
+    const locateRuntime = vi.fn().mockResolvedValue(readyRuntimeSelection());
+    // provider default (host), platform=linux, year default, bitness default (x64 on linux).
+    const promptLine = vi
+      .fn()
+      .mockResolvedValueOnce('')
+      .mockResolvedValueOnce('linux')
+      .mockResolvedValueOnce('')
+      .mockResolvedValueOnce('');
+
+    const result = await runInteractiveLocalRuntimeSettingsCli({
+      fs: memoryFs as never,
+      stdout: stdout.stream,
+      promptLine,
+      platform: 'linux',
+      env: { HOME: '/home/test' },
+      homedir: () => '/home/test',
+      locateRuntime,
+      buildInfoDeps: {
+        fs: memoryFs as never,
+        buildInfoPath: '/build/buildInfo.json',
+        packageJsonPath: '/package.json'
+      }
+    });
+
+    expect(result).toMatchObject({
+      outcome: 'validated-settings',
+      persistedProvider: 'host',
+      persistedLabviewBitness: 'x64'
+    });
+    expect(promptLine).toHaveBeenCalledTimes(4);
+  });
+
+  it('re-prompts on an invalid enum answer and resolves a newer/manual LabVIEW year', async () => {
+    const memoryFs = new MemoryFs();
+    const stdout = createWritable();
+    memoryFs.seed('/build/buildInfo.json', JSON.stringify({
+      extensionVersion: '1.4.2',
+      extensionCommit: 'abcdef1234567890'
+    }));
+    const locateRuntime = vi.fn().mockResolvedValue(readyRuntimeSelection());
+    // provider: invalid then valid (reprompt loop); platform default (windows);
+    // year: 'newer' then manual '2027'; bitness default (x86 on windows host).
+    const promptLine = vi
+      .fn()
+      .mockResolvedValueOnce('nonsense')
+      .mockResolvedValueOnce('host')
+      .mockResolvedValueOnce('')
+      .mockResolvedValueOnce('newer')
+      .mockResolvedValueOnce('2027')
+      .mockResolvedValueOnce('');
+
+    const result = await runInteractiveLocalRuntimeSettingsCli({
+      fs: memoryFs as never,
+      stdout: stdout.stream,
+      promptLine,
+      platform: 'win32',
+      env: { APPDATA: 'C:\\Users\\Test\\AppData\\Roaming' },
+      homedir: () => 'C:\\Users\\Test',
+      locateRuntime,
+      buildInfoDeps: {
+        fs: memoryFs as never,
+        buildInfoPath: '/build/buildInfo.json',
+        packageJsonPath: '/package.json'
+      }
+    });
+
+    expect(result).toMatchObject({
+      outcome: 'validated-settings',
+      persistedProvider: 'host',
+      persistedLabviewVersion: '2027',
+      persistedLabviewBitness: 'x86'
+    });
+    expect(promptLine).toHaveBeenCalledTimes(6);
   });
 
   it('prints terminal entrypoint discovery when no non-interactive args are supplied', async () => {
