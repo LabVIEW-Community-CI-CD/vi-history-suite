@@ -22,7 +22,6 @@ import {
 export { normalizeComparisonProcessError } from './runtime/comparisonProcessErrorNormalization';
 import {
   inferLabviewBitnessFromExecutablePath,
-  inferLabviewYearFromExecutablePath,
   inferSupportedLabviewYearFromExecutablePath
 } from './runtime/labviewExecutablePathInference';
 export {
@@ -30,6 +29,15 @@ export {
   inferLabviewYearFromExecutablePath,
   inferSupportedLabviewYearFromExecutablePath
 } from './runtime/labviewExecutablePathInference';
+import {
+  normalizeWindowsInteropPath,
+  normalizeWindowsInteropExecutable,
+  normalizeComparablePath
+} from './runtime/windowsInteropPaths';
+export {
+  normalizeWindowsInteropPath,
+  normalizeWindowsInteropExecutable
+} from './runtime/windowsInteropPaths';
 import { nowIso } from '../support/clock';
 import { ComparisonCommandPlan, ComparisonReportOptions } from './comparisonReportPlan';
 import { buildComparisonReportExecutionPlan } from './comparisonReportExecutionPlan';
@@ -4730,51 +4738,6 @@ function buildReportAssetsDirectoryPath(reportFilePath: string): string {
   return reportFilePath.replace(/\.html$/i, '') + '_files';
 }
 
-export function normalizeWindowsInteropPath(filePath: string): string | undefined {
-  const trimmed = filePath.trim();
-  if (!trimmed) {
-    return undefined;
-  }
-
-  if (/^[A-Za-z]:[\\/]/.test(trimmed)) {
-    return trimmed.replaceAll('/', '\\');
-  }
-
-  const match = trimmed.match(/^\/mnt\/([a-zA-Z])\/(.*)$/);
-  if (!match) {
-    return undefined;
-  }
-
-  const [, driveLetter, tail] = match;
-  const normalizedTail = tail
-    .split('/')
-    .filter((segment) => segment.length > 0)
-    .join('\\');
-  return normalizedTail.length > 0
-    ? `${driveLetter.toUpperCase()}:\\${normalizedTail}`
-    : `${driveLetter.toUpperCase()}:\\`;
-}
-
-export function normalizeWindowsInteropExecutable(filePath: string): string | undefined {
-  const trimmed = filePath.trim();
-  if (!trimmed) {
-    return undefined;
-  }
-
-  if (trimmed.startsWith('/mnt/')) {
-    return trimmed;
-  }
-
-  const windowsPathMatch = trimmed.match(/^([A-Za-z]):[\\/](.*)$/);
-  if (!windowsPathMatch) {
-    return undefined;
-  }
-
-  const [, driveLetter, tail] = windowsPathMatch;
-  const normalizedTail = tail.replaceAll('\\', '/');
-  return `/mnt/${driveLetter.toLowerCase()}/${normalizedTail}`;
-}
-
 function resolveHostReadableWindowsPath(
   filePath: string,
   processPlatform: NodeJS.Platform = process.platform
@@ -5459,16 +5422,6 @@ export function extractCommandOptionValue(args: string[], optionName: string): s
   }
 
   return undefined;
-}
-
-function normalizeComparablePath(filePath?: string): string | undefined {
-  const trimmed = filePath?.trim();
-  if (!trimmed) {
-    return undefined;
-  }
-
-  const windowsPath = normalizeWindowsInteropPath(trimmed) ?? trimmed.replaceAll('/', '\\');
-  return windowsPath.replaceAll('/', '\\').toLowerCase();
 }
 
 function resolveWindowsPowerShellHostExecutable(
