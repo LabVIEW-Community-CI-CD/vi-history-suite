@@ -73,9 +73,9 @@
       "provider": "vagrant",
       "linuxExecutable": false,
       "releaseGating": false,
-      "lastValidatedVersion": "0.0.0",
-      "lastValidatedCommit": "unvalidated",
-      "evidence": "advisory: awaiting first vagrantValidationProofDriver.cjs run",
+      "lastValidatedVersion": "1.33.2",
+      "lastValidatedCommit": "2a1891c2",
+      "evidence": "vagrant pathadmit+validation proof: runtime.validationOutcome=ready, host-native x86, golden box",
       "fixture": "real Windows user-PATH admission (persistWindowsUserPathPrepend) + validateLocalRuntimeSettingsCli --proof-out (runtime-validation-proof@v1)"
     }
   ]
