@@ -42,6 +42,13 @@ const { spawnSync } = require('node:child_process');
 const repoRoot = path.resolve(__dirname, '..');
 const vagrantDir = path.join(repoRoot, 'vagrant');
 const TRACK_ID = 'vagrant-win-pathadmit-validation';
+// Must match vagrant/Vagrantfile default box name; setting VIHS_VAGRANT_BOX to
+// this value selects the same committed box and is NOT an override.
+const DEFAULT_BOX = 'vihs/win11-labview2026';
+function isBoxOverride() {
+  const value = (process.env.VIHS_VAGRANT_BOX || '').trim();
+  return value !== '' && value !== DEFAULT_BOX;
+}
 
 // In-guest paths: the Vagrantfile mounts the repo at C:\vihs-workspace.
 const GUEST_REPO = 'C:\\vihs-workspace';
@@ -100,7 +107,7 @@ function getPackageVersion() {
 // when VIHS_VAGRANT_BOX overrides the box (the committed manifest fingerprints
 // the DEFAULT box; binding it to an override run would be false provenance).
 function getBoxSha256() {
-  if (process.env.VIHS_VAGRANT_BOX && process.env.VIHS_VAGRANT_BOX.trim()) {
+  if (isBoxOverride()) {
     return undefined;
   }
   try {
@@ -300,7 +307,7 @@ function main() {
     ? `${options.evidence} ${proofTag}`
     : `vagrant pathadmit+validation proof ${proofTag} ${new Date().toISOString()}`;
   const boxSha256 = getBoxSha256();
-  const overrideBox = process.env.VIHS_VAGRANT_BOX && process.env.VIHS_VAGRANT_BOX.trim();
+  const overrideBox = isBoxOverride();
   const record = run('node', [
     path.join('scripts', 'recordRuntimeValidation.js'),
     '--track',

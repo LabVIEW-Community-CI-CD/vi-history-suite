@@ -346,32 +346,50 @@ function buildPlatformProofEntries() {
 // validation into a self-directing signal instead of an ad-hoc issue comment.
 // Windows tracks are intentionally NOT modeled here — they remain in the parked
 // platform-proof awareness list because they are not executable on a Linux host.
-// box-provenance dimension: the committed Vagrant box manifest fingerprints the
-// golden box the release-gating attestation is produced on. When its
-// recordedForVersion drifts from the current build, the box may need a fresh
-// validation pass; surface a selectable MEDIUM (mirrors runtime-fidelity).
-// Fires 0 entries when the manifest is absent or already recorded for the build.
-function buildBoxProvenanceEntries(manifest, currentVersion) {
-  if (!manifest || typeof manifest !== 'object') {
+// box-provenance dimension: surfaces GENUINE binding drift between the committed
+// Vagrant box manifest and the release-gating attestation. A release-gating
+// track that records a boxSha256 which does NOT equal the committed manifest's
+// sha256 means the attestation was produced on a different box than the one that
+// ships — a selectable MEDIUM. It deliberately does NOT fire on recordedForVersion
+// drift: the box is sha256-identified and recordedForVersion legitimately lags a
+// version bump when the box is unchanged (per the decoupled box-gate contract),
+// so version drift alone is non-actionable noise. Fires 0 entries when the box
+// manifest has no sha256, no gating track records a boxSha256 (transition), or
+// every recorded boxSha256 matches.
+function buildBoxProvenanceEntries(boxManifest, runtimeManifest) {
+  if (!boxManifest || typeof boxManifest !== 'object' || typeof boxManifest.sha256 !== 'string') {
     return [];
   }
-  const recordedForVersion =
-    typeof manifest.recordedForVersion === 'string' ? manifest.recordedForVersion : undefined;
-  if (recordedForVersion === currentVersion) {
+  const boxSha256 = boxManifest.sha256;
+  const tracks =
+    runtimeManifest && typeof runtimeManifest === 'object' && Array.isArray(runtimeManifest.tracks)
+      ? runtimeManifest.tracks
+      : [];
+  const mismatched = tracks
+    .filter(
+      (track) =>
+        track &&
+        typeof track === 'object' &&
+        track.releaseGating === true &&
+        typeof track.boxSha256 === 'string' &&
+        track.boxSha256.length > 0 &&
+        track.boxSha256 !== boxSha256
+    )
+    .map((track) => (typeof track.trackId === 'string' ? track.trackId : 'unnamed-track'));
+  if (mismatched.length === 0) {
     return [];
   }
-  const recordedText = recordedForVersion ?? '<never>';
   return [
     makeEntry({
       id: 'box-provenance/box-manifest',
       dimension: 'box-provenance',
       severityTier: 'MEDIUM',
       requirementIds: ['VHS-REQ-666'],
-      title: `Vagrant box manifest was recorded for ${recordedText}, not the current build ${currentVersion}`,
+      title: `Release-gating track(s) recorded a boxSha256 that does not match the committed box manifest (${boxSha256.slice(0, 12)}\u2026): ${mismatched.join(', ')}`,
       source: 'box-manifest',
-      provenance: typeof manifest.sha256 === 'string' ? `sha256:${manifest.sha256.slice(0, 12)}\u2026` : '',
+      provenance: `sha256:${boxSha256.slice(0, 12)}\u2026`,
       suggestedAction:
-        'Confirm the golden box is current and re-run the Vagrant release validation for this build, then regenerate vagrant/box-manifest.json (node scripts/verifyVagrantBox.cjs --generate <box>) if the box changed.'
+        'Re-validate the release-gating track against the committed golden box (vagrant/box-manifest.json) and re-record its boxSha256, or regenerate the manifest if the box was intentionally rebuilt.'
     })
   ];
 }
@@ -450,7 +468,7 @@ function buildRiskLedger(signals = {}, meta = {}) {
     ),
     ...buildBoxProvenanceEntries(
       signals.boxManifest?.available ? signals.boxManifest.manifest : undefined,
-      meta.extensionVersion
+      signals.runtimeValidation?.available ? signals.runtimeValidation.manifest : undefined
     ),
     ...buildStandardsEntries(signals.standards?.available ? signals.standards.summary : undefined),
     ...buildPlatformProofEntries()
