@@ -46,9 +46,9 @@ function makeRepo(files: Record<string, string> = {}): string {
 const VERSION = '1.33.2';
 
 describe('supply-chain per-artifact builders', () => {
-  it('box: fresh when recordedForVersion matches, stale otherwise, absent when missing', () => {
+  it('box: fresh when well-formed and recordedForVersion matches, stale otherwise, absent when missing', () => {
     const fresh = makeRepo({
-      'vagrant/box-manifest.json': JSON.stringify({ sha256: 'a'.repeat(64), recordedForVersion: VERSION })
+      'vagrant/box-manifest.json': JSON.stringify({ sha256: 'a'.repeat(64), sizeBytes: 123, recordedForVersion: VERSION })
     });
     const a = sc.buildBoxArtifact(fresh, VERSION);
     expect(a.available).toBe(true);
@@ -56,7 +56,7 @@ describe('supply-chain per-artifact builders', () => {
     expect(a.fresh).toBe(true);
 
     const stale = makeRepo({
-      'vagrant/box-manifest.json': JSON.stringify({ sha256: 'a'.repeat(64), recordedForVersion: '0.0.0' })
+      'vagrant/box-manifest.json': JSON.stringify({ sha256: 'a'.repeat(64), sizeBytes: 123, recordedForVersion: '0.0.0' })
     });
     expect(sc.buildBoxArtifact(stale, VERSION).fresh).toBe(false);
 
@@ -64,6 +64,16 @@ describe('supply-chain per-artifact builders', () => {
     const missing = sc.buildBoxArtifact(absent, VERSION);
     expect(missing.available).toBe(false);
     expect(missing.drift).toBe('unavailable');
+  });
+
+  it('box: NOT fresh when the manifest matches the version but sha256 is malformed (#1522)', () => {
+    const malformed = makeRepo({
+      'vagrant/box-manifest.json': JSON.stringify({ sha256: 'nope', sizeBytes: 123, recordedForVersion: VERSION })
+    });
+    const a = sc.buildBoxArtifact(malformed, VERSION);
+    expect(a.available).toBe(true);
+    expect(a.fresh).toBe(false);
+    expect(a.drift).toBe('malformed');
   });
 
   it('runtime: fresh only when all release-gating tracks are validated at the build version (VHS-REQ-668.2)', () => {
@@ -213,7 +223,7 @@ describe('supply-chain CLI', () => {
 
   it('collectSupplyChainState reports fresh with all sources present and gating fresh (VHS-REQ-668.1)', () => {
     const cwd = makeRepo({
-      'vagrant/box-manifest.json': JSON.stringify({ sha256: 'a'.repeat(64), recordedForVersion: VERSION }),
+      'vagrant/box-manifest.json': JSON.stringify({ sha256: 'a'.repeat(64), sizeBytes: 123, recordedForVersion: VERSION }),
       'out/requirements/requirements-manifest.json': JSON.stringify({ integrityDigest: 'r', extensionVersion: VERSION, counts: { requirements: 1 } })
     });
     const state = sc.collectSupplyChainState(cwd, {}, deterministic(cwd));
@@ -231,7 +241,7 @@ describe('supply-chain CLI', () => {
     expect(code).toBe(1);
 
     const okCwd = makeRepo({
-      'vagrant/box-manifest.json': JSON.stringify({ sha256: 'a'.repeat(64), recordedForVersion: VERSION }),
+      'vagrant/box-manifest.json': JSON.stringify({ sha256: 'a'.repeat(64), sizeBytes: 123, recordedForVersion: VERSION }),
       'out/requirements/requirements-manifest.json': JSON.stringify({ integrityDigest: 'r', extensionVersion: VERSION, counts: { requirements: 1 } })
     });
     const wrote = sc.main(['--json', '--output', 'out/supply-chain.json'], {
