@@ -4972,8 +4972,12 @@ Missing numeric IDs are intentional.
     CI-safe `box-manifest-integrity` check that fails closed unless the
     committed `vagrant/box-manifest.json` is present, matches the
     `vi-history-suite/vagrant-box-manifest@v1` schema, has a 64-hex `sha256`, a
-    positive-integer `sizeBytes`, and a `recordedForVersion` equal to the
-    release version. The check reads only the committed manifest (never the box
+    positive-integer `sizeBytes`, and a non-empty `recordedForVersion`. The
+    check does not require `recordedForVersion` to equal the release version
+    (the box is identified by its `sha256` and is regenerated only when
+    rebuilt, while the release version bumps every release; attestation
+    freshness is enforced separately by the `release-attestation` check). The
+    check reads only the committed manifest (never the box
     artifact), so it needs no hypervisor in hosted CI; byte-level box hashing
     stays in `scripts/verifyVagrantBox.cjs --verify` as a maintainer-local step.
 - Agent Work Scope:

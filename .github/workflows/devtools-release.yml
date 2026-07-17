@@ -110,13 +110,17 @@ jobs:
           set -euo pipefail
           digest=$(node -e "console.log(require('./devtools-dist/devtools-release.json').contentDigest)")
           echo "content_digest=$digest" >> "$GITHUB_OUTPUT"
-          if [ "$CHANNEL" = "stable" ]; then prefix="devtools-"; else prefix="devtools-dev-"; fi
+          if [ "$CHANNEL" = "stable" ]; then prefix="devtools-"; want_prerelease="false"; else prefix="devtools-dev-"; want_prerelease="true"; fi
           date_tag=$(date -u +%Y%m%d)
           echo "tag=${prefix}${date_tag}-$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
-          # Find the most recent release of this channel and compare its embedded
-          # content digest; skip when unchanged so no-op merges do not churn releases.
-          last_tag=$(gh release list --limit 100 --json tagName,createdAt \
-            --jq "[.[] | select(.tagName | startswith(\"$prefix\"))] | sort_by(.createdAt) | reverse | .[0].tagName // \"\"")
+          # Find the most recent release OF THIS CHANNEL and compare its embedded
+          # content digest; skip when unchanged so no-op merges do not churn
+          # releases. Match on the isPrerelease flag (not a tag-name prefix),
+          # because the stable prefix "devtools-" is also a prefix of the
+          # prerelease tag "devtools-dev-*" and would otherwise dedup a stable
+          # push against the latest prerelease.
+          last_tag=$(gh release list --limit 100 --json tagName,createdAt,isPrerelease \
+            --jq "[.[] | select(.isPrerelease == $want_prerelease)] | sort_by(.createdAt) | reverse | .[0].tagName // \"\"")
           prior_digest=""
           if [ -n "$last_tag" ]; then
             gh release download "$last_tag" --pattern devtools-release.json --dir prior --clobber || true
