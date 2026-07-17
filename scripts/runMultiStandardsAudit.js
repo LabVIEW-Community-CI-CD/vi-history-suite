@@ -14,9 +14,17 @@ const {
   prepareStandardsImage,
   summarizeRequirementsQuality
 } = require('./runIssueStandardsTriage.js');
+const {
+  JSON_SCHEMA_DIALECT,
+  renderSchemaDocument,
+  schemaEnvelopeFields,
+  schemaEnvelopePropertyNodes
+} = require('./lib/schemaEnvelope.js');
 
 const DEFAULT_SAVE_DIR = 'assurance-multi-standards-evidence';
 const DEFAULT_REQUIREMENTS_SPEC_SCOPE = 'system';
+const SCHEMA_VERSION = 1;
+const MULTI_STANDARDS_AUDIT_SCHEMA_ID = 'vi-history-suite/multi-standards-audit@v1';
 const COMMAND_TIMEOUT_MS = 10 * 60 * 1000;
 const GATE_SCORECARD_PROFILES = [
   'quick-triage',
@@ -38,6 +46,7 @@ function usage() {
     `  --save-dir <dir>                 Output root (default: ${DEFAULT_SAVE_DIR})`,
     '  --run-id <id>                    Output run id directory (default: UTC timestamp)',
     '  --keep-snapshot                  Leave the tracked-worktree snapshot on disk for troubleshooting',
+    '  --schema                         Publish the retained audit-summary JSON Schema and exit',
     '  --help                           Show this help'
   ].join('\n');
 }
@@ -61,6 +70,7 @@ function parseArgs(argv) {
     saveDir: DEFAULT_SAVE_DIR,
     runId: undefined,
     keepSnapshot: false,
+    schema: false,
     help: false
   };
 
@@ -85,6 +95,9 @@ function parseArgs(argv) {
         break;
       case '--keep-snapshot':
         options.keepSnapshot = true;
+        break;
+      case '--schema':
+        options.schema = true;
         break;
       case '--help':
       case '-h':
@@ -1193,10 +1206,51 @@ function renderMarkdown(context) {
   return lines.join('\n');
 }
 
+// Published JSON Schema for the retained multi-standards audit-summary.json
+// packet, so consumers can validate the packet and the `--schema` mode can
+// publish the contract without running the audit. Shares the self-describing
+// envelope via scripts/lib/schemaEnvelope.js. The rich nested check/profile/
+// coverage records use permissive object shapes for forward-compatibility.
+const MULTI_STANDARDS_AUDIT_JSON_SCHEMA = {
+  $schema: JSON_SCHEMA_DIALECT,
+  $id: MULTI_STANDARDS_AUDIT_SCHEMA_ID,
+  title: 'vi-history-suite multi-standards audit summary',
+  type: 'object',
+  additionalProperties: true,
+  required: [
+    '$schema',
+    'schemaVersion',
+    'options',
+    'outputDir',
+    'directChecks',
+    'profiles',
+    'success'
+  ],
+  properties: {
+    ...schemaEnvelopePropertyNodes(MULTI_STANDARDS_AUDIT_SCHEMA_ID, SCHEMA_VERSION),
+    options: { type: 'object' },
+    outputDir: { type: 'string' },
+    imageAccess: { type: 'string' },
+    imagePreparation: { type: 'array', items: { type: 'object' } },
+    snapshot: { type: 'object' },
+    directChecks: { type: 'array', items: { type: 'object' } },
+    profiles: { type: 'array', items: { type: 'object' } },
+    success: { type: 'boolean' }
+  }
+};
+
+function renderSchema(options = {}) {
+  return renderSchemaDocument(MULTI_STANDARDS_AUDIT_JSON_SCHEMA, options);
+}
+
 function runMultiStandardsAudit(argv = process.argv.slice(2), deps = {}) {
   const options = parseArgs(argv);
   if (options.help) {
     return { exitCode: 0, markdown: usage(), context: { options } };
+  }
+  // --schema publishes the JSON Schema without running the audit.
+  if (options.schema) {
+    return { exitCode: 0, markdown: renderSchema(), context: { options, schema: true } };
   }
 
   const cwd = deps.cwd || process.cwd();
@@ -1221,7 +1275,7 @@ function runMultiStandardsAudit(argv = process.argv.slice(2), deps = {}) {
       : [];
 
     const context = {
-      schemaVersion: 1,
+      ...schemaEnvelopeFields(MULTI_STANDARDS_AUDIT_SCHEMA_ID, SCHEMA_VERSION),
       options: { ...options, runId },
       outputDir,
       imageAccess,
@@ -1277,10 +1331,14 @@ if (require.main === module) {
 module.exports = {
   DEFAULT_SAVE_DIR,
   DEFAULT_REQUIREMENTS_SPEC_SCOPE,
+  MULTI_STANDARDS_AUDIT_SCHEMA_ID,
+  MULTI_STANDARDS_AUDIT_JSON_SCHEMA,
+  SCHEMA_VERSION,
   GATE_SCORECARD_PROFILES,
   PORTFOLIO_PROFILE,
   buildRunId,
   parseArgs,
+  renderSchema,
   directDockerSteps,
   profileDockerSteps,
   replaceAuditMounts,

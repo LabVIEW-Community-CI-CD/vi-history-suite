@@ -10,8 +10,11 @@ const {
   DEFAULT_SAVE_DIR,
   GATE_SCORECARD_PROFILES,
   PORTFOLIO_PROFILE,
+  MULTI_STANDARDS_AUDIT_SCHEMA_ID,
+  MULTI_STANDARDS_AUDIT_JSON_SCHEMA,
   buildRunId,
   parseArgs,
+  renderSchema,
   directDockerSteps,
   profileDockerSteps,
   replaceAuditMounts,
@@ -42,6 +45,8 @@ const {
   DEFAULT_SAVE_DIR: string;
   GATE_SCORECARD_PROFILES: string[];
   PORTFOLIO_PROFILE: string;
+  MULTI_STANDARDS_AUDIT_SCHEMA_ID: string;
+  MULTI_STANDARDS_AUDIT_JSON_SCHEMA: { required: string[]; properties: Record<string, unknown> };
   buildRunId: (date?: Date) => string;
   parseArgs: (argv: string[]) => {
     image: string;
@@ -49,8 +54,10 @@ const {
     saveDir: string;
     runId?: string;
     keepSnapshot: boolean;
+    schema: boolean;
     help: boolean;
   };
+  renderSchema: (options?: { provenance?: unknown }) => string;
   directDockerSteps: (options: { image: string; requirementsSpecScope: string }) => Array<{
     name: string;
     file: string;
@@ -1407,6 +1414,7 @@ describe('multi standards audit script', () => {
     ];
     const auditSummaryPath = path.join(root, 'evidence', 'run-1', 'audit-summary.json');
     type RetainedAuditSummary = typeof result.context & {
+      $schema: string;
       schemaVersion: number;
       options: { runId: string };
       snapshot: {
@@ -1429,6 +1437,7 @@ describe('multi standards audit script', () => {
     expect(result.context.directChecks).toHaveLength(2);
     expect(result.context.profiles).toHaveLength(6);
     expect(Object.keys(retainedSummary)).toEqual([
+      '$schema',
       'schemaVersion',
       'options',
       'outputDir',
@@ -1447,6 +1456,12 @@ describe('multi standards audit script', () => {
       'standardsGateDetailSummary'
     ]);
     expect(retainedSummary.schemaVersion).toBe(1);
+    expect(retainedSummary.$schema).toBe(MULTI_STANDARDS_AUDIT_SCHEMA_ID);
+    // The retained packet self-describes and satisfies the published schema contract (no drift).
+    expect(MULTI_STANDARDS_AUDIT_JSON_SCHEMA.required.filter((key) => !(key in retainedSummary))).toEqual([]);
+    expect(retainedSummary.$schema).toBe(
+      (MULTI_STANDARDS_AUDIT_JSON_SCHEMA.properties.$schema as { const: string }).const
+    );
     expect(retainedSummary.options.runId).toBe('run-1');
     expect(retainedSummary.success).toBe(true);
     expect(retainedSummary.snapshot).toMatchObject({
@@ -1638,6 +1653,28 @@ describe('multi standards audit script', () => {
       expect.objectContaining({ path: snapshotPath }),
       expect.any(Object)
     );
+  });
+
+  it('publishes the audit-summary JSON Schema via --schema without running the audit (VHS-REQ-615)', () => {
+    const schema = JSON.parse(renderSchema()) as {
+      $id: string;
+      required: string[];
+      properties: { $schema: { const: string }; schemaVersion: { const: number } };
+    };
+    expect(schema.$id).toBe(MULTI_STANDARDS_AUDIT_SCHEMA_ID);
+    expect(schema.properties.$schema.const).toBe(MULTI_STANDARDS_AUDIT_SCHEMA_ID);
+    expect(schema.properties.schemaVersion.const).toBe(1);
+
+    // --schema attaches provenance under the shared extension key.
+    const withProvenance = JSON.parse(renderSchema({ provenance: { generatedAt: 'x' } })) as Record<string, unknown>;
+    expect(withProvenance['x-vi-history-suite-provenance']).toEqual({ generatedAt: 'x' });
+
+    // runMultiStandardsAudit --schema returns the schema markdown without spawning docker.
+    const spawnSync = vi.fn();
+    const result = runMultiStandardsAudit(['--schema'], { spawnSync });
+    expect(result.exitCode).toBe(0);
+    expect((JSON.parse(result.markdown) as Record<string, unknown>).$id).toBe(MULTI_STANDARDS_AUDIT_SCHEMA_ID);
+    expect(spawnSync).not.toHaveBeenCalled();
   });
 
   it('clears stale retained profile scores before reruns', () => {
