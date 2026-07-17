@@ -46,7 +46,7 @@ function makeRepo(files: Record<string, string> = {}): string {
 const VERSION = '1.33.2';
 
 describe('supply-chain per-artifact builders', () => {
-  it('box: fresh when well-formed and recordedForVersion matches, stale otherwise, absent when missing', () => {
+  it('box: fresh when well-formed and bound (unchanged box lagging the version stays fresh; version binding decoupled), absent when missing (VHS-REQ-668)', () => {
     const fresh = makeRepo({
       'vagrant/box-manifest.json': JSON.stringify({ sha256: 'a'.repeat(64), sizeBytes: 123, recordedForVersion: VERSION })
     });
@@ -55,10 +55,22 @@ describe('supply-chain per-artifact builders', () => {
     expect(a.gates).toBe(true);
     expect(a.fresh).toBe(true);
 
-    const stale = makeRepo({
+    // An unchanged box recorded for an EARLIER version stays fresh: the box is
+    // identified by its sha256, not the release version (matches the release
+    // gate's box-manifest-integrity contract). Per-version freshness is the
+    // runtime track's job, so a version-only release is not blocked here.
+    const unchanged = makeRepo({
       'vagrant/box-manifest.json': JSON.stringify({ sha256: 'a'.repeat(64), sizeBytes: 123, recordedForVersion: '0.0.0' })
     });
-    expect(sc.buildBoxArtifact(stale, VERSION).fresh).toBe(false);
+    expect(sc.buildBoxArtifact(unchanged, VERSION).fresh).toBe(true);
+
+    // A missing recordedForVersion binding is NOT fresh.
+    const unbound = makeRepo({
+      'vagrant/box-manifest.json': JSON.stringify({ sha256: 'a'.repeat(64), sizeBytes: 123 })
+    });
+    const unboundArtifact = sc.buildBoxArtifact(unbound, VERSION);
+    expect(unboundArtifact.fresh).toBe(false);
+    expect(unboundArtifact.drift).toBe('recorded-for-version');
 
     const absent = makeRepo();
     const missing = sc.buildBoxArtifact(absent, VERSION);
