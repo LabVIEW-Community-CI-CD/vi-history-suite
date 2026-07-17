@@ -4,9 +4,17 @@ const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
 
+const {
+  JSON_SCHEMA_DIALECT,
+  renderSchemaDocument,
+  schemaEnvelopeFields,
+  schemaEnvelopePropertyNodes
+} = require('./lib/schemaEnvelope.js');
+
 const DEFAULT_SAVE_DIR = 'assurance-state-evidence';
 const DEFAULT_STANDARDS_AUDIT_DIR = 'assurance-multi-standards-evidence';
 const SCHEMA_VERSION = 1;
+const ASSURANCE_STATE_SCHEMA_ID = 'vi-history-suite/assurance-state@v1';
 const SIGNAL_STATES = ['green', 'candidate', 'known', 'resolved', 'needs-review'];
 
 function usage() {
@@ -48,6 +56,7 @@ function parseArgs(argv) {
     mergeShas: [],
     requirements: [],
     reviewFindings: [],
+    schema: false,
     help: false
   };
 
@@ -93,6 +102,9 @@ function parseArgs(argv) {
       case '--review-finding':
         options.reviewFindings.push(parseReviewFinding(takeValue(argv, index, arg)));
         index += 1;
+        break;
+      case '--schema':
+        options.schema = true;
         break;
       case '--help':
       case '-h':
@@ -612,7 +624,7 @@ function buildAssuranceState(auditSummary, options) {
     artifactPath: repoRelative(options.auditSummaryPath, options.cwd)
   };
   return {
-    schemaVersion: SCHEMA_VERSION,
+    ...schemaEnvelopeFields(ASSURANCE_STATE_SCHEMA_ID, SCHEMA_VERSION),
     runId: options.runId,
     generatedAt,
     sources: [source],
@@ -633,6 +645,44 @@ function buildAssuranceState(auditSummary, options) {
     signalCount: signals.length,
     signals
   };
+}
+
+// Published JSON Schema for the retained assurance-state packet, so consumers can
+// validate assurance-state.json and the `--schema` mode can publish the contract
+// without running the aggregation. Shares the self-describing envelope via
+// scripts/lib/schemaEnvelope.js. The rich nested signal/metadata records use
+// permissive object shapes for forward-compatibility.
+const ASSURANCE_STATE_JSON_SCHEMA = {
+  $schema: JSON_SCHEMA_DIALECT,
+  $id: ASSURANCE_STATE_SCHEMA_ID,
+  title: 'vi-history-suite assurance state',
+  type: 'object',
+  additionalProperties: true,
+  required: [
+    '$schema',
+    'schemaVersion',
+    'runId',
+    'generatedAt',
+    'sources',
+    'metadata',
+    'countsByState',
+    'signalCount',
+    'signals'
+  ],
+  properties: {
+    ...schemaEnvelopePropertyNodes(ASSURANCE_STATE_SCHEMA_ID, SCHEMA_VERSION),
+    runId: { type: 'string' },
+    generatedAt: { type: 'string' },
+    sources: { type: 'array', items: { type: 'object' } },
+    metadata: { type: 'object' },
+    countsByState: { type: 'object' },
+    signalCount: { type: 'integer' },
+    signals: { type: 'array', items: { type: 'object' } }
+  }
+};
+
+function renderSchema(options = {}) {
+  return renderSchemaDocument(ASSURANCE_STATE_JSON_SCHEMA, options);
 }
 
 function markdownCell(value) {
@@ -744,6 +794,10 @@ function runAssuranceState(argv = process.argv.slice(2), deps = {}) {
   if (options.help) {
     return { exitCode: 0, markdown: usage(), context: { options } };
   }
+  // --schema publishes the JSON Schema without reading any audit summary.
+  if (options.schema) {
+    return { exitCode: 0, markdown: renderSchema(), context: { options, schema: true } };
+  }
   const cwd = deps.cwd || process.cwd();
   const auditSummaryPath = resolveAuditSummaryPath(options, cwd, deps);
   const auditSummary = readJson(auditSummaryPath, deps);
@@ -781,6 +835,9 @@ module.exports = {
   DEFAULT_SAVE_DIR,
   DEFAULT_STANDARDS_AUDIT_DIR,
   SCHEMA_VERSION,
+  ASSURANCE_STATE_SCHEMA_ID,
+  ASSURANCE_STATE_JSON_SCHEMA,
+  renderSchema,
   SIGNAL_STATES,
   parseArgs,
   buildRunId,

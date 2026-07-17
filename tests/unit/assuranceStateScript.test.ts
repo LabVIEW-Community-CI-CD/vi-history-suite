@@ -10,10 +10,14 @@ const {
   parseReviewFinding,
   buildAssuranceState,
   renderAssuranceStateMarkdown,
+  renderSchema,
   resolveAuditSummaryPath,
-  runAssuranceState
+  runAssuranceState,
+  ASSURANCE_STATE_SCHEMA_ID
 } = require('../../scripts/generateAssuranceState.js') as {
   DEFAULT_SAVE_DIR: string;
+  renderSchema: (options?: { provenance?: unknown }) => string;
+  ASSURANCE_STATE_SCHEMA_ID: string;
   parseArgs: (argv: string[]) => {
     auditSummary?: string;
     auditRunId?: string;
@@ -40,6 +44,7 @@ const {
       reviewFindings?: ReviewFinding[];
     };
   }) => {
+    $schema: string;
     schemaVersion: number;
     runId: string;
     signalCount: number;
@@ -242,6 +247,7 @@ describe('generateAssuranceState script', () => {
     });
 
     expect(state.schemaVersion).toBe(1);
+    expect(state.$schema).toBe(ASSURANCE_STATE_SCHEMA_ID);
     expect(state.countsByState.green).toBeGreaterThan(0);
     expect(state.countsByState['needs-review']).toBe(1);
     expect(state.countsByState.candidate).toBe(1);
@@ -601,6 +607,7 @@ describe('generateAssuranceState script', () => {
     expect(result.exitCode).toBe(0);
     expect(result.context.outputDir).toBe(path.dirname(jsonPath));
     expect(Object.keys(json)).toEqual([
+      '$schema',
       'schemaVersion',
       'runId',
       'generatedAt',
@@ -678,5 +685,40 @@ describe('generateAssuranceState script', () => {
     expect(json.signals.length).toBeGreaterThan(0);
     expect(markdown).toContain('# Assurance State');
     expect(result.markdown).toBe(markdown);
+  });
+
+  it('emits a self-describing packet aligned with the published schema, with a --schema mode (VHS-REQ-615)', () => {
+    const cwd = makeTempRoot();
+    const auditPath = path.join(cwd, 'assurance-multi-standards-evidence', 'audit-green', 'audit-summary.json');
+    writeJson(auditPath, fixtureAuditSummary());
+    const state = buildAssuranceState(fixtureAuditSummary(), {
+      cwd,
+      auditSummaryPath: auditPath,
+      runId: 'state-green',
+      generatedAt: '2026-07-14T00:00:00.000Z',
+      metadata: { issueLinks: [], prLinks: [], mergeShas: [], requirements: [] }
+    }) as unknown as Record<string, unknown>;
+    const schema = JSON.parse(renderSchema()) as {
+      $id: string;
+      required: string[];
+      properties: { $schema: { const: string }; schemaVersion: { const: number } };
+    };
+
+    // Self-describing envelope aligned with the schema's required contract.
+    expect(schema.required.filter((key) => !(key in state))).toEqual([]);
+    expect(state.$schema).toBe(schema.properties.$schema.const);
+    expect(state.$schema).toBe(ASSURANCE_STATE_SCHEMA_ID);
+    expect(state.schemaVersion).toBe(schema.properties.schemaVersion.const);
+
+    // --schema publishes the JSON Schema and attaches provenance under the shared key.
+    expect(schema.$id).toBe(ASSURANCE_STATE_SCHEMA_ID);
+    const withProvenance = JSON.parse(renderSchema({ provenance: { generatedAt: 'x' } })) as Record<string, unknown>;
+    expect(withProvenance['x-vi-history-suite-provenance']).toEqual({ generatedAt: 'x' });
+
+    // runAssuranceState --schema returns the schema markdown without reading a summary.
+    const { runAssuranceState: run } = require('../../scripts/generateAssuranceState.js');
+    const schemaRun = run(['--schema'], { cwd });
+    expect(schemaRun.exitCode).toBe(0);
+    expect((JSON.parse(schemaRun.markdown) as Record<string, unknown>).$id).toBe(ASSURANCE_STATE_SCHEMA_ID);
   });
 });
