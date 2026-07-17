@@ -2,6 +2,7 @@ import * as fs from 'node:fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
 
+import { serializeJsonArtifact } from '../support/jsonArtifact';
 import { errorMessage } from '../support/errorMessage';
 import type { ComparisonCommandPlan } from '../reporting/comparisonReportPlan';
 import {
@@ -288,7 +289,7 @@ export async function main(
     await fs.mkdir(proofRoot, { recursive: true });
     await fs.writeFile(
       path.join(proofRoot, PREVIEW_VERIFICATION_PROOF_FILE_NAME),
-      `${JSON.stringify(record, null, 2)}\n`,
+      serializeJsonArtifact(record),
       'utf8'
     );
   }

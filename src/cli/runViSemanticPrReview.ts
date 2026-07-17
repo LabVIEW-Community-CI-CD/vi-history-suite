@@ -4,6 +4,7 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
 import { errorMessage } from '../support/errorMessage';
+import { serializeJsonArtifact } from '../support/jsonArtifact';
 import {
   buildViSemanticPrReview,
   planReviewReportCopies,
@@ -703,7 +704,7 @@ export async function runViSemanticPrReviewCli(argv: string[]): Promise<number> 
     await fs.writeFile(path.join(args.outDir, 'vi-semantic-pr-review.md'), markdown, 'utf8');
     await fs.writeFile(
       path.join(args.outDir, 'vi-semantic-pr-review.json'),
-      `${JSON.stringify(review, null, 2)}\n`,
+      serializeJsonArtifact(review),
       'utf8'
     );
     // Copy the per-VI self-contained comparison reports (which embed the

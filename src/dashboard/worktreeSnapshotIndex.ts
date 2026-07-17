@@ -1,4 +1,5 @@
 import type { ComparisonReportType } from '../reporting/comparisonReportPlan';
+import { serializeJsonArtifact } from '../support/jsonArtifact';
 
 /**
  * VHS-REQ-641 (Phase 3, issue #1366): persisted retention index for
@@ -165,5 +166,5 @@ export function parseWorktreeSnapshotIndex(raw: string): WorktreeSnapshotIndex |
 
 /** Serializes the index as byte-stable 2-space JSON with a trailing newline. */
 export function serializeWorktreeSnapshotIndex(index: WorktreeSnapshotIndex): string {
-  return `${JSON.stringify(index, null, 2)}\n`;
+  return serializeJsonArtifact(index);
 }
