@@ -141,17 +141,23 @@ export function planReviewReportCopies(review: ViSemanticPrReview): ReviewReport
 const DEFAULT_MAX_VIS = 50;
 const MAX_VIS_CEILING = 200;
 
-async function defaultListChangedPaths(
-  repositoryRoot: string,
-  baseHash: string,
-  selectedHash: string
-): Promise<string[]> {
-  const stdout = await runGit(['diff', '--name-only', baseHash, selectedHash], repositoryRoot, 'utf8');
-  return String(stdout)
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0);
+export function createDefaultListChangedPaths(
+  runGitDep: typeof runGit = runGit
+): (repositoryRoot: string, baseHash: string, selectedHash: string) => Promise<string[]> {
+  return async (repositoryRoot, baseHash, selectedHash) => {
+    const stdout = await runGitDep(
+      ['diff', '--name-only', baseHash, selectedHash],
+      repositoryRoot,
+      'utf8'
+    );
+    return String(stdout)
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
+  };
 }
+
+const defaultListChangedPaths = createDefaultListChangedPaths();
 
 function toEntry(relativePath: string, result: CompareViRevisionsResult): ViSemanticPrReviewEntry {
   if (result.status === 'completed') {
