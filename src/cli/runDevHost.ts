@@ -1,5 +1,7 @@
 import * as path from 'node:path';
 
+import { errorMessage } from '../support/errorMessage';
+
 import {
   buildViHistoryDevHostLaunchPlan,
   canWriteDirectory,
@@ -105,7 +107,7 @@ export async function runDevHostCliMain(
     await runDevHostCli(argv, deps);
     return 0;
   } catch (error) {
-    stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
+    stderr.write(`${errorMessage(error)}\n`);
     return 1;
   }
 }

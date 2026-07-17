@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
+import { errorMessage } from '../support/errorMessage';
 import {
   buildViSemanticPrReview,
   planReviewReportCopies,
@@ -691,7 +692,7 @@ export async function runViSemanticPrReviewCli(argv: string[]): Promise<number> 
       // Best-effort: a status failure must not block the textual review.
       process.stderr.write(
         `vi-semantic-pr-review: commit status skipped: ${
-          error instanceof Error ? error.message : String(error)
+          errorMessage(error)
         }\n`
       );
     }
@@ -765,7 +766,7 @@ if (require.main === module) {
     })
     .catch((error: unknown) => {
       process.stderr.write(
-        `vi-semantic-pr-review error: ${error instanceof Error ? error.message : String(error)}\n`
+        `vi-semantic-pr-review error: ${errorMessage(error)}\n`
       );
       process.exitCode = 1;
     });

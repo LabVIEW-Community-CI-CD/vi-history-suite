@@ -1,5 +1,6 @@
 import * as fs from 'node:fs/promises';
 import { pathExistsViaFsAccess as defaultPathExists } from '../support/fsExists';
+import { errorMessage } from '../support/errorMessage';
 import * as path from 'node:path';
 import type * as vscode from 'vscode';
 
@@ -363,7 +364,7 @@ export async function runComparisonReportExport(
       }
     });
   } catch (error) {
-    const failureReason = error instanceof Error ? error.message : String(error);
+    const failureReason = errorMessage(error);
     void deps.showErrorMessage(`VI History could not export the comparison report: ${failureReason}`);
     return {
       outcome: 'export-failed',

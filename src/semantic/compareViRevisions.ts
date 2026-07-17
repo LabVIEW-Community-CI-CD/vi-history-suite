@@ -2,6 +2,7 @@ import * as fs from 'node:fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
 
+import { errorMessage } from '../support/errorMessage';
 import { parseNiComparisonReportFile } from '../dashboard/niComparisonReportParser';
 import { runGit } from '../git/gitCli';
 import { ComparisonReportType } from '../reporting/comparisonReportPlan';
@@ -380,7 +381,7 @@ export async function compareViRevisions(
   } catch (error) {
     return {
       status: 'failed',
-      reason: error instanceof Error ? error.message : String(error)
+      reason: errorMessage(error)
     };
   }
 }

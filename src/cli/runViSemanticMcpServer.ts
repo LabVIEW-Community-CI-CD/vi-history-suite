@@ -3,6 +3,7 @@ import {
   handleViSemanticMcpMessageAsync,
   JsonRpcRequest
 } from '../semantic/viSemanticComparisonMcp';
+import { errorMessage } from '../support/errorMessage';
 import {
   buildViSemanticMcpServerDeps,
   createDefaultComparisonModelCache
@@ -54,7 +55,7 @@ async function dispatchLine(line: string): Promise<void> {
 function dispatchLineSafely(line: string): void {
   void dispatchLine(line).catch((error: unknown) => {
     process.stderr.write(
-      `dispatch error: ${error instanceof Error ? error.message : String(error)}\n`
+      `dispatch error: ${errorMessage(error)}\n`
     );
   });
 }
