@@ -3,10 +3,19 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
+const {
+  JSON_SCHEMA_DIALECT,
+  renderSchemaDocument,
+  schemaEnvelopeFields,
+  schemaEnvelopePropertyNodes
+} = require('./lib/schemaEnvelope.js');
+
 const DEFAULT_COVERAGE_SUMMARY = path.join('coverage', 'coverage-summary.json');
 const DEFAULT_INVENTORY = path.join('docs', 'requirements', 'traceability-inventory.csv');
 const DEFAULT_RTM = path.join('docs', 'requirements', 'rtm.csv');
 const DEFAULT_RISK_THRESHOLD = 50;
+const COVERAGE_MAP_SCHEMA_ID = 'vi-history-suite/coverage-traceability-map@v1';
+const COVERAGE_MAP_SCHEMA_VERSION = 1;
 
 function parseArgs(argv) {
   const options = {
@@ -15,6 +24,8 @@ function parseArgs(argv) {
     rtm: DEFAULT_RTM,
     riskThreshold: DEFAULT_RISK_THRESHOLD,
     json: false,
+    schema: false,
+    includeProvenance: false,
     enforce: false,
     help: false
   };
@@ -37,6 +48,8 @@ function parseArgs(argv) {
     else if (arg === '--risk-threshold') {
       options.riskThreshold = Number(next());
     } else if (arg === '--json') options.json = true;
+    else if (arg === '--schema') options.schema = true;
+    else if (arg === '--include-provenance') options.includeProvenance = true;
     else if (arg === '--enforce') options.enforce = true;
     else if (arg === '--help' || arg === '-h') options.help = true;
     else throw new Error(`Unknown argument: ${arg}`);
@@ -60,7 +73,9 @@ function usage() {
     '  --repo-root <path>          Default: current working directory',
     '  --risk-threshold <number>   Default: 50',
     '  --enforce                   Fail closed on mapped-below-threshold or zero-coverage supporting risk',
-    '  --json'
+    '  --json',
+    '  --schema                    Publish the JSON Schema without reading coverage',
+    '  --include-provenance        Attach generatedAt/cwd/outputMode/argv provenance'
   ].join('\n');
 }
 
@@ -273,6 +288,7 @@ function generateCoverageMap(options = {}) {
     .sort((left, right) => left.path.localeCompare(right.path));
 
   return {
+    ...schemaEnvelopeFields(COVERAGE_MAP_SCHEMA_ID, COVERAGE_MAP_SCHEMA_VERSION),
     total: coverageSummary.total,
     riskThreshold,
     files,
@@ -281,6 +297,54 @@ function generateCoverageMap(options = {}) {
     byRequirement: summarizeByRequirement(files),
     byClassification: summarizeByClassification(files)
   };
+}
+
+// Published JSON Schema for the coverage-traceability-map packet, so consumers
+// can validate `--json` output and `--schema` can publish the contract without
+// reading coverage. Shares the self-describing envelope via scripts/lib/schemaEnvelope.js.
+// Nested file/requirement records use permissive object shapes (additionalProperties
+// allowed) so the rich per-file metrics stay forward-compatible.
+const COVERAGE_MAP_JSON_SCHEMA = {
+  $schema: JSON_SCHEMA_DIALECT,
+  $id: COVERAGE_MAP_SCHEMA_ID,
+  title: 'vi-history-suite coverage traceability map',
+  type: 'object',
+  additionalProperties: false,
+  required: [
+    '$schema',
+    'schemaVersion',
+    'total',
+    'riskThreshold',
+    'files',
+    'mappedBelowThreshold',
+    'zeroCoverageSupportingRequirements',
+    'byRequirement',
+    'byClassification'
+  ],
+  properties: {
+    ...schemaEnvelopePropertyNodes(COVERAGE_MAP_SCHEMA_ID, COVERAGE_MAP_SCHEMA_VERSION),
+    total: { type: 'object' },
+    riskThreshold: { type: 'number' },
+    files: { type: 'array', items: { type: 'object' } },
+    mappedBelowThreshold: { type: 'array', items: { type: 'object' } },
+    zeroCoverageSupportingRequirements: { type: 'array', items: { type: 'object' } },
+    byRequirement: { type: 'array', items: { type: 'object' } },
+    byClassification: { type: 'array', items: { type: 'object' } },
+    provenance: {
+      type: 'object',
+      required: ['generatedAt', 'cwd', 'outputMode', 'argv'],
+      properties: {
+        generatedAt: { type: 'string' },
+        cwd: { type: 'string' },
+        outputMode: { enum: ['markdown', 'json', 'schema'] },
+        argv: { type: 'array', items: { type: 'string' } }
+      }
+    }
+  }
+};
+
+function renderSchema(options = {}) {
+  return renderSchemaDocument(COVERAGE_MAP_JSON_SCHEMA, options);
 }
 
 function formatPct(metric) {
@@ -379,8 +443,21 @@ function main(argv = process.argv.slice(2)) {
       process.stdout.write(`${usage()}\n`);
       return 0;
     }
+    const provenance = options.includeProvenance
+      ? {
+          generatedAt: new Date().toISOString(),
+          cwd: path.resolve(options.repoRoot || process.cwd()),
+          outputMode: options.schema ? 'schema' : options.json ? 'json' : 'markdown',
+          argv: [...argv]
+        }
+      : undefined;
+    if (options.schema) {
+      process.stdout.write(`${renderSchema({ provenance })}\n`);
+      return 0;
+    }
     const map = generateCoverageMap(options);
-    process.stdout.write(options.json ? `${JSON.stringify(map, null, 2)}\n` : `${renderCoverageMapMarkdown(map)}\n`);
+    const jsonMap = provenance ? { ...map, provenance } : map;
+    process.stdout.write(options.json ? `${JSON.stringify(jsonMap, null, 2)}\n` : `${renderCoverageMapMarkdown(map)}\n`);
     if (options.enforce) {
       const enforcement = summarizeEnforcement(map);
       if (enforcement.violations > 0) {
@@ -408,6 +485,10 @@ module.exports = {
   DEFAULT_COVERAGE_SUMMARY,
   DEFAULT_INVENTORY,
   DEFAULT_RISK_THRESHOLD,
+  COVERAGE_MAP_SCHEMA_ID,
+  COVERAGE_MAP_SCHEMA_VERSION,
+  COVERAGE_MAP_JSON_SCHEMA,
+  renderSchema,
   DEFAULT_RTM,
   buildRequirementMap,
   generateCoverageMap,
