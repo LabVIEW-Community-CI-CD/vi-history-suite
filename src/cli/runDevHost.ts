@@ -136,7 +136,7 @@ export function maybeRunDevHostCliAsMain(
   return true;
 }
 
-function normalizeWorkspacePath(candidate: string): string {
+export function normalizeWorkspacePath(candidate: string): string {
   if (/^[A-Za-z]:\\/.test(candidate) || candidate.startsWith('\\\\')) {
     return candidate;
   }
@@ -144,7 +144,7 @@ function normalizeWorkspacePath(candidate: string): string {
   return path.resolve(candidate);
 }
 
-function joinPreservingExplicitPathStyle(rootPath: string, ...segments: string[]): string {
+export function joinPreservingExplicitPathStyle(rootPath: string, ...segments: string[]): string {
   if (rootPath.startsWith('/')) {
     return path.posix.join(rootPath, ...segments.map((segment) => segment.replace(/\\/g, '/')));
   }

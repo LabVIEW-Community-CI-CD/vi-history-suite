@@ -2,7 +2,9 @@ import { describe, expect, it, vi } from 'vitest';
 
 import {
   applyDevHostCliExitCode,
+  joinPreservingExplicitPathStyle,
   maybeRunDevHostCliAsMain,
+  normalizeWorkspacePath,
   runDevHostCli,
   runDevHostCliMain
 } from '../../src/cli/runDevHost';
@@ -206,5 +208,32 @@ describe('dev-host CLI entry helpers', () => {
     });
     expect(processLike.exitCode).toBe(0);
     expect(write).toHaveBeenCalled();
+  });
+});
+
+// VHS-REQ-621: cover the win32 drive-letter and UNC branches of the path helpers
+// that the Linux CLI-flow tests never exercise (they only produce POSIX inputs).
+// Backslashes are built via String.fromCharCode(92) to keep the source escape-safe.
+describe('runDevHost path helpers (VHS-REQ-621)', () => {
+  const BS = String.fromCharCode(92); // a single backslash
+
+  it('normalizeWorkspacePath returns win32 drive-letter and UNC paths verbatim, resolves POSIX', () => {
+    const winPath = `C:${BS}Users${BS}dev${BS}ws`;
+    expect(normalizeWorkspacePath(winPath)).toBe(winPath);
+    const uncPath = `${BS}${BS}server${BS}share${BS}ws`;
+    expect(normalizeWorkspacePath(uncPath)).toBe(uncPath);
+    // A relative POSIX path is resolved against cwd (absolute, no drive/UNC prefix).
+    const resolved = normalizeWorkspacePath('rel/ws');
+    expect(resolved.startsWith('/')).toBe(true);
+    expect(resolved.endsWith('/rel/ws')).toBe(true);
+  });
+
+  it('joinPreservingExplicitPathStyle joins per the root path style (posix / win32 / UNC)', () => {
+    // POSIX root -> forward slashes, backslashes in segments normalized to '/'.
+    expect(joinPreservingExplicitPathStyle('/runtime/root', `a${BS}b`, 'c')).toBe('/runtime/root/a/b/c');
+    // win32 drive root -> backslashes, forward slashes in segments normalized.
+    expect(joinPreservingExplicitPathStyle(`C:${BS}runtime`, 'a/b', 'c')).toBe(`C:${BS}runtime${BS}a${BS}b${BS}c`);
+    // UNC root -> win32 join preserving the leading double backslash.
+    expect(joinPreservingExplicitPathStyle(`${BS}${BS}srv${BS}share`, 'a/b')).toBe(`${BS}${BS}srv${BS}share${BS}a${BS}b`);
   });
 });
