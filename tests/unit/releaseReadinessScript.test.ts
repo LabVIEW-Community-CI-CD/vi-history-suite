@@ -20,6 +20,7 @@ const readinessModule = require('../../scripts/checkReleaseReadiness.js') as {
   describeRuntimeAttestation: (version: string, evidence: unknown) => string;
   deriveRuntimeAttestationFromLedger: (manifest: unknown, version: string) => any;
   checkReleaseAttestation: (manifest: unknown, version: string) => { name: string; passed: boolean; details: string };
+  checkBoxManifestIntegrity: (boxManifest: unknown, version: string) => { name: string; passed: boolean; details: string };
   buildReleaseReadiness: (inputs?: Record<string, unknown>, meta?: Record<string, unknown>) => any;
   renderMarkdown: (verdict: unknown) => string;
   renderSchema: (options?: Record<string, unknown>) => string;
@@ -39,6 +40,7 @@ const {
   describeRuntimeAttestation,
   deriveRuntimeAttestationFromLedger,
   checkReleaseAttestation,
+  checkBoxManifestIntegrity,
   buildReleaseReadiness,
   renderMarkdown,
   renderSchema,
@@ -381,7 +383,15 @@ describe('checkReleaseAttestation release gate (VHS-REQ-666)', () => {
     expect(checkReleaseAttestation(undefined, '1.33.2').passed).toBe(false);
   });
 
-  it('appends the gating check ONLY when requireReleaseAttestation is set (VHS-REQ-666.2)', () => {
+  const BOX_MANIFEST_VALID = {
+    schema: 'vi-history-suite/vagrant-box-manifest@v1',
+    schemaVersion: 1,
+    sha256: 'a'.repeat(64),
+    sizeBytes: 123,
+    recordedForVersion: '1.33.2'
+  };
+
+  it('appends the gating checks ONLY when requireReleaseAttestation is set (VHS-REQ-666.2)', () => {
     const base = {
       ledger: CLEAN_LEDGER,
       hasSelectableHighRisk,
@@ -396,31 +406,43 @@ describe('checkReleaseAttestation release gate (VHS-REQ-666)', () => {
     expect(advisory.checks).toHaveLength(3);
     expect(advisory.status).toBe('READY');
 
-    // Gated + fresh attestation: four checks, READY.
+    // Gated + fresh attestation + valid box manifest: five checks, READY.
     const gatedReady = buildReleaseReadiness(
-      { ...base, requireReleaseAttestation: true, runtimeManifest: GATING_FRESH },
+      { ...base, requireReleaseAttestation: true, runtimeManifest: GATING_FRESH, boxManifest: BOX_MANIFEST_VALID },
       meta
     );
-    expect(gatedReady.checks).toHaveLength(4);
+    expect(gatedReady.checks).toHaveLength(5);
     expect(gatedReady.status).toBe('READY');
     expect(gatedReady.checks.map((c: { name: string }) => c.name)).toContain('release-attestation');
 
-    // Gated + stale attestation: four checks, ATTENTION (fails closed).
+    // Gated + stale attestation: five checks, ATTENTION (fails closed).
     const gatedStale = buildReleaseReadiness(
-      { ...base, requireReleaseAttestation: true, runtimeManifest: GATING_STALE },
+      { ...base, requireReleaseAttestation: true, runtimeManifest: GATING_STALE, boxManifest: BOX_MANIFEST_VALID },
       meta
     );
-    expect(gatedStale.checks).toHaveLength(4);
+    expect(gatedStale.checks).toHaveLength(5);
     expect(gatedStale.status).toBe('ATTENTION');
   });
 
   it('main --require-release-attestation --strict blocks a stale attestation and passes a fresh one (VHS-REQ-666.1)', () => {
     const cwd = makeTempDir();
     fs.mkdirSync(path.join(cwd, 'out', 'requirements'), { recursive: true });
+    fs.mkdirSync(path.join(cwd, 'vagrant'), { recursive: true });
     fs.writeFileSync(path.join(cwd, 'CHANGELOG.md'), '# Changelog\n\n## [Unreleased]\n', 'utf8');
     fs.writeFileSync(
       path.join(cwd, 'out', 'requirements', 'requirements-manifest.json'),
       JSON.stringify({ integrityDigest: 'DIGEST123' }),
+      'utf8'
+    );
+    fs.writeFileSync(
+      path.join(cwd, 'vagrant', 'box-manifest.json'),
+      JSON.stringify({
+        schema: 'vi-history-suite/vagrant-box-manifest@v1',
+        schemaVersion: 1,
+        sha256: 'a'.repeat(64),
+        sizeBytes: 123,
+        recordedForVersion: '1.33.2'
+      }),
       'utf8'
     );
 
@@ -451,5 +473,84 @@ describe('checkReleaseAttestation release gate (VHS-REQ-666)', () => {
   it('parseArgs captures --require-release-attestation', () => {
     expect(parseArgs(['--require-release-attestation']).requireReleaseAttestation).toBe(true);
     expect(parseArgs([]).requireReleaseAttestation).toBe(false);
+  });
+});
+
+// Criterion coverage: VHS-REQ-666.5 — a CI-safe box-manifest-integrity gate
+// verifies the committed vagrant/box-manifest.json is present, well-formed, and
+// recorded for the release version. It reads only the committed manifest (never
+// the box bytes), so it runs in hosted CI. It is appended only under
+// --require-release-attestation, preserving the advisory default verdict.
+describe('checkBoxManifestIntegrity release gate (VHS-REQ-666.5)', () => {
+  const VALID = {
+    schema: 'vi-history-suite/vagrant-box-manifest@v1',
+    schemaVersion: 1,
+    sha256: 'a'.repeat(64),
+    sizeBytes: 123,
+    recordedForVersion: '1.33.2'
+  };
+
+  it('passes a well-formed manifest recorded for the release version (VHS-REQ-666.5)', () => {
+    const result = checkBoxManifestIntegrity(VALID, '1.33.2');
+    expect(result.passed).toBe(true);
+    expect(result.name).toBe('box-manifest-integrity');
+  });
+
+  it('fails closed on a missing or non-object manifest (VHS-REQ-666.5)', () => {
+    expect(checkBoxManifestIntegrity(undefined, '1.33.2').passed).toBe(false);
+    expect(checkBoxManifestIntegrity(null, '1.33.2').passed).toBe(false);
+    expect(checkBoxManifestIntegrity(undefined, '1.33.2').details).toContain('missing or unparseable');
+  });
+
+  it('fails closed on a wrong schema id or schemaVersion (VHS-REQ-666.5)', () => {
+    expect(checkBoxManifestIntegrity({ ...VALID, schema: 'other' }, '1.33.2').passed).toBe(false);
+    expect(checkBoxManifestIntegrity({ ...VALID, schemaVersion: 2 }, '1.33.2').passed).toBe(false);
+  });
+
+  it('fails closed on a malformed sha256 (VHS-REQ-666.5)', () => {
+    expect(checkBoxManifestIntegrity({ ...VALID, sha256: 'abc' }, '1.33.2').passed).toBe(false);
+    expect(checkBoxManifestIntegrity({ ...VALID, sha256: 'A'.repeat(64) }, '1.33.2').passed).toBe(false);
+    expect(checkBoxManifestIntegrity({ ...VALID, sha256: undefined }, '1.33.2').passed).toBe(false);
+  });
+
+  it('fails closed on a non-positive-integer sizeBytes (VHS-REQ-666.5)', () => {
+    expect(checkBoxManifestIntegrity({ ...VALID, sizeBytes: 0 }, '1.33.2').passed).toBe(false);
+    expect(checkBoxManifestIntegrity({ ...VALID, sizeBytes: -1 }, '1.33.2').passed).toBe(false);
+    expect(checkBoxManifestIntegrity({ ...VALID, sizeBytes: 1.5 }, '1.33.2').passed).toBe(false);
+    expect(checkBoxManifestIntegrity({ ...VALID, sizeBytes: undefined }, '1.33.2').passed).toBe(false);
+  });
+
+  it('fails closed on a missing or mismatched recordedForVersion (VHS-REQ-666.5)', () => {
+    const mismatch = checkBoxManifestIntegrity({ ...VALID, recordedForVersion: '0.0.0' }, '1.33.2');
+    expect(mismatch.passed).toBe(false);
+    expect(mismatch.details).toContain('expected 1.33.2');
+    expect(checkBoxManifestIntegrity({ ...VALID, recordedForVersion: undefined }, '1.33.2').passed).toBe(false);
+  });
+
+  it('is appended only under requireReleaseAttestation (VHS-REQ-666.5)', () => {
+    const base = {
+      ledger: CLEAN_LEDGER,
+      hasSelectableHighRisk,
+      builtManifestDigest: 'abc123',
+      shippedManifest: { integrityDigest: 'abc123' },
+      changelogTop: { released: undefined, unreleased: true },
+      runtimeManifest: {
+        tracks: [{ trackId: 'vagrant-win-x86-hostnative', releaseGating: true, lastValidatedVersion: '1.33.2' }]
+      }
+    };
+    const meta = { generatedAt: '2026-07-16T00:00:00.000Z', version: '1.33.2', commit: 'deadbeef' };
+
+    const advisory = buildReleaseReadiness(base, meta);
+    expect(advisory.checks.map((c: { name: string }) => c.name)).not.toContain('box-manifest-integrity');
+
+    const gatedReady = buildReleaseReadiness({ ...base, requireReleaseAttestation: true, boxManifest: VALID }, meta);
+    expect(gatedReady.checks.map((c: { name: string }) => c.name)).toContain('box-manifest-integrity');
+    expect(gatedReady.status).toBe('READY');
+
+    const gatedDrift = buildReleaseReadiness(
+      { ...base, requireReleaseAttestation: true, boxManifest: { ...VALID, recordedForVersion: '0.0.0' } },
+      meta
+    );
+    expect(gatedDrift.status).toBe('ATTENTION');
   });
 });

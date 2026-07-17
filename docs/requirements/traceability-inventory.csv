@@ -242,6 +242,7 @@ resources/bundled-docs/pages/overview.html,mapped,Yes,Bundled overview documenta
 resources/bundled-docs/pages/user-workflow.html,mapped,Yes,Bundled user-workflow documentation page asset; mapped to VHS-REQ-611.
 resources/bundled-docs/pages/copilot-agent-mode.html,mapped,Yes,Bundled Copilot agent-mode documentation page asset; mapped to VHS-REQ-611.
 vagrant/Vagrantfile,supporting,Yes,Vagrant configuration; mapped through RTM.
+vagrant/box-manifest.json,supporting,Yes,Committed Vagrant golden-box integrity manifest; verified CI-safe by the release-readiness box-manifest-integrity gate; mapped to VHS-REQ-666.
 vagrant/provision/bootstrap.ps1,supporting,Yes,Vagrant bootstrap provisioner; mapped to VHS-REQ-599.
 vagrant/provision/prepare-cold-labview.ps1,supporting,Yes,Vagrant cold LabVIEW preparation; mapped to VHS-REQ-599.
 vagrant/provision/repair-vagrant-account.ps1,supporting,No,Interactive in-guest repair for a restricted vagrant account blocking WinRM/guest-control logon; local maintainer helper only.

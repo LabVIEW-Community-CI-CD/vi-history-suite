@@ -67,7 +67,16 @@ npm run release:readiness:gate   # node scripts/checkReleaseReadiness.js --stric
 ```
 
 It exits nonzero (and prints `Verdict: ATTENTION`) until the gating track's
-`lastValidatedVersion` equals the release version. The `Marketplace Release`
+`lastValidatedVersion` equals the release version. The same gate also runs a
+CI-safe `box-manifest-integrity` check: it fails closed unless the committed
+[`vagrant/box-manifest.json`](../vagrant/box-manifest.json) is present, matches
+the `vi-history-suite/vagrant-box-manifest@v1` schema, carries a 64-hex
+`sha256` and positive `sizeBytes`, and has a `recordedForVersion` equal to the
+release version. That check reads only the committed manifest (never the box
+artifact), so it needs no hypervisor; regenerate the manifest with
+`node scripts/verifyVagrantBox.cjs --generate <box>` when the box changes, and
+run `node scripts/verifyVagrantBox.cjs --verify <box>` locally for the
+byte-level hash check. The `Marketplace Release`
 workflow runs this same gate before publishing and reads the committed ledger,
 so enforcement needs no hypervisor in hosted CI and the workflow YAML never
 names Vagrant. Default advisory `npm run release:readiness` is unchanged (it

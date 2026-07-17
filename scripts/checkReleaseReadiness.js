@@ -38,6 +38,8 @@ const RELEASE_READINESS_SCHEMA_ID =
 const RELEASE_READINESS_SCHEMA_PROVENANCE_KEY = 'x-vi-history-suite-provenance';
 const UNKNOWN_COMMIT = '<unknown>';
 const SHIPPED_MANIFEST_RELATIVE_PATH = 'out/requirements/requirements-manifest.json';
+const BOX_MANIFEST_RELATIVE_PATH = 'vagrant/box-manifest.json';
+const BOX_MANIFEST_SCHEMA_ID = 'vi-history-suite/vagrant-box-manifest@v1';
 
 function getGitCommit(cwd) {
   try {
@@ -238,6 +240,63 @@ function checkReleaseAttestation(runtimeManifest, version) {
   );
 }
 
+// GATING (opt-in, CI-safe): verify the committed Vagrant box manifest
+// (vagrant/box-manifest.json) is present, well-formed, and recorded for the
+// release version. This never reads the ~71GB box artifact (hosted CI has none)
+// — it only validates the committed manifest's internal consistency so a
+// release cannot be attested against a missing, malformed, or version-mismatched
+// box manifest. Byte-level hash verification stays in verifyVagrantBox.cjs
+// --verify as a maintainer-local step.
+function checkBoxManifestIntegrity(boxManifest, version) {
+  if (!boxManifest || typeof boxManifest !== 'object') {
+    return makeCheck(
+      'box-manifest-integrity',
+      false,
+      `Committed Vagrant box manifest (${BOX_MANIFEST_RELATIVE_PATH}) is missing or unparseable; regenerate it with node scripts/verifyVagrantBox.cjs --generate <box> before publishing.`
+    );
+  }
+  if (boxManifest.schema !== BOX_MANIFEST_SCHEMA_ID) {
+    return makeCheck(
+      'box-manifest-integrity',
+      false,
+      `Vagrant box manifest schema is ${JSON.stringify(boxManifest.schema)}; expected ${BOX_MANIFEST_SCHEMA_ID}.`
+    );
+  }
+  if (boxManifest.schemaVersion !== 1) {
+    return makeCheck(
+      'box-manifest-integrity',
+      false,
+      `Vagrant box manifest schemaVersion is ${JSON.stringify(boxManifest.schemaVersion)}; expected 1.`
+    );
+  }
+  if (typeof boxManifest.sha256 !== 'string' || !/^[0-9a-f]{64}$/.test(boxManifest.sha256)) {
+    return makeCheck(
+      'box-manifest-integrity',
+      false,
+      'Vagrant box manifest sha256 is missing or not a 64-character lowercase hex digest.'
+    );
+  }
+  if (!Number.isInteger(boxManifest.sizeBytes) || boxManifest.sizeBytes <= 0) {
+    return makeCheck(
+      'box-manifest-integrity',
+      false,
+      'Vagrant box manifest sizeBytes is missing or not a positive integer.'
+    );
+  }
+  if (boxManifest.recordedForVersion !== version) {
+    return makeCheck(
+      'box-manifest-integrity',
+      false,
+      `Vagrant box manifest recordedForVersion is ${JSON.stringify(boxManifest.recordedForVersion)}; expected ${version}. Regenerate the manifest against the box used for this release.`
+    );
+  }
+  return makeCheck(
+    'box-manifest-integrity',
+    true,
+    `Committed Vagrant box manifest is well-formed and recorded for ${version} (sha256 ${boxManifest.sha256.slice(0, 12)}\u2026).`
+  );
+}
+
 function buildReleaseReadiness(inputs = {}, meta = {}) {
   const checks = [
     checkRiskLedger(inputs.ledger, inputs.hasSelectableHighRisk),
@@ -249,6 +308,7 @@ function buildReleaseReadiness(inputs = {}, meta = {}) {
   // VHS-REQ-615.13 contract is preserved for local/CI advisory runs.
   if (inputs.requireReleaseAttestation) {
     checks.push(checkReleaseAttestation(inputs.runtimeManifest, meta.version));
+    checks.push(checkBoxManifestIntegrity(inputs.boxManifest, meta.version));
   }
   const status = checks.every((check) => check.passed) ? 'READY' : 'ATTENTION';
   return {
@@ -323,6 +383,19 @@ function loadSignals(cwd, deps = {}) {
 
   const changelogTop = parseChangelogTop(readFile('CHANGELOG.md'));
 
+  // Committed Vagrant box manifest, used by the opt-in box-manifest-integrity
+  // gate. Read the committed JSON only (never the box bytes) so the gate is
+  // safe in hosted CI, which has no box artifact.
+  let boxManifest;
+  const boxManifestRaw = readFile(BOX_MANIFEST_RELATIVE_PATH);
+  if (typeof boxManifestRaw === 'string') {
+    try {
+      boxManifest = JSON.parse(boxManifestRaw);
+    } catch {
+      boxManifest = undefined;
+    }
+  }
+
   // Raw committed runtime-validation ledger manifest, used by the opt-in
   // release-attestation gate (releaseGating tracks). Kept separate from the
   // derived display-only runtimeEvidence.
@@ -372,6 +445,7 @@ function loadSignals(cwd, deps = {}) {
     shippedManifest,
     changelogTop,
     runtimeManifest,
+    boxManifest,
     requireReleaseAttestation: deps.requireReleaseAttestation === true,
     runtimeEvidence
   };
@@ -604,6 +678,8 @@ module.exports = {
   RELEASE_READINESS_SCHEMA_PROVENANCE_KEY,
   RELEASE_READINESS_JSON_SCHEMA,
   SHIPPED_MANIFEST_RELATIVE_PATH,
+  BOX_MANIFEST_RELATIVE_PATH,
+  BOX_MANIFEST_SCHEMA_ID,
   parseChangelogTop,
   makeCheck,
   checkRiskLedger,
@@ -612,6 +688,7 @@ module.exports = {
   describeRuntimeAttestation,
   deriveRuntimeAttestationFromLedger,
   checkReleaseAttestation,
+  checkBoxManifestIntegrity,
   buildReleaseReadiness,
   loadSignals,
   renderSummary,
