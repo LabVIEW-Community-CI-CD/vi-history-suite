@@ -6,6 +6,11 @@ import { createHash } from 'node:crypto';
 
 import { joinPreservingExplicitPathStyle } from '../support/pathStyle';
 import { errorMessage } from '../support/errorMessage';
+import {
+  parseWindowsTasklistCsvLine,
+  isObservedRuntimeProcessName,
+  isExactObservedRuntimeProcessName
+} from './runtime/windowsTasklistParsing';
 import { nowIso } from '../support/clock';
 import { ComparisonCommandPlan, ComparisonReportOptions } from './comparisonReportPlan';
 import { buildComparisonReportExecutionPlan } from './comparisonReportExecutionPlan';
@@ -6178,71 +6183,4 @@ export function defaultNowIso(): string {
 
 export function defaultNowMs(): number {
   return Date.now();
-}
-
-function parseWindowsTasklistCsvLine(line: string): RuntimeObservedProcess | undefined {
-  const columns = parseCsvColumns(line);
-  if (columns.length < 2) {
-    return undefined;
-  }
-
-  const imageName = columns[0]?.trim();
-  const pid = Number.parseInt(columns[1] ?? '', 10);
-  if (!imageName || !Number.isFinite(pid)) {
-    return undefined;
-  }
-
-  const sessionNumber = Number.parseInt((columns[3] ?? '').replaceAll(',', ''), 10);
-
-  return {
-    imageName,
-    pid,
-    sessionName: columns[2]?.trim() || undefined,
-    sessionNumber: Number.isFinite(sessionNumber) ? sessionNumber : undefined,
-    memUsage: columns[4]?.trim() || undefined
-  };
-}
-
-function parseCsvColumns(line: string): string[] {
-  const columns: string[] = [];
-  let current = '';
-  let inQuotes = false;
-
-  for (let index = 0; index < line.length; index += 1) {
-    const character = line[index];
-
-    if (character === '"') {
-      if (inQuotes && line[index + 1] === '"') {
-        current += '"';
-        index += 1;
-        continue;
-      }
-
-      inQuotes = !inQuotes;
-      continue;
-    }
-
-    if (character === ',' && !inQuotes) {
-      columns.push(current);
-      current = '';
-      continue;
-    }
-
-    current += character;
-  }
-
-  columns.push(current);
-  return columns;
-}
-
-function isObservedRuntimeProcessName(imageName: string): boolean {
-  return (
-    isExactObservedRuntimeProcessName(imageName, 'LabVIEW.exe') ||
-    isExactObservedRuntimeProcessName(imageName, 'LabVIEWCLI.exe') ||
-    isExactObservedRuntimeProcessName(imageName, 'LVCompare.exe')
-  );
-}
-
-function isExactObservedRuntimeProcessName(imageName: string, expected: string): boolean {
-  return imageName.trim().toLowerCase() === expected.toLowerCase();
 }
