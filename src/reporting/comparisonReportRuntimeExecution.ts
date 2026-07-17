@@ -15,6 +15,11 @@ import {
   describeObservedRuntimeProcesses,
   describeObservedWindowsTcpListeners
 } from './runtime/windowsRuntimeObservationFormatting';
+import {
+  extractErrorCode,
+  normalizeComparisonProcessError
+} from './runtime/comparisonProcessErrorNormalization';
+export { normalizeComparisonProcessError } from './runtime/comparisonProcessErrorNormalization';
 import { nowIso } from '../support/clock';
 import { ComparisonCommandPlan, ComparisonReportOptions } from './comparisonReportPlan';
 import { buildComparisonReportExecutionPlan } from './comparisonReportExecutionPlan';
@@ -6123,42 +6128,6 @@ class ReportFinalizationError extends Error {
     this.name = 'ReportFinalizationError';
     this.code = code;
   }
-}
-
-function extractErrorCode(error: unknown): string | undefined {
-  if (error && typeof error === 'object') {
-    const code = (error as NodeJS.ErrnoException).code;
-    if (typeof code === 'string') {
-      return code;
-    }
-  }
-  return undefined;
-}
-
-export function normalizeComparisonProcessError(error: unknown): {
-  stdout: string;
-  stderr: string;
-  signal?: string;
-} {
-  if (error && typeof error === 'object') {
-    const maybeError = error as {
-      stdout?: string;
-      stderr?: string;
-      signal?: string;
-      message?: string;
-    };
-
-    return {
-      stdout: String(maybeError.stdout ?? ''),
-      stderr: String(maybeError.stderr ?? maybeError.message ?? ''),
-      signal: maybeError.signal ?? undefined
-    };
-  }
-
-  return {
-    stdout: '',
-    stderr: String(error ?? '')
-  };
 }
 
 export function defaultNowIso(): string {
