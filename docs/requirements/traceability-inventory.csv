@@ -149,6 +149,7 @@ tests/unit/fsExists.test.ts,supporting,No,"Shared filesystem-existence predicate
 tests/unit/clock.test.ts,supporting,No,"Shared default ISO-8601 clock unit tests (nowIso returns a parseable ISO string close to the current time); supporting VHS-REQ-610."
 tests/unit/errorMessage.test.ts,supporting,No,"Shared error-message coercion unit tests (errorMessage returns Error.message for Error/subclass, String() for non-Error string/number/null/undefined); supporting VHS-REQ-610."
 tests/unit/escapeHtml.test.ts,supporting,No,"Shared HTML text escaper unit tests (escapeHtml escapes the five HTML-significant characters, ampersand-first ordering, all occurrences); supporting VHS-REQ-610."
+tests/unit/cacheKey.test.ts,supporting,No,"Shared cache-key validator unit tests (isSha256HexKey accepts 64-char lowercase hex, rejects wrong length/uppercase/non-hex/empty); supporting VHS-REQ-610."
 tests/unit/reviewScenarioSupportPolicy.test.ts,mapped,Yes,Review scenario and repository support policy tests; mapped to VHS-REQ-610.
 tests/unit/runLinuxIntegrationHost.test.ts,dev-only,No,Linux integration host tests; CI infrastructure.
 tests/unit/vagrantLanePreflight.test.ts,dev-only,No,Optional Vagrant lane preflight/status tests covering banner and box-list parsing readiness checks and CLI exit behavior; local maintainer tooling.
@@ -343,6 +344,7 @@ src/support/fsExists.ts,supporting,No,"Shared filesystem-existence predicate (pa
 src/support/clock.ts,supporting,No,"Shared default ISO-8601 clock (nowIso) reused as the default now/nowIso seam across dashboard, reporting, and scenario modules; supporting VHS-REQ-610."
 src/support/errorMessage.ts,supporting,No,"Shared error-message coercion (errorMessage) reused to derive a human-readable message from unknown caught values across cli, semantic, reporting, and tooling modules; supporting VHS-REQ-610."
 src/support/escapeHtml.ts,supporting,No,"Shared HTML text escaper (escapeHtml) reused for safe text interpolation across ui, dashboard, reporting, and docs markup renderers; supporting VHS-REQ-610."
+src/support/cacheKey.ts,supporting,No,"Shared cache-key validator (isSha256HexKey) reused by the preview render, semantic narrative, and comparison model caches to guard content-addressed keys; supporting VHS-REQ-610."
 tests/unit/viPreviewVerifyCli.test.ts,mapped,Yes,Preview verification CLI resolve-and-verify unit tests; mapped to VHS-REQ-659.
 src/git/revisionViTree.ts,mapped,Yes,Revision VI-tree materializer (parses git ls-tree output and stages a revision's VI plus sibling source tree for preview); mapped to VHS-REQ-659.
 tests/unit/revisionViTree.test.ts,mapped,Yes,Revision VI-tree materializer and ls-tree parser unit tests; mapped to VHS-REQ-659.

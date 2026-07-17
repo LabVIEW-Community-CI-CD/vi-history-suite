@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { isSha256HexKey as isValidKey } from '../support/cacheKey';
 
 import {
   VI_SEMANTIC_COMPARISON_SCHEMA,
@@ -54,10 +55,6 @@ export interface FileViComparisonModelCacheFsDeps {
 export interface FileViComparisonModelCacheOptions {
   cacheDirectory: string;
   joinPath: (directory: string, name: string) => string;
-}
-
-function isValidKey(key: string): boolean {
-  return /^[a-f0-9]{64}$/.test(key);
 }
 
 /**
