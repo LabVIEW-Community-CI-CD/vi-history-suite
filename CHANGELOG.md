@@ -6,6 +6,14 @@ This changelog records user-facing release history for `vi-history-suite`.
 
 ### Added
 
+- The release-readiness gate (`node scripts/checkReleaseReadiness.js
+  --require-release-attestation`) now also verifies the committed Vagrant box
+  integrity manifest (`vagrant/box-manifest.json`): it fails closed unless the
+  manifest is present, matches the `vi-history-suite/vagrant-box-manifest@v1`
+  schema, has a 64-hex `sha256`, a positive `sizeBytes`, and a
+  `recordedForVersion` equal to the release version. The check reads only the
+  committed manifest (never the box artifact), so it stays hypervisor-free in
+  hosted CI (VHS-REQ-666) (#1505).
 - VI History Suite now registers a built-in **Model Context Protocol (MCP)**
   server with VS Code, so Copilot **agent mode** can summarize VI comparisons,
   compare and walk VI revisions, index a repository's VIs, and fetch or validate
