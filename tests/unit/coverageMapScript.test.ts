@@ -5,6 +5,8 @@ import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 type CoverageMap = {
+  $schema?: string;
+  schemaVersion?: number;
   riskThreshold: number;
   files: Array<{
     path: string;
@@ -29,8 +31,10 @@ const {
   generateCoverageMap,
   parseArgs,
   renderCoverageMapMarkdown,
+  renderSchema,
   summarizeEnforcement,
-  main
+  main,
+  COVERAGE_MAP_SCHEMA_ID
 } = require('../../scripts/mapCoverageToTraceability.js') as {
   parseArgs: (argv: string[]) => {
     coverageSummary: string;
@@ -38,6 +42,8 @@ const {
     rtm: string;
     riskThreshold: number;
     json: boolean;
+    schema: boolean;
+    includeProvenance: boolean;
     enforce: boolean;
     repoRoot?: string;
   };
@@ -49,6 +55,8 @@ const {
     riskThreshold?: number;
   }) => CoverageMap;
   renderCoverageMapMarkdown: (map: CoverageMap) => string;
+  renderSchema: (options?: { provenance?: unknown }) => string;
+  COVERAGE_MAP_SCHEMA_ID: string;
   summarizeEnforcement: (map: CoverageMap) => {
     mappedBelow: number;
     zeroCoverageSupporting: number;
@@ -180,6 +188,27 @@ describe('coverage traceability map script', () => {
     expect(markdown).toContain('## Zero-Coverage Supporting Files Tied To Requirements');
     expect(markdown).toContain('| src/supportingRisk.ts | VHS-REQ-610 | supporting |');
     expect(markdown).toContain('| VHS-REQ-613 | 2 | 6 |');
+  });
+
+  it('emits a self-describing packet aligned with the published schema, with a --schema mode (VHS-REQ-613)', () => {
+    const repoRoot = writeFixture();
+    const map = generateCoverageMap({ repoRoot, riskThreshold: 50 }) as unknown as Record<string, unknown>;
+    const schema = JSON.parse(renderSchema()) as {
+      $id: string;
+      required: string[];
+      properties: { $schema: { const: string }; schemaVersion: { const: number } };
+    };
+
+    // Self-describing envelope aligned with the schema's required contract.
+    expect(schema.required.filter((key) => !(key in map))).toEqual([]);
+    expect(map.$schema).toBe(schema.properties.$schema.const);
+    expect(map.$schema).toBe(COVERAGE_MAP_SCHEMA_ID);
+    expect(map.schemaVersion).toBe(schema.properties.schemaVersion.const);
+
+    // --schema publishes the JSON Schema and attaches provenance under the shared key.
+    expect(schema.$id).toBe(COVERAGE_MAP_SCHEMA_ID);
+    const withProvenance = JSON.parse(renderSchema({ provenance: { generatedAt: 'x' } })) as Record<string, unknown>;
+    expect(withProvenance['x-vi-history-suite-provenance']).toEqual({ generatedAt: 'x' });
   });
 
   it('fails closed when retained coverage evidence is missing (VHS-REQ-613.7)', () => {
