@@ -85,6 +85,7 @@ import {
   applyRuntimeTextReplacements,
   type RuntimeTextReplacement
 } from './runtime/runtimeTextReplacements';
+import { selectDiagnosticReason } from './runtime/selectDiagnosticReason';
 import { nowIso } from '../support/clock';
 import { ComparisonCommandPlan, ComparisonReportOptions } from './comparisonReportPlan';
 import { buildComparisonReportExecutionPlan } from './comparisonReportExecutionPlan';
@@ -2388,28 +2389,6 @@ async function captureRuntimeDiagnostics(
     artifactPath: record.artifactPlan.runtimeDiagnosticLogFilePath,
     headlessArtifactPaths: headlessDiagnostics.artifactPaths
   };
-}
-
-// linux-headless-init-failed is terminal (no retry can help) and linux-headless-recursive-load
-// is the trigger for the headless-session recovery retry. Either headless reason must win when
-// observed in LVStatus.txt / lvrt headless logs, even if stderr or the LabVIEW CLI diagnostic
-// log carry a more specific post-failure reason.
-function selectDiagnosticReason(
-  headlessReason: string | undefined,
-  ...otherReasons: Array<string | undefined>
-): string | undefined {
-  if (
-    headlessReason === 'linux-headless-init-failed' ||
-    headlessReason === 'linux-headless-recursive-load'
-  ) {
-    return headlessReason;
-  }
-  for (const reason of otherReasons) {
-    if (reason) {
-      return reason;
-    }
-  }
-  return headlessReason;
 }
 
 function shouldCaptureLinuxHeadlessDiagnostics(
