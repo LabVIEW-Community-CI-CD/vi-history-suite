@@ -37,3 +37,15 @@ export function quotePowerShellLiteral(value: string): string {
 export function quoteBashLiteral(value: string): string {
   return `'${value.replace(/'/g, `'\"'\"'`)}'`;
 }
+
+// Render a PowerShell array literal `@('a', 'b')` from string values (each quoted
+// via quotePowerShellLiteral).
+export function buildWindowsPowerShellArrayLiteral(values: string[]): string {
+  return `@(${values.map((value) => quotePowerShellLiteral(value)).join(', ')})`;
+}
+
+// Render a bash array literal `('a' 'b')` from string values (each quoted via
+// quoteBashLiteral).
+export function buildBashArrayLiteral(values: string[]): string {
+  return `(${values.map((value) => quoteBashLiteral(value)).join(' ')})`;
+}
