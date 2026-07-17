@@ -1,0 +1,159 @@
+name: Dev-Tools Release
+
+# Dev-tools GitHub Release channel (DS3). Publishes a versioned, content-addressed
+# artifact of the development toolset (scripts CLIs, .cjs drivers, compiled MCP,
+# requirements docs, agent-customization surfaces) defined by the committed
+# docs/devtools-release.manifest.json. This is independent of the marketplace
+# release: it distributes/pins the TOOLS, not the extension.
+#
+# Safety: it lands dry-run-first. workflow_dispatch defaults dry_run=true, which
+# builds + self-verifies + shows the dedup decision and uploads the artifact to
+# the run only (no GitHub Release is created). A push to develop/main runs the
+# real path (develop -> prerelease, main -> latest), but only cuts a release when
+# the toolset content digest actually changed since the last release of that
+# channel.
+
+on:
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: 'Release channel (defaults to branch mapping when empty)'
+        required: false
+        type: choice
+        options:
+          - ''
+          - stable
+          - prerelease
+        default: ''
+      dry_run:
+        description: 'Build + verify without creating a GitHub Release'
+        required: false
+        type: boolean
+        default: true
+  push:
+    branches:
+      - develop
+      - main
+
+permissions:
+  contents: write
+
+concurrency:
+  group: devtools-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  devtools-release:
+    name: Dev-Tools Release
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Compile
+        run: npm run compile
+
+      - name: Resolve channel and dry-run
+        id: resolve
+        env:
+          INPUT_CHANNEL: ${{ inputs.channel }}
+          INPUT_DRY_RUN: ${{ inputs.dry_run }}
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          channel="$INPUT_CHANNEL"
+          if [ -z "$channel" ]; then
+            if [ "$REF_NAME" = "main" ]; then channel="stable"; else channel="prerelease"; fi
+          fi
+          # Only a manual dispatch can request a real (non-dry-run) publish via the
+          # input; push events always run the real path.
+          if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ "$INPUT_DRY_RUN" != "false" ]; then
+            dry_run="true"
+          else
+            dry_run="false"
+          fi
+          echo "channel=$channel" >> "$GITHUB_OUTPUT"
+          echo "dry_run=$dry_run" >> "$GITHUB_OUTPUT"
+          echo "[devtools-release] channel=$channel dry_run=$dry_run event=$EVENT_NAME"
+
+      - name: Build provenance manifest and tarball
+        run: |
+          mkdir -p devtools-dist
+          npm run devtools:release -- \
+            --channel "${{ steps.resolve.outputs.channel }}" \
+            --output devtools-dist/devtools-release.json \
+            --pack devtools-dist/devtools-tools.tgz
+
+      - name: Self-verify built toolset
+        run: npm run devtools:release:verify -- --verify-self --manifest devtools-dist/devtools-release.json
+
+      - name: Decide release vs dedup
+        id: decide
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CHANNEL: ${{ steps.resolve.outputs.channel }}
+        run: |
+          set -euo pipefail
+          digest=$(node -e "console.log(require('./devtools-dist/devtools-release.json').contentDigest)")
+          echo "content_digest=$digest" >> "$GITHUB_OUTPUT"
+          if [ "$CHANNEL" = "stable" ]; then prefix="devtools-"; else prefix="devtools-dev-"; fi
+          date_tag=$(date -u +%Y%m%d)
+          echo "tag=${prefix}${date_tag}-$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+          # Find the most recent release of this channel and compare its embedded
+          # content digest; skip when unchanged so no-op merges do not churn releases.
+          last_tag=$(gh release list --limit 100 --json tagName,createdAt \
+            --jq "[.[] | select(.tagName | startswith(\"$prefix\"))] | sort_by(.createdAt) | reverse | .[0].tagName // \"\"")
+          prior_digest=""
+          if [ -n "$last_tag" ]; then
+            gh release download "$last_tag" --pattern devtools-release.json --dir prior --clobber || true
+            if [ -f prior/devtools-release.json ]; then
+              prior_digest=$(node -e "try{console.log(require('./prior/devtools-release.json').contentDigest)}catch{console.log('')}")
+            fi
+          fi
+          if [ -n "$prior_digest" ] && [ "$prior_digest" = "$digest" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "[devtools-release] Content digest unchanged since $last_tag; skipping release."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "[devtools-release] Content digest changed (prior='$prior_digest' new='$digest')."
+          fi
+
+      - name: Upload dev-tools artifact (run evidence)
+        uses: actions/upload-artifact@v7
+        with:
+          name: devtools-release-${{ github.run_id }}
+          path: devtools-dist/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Create GitHub Release
+        if: ${{ steps.resolve.outputs.dry_run == 'false' && steps.decide.outputs.changed == 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CHANNEL: ${{ steps.resolve.outputs.channel }}
+          TAG: ${{ steps.decide.outputs.tag }}
+        run: |
+          set -euo pipefail
+          prerelease_flag=""
+          if [ "$CHANNEL" != "stable" ]; then prerelease_flag="--prerelease"; fi
+          gh release create "$TAG" \
+            devtools-dist/devtools-tools.tgz \
+            devtools-dist/devtools-release.json \
+            --title "Dev tools $TAG ($CHANNEL)" \
+            --notes "Content digest: ${{ steps.decide.outputs.content_digest }}" \
+            --target "${{ github.sha }}" \
+            $prerelease_flag
+
+      - name: Dry-run summary
+        if: ${{ steps.resolve.outputs.dry_run == 'true' }}
+        run: echo "[devtools-release] Dry run - built and self-verified; no GitHub Release created (would tag ${{ steps.decide.outputs.tag }}, changed=${{ steps.decide.outputs.changed }})."

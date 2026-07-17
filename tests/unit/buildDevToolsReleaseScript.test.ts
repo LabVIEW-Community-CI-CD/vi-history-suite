@@ -94,7 +94,7 @@ describe('buildDevToolsRelease helpers (DS1)', () => {
     expect(() => loadToolsetManifest(dir, 'empty.json')).toThrow(/non-empty categories/);
   });
 
-  it('resolveToolsetFiles returns a sorted, de-duplicated list honoring excludes', () => {
+  it('resolveToolsetFiles returns a sorted, de-duplicated list honoring excludes (VHS-REQ-667.1)', () => {
     const dir = makeFixtureRepo();
     const manifest = loadToolsetManifest(dir, 'docs/devtools-release.manifest.json');
     const files = resolveToolsetFiles(dir, manifest);
@@ -128,7 +128,7 @@ describe('buildDevToolsRelease helpers (DS1)', () => {
     expect(() => normalizeChannel('nightly')).toThrow(/--channel must be one of/);
   });
 
-  it('buildDevToolsReleaseManifest binds provenance fields and the content digest', () => {
+  it('buildDevToolsReleaseManifest binds provenance fields and the content digest (VHS-REQ-667.2)', () => {
     const fileDigests = [{ path: 'scripts/toolA.js', sha256: 'aaa', bytes: 1 }];
     const manifest = buildDevToolsReleaseManifest(
       { fileDigests, requirementsManifestDigest: 'REQDIGEST123', traceabilityAudit: { passed: true, gaps: 0 } },

@@ -75,7 +75,7 @@ describe('deterministic tarball packing (DS2)', () => {
     expect(() => builder.buildUstarHeader(tooLong, 1)).toThrow(/too long/);
   });
 
-  it('packToolsetTarball is byte-identical for identical inputs', () => {
+  it('packToolsetTarball is byte-identical for identical inputs (VHS-REQ-667.3)', () => {
     const dir = makeFixtureRepo();
     const files = ['scripts/toolA.js', 'scripts/toolB.js'];
     const a = builder.packToolsetTarball(dir, files);
@@ -117,7 +117,7 @@ describe('verifyDevToolsRelease (DS2)', () => {
     expect(result.actualDigest).toBe(manifest.contentDigest);
   });
 
-  it('fails closed on a tampered file', () => {
+  it('fails closed on a tampered file (VHS-REQ-667.4)', () => {
     const { dir, manifest } = fixtureWithManifest();
     fs.writeFileSync(path.join(dir, 'scripts', 'toolA.js'), 'tampered\n', 'utf8');
     const result = verifier.verifyToolsetAgainstManifest(dir, manifest);
