@@ -272,12 +272,15 @@ function main() {
   const { sha256 } = persistAndAssertProofPacket(String(emit.stdout || ''));
 
   // 5. Record the advisory attestation into the committed ledger. The evidence
-  // names the proof packet's SHA-256 so the committed record is tamper-evident
-  // and traceable back to the exact retained proof.
+  // always names the proof packet's SHA-256 so the committed record is
+  // tamper-evident and traceable back to the exact retained proof, even when
+  // the maintainer supplies a custom --evidence note (the hash is appended to
+  // it rather than replaced).
   log(`Recording the advisory attestation for track ${TRACK_ID} at ${version}...`);
-  const evidence =
-    options.evidence ||
-    `vagrant pathadmit+validation proof sha256:${sha256} ${new Date().toISOString()}`;
+  const proofTag = `sha256:${sha256}`;
+  const evidence = options.evidence
+    ? `${options.evidence} ${proofTag}`
+    : `vagrant pathadmit+validation proof ${proofTag} ${new Date().toISOString()}`;
   const record = run('node', [
     path.join('scripts', 'recordRuntimeValidation.js'),
     '--track',
