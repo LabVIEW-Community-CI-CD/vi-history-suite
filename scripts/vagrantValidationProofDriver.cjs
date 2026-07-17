@@ -95,6 +95,19 @@ function getPackageVersion() {
   return JSON.parse(fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf8')).version;
 }
 
+// Read the committed Vagrant box manifest sha256 to bind the attestation to the
+// box it ran on (box-provenance chain). Undefined when absent/unparseable.
+function getBoxSha256() {
+  try {
+    const manifest = JSON.parse(fs.readFileSync(path.join(vagrantDir, 'box-manifest.json'), 'utf8'));
+    return typeof manifest.sha256 === 'string' && /^[0-9a-f]{64}$/.test(manifest.sha256)
+      ? manifest.sha256
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 function getCommit() {
   const result = run('git', ['rev-parse', '--short', 'HEAD'], { capture: true });
   return result.status === 0 ? String(result.stdout).trim() : 'unknown';
@@ -290,7 +303,8 @@ function main() {
     '--commit',
     commit,
     '--evidence',
-    evidence
+    evidence,
+    ...(getBoxSha256() ? ['--box-sha256', getBoxSha256()] : [])
   ]);
   if (record.status !== 0) {
     fail('Failed to record the attestation into the runtime-validation ledger.');
