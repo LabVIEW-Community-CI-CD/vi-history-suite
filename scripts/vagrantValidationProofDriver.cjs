@@ -45,9 +45,13 @@ const TRACK_ID = 'vagrant-win-pathadmit-validation';
 // In-guest paths: the Vagrantfile mounts the repo at C:\vihs-workspace.
 const GUEST_REPO = 'C:\\vihs-workspace';
 const GUEST_GLOBAL_STORAGE = 'C:\\vihs-workspace\\win-validation\\pathadmit-globalstorage';
-const GUEST_PROOF_DIR = 'C:\\vihs-workspace\\win-validation\\pathadmit-proof';
+// The proof is written to a GUEST-LOCAL dir (not the shared folder): after a
+// host-side delete of a shared path, the VirtualBox shared-folder host cache
+// can go stale and never surface the guest's recreation. We instead emit the
+// proof JSON on stdout between sentinels and let the driver persist it host-side.
+const GUEST_PROOF_DIR = 'C:\\vihs-proof-tmp';
 
-// Host-side path to the proof the guest writes into the synced repo folder.
+// Host-side path where the driver persists the captured proof packet.
 const HOST_PROOF_JSON = path.join(
   repoRoot,
   'win-validation',
@@ -144,20 +148,42 @@ function buildGuestScript() {
     // blocked `labview-runtime-selection-required` proof instead of exercising
     // the installed LabVIEWCLI (x86 host-native, VHS-REQ-665).
     'node out\\tooling\\localRuntimeSettingsCli.js --provider host --labview-version 2026 --labview-bitness x86',
-    // B. Real bounded runtime validation proof packet against the seeded install.
+    // B. Real bounded runtime validation proof packet against the seeded install,
+    // written to a guest-local dir to avoid shared-folder host-cache staleness.
+    `if (Test-Path ${GUEST_PROOF_DIR}) { Remove-Item -Recurse -Force ${GUEST_PROOF_DIR} }`,
     `node out\\tooling\\localRuntimeSettingsCli.js --validate --proof-out ${GUEST_PROOF_DIR}`
   ].join('; ');
 }
 
-function assertProofPacket() {
-  if (!fs.existsSync(HOST_PROOF_JSON)) {
-    fail(`Validation proof packet was not produced at ${HOST_PROOF_JSON}.`);
+// A dedicated second invocation that only prints the guest-local proof JSON.
+// Kept separate from the main script so the command echo Vagrant prints to
+// stdout contains no JSON braces, letting the driver extract the packet by
+// brace-matching without relying on the shared-folder mount.
+function buildEmitProofScript() {
+  return `Get-Content -Raw ${GUEST_PROOF_DIR}\\vihs-validation-proof.json`;
+}
+
+// Extract the proof JSON from the dedicated emit invocation's stdout by
+// brace-matching (the `Get-Content` command echo contains no JSON braces),
+// persist it host-side (the driver owns the write, so no shared-folder read is
+// involved), and assert schema + a `ready` runtime outcome.
+function persistAndAssertProofPacket(emitStdout) {
+  const begin = emitStdout.indexOf('{');
+  const end = emitStdout.lastIndexOf('}');
+  if (begin < 0 || end < 0 || end <= begin) {
+    fail('Guest did not emit a JSON proof packet.');
   }
+  // Vagrant prefixes each guest output line with `    default: `; strip it.
+  const rawJson = emitStdout
+    .slice(begin, end + 1)
+    .split(/\r?\n/)
+    .map((line) => line.replace(/^\s*default:\s?/, ''))
+    .join('\n');
   let proof;
   try {
-    proof = JSON.parse(fs.readFileSync(HOST_PROOF_JSON, 'utf8'));
+    proof = JSON.parse(rawJson);
   } catch (error) {
-    fail(`Validation proof packet is not valid JSON: ${error.message}`);
+    fail(`Emitted validation proof is not valid JSON: ${error.message}`);
   }
   if (proof.schema !== PROOF_SCHEMA) {
     fail(`Validation proof schema mismatch: expected ${PROOF_SCHEMA}, got ${proof.schema}.`);
@@ -175,9 +201,14 @@ function assertProofPacket() {
         `blockedReason=${runtime.blockedReason ?? '<none>'}). No advisory attestation recorded.`
     );
   }
+  // Persist the captured packet host-side for retained PR/ledger evidence.
+  fs.mkdirSync(path.dirname(HOST_PROOF_JSON), { recursive: true });
+  fs.writeFileSync(HOST_PROOF_JSON, `${JSON.stringify(proof, null, 2)}
+`, 'utf8');
   log(
-    `Validation proof packet OK (schema=${proof.schema}, ` +
-      `runtime.validationOutcome=${validationOutcome}, proofStatus=${proof.proofStatus}).`
+    `Validation proof OK (schema=${proof.schema}, ` +
+      `runtime.validationOutcome=${validationOutcome}, proofStatus=${proof.proofStatus}). ` +
+      `Persisted to ${HOST_PROOF_JSON}.`
   );
   return proof;
 }
@@ -208,13 +239,30 @@ function main() {
 
   // 3. Real PATH admission (idempotent) + real validation proof, in-guest.
   log('Running in-guest PATH admission + validation proof...');
-  const guest = run('vagrant', ['powershell', '-c', buildGuestScript()], { cwd: vagrantDir });
+  const guest = run('vagrant', ['powershell', '-c', buildGuestScript()], {
+    cwd: vagrantDir,
+    capture: true
+  });
+  if (guest.stdout) {
+    process.stdout.write(guest.stdout);
+  }
+  if (guest.stderr) {
+    process.stderr.write(guest.stderr);
+  }
   if (guest.status !== 0) {
     fail('In-guest PATH admission / validation FAILED. No attestation recorded.');
   }
 
-  // 4. Assert the proof packet the guest wrote into the synced repo folder.
-  assertProofPacket();
+  // 4. Emit the guest-local proof JSON via a dedicated invocation, then
+  // extract, persist, and assert it host-side.
+  const emit = run('vagrant', ['powershell', '-c', buildEmitProofScript()], {
+    cwd: vagrantDir,
+    capture: true
+  });
+  if (emit.status !== 0) {
+    fail('Failed to read the guest-local validation proof packet.');
+  }
+  persistAndAssertProofPacket(String(emit.stdout || ''));
 
   // 5. Record the advisory attestation into the committed ledger.
   log(`Recording the advisory attestation for track ${TRACK_ID} at ${version}...`);
