@@ -99,20 +99,35 @@ function buildBoxArtifact(cwd, version, deps = {}) {
     });
   }
   const recordedForVersion = manifest.recordedForVersion ?? null;
-  const fresh = recordedForVersion === version;
-  return makeArtifact({
-    id: 'box',
-    kind: 'box-manifest',
-    available: true,
-    gates: true,
-    digest: typeof manifest.sha256 === 'string' ? manifest.sha256 : null,
-    fresh,
-    detail: fresh
+  // The box artifact is only "fresh" when the manifest is well-formed (matching
+  // the release gate's box-manifest-integrity contract: 64-hex sha256 + positive
+  // sizeBytes) AND recorded for the current build. A matching recordedForVersion
+  // with a malformed sha256 must not read as fresh — the box is not
+  // cryptographically bound.
+  const wellFormed =
+    typeof manifest.sha256 === 'string' &&
+    /^[0-9a-f]{64}$/.test(manifest.sha256) &&
+    Number.isInteger(manifest.sizeBytes) &&
+    manifest.sizeBytes > 0;
+  const fresh = wellFormed && recordedForVersion === version;
+  const detail = !wellFormed
+    ? 'Box manifest is malformed (sha256 must be 64-hex and sizeBytes a positive integer).'
+    : fresh
       ? `Box manifest recorded for ${version}.`
-      : `Box manifest recorded for ${recordedForVersion ?? 'n/a'}, not ${version}.`,
-    drift: fresh ? null : 'recorded-for-version',
-    source: BOX_MANIFEST_PATH
-  });
+      : `Box manifest recorded for ${recordedForVersion ?? 'n/a'}, not ${version}.`;
+  return {
+    ...makeArtifact({
+      id: 'box',
+      kind: 'box-manifest',
+      available: true,
+      gates: true,
+      digest: typeof manifest.sha256 === 'string' ? manifest.sha256 : null,
+      fresh,
+      detail,
+      drift: fresh ? null : !wellFormed ? 'malformed' : 'recorded-for-version',
+      source: BOX_MANIFEST_PATH
+    })
+  };
 }
 
 // runtime: per-track validated-version freshness. The artifact is fresh only

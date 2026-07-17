@@ -86,8 +86,14 @@ function getCommit() {
 
 // Read the committed Vagrant box manifest's sha256 so the recorded attestation
 // is structurally bound to the specific box it was produced on (box-provenance
-// chain). Returns undefined when the manifest is absent/unparseable.
+// chain). Returns undefined when the manifest is absent/unparseable OR when
+// VIHS_VAGRANT_BOX overrides the box: the committed manifest fingerprints the
+// DEFAULT box, so binding its sha256 to an attestation produced on an override
+// box would be false provenance. Skip the binding under an override.
 function getBoxSha256() {
+  if (process.env.VIHS_VAGRANT_BOX && process.env.VIHS_VAGRANT_BOX.trim()) {
+    return undefined;
+  }
   try {
     const manifest = JSON.parse(fs.readFileSync(path.join(vagrantDir, 'box-manifest.json'), 'utf8'));
     return typeof manifest.sha256 === 'string' && /^[0-9a-f]{64}$/.test(manifest.sha256)
