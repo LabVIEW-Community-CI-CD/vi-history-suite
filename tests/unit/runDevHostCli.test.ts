@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import * as path from 'node:path';
 
 import {
   applyDevHostCliExitCode,
@@ -222,10 +223,10 @@ describe('runDevHost path helpers (VHS-REQ-621)', () => {
     expect(normalizeWorkspacePath(winPath)).toBe(winPath);
     const uncPath = `${BS}${BS}server${BS}share${BS}ws`;
     expect(normalizeWorkspacePath(uncPath)).toBe(uncPath);
-    // A relative POSIX path is resolved against cwd (absolute, no drive/UNC prefix).
-    const resolved = normalizeWorkspacePath('rel/ws');
-    expect(resolved.startsWith('/')).toBe(true);
-    expect(resolved.endsWith('/rel/ws')).toBe(true);
+    // A relative path is resolved against cwd. Compute the expected value the
+    // same way production does (path.resolve) so the assertion is separator-
+    // agnostic and passes on the Windows CI leg too (AGENTS.md guidance).
+    expect(normalizeWorkspacePath('rel/ws')).toBe(path.resolve('rel/ws'));
   });
 
   it('joinPreservingExplicitPathStyle joins per the root path style (posix / win32 / UNC)', () => {
