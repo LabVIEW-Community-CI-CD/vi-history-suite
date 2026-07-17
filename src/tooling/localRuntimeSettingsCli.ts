@@ -15,6 +15,7 @@ import {
 } from '../reporting/comparisonRuntimeLocator';
 import { readBuildInfo, type BuildInfo, type BuildInfoDeps } from './buildInfo';
 import { scanFlags } from './cliFlags';
+import { serializeJsonArtifact } from '../support/jsonArtifact';
 const execFileAsync = promisify(execFileCallback);
 
 export type LocalRuntimeSettingsCliBitness = 'x86' | 'x64';
@@ -1014,7 +1015,7 @@ async function writeValidationProofPacket(
   const proofReportPath = path.join(proofRoot, VALIDATION_PROOF_JSON_FILE_NAME);
   const proofIssueBodyPath = path.join(proofRoot, VALIDATION_PROOF_ISSUE_FILE_NAME);
   const proof = buildValidationProof(input, deps);
-  await fsApi.writeFile(proofReportPath, `${JSON.stringify(proof, null, 2)}\n`, 'utf8');
+  await fsApi.writeFile(proofReportPath, serializeJsonArtifact(proof), 'utf8');
   await fsApi.writeFile(proofIssueBodyPath, `${buildValidationIssueBody(proof)}\n`, 'utf8');
   return { proofReportPath, proofIssueBodyPath };
 }
