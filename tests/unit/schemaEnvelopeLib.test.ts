@@ -13,6 +13,8 @@ const envelope = require('../../scripts/lib/schemaEnvelope.js') as {
   schemaEnvelopeFields: (schemaId: string, schemaVersion: number) => Record<string, unknown>;
   schemaEnvelopePropertyNodes: (schemaId: string, schemaVersion: number) => Record<string, unknown>;
   collectSchemaEnvelopeDrift: (packet: unknown, schema: unknown) => string[];
+  provenanceFooterLines: (provenance: unknown, label?: string) => string[];
+  assertSingleOutputMode: (modes?: Record<string, boolean>) => string | undefined;
 };
 
 const {
@@ -22,7 +24,9 @@ const {
   renderSchemaDocument,
   schemaEnvelopeFields,
   schemaEnvelopePropertyNodes,
-  collectSchemaEnvelopeDrift
+  collectSchemaEnvelopeDrift,
+  provenanceFooterLines,
+  assertSingleOutputMode
 } = envelope;
 
 const SCHEMA_ID = 'vi-history-suite/example@v1';
@@ -109,5 +113,27 @@ describe('schemaEnvelope shared read-model helper (VHS-REQ-601)', () => {
   it('collectSchemaEnvelopeDrift fails closed on malformed inputs', () => {
     expect(collectSchemaEnvelopeDrift(undefined, exampleSchema())).toEqual(['packet is not an object']);
     expect(collectSchemaEnvelopeDrift({}, {})).toEqual(['schema is missing a required[] array']);
+  });
+
+  it('provenanceFooterLines emits nothing without provenance and labeled lines with it', () => {
+    expect(provenanceFooterLines(undefined)).toEqual([]);
+    const lines = provenanceFooterLines(
+      { generatedAt: 't', cwd: '/repo', outputMode: 'text', argv: ['--include-provenance'] },
+      'demo'
+    );
+    expect(lines[0]).toBe('[demo] provenance generatedAt: t');
+    expect(lines).toContain('[demo] provenance argv: ["--include-provenance"]');
+    // No label -> no bracket prefix.
+    expect(provenanceFooterLines({ generatedAt: 't', cwd: '/r', outputMode: 'json', argv: [] })[0]).toBe(
+      'provenance generatedAt: t'
+    );
+  });
+
+  it('assertSingleOutputMode returns the single active mode and throws on conflicts', () => {
+    expect(assertSingleOutputMode({ json: false, schema: false })).toBeUndefined();
+    expect(assertSingleOutputMode({ json: true, schema: false })).toBe('json');
+    expect(() => assertSingleOutputMode({ json: true, schema: true })).toThrow(
+      'Use only one output mode: --json, --schema'
+    );
   });
 });

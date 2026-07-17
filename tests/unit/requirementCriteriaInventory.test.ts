@@ -351,4 +351,24 @@ describe('requirement acceptance-criteria inventory (VHS-REQ-601)', () => {
     expect(code).toBe(0);
     expect((JSON.parse(schemaOut.join('')) as Record<string, unknown>).$id).toBe(CRITERIA_INVENTORY_SCHEMA_ID);
   });
+
+  it('rejects combining --json and --schema, and honors --include-provenance in text output (VHS-REQ-601)', () => {
+    let stderr = '';
+    const code = main(['--json', '--schema'], {
+      cwd: path.resolve(__dirname, '..', '..'),
+      stdout: { write: () => undefined },
+      stderr: { write: (t: string) => { stderr += t; } }
+    });
+    expect(code).toBe(1);
+    expect(stderr).toContain('Use only one output mode');
+
+    let textOut = '';
+    main(['--include-provenance'], {
+      cwd: path.resolve(__dirname, '..', '..'),
+      now: () => new Date('2026-07-15T00:00:00.000Z'),
+      stdout: { write: (t: string) => { textOut += t; } }
+    });
+    expect(textOut).toContain('[requirements-criteria] provenance generatedAt: 2026-07-15T00:00:00.000Z');
+    expect(textOut).toContain('provenance outputMode: text');
+  });
 });

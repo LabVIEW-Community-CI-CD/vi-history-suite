@@ -7,7 +7,9 @@ const {
   JSON_SCHEMA_DIALECT,
   renderSchemaDocument,
   schemaEnvelopeFields,
-  schemaEnvelopePropertyNodes
+  schemaEnvelopePropertyNodes,
+  provenanceFooterLines,
+  assertSingleOutputMode
 } = require('./lib/schemaEnvelope.js');
 
 const AGENTS_GUIDE_PATH = 'AGENTS.md';
@@ -984,6 +986,15 @@ function main(argv = process.argv.slice(2), deps = {}) {
 
   const cwd = deps.cwd || parsedArgs.cwd;
 
+  // json and schema are mutually exclusive output modes; reject rather than
+  // silently letting --schema win over --json.
+  try {
+    assertSingleOutputMode({ json: parsedArgs.emitJson, schema: parsedArgs.emitSchema });
+  } catch (error) {
+    (deps.stderr || process.stderr).write(`${error instanceof Error ? error.message : String(error)}\n`);
+    return 1;
+  }
+
   const provenance = parsedArgs.includeProvenance
     ? {
         generatedAt: (deps.now || new Date()).toISOString(),
@@ -1008,7 +1019,7 @@ function main(argv = process.argv.slice(2), deps = {}) {
     return result.success ? 0 : 1;
   }
 
-  const output = `${renderSummary(result)}\n`;
+  const output = `${[renderSummary(result), ...provenanceFooterLines(provenance, 'customization-audit')].join('\n')}\n`;
 
   if (result.success) {
     (deps.stdout || process.stdout).write(output);

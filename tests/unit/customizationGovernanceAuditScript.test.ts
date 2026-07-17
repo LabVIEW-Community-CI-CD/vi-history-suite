@@ -1256,4 +1256,23 @@ Instruction body.
     expect(code).toBe(0);
     expect((JSON.parse(out) as Record<string, unknown>).$id).toBe(CUSTOMIZATION_AUDIT_SCHEMA_ID);
   });
+
+  it('rejects combining --json and --schema, and honors --include-provenance in text output (VHS-REQ-615)', () => {
+    let stderr = '';
+    const conflictCode = main(['--json', '--schema'], {
+      stdout: { write: () => undefined },
+      stderr: { write: (t: string) => { stderr += t; } }
+    });
+    expect(conflictCode).toBe(1);
+    expect(stderr).toContain('Use only one output mode');
+
+    let out = '';
+    main(['--include-provenance'], {
+      now: new Date('2026-07-15T00:00:00.000Z'),
+      stdout: { write: (t: string) => { out += t; } },
+      stderr: { write: (t: string) => { out += t; } }
+    });
+    expect(out).toContain('[customization-audit] provenance generatedAt: 2026-07-15T00:00:00.000Z');
+    expect(out).toContain('provenance outputMode: text');
+  });
 });

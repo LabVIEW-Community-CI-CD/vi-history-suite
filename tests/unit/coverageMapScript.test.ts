@@ -233,6 +233,30 @@ describe('coverage traceability map script', () => {
     expect(parseArgs([]).enforce).toBe(false);
   });
 
+  it('rejects combining --json and --schema, and honors --include-provenance in markdown output (VHS-REQ-613)', () => {
+    const repoRoot = writeFixture();
+    const originalWrite = process.stdout.write.bind(process.stdout);
+    let captured = '';
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (process.stdout as any).write = (chunk: string) => {
+      captured += chunk;
+      return true;
+    };
+    try {
+      captured = '';
+      const conflictCode = main(['--json', '--schema', '--repo-root', repoRoot]);
+      expect(conflictCode).toBe(1);
+
+      captured = '';
+      main(['--include-provenance', '--repo-root', repoRoot]);
+      expect(captured).toContain('## Provenance');
+      expect(captured).toContain('- provenance outputMode: markdown');
+    } finally {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (process.stdout as any).write = originalWrite;
+    }
+  });
+
   it('summarizes enforcement risk from mapped-below-threshold and zero-coverage supporting files', () => {
     const repoRoot = writeFixture();
     const map = generateCoverageMap({ repoRoot, riskThreshold: 50 });

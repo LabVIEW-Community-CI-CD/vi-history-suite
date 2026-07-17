@@ -35,7 +35,9 @@ const {
   JSON_SCHEMA_DIALECT,
   renderSchemaDocument,
   schemaEnvelopeFields,
-  schemaEnvelopePropertyNodes
+  schemaEnvelopePropertyNodes,
+  provenanceFooterLines,
+  assertSingleOutputMode
 } = require('./lib/schemaEnvelope.js');
 
 const SRS_PATH = 'docs/requirements/srs.md';
@@ -327,6 +329,15 @@ function main(argv = process.argv.slice(2), deps = {}) {
   const cwd = deps.cwd || positionals[0] || process.cwd();
   const stdout = deps.stdout || process.stdout;
 
+  // json and schema are mutually exclusive output modes; reject rather than
+  // silently letting --schema win over --json.
+  try {
+    assertSingleOutputMode({ json: asJson, schema: asSchema });
+  } catch (error) {
+    (deps.stderr || process.stderr).write(`${error instanceof Error ? error.message : String(error)}\n`);
+    return 1;
+  }
+
   const provenance = includeProvenance
     ? {
         generatedAt:
@@ -353,7 +364,12 @@ function main(argv = process.argv.slice(2), deps = {}) {
   }
 
   const jsonResult = provenance ? { ...result, provenance } : result;
-  stdout.write(asJson ? `${JSON.stringify(jsonResult, null, 2)}\n` : `${renderSummary(result, { enforce })}\n`);
+  if (asJson) {
+    stdout.write(`${JSON.stringify(jsonResult, null, 2)}\n`);
+  } else {
+    const textLines = [renderSummary(result, { enforce }), ...provenanceFooterLines(provenance, 'requirements-criteria')];
+    stdout.write(`${textLines.join('\n')}\n`);
+  }
 
   // Advisory by default (exit 0): criterion inventory does not fail the build.
   // With --enforce the guard fails closed (exit 1) when any Active criterion is
