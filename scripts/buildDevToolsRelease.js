@@ -28,6 +28,13 @@ const crypto = require('node:crypto');
 const zlib = require('node:zlib');
 const { execSync } = require('node:child_process');
 const { globSync } = require('glob');
+const {
+  JSON_SCHEMA_DIALECT,
+  renderSchemaDocument,
+  schemaEnvelopeFields,
+  schemaEnvelopePropertyNodes
+} = require('./lib/schemaEnvelope.js');
+const { parseSharedOutputArgs } = require('./lib/outputContract.js');
 
 const SCHEMA_ID = 'vi-history-suite/devtools-release@v1';
 const SCHEMA_VERSION = 1;
@@ -232,8 +239,7 @@ function packToolsetTarball(cwd, relativePaths, deps = {}) {
 function buildDevToolsReleaseManifest(inputs = {}, meta = {}) {
   const fileDigests = inputs.fileDigests ?? [];
   return {
-    schema: SCHEMA_ID,
-    schemaVersion: SCHEMA_VERSION,
+    ...schemaEnvelopeFields(SCHEMA_ID, SCHEMA_VERSION),
     channel: meta.channel ?? 'prerelease',
     generatedAt: meta.generatedAt,
     buildVersion: meta.buildVersion,
@@ -271,25 +277,53 @@ function collectDevToolsRelease(cwd, options = {}, deps = {}) {
 }
 
 function parseArgs(argv = []) {
-  const options = { channel: undefined, manifestPath: undefined, outputPath: undefined, packPath: undefined, json: false };
-  for (let index = 0; index < argv.length; index += 1) {
-    const arg = argv[index];
-    const next = () => {
-      const value = argv[index + 1];
-      if (value === undefined || value.startsWith('--')) {
-        throw new Error(`${arg} requires a value`);
-      }
-      index += 1;
-      return value;
-    };
-    if (arg === '--json') options.json = true;
-    else if (arg === '--channel') options.channel = next();
-    else if (arg === '--manifest') options.manifestPath = next();
-    else if (arg === '--output') options.outputPath = next();
-    else if (arg === '--pack') options.packPath = next();
-    else if (arg.startsWith('--')) throw new Error(`Unknown argument: ${arg}`);
-  }
+  const { options } = parseSharedOutputArgs(argv, {
+    defaults: { channel: undefined, manifestPath: undefined, outputPath: undefined, packPath: undefined, json: false, schema: false },
+    // --markdown/--strict/--include-provenance are not supported here.
+    excludeCommonFlags: ['--markdown', '--strict', '--include-provenance'],
+    enforceSingleOutputMode: false,
+    valueFlags: {
+      '--channel': 'channel',
+      '--manifest': 'manifestPath',
+      '--pack': 'packPath'
+    }
+  });
   return options;
+}
+
+// Published JSON Schema for the devtools-release provenance manifest, so
+// consumers can validate it and the `--schema` mode can publish the contract
+// without building. Shares the self-describing envelope via schemaEnvelope.js.
+const DEVTOOLS_RELEASE_JSON_SCHEMA = {
+  $schema: JSON_SCHEMA_DIALECT,
+  $id: SCHEMA_ID,
+  title: 'vi-history-suite devtools release provenance manifest',
+  type: 'object',
+  additionalProperties: true,
+  required: [
+    '$schema',
+    'schemaVersion',
+    'channel',
+    'contentDigest',
+    'fileCount',
+    'files'
+  ],
+  properties: {
+    ...schemaEnvelopePropertyNodes(SCHEMA_ID, SCHEMA_VERSION),
+    channel: { enum: CHANNELS },
+    generatedAt: { type: 'string' },
+    buildVersion: { type: 'string' },
+    gitCommit: { type: 'string' },
+    contentDigest: { type: 'string' },
+    requirementsManifestDigest: { type: ['string', 'null'] },
+    traceabilityAudit: { type: ['object', 'null'] },
+    fileCount: { type: 'integer' },
+    files: { type: 'array', items: { type: 'object' } }
+  }
+};
+
+function renderSchema(options = {}) {
+  return renderSchemaDocument(DEVTOOLS_RELEASE_JSON_SCHEMA, options);
 }
 
 function resolveOutputPath(cwd, relativePath) {
@@ -330,6 +364,13 @@ function main(argv = process.argv.slice(2), deps = {}) {
   }
 
   const cwd = deps.cwd || process.cwd();
+
+  // --schema publishes the JSON Schema without building the release.
+  if (deps.schema ?? options.schema) {
+    stdout.write(`${renderSchema()}\n`);
+    return 0;
+  }
+
   let manifest;
   try {
     manifest = collectDevToolsRelease(cwd, options, deps);
@@ -394,6 +435,8 @@ module.exports = {
   buildDevToolsReleaseManifest,
   collectDevToolsRelease,
   parseArgs,
+  renderSchema,
+  DEVTOOLS_RELEASE_JSON_SCHEMA,
   resolveOutputPath,
   renderSummary,
   main

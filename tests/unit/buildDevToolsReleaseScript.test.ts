@@ -22,6 +22,8 @@ const builder = require('../../scripts/buildDevToolsRelease.js') as {
   buildDevToolsReleaseManifest: (inputs?: Record<string, unknown>, meta?: Record<string, unknown>) => any;
   collectDevToolsRelease: (cwd: string, options?: Record<string, unknown>, deps?: Record<string, unknown>) => any;
   parseArgs: (argv: string[]) => Record<string, unknown>;
+  renderSchema: (options?: { provenance?: unknown }) => string;
+  DEVTOOLS_RELEASE_JSON_SCHEMA: { required: string[]; properties: Record<string, { const?: unknown }> };
   resolveOutputPath: (cwd: string, relativePath: string) => string;
   main: (argv?: string[], deps?: Record<string, unknown>) => number;
 };
@@ -37,6 +39,8 @@ const {
   buildDevToolsReleaseManifest,
   collectDevToolsRelease,
   parseArgs,
+  renderSchema,
+  DEVTOOLS_RELEASE_JSON_SCHEMA,
   resolveOutputPath,
   main
 } = builder;
@@ -133,7 +137,7 @@ describe('buildDevToolsRelease helpers (DS1)', () => {
       { fileDigests, requirementsManifestDigest: 'REQDIGEST123', traceabilityAudit: { passed: true, gaps: 0 } },
       { channel: 'stable', generatedAt: '2026-07-17T00:00:00.000Z', buildVersion: '1.33.2', gitCommit: 'deadbeef' }
     );
-    expect(manifest.schema).toBe(SCHEMA_ID);
+    expect(manifest.$schema).toBe(SCHEMA_ID);
     expect(manifest.channel).toBe('stable');
     expect(manifest.buildVersion).toBe('1.33.2');
     expect(manifest.gitCommit).toBe('deadbeef');
@@ -197,7 +201,7 @@ describe('collectDevToolsRelease + main (DS1)', () => {
     });
     expect(code).toBe(0);
     const written = JSON.parse(fs.readFileSync(path.join(dir, 'out', 'devtools-release.json'), 'utf8'));
-    expect(written.schema).toBe(SCHEMA_ID);
+    expect(written.$schema).toBe(SCHEMA_ID);
     expect(written.channel).toBe('stable');
     expect(written.contentDigest).toMatch(/^[0-9a-f]{64}$/);
   });
@@ -207,5 +211,35 @@ describe('collectDevToolsRelease + main (DS1)', () => {
     const code = main(['--bogus'], { stdout: { write: () => undefined }, stderr: { write: (s: string) => errs.push(s) } });
     expect(code).toBe(1);
     expect(errs.join('')).toMatch(/Unknown argument/);
+  });
+
+  it('publishes the JSON Schema via --schema and self-describes without drift (VHS-REQ-601)', () => {
+    const schema = JSON.parse(renderSchema()) as {
+      $id: string;
+      required: string[];
+      properties: { $schema: { const: string }; schemaVersion: { const: number } };
+    };
+    expect(schema.$id).toBe(SCHEMA_ID);
+    expect(schema.properties.$schema.const).toBe(SCHEMA_ID);
+    expect(schema.properties.schemaVersion.const).toBe(1);
+
+    // The built manifest self-describes ($schema + schemaVersion) and satisfies required.
+    const manifest = buildDevToolsReleaseManifest(
+      { fileDigests: [{ path: 'scripts/x.js', sha256: 'a'.repeat(64), bytes: 1 }] },
+      { channel: 'stable', generatedAt: '2026-07-17T00:00:00.000Z', buildVersion: '1.0.0', gitCommit: 'abc' }
+    ) as Record<string, unknown>;
+    expect(DEVTOOLS_RELEASE_JSON_SCHEMA.required.filter((key) => !(key in manifest))).toEqual([]);
+    expect(manifest.$schema).toBe(DEVTOOLS_RELEASE_JSON_SCHEMA.properties.$schema.const);
+    expect(manifest.schemaVersion).toBe(DEVTOOLS_RELEASE_JSON_SCHEMA.properties.schemaVersion.const);
+
+    // --schema attaches provenance under the shared extension key.
+    const withProvenance = JSON.parse(renderSchema({ provenance: { generatedAt: 'x' } })) as Record<string, unknown>;
+    expect(withProvenance['x-vi-history-suite-provenance']).toEqual({ generatedAt: 'x' });
+
+    // main --schema publishes without building (no readFile/writeFile needed).
+    const outputs: string[] = [];
+    const code = main(['--schema'], { stdout: { write: (t: string) => outputs.push(t) } });
+    expect(code).toBe(0);
+    expect((JSON.parse(outputs.join('')) as Record<string, unknown>).$id).toBe(SCHEMA_ID);
   });
 });

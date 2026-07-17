@@ -130,7 +130,7 @@ function loadManifest(cwd, relativePath, deps = {}) {
   const readFile = deps.readFile ?? ((p) => fs.readFileSync(p, 'utf8'));
   const full = path.isAbsolute(relativePath) ? relativePath : path.join(cwd, ...relativePath.split('/'));
   const parsed = JSON.parse(readFile(full));
-  if (!parsed || parsed.schema !== builder.SCHEMA_ID) {
+  if (!parsed || parsed.$schema !== builder.SCHEMA_ID) {
     throw new Error(`Manifest schema must be ${builder.SCHEMA_ID}`);
   }
   return parsed;
