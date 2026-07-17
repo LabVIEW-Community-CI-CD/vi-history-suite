@@ -31,9 +31,17 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const { parseCsv, splitReferences } = require('./auditTraceabilitySteward.js');
+const {
+  JSON_SCHEMA_DIALECT,
+  renderSchemaDocument,
+  schemaEnvelopeFields,
+  schemaEnvelopePropertyNodes
+} = require('./lib/schemaEnvelope.js');
 
 const SRS_PATH = 'docs/requirements/srs.md';
 const RTM_PATH = 'docs/requirements/rtm.csv';
+const CRITERIA_INVENTORY_SCHEMA_ID = 'vi-history-suite/requirement-criteria-inventory@v1';
+const CRITERIA_INVENTORY_SCHEMA_VERSION = 1;
 
 function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -176,12 +184,78 @@ function auditRequirementCriteriaInventory(cwd = process.cwd(), deps = {}) {
   requirements.sort((left, right) => left.reqId.localeCompare(right.reqId));
 
   return {
+    ...schemaEnvelopeFields(CRITERIA_INVENTORY_SCHEMA_ID, CRITERIA_INVENTORY_SCHEMA_VERSION),
     totalRequirements: requirements.length,
     totalCriteria,
     citedCriteria,
     uncitedCriteria: totalCriteria - citedCriteria,
     requirements
   };
+}
+
+// Published JSON Schema for the criterion-inventory packet, so consumers can
+// validate `--json` output and `--schema` can publish the contract without
+// running the audit. Shares the self-describing envelope via scripts/lib/schemaEnvelope.js.
+const CRITERIA_INVENTORY_JSON_SCHEMA = {
+  $schema: JSON_SCHEMA_DIALECT,
+  $id: CRITERIA_INVENTORY_SCHEMA_ID,
+  title: 'vi-history-suite requirement criteria inventory',
+  type: 'object',
+  additionalProperties: false,
+  required: [
+    '$schema',
+    'schemaVersion',
+    'totalRequirements',
+    'totalCriteria',
+    'citedCriteria',
+    'uncitedCriteria',
+    'requirements'
+  ],
+  properties: {
+    ...schemaEnvelopePropertyNodes(CRITERIA_INVENTORY_SCHEMA_ID, CRITERIA_INVENTORY_SCHEMA_VERSION),
+    totalRequirements: { type: 'integer' },
+    totalCriteria: { type: 'integer' },
+    citedCriteria: { type: 'integer' },
+    uncitedCriteria: { type: 'integer' },
+    requirements: {
+      type: 'array',
+      items: {
+        type: 'object',
+        required: ['reqId', 'criteriaCount', 'criteria'],
+        properties: {
+          reqId: { type: 'string' },
+          criteriaCount: { type: 'integer' },
+          criteria: {
+            type: 'array',
+            items: {
+              type: 'object',
+              required: ['criterionId', 'ordinal', 'text', 'cited'],
+              properties: {
+                criterionId: { type: 'string' },
+                ordinal: { type: 'integer' },
+                text: { type: 'string' },
+                cited: { type: 'boolean' }
+              }
+            }
+          }
+        }
+      }
+    },
+    provenance: {
+      type: 'object',
+      required: ['generatedAt', 'cwd', 'outputMode', 'argv'],
+      properties: {
+        generatedAt: { type: 'string' },
+        cwd: { type: 'string' },
+        outputMode: { enum: ['text', 'json', 'schema'] },
+        argv: { type: 'array', items: { type: 'string' } }
+      }
+    }
+  }
+};
+
+function renderSchema(options = {}) {
+  return renderSchemaDocument(CRITERIA_INVENTORY_JSON_SCHEMA, options);
 }
 
 function renderSummary(result, options = {}) {
@@ -247,8 +321,28 @@ function renderStepSummary(result, options = {}) {
 function main(argv = process.argv.slice(2), deps = {}) {
   const positionals = argv.filter((arg) => !arg.startsWith('--'));
   const asJson = deps.json ?? argv.includes('--json');
+  const asSchema = deps.schema ?? argv.includes('--schema');
   const enforce = deps.enforce ?? argv.includes('--enforce');
+  const includeProvenance = deps.includeProvenance ?? argv.includes('--include-provenance');
   const cwd = deps.cwd || positionals[0] || process.cwd();
+  const stdout = deps.stdout || process.stdout;
+
+  const provenance = includeProvenance
+    ? {
+        generatedAt:
+          typeof deps.now === 'function' ? new Date(deps.now()).toISOString() : new Date().toISOString(),
+        cwd,
+        outputMode: asSchema ? 'schema' : asJson ? 'json' : 'text',
+        argv: [...argv]
+      }
+    : undefined;
+
+  // --schema publishes the JSON Schema without running the audit.
+  if (asSchema) {
+    stdout.write(`${renderSchema({ provenance })}\n`);
+    return 0;
+  }
+
   const result = auditRequirementCriteriaInventory(cwd, deps);
 
   const stepSummaryPath = deps.stepSummaryPath || process.env.GITHUB_STEP_SUMMARY;
@@ -258,8 +352,8 @@ function main(argv = process.argv.slice(2), deps = {}) {
     appendStepSummary(stepSummaryPath, `${renderStepSummary(result, { enforce })}\n`);
   }
 
-  const stdout = deps.stdout || process.stdout;
-  stdout.write(asJson ? `${JSON.stringify(result, null, 2)}\n` : `${renderSummary(result, { enforce })}\n`);
+  const jsonResult = provenance ? { ...result, provenance } : result;
+  stdout.write(asJson ? `${JSON.stringify(jsonResult, null, 2)}\n` : `${renderSummary(result, { enforce })}\n`);
 
   // Advisory by default (exit 0): criterion inventory does not fail the build.
   // With --enforce the guard fails closed (exit 1) when any Active criterion is
@@ -279,6 +373,9 @@ if (require.main === module) {
 module.exports = {
   SRS_PATH,
   RTM_PATH,
+  CRITERIA_INVENTORY_SCHEMA_ID,
+  CRITERIA_INVENTORY_SCHEMA_VERSION,
+  CRITERIA_INVENTORY_JSON_SCHEMA,
   isCiteableTestReference,
   cleanReference,
   extractAcceptanceCriteria,
@@ -286,6 +383,7 @@ module.exports = {
   criterionIsCited,
   auditRequirementCriteriaInventory,
   renderSummary,
+  renderSchema,
   renderStepSummary,
   main
 };
