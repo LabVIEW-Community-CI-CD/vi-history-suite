@@ -400,6 +400,55 @@ describe('review decision record action automation happy path (VHS-REQ-610 suppo
       expect.any(Object)
     );
   });
+
+  it('reads complete automation inputs from the environment when none are injected', async () => {
+    const previousEnv = {
+      reviewer: process.env.VI_HISTORY_SUITE_DECISION_REVIEWER,
+      question: process.env.VI_HISTORY_SUITE_DECISION_QUESTION,
+      outcome: process.env.VI_HISTORY_SUITE_DECISION_OUTCOME,
+      confidence: process.env.VI_HISTORY_SUITE_DECISION_CONFIDENCE,
+      rationale: process.env.VI_HISTORY_SUITE_DECISION_RATIONALE
+    };
+    process.env.VI_HISTORY_SUITE_DECISION_REVIEWER = '  Environment Reviewer  ';
+    process.env.VI_HISTORY_SUITE_DECISION_QUESTION = 'Does the environment evidence support acceptance?';
+    process.env.VI_HISTORY_SUITE_DECISION_OUTCOME = 'approved';
+    process.env.VI_HISTORY_SUITE_DECISION_CONFIDENCE = 'high';
+    process.env.VI_HISTORY_SUITE_DECISION_RATIONALE = 'Environment-derived bounded rationale.';
+    try {
+      const mocks = createOrchestrationMocks(createDashboardResult());
+      // No automationInputs and not test mode: exercises readDecisionRecordAutomationInputs.
+      const action = createReviewDecisionRecordAction(harness.createContext() as never, {
+        ...mocks,
+        uriFile: harness.vscode.Uri.file
+      });
+
+      await expect(action({ model: createModel() })).resolves.toMatchObject({
+        outcome: 'created-decision-record'
+      });
+      expect(mocks.persistDecisionRecord).toHaveBeenCalledWith(
+        '/workspace/storage',
+        expect.objectContaining({
+          reviewer: 'Environment Reviewer',
+          outcome: 'approved',
+          confidence: 'high'
+        }),
+        expect.any(Object)
+      );
+    } finally {
+      const restore = (key: string, value: string | undefined): void => {
+        if (value === undefined) {
+          delete process.env[key];
+        } else {
+          process.env[key] = value;
+        }
+      };
+      restore('VI_HISTORY_SUITE_DECISION_REVIEWER', previousEnv.reviewer);
+      restore('VI_HISTORY_SUITE_DECISION_QUESTION', previousEnv.question);
+      restore('VI_HISTORY_SUITE_DECISION_OUTCOME', previousEnv.outcome);
+      restore('VI_HISTORY_SUITE_DECISION_CONFIDENCE', previousEnv.confidence);
+      restore('VI_HISTORY_SUITE_DECISION_RATIONALE', previousEnv.rationale);
+    }
+  });
 });
 
 describe('review decision record action interactive prompts (VHS-REQ-610 supporting evidence)', () => {
