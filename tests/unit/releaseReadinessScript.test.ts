@@ -21,6 +21,7 @@ const readinessModule = require('../../scripts/checkReleaseReadiness.js') as {
   deriveRuntimeAttestationFromLedger: (manifest: unknown, version: string) => any;
   checkReleaseAttestation: (manifest: unknown, version: string) => { name: string; passed: boolean; details: string };
   checkBoxManifestIntegrity: (boxManifest: unknown, version: string) => { name: string; passed: boolean; details: string };
+  checkBoxProvenanceBinding: (runtimeManifest: unknown, boxManifest: unknown) => { name: string; passed: boolean; details: string };
   buildReleaseReadiness: (inputs?: Record<string, unknown>, meta?: Record<string, unknown>) => any;
   renderMarkdown: (verdict: unknown) => string;
   renderSchema: (options?: Record<string, unknown>) => string;
@@ -41,6 +42,7 @@ const {
   deriveRuntimeAttestationFromLedger,
   checkReleaseAttestation,
   checkBoxManifestIntegrity,
+  checkBoxProvenanceBinding,
   buildReleaseReadiness,
   renderMarkdown,
   renderSchema,
@@ -406,21 +408,21 @@ describe('checkReleaseAttestation release gate (VHS-REQ-666)', () => {
     expect(advisory.checks).toHaveLength(3);
     expect(advisory.status).toBe('READY');
 
-    // Gated + fresh attestation + valid box manifest: five checks, READY.
+    // Gated + fresh attestation + valid box manifest: six checks, READY.
     const gatedReady = buildReleaseReadiness(
       { ...base, requireReleaseAttestation: true, runtimeManifest: GATING_FRESH, boxManifest: BOX_MANIFEST_VALID },
       meta
     );
-    expect(gatedReady.checks).toHaveLength(5);
+    expect(gatedReady.checks).toHaveLength(6);
     expect(gatedReady.status).toBe('READY');
     expect(gatedReady.checks.map((c: { name: string }) => c.name)).toContain('release-attestation');
 
-    // Gated + stale attestation: five checks, ATTENTION (fails closed).
+    // Gated + stale attestation: six checks, ATTENTION (fails closed).
     const gatedStale = buildReleaseReadiness(
       { ...base, requireReleaseAttestation: true, runtimeManifest: GATING_STALE, boxManifest: BOX_MANIFEST_VALID },
       meta
     );
-    expect(gatedStale.checks).toHaveLength(5);
+    expect(gatedStale.checks).toHaveLength(6);
     expect(gatedStale.status).toBe('ATTENTION');
   });
 
@@ -555,5 +557,49 @@ describe('checkBoxManifestIntegrity release gate (VHS-REQ-666.5)', () => {
       meta
     );
     expect(gatedMalformed.status).toBe('ATTENTION');
+  });
+});
+
+// Criterion coverage: VHS-REQ-666.6 — box-provenance binding. When a
+// release-gating track records a structured boxSha256 (S2), it must equal the
+// committed box manifest sha256; a mismatch fails closed. Absent boxSha256
+// (pre-S2 attestations) soft-passes during the transition.
+describe('checkBoxProvenanceBinding (VHS-REQ-666.6)', () => {
+  const BOX = { sha256: 'a'.repeat(64) };
+  const gatingTrack = (over: Record<string, unknown> = {}) => ({
+    trackId: 'vagrant-win-x86-hostnative',
+    releaseGating: true,
+    lastValidatedVersion: '1.33.2',
+    ...over
+  });
+
+  it('passes when a gating track boxSha256 matches the committed manifest (VHS-REQ-666.6)', () => {
+    const result = checkBoxProvenanceBinding(
+      { tracks: [gatingTrack({ boxSha256: 'a'.repeat(64) })] },
+      BOX
+    );
+    expect(result.passed).toBe(true);
+    expect(result.name).toBe('box-provenance-binding');
+  });
+
+  it('fails closed when a gating track boxSha256 does not match (VHS-REQ-666.6)', () => {
+    const result = checkBoxProvenanceBinding(
+      { tracks: [gatingTrack({ boxSha256: 'b'.repeat(64) })] },
+      BOX
+    );
+    expect(result.passed).toBe(false);
+    expect(result.details).toContain('does not match');
+  });
+
+  it('soft-passes when no gating track records a boxSha256 yet (transition) (VHS-REQ-666.6)', () => {
+    const result = checkBoxProvenanceBinding({ tracks: [gatingTrack()] }, BOX);
+    expect(result.passed).toBe(true);
+    expect(result.details).toContain('No release-gating track records a structured boxSha256');
+  });
+
+  it('fails closed when the committed manifest has no sha256 (VHS-REQ-666.6)', () => {
+    expect(checkBoxProvenanceBinding({ tracks: [gatingTrack({ boxSha256: 'a'.repeat(64) })] }, {}).passed).toBe(
+      false
+    );
   });
 });

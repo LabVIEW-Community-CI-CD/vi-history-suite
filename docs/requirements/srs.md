@@ -4980,6 +4980,14 @@ Missing numeric IDs are intentional.
     check reads only the committed manifest (never the box
     artifact), so it needs no hypervisor in hosted CI; byte-level box hashing
     stays in `scripts/verifyVagrantBox.cjs --verify` as a maintainer-local step.
+  - Under `--require-release-attestation` the readiness gate also appends a
+    `box-provenance-binding` check that fails closed when a release-gating track
+    records a structured `boxSha256` that does not equal the committed box
+    manifest's `sha256`. A gating track with no recorded `boxSha256` soft-passes
+    so pre-binding attestations are not forced to re-record;
+    `scripts/recordRuntimeValidation.js --box-sha256` records the structured
+    binding, and the Vagrant release/proof drivers pass the committed box
+    manifest `sha256` automatically.
 - Agent Work Scope:
   - Change the readiness gate, the release workflow gate step, the ledger
     release-gating track, and the maintainer/vagrant docs together; keep the

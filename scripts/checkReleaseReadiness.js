@@ -307,6 +307,56 @@ function checkBoxManifestIntegrity(boxManifest, version) {
   );
 }
 
+// GATING (opt-in): bind the release-gating attestation to the box it ran on.
+// When a release-gating track records a structured `boxSha256` (box-provenance
+// S2), it MUST equal the committed box manifest's sha256 — otherwise the
+// attestation was produced on a different box than the one this release ships
+// against. Transition posture: soft-pass when a gating track has no `boxSha256`
+// (pre-S2 attestations), hard-fail only on a present-but-mismatched digest.
+function checkBoxProvenanceBinding(runtimeManifest, boxManifest) {
+  const tracks =
+    runtimeManifest && typeof runtimeManifest === 'object' && Array.isArray(runtimeManifest.tracks)
+      ? runtimeManifest.tracks
+      : [];
+  const gating = tracks.filter((track) => track && typeof track === 'object' && track.releaseGating === true);
+  const boxSha256 =
+    boxManifest && typeof boxManifest === 'object' && typeof boxManifest.sha256 === 'string'
+      ? boxManifest.sha256
+      : null;
+  if (!boxSha256) {
+    return makeCheck(
+      'box-provenance-binding',
+      false,
+      'Committed Vagrant box manifest has no sha256 to bind the attestation against.'
+    );
+  }
+  const bound = gating.filter((track) => typeof track.boxSha256 === 'string' && track.boxSha256.length > 0);
+  const mismatched = bound
+    .filter((track) => track.boxSha256 !== boxSha256)
+    .map((track) => (typeof track.trackId === 'string' ? track.trackId : 'unnamed-track'));
+  if (mismatched.length > 0) {
+    return makeCheck(
+      'box-provenance-binding',
+      false,
+      `Release-gating track(s) recorded a boxSha256 that does not match the committed box manifest (${boxSha256.slice(0, 12)}\u2026): ${mismatched.join(', ')}; re-validate against the shipped box.`
+    );
+  }
+  if (bound.length === 0) {
+    return makeCheck(
+      'box-provenance-binding',
+      true,
+      'No release-gating track records a structured boxSha256 yet; binding check passes (record one via --box-sha256 to bind future attestations).'
+    );
+  }
+  return makeCheck(
+    'box-provenance-binding',
+    true,
+    `Release-gating attestation(s) bound to the committed box (sha256 ${boxSha256.slice(0, 12)}\u2026): ${bound
+      .map((track) => (typeof track.trackId === 'string' ? track.trackId : 'unnamed-track'))
+      .join(', ')}.`
+  );
+}
+
 function buildReleaseReadiness(inputs = {}, meta = {}) {
   const checks = [
     checkRiskLedger(inputs.ledger, inputs.hasSelectableHighRisk),
@@ -319,6 +369,7 @@ function buildReleaseReadiness(inputs = {}, meta = {}) {
   if (inputs.requireReleaseAttestation) {
     checks.push(checkReleaseAttestation(inputs.runtimeManifest, meta.version));
     checks.push(checkBoxManifestIntegrity(inputs.boxManifest, meta.version));
+    checks.push(checkBoxProvenanceBinding(inputs.runtimeManifest, inputs.boxManifest));
   }
   const status = checks.every((check) => check.passed) ? 'READY' : 'ATTENTION';
   return {
@@ -699,6 +750,7 @@ module.exports = {
   deriveRuntimeAttestationFromLedger,
   checkReleaseAttestation,
   checkBoxManifestIntegrity,
+  checkBoxProvenanceBinding,
   buildReleaseReadiness,
   loadSignals,
   renderSummary,
