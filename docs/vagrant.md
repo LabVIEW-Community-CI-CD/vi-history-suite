@@ -90,6 +90,44 @@ these first (all observed at least once on the maintainer host):
 `npm run vagrant:preflight` surfaces a missing box or missing CLI as a `FAIL`
 line so you can catch these before spending time on `vagrant up`.
 
+## Box integrity manifest and durability
+
+The golden box is a large single binary that cannot live in git and is rebuilt
+by hand, so a disk failure or a silently corrupted copy would take the whole
+Windows-validation capability with it. A small committed fingerprint
+(`vagrant/box-manifest.json`, schema `vi-history-suite/vagrant-box-manifest@v1`)
+records the box's SHA-256, size, and provenance so a restored, copied, or
+archived box can be confirmed intact and identical to the box the recorded
+attestations were produced on. The manifest is produced and checked with a
+maintainer helper (`scripts/verifyVagrantBox.cjs`, a `.cjs` outside the
+`scripts/*.js` traceability glob, never CI/VSIX):
+
+```bash
+# After rebuilding the golden box: fingerprint it and commit the manifest.
+node scripts/verifyVagrantBox.cjs --generate "/path/to/vihs-selfheal.box"
+
+# After restoring/copying/archiving a box: fail closed unless it matches.
+node scripts/verifyVagrantBox.cjs --verify "/path/to/vihs-selfheal.box"
+
+# Inspect the committed fingerprint.
+node scripts/verifyVagrantBox.cjs --print
+```
+
+Durability checklist for the golden box:
+
+- Keep at least two copies on **different physical drives** (the maintainer host
+  keeps the provisioned box and the self-heal box on separate drives).
+- Archive one copy to durable off-host storage, then run `--verify` against the
+  archived copy so a future restore is trustworthy.
+- Re-run `--generate` and commit the refreshed manifest whenever the box is
+  rebuilt; the manifest's `recordedForVersion` notes the build it was fingerprinted
+  against.
+- The rebuild recipe is the `bootstrap`/self-heal provisioning in
+  [`vagrant/provision/`](../vagrant/provision) plus the packaging steps; verify a
+  rebuilt box with `--verify` (expect a new hash after a rebuild) and re-run the
+  release attestation (`npm run vagrant:validate:release`) on it before trusting
+  it for a release.
+
 ## WinRM handshake and the restricted `vagrant` account
 
 A packaged box can boot to the Windows 11 desktop while the WinRM handshake
