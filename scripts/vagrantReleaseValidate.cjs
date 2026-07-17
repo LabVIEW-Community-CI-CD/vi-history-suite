@@ -166,9 +166,13 @@ function main() {
     evidence
   ];
   // Bind the attestation to the box it ran on when the committed manifest is
-  // present (best-effort; the record still succeeds without it).
+  // present (best-effort). Under a VIHS_VAGRANT_BOX override getBoxSha256()
+  // returns undefined and we CLEAR any stale binding so the recorded attestation
+  // does not falsely claim the committed box's provenance.
   if (boxSha256) {
     recordArgs.push('--box-sha256', boxSha256);
+  } else if (process.env.VIHS_VAGRANT_BOX && process.env.VIHS_VAGRANT_BOX.trim()) {
+    recordArgs.push('--clear-box-sha256');
   }
   const record = run('node', recordArgs);
   if (record.status !== 0) {

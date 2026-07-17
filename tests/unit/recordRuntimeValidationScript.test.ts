@@ -145,6 +145,35 @@ describe('applyRuntimeValidationRecord (VHS-REQ-601.32)', () => {
     const track = updated.tracks.find((t: any) => t.trackId === 'linux-host-native');
     expect(track.boxSha256).toBeUndefined();
   });
+
+  it('clears an existing boxSha256/boxFileName on --clear-box-sha256 and rejects clear+set (#1530)', () => {
+    const seeded = manifestFixture();
+    const withBinding = applyRuntimeValidationRecord(seeded, {
+      trackId: 'linux-host-native',
+      version: '1.34.0',
+      boxSha256: 'a'.repeat(64),
+      boxFileName: 'vihs.box'
+    });
+    // A subsequent override record clears the stale binding.
+    const cleared = applyRuntimeValidationRecord(withBinding, {
+      trackId: 'linux-host-native',
+      version: '1.35.0',
+      clearBoxSha256: true
+    });
+    const track = cleared.tracks.find((t: any) => t.trackId === 'linux-host-native');
+    expect(track.boxSha256).toBeUndefined();
+    expect(track.boxFileName).toBeUndefined();
+    expect(track.lastValidatedVersion).toBe('1.35.0');
+    // Cannot both clear and set.
+    expect(() =>
+      applyRuntimeValidationRecord(seeded, {
+        trackId: 'linux-host-native',
+        version: '1.34.0',
+        clearBoxSha256: true,
+        boxSha256: 'a'.repeat(64)
+      })
+    ).toThrow(/cannot be combined/);
+  });
 });
 
 describe('serializeManifest (VHS-REQ-601.32)', () => {
