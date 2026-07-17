@@ -32,10 +32,12 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { execSync } = require('node:child_process');
 
+const { SCHEMA_PROVENANCE_KEY, renderSchemaDocument } = require('./lib/schemaEnvelope.js');
+
 const SCHEMA_VERSION = 2;
 const RELEASE_READINESS_SCHEMA_ID =
   'https://raw.githubusercontent.com/LabVIEW-Community-CI-CD/vi-history-suite/main/docs/requirements/release-readiness.schema.json';
-const RELEASE_READINESS_SCHEMA_PROVENANCE_KEY = 'x-vi-history-suite-provenance';
+const RELEASE_READINESS_SCHEMA_PROVENANCE_KEY = SCHEMA_PROVENANCE_KEY;
 const UNKNOWN_COMMIT = '<unknown>';
 const SHIPPED_MANIFEST_RELATIVE_PATH = 'out/requirements/requirements-manifest.json';
 const BOX_MANIFEST_RELATIVE_PATH = 'vagrant/box-manifest.json';
@@ -702,10 +704,7 @@ const RELEASE_READINESS_JSON_SCHEMA = {
 };
 
 function renderSchema(options = {}) {
-  const schema = options.provenance
-    ? { ...RELEASE_READINESS_JSON_SCHEMA, [RELEASE_READINESS_SCHEMA_PROVENANCE_KEY]: options.provenance }
-    : RELEASE_READINESS_JSON_SCHEMA;
-  return JSON.stringify(schema, null, 2);
+  return renderSchemaDocument(RELEASE_READINESS_JSON_SCHEMA, options);
 }
 
 // --- CLI ---
