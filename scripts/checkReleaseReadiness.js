@@ -167,6 +167,19 @@ function describeRuntimeAttestation(version, runtimeEvidence) {
   return `Human-attested real-hardware record present for ${version}: ${tracks}.${staleSuffix}`;
 }
 
+// Advisory one-line summary of the unified supply-chain state read-model
+// (scripts/buildSupplyChainState.js), so a readiness run reports whether every
+// shipped artifact bound to a committed digest (box, runtime, requirements,
+// devtools) is fresh for this build. Informational only — never gating.
+function describeSupplyChainState(state) {
+  if (!state || typeof state !== 'object' || typeof state.status !== 'string') {
+    return 'Supply-chain provenance state unavailable (run npm run supply-chain:state) (informational; not gating).';
+  }
+  const attention = Number.isInteger(state.attentionCount) ? state.attentionCount : 0;
+  const total = Number.isInteger(state.artifactCount) ? state.artifactCount : 0;
+  return `Supply-chain provenance ${state.status}: ${attention} attention of ${total} artifact(s) (informational; not gating).`;
+}
+
 // Derive a display-only runtime-attestation record from the committed
 // runtime-validation ledger (docs/requirements/runtime-validation-ledger.json).
 // Linux-executable tracks validated at `version` are "fresh"; the rest are
@@ -381,7 +394,8 @@ function buildReleaseReadiness(inputs = {}, meta = {}) {
     status,
     manifestDigest: inputs.builtManifestDigest ?? null,
     checks,
-    runtimeAttestation: describeRuntimeAttestation(meta.version, inputs.runtimeEvidence)
+    runtimeAttestation: describeRuntimeAttestation(meta.version, inputs.runtimeEvidence),
+    supplyChain: describeSupplyChainState(inputs.supplyChainState)
   };
 }
 
@@ -499,6 +513,24 @@ function loadSignals(cwd, deps = {}) {
     }
   }
 
+  // Advisory unified supply-chain provenance state (read-model; never gating).
+  // Graceful-degrade to undefined so the readiness verdict is unaffected when
+  // the aggregator or any of its sources are unavailable.
+  let supplyChainState;
+  try {
+    const supplyChainModule = deps.supplyChainModule ?? require('./buildSupplyChainState.js');
+    const state = supplyChainModule.collectSupplyChainState(cwd, {}, {});
+    if (state && typeof state.status === 'string') {
+      supplyChainState = {
+        status: state.status,
+        attentionCount: state.attentionCount,
+        artifactCount: state.artifactCount
+      };
+    }
+  } catch {
+    supplyChainState = undefined;
+  }
+
   return {
     ledger,
     hasSelectableHighRisk: ledgerModule.hasSelectableHighRisk,
@@ -508,7 +540,8 @@ function loadSignals(cwd, deps = {}) {
     runtimeManifest,
     boxManifest,
     requireReleaseAttestation: deps.requireReleaseAttestation === true,
-    runtimeEvidence
+    runtimeEvidence,
+    supplyChainState
   };
 }
 
@@ -522,6 +555,7 @@ function renderSummary(verdict) {
     lines.push(`[release-readiness] ${check.passed ? 'PASS' : 'ATTENTION'} ${check.name}: ${check.details}`);
   }
   lines.push(`[release-readiness] Runtime: ${verdict.runtimeAttestation}`);
+  lines.push(`[release-readiness] Supply-chain: ${verdict.supplyChain}`);
   lines.push(`[release-readiness] Verdict: ${verdict.status}.`);
   lines.push('[release-readiness] Advisory; the marketplace release remains a separate maintainer-only manual action.');
   return lines.join('\n');
@@ -543,6 +577,8 @@ function renderMarkdown(verdict) {
   lines.push('');
   lines.push(`_Runtime attestation:_ ${verdict.runtimeAttestation}`);
   lines.push('');
+  lines.push(`_Supply-chain state:_ ${verdict.supplyChain}`);
+  lines.push('');
   lines.push('_The marketplace release remains a separate maintainer-only manual action._');
   lines.push('');
   return lines.join('\n');
@@ -563,7 +599,8 @@ const RELEASE_READINESS_JSON_SCHEMA = {
     'status',
     'manifestDigest',
     'checks',
-    'runtimeAttestation'
+    'runtimeAttestation',
+    'supplyChain'
   ],
   properties: {
     $schema: { const: RELEASE_READINESS_SCHEMA_ID },
@@ -586,7 +623,8 @@ const RELEASE_READINESS_JSON_SCHEMA = {
         }
       }
     },
-    runtimeAttestation: { type: 'string' }
+    runtimeAttestation: { type: 'string' },
+    supplyChain: { type: 'string' }
   }
 };
 
@@ -747,6 +785,7 @@ module.exports = {
   checkManifestDigest,
   checkVersionChangelog,
   describeRuntimeAttestation,
+  describeSupplyChainState,
   deriveRuntimeAttestationFromLedger,
   checkReleaseAttestation,
   checkBoxManifestIntegrity,
