@@ -6,6 +6,7 @@ import {
   joinPreservingExplicitPathStyle,
   usesExplicitPosixPathStyle
 } from '../support/pathStyle';
+import { pathExistsViaFsAccess as defaultPathExists } from '../support/fsExists';
 import { readArchivedComparisonReportSourceRecordFromSelection } from './comparisonReportArchive';
 import {
   buildDashboardPairEtaAccuracyRecord,
@@ -1225,13 +1226,4 @@ function buildDashboardPairKeepaliveMessage(
   return `${pairPrefix}Still working; ${calibrationNote}elapsed ${formatEstimatedDuration(
     elapsedSeconds
   )}. Last step: ${normalizedStep}.`;
-}
-
-async function defaultPathExists(targetPath: string): Promise<boolean> {
-  try {
-    await fs.access(targetPath);
-    return true;
-  } catch {
-    return false;
-  }
 }

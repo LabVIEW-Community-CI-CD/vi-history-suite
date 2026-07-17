@@ -3,6 +3,7 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
 import { joinPreservingExplicitPathStyle } from '../support/pathStyle';
+import { pathExistsViaFsAccess as defaultPathExists } from '../support/fsExists';
 import {
   ArchivedComparisonReportSourceRecord,
   buildComparisonReportArchivePlanFromSelection,
@@ -1614,15 +1615,6 @@ function deriveCommitPairs(commits: ViHistoryCommit[]): Array<{ selected: ViHist
 
 function createDeterministicId(value: string): string {
   return createHash('sha256').update(value).digest('hex').slice(0, 12);
-}
-
-async function defaultPathExists(targetPath: string): Promise<boolean> {
-  try {
-    await fs.access(targetPath);
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 function defaultNow(): string {

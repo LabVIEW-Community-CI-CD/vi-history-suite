@@ -1,4 +1,5 @@
 import * as fs from 'node:fs/promises';
+import { pathExistsViaFsAccess as defaultPathExists } from '../support/fsExists';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 
@@ -1351,15 +1352,6 @@ async function openPersistedComparisonReportPanel(
   }
 
   return result;
-}
-
-async function defaultPathExists(targetPath: string): Promise<boolean> {
-  try {
-    await fs.access(targetPath);
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 export function renderComparisonReportPanelHtml(options: {
