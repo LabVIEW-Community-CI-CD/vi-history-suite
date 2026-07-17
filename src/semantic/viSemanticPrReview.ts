@@ -5,6 +5,7 @@ import {
   type CompareViRevisionsRuntimeRequest
 } from './compareViRevisions';
 import type { ViSemanticComparisonModel } from './viSemanticModel';
+import { requireRepositoryRoot } from './repositoryTarget';
 
 // The PR-review Markdown renderer and its sticky-comment marker live in the
 // dependency-free renderer leaf so the MCP handler can render a review without
@@ -198,10 +199,7 @@ export async function buildViSemanticPrReview(
   input: ViSemanticPrReviewInput,
   deps: ViSemanticPrReviewDeps = {}
 ): Promise<ViSemanticPrReview> {
-  const repositoryRoot = (input.repositoryRoot ?? '').trim();
-  if (!repositoryRoot) {
-    throw new Error('repositoryRoot is required');
-  }
+  const repositoryRoot = requireRepositoryRoot(input.repositoryRoot);
   const baseHash = (input.baseHash ?? '').trim();
   const selectedHash = (input.selectedHash ?? '').trim();
   if (!baseHash || !selectedHash) {
