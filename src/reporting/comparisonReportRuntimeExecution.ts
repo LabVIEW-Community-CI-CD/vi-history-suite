@@ -54,7 +54,6 @@ import {
 import {
   parseLabviewCliDiagnosticLogPath,
   resolveHostReadableDiagnosticPath,
-  resolveMappedRuntimeDiagnosticPath,
   classifyLabviewCliDiagnosticText,
   type RuntimeDiagnosticPathMapping
 } from './runtime/labviewCliDiagnostics';
@@ -64,6 +63,13 @@ export {
   resolveMappedRuntimeDiagnosticPath,
   classifyLabviewCliDiagnosticText
 } from './runtime/labviewCliDiagnostics';
+import {
+  isLabviewCliLogOnlyStdout,
+  mergeDiagnosticNotes,
+  buildProcessObservationNotes,
+  extractCommandOptionValue
+} from './runtime/diagnosticNotes';
+export { extractCommandOptionValue } from './runtime/diagnosticNotes';
 import { nowIso } from '../support/clock';
 import { ComparisonCommandPlan, ComparisonReportOptions } from './comparisonReportPlan';
 import { buildComparisonReportExecutionPlan } from './comparisonReportExecutionPlan';
@@ -5064,81 +5070,6 @@ function classifyTimedOutRuntimeDiagnostic(options: {
       'LabVIEW CLI timed out without generating a report; at the retained cli-log-banner snapshot, LabVIEWCLI.exe was observed while LabVIEW.exe was not observed.'
     ]
   };
-}
-
-function isLabviewCliLogOnlyStdout(stdout: string): boolean {
-  const lines = stdout
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0);
-
-  return (
-    lines.length === 1 &&
-    /^LabVIEWCLI started logging in file:\s*\S+/i.test(lines[0])
-  );
-}
-
-function mergeDiagnosticNotes(...noteGroups: Array<string[] | undefined>): string[] {
-  const merged: string[] = [];
-  for (const noteGroup of noteGroups) {
-    for (const note of noteGroup ?? []) {
-      if (!merged.includes(note)) {
-        merged.push(note);
-      }
-    }
-  }
-
-  return merged;
-}
-
-function buildProcessObservationNotes(
-  observations:
-    | {
-        bannerSnapshot?: RuntimeProcessObservation;
-        exitSnapshot?: RuntimeProcessObservation;
-      }
-    | undefined
-): string[] {
-  const notes: string[] = [];
-  for (const observation of [observations?.bannerSnapshot, observations?.exitSnapshot]) {
-    if (!observation) {
-      continue;
-    }
-
-    const observedProcessNames =
-      observation.observedProcessNames.length > 0
-        ? observation.observedProcessNames.join(', ')
-        : 'none';
-
-    notes.push(
-      `At the retained ${observation.trigger} snapshot (${observation.capturedAt}), observed LabVIEW-related processes: ${observedProcessNames}.`
-    );
-
-    if (observation.labviewCliProcessObserved && !observation.labviewProcessObserved) {
-      notes.push(
-        `At the retained ${observation.trigger} snapshot, LabVIEWCLI.exe was observed while LabVIEW.exe was not observed.`
-      );
-    }
-
-    if (!observation.lvcompareProcessObserved) {
-      notes.push(
-        `At the retained ${observation.trigger} snapshot, LVCompare.exe was not observed.`
-      );
-    }
-  }
-
-  return notes;
-}
-
-export function extractCommandOptionValue(args: string[], optionName: string): string | undefined {
-  for (let index = 0; index < args.length - 1; index += 1) {
-    if (args[index] === optionName) {
-      const value = args[index + 1]?.trim();
-      return value ? value : undefined;
-    }
-  }
-
-  return undefined;
 }
 
 export function requiresWindowsInterop(
