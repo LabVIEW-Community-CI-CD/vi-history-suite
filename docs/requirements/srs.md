@@ -5107,10 +5107,12 @@ Missing numeric IDs are intentional.
 - Implementation References:
   - `scripts/buildSupplyChainState.js`
   - `scripts/checkReleaseReadiness.js`
+  - `.github/workflows/marketplace-release.yml`
   - `package.json`
 - Verification References:
   - `tests/unit/supplyChainStateScript.test.ts`
   - `tests/unit/releaseReadinessScript.test.ts`
+  - `tests/unit/marketplaceReleaseWorkflow.test.ts`
 - Change Guidance:
   - Keep the read-model non-gating by default and its JSON packet
     schema-versioned; add new provenance streams as additional artifact records

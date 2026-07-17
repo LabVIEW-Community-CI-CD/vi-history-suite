@@ -98,6 +98,12 @@ jobs:
           echo "Enforcing the mandatory release runtime attestation (VHS-REQ-666) from the committed runtime-validation ledger." | tee -a "$GITHUB_STEP_SUMMARY"
           node scripts/checkReleaseReadiness.js --strict --require-release-attestation
 
+      - name: Verify Supply-Chain Provenance Freshness
+        run: |
+          set -euo pipefail
+          echo "Enforcing supply-chain provenance freshness (VHS-REQ-668): every shipped artifact bound to a committed digest must be fresh for this build." | tee -a "$GITHUB_STEP_SUMMARY"
+          node scripts/checkReleaseReadiness.js --strict --require-supply-chain-fresh
+
       - name: Locate VSIX
         id: locate-vsix
         run: |
