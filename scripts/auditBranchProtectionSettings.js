@@ -5,6 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const { SCHEMA_PROVENANCE_KEY, renderSchemaDocument } = require('./lib/schemaEnvelope.js');
+const { parseSharedOutputArgs, generatedAt } = require('./lib/outputContract.js');
 
 const DEFAULT_REPO = 'LabVIEW-Community-CI-CD/vi-history-suite';
 const DEFAULT_BRANCH = 'develop';
@@ -281,64 +282,66 @@ function enableFullHardeningOptions(options) {
 }
 
 function parseArgs(argv) {
-  const options = {
-    repo: DEFAULT_REPO,
-    branch: DEFAULT_BRANCH,
-    allBranches: false,
-    requireAdvisory: false,
-    requireReview: false,
-    requireLinearHistory: false,
-    requireConversationResolution: false,
-    requireSignedCommits: false,
-    requireStaleReviewDismissal: false,
-    requireCodeOwnerReview: false,
-    requireLastPushApproval: false,
-    requireBranchCreationBlock: false,
-    requireFullHardening: false,
-    emitJson: false,
-    emitMarkdown: false,
-    emitSchema: false,
-    includeProvenance: false,
-    failOnDuplicateCheckIds: false,
-    outputPath: undefined,
-    help: false
-  };
+  const { options, positionals } = parseSharedOutputArgs(argv, {
+    defaults: {
+      repo: DEFAULT_REPO,
+      branch: DEFAULT_BRANCH,
+      allBranches: false,
+      requireAdvisory: false,
+      requireReview: false,
+      requireLinearHistory: false,
+      requireConversationResolution: false,
+      requireSignedCommits: false,
+      requireStaleReviewDismissal: false,
+      requireCodeOwnerReview: false,
+      requireLastPushApproval: false,
+      requireBranchCreationBlock: false,
+      requireFullHardening: false,
+      emitJson: false,
+      emitMarkdown: false,
+      emitSchema: false,
+      includeProvenance: false,
+      failOnDuplicateCheckIds: false,
+      outputPath: undefined,
+      help: false
+    },
+    // This script exposes its output modes under emit* option keys and enforces
+    // exclusivity with its own message below, so the shared common flags are
+    // remapped here and the shared single-output-mode guard is disabled.
+    boolFlags: {
+      '--all': 'allBranches',
+      '--require-advisory': 'requireAdvisory',
+      '--require-review': 'requireReview',
+      '--require-linear-history': 'requireLinearHistory',
+      '--require-conversation-resolution': 'requireConversationResolution',
+      '--require-signed-commits': 'requireSignedCommits',
+      '--require-stale-review-dismissal': 'requireStaleReviewDismissal',
+      '--require-code-owner-review': 'requireCodeOwnerReview',
+      '--require-last-push-approval': 'requireLastPushApproval',
+      '--require-branch-creation-block': 'requireBranchCreationBlock',
+      '--require-full-hardening': 'requireFullHardening',
+      '--json': 'emitJson',
+      '--markdown': 'emitMarkdown',
+      '--schema': 'emitSchema',
+      '--include-provenance': 'includeProvenance',
+      '--fail-on-duplicate-check-ids': 'failOnDuplicateCheckIds',
+      '--help': 'help',
+      '-h': 'help'
+    },
+    valueFlags: {
+      '--repo': 'repo',
+      '--branch': 'branch'
+    },
+    enforceSingleOutputMode: false
+  });
 
-  for (let index = 0; index < argv.length; index += 1) {
-    const arg = argv[index];
-    const next = () => {
-      const value = argv[index + 1];
-      if (value === undefined || value.startsWith('--')) {
-        throw new Error(`${arg} requires a value`);
-      }
-      index += 1;
-      return value;
-    };
+  // This CLI takes no positional arguments; treat any as unknown (as before).
+  if (positionals.length > 0) {
+    throw new Error(`Unknown argument: ${positionals[0]}`);
+  }
 
-    if (arg === '--repo') options.repo = next();
-    else if (arg === '--branch') options.branch = next();
-    else if (arg === '--all') options.allBranches = true;
-    else if (arg === '--require-advisory') options.requireAdvisory = true;
-    else if (arg === '--require-review') options.requireReview = true;
-    else if (arg === '--require-linear-history') options.requireLinearHistory = true;
-    else if (arg === '--require-conversation-resolution') options.requireConversationResolution = true;
-    else if (arg === '--require-signed-commits') options.requireSignedCommits = true;
-    else if (arg === '--require-stale-review-dismissal') options.requireStaleReviewDismissal = true;
-    else if (arg === '--require-code-owner-review') options.requireCodeOwnerReview = true;
-    else if (arg === '--require-last-push-approval') options.requireLastPushApproval = true;
-    else if (arg === '--require-branch-creation-block') options.requireBranchCreationBlock = true;
-    else if (arg === '--require-full-hardening') {
-      options.requireFullHardening = true;
-      enableFullHardeningOptions(options);
-    }
-    else if (arg === '--json') options.emitJson = true;
-    else if (arg === '--markdown') options.emitMarkdown = true;
-    else if (arg === '--schema') options.emitSchema = true;
-    else if (arg === '--include-provenance') options.includeProvenance = true;
-    else if (arg === '--fail-on-duplicate-check-ids') options.failOnDuplicateCheckIds = true;
-    else if (arg === '--output') options.outputPath = next();
-    else if (arg === '--help' || arg === '-h') options.help = true;
-    else throw new Error(`Unknown argument: ${arg}`);
+  if (options.requireFullHardening) {
+    enableFullHardeningOptions(options);
   }
 
   if (options.help) {
@@ -1368,14 +1371,7 @@ function outputModeForOptions(options = {}) {
 }
 
 function generatedAtForProvenance(deps = {}) {
-  if (typeof deps.now === 'function') {
-    const now = deps.now();
-    return now instanceof Date ? now.toISOString() : String(now);
-  }
-  if (deps.generatedAt !== undefined) {
-    return deps.generatedAt instanceof Date ? deps.generatedAt.toISOString() : String(deps.generatedAt);
-  }
-  return new Date().toISOString();
+  return generatedAt(deps);
 }
 
 function buildAuditProvenance(branchResults, options = {}, deps = {}) {
