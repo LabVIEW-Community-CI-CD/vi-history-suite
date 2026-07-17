@@ -297,6 +297,23 @@ describe('compareViRevisions', () => {
     expect(result).toEqual({ status: 'failed', reason: 'git not found' });
   });
 
+  it('rejects a blank repositoryRoot or relativePath', async () => {
+    const { deps } = makeHarness();
+    await expect(
+      compareViRevisions(input({ repositoryRoot: '   ' }), deps)
+    ).rejects.toThrow('repositoryRoot is required');
+    await expect(
+      compareViRevisions(input({ relativePath: '   ' }), deps)
+    ).rejects.toThrow('relativePath is required');
+  });
+
+  it('rejects an invalid reportType', async () => {
+    const { deps } = makeHarness();
+    await expect(
+      compareViRevisions(input({ reportType: 'bogus' as never }), deps)
+    ).rejects.toThrow('reportType must be "diff" or "print"');
+  });
+
   it('rejects an absolute relativePath', async () => {
     const { deps } = makeHarness();
     await expect(
