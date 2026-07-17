@@ -37,6 +37,7 @@ const { auditRequirementCriteriaInventory } = require('./auditRequirementCriteri
 const { checkRequirementsIntegrity } = require('./checkRequirementsIntegrity.js');
 const { generateCoverageMap } = require('./mapCoverageToTraceability.js');
 const { SCHEMA_PROVENANCE_KEY, renderSchemaDocument } = require('./lib/schemaEnvelope.js');
+const { outputModeForOptions, parseSharedOutputArgs } = require('./lib/outputContract.js');
 
 const MUTATION_REPORT_PATH = 'reports/mutation/mutation.json';
 const REQUIREMENTS_HEALTH_SCHEMA_VERSION = 1;
@@ -372,45 +373,18 @@ function summarizeRequirementHealth(result) {
 }
 
 function parseArgs(argv = []) {
-  const options = {
-    json: false,
-    markdown: false,
-    schema: false,
-    strict: false,
-    includeProvenance: false,
-    outputPath: undefined,
-    positionals: []
-  };
-  for (let index = 0; index < argv.length; index += 1) {
-    const arg = argv[index];
-    const next = () => {
-      const value = argv[index + 1];
-      if (value === undefined || value.startsWith('--')) {
-        throw new Error(`${arg} requires a value`);
-      }
-      index += 1;
-      return value;
-    };
-
-    if (arg === '--json') options.json = true;
-    else if (arg === '--markdown') options.markdown = true;
-    else if (arg === '--schema') options.schema = true;
-    else if (arg === '--strict') options.strict = true;
-    else if (arg === '--include-provenance') options.includeProvenance = true;
-    else if (arg === '--output') options.outputPath = next();
-    else if (arg.startsWith('--')) throw new Error(`Unknown argument: ${arg}`);
-    else options.positionals.push(arg);
-  }
-  if ([options.json, options.markdown, options.schema].filter(Boolean).length > 1) {
-    throw new Error('Use only one output mode: --json, --markdown, or --schema');
-  }
+  const { options, positionals } = parseSharedOutputArgs(argv, {
+    defaults: {
+      json: false,
+      markdown: false,
+      schema: false,
+      strict: false,
+      includeProvenance: false,
+      outputPath: undefined
+    }
+  });
+  options.positionals = positionals;
   return options;
-}
-
-function outputModeForOptions(options = {}) {
-  if (options.schema) return 'schema';
-  if (options.markdown) return 'markdown';
-  return options.json ? 'json' : 'text';
 }
 
 function renderRequirementsHealthJsonSchema(options = {}) {
