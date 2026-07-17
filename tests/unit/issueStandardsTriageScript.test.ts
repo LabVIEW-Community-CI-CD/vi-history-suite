@@ -9,8 +9,11 @@ const repoRoot = path.resolve(__dirname, '..', '..');
 const {
   DEFAULT_REPO,
   DEFAULT_SAVE_DIR,
+  TRIAGE_SUMMARY_SCHEMA_ID,
+  TRIAGE_SUMMARY_JSON_SCHEMA,
   ISSUE_JSON_FIELDS,
   parseArgs,
+  renderSchema,
   issueViewArgs,
   standardsDockerSteps,
   replaceSnapshotMount,
@@ -18,6 +21,8 @@ const {
 } = require('../../scripts/runIssueStandardsTriage.js') as {
   DEFAULT_REPO: string;
   DEFAULT_SAVE_DIR: string;
+  TRIAGE_SUMMARY_SCHEMA_ID: string;
+  TRIAGE_SUMMARY_JSON_SCHEMA: { required: string[]; properties: Record<string, { const?: unknown }> };
   ISSUE_JSON_FIELDS: string[];
   parseArgs: (argv: string[]) => {
     issue?: string;
@@ -30,6 +35,7 @@ const {
     keepSnapshot: boolean;
     help: boolean;
   };
+  renderSchema: (options?: { provenance?: unknown }) => string;
   issueViewArgs: (issue: string, repo: string) => string[];
   standardsDockerSteps: (options: {
     image: string;
@@ -92,6 +98,28 @@ describe('issue standards triage script', () => {
     expect(options.requirementsSpecScope).toBe('system');
     expect(options.saveDir).toBe(DEFAULT_SAVE_DIR);
     expect(options.skipIssueFetch).toBe(false);
+  });
+
+  it('publishes the triage-summary JSON Schema via --schema without fetching or spawning (VHS-REQ-601)', () => {
+    const schema = JSON.parse(renderSchema()) as {
+      $id: string;
+      required: string[];
+      properties: { $schema: { const: string }; schemaVersion: { const: number } };
+    };
+    expect(schema.$id).toBe(TRIAGE_SUMMARY_SCHEMA_ID);
+    expect(schema.properties.$schema.const).toBe(TRIAGE_SUMMARY_SCHEMA_ID);
+    expect(schema.properties.schemaVersion.const).toBe(1);
+
+    // --schema attaches provenance under the shared extension key.
+    const withProvenance = JSON.parse(renderSchema({ provenance: { generatedAt: 'x' } })) as Record<string, unknown>;
+    expect(withProvenance['x-vi-history-suite-provenance']).toEqual({ generatedAt: 'x' });
+
+    // --schema does not require --issue and never spawns docker/gh.
+    const spawnSync = vi.fn();
+    const result = runIssueStandardsTriage(['--schema'], { spawnSync });
+    expect(result.exitCode).toBe(0);
+    expect((JSON.parse(result.markdown) as Record<string, unknown>).$id).toBe(TRIAGE_SUMMARY_SCHEMA_ID);
+    expect(spawnSync).not.toHaveBeenCalled();
   });
 
   it('builds issue and Docker standards commands with explicit profile and scope', () => {
@@ -209,6 +237,7 @@ describe('issue standards triage script', () => {
     const triageSummaryPath = path.join(root, 'evidence', 'issue-1040', 'triage-summary.json');
     expect(fs.existsSync(triageSummaryPath)).toBe(true);
     const triageSummary = JSON.parse(fs.readFileSync(triageSummaryPath, 'utf8')) as {
+      $schema: string;
       schemaVersion: number;
       options: {
         issue: string;
@@ -266,6 +295,7 @@ describe('issue standards triage script', () => {
     const evidenceScan = triageSummary.standards.find((step) => step.name === 'evidence-scan')!;
     const assuranceScorecard = triageSummary.standards.find((step) => step.name === 'assurance-scorecard')!;
     expect(Object.keys(triageSummary)).toEqual([
+      '$schema',
       'schemaVersion',
       'options',
       'outputDir',
@@ -277,6 +307,12 @@ describe('issue standards triage script', () => {
       'standards',
       'success'
     ]);
+    // The retained packet self-describes and satisfies the published schema contract (no drift).
+    expect(triageSummary.$schema).toBe(TRIAGE_SUMMARY_SCHEMA_ID);
+    expect(TRIAGE_SUMMARY_JSON_SCHEMA.required.filter((key) => !(key in triageSummary))).toEqual([]);
+    expect(triageSummary.$schema).toBe(
+      (TRIAGE_SUMMARY_JSON_SCHEMA.properties.$schema as { const: string }).const
+    );
     expect(Object.keys(triageSummary.options)).toEqual([
       'issue',
       'repo',
@@ -286,6 +322,7 @@ describe('issue standards triage script', () => {
       'saveDir',
       'skipIssueFetch',
       'keepSnapshot',
+      'schema',
       'help'
     ]);
     expect(Object.keys(retainedIssue)).toEqual(ISSUE_JSON_FIELDS);
