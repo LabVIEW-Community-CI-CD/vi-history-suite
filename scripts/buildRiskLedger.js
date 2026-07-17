@@ -37,6 +37,14 @@ const path = require('node:path');
 const { execSync } = require('node:child_process');
 
 const { SCHEMA_PROVENANCE_KEY, renderSchemaDocument } = require('./lib/schemaEnvelope.js');
+const {
+  outputModeForOptions,
+  parseSharedOutputArgs,
+  generatedAt: generatedAtFor,
+  buildProvenance,
+  resolveOutputPath,
+  writeOutput
+} = require('./lib/outputContract.js');
 
 const SCHEMA_VERSION = 1;
 const RISK_LEDGER_SCHEMA_ID =
@@ -734,79 +742,34 @@ function renderSchema(options = {}) {
 // ---- CLI ----
 
 function parseArgs(argv = []) {
-  const options = {
-    json: false,
-    markdown: false,
-    schema: false,
-    strict: false,
-    includeProvenance: false,
-    outputPath: undefined,
-    coverageJsonPath: undefined,
-    requirementsJsonPath: undefined,
-    standardsSummaryPath: undefined,
-    runtimeValidationJsonPath: undefined,
-    maxCoverageDebtEntries: 10,
-    positionals: []
-  };
-  for (let index = 0; index < argv.length; index += 1) {
-    const arg = argv[index];
-    const next = () => {
-      const value = argv[index + 1];
-      if (value === undefined || value.startsWith('--')) {
-        throw new Error(`${arg} requires a value`);
-      }
-      index += 1;
-      return value;
-    };
-    if (arg === '--json') options.json = true;
-    else if (arg === '--markdown') options.markdown = true;
-    else if (arg === '--schema') options.schema = true;
-    else if (arg === '--strict') options.strict = true;
-    else if (arg === '--include-provenance') options.includeProvenance = true;
-    else if (arg === '--output') options.outputPath = next();
-    else if (arg === '--coverage-json') options.coverageJsonPath = next();
-    else if (arg === '--requirements-json') options.requirementsJsonPath = next();
-    else if (arg === '--standards-summary') options.standardsSummaryPath = next();
-    else if (arg === '--runtime-validation-json') options.runtimeValidationJsonPath = next();
-    else if (arg === '--box-manifest-json') options.boxManifestJsonPath = next();
-    else if (arg === '--max-coverage-debt-entries') options.maxCoverageDebtEntries = Number(next());
-    else if (arg.startsWith('--')) throw new Error(`Unknown argument: ${arg}`);
-    else options.positionals.push(arg);
-  }
-  if ([options.json, options.markdown, options.schema].filter(Boolean).length > 1) {
-    throw new Error('Use only one output mode: --json, --markdown, or --schema');
-  }
+  const { options, positionals } = parseSharedOutputArgs(argv, {
+    defaults: {
+      json: false,
+      markdown: false,
+      schema: false,
+      strict: false,
+      includeProvenance: false,
+      outputPath: undefined,
+      coverageJsonPath: undefined,
+      requirementsJsonPath: undefined,
+      standardsSummaryPath: undefined,
+      runtimeValidationJsonPath: undefined,
+      maxCoverageDebtEntries: 10
+    },
+    valueFlags: {
+      '--coverage-json': 'coverageJsonPath',
+      '--requirements-json': 'requirementsJsonPath',
+      '--standards-summary': 'standardsSummaryPath',
+      '--runtime-validation-json': 'runtimeValidationJsonPath',
+      '--box-manifest-json': 'boxManifestJsonPath',
+      '--max-coverage-debt-entries': 'maxCoverageDebtEntries'
+    },
+    transforms: {
+      maxCoverageDebtEntries: (value) => Number(value)
+    }
+  });
+  options.positionals = positionals;
   return options;
-}
-
-function outputModeForOptions(options = {}) {
-  if (options.schema) return 'schema';
-  if (options.markdown) return 'markdown';
-  return options.json ? 'json' : 'text';
-}
-
-// Reject empty, absolute, or parent-escaping output paths (write inside cwd only).
-function resolveOutputPath(cwd, relativePath) {
-  if (typeof relativePath !== 'string' || relativePath.trim().length === 0) {
-    throw new Error('--output requires a non-empty relative path');
-  }
-  if (path.isAbsolute(relativePath)) {
-    throw new Error('--output must be a relative path inside the working directory');
-  }
-  const resolved = path.resolve(cwd, relativePath);
-  const normalizedRoot = path.resolve(cwd) + path.sep;
-  if (!resolved.startsWith(normalizedRoot)) {
-    throw new Error('--output must stay inside the working directory');
-  }
-  return resolved;
-}
-
-function generatedAtFor(deps = {}) {
-  if (typeof deps.now === 'function') {
-    const value = deps.now();
-    return value instanceof Date ? value.toISOString() : String(value);
-  }
-  return new Date().toISOString();
 }
 
 function main(argv = process.argv.slice(2), deps = {}) {
@@ -824,18 +787,12 @@ function main(argv = process.argv.slice(2), deps = {}) {
   const outputMode = outputModeForOptions(options);
 
   const provenance = options.includeProvenance
-    ? {
-        generatedAt: generatedAtFor(deps),
-        cwd,
-        outputMode,
-        strict: options.strict,
-        argv: [...argv]
-      }
+    ? buildProvenance({ cwd, outputMode, strict: options.strict, argv }, deps)
     : undefined;
 
   if (options.schema) {
     const rendered = renderSchema({ provenance });
-    writeOrPrint(rendered, options, cwd, stdout, deps);
+    writeOutput(rendered, { outputPath: options.outputPath, cwd, stdout, deps, label: 'risk-ledger' });
     return 0;
   }
 
@@ -869,25 +826,12 @@ function main(argv = process.argv.slice(2), deps = {}) {
     rendered = renderSummary(ledger);
   }
 
-  writeOrPrint(rendered, options, cwd, stdout, deps);
+  writeOutput(rendered, { outputPath: options.outputPath, cwd, stdout, deps, label: 'risk-ledger' });
 
   if (options.strict && hasSelectableHighRisk(ledger)) {
     return 1;
   }
   return 0;
-}
-
-function writeOrPrint(content, options, cwd, stdout, deps) {
-  if (options.outputPath) {
-    const resolved = resolveOutputPath(cwd, options.outputPath);
-    const mkdirSync = deps.mkdirSync ?? fs.mkdirSync;
-    const writeFile = deps.writeFile ?? fs.writeFileSync;
-    mkdirSync(path.dirname(resolved), { recursive: true });
-    writeFile(resolved, `${content}\n`, 'utf8');
-    stdout.write(`[risk-ledger] Wrote ${options.outputPath}\n`);
-    return;
-  }
-  stdout.write(`${content}\n`);
 }
 
 if (require.main === module) {
