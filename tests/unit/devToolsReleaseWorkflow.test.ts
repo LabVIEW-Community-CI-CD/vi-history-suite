@@ -74,6 +74,7 @@ describe('Dev-tools release workflow (DS3)', () => {
     // workflow's prerelease (e.g. diagnostic-test-vsix-*) is never selected, and
     // paginate all releases so a large history cannot hide the latest one.
     expect(decideBlock).toContain('gh api --paginate --slurp');
+    expect(decideBlock).toContain('| jq -r');
     expect(decideBlock).toContain('.prerelease == $want_prerelease');
     expect(decideBlock).toContain('startswith(\\"$prefix\\")');
     expect(decideBlock).toContain('startswith(\\"devtools-dev-\\") | not');
@@ -104,6 +105,7 @@ describe('Dev-tools release workflow (DS3)', () => {
     // Honors the retention variable (default 5, 0 disables) and deletes beyond N.
     expect(pruneBlock).toContain('vars.DEVTOOLS_RELEASE_RETENTION');
     expect(pruneBlock).toContain('gh api --paginate --slurp');
+    expect(pruneBlock).toContain('| jq -r');
     expect(pruneBlock).toContain('gh release delete');
     expect(pruneBlock).toContain('--cleanup-tag');
   });
