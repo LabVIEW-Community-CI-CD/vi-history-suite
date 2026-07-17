@@ -11,6 +11,7 @@ import {
 } from '../../src/semantic/viSemanticModel';
 import {
   buildViSemanticPrReview,
+  createDefaultListChangedPaths,
   isViSourcePath,
   planReviewReportCopies,
   renderViSemanticPrReviewMarkdown,
@@ -298,5 +299,28 @@ describe('renderViSemanticPrReviewPendingMarkdown', () => {
     expect(markdown.startsWith(VI_SEMANTIC_PR_REVIEW_COMMENT_MARKER)).toBe(true);
     expect(markdown).toContain('in progress');
     expect(markdown).not.toContain('` `');
+  });
+});
+
+describe('createDefaultListChangedPaths', () => {
+  it('parses git diff stdout into trimmed, non-empty paths and passes the git args', async () => {
+    const runGit = vi.fn(async () => 'a/One.vi\r\n  b/Two.vi  \n\n\nc/Three.vi\n');
+    const listChangedPaths = createDefaultListChangedPaths(runGit as never);
+
+    const paths = await listChangedPaths('/repo', 'base123', 'sel456');
+
+    expect(paths).toEqual(['a/One.vi', 'b/Two.vi', 'c/Three.vi']);
+    expect(runGit).toHaveBeenCalledWith(
+      ['diff', '--name-only', 'base123', 'sel456'],
+      '/repo',
+      'utf8'
+    );
+  });
+
+  it('returns an empty list when git reports no changed paths', async () => {
+    const runGit = vi.fn(async () => '\n   \n');
+    const listChangedPaths = createDefaultListChangedPaths(runGit as never);
+
+    expect(await listChangedPaths('/repo', 'base', 'sel')).toEqual([]);
   });
 });
