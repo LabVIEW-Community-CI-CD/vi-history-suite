@@ -124,9 +124,10 @@ jobs:
           # bounded `gh release list --limit N`, so a large history of unrelated
           # releases cannot push the latest dev-tools release off the window.
           # --slurp returns one array of pages; flatten with .[][] so the jq
-          # sort/select runs over the combined list, not per page.
+          # sort/select runs over the combined list, not per page. gh's own
+          # --jq is incompatible with --slurp, so pipe to external jq.
           last_tag=$(gh api --paginate --slurp "/repos/$GITHUB_REPOSITORY/releases" \
-            --jq "[.[][] | select(.prerelease == $want_prerelease and (.tag_name | startswith(\"$prefix\")) and (\"$CHANNEL\" != \"stable\" or (.tag_name | startswith(\"devtools-dev-\") | not)))] | sort_by(.created_at) | reverse | .[0].tag_name // \"\"")
+            | jq -r "[.[][] | select(.prerelease == $want_prerelease and (.tag_name | startswith(\"$prefix\")) and (\"$CHANNEL\" != \"stable\" or (.tag_name | startswith(\"devtools-dev-\") | not)))] | sort_by(.created_at) | reverse | .[0].tag_name // \"\"")
           prior_digest=""
           if [ -n "$last_tag" ]; then
             gh release download "$last_tag" --pattern devtools-release.json --dir prior --clobber || true
@@ -189,7 +190,7 @@ jobs:
           # hide older dev-tools releases from keep-last-N pruning. --slurp +
           # .[][] flattens the pages so the sort orders the combined list.
           mapfile -t channel_tags < <(gh api --paginate --slurp "/repos/$GITHUB_REPOSITORY/releases" \
-            --jq "[.[][] | select(.prerelease == $want_prerelease and (.tag_name | startswith(\"$prefix\")) and (\"$CHANNEL\" != \"stable\" or (.tag_name | startswith(\"devtools-dev-\") | not)))] | sort_by(.created_at) | reverse | .[].tag_name")
+            | jq -r "[.[][] | select(.prerelease == $want_prerelease and (.tag_name | startswith(\"$prefix\")) and (\"$CHANNEL\" != \"stable\" or (.tag_name | startswith(\"devtools-dev-\") | not)))] | sort_by(.created_at) | reverse | .[].tag_name")
           index=0
           for tag in "${channel_tags[@]}"; do
             index=$((index + 1))
