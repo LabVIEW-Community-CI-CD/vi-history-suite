@@ -64,7 +64,12 @@ publishes the artifact. It is **dry-run-first**:
   run builds, self-verifies, and reports the dedup decision, uploading the
   artifact to the run only — it creates no GitHub Release.
 - A push to `develop` maps to the `prerelease` channel; a push to `main` maps to
-  the `stable` channel.
+  the `stable` channel. A push **behaves as a dry run** (build + verify + dedup,
+  no release) unless the opt-in repository variable
+  `DEVTOOLS_RELEASE_PUBLISH` is set to `true`. This keeps the channel
+  dry-run-first: enabling live auto-publish on push is a deliberate switch. A
+  manual dispatch with `dry_run=false` always publishes on explicit maintainer
+  intent, regardless of the variable.
 - The workflow **deduplicates on the content digest**: it compares against the
   latest release of the channel and skips when nothing tool-related changed, so
   no-op merges do not churn releases.

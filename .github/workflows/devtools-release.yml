@@ -70,21 +70,25 @@ jobs:
           INPUT_DRY_RUN: ${{ inputs.dry_run }}
           EVENT_NAME: ${{ github.event_name }}
           REF_NAME: ${{ github.ref_name }}
+          PUBLISH_ENABLED: ${{ vars.DEVTOOLS_RELEASE_PUBLISH }}
         run: |
           channel="$INPUT_CHANNEL"
           if [ -z "$channel" ]; then
             if [ "$REF_NAME" = "main" ]; then channel="stable"; else channel="prerelease"; fi
           fi
-          # Only a manual dispatch can request a real (non-dry-run) publish via the
-          # input; push events always run the real path.
-          if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ "$INPUT_DRY_RUN" != "false" ]; then
-            dry_run="true"
+          # Dry-run-first: a push publishes a real release ONLY when the opt-in
+          # repository variable DEVTOOLS_RELEASE_PUBLISH == 'true' is set;
+          # otherwise a push behaves as a dry run (build + verify + dedup, no
+          # release). A manual dispatch with dry_run=false always publishes on
+          # explicit maintainer intent, regardless of the variable.
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            if [ "$INPUT_DRY_RUN" = "false" ]; then dry_run="false"; else dry_run="true"; fi
           else
-            dry_run="false"
+            if [ "$PUBLISH_ENABLED" = "true" ]; then dry_run="false"; else dry_run="true"; fi
           fi
           echo "channel=$channel" >> "$GITHUB_OUTPUT"
           echo "dry_run=$dry_run" >> "$GITHUB_OUTPUT"
-          echo "[devtools-release] channel=$channel dry_run=$dry_run event=$EVENT_NAME"
+          echo "[devtools-release] channel=$channel dry_run=$dry_run event=$EVENT_NAME publish_enabled=${PUBLISH_ENABLED:-<unset>}"
 
       - name: Build provenance manifest and tarball
         run: |

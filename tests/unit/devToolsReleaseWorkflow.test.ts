@@ -62,6 +62,18 @@ describe('Dev-tools release workflow (DS3)', () => {
     expect(createBlock).toContain("steps.decide.outputs.changed == 'true'");
   });
 
+  it('treats a push as dry-run unless the opt-in publish variable is set (dry-run-first)', () => {
+    const workflow = readWorkflow();
+    // A push publishes only when DEVTOOLS_RELEASE_PUBLISH == 'true'; otherwise dry-run.
+    expect(workflow).toContain('vars.DEVTOOLS_RELEASE_PUBLISH');
+    const resolveBlock = workflow.slice(
+      workflow.indexOf('name: Resolve channel and dry-run'),
+      workflow.indexOf('name: Build provenance manifest and tarball')
+    );
+    expect(resolveBlock).toContain('PUBLISH_ENABLED');
+    expect(resolveBlock).toContain('"$PUBLISH_ENABLED" = "true"');
+  });
+
   it('never references the Vagrant helper (VHS-REQ-599 alignment)', () => {
     const workflow = readWorkflow().toLowerCase();
     expect(workflow).not.toContain('vagrant');
