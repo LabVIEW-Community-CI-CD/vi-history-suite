@@ -70,6 +70,11 @@ import {
   extractCommandOptionValue
 } from './runtime/diagnosticNotes';
 export { extractCommandOptionValue } from './runtime/diagnosticNotes';
+import {
+  isPathInsideDirectory,
+  posixDirname,
+  buildReportAssetsDirectoryPath
+} from './runtime/runtimePathHelpers';
 import { nowIso } from '../support/clock';
 import { ComparisonCommandPlan, ComparisonReportOptions } from './comparisonReportPlan';
 import { buildComparisonReportExecutionPlan } from './comparisonReportExecutionPlan';
@@ -3194,16 +3199,6 @@ export function shouldUseLinuxHostNativeShortPathStaging(
   return true;
 }
 
-function isPathInsideDirectory(candidate: string, directory: string): boolean {
-  // Use path.posix on Linux short-path staging where both inputs are POSIX strings.
-  const normalizedDir = path.posix.normalize(directory).replace(/\/+$/u, '');
-  const normalizedCandidate = path.posix.normalize(candidate);
-  if (normalizedCandidate === normalizedDir) {
-    return true;
-  }
-  return normalizedCandidate.startsWith(`${normalizedDir}/`);
-}
-
 function resolveLinuxRuntimeTmpRoot(processEnv: NodeJS.ProcessEnv): string {
   const override = processEnv.LVIE_LINUX_RUNTIME_TMPDIR?.trim();
   if (override) {
@@ -3388,14 +3383,6 @@ function buildLinuxContainerWorkspaceLayout(
     reportIdentityFilenames: [leftFilename, rightFilename],
     reportTextReplacements: replacements
   };
-}
-
-function posixDirname(filePath: string): string {
-  if (filePath.startsWith('/')) {
-    return path.posix.dirname(filePath);
-  }
-
-  return path.dirname(filePath);
 }
 
 function buildLinuxContainerRuntimeFilenameAlias(filename: string): string {
@@ -4745,10 +4732,6 @@ async function forceRemovePathResilient(
     readdir: deps.readdir
   });
   await deps.removePath(targetPath, { recursive: true, force: true });
-}
-
-function buildReportAssetsDirectoryPath(reportFilePath: string): string {
-  return reportFilePath.replace(/\.html$/i, '') + '_files';
 }
 
 function resolveHostReadableWindowsPath(
