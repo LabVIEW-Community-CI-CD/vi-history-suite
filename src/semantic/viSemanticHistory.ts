@@ -1,5 +1,3 @@
-import * as path from 'node:path';
-
 import { GitHistoryEntry, getFileHistoryEntries } from '../git/gitCli';
 import {
   CompareViRevisionsResult,
@@ -7,6 +5,7 @@ import {
   compareViRevisions
 } from './compareViRevisions';
 import { ViChangeSurface } from './viSemanticModel';
+import { validateRepositoryTarget } from './repositoryTarget';
 
 /**
  * Stable, versioned identifier for the VI semantic history model. Consumers key
@@ -76,23 +75,7 @@ function validateTarget(input: ViSemanticHistoryInput): {
   repositoryRoot: string;
   relativePath: string;
 } {
-  const repositoryRoot = (input.repositoryRoot ?? '').trim();
-  if (!repositoryRoot) {
-    throw new Error('repositoryRoot is required');
-  }
-  const relativePath = (input.relativePath ?? '').trim();
-  if (!relativePath) {
-    throw new Error('relativePath is required');
-  }
-  if (path.isAbsolute(relativePath)) {
-    throw new Error('relativePath must be repository-relative, not absolute');
-  }
-  const repoResolved = path.resolve(repositoryRoot);
-  const targetResolved = path.resolve(repoResolved, relativePath);
-  if (targetResolved !== repoResolved && !targetResolved.startsWith(repoResolved + path.sep)) {
-    throw new Error('relativePath escapes the repository root');
-  }
-  return { repositoryRoot: repoResolved, relativePath };
+  return validateRepositoryTarget(input);
 }
 
 /**

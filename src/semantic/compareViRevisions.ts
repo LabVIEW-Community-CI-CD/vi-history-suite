@@ -26,6 +26,7 @@ import {
   computeViComparisonModelCacheKey,
   type ViComparisonModelCache
 } from './viComparisonModelCache';
+import { validateRepositoryTarget } from './repositoryTarget';
 
 /**
  * Runtime preferences an agent can pass to `compareViRevisions`. All optional:
@@ -130,22 +131,7 @@ interface ValidatedTarget {
 }
 
 function validateInput(input: CompareViRevisionsInput): ValidatedTarget {
-  const repositoryRoot = (input.repositoryRoot ?? '').trim();
-  if (!repositoryRoot) {
-    throw new Error('repositoryRoot is required');
-  }
-  const relativePath = (input.relativePath ?? '').trim();
-  if (!relativePath) {
-    throw new Error('relativePath is required');
-  }
-  if (path.isAbsolute(relativePath)) {
-    throw new Error('relativePath must be repository-relative, not absolute');
-  }
-  const repoResolved = path.resolve(repositoryRoot);
-  const targetResolved = path.resolve(repoResolved, relativePath);
-  if (targetResolved !== repoResolved && !targetResolved.startsWith(repoResolved + path.sep)) {
-    throw new Error('relativePath escapes the repository root');
-  }
+  const { repositoryRoot, relativePath } = validateRepositoryTarget(input);
   for (const [label, value] of [
     ['baseHash', input.baseHash],
     ['selectedHash', input.selectedHash]
@@ -161,7 +147,7 @@ function validateInput(input: CompareViRevisionsInput): ValidatedTarget {
   ) {
     throw new Error('reportType must be "diff" or "print"');
   }
-  return { repositoryRoot: repoResolved, relativePath };
+  return { repositoryRoot, relativePath };
 }
 
 function resolveRuntimePlatform(platform: NodeJS.Platform): RuntimePlatform {
