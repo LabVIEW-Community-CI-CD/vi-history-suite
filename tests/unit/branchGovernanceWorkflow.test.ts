@@ -242,4 +242,21 @@ describe('CI branch governance workflow', () => {
     expect(workflow).toContain('feature/*)');
     expect(workflow).toContain('"$head" =~ ^fix/.+ || "$head" =~ ^feature/[0-9]+-.+');
   });
+
+  it('surfaces the supply-chain provenance read-model as an advisory report on every build (VHS-REQ-668)', () => {
+    const workflow = readWorkflow();
+
+    // Advisory (non-strict) read-model report + retained artifact so provenance
+    // drift is visible on develop/PR builds before the release gate hard-blocks.
+    expect(workflow).toContain('Supply-Chain Provenance Report / supply-chain-state');
+    expect(workflow).toContain('node scripts/buildSupplyChainState.js | tee supply-chain-state-report.txt');
+    expect(workflow).toContain('node scripts/buildSupplyChainState.js --json --output supply-chain-state.json');
+    expect(workflow).toContain('supply-chain-state-${{ github.run_id }}');
+
+    // It is advisory only — it must NOT run with --strict (which would fail the build).
+    const reportIndex = workflow.indexOf('Supply-Chain Provenance Report / supply-chain-state');
+    const artifactIndex = workflow.indexOf('Supply-Chain Provenance Artifact / supply-chain-state');
+    const reportSegment = workflow.slice(reportIndex, artifactIndex);
+    expect(reportSegment).not.toContain('--strict');
+  });
 });
