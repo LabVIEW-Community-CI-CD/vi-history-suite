@@ -7,7 +7,9 @@ const {
   JSON_SCHEMA_DIALECT,
   renderSchemaDocument,
   schemaEnvelopeFields,
-  schemaEnvelopePropertyNodes
+  schemaEnvelopePropertyNodes,
+  provenanceFooterLines,
+  assertSingleOutputMode
 } = require('./lib/schemaEnvelope.js');
 
 const DEFAULT_COVERAGE_SUMMARY = path.join('coverage', 'coverage-summary.json');
@@ -443,6 +445,9 @@ function main(argv = process.argv.slice(2)) {
       process.stdout.write(`${usage()}\n`);
       return 0;
     }
+    // json/markdown/schema are mutually exclusive; --markdown is the implicit
+    // default, so only json and schema can be explicitly combined in error.
+    assertSingleOutputMode({ json: options.json, schema: options.schema });
     const provenance = options.includeProvenance
       ? {
           generatedAt: new Date().toISOString(),
@@ -456,8 +461,18 @@ function main(argv = process.argv.slice(2)) {
       return 0;
     }
     const map = generateCoverageMap(options);
-    const jsonMap = provenance ? { ...map, provenance } : map;
-    process.stdout.write(options.json ? `${JSON.stringify(jsonMap, null, 2)}\n` : `${renderCoverageMapMarkdown(map)}\n`);
+    if (options.json) {
+      const jsonMap = provenance ? { ...map, provenance } : map;
+      process.stdout.write(`${JSON.stringify(jsonMap, null, 2)}\n`);
+    } else {
+      const markdownLines = [
+        renderCoverageMapMarkdown(map),
+        ...(provenance
+          ? ['', '## Provenance', '', ...provenanceFooterLines(provenance).map((line) => `- ${line}`)]
+          : [])
+      ];
+      process.stdout.write(`${markdownLines.join('\n')}\n`);
+    }
     if (options.enforce) {
       const enforcement = summarizeEnforcement(map);
       if (enforcement.violations > 0) {

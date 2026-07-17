@@ -108,6 +108,35 @@ function collectSchemaEnvelopeDrift(packet, schema) {
   return problems;
 }
 
+// Shared plain-text provenance footer lines for read-model CLIs that support
+// `--include-provenance` in their default text output. Centralizing this keeps
+// the footer identical across scripts and guarantees the flag is honored in text
+// mode (not silently dropped for non-JSON output). Returns [] when no provenance.
+function provenanceFooterLines(provenance, label) {
+  if (!provenance) return [];
+  const prefix = label ? `[${label}] ` : '';
+  return [
+    `${prefix}provenance generatedAt: ${provenance.generatedAt}`,
+    `${prefix}provenance cwd: ${provenance.cwd}`,
+    `${prefix}provenance outputMode: ${provenance.outputMode}`,
+    `${prefix}provenance argv: ${JSON.stringify(provenance.argv)}`
+  ];
+}
+
+// Reject conflicting output-mode flags. Read-model CLIs expose mutually
+// exclusive output modes (json/markdown/schema); passing more than one is a
+// caller error, not a silent precedence win. Throws with a clear message when
+// more than one is set. `modes` is an object of { name: boolean }.
+function assertSingleOutputMode(modes = {}) {
+  const active = Object.entries(modes)
+    .filter(([, on]) => on === true)
+    .map(([name]) => name);
+  if (active.length > 1) {
+    throw new Error(`Use only one output mode: ${Object.keys(modes).map((name) => `--${name}`).join(', ')}`);
+  }
+  return active[0];
+}
+
 module.exports = {
   SCHEMA_PROVENANCE_KEY,
   JSON_SCHEMA_DIALECT,
@@ -115,5 +144,7 @@ module.exports = {
   renderSchemaDocument,
   schemaEnvelopeFields,
   schemaEnvelopePropertyNodes,
-  collectSchemaEnvelopeDrift
+  collectSchemaEnvelopeDrift,
+  provenanceFooterLines,
+  assertSingleOutputMode
 };
