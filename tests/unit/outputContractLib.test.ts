@@ -117,6 +117,13 @@ describe('parseSharedOutputArgs', () => {
     expect(() => parseSharedOutputArgs(['--output', '--json'])).toThrow(/--output requires a value/);
   });
 
+  it('rejects an empty-string value flag by default', () => {
+    expect(() => parseSharedOutputArgs(['--output', ''])).toThrow(/--output requires a value/);
+    expect(() =>
+      parseSharedOutputArgs(['--risk-threshold', ''], { valueFlags: { '--risk-threshold': 'riskThreshold' } })
+    ).toThrow(/--risk-threshold requires a value/);
+  });
+
   it('takes the next token verbatim when requireValue is false', () => {
     const { options } = parseSharedOutputArgs(['--output', '--json'], { requireValue: false });
     expect(options.outputPath).toBe('--json');

@@ -58,8 +58,9 @@ function outputModeForOptions(options = {}) {
 //   - valueFlags: { '--flag': 'optionsKey' } merged over COMMON_VALUE_FLAGS
 //   - transforms: { optionsKey: (rawValue) => value } applied to value flags
 //   - defaults:   initial options object (shallow-copied)
-//   - requireValue: when true (default), a value flag at end-of-argv or followed
-//                   by another `--flag` throws; when false, the next token is
+//   - requireValue: when true (default), a value flag at end-of-argv, followed
+//                   by another `--flag`, or given an empty-string value throws;
+//                   when false, the next token is
 //                   taken verbatim (looser, matches scripts that used a bare
 //                   `next()` accessor)
 //   - enforceSingleOutputMode: when true (default), throws if more than one of
@@ -94,7 +95,7 @@ function parseSharedOutputArgs(argv, spec = {}) {
     } else if (Object.prototype.hasOwnProperty.call(valueFlags, arg)) {
       const key = valueFlags[arg];
       const raw = list[index + 1];
-      if (requireValue && (raw === undefined || (typeof raw === 'string' && raw.startsWith('--')))) {
+      if (requireValue && (raw === undefined || raw === '' || (typeof raw === 'string' && raw.startsWith('--')))) {
         throw new Error(`${arg} requires a value`);
       }
       const value = typeof transforms[key] === 'function' ? transforms[key](raw) : raw;
