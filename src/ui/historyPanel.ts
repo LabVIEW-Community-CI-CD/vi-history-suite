@@ -2,6 +2,7 @@ import {
   ViHistoryCommit,
   ViHistoryViewModel
 } from '../services/viHistoryModel';
+import { escapeHtml } from '../support/escapeHtml';
 import { WORKTREE_REVISION_SENTINEL } from '../git/gitCli';
 
 /**
@@ -441,15 +442,6 @@ function renderCommitBodyCell(commit: ViHistoryCommit): string {
 function renderCommitBodyText(commit: ViHistoryCommit): string {
   const body = renderPlainTextValue(commit.body ?? '');
   return body.length > 0 ? body : 'No commit body';
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
 }
 
 function renderPlainTextValue(value: string): string {

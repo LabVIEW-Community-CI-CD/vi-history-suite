@@ -1,5 +1,6 @@
 import * as fs from 'node:fs/promises';
 import { pathExistsViaFsAccess as defaultPathExists } from '../support/fsExists';
+import { escapeHtml } from '../support/escapeHtml';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 
@@ -1591,15 +1592,6 @@ function ensureTrailingSlash(value: string): string {
  */
 function enableLazyImageLoading(html: string): string {
   return html.replace(/<img\b(?![^>]*\bloading=)/gi, '<img loading="lazy"');
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
 }
 
 function toRevisionMetadata(
