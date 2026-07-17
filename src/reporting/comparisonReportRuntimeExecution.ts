@@ -38,6 +38,12 @@ export {
   normalizeWindowsInteropPath,
   normalizeWindowsInteropExecutable
 } from './runtime/windowsInteropPaths';
+import {
+  resolveWindowsPowerShellHostExecutable,
+  encodeWindowsPowerShellScript,
+  quotePowerShellLiteral,
+  quoteBashLiteral
+} from './runtime/shellScriptEncoding';
 import { nowIso } from '../support/clock';
 import { ComparisonCommandPlan, ComparisonReportOptions } from './comparisonReportPlan';
 import { buildComparisonReportExecutionPlan } from './comparisonReportExecutionPlan';
@@ -5422,32 +5428,6 @@ export function extractCommandOptionValue(args: string[], optionName: string): s
   }
 
   return undefined;
-}
-
-function resolveWindowsPowerShellHostExecutable(
-  processPlatform: NodeJS.Platform
-): string | undefined {
-  if (processPlatform === 'win32') {
-    return 'powershell.exe';
-  }
-
-  if (processPlatform === 'linux') {
-    return '/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe';
-  }
-
-  return undefined;
-}
-
-function encodeWindowsPowerShellScript(script: string): string {
-  return Buffer.from(script, 'utf16le').toString('base64');
-}
-
-function quotePowerShellLiteral(value: string): string {
-  return `'${value.replace(/'/g, "''")}'`;
-}
-
-function quoteBashLiteral(value: string): string {
-  return `'${value.replace(/'/g, `'\"'\"'`)}'`;
 }
 
 export function requiresWindowsInterop(
