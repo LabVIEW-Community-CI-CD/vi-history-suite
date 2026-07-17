@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { isSha256HexKey as isValidKey } from '../../support/cacheKey';
 
 /**
  * VHS-REQ-659: render cache for single-VI previews.
@@ -62,10 +63,6 @@ export interface FileViPreviewCacheOptions {
 
 const CACHE_FILE_SUFFIX = '.html';
 const DEFAULT_MAX_ENTRIES = 200;
-
-function isValidKey(key: string): boolean {
-  return /^[a-f0-9]{64}$/.test(key);
-}
 
 /**
  * File-backed preview cache. Reads/writes `<key>.html` under the cache

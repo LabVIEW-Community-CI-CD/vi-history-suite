@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { isSha256HexKey as isValidKey } from '../support/cacheKey';
 
 import {
   buildViSemanticComparisonModelFromHtml,
@@ -55,10 +56,6 @@ export interface FileViSemanticNarrativeCacheFsDeps {
 export interface FileViSemanticNarrativeCacheOptions {
   cacheDirectory: string;
   joinPath: (directory: string, name: string) => string;
-}
-
-function isValidKey(key: string): boolean {
-  return /^[a-f0-9]{64}$/.test(key);
 }
 
 function isStoredNarrative(value: unknown): value is StoredViSemanticNarrative {
