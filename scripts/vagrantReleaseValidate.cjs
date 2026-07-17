@@ -37,6 +37,16 @@ const { spawnSync } = require('node:child_process');
 const repoRoot = path.resolve(__dirname, '..');
 const vagrantDir = path.join(repoRoot, 'vagrant');
 const TRACK_ID = 'vagrant-win-x86-hostnative';
+// Must match vagrant/Vagrantfile: BOX_NAME = ENV.fetch("VIHS_VAGRANT_BOX", "vihs/win11-labview2026").
+// Setting VIHS_VAGRANT_BOX to this value selects the SAME committed box, so it
+// is NOT an override; only a different value is.
+const DEFAULT_BOX = 'vihs/win11-labview2026';
+
+// True only when VIHS_VAGRANT_BOX names a box OTHER than the committed default.
+function isBoxOverride() {
+  const value = (process.env.VIHS_VAGRANT_BOX || '').trim();
+  return value !== '' && value !== DEFAULT_BOX;
+}
 
 // In-guest paths: the Vagrantfile mounts the repo at C:\vihs-workspace.
 const GUEST_REPO = 'C:\\vihs-workspace';
@@ -87,11 +97,11 @@ function getCommit() {
 // Read the committed Vagrant box manifest's sha256 so the recorded attestation
 // is structurally bound to the specific box it was produced on (box-provenance
 // chain). Returns undefined when the manifest is absent/unparseable OR when
-// VIHS_VAGRANT_BOX overrides the box: the committed manifest fingerprints the
-// DEFAULT box, so binding its sha256 to an attestation produced on an override
-// box would be false provenance. Skip the binding under an override.
+// VIHS_VAGRANT_BOX names a NON-default box: the committed manifest fingerprints
+// the default box, so binding its sha256 to an override run would be false
+// provenance. Setting the env to the default box name is not an override.
 function getBoxSha256() {
-  if (process.env.VIHS_VAGRANT_BOX && process.env.VIHS_VAGRANT_BOX.trim()) {
+  if (isBoxOverride()) {
     return undefined;
   }
   try {
@@ -111,14 +121,14 @@ function main() {
   log(`Validating release candidate ${version} (${commit}) via the Vagrant Windows/LabVIEW lane.`);
 
   // A release-gating attestation must be produced on the committed golden box
-  // that ships (fingerprinted by vagrant/box-manifest.json). Under a
-  // VIHS_VAGRANT_BOX override the run uses a different box, so recording an
-  // attestation — even with a cleared binding — would let the marketplace gate
-  // pass on a non-shipped box. Fail fast instead. (The advisory pathadmit proof
-  // lane is non-gating and may run under an override.)
-  if (process.env.VIHS_VAGRANT_BOX && process.env.VIHS_VAGRANT_BOX.trim()) {
+  // that ships (fingerprinted by vagrant/box-manifest.json). A VIHS_VAGRANT_BOX
+  // value naming a DIFFERENT box means the run uses a non-shipped box, so
+  // recording an attestation would let the marketplace gate pass on it. Fail
+  // fast. Setting the env to the default box name is allowed (same box). (The
+  // advisory pathadmit proof lane is non-gating and may run under an override.)
+  if (isBoxOverride()) {
     fail(
-      'VIHS_VAGRANT_BOX override is set. A release-gating attestation must be produced on the committed golden box (vagrant/box-manifest.json); unset VIHS_VAGRANT_BOX and re-run against the default box before recording a release attestation.'
+      `VIHS_VAGRANT_BOX is set to a non-default box ("${process.env.VIHS_VAGRANT_BOX}"). A release-gating attestation must be produced on the committed golden box "${DEFAULT_BOX}" (vagrant/box-manifest.json); unset VIHS_VAGRANT_BOX or set it to the default box, then re-run before recording a release attestation.`
     );
   }
 
