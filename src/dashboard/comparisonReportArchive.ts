@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
+import { joinPreservingExplicitPathStyle } from '../support/pathStyle';
 import {
   ComparisonReportPacketRecord
 } from '../reporting/comparisonReportPacket';
@@ -404,14 +405,6 @@ function contentAddressRevisionForPairId(
     return `${revisionId}:${worktreeSnapshotId}`;
   }
   return revisionId;
-}
-
-function joinPreservingExplicitPathStyle(rootPath: string, ...segments: string[]): string {
-  if (rootPath.startsWith('/')) {
-    return path.posix.join(rootPath, ...segments.map((segment) => segment.replace(/\\/g, '/')));
-  }
-
-  return path.join(rootPath, ...segments);
 }
 
 async function copyIfExists(

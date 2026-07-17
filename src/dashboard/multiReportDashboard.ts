@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
+import { joinPreservingExplicitPathStyle } from '../support/pathStyle';
 import {
   ArchivedComparisonReportSourceRecord,
   buildComparisonReportArchivePlanFromSelection,
@@ -1086,14 +1087,6 @@ function buildMultiReportDashboardArtifactPlan(
     htmlFilePath: joinPreservingExplicitPathStyle(dashboardDirectory, 'dashboard.html'),
     assetsDirectory: joinPreservingExplicitPathStyle(dashboardDirectory, 'assets')
   };
-}
-
-function joinPreservingExplicitPathStyle(rootPath: string, ...segments: string[]): string {
-  if (rootPath.startsWith('/')) {
-    return path.posix.join(rootPath, ...segments.map((segment) => segment.replace(/\\/g, '/')));
-  }
-
-  return path.join(rootPath, ...segments);
 }
 
 interface DecodedDataUriImage {

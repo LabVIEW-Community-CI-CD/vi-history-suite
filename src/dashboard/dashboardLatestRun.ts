@@ -1,5 +1,4 @@
-import * as path from 'node:path';
-
+import { joinPreservingExplicitPathStyle } from '../support/pathStyle';
 import {
   MultiReportDashboardEtaAccuracyContext,
   MultiReportDashboardEtaAccuracyRecord
@@ -171,12 +170,4 @@ export function buildDashboardLatestRunRecord(options: {
     etaAccuracyRecord: options.etaAccuracyRecord,
     experiment: options.experiment
   };
-}
-
-function joinPreservingExplicitPathStyle(rootPath: string, ...segments: string[]): string {
-  if (rootPath.startsWith('/')) {
-    return path.posix.join(rootPath, ...segments.map((segment) => segment.replace(/\\/g, '/')));
-  }
-
-  return path.join(rootPath, ...segments);
 }
