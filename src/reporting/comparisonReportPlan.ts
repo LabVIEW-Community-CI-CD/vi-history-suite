@@ -1,6 +1,6 @@
-import { createHash } from 'node:crypto';
 import * as path from 'node:path';
 
+import { createDeterministicId } from '../support/deterministicId';
 import { normalizeRelativeGitPath } from '../git/gitCli';
 
 export type ComparisonReportType = 'diff' | 'print';
@@ -297,10 +297,6 @@ export function buildLvComparePlan(options: LvComparePlanOptions): ComparisonCom
     executable: 'LVCompare',
     args
   };
-}
-
-function createDeterministicId(value: string): string {
-  return createHash('sha256').update(value).digest('hex').slice(0, 12);
 }
 
 function deriveRelativeDirectory(normalizedRelativePath?: string): string {

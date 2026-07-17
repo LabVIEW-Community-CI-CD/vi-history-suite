@@ -3,6 +3,7 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
 import { joinPreservingExplicitPathStyle } from '../support/pathStyle';
+import { createDeterministicId } from '../support/deterministicId';
 import { pathExistsViaFsAccess as defaultPathExists } from '../support/fsExists';
 import { nowIso as defaultNow } from '../support/clock';
 import { escapeHtml } from '../support/escapeHtml';
@@ -1613,10 +1614,6 @@ function deriveCommitPairs(commits: ViHistoryCommit[]): Array<{ selected: ViHist
     });
   }
   return pairs;
-}
-
-function createDeterministicId(value: string): string {
-  return createHash('sha256').update(value).digest('hex').slice(0, 12);
 }
 
 function formatDurationMinutesSeconds(totalSeconds: number): string {

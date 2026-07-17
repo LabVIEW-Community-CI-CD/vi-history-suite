@@ -1,7 +1,7 @@
-import { createHash } from 'node:crypto';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
+import { createDeterministicId } from '../support/deterministicId';
 import { joinPreservingExplicitPathStyle } from '../support/pathStyle';
 import { pathExistsViaFsAccess as defaultPathExists } from '../support/fsExists';
 import { nowIso as defaultNow } from '../support/clock';
@@ -385,10 +385,6 @@ export async function readArchivedComparisonReportSourceRecordFromSelection(
 
 export function buildReportAssetsDirectoryName(reportFilename: string): string {
   return reportFilename.replace(/\.html$/i, '') + '_files';
-}
-
-function createDeterministicId(value: string): string {
-  return createHash('sha256').update(value).digest('hex').slice(0, 12);
 }
 
 /**
