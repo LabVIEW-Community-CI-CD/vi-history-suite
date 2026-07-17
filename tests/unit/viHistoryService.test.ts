@@ -75,6 +75,15 @@ describe('viHistoryService', () => {
     ).toBe('/workspace/repo-a/nested');
   });
 
+  it('matches a repository root when the target path equals the root exactly', () => {
+    expect(
+      selectMostSpecificGitRepositoryRoot('/workspace/repo-a', [
+        { rootUri: { fsPath: '/workspace/repo-a' } },
+        { rootUri: { fsPath: '/workspace/other' } }
+      ] as never)
+    ).toBe('/workspace/repo-a');
+  });
+
   it('matches Git API repository roots across slash variants', () => {
     expect(
       selectMostSpecificGitRepositoryRoot('C:\\workspace\\repo\\nested\\sample.vi', [
