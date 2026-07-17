@@ -32,7 +32,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { execSync } = require('node:child_process');
 
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 const RELEASE_READINESS_SCHEMA_ID =
   'https://raw.githubusercontent.com/LabVIEW-Community-CI-CD/vi-history-suite/main/docs/requirements/release-readiness.schema.json';
 const RELEASE_READINESS_SCHEMA_PROVENANCE_KEY = 'x-vi-history-suite-provenance';
