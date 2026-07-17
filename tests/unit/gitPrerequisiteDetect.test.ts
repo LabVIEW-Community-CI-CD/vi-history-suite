@@ -3,7 +3,7 @@
  * and probe-failed cases via an injected runner so detection stays
  * deterministic in CI.
  */
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { EventEmitter } from 'node:events';
 
 import {
@@ -186,5 +186,24 @@ describe('createRunGitVersion (VHS-REQ-619.1)', () => {
     // A subsequent close must not throw or change the already-rejected result.
     child.emit('close', 0);
     await expect(promise).rejects.toThrow('first');
+  });
+
+  it('kills the child and rejects when the probe exceeds the timeout', async () => {
+    vi.useFakeTimers();
+    try {
+      const child = createFakeChild();
+      const kill = vi.fn();
+      child.kill = kill;
+      const runGitVersion = createRunGitVersion((() => child) as never);
+      const promise = runGitVersion();
+      const assertion = expect(promise).rejects.toThrow('git --version timed out');
+      vi.advanceTimersByTime(5_000);
+      await assertion;
+      expect(kill).toHaveBeenCalledTimes(1);
+      // A close after the timeout has settled the probe must be ignored.
+      child.emit('close', 0);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
