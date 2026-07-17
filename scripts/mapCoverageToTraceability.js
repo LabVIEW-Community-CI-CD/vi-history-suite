@@ -11,6 +11,7 @@ const {
   provenanceFooterLines,
   assertSingleOutputMode
 } = require('./lib/schemaEnvelope.js');
+const { parseSharedOutputArgs } = require('./lib/outputContract.js');
 
 const DEFAULT_COVERAGE_SUMMARY = path.join('coverage', 'coverage-summary.json');
 const DEFAULT_INVENTORY = path.join('docs', 'requirements', 'traceability-inventory.csv');
@@ -20,41 +21,42 @@ const COVERAGE_MAP_SCHEMA_ID = 'vi-history-suite/coverage-traceability-map@v1';
 const COVERAGE_MAP_SCHEMA_VERSION = 1;
 
 function parseArgs(argv) {
-  const options = {
-    coverageSummary: DEFAULT_COVERAGE_SUMMARY,
-    inventory: DEFAULT_INVENTORY,
-    rtm: DEFAULT_RTM,
-    riskThreshold: DEFAULT_RISK_THRESHOLD,
-    json: false,
-    schema: false,
-    includeProvenance: false,
-    enforce: false,
-    help: false
-  };
+  const { options, positionals } = parseSharedOutputArgs(argv, {
+    defaults: {
+      coverageSummary: DEFAULT_COVERAGE_SUMMARY,
+      inventory: DEFAULT_INVENTORY,
+      rtm: DEFAULT_RTM,
+      riskThreshold: DEFAULT_RISK_THRESHOLD,
+      json: false,
+      schema: false,
+      includeProvenance: false,
+      enforce: false,
+      help: false
+    },
+    // This CLI does not support --markdown/--strict/--output; reject them as
+    // unknown. Single-output-mode is enforced in main (json/schema only).
+    excludeCommonFlags: ['--markdown', '--strict', '--output'],
+    enforceSingleOutputMode: false,
+    boolFlags: {
+      '--enforce': 'enforce',
+      '--help': 'help',
+      '-h': 'help'
+    },
+    valueFlags: {
+      '--coverage-summary': 'coverageSummary',
+      '--inventory': 'inventory',
+      '--rtm': 'rtm',
+      '--repo-root': 'repoRoot',
+      '--risk-threshold': 'riskThreshold'
+    },
+    transforms: {
+      riskThreshold: (value) => Number(value)
+    }
+  });
 
-  for (let index = 0; index < argv.length; index += 1) {
-    const arg = argv[index];
-    const next = () => {
-      const value = argv[index + 1];
-      if (!value || value.startsWith('--')) {
-        throw new Error(`${arg} requires a value`);
-      }
-      index += 1;
-      return value;
-    };
-
-    if (arg === '--coverage-summary') options.coverageSummary = next();
-    else if (arg === '--inventory') options.inventory = next();
-    else if (arg === '--rtm') options.rtm = next();
-    else if (arg === '--repo-root') options.repoRoot = next();
-    else if (arg === '--risk-threshold') {
-      options.riskThreshold = Number(next());
-    } else if (arg === '--json') options.json = true;
-    else if (arg === '--schema') options.schema = true;
-    else if (arg === '--include-provenance') options.includeProvenance = true;
-    else if (arg === '--enforce') options.enforce = true;
-    else if (arg === '--help' || arg === '-h') options.help = true;
-    else throw new Error(`Unknown argument: ${arg}`);
+  // This CLI takes no positional arguments; reject any as unknown (as before).
+  if (positionals.length > 0) {
+    throw new Error(`Unknown argument: ${positionals[0]}`);
   }
 
   if (!Number.isFinite(options.riskThreshold) || options.riskThreshold < 0) {

@@ -10,6 +10,7 @@ const {
   schemaEnvelopeFields,
   schemaEnvelopePropertyNodes
 } = require('./lib/schemaEnvelope.js');
+const { parseSharedOutputArgs } = require('./lib/outputContract.js');
 
 const DEFAULT_SAVE_DIR = 'assurance-state-evidence';
 const DEFAULT_STANDARDS_AUDIT_DIR = 'assurance-multi-standards-evidence';
@@ -36,83 +37,49 @@ function usage() {
   ].join('\n');
 }
 
-function takeValue(argv, index, flag) {
-  const value = argv[index + 1];
-  if (!value || value.startsWith('--')) {
-    throw new Error(`${flag} requires a value.`);
-  }
-  return value;
-}
-
 function parseArgs(argv) {
-  const options = {
-    auditSummary: undefined,
-    auditRunId: undefined,
-    standardsAuditDir: DEFAULT_STANDARDS_AUDIT_DIR,
-    saveDir: DEFAULT_SAVE_DIR,
-    runId: undefined,
-    issueLinks: [],
-    prLinks: [],
-    mergeShas: [],
-    requirements: [],
-    reviewFindings: [],
-    schema: false,
-    help: false
-  };
-
-  for (let index = 0; index < argv.length; index += 1) {
-    const arg = argv[index];
-    switch (arg) {
-      case '--audit-summary':
-        options.auditSummary = takeValue(argv, index, arg);
-        index += 1;
-        break;
-      case '--audit-run-id':
-        options.auditRunId = takeValue(argv, index, arg);
-        index += 1;
-        break;
-      case '--standards-audit-dir':
-        options.standardsAuditDir = takeValue(argv, index, arg);
-        index += 1;
-        break;
-      case '--save-dir':
-        options.saveDir = takeValue(argv, index, arg);
-        index += 1;
-        break;
-      case '--run-id':
-        options.runId = takeValue(argv, index, arg);
-        index += 1;
-        break;
-      case '--issue-link':
-        options.issueLinks.push(takeValue(argv, index, arg));
-        index += 1;
-        break;
-      case '--pr-link':
-        options.prLinks.push(takeValue(argv, index, arg));
-        index += 1;
-        break;
-      case '--merge-sha':
-        options.mergeShas.push(takeValue(argv, index, arg));
-        index += 1;
-        break;
-      case '--requirement':
-        options.requirements.push(takeValue(argv, index, arg));
-        index += 1;
-        break;
-      case '--review-finding':
-        options.reviewFindings.push(parseReviewFinding(takeValue(argv, index, arg)));
-        index += 1;
-        break;
-      case '--schema':
-        options.schema = true;
-        break;
-      case '--help':
-      case '-h':
-        options.help = true;
-        break;
-      default:
-        throw new Error(`Unknown argument: ${arg}`);
+  const { options, positionals } = parseSharedOutputArgs(argv, {
+    defaults: {
+      auditSummary: undefined,
+      auditRunId: undefined,
+      standardsAuditDir: DEFAULT_STANDARDS_AUDIT_DIR,
+      saveDir: DEFAULT_SAVE_DIR,
+      runId: undefined,
+      issueLinks: [],
+      prLinks: [],
+      mergeShas: [],
+      requirements: [],
+      reviewFindings: [],
+      schema: false,
+      help: false
+    },
+    // This CLI only shares --schema; reject the other common flags as unknown.
+    excludeCommonFlags: ['--json', '--markdown', '--strict', '--include-provenance', '--output'],
+    boolFlags: {
+      '--help': 'help',
+      '-h': 'help'
+    },
+    valueFlags: {
+      '--audit-summary': 'auditSummary',
+      '--audit-run-id': 'auditRunId',
+      '--standards-audit-dir': 'standardsAuditDir',
+      '--save-dir': 'saveDir',
+      '--run-id': 'runId',
+      '--issue-link': 'issueLinks',
+      '--pr-link': 'prLinks',
+      '--merge-sha': 'mergeShas',
+      '--requirement': 'requirements',
+      '--review-finding': 'reviewFindings'
+    },
+    repeatable: ['issueLinks', 'prLinks', 'mergeShas', 'requirements', 'reviewFindings'],
+    transforms: {
+      reviewFindings: (value) => parseReviewFinding(value)
     }
+  });
+
+  // This CLI takes no positional arguments; reject any as unknown (as before).
+  if (positionals.length > 0) {
+    throw new Error(`Unknown argument: ${positionals[0]}`);
   }
 
   if (options.auditSummary && options.auditRunId) {

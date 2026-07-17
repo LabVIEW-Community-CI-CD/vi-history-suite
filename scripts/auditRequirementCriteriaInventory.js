@@ -39,6 +39,7 @@ const {
   provenanceFooterLines,
   assertSingleOutputMode
 } = require('./lib/schemaEnvelope.js');
+const { parseSharedOutputArgs } = require('./lib/outputContract.js');
 
 const SRS_PATH = 'docs/requirements/srs.md';
 const RTM_PATH = 'docs/requirements/rtm.csv';
@@ -320,14 +321,33 @@ function renderStepSummary(result, options = {}) {
   return lines.join('\n');
 }
 
+function parseArgs(argv = []) {
+  const { options, positionals } = parseSharedOutputArgs(argv, {
+    defaults: { json: false, schema: false, includeProvenance: false, enforce: false },
+    // This CLI does not support --markdown/--strict/--output; reject them as
+    // unknown. Single-output-mode (json/schema) is enforced in main.
+    excludeCommonFlags: ['--markdown', '--strict', '--output'],
+    enforceSingleOutputMode: false,
+    boolFlags: { '--enforce': 'enforce' }
+  });
+  options.positionals = positionals;
+  return options;
+}
+
 function main(argv = process.argv.slice(2), deps = {}) {
-  const positionals = argv.filter((arg) => !arg.startsWith('--'));
-  const asJson = deps.json ?? argv.includes('--json');
-  const asSchema = deps.schema ?? argv.includes('--schema');
-  const enforce = deps.enforce ?? argv.includes('--enforce');
-  const includeProvenance = deps.includeProvenance ?? argv.includes('--include-provenance');
-  const cwd = deps.cwd || positionals[0] || process.cwd();
   const stdout = deps.stdout || process.stdout;
+  let parsed;
+  try {
+    parsed = parseArgs(argv);
+  } catch (error) {
+    (deps.stderr || process.stderr).write(`${error instanceof Error ? error.message : String(error)}\n`);
+    return 1;
+  }
+  const asJson = deps.json ?? parsed.json;
+  const asSchema = deps.schema ?? parsed.schema;
+  const enforce = deps.enforce ?? parsed.enforce;
+  const includeProvenance = deps.includeProvenance ?? parsed.includeProvenance;
+  const cwd = deps.cwd || parsed.positionals[0] || process.cwd();
 
   // json and schema are mutually exclusive output modes; reject rather than
   // silently letting --schema win over --json.
@@ -387,6 +407,7 @@ if (require.main === module) {
 }
 
 module.exports = {
+  parseArgs,
   SRS_PATH,
   RTM_PATH,
   CRITERIA_INVENTORY_SCHEMA_ID,

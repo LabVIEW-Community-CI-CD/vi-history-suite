@@ -11,6 +11,7 @@ const {
   provenanceFooterLines,
   assertSingleOutputMode
 } = require('./lib/schemaEnvelope.js');
+const { parseSharedOutputArgs } = require('./lib/outputContract.js');
 
 const AGENTS_GUIDE_PATH = 'AGENTS.md';
 const ONBOARDING_SKILL_PATH = '.github/skills/onboarding/SKILL.md';
@@ -935,43 +936,28 @@ function renderSummary(result) {
 }
 
 function parseMainArgs(argv) {
-  let cwd;
-  let emitJson = false;
-  let emitSchema = false;
-  let includeProvenance = false;
+  const { options, positionals } = parseSharedOutputArgs(argv, {
+    defaults: { emitJson: false, emitSchema: false, includeProvenance: false },
+    // Output modes are exposed under emit* keys; --markdown/--strict/--output are
+    // not supported. Single-output-mode (json/schema) is enforced in main.
+    boolFlags: {
+      '--json': 'emitJson',
+      '--schema': 'emitSchema',
+      '--include-provenance': 'includeProvenance'
+    },
+    excludeCommonFlags: ['--markdown', '--strict', '--output'],
+    enforceSingleOutputMode: false
+  });
 
-  for (const arg of argv) {
-    if (arg === '--json') {
-      emitJson = true;
-      continue;
-    }
-
-    if (arg === '--schema') {
-      emitSchema = true;
-      continue;
-    }
-
-    if (arg === '--include-provenance') {
-      includeProvenance = true;
-      continue;
-    }
-
-    if (arg.startsWith('--')) {
-      throw new Error(`Unknown option '${arg}'. Supported options: --json, --schema, --include-provenance [cwd].`);
-    }
-
-    if (cwd) {
-      throw new Error('Only one cwd argument is supported.');
-    }
-
-    cwd = arg;
+  if (positionals.length > 1) {
+    throw new Error('Only one cwd argument is supported.');
   }
 
   return {
-    cwd: cwd || process.cwd(),
-    emitJson,
-    emitSchema,
-    includeProvenance
+    cwd: positionals[0] || process.cwd(),
+    emitJson: options.emitJson,
+    emitSchema: options.emitSchema,
+    includeProvenance: options.includeProvenance
   };
 }
 

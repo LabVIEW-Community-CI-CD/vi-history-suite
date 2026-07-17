@@ -68,6 +68,11 @@ function outputModeForOptions(options = {}) {
 //                   from the merged bool/value flag sets, so a script that does
 //                   not support a shared flag rejects it as an unknown argument
 //                   instead of silently accepting it.
+//   - repeatable: array of option KEYS (value-flag targets) that accumulate into
+//                   an array (push) instead of single-assign, for repeatable
+//                   value flags such as --issue-link. The transform (when present)
+//                   is applied per element. The default for a repeatable key
+//                   should be an array (e.g. defaults: { issueLinks: [] }).
 function parseSharedOutputArgs(argv, spec = {}) {
   const boolFlags = { ...COMMON_BOOL_FLAGS, ...(spec.boolFlags || {}) };
   const valueFlags = { ...COMMON_VALUE_FLAGS, ...(spec.valueFlags || {}) };
@@ -76,6 +81,7 @@ function parseSharedOutputArgs(argv, spec = {}) {
     delete valueFlags[flag];
   }
   const transforms = spec.transforms || {};
+  const repeatable = new Set(Array.isArray(spec.repeatable) ? spec.repeatable : []);
   const requireValue = spec.requireValue !== false;
   const options = { ...(spec.defaults || {}) };
   const positionals = [];
@@ -91,7 +97,15 @@ function parseSharedOutputArgs(argv, spec = {}) {
       if (requireValue && (raw === undefined || (typeof raw === 'string' && raw.startsWith('--')))) {
         throw new Error(`${arg} requires a value`);
       }
-      options[key] = typeof transforms[key] === 'function' ? transforms[key](raw) : raw;
+      const value = typeof transforms[key] === 'function' ? transforms[key](raw) : raw;
+      if (repeatable.has(key)) {
+        if (!Array.isArray(options[key])) {
+          options[key] = [];
+        }
+        options[key].push(value);
+      } else {
+        options[key] = value;
+      }
       index += 1;
     } else if (typeof arg === 'string' && arg.startsWith('--')) {
       throw new Error(`Unknown argument: ${arg}`);

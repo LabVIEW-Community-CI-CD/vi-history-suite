@@ -20,6 +20,7 @@ const {
   schemaEnvelopeFields,
   schemaEnvelopePropertyNodes
 } = require('./lib/schemaEnvelope.js');
+const { parseSharedOutputArgs } = require('./lib/outputContract.js');
 
 const DEFAULT_SAVE_DIR = 'assurance-multi-standards-evidence';
 const DEFAULT_REQUIREMENTS_SPEC_SCOPE = 'system';
@@ -51,61 +52,39 @@ function usage() {
   ].join('\n');
 }
 
-function takeValue(argv, index, flag) {
-  const value = argv[index + 1];
-  if (!value || value.startsWith('--')) {
-    throw new Error(`${flag} requires a value.`);
-  }
-  return value;
-}
-
 function buildRunId(date = new Date()) {
   return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
 }
 
 function parseArgs(argv) {
-  const options = {
-    image: DEFAULT_STANDARDS_IMAGE,
-    requirementsSpecScope: DEFAULT_REQUIREMENTS_SPEC_SCOPE,
-    saveDir: DEFAULT_SAVE_DIR,
-    runId: undefined,
-    keepSnapshot: false,
-    schema: false,
-    help: false
-  };
-
-  for (let index = 0; index < argv.length; index += 1) {
-    const arg = argv[index];
-    switch (arg) {
-      case '--image':
-        options.image = takeValue(argv, index, arg);
-        index += 1;
-        break;
-      case '--requirements-spec-scope':
-        options.requirementsSpecScope = takeValue(argv, index, arg);
-        index += 1;
-        break;
-      case '--save-dir':
-        options.saveDir = takeValue(argv, index, arg);
-        index += 1;
-        break;
-      case '--run-id':
-        options.runId = takeValue(argv, index, arg);
-        index += 1;
-        break;
-      case '--keep-snapshot':
-        options.keepSnapshot = true;
-        break;
-      case '--schema':
-        options.schema = true;
-        break;
-      case '--help':
-      case '-h':
-        options.help = true;
-        break;
-      default:
-        throw new Error(`Unknown argument: ${arg}`);
+  const { options, positionals } = parseSharedOutputArgs(argv, {
+    defaults: {
+      image: DEFAULT_STANDARDS_IMAGE,
+      requirementsSpecScope: DEFAULT_REQUIREMENTS_SPEC_SCOPE,
+      saveDir: DEFAULT_SAVE_DIR,
+      runId: undefined,
+      keepSnapshot: false,
+      schema: false,
+      help: false
+    },
+    // This CLI only shares --schema; reject the other common flags as unknown.
+    excludeCommonFlags: ['--json', '--markdown', '--strict', '--include-provenance', '--output'],
+    boolFlags: {
+      '--keep-snapshot': 'keepSnapshot',
+      '--help': 'help',
+      '-h': 'help'
+    },
+    valueFlags: {
+      '--image': 'image',
+      '--requirements-spec-scope': 'requirementsSpecScope',
+      '--save-dir': 'saveDir',
+      '--run-id': 'runId'
     }
+  });
+
+  // This CLI takes no positional arguments; reject any as unknown (as before).
+  if (positionals.length > 0) {
+    throw new Error(`Unknown argument: ${positionals[0]}`);
   }
 
   return options;
