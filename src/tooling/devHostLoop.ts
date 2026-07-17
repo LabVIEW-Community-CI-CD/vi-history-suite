@@ -4,6 +4,7 @@ import { spawn } from 'node:child_process';
 import * as path from 'node:path';
 
 import { runGit } from '../git/gitCli';
+import { scanFlags } from './cliFlags';
 
 export interface ViHistoryDevHostCliArgs {
   workspacePath?: string;
@@ -135,45 +136,32 @@ export function parseViHistoryDevHostArgs(argv: string[]): ViHistoryDevHostCliAr
   let prepareWorkspaceOnly = false;
   let helpRequested = false;
 
-  for (let index = 0; index < argv.length; index += 1) {
-    const current = argv[index];
-    const requireValue = (flag: string): string => {
-      const candidate = argv[index + 1];
-      if (!candidate || candidate.startsWith('--')) {
-        throw new Error(`Missing value for ${flag}.\n\n${getViHistoryDevHostUsage()}`);
+  scanFlags(argv, {
+    usage: getViHistoryDevHostUsage,
+    rejectFlagLikeValues: true,
+    boolFlags: {
+      '--stage-extension': () => {
+        stageExtension = true;
+      },
+      '--prepare-workspace-only': () => {
+        prepareWorkspaceOnly = true;
+      },
+      '--help': () => {
+        helpRequested = true;
+      },
+      '-h': () => {
+        helpRequested = true;
       }
-
-      index += 1;
-      return candidate;
-    };
-
-    if (current === '--workspace-path') {
-      workspacePath = requireValue('--workspace-path');
-      continue;
+    },
+    valueFlags: {
+      '--workspace-path': (value) => {
+        workspacePath = value;
+      },
+      '--code-path': (value) => {
+        codePath = value;
+      }
     }
-
-    if (current === '--code-path') {
-      codePath = requireValue('--code-path');
-      continue;
-    }
-
-    if (current === '--stage-extension') {
-      stageExtension = true;
-      continue;
-    }
-
-    if (current === '--prepare-workspace-only') {
-      prepareWorkspaceOnly = true;
-      continue;
-    }
-
-    if (current === '--help' || current === '-h') {
-      helpRequested = true;
-      continue;
-    }
-
-    throw new Error(`Unknown argument: ${current}\n\n${getViHistoryDevHostUsage()}`);
-  }
+  });
 
   return {
     workspacePath,

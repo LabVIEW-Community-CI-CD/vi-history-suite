@@ -14,6 +14,7 @@ import {
   type ComparisonRuntimeSettings
 } from '../reporting/comparisonRuntimeLocator';
 import { readBuildInfo, type BuildInfo, type BuildInfoDeps } from './buildInfo';
+import { scanFlags } from './cliFlags';
 const execFileAsync = promisify(execFileCallback);
 
 export type LocalRuntimeSettingsCliBitness = 'x86' | 'x64';
@@ -200,36 +201,34 @@ export function parseLocalRuntimeSettingsCliArgs(argv: readonly string[]): Local
     helpRequested: false
   };
 
-  for (let index = 0; index < argv.length; index += 1) {
-    const argument = argv[index];
-    switch (argument) {
-      case '--help':
+  scanFlags(argv, {
+    trimValues: true,
+    boolFlags: {
+      '--help': () => {
         parsed.helpRequested = true;
-        break;
-      case '--validate':
+      },
+      '--validate': () => {
         parsed.validateRequested = true;
-        break;
-      case '--provider':
-        parsed.provider = normalizeProvider(readRequiredArgValue(argv, argument, ++index));
-        break;
-      case '--labview-version':
-        parsed.labviewVersion = readRequiredArgValue(argv, argument, ++index);
-        break;
-      case '--labview-bitness':
-        parsed.labviewBitness = normalizeLabviewBitness(
-          readRequiredArgValue(argv, argument, ++index)
-        );
-        break;
-      case '--settings-file':
-        parsed.settingsFilePath = readRequiredArgValue(argv, argument, ++index);
-        break;
-      case '--proof-out':
-        parsed.proofOutDirectoryPath = readRequiredArgValue(argv, argument, ++index);
-        break;
-      default:
-        throw new Error(`Unknown argument: ${argument}`);
+      }
+    },
+    valueFlags: {
+      '--provider': (value) => {
+        parsed.provider = normalizeProvider(value);
+      },
+      '--labview-version': (value) => {
+        parsed.labviewVersion = value;
+      },
+      '--labview-bitness': (value) => {
+        parsed.labviewBitness = normalizeLabviewBitness(value);
+      },
+      '--settings-file': (value) => {
+        parsed.settingsFilePath = value;
+      },
+      '--proof-out': (value) => {
+        parsed.proofOutDirectoryPath = value;
+      }
     }
-  }
+  });
 
   return parsed;
 }
@@ -573,20 +572,6 @@ export async function runInteractiveLocalRuntimeSettingsCli(
   } finally {
     promptController.close();
   }
-}
-
-function readRequiredArgValue(argv: readonly string[], flag: string, index: number): string {
-  const value = argv[index];
-  if (!value) {
-    throw new Error(`Missing value for ${flag}.`);
-  }
-
-  const trimmedValue = value.trim();
-  if (!trimmedValue) {
-    throw new Error(`Missing value for ${flag}.`);
-  }
-
-  return trimmedValue;
 }
 
 export function normalizeLabviewBitness(value: string): LocalRuntimeSettingsCliBitness {
