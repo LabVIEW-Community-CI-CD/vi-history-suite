@@ -8,6 +8,11 @@ import {
   type StreamDockerImagePullResult
 } from '../tooling/dockerImagePullProgress';
 import {
+  isSupportedComparisonReportLabviewVersion,
+  matchesRequestedLabviewVersion,
+  normalizeRequestedLabviewVersion
+} from './runtime/labviewVersionSelection';
+import {
   observeWindowsRuntimeProcesses,
   observeWindowsTcpListeners,
   ObserveWindowsProcessesOptions,
@@ -219,7 +224,6 @@ interface BuildProviderDecisionsOptions {
 }
 
 const WINDOWS_SHARED_LABVIEW_CLI = WINDOWS_SHARED_LABVIEW_CLI_PATH;
-const MINIMUM_COMPARISON_REPORT_LABVIEW_YEAR = 2025;
 const DEFAULT_WINDOWS_CONTAINER_IMAGE = 'nationalinstruments/labview:2026q1-windows';
 const DEFAULT_LINUX_CONTAINER_IMAGE = 'nationalinstruments/labview:2026q1-linux';
 const WINDOWS_CONTAINER_LABVIEW_EXE =
@@ -2616,25 +2620,6 @@ function resolveConfiguredContainerImageReference(options: {
   return resolved.outcome === 'resolved' ? resolved.reference : options.defaultReference;
 }
 
-function normalizeRequestedLabviewVersion(rawVersion: string | undefined): string | undefined {
-  const trimmed = rawVersion?.trim();
-  if (!trimmed) {
-    return undefined;
-  }
-
-  const yearMatch = trimmed.match(/\b(20\d{2})\b/u);
-  return yearMatch?.[1] ?? trimmed;
-}
-
-function isSupportedComparisonReportLabviewVersion(requestedVersion: string): boolean {
-  const requestedYear = Number.parseInt(requestedVersion, 10);
-  if (!Number.isFinite(requestedYear)) {
-    return true;
-  }
-
-  return requestedYear >= MINIMUM_COMPARISON_REPORT_LABVIEW_YEAR;
-}
-
 async function resolveConfiguredCandidates(
   settings: ComparisonRuntimeSettings,
   pathExists: (filePath: string) => Promise<boolean>
@@ -2840,28 +2825,6 @@ function describeDetectedWindowsHostAlternativeBitness(options: {
 
 function describeBitness(bitness: RuntimeBitness): string {
   return bitness === 'x86' ? '32-bit' : '64-bit';
-}
-
-function matchesRequestedLabviewVersion(
-  candidate: RuntimeToolCandidate,
-  requestedVersion: string | undefined
-): boolean {
-  if (!requestedVersion || candidate.kind !== 'labview-exe') {
-    return true;
-  }
-
-  return extractLabviewMajorVersion(candidate.path) === requestedVersion;
-}
-
-function extractLabviewMajorVersion(filePath: string): string | undefined {
-  const normalized = filePath.replaceAll('\\', '/');
-  const folderMatch = normalized.match(/\/LabVIEW(?:[- ])([^/]+)\/(?:LabVIEW\.exe|labview|labviewcommunity)$/iu);
-  if (!folderMatch) {
-    return undefined;
-  }
-
-  const yearMatch = folderMatch[1].match(/\b(20\d{2})\b/u);
-  return yearMatch?.[1];
 }
 
 export function inferBitnessFromPath(filePath: string): RuntimeBitness | undefined {
