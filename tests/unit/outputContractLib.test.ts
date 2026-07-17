@@ -22,6 +22,8 @@ const outputContract = require('../../scripts/lib/outputContract.js') as {
       defaults?: Record<string, unknown>;
       requireValue?: boolean;
       enforceSingleOutputMode?: boolean;
+      excludeCommonFlags?: string[];
+      repeatable?: string[];
     }
   ) => { options: Record<string, unknown>; positionals: string[] };
   generatedAt: (deps?: { now?: () => Date | string | number; generatedAt?: Date | string | number }) => string;
@@ -138,6 +140,18 @@ describe('parseSharedOutputArgs', () => {
   it('still parses non-excluded common flags when some are excluded', () => {
     const { options } = parseSharedOutputArgs(['--json'], { excludeCommonFlags: ['--strict'] });
     expect(options.json).toBe(true);
+  });
+
+  it('accumulates repeatable value flags into an array with per-element transform', () => {
+    const { options } = parseSharedOutputArgs(
+      ['--issue-link', 'a', '--issue-link', 'b'],
+      {
+        valueFlags: { '--issue-link': 'issueLinks' },
+        repeatable: ['issueLinks'],
+        defaults: { issueLinks: [] }
+      }
+    );
+    expect(options.issueLinks).toEqual(['a', 'b']);
   });
 });
 

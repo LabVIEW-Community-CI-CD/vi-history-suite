@@ -1186,7 +1186,7 @@ Instruction body.
     const stderrCapture = captureWrite(process.stderr);
     try {
       expect(main(['--unsupported-option'])).toBe(1);
-      expect(stderrCapture.read()).toContain("Unknown option '--unsupported-option'");
+      expect(stderrCapture.read()).toContain('Unknown argument: --unsupported-option');
     } finally {
       stderrCapture.restore();
     }
@@ -1208,7 +1208,7 @@ Instruction body.
     });
 
     expect(() => parseMainArgs(['--unsupported-option'])).toThrow(
-      "Unknown option '--unsupported-option'"
+      'Unknown argument: --unsupported-option'
     );
 
     expect(() => parseMainArgs(['/tmp/one', '/tmp/two'])).toThrow(
@@ -1225,7 +1225,7 @@ Instruction body.
         }
       })
     ).toBe(1);
-    expect(stderr).toContain("Unknown option '--unsupported-option'");
+    expect(stderr).toContain('Unknown argument: --unsupported-option');
   });
 
   it('emits a self-describing report aligned with the published schema, with a --schema mode (VHS-REQ-615)', () => {
