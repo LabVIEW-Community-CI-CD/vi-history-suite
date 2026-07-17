@@ -66,6 +66,17 @@
       "lastValidatedCommit": "ee8d6cbc",
       "evidence": "vagrant local validation 2026-07-16T21:38:25.763Z",
       "fixture": "labview-icon-editor resource/plugins/lv_icon.vi (x86 host-native headless, VHS-REQ-665)"
+    },
+    {
+      "trackId": "vagrant-win-pathadmit-validation",
+      "platform": "windows",
+      "provider": "vagrant",
+      "linuxExecutable": false,
+      "releaseGating": false,
+      "lastValidatedVersion": "0.0.0",
+      "lastValidatedCommit": "unvalidated",
+      "evidence": "advisory: awaiting first vagrantValidationProofDriver.cjs run",
+      "fixture": "real Windows user-PATH admission (persistWindowsUserPathPrepend) + validateLocalRuntimeSettingsCli --proof-out (runtime-validation-proof@v1)"
     }
   ]
 }
