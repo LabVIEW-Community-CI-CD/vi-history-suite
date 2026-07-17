@@ -131,6 +131,22 @@ describe('createFileViSemanticNarrativeCache (VHS-REQ-660.1)', () => {
     expect(await cache.get('not-a-valid-key')).toBeUndefined();
   });
 
+  it('returns undefined when the stored JSON is not a valid narrative shape', async () => {
+    const { fsDeps, files } = createInMemoryFsDeps();
+    const cache = createFileViSemanticNarrativeCache({ cacheDirectory: '/c', joinPath }, fsDeps);
+    // Seed the cache file with parseable JSON that is not a StoredViSemanticNarrative.
+    files.set(joinPath('/c', `${key}.json`), JSON.stringify({ unrelated: true }));
+    expect(await cache.get(key)).toBeUndefined();
+  });
+
+  it('skips the write for an invalid key without touching the filesystem', async () => {
+    const { fsDeps, files, directories } = createInMemoryFsDeps();
+    const cache = createFileViSemanticNarrativeCache({ cacheDirectory: '/c', joinPath }, fsDeps);
+    await cache.set('not-a-valid-key', value);
+    expect(files.size).toBe(0);
+    expect(directories.has('/c')).toBe(false);
+  });
+
   it('treats a read failure as a miss and never throws on a write failure', async () => {
     const cache = createFileViSemanticNarrativeCache(
       { cacheDirectory: '/c', joinPath },
