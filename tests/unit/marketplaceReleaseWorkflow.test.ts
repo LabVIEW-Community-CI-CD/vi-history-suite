@@ -84,6 +84,18 @@ describe('Marketplace release workflow', () => {
     expect(gateIndex, 'attestation gate must run before publish').toBeLessThan(publishIndex);
   });
 
+  it('enforces the supply-chain provenance freshness gate before publish (VHS-REQ-668.5)', () => {
+    const workflow = readWorkflow();
+    const gateCommand = 'node scripts/checkReleaseReadiness.js --strict --require-supply-chain-fresh';
+    const gateIndex = workflow.indexOf(gateCommand);
+    const publishIndex = workflow.indexOf('node scripts/runPinnedVsce.js publish --packagePath');
+
+    expect(workflow).toContain('Verify Supply-Chain Provenance Freshness');
+    expect(workflow).toContain(gateCommand);
+    expect(gateIndex, 'supply-chain gate should exist').toBeGreaterThan(-1);
+    expect(gateIndex, 'supply-chain gate must run before publish').toBeLessThan(publishIndex);
+  });
+
   it('verifies the live Marketplace listing after publish and uploads retained release evidence (VHS-REQ-609.6, VHS-REQ-609.10, VHS-REQ-609.12)', () => {
     const workflow = readWorkflow();
     const publishIndex = workflow.indexOf('node scripts/runPinnedVsce.js publish --packagePath');
