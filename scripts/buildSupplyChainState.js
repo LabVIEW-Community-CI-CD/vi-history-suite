@@ -32,8 +32,17 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { execSync } = require('node:child_process');
 
+const {
+  SCHEMA_PROVENANCE_KEY,
+  JSON_SCHEMA_DIALECT,
+  renderSchemaDocument,
+  schemaEnvelopeFields,
+  schemaEnvelopePropertyNodes
+} = require('./lib/schemaEnvelope.js');
+
 const SCHEMA_ID = 'vi-history-suite/supply-chain-state@v1';
 const SCHEMA_VERSION = 1;
+const SUPPLY_CHAIN_STATE_SCHEMA_PROVENANCE_KEY = SCHEMA_PROVENANCE_KEY;
 const UNKNOWN_COMMIT = '<unknown>';
 
 const BOX_MANIFEST_PATH = 'vagrant/box-manifest.json';
@@ -258,8 +267,7 @@ function buildSupplyChainState(inputs = {}, meta = {}) {
   const artifacts = inputs.artifacts ?? [];
   const attention = artifacts.filter((a) => a.gates && (!a.available || a.fresh === false));
   return {
-    schema: SCHEMA_ID,
-    schemaVersion: SCHEMA_VERSION,
+    ...schemaEnvelopeFields(SCHEMA_ID, SCHEMA_VERSION),
     generatedAt: meta.generatedAt,
     buildVersion: meta.buildVersion,
     gitCommit: meta.gitCommit,
@@ -334,10 +342,84 @@ function renderMarkdown(state) {
   return lines.join('\n');
 }
 
+// Published JSON Schema for the supply-chain-state packet, so machine consumers
+// can validate the emitted `--json` output and the `--schema` mode can publish
+// the contract without running the aggregation. Shares the self-describing
+// envelope contract (top-level $schema + schemaVersion) used by the other
+// read-models via scripts/lib/schemaEnvelope.js.
+const SUPPLY_CHAIN_STATE_JSON_SCHEMA = {
+  $schema: JSON_SCHEMA_DIALECT,
+  $id: SCHEMA_ID,
+  title: 'vi-history-suite supply-chain state',
+  type: 'object',
+  additionalProperties: false,
+  required: [
+    '$schema',
+    'schemaVersion',
+    'generatedAt',
+    'buildVersion',
+    'gitCommit',
+    'status',
+    'artifactCount',
+    'attentionCount',
+    'artifacts'
+  ],
+  properties: {
+    ...schemaEnvelopePropertyNodes(SCHEMA_ID, SCHEMA_VERSION),
+    generatedAt: { type: 'string' },
+    buildVersion: { type: 'string' },
+    gitCommit: { type: 'string' },
+    status: { enum: ['fresh', 'attention'] },
+    artifactCount: { type: 'integer' },
+    attentionCount: { type: 'integer' },
+    artifacts: {
+      type: 'array',
+      items: {
+        type: 'object',
+        required: ['id', 'kind', 'available', 'gates', 'digest', 'fresh', 'detail', 'drift', 'source'],
+        properties: {
+          id: { type: 'string' },
+          kind: { type: 'string' },
+          available: { type: 'boolean' },
+          gates: { type: 'boolean' },
+          digest: { type: ['string', 'null'] },
+          fresh: { type: ['boolean', 'null'] },
+          detail: { type: 'string' },
+          drift: { type: ['string', 'null'] },
+          source: { type: ['string', 'null'] },
+          tracks: { type: 'array' }
+        }
+      }
+    },
+    provenance: {
+      type: 'object',
+      required: ['generatedAt', 'cwd', 'outputMode', 'strict', 'argv'],
+      properties: {
+        generatedAt: { type: 'string' },
+        cwd: { type: 'string' },
+        outputMode: { enum: ['text', 'json', 'markdown', 'schema'] },
+        strict: { type: 'boolean' },
+        argv: { type: 'array', items: { type: 'string' } }
+      }
+    }
+  }
+};
+
+function renderSchema(options = {}) {
+  return renderSchemaDocument(SUPPLY_CHAIN_STATE_JSON_SCHEMA, options);
+}
+
 // --- CLI ---
 
 function parseArgs(argv = []) {
-  const options = { json: false, markdown: false, strict: false, outputPath: undefined };
+  const options = {
+    json: false,
+    markdown: false,
+    schema: false,
+    strict: false,
+    includeProvenance: false,
+    outputPath: undefined
+  };
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
     const next = () => {
@@ -350,14 +432,22 @@ function parseArgs(argv = []) {
     };
     if (arg === '--json') options.json = true;
     else if (arg === '--markdown') options.markdown = true;
+    else if (arg === '--schema') options.schema = true;
     else if (arg === '--strict') options.strict = true;
+    else if (arg === '--include-provenance') options.includeProvenance = true;
     else if (arg === '--output') options.outputPath = next();
     else if (arg.startsWith('--')) throw new Error(`Unknown argument: ${arg}`);
   }
-  if (options.json && options.markdown) {
-    throw new Error('Use only one output mode: --json or --markdown');
+  if ([options.json, options.markdown, options.schema].filter(Boolean).length > 1) {
+    throw new Error('Use only one output mode: --json, --markdown, or --schema');
   }
   return options;
+}
+
+function outputModeForOptions(options = {}) {
+  if (options.schema) return 'schema';
+  if (options.markdown) return 'markdown';
+  return options.json ? 'json' : 'text';
 }
 
 function resolveOutputPath(cwd, relativePath) {
@@ -386,9 +476,38 @@ function main(argv = process.argv.slice(2), deps = {}) {
     return 1;
   }
   const cwd = deps.cwd || process.cwd();
+  const outputMode = outputModeForOptions(options);
+  const provenance = options.includeProvenance
+    ? {
+        generatedAt:
+          typeof deps.now === 'function' ? new Date(deps.now()).toISOString() : new Date().toISOString(),
+        cwd,
+        outputMode,
+        strict: options.strict,
+        argv: [...argv]
+      }
+    : undefined;
+
+  // --schema publishes the JSON Schema without running the aggregation.
+  if (options.schema) {
+    const rendered = renderSchema({ provenance });
+    if (options.outputPath) {
+      const resolved = resolveOutputPath(cwd, options.outputPath);
+      const mkdirSync = deps.mkdirSync ?? fs.mkdirSync;
+      const writeFile = deps.writeFile ?? fs.writeFileSync;
+      mkdirSync(path.dirname(resolved), { recursive: true });
+      writeFile(resolved, `${rendered}\n`, 'utf8');
+      stdout.write(`[supply-chain-state] Wrote ${options.outputPath}\n`);
+    } else {
+      stdout.write(`${rendered}\n`);
+    }
+    return 0;
+  }
+
   const state = collectSupplyChainState(cwd, options, deps);
+  const stateWithProvenance = provenance ? { ...state, provenance } : state;
   const rendered = options.json
-    ? JSON.stringify(state, null, 2)
+    ? JSON.stringify(stateWithProvenance, null, 2)
     : options.markdown
       ? renderMarkdown(state)
       : renderSummary(state);
@@ -425,6 +544,9 @@ module.exports = {
   buildDevtoolsArtifact,
   buildSupplyChainState,
   collectSupplyChainState,
+  SUPPLY_CHAIN_STATE_JSON_SCHEMA,
+  renderSchema,
+  outputModeForOptions,
   renderSummary,
   renderMarkdown,
   markdownCell,

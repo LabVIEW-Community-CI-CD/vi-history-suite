@@ -5093,9 +5093,11 @@ Missing numeric IDs are intentional.
     artifact is unavailable or stale, otherwise `fresh`; `--strict` exits
     nonzero on `attention` as an opt-in local signal and is not wired into any
     CI gate.
-  - `npm run supply-chain:state` renders text by default, with `--json` and
-    `--markdown` output modes and a path-safe `--output`; Markdown table cells
-    escape backslashes before pipes.
+  - `npm run supply-chain:state` renders text by default, with `--json`,
+    `--markdown`, and `--schema` output modes plus optional `--include-provenance`
+    and a path-safe `--output`; the emitted packet is self-describing with a
+    top-level `$schema` and `schemaVersion`, and Markdown table cells escape
+    backslashes before pipes.
   - The release-readiness gate exposes an opt-in `--require-supply-chain-fresh`
     flag that promotes the read-model to a hard check, failing the verdict
     unless every artifact is fresh with zero attention and failing closed when
