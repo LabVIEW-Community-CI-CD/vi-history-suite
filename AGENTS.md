@@ -152,6 +152,7 @@ At the end of substantial tasks, improve the agent guidance in the same PR when 
 - [Branch and PR Flow](./CONTRIBUTING.md#branch-and-pr-flow)
 - [Maintainer Operations](./docs/maintainer-operations.md)
 - [Optional Vagrant Helper](./docs/vagrant.md)
+- [Dev-Tools Release Channel](./docs/devtools-release.md)
 - [Contributing](./CONTRIBUTING.md)
 - [Security Policy](./SECURITY.md)
 
