@@ -25,7 +25,7 @@ describe('resolveMappedRuntimeDiagnosticPath', () => {
       resolveMappedRuntimeDiagnosticPath('/workspace/staging/cli.log', {
         runtimeRoot: '/workspace',
         hostRoot: '/home/user/report'
-      })
+      })?.replace(/\\/g, '/')
     ).toBe('/home/user/report/staging/cli.log');
   });
 
@@ -46,7 +46,7 @@ describe('resolveHostReadableDiagnosticPath', () => {
       resolveHostReadableDiagnosticPath('/workspace/cli.log', 'linux', {
         runtimeRoot: '/workspace',
         hostRoot: '/home/user'
-      })
+      })?.replace(/\\/g, '/')
     ).toBe('/home/user/cli.log');
   });
 
