@@ -4,6 +4,8 @@ const { spawnSync } = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
 
+const { SCHEMA_PROVENANCE_KEY, renderSchemaDocument } = require('./lib/schemaEnvelope.js');
+
 const DEFAULT_REPO = 'LabVIEW-Community-CI-CD/vi-history-suite';
 const DEFAULT_BRANCH = 'develop';
 const DEFAULT_AUDIT_BRANCHES = Object.freeze(['develop', 'main']);
@@ -90,7 +92,7 @@ const FULL_HARDENING_OPTION_KEYS = Object.freeze([
 ]);
 const BRANCH_PROTECTION_AUDIT_SCHEMA_VERSION = 1;
 const BRANCH_PROTECTION_AUDIT_SCHEMA_ID = 'https://labview-community-cicd.github.io/vi-history-suite/schemas/branch-protection-audit-v1.schema.json';
-const BRANCH_PROTECTION_AUDIT_SCHEMA_PROVENANCE_KEY = 'x-vi-history-suite-provenance';
+const BRANCH_PROTECTION_AUDIT_SCHEMA_PROVENANCE_KEY = SCHEMA_PROVENANCE_KEY;
 const BRANCH_PROTECTION_AUDIT_JSON_SCHEMA = Object.freeze({
   $schema: 'https://json-schema.org/draft/2020-12/schema',
   $id: BRANCH_PROTECTION_AUDIT_SCHEMA_ID,
@@ -1395,13 +1397,7 @@ function buildAuditSchemaProvenance(options = {}, deps = {}) {
 }
 
 function renderBranchProtectionAuditJsonSchema(options = {}) {
-  const schema = options.provenance
-    ? {
-        ...BRANCH_PROTECTION_AUDIT_JSON_SCHEMA,
-        [BRANCH_PROTECTION_AUDIT_SCHEMA_PROVENANCE_KEY]: options.provenance
-      }
-    : BRANCH_PROTECTION_AUDIT_JSON_SCHEMA;
-  return JSON.stringify(schema, null, 2);
+  return renderSchemaDocument(BRANCH_PROTECTION_AUDIT_JSON_SCHEMA, options);
 }
 
 function provenanceMarkdownLines(provenance) {
