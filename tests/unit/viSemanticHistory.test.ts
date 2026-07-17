@@ -156,4 +156,29 @@ describe('buildViSemanticHistory', () => {
       buildViSemanticHistory(input({ relativePath: '../../secrets.vi' }), deps)
     ).rejects.toThrow('escapes the repository root');
   });
+
+  it('rejects a blank relative path', async () => {
+    const { deps } = makeHarness([], []);
+    await expect(
+      buildViSemanticHistory(input({ relativePath: '   ' }), deps)
+    ).rejects.toThrow('relativePath is required');
+  });
+
+  it('counts connector-pane and vi-attributes surface changes and names them in the narrative', async () => {
+    const entries = [entry('cccc', 'edit', 3), entry('bbbb', 'edit', 2), entry('aaaa', 'init', 1)];
+    const harness = makeHarness(entries, [
+      completed(['connector-pane'], 'The connector pane differs.', 'bbbb'),
+      completed(['vi-attributes'], 'The VI attributes differ.', 'aaaa')
+    ]);
+
+    const history = await buildViSemanticHistory(input(), harness.deps);
+
+    expect(history.totals).toMatchObject({
+      changingStepCount: 2,
+      connectorPaneChangeCount: 1,
+      viAttributeChangeCount: 1
+    });
+    expect(history.narrative).toContain('connector pane (1)');
+    expect(history.narrative).toContain('VI attributes (1)');
+  });
 });
