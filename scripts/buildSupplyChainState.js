@@ -316,11 +316,11 @@ function provenanceMarkdownLines(provenance) {
   return [
     '## Provenance',
     '',
-    `- Generated: \`${markdownCell(provenance.generatedAt)}\``,
-    `- Cwd: \`${markdownCell(provenance.cwd)}\``,
-    `- Output: \`${markdownCell(provenance.outputMode)}\``,
-    `- Strict: \`${markdownCell(provenance.strict)}\``,
-    `- Argv: \`${markdownCell(JSON.stringify(provenance.argv))}\``,
+    `- Generated: ${markdownCodeSpan(provenance.generatedAt)}`,
+    `- Cwd: ${markdownCodeSpan(provenance.cwd)}`,
+    `- Output: ${markdownCodeSpan(provenance.outputMode)}`,
+    `- Strict: ${markdownCodeSpan(provenance.strict)}`,
+    `- Argv: ${markdownCodeSpan(JSON.stringify(provenance.argv))}`,
     ''
   ];
 }
@@ -345,6 +345,18 @@ function markdownCell(value) {
     .replace(/\\/g, '\\\\')
     .replace(/\|/g, '\\|')
     .replace(/\n/g, '<br>');
+}
+
+// Inline-code span: inside a code span backslashes are LITERAL (unlike table
+// cells), so paths like C:\repo must NOT be backslash-doubled. Fence with a
+// backtick run one longer than any run inside the value so embedded backticks
+// stay literal, per the requirements-health/branch-protection renderers.
+function markdownCodeSpan(value) {
+  const content = String(value ?? '').replace(/\r?\n/gu, ' ');
+  const longestBacktickRun = Math.max(0, ...Array.from(content.matchAll(/`+/gu), (match) => match[0].length));
+  const fence = '`'.repeat(longestBacktickRun + 1);
+  const paddedContent = content.startsWith('`') || content.endsWith('`') ? ` ${content} ` : content;
+  return `${fence}${paddedContent}${fence}`;
 }
 
 function renderMarkdown(state, provenance) {
