@@ -1,8 +1,6 @@
-import { execFile } from 'node:child_process';
 import * as fs from 'node:fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
-import { promisify } from 'node:util';
 
 import * as vscode from 'vscode';
 
@@ -30,6 +28,7 @@ import {
   type ResolveViPreviewRenderSourceDeps,
   type ViPreviewMaterializedTree
 } from '../reporting/viPreview/viPreviewRenderSource';
+import { runExecFileText } from '../tooling/execFileText';
 
 /**
  * VHS-REQ-659: shared VS Code host bindings for single-VI preview rendering.
@@ -43,8 +42,6 @@ import {
 /** Generous window for a cold LabVIEW container launch plus the one-shot retry. */
 const VI_PREVIEW_COMMAND_TIMEOUT_MS = 10 * 60 * 1000;
 const VI_PREVIEW_MAX_BUFFER_BYTES = 16 * 1024 * 1024;
-
-const execFileAsync = promisify(execFile);
 
 /** Absolute path of the vendored `PrintToSingleFileHtml` operation root. */
 export function getViPreviewOperationDirectory(context: vscode.ExtensionContext): string {
@@ -99,20 +96,10 @@ export async function resolvePreviewRuntime(): Promise<ViPreviewRuntimeResolutio
 async function runViPreviewCommand(
   plan: ComparisonCommandPlan
 ): Promise<{ exitCode: number; stdout: string; stderr: string }> {
-  try {
-    const { stdout, stderr } = await execFileAsync(plan.executable, plan.args, {
-      timeout: VI_PREVIEW_COMMAND_TIMEOUT_MS,
-      maxBuffer: VI_PREVIEW_MAX_BUFFER_BYTES
-    });
-    return { exitCode: 0, stdout, stderr };
-  } catch (error) {
-    const failure = error as { code?: number | string; stdout?: string; stderr?: string; message?: string };
-    return {
-      exitCode: typeof failure.code === 'number' ? failure.code : 1,
-      stdout: failure.stdout ?? '',
-      stderr: failure.stderr ?? failure.message ?? String(error)
-    };
-  }
+  return runExecFileText(plan.executable, plan.args, {
+    timeoutMs: VI_PREVIEW_COMMAND_TIMEOUT_MS,
+    maxBufferBytes: VI_PREVIEW_MAX_BUFFER_BYTES
+  });
 }
 
 /**
