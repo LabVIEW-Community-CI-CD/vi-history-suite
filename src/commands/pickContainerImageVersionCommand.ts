@@ -229,7 +229,7 @@ export async function discoverAvailableContainerImageVersions(
  */
 export const defaultFetchPublishedTags = async (
   repository: string,
-  httpGetJson: (url: string) => Promise<{ results?: Array<{ name?: unknown }>; next?: unknown }> = httpsGetJson
+  httpGetJson: (url: string) => Promise<{ results?: Array<{ name?: unknown }>; next?: unknown }> = createHttpsGetJson()
 ): Promise<string[]> => {
   if (repository !== LABVIEW_CONTAINER_IMAGE_REPOSITORY) {
     return [];
@@ -257,34 +257,43 @@ export const defaultFetchPublishedTags = async (
   return tags;
 };
 
-function httpsGetJson(url: string): Promise<{ results?: Array<{ name?: unknown }>; next?: unknown }> {
-  return new Promise((resolve, reject) => {
-    const request = https.get(url, { timeout: REGISTRY_REQUEST_TIMEOUT_MS }, (response) => {
-      const status = response.statusCode ?? 0;
-      if (status < 200 || status >= 300) {
-        response.resume();
-        reject(new Error(`registry responded with HTTP ${status}`));
-        return;
-      }
-      let body = '';
-      response.setEncoding('utf8');
-      response.on('data', (chunk) => {
-        body += chunk;
-        if (body.length > 2_000_000) {
-          request.destroy(new Error('registry response too large'));
+/**
+ * Build the default registry JSON getter over an injectable `https.get`. The
+ * HTTP boundary is a parameter so the status/size-cap/parse/timeout/error
+ * branches can be unit-tested with a fake request/response pair, matching the
+ * dependency-injected-boundary convention used elsewhere in the codebase.
+ */
+export function createHttpsGetJson(
+  httpGet: typeof https.get = https.get
+): (url: string) => Promise<{ results?: Array<{ name?: unknown }>; next?: unknown }> {
+  return (url: string) =>
+    new Promise((resolve, reject) => {
+      const request = httpGet(url, { timeout: REGISTRY_REQUEST_TIMEOUT_MS }, (response) => {
+        const status = response.statusCode ?? 0;
+        if (status < 200 || status >= 300) {
+          response.resume();
+          reject(new Error(`registry responded with HTTP ${status}`));
+          return;
         }
+        let body = '';
+        response.setEncoding('utf8');
+        response.on('data', (chunk) => {
+          body += chunk;
+          if (body.length > 2_000_000) {
+            request.destroy(new Error('registry response too large'));
+          }
+        });
+        response.on('end', () => {
+          try {
+            resolve(JSON.parse(body));
+          } catch (error) {
+            reject(error instanceof Error ? error : new Error(String(error)));
+          }
+        });
       });
-      response.on('end', () => {
-        try {
-          resolve(JSON.parse(body));
-        } catch (error) {
-          reject(error instanceof Error ? error : new Error(String(error)));
-        }
-      });
+      request.on('timeout', () => request.destroy(new Error('registry request timed out')));
+      request.on('error', reject);
     });
-    request.on('timeout', () => request.destroy(new Error('registry request timed out')));
-    request.on('error', reject);
-  });
 }
 
 /**
