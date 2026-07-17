@@ -96,8 +96,13 @@ function getPackageVersion() {
 }
 
 // Read the committed Vagrant box manifest sha256 to bind the attestation to the
-// box it ran on (box-provenance chain). Undefined when absent/unparseable.
+// box it ran on (box-provenance chain). Undefined when absent/unparseable OR
+// when VIHS_VAGRANT_BOX overrides the box (the committed manifest fingerprints
+// the DEFAULT box; binding it to an override run would be false provenance).
 function getBoxSha256() {
+  if (process.env.VIHS_VAGRANT_BOX && process.env.VIHS_VAGRANT_BOX.trim()) {
+    return undefined;
+  }
   try {
     const manifest = JSON.parse(fs.readFileSync(path.join(vagrantDir, 'box-manifest.json'), 'utf8'));
     return typeof manifest.sha256 === 'string' && /^[0-9a-f]{64}$/.test(manifest.sha256)
@@ -294,6 +299,8 @@ function main() {
   const evidence = options.evidence
     ? `${options.evidence} ${proofTag}`
     : `vagrant pathadmit+validation proof ${proofTag} ${new Date().toISOString()}`;
+  const boxSha256 = getBoxSha256();
+  const overrideBox = process.env.VIHS_VAGRANT_BOX && process.env.VIHS_VAGRANT_BOX.trim();
   const record = run('node', [
     path.join('scripts', 'recordRuntimeValidation.js'),
     '--track',
@@ -304,7 +311,9 @@ function main() {
     commit,
     '--evidence',
     evidence,
-    ...(getBoxSha256() ? ['--box-sha256', getBoxSha256()] : [])
+    // Bind to the committed box, or CLEAR any stale binding under an override so
+    // the attestation does not falsely claim the committed box's provenance.
+    ...(boxSha256 ? ['--box-sha256', boxSha256] : overrideBox ? ['--clear-box-sha256'] : [])
   ]);
   if (record.status !== 0) {
     fail('Failed to record the attestation into the runtime-validation ledger.');

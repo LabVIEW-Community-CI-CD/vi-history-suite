@@ -62,6 +62,19 @@ describe('Dev-tools release workflow (DS3)', () => {
     expect(createBlock).toContain("steps.decide.outputs.changed == 'true'");
   });
 
+  it('scopes dedup to the dev-tools tag prefix AND the isPrerelease flag (#1524)', () => {
+    const workflow = readWorkflow();
+    const decideBlock = workflow.slice(
+      workflow.indexOf('name: Decide release vs dedup'),
+      workflow.indexOf('name: Upload dev-tools artifact')
+    );
+    // Must combine the prerelease flag and the dev-tools tag prefix so another
+    // workflow's prerelease (e.g. diagnostic-test-vsix-*) is never selected.
+    expect(decideBlock).toContain('.isPrerelease == $want_prerelease');
+    expect(decideBlock).toContain('startswith(\\"$prefix\\")');
+    expect(decideBlock).toContain('startswith(\\"devtools-dev-\\") | not');
+  });
+
   it('treats a push as dry-run unless the opt-in publish variable is set (dry-run-first)', () => {
     const workflow = readWorkflow();
     // A push publishes only when DEVTOOLS_RELEASE_PUBLISH == 'true'; otherwise dry-run.
