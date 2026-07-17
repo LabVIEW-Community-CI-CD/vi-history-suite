@@ -3,6 +3,12 @@ import { pathExistsViaFsAccess as defaultPathExists } from '../support/fsExists'
 import { escapeHtml } from '../support/escapeHtml';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
+import {
+  readBooleanSetting,
+  readConfiguredLabviewBitness,
+  readConfiguredRuntimeProvider,
+  readTrimmedStringSetting
+} from './comparisonReportActionSettingsPrimitives';
 
 import {
   archiveComparisonReportSource,
@@ -1731,47 +1737,6 @@ export function readComparisonRuntimeSettings(
   };
 }
 
-function readTrimmedStringSetting(
-  configuration: Pick<vscode.WorkspaceConfiguration, 'get'>,
-  key: string
-): string | undefined {
-  const value = configuration.get<unknown>(key);
-  if (typeof value !== 'string') {
-    // Defend the system boundary: a misconfigured settings.json can return a
-    // non-string (e.g. a number) for a string-typed setting, and calling
-    // `.trim()` on it would throw and break runtime-settings resolution.
-    return undefined;
-  }
-  const trimmed = value.trim();
-  return trimmed ? trimmed : undefined;
-}
-
-function readConfiguredLabviewBitness(
-  configuration: Pick<vscode.WorkspaceConfiguration, 'get'>
-): 'x86' | 'x64' | undefined {
-  const value = readTrimmedStringSetting(configuration, 'labviewBitness');
-  if (value === 'x86' || value === 'x64') {
-    return value;
-  }
-
-  return undefined;
-}
-
-function readConfiguredRuntimeProvider(
-  configuration: Pick<vscode.WorkspaceConfiguration, 'get'>
-): { provider?: 'host' | 'docker'; invalidProvider?: string } {
-  const value = readTrimmedStringSetting(configuration, 'runtimeProvider');
-  if (!value) {
-    return {};
-  }
-
-  if (value === 'host' || value === 'docker') {
-    return { provider: value };
-  }
-
-  return { invalidProvider: value };
-}
-
 /**
  * VHS-REQ-645: reads the user-configurable comparison report flags from
  * `viHistorySuite.report.*`. The difference-suppression booleans default to
@@ -1797,16 +1762,6 @@ export function readComparisonReportOptions(
       'report.ignoreBlockDiagramCosmetic'
     )
   };
-}
-
-function readBooleanSetting(
-  configuration: Pick<vscode.WorkspaceConfiguration, 'get'>,
-  key: string
-): boolean {
-  // Defend the system boundary: a misconfigured settings.json can return a
-  // non-boolean for a boolean-typed setting; treat anything but `true` as the
-  // default (false = include this difference class).
-  return configuration.get<unknown>(key) === true;
 }
 
 export interface ApplyComparisonReportOptionSelectionDeps {
