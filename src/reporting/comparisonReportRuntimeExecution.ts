@@ -45,6 +45,10 @@ import {
   quoteBashLiteral
 } from './runtime/shellScriptEncoding';
 import { parseWindowsContainerRuntimeFacts } from './runtime/windowsContainerRuntimeFacts';
+import {
+  resolveWindowsSystem32Executable,
+  parseWindowsNetstatListeners
+} from './runtime/windowsNetstatListeners';
 import { nowIso } from '../support/clock';
 import { ComparisonCommandPlan, ComparisonReportOptions } from './comparisonReportPlan';
 import { buildComparisonReportExecutionPlan } from './comparisonReportExecutionPlan';
@@ -5532,38 +5536,6 @@ export async function observeWindowsTcpListeners(
     ...listener,
     processName: processNamesByPid.get(listener.pid)
   }));
-}
-
-function resolveWindowsSystem32Executable(hostPlatform: NodeJS.Platform, filename: string): string {
-  return hostPlatform === 'win32'
-    ? path.win32.join(process.env.SYSTEMROOT ?? 'C:\\Windows', 'System32', filename)
-    : `/mnt/c/Windows/System32/${filename}`;
-}
-
-function parseWindowsNetstatListeners(stdout: string): WindowsTcpListenerObservation[] {
-  return stdout
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0)
-    .map((line) => {
-      const match = line.match(/^TCP\s+(\S+):(\d+)\s+\S+\s+LISTENING\s+(\d+)$/i);
-      if (!match) {
-        return undefined;
-      }
-
-      const localPort = Number.parseInt(match[2], 10);
-      const pid = Number.parseInt(match[3], 10);
-      if (!Number.isInteger(localPort) || !Number.isInteger(pid)) {
-        return undefined;
-      }
-
-      return {
-        localAddress: match[1],
-        localPort,
-        pid
-      } satisfies WindowsTcpListenerObservation;
-    })
-    .filter((listener): listener is WindowsTcpListenerObservation => Boolean(listener));
 }
 
 export function runComparisonCommandPlanWithObservation(
