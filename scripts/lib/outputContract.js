@@ -158,20 +158,33 @@ function resolveOutputPath(cwd, relativePath) {
 }
 
 // Write rendered content to a safe `--output` file (creating parent dirs) or, when
-// no outputPath is given, print it to stdout. When both `stdout` and `label` are
-// provided, a `[label] Wrote <outputPath>` confirmation is written to stdout after
-// the file write (matching the read-models that log a write confirmation).
+// no outputPath is given, print it to stdout. A stdout write-confirmation is emitted
+// only when `stdout` is provided AND a confirmation source is given:
+//   - `confirm`: a full message string, OR a function (outputPath) => string, giving
+//     callers exact control over their CLI contract (e.g. the mode-specific
+//     `[requirements-verify] Wrote schema output to <path>` messages). Highest priority.
+//   - `label`: shorthand for the common `[label] Wrote <outputPath>` message.
 // Supports both `deps.writeFile` and `deps.writeFileSync` injection names.
 // Returns the resolved absolute path when a file was written, otherwise undefined.
-function writeOutput(content, { outputPath, cwd, stdout, deps = {}, label } = {}) {
+function writeOutput(content, { outputPath, cwd, stdout, deps = {}, label, confirm } = {}) {
   if (outputPath) {
     const resolved = resolveOutputPath(cwd, outputPath);
     const mkdirSync = deps.mkdirSync || fs.mkdirSync;
     const writeFileSync = deps.writeFile || deps.writeFileSync || fs.writeFileSync;
     mkdirSync(path.dirname(resolved), { recursive: true });
     writeFileSync(resolved, `${content}\n`, 'utf8');
-    if (stdout && label) {
-      stdout.write(`[${label}] Wrote ${outputPath}\n`);
+    if (stdout) {
+      let message;
+      if (typeof confirm === 'function') {
+        message = confirm(outputPath);
+      } else if (typeof confirm === 'string') {
+        message = confirm;
+      } else if (label) {
+        message = `[${label}] Wrote ${outputPath}`;
+      }
+      if (message !== undefined) {
+        stdout.write(`${message}\n`);
+      }
     }
     return resolved;
   }

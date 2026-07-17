@@ -38,6 +38,7 @@ const outputContract = require('../../scripts/lib/outputContract.js') as {
       stdout?: { write: (chunk: string) => void };
       deps?: Record<string, unknown>;
       label?: string;
+      confirm?: string | ((outputPath: string) => string);
     }
   ) => string | undefined;
 };
@@ -242,6 +243,33 @@ describe('writeOutput', () => {
       stdout: { write: (chunk: string) => chunks.push(chunk) }
     });
     expect(chunks).toEqual([]);
+  });
+
+  it('uses a caller-provided confirmation string over the label shorthand', () => {
+    const root = makeTempRoot();
+    tempRoots.push(root);
+    const chunks: string[] = [];
+    writeOutput('body', {
+      outputPath: 'report.json',
+      cwd: root,
+      stdout: { write: (chunk: string) => chunks.push(chunk) },
+      label: 'ignored',
+      confirm: '[requirements-verify] Wrote schema output to report.json'
+    });
+    expect(chunks).toEqual(['[requirements-verify] Wrote schema output to report.json\n']);
+  });
+
+  it('uses a caller-provided confirmation function receiving the outputPath', () => {
+    const root = makeTempRoot();
+    tempRoots.push(root);
+    const chunks: string[] = [];
+    writeOutput('body', {
+      outputPath: path.join('out', 'audit.json'),
+      cwd: root,
+      stdout: { write: (chunk: string) => chunks.push(chunk) },
+      confirm: (outputPath: string) => `[branch-protection-audit] Wrote audit output to ${outputPath}`
+    });
+    expect(chunks).toEqual([`[branch-protection-audit] Wrote audit output to ${path.join('out', 'audit.json')}\n`]);
   });
 
   it('supports injected writeFileSync', () => {
