@@ -49,6 +49,8 @@ import {
   resolveLinuxContainerLabviewProfile
 } from '../tooling/containerImageCatalog';
 import { resolveConfiguredContainerImageReference } from './runtime/containerImageReference';
+import { describeBitness, inferBitnessFromPath } from './runtime/bitnessHelpers';
+export { inferBitnessFromPath } from './runtime/bitnessHelpers';
 
 const execFileAsync = promisify(execFile);
 
@@ -2688,30 +2690,6 @@ function describeDetectedWindowsHostAlternativeBitness(options: {
   return [
     `Detected installed ${surface} at ${paths}, but VI History Suite will not auto-switch from selected ${options.requestedBitness} (${describeBitness(options.requestedBitness)}) to ${alternativeBitness} (${describeBitness(alternativeBitness)}) because bitness-specific dependencies may differ.`
   ];
-}
-
-function describeBitness(bitness: RuntimeBitness): string {
-  return bitness === 'x86' ? '32-bit' : '64-bit';
-}
-
-export function inferBitnessFromPath(filePath: string): RuntimeBitness | undefined {
-  // Normalize to forward slashes so the check works for both Windows
-  // (backslash) and POSIX (forward-slash) install paths. The shared
-  // normalizeCandidatePath normalizes to backslashes for Windows CLI dedup,
-  // which would make the POSIX markers below unmatchable — so infer bitness
-  // with a forward-slash form here instead.
-  const normalized = filePath.replaceAll('\\', '/').toLowerCase();
-  if (normalized.includes('/program files (x86)/')) {
-    return 'x86';
-  }
-  if (
-    normalized.includes('/program files/') ||
-    normalized.includes('/usr/local/natinst/') ||
-    normalized.includes('/applications/national instruments/')
-  ) {
-    return 'x64';
-  }
-  return undefined;
 }
 
 async function defaultPathExists(filePath: string): Promise<boolean> {
