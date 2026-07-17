@@ -386,7 +386,6 @@ function checkSupplyChainFreshness(state) {
       'Supply-chain provenance state unavailable (run npm run supply-chain:state); cannot gate a release on an absent read-model.'
     );
   }
-  const attention = Number.isInteger(state.attentionCount) ? state.attentionCount : 0;
   const total = Number.isInteger(state.artifactCount) ? state.artifactCount : 0;
   if (total === 0) {
     return makeCheck(
@@ -395,6 +394,33 @@ function checkSupplyChainFreshness(state) {
       'Supply-chain provenance state reports no artifacts; cannot attest freshness for a release.'
     );
   }
+  // Enforce the documented "every artifact is fresh" contract by inspecting each
+  // artifact record rather than trusting the rollup status/attentionCount, which
+  // the aggregator derives from release-gating artifacts only. A stale or
+  // unavailable non-gating artifact (e.g. a drifted requirements manifest or an
+  // uncompiled devtools toolset) must still block the opt-in gate. Artifacts with
+  // fresh === null (freshness not applicable, e.g. content-digest-only records)
+  // are treated as acceptable.
+  if (Array.isArray(state.artifacts)) {
+    const stale = state.artifacts.filter(
+      (artifact) => artifact && typeof artifact === 'object' && (artifact.available === false || artifact.fresh === false)
+    );
+    if (stale.length > 0) {
+      const names = stale.map((artifact) => (typeof artifact.id === 'string' ? artifact.id : 'unnamed-artifact'));
+      return makeCheck(
+        'supply-chain-freshness',
+        false,
+        `Supply-chain artifact(s) stale or unavailable: ${names.join(', ')}; refresh provenance before publishing.`
+      );
+    }
+    return makeCheck(
+      'supply-chain-freshness',
+      true,
+      `Supply-chain provenance fresh: all ${total} artifact(s) bound and current for this build.`
+    );
+  }
+  // Fallback (no per-artifact records supplied): honor the rollup summary.
+  const attention = Number.isInteger(state.attentionCount) ? state.attentionCount : 0;
   if (state.status !== 'fresh' || attention > 0) {
     return makeCheck(
       'supply-chain-freshness',
@@ -569,7 +595,8 @@ function loadSignals(cwd, deps = {}) {
       supplyChainState = {
         status: state.status,
         attentionCount: state.attentionCount,
-        artifactCount: state.artifactCount
+        artifactCount: state.artifactCount,
+        artifacts: Array.isArray(state.artifacts) ? state.artifacts : undefined
       };
     }
   } catch {

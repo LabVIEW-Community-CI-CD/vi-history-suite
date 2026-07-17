@@ -521,6 +521,36 @@ describe('checkSupplyChainFreshness release gate (VHS-REQ-668.5)', () => {
     expect(checkSupplyChainFreshness({}).passed).toBe(false);
   });
 
+  it('inspects per-artifact records so a stale/unavailable non-gating artifact fails the gate', () => {
+    // Rollup says fresh/0-attention (gating artifacts only) but a non-gating
+    // artifact is stale/unavailable: the gate must still fail on the records.
+    const staleNonGating = checkSupplyChainFreshness({
+      status: 'fresh',
+      attentionCount: 0,
+      artifactCount: 3,
+      artifacts: [
+        { id: 'box', available: true, gates: true, fresh: true },
+        { id: 'requirements', available: true, gates: false, fresh: false },
+        { id: 'devtools', available: false, gates: false, fresh: null }
+      ]
+    });
+    expect(staleNonGating.passed).toBe(false);
+    expect(staleNonGating.details).toContain('requirements');
+    expect(staleNonGating.details).toContain('devtools');
+
+    // fresh === null (not applicable) is acceptable when everything is available.
+    const allCurrent = checkSupplyChainFreshness({
+      status: 'fresh',
+      attentionCount: 0,
+      artifactCount: 2,
+      artifacts: [
+        { id: 'box', available: true, gates: true, fresh: true },
+        { id: 'devtools', available: true, gates: false, fresh: null }
+      ]
+    });
+    expect(allCurrent.passed).toBe(true);
+  });
+
   it('appends the supply-chain gate ONLY when requireSupplyChainFresh is set', () => {
     // Default: three advisory checks, no gate.
     expect(buildReleaseReadiness(base, meta).checks).toHaveLength(3);
