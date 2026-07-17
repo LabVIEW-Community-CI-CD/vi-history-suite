@@ -84,6 +84,20 @@ function getCommit() {
   return result.status === 0 ? String(result.stdout).trim() : 'unknown';
 }
 
+// Read the committed Vagrant box manifest's sha256 so the recorded attestation
+// is structurally bound to the specific box it was produced on (box-provenance
+// chain). Returns undefined when the manifest is absent/unparseable.
+function getBoxSha256() {
+  try {
+    const manifest = JSON.parse(fs.readFileSync(path.join(vagrantDir, 'box-manifest.json'), 'utf8'));
+    return typeof manifest.sha256 === 'string' && /^[0-9a-f]{64}$/.test(manifest.sha256)
+      ? manifest.sha256
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 function main() {
   const options = parseArgs(process.argv.slice(2));
   const version = getPackageVersion();
@@ -133,7 +147,8 @@ function main() {
   // 4. Record the attestation into the committed ledger.
   log(`Recording the release attestation for track ${TRACK_ID} at ${version}...`);
   const evidence = options.evidence || `vagrant local validation ${new Date().toISOString()}`;
-  const record = run('node', [
+  const boxSha256 = getBoxSha256();
+  const recordArgs = [
     path.join('scripts', 'recordRuntimeValidation.js'),
     '--track',
     TRACK_ID,
@@ -143,7 +158,13 @@ function main() {
     commit,
     '--evidence',
     evidence
-  ]);
+  ];
+  // Bind the attestation to the box it ran on when the committed manifest is
+  // present (best-effort; the record still succeeds without it).
+  if (boxSha256) {
+    recordArgs.push('--box-sha256', boxSha256);
+  }
+  const record = run('node', recordArgs);
   if (record.status !== 0) {
     fail('Failed to record the attestation into the runtime-validation ledger.');
   }

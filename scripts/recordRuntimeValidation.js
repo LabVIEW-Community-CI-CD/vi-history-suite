@@ -29,6 +29,7 @@ const path = require('node:path');
 
 const DEFAULT_LEDGER_PATH = 'docs/requirements/runtime-validation-ledger.json';
 const VERSION_PATTERN = /^\d+\.\d+\.\d+$/;
+const SHA256_PATTERN = /^[0-9a-f]{64}$/;
 
 // Validate the semantic version string (x.y.z) shared with package.json.
 function isValidVersion(value) {
@@ -70,6 +71,19 @@ function applyRuntimeValidationRecord(manifest, record) {
   if (typeof record.evidence === 'string' && record.evidence.trim()) {
     updatedTrack.evidence = record.evidence.trim();
   }
+  // Optional structured binding of the attestation to the specific box it was
+  // produced on (box-provenance chain). Fail-closed on a malformed digest so a
+  // bad value never reaches disk; a blank value clears nothing (preserved).
+  if (record.boxSha256 !== undefined) {
+    const boxSha256 = typeof record.boxSha256 === 'string' ? record.boxSha256.trim().toLowerCase() : '';
+    if (!SHA256_PATTERN.test(boxSha256)) {
+      throw new Error('--box-sha256 must be a 64-character lowercase hex digest.');
+    }
+    updatedTrack.boxSha256 = boxSha256;
+  }
+  if (typeof record.boxFileName === 'string' && record.boxFileName.trim()) {
+    updatedTrack.boxFileName = record.boxFileName.trim();
+  }
 
   const tracks = [...manifest.tracks];
   tracks[index] = updatedTrack;
@@ -101,6 +115,8 @@ function parseArgs(argv = []) {
     version: undefined,
     commit: undefined,
     evidence: undefined,
+    boxSha256: undefined,
+    boxFileName: undefined,
     ledgerPath: undefined,
     json: false,
     positionals: []
@@ -119,6 +135,8 @@ function parseArgs(argv = []) {
     else if (arg === '--version') options.version = next();
     else if (arg === '--commit') options.commit = next();
     else if (arg === '--evidence') options.evidence = next();
+    else if (arg === '--box-sha256') options.boxSha256 = next();
+    else if (arg === '--box-file-name') options.boxFileName = next();
     else if (arg === '--ledger') options.ledgerPath = next();
     else if (arg === '--json') options.json = true;
     else if (arg.startsWith('--')) throw new Error(`Unknown argument: ${arg}`);
@@ -164,7 +182,9 @@ function main(argv = process.argv.slice(2), deps = {}) {
       trackId: options.trackId,
       version: options.version,
       commit: options.commit,
-      evidence: options.evidence
+      evidence: options.evidence,
+      boxSha256: options.boxSha256,
+      boxFileName: options.boxFileName
     });
   } catch (error) {
     stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);

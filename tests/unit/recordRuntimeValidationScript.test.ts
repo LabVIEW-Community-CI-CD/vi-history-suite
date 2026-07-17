@@ -116,6 +116,35 @@ describe('applyRuntimeValidationRecord (VHS-REQ-601.32)', () => {
       /missing or has no tracks array/
     );
   });
+
+  it('records a structured boxSha256 (lowercased) and boxFileName when supplied (#1507)', () => {
+    const updated = applyRuntimeValidationRecord(manifestFixture(), {
+      trackId: 'linux-host-native',
+      version: '1.34.0',
+      boxSha256: 'A'.repeat(64),
+      boxFileName: 'vihs-selfheal.box'
+    });
+    const track = updated.tracks.find((t: any) => t.trackId === 'linux-host-native');
+    expect(track.boxSha256).toBe('a'.repeat(64));
+    expect(track.boxFileName).toBe('vihs-selfheal.box');
+  });
+
+  it('fails closed on a malformed boxSha256 and preserves tracks without one (#1507)', () => {
+    expect(() =>
+      applyRuntimeValidationRecord(manifestFixture(), {
+        trackId: 'linux-host-native',
+        version: '1.34.0',
+        boxSha256: 'not-a-digest'
+      })
+    ).toThrow(/64-character lowercase hex/);
+    // Absent boxSha256 leaves the field unset (backward compatible).
+    const updated = applyRuntimeValidationRecord(manifestFixture(), {
+      trackId: 'linux-host-native',
+      version: '1.34.0'
+    });
+    const track = updated.tracks.find((t: any) => t.trackId === 'linux-host-native');
+    expect(track.boxSha256).toBeUndefined();
+  });
 });
 
 describe('serializeManifest (VHS-REQ-601.32)', () => {
@@ -142,6 +171,11 @@ describe('parseArgs (VHS-REQ-601.32)', () => {
     expect(options).toMatchObject({ trackId: 't', version: '1.34.0', commit: 'c', json: true });
     expect(() => parseArgs(['--nope'])).toThrow(/Unknown argument/);
     expect(() => parseArgs(['--track'])).toThrow(/requires a value/);
+  });
+
+  it('parses --box-sha256 and --box-file-name (#1507)', () => {
+    const options = parseArgs(['--track', 't', '--version', '1.34.0', '--box-sha256', 'a'.repeat(64), '--box-file-name', 'b.box']);
+    expect(options).toMatchObject({ boxSha256: 'a'.repeat(64), boxFileName: 'b.box' });
   });
 });
 
