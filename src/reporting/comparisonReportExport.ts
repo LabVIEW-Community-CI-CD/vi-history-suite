@@ -1,4 +1,5 @@
 import * as fs from 'node:fs/promises';
+import { pathExistsViaFsAccess as defaultPathExists } from '../support/fsExists';
 import * as path from 'node:path';
 import type * as vscode from 'vscode';
 
@@ -430,15 +431,6 @@ export class ComparisonReportExportRegistry {
 
   getActiveSource(): ComparisonReportExportSource | undefined {
     return this.activeSource;
-  }
-}
-
-async function defaultPathExists(targetPath: string): Promise<boolean> {
-  try {
-    await fs.access(targetPath);
-    return true;
-  } catch {
-    return false;
   }
 }
 

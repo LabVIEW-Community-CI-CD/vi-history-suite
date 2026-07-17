@@ -3,6 +3,7 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
 import { joinPreservingExplicitPathStyle } from '../support/pathStyle';
+import { pathExistsViaFsAccess as defaultPathExists } from '../support/fsExists';
 import {
   ComparisonReportPacketRecord
 } from '../reporting/comparisonReportPacket';
@@ -422,15 +423,6 @@ async function copyIfExists(
 
   await deps.mkdir(path.dirname(destinationPath), { recursive: true });
   await deps.copyFile(sourcePath, destinationPath);
-}
-
-async function defaultPathExists(targetPath: string): Promise<boolean> {
-  try {
-    await fs.access(targetPath);
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 function defaultNow(): string {

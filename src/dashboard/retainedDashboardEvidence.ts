@@ -1,5 +1,6 @@
 import type { Dirent } from 'node:fs';
 import * as fs from 'node:fs/promises';
+import { pathExistsViaFsAccess as defaultPathExists } from '../support/fsExists';
 import * as os from 'node:os';
 import * as path from 'node:path';
 
@@ -759,13 +760,4 @@ function shouldSkipRetainedDashboardSearchDirectory(directoryName: string): bool
     normalized === 'reports' ||
     normalized === 'node_modules'
   );
-}
-
-async function defaultPathExists(targetPath: string): Promise<boolean> {
-  try {
-    await fs.access(targetPath);
-    return true;
-  } catch {
-    return false;
-  }
 }
