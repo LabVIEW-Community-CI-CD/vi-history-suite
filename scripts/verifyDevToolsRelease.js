@@ -130,7 +130,11 @@ function loadManifest(cwd, relativePath, deps = {}) {
   const readFile = deps.readFile ?? ((p) => fs.readFileSync(p, 'utf8'));
   const full = path.isAbsolute(relativePath) ? relativePath : path.join(cwd, ...relativePath.split('/'));
   const parsed = JSON.parse(readFile(full));
-  if (!parsed || parsed.$schema !== builder.SCHEMA_ID) {
+  // Accept both the self-describing `$schema` envelope (current builder) and the
+  // legacy `schema` key emitted by pre-#1610 builders: the schema id/version is
+  // unchanged (@v1), so older release artifacts must still verify.
+  const manifestSchemaId = parsed && (parsed.$schema ?? parsed.schema);
+  if (!parsed || manifestSchemaId !== builder.SCHEMA_ID) {
     throw new Error(`Manifest schema must be ${builder.SCHEMA_ID}`);
   }
   return parsed;

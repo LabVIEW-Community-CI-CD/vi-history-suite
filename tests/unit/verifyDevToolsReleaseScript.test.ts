@@ -20,6 +20,7 @@ const builder = require('../../scripts/buildDevToolsRelease.js') as {
 const verifier = require('../../scripts/verifyDevToolsRelease.js') as {
   verifyToolsetAgainstManifest: (root: string, manifest: unknown, deps?: Record<string, unknown>) => any;
   verifySelf: (cwd: string, manifest: unknown, deps?: Record<string, unknown>) => any;
+  loadManifest: (cwd: string, relativePath: string, deps?: Record<string, unknown>) => any;
   parseArgs: (argv: string[]) => Record<string, unknown>;
   main: (argv?: string[], deps?: Record<string, unknown>) => number;
 };
@@ -183,6 +184,20 @@ describe('verifyDevToolsRelease (DS2)', () => {
       root: 'x'
     });
     expect(() => verifier.parseArgs(['--nope'])).toThrow(/Unknown argument/);
+  });
+
+  it('loadManifest accepts both the $schema envelope and the legacy schema key (VHS-REQ-601)', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'verify-legacy-'));
+    tempDirs.push(dir);
+    // Current builder emits $schema.
+    fs.writeFileSync(path.join(dir, 'current.json'), JSON.stringify({ $schema: builder.SCHEMA_ID, contentDigest: 'x' }), 'utf8');
+    // Pre-#1610 v1 artifacts carry the legacy `schema` key (same id/version).
+    fs.writeFileSync(path.join(dir, 'legacy.json'), JSON.stringify({ schema: builder.SCHEMA_ID, contentDigest: 'x' }), 'utf8');
+    fs.writeFileSync(path.join(dir, 'wrong.json'), JSON.stringify({ $schema: 'other', contentDigest: 'x' }), 'utf8');
+
+    expect(verifier.loadManifest(dir, 'current.json').contentDigest).toBe('x');
+    expect(verifier.loadManifest(dir, 'legacy.json').contentDigest).toBe('x');
+    expect(() => verifier.loadManifest(dir, 'wrong.json')).toThrow(/Manifest schema must be/);
   });
 
   it('main returns 0 on an intact toolset and 1 on tamper', () => {
