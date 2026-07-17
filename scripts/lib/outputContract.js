@@ -64,9 +64,17 @@ function outputModeForOptions(options = {}) {
 //                   `next()` accessor)
 //   - enforceSingleOutputMode: when true (default), throws if more than one of
 //                   json/markdown/schema is set (via schemaEnvelope helper)
+//   - excludeCommonFlags: array of common flag names (e.g. ['--strict']) to DROP
+//                   from the merged bool/value flag sets, so a script that does
+//                   not support a shared flag rejects it as an unknown argument
+//                   instead of silently accepting it.
 function parseSharedOutputArgs(argv, spec = {}) {
   const boolFlags = { ...COMMON_BOOL_FLAGS, ...(spec.boolFlags || {}) };
   const valueFlags = { ...COMMON_VALUE_FLAGS, ...(spec.valueFlags || {}) };
+  for (const flag of Array.isArray(spec.excludeCommonFlags) ? spec.excludeCommonFlags : []) {
+    delete boolFlags[flag];
+    delete valueFlags[flag];
+  }
   const transforms = spec.transforms || {};
   const requireValue = spec.requireValue !== false;
   const options = { ...(spec.defaults || {}) };

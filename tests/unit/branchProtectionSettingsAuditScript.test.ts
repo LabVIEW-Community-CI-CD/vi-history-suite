@@ -531,6 +531,7 @@ describe('branch protection audit arguments', () => {
     expect(() => parseArgs(['--json', '--schema'])).toThrow(/only one of --json, --markdown, or --schema/);
     expect(() => parseArgs(['--output'])).toThrow(/requires a value/);
     expect(() => parseArgs(['--bogus'])).toThrow(/Unknown argument/);
+    expect(() => parseArgs(['--strict'])).toThrow(/Unknown argument/);
   });
 });
 

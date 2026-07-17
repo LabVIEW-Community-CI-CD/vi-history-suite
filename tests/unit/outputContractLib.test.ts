@@ -128,6 +128,17 @@ describe('parseSharedOutputArgs', () => {
     const { options } = parseSharedOutputArgs(['--json', '--markdown'], { enforceSingleOutputMode: false });
     expect(options).toMatchObject({ json: true, markdown: true });
   });
+
+  it('rejects excluded common flags as unknown arguments', () => {
+    expect(() => parseSharedOutputArgs(['--strict'], { excludeCommonFlags: ['--strict'] })).toThrow(
+      /Unknown argument: --strict/
+    );
+  });
+
+  it('still parses non-excluded common flags when some are excluded', () => {
+    const { options } = parseSharedOutputArgs(['--json'], { excludeCommonFlags: ['--strict'] });
+    expect(options.json).toBe(true);
+  });
 });
 
 describe('generatedAt', () => {
