@@ -368,6 +368,31 @@ describe('viSemanticComparisonMcp', () => {
       expect(parsed.schema).toBe(VI_SEMANTIC_COMPARISON_SCHEMA);
     });
 
+    it('threads optional reportType and runtime through to the compare orchestrator', async () => {
+      const model = buildViSemanticComparisonModelFromHtml(REPORT_HTML);
+      const compareViRevisions = vi.fn(
+        async (): Promise<CompareViRevisionsResult> => ({
+          status: 'completed',
+          hasDifferences: true,
+          model
+        })
+      );
+      await handleViSemanticMcpMessageAsync(
+        compareCall({
+          ...validArgs,
+          reportType: 'gui',
+          runtime: { provider: 'linux-container' }
+        }),
+        { compareViRevisions }
+      );
+      expect(compareViRevisions).toHaveBeenCalledWith(
+        expect.objectContaining({
+          reportType: 'gui',
+          runtime: { provider: 'linux-container' }
+        })
+      );
+    });
+
     it('surfaces a blocked comparison through the error envelope', async () => {
       const compareViRevisions = vi.fn(
         async (): Promise<CompareViRevisionsResult> => ({
@@ -447,6 +472,23 @@ describe('viSemanticComparisonMcp', () => {
       );
       const parsed = JSON.parse(response.content[0].text) as { schema: string };
       expect(parsed.schema).toBe('vi-history-suite/vi-semantic-history@v1');
+    });
+
+    it('threads the optional runtime through to the history orchestrator', async () => {
+      const buildViSemanticHistory = vi.fn(
+        async (): Promise<ViSemanticHistory> => ({}) as ViSemanticHistory
+      );
+      await handleViSemanticMcpMessageAsync(
+        historyCall({
+          repositoryRoot: '/repo',
+          relativePath: 'vis/Widget.vi',
+          runtime: { provider: 'linux-container' }
+        }),
+        { buildViSemanticHistory }
+      );
+      expect(buildViSemanticHistory).toHaveBeenCalledWith(
+        expect.objectContaining({ runtime: { provider: 'linux-container' } })
+      );
     });
 
     it('reports a wired-up error when the history orchestrator is not injected', async () => {
@@ -654,6 +696,22 @@ describe('viSemanticComparisonMcp', () => {
       expect(response.isError).toBe(false);
       expect(response.content[0].text).toContain('<!-- vi-history-suite:vi-semantic-pr-review -->');
       expect(response.content[0].text).toContain('## VI semantic review');
+    });
+
+    it('threads the optional runtime through to the PR-review orchestrator', async () => {
+      const buildViSemanticPrReview = vi.fn(async (): Promise<ViSemanticPrReview> => prReview);
+      await handleViSemanticMcpMessageAsync(
+        prReviewCall({
+          repositoryRoot: '/repo',
+          baseHash: 'aaaa',
+          selectedHash: 'bbbb',
+          runtime: { provider: 'linux-container' }
+        }),
+        { buildViSemanticPrReview }
+      );
+      expect(buildViSemanticPrReview).toHaveBeenCalledWith(
+        expect.objectContaining({ runtime: { provider: 'linux-container' } })
+      );
     });
 
     it('reports a wired-up error when the PR-review orchestrator is not injected', async () => {
