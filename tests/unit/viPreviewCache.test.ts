@@ -27,7 +27,15 @@ describe('computeViPreviewCacheKey', () => {
     // Backslash and forward slash hash identically (target and entries).
     expect(computeViPreviewCacheKey('a\\Foo.vi', [{ relativePath: 'a\\Foo.vi', sizeBytes: 10, mtimeMs: 100 }])).toBe(base);
   });
-
+  it('treats a missing mtimeMs as 0 so it matches an explicit zero mtime', () => {
+    const withUndefined = computeViPreviewCacheKey('a/Foo.vi', [
+      { relativePath: 'a/Foo.vi', sizeBytes: 10 }
+    ]);
+    const withZero = computeViPreviewCacheKey('a/Foo.vi', [
+      { relativePath: 'a/Foo.vi', sizeBytes: 10, mtimeMs: 0 }
+    ]);
+    expect(withUndefined).toBe(withZero);
+  });
   it('distinguishes different target VIs that share the same staged file set (VHS-REQ-659.11, #646)', () => {
     const entries = [
       { relativePath: 'left/A.vi', sizeBytes: 10, mtimeMs: 100 },
@@ -101,5 +109,13 @@ describe('createFileViPreviewCache', () => {
     await cache.set(KEY, '<HTML></HTML>');
     expect(fsDeps.removeFile).toHaveBeenCalledTimes(1);
     expect(fsDeps.removeFile).toHaveBeenCalledWith('/c/old.html');
+  });
+
+  it('skips the write and never touches the filesystem for a malformed key', async () => {
+    const fsDeps = makeFsDeps();
+    const cache = createFileViPreviewCache({ cacheDirectory: '/c', joinPath: (d, n) => `${d}/${n}` }, fsDeps);
+    await cache.set('not-a-key', '<HTML></HTML>');
+    expect(fsDeps.ensureDirectory).not.toHaveBeenCalled();
+    expect(fsDeps.writeFile).not.toHaveBeenCalled();
   });
 });
