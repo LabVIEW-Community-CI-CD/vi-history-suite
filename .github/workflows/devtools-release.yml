@@ -120,8 +120,11 @@ jobs:
           # prerelease "devtools-dev-*"), and the flag alone can match another
           # workflow's prerelease (e.g. diagnostic-test-vsix-*). For the stable
           # channel additionally exclude the "devtools-dev-" prefix.
-          last_tag=$(gh release list --limit 100 --json tagName,createdAt,isPrerelease \
-            --jq "[.[] | select(.isPrerelease == $want_prerelease and (.tagName | startswith(\"$prefix\")) and (\"$CHANNEL\" != \"stable\" or (.tagName | startswith(\"devtools-dev-\") | not)))] | sort_by(.createdAt) | reverse | .[0].tagName // \"\"")
+          # Paginate ALL releases (gh api --paginate) rather than a bounded
+          # `gh release list --limit N`, so a large history of unrelated
+          # releases cannot push the latest dev-tools release off the window.
+          last_tag=$(gh api --paginate "/repos/$GITHUB_REPOSITORY/releases" \
+            --jq "[.[] | select(.prerelease == $want_prerelease and (.tag_name | startswith(\"$prefix\")) and (\"$CHANNEL\" != \"stable\" or (.tag_name | startswith(\"devtools-dev-\") | not)))] | sort_by(.created_at) | reverse | .[0].tag_name // \"\"")
           prior_digest=""
           if [ -n "$last_tag" ]; then
             gh release download "$last_tag" --pattern devtools-release.json --dir prior --clobber || true
@@ -179,9 +182,11 @@ jobs:
           fi
           if [ "$CHANNEL" = "stable" ]; then prefix="devtools-"; want_prerelease="false"; else prefix="devtools-dev-"; want_prerelease="true"; fi
           # Newest-first list of THIS channel's releases (same scoping as dedup:
-          # dev-tools tag prefix AND isPrerelease, stable excludes devtools-dev-).
-          mapfile -t channel_tags < <(gh release list --limit 200 --json tagName,createdAt,isPrerelease \
-            --jq "[.[] | select(.isPrerelease == $want_prerelease and (.tagName | startswith(\"$prefix\")) and (\"$CHANNEL\" != \"stable\" or (.tagName | startswith(\"devtools-dev-\") | not)))] | sort_by(.createdAt) | reverse | .[].tagName")
+          # dev-tools tag prefix AND prerelease flag, stable excludes devtools-dev-).
+          # Paginate ALL releases so a large history of unrelated releases cannot
+          # hide older dev-tools releases from keep-last-N pruning.
+          mapfile -t channel_tags < <(gh api --paginate "/repos/$GITHUB_REPOSITORY/releases" \
+            --jq "[.[] | select(.prerelease == $want_prerelease and (.tag_name | startswith(\"$prefix\")) and (\"$CHANNEL\" != \"stable\" or (.tag_name | startswith(\"devtools-dev-\") | not)))] | sort_by(.created_at) | reverse | .[].tag_name")
           index=0
           for tag in "${channel_tags[@]}"; do
             index=$((index + 1))
