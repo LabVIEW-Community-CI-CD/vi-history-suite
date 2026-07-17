@@ -18,6 +18,10 @@ import {
   describeWindowsTcpListeners
 } from './runtime/hostNativeRejection';
 import {
+  normalizeCandidatePath,
+  dedupeCandidates
+} from './runtime/candidatePathHelpers';
+import {
   observeWindowsRuntimeProcesses,
   observeWindowsTcpListeners,
   ObserveWindowsProcessesOptions,
@@ -2737,26 +2741,6 @@ export function inferBitnessFromPath(filePath: string): RuntimeBitness | undefin
     return 'x64';
   }
   return undefined;
-}
-
-function normalizeCandidatePath(filePath: string): string {
-  return filePath.replaceAll('/', '\\').toLowerCase();
-}
-
-function dedupeCandidates(candidates: RuntimeToolCandidate[]): RuntimeToolCandidate[] {
-  const seen = new Set<string>();
-  const deduped: RuntimeToolCandidate[] = [];
-
-  for (const candidate of candidates) {
-    const key = `${candidate.kind}\n${candidate.path.toLowerCase()}`;
-    if (seen.has(key)) {
-      continue;
-    }
-    seen.add(key);
-    deduped.push(candidate);
-  }
-
-  return deduped;
 }
 
 async function defaultPathExists(filePath: string): Promise<boolean> {
