@@ -23,6 +23,9 @@ const {
   assertAllowedExecutableCommand,
   isTransientNetworkFailure,
   generateCloseoutEvidence,
+  renderSchema,
+  CLOSEOUT_SUMMARY_SCHEMA_ID,
+  CLOSEOUT_SUMMARY_JSON_SCHEMA,
   parseGateScorecard,
   parseArgs,
   parseGitTrackedFiles,
@@ -81,6 +84,9 @@ const {
   }) => boolean;
   parseGateScorecard: (scorecard: string) => Record<string, string>;
   parseGitTrackedFiles: (stdout: string) => string[];
+  renderSchema: (options?: { provenance?: unknown }) => string;
+  CLOSEOUT_SUMMARY_SCHEMA_ID: string;
+  CLOSEOUT_SUMMARY_JSON_SCHEMA: { required: string[]; properties: Record<string, { const?: unknown }> };
   parseArgs: (argv: string[]) => {
     kind: string;
     issue?: string;
@@ -650,6 +656,26 @@ describe('closeout evidence script', () => {
     });
   });
 
+  it('publishes the closeout-summary JSON Schema via --schema without collecting evidence (VHS-REQ-601)', () => {
+    const schema = JSON.parse(renderSchema()) as {
+      $id: string;
+      required: string[];
+      properties: { $schema: { const: string }; schemaVersion: { const: number } };
+    };
+    expect(schema.$id).toBe(CLOSEOUT_SUMMARY_SCHEMA_ID);
+    expect(schema.properties.$schema.const).toBe(CLOSEOUT_SUMMARY_SCHEMA_ID);
+    expect(schema.properties.schemaVersion.const).toBe(1);
+    // --schema does not require --kind and never spawns any command.
+    const spawnSync = vi.fn();
+    const result = generateCloseoutEvidence(['--schema'], { spawnSync });
+    expect(result.exitCode).toBe(0);
+    expect((JSON.parse(result.markdown) as Record<string, unknown>).$id).toBe(CLOSEOUT_SUMMARY_SCHEMA_ID);
+    expect(spawnSync).not.toHaveBeenCalled();
+    // --schema attaches provenance under the shared extension key.
+    const withProvenance = JSON.parse(renderSchema({ provenance: { generatedAt: 'x' } })) as Record<string, unknown>;
+    expect(withProvenance['x-vi-history-suite-provenance']).toEqual({ generatedAt: 'x' });
+  });
+
   it('parses explicit gate scorecard statuses', () => {
     expect(parseGateScorecard(scorecardDodPass)).toMatchObject({
       coverage: 'PASS',
@@ -1085,6 +1111,7 @@ describe('closeout evidence script', () => {
       expect(fs.existsSync(auditTargetPath)).toBe(true);
 
       const summary = JSON.parse(fs.readFileSync(summaryPath, 'utf8')) as {
+        $schema: string;
         schemaVersion: number;
         localGates: {
           ran: boolean;
@@ -1205,6 +1232,7 @@ describe('closeout evidence script', () => {
       };
 
       expect(Object.keys(summary)).toEqual([
+        '$schema',
         'schemaVersion',
         'kind',
         'issueNumber',
@@ -1215,6 +1243,9 @@ describe('closeout evidence script', () => {
         'closureDecision',
         'exitCode'
       ]);
+      // The retained packet self-describes and satisfies the published schema contract (no drift).
+      expect((summary as { $schema: string }).$schema).toBe(CLOSEOUT_SUMMARY_SCHEMA_ID);
+      expect(CLOSEOUT_SUMMARY_JSON_SCHEMA.required.filter((key) => !(key in summary))).toEqual([]);
       expect(Object.keys(summary.git)).toEqual(['branch', 'commit', 'shortCommit']);
       expect(Object.keys(summary.localGates)).toEqual([
         'ran',
