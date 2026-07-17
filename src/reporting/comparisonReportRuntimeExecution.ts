@@ -11,6 +11,10 @@ import {
   isObservedRuntimeProcessName,
   isExactObservedRuntimeProcessName
 } from './runtime/windowsTasklistParsing';
+import {
+  describeObservedRuntimeProcesses,
+  describeObservedWindowsTcpListeners
+} from './runtime/windowsRuntimeObservationFormatting';
 import { nowIso } from '../support/clock';
 import { ComparisonCommandPlan, ComparisonReportOptions } from './comparisonReportPlan';
 import { buildComparisonReportExecutionPlan } from './comparisonReportExecutionPlan';
@@ -2236,26 +2240,6 @@ async function preflightWindowsHostRuntimeSurface(
       lvcompareProcessObserved: processObservation?.lvcompareProcessObserved
     }
   };
-}
-
-function describeObservedRuntimeProcesses(processes: RuntimeObservedProcess[]): string {
-  const descriptions = [...new Map(
-    processes.map((processInfo) => [
-      `${processInfo.imageName}:${String(processInfo.pid)}`,
-      `${processInfo.imageName} (pid ${String(processInfo.pid)})`
-    ])
-  ).values()];
-  return descriptions.join(' | ');
-}
-
-function describeObservedWindowsTcpListeners(listeners: WindowsTcpListenerObservation[]): string {
-  return listeners
-    .map((listener) =>
-      `${listener.processName ?? `pid ${String(listener.pid)}`} listening on ${listener.localAddress}:${String(
-        listener.localPort
-      )}`
-    )
-    .join(' | ');
 }
 
 async function captureRuntimeDiagnostics(
