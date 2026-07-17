@@ -87,6 +87,22 @@ describe('Dev-tools release workflow (DS3)', () => {
     expect(resolveBlock).toContain('"$PUBLISH_ENABLED" = "true"');
   });
 
+  it('prunes superseded releases keep-last-N per channel after a real release (#1532)', () => {
+    const workflow = readWorkflow();
+    expect(workflow).toContain('name: Prune superseded releases');
+    const pruneBlock = workflow.slice(
+      workflow.indexOf('name: Prune superseded releases'),
+      workflow.indexOf('name: Dry-run summary')
+    );
+    // Gated to a real (non-dry-run) release that actually changed.
+    expect(pruneBlock).toContain("steps.resolve.outputs.dry_run == 'false'");
+    expect(pruneBlock).toContain("steps.decide.outputs.changed == 'true'");
+    // Honors the retention variable (default 5, 0 disables) and deletes beyond N.
+    expect(pruneBlock).toContain('vars.DEVTOOLS_RELEASE_RETENTION');
+    expect(pruneBlock).toContain('gh release delete');
+    expect(pruneBlock).toContain('--cleanup-tag');
+  });
+
   it('never references the Vagrant helper (VHS-REQ-599 alignment)', () => {
     const workflow = readWorkflow().toLowerCase();
     expect(workflow).not.toContain('vagrant');
