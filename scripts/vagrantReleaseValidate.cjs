@@ -110,6 +110,18 @@ function main() {
   const commit = getCommit();
   log(`Validating release candidate ${version} (${commit}) via the Vagrant Windows/LabVIEW lane.`);
 
+  // A release-gating attestation must be produced on the committed golden box
+  // that ships (fingerprinted by vagrant/box-manifest.json). Under a
+  // VIHS_VAGRANT_BOX override the run uses a different box, so recording an
+  // attestation — even with a cleared binding — would let the marketplace gate
+  // pass on a non-shipped box. Fail fast instead. (The advisory pathadmit proof
+  // lane is non-gating and may run under an override.)
+  if (process.env.VIHS_VAGRANT_BOX && process.env.VIHS_VAGRANT_BOX.trim()) {
+    fail(
+      'VIHS_VAGRANT_BOX override is set. A release-gating attestation must be produced on the committed golden box (vagrant/box-manifest.json); unset VIHS_VAGRANT_BOX and re-run against the default box before recording a release attestation.'
+    );
+  }
+
   // 1. Preflight.
   log('Preflighting the Vagrant lane...');
   const preflight = run('node', [path.join('scripts', 'vagrantLanePreflight.js'), 'preflight']);
@@ -165,14 +177,11 @@ function main() {
     '--evidence',
     evidence
   ];
-  // Bind the attestation to the box it ran on when the committed manifest is
-  // present (best-effort). Under a VIHS_VAGRANT_BOX override getBoxSha256()
-  // returns undefined and we CLEAR any stale binding so the recorded attestation
-  // does not falsely claim the committed box's provenance.
+  // Bind the attestation to the committed box. Under a VIHS_VAGRANT_BOX override
+  // main() has already failed out, so this lane only ever records on the default
+  // box; the binding is present when the committed manifest is well-formed.
   if (boxSha256) {
     recordArgs.push('--box-sha256', boxSha256);
-  } else if (process.env.VIHS_VAGRANT_BOX && process.env.VIHS_VAGRANT_BOX.trim()) {
-    recordArgs.push('--clear-box-sha256');
   }
   const record = run('node', recordArgs);
   if (record.status !== 0) {
