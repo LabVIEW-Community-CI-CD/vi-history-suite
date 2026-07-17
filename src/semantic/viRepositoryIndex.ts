@@ -1,10 +1,9 @@
-import * as path from 'node:path';
-
 import {
   getFileHistoryCount,
   getFileHistoryEntries,
   listTrackedFiles
 } from '../git/gitCli';
+import { resolveRepositoryRoot } from './repositoryTarget';
 
 /**
  * Stable, versioned identifier for the repository VI index model. Consumers key
@@ -63,11 +62,7 @@ export async function buildViRepositoryIndex(
   input: ViRepositoryIndexInput,
   deps: ViRepositoryIndexDeps = {}
 ): Promise<ViRepositoryIndex> {
-  const repositoryRoot = (input.repositoryRoot ?? '').trim();
-  if (!repositoryRoot) {
-    throw new Error('repositoryRoot is required');
-  }
-  const resolvedRoot = path.resolve(repositoryRoot);
+  const resolvedRoot = resolveRepositoryRoot(input.repositoryRoot);
   const requested = input.maxVis ?? DEFAULT_MAX_VIS;
   const maxVis = Math.max(
     1,
