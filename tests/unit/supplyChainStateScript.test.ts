@@ -15,6 +15,9 @@ const sc = require('../../scripts/buildSupplyChainState.js') as {
   buildDevtoolsArtifact: (cwd: string, deps?: Record<string, unknown>) => any;
   buildSupplyChainState: (inputs?: Record<string, unknown>, meta?: Record<string, unknown>) => any;
   collectSupplyChainState: (cwd: string, options?: Record<string, unknown>, deps?: Record<string, unknown>) => any;
+  SUPPLY_CHAIN_STATE_JSON_SCHEMA: Record<string, unknown>;
+  renderSchema: (options?: Record<string, unknown>) => string;
+  outputModeForOptions: (options?: Record<string, unknown>) => string;
   renderMarkdown: (state: unknown) => string;
   markdownCell: (value: unknown) => string;
   parseArgs: (argv: string[]) => Record<string, unknown>;
@@ -239,9 +242,74 @@ describe('supply-chain CLI', () => {
       'out/requirements/requirements-manifest.json': JSON.stringify({ integrityDigest: 'r', extensionVersion: VERSION, counts: { requirements: 1 } })
     });
     const state = sc.collectSupplyChainState(cwd, {}, deterministic(cwd));
-    expect(state.schema).toBe(sc.SCHEMA_ID);
+    expect(state.$schema).toBe(sc.SCHEMA_ID);
     expect(state.status).toBe('fresh');
     expect(state.artifacts.map((a: { id: string }) => a.id)).toEqual(['box', 'runtime', 'requirements', 'devtools']);
+  });
+
+  it('keeps emitted JSON aligned with the published schema contract, self-describing (VHS-REQ-668)', () => {
+    const cwd = makeRepo({
+      'vagrant/box-manifest.json': JSON.stringify({ sha256: 'a'.repeat(64), sizeBytes: 123, recordedForVersion: VERSION }),
+      'out/requirements/requirements-manifest.json': JSON.stringify({ integrityDigest: 'r', extensionVersion: VERSION, counts: { requirements: 1 } })
+    });
+    const state = sc.collectSupplyChainState(cwd, {}, deterministic(cwd)) as Record<string, unknown>;
+    const schema = JSON.parse(sc.renderSchema()) as {
+      $id: string;
+      required: string[];
+      properties: {
+        $schema: { const: string };
+        schemaVersion: { const: number };
+        status: { enum: string[] };
+        artifacts: { items: { required: string[] } };
+      };
+    };
+
+    // Top-level required keys present and self-describing.
+    expect(schema.required.filter((key) => !(key in state))).toEqual([]);
+    expect(state.$schema).toBe(schema.properties.$schema.const);
+    expect(state.$schema).toBe(sc.SCHEMA_ID);
+    expect(state.schemaVersion).toBe(schema.properties.schemaVersion.const);
+    expect(schema.properties.status.enum).toContain(state.status);
+
+    // Every artifact record carries the schema's required keys.
+    const artifacts = state.artifacts as Array<Record<string, unknown>>;
+    expect(artifacts.length).toBeGreaterThan(0);
+    const artifactRequired = schema.properties.artifacts.items.required;
+    for (const artifact of artifacts) {
+      expect(artifactRequired.filter((key) => !(key in artifact))).toEqual([]);
+    }
+  });
+
+  it('renders --schema without aggregation and attaches optional provenance (VHS-REQ-668)', () => {
+    const schema = JSON.parse(sc.renderSchema()) as Record<string, unknown>;
+    expect(schema.$id).toBe(sc.SCHEMA_ID);
+    expect((schema as { properties: { status: { enum: string[] } } }).properties.status.enum).toEqual([
+      'fresh',
+      'attention'
+    ]);
+    const withProvenance = JSON.parse(sc.renderSchema({ provenance: { generatedAt: 'x' } })) as Record<string, unknown>;
+    expect(withProvenance['x-vi-history-suite-provenance']).toEqual({ generatedAt: 'x' });
+  });
+
+  it('parseArgs rejects combining output modes and recognizes --schema/--include-provenance (VHS-REQ-668)', () => {
+    expect(() => sc.parseArgs(['--json', '--schema'])).toThrow(/only one output mode/);
+    expect(sc.parseArgs(['--schema']).schema).toBe(true);
+    expect(sc.parseArgs(['--include-provenance']).includeProvenance).toBe(true);
+    expect(sc.outputModeForOptions(sc.parseArgs(['--schema']))).toBe('schema');
+    expect(sc.outputModeForOptions(sc.parseArgs([]))).toBe('text');
+  });
+
+  it('main --schema publishes the JSON Schema without running the aggregation (VHS-REQ-668)', () => {
+    const cwd = makeRepo();
+    const outputs: string[] = [];
+    const code = sc.main(['--schema'], {
+      cwd,
+      stdout: { write: (t: string) => outputs.push(t) },
+      stderr: { write: (t: string) => outputs.push(t) }
+    });
+    expect(code).toBe(0);
+    const emitted = JSON.parse(outputs.join('')) as Record<string, unknown>;
+    expect(emitted.$id).toBe(sc.SCHEMA_ID);
   });
 
   it('main --strict returns 1 on attention and --output writes the packet (VHS-REQ-668.4)', () => {
