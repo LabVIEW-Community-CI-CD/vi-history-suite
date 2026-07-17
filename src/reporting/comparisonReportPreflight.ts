@@ -1,6 +1,7 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
+import { requireNonEmpty } from '../support/requireNonEmpty';
 import { detectViSignature, ViSignature } from '../domain/viMagicCore';
 import { isWorktreeRevision, normalizeRelativeGitPath, runGit } from '../git/gitCli';
 
@@ -410,13 +411,4 @@ function deriveBlockedReason(
   }
 
   return undefined;
-}
-
-function requireNonEmpty(value: string, field: string): string {
-  const trimmed = value.trim();
-  if (!trimmed) {
-    throw new Error(`${field} must be non-empty`);
-  }
-
-  return trimmed;
 }

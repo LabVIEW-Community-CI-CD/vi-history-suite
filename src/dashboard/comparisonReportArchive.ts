@@ -2,6 +2,7 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
 import { createDeterministicId } from '../support/deterministicId';
+import { requireNonEmpty } from '../support/requireNonEmpty';
 import { joinPreservingExplicitPathStyle } from '../support/pathStyle';
 import { pathExistsViaFsAccess as defaultPathExists } from '../support/fsExists';
 import { nowIso as defaultNow } from '../support/clock';
@@ -420,13 +421,4 @@ async function copyIfExists(
 
   await deps.mkdir(path.dirname(destinationPath), { recursive: true });
   await deps.copyFile(sourcePath, destinationPath);
-}
-
-function requireNonEmpty(value: string, field: string): string {
-  const trimmed = value.trim();
-  if (!trimmed) {
-    throw new Error(`${field} must be non-empty`);
-  }
-
-  return trimmed;
 }
