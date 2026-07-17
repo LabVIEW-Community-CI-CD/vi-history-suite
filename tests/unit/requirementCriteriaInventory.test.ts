@@ -11,6 +11,8 @@ interface Criterion {
 }
 
 interface CriteriaInventory {
+  $schema?: string;
+  schemaVersion?: number;
   totalRequirements: number;
   totalCriteria: number;
   citedCriteria: number;
@@ -24,8 +26,10 @@ const {
   criterionIsCited,
   auditRequirementCriteriaInventory,
   renderSummary,
+  renderSchema,
   renderStepSummary,
-  main
+  main,
+  CRITERIA_INVENTORY_SCHEMA_ID
 } = require('../../scripts/auditRequirementCriteriaInventory.js') as {
   extractAcceptanceCriteria: (blockBody: string) => string[];
   extractRequirementCriteria: (
@@ -37,13 +41,18 @@ const {
     deps?: { readFile?: (relativePath: string) => string | undefined }
   ) => CriteriaInventory;
   renderSummary: (result: CriteriaInventory, options?: { enforce?: boolean }) => string;
+  renderSchema: (options?: { provenance?: unknown }) => string;
+  CRITERIA_INVENTORY_SCHEMA_ID: string;
   renderStepSummary: (result: CriteriaInventory, options?: { enforce?: boolean }) => string;
   main: (
     argv?: string[],
     deps?: {
       cwd?: string;
       json?: boolean;
+      schema?: boolean;
+      includeProvenance?: boolean;
       enforce?: boolean;
+      now?: () => Date;
       readFile?: (relativePath: string) => string | undefined;
       stdout?: { write: (chunk: string) => void };
       stepSummaryPath?: string;
@@ -305,5 +314,41 @@ describe('requirement acceptance-criteria inventory (VHS-REQ-601)', () => {
     const positions = orderedSteps.map((step) => workflow.indexOf(step));
     expect(positions.every((position) => position >= 0)).toBe(true);
     expect(positions).toEqual([...positions].sort((left, right) => left - right));
+  });
+
+  it('emits a self-describing packet aligned with the published schema, with a --schema mode (VHS-REQ-601)', () => {
+    const result = auditRequirementCriteriaInventory(path.resolve(__dirname, '..', '..')) as Record<string, unknown>;
+    const schema = JSON.parse(renderSchema()) as {
+      $id: string;
+      required: string[];
+      properties: {
+        $schema: { const: string };
+        schemaVersion: { const: number };
+        requirements: { items: { required: string[] } };
+      };
+    };
+
+    // Self-describing envelope aligned with the schema.
+    expect(schema.required.filter((key) => !(key in result))).toEqual([]);
+    expect(result.$schema).toBe(schema.properties.$schema.const);
+    expect(result.$schema).toBe(CRITERIA_INVENTORY_SCHEMA_ID);
+    expect(result.schemaVersion).toBe(schema.properties.schemaVersion.const);
+
+    // Every requirement record carries the schema's required keys.
+    const requirements = result.requirements as Array<Record<string, unknown>>;
+    expect(requirements.length).toBeGreaterThan(0);
+    const reqRequired = schema.properties.requirements.items.required;
+    for (const requirement of requirements) {
+      expect(reqRequired.filter((key) => !(key in requirement))).toEqual([]);
+    }
+
+    // --schema publishes the JSON Schema without running the audit; provenance attaches under the shared key.
+    const withProvenance = JSON.parse(renderSchema({ provenance: { generatedAt: 'x' } })) as Record<string, unknown>;
+    expect(withProvenance['x-vi-history-suite-provenance']).toEqual({ generatedAt: 'x' });
+
+    const schemaOut: string[] = [];
+    const code = main(['--schema'], { cwd: path.resolve(__dirname, '..', '..'), stdout: { write: (t: string) => schemaOut.push(t) } });
+    expect(code).toBe(0);
+    expect((JSON.parse(schemaOut.join('')) as Record<string, unknown>).$id).toBe(CRITERIA_INVENTORY_SCHEMA_ID);
   });
 });
