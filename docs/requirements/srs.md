@@ -2072,6 +2072,7 @@ Missing numeric IDs are intentional.
   - `tests/unit/verifyRequirementsHealth.test.ts`
   - `tests/unit/requirementsManifestExport.test.ts`
   - `tests/unit/riskLedgerScript.test.ts`
+  - `tests/unit/schemaEnvelopeLib.test.ts`
   - `tests/unit/recordRuntimeValidationScript.test.ts`
   - `manual:requirements-quality-check-system-scope`
 - Change Guidance:

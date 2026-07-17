@@ -36,12 +36,13 @@ const { auditRequirementVerificationLinkage } = require('./auditRequirementVerif
 const { auditRequirementCriteriaInventory } = require('./auditRequirementCriteriaInventory.js');
 const { checkRequirementsIntegrity } = require('./checkRequirementsIntegrity.js');
 const { generateCoverageMap } = require('./mapCoverageToTraceability.js');
+const { SCHEMA_PROVENANCE_KEY, renderSchemaDocument } = require('./lib/schemaEnvelope.js');
 
 const MUTATION_REPORT_PATH = 'reports/mutation/mutation.json';
 const REQUIREMENTS_HEALTH_SCHEMA_VERSION = 1;
 const REQUIREMENTS_HEALTH_SCHEMA_ID =
   'https://labview-community-cicd.github.io/vi-history-suite/schemas/requirements-health-v1.schema.json';
-const REQUIREMENTS_HEALTH_SCHEMA_PROVENANCE_KEY = 'x-vi-history-suite-provenance';
+const REQUIREMENTS_HEALTH_SCHEMA_PROVENANCE_KEY = SCHEMA_PROVENANCE_KEY;
 
 const ATTENTION_REASON_IDS = Object.freeze({
   unlinked: 'unlinked',
@@ -413,13 +414,7 @@ function outputModeForOptions(options = {}) {
 }
 
 function renderRequirementsHealthJsonSchema(options = {}) {
-  const schema = options.provenance
-    ? {
-        ...REQUIREMENTS_HEALTH_JSON_SCHEMA,
-        [REQUIREMENTS_HEALTH_SCHEMA_PROVENANCE_KEY]: options.provenance
-      }
-    : REQUIREMENTS_HEALTH_JSON_SCHEMA;
-  return JSON.stringify(schema, null, 2);
+  return renderSchemaDocument(REQUIREMENTS_HEALTH_JSON_SCHEMA, options);
 }
 
 function markdownCell(value) {
