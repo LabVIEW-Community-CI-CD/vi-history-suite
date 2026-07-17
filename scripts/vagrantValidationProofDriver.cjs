@@ -299,6 +299,8 @@ function main() {
   const evidence = options.evidence
     ? `${options.evidence} ${proofTag}`
     : `vagrant pathadmit+validation proof ${proofTag} ${new Date().toISOString()}`;
+  const boxSha256 = getBoxSha256();
+  const overrideBox = process.env.VIHS_VAGRANT_BOX && process.env.VIHS_VAGRANT_BOX.trim();
   const record = run('node', [
     path.join('scripts', 'recordRuntimeValidation.js'),
     '--track',
@@ -309,7 +311,9 @@ function main() {
     commit,
     '--evidence',
     evidence,
-    ...(getBoxSha256() ? ['--box-sha256', getBoxSha256()] : [])
+    // Bind to the committed box, or CLEAR any stale binding under an override so
+    // the attestation does not falsely claim the committed box's provenance.
+    ...(boxSha256 ? ['--box-sha256', boxSha256] : overrideBox ? ['--clear-box-sha256'] : [])
   ]);
   if (record.status !== 0) {
     fail('Failed to record the attestation into the runtime-validation ledger.');
