@@ -77,5 +77,10 @@ publishes the artifact. It is **dry-run-first**:
 - A real GitHub Release is created only on a non-dry-run when the content digest
   changed. Tags follow `devtools-YYYYMMDD-<sha7>` (stable) and
   `devtools-dev-YYYYMMDD-<sha7>` (prerelease, marked as a GitHub pre-release).
+- After a real release, the workflow **prunes superseded releases of that
+  channel** beyond a keep-last-N bound (default 5, overridable via the
+  repository variable `DEVTOOLS_RELEASE_RETENTION`; `0` disables pruning), so
+  the dev channel does not accumulate one release per merge. Pruning is
+  best-effort and deletes the release plus its tag.
 
 The workflow names no Vagrant helper (VHS-REQ-599 alignment).

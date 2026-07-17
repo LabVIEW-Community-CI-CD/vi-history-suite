@@ -163,6 +163,33 @@ jobs:
             --target "${{ github.sha }}" \
             $prerelease_flag
 
+      - name: Prune superseded releases (keep-last-N per channel)
+        if: ${{ steps.resolve.outputs.dry_run == 'false' && steps.decide.outputs.changed == 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CHANNEL: ${{ steps.resolve.outputs.channel }}
+          # Retention bound per channel; 0 disables pruning. Overridable via the
+          # repository variable DEVTOOLS_RELEASE_RETENTION.
+          RETENTION: ${{ vars.DEVTOOLS_RELEASE_RETENTION || '5' }}
+        run: |
+          set -euo pipefail
+          if ! [ "$RETENTION" -gt 0 ] 2>/dev/null; then
+            echo "[devtools-release] Retention disabled (DEVTOOLS_RELEASE_RETENTION=$RETENTION); keeping all releases."
+            exit 0
+          fi
+          if [ "$CHANNEL" = "stable" ]; then prefix="devtools-"; want_prerelease="false"; else prefix="devtools-dev-"; want_prerelease="true"; fi
+          # Newest-first list of THIS channel's releases (same scoping as dedup:
+          # dev-tools tag prefix AND isPrerelease, stable excludes devtools-dev-).
+          mapfile -t channel_tags < <(gh release list --limit 200 --json tagName,createdAt,isPrerelease \
+            --jq "[.[] | select(.isPrerelease == $want_prerelease and (.tagName | startswith(\"$prefix\")) and (\"$CHANNEL\" != \"stable\" or (.tagName | startswith(\"devtools-dev-\") | not)))] | sort_by(.createdAt) | reverse | .[].tagName")
+          index=0
+          for tag in "${channel_tags[@]}"; do
+            index=$((index + 1))
+            if [ "$index" -le "$RETENTION" ]; then continue; fi
+            echo "[devtools-release] Pruning superseded $CHANNEL release $tag (beyond keep-last-$RETENTION)."
+            gh release delete "$tag" --yes --cleanup-tag || echo "[devtools-release] WARN: failed to delete $tag (continuing)."
+          done
+
       - name: Dry-run summary
         if: ${{ steps.resolve.outputs.dry_run == 'true' }}
         run: echo "[devtools-release] Dry run - built and self-verified; no GitHub Release created (would tag ${{ steps.decide.outputs.tag }}, changed=${{ steps.decide.outputs.changed }})."
