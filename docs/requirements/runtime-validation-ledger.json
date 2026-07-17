@@ -63,8 +63,8 @@
       "linuxExecutable": false,
       "releaseGating": true,
       "lastValidatedVersion": "1.33.2",
-      "lastValidatedCommit": "ee8d6cbc",
-      "evidence": "vagrant local validation 2026-07-16T21:38:25.763Z",
+      "lastValidatedCommit": "f1ca054a",
+      "evidence": "vagrant local validation 2026-07-17T06:22:23.704Z",
       "fixture": "labview-icon-editor resource/plugins/lv_icon.vi (x86 host-native headless, VHS-REQ-665)"
     },
     {
