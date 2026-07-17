@@ -21,6 +21,7 @@ const readinessModule = require('../../scripts/checkReleaseReadiness.js') as {
   describeSupplyChainState: (state: unknown) => string;
   deriveRuntimeAttestationFromLedger: (manifest: unknown, version: string) => any;
   checkReleaseAttestation: (manifest: unknown, version: string) => { name: string; passed: boolean; details: string };
+  checkSupplyChainFreshness: (state: unknown) => { name: string; passed: boolean; details: string };
   checkBoxManifestIntegrity: (boxManifest: unknown, version: string) => { name: string; passed: boolean; details: string };
   checkBoxProvenanceBinding: (runtimeManifest: unknown, boxManifest: unknown) => { name: string; passed: boolean; details: string };
   buildReleaseReadiness: (inputs?: Record<string, unknown>, meta?: Record<string, unknown>) => any;
@@ -43,6 +44,7 @@ const {
   describeSupplyChainState,
   deriveRuntimeAttestationFromLedger,
   checkReleaseAttestation,
+  checkSupplyChainFreshness,
   checkBoxManifestIntegrity,
   checkBoxProvenanceBinding,
   buildReleaseReadiness,
@@ -490,6 +492,60 @@ describe('checkReleaseAttestation release gate (VHS-REQ-666)', () => {
   it('parseArgs captures --require-release-attestation', () => {
     expect(parseArgs(['--require-release-attestation']).requireReleaseAttestation).toBe(true);
     expect(parseArgs([]).requireReleaseAttestation).toBe(false);
+  });
+});
+
+// Criterion coverage: VHS-REQ-668 — the unified supply-chain state read-model can
+// be promoted to a hard release check via the opt-in --require-supply-chain-fresh
+// flag. It reads the same committed provenance signals the advisory line reads,
+// fails closed when the read-model is unavailable, and is appended ONLY when the
+// maintainer opts in, preserving the advisory-default verdict.
+describe('checkSupplyChainFreshness release gate (VHS-REQ-668.5)', () => {
+  const meta = { generatedAt: '2026-07-16T00:00:00.000Z', version: '1.33.2', commit: 'deadbeef' };
+  const base = {
+    ledger: CLEAN_LEDGER,
+    hasSelectableHighRisk,
+    builtManifestDigest: 'abc123',
+    shippedManifest: { integrityDigest: 'abc123' },
+    changelogTop: { released: undefined, unreleased: true }
+  };
+
+  it('passes only for a fresh, non-empty, zero-attention state and fails closed otherwise', () => {
+    expect(checkSupplyChainFreshness({ status: 'fresh', attentionCount: 0, artifactCount: 4 }).passed).toBe(true);
+    // Attention present -> fails even if status text says fresh-ish.
+    expect(checkSupplyChainFreshness({ status: 'attention', attentionCount: 2, artifactCount: 4 }).passed).toBe(false);
+    // No artifacts -> cannot attest.
+    expect(checkSupplyChainFreshness({ status: 'fresh', attentionCount: 0, artifactCount: 0 }).passed).toBe(false);
+    // Unavailable / malformed read-model -> fails closed.
+    expect(checkSupplyChainFreshness(undefined).passed).toBe(false);
+    expect(checkSupplyChainFreshness({}).passed).toBe(false);
+  });
+
+  it('appends the supply-chain gate ONLY when requireSupplyChainFresh is set', () => {
+    // Default: three advisory checks, no gate.
+    expect(buildReleaseReadiness(base, meta).checks).toHaveLength(3);
+
+    // Opted in + fresh: four checks, READY, gate present.
+    const gatedFresh = buildReleaseReadiness(
+      { ...base, requireSupplyChainFresh: true, supplyChainState: { status: 'fresh', attentionCount: 0, artifactCount: 4 } },
+      meta
+    );
+    expect(gatedFresh.checks).toHaveLength(4);
+    expect(gatedFresh.status).toBe('READY');
+    expect(gatedFresh.checks.map((c: { name: string }) => c.name)).toContain('supply-chain-freshness');
+
+    // Opted in + degraded: four checks, ATTENTION (fails closed).
+    const gatedStale = buildReleaseReadiness(
+      { ...base, requireSupplyChainFresh: true, supplyChainState: { status: 'attention', attentionCount: 1, artifactCount: 4 } },
+      meta
+    );
+    expect(gatedStale.checks).toHaveLength(4);
+    expect(gatedStale.status).toBe('ATTENTION');
+  });
+
+  it('parseArgs recognizes --require-supply-chain-fresh', () => {
+    expect(parseArgs(['--require-supply-chain-fresh']).requireSupplyChainFresh).toBe(true);
+    expect(parseArgs([]).requireSupplyChainFresh).toBe(false);
   });
 });
 

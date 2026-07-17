@@ -5095,15 +5095,22 @@ Missing numeric IDs are intentional.
   - `npm run supply-chain:state` renders text by default, with `--json` and
     `--markdown` output modes and a path-safe `--output`; Markdown table cells
     escape backslashes before pipes.
+  - The release-readiness gate exposes an opt-in `--require-supply-chain-fresh`
+    flag that promotes the read-model to a hard check, failing the verdict
+    unless every artifact is fresh with zero attention and failing closed when
+    the read-model is unavailable; the check is absent from the default advisory
+    verdict.
 - Agent Work Scope:
   - Keep the aggregator read-only and pure/injectable with a thin CLI; reuse the
     existing runtime-validation and dev-tools builders rather than reimplementing
     digest logic; never mutate a source ledger or manifest.
 - Implementation References:
   - `scripts/buildSupplyChainState.js`
+  - `scripts/checkReleaseReadiness.js`
   - `package.json`
 - Verification References:
   - `tests/unit/supplyChainStateScript.test.ts`
+  - `tests/unit/releaseReadinessScript.test.ts`
 - Change Guidance:
   - Keep the read-model non-gating by default and its JSON packet
     schema-versioned; add new provenance streams as additional artifact records

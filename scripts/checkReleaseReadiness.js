@@ -370,6 +370,45 @@ function checkBoxProvenanceBinding(runtimeManifest, boxManifest) {
   );
 }
 
+// GATING (opt-in): promote the advisory unified supply-chain state read-model to a
+// hard release check. Unlike the display-only `supplyChain` line, this fails the
+// verdict unless every shipped artifact bound to a committed digest (box, runtime,
+// requirements, devtools) is fresh for this build (status 'fresh', zero attention,
+// at least one artifact). Fails closed when the read-model is unavailable so a
+// publish cannot be attested against a missing or degraded provenance state. This
+// closes the read-only -> gate loop for the provenance stack; CI reads the same
+// committed signals the aggregator reads, so no hypervisor is needed.
+function checkSupplyChainFreshness(state) {
+  if (!state || typeof state !== 'object' || typeof state.status !== 'string') {
+    return makeCheck(
+      'supply-chain-freshness',
+      false,
+      'Supply-chain provenance state unavailable (run npm run supply-chain:state); cannot gate a release on an absent read-model.'
+    );
+  }
+  const attention = Number.isInteger(state.attentionCount) ? state.attentionCount : 0;
+  const total = Number.isInteger(state.artifactCount) ? state.artifactCount : 0;
+  if (total === 0) {
+    return makeCheck(
+      'supply-chain-freshness',
+      false,
+      'Supply-chain provenance state reports no artifacts; cannot attest freshness for a release.'
+    );
+  }
+  if (state.status !== 'fresh' || attention > 0) {
+    return makeCheck(
+      'supply-chain-freshness',
+      false,
+      `Supply-chain provenance ${state.status}: ${attention} of ${total} artifact(s) need attention; refresh provenance before publishing.`
+    );
+  }
+  return makeCheck(
+    'supply-chain-freshness',
+    true,
+    `Supply-chain provenance fresh: all ${total} artifact(s) bound and current for this build.`
+  );
+}
+
 function buildReleaseReadiness(inputs = {}, meta = {}) {
   const checks = [
     checkRiskLedger(inputs.ledger, inputs.hasSelectableHighRisk),
@@ -383,6 +422,12 @@ function buildReleaseReadiness(inputs = {}, meta = {}) {
     checks.push(checkReleaseAttestation(inputs.runtimeManifest, meta.version));
     checks.push(checkBoxManifestIntegrity(inputs.boxManifest, meta.version));
     checks.push(checkBoxProvenanceBinding(inputs.runtimeManifest, inputs.boxManifest));
+  }
+  // Opt-in supply-chain freshness gate (release workflow path only). The advisory
+  // `supplyChain` line still renders regardless; this only adds a hard check when
+  // the maintainer opts in, preserving the advisory-default contract.
+  if (inputs.requireSupplyChainFresh) {
+    checks.push(checkSupplyChainFreshness(inputs.supplyChainState));
   }
   const status = checks.every((check) => check.passed) ? 'READY' : 'ATTENTION';
   return {
@@ -540,6 +585,7 @@ function loadSignals(cwd, deps = {}) {
     runtimeManifest,
     boxManifest,
     requireReleaseAttestation: deps.requireReleaseAttestation === true,
+    requireSupplyChainFresh: deps.requireSupplyChainFresh === true,
     runtimeEvidence,
     supplyChainState
   };
@@ -645,6 +691,7 @@ function parseArgs(argv = []) {
     strict: false,
     includeProvenance: false,
     requireReleaseAttestation: false,
+    requireSupplyChainFresh: false,
     outputPath: undefined,
     runtimeEvidencePath: undefined,
     positionals: []
@@ -665,6 +712,7 @@ function parseArgs(argv = []) {
     else if (arg === '--strict') options.strict = true;
     else if (arg === '--include-provenance') options.includeProvenance = true;
     else if (arg === '--require-release-attestation') options.requireReleaseAttestation = true;
+    else if (arg === '--require-supply-chain-fresh') options.requireSupplyChainFresh = true;
     else if (arg === '--output') options.outputPath = next();
     else if (arg === '--runtime-evidence') options.runtimeEvidencePath = next();
     else if (arg.startsWith('--')) throw new Error(`Unknown argument: ${arg}`);
@@ -730,7 +778,8 @@ function main(argv = process.argv.slice(2), deps = {}) {
   const signals = loadSignals(cwd, {
     ...deps,
     runtimeEvidencePath: options.runtimeEvidencePath,
-    requireReleaseAttestation: options.requireReleaseAttestation
+    requireReleaseAttestation: options.requireReleaseAttestation,
+    requireSupplyChainFresh: options.requireSupplyChainFresh
   });
   const verdict = buildReleaseReadiness(signals, {
     generatedAt: generatedAtFor(deps),
@@ -788,6 +837,7 @@ module.exports = {
   describeSupplyChainState,
   deriveRuntimeAttestationFromLedger,
   checkReleaseAttestation,
+  checkSupplyChainFreshness,
   checkBoxManifestIntegrity,
   checkBoxProvenanceBinding,
   buildReleaseReadiness,
