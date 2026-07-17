@@ -49,6 +49,14 @@ describe('bundled documentation', () => {
     }
   });
 
+  it('returns undefined when the requested page id is absent from the manifest', async () => {
+    const loaded = await loadBundledDocumentationPage(
+      extensionUri as never,
+      'no-such-page-id'
+    );
+    expect(loaded).toBeUndefined();
+  });
+
   it('loads concise bundled pages that stay free of private authority links and standards-only pages', async () => {
     const loaded = await loadBundledDocumentationPage(extensionUri as never, 'user-workflow');
     expect(loaded).toBeDefined();
