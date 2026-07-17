@@ -137,6 +137,32 @@ jobs:
       - name: Package
         run: npm run package
 
+      # Advisory supply-chain provenance report (VHS-REQ-668): render the unified
+      # read-model on every develop/PR build so provenance drift (a stale box,
+      # runtime, or requirements binding) is visible early, long before the
+      # marketplace-release gate would hard-block it. This is advisory only — it
+      # runs WITHOUT --strict, so it never fails the build; the retained JSON/
+      # Markdown lets a reviewer see the exact provenance state for a commit.
+      - name: Supply-Chain Provenance Report / supply-chain-state
+        if: ${{ always() }}
+        run: |
+          set -euo pipefail
+          node scripts/buildSupplyChainState.js | tee supply-chain-state-report.txt
+          node scripts/buildSupplyChainState.js --json --output supply-chain-state.json
+          node scripts/buildSupplyChainState.js --markdown --output supply-chain-state.md
+
+      - name: Supply-Chain Provenance Artifact / supply-chain-state
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: supply-chain-state-${{ github.run_id }}
+          path: |
+            supply-chain-state-report.txt
+            supply-chain-state.json
+            supply-chain-state.md
+          if-no-files-found: ignore
+          retention-days: 30
+
       - name: DoD Gate / dod
         run: |
           set +e
