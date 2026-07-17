@@ -251,6 +251,41 @@ describe('buildRiskLedger rendering and CLI', () => {
     expect(withProvenance['x-vi-history-suite-provenance']).toEqual({ generatedAt: 'x' });
   });
 
+  it('keeps emitted JSON aligned with the published schema contract (VHS-REQ-601)', () => {
+    const ledger = buildRiskLedger(
+      signalsFrom({ coverage: COVERAGE_WITH_DEBT, requirements: HEALTHY_HEALTH }),
+      META
+    ) as Record<string, unknown>;
+    const schema = JSON.parse(renderSchema()) as {
+      required: string[];
+      properties: {
+        $schema: { const: string };
+        schemaVersion: { const: number };
+        entries: { items: { required: string[] } };
+        ranking: { required: string[] };
+      };
+    };
+
+    // Top-level required keys are all present and self-describing.
+    expect(schema.required.filter((key) => !(key in ledger))).toEqual([]);
+    expect(ledger.$schema).toBe(schema.properties.$schema.const);
+    expect(ledger.$schema).toBe(RISK_LEDGER_SCHEMA_ID);
+    expect(ledger.schemaVersion).toBe(schema.properties.schemaVersion.const);
+    expect(ledger.schemaVersion).toBe(SCHEMA_VERSION);
+
+    // Every entry record carries the schema's required entry keys.
+    const entries = ledger.entries as Array<Record<string, unknown>>;
+    expect(entries.length).toBeGreaterThan(0);
+    const entryRequired = schema.properties.entries.items.required;
+    for (const entry of entries) {
+      expect(entryRequired.filter((key) => !(key in entry))).toEqual([]);
+    }
+
+    // The ranking sub-packet matches its required contract.
+    const ranking = ledger.ranking as Record<string, unknown>;
+    expect(schema.properties.ranking.required.filter((key) => !(key in ranking))).toEqual([]);
+  });
+
   it('parseArgs rejects multiple output modes and unknown flags (VHS-REQ-601)', () => {
     expect(() => parseArgs(['--json', '--markdown'])).toThrow(/only one output mode/);
     expect(() => parseArgs(['--nope'])).toThrow(/Unknown argument/);
