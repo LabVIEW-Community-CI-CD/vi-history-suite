@@ -36,10 +36,12 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { execSync } = require('node:child_process');
 
+const { SCHEMA_PROVENANCE_KEY, renderSchemaDocument } = require('./lib/schemaEnvelope.js');
+
 const SCHEMA_VERSION = 1;
 const RISK_LEDGER_SCHEMA_ID =
   'https://raw.githubusercontent.com/LabVIEW-Community-CI-CD/vi-history-suite/main/docs/requirements/risk-ledger.schema.json';
-const RISK_LEDGER_SCHEMA_PROVENANCE_KEY = 'x-vi-history-suite-provenance';
+const RISK_LEDGER_SCHEMA_PROVENANCE_KEY = SCHEMA_PROVENANCE_KEY;
 const UNKNOWN_COMMIT = '<unknown>';
 
 const SEVERITY_TIERS = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'INFO'];
@@ -726,10 +728,7 @@ const RISK_LEDGER_JSON_SCHEMA = {
 };
 
 function renderSchema(options = {}) {
-  const schema = options.provenance
-    ? { ...RISK_LEDGER_JSON_SCHEMA, [RISK_LEDGER_SCHEMA_PROVENANCE_KEY]: options.provenance }
-    : RISK_LEDGER_JSON_SCHEMA;
-  return JSON.stringify(schema, null, 2);
+  return renderSchemaDocument(RISK_LEDGER_JSON_SCHEMA, options);
 }
 
 // ---- CLI ----
