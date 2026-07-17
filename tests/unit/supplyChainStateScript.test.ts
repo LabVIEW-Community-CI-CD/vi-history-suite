@@ -18,7 +18,7 @@ const sc = require('../../scripts/buildSupplyChainState.js') as {
   SUPPLY_CHAIN_STATE_JSON_SCHEMA: Record<string, unknown>;
   renderSchema: (options?: Record<string, unknown>) => string;
   outputModeForOptions: (options?: Record<string, unknown>) => string;
-  renderMarkdown: (state: unknown) => string;
+  renderMarkdown: (state: unknown, provenance?: unknown) => string;
   markdownCell: (value: unknown) => string;
   parseArgs: (argv: string[]) => Record<string, unknown>;
   resolveOutputPath: (cwd: string, relativePath: string) => string;
@@ -339,6 +339,15 @@ describe('supply-chain CLI', () => {
     expect(md).toContain('## Provenance');
     expect(md).toContain('- Output: `markdown`');
     expect(md).toContain('2026-07-15T00:00:00.000Z');
+
+    // Markdown provenance code spans preserve literal backslashes (no doubling)
+    // for Windows-style paths, since backslashes are literal inside code spans.
+    const winMd = sc.renderMarkdown(
+      { buildVersion: '1', gitCommit: 'c', status: 'fresh', attentionCount: 0, artifactCount: 0, artifacts: [] },
+      { generatedAt: 't', cwd: 'C:\\repo\\ws', outputMode: 'markdown', strict: false, argv: ['--markdown'] }
+    );
+    expect(winMd).toContain('- Cwd: `C:\\repo\\ws`');
+    expect(winMd).not.toContain('C:\\\\repo');
 
     // Default (no flag) stays provenance-free.
     const plainOut: string[] = [];
