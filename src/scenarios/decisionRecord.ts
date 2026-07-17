@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
+import { nowIso as defaultNow } from '../support/clock';
 import { MultiReportDashboardRecord } from '../dashboard/multiReportDashboard';
 import { ReviewScenarioDefinition } from './reviewScenarioRegistry';
 
@@ -268,8 +269,4 @@ export function buildDecisionRecordMissingOrBlockedFacts(
   }
 
   return facts;
-}
-
-function defaultNow(): string {
-  return new Date().toISOString();
 }

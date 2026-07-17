@@ -146,6 +146,7 @@ tests/unit/execFileText.test.ts,supporting,No,Shared structured execFile text ru
 tests/unit/cliFlags.test.ts,supporting,No,"Shared strict CLI flag scanner unit tests (bool/value dispatch, unknown-argument throw, missing-value throw, usage suffix, trim vs reject-flag-like value modes); supporting VHS-REQ-614."
 tests/unit/pathStyle.test.ts,supporting,No,"Shared POSIX-aware path helper unit tests (usesExplicitPosixPathStyle predicate, joinPreservingExplicitPathStyle posix vs platform join and backslash normalization); supporting VHS-REQ-610."
 tests/unit/fsExists.test.ts,supporting,No,"Shared filesystem-existence predicate unit tests (pathExistsViaFsAccess true for existing file/directory, false for missing path); supporting VHS-REQ-610."
+tests/unit/clock.test.ts,supporting,No,"Shared default ISO-8601 clock unit tests (nowIso returns a parseable ISO string close to the current time); supporting VHS-REQ-610."
 tests/unit/reviewScenarioSupportPolicy.test.ts,mapped,Yes,Review scenario and repository support policy tests; mapped to VHS-REQ-610.
 tests/unit/runLinuxIntegrationHost.test.ts,dev-only,No,Linux integration host tests; CI infrastructure.
 tests/unit/vagrantLanePreflight.test.ts,dev-only,No,Optional Vagrant lane preflight/status tests covering banner and box-list parsing readiness checks and CLI exit behavior; local maintainer tooling.
@@ -337,6 +338,7 @@ src/tooling/execFileText.ts,supporting,No,"Shared structured execFile text runne
 src/tooling/cliFlags.ts,supporting,No,"Shared strict CLI flag scanner (scanFlags) reused by the dev-host loop and local-runtime settings CLI parsers; preserves each caller's value semantics and error formatting; supporting VHS-REQ-614."
 src/support/pathStyle.ts,supporting,No,"Shared POSIX-aware path helpers (usesExplicitPosixPathStyle, joinPreservingExplicitPathStyle) reused by dashboard and reporting staged-tree layout; supporting VHS-REQ-610."
 src/support/fsExists.ts,supporting,No,"Shared filesystem-existence predicate (pathExistsViaFsAccess) reused as the default path-exists probe across dashboard and reporting modules; supporting VHS-REQ-610."
+src/support/clock.ts,supporting,No,"Shared default ISO-8601 clock (nowIso) reused as the default now/nowIso seam across dashboard, reporting, and scenario modules; supporting VHS-REQ-610."
 tests/unit/viPreviewVerifyCli.test.ts,mapped,Yes,Preview verification CLI resolve-and-verify unit tests; mapped to VHS-REQ-659.
 src/git/revisionViTree.ts,mapped,Yes,Revision VI-tree materializer (parses git ls-tree output and stages a revision's VI plus sibling source tree for preview); mapped to VHS-REQ-659.
 tests/unit/revisionViTree.test.ts,mapped,Yes,Revision VI-tree materializer and ls-tree parser unit tests; mapped to VHS-REQ-659.

@@ -1,6 +1,7 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
+import { nowIso as defaultNow } from '../support/clock';
 import {
   buildComparisonArtifactPlan,
   buildStagedRevisionPlan,
@@ -534,10 +535,6 @@ function deriveProviderRequestLabel(runtimeSelection: ComparisonRuntimeSelection
   }
 
   return runtimeSelection.executionMode ?? 'auto';
-}
-
-function defaultNow(): string {
-  return new Date().toISOString();
 }
 
 function buildInitialRuntimeExecution(
