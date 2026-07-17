@@ -402,3 +402,62 @@ describe('buildRuntimeFidelityEntries (VHS-REQ-601.31)', () => {
     expect(ledger.inputs.runtimeValidation.available).toBe(true);
   });
 });
+
+describe('buildBoxProvenanceEntries (VHS-REQ-666)', () => {
+  const {
+    buildBoxProvenanceEntries,
+    loadBoxManifestSignal
+  } = ledgerModule as unknown as {
+    buildBoxProvenanceEntries: (manifest: unknown, currentVersion: string) => any[];
+    loadBoxManifestSignal: (cwd: string, deps?: Record<string, unknown>) => any;
+  };
+
+  const BOX = { schemaVersion: 1, sha256: 'a'.repeat(64), recordedForVersion: '1.33.2' };
+
+  it('emits no entries when the box manifest is recorded for the current build', () => {
+    expect(buildBoxProvenanceEntries(BOX, '1.33.2')).toEqual([]);
+  });
+
+  it('emits one selectable MEDIUM box-provenance risk when recordedForVersion drifts', () => {
+    const entries = buildBoxProvenanceEntries(BOX, '1.34.0');
+    expect(entries).toHaveLength(1);
+    expect(entries[0].dimension).toBe('box-provenance');
+    expect(entries[0].severityTier).toBe('MEDIUM');
+    expect(entries[0].selectable).toBe(true);
+    expect(entries[0].id).toBe('box-provenance/box-manifest');
+    expect(entries[0].requirementIds).toContain('VHS-REQ-666');
+    expect(entries[0].title).toContain('1.33.2');
+    expect(entries[0].title).toContain('1.34.0');
+  });
+
+  it('treats a manifest with no recordedForVersion as drifted (<never>)', () => {
+    const entries = buildBoxProvenanceEntries({ sha256: 'a'.repeat(64) }, '1.34.0');
+    expect(entries).toHaveLength(1);
+    expect(entries[0].title).toContain('<never>');
+  });
+
+  it('graceful-degrades to no entries when the manifest is absent', () => {
+    expect(buildBoxProvenanceEntries(undefined, '1.34.0')).toEqual([]);
+    expect(buildBoxProvenanceEntries(null, '1.34.0')).toEqual([]);
+  });
+
+  it('loadBoxManifestSignal reports available:false without throwing when the manifest is absent', () => {
+    const signal = loadBoxManifestSignal(makeTempDir());
+    expect(signal.available).toBe(false);
+    expect(signal.source).toBe('vagrant/box-manifest.json');
+  });
+
+  it('the ledger integrates a drifted box manifest as a selectable box-provenance entry', () => {
+    const ledger = buildRiskLedger(
+      {
+        coverage: { available: false, source: null },
+        requirements: { available: true, health: HEALTHY_HEALTH, source: 'fixture' },
+        standards: { available: false, source: null },
+        boxManifest: { available: true, manifest: BOX, source: 'fixture' }
+      },
+      { ...META, extensionVersion: '1.34.0' }
+    );
+    expect(ledger.countsByDimension['box-provenance']).toBe(1);
+    expect(ledger.inputs.boxManifest.available).toBe(true);
+  });
+});

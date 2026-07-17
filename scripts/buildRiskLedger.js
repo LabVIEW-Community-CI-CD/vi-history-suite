@@ -51,6 +51,7 @@ const DIMENSIONS = [
   'requirement-quality',
   'coverage',
   'runtime-fidelity',
+  'box-provenance',
   'requirements-drift',
   'platform-proof'
 ];
@@ -345,6 +346,36 @@ function buildPlatformProofEntries() {
 // validation into a self-directing signal instead of an ad-hoc issue comment.
 // Windows tracks are intentionally NOT modeled here — they remain in the parked
 // platform-proof awareness list because they are not executable on a Linux host.
+// box-provenance dimension: the committed Vagrant box manifest fingerprints the
+// golden box the release-gating attestation is produced on. When its
+// recordedForVersion drifts from the current build, the box may need a fresh
+// validation pass; surface a selectable MEDIUM (mirrors runtime-fidelity).
+// Fires 0 entries when the manifest is absent or already recorded for the build.
+function buildBoxProvenanceEntries(manifest, currentVersion) {
+  if (!manifest || typeof manifest !== 'object') {
+    return [];
+  }
+  const recordedForVersion =
+    typeof manifest.recordedForVersion === 'string' ? manifest.recordedForVersion : undefined;
+  if (recordedForVersion === currentVersion) {
+    return [];
+  }
+  const recordedText = recordedForVersion ?? '<never>';
+  return [
+    makeEntry({
+      id: 'box-provenance/box-manifest',
+      dimension: 'box-provenance',
+      severityTier: 'MEDIUM',
+      requirementIds: ['VHS-REQ-666'],
+      title: `Vagrant box manifest was recorded for ${recordedText}, not the current build ${currentVersion}`,
+      source: 'box-manifest',
+      provenance: typeof manifest.sha256 === 'string' ? `sha256:${manifest.sha256.slice(0, 12)}\u2026` : '',
+      suggestedAction:
+        'Confirm the golden box is current and re-run the Vagrant release validation for this build, then regenerate vagrant/box-manifest.json (node scripts/verifyVagrantBox.cjs --generate <box>) if the box changed.'
+    })
+  ];
+}
+
 function buildRuntimeFidelityEntries(manifest, currentVersion) {
   if (!manifest || typeof manifest !== 'object' || !Array.isArray(manifest.tracks)) {
     return [];
@@ -417,6 +448,10 @@ function buildRiskLedger(signals = {}, meta = {}) {
       signals.runtimeValidation?.available ? signals.runtimeValidation.manifest : undefined,
       meta.extensionVersion
     ),
+    ...buildBoxProvenanceEntries(
+      signals.boxManifest?.available ? signals.boxManifest.manifest : undefined,
+      meta.extensionVersion
+    ),
     ...buildStandardsEntries(signals.standards?.available ? signals.standards.summary : undefined),
     ...buildPlatformProofEntries()
   ];
@@ -435,6 +470,10 @@ function buildRiskLedger(signals = {}, meta = {}) {
     runtimeValidation: {
       available: Boolean(signals.runtimeValidation?.available),
       source: signals.runtimeValidation?.source ?? null
+    },
+    boxManifest: {
+      available: Boolean(signals.boxManifest?.available),
+      source: signals.boxManifest?.source ?? null
     }
   };
 
@@ -522,6 +561,19 @@ function defaultReadFile(cwd) {
 const DEFAULT_RUNTIME_VALIDATION_LEDGER_PATH = 'docs/requirements/runtime-validation-ledger.json';
 function loadRuntimeValidationSignal(cwd, deps = {}) {
   const targetPath = deps.runtimeValidationJsonPath ?? DEFAULT_RUNTIME_VALIDATION_LEDGER_PATH;
+  try {
+    const raw = (deps.readFile ?? defaultReadFile(cwd))(targetPath);
+    return { available: true, manifest: JSON.parse(raw), source: targetPath };
+  } catch (error) {
+    return { available: false, source: targetPath, error: String(error && error.message) };
+  }
+}
+
+// Vagrant box manifest: committed golden-box fingerprint. Defaults to
+// vagrant/box-manifest.json; graceful-degrade (available:false) when absent.
+const DEFAULT_BOX_MANIFEST_PATH = 'vagrant/box-manifest.json';
+function loadBoxManifestSignal(cwd, deps = {}) {
+  const targetPath = deps.boxManifestJsonPath ?? DEFAULT_BOX_MANIFEST_PATH;
   try {
     const raw = (deps.readFile ?? defaultReadFile(cwd))(targetPath);
     return { available: true, manifest: JSON.parse(raw), source: targetPath };
@@ -699,6 +751,7 @@ function parseArgs(argv = []) {
     else if (arg === '--requirements-json') options.requirementsJsonPath = next();
     else if (arg === '--standards-summary') options.standardsSummaryPath = next();
     else if (arg === '--runtime-validation-json') options.runtimeValidationJsonPath = next();
+    else if (arg === '--box-manifest-json') options.boxManifestJsonPath = next();
     else if (arg === '--max-coverage-debt-entries') options.maxCoverageDebtEntries = Number(next());
     else if (arg.startsWith('--')) throw new Error(`Unknown argument: ${arg}`);
     else options.positionals.push(arg);
@@ -776,6 +829,10 @@ function main(argv = process.argv.slice(2), deps = {}) {
     runtimeValidation: loadRuntimeValidationSignal(cwd, {
       ...deps,
       runtimeValidationJsonPath: options.runtimeValidationJsonPath
+    }),
+    boxManifest: loadBoxManifestSignal(cwd, {
+      ...deps,
+      boxManifestJsonPath: options.boxManifestJsonPath
     })
   };
 
@@ -835,6 +892,7 @@ module.exports = {
   buildStandardsEntries,
   buildPlatformProofEntries,
   buildRuntimeFidelityEntries,
+  buildBoxProvenanceEntries,
   buildRiskLedger,
   hasSelectableHighRisk,
   compareEntries,
@@ -843,6 +901,7 @@ module.exports = {
   loadRequirementsSignal,
   loadStandardsSignal,
   loadRuntimeValidationSignal,
+  loadBoxManifestSignal,
   renderSummary,
   renderMarkdown,
   renderSchema,
