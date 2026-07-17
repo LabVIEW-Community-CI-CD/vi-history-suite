@@ -99,22 +99,30 @@ function buildBoxArtifact(cwd, version, deps = {}) {
     });
   }
   const recordedForVersion = manifest.recordedForVersion ?? null;
-  // The box artifact is only "fresh" when the manifest is well-formed (matching
-  // the release gate's box-manifest-integrity contract: 64-hex sha256 + positive
-  // sizeBytes) AND recorded for the current build. A matching recordedForVersion
-  // with a malformed sha256 must not read as fresh — the box is not
-  // cryptographically bound.
+  // Box freshness follows the same decoupled contract as the release gate's
+  // box-manifest-integrity check: the box is identified by its sha256, not the
+  // release version. The golden box is regenerated only when rebuilt, while the
+  // package version bumps every release, so requiring recordedForVersion to equal
+  // the build version would wrongly mark an unchanged box stale on a version-only
+  // release (and, once this artifact gates the release path, block that release).
+  // The box is "fresh" when it is well-formed (64-hex sha256 + positive sizeBytes,
+  // i.e. cryptographically bound) AND records a version binding; per-version
+  // runtime freshness is enforced by the runtime-validation track, not here.
   const wellFormed =
     typeof manifest.sha256 === 'string' &&
     /^[0-9a-f]{64}$/.test(manifest.sha256) &&
     Number.isInteger(manifest.sizeBytes) &&
     manifest.sizeBytes > 0;
-  const fresh = wellFormed && recordedForVersion === version;
+  const boundToVersion = typeof recordedForVersion === 'string' && recordedForVersion.trim().length > 0;
+  const fresh = wellFormed && boundToVersion;
+  const recordedForBuild = recordedForVersion === version;
   const detail = !wellFormed
     ? 'Box manifest is malformed (sha256 must be 64-hex and sizeBytes a positive integer).'
-    : fresh
-      ? `Box manifest recorded for ${version}.`
-      : `Box manifest recorded for ${recordedForVersion ?? 'n/a'}, not ${version}.`;
+    : !boundToVersion
+      ? 'Box manifest is missing a recordedForVersion binding.'
+      : recordedForBuild
+        ? `Box manifest bound (sha256) and recorded for ${version}.`
+        : `Box manifest bound (sha256) and recorded for ${recordedForVersion} (unchanged box; version binding is informational).`;
   return {
     ...makeArtifact({
       id: 'box',
