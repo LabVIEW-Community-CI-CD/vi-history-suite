@@ -332,6 +332,10 @@ function parseArgs(argv) {
       '--repo': 'repo',
       '--branch': 'branch'
     },
+    // This CLI does not support the shared --strict flag; drop it from the
+    // merged common flags so it is rejected as an unknown argument (rather than
+    // silently accepted) — automation must not carry --strict into this gate.
+    excludeCommonFlags: ['--strict'],
     enforceSingleOutputMode: false
   });
 
