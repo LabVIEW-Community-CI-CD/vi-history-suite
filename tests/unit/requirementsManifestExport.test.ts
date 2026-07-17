@@ -42,6 +42,8 @@ const manifestModule = require('../../scripts/exportRequirementsManifest.js') as
     integrityDigest: string;
   };
   renderManifestMarkdown: (manifest: unknown) => string;
+  renderSchema: (options?: { provenance?: unknown }) => string;
+  REQUIREMENTS_MANIFEST_JSON_SCHEMA: { required: string[]; properties: Record<string, { const?: unknown }> };
   exportRequirementsManifest: (deps?: Record<string, unknown>) => {
     jsonPath: string;
     markdownPath?: string;
@@ -57,6 +59,8 @@ const {
   computeIntegrityDigest,
   buildRequirementsManifest,
   renderManifestMarkdown,
+  renderSchema,
+  REQUIREMENTS_MANIFEST_JSON_SCHEMA,
   exportRequirementsManifest,
   main
 } = manifestModule;
@@ -331,5 +335,44 @@ describe('exportRequirementsManifest', () => {
       stdout: { write: () => undefined }
     });
     expect(failCode).toBe(1);
+  });
+
+  it('publishes the manifest JSON Schema via --schema without exporting (VHS-REQ-601)', () => {
+    const schema = JSON.parse(renderSchema()) as {
+      $id: string;
+      required: string[];
+      properties: { $schema: { const: string }; schemaVersion: { const: number } };
+    };
+    expect(schema.$id).toBe(MANIFEST_SCHEMA_ID);
+    expect(schema.properties.$schema.const).toBe(MANIFEST_SCHEMA_ID);
+    expect(schema.properties.schemaVersion.const).toBe(SCHEMA_VERSION);
+
+    // The built manifest self-describes and satisfies the published schema contract (no drift).
+    const manifest = buildRequirementsManifest({
+      srsText: FIXTURE_SRS,
+      extensionVersion: '1.0.0',
+      extensionCommit: 'aaaaaaaaaaaa',
+      generatedAt: '2026-01-01T00:00:00.000Z'
+    }) as unknown as Record<string, unknown>;
+    expect(REQUIREMENTS_MANIFEST_JSON_SCHEMA.required.filter((key) => !(key in manifest))).toEqual([]);
+    expect(manifest.$schema).toBe(REQUIREMENTS_MANIFEST_JSON_SCHEMA.properties.$schema.const);
+    expect(manifest.schemaVersion).toBe(REQUIREMENTS_MANIFEST_JSON_SCHEMA.properties.schemaVersion.const);
+
+    // --schema attaches provenance under the shared extension key.
+    const withProvenance = JSON.parse(renderSchema({ provenance: { generatedAt: 'x' } })) as Record<string, unknown>;
+    expect(withProvenance['x-vi-history-suite-provenance']).toEqual({ generatedAt: 'x' });
+
+    // main --schema publishes the schema and does not export (no writeFile invoked).
+    const outputs: string[] = [];
+    let wrote = false;
+    const code = main(['--schema'], {
+      writeFile: () => {
+        wrote = true;
+      },
+      stdout: { write: (text: string) => outputs.push(text) }
+    });
+    expect(code).toBe(0);
+    expect(wrote).toBe(false);
+    expect((JSON.parse(outputs.join('')) as Record<string, unknown>).$id).toBe(MANIFEST_SCHEMA_ID);
   });
 });
