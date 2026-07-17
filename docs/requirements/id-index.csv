@@ -684,3 +684,4 @@ VHS-REQ-664,Software,Active,srs.md#vhs-req-664-preview-and-comparison-cache-warm
 VHS-REQ-665,Software,Active,srs.md#vhs-req-665-win32-host-native-headless-comparison-for-32-bit-labview-parity,,,docs/requirements/srs.md
 VHS-REQ-666,Software,Active,srs.md#vhs-req-666-mandatory-local-vagrant-release-attestation,,,docs/requirements/srs.md
 VHS-REQ-667,Software,Active,srs.md#vhs-req-667-versioned-dev-tools-github-release-channel,,,docs/requirements/srs.md
+VHS-REQ-668,Software,Active,srs.md#vhs-req-668-supply-chain-state-read-model,,,docs/requirements/srs.md

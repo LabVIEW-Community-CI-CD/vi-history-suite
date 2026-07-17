@@ -5054,3 +5054,45 @@ Missing numeric IDs are intentional.
     metadata) and the release workflow dry-run-first; never publish on a no-op
     content digest, and never bundle a file not declared in the committed
     toolset manifest.
+
+### VHS-REQ-668: Supply-Chain State Read-Model
+
+- Status: Active
+- Parent: VHS-SYS-REQ-013
+- Area: CI And Developer Environment
+- Statement: The repository shall provide a read-only aggregator that reports the
+  provenance state of every shipped artifact bound to a committed digest in one
+  schema-versioned packet, so maintainers and agents can see at a glance whether
+  everything that ships is cryptographically bound and fresh for the current
+  build. It reads existing ledgers and manifests only, mutates no source, and
+  gates nothing by default.
+- Acceptance Criteria:
+  - `scripts/buildSupplyChainState.js` aggregates four provenance streams into a
+    single `vi-history-suite/supply-chain-state@v1` packet: the Vagrant box
+    manifest, the runtime-validation ledger, the requirements manifest, and the
+    dev-tools toolset content digest; each source graceful-degrades to
+    unavailable when absent.
+  - Each artifact record reports availability, whether it gates a release, its
+    digest, a tri-state freshness against the current build version, and a
+    drift reason; the runtime record enumerates per-track validated-version
+    freshness.
+  - The packet rolls up a `status` of `attention` when any release-gating
+    artifact is unavailable or stale, otherwise `fresh`; `--strict` exits
+    nonzero on `attention` as an opt-in local signal and is not wired into any
+    CI gate.
+  - `npm run supply-chain:state` renders text by default, with `--json` and
+    `--markdown` output modes and a path-safe `--output`; Markdown table cells
+    escape backslashes before pipes.
+- Agent Work Scope:
+  - Keep the aggregator read-only and pure/injectable with a thin CLI; reuse the
+    existing runtime-validation and dev-tools builders rather than reimplementing
+    digest logic; never mutate a source ledger or manifest.
+- Implementation References:
+  - `scripts/buildSupplyChainState.js`
+  - `package.json`
+- Verification References:
+  - `tests/unit/supplyChainStateScript.test.ts`
+- Change Guidance:
+  - Keep the read-model non-gating by default and its JSON packet
+    schema-versioned; add new provenance streams as additional artifact records
+    rather than changing the existing record shape.
