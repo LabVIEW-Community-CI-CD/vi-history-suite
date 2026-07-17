@@ -77,6 +77,7 @@ scripts/verifyMarketplaceListing.js,mapped,Yes,Marketplace listing verification 
 scripts/checkReleaseReadiness.js,mapped,Yes,Release-readiness verdict aggregator; composes risk ledger requirements-manifest digest and version/CHANGELOG coherence into one advisory READY/ATTENTION status with a display-only human-attested runtime line; mapped to VHS-REQ-615.
 scripts/runWindowsIntegrationHost.js,dev-only,No,Windows integration host runner; CI infrastructure.
 scripts/vagrantLanePreflight.js,dev-only,No,Optional Vagrant lane preflight and status reporter; injected command/fs boundaries; local maintainer helper only and never a CI gate.
+scripts/buildDevToolsRelease.js,dev-only,No,"Dev-tools GitHub Release content-digest and provenance builder (DS1); resolves the committed toolset manifest into a deterministic content digest binding shipped tools to their requirements state; local/CI packaging helper pending its release-channel requirement."
 tests/unit/bootstrapLinuxVsCodeHost.test.ts,dev-only,No,Tests for Linux VS Code host bootstrap.
 tests/unit/branchGovernanceWorkflow.test.ts,mapped,Yes,Branch governance workflow tests; mapped through RTM.
 tests/unit/branchProtectionSettingsAuditScript.test.ts,dev-only,No,Tests for the maintainer branch protection settings audit command with mocked GitHub CLI execution and drift rendering.
@@ -140,6 +141,7 @@ tests/unit/reviewDecisionRecordAction.test.ts,supporting,No,Decision record acti
 tests/unit/reviewScenarioSupportPolicy.test.ts,mapped,Yes,Review scenario and repository support policy tests; mapped to VHS-REQ-610.
 tests/unit/runLinuxIntegrationHost.test.ts,dev-only,No,Linux integration host tests; CI infrastructure.
 tests/unit/vagrantLanePreflight.test.ts,dev-only,No,Optional Vagrant lane preflight/status tests covering banner and box-list parsing readiness checks and CLI exit behavior; local maintainer tooling.
+tests/unit/buildDevToolsReleaseScript.test.ts,dev-only,No,"Dev-tools release builder (DS1) tests covering manifest resolution, deterministic content digest, provenance binding, and CLI output-path safety."
 tests/unit/runDevHostCli.test.ts,dev-only,No,Development host CLI tests; development tooling.
 tests/unit/runPinnedVsce.test.ts,supporting,No,Pinned VSCE runner tests; packaging support.
 tests/unit/traceabilityAuditScript.test.ts,mapped,Yes,Traceability audit script tests; mapped through RTM.
