@@ -212,6 +212,33 @@ describe('viHistoryService', () => {
       historyLimit: AUTO_HISTORY_ENTRY_CEILING
     });
   });
+
+  it('uses maxHistoryEntries as the historyLimit in capped mode (VHS-REQ-621)', () => {
+    workspaceGetMock.mockImplementation((key: string, fallback: unknown) => {
+      if (key === 'strictRsrcHeader') return false;
+      if (key === 'historyWindowMode') return 'capped';
+      if (key === 'maxHistoryEntries') return 7;
+      return fallback;
+    });
+    expect(getViHistoryServiceSettings()).toEqual({
+      strictRsrcHeader: false,
+      historyWindowMode: 'capped',
+      maxHistoryEntries: 7,
+      historyLimit: 7
+    });
+  });
+
+  it('clamps maxHistoryEntries to a minimum of 2 (VHS-REQ-621)', () => {
+    workspaceGetMock.mockImplementation((key: string, fallback: unknown) => {
+      if (key === 'strictRsrcHeader') return false;
+      if (key === 'historyWindowMode') return 'capped';
+      if (key === 'maxHistoryEntries') return 1;
+      return fallback;
+    });
+    const settings = getViHistoryServiceSettings();
+    expect(settings.maxHistoryEntries).toBe(2);
+    expect(settings.historyLimit).toBe(2);
+  });
 });
 
 describe('viHistoryService eligibility edge cases (VHS-REQ-006, VHS-REQ-061)', () => {
