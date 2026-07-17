@@ -4,6 +4,7 @@ import * as path from 'node:path';
 
 import { joinPreservingExplicitPathStyle } from '../support/pathStyle';
 import { pathExistsViaFsAccess as defaultPathExists } from '../support/fsExists';
+import { nowIso as defaultNow } from '../support/clock';
 import {
   ComparisonReportPacketRecord
 } from '../reporting/comparisonReportPacket';
@@ -423,10 +424,6 @@ async function copyIfExists(
 
   await deps.mkdir(path.dirname(destinationPath), { recursive: true });
   await deps.copyFile(sourcePath, destinationPath);
-}
-
-function defaultNow(): string {
-  return new Date().toISOString();
 }
 
 function requireNonEmpty(value: string, field: string): string {

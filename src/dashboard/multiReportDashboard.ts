@@ -4,6 +4,7 @@ import * as path from 'node:path';
 
 import { joinPreservingExplicitPathStyle } from '../support/pathStyle';
 import { pathExistsViaFsAccess as defaultPathExists } from '../support/fsExists';
+import { nowIso as defaultNow } from '../support/clock';
 import {
   ArchivedComparisonReportSourceRecord,
   buildComparisonReportArchivePlanFromSelection,
@@ -1615,10 +1616,6 @@ function deriveCommitPairs(commits: ViHistoryCommit[]): Array<{ selected: ViHist
 
 function createDeterministicId(value: string): string {
   return createHash('sha256').update(value).digest('hex').slice(0, 12);
-}
-
-function defaultNow(): string {
-  return new Date().toISOString();
 }
 
 function escapeHtml(value: string): string {

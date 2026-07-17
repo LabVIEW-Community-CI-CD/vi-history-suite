@@ -5,6 +5,7 @@ import * as path from 'node:path';
 import { createHash } from 'node:crypto';
 
 import { joinPreservingExplicitPathStyle } from '../support/pathStyle';
+import { nowIso } from '../support/clock';
 import { ComparisonCommandPlan, ComparisonReportOptions } from './comparisonReportPlan';
 import { buildComparisonReportExecutionPlan } from './comparisonReportExecutionPlan';
 import {
@@ -6171,7 +6172,7 @@ export function normalizeComparisonProcessError(error: unknown): {
 }
 
 export function defaultNowIso(): string {
-  return new Date().toISOString();
+  return nowIso();
 }
 
 export function defaultNowMs(): number {
