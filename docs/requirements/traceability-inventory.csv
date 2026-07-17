@@ -144,6 +144,7 @@ tests/unit/reviewDecisionRecordAction.test.ts,supporting,No,Decision record acti
 tests/unit/repositoryTarget.test.ts,supporting,No,Shared semantic repository-target validator unit tests (root require/resolve and repository-relative path-escape guard); supporting VHS-REQ-662 semantic comparison models.
 tests/unit/execFileText.test.ts,supporting,No,Shared structured execFile text runner unit tests (success/non-zero/spawn-error/non-numeric-code mapping via injected runner); supporting VHS-REQ-659.
 tests/unit/cliFlags.test.ts,supporting,No,"Shared strict CLI flag scanner unit tests (bool/value dispatch, unknown-argument throw, missing-value throw, usage suffix, trim vs reject-flag-like value modes); supporting VHS-REQ-614."
+tests/unit/pathStyle.test.ts,supporting,No,"Shared POSIX-aware path helper unit tests (usesExplicitPosixPathStyle predicate, joinPreservingExplicitPathStyle posix vs platform join and backslash normalization); supporting VHS-REQ-610."
 tests/unit/reviewScenarioSupportPolicy.test.ts,mapped,Yes,Review scenario and repository support policy tests; mapped to VHS-REQ-610.
 tests/unit/runLinuxIntegrationHost.test.ts,dev-only,No,Linux integration host tests; CI infrastructure.
 tests/unit/vagrantLanePreflight.test.ts,dev-only,No,Optional Vagrant lane preflight/status tests covering banner and box-list parsing readiness checks and CLI exit behavior; local maintainer tooling.
@@ -333,6 +334,7 @@ tests/unit/viPreviewVerification.test.ts,mapped,Yes,Single-VI preview render ver
 src/tooling/viPreviewVerifyCli.ts,mapped,Yes,"Proof-emitting CLI preview verification (resolves the runtime, renders a sample VI, emits proof JSON) for the maintainer runner; mapped to VHS-REQ-659."
 src/tooling/execFileText.ts,supporting,No,"Shared structured execFile text runner (success/failure -> exitCode/stdout/stderr mapping) reused by the preview render host, container session, and verify CLI; supporting VHS-REQ-659."
 src/tooling/cliFlags.ts,supporting,No,"Shared strict CLI flag scanner (scanFlags) reused by the dev-host loop and local-runtime settings CLI parsers; preserves each caller's value semantics and error formatting; supporting VHS-REQ-614."
+src/support/pathStyle.ts,supporting,No,"Shared POSIX-aware path helpers (usesExplicitPosixPathStyle, joinPreservingExplicitPathStyle) reused by dashboard and reporting staged-tree layout; supporting VHS-REQ-610."
 tests/unit/viPreviewVerifyCli.test.ts,mapped,Yes,Preview verification CLI resolve-and-verify unit tests; mapped to VHS-REQ-659.
 src/git/revisionViTree.ts,mapped,Yes,Revision VI-tree materializer (parses git ls-tree output and stages a revision's VI plus sibling source tree for preview); mapped to VHS-REQ-659.
 tests/unit/revisionViTree.test.ts,mapped,Yes,Revision VI-tree materializer and ls-tree parser unit tests; mapped to VHS-REQ-659.

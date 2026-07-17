@@ -4,6 +4,7 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import { createHash } from 'node:crypto';
 
+import { joinPreservingExplicitPathStyle } from '../support/pathStyle';
 import { ComparisonCommandPlan, ComparisonReportOptions } from './comparisonReportPlan';
 import { buildComparisonReportExecutionPlan } from './comparisonReportExecutionPlan';
 import {
@@ -3356,14 +3357,6 @@ function buildLinuxContainerWorkspaceLayout(
     reportIdentityFilenames: [leftFilename, rightFilename],
     reportTextReplacements: replacements
   };
-}
-
-function joinPreservingExplicitPathStyle(rootPath: string, ...segments: string[]): string {
-  if (rootPath.startsWith('/')) {
-    return path.posix.join(rootPath, ...segments.map((segment) => segment.replace(/\\/g, '/')));
-  }
-
-  return path.join(rootPath, ...segments);
 }
 
 function posixDirname(filePath: string): string {

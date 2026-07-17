@@ -2,6 +2,10 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 
+import {
+  joinPreservingExplicitPathStyle,
+  usesExplicitPosixPathStyle
+} from '../support/pathStyle';
 import { readArchivedComparisonReportSourceRecordFromSelection } from './comparisonReportArchive';
 import {
   buildDashboardPairEtaAccuracyRecord,
@@ -1038,18 +1042,6 @@ function isDescendantPath(rootPath: string, candidatePath: string): boolean {
  */
 function startsWithParentTraversalSegment(relativePath: string): boolean {
   return relativePath.split(/[\\/]/)[0] === '..';
-}
-
-function usesExplicitPosixPathStyle(rootPath: string): boolean {
-  return rootPath.startsWith('/');
-}
-
-function joinPreservingExplicitPathStyle(rootPath: string, ...segments: string[]): string {
-  if (usesExplicitPosixPathStyle(rootPath)) {
-    return path.posix.join(rootPath, ...segments.map((segment) => segment.replace(/\\/g, '/')));
-  }
-
-  return path.join(rootPath, ...segments);
 }
 
 function resolvePreservingExplicitPathStyle(targetPath: string): string {
