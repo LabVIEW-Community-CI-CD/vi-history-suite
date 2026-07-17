@@ -20,6 +20,7 @@
  */
 
 import type { ComparisonReportOptions } from '../reporting/comparisonReportPlan';
+import { escapeHtml } from '../support/escapeHtml';
 
 /** Stable view-type id for the runtime & report settings webview panel. */
 export const RUNTIME_REPORT_PANEL_VIEW_TYPE = 'viHistorySuite.runtimeReportSettings';
@@ -188,15 +189,6 @@ export interface RuntimeReportPanelViewModel {
   readonly preview: PreviewSectionViewModel;
   readonly report: ReportSectionViewModel;
   readonly advanced: AdvancedSectionViewModel;
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
 }
 
 export function serializeForInlineScript(value: unknown): string {

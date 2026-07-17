@@ -1,5 +1,6 @@
 import type { ComparisonReportRevisionMetadata } from './comparisonReportPacket';
 import { formatComparisonRevisionHashDisplay } from './comparisonReportPacket';
+import { escapeHtml } from '../support/escapeHtml';
 
 /**
  * Shared revision-context rendering for comparison reports.
@@ -82,13 +83,4 @@ function renderPanelRevisionMetadataValue(value: string | undefined): string {
   return value && value.length > 0
     ? escapeHtml(value)
     : '<span class="vihs-compare-context-muted">not retained</span>';
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
 }

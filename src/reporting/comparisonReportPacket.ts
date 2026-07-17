@@ -2,6 +2,7 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
 import { nowIso as defaultNow } from '../support/clock';
+import { escapeHtml } from '../support/escapeHtml';
 import {
   buildComparisonArtifactPlan,
   buildStagedRevisionPlan,
@@ -510,15 +511,6 @@ export function renderComparisonReportPacketHtml(record: ComparisonReportPacketR
     </div>
   </body>
 </html>`;
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
 }
 
 function deriveProviderRequestLabel(runtimeSelection: ComparisonRuntimeSelection): string {

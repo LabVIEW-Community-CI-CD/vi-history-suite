@@ -5,6 +5,7 @@ import * as path from 'node:path';
 import { joinPreservingExplicitPathStyle } from '../support/pathStyle';
 import { pathExistsViaFsAccess as defaultPathExists } from '../support/fsExists';
 import { nowIso as defaultNow } from '../support/clock';
+import { escapeHtml } from '../support/escapeHtml';
 import {
   ArchivedComparisonReportSourceRecord,
   buildComparisonReportArchivePlanFromSelection,
@@ -1616,15 +1617,6 @@ function deriveCommitPairs(commits: ViHistoryCommit[]): Array<{ selected: ViHist
 
 function createDeterministicId(value: string): string {
   return createHash('sha256').update(value).digest('hex').slice(0, 12);
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
 }
 
 function formatDurationMinutesSeconds(totalSeconds: number): string {

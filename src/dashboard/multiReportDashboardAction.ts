@@ -7,6 +7,7 @@ import {
   usesExplicitPosixPathStyle
 } from '../support/pathStyle';
 import { pathExistsViaFsAccess as defaultPathExists } from '../support/fsExists';
+import { escapeHtml } from '../support/escapeHtml';
 import { readArchivedComparisonReportSourceRecordFromSelection } from './comparisonReportArchive';
 import {
   buildDashboardPairEtaAccuracyRecord,
@@ -1203,15 +1204,6 @@ function renderDashboardArtifactIframeHtml(options: {
  */
 function enableLazyImageLoading(html: string): string {
   return html.replace(/<img\b(?![^>]*\bloading=)/gi, '<img loading="lazy"');
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
 }
 
 function buildDashboardPairKeepaliveMessage(
