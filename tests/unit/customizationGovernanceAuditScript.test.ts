@@ -34,7 +34,9 @@ const {
   parseMainArgs,
   parseFrontmatter,
   renderSummary,
+  renderSchema,
   toMachineReadableReport,
+  CUSTOMIZATION_AUDIT_SCHEMA_ID,
   validateFrontmatterSchemas,
   validateInstructionApplyTo,
   validateLocalMarkdownLinks
@@ -55,13 +57,16 @@ const {
       stderr?: { write: (text: string) => void };
     }
   ) => number;
-  parseMainArgs: (argv: string[]) => { cwd: string; emitJson: boolean };
+  parseMainArgs: (argv: string[]) => { cwd: string; emitJson: boolean; emitSchema: boolean; includeProvenance: boolean };
   parseFrontmatter: (text: string) => Record<string, string | string[]>;
   renderSummary: (result: AuditResult) => string;
+  renderSchema: (options?: { provenance?: unknown }) => string;
+  CUSTOMIZATION_AUDIT_SCHEMA_ID: string;
   toMachineReadableReport: (
     result: AuditResult,
     now?: Date
   ) => {
+    $schema: string;
     schemaVersion: number;
     generatedAt: string;
     success: boolean;
@@ -1028,6 +1033,7 @@ Instruction body.
     );
 
     expect(report).toEqual({
+      $schema: CUSTOMIZATION_AUDIT_SCHEMA_ID,
       schemaVersion: 1,
       generatedAt: '2026-07-14T12:00:00.000Z',
       success: false,
@@ -1189,12 +1195,16 @@ Instruction body.
   it('parses CLI args for json mode and rejects unknown options', () => {
     expect(parseMainArgs([])).toEqual({
       cwd: process.cwd(),
-      emitJson: false
+      emitJson: false,
+      emitSchema: false,
+      includeProvenance: false
     });
 
     expect(parseMainArgs(['--json', '/tmp/custom-cwd'])).toEqual({
       cwd: '/tmp/custom-cwd',
-      emitJson: true
+      emitJson: true,
+      emitSchema: false,
+      includeProvenance: false
     });
 
     expect(() => parseMainArgs(['--unsupported-option'])).toThrow(
@@ -1216,5 +1226,34 @@ Instruction body.
       })
     ).toBe(1);
     expect(stderr).toContain("Unknown option '--unsupported-option'");
+  });
+
+  it('emits a self-describing report aligned with the published schema, with a --schema mode (VHS-REQ-615)', () => {
+    const report = toMachineReadableReport(
+      { success: true, customizationFilesChecked: 3, findings: {} },
+      new Date('2026-07-14T00:00:00.000Z')
+    ) as unknown as Record<string, unknown>;
+    const schema = JSON.parse(renderSchema()) as {
+      $id: string;
+      required: string[];
+      properties: { $schema: { const: string }; schemaVersion: { const: number } };
+    };
+
+    // Self-describing envelope aligned with the schema's required contract.
+    expect(schema.required.filter((key) => !(key in report))).toEqual([]);
+    expect(report.$schema).toBe(schema.properties.$schema.const);
+    expect(report.$schema).toBe(CUSTOMIZATION_AUDIT_SCHEMA_ID);
+    expect(report.schemaVersion).toBe(schema.properties.schemaVersion.const);
+
+    // --schema publishes the JSON Schema and attaches provenance under the shared key.
+    expect(schema.$id).toBe(CUSTOMIZATION_AUDIT_SCHEMA_ID);
+    const withProvenance = JSON.parse(renderSchema({ provenance: { generatedAt: 'x' } })) as Record<string, unknown>;
+    expect(withProvenance['x-vi-history-suite-provenance']).toEqual({ generatedAt: 'x' });
+
+    // main --schema publishes the schema without running the audit.
+    let out = '';
+    const code = main(['--schema'], { stdout: { write: (t: string) => { out += t; } }, stderr: { write: () => undefined } });
+    expect(code).toBe(0);
+    expect((JSON.parse(out) as Record<string, unknown>).$id).toBe(CUSTOMIZATION_AUDIT_SCHEMA_ID);
   });
 });
