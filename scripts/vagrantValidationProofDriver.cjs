@@ -36,6 +36,7 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
+const crypto = require('node:crypto');
 const { spawnSync } = require('node:child_process');
 
 const repoRoot = path.resolve(__dirname, '..');
@@ -202,15 +203,21 @@ function persistAndAssertProofPacket(emitStdout) {
     );
   }
   // Persist the captured packet host-side for retained PR/ledger evidence.
+  const serialized = `${JSON.stringify(proof, null, 2)}
+`;
   fs.mkdirSync(path.dirname(HOST_PROOF_JSON), { recursive: true });
-  fs.writeFileSync(HOST_PROOF_JSON, `${JSON.stringify(proof, null, 2)}
-`, 'utf8');
+  fs.writeFileSync(HOST_PROOF_JSON, serialized, 'utf8');
+  // Hash the exact retained bytes so the committed ledger attestation is
+  // tamper-evident: the evidence line names the SHA-256 of the proof packet it
+  // was derived from, letting anyone holding the (gitignored, local) packet
+  // confirm the committed record matches what the driver actually observed.
+  const sha256 = crypto.createHash('sha256').update(serialized).digest('hex');
   log(
     `Validation proof OK (schema=${proof.schema}, ` +
       `runtime.validationOutcome=${validationOutcome}, proofStatus=${proof.proofStatus}). ` +
-      `Persisted to ${HOST_PROOF_JSON}.`
+      `Persisted to ${HOST_PROOF_JSON} (sha256=${sha256}).`
   );
-  return proof;
+  return { proof, sha256 };
 }
 
 function main() {
@@ -262,12 +269,15 @@ function main() {
   if (emit.status !== 0) {
     fail('Failed to read the guest-local validation proof packet.');
   }
-  persistAndAssertProofPacket(String(emit.stdout || ''));
+  const { sha256 } = persistAndAssertProofPacket(String(emit.stdout || ''));
 
-  // 5. Record the advisory attestation into the committed ledger.
+  // 5. Record the advisory attestation into the committed ledger. The evidence
+  // names the proof packet's SHA-256 so the committed record is tamper-evident
+  // and traceable back to the exact retained proof.
   log(`Recording the advisory attestation for track ${TRACK_ID} at ${version}...`);
   const evidence =
-    options.evidence || `vagrant pathadmit+validation proof ${new Date().toISOString()}`;
+    options.evidence ||
+    `vagrant pathadmit+validation proof sha256:${sha256} ${new Date().toISOString()}`;
   const record = run('node', [
     path.join('scripts', 'recordRuntimeValidation.js'),
     '--track',

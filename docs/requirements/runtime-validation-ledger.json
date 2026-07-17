@@ -74,8 +74,8 @@
       "linuxExecutable": false,
       "releaseGating": false,
       "lastValidatedVersion": "1.33.2",
-      "lastValidatedCommit": "2a1891c2",
-      "evidence": "vagrant pathadmit+validation proof: runtime.validationOutcome=ready, host-native x86, golden box",
+      "lastValidatedCommit": "f1ca054a",
+      "evidence": "vagrant pathadmit+validation proof sha256:52d0e648d1b7b81ec5678277c795fafbdc15ae056bbaee354f5840f3b3f68d44 2026-07-17T06:27:36.094Z",
       "fixture": "real Windows user-PATH admission (persistWindowsUserPathPrepend) + validateLocalRuntimeSettingsCli --proof-out (runtime-validation-proof@v1)"
     }
   ]
