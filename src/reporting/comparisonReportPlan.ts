@@ -1,6 +1,7 @@
 import * as path from 'node:path';
 
 import { createDeterministicId } from '../support/deterministicId';
+import { requireNonEmpty } from '../support/requireNonEmpty';
 import { normalizeRelativeGitPath } from '../git/gitCli';
 
 export type ComparisonReportType = 'diff' | 'print';
@@ -333,13 +334,4 @@ function buildStageLabel(side: 'left' | 'right', revisionId?: string): string {
 
   const sanitized = trimmed.replace(/[^A-Za-z0-9._-]+/g, '-').replace(/-+/g, '-');
   return `${side}-${sanitized.slice(0, 12)}`;
-}
-
-function requireNonEmpty(value: string, field: string): string {
-  const trimmed = value.trim();
-  if (!trimmed) {
-    throw new Error(`${field} must be non-empty`);
-  }
-
-  return trimmed;
 }
