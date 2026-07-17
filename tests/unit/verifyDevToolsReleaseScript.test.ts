@@ -110,44 +110,74 @@ describe('verifyDevToolsRelease (DS2)', () => {
     return { dir, manifest };
   }
 
-  it('passes an intact toolset', () => {
+  // A real extracted release root contains ONLY the manifest's files; build one
+  // by copying just those files from the fixture repo into a clean directory.
+  function extractOnly(dir: string, manifest: any): string {
+    const out = fs.mkdtempSync(path.join(os.tmpdir(), 'vihs-devtools2-x-'));
+    tempDirs.push(out);
+    for (const entry of manifest.files) {
+      const src = path.join(dir, ...entry.path.split('/'));
+      const dst = path.join(out, ...entry.path.split('/'));
+      fs.mkdirSync(path.dirname(dst), { recursive: true });
+      fs.copyFileSync(src, dst);
+    }
+    return out;
+  }
+
+  it('passes an intact extracted toolset', () => {
     const { dir, manifest } = fixtureWithManifest();
-    const result = verifier.verifyToolsetAgainstManifest(dir, manifest);
+    const root = extractOnly(dir, manifest);
+    const result = verifier.verifyToolsetAgainstManifest(root, manifest);
     expect(result.ok).toBe(true);
     expect(result.actualDigest).toBe(manifest.contentDigest);
   });
 
   it('fails closed on a tampered file (VHS-REQ-667.4)', () => {
     const { dir, manifest } = fixtureWithManifest();
-    fs.writeFileSync(path.join(dir, 'scripts', 'toolA.js'), 'tampered\n', 'utf8');
-    const result = verifier.verifyToolsetAgainstManifest(dir, manifest);
+    const root = extractOnly(dir, manifest);
+    fs.writeFileSync(path.join(root, 'scripts', 'toolA.js'), 'tampered\n', 'utf8');
+    const result = verifier.verifyToolsetAgainstManifest(root, manifest);
     expect(result.ok).toBe(false);
     expect(result.mismatches.map((m: { path: string }) => m.path)).toContain('scripts/toolA.js');
   });
 
   it('fails closed on a missing file', () => {
     const { dir, manifest } = fixtureWithManifest();
-    fs.rmSync(path.join(dir, 'scripts', 'toolB.js'));
-    const result = verifier.verifyToolsetAgainstManifest(dir, manifest);
+    const root = extractOnly(dir, manifest);
+    fs.rmSync(path.join(root, 'scripts', 'toolB.js'));
+    const result = verifier.verifyToolsetAgainstManifest(root, manifest);
     expect(result.ok).toBe(false);
     expect(result.missing).toContain('scripts/toolB.js');
   });
 
-  it('verifySelf passes in-tree and fails on digest drift', () => {
+  it('fails closed on an unexpected extra file (#1514)', () => {
+    const { dir, manifest } = fixtureWithManifest();
+    const root = extractOnly(dir, manifest);
+    fs.writeFileSync(path.join(root, 'scripts', 'evil.js'), 'gotcha\n', 'utf8');
+    const result = verifier.verifyToolsetAgainstManifest(root, manifest);
+    expect(result.ok).toBe(false);
+    expect(result.extra).toContain('scripts/evil.js');
+  });
+
+  it('verifySelf honors the root argument and fails on digest drift (#1514)', () => {
     const { dir, manifest } = fixtureWithManifest();
     const deps = {
-      cwd: dir,
       now: () => new Date('2026-07-17T00:00:00.000Z'),
       getGitCommit: () => 'abc',
       getPackageVersion: () => '1.0.0'
     };
+    // root drives collectDevToolsRelease, independent of cwd.
     expect(verifier.verifySelf(dir, manifest, deps).ok).toBe(true);
     expect(verifier.verifySelf(dir, { ...manifest, contentDigest: 'deadbeef' }, deps).ok).toBe(false);
   });
 
-  it('parseArgs requires a manifest unless --verify-self, and rejects unknown flags', () => {
+  it('parseArgs requires a manifest even for --verify-self, and rejects unknown flags (#1514)', () => {
     expect(() => verifier.parseArgs([])).toThrow(/--manifest/);
-    expect(verifier.parseArgs(['--verify-self'])).toMatchObject({ verifySelf: true });
+    expect(() => verifier.parseArgs(['--verify-self'])).toThrow(/--manifest/);
+    expect(verifier.parseArgs(['--verify-self', '--manifest', 'm.json'])).toMatchObject({
+      verifySelf: true,
+      manifestPath: 'm.json'
+    });
     expect(verifier.parseArgs(['--manifest', 'm.json', '--root', 'x'])).toMatchObject({
       manifestPath: 'm.json',
       root: 'x'
@@ -157,15 +187,17 @@ describe('verifyDevToolsRelease (DS2)', () => {
 
   it('main returns 0 on an intact toolset and 1 on tamper', () => {
     const { dir, manifest } = fixtureWithManifest();
+    const root = extractOnly(dir, manifest);
+    // Keep the manifest OUTSIDE the extracted root so it is not an extra file.
     fs.writeFileSync(path.join(dir, 'manifest.json'), JSON.stringify(manifest), 'utf8');
-    const ok = verifier.main(['--manifest', 'manifest.json'], {
+    const ok = verifier.main(['--manifest', path.join(dir, 'manifest.json'), '--root', root], {
       cwd: dir,
       stdout: { write: () => undefined },
       stderr: { write: () => undefined }
     });
     expect(ok).toBe(0);
-    fs.writeFileSync(path.join(dir, 'scripts', 'toolA.js'), 'tampered\n', 'utf8');
-    const bad = verifier.main(['--manifest', 'manifest.json'], {
+    fs.writeFileSync(path.join(root, 'scripts', 'toolA.js'), 'tampered\n', 'utf8');
+    const bad = verifier.main(['--manifest', path.join(dir, 'manifest.json'), '--root', root], {
       cwd: dir,
       stdout: { write: () => undefined },
       stderr: { write: () => undefined }

@@ -23,12 +23,13 @@ content digest.
 
 ## Building the artifact
 
+Build the compiled output first, then produce the provenance manifest and
+tarball (the `stable` channel is shown; omit `--channel` to default to
+`prerelease`):
+
 ```bash
-npm run compile                       # compiled MCP/CLI output must be built first
-npm run devtools:release -- \
-  --channel stable \                  # or prerelease; defaults to prerelease
-  --output devtools-dist/devtools-release.json \
-  --pack devtools-dist/devtools-tools.tgz
+npm run compile
+npm run devtools:release -- --channel stable --output devtools-dist/devtools-release.json --pack devtools-dist/devtools-tools.tgz
 ```
 
 - The **provenance manifest** (`devtools-release.json`) records the aggregate

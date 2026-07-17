@@ -31,7 +31,6 @@ const {
   sha256Hex,
   loadToolsetManifest,
   resolveToolsetFiles,
-  computeFileDigests,
   computeContentDigest,
   readRequirementsManifestDigest,
   normalizeChannel,

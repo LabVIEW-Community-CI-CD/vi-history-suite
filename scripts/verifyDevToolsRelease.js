@@ -48,21 +48,53 @@ function verifyToolsetAgainstManifest(root, manifest, deps = {}) {
       present.push({ path: entry.path, sha256: entry.sha256 });
     }
   }
+  // Fail-closed on unexpected extra files: an extracted release root should
+  // contain ONLY the manifest's files, so anything else is untrusted content.
+  const listed = listFilesRecursive(root, deps);
+  const expectedPaths = new Set(manifest.files.map((entry) => entry.path));
+  const extra = listed.filter((relativePath) => !expectedPaths.has(relativePath));
   const actualDigest = builder.computeContentDigest(present);
   const expectedDigest = typeof manifest.contentDigest === 'string' ? manifest.contentDigest : null;
   const ok =
     mismatches.length === 0 &&
     missing.length === 0 &&
+    extra.length === 0 &&
     expectedDigest !== null &&
     actualDigest === expectedDigest;
-  return { ok, mismatches, missing, expectedDigest, actualDigest };
+  return { ok, mismatches, missing, extra, expectedDigest, actualDigest };
 }
 
-// Self-verify: rebuild the manifest from the in-tree toolset and confirm it
-// reproduces the supplied manifest's contentDigest. Proves the on-disk toolset
-// matches the digest it was released under.
-function verifySelf(cwd, manifest, deps = {}) {
-  const rebuilt = builder.collectDevToolsRelease(cwd, {}, deps);
+// Enumerate every file under a root as sorted repo-relative POSIX paths.
+function listFilesRecursive(root, deps = {}) {
+  const readdirSync = deps.readdirSync ?? ((dir) => fs.readdirSync(dir, { withFileTypes: true }));
+  const results = [];
+  const walk = (dir, prefix) => {
+    let entries;
+    try {
+      entries = readdirSync(dir);
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
+      if (entry.isDirectory()) {
+        walk(path.join(dir, entry.name), rel);
+      } else if (entry.isFile()) {
+        results.push(rel);
+      }
+    }
+  };
+  walk(root, '');
+  return results.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+}
+
+// Self-verify: rebuild the manifest from the toolset at `root` (defaults to the
+// working directory) and confirm it reproduces the supplied manifest's
+// contentDigest. Proves the on-disk toolset matches the digest it was released
+// under. Requires a provenance manifest (with contentDigest), not the source
+// glob manifest.
+function verifySelf(root, manifest, deps = {}) {
+  const rebuilt = builder.collectDevToolsRelease(root, {}, deps);
   const expectedDigest = typeof manifest.contentDigest === 'string' ? manifest.contentDigest : null;
   const ok = expectedDigest !== null && rebuilt.contentDigest === expectedDigest;
   return { ok, expectedDigest, actualDigest: rebuilt.contentDigest };
@@ -85,8 +117,11 @@ function parseArgs(argv = []) {
     else if (arg === '--root') options.root = next();
     else if (arg.startsWith('--')) throw new Error(`Unknown argument: ${arg}`);
   }
-  if (!options.verifySelf && !options.manifestPath) {
-    throw new Error('Provide --manifest <path> (or --verify-self with a rebuilt manifest)');
+  // Both modes need a provenance manifest: --verify-self compares the rebuilt
+  // in-tree digest to the manifest's contentDigest, which the source glob
+  // manifest does not carry.
+  if (!options.manifestPath) {
+    throw new Error('Provide --manifest <provenance-manifest.json>');
   }
   return options;
 }
@@ -123,9 +158,9 @@ function main(argv = process.argv.slice(2), deps = {}) {
   }
 
   if (options.verifySelf) {
-    const result = verifySelf(cwd, manifest, deps);
+    const result = verifySelf(root, manifest, deps);
     if (result.ok) {
-      stdout.write(`[verify-devtools] Self-verify OK: in-tree toolset matches ${result.expectedDigest}\n`);
+      stdout.write(`[verify-devtools] Self-verify OK: toolset matches ${result.expectedDigest}\n`);
       return 0;
     }
     stderr.write(
@@ -151,6 +186,9 @@ function main(argv = process.argv.slice(2), deps = {}) {
   for (const p of result.missing) {
     stderr.write(`[verify-devtools] MISSING ${p}\n`);
   }
+  for (const p of result.extra ?? []) {
+    stderr.write(`[verify-devtools] UNEXPECTED ${p}\n`);
+  }
   if (result.expectedDigest !== result.actualDigest) {
     stderr.write(
       `[verify-devtools] DIGEST MISMATCH: expected ${result.expectedDigest}, got ${result.actualDigest}\n`
@@ -165,6 +203,7 @@ if (require.main === module) {
 
 module.exports = {
   verifyToolsetAgainstManifest,
+  listFilesRecursive,
   verifySelf,
   parseArgs,
   loadManifest,

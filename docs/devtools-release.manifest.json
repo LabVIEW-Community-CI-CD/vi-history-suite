@@ -5,8 +5,8 @@
   "categories": [
     {
       "id": "scripts-cli",
-      "description": "Node CLI tools under scripts/ (risk ledger, release readiness, traceability/requirements audits, etc.).",
-      "include": ["scripts/*.js"]
+      "description": "Node CLI tools under scripts/ (risk ledger, release readiness, traceability/requirements audits, etc.) plus the Windows runtime-matrix PowerShell helpers invoked by runWindowsRuntimeMatrix.js.",
+      "include": ["scripts/*.js", "scripts/windows-runtime-matrix/**/*.ps1"]
     },
     {
       "id": "drivers",
@@ -50,6 +50,9 @@
   "exclude": [
     "**/*.map",
     "**/*.test.js",
-    "**/*.test.cjs"
+    "**/*.test.cjs",
+    "scripts/windows-compare-driver.cjs",
+    "scripts/windows-preview-diff-driver.cjs",
+    "scripts/vagrantValidationProofDriver.cjs"
   ]
 }

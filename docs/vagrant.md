@@ -71,8 +71,12 @@ It exits nonzero (and prints `Verdict: ATTENTION`) until the gating track's
 CI-safe `box-manifest-integrity` check: it fails closed unless the committed
 [`vagrant/box-manifest.json`](../vagrant/box-manifest.json) is present, matches
 the `vi-history-suite/vagrant-box-manifest@v1` schema, carries a 64-hex
-`sha256` and positive `sizeBytes`, and has a `recordedForVersion` equal to the
-release version. That check reads only the committed manifest (never the box
+`sha256` and positive `sizeBytes`, and has a non-empty `recordedForVersion`. It
+does not require `recordedForVersion` to equal the release version — the box is
+identified by its `sha256` and is regenerated only when rebuilt, so an unchanged
+box does not block a version bump (attestation freshness is enforced separately
+by the `release-attestation` check). That check reads only the committed
+manifest (never the box
 artifact), so it needs no hypervisor; regenerate the manifest with
 `node scripts/verifyVagrantBox.cjs --generate <box>` when the box changes, and
 run `node scripts/verifyVagrantBox.cjs --verify <box>` locally for the

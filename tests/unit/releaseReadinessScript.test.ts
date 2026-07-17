@@ -520,11 +520,14 @@ describe('checkBoxManifestIntegrity release gate (VHS-REQ-666.5)', () => {
     expect(checkBoxManifestIntegrity({ ...VALID, sizeBytes: undefined }, '1.33.2').passed).toBe(false);
   });
 
-  it('fails closed on a missing or mismatched recordedForVersion (VHS-REQ-666.5)', () => {
-    const mismatch = checkBoxManifestIntegrity({ ...VALID, recordedForVersion: '0.0.0' }, '1.33.2');
-    expect(mismatch.passed).toBe(false);
-    expect(mismatch.details).toContain('expected 1.33.2');
+  it('passes a non-version-equal recordedForVersion (box unchanged) but fails when missing/empty (VHS-REQ-666.5)', () => {
+    // The box is identified by sha256, not the release version; an unchanged box
+    // recorded for a prior version must not block a release.
+    const unchanged = checkBoxManifestIntegrity({ ...VALID, recordedForVersion: '0.0.0' }, '1.33.2');
+    expect(unchanged.passed).toBe(true);
+    expect(unchanged.details).toContain('box unchanged since');
     expect(checkBoxManifestIntegrity({ ...VALID, recordedForVersion: undefined }, '1.33.2').passed).toBe(false);
+    expect(checkBoxManifestIntegrity({ ...VALID, recordedForVersion: '  ' }, '1.33.2').passed).toBe(false);
   });
 
   it('is appended only under requireReleaseAttestation (VHS-REQ-666.5)', () => {
@@ -547,10 +550,10 @@ describe('checkBoxManifestIntegrity release gate (VHS-REQ-666.5)', () => {
     expect(gatedReady.checks.map((c: { name: string }) => c.name)).toContain('box-manifest-integrity');
     expect(gatedReady.status).toBe('READY');
 
-    const gatedDrift = buildReleaseReadiness(
-      { ...base, requireReleaseAttestation: true, boxManifest: { ...VALID, recordedForVersion: '0.0.0' } },
+    const gatedMalformed = buildReleaseReadiness(
+      { ...base, requireReleaseAttestation: true, boxManifest: { ...VALID, sha256: 'nope' } },
       meta
     );
-    expect(gatedDrift.status).toBe('ATTENTION');
+    expect(gatedMalformed.status).toBe('ATTENTION');
   });
 });
