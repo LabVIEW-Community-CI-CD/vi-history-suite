@@ -138,7 +138,13 @@ function buildGuestScript() {
     `node -e '${nodeAdmitSnippet}'`,
     // Assert idempotency against the real User PATH.
     verifyPathSnippet,
-    // B. Real bounded runtime validation proof packet.
+    // Seed the persisted runtime settings first: a clean guest has no
+    // viHistorySuite.* settings, and readPersistedRuntimeSettingsFacts sets
+    // requireVersionAndBitness, so an unseeded --validate would return a
+    // blocked `labview-runtime-selection-required` proof instead of exercising
+    // the installed LabVIEWCLI (x86 host-native, VHS-REQ-665).
+    'node out\\tooling\\localRuntimeSettingsCli.js --provider host --labview-version 2026 --labview-bitness x86',
+    // B. Real bounded runtime validation proof packet against the seeded install.
     `node out\\tooling\\localRuntimeSettingsCli.js --validate --proof-out ${GUEST_PROOF_DIR}`
   ].join('; ');
 }
@@ -156,12 +162,22 @@ function assertProofPacket() {
   if (proof.schema !== PROOF_SCHEMA) {
     fail(`Validation proof schema mismatch: expected ${PROOF_SCHEMA}, got ${proof.schema}.`);
   }
-  if (typeof proof.runtimeValidationOutcome !== 'string') {
-    fail('Validation proof packet is missing runtimeValidationOutcome.');
+  // The proof stores the outcome under the nested `runtime` block, not as a
+  // top-level field (see buildValidationProof in localRuntimeSettingsCli.ts).
+  const runtime = proof.runtime && typeof proof.runtime === 'object' ? proof.runtime : {};
+  const validationOutcome = runtime.validationOutcome;
+  if (typeof validationOutcome !== 'string') {
+    fail('Validation proof packet is missing runtime.validationOutcome.');
+  }
+  if (validationOutcome !== 'ready') {
+    fail(
+      `Runtime validation did not reach 'ready' (runtime.validationOutcome=${validationOutcome}, ` +
+        `blockedReason=${runtime.blockedReason ?? '<none>'}). No advisory attestation recorded.`
+    );
   }
   log(
     `Validation proof packet OK (schema=${proof.schema}, ` +
-      `runtimeValidationOutcome=${proof.runtimeValidationOutcome}).`
+      `runtime.validationOutcome=${validationOutcome}, proofStatus=${proof.proofStatus}).`
   );
   return proof;
 }
