@@ -74,14 +74,23 @@ function applyRuntimeValidationRecord(manifest, record) {
   // Optional structured binding of the attestation to the specific box it was
   // produced on (box-provenance chain). Fail-closed on a malformed digest so a
   // bad value never reaches disk; a blank value clears nothing (preserved).
-  if (record.boxSha256 !== undefined) {
+  if (record.clearBoxSha256 && record.boxSha256 !== undefined) {
+    throw new Error('--clear-box-sha256 cannot be combined with --box-sha256.');
+  }
+  if (record.clearBoxSha256) {
+    // Explicitly drop any stale binding (e.g. an override run whose box does not
+    // match the committed manifest) so the gate treats it as unbound rather than
+    // falsely bound to the previous box.
+    delete updatedTrack.boxSha256;
+    delete updatedTrack.boxFileName;
+  } else if (record.boxSha256 !== undefined) {
     const boxSha256 = typeof record.boxSha256 === 'string' ? record.boxSha256.trim().toLowerCase() : '';
     if (!SHA256_PATTERN.test(boxSha256)) {
       throw new Error('--box-sha256 must be a 64-character lowercase hex digest.');
     }
     updatedTrack.boxSha256 = boxSha256;
   }
-  if (typeof record.boxFileName === 'string' && record.boxFileName.trim()) {
+  if (!record.clearBoxSha256 && typeof record.boxFileName === 'string' && record.boxFileName.trim()) {
     updatedTrack.boxFileName = record.boxFileName.trim();
   }
 
@@ -117,6 +126,7 @@ function parseArgs(argv = []) {
     evidence: undefined,
     boxSha256: undefined,
     boxFileName: undefined,
+    clearBoxSha256: false,
     ledgerPath: undefined,
     json: false,
     positionals: []
@@ -137,6 +147,7 @@ function parseArgs(argv = []) {
     else if (arg === '--evidence') options.evidence = next();
     else if (arg === '--box-sha256') options.boxSha256 = next();
     else if (arg === '--box-file-name') options.boxFileName = next();
+    else if (arg === '--clear-box-sha256') options.clearBoxSha256 = true;
     else if (arg === '--ledger') options.ledgerPath = next();
     else if (arg === '--json') options.json = true;
     else if (arg.startsWith('--')) throw new Error(`Unknown argument: ${arg}`);
@@ -184,7 +195,8 @@ function main(argv = process.argv.slice(2), deps = {}) {
       commit: options.commit,
       evidence: options.evidence,
       boxSha256: options.boxSha256,
-      boxFileName: options.boxFileName
+      boxFileName: options.boxFileName,
+      clearBoxSha256: options.clearBoxSha256
     });
   } catch (error) {
     stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
