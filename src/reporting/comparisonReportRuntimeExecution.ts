@@ -80,6 +80,11 @@ import {
   classifyTimedOutRuntimeDiagnostic
 } from './runtime/runtimeFailureClassification';
 export { classifyRuntimeFailure } from './runtime/runtimeFailureClassification';
+import {
+  buildLinuxContainerRuntimeFilenameAlias,
+  applyRuntimeTextReplacements,
+  type RuntimeTextReplacement
+} from './runtime/runtimeTextReplacements';
 import { nowIso } from '../support/clock';
 import { ComparisonCommandPlan, ComparisonReportOptions } from './comparisonReportPlan';
 import { buildComparisonReportExecutionPlan } from './comparisonReportExecutionPlan';
@@ -1807,11 +1812,6 @@ interface CapturedRuntimeDiagnostics {
   headlessArtifactPaths?: string[];
 }
 
-interface RuntimeTextReplacement {
-  from: string;
-  to: string;
-}
-
 const WINDOWS_CONTAINER_WORKSPACE_ROOT = 'C:\\vi-history-suite';
 const WINDOWS_CONTAINER_TEMP_ROOT = `${WINDOWS_CONTAINER_WORKSPACE_ROOT}\\container-temp`;
 const LINUX_CONTAINER_WORKSPACE_ROOT = '/workspace';
@@ -3388,19 +3388,6 @@ function buildLinuxContainerWorkspaceLayout(
     reportIdentityFilenames: [leftFilename, rightFilename],
     reportTextReplacements: replacements
   };
-}
-
-function buildLinuxContainerRuntimeFilenameAlias(filename: string): string {
-  return filename.replace(/\s+/g, '_');
-}
-
-function applyRuntimeTextReplacements(
-  reportText: string,
-  replacements: RuntimeTextReplacement[]
-): string {
-  return [...replacements]
-    .sort((left, right) => right.from.length - left.from.length)
-    .reduce((updated, replacement) => updated.split(replacement.from).join(replacement.to), reportText);
 }
 
 export function buildWindowsInteropCommandPlan(
