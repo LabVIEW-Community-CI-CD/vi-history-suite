@@ -5180,3 +5180,55 @@ Missing numeric IDs are intentional.
   - Keep the read-model non-gating by default and its JSON packet
     schema-versioned; add new provenance streams as additional artifact records
     rather than changing the existing record shape.
+
+### VHS-REQ-669: Serialized Local VI Server Acquisition
+
+- Status: Active
+- Parent: VHS-SYS-REQ-007
+- Area: Comparison Reports
+- Statement: A single host-native LabVIEW install exposes exactly one local VI
+  Server endpoint (the derived `server.tcp.port`, default 3363). The extension
+  shall serialize concurrent host-native LabVIEWCLI launches that would contend
+  on the same local VI Server endpoint through a single in-process acquisition
+  lock keyed by that endpoint, so overlapping host-native renders take turns
+  instead of racing the one VI Server. The lock governs only local (host-native)
+  acquisition; container and docker runs address their own container endpoint
+  and never acquire a slot.
+- Acceptance Criteria:
+  - A shared serialization primitive
+    (`createLocalViServerAcquisitionLock`) grants a per-key FIFO single-flight
+    slot: `acquire(key)` resolves only after every earlier acquirer of the same
+    key has released, and exposes `isBusy`/`waitingCount` for the endpoint; a
+    process-wide `sharedLocalViServerAcquisitionLock` instance backs the
+    execution paths.
+  - `localViServerLockKey` derives a stable key from the provider and the
+    resolved VI Server port (falling back to a `default` port token when the
+    port is absent, zero, negative, or non-integer), so two launches that
+    resolve to the same endpoint share a key and serialize while launches
+    against different ports get different keys and run concurrently.
+  - The host-native branch of `executeViPreview` acquires the slot for its
+    derived local VI Server endpoint before launching LabVIEWCLI and holds it
+    across the cold-launch retry loop; a container or docker preview run never
+    acquires a slot.
+  - The acquired slot is released after the launch completes for every outcome
+    (rendered, failed, or thrown) via a `finally`, and the release function is
+    idempotent so a double release never double-frees or hands a phantom slot to
+    the next acquirer.
+- Agent Work Scope:
+  - Keep the lock a small, pure, injectable in-process primitive with no
+    external I/O; inject the acquire seam into execution deps for deterministic
+    tests; never serialize container/docker runs and never block distinct
+    endpoints against each other.
+- Implementation References:
+  - `src/reporting/runtime/localViServerAcquisitionLock.ts`
+  - `src/reporting/viPreview/viPreviewExecution.ts`
+- Verification References:
+  - `tests/unit/localViServerAcquisitionLock.test.ts`
+  - `tests/unit/viPreviewExecution.test.ts`
+- Change Guidance:
+  - Keep the lock keyed by the local VI Server endpoint and container/docker
+    runs exempt. The host-native comparison execution path
+    (`comparisonReportRuntimeExecution.ts`) is the documented next adopter of
+    the same shared lock; when wiring it, acquire the shared lock with the same
+    `localViServerLockKey` derivation so preview and comparison launches share
+    one queue per endpoint.
