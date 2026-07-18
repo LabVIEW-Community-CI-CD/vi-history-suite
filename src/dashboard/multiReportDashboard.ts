@@ -28,6 +28,10 @@ import {
 } from './multiReportDashboardPreparationSummary';
 import { renderPairMetadataLedgerRow } from './multiReportDashboardPairLedger';
 import { groupOverviewImageAssets } from './multiReportDashboardOverviewImages';
+import {
+  formatPairOrdinalSummary,
+  mapPairIdsToOrdinals
+} from './multiReportDashboardPairOrdinals';
 import { buildViSemanticComparisonModel } from '../semantic/viSemanticModel';
 import { ViHistoryCommit, ViHistoryViewModel } from '../services/viHistoryModel';
 import { WORKTREE_REVISION_SENTINEL } from '../git/gitCli';
@@ -905,28 +909,6 @@ export function renderMultiReportDashboardHtml(
     ${entriesHtml}
   </body>
 </html>`;
-}
-
-function mapPairIdsToOrdinals(
-  pairIds: Iterable<string>,
-  pairOrdinalById: ReadonlyMap<string, number>
-): number[] {
-  return [...pairIds]
-    .map((pairId) => pairOrdinalById.get(pairId))
-    .filter((ordinal): ordinal is number => ordinal !== undefined)
-    .sort((left, right) => left - right);
-}
-
-function formatPairOrdinalSummary(pairOrdinals: readonly number[]): string {
-  if (pairOrdinals.length === 0) {
-    return 'no pair positions retained';
-  }
-
-  if (pairOrdinals.length === 1) {
-    return `pair ${pairOrdinals[0]}`;
-  }
-
-  return `pairs ${pairOrdinals.join(', ')}`;
 }
 
 function buildMultiReportDashboardArtifactPlan(
