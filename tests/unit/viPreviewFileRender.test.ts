@@ -161,6 +161,36 @@ describe('renderViPreviewForFile', () => {
     expect(cache.set).toHaveBeenCalledOnce();
   });
 
+  it('cacheOnly returns a cache hit without staging or executing, and a miss without launching (VHS-REQ-659.7)', async () => {
+    // Hit: serve the cached document, never run the command.
+    const hitDeps = makeDeps({ exitCode: 0, stdout: '', stderr: '' }, true, '<HTML>fresh</HTML>', [
+      { relativePath: 'Foo.vi', sizeBytes: 10, mtimeMs: 111 }
+    ]);
+    const hitCache = { get: vi.fn().mockResolvedValue('<HTML>cached</HTML>'), set: vi.fn() };
+    const hit = await renderViPreviewForFile(
+      { runtime: hostRuntime, viFilePath: '/repo/Foo.vi', operationDirectory: '/ops', cacheOnly: true },
+      { ...hitDeps, cache: hitCache }
+    );
+    expect(hit.outcome).toBe('rendered');
+    expect(hit.cached).toBe(true);
+    expect(hit.html).toBe('<HTML>cached</HTML>');
+    expect(hitDeps.execution.runCommand).not.toHaveBeenCalled();
+
+    // Miss: return preview-cache-miss without launching LabVIEW.
+    const missDeps = makeDeps({ exitCode: 0, stdout: '', stderr: '' }, true, '<HTML>fresh</HTML>', [
+      { relativePath: 'Foo.vi', sizeBytes: 10, mtimeMs: 111 }
+    ]);
+    const missCache = { get: vi.fn().mockResolvedValue(undefined), set: vi.fn() };
+    const miss = await renderViPreviewForFile(
+      { runtime: hostRuntime, viFilePath: '/repo/Foo.vi', operationDirectory: '/ops', cacheOnly: true },
+      { ...missDeps, cache: missCache }
+    );
+    expect(miss.outcome).toBe('failed');
+    expect(miss.failureReason).toBe('preview-cache-miss');
+    expect(missDeps.execution.runCommand).not.toHaveBeenCalled();
+    expect(missCache.set).not.toHaveBeenCalled();
+  });
+
   it('uses an injected execute override instead of the default executor', async () => {
     const deps = makeDeps({ exitCode: 0, stdout: '', stderr: '' }, true, '<HTML>via-exec</HTML>', [
       { relativePath: 'Foo.vi', sizeBytes: 10, mtimeMs: 1 }

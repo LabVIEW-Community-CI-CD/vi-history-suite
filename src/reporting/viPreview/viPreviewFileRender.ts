@@ -35,6 +35,13 @@ export interface RenderViPreviewForFileOptions {
   viFilePath: string;
   /** Host directory that contains the `PrintToSingleFileHtml/` operation folder. */
   operationDirectory: string;
+  /**
+   * When true, only a cache hit is served: a cache miss returns
+   * `failed`/`preview-cache-miss` without staging or launching LabVIEW. Serving
+   * a cached document runs no external process, so a cache-only peek is safe on
+   * any runtime (including host-native, where a live render is Docker-only).
+   */
+  cacheOnly?: boolean;
 }
 
 export interface RenderViPreviewForFileResult {
@@ -137,6 +144,14 @@ export async function renderViPreviewForFile(
     if (cached !== undefined) {
       return { outcome: 'rendered', html: cached, cached: true };
     }
+  }
+
+  // Cache-only peek: serving a cached document launches no external process, so
+  // it is safe on any runtime (including host-native, where a live preview
+  // render is Docker-only). When requested and the cache misses, return without
+  // staging or executing LabVIEW so the caller can fall back. (VHS-REQ-659.)
+  if (options.cacheOnly) {
+    return { outcome: 'failed', failureReason: 'preview-cache-miss' };
   }
 
   const workspaceDirectory = await deps.createWorkspaceDirectory();

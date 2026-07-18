@@ -4498,6 +4498,16 @@ Missing numeric IDs are intentional.
     used. The custom editor requests `interactive` mode (enabling webview scripts
     with a per-load nonce) when the `viHistorySuite.preview.blockDiagramInteractive`
     setting is on, and `document` mode otherwise.
+  - VI previews are GENERATED on Docker and DISPLAYED from the render cache, so a
+    live render is Docker-only while serving a cached document (which launches no
+    external process) works on any runtime. On a host-native runtime the custom
+    editor performs a cache-only peek (`renderViPreviewForFile` with `cacheOnly`,
+    which returns `preview-cache-miss` rather than staging or launching LabVIEW):
+    a hit is displayed, and a miss shows guidance to generate the cache on Docker
+    and reopen on Host. The `viHistorySuite.preview.allowHostNativeRender` setting
+    (default off) lets a Docker-less LabVIEW environment — for example the Vagrant
+    LabVIEW VM — render previews live on host-native so it can both generate the
+    cache and visualize previews for troubleshooting without Docker.
 - Agent Work Scope:
   - Keep the command-plan builders pure and dependency-free so they stay
     deterministically unit-testable without a LabVIEW runtime. Reuse the

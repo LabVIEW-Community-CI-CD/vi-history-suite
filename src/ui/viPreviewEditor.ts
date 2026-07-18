@@ -45,6 +45,20 @@ function isBlockDiagramInteractiveEnabled(): boolean {
     .get<boolean>('preview.blockDiagramInteractive', false);
 }
 
+/**
+ * Whether the host-native runtime may render previews LIVE
+ * (`viHistorySuite.preview.allowHostNativeRender`, default false). Normally
+ * previews are generated on Docker and the host only displays from the cache;
+ * the Vagrant LabVIEW VM (host-native x86, no Docker) turns this on so it can
+ * both generate the cache AND visualize, to troubleshoot without Docker.
+ * (VHS-REQ-659.)
+ */
+function isHostNativeRenderAllowed(): boolean {
+  return vscode.workspace
+    .getConfiguration('viHistorySuite')
+    .get<boolean>('preview.allowHostNativeRender', false);
+}
+
 export interface RegisterViPreviewCustomEditorOptions {
   /** Invoked with the VI path after a preview renders successfully (drives cache warming). */
   onPreviewOpened?: (viFsPath: string) => void;
@@ -98,6 +112,33 @@ class ViPreviewEditorProvider implements vscode.CustomReadonlyEditorProvider<ViP
     return new ViPreviewDocument(uri);
   }
 
+  /**
+   * Displays a rendered LabVIEW document in the webview. Interactive
+   * block-diagram mode runs an inline (nonce'd) script; the static document mode
+   * does not. The selected presentation is computed FIRST, then scripts are
+   * enabled only when the interactive viewer was actually returned — the
+   * selector falls back to the static document (for example a `.ctl` with no
+   * diagram or a malformed export), and that fallback must stay host-level
+   * script-disabled like the normal document path. (VHS-REQ-659.)
+   */
+  private renderResultToWebview(
+    webviewPanel: vscode.WebviewPanel,
+    labviewHtml: string,
+    viFsPath: string
+  ): void {
+    const interactive = isBlockDiagramInteractiveEnabled();
+    const nonce = interactive ? randomBytes(16).toString('base64') : undefined;
+    const selected = selectViPreviewDocument({
+      labviewHtml,
+      mode: interactive ? 'interactive' : 'document',
+      nonce
+    });
+    webviewPanel.webview.options = { enableScripts: selected.mode === 'interactive' };
+    webviewPanel.webview.html = selected.html;
+    // Successful open signals user intent; warm the rest of the workspace.
+    this.onPreviewOpened?.(viFsPath);
+  }
+
   async resolveCustomEditor(
     document: ViPreviewDocument,
     webviewPanel: vscode.WebviewPanel
@@ -146,16 +187,41 @@ class ViPreviewEditorProvider implements vscode.CustomReadonlyEditorProvider<ViP
         return;
       }
 
-      // VHS-REQ-659: VI Preview is a Docker-only feature. When the resolved
-      // runtime is host-native, prompt the user to switch to Docker rather than
-      // render (the panel toggle only appears under Docker, but the setting can
-      // persist across a runtime switch).
-      if (runtime.runtime.provider === 'host-native') {
+      // VI Preview renders live only on the Docker runtime. Docker's job is to
+      // GENERATE the cache; the host then DISPLAYS from it. So on a host-native
+      // runtime (for example the Vagrant LabVIEW VM, where Docker cannot run) we
+      // still serve a cached preview — a cache hit launches no external process
+      // — and only guide the user to Docker when the cache misses. The Vagrant
+      // VM opts into `preview.allowHostNativeRender` so it can BOTH generate the
+      // cache and visualize (troubleshoot without Docker); when that is on we
+      // fall through to the normal render path below. (VHS-REQ-659.)
+      if (runtime.runtime.provider === 'host-native' && !isHostNativeRenderAllowed()) {
+        const cachedSource = await resolveViPreviewRenderSource(
+          document.uri,
+          buildViPreviewRenderSourceDeps(document.uri)
+        );
+        try {
+          const cachePeek = await renderViPreviewForFile(
+            {
+              runtime: runtime.runtime,
+              viFilePath: cachedSource.renderPath,
+              operationDirectory: getViPreviewOperationDirectory(this.context),
+              cacheOnly: true
+            },
+            buildViPreviewRenderDeps(this.cache)
+          );
+          if (cachePeek.outcome === 'rendered' && cachePeek.html) {
+            this.renderResultToWebview(webviewPanel, cachePeek.html, document.uri.fsPath);
+            return;
+          }
+        } finally {
+          await cachedSource.cleanup();
+        }
         webviewPanel.webview.html = buildViPreviewWebviewHtml({
           kind: 'error',
-          title: 'VI Preview requires Docker',
+          title: 'VI Preview requires Docker to generate the cache',
           message:
-            'VI Preview runs on the Docker runtime. Select Docker in the "VI History: Runtime & Report Settings" command, then reopen this VI.'
+            'This VI has no cached preview yet, and previews are generated on the Docker runtime. Generate the cache on Docker (the caching runs in the background once VI Preview is on), then reopen this VI here on the Host runtime to view it — the display reads the cache and does not run Docker.'
         });
         return;
       }
@@ -198,24 +264,7 @@ class ViPreviewEditorProvider implements vscode.CustomReadonlyEditorProvider<ViP
         }
 
         if (result.outcome === 'rendered' && result.html) {
-          // Interactive block-diagram mode runs an inline (nonce'd) script in
-          // the webview; the static document mode does not. Compute the selected
-          // presentation FIRST, then enable scripts only when the interactive
-          // viewer was actually returned — the selector falls back to the
-          // static document (for example a `.ctl` with no diagram or a malformed
-          // export), and that fallback must stay host-level script-disabled like
-          // the normal document path. (VHS-REQ-659.)
-          const interactive = isBlockDiagramInteractiveEnabled();
-          const nonce = interactive ? randomBytes(16).toString('base64') : undefined;
-          const selected = selectViPreviewDocument({
-            labviewHtml: result.html,
-            mode: interactive ? 'interactive' : 'document',
-            nonce
-          });
-          webviewPanel.webview.options = { enableScripts: selected.mode === 'interactive' };
-          webviewPanel.webview.html = selected.html;
-          // Successful open signals user intent; warm the rest of the workspace.
-          this.onPreviewOpened?.(document.uri.fsPath);
+          this.renderResultToWebview(webviewPanel, result.html, document.uri.fsPath);
           return;
         }
 
