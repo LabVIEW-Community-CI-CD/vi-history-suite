@@ -468,6 +468,11 @@ export async function activate(
       }
     })
   );
+  // Reconcile once at activation so, when VI Preview is already enabled on the
+  // Docker runtime, the whole-workspace cache warms immediately after the
+  // extension loads — without waiting for a settings change or a first manual
+  // open. This makes a preview ready as soon as the user selects a VI. (#659)
+  void reconcilePreviewWarming();
 
   // VHS-REQ-619: Detect Git on PATH once per activation, surface a status
   // bar warning plus a one-time first-run information notice when Git is
