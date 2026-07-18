@@ -29,6 +29,8 @@ export {
   isMissingWindowsDockerCommand
 } from './runtime/windowsDockerSpawn';
 import { resolveScanCandidates } from './runtime/scanCandidateResolution';
+import { pathExistsWithFsAccess, defaultPathExists } from './runtime/fsPathExists';
+export { pathExistsWithFsAccess } from './runtime/fsPathExists';
 import {
   buildDocumentedRuntimeCandidates,
   buildWindowsRegistryQueryPlans
@@ -1572,22 +1574,6 @@ async function resolveWindowsRegistryCandidates(
   );
 
   return dedupeCandidates(validatedCandidates);
-}
-
-async function defaultPathExists(filePath: string): Promise<boolean> {
-  return pathExistsWithFsAccess(filePath);
-}
-
-export async function pathExistsWithFsAccess(
-  filePath: string,
-  access: typeof fs.access = fs.access
-): Promise<boolean> {
-  try {
-    await access(filePath);
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 export async function runWindowsRegistryQuery(
