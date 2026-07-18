@@ -77,6 +77,7 @@ import { parseSubmoduleGitlinks } from './runtime/submoduleGitlinkParsing';
 export { parseSubmoduleGitlinks } from './runtime/submoduleGitlinkParsing';
 import { appendLabviewCliPortNumberArg } from './runtime/labviewCliPortArg';
 export { appendLabviewCliPortNumberArg } from './runtime/labviewCliPortArg';
+import { buildLabviewCliCloseLabviewCommandPlan } from './runtime/closeLabviewCommandPlan';
 import {
   shouldUseLinuxHostNativeShortPathStaging,
   buildLinuxHostNativeShortPathLayout
@@ -2530,26 +2531,6 @@ function buildColdLaunchRetryExecutionResult(
     startedAt: initialResult.startedAt ?? retriedResult.startedAt,
     durationMs: (initialResult.durationMs ?? 0) + (retriedResult.durationMs ?? 0),
     diagnosticNotes: mergeDiagnosticNotes(retriedResult.diagnosticNotes, [recoveryNote])
-  };
-}
-
-function buildLabviewCliCloseLabviewCommandPlan(
-  executable: string,
-  labviewPath?: string,
-  labviewTcpPort?: number
-): ComparisonCommandPlan {
-  const args = ['-LogToConsole', 'TRUE', '-OperationName', 'CloseLabVIEW'];
-  if (labviewPath?.trim()) {
-    args.push('-LabVIEWPath', labviewPath.trim());
-  }
-  if (Number.isInteger(labviewTcpPort) && (labviewTcpPort ?? 0) > 0) {
-    args.push('-PortNumber', String(labviewTcpPort));
-  }
-  args.push('-Headless');
-
-  return {
-    executable,
-    args
   };
 }
 
