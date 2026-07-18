@@ -19,8 +19,8 @@
       "image": "nationalinstruments/labview:2026q1-linux",
       "linuxExecutable": true,
       "lastValidatedVersion": "1.33.2",
-      "lastValidatedCommit": "0376e5e3",
-      "evidence": "P3b coupled-extraction milestone: real docker linux-container 2026q1 CreateComparisonReport via EXTRACTED buildLinuxContainerLabviewCliScript (linuxContainerLaunchScriptBuilders.ts) succeeded, reportExists=true, byte-identical script len 2200 sha 1ff17a37f0cf7931, 2026-07-18",
+      "lastValidatedCommit": "51c99d93",
+      "evidence": "P3b coupled-extraction milestone: real docker linux-container 2026q1 CreateComparisonReport via EXTRACTED buildLinuxContainerLabviewCliScript (linuxContainerLaunchScriptBuilders.ts, present at merge 51c99d93) succeeded, reportExists=true, byte-identical script len 2200 sha 1ff17a37f0cf7931, 2026-07-18",
       "fixture": "labview-icon-editor resource/plugins/lv_icon.vi"
     },
     {
