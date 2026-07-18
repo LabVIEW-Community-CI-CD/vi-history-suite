@@ -207,6 +207,37 @@ describe('buildLinuxContainerViPreviewCommandPlan', () => {
     // Default VI Server port is threaded into the container command.
     expect(script).toContain(String(DEFAULT_VI_PREVIEW_VI_SERVER_PORT));
   });
+
+  it('passes -Headless for a 2026 Q1+ Linux image (cli-headless) (VHS-REQ-659.3)', () => {
+    const plan = buildLinuxContainerViPreviewCommandPlan({
+      hostWorkspaceDirectory: '/host/report',
+      hostOperationDirectory: '/host/ops',
+      containerImage: 'nationalinstruments/labview:2026q1patch2-linux',
+      viFilename: 'staging/Foo.vi',
+      outputFilename: 'preview.html'
+    });
+    const script = plan.args[plan.args.indexOf('-lc') + 1];
+    expect(script).toContain('-Headless');
+    expect(script).not.toContain('EnableCICDFeaturesForLabVIEW=TRUE');
+    // Derives the 2026 headless binary from the image profile.
+    expect(script).toContain('labviewprofull');
+  });
+
+  it('uses the EnableCICDFeaturesForLabVIEW env toggle for an older Linux image (enable-cicd-env) (VHS-REQ-659.3)', () => {
+    const plan = buildLinuxContainerViPreviewCommandPlan({
+      hostWorkspaceDirectory: '/host/report',
+      hostOperationDirectory: '/host/ops',
+      containerImage: 'nationalinstruments/labview:2025q3-linux',
+      viFilename: 'staging/Foo.vi',
+      outputFilename: 'preview.html'
+    });
+    const script = plan.args[plan.args.indexOf('-lc') + 1];
+    // Older images do NOT take -Headless; they export the CICD env toggle and
+    // use the plain `labview` binary.
+    expect(script).toContain('export EnableCICDFeaturesForLabVIEW=TRUE');
+    expect(script).not.toContain('-Headless');
+    expect(script).toContain("lv_exe='/usr/local/natinst/LabVIEW-2025-64/labview'");
+  });
 });
 
 describe('buildLinuxContainerSessionStartArgs', () => {

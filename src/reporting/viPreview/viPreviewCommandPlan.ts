@@ -1,5 +1,9 @@
 import { ComparisonCommandPlan } from '../comparisonReportPlan';
 import {
+  resolveLinuxContainerLabviewProfile,
+  type LinuxContainerHeadlessMode
+} from '../../tooling/containerImageCatalog';
+import {
   buildWindowsPowerShellArrayLiteral,
   encodeWindowsPowerShellScript,
   quotePowerShellLiteral
@@ -246,6 +250,12 @@ export interface BuildLinuxContainerViPreviewScriptOptions {
   containerLabviewPath?: string;
   /** VI Server connect window (seconds) written into the LabVIEW config. */
   connectTimeoutSeconds?: number;
+  /**
+   * How the image enables headless CLI rendering. `cli-headless` (2026 Q1+)
+   * passes `-Headless`; `enable-cicd-env` (2025 Q3 and earlier) instead exports
+   * `EnableCICDFeaturesForLabVIEW=TRUE`. Defaults to `cli-headless`.
+   */
+  headlessMode?: LinuxContainerHeadlessMode;
 }
 
 /**
@@ -275,6 +285,9 @@ export function buildLinuxContainerViPreviewScript(
     `export TEMP=${quoteBashLiteral(tempRoot)}`,
     `export TMP=${quoteBashLiteral(tempRoot)}`,
     `export TMPDIR=${quoteBashLiteral(tempRoot)}`,
+    ...((options?.headlessMode ?? 'cli-headless') === 'enable-cicd-env'
+      ? ['export EnableCICDFeaturesForLabVIEW=TRUE']
+      : []),
     `cli_path=${quoteBashLiteral(executable)}`,
     `args=${buildBashArrayLiteral(args)}`,
     `lv_exe=${quoteBashLiteral(labviewExecutablePath)}`,
@@ -356,24 +369,35 @@ export interface LinuxContainerViPreviewCommandPlanOptions {
 export function buildLinuxContainerViPreviewCommandPlan(
   options: LinuxContainerViPreviewCommandPlanOptions
 ): ComparisonCommandPlan {
+  // VHS-REQ-657: derive the in-container LabVIEW executable and headless
+  // mechanism from the selected image so older images (2025 Q3 and earlier) use
+  // the plain `labview` binary with the EnableCICDFeaturesForLabVIEW env toggle
+  // instead of `labviewprofull` + `-Headless` (valid only for 2026 Q1+), exactly
+  // as the comparison runtime does. Without this, preview always forced
+  // `-Headless` and failed on older Linux images.
+  const labviewProfile = resolveLinuxContainerLabviewProfile(options.containerImage);
+  const usesHeadlessFlag = labviewProfile.headlessMode === 'cli-headless';
+  const containerLabviewPath = options.containerLabviewPath ?? labviewProfile.labviewCliPath;
+
   const hostPlan = buildLabviewCliPrintToSingleFileHtmlPlan({
     viPath: options.viFilename,
     outputHtmlPath: options.outputFilename,
     additionalOperationDirectory: LINUX_CONTAINER_VI_PREVIEW_OPERATION_ROOT,
     portNumber: options.portNumber ?? DEFAULT_VI_PREVIEW_VI_SERVER_PORT,
-    headless: true
+    headless: usesHeadlessFlag
   });
 
   const containerArgs = rewriteViPreviewArgsForLinuxContainerWorkspace(hostPlan.args, {
     viFilename: options.viFilename,
     outputFilename: options.outputFilename,
-    containerLabviewPath: options.containerLabviewPath,
-    headless: true
+    containerLabviewPath,
+    headless: usesHeadlessFlag
   });
 
   const containerScript = buildLinuxContainerViPreviewScript(hostPlan.executable, containerArgs, {
-    containerLabviewPath: options.containerLabviewPath,
-    connectTimeoutSeconds: options.connectTimeoutSeconds
+    containerLabviewPath,
+    connectTimeoutSeconds: options.connectTimeoutSeconds,
+    headlessMode: labviewProfile.headlessMode
   });
 
   return {
