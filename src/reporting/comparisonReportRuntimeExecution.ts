@@ -108,6 +108,12 @@ import {
   resolveEffectiveRuntimePlatform,
   isHeadlessLabviewCliExecution
 } from './runtime/runtimeSelectionPredicates';
+import {
+  WINDOWS_CONTAINER_WORKSPACE_ROOT,
+  WINDOWS_CONTAINER_TEMP_ROOT,
+  LINUX_CONTAINER_WORKSPACE_ROOT,
+  LINUX_CONTAINER_TEMP_ROOT
+} from './runtime/containerLaunchConstants';
 import { resolveEffectiveCommandTimeoutMs } from './runtime/effectiveCommandTimeout';
 export {
   resolveEffectiveCommandTimeoutMs,
@@ -1788,10 +1794,6 @@ interface CapturedRuntimeDiagnostics {
   headlessArtifactPaths?: string[];
 }
 
-const WINDOWS_CONTAINER_WORKSPACE_ROOT = 'C:\\vi-history-suite';
-const WINDOWS_CONTAINER_TEMP_ROOT = `${WINDOWS_CONTAINER_WORKSPACE_ROOT}\\container-temp`;
-const LINUX_CONTAINER_WORKSPACE_ROOT = '/workspace';
-const LINUX_CONTAINER_TEMP_ROOT = `${LINUX_CONTAINER_WORKSPACE_ROOT}/container-temp`;
 // Linux containers run LabVIEW as root, so anything written into the bind-mounted
 // workspace lands on the host owned by root. Confine that root-owned output to a
 // dedicated subdirectory of the retained report directory so the host-native
@@ -1833,7 +1835,6 @@ const WINDOWS_HOST_NATIVE_HEADLESS_RETRY_DELAY_SECONDS = 8;
 // the launched headless LabVIEW reads, and retry once on the cold-launch
 // connectivity failure. Defaults match the Windows container values.
 const LINUX_CONTAINER_OPEN_APP_TIMEOUT_SECONDS = 180;
-const LINUX_CONTAINER_AFTER_LAUNCH_TIMEOUT_SECONDS = 180;
 const LINUX_CONTAINER_STARTUP_RETRY_COUNT = 1;
 const LINUX_CONTAINER_RETRY_DELAY_SECONDS = 8;
 const LINUX_HEADLESS_RECOVERY_NOTE =
