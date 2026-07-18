@@ -193,14 +193,26 @@ function buildEmitProofScript() {
 // brace-matching (the `Get-Content` command echo contains no JSON braces),
 // persist it host-side (the driver owns the write, so no shared-folder read is
 // involved), and assert schema + a `ready` runtime outcome.
-function persistAndAssertProofPacket(emitStdout) {
-  const begin = emitStdout.indexOf('{');
-  const end = emitStdout.lastIndexOf('}');
+/**
+ * Parse and validate a runtime-validation proof packet emitted by the guest.
+ * Pure: no filesystem or process side effects. The guest prints the JSON packet
+ * (Vagrant prefixes each line with `    default: `); this extracts the JSON,
+ * strips those prefixes, parses it, and checks the schema and the nested
+ * `runtime.validationOutcome`.
+ *
+ * @param {string} emitStdout raw guest stdout containing the JSON packet
+ * @param {string} expectedSchema the required `schema` value
+ * @returns {{ ok: boolean, problem: string|null, proof: any, validationOutcome: string|null }}
+ */
+function parseValidationProofPacket(emitStdout, expectedSchema) {
+  const text = typeof emitStdout === 'string' ? emitStdout : '';
+  const begin = text.indexOf('{');
+  const end = text.lastIndexOf('}');
   if (begin < 0 || end < 0 || end <= begin) {
-    fail('Guest did not emit a JSON proof packet.');
+    return { ok: false, problem: 'Guest did not emit a JSON proof packet.', proof: null, validationOutcome: null };
   }
   // Vagrant prefixes each guest output line with `    default: `; strip it.
-  const rawJson = emitStdout
+  const rawJson = text
     .slice(begin, end + 1)
     .split(/\r?\n/)
     .map((line) => line.replace(/^\s*default:\s?/, ''))
@@ -209,24 +221,52 @@ function persistAndAssertProofPacket(emitStdout) {
   try {
     proof = JSON.parse(rawJson);
   } catch (error) {
-    fail(`Emitted validation proof is not valid JSON: ${error.message}`);
+    return {
+      ok: false,
+      problem: `Emitted validation proof is not valid JSON: ${error.message}`,
+      proof: null,
+      validationOutcome: null
+    };
   }
-  if (proof.schema !== PROOF_SCHEMA) {
-    fail(`Validation proof schema mismatch: expected ${PROOF_SCHEMA}, got ${proof.schema}.`);
+  if (proof.schema !== expectedSchema) {
+    return {
+      ok: false,
+      problem: `Validation proof schema mismatch: expected ${expectedSchema}, got ${proof.schema}.`,
+      proof,
+      validationOutcome: null
+    };
   }
   // The proof stores the outcome under the nested `runtime` block, not as a
   // top-level field (see buildValidationProof in localRuntimeSettingsCli.ts).
   const runtime = proof.runtime && typeof proof.runtime === 'object' ? proof.runtime : {};
   const validationOutcome = runtime.validationOutcome;
   if (typeof validationOutcome !== 'string') {
-    fail('Validation proof packet is missing runtime.validationOutcome.');
+    return {
+      ok: false,
+      problem: 'Validation proof packet is missing runtime.validationOutcome.',
+      proof,
+      validationOutcome: null
+    };
   }
   if (validationOutcome !== 'ready') {
-    fail(
-      `Runtime validation did not reach 'ready' (runtime.validationOutcome=${validationOutcome}, ` +
-        `blockedReason=${runtime.blockedReason ?? '<none>'}). No advisory attestation recorded.`
-    );
+    return {
+      ok: false,
+      problem:
+        `Runtime validation did not reach 'ready' (runtime.validationOutcome=${validationOutcome}, ` +
+        `blockedReason=${runtime.blockedReason ?? '<none>'}). No advisory attestation recorded.`,
+      proof,
+      validationOutcome
+    };
   }
+  return { ok: true, problem: null, proof, validationOutcome };
+}
+
+function persistAndAssertProofPacket(emitStdout) {
+  const parsed = parseValidationProofPacket(emitStdout, PROOF_SCHEMA);
+  if (!parsed.ok) {
+    fail(parsed.problem);
+  }
+  const { proof, validationOutcome } = parsed;
   // Persist the captured packet host-side for retained PR/ledger evidence.
   const serialized = `${JSON.stringify(proof, null, 2)}
 `;
@@ -330,4 +370,11 @@ function main() {
   log('and the retained win-validation/pathadmit-proof/ packet as PR evidence.');
 }
 
-main();
+module.exports = {
+  PROOF_SCHEMA,
+  parseValidationProofPacket
+};
+
+if (require.main === module) {
+  main();
+}
