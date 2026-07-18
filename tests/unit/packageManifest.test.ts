@@ -85,7 +85,7 @@ describe('extension manifest public metadata', () => {
     // VHS-REQ-600.1, VHS-REQ-600.2, VHS-REQ-600.3, VHS-REQ-600.4
     expect(manifest.name).toBe('vi-history-suite');
     expect(manifest.displayName).toBe('VI History Suite');
-    expect(manifest.version).toBe('1.34.1');
+    expect(manifest.version).toBe('1.34.2');
     expect(manifest.publisher).toBe('svelderrainruiz');
     expect(manifest.license).toBe('0BSD');
     expect(manifest.private).toBe(true);
