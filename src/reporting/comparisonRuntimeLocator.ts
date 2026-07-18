@@ -28,6 +28,7 @@ export {
   resolveWindowsDockerSpawnCommand,
   isMissingWindowsDockerCommand
 } from './runtime/windowsDockerSpawn';
+import { resolveScanCandidates } from './runtime/scanCandidateResolution';
 import {
   buildDocumentedRuntimeCandidates,
   buildWindowsRegistryQueryPlans
@@ -1571,18 +1572,6 @@ async function resolveWindowsRegistryCandidates(
   );
 
   return dedupeCandidates(validatedCandidates);
-}
-
-async function resolveScanCandidates(
-  candidates: RuntimeToolCandidate[],
-  pathExists: (filePath: string) => Promise<boolean>
-): Promise<RuntimeToolCandidate[]> {
-  return Promise.all(
-    candidates.map(async (candidate) => ({
-      ...candidate,
-      exists: await pathExists(candidate.path)
-    }))
-  );
 }
 
 async function defaultPathExists(filePath: string): Promise<boolean> {
