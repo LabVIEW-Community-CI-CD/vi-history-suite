@@ -441,8 +441,12 @@ src/reporting/viPreview/viPreviewRuntimeAdapter.ts,mapped,Yes,Adapts the compari
 tests/unit/viPreviewRuntimeAdapter.test.ts,mapped,Yes,Single-VI preview runtime adapter unit tests; mapped to VHS-REQ-659.
 src/reporting/viPreview/viPreviewWebview.ts,mapped,Yes,Single-VI preview webview document assembly with strict CSP; mapped to VHS-REQ-659.
 src/reporting/viPreview/viPreviewRenderSource.ts,mapped,Yes,Preview render-source resolver; materializes a non-file (git diff base) preview URI to a temp copy so it renders committed bytes not the working-tree file; mapped to VHS-REQ-659.
+src/reporting/viPreview/viPreviewFramesModel.ts,mapped,Yes,"Position-aware frames model + pure normalizer/structure grouping for the interactive block-diagram preview (root diagram plus in-place case structures); mapped to VHS-REQ-659."
+src/reporting/viPreview/viPreviewFramesViewer.ts,mapped,Yes,"Pure interactive block-diagram viewer webview document builder (nonce-CSP scripted in-place case steppers with pan/zoom) over the frames model; mapped to VHS-REQ-659."
 tests/unit/viPreviewWebview.test.ts,mapped,Yes,Single-VI preview webview document unit tests; mapped to VHS-REQ-659.
 tests/unit/viPreviewRenderSource.test.ts,mapped,Yes,Preview render-source resolver unit tests; mapped to VHS-REQ-659.
+tests/unit/viPreviewFramesModel.test.ts,mapped,Yes,Frames-model normalizer and structure-grouping unit tests; mapped to VHS-REQ-659.
+tests/unit/viPreviewFramesViewer.test.ts,mapped,Yes,Interactive frames viewer document builder unit tests (nonce CSP + JSON island safety); mapped to VHS-REQ-659.
 src/ui/viPreviewEditor.ts,mapped,Yes,VI preview read-only custom editor provider (host binding for the single-VI preview); mapped to VHS-REQ-659.
 tests/unit/viPreviewEditor.test.ts,mapped,Yes,VI preview custom editor provider host-binding tests; mapped to VHS-REQ-659.
 src/reporting/viPreview/viPreviewStaging.ts,mapped,Yes,Dependency-aware staging planner for single-VI preview (LabVIEW source-tree selection with size/count guard); mapped to VHS-REQ-659.
