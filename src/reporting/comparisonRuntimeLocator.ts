@@ -70,6 +70,7 @@ import {
 export { inferBitnessFromPath } from './runtime/bitnessHelpers';
 import { resolveConfiguredCandidates } from './runtime/configuredCandidateResolution';
 import { resolveExactWindowsHostRuntime } from './runtime/exactWindowsHostRuntime';
+import { buildLegacyWindowsContainerProviderFacts } from './runtime/legacyWindowsContainerFacts';
 
 const execFileAsync = promisify(execFile);
 
@@ -1538,27 +1539,6 @@ async function observeWindowsHostRuntimeSurfaceFacts(
       (processObservation?.labviewProcessObserved ? 'unknown' : undefined),
     hostObservedLabviewExecutablePath: processObservation?.labviewProcessExecutablePath,
     notes
-  };
-}
-
-function buildLegacyWindowsContainerProviderFacts(
-  image: string,
-  hostPlatform: NodeJS.Platform,
-  imageAvailable: boolean
-): WindowsContainerProviderFacts {
-  return {
-    image,
-    provider: 'windows-container',
-    runtimePlatform: 'win32',
-    hostPlatform,
-    dockerCliAvailable: imageAvailable,
-    dockerDaemonReachable: imageAvailable,
-    windowsContainerCapabilityAvailable: imageAvailable,
-    windowsContainerHostMode: imageAvailable ? 'windows' : undefined,
-    imageAvailable,
-    notes: imageAvailable
-      ? [`Windows container image ${image} was available through the legacy image-inspect probe.`]
-      : [`Legacy Windows container image probe did not find image ${image} on the current host.`]
   };
 }
 
