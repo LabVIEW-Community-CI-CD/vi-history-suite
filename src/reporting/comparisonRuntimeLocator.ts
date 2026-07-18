@@ -55,6 +55,10 @@ import {
   resolveContainerImageForHostMode
 } from './runtime/containerRuntimePaths';
 import {
+  resolveContainerProvider,
+  resolveContainerRuntimePlatform
+} from './runtime/containerProviderResolution';
+import {
   ContainerImageVersionPlatformConflict,
   detectContainerImageVersionPlatformConflict,
   parseLabviewContainerImageReference,
@@ -1610,18 +1614,6 @@ function buildLegacyWindowsContainerProviderFacts(
       ? [`Windows container image ${image} was available through the legacy image-inspect probe.`]
       : [`Legacy Windows container image probe did not find image ${image} on the current host.`]
   };
-}
-
-function resolveContainerProvider(
-  facts: WindowsContainerProviderFacts
-): Extract<ComparisonRuntimeProvider, 'windows-container' | 'linux-container'> {
-  return facts.provider ?? (facts.windowsContainerHostMode === 'linux' ? 'linux-container' : 'windows-container');
-}
-
-function resolveContainerRuntimePlatform(
-  facts: WindowsContainerProviderFacts
-): Extract<RuntimePlatform, 'win32' | 'linux'> {
-  return facts.runtimePlatform ?? (resolveContainerProvider(facts) === 'linux-container' ? 'linux' : 'win32');
 }
 
 function buildContainerToolCandidates(
