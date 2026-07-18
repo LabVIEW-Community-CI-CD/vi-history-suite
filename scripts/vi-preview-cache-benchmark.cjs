@@ -75,10 +75,13 @@ function isViFile(name) {
 }
 
 // A real file-backed cache using node fs, mirroring the injectable boundary
-// FileViPreviewCache expects.
-function buildCache(cacheDirectory) {
+// FileViPreviewCache expects. maxEntries must cover the full target set: the
+// warm-all pass writes one entry per VI and the verify pass re-reads every one,
+// so a cache smaller than the target would evict the earliest-warmed VIs and
+// mis-report them as NOT-HIT even though the cache behaved correctly.
+function buildCache(cacheDirectory, maxEntries) {
   return createFileViPreviewCache(
-    { cacheDirectory, joinPath: (dir, name) => path.join(dir, name) },
+    { cacheDirectory, maxEntries, joinPath: (dir, name) => path.join(dir, name) },
     {
       ensureDirectory: async (directory) => {
         await fsp.mkdir(directory, { recursive: true });
@@ -174,14 +177,16 @@ async function main() {
   const runtime = { ...resolution.runtime, headless: true };
   log(`Runtime ready: provider=${runtime.provider} bitness=${bitness} version=${labviewVersion} headless=true`);
 
-  const cache = buildCache(cacheDirectory);
-  const deps = { ...buildNodeViPreviewRenderDeps(), cache };
-
   const vis = await enumerateVis(benchRepo);
   if (vis.length === 0) {
     fail(`No *.vi files found under ${benchRepo}.`);
   }
   log(`Discovered ${vis.length} VI(s).`);
+
+  // Size the cache to hold every VI we may warm (all discovered VIs, plus the
+  // single-VI benchmark entry) so the verify pass never sees a spurious eviction.
+  const cache = buildCache(cacheDirectory, vis.length + 1);
+  const deps = { ...buildNodeViPreviewRenderDeps(), cache };
 
   const evidence = { schema: 'vi-history-suite/vi-preview-cache-benchmark@v1', repo: benchRepo, bitness, labviewVersion };
 
