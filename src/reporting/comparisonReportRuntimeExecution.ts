@@ -11,6 +11,7 @@ import {
   isExactObservedRuntimeProcessName
 } from './runtime/windowsTasklistParsing';
 export { parseWindowsTasklistCsv } from './runtime/windowsTasklistParsing';
+import { isSafeRelativeSubpath } from './runtime/safeRelativeSubpath';
 import {
   describeObservedRuntimeProcesses,
   describeObservedWindowsTcpListeners
@@ -932,20 +933,6 @@ async function materializeSubmoduleTreesBestEffort(
       depth: params.depth + 1
     });
   }
-}
-
-/**
- * VHS-REQ-624 (#283): only accept plain relative subpaths for submodule
- * destinations. Absolute paths, drive prefixes, and `.`/`..` segments are
- * rejected so a tree entry can never resolve outside the staging destination.
- */
-function isSafeRelativeSubpath(candidate: string): boolean {
-  if (!candidate || candidate.startsWith('/') || /^[A-Za-z]:/.test(candidate)) {
-    return false;
-  }
-  return candidate
-    .split('/')
-    .every((segment) => segment.length > 0 && segment !== '.' && segment !== '..');
 }
 
 function spawnGitToCompletion(
