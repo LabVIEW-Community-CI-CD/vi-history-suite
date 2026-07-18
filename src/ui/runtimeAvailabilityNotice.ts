@@ -49,6 +49,17 @@ export {
   buildVersionOpenBlockedMessage
 } from './runtimeAvailabilityMessages';
 import {
+  isLabviewCliInstalled,
+  isLabviewHostInstalledWithoutCli,
+  isViServerExplicitlyEnabledInConfig
+} from './runtimeAvailabilityGatePredicates';
+
+export {
+  isLabviewCliInstalled,
+  isLabviewHostInstalledWithoutCli,
+  isViServerExplicitlyEnabledInConfig
+} from './runtimeAvailabilityGatePredicates';
+import {
   type DockerDaemonPlatformProber,
   defaultProbeDockerDaemonPlatform,
   resolveConfirmedContainerPlatform
@@ -402,34 +413,6 @@ export function buildStatusBarPresentation(
   };
 }
 
-/**
- * VHS-REQ-627: True when at least one detected host LabVIEW installation
- * exposes the LabVIEW CLI (`LabVIEWCLI.exe` on Windows, `labviewcli` on Linux).
- * Host-native VI comparison shells out to the LabVIEW CLI, so its absence means
- * the Compare action cannot succeed.
- */
-export function isLabviewCliInstalled(detection: DetectedRuntimes): boolean {
-  return detection.host.installations.some(
-    (installation) =>
-      typeof installation.labviewCliPath === 'string' &&
-      installation.labviewCliPath.length > 0
-  );
-}
-
-/**
- * VHS-REQ-629: True when at least one host LabVIEW (\u22652025) is installed but
- * none of the detected installations expose the LabVIEW CLI. Detection only
- * records installations for supported years, so a non-empty installation list
- * already implies LabVIEW \u22652025. This is the "LabVIEW present, only the CLI
- * missing" state, which deserves the dedicated LabVIEW CLI download rather than
- * the full LabVIEW installer.
- */
-export function isLabviewHostInstalledWithoutCli(
-  detection: DetectedRuntimes
-): boolean {
-  return detection.host.installations.length > 0 && !isLabviewCliInstalled(detection);
-}
-
 export const LABVIEW_CLI_OPEN_BLOCKED_MESSAGE =
   'VI History cannot open a comparison because the LabVIEW CLI (LabVIEWCLI) is not installed. Install LabVIEW \u22652025 with the LabVIEW Command-Line Interface, then reload the window to compare VIs.';
 
@@ -590,19 +573,6 @@ export async function decideLabviewCliOpenGateWithRegistryFallback(
     // fall through to the original block decision.
   }
   return baseDecision;
-}
-
-/**
- * VHS-REQ-631: True only when the supplied LabVIEW VI Server config text
- * explicitly enables VI Server TCP with `server.tcp.enabled=True`. Tolerant of
- * surrounding whitespace, optional quotes, and case. An absent key, an explicit
- * `False`, or unparseable text all return false — the open gate treats those as
- * "VI Server not enabled" per the maintainer decision that the pre-panel gate
- * requires an explicit opt-in (stricter than the VHS-REQ-623 compare-time
- * preflight, which leaves the Windows absent-key default as enabled).
- */
-export function isViServerExplicitlyEnabledInConfig(configText: string): boolean {
-  return /^\s*server\.tcp\.enabled\s*=\s*"?true"?\s*$/im.test(configText);
 }
 
 export const VI_SERVER_OPEN_BLOCKED_MESSAGE =
