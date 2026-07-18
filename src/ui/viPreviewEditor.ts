@@ -199,19 +199,20 @@ class ViPreviewEditorProvider implements vscode.CustomReadonlyEditorProvider<ViP
 
         if (result.outcome === 'rendered' && result.html) {
           // Interactive block-diagram mode runs an inline (nonce'd) script in
-          // the webview; the static document mode does not. Enable scripts and
-          // mint a per-load nonce (shared by the webview options and the viewer
-          // CSP) only for the interactive presentation. (VHS-REQ-659.)
+          // the webview; the static document mode does not. Compute the selected
+          // presentation FIRST, then enable scripts only when the interactive
+          // viewer was actually returned — the selector falls back to the
+          // static document (for example a `.ctl` with no diagram or a malformed
+          // export), and that fallback must stay host-level script-disabled like
+          // the normal document path. (VHS-REQ-659.)
           const interactive = isBlockDiagramInteractiveEnabled();
           const nonce = interactive ? randomBytes(16).toString('base64') : undefined;
-          if (interactive) {
-            webviewPanel.webview.options = { enableScripts: true };
-          }
           const selected = selectViPreviewDocument({
             labviewHtml: result.html,
             mode: interactive ? 'interactive' : 'document',
             nonce
           });
+          webviewPanel.webview.options = { enableScripts: selected.mode === 'interactive' };
           webviewPanel.webview.html = selected.html;
           // Successful open signals user intent; warm the rest of the workspace.
           this.onPreviewOpened?.(document.uri.fsPath);

@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const {
   registerCustomEditorProviderMock,
   workspaceTrusted,
+  blockDiagramInteractive,
   isViPreviewEnabledMock,
   resolvePreviewRuntimeMock,
   renderViPreviewForFileMock,
@@ -11,6 +12,7 @@ const {
 } = vi.hoisted(() => ({
   registerCustomEditorProviderMock: vi.fn(),
   workspaceTrusted: { value: true },
+  blockDiagramInteractive: { value: false },
   isViPreviewEnabledMock: vi.fn(),
   resolvePreviewRuntimeMock: vi.fn(),
   renderViPreviewForFileMock: vi.fn(),
@@ -27,7 +29,8 @@ vi.mock('vscode', () => ({
       return workspaceTrusted.value;
     },
     getConfiguration: () => ({
-      get: (_key: string, fallback: unknown) => fallback
+      get: (key: string, fallback: unknown) =>
+        key === 'preview.blockDiagramInteractive' ? blockDiagramInteractive.value : fallback
     })
   }
 }));
@@ -93,6 +96,7 @@ describe('VI Preview custom editor (VHS-REQ-659.8)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     workspaceTrusted.value = true;
+    blockDiagramInteractive.value = false;
     isViPreviewEnabledMock.mockReturnValue(true);
     resolvePreviewRuntimeMock.mockResolvedValue({
       outcome: 'ready',
@@ -187,6 +191,45 @@ describe('VI Preview custom editor (VHS-REQ-659.8)', () => {
     expect(panel.webview.html).toContain('docker preview');
     expect(onPreviewOpened).toHaveBeenCalledWith('/workspace/repo/Foo.vit');
     expect(renderViPreviewForFileMock).not.toHaveBeenCalled();
+  });
+
+  const BD_HTML =
+    '<HTML><BODY><H3>Block Diagram</H3>' +
+    '<P><IMG src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAACWCAIAAAA="></P>' +
+    '<H3>VI Revision History</H3></BODY></HTML>';
+
+  it('enables webview scripts only when the interactive viewer is returned (VHS-REQ-659.19)', async () => {
+    blockDiagramInteractive.value = true;
+    const sessionManager = {
+      renderVi: vi.fn().mockResolvedValue({ outcome: 'rendered', html: BD_HTML }),
+      dispose: vi.fn()
+    };
+    const context = createContext();
+    registerViPreviewCustomEditor(context as never, { sessionManager });
+    const provider = providerFromLastRegistration();
+
+    const panel = await resolveEditor(provider, createPanel(), '/workspace/repo/Foo.vi');
+
+    expect(panel.webview.options).toEqual({ enableScripts: true });
+    expect(panel.webview.html).toContain('lvr-frames');
+  });
+
+  it('keeps scripts disabled when interactive mode falls back to the document (VHS-REQ-659.19)', async () => {
+    blockDiagramInteractive.value = true;
+    // No Block Diagram section => no frames extract => the selector falls back to
+    // the static document, which must stay host-level script-disabled.
+    const sessionManager = {
+      renderVi: vi.fn().mockResolvedValue({ outcome: 'rendered', html: '<HTML><BODY>no diagram</BODY></HTML>' }),
+      dispose: vi.fn()
+    };
+    const context = createContext();
+    registerViPreviewCustomEditor(context as never, { sessionManager });
+    const provider = providerFromLastRegistration();
+
+    const panel = await resolveEditor(provider, createPanel(), '/workspace/repo/Foo.ctl');
+
+    expect(panel.webview.options).toEqual({ enableScripts: false });
+    expect(panel.webview.html).not.toContain('lvr-frames');
   });
 
   it('materializes a non-file (git) base URI and renders the committed bytes, not the working file (VHS-REQ-659.8)', async () => {
