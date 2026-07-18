@@ -1,5 +1,4 @@
 import { ComparisonCommandPlan } from '../comparisonReportPlan';
-import { resolveWindowsPowerShellHostExecutable } from '../runtime/shellScriptEncoding';
 export { resolveWindowsPowerShellHostExecutable } from '../runtime/shellScriptEncoding';
 
 /**
