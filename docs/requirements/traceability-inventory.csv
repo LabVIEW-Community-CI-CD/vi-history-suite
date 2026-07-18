@@ -21,6 +21,7 @@ scripts/runIssueStandardsTriage.js,dev-only,No,Local maintainer issue-triage hel
 scripts/mapCoverageToTraceability.js,mapped,Yes,Coverage traceability map command; mapped to VHS-REQ-613.
 src/cli/runDevHost.ts,dev-only,No,Development host CLI for local debugging and testing.
 src/commands/openViHistoryCommand.ts,mapped,Yes,Main command implementation; mapped through RTM.
+src/commands/comparisonRuntimeDoctorSummaryParsing.ts,supporting,No,"Runtime-doctor-summary parsers (deriveComparisonRuntimeNextAction, deriveRuntimeProviderFromDoctorSummary, deriveRuntimeProviderRequestFromDoctorSummary, deriveWindowsContainerAcquisitionStateFromDoctorSummary, deriveRejectedProviderSummaryFromDoctorSummary, mapLegacyExecutionModeToProviderRequest) extracted verbatim from openViHistoryCommand and the public ones re-exported to preserve the public API while separating pure doctor-summary parsing from command orchestration; supporting VHS-REQ-620."
 src/dashboard/comparisonReportArchive.ts,mapped,Yes,Dashboard archive support; mapped to VHS-REQ-610.
 src/dashboard/dashboardEtaAccuracy.ts,mapped,Yes,Dashboard ETA accuracy; mapped to VHS-REQ-610.
 src/dashboard/dashboardLatestRun.ts,mapped,Yes,Dashboard latest run support; mapped to VHS-REQ-610.
@@ -154,6 +155,7 @@ tests/unit/multiReportDashboardSummary.test.ts,supporting,No,"Dashboard summary 
 tests/unit/multiReportDashboardAction.test.ts,mapped,Yes,Multi-report dashboard action routing tests; mapped to VHS-REQ-610.
 tests/unit/niComparisonReportParser.test.ts,mapped,Yes,NI comparison report parser tests; mapped to VHS-REQ-610.
 tests/unit/openViHistoryCommand.test.ts,mapped,Yes,Open VI history command tests; mapped through RTM.
+tests/unit/comparisonRuntimeDoctorSummaryParsing.test.ts,supporting,No,"Runtime-doctor-summary parser unit tests (next-action line, selected-provider, provider-request/legacy-execution-mode, container-acquisition-state, rejected-provider summary, legacy execution-mode mapping); supporting VHS-REQ-620."
 tests/unit/packageManifest.test.ts,mapped,Yes,Package manifest tests; mapped through RTM including VHS-REQ-626 export command contribution VHS-REQ-645 settings contribution checks VHS-REQ-651 Command Palette exclusion and VHS-REQ-659 VI Preview custom editor contribution.
 tests/unit/packageRuntimeSurfaceAudit.test.ts,mapped,Yes,Package runtime surface audit tests; mapped through RTM.
 tests/unit/packageTestVsixWorkflow.test.ts,mapped,Yes,Package test VSIX workflow tests; mapped through RTM.
