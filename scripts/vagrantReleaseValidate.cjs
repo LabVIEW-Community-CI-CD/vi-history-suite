@@ -9,6 +9,12 @@
  *
  * Flow:
  *   1. Preflight the Vagrant lane (scripts/vagrantLanePreflight.js).
+ *   1b. Consume the dev-tools PRERELEASE: build its provenance manifest
+ *      (scripts/buildDevToolsRelease.js --channel prerelease) and self-verify
+ *      the in-tree toolset against it fail-closed (scripts/verifyDevToolsRelease.js
+ *      --verify-self), proving the synced tree the guest validates is the
+ *      content-addressed prerelease toolset (VHS-REQ-667). Its contentDigest is
+ *      bound into the recorded attestation evidence.
  *   2. Bring the Windows/LabVIEW guest up (vagrant up); the box self-heals its
  *      account at boot (VIHSVagrantSelfHeal task), so no interactive login.
  *   3. Run the shipped comparison primitives IN-GUEST over WinRM against the
@@ -114,6 +120,70 @@ function getBoxSha256() {
   }
 }
 
+// Build the dev-tools PRERELEASE provenance manifest and self-verify the in-tree
+// toolset against it (fail-closed), then return the aggregate contentDigest.
+//
+// The in-guest comparison validates the synced working tree. Building the
+// prerelease provenance manifest (channel: prerelease, the dev-tools release
+// channel that tracks develop) and self-verifying it proves that synced tree is
+// byte-for-byte the content-addressed prerelease toolset (VHS-REQ-667), so the
+// recorded release attestation is bound to a known dev-tools prerelease rather
+// than an unverified checkout. The transient manifest is written under the
+// gitignored dist/ directory and removed after the digest is read.
+function buildAndVerifyDevToolsPrerelease() {
+  const relativeManifestPath = path.join('dist', `vagrant-devtools-prerelease-${process.pid}.json`);
+  const absoluteManifestPath = path.join(repoRoot, relativeManifestPath);
+
+  log('Building the dev-tools prerelease provenance manifest (channel: prerelease)...');
+  const build = run('node', [
+    path.join('scripts', 'buildDevToolsRelease.js'),
+    '--channel',
+    'prerelease',
+    '--output',
+    relativeManifestPath
+  ]);
+  if (build.status !== 0) {
+    fail('Failed to build the dev-tools prerelease provenance manifest; cannot validate an unverified toolset.');
+  }
+
+  log('Self-verifying the in-tree toolset against the prerelease content digest...');
+  const verify = run('node', [
+    path.join('scripts', 'verifyDevToolsRelease.js'),
+    '--verify-self',
+    '--manifest',
+    relativeManifestPath
+  ]);
+  if (verify.status !== 0) {
+    try {
+      fs.unlinkSync(absoluteManifestPath);
+    } catch {
+      /* best effort */
+    }
+    fail(
+      'Dev-tools prerelease self-verification FAILED: the working tree does not match the prerelease content digest. Do not validate or publish.'
+    );
+  }
+
+  let contentDigest = 'unknown';
+  try {
+    const manifest = JSON.parse(fs.readFileSync(absoluteManifestPath, 'utf8'));
+    if (typeof manifest.contentDigest === 'string' && manifest.contentDigest.length > 0) {
+      contentDigest = manifest.contentDigest;
+    }
+  } catch {
+    /* verification already passed; digest is best-effort for the evidence binding */
+  } finally {
+    try {
+      fs.unlinkSync(absoluteManifestPath);
+    } catch {
+      /* best effort */
+    }
+  }
+
+  log(`Dev-tools prerelease consumed and verified (contentDigest=${contentDigest}).`);
+  return contentDigest;
+}
+
 function main() {
   const options = parseArgs(process.argv.slice(2));
   const version = getPackageVersion();
@@ -138,6 +208,12 @@ function main() {
   if (preflight.status !== 0) {
     fail('Vagrant lane preflight failed. Resolve the FAIL items (see docs/vagrant.md) before release validation.');
   }
+
+  // 1b. Consume the dev-tools PRERELEASE: build its provenance manifest and
+  // self-verify the in-tree toolset against it (fail-closed) BEFORE the heavy
+  // vagrant up, so an unverified/mismatched toolset is rejected cheaply. The
+  // returned contentDigest is bound into the attestation evidence below.
+  const devtoolsContentDigest = buildAndVerifyDevToolsPrerelease();
 
   // 2. Bring the guest up (self-heals its account at boot).
   if (!options.skipUp) {
@@ -174,7 +250,10 @@ function main() {
 
   // 4. Record the attestation into the committed ledger.
   log(`Recording the release attestation for track ${TRACK_ID} at ${version}...`);
-  const evidence = options.evidence || `vagrant local validation ${new Date().toISOString()}`;
+  const baseEvidence = options.evidence || `vagrant local validation ${new Date().toISOString()}`;
+  // Bind the verified dev-tools prerelease content digest into the evidence so
+  // the recorded attestation references the exact prerelease toolset it validated.
+  const evidence = `${baseEvidence}; devtools-prerelease contentDigest=${devtoolsContentDigest}`;
   const boxSha256 = getBoxSha256();
   const recordArgs = [
     path.join('scripts', 'recordRuntimeValidation.js'),
