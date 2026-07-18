@@ -1,22 +1,28 @@
 /**
- * VHS-REQ-659 maintainer driver: Docker preview-cache cross-VI benchmark.
+ * VHS-REQ-659 maintainer driver: preview-cache cross-VI benchmark (Docker or host).
  *
- * Renders N real VIs on the Docker linux-container runtime (LabVIEW 2026) into a
- * single shared file-backed cache (cold), then re-renders each through the same
- * cache and asserts the warm result is a HIT that is byte-identical and has the
- * same inline-image count as the cold render. Proves the cache distinguishes
- * VIs and returns unchanged content at scale on real Docker + LabVIEW.
+ * Renders N real VIs on the chosen runtime lane (Docker linux-container OR
+ * host-native LabVIEW, 2026) into a single shared file-backed cache (cold), then
+ * re-renders each through the same cache and asserts the warm result is a HIT
+ * that is byte-identical and has the same inline-image count as the cold render.
+ * Proves the cache distinguishes VIs and returns unchanged content at scale.
+ *
+ * Because each invocation uses its own cache dir and runtime lane, several
+ * instances can run CONCURRENTLY (Docker + host-native on this box + the Vagrant
+ * guest) to validate simultaneous caching execution across runtimes.
  *
  * Maintainer-only `.cjs` under vagrant/, not shipped / not in npm test. Requires
- * `npm run compile`. Runs on the Linux host (Docker available).
+ * `npm run compile`. Runs on the Linux host (Docker and/or host-native LabVIEW).
  *
  * Env:
- *   VIHS_DB_REPO    icon-editor repo (default /home/sergio/repos/labview-icon-editor)
- *   VIHS_DB_LIMIT   number of VIs to render (default 6)
- *   VIHS_DB_IMAGE   container image (default nationalinstruments/labview:2026q1-linux)
- *   VIHS_DB_VERSION LabVIEW year (default 2026)
- *   VIHS_DB_CACHE   cache dir (default a fresh temp dir)
- *   VIHS_DB_OUT     optional JSON evidence path
+ *   VIHS_DB_REPO     icon-editor repo (default /home/sergio/repos/labview-icon-editor)
+ *   VIHS_DB_LIMIT    number of VIs to render (default 6)
+ *   VIHS_DB_PROVIDER 'docker' (linux-container) | 'host' (host-native) (default docker)
+ *   VIHS_DB_BITNESS  x64 | x86 (default x64)
+ *   VIHS_DB_IMAGE    container image (default nationalinstruments/labview:2026q1-linux)
+ *   VIHS_DB_VERSION  LabVIEW year (default 2026)
+ *   VIHS_DB_CACHE    cache dir (default a fresh temp dir)
+ *   VIHS_DB_OUT      optional JSON evidence path
  */
 'use strict';
 
@@ -103,23 +109,34 @@ async function main() {
   const image = process.env.VIHS_DB_IMAGE || 'nationalinstruments/labview:2026q1-linux';
   const version = process.env.VIHS_DB_VERSION || '2026';
   const cacheDir = process.env.VIHS_DB_CACHE || fs.mkdtempSync(path.join(os.tmpdir(), 'vihs-db-cache-'));
+  // Provider lane: 'docker' (linux-container) or 'host' (host-native LabVIEW on
+  // this Linux host). Lets the same driver benchmark either runtime so several
+  // lanes can run concurrently (VHS-REQ-659 simultaneous caching).
+  const provider = (process.env.VIHS_DB_PROVIDER || 'docker').toLowerCase() === 'host' ? 'host' : 'docker';
+  const bitness = (process.env.VIHS_DB_BITNESS || 'x64').toLowerCase() === 'x86' ? 'x86' : 'x64';
+  // Docker always locates on 'linux'; host-native locates on the ACTUAL platform
+  // (win32 in the Vagrant guest, linux on this box) so the same driver runs on
+  // all three lanes. Override with VIHS_DB_PLATFORM if needed.
+  const locatePlatform =
+    process.env.VIHS_DB_PLATFORM || (provider === 'docker' ? 'linux' : process.platform === 'win32' ? 'win32' : 'linux');
 
   if (!fs.existsSync(repo)) {
     fail(`repo not found: ${repo} (set VIHS_DB_REPO).`);
   }
 
-  const selection = await locateComparisonRuntime('linux', {
-    requestedProvider: 'docker',
+  const selection = await locateComparisonRuntime(locatePlatform, {
+    requestedProvider: provider,
+    requireVersionAndBitness: provider === 'host',
     labviewVersion: version,
-    bitness: 'x64',
+    bitness,
     linuxContainerImage: image
   });
-  const resolution = mapComparisonRuntimeSelectionToViPreview(selection, { processPlatform: 'linux' });
+  const resolution = mapComparisonRuntimeSelectionToViPreview(selection, { processPlatform: locatePlatform });
   if (resolution.outcome !== 'ready') {
-    fail(`Docker runtime not ready: ${selection.blockedReason ?? resolution.reason}`);
+    fail(`${provider} runtime not ready: ${selection.blockedReason ?? resolution.reason}`);
   }
   const runtime = { ...resolution.runtime, headless: true };
-  log(`runtime provider=${runtime.provider} image=${image} version=${version}`);
+  log(`runtime provider=${runtime.provider} lane=${provider} image=${provider === 'docker' ? image : 'n/a'} version=${version}`);
 
   const vis = await enumerateVis(repo, limit);
   if (vis.length === 0) {
