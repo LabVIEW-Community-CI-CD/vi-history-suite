@@ -29,6 +29,17 @@ export function parseWindowsTasklistCsvLine(line: string): RuntimeObservedProces
   };
 }
 
+// Parse an entire Windows `tasklist /fo csv /nh` stdout capture into observed-
+// process records, dropping blank lines and rows the per-line parser rejects.
+export function parseWindowsTasklistCsv(stdout: string): RuntimeObservedProcess[] {
+  return stdout
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+    .map(parseWindowsTasklistCsvLine)
+    .filter((entry): entry is RuntimeObservedProcess => Boolean(entry));
+}
+
 function parseCsvColumns(line: string): string[] {
   const columns: string[] = [];
   let current = '';

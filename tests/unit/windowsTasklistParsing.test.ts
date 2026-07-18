@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  parseWindowsTasklistCsv,
   parseWindowsTasklistCsvLine,
   isObservedRuntimeProcessName,
   isExactObservedRuntimeProcessName
@@ -59,5 +60,32 @@ describe('isObservedRuntimeProcessName', () => {
 
   it('rejects an unrelated image', () => {
     expect(isObservedRuntimeProcessName('notepad.exe')).toBe(false);
+  });
+});
+
+describe('parseWindowsTasklistCsv', () => {
+  it('parses multiple CSV rows into observed-process records', () => {
+    const stdout = [
+      '"LabVIEW.exe","1234","Console","1","123,456 K"',
+      '"LVCompare.exe","5678","Console","1","7,890 K"'
+    ].join('\r\n');
+    const parsed = parseWindowsTasklistCsv(stdout);
+    expect(parsed).toHaveLength(2);
+    expect(parsed[0]).toMatchObject({ imageName: 'LabVIEW.exe', pid: 1234 });
+    expect(parsed[1]).toMatchObject({ imageName: 'LVCompare.exe', pid: 5678 });
+  });
+
+  it('drops blank lines and rows the line parser rejects', () => {
+    const stdout = [
+      '',
+      '   ',
+      'not,enough',
+      '"LabVIEW.exe","1234","Console","1","123,456 K"'
+    ].join('\n');
+    expect(parseWindowsTasklistCsv(stdout)).toHaveLength(1);
+  });
+
+  it('returns an empty array for empty stdout', () => {
+    expect(parseWindowsTasklistCsv('')).toEqual([]);
   });
 });

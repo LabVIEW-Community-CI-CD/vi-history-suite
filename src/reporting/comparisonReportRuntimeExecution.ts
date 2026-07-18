@@ -6,10 +6,11 @@ import * as path from 'node:path';
 import { joinPreservingExplicitPathStyle } from '../support/pathStyle';
 import { errorMessage } from '../support/errorMessage';
 import {
-  parseWindowsTasklistCsvLine,
+  parseWindowsTasklistCsv,
   isObservedRuntimeProcessName,
   isExactObservedRuntimeProcessName
 } from './runtime/windowsTasklistParsing';
+export { parseWindowsTasklistCsv } from './runtime/windowsTasklistParsing';
 import {
   describeObservedRuntimeProcesses,
   describeObservedWindowsTcpListeners
@@ -4537,15 +4538,6 @@ export function requiresWindowsInterop(
   processPlatform: NodeJS.Platform = process.platform
 ): boolean {
   return runtimePlatform === 'win32' && processPlatform !== 'win32';
-}
-
-export function parseWindowsTasklistCsv(stdout: string): RuntimeObservedProcess[] {
-  return stdout
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0)
-    .map(parseWindowsTasklistCsvLine)
-    .filter((entry): entry is RuntimeObservedProcess => Boolean(entry));
 }
 
 export async function observeWindowsRuntimeProcesses(
