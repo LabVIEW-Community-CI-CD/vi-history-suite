@@ -1,3 +1,5 @@
+import { normalizeTrimmed } from './localRuntimeSettingsFileText';
+
 export interface RuntimeSettingsLiveSessionFacts {
   runtimeProvider?: string;
   labviewVersion?: string;
@@ -145,15 +147,6 @@ export function buildRuntimeSettingsLiveSessionProbeSummary(
     runtimeEngine: input.runtimeEngine,
     runtimeBlockedReason: input.runtimeBlockedReason
   };
-}
-
-function normalizeTrimmed(value: string | undefined): string | undefined {
-  if (typeof value !== 'string') {
-    return undefined;
-  }
-
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : undefined;
 }
 
 function normalizeComparableProvider(value: string | undefined): string | undefined {
