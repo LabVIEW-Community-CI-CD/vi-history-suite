@@ -31,6 +31,8 @@ export {
 import { resolveScanCandidates } from './runtime/scanCandidateResolution';
 import { pathExistsWithFsAccess, defaultPathExists } from './runtime/fsPathExists';
 export { pathExistsWithFsAccess } from './runtime/fsPathExists';
+import { runWindowsRegistryQuery } from './runtime/windowsRegistryQuery';
+export { runWindowsRegistryQuery } from './runtime/windowsRegistryQuery';
 import {
   buildDocumentedRuntimeCandidates,
   buildWindowsRegistryQueryPlans
@@ -1574,22 +1576,6 @@ async function resolveWindowsRegistryCandidates(
   );
 
   return dedupeCandidates(validatedCandidates);
-}
-
-export async function runWindowsRegistryQuery(
-  plan: WindowsRegistryQueryPlan,
-  execFileRunner: (
-    file: string,
-    args: readonly string[],
-    options: { windowsHide: boolean; maxBuffer: number }
-  ) => Promise<{ stdout: string }>
-    = execFileAsync
-): Promise<string> {
-  const { stdout } = await execFileRunner(plan.command, plan.args, {
-    windowsHide: true,
-    maxBuffer: 1024 * 1024
-  });
-  return stdout;
 }
 
 /**
