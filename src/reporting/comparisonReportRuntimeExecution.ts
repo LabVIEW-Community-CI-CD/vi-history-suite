@@ -12,6 +12,7 @@ import {
 } from './runtime/windowsTasklistParsing';
 export { parseWindowsTasklistCsv } from './runtime/windowsTasklistParsing';
 import { isSafeRelativeSubpath } from './runtime/safeRelativeSubpath';
+import { appendCancellationMessage } from './runtime/cancellationMessage';
 import {
   describeObservedRuntimeProcesses,
   describeObservedWindowsTcpListeners
@@ -680,13 +681,7 @@ async function terminateWindowsProcessTree(
   });
 }
 
-function appendCancellationMessage(stderr: string): string {
-  if (/comparison-command cancelled by user/iu.test(stderr)) {
-    return stderr;
-  }
 
-  return `${stderr}comparison-command cancelled by user\n`;
-}
 
 export interface MaterializeSelectedRevisionTreeOptions {
   repositoryRoot: string;
