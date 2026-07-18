@@ -39,6 +39,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
+const { buildAndVerifyDevToolsPrerelease } = require('./lib/devtoolsPrereleaseConsumer.cjs');
 
 const repoRoot = path.resolve(__dirname, '..');
 const vagrantDir = path.join(repoRoot, 'vagrant');
@@ -128,60 +129,10 @@ function getBoxSha256() {
 // channel that tracks develop) and self-verifying it proves that synced tree is
 // byte-for-byte the content-addressed prerelease toolset (VHS-REQ-667), so the
 // recorded release attestation is bound to a known dev-tools prerelease rather
-// than an unverified checkout. The transient manifest is written under the
-// gitignored dist/ directory and removed after the digest is read.
-function buildAndVerifyDevToolsPrerelease() {
-  const relativeManifestPath = path.join('dist', `vagrant-devtools-prerelease-${process.pid}.json`);
-  const absoluteManifestPath = path.join(repoRoot, relativeManifestPath);
-
-  log('Building the dev-tools prerelease provenance manifest (channel: prerelease)...');
-  const build = run('node', [
-    path.join('scripts', 'buildDevToolsRelease.js'),
-    '--channel',
-    'prerelease',
-    '--output',
-    relativeManifestPath
-  ]);
-  if (build.status !== 0) {
-    fail('Failed to build the dev-tools prerelease provenance manifest; cannot validate an unverified toolset.');
-  }
-
-  log('Self-verifying the in-tree toolset against the prerelease content digest...');
-  const verify = run('node', [
-    path.join('scripts', 'verifyDevToolsRelease.js'),
-    '--verify-self',
-    '--manifest',
-    relativeManifestPath
-  ]);
-  if (verify.status !== 0) {
-    try {
-      fs.unlinkSync(absoluteManifestPath);
-    } catch {
-      /* best effort */
-    }
-    fail(
-      'Dev-tools prerelease self-verification FAILED: the working tree does not match the prerelease content digest. Do not validate or publish.'
-    );
-  }
-
-  let contentDigest = 'unknown';
-  try {
-    const manifest = JSON.parse(fs.readFileSync(absoluteManifestPath, 'utf8'));
-    if (typeof manifest.contentDigest === 'string' && manifest.contentDigest.length > 0) {
-      contentDigest = manifest.contentDigest;
-    }
-  } catch {
-    /* verification already passed; digest is best-effort for the evidence binding */
-  } finally {
-    try {
-      fs.unlinkSync(absoluteManifestPath);
-    } catch {
-      /* best effort */
-    }
-  }
-
-  log(`Dev-tools prerelease consumed and verified (contentDigest=${contentDigest}).`);
-  return contentDigest;
+// than an unverified checkout. Shared with the advisory proof driver via
+// scripts/lib/devtoolsPrereleaseConsumer.cjs.
+function consumeDevToolsPrerelease() {
+  return buildAndVerifyDevToolsPrerelease({ repoRoot, run, log, fail });
 }
 
 function main() {
@@ -213,7 +164,7 @@ function main() {
   // self-verify the in-tree toolset against it (fail-closed) BEFORE the heavy
   // vagrant up, so an unverified/mismatched toolset is rejected cheaply. The
   // returned contentDigest is bound into the attestation evidence below.
-  const devtoolsContentDigest = buildAndVerifyDevToolsPrerelease();
+  const devtoolsContentDigest = consumeDevToolsPrerelease();
 
   // 2. Bring the guest up (self-heals its account at boot).
   if (!options.skipUp) {

@@ -38,6 +38,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const { spawnSync } = require('node:child_process');
+const { buildAndVerifyDevToolsPrerelease } = require('./lib/devtoolsPrereleaseConsumer.cjs');
 
 const repoRoot = path.resolve(__dirname, '..');
 const vagrantDir = path.join(repoRoot, 'vagrant');
@@ -258,6 +259,12 @@ function main() {
     fail('Vagrant lane preflight failed. Resolve the FAIL items (see docs/vagrant.md) first.');
   }
 
+  // 1b. Consume the dev-tools PRERELEASE: build its provenance manifest and
+  // self-verify the in-tree toolset against it (fail-closed) BEFORE the heavy
+  // vagrant up, so the advisory attestation references the content-addressed
+  // prerelease toolset (VHS-REQ-667) rather than an unverified checkout.
+  const devtoolsContentDigest = buildAndVerifyDevToolsPrerelease({ repoRoot, run, log, fail });
+
   // 2. Bring the guest up (self-heals its account at boot).
   if (!options.skipUp) {
     log('Bringing the Windows/LabVIEW guest up (vagrant up)...');
@@ -303,9 +310,10 @@ function main() {
   // it rather than replaced).
   log(`Recording the advisory attestation for track ${TRACK_ID} at ${version}...`);
   const proofTag = `sha256:${sha256}`;
+  const devtoolsTag = `devtools-prerelease contentDigest=${devtoolsContentDigest}`;
   const evidence = options.evidence
-    ? `${options.evidence} ${proofTag}`
-    : `vagrant pathadmit+validation proof ${proofTag} ${new Date().toISOString()}`;
+    ? `${options.evidence} ${proofTag}; ${devtoolsTag}`
+    : `vagrant pathadmit+validation proof ${proofTag} ${new Date().toISOString()}; ${devtoolsTag}`;
   const boxSha256 = getBoxSha256();
   const overrideBox = isBoxOverride();
   const record = run('node', [
