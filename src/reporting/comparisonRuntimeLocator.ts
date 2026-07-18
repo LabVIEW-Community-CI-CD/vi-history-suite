@@ -21,6 +21,14 @@ import {
 import { parseWindowsRegistryLabviewCandidates } from './runtime/windowsRegistryCandidateParsing';
 export { parseWindowsRegistryLabviewCandidates } from './runtime/windowsRegistryCandidateParsing';
 import {
+  resolveWindowsDockerSpawnCommand,
+  isMissingWindowsDockerCommand
+} from './runtime/windowsDockerSpawn';
+export {
+  resolveWindowsDockerSpawnCommand,
+  isMissingWindowsDockerCommand
+} from './runtime/windowsDockerSpawn';
+import {
   buildDocumentedRuntimeCandidates,
   buildWindowsRegistryQueryPlans
 } from './runtime/documentedRuntimeCandidates';
@@ -2003,40 +2011,3 @@ async function runWindowsDockerCommand(
   }
 }
 
-function resolveWindowsDockerSpawnCommand(
-  hostPlatform: NodeJS.Platform,
-  dockerArgs: readonly string[]
-): { file: string; args: string[] } {
-  if (hostPlatform === 'win32') {
-    return {
-      file: 'docker',
-      args: [...dockerArgs]
-    };
-  }
-
-  if (hostPlatform !== 'linux' || !process.env.WSL_DISTRO_NAME) {
-    return {
-      file: 'docker',
-      args: [...dockerArgs]
-    };
-  }
-
-  return {
-    file: '/mnt/c/Windows/System32/cmd.exe',
-    args: ['/c', 'docker', ...dockerArgs]
-  };
-}
-
-function isMissingWindowsDockerCommand(error: unknown): boolean {
-  if (!error || typeof error !== 'object') {
-    return false;
-  }
-
-  const code = 'code' in error ? error.code : undefined;
-  const message = 'message' in error ? error.message : undefined;
-  return (
-    code === 'ENOENT' ||
-    (typeof message === 'string' &&
-      (message.includes('ENOENT') || message.includes('not found') || message.includes('spawn docker')))
-  );
-}
