@@ -1,4 +1,9 @@
 import { ComparisonCommandPlan } from '../comparisonReportPlan';
+import {
+  buildWindowsPowerShellArrayLiteral,
+  encodeWindowsPowerShellScript,
+  quotePowerShellLiteral
+} from '../runtime/shellScriptEncoding';
 export { resolveWindowsPowerShellHostExecutable } from '../runtime/shellScriptEncoding';
 
 /**
@@ -589,18 +594,6 @@ export const WINDOWS_CONTAINER_VI_PREVIEW_TEMP_ROOT = `${WINDOWS_CONTAINER_VI_PR
 
 /** Seconds to wait after a best-effort LabVIEW pre-launch before the CLI run. */
 const WINDOWS_CONTAINER_VI_PREVIEW_PRELAUNCH_WAIT_SECONDS = 8;
-
-function quotePowerShellLiteral(value: string): string {
-  return `'${value.replace(/'/g, "''")}'`;
-}
-
-function buildWindowsPowerShellArrayLiteral(values: string[]): string {
-  return `@(${values.map((value) => quotePowerShellLiteral(value)).join(', ')})`;
-}
-
-function encodeWindowsPowerShellScript(script: string): string {
-  return Buffer.from(script, 'utf16le').toString('base64');
-}
 
 export interface RewriteViPreviewArgsForWindowsContainerOptions {
   /** Container workspace mount root (default `C:\\vi-history-suite`). */
