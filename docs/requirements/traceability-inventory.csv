@@ -29,6 +29,7 @@ src/dashboard/multiReportDashboardPreparationSummary.ts,supporting,No,"Dashboard
 src/dashboard/multiReportDashboardPairLedger.ts,supporting,No,"Dashboard pair-metadata ledger rendering (renderPairMetadataLedgerRow + formatOverviewCaptionLedger/formatAttributeLedger/formatDetailHeadingLedger/formatDetailItemLedger) extracted verbatim from multiReportDashboard to separate pure ledger-row HTML/formatting from dashboard orchestration; supporting VHS-REQ-610."
 src/dashboard/multiReportDashboardOverviewImages.ts,supporting,No,"Dashboard overview image grouping (groupOverviewImageAssets, deriveOverviewCaptionPriority) extracted verbatim from multiReportDashboard to separate pure caption-priority grouping/sorting from dashboard orchestration; supporting VHS-REQ-610."
 src/dashboard/multiReportDashboardPairOrdinals.ts,supporting,No,"Dashboard pair-ordinal helpers (mapPairIdsToOrdinals, formatPairOrdinalSummary) extracted verbatim from multiReportDashboard to separate pure pair-position resolution/formatting from dashboard orchestration; supporting VHS-REQ-610."
+src/dashboard/multiReportDashboardDataUriImage.ts,supporting,No,"Dashboard data-URI image decoding (decodeDataUriImage + DecodedDataUriImage) extracted verbatim from multiReportDashboard to separate pure base64 image decoding/content-hashing from dashboard orchestration; supporting VHS-REQ-640."
 src/dashboard/multiReportDashboardAction.ts,mapped,Yes,Multi-report dashboard action; mapped to VHS-REQ-610.
 src/dashboard/niComparisonReportParser.ts,mapped,Yes,NI comparison report parser; mapped to VHS-REQ-610.
 src/dashboard/retainedDashboardEvidence.ts,mapped,Yes,Retained dashboard evidence; mapped to VHS-REQ-610.
@@ -143,6 +144,7 @@ tests/unit/multiReportDashboardPreparationSummary.test.ts,supporting,No,"Dashboa
 tests/unit/multiReportDashboardPairLedger.test.ts,supporting,No,"Dashboard pair-metadata ledger rendering unit tests (overview caption/attribute/detail-heading/detail-item ledger formatting, no-metadata note, metadata grid, HTML escaping); supporting VHS-REQ-610."
 tests/unit/multiReportDashboardOverviewImages.test.ts,supporting,No,"Dashboard overview image grouping unit tests (caption priority ranking, group-by-caption with position sort, priority-then-original ordering, empty input); supporting VHS-REQ-610."
 tests/unit/multiReportDashboardPairOrdinals.test.ts,supporting,No,"Dashboard pair-ordinal helper unit tests (resolve known/drop unknown/sort ascending, empty/single/multi ordinal summary forms); supporting VHS-REQ-610."
+tests/unit/multiReportDashboardDataUriImage.test.ts,supporting,No,"Dashboard data-URI image decoding unit tests (PNG decode + content hash, jpeg->jpg normalization, post-base64 whitespace tolerance, non-data-URI/empty payload undefined, content-addressed hashing); supporting VHS-REQ-640."
 tests/unit/multiReportDashboardAction.test.ts,mapped,Yes,Multi-report dashboard action routing tests; mapped to VHS-REQ-610.
 tests/unit/niComparisonReportParser.test.ts,mapped,Yes,NI comparison report parser tests; mapped to VHS-REQ-610.
 tests/unit/openViHistoryCommand.test.ts,mapped,Yes,Open VI history command tests; mapped through RTM.
