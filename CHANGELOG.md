@@ -6,6 +6,17 @@ This changelog records user-facing release history for `vi-history-suite`.
 
 ### Added
 
+- The single-VI **block diagram preview** can now be shown as an **interactive**
+  view (`viHistorySuite.preview.blockDiagramInteractive`): the diagram is
+  rendered the way the LabVIEW editor shows it — the root diagram with every
+  Case / Event / Stacked-Sequence structure composited in place, each carrying a
+  `◀ n/N ▶` case selector so you can page through a structure's cases in
+  place (or with the arrow keys), plus drag-to-pan, Ctrl/Cmd+scroll and
+  double-click zoom, and a Fit control. Previews are generated on Docker and
+  displayed from the render cache, so the display launches no external process;
+  a Docker-less LabVIEW environment (for example the Vagrant LabVIEW VM) can set
+  `viHistorySuite.preview.allowHostNativeRender` to both generate the cache and
+  visualize previews on the Host runtime (VHS-REQ-659).
 - The development toolset (scripts CLIs, maintainer drivers, the compiled MCP
   server, requirements documents, and agent-customization surfaces) can now be
   distributed as a versioned, content-addressed **GitHub Release** artifact,
