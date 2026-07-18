@@ -40,20 +40,16 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 const { buildAndVerifyDevToolsPrerelease } = require('./lib/devtoolsPrereleaseConsumer.cjs');
+const { DEFAULT_BOX, isBoxOverride, readCommittedBoxSha256 } = require('./lib/vagrantBoxProvenance.cjs');
 
 const repoRoot = path.resolve(__dirname, '..');
 const vagrantDir = path.join(repoRoot, 'vagrant');
 const TRACK_ID = 'vagrant-win-x86-hostnative';
-// Must match vagrant/Vagrantfile: BOX_NAME = ENV.fetch("VIHS_VAGRANT_BOX", "vihs/win11-labview2026").
-// Setting VIHS_VAGRANT_BOX to this value selects the SAME committed box, so it
-// is NOT an override; only a different value is.
-const DEFAULT_BOX = 'vihs/win11-labview2026';
-
-// True only when VIHS_VAGRANT_BOX names a box OTHER than the committed default.
-function isBoxOverride() {
-  const value = (process.env.VIHS_VAGRANT_BOX || '').trim();
-  return value !== '' && value !== DEFAULT_BOX;
-}
+// DEFAULT_BOX / isBoxOverride / readCommittedBoxSha256 come from
+// scripts/lib/vagrantBoxProvenance.cjs. Must match vagrant/Vagrantfile:
+// BOX_NAME = ENV.fetch("VIHS_VAGRANT_BOX", "vihs/win11-labview2026"). Setting
+// VIHS_VAGRANT_BOX to the default value selects the SAME committed box, so it is
+// NOT an override; only a different value is.
 
 // In-guest paths: the Vagrantfile mounts the repo at C:\vihs-workspace.
 const GUEST_REPO = 'C:\\vihs-workspace';
@@ -103,22 +99,11 @@ function getCommit() {
 
 // Read the committed Vagrant box manifest's sha256 so the recorded attestation
 // is structurally bound to the specific box it was produced on (box-provenance
-// chain). Returns undefined when the manifest is absent/unparseable OR when
-// VIHS_VAGRANT_BOX names a NON-default box: the committed manifest fingerprints
-// the default box, so binding its sha256 to an override run would be false
-// provenance. Setting the env to the default box name is not an override.
+// chain). Delegates to scripts/lib/vagrantBoxProvenance.cjs: returns undefined
+// when the manifest is absent/unparseable OR when VIHS_VAGRANT_BOX names a
+// NON-default box.
 function getBoxSha256() {
-  if (isBoxOverride()) {
-    return undefined;
-  }
-  try {
-    const manifest = JSON.parse(fs.readFileSync(path.join(vagrantDir, 'box-manifest.json'), 'utf8'));
-    return typeof manifest.sha256 === 'string' && /^[0-9a-f]{64}$/.test(manifest.sha256)
-      ? manifest.sha256
-      : undefined;
-  } catch {
-    return undefined;
-  }
+  return readCommittedBoxSha256({ vagrantDir });
 }
 
 // Build the dev-tools PRERELEASE provenance manifest and self-verify the in-tree
