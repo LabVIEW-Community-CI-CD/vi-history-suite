@@ -153,11 +153,12 @@ const VIEWER_SCRIPT = `
   var selectors = [];
   var currentZoom = 1;
   function scaleSelector(sel) {
-    // Counter-scale by 1/zoom so a small fit-zoom does not shrink the control
-    // below a clickable size. Clamp so a very small zoom does not blow it up
-    // unboundedly.
+    // Counter-scale by the FULL 1/zoom so the control keeps its true nominal
+    // on-screen size across the whole supported zoom range (fit() can select
+    // down to 0.04 for large VIs / small panes — a capped inverse would still
+    // leave the control unclickable there). Only clamp the lower bound so we
+    // never shrink below nominal when zoomed in past 1x.
     var inv = currentZoom > 0 ? 1 / currentZoom : 1;
-    if (inv > 6) { inv = 6; }
     if (inv < 1) { inv = 1; }
     sel.style.transform = 'scale(' + inv + ')';
   }
