@@ -270,4 +270,48 @@ describe('formatPreflightReport + main', () => {
     expect(code).toBe(0);
     expect(out.writes.join('')).toContain('VM state: running');
   });
+
+  it('main --json emits the structured preflight report on stdout when ready', () => {
+    const out = collectStream();
+    const err = collectStream();
+    const code = main({ ...readyDeps, argv: ['preflight', '--json'], stdout: out.stream, stderr: err.stream });
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out.writes.join(''));
+    expect(parsed.mode).toBe('preflight');
+    expect(parsed.satisfied).toBe(true);
+    expect(Array.isArray(parsed.checks)).toBe(true);
+    expect(err.writes).toHaveLength(0);
+  });
+
+  it('main --json emits the report on stderr and returns 1 when not ready', () => {
+    const out = collectStream();
+    const err = collectStream();
+    const code = main({
+      cwd: FIXTURE_CWD,
+      env: {},
+      existsSync: existsSyncFor(new Set()),
+      runCommand: () => NOT_FOUND,
+      argv: ['preflight', '--json'],
+      stdout: out.stream,
+      stderr: err.stream
+    });
+    expect(code).toBe(1);
+    const parsed = JSON.parse(err.writes.join(''));
+    expect(parsed.mode).toBe('preflight');
+    expect(parsed.satisfied).toBe(false);
+    expect(out.writes).toHaveLength(0);
+  });
+
+  it('main status --json emits the structured status', () => {
+    const out = collectStream();
+    const code = main({
+      cwd: FIXTURE_CWD,
+      argv: ['status', '--json'],
+      runCommand: () => OK('  vihs-local-win11   paused (virtualbox)\n'),
+      stdout: out.stream
+    });
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out.writes.join(''));
+    expect(parsed).toMatchObject({ mode: 'status', state: 'paused', ok: true });
+  });
 });

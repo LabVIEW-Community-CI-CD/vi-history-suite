@@ -30,6 +30,14 @@ Report the current VM lifecycle state:
 npm run vagrant:status
 ```
 
+Both the preflight and status commands accept a `--json` flag for machine-readable
+output (the structured readiness report or lifecycle state):
+
+```bash
+node scripts/vagrantLanePreflight.js preflight --json
+node scripts/vagrantLanePreflight.js status --json
+```
+
 Start the VM manually:
 
 ```bash
