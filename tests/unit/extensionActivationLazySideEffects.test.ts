@@ -780,7 +780,11 @@ describe('extension activation lazy side effects', () => {
     workspaceState.isTrusted = false;
     workspaceState.isTrusted = true;
 
-    expect(eligibilityEventListeners.grantTrust).toHaveLength(1);
+    // Two grant-trust listeners register at activation: the eligibility-cache
+    // invalidator and the VI Preview warming reconciler (VHS-REQ-659). Invoking
+    // both proves the cache is cleared; the reconcile listener is a fire-and-forget
+    // no-op for this assertion.
+    expect(eligibilityEventListeners.grantTrust).toHaveLength(2);
     eligibilityEventListeners.grantTrust.forEach((listener) => listener());
 
     expect(api.isEligible({ fsPath: '/repo/demo.vi' } as never)).toBe(false);
