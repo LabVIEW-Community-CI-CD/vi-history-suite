@@ -16,6 +16,7 @@ describe('Package Test VSIX workflow', () => {
   it('is manual-only and cannot run on pull requests or pushes', () => {
     const workflow = readWorkflow();
 
+    // VHS-REQ-608.1
     expect(workflow).toContain('workflow_dispatch:');
     expect(workflow).toContain('publish_prerelease:');
     expect(workflow).toContain('issue_number:');
@@ -35,6 +36,7 @@ describe('Package Test VSIX workflow', () => {
   it('fails closed to trusted refs and avoids Marketplace publication secrets', () => {
     const workflow = readWorkflow();
 
+    // VHS-REQ-608.2, VHS-REQ-608.6
     expect(workflow).toContain('refs/heads/main');
     expect(workflow).toContain('^refs/heads/release/v[0-9]+\\.[0-9]+\\.[0-9]+$');
     expect(workflow).toContain('^refs/tags/v[0-9]+\\.[0-9]+\\.[0-9]+$');
@@ -51,6 +53,7 @@ describe('Package Test VSIX workflow', () => {
   it('runs package checks and uploads a short-lived VSIX artifact', () => {
     const workflow = readWorkflow();
 
+    // VHS-REQ-608.3, VHS-REQ-608.4
     expect(workflow).toContain('npm ci');
     expect(workflow).toContain('npm run check');
     expect(workflow).toContain('npm test');
@@ -64,6 +67,7 @@ describe('Package Test VSIX workflow', () => {
   it('can optionally create a unique immutable diagnostic prerelease without marking it latest', () => {
     const workflow = readWorkflow();
 
+    // VHS-REQ-608.5
     expect(workflow).toContain('if: ${{ inputs.publish_prerelease }}');
     expect(workflow).toContain('Compute Diagnostic Prerelease Tag');
     expect(workflow).toContain('diagnostic-test-vsix-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}');

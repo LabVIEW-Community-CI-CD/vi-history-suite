@@ -24,8 +24,7 @@ describe('review scenario registry and repository support policy (VHS-REQ-610 su
       familyId: 'labview-icon-editor',
       allowCoreReviewActions: true,
       allowDecisionRecordActions: true,
-      allowBenchmarkStatus: true,
-      allowHumanReviewSubmission: true
+      allowBenchmarkStatus: true
     });
     expect(
       classifyRepositorySupportPolicy('https://github.com/example/labview-icon-editor.git')
@@ -46,6 +45,24 @@ describe('review scenario registry and repository support policy (VHS-REQ-610 su
     expect(classifyRepositorySupportPolicy(undefined)).toMatchObject({
       tier: 'generic-repository',
       supportLabel: 'Repo-agnostic support'
+    });
+  });
+
+  it('normalizes and classifies www.github.com remotes as canonical GitHub (VHS-REQ-610 supporting evidence)', () => {
+    // www.github.com is a valid GitHub remote host (git redirects it); it must
+    // normalize to the canonical github.com coordinates, not fall back to
+    // generic-repository.
+    expect(normalizeGitHubRepositoryUrl('https://www.github.com/ni/labview-icon-editor.git')).toBe(
+      'https://github.com/ni/labview-icon-editor.git'
+    );
+    expect(normalizeGitHubRepositoryUrl('git@www.github.com:NI/LabVIEW-Icon-Editor.git')).toBe(
+      'https://github.com/ni/labview-icon-editor.git'
+    );
+    expect(
+      classifyRepositorySupportPolicy('https://www.github.com/ni/labview-icon-editor.git')
+    ).toMatchObject({
+      tier: 'known-upstream',
+      familyId: 'labview-icon-editor'
     });
   });
 

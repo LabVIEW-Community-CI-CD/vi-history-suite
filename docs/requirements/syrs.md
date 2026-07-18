@@ -231,11 +231,11 @@ trusted Windows/LabVIEW validation, and optional Vagrant local validation.
 - Status: Active
 - Area: Runtime
 - Statement: The system shall let users select among the LabVIEW container image
-  versions that are actually available — across release year, quarter, and patch
-  revision, for both the Windows-container and Linux-container providers — and
-  shall derive the selectable set from published registry tags and locally
-  present images, so newly published images (including future release years and
-  new patch revisions) become selectable without modifying extension source.
+  versions that are actually available across release year, quarter, and patch
+  revision for both the Windows-container and Linux-container providers by
+  deriving the selectable set from published registry tags and locally present
+  images, so newly published images become selectable without modifying extension
+  source.
 - Acceptance Criteria:
   - Selectable container versions are derived at runtime from discovered image
     tags, not from a single hardcoded tag per platform.
@@ -274,7 +274,8 @@ trusted Windows/LabVIEW validation, and optional Vagrant local validation.
   - Pull requests to `develop` admit `feature/*`, release, hotfix, and `main`
     back-sync branches by hosted CI.
   - Marketplace publication is tag-only from exact `vX.Y.Z` tags on commits
-    reachable from `origin/main`.
+    reachable from `origin/main`, triggered exclusively by a manual maintainer
+    dispatch with no automatic trigger (agents must never dispatch or approve it).
   - Marketplace live-listing verification distinguishes bounded propagation lag
     from publication failure.
 - Verification References:
@@ -298,8 +299,8 @@ trusted Windows/LabVIEW validation, and optional Vagrant local validation.
     coverage and zero-coverage supporting files tied to active requirements.
   - Hosted coverage thresholds are raised only from measured evidence and remain
     documented as regression floors, not coverage-quality claims; the
-    post-wave hosted floors are 72% statements, 61% branches, 79% functions,
-    and 72% lines.
+    post-wave hosted floors are 80% statements, 70% branches, 84% functions,
+    and 80% lines.
   - Coverage-led follow-up work targets user-facing requirement-mapped dark
     areas before dev-only tooling.
 - Verification References:

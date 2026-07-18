@@ -2,6 +2,92 @@
 
 This changelog records user-facing release history for `vi-history-suite`.
 
+## [Unreleased]
+
+### Added
+
+- The single-VI **block diagram preview** can now be shown as an **interactive**
+  view (`viHistorySuite.preview.blockDiagramInteractive`): the diagram is
+  rendered the way the LabVIEW editor shows it — the root diagram with every
+  Case / Event / Stacked-Sequence structure composited in place, each carrying a
+  `◀ n/N ▶` case selector so you can page through a structure's cases in
+  place (or with the arrow keys), plus drag-to-pan, Ctrl/Cmd+scroll and
+  double-click zoom, and a Fit control. Previews are generated on Docker and
+  displayed from the render cache, so the display launches no external process;
+  a Docker-less LabVIEW environment (for example the Vagrant LabVIEW VM) can set
+  `viHistorySuite.preview.allowHostNativeRender` to both generate the cache and
+  visualize previews on the Host runtime (VHS-REQ-659).
+- The development toolset (scripts CLIs, maintainer drivers, the compiled MCP
+  server, requirements documents, and agent-customization surfaces) can now be
+  distributed as a versioned, content-addressed **GitHub Release** artifact,
+  independent of the marketplace release. A committed toolset manifest
+  (`docs/devtools-release.manifest.json`) defines what ships;
+  `npm run devtools:release` emits a deterministic content digest plus a
+  provenance manifest binding the toolset to its requirements state and can pack
+  a reproducible tarball; `scripts/verifyDevToolsRelease.js` fails closed unless
+  a downloaded or in-tree toolset matches that manifest; and a dry-run-first
+  release workflow publishes only when the content digest changes
+  (VHS-REQ-667). See [docs/devtools-release.md](./docs/devtools-release.md)
+  (#1510, #1513, #1515, #1517).
+- The release-readiness gate (`node scripts/checkReleaseReadiness.js
+  --require-release-attestation`) now also verifies the committed Vagrant box
+  integrity manifest (`vagrant/box-manifest.json`): it fails closed unless the
+  manifest is present, matches the `vi-history-suite/vagrant-box-manifest@v1`
+  schema, has a 64-hex `sha256`, a positive `sizeBytes`, and a
+  `recordedForVersion` equal to the release version. The check reads only the
+  committed manifest (never the box artifact), so it stays hypervisor-free in
+  hosted CI (VHS-REQ-666) (#1505).
+- VI History Suite now registers a built-in **Model Context Protocol (MCP)**
+  server with VS Code, so Copilot **agent mode** can summarize VI comparisons,
+  compare and walk VI revisions, index a repository's VIs, and fetch or validate
+  the published VI-diff schemas. See [docs/mcp-server.md](./docs/mcp-server.md).
+  Requires VS Code 1.101 or later (#756, #757).
+- The Source Control and Explorer views now show a badge and hover summary on a
+  changed VI once you have compared its uncommitted change against the latest
+  committed revision, so you can see what changed without reopening the full
+  comparison report. The hover also prompts you to run a comparison when a
+  changed VI has no cached summary yet, so the feature is discoverable before
+  the first compare (#762, #768).
+- VI History Suite can now produce a **VI semantic pull-request review**: it
+  detects the LabVIEW VIs changed between two revisions, compares each, and
+  turns GitHub's "Binary file not shown" into a real "what changed" summary
+  (changed surfaces and itemized detail) posted as a single **sticky comment**
+  that updates in place on re-runs. It is available as the `build_vi_pr_review`
+  Copilot agent-mode MCP tool and as a headless CLI that can post the comment,
+  write the review artifact, or post a previously produced artifact without
+  recomputing. VIs that could not be compared list the reason instead of a bare
+  "failed" (#771, #772, #774, #779, #780).
+- A maintainer-dispatched **on-demand VI PR review GitHub Actions workflow**
+  runs that review against any target repository's pull request on a
+  GitHub-hosted Linux runner (which pulls the NI LabVIEW container image) and
+  posts the sticky comment back to the target PR. The review logic is packaged
+  as a reusable `workflow_call` unit so any
+  LabVIEW repository can consume it with a thin caller workflow. See
+  [docs/maintainer-operations.md](./docs/maintainer-operations.md)
+  (VHS-REQ-661; #775, #777, #781, #786, #803).
+- The VI PR review now also embeds the **rendered block-diagram/front-panel
+  difference images** inline in the comment (public target repos) and attaches
+  each changed VI's full self-contained comparison report to the run artifact,
+  and it can publish a branch-protection-gateable **`vi-semantic-review` commit
+  status** on the PR head. Inline images and the commit status are opt-in
+  workflow inputs (`publish_images`, `create_commit_status`) that need a token
+  with `contents: write` / `statuses: write` respectively (VHS-REQ-661; #805,
+  #806, #808).
+- `npm run assurance:state` can now retain supplied post-merge review findings
+  as first-class classified signals, including the review URL, title, source,
+  and basis in the generated JSON and Markdown assurance-state packet
+  (VHS-REQ-615; #1110).
+- Comparisons of **uncommitted working-tree changes** are now **retained in the
+  VI Review Dashboard**. Each uncommitted comparison is saved as a
+  content-addressed snapshot of the exact on-disk bytes that were compared, so
+  it appears in the dashboard as an **"Uncommitted snapshot"** entry alongside
+  committed-revision pairs. Because a re-run would compare whatever is on disk
+  at that later moment, retained snapshots are clearly flagged as **not
+  reproducible**. VI History keeps the most recent snapshots per VI (default
+  5); set `viHistorySuite.comparison.worktreeSnapshotRetentionLimit` to `0` to
+  turn retention off, or to a higher number to keep more
+  (VHS-REQ-641; #1386, #1387, #1388, #1389, #1390, #1391).
+
 ## [1.33.2] - 2026-06-25
 
 ### Changed
@@ -1120,7 +1206,7 @@ This changelog records user-facing release history for `vi-history-suite`.
   auto-detection returns no host installations and falls through to the
   Docker CLI check; Marketplace-published builds for macOS still require
   Docker Desktop until ≥2025 macOS builds of LabVIEW ship and the
-  `/Applications` scan is added (tracked as VHS-REQ-618).
+  `/Applications` scan is added (a deferred extension of VHS-REQ-616).
 
 ### Changed
 

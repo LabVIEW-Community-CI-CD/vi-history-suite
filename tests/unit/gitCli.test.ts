@@ -67,7 +67,7 @@ describe('gitCli parsing', () => {
     expect(isWorktreeRevision(undefined)).toBe(false);
   });
 
-  it('detects tracked change from git status porcelain output (VHS-REQ-641)', () => {
+  it('detects tracked change from git status porcelain output (VHS-REQ-641.1)', () => {
     expect(parseStatusPorcelainHasChange(' M path/to/File.vi\n')).toBe(true);
     expect(parseStatusPorcelainHasChange('M  staged.vi\n')).toBe(true);
     expect(parseStatusPorcelainHasChange('')).toBe(false);
@@ -107,6 +107,26 @@ describe('gitCli parsing', () => {
     expect(parseCommitHashes('abc123\n\ndef456\n')).toEqual(['abc123', 'def456']);
   });
 
+  it('drops staged ls-files entries whose metadata is malformed (VHS-REQ-641.1)', () => {
+    // Tab present but metadata is invalid: non-integer stage, missing fields, or
+    // an empty path after the tab -> the entry is filtered out (second guard).
+    expect(
+      parseLsFilesStageZ(
+        '100644 abcdef1234567890abcdef1234567890abcdef12 X\tbad-stage.vi\0' +
+          '100644\tmissing-fields.vi\0' +
+          '100644 abcdef1234567890abcdef1234567890abcdef12 0\t\0' +
+          '100644 abcdef1234567890abcdef1234567890abcdef12 0\tgood.vi\0'
+      )
+    ).toEqual([
+      {
+        mode: '100644',
+        objectId: 'abcdef1234567890abcdef1234567890abcdef12',
+        stage: 0,
+        relativePath: 'good.vi'
+      }
+    ]);
+  });
+
   it('parses history entry records including single-line, multi-line, and empty commit bodies', () => {
     const stdout =
       'abc123\x1f2026-04-02T10:00:00Z\x1fA User\x1fFirst subject\x1fFirst body line\x1e' +
@@ -142,6 +162,22 @@ describe('gitCli parsing', () => {
     expect(normalizeRelativeGitPath('folder\\nested\\file.vi')).toBe(
       'folder/nested/file.vi'
     );
+  });
+
+  it('preserves a commit body that itself contains the field-separator byte', () => {
+    // %b (body) is the last format field. A commit body that contains the field
+    // separator (\x1f) must be preserved verbatim, not truncated at the first
+    // occurrence.
+    const stdout = 'abc123\x1f2026-04-02T10:00:00Z\x1fA User\x1fSubject\x1fLine A\x1fLine B\x1e';
+    expect(parseHistoryEntries(stdout)).toEqual([
+      {
+        hash: 'abc123',
+        authorDate: '2026-04-02T10:00:00Z',
+        authorName: 'A User',
+        subject: 'Subject',
+        body: 'Line A\x1fLine B'
+      }
+    ]);
   });
 
   it('prefers an explicit git executable override', () => {
@@ -268,7 +304,7 @@ describe('gitCli parsing', () => {
     ]);
   });
 
-  it('reports per-file working-tree dirtiness scoped to the path (VHS-REQ-641)', async () => {
+  it('reports per-file working-tree dirtiness scoped to the path (VHS-REQ-641.1)', async () => {
     const repoRoot = await createTempGitRepo();
     const targetPath = path.join(repoRoot, 'nested', 'Target.vi');
     const otherPath = path.join(repoRoot, 'Other.vi');
@@ -334,7 +370,7 @@ describe('gitCli parsing', () => {
     expect(reachableProofs).toEqual(new Set([head]));
   });
 
-  it('returns bounded commit hashes and structured history entries from a real temporary Git repo', async () => {
+  it('returns bounded commit hashes and structured history entries from a real temporary Git repo (VHS-REQ-008.1, VHS-REQ-008.2, VHS-REQ-639.3)', async () => {
     const repoRoot = await createTempGitRepo();
     const trackedPath = path.join(repoRoot, 'nested', 'history.vi');
 
@@ -369,6 +405,17 @@ describe('gitCli parsing', () => {
     expect(historyEntries[0]?.authorDate).toMatch(/^\d{4}-\d{2}-\d{2}T/);
   });
 
+  it('returns the first existing Windows Git candidate before falling back (VHS-REQ-641.1)', () => {
+    // pathExists true for the cmd/git.exe candidate -> that path is returned
+    // (win32 candidate-found branch), not the bare "git" fallback.
+    const chosen = resolveGitExecutable(
+      { ProgramFiles: 'C:\\Program Files' },
+      'win32',
+      (candidate) => candidate === 'C:\\Program Files\\Git\\cmd\\git.exe'
+    );
+    expect(chosen).toBe('C:\\Program Files\\Git\\cmd\\git.exe');
+  });
+
   it('falls back to bare git when no Windows candidate exists and rejects Git subprocess failures', async () => {
     expect(resolveGitExecutable({}, 'win32', () => false)).toBe('git');
 
@@ -401,7 +448,7 @@ describe('gitCli parsing', () => {
 });
 
 describe('gitCli eligibility edge cases (VHS-REQ-006, VHS-REQ-007)', () => {
-  it('follows renamed file history and returns commit hashes from before the rename', async () => {
+  it('follows renamed file history and returns commit hashes from before the rename (VHS-REQ-008.3)', async () => {
     const repoRoot = await createTempGitRepo();
     const originalPath = path.join(repoRoot, 'original.vi');
     const renamedPath = path.join(repoRoot, 'renamed.vi');
@@ -425,7 +472,7 @@ describe('gitCli eligibility edge cases (VHS-REQ-006, VHS-REQ-007)', () => {
     expect(historyEntries[2]?.subject).toBe('Add original.vi');
   });
 
-  it('returns empty commit hashes for untracked files in a repository with history', async () => {
+  it('returns empty commit hashes for untracked files in a repository with history (VHS-REQ-006.1)', async () => {
     const repoRoot = await createTempGitRepo();
     const trackedPath = path.join(repoRoot, 'tracked.vi');
     const untrackedPath = path.join(repoRoot, 'untracked.vi');
@@ -455,7 +502,7 @@ describe('gitCli eligibility edge cases (VHS-REQ-006, VHS-REQ-007)', () => {
     ).rejects.toThrow(/outside repository/);
   });
 
-  it('handles paths with special characters safely when NUL-delimited', async () => {
+  it('handles paths with special characters safely when NUL-delimited (VHS-REQ-007.1)', async () => {
     const repoRoot = await createTempGitRepo();
     const specialPath = path.join(repoRoot, 'folder with spaces', 'file [special] (chars).vi');
 
@@ -478,7 +525,14 @@ describe('gitCli eligibility edge cases (VHS-REQ-006, VHS-REQ-007)', () => {
     expect(commitHashes).toHaveLength(2);
   });
 
-  it('parses NUL-separated paths with empty segments and trailing NUL bytes correctly', () => {
+  it('fails closed when tracked path enumeration cannot run at the caller boundary (VHS-REQ-007.3)', async () => {
+    const nonRepositoryRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-git-nonrepo-'));
+    tempDirectories.push(nonRepositoryRoot);
+
+    await expect(listTrackedFiles(nonRepositoryRoot)).rejects.toThrow(/not a git repository/i);
+  });
+
+  it('parses NUL-separated paths with empty segments and trailing NUL bytes correctly (VHS-REQ-007.2)', () => {
     expect(parseLsFilesZ('')).toEqual([]);
     expect(parseLsFilesZ('\0')).toEqual([]);
     expect(parseLsFilesZ('\0\0\0')).toEqual([]);

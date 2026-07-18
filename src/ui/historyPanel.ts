@@ -2,6 +2,7 @@ import {
   ViHistoryCommit,
   ViHistoryViewModel
 } from '../services/viHistoryModel';
+import { escapeHtml } from '../support/escapeHtml';
 import { WORKTREE_REVISION_SENTINEL } from '../git/gitCli';
 
 /**
@@ -92,7 +93,10 @@ export function deriveCompareSelectionState(
   return { count: validCandidates.length, status: 'too-many' };
 }
 
-export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
+export function renderHistoryPanelHtml(
+  model: ViHistoryViewModel,
+  options: { previewEnabled?: boolean } = {}
+): string {
   const capabilities = model.surfaceCapabilities ?? {};
   const comparisonSelectionEnabled = capabilities.comparisonGenerationAvailable !== false;
   const commitCount = model.commits.length;
@@ -121,10 +125,22 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
       const selectCheckbox = `<input data-testid="history-commit-select" type="checkbox" data-hash="${escapeHtml(commit.hash)}" ${
         comparisonSelectionEnabled ? '' : 'disabled'
       } />`;
+      // VHS-REQ-659: per-revision preview opens that commit's VI in the read-only
+      // preview editor. Shown only when comparison/runtime surfaces are available
+      // (same gate as compare) AND the opt-in VI Preview feature is enabled
+      // (`viHistorySuite.preview.enabled`; the pure renderer defaults to shown so
+      // existing callers/tests are unaffected — the extension passes the real
+      // state). The shared webview click handler posts { command: 'previewRevision', hash }.
+      const previewButton =
+        comparisonSelectionEnabled && options.previewEnabled !== false
+          ? `<button data-testid="history-action-preview" class="row-preview" data-command="previewRevision" data-hash="${escapeHtml(
+              commit.hash
+            )}" title="Preview this revision">Preview</button>`
+          : '';
 
       return `
         <tr data-testid="history-row" data-commit-index="${index}">
-          <td data-testid="history-commit-select-cell">${selectCheckbox}</td>
+          <td data-testid="history-commit-select-cell">${selectCheckbox}${previewButton}</td>
           <td data-testid="history-commit-hash"><code>${escapeHtml(commit.hash.slice(0, 8))}</code></td>
           <td data-testid="history-commit-date">${escapeHtml(commit.authorDate)}</td>
           <td data-testid="history-commit-author">${escapeHtml(commit.authorName)}</td>
@@ -173,6 +189,11 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
       button {
         margin-right: 8px;
         margin-bottom: 6px;
+      }
+      .row-preview {
+        margin-left: 6px;
+        margin-bottom: 0;
+        font-size: 0.85em;
       }
       .commit-body {
         white-space: pre-wrap;
@@ -256,6 +277,14 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
           .sort((left, right) => left.commitIndex - right.commitIndex);
 
         if (ranked.length !== 2) {
+          return undefined;
+        }
+
+        // VHS-REQ-133: require two DISTINCT revisions, mirroring the tested
+        // resolveSelectedComparePair guard. Without this a duplicate-hash
+        // selection (e.g. a rendering regression that emits two rows with the
+        // same data-hash) would enable Compare and post a self-compare pair.
+        if (ranked[0].hash === ranked[1].hash) {
           return undefined;
         }
 
@@ -413,15 +442,6 @@ function renderCommitBodyCell(commit: ViHistoryCommit): string {
 function renderCommitBodyText(commit: ViHistoryCommit): string {
   const body = renderPlainTextValue(commit.body ?? '');
   return body.length > 0 ? body : 'No commit body';
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
 }
 
 function renderPlainTextValue(value: string): string {

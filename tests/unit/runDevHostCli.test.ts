@@ -1,8 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
+import * as path from 'node:path';
 
 import {
   applyDevHostCliExitCode,
+  joinPreservingExplicitPathStyle,
   maybeRunDevHostCliAsMain,
+  normalizeWorkspacePath,
   runDevHostCli,
   runDevHostCliMain
 } from '../../src/cli/runDevHost';
@@ -98,6 +101,64 @@ describe('runDevHostCli', () => {
     expect(launchPlan?.extensionMode).toBe('staged');
     expect(write).toHaveBeenCalled();
   });
+
+  it('launches with a user-supplied --workspace in direct extension mode (no fixture prepared)', async () => {
+    const write = vi.fn();
+    const prepareFixtureWorkspace = vi.fn<
+      (workspacePath: string) => Promise<ViHistoryDevHostWorkspaceMetadata>
+    >();
+    const launcher = vi.fn<(plan: ViHistoryDevHostLaunchPlan) => Promise<void>>().mockResolvedValue();
+
+    const outcome = await runDevHostCli(['--workspace-path', '/home/dev/my-workspace'], {
+      repoRoot: '/repo',
+      resolveRuntimeRoot: vi.fn().mockResolvedValue('/tmp/runtime'),
+      prepareFixtureWorkspace,
+      resolveCodeExecutablePath: vi.fn().mockReturnValue('/opt/vscode/code'),
+      launcher,
+      stdout: { write }
+    });
+
+    expect(outcome).toBe('launched');
+    // A user-supplied workspace path bypasses fixture preparation entirely.
+    expect(prepareFixtureWorkspace).not.toHaveBeenCalled();
+    const launchPlan = launcher.mock.calls[0]?.[0];
+    expect(launchPlan?.workspacePath.replace(/\\/g, '/')).toContain('my-workspace');
+    expect(launchPlan?.preparedFixtureWorkspace).toBe(false);
+    // No --stage-extension -> direct mode, extension development path is the repo root.
+    expect(launchPlan?.extensionMode).toBe('direct');
+    expect(launchPlan?.extensionDevelopmentPath).toBe('/repo');
+  });
+
+  it('re-prepares the fixture workspace for --prepare-workspace-only when a workspace path is also supplied', async () => {
+    const write = vi.fn();
+    const prepareFixtureWorkspace = vi
+      .fn<(workspacePath: string) => Promise<ViHistoryDevHostWorkspaceMetadata>>()
+      .mockResolvedValue({
+        workspacePath: '/tmp/runtime/workspace-fixture',
+        eligibleRelativePath: 'fixtures/eligible.vi',
+        ineligibleRelativePath: 'fixtures/ineligible.txt',
+        metadataPath: '/tmp/runtime/workspace-fixture/.vihs-metadata.json'
+      });
+    const launcher = vi.fn<(plan: ViHistoryDevHostLaunchPlan) => Promise<void>>().mockResolvedValue();
+
+    const outcome = await runDevHostCli(
+      ['--prepare-workspace-only', '--workspace-path', '/home/dev/my-workspace'],
+      {
+        repoRoot: '/repo',
+        resolveRuntimeRoot: vi.fn().mockResolvedValue('/tmp/runtime'),
+        prepareFixtureWorkspace,
+        launcher,
+        stdout: { write }
+      }
+    );
+
+    expect(outcome).toBe('prepared');
+    // The supplied workspace path skips the inline fixture prepare, so the
+    // prepare-workspace-only branch must call prepareFixtureWorkspace itself.
+    expect(prepareFixtureWorkspace).toHaveBeenCalledTimes(1);
+    expect(launcher).not.toHaveBeenCalled();
+    expect(write).toHaveBeenCalled();
+  });
 });
 
 describe('runDevHostCliMain', () => {
@@ -148,5 +209,32 @@ describe('dev-host CLI entry helpers', () => {
     });
     expect(processLike.exitCode).toBe(0);
     expect(write).toHaveBeenCalled();
+  });
+});
+
+// VHS-REQ-621: cover the win32 drive-letter and UNC branches of the path helpers
+// that the Linux CLI-flow tests never exercise (they only produce POSIX inputs).
+// Backslashes are built via String.fromCharCode(92) to keep the source escape-safe.
+describe('runDevHost path helpers (VHS-REQ-621)', () => {
+  const BS = String.fromCharCode(92); // a single backslash
+
+  it('normalizeWorkspacePath returns win32 drive-letter and UNC paths verbatim, resolves POSIX', () => {
+    const winPath = `C:${BS}Users${BS}dev${BS}ws`;
+    expect(normalizeWorkspacePath(winPath)).toBe(winPath);
+    const uncPath = `${BS}${BS}server${BS}share${BS}ws`;
+    expect(normalizeWorkspacePath(uncPath)).toBe(uncPath);
+    // A relative path is resolved against cwd. Compute the expected value the
+    // same way production does (path.resolve) so the assertion is separator-
+    // agnostic and passes on the Windows CI leg too (AGENTS.md guidance).
+    expect(normalizeWorkspacePath('rel/ws')).toBe(path.resolve('rel/ws'));
+  });
+
+  it('joinPreservingExplicitPathStyle joins per the root path style (posix / win32 / UNC)', () => {
+    // POSIX root -> forward slashes, backslashes in segments normalized to '/'.
+    expect(joinPreservingExplicitPathStyle('/runtime/root', `a${BS}b`, 'c')).toBe('/runtime/root/a/b/c');
+    // win32 drive root -> backslashes, forward slashes in segments normalized.
+    expect(joinPreservingExplicitPathStyle(`C:${BS}runtime`, 'a/b', 'c')).toBe(`C:${BS}runtime${BS}a${BS}b${BS}c`);
+    // UNC root -> win32 join preserving the leading double backslash.
+    expect(joinPreservingExplicitPathStyle(`${BS}${BS}srv${BS}share`, 'a/b')).toBe(`${BS}${BS}srv${BS}share${BS}a${BS}b`);
   });
 });

@@ -223,8 +223,14 @@ export async function discoverAvailableContainerImageVersions(
  * HTTPS GET against the Docker Hub tag list for the pinned repository, capped at
  * a small number of pages, with a per-request timeout. Returns only tag name
  * strings; the caller validates them through the namespace-pinned tag grammar.
+ *
+ * `httpGetJson` defaults to the real `httpsGetJson` and is injectable so the
+ * pagination/guard/filter logic can be unit-tested without network I/O.
  */
-export const defaultFetchPublishedTags: RegistryTagFetcher = async (repository) => {
+export const defaultFetchPublishedTags = async (
+  repository: string,
+  httpGetJson: (url: string) => Promise<{ results?: Array<{ name?: unknown }>; next?: unknown }> = createHttpsGetJson()
+): Promise<string[]> => {
   if (repository !== LABVIEW_CONTAINER_IMAGE_REPOSITORY) {
     return [];
   }
@@ -234,7 +240,7 @@ export const defaultFetchPublishedTags: RegistryTagFetcher = async (repository) 
     const url = `https://hub.docker.com/v2/repositories/${repository}/tags?page_size=100&page=${page}`;
     let payload: { results?: Array<{ name?: unknown }>; next?: unknown };
     try {
-      payload = await httpsGetJson(url);
+      payload = await httpGetJson(url);
     } catch {
       break;
     }
@@ -251,34 +257,43 @@ export const defaultFetchPublishedTags: RegistryTagFetcher = async (repository) 
   return tags;
 };
 
-function httpsGetJson(url: string): Promise<{ results?: Array<{ name?: unknown }>; next?: unknown }> {
-  return new Promise((resolve, reject) => {
-    const request = https.get(url, { timeout: REGISTRY_REQUEST_TIMEOUT_MS }, (response) => {
-      const status = response.statusCode ?? 0;
-      if (status < 200 || status >= 300) {
-        response.resume();
-        reject(new Error(`registry responded with HTTP ${status}`));
-        return;
-      }
-      let body = '';
-      response.setEncoding('utf8');
-      response.on('data', (chunk) => {
-        body += chunk;
-        if (body.length > 2_000_000) {
-          request.destroy(new Error('registry response too large'));
+/**
+ * Build the default registry JSON getter over an injectable `https.get`. The
+ * HTTP boundary is a parameter so the status/size-cap/parse/timeout/error
+ * branches can be unit-tested with a fake request/response pair, matching the
+ * dependency-injected-boundary convention used elsewhere in the codebase.
+ */
+export function createHttpsGetJson(
+  httpGet: typeof https.get = https.get
+): (url: string) => Promise<{ results?: Array<{ name?: unknown }>; next?: unknown }> {
+  return (url: string) =>
+    new Promise((resolve, reject) => {
+      const request = httpGet(url, { timeout: REGISTRY_REQUEST_TIMEOUT_MS }, (response) => {
+        const status = response.statusCode ?? 0;
+        if (status < 200 || status >= 300) {
+          response.resume();
+          reject(new Error(`registry responded with HTTP ${status}`));
+          return;
         }
+        let body = '';
+        response.setEncoding('utf8');
+        response.on('data', (chunk) => {
+          body += chunk;
+          if (body.length > 2_000_000) {
+            request.destroy(new Error('registry response too large'));
+          }
+        });
+        response.on('end', () => {
+          try {
+            resolve(JSON.parse(body));
+          } catch (error) {
+            reject(error instanceof Error ? error : new Error(String(error)));
+          }
+        });
       });
-      response.on('end', () => {
-        try {
-          resolve(JSON.parse(body));
-        } catch (error) {
-          reject(error instanceof Error ? error : new Error(String(error)));
-        }
-      });
+      request.on('timeout', () => request.destroy(new Error('registry request timed out')));
+      request.on('error', reject);
     });
-    request.on('timeout', () => request.destroy(new Error('registry request timed out')));
-    request.on('error', reject);
-  });
 }
 
 /**
@@ -295,8 +310,11 @@ function httpsGetJson(url: string): Promise<{ results?: Array<{ name?: unknown }
  *   silently empty (the engine-offline bug: present images showed as
  *   available-to-pull).
  * - Success (exit 0) resolves the parsed reference list.
+ *
+ * `spawnImpl` defaults to the real `spawn` and is injectable so the three-state
+ * logic can be unit-tested without a Docker CLI.
  */
-export const defaultListLocalImages: LocalImageLister = () =>
+export const defaultListLocalImages = (spawnImpl: typeof spawn = spawn): Promise<string[]> =>
   new Promise((resolve, reject) => {
     let stdout = '';
     let stderr = '';
@@ -308,7 +326,7 @@ export const defaultListLocalImages: LocalImageLister = () =>
       }
     };
     try {
-      const child = spawn(
+      const child = spawnImpl(
         'docker',
         ['images', '--format', '{{.Repository}}:{{.Tag}}', LABVIEW_CONTAINER_IMAGE_REPOSITORY],
         { windowsHide: true }

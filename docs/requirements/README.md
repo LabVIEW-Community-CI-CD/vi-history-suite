@@ -105,6 +105,10 @@ closure-decision status, and `standards.auditTarget` fields. Standards evidence
 runs against a temporary tracked-worktree snapshot built from `git ls-files`, so
 generated validation, cache, coverage, package, and evidence directories cannot
 become formal proof.
+For release closeout, use `--kind release` with the same command shape. Release
+closeout retains the quick-triage scorecard plus first-class `release-gate` and
+`26514-review` scorecards in `closeout-summary.json` and the save directory;
+non-PASS or missing release profile gates block closure.
 
 Use Docker explicitly when host Python is unavailable:
 

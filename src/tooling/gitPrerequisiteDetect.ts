@@ -9,6 +9,8 @@
 
 import { spawn } from 'node:child_process';
 
+import { errorMessage } from '../support/errorMessage';
+
 /**
  * Reason a Git probe came back negative. Distinguishing "not on PATH" from
  * "spawn failed unexpectedly" lets the UX explain itself precisely.
@@ -44,59 +46,71 @@ export interface GitPrerequisiteDetectDeps {
 
 const GIT_PROBE_TIMEOUT_MS = 5_000;
 
-const defaultRunGitVersion = (): Promise<GitProbeResult> =>
-  new Promise((resolve, reject) => {
-    let stdout = '';
-    let stderr = '';
-    let settled = false;
+/**
+ * Build the default `git --version` probe over an injectable `spawn`. The
+ * internal spawn is a parameter so the timeout / spawn-throw / child-error /
+ * close branches can be unit-tested with a fake child process, matching the
+ * dependency-injected-boundary convention used elsewhere in the codebase.
+ */
+export function createRunGitVersion(
+  spawnImpl: typeof spawn = spawn
+): () => Promise<GitProbeResult> {
+  return () =>
+    new Promise((resolve, reject) => {
+      let stdout = '';
+      let stderr = '';
+      let settled = false;
 
-    let child: ReturnType<typeof spawn>;
-    try {
-      child = spawn('git', ['--version'], {
-        windowsHide: true,
-        stdio: ['ignore', 'pipe', 'pipe']
-      });
-    } catch (error) {
-      reject(error);
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-      if (settled) {
-        return;
-      }
-      settled = true;
+      let child: ReturnType<typeof spawn>;
       try {
-        child.kill();
-      } catch {
-        // ignore
+        child = spawnImpl('git', ['--version'], {
+          windowsHide: true,
+          stdio: ['ignore', 'pipe', 'pipe']
+        });
+      } catch (error) {
+        reject(error);
+        return;
       }
-      reject(new Error('git --version timed out'));
-    }, GIT_PROBE_TIMEOUT_MS);
 
-    child.stdout?.on('data', (chunk) => {
-      stdout += chunk.toString('utf8');
+      const timeout = setTimeout(() => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        try {
+          child.kill();
+        } catch {
+          // ignore
+        }
+        reject(new Error('git --version timed out'));
+      }, GIT_PROBE_TIMEOUT_MS);
+
+      child.stdout?.on('data', (chunk) => {
+        stdout += chunk.toString('utf8');
+      });
+      child.stderr?.on('data', (chunk) => {
+        stderr += chunk.toString('utf8');
+      });
+      child.on('error', (error) => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        clearTimeout(timeout);
+        reject(error);
+      });
+      child.on('close', (exitCode) => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        clearTimeout(timeout);
+        resolve({ exitCode, stdout, stderr });
+      });
     });
-    child.stderr?.on('data', (chunk) => {
-      stderr += chunk.toString('utf8');
-    });
-    child.on('error', (error) => {
-      if (settled) {
-        return;
-      }
-      settled = true;
-      clearTimeout(timeout);
-      reject(error);
-    });
-    child.on('close', (exitCode) => {
-      if (settled) {
-        return;
-      }
-      settled = true;
-      clearTimeout(timeout);
-      resolve({ exitCode, stdout, stderr });
-    });
-  });
+}
+
+const defaultRunGitVersion = createRunGitVersion();
 
 /**
  * Parse `git --version` stdout into a normalized version string. Returns
@@ -121,7 +135,7 @@ export async function detectGitPrerequisite(
   try {
     result = await runGitVersion();
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = errorMessage(error);
     return {
       available: false,
       reason: looksLikeNotFound(message) ? 'not-found' : 'probe-failed',

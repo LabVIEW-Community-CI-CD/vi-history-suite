@@ -13,7 +13,7 @@ function readWorkflow(): string {
 }
 
 describe('Linux LabVIEW maintainer workflow', () => {
-  it('is manual-only and cannot run on pull requests or pushes', () => {
+  it('is manual-only and cannot run on pull requests or pushes (VHS-REQ-652.1)', () => {
     const workflow = readWorkflow();
 
     expect(workflow).toContain('workflow_dispatch:');
@@ -21,7 +21,7 @@ describe('Linux LabVIEW maintainer workflow', () => {
     expect(workflow).not.toMatch(/^\s*push:/m);
   });
 
-  it('uses the maintainer-only runner label with read-only permissions', () => {
+  it('uses the maintainer-only runner label with read-only permissions (VHS-REQ-652.2)', () => {
     const workflow = readWorkflow();
 
     expect(workflow).toContain('permissions:\n  contents: read');
@@ -36,7 +36,7 @@ describe('Linux LabVIEW maintainer workflow', () => {
     expect(workflow).not.toContain('shell: pwsh');
   });
 
-  it('fails closed to trusted refs and avoids Marketplace publishing secrets', () => {
+  it('fails closed to trusted refs and exposes the trusted decision (VHS-REQ-652.3, VHS-REQ-652.5)', () => {
     const workflow = readWorkflow();
 
     expect(workflow).toContain('refs/heads/main');
@@ -52,7 +52,7 @@ describe('Linux LabVIEW maintainer workflow', () => {
     expect(workflow).not.toMatch(/\bvsce\s+publish\b/i);
   });
 
-  it('captures explicit maintainer evidence and uploads it as an artifact', () => {
+  it('captures explicit maintainer evidence and uploads it as an artifact (VHS-REQ-652.4, VHS-REQ-652.6)', () => {
     const workflow = readWorkflow();
 
     expect(workflow).toContain('npm ci');
@@ -64,6 +64,13 @@ describe('Linux LabVIEW maintainer workflow', () => {
     );
     expect(workflow).toContain('LabVIEW CLI detected:');
     expect(workflow).toContain('Runner labels: $RUNNER_LABELS');
+    // VHS-REQ-652.4: the evidence summary must also carry the ref,
+    // commit SHA, and Node/npm versions, not just runner context and the VSIX
+    // path, so a regression dropping them from the maintainer evidence fails.
+    expect(workflow).toContain('Ref: $GITHUB_REF');
+    expect(workflow).toContain('SHA: $GITHUB_SHA');
+    expect(workflow).toContain('Node: $(node --version)');
+    expect(workflow).toContain('npm: $(npm --version)');
     expect(workflow).toContain('VSIX evidence path: pending package step');
     expect(workflow).toContain('VSIX evidence path: $(pwd)/$vsix');
     expect(workflow).toContain('summary_path="runner-evidence/linux-labview-maintainer-summary.txt"');
@@ -104,7 +111,7 @@ describe('Linux LabVIEW maintainer workflow', () => {
     expect(stepBlock('Record VSIX Evidence Path')).toContain('mkdir -p runner-evidence');
   });
 
-  it('gates on a runner prerequisite doctor after checkout and before install (fail-fast)', () => {
+  it('gates on a runner prerequisite doctor after checkout and before install (fail-fast) (VHS-REQ-652.7)', () => {
     const workflow = readWorkflow();
 
     // The prerequisite doctor must run as a fail-fast gate so a missing host

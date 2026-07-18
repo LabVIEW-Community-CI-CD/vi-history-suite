@@ -1,10 +1,15 @@
-import { createHash } from 'node:crypto';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
+import { joinPreservingExplicitPathStyle } from '../support/pathStyle';
+import { createDeterministicId } from '../support/deterministicId';
+import { pathExistsViaFsAccess as defaultPathExists } from '../support/fsExists';
+import { nowIso as defaultNow } from '../support/clock';
+import { escapeHtml } from '../support/escapeHtml';
 import {
   ArchivedComparisonReportSourceRecord,
   buildComparisonReportArchivePlanFromSelection,
+  buildWorktreeSnapshotIndexFilePath,
   ComparisonReportArchivePlan
 } from './comparisonReportArchive';
 import {
@@ -14,9 +19,27 @@ import {
   ParsedNiComparisonReport,
   parseNiComparisonReportFile
 } from './niComparisonReportParser';
+import { parseWorktreeSnapshotIndex } from './worktreeSnapshotIndex';
+import {
+  formatDurationMinutesSeconds,
+  formatSignedDurationMinutesSeconds,
+  renderPreparationSummary
+} from './multiReportDashboardPreparationSummary';
+import { renderPairMetadataLedgerRow } from './multiReportDashboardPairLedger';
+import { groupOverviewImageAssets } from './multiReportDashboardOverviewImages';
+import { formatPairOrdinalSummary } from './multiReportDashboardPairOrdinals';
+import { decodeDataUriImage } from './multiReportDashboardDataUriImage';
+import { buildMultiReportDashboardArtifactPlan } from './multiReportDashboardArtifactPlan';
+import {
+  buildArtifactLinks,
+  buildProviderLabel,
+  deriveCommitPairs,
+  derivePairEvidenceState
+} from './multiReportDashboardSourceRecord';
+import { buildDashboardSummary } from './multiReportDashboardSummary';
+import { buildViSemanticComparisonModel } from '../semantic/viSemanticModel';
 import { ViHistoryCommit, ViHistoryViewModel } from '../services/viHistoryModel';
-
-const DASHBOARDS_DIRECTORY = 'dashboards';
+import { WORKTREE_REVISION_SENTINEL } from '../git/gitCli';
 
 export interface MultiReportDashboardArtifactPlan {
   repoId: string;
@@ -127,6 +150,20 @@ export interface MultiReportDashboardEntry {
   overviewImageCount: number;
   detailItemCount: number;
   evidenceCount: number;
+  /**
+   * VHS-REQ-641 (Phase 3, issue #1366): content-addressed identity of a retained
+   * working-tree (uncommitted) snapshot, present only for worktree-snapshot
+   * entries discovered through the per-VI retention index. Undefined for
+   * committed pairs.
+   */
+  worktreeSnapshotId?: string;
+  /**
+   * VHS-REQ-641: false for a retained working-tree snapshot — its source
+   * on-disk bytes are a point-in-time capture that a later re-run cannot
+   * reproduce (the file may have changed), so the dashboard flags it and the
+   * re-run affordance is disabled. Undefined/true for reproducible committed pairs.
+   */
+  reproducible?: boolean;
 }
 
 export interface MultiReportDashboardRecord {
@@ -244,6 +281,15 @@ export async function buildAndPersistMultiReportDashboard(
       increment: pairIncrement
     });
   }
+  // VHS-REQ-641 (Phase 3, issue #1366): a working-tree comparison's selected side
+  // is the WORKTREE sentinel with no commit, so it is not discoverable from the
+  // commit list. Read the per-VI retention index and append any retained
+  // working-tree snapshots so they surface in the dashboard alongside commit pairs.
+  const worktreeEntries = await buildRetainedWorktreeSnapshotEntries(storageRoot, model, {
+    pathExists,
+    readFile
+  });
+  entries.push(...worktreeEntries);
   const record: MultiReportDashboardRecord = {
     generatedAt: now(),
     repositoryName: model.repositoryName,
@@ -604,6 +650,18 @@ export function renderMultiReportDashboardHtml(
             .join('\n')
         : '<div class="note" data-testid="dashboard-entry-detail-metadata">No detailed-information metadata is currently retained for this pair.</div>';
 
+      // VHS-REQ-610: lead each reviewed pair with a concise, human-readable
+      // "what changed" narrative derived from the shared VI semantic model, so
+      // reviewers get the gist before scanning the attribute/detail ledgers.
+      const changeSummaryHtml = parsed
+        ? `<div class="entry-change-summary" data-testid="dashboard-entry-change-summary"><strong>What changed:</strong> ${escapeHtml(
+            buildViSemanticComparisonModel({
+              report: parsed,
+              revisions: { baseHash: entry.baseHash, selectedHash: entry.selectedHash }
+            }).narrative
+          )}</div>`
+        : '';
+
       return `<section class="entry" data-testid="dashboard-entry" data-entry-index="${index}">
 	        <div class="entry-header">
 	          <h2>Pair ${index + 1} of ${record.entries.length}: ${escapeHtml(
@@ -611,12 +669,20 @@ export function renderMultiReportDashboardHtml(
           )} vs ${escapeHtml(
 	            entry.baseHash.slice(0, 8)
 	          )}</h2>
+          ${
+            entry.worktreeSnapshotId
+              ? `<div class="entry-worktree-snapshot-badge" data-testid="dashboard-entry-worktree-snapshot"><strong>⚠ Uncommitted snapshot @ ${escapeHtml(
+                  entry.worktreeSnapshotId
+                )}</strong> — content-addressed capture of on-disk bytes; not reproducible by re-run.</div>`
+              : ''
+          }
           <div class="entry-state">
             <strong>Evidence state:</strong> ${escapeHtml(entry.pairEvidenceState)} ·
             <strong>Archive:</strong> ${escapeHtml(entry.archiveStatus)} ·
             <strong>Report:</strong> ${escapeHtml(entry.reportStatus ?? 'missing-packet')} ·
             <strong>Runtime:</strong> ${escapeHtml(entry.runtimeExecutionState ?? 'not-run')}
           </div>
+          ${changeSummaryHtml}
         </div>
         <div class="entry-grid" data-testid="dashboard-entry-provenance">
 	          <div><strong>Selected hash:</strong> <code>${escapeHtml(entry.selectedHash)}</code></div>
@@ -848,238 +914,6 @@ export function renderMultiReportDashboardHtml(
 </html>`;
 }
 
-function renderPairMetadataLedgerRow(
-  entry: MultiReportDashboardEntry,
-  index: number,
-  pairCount: number
-): string {
-  const parsed = entry.parsedReport;
-  const chronologySummary = `<strong>Selected:</strong> ${escapeHtml(
-    entry.selectedSubject
-  )} <code>${escapeHtml(entry.selectedHash.slice(0, 8))}</code> · <strong>Base:</strong> ${escapeHtml(
-    entry.baseSubject ?? 'none'
-  )} <code>${escapeHtml(entry.baseHash.slice(0, 8))}</code>`;
-
-  if (!parsed) {
-    return `<section class="pair-ledger-row" data-testid="dashboard-pair-ledger-row">
-      <h3>Pair ${index + 1} of ${pairCount}</h3>
-      <div class="pair-ledger-block" data-testid="dashboard-pair-ledger-chronology">${chronologySummary}</div>
-      <div class="note" data-testid="dashboard-pair-ledger-no-metadata">
-        No retained VI Comparison Report metadata is currently available for this pair.
-      </div>
-    </section>`;
-  }
-
-  return `<section class="pair-ledger-row" data-testid="dashboard-pair-ledger-row">
-    <h3>Pair ${index + 1} of ${pairCount}</h3>
-    <div class="pair-ledger-block" data-testid="dashboard-pair-ledger-chronology">${chronologySummary}</div>
-    <div class="pair-ledger-grid">
-      <div class="pair-ledger-block" data-testid="dashboard-pair-ledger-report">
-        <strong>Report:</strong> ${escapeHtml(parsed.reportTitle)} · generated ${escapeHtml(
-          parsed.generationTime ?? 'none'
-        )}
-      </div>
-      <div class="pair-ledger-block" data-testid="dashboard-pair-ledger-compared-paths">
-        <strong>Compared VI paths:</strong> First VI=${escapeHtml(
-          parsed.firstViPath ?? 'none'
-        )} · Second VI=${escapeHtml(parsed.secondViPath ?? 'none')}
-      </div>
-      <div class="pair-ledger-block" data-testid="dashboard-pair-ledger-overview">
-        <strong>Overview captions:</strong> ${escapeHtml(formatOverviewCaptionLedger(parsed))}
-      </div>
-      <div class="pair-ledger-block" data-testid="dashboard-pair-ledger-attributes">
-        <strong>Included attributes:</strong> ${escapeHtml(
-          formatAttributeLedger(parsed, true)
-        )}<br />
-        <strong>Excluded attributes:</strong> ${escapeHtml(formatAttributeLedger(parsed, false))}
-      </div>
-      <div class="pair-ledger-block" data-testid="dashboard-pair-ledger-detail-headings">
-        <strong>Detail headings:</strong> ${escapeHtml(formatDetailHeadingLedger(parsed))}
-      </div>
-      <div class="pair-ledger-block" data-testid="dashboard-pair-ledger-detail-items">
-        <strong>Detail items:</strong> ${escapeHtml(formatDetailItemLedger(parsed))}
-      </div>
-    </div>
-  </section>`;
-}
-
-function formatOverviewCaptionLedger(parsed: ParsedNiComparisonReport): string {
-  if (parsed.overviewSections.length === 0) {
-    return 'none';
-  }
-
-  return parsed.overviewSections
-    .map((section) => `${section.caption} (${section.images.length} image(s))`)
-    .join('; ');
-}
-
-function groupOverviewImageAssets(
-  assets: readonly MultiReportDashboardImageAsset[]
-): Array<{
-  caption: string;
-  images: MultiReportDashboardImageAsset[];
-}> {
-  const groups = new Map<
-    string,
-    {
-      caption: string;
-      originalOrder: number;
-      images: MultiReportDashboardImageAsset[];
-    }
-  >();
-
-  for (const [index, asset] of assets.entries()) {
-    const existing = groups.get(asset.caption);
-    if (existing) {
-      existing.images.push(asset);
-      continue;
-    }
-
-    groups.set(asset.caption, {
-      caption: asset.caption,
-      originalOrder: index,
-      images: [asset]
-    });
-  }
-
-  return [...groups.values()]
-    .sort((left, right) => {
-      const priorityDifference =
-        deriveOverviewCaptionPriority(left.caption) - deriveOverviewCaptionPriority(right.caption);
-      if (priorityDifference !== 0) {
-        return priorityDifference;
-      }
-
-      return left.originalOrder - right.originalOrder;
-    })
-    .map((group) => ({
-      caption: group.caption,
-      images: group.images.sort((left, right) => left.position - right.position)
-    }));
-}
-
-function deriveOverviewCaptionPriority(caption: string): number {
-  const normalized = caption.trim().toLowerCase();
-  if (normalized === 'block diagram overview') {
-    return 0;
-  }
-
-  if (normalized === 'front panel overview') {
-    return 1;
-  }
-
-  return 2;
-}
-
-function formatAttributeLedger(parsed: ParsedNiComparisonReport, included: boolean): string {
-  const labels = parsed.includedAttributes
-    .filter((attribute) => attribute.included === included)
-    .map((attribute) => attribute.label);
-  return labels.length > 0 ? labels.join('; ') : 'none';
-}
-
-function formatDetailHeadingLedger(parsed: ParsedNiComparisonReport): string {
-  if (parsed.detailSections.length === 0) {
-    return 'none';
-  }
-
-  return parsed.detailSections
-    .map((section) => `${section.heading} (${section.items.length} item(s))`)
-    .join('; ');
-}
-
-function formatDetailItemLedger(parsed: ParsedNiComparisonReport): string {
-  const items = parsed.detailSections.flatMap((section) => section.items);
-  return items.length > 0 ? items.join('; ') : 'none';
-}
-
-function mapPairIdsToOrdinals(
-  pairIds: Iterable<string>,
-  pairOrdinalById: ReadonlyMap<string, number>
-): number[] {
-  return [...pairIds]
-    .map((pairId) => pairOrdinalById.get(pairId))
-    .filter((ordinal): ordinal is number => ordinal !== undefined)
-    .sort((left, right) => left - right);
-}
-
-function formatPairOrdinalSummary(pairOrdinals: readonly number[]): string {
-  if (pairOrdinals.length === 0) {
-    return 'no pair positions retained';
-  }
-
-  if (pairOrdinals.length === 1) {
-    return `pair ${pairOrdinals[0]}`;
-  }
-
-  return `pairs ${pairOrdinals.join(', ')}`;
-}
-
-function buildMultiReportDashboardArtifactPlan(
-  storageRoot: string,
-  model: ViHistoryViewModel
-): MultiReportDashboardArtifactPlan {
-  const repoId = createDeterministicId(model.repositoryRoot);
-  const fileId = createDeterministicId(`${model.repositoryRoot}\n${model.relativePath}`);
-  const windowId = createDeterministicId(model.commits.map((commit) => commit.hash).join('\n'));
-  const dashboardDirectory = joinPreservingExplicitPathStyle(
-    storageRoot,
-    DASHBOARDS_DIRECTORY,
-    repoId,
-    fileId,
-    windowId
-  );
-
-  return {
-    repoId,
-    fileId,
-    windowId,
-    dashboardDirectory,
-    jsonFilePath: joinPreservingExplicitPathStyle(dashboardDirectory, 'dashboard.json'),
-    htmlFilePath: joinPreservingExplicitPathStyle(dashboardDirectory, 'dashboard.html'),
-    assetsDirectory: joinPreservingExplicitPathStyle(dashboardDirectory, 'assets')
-  };
-}
-
-function joinPreservingExplicitPathStyle(rootPath: string, ...segments: string[]): string {
-  if (rootPath.startsWith('/')) {
-    return path.posix.join(rootPath, ...segments.map((segment) => segment.replace(/\\/g, '/')));
-  }
-
-  return path.join(rootPath, ...segments);
-}
-
-interface DecodedDataUriImage {
-  data: Buffer;
-  extension: string;
-  contentHash: string;
-}
-
-/**
- * VHS-REQ-640: decodes a `data:image/<type>;base64,<payload>` overview-image
- * source produced by single-file reports. Tolerates the whitespace LabVIEW
- * inserts after `base64,`. Returns undefined for non-data-URI sources (legacy
- * multi-file reports reference `<report>_files/...` paths instead).
- */
-function decodeDataUriImage(source: string): DecodedDataUriImage | undefined {
-  const match = /^data:image\/([a-z0-9.+-]+);base64,([\s\S]*)$/i.exec(source.trim());
-  if (!match) {
-    return undefined;
-  }
-  const rawType = match[1].toLowerCase();
-  const extension = rawType === 'jpeg' ? 'jpg' : rawType.replace(/[^a-z0-9]/g, '');
-  const base64Payload = match[2].replace(/\s+/g, '');
-  if (!extension || base64Payload.length === 0) {
-    return undefined;
-  }
-  const data = Buffer.from(base64Payload, 'base64');
-  if (data.length === 0) {
-    return undefined;
-  }
-  const contentHash = createHash('sha256').update(data).digest('hex').slice(0, 16);
-  return { data, extension, contentHash };
-}
-
 async function buildDashboardEntry(
   pair: { selected: ViHistoryCommit; base: ViHistoryCommit },
   storageRoot: string,
@@ -1174,398 +1008,103 @@ async function buildDashboardEntry(
   };
 }
 
-function buildDashboardSummary(entries: MultiReportDashboardEntry[]) {
-  const representedPairCount = entries.length;
-  const archivedPairCount = entries.filter((entry) => entry.archiveStatus === 'archived').length;
-  const missingPairCount = entries.filter((entry) => entry.archiveStatus === 'missing').length;
-  const missingPairIds = entries
-    .filter((entry) => entry.archiveStatus === 'missing')
-    .map((entry) => entry.pairId);
-  const generatedReportCount = entries.filter((entry) => entry.generatedReportExists).length;
-  const reportMetadataPairCount = entries.filter((entry) => Boolean(entry.parsedReport)).length;
-  const failedEntries = entries.filter((entry) => entry.pairEvidenceState === 'archived-failed');
-  const failedPairCount = failedEntries.length;
-  const failedPairIds = failedEntries.map((entry) => entry.pairId);
-  const blockedEntries = entries.filter((entry) => entry.pairEvidenceState === 'archived-blocked');
-  const blockedPairCount = blockedEntries.length;
-  const blockedPairIds = blockedEntries.map((entry) => entry.pairId);
-  const overviewSectionCount = entries.reduce(
-    (total, entry) => total + (entry.parsedReport?.overviewSections.length ?? 0),
-    0
-  );
-  const overviewImageCount = entries.reduce(
-    (total, entry) => total + entry.overviewImageCount,
-    0
-  );
-  const includedAttributeCount = entries.reduce(
-    (total, entry) => total + (entry.parsedReport?.includedAttributes.length ?? 0),
-    0
-  );
-  const detailSectionCount = entries.reduce(
-    (total, entry) => total + (entry.parsedReport?.detailSections.length ?? 0),
-    0
-  );
-  const detailItemCount = entries.reduce((total, entry) => total + entry.detailItemCount, 0);
-  const pairWithOverviewImageCount = entries.filter((entry) => entry.overviewImageCount > 0).length;
-  const pairWithDetailCount = entries.filter((entry) => entry.detailItemCount > 0).length;
-  const providerCounts = new Map<string, number>();
-  const comparedPathCounts = new Map<
-    string,
-    {
-      firstViPath: string;
-      secondViPath: string;
-      pairIds: Set<string>;
-    }
-  >();
-  const overviewCaptionCounts = new Map<
-    string,
-    {
-      pairIds: Set<string>;
-      imageCount: number;
-    }
-  >();
-  const includedAttributeCounts = new Map<
-    string,
-    {
-      includedPairIds: Set<string>;
-      excludedPairIds: Set<string>;
-    }
-  >();
-  const detailHeadingCounts = new Map<
-    string,
-    {
-      pairIds: Set<string>;
-      itemCount: number;
-    }
-  >();
-  const detailItemCounts = new Map<
-    string,
-    {
-      pairIds: Set<string>;
-    }
-  >();
-  const pairOrdinalById = new Map(entries.map((entry, index) => [entry.pairId, index + 1]));
-  for (const entry of entries) {
-    const label = entry.runtimeProviderLabel ?? 'none';
-    providerCounts.set(label, (providerCounts.get(label) ?? 0) + 1);
-    if (entry.parsedReport?.firstViPath || entry.parsedReport?.secondViPath) {
-      const firstViPath = entry.parsedReport?.firstViPath ?? 'none';
-      const secondViPath = entry.parsedReport?.secondViPath ?? 'none';
-      const key = `${firstViPath}\n${secondViPath}`;
-      const summary = comparedPathCounts.get(key) ?? {
-        firstViPath,
-        secondViPath,
-        pairIds: new Set<string>()
-      };
-      summary.pairIds.add(entry.pairId);
-      comparedPathCounts.set(key, summary);
-    }
-    for (const section of entry.parsedReport?.overviewSections ?? []) {
-      const summary = overviewCaptionCounts.get(section.caption) ?? {
-        pairIds: new Set<string>(),
-        imageCount: 0
-      };
-      summary.pairIds.add(entry.pairId);
-      summary.imageCount += section.images.length;
-      overviewCaptionCounts.set(section.caption, summary);
-    }
-    for (const attribute of entry.parsedReport?.includedAttributes ?? []) {
-      const summary = includedAttributeCounts.get(attribute.label) ?? {
-        includedPairIds: new Set<string>(),
-        excludedPairIds: new Set<string>()
-      };
-      if (attribute.included) {
-        summary.includedPairIds.add(entry.pairId);
-      } else {
-        summary.excludedPairIds.add(entry.pairId);
-      }
-      includedAttributeCounts.set(attribute.label, summary);
-    }
-    for (const section of entry.parsedReport?.detailSections ?? []) {
-      const summary = detailHeadingCounts.get(section.heading) ?? {
-        pairIds: new Set<string>(),
-        itemCount: 0
-      };
-      summary.pairIds.add(entry.pairId);
-      summary.itemCount += section.items.length;
-      detailHeadingCounts.set(section.heading, summary);
-      for (const item of section.items) {
-        const itemSummary = detailItemCounts.get(item) ?? {
-          pairIds: new Set<string>()
-        };
-        itemSummary.pairIds.add(entry.pairId);
-        detailItemCounts.set(item, itemSummary);
-      }
-    }
+/**
+ * VHS-REQ-641 (Phase 3, issue #1366): discover retained working-tree
+ * (uncommitted) snapshots from the per-VI retention index and build dashboard
+ * entries for them. Their content-addressed pair-ID round-trips from the stored
+ * snapshot identity (`WORKTREE:<id>`), so each retained pair's source-record is
+ * locatable without the commit list. Missing/malformed index or a missing
+ * source-record is skipped (fail-soft). Each entry is flagged
+ * `reproducible: false` because re-running a working-tree comparison compares
+ * current on-disk bytes, which may differ from the retained capture.
+ */
+async function buildRetainedWorktreeSnapshotEntries(
+  storageRoot: string,
+  model: ViHistoryViewModel,
+  deps: {
+    pathExists: (targetPath: string) => Promise<boolean>;
+    readFile: typeof fs.readFile;
   }
-  const providerSummaries = [...providerCounts.entries()]
-    .map(([label, pairCount]) => ({ label, pairCount }))
-    .sort((left, right) => right.pairCount - left.pairCount || left.label.localeCompare(right.label));
-  const comparedPathSummaries = [...comparedPathCounts.values()]
-    .map((summary) => ({
-      firstViPath: summary.firstViPath,
-      secondViPath: summary.secondViPath,
-      pairCount: summary.pairIds.size,
-      pairOrdinals: mapPairIdsToOrdinals(summary.pairIds, pairOrdinalById)
-    }))
-    .sort((left, right) => {
-      return (
-        right.pairCount - left.pairCount ||
-        left.firstViPath.localeCompare(right.firstViPath) ||
-        left.secondViPath.localeCompare(right.secondViPath)
-      );
-    });
-  const overviewCaptionSummaries = [...overviewCaptionCounts.entries()]
-    .map(([caption, summary]) => ({
-      caption,
-      pairCount: summary.pairIds.size,
-      imageCount: summary.imageCount,
-      pairOrdinals: mapPairIdsToOrdinals(summary.pairIds, pairOrdinalById)
-    }))
-    .sort((left, right) => right.pairCount - left.pairCount || left.caption.localeCompare(right.caption));
-  const includedAttributeSummaries = [...includedAttributeCounts.entries()]
-    .map(([label, summary]) => ({
-      label,
-      includedPairCount: summary.includedPairIds.size,
-      excludedPairCount: summary.excludedPairIds.size,
-      includedPairOrdinals: mapPairIdsToOrdinals(summary.includedPairIds, pairOrdinalById),
-      excludedPairOrdinals: mapPairIdsToOrdinals(summary.excludedPairIds, pairOrdinalById)
-    }))
-    .sort((left, right) => {
-      const leftTotal = left.includedPairCount + left.excludedPairCount;
-      const rightTotal = right.includedPairCount + right.excludedPairCount;
-      return rightTotal - leftTotal || left.label.localeCompare(right.label);
-    });
-  const detailHeadingSummaries = [...detailHeadingCounts.entries()]
-    .map(([heading, summary]) => ({
-      heading,
-      pairCount: summary.pairIds.size,
-      itemCount: summary.itemCount,
-      pairOrdinals: mapPairIdsToOrdinals(summary.pairIds, pairOrdinalById)
-    }))
-    .sort((left, right) => right.pairCount - left.pairCount || left.heading.localeCompare(right.heading));
-  const detailItemSummaries = [...detailItemCounts.entries()]
-    .map(([item, summary]) => ({
-      item,
-      pairCount: summary.pairIds.size,
-      pairOrdinals: mapPairIdsToOrdinals(summary.pairIds, pairOrdinalById)
-    }))
-    .sort((left, right) => right.pairCount - left.pairCount || left.item.localeCompare(right.item));
-  const evidenceStateCounts = new Map<MultiReportDashboardEntryEvidenceState, number>();
-  for (const entry of entries) {
-    evidenceStateCounts.set(
-      entry.pairEvidenceState,
-      (evidenceStateCounts.get(entry.pairEvidenceState) ?? 0) + 1
-    );
+): Promise<MultiReportDashboardEntry[]> {
+  const indexReferencePlan = buildComparisonReportArchivePlanFromSelection({
+    storageRoot,
+    repositoryRoot: model.repositoryRoot,
+    relativePath: model.relativePath,
+    reportType: 'diff',
+    selectedHash: WORKTREE_REVISION_SENTINEL,
+    baseHash: WORKTREE_REVISION_SENTINEL
+  });
+  const indexFilePath = buildWorktreeSnapshotIndexFilePath(indexReferencePlan);
+  if (!(await deps.pathExists(indexFilePath))) {
+    return [];
   }
-  const evidenceStateSummaries = [...evidenceStateCounts.entries()]
-    .map(([state, pairCount]) => ({ state, pairCount }))
-    .sort((left, right) => right.pairCount - left.pairCount || left.state.localeCompare(right.state));
+  const index = parseWorktreeSnapshotIndex(await deps.readFile(indexFilePath, 'utf8'));
+  if (!index) {
+    return [];
+  }
 
-  return {
-    representedPairCount,
-    windowCompletenessState:
-      missingPairCount === 0
-        ? ('complete' as const)
-        : ('incomplete-missing-archives' as const),
-    archivedPairCount,
-    missingPairCount,
-    missingPairIds,
-    generatedReportCount,
-    reportMetadataPairCount,
-    failedPairCount,
-    failedPairIds,
-    blockedPairCount,
-    blockedPairIds,
-    overviewSectionCount,
-    overviewImageCount,
-    includedAttributeCount,
-    detailSectionCount,
-    detailItemCount,
-    pairWithOverviewImageCount,
-    pairWithDetailCount,
-    providerSummaries,
-    comparedPathSummaries,
-    overviewCaptionSummaries,
-    includedAttributeSummaries,
-    detailHeadingSummaries,
-    detailItemSummaries,
-    evidenceStateSummaries
-  };
-}
-
-function buildArtifactLinks(
-  sourceRecord: ArchivedComparisonReportSourceRecord,
-  generatedReportExists: boolean
-): MultiReportDashboardArtifactLink[] {
-  const links: MultiReportDashboardArtifactLink[] = [
-    {
-      kind: 'packet-html',
-      label: 'Open archived packet',
-      filePath: sourceRecord.archivePlan.packetFilePath
-    },
-    {
-      kind: 'metadata-json',
-      label: 'Open archived metadata',
-      filePath: sourceRecord.archivePlan.metadataFilePath
-    },
-    {
-      kind: 'source-record-json',
-      label: 'Open archive source record',
-      filePath: sourceRecord.archivePlan.sourceRecordFilePath
+  const entries: MultiReportDashboardEntry[] = [];
+  for (const snapshot of index.snapshots) {
+    const archivePlan = buildComparisonReportArchivePlanFromSelection({
+      storageRoot,
+      repositoryRoot: model.repositoryRoot,
+      relativePath: model.relativePath,
+      reportType: snapshot.reportType,
+      selectedHash: WORKTREE_REVISION_SENTINEL,
+      baseHash: snapshot.baseHash,
+      worktreeSnapshotId: snapshot.snapshotId
+    });
+    if (!(await deps.pathExists(archivePlan.sourceRecordFilePath))) {
+      continue;
     }
-  ];
+    const sourceRecord = JSON.parse(
+      await deps.readFile(archivePlan.sourceRecordFilePath, 'utf8')
+    ) as ArchivedComparisonReportSourceRecord;
+    const generatedReportExists =
+      sourceRecord.packetRecord.runtimeExecution.reportExists &&
+      (await deps.pathExists(sourceRecord.archivePlan.reportFilePath));
+    const parsedReport = generatedReportExists
+      ? await parseNiComparisonReportFile(sourceRecord.archivePlan.reportFilePath, {
+          readFile: deps.readFile
+        })
+      : undefined;
 
-  if (generatedReportExists) {
-    links.splice(1, 0, {
-      kind: 'report-html',
-      label: 'Open archived LabVIEW report',
-      filePath: sourceRecord.archivePlan.reportFilePath
+    entries.push({
+      pairId: sourceRecord.archivePlan.pairId,
+      selectedHash: WORKTREE_REVISION_SENTINEL,
+      baseHash: snapshot.baseHash,
+      selectedAuthorDate: snapshot.retainedAt,
+      selectedAuthorName: 'Working tree (uncommitted)',
+      selectedSubject: `Uncommitted snapshot @ ${snapshot.snapshotId}`,
+      baseAuthorDate: undefined,
+      baseAuthorName: undefined,
+      baseSubject: undefined,
+      archiveStatus: 'archived',
+      archivePlan: sourceRecord.archivePlan,
+      packetRecordPath: sourceRecord.archivePlan.sourceRecordFilePath,
+      packetFilePath: sourceRecord.archivePlan.packetFilePath,
+      reportFilePath: sourceRecord.archivePlan.reportFilePath,
+      metadataFilePath: sourceRecord.archivePlan.metadataFilePath,
+      reportStatus: sourceRecord.packetRecord.reportStatus,
+      runtimeExecutionState: sourceRecord.packetRecord.runtimeExecutionState,
+      runtimeFailureReason: sourceRecord.packetRecord.runtimeExecution.failureReason,
+      runtimeDiagnosticReason: sourceRecord.packetRecord.runtimeExecution.diagnosticReason,
+      runtimeProvider: sourceRecord.packetRecord.runtimeSelection.provider,
+      runtimeEngine: sourceRecord.packetRecord.runtimeSelection.engine,
+      runtimePlatform: sourceRecord.packetRecord.runtimeSelection.platform,
+      runtimeBitness: sourceRecord.packetRecord.runtimeSelection.bitness,
+      runtimeProviderLabel: buildProviderLabel(sourceRecord.packetRecord),
+      pairEvidenceState: derivePairEvidenceState(sourceRecord, generatedReportExists),
+      generatedReportExists,
+      parsedReport,
+      dashboardImageAssets: [],
+      artifactLinks: buildArtifactLinks(sourceRecord, generatedReportExists),
+      overviewImageCount: parsedReport?.overviewImageCount ?? 0,
+      detailItemCount: parsedReport?.detailItemCount ?? 0,
+      evidenceCount: (parsedReport?.overviewImageCount ?? 0) + (parsedReport?.detailItemCount ?? 0),
+      worktreeSnapshotId: snapshot.snapshotId,
+      reproducible: false
     });
   }
-
-  return links;
-}
-
-function buildProviderLabel(record: ArchivedComparisonReportSourceRecord['packetRecord']): string {
-  const selection = record.runtimeSelection;
-  return [
-    selection.provider,
-    selection.engine ?? 'none',
-    selection.bitness,
-    selection.platform
-  ].join(' / ');
-}
-
-function derivePairEvidenceState(
-  sourceRecord: ArchivedComparisonReportSourceRecord,
-  generatedReportExists: boolean
-): MultiReportDashboardEntryEvidenceState {
-  if (generatedReportExists) {
-    return 'archived-generated-report';
-  }
-
-  if (
-    sourceRecord.packetRecord.reportStatus === 'blocked-preflight' ||
-    sourceRecord.packetRecord.reportStatus === 'blocked-runtime' ||
-    sourceRecord.packetRecord.runtimeExecutionState === 'not-available'
-  ) {
-    return 'archived-blocked';
-  }
-
-  if (sourceRecord.packetRecord.runtimeExecutionState === 'failed') {
-    return 'archived-failed';
-  }
-
-  return 'archived-no-generated-report';
-}
-
-function deriveCommitPairs(commits: ViHistoryCommit[]): Array<{ selected: ViHistoryCommit; base: ViHistoryCommit }> {
-  const pairs: Array<{ selected: ViHistoryCommit; base: ViHistoryCommit }> = [];
-  for (let index = 0; index < commits.length - 1; index += 1) {
-    pairs.push({
-      selected: commits[index],
-      base: commits[index + 1]
-    });
-  }
-  return pairs;
-}
-
-function createDeterministicId(value: string): string {
-  return createHash('sha256').update(value).digest('hex').slice(0, 12);
-}
-
-async function defaultPathExists(targetPath: string): Promise<boolean> {
-  try {
-    await fs.access(targetPath);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function defaultNow(): string {
-  return new Date().toISOString();
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
-}
-
-function formatDurationMinutesSeconds(totalSeconds: number): string {
-  const boundedSeconds = Math.max(0, Math.ceil(totalSeconds));
-  const minutes = Math.floor(boundedSeconds / 60);
-  const seconds = boundedSeconds % 60;
-  return `${minutes}m ${seconds}s`;
-}
-
-function formatSignedDurationMinutesSeconds(totalSeconds: number): string {
-  const sign = totalSeconds < 0 ? '-' : '+';
-  return `${sign}${formatDurationMinutesSeconds(Math.abs(totalSeconds))}`;
-}
-
-function renderPreparationSummary(
-  summary: MultiReportDashboardPreparationSummary
-): string {
-  if (summary.mode === 'retained-evidence-complete') {
-    return 'All adjacent retained pairs already had retained comparison evidence before dashboard concentration began.';
-  }
-
-  if (summary.mode === 'backfilled-before-build') {
-    const outcomeParts: string[] = [];
-    if (summary.preparedGeneratedReportCount > 0) {
-      outcomeParts.push(
-        `${summary.preparedGeneratedReportCount} generated report${summary.preparedGeneratedReportCount === 1 ? '' : 's'}`
-      );
-    }
-    if (summary.preparedBlockedPairCount > 0) {
-      outcomeParts.push(
-        `${summary.preparedBlockedPairCount} blocked pair${summary.preparedBlockedPairCount === 1 ? '' : 's'}`
-      );
-    }
-    if (summary.preparedFailedPairCount > 0) {
-      outcomeParts.push(
-        `${summary.preparedFailedPairCount} failed pair${summary.preparedFailedPairCount === 1 ? '' : 's'}`
-      );
-    }
-    if (summary.preparedNoGeneratedReportCount > 0) {
-      outcomeParts.push(
-        `${summary.preparedNoGeneratedReportCount} pair${summary.preparedNoGeneratedReportCount === 1 ? '' : 's'} without a generated report`
-      );
-    }
-    if (summary.preparedMissingRetainedArchiveCount > 0) {
-      outcomeParts.push(
-        `${summary.preparedMissingRetainedArchiveCount} pair${summary.preparedMissingRetainedArchiveCount === 1 ? '' : 's'} without retained archive evidence`
-      );
-    }
-    const baseSummary = `${summary.preparedPairCount} adjacent pair(s) were refreshed for retained comparison evidence before this dashboard was concentrated.`;
-    if (outcomeParts.length === 0) {
-      return baseSummary;
-    }
-
-    const needsFollowUpGuidance =
-      summary.preparedBlockedPairCount > 0 ||
-      summary.preparedFailedPairCount > 0 ||
-      summary.preparedNoGeneratedReportCount > 0 ||
-      summary.preparedMissingRetainedArchiveCount > 0;
-    return `${baseSummary} Refresh outcomes: ${outcomeParts.join(', ')}.${needsFollowUpGuidance ? ' Review the pair ledger or Open compare for runtime doctor details.' : ''}`;
-  }
-
-  if (summary.mode === 'seeded-retained-before-build') {
-    const seededCount = summary.seededImportedPairCount ?? 0;
-    const baseSummary =
-      `${seededCount} adjacent pair(s) were seeded from retained evidence before this dashboard was concentrated.`;
-    if (summary.pairsNeedingEvidenceCount <= 0) {
-      return `${baseSummary} No additional local pair refresh was needed from Open dashboard.`;
-    }
-
-    return `${baseSummary} ${summary.pairsNeedingEvidenceCount} adjacent pair(s) remain missing in the retained evidence set, and Open dashboard did not attempt a local pair refresh during this review.`;
-  }
-
-  return `${summary.pairsNeedingEvidenceCount} adjacent pair(s) still lacked retained comparison evidence, and this build could not refresh them from Open dashboard. This dashboard concentrates the currently retained archive set only.`;
+  return entries;
 }

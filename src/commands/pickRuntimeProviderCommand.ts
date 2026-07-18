@@ -122,3 +122,23 @@ export async function applyPickRuntimeProviderSelection(
   );
 }
 
+export interface ApplyViPreviewEnabledSelectionDeps {
+  readonly update: (
+    key: string,
+    value: boolean,
+    target: vscode.ConfigurationTarget
+  ) => Thenable<void>;
+}
+
+/**
+ * VHS-REQ-659: persist the opt-in VI Preview flag (`viHistorySuite.preview.enabled`)
+ * written by the Runtime & Report Settings panel's VI Preview toggle. Global-scoped
+ * like the other panel writers.
+ */
+export async function applyViPreviewEnabledSelection(
+  enabled: boolean,
+  deps: ApplyViPreviewEnabledSelectionDeps
+): Promise<void> {
+  await deps.update('preview.enabled', enabled, vscode.ConfigurationTarget.Global);
+}
+

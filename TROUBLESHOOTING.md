@@ -67,6 +67,25 @@ docker info --format "{{.OSType}}"
 
 The first Docker compare can pull a large LabVIEW runtime image.
 
+## VI Preview shows "requires Docker to generate the cache" on the Host runtime
+
+VI previews are **generated on Docker** and **displayed from the render cache**.
+On the Host (installed LabVIEW) runtime the editor shows a cached preview when
+one exists and otherwise guides you to generate it on Docker, because a live
+render is Docker-only. Two ways to see a preview on Host:
+
+- **Generate on Docker, then view on Host.** With `viHistorySuite.preview.enabled`
+  on and Docker selected, the background warmer caches the workspace's VIs. Then
+  switch to the Host runtime and reopen the VI — the display reads the cache and
+  does not run Docker. Note the cache is keyed by the VI file's on-disk identity,
+  so this applies to directly-opened `.vi` files (not Source Control diff bases).
+- **Let a Docker-less LabVIEW environment render directly.** For a dedicated
+  LabVIEW VM with no Docker (for example the Vagrant LabVIEW VM, since Docker and
+  Vagrant cannot run at once), set `viHistorySuite.preview.allowHostNativeRender: true`
+  so the Host both generates the cache and visualizes previews. Turn on
+  `viHistorySuite.preview.blockDiagramInteractive` for the interactive
+  pan/zoom/case-stepper view.
+
 ## Windows + Docker (Linux container) compare fails instantly with a bash parse error
 
 ### Symptom
@@ -333,6 +352,38 @@ Resolve it by keeping the extension's report storage under `$HOME` (the
 default VS Code `workspaceStorage` location already qualifies), or connect the
 required snap interface (for removable media, `sudo snap connect
 docker:removable-media`). Native (non-snap) Docker is unaffected.
+
+When this happens, the comparison report's retained diagnostics now name this
+cause directly: a failed Linux **container** compare whose bind-mounted report
+directory is outside your home directory attaches an actionable
+bind-mount-visibility note pointing at the fix above (VHS-REQ-663), so you do
+not have to infer it from the raw `path invalid` error.
+
+## `npm run compile` Cannot Find tsc
+
+If `npm run compile`, `npm run check`, or the F5 **Run VI History Suite** launch
+fails with:
+
+- Windows: `'tsc' is not recognized as an internal or external command`
+- macOS / Linux: `tsc: command not found`
+
+then the local development dependencies are missing or incomplete. The build
+uses the `typescript` compiler installed under `node_modules`, so this happens
+after a fresh clone, after `node_modules` is deleted, or when an install omitted
+dev dependencies.
+
+The `precompile` / `precheck` preflight (`scripts/checkDevDependencies.js`, also
+runnable as `npm run deps:check`) detects this and prints the remedy before the
+raw compiler runs. Install dependencies from the repository root:
+
+```bash
+npm ci
+```
+
+Then re-run your command. If `npm ci` still does not restore `typescript`,
+confirm dev dependencies are not being omitted (neither `NODE_ENV` nor
+`npm_config_omit` should be set to `dev` or `production`). See
+[INSTALL.md](./INSTALL.md) for the full source-evaluation setup.
 
 ## Source Evaluation
 

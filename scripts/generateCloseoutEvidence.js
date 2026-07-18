@@ -4,7 +4,15 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
+const {
+  JSON_SCHEMA_DIALECT,
+  renderSchemaDocument,
+  schemaEnvelopeFields,
+  schemaEnvelopePropertyNodes
+} = require('./lib/schemaEnvelope.js');
 
+const CLOSEOUT_SUMMARY_SCHEMA_ID = 'vi-history-suite/closeout-evidence@v1';
+const CLOSEOUT_SCHEMA_VERSION = 1;
 const STANDARDS_TOOLCHAIN_EXPECTED_COMMIT = 'd44f210ded557cda6d4598cdaffe938da51d873e';
 const STANDARDS_TOOLCHAIN_GITLAB_URL = 'https://gitlab.com/svelderrainruiz/repo-standards-review.git';
 const STANDARDS_TOOLCHAIN_GITHUB_URL = 'https://github.com/svelderrainruiz/repo-standards-review.git';
@@ -14,6 +22,8 @@ const STANDARDS_TOOLCHAIN_REGISTRY_IMAGE =
 const LOCAL_STANDARDS_IMAGE = 'repo-standards-review-assurance-workbench:local';
 const DEFAULT_STANDARDS_IMAGE = STANDARDS_TOOLCHAIN_REGISTRY_IMAGE;
 const DEFAULT_SAVE_DIR = 'assurance-closeout-evidence';
+const RELEASE_STANDARDS_PROFILES = ['26514-review', 'release-gate'];
+const RELEASE_STANDARDS_EXPECTED_GATES = ['coverage', 'cm', 'req', 'arch', 'doc', 'dod'];
 const DEFAULT_SKILL_ROOT = process.env.REPO_STANDARDS_REVIEW_ROOT ||
   'C:\\Users\\sveld\\.codex\\skills\\repo-standards-review';
 const TRUSTED_REPO_ROOT = path.resolve(__dirname, '..');
@@ -99,11 +109,12 @@ function parseArgs(argv) {
     else if (arg === '--release-pr') options.releasePr = next();
     else if (arg === '--back-sync-pr') options.backSyncPr = next();
     else if (arg === '--marketplace-run') options.marketplaceRun = next();
+    else if (arg === '--schema') options.schema = true;
     else if (arg === '--help' || arg === '-h') options.help = true;
     else throw new Error(`Unknown argument: ${arg}`);
   }
 
-  if (options.help) {
+  if (options.help || options.schema) {
     return options;
   }
 
@@ -350,6 +361,42 @@ function parseGitTrackedFiles(output) {
     .map((entry) => entry.replace(/\\/g, '/'));
 }
 
+// Resolve the base directory that the tracked-worktree audit snapshot is created
+// under. The snapshot is bind-mounted into the Docker standards workbench, so the
+// base must be a path the Docker daemon can share. Snap-confined and rootless
+// Docker daemons run in a private mount namespace and cannot bind-mount host
+// `/tmp` subpaths, which silently mounts an empty directory (the workbench then
+// scans 0 files and every gate fails "not confirmed"). Defaulting to a
+// home-directory cache keeps the snapshot Docker-visible on snap/rootless hosts
+// without requiring an operator-set `TMPDIR`, while remaining valid on
+// `/tmp`-capable hosts. Priority: an injected `deps.tmpdir` seam (unit tests),
+// then the explicit `VIHS_CLOSEOUT_SNAPSHOT_DIR` override (documented escape
+// hatch), then the home cache, falling back to `os.tmpdir()` only when no home
+// directory is resolvable.
+function resolveAuditSnapshotBase(deps = {}) {
+  if (deps.tmpdir) {
+    return deps.tmpdir();
+  }
+
+  const override = (deps.env || process.env).VIHS_CLOSEOUT_SNAPSHOT_DIR;
+  if (override && override.trim().length > 0) {
+    return override.trim();
+  }
+
+  const homedirImpl = deps.homedir || os.homedir;
+  let homeDir = '';
+  try {
+    homeDir = homedirImpl() || '';
+  } catch {
+    homeDir = '';
+  }
+  if (homeDir.length > 0) {
+    return path.join(homeDir, '.cache', 'vi-history-suite');
+  }
+
+  return os.tmpdir();
+}
+
 function createTrackedWorktreeSnapshot(repoRoot, deps = {}) {
   const resolvedRepoRoot = path.resolve(repoRoot);
   const listFiles = runCommand('git', ['ls-files', '-z'], withCommandPolicy({ ...deps, cwd: resolvedRepoRoot }, {
@@ -362,13 +409,17 @@ function createTrackedWorktreeSnapshot(repoRoot, deps = {}) {
   }
 
   const trackedFiles = parseGitTrackedFiles(listFiles.stdout);
-  const tmpRoot = deps.tmpdir ? deps.tmpdir() : os.tmpdir();
+  const tmpRoot = resolveAuditSnapshotBase(deps);
   const mkdtempSyncImpl = deps.mkdtempSync || fs.mkdtempSync;
   const mkdirSyncImpl = deps.mkdirSync || fs.mkdirSync;
   const lstatSyncImpl = deps.lstatSync || fs.lstatSync;
   const copyFileSyncImpl = deps.copyFileSync || fs.copyFileSync;
   const readlinkSyncImpl = deps.readlinkSync || fs.readlinkSync;
   const writeFileSyncImpl = deps.writeFileSync || fs.writeFileSync;
+  // The snapshot base may not exist yet (for example the home cache on a fresh
+  // host); create it before mkdtemp so snapshot creation never fails on a
+  // missing parent. Creating an existing directory recursively is a no-op.
+  mkdirSyncImpl(tmpRoot, { recursive: true });
   const snapshotPath = mkdtempSyncImpl(path.join(tmpRoot, 'vi-history-suite-audit-snapshot-'));
   const symlinkFiles = [];
   const missingFiles = [];
@@ -414,9 +465,26 @@ function removeTrackedWorktreeSnapshot(snapshot, deps = {}) {
   rmSyncImpl(snapshot.path, { recursive: true, force: true });
 }
 
-function hostStandardsCommands(skillRoot) {
+function releaseStandardsHostCommands(skillRoot) {
   const scripts = path.join(skillRoot, 'scripts');
-  return [
+  return RELEASE_STANDARDS_PROFILES.map((profile) => ({
+    name: `release-profile-${profile}`,
+    file: `release-${profile}-scorecard.txt`,
+    command: 'python3',
+    args: [
+      path.join(scripts, 'run_assurance.py'),
+      '.',
+      '--profile',
+      profile,
+      '--output',
+      'gate-scorecard'
+    ]
+  }));
+}
+
+function hostStandardsCommands(skillRoot, kind = 'standards') {
+  const scripts = path.join(skillRoot, 'scripts');
+  const commands = [
     {
       name: 'preflight',
       file: 'standards-preflight.json',
@@ -463,6 +531,12 @@ function hostStandardsCommands(skillRoot) {
       ]
     }
   ];
+
+  if (kind === 'release') {
+    commands.push(...releaseStandardsHostCommands(skillRoot));
+  }
+
+  return commands;
 }
 
 function parseJsonOrUndefined(text) {
@@ -765,6 +839,47 @@ function verifyStandardsToolchainProvenance(options, deps = {}) {
   };
 }
 
+function summarizeReleaseProfileResults(results) {
+  return RELEASE_STANDARDS_PROFILES.map((profile) => {
+    const result = results.find((entry) => entry.name === `release-profile-${profile}`);
+    const gateStatuses = parseGateScorecard(result?.stdout || '');
+    const gates = Object.entries(gateStatuses).map(([gate, status]) => ({ gate, status }));
+    const failedGates = gates.filter((entry) => entry.status !== 'PASS').map((entry) => entry.gate);
+    const missingGates = RELEASE_STANDARDS_EXPECTED_GATES.filter((gate) => !gateStatuses[gate]);
+    return {
+      profile,
+      status: result?.status ?? 1,
+      success: result?.status === 0 && failedGates.length === 0 && missingGates.length === 0,
+      gates,
+      failedGates,
+      missingGates,
+      file: result?.file
+    };
+  });
+}
+
+function summarizeStandardsFailure(summary) {
+  const profileFailures = summary.failedReleaseProfiles || [];
+  if (profileFailures.length > 0) {
+    const profiles = profileFailures.map((profile) => {
+      const gateDetails = [
+        ...profile.failedGates.map((gate) => `${gate}=FAIL`),
+        ...profile.missingGates.map((gate) => `${gate}=missing`)
+      ];
+      const commandDetails = profile.status === 0 ? [] : [`command status ${profile.status}`];
+      const details = [...gateDetails, ...commandDetails].join('; ') || 'unknown failure';
+      return `${profile.profile} (${details})`;
+    });
+    return `Release/user-information profile failures: ${profiles.join(', ')}.`;
+  }
+
+  if (summary.failed?.length > 0) {
+    return `Standards command failures: ${summary.failed.map((result) => result.name).join(', ')}.`;
+  }
+
+  return undefined;
+}
+
 function summarizeStandardsResults(results, runner) {
   const byName = new Map(results.map((result) => [result.name, result]));
   const preflight = parseJsonOrUndefined(byName.get('preflight')?.stdout || '');
@@ -774,10 +889,12 @@ function summarizeStandardsResults(results, runner) {
   const gateStatuses = parseGateScorecard(scorecard);
   const dodGateEvidence = summarizeDodGateEvidence(evidenceScan, scorecard);
   const failed = results.filter((result) => result.status !== 0);
+  const releaseProfiles = summarizeReleaseProfileResults(results).filter((profile) => profile.file);
+  const failedReleaseProfiles = releaseProfiles.filter((profile) => !profile.success);
 
   return {
     runner,
-    success: failed.length === 0,
+    success: failed.length === 0 && failedReleaseProfiles.length === 0,
     failed,
     preflight,
     requirementsQuality,
@@ -789,12 +906,14 @@ function summarizeStandardsResults(results, runner) {
     coverageGate: gateStatuses.coverage,
     docGate: gateStatuses.doc,
     dodGate: dodGateEvidence.status,
-    dodGateEvidence
+    dodGateEvidence,
+    releaseProfiles,
+    failedReleaseProfiles
   };
 }
 
 function runHostStandards(options, deps = {}) {
-  const results = hostStandardsCommands(options.skillRoot).map((step) => ({
+  const results = hostStandardsCommands(options.skillRoot, options.kind).map((step) => ({
     ...step,
     ...runCommand(step.command, step.args, withCommandPolicy(deps, {
       timeoutMs: COMMAND_TIMEOUT_MS.hostPython,
@@ -809,12 +928,34 @@ function runHostStandards(options, deps = {}) {
     success: summary.success && preflightOk,
     results,
     summary,
-    failure: preflightOk ? undefined : 'Host standards preflight did not return ok: true.'
+    failure: preflightOk ? summarizeStandardsFailure(summary) : 'Host standards preflight did not return ok: true.'
   };
 }
 
-function dockerStandardsCommands(image) {
-  return [
+function releaseStandardsDockerCommands(image) {
+  return RELEASE_STANDARDS_PROFILES.map((profile) => ({
+    name: `release-profile-${profile}`,
+    file: `release-${profile}-scorecard.txt`,
+    command: 'docker',
+    args: [
+      'run',
+      '--rm',
+      '-v',
+      '${REPO}:/target',
+      image,
+      'python3',
+      'scripts/run_assurance.py',
+      '/target',
+      '--profile',
+      profile,
+      '--output',
+      'gate-scorecard'
+    ]
+  }));
+}
+
+function dockerStandardsCommands(image, kind = 'standards') {
+  const commands = [
     {
       name: 'requirements-quality',
       file: 'requirements-quality.json',
@@ -873,6 +1014,12 @@ function dockerStandardsCommands(image) {
       ]
     }
   ];
+
+  if (kind === 'release') {
+    commands.push(...releaseStandardsDockerCommands(image));
+  }
+
+  return commands;
 }
 
 function replaceRepoMount(args, repoRoot) {
@@ -1034,7 +1181,7 @@ function runDockerStandards(options, deps = {}) {
   }
 
   results.push(
-    ...dockerStandardsCommands(options.standardsImage).map((step) => ({
+    ...dockerStandardsCommands(options.standardsImage, options.kind).map((step) => ({
       ...step,
       args: replaceRepoMount(step.args, repoRoot),
       ...runCommand(step.command, replaceRepoMount(step.args, repoRoot), withCommandPolicy(deps, {
@@ -1055,7 +1202,7 @@ function runDockerStandards(options, deps = {}) {
     success: imageAvailable && summary.success,
     results,
     summary,
-    failure: summary.success ? undefined : 'Docker standards evidence failed.'
+    failure: summary.success ? undefined : summarizeStandardsFailure(summary) || 'Docker standards evidence failed.'
   };
 }
 
@@ -1070,6 +1217,11 @@ function runStandardsEvidence(options, deps = {}) {
 
   const host = runHostStandards(options, deps);
   if (host.success) {
+    return host;
+  }
+
+  const hostPreflightOk = host.summary?.preflight?.ok === true;
+  if (options.kind === 'release' && hostPreflightOk && host.summary?.failedReleaseProfiles?.length > 0) {
     return host;
   }
 
@@ -1224,7 +1376,7 @@ function formatDodGateSummary(dodGateEvidence) {
 }
 
 function renderStandardsSummary(standards) {
-  if (!standards.success) {
+  if (!standards.success && !standards.summary) {
     return [
       `- Standards runner: ${standards.runner}`,
       `- Standards evidence failed: ${standards.failure || 'unknown failure'}`
@@ -1234,6 +1386,7 @@ function renderStandardsSummary(standards) {
   const summary = standards.summary;
   const lines = [
     `- Standards runner: ${summary.runner}`,
+    !standards.success ? `- Standards evidence failed: ${standards.failure || 'unknown failure'}` : undefined,
     standards.auditTarget
       ? `- Audit target: ${standards.auditTarget.mode}; ${standards.auditTarget.trackedFileCount} tracked files; generated roots excluded.`
       : undefined,
@@ -1244,6 +1397,15 @@ function renderStandardsSummary(standards) {
   ].filter(Boolean);
   if (standards.runner === 'docker') {
     lines.splice(1, 0, `- Docker image: ${standards.image}; image access=${standards.imageAccess}`);
+  }
+  if (summary.releaseProfiles?.length > 0) {
+    lines.push('- Release/user-information profiles:');
+    for (const profile of summary.releaseProfiles) {
+      const gates = profile.gates.length > 0
+        ? profile.gates.map((entry) => `${entry.gate}=${entry.status}`).join('; ')
+        : 'no scorecard gates parsed';
+      lines.push(`  - ${profile.profile}: ${profile.success ? 'PASS' : 'FAIL'} (${gates})`);
+    }
   }
   return lines.join('\n');
 }
@@ -1291,6 +1453,8 @@ function evaluateClosureDecision(context) {
     : [];
   const standardsPassed = context.standards?.success === true;
   const provenancePassed = context.provenance?.success === true;
+  const dodGateEvidence = context.standards?.summary?.dodGateEvidence;
+  const dodEvidencePassed = standardsPassed && dodGateEvidence?.status === 'PASS';
   const reasons = [];
 
   if (!localGatesRan) {
@@ -1301,6 +1465,8 @@ function evaluateClosureDecision(context) {
 
   if (!standardsPassed) {
     reasons.push(context.standards?.failure || 'Standards evidence failed.');
+  } else if (!dodEvidencePassed) {
+    reasons.push('Definition-of-Done evidence did not pass; record the blocking follow-up issue before umbrella closeout.');
   }
 
   if (!provenancePassed) {
@@ -1308,11 +1474,12 @@ function evaluateClosureDecision(context) {
   }
 
   return {
-    closable: localGatesPassed && standardsPassed && provenancePassed,
+    closable: localGatesPassed && standardsPassed && dodEvidencePassed && provenancePassed,
     localGatesRan,
     localGatesPassed,
     failedLocalGates,
     standardsPassed,
+    dodEvidencePassed,
     provenancePassed,
     reasons
   };
@@ -1323,7 +1490,7 @@ function buildMachineReadableCloseoutSummary(context, exitCode) {
   const standardsSummary = context.standards?.summary || {};
 
   return {
-    schemaVersion: 1,
+    ...schemaEnvelopeFields(CLOSEOUT_SUMMARY_SCHEMA_ID, CLOSEOUT_SCHEMA_VERSION),
     kind: context.options.kind,
     issueNumber: context.options.issue ? Number(context.options.issue) : undefined,
     githubIssueUrl: context.githubContext.issue?.url,
@@ -1367,7 +1534,8 @@ function buildMachineReadableCloseoutSummary(context, exitCode) {
         coverageGate: standardsSummary.coverageGate,
         docGate: standardsSummary.docGate,
         dodGate: standardsSummary.dodGate,
-        dodGateEvidence: standardsSummary.dodGateEvidence
+        dodGateEvidence: standardsSummary.dodGateEvidence,
+        releaseProfiles: standardsSummary.releaseProfiles
       }
     },
     provenance: {
@@ -1409,6 +1577,7 @@ function buildMachineReadableCloseoutSummary(context, exitCode) {
       requirements: {
         localGates: closureDecision.localGatesPassed,
         standardsEvidence: closureDecision.standardsPassed,
+        definitionOfDoneEvidence: closureDecision.dodEvidencePassed,
         standardsProvenance: closureDecision.provenancePassed
       },
       reasons: closureDecision.reasons
@@ -1458,10 +1627,54 @@ function renderCloseoutMarkdown(context) {
   ].filter((line) => line !== undefined).join('\n');
 }
 
+// Published JSON Schema for the retained closeout-summary.json packet, so consumers
+// can validate it and the `--schema` mode can publish the contract without
+// collecting evidence. Shares the self-describing envelope via
+// scripts/lib/schemaEnvelope.js; the rich nested gate/standards/provenance records
+// use permissive shapes for forward-compatibility.
+const CLOSEOUT_SUMMARY_JSON_SCHEMA = {
+  $schema: JSON_SCHEMA_DIALECT,
+  $id: CLOSEOUT_SUMMARY_SCHEMA_ID,
+  title: 'vi-history-suite closeout evidence summary',
+  type: 'object',
+  additionalProperties: true,
+  required: [
+    '$schema',
+    'schemaVersion',
+    'kind',
+    'git',
+    'localGates',
+    'standards',
+    'provenance',
+    'closureDecision',
+    'exitCode'
+  ],
+  properties: {
+    ...schemaEnvelopePropertyNodes(CLOSEOUT_SUMMARY_SCHEMA_ID, CLOSEOUT_SCHEMA_VERSION),
+    kind: { type: 'string' },
+    issueNumber: { type: ['integer', 'null'] },
+    githubIssueUrl: { type: ['string', 'null'] },
+    git: { type: 'object' },
+    localGates: { type: 'object' },
+    standards: { type: 'object' },
+    provenance: { type: 'object' },
+    closureDecision: { type: 'object' },
+    exitCode: { type: 'integer' }
+  }
+};
+
+function renderSchema(options = {}) {
+  return renderSchemaDocument(CLOSEOUT_SUMMARY_JSON_SCHEMA, options);
+}
+
 function generateCloseoutEvidence(argv, deps = {}) {
   const options = parseArgs(argv);
   if (options.help) {
     return { exitCode: 0, markdown: usage(), context: { options } };
+  }
+  // --schema publishes the JSON Schema without collecting any evidence.
+  if (options.schema) {
+    return { exitCode: 0, markdown: renderSchema(), context: { options, schema: true } };
   }
 
   const cwd = TRUSTED_REPO_ROOT;
@@ -1544,7 +1757,8 @@ function generateCloseoutEvidence(argv, deps = {}) {
   const closureDecision = evaluateClosureDecision(context);
   context.closureDecision = closureDecision;
   const gateFailure = closureDecision.localGatesRan ? !closureDecision.localGatesPassed : false;
-  const exitCode = standards.success && provenance.success && !gateFailure ? 0 : 1;
+  const exitCode =
+    standards.success && closureDecision.dodEvidencePassed && provenance.success && !gateFailure ? 0 : 1;
   const machineReadableSummary = buildMachineReadableCloseoutSummary(context, exitCode);
   context.machineReadableSummary = machineReadableSummary;
   records.push({
@@ -1587,6 +1801,7 @@ module.exports = {
   DEFAULT_STANDARDS_IMAGE,
   GENERATED_ROOTS_EXCLUDED_FROM_STANDARDS_AUDIT,
   LOCAL_STANDARDS_IMAGE,
+  RELEASE_STANDARDS_PROFILES,
   STANDARDS_TOOLCHAIN_EXPECTED_COMMIT,
   STANDARDS_TOOLCHAIN_GITHUB_TAG,
   STANDARDS_TOOLCHAIN_GITHUB_URL,
@@ -1608,11 +1823,17 @@ module.exports = {
   parseTraceabilitySummary,
   renderCloseoutMarkdown,
   removeTrackedWorktreeSnapshot,
+  resolveAuditSnapshotBase,
+  summarizeReleaseProfileResults,
   isAllowedExecutableCommand,
   assertAllowedExecutableCommand,
   runCommand,
   evaluateClosureDecision,
   buildMachineReadableCloseoutSummary,
+  renderSchema,
+  CLOSEOUT_SUMMARY_SCHEMA_ID,
+  CLOSEOUT_SUMMARY_JSON_SCHEMA,
+  CLOSEOUT_SCHEMA_VERSION,
   runDockerStandards,
   runGateCommands,
   runHostStandards,

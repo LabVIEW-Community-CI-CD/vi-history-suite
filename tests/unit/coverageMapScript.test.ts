@@ -5,6 +5,8 @@ import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 type CoverageMap = {
+  $schema?: string;
+  schemaVersion?: number;
   riskThreshold: number;
   files: Array<{
     path: string;
@@ -28,7 +30,11 @@ type CoverageMap = {
 const {
   generateCoverageMap,
   parseArgs,
-  renderCoverageMapMarkdown
+  renderCoverageMapMarkdown,
+  renderSchema,
+  summarizeEnforcement,
+  main,
+  COVERAGE_MAP_SCHEMA_ID
 } = require('../../scripts/mapCoverageToTraceability.js') as {
   parseArgs: (argv: string[]) => {
     coverageSummary: string;
@@ -36,6 +42,10 @@ const {
     rtm: string;
     riskThreshold: number;
     json: boolean;
+    schema: boolean;
+    includeProvenance: boolean;
+    enforce: boolean;
+    repoRoot?: string;
   };
   generateCoverageMap: (options: {
     repoRoot: string;
@@ -45,6 +55,14 @@ const {
     riskThreshold?: number;
   }) => CoverageMap;
   renderCoverageMapMarkdown: (map: CoverageMap) => string;
+  renderSchema: (options?: { provenance?: unknown }) => string;
+  COVERAGE_MAP_SCHEMA_ID: string;
+  summarizeEnforcement: (map: CoverageMap) => {
+    mappedBelow: number;
+    zeroCoverageSupporting: number;
+    violations: number;
+  };
+  main: (argv?: string[]) => number;
 };
 
 function metric(total: number, covered: number) {
@@ -135,10 +153,11 @@ describe('coverage traceability map script', () => {
     expect(options.json).toBe(true);
   });
 
-  it('joins coverage, inventory, and RTM records into requirement risk facts', () => {
+  it('joins coverage, inventory, and RTM records into requirement risk facts (VHS-REQ-613.1, VHS-REQ-613.2, VHS-REQ-613.3)', () => {
     const repoRoot = writeFixture();
 
     const map = generateCoverageMap({ repoRoot, riskThreshold: 50 });
+    const requirementRisk = map.byRequirement.find((entry) => entry.reqId === 'VHS-REQ-613');
 
     expect(map.files.map((file) => file.path)).toEqual([
       'src/coveredMapped.ts',
@@ -151,13 +170,15 @@ describe('coverage traceability map script', () => {
       'src/supportingRisk.ts'
     ]);
     expect(map.zeroCoverageSupportingRequirements[0].requirementIds).toContain('VHS-REQ-610');
-    expect(map.byRequirement.find((entry) => entry.reqId === 'VHS-REQ-613')?.missingLines).toBe(6);
+    expect(requirementRisk?.missingLines).toBe(6);
+    expect(requirementRisk?.missingBranches).toBe(3);
+    expect(requirementRisk?.missingFunctions).toBe(3);
     expect(map.byClassification.find((entry) => entry.classification === 'supporting')?.fileCount).toBe(
       1
     );
   });
 
-  it('renders GitHub-ready Markdown for low mapped and zero supporting risk', () => {
+  it('renders GitHub-ready Markdown for low mapped and zero supporting risk (VHS-REQ-613.2, VHS-REQ-613.3)', () => {
     const repoRoot = writeFixture();
     const markdown = renderCoverageMapMarkdown(generateCoverageMap({ repoRoot }));
 
@@ -169,7 +190,28 @@ describe('coverage traceability map script', () => {
     expect(markdown).toContain('| VHS-REQ-613 | 2 | 6 |');
   });
 
-  it('fails closed when retained coverage evidence is missing', () => {
+  it('emits a self-describing packet aligned with the published schema, with a --schema mode (VHS-REQ-613)', () => {
+    const repoRoot = writeFixture();
+    const map = generateCoverageMap({ repoRoot, riskThreshold: 50 }) as unknown as Record<string, unknown>;
+    const schema = JSON.parse(renderSchema()) as {
+      $id: string;
+      required: string[];
+      properties: { $schema: { const: string }; schemaVersion: { const: number } };
+    };
+
+    // Self-describing envelope aligned with the schema's required contract.
+    expect(schema.required.filter((key) => !(key in map))).toEqual([]);
+    expect(map.$schema).toBe(schema.properties.$schema.const);
+    expect(map.$schema).toBe(COVERAGE_MAP_SCHEMA_ID);
+    expect(map.schemaVersion).toBe(schema.properties.schemaVersion.const);
+
+    // --schema publishes the JSON Schema and attaches provenance under the shared key.
+    expect(schema.$id).toBe(COVERAGE_MAP_SCHEMA_ID);
+    const withProvenance = JSON.parse(renderSchema({ provenance: { generatedAt: 'x' } })) as Record<string, unknown>;
+    expect(withProvenance['x-vi-history-suite-provenance']).toEqual({ generatedAt: 'x' });
+  });
+
+  it('fails closed when retained coverage evidence is missing (VHS-REQ-613.7)', () => {
     const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'vihs-coverage-map-missing-'));
     fs.mkdirSync(path.join(repoRoot, 'docs', 'requirements'), { recursive: true });
     fs.writeFileSync(
@@ -184,5 +226,61 @@ describe('coverage traceability map script', () => {
     );
 
     expect(() => generateCoverageMap({ repoRoot })).toThrow('Run npm test first');
+  });
+
+  it('parses the enforce flag with an advisory default', () => {
+    expect(parseArgs(['--enforce']).enforce).toBe(true);
+    expect(parseArgs([]).enforce).toBe(false);
+  });
+
+  it('rejects combining --json and --schema, and honors --include-provenance in markdown output (VHS-REQ-613)', () => {
+    const repoRoot = writeFixture();
+    const originalWrite = process.stdout.write.bind(process.stdout);
+    let captured = '';
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (process.stdout as any).write = (chunk: string) => {
+      captured += chunk;
+      return true;
+    };
+    try {
+      captured = '';
+      const conflictCode = main(['--json', '--schema', '--repo-root', repoRoot]);
+      expect(conflictCode).toBe(1);
+
+      captured = '';
+      main(['--include-provenance', '--repo-root', repoRoot]);
+      expect(captured).toContain('## Provenance');
+      expect(captured).toContain('- provenance outputMode: markdown');
+    } finally {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (process.stdout as any).write = originalWrite;
+    }
+  });
+
+  it('summarizes enforcement risk from mapped-below-threshold and zero-coverage supporting files', () => {
+    const repoRoot = writeFixture();
+    const map = generateCoverageMap({ repoRoot, riskThreshold: 50 });
+
+    expect(summarizeEnforcement(map)).toEqual({
+      mappedBelow: 1,
+      zeroCoverageSupporting: 1,
+      violations: 2
+    });
+
+    const cleanMap: CoverageMap = {
+      ...map,
+      mappedBelowThreshold: [],
+      zeroCoverageSupportingRequirements: []
+    };
+    expect(summarizeEnforcement(cleanMap)).toEqual({
+      mappedBelow: 0,
+      zeroCoverageSupporting: 0,
+      violations: 0
+    });
+  });
+
+  it('fails closed under --enforce when requirement-mapped or supporting risk exists (VHS-REQ-613.4)', () => {
+    const repoRoot = writeFixture();
+    expect(main(['--enforce', '--repo-root', repoRoot])).toBe(1);
   });
 });

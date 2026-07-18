@@ -22,6 +22,8 @@ Follow this order to minimize rework and get fast feedback:
 
 Use `bash .github/skills/testing-automation/scripts/run-pr-gates.sh` when you need a clean dependency install with `npm ci`.
 
+For a single-pane requirement-verification signal across structural integrity, requirement linkage, criterion citation, coverage risk, and mutation, run `npm run requirements:verify` (`:strict` fails locally when health is not green). Stryker mutation testing runs nightly and advisory via `.github/workflows/mutation.yml`; run it locally with `npm run test:mutation` (`src/domain` scope).
+
 ## Failure Triage Flow
 1. Run the smallest command that reproduces the failure.
 2. Fix code and tests together in the same change.

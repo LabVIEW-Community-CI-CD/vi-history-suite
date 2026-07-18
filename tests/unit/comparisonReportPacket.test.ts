@@ -1,9 +1,14 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import {
+  ComparisonReportPacketDeps,
   ComparisonReportPacketRecord,
   ComparisonReportRuntimeExecution,
-  renderComparisonReportPacketHtml
+  PersistComparisonReportPacketOptions,
+  persistComparisonReportPacket,
+  renderComparisonReportPacketHtml,
+  formatComparisonRevisionHashDisplay,
+  writeComparisonReportPacketRecord
 } from '../../src/reporting/comparisonReportPacket';
 
 /**
@@ -109,6 +114,20 @@ function extractCompactEvidenceSummary(html: string): string {
   }
   return compactSummaryMatch[0];
 }
+
+describe('formatComparisonRevisionHashDisplay (VHS-REQ-641.6)', () => {
+  it('renders the WORKTREE sentinel as a human-readable label', () => {
+    expect(formatComparisonRevisionHashDisplay('WORKTREE')).toBe('Working tree (uncommitted)');
+  });
+
+  it('renders a committed hash verbatim', () => {
+    expect(formatComparisonRevisionHashDisplay('abcdef1234567890')).toBe('abcdef1234567890');
+  });
+
+  it('falls back to "not retained" for an absent id', () => {
+    expect(formatComparisonRevisionHashDisplay(undefined)).toBe('not retained');
+  });
+});
 
 describe('comparisonReportPacket retained evidence (VHS-REQ-148)', () => {
   describe('retained metadata completeness', () => {
@@ -327,7 +346,7 @@ describe('comparisonReportPacket retained evidence (VHS-REQ-148)', () => {
   });
 
   describe('packet HTML doctor summary rendering', () => {
-    it('renders doctor summary lines when present', () => {
+    it('renders doctor summary lines when present (VHS-REQ-155.3)', () => {
       const record = createBaseRecord({
         state: 'failed',
         attempted: true,
@@ -438,7 +457,7 @@ describe('comparisonReportPacket retained evidence (VHS-REQ-148)', () => {
     });
   });
 
-  describe('HTML escaping for factual evidence', () => {
+  describe('HTML escaping for factual evidence (VHS-REQ-148.6)', () => {
     it('escapes angle brackets in report title', () => {
       const record = createBaseRecord();
       record.reportTitle = 'VI Comparison Report: <script>alert("xss")</script>.vi';
@@ -617,7 +636,7 @@ describe('comparisonReportPacket retained evidence (VHS-REQ-148)', () => {
   });
 
   describe('runtime doctor facts preserved end-to-end (VHS-REQ-155)', () => {
-    it('retains blocked host runtime facts through packet rendering with provider decisions', () => {
+    it('retains blocked host runtime facts through packet rendering with provider decisions (VHS-REQ-155.4, VHS-REQ-155.5)', () => {
       const record = createBaseRecord(
         {
           state: 'not-available',
@@ -675,7 +694,7 @@ describe('comparisonReportPacket retained evidence (VHS-REQ-148)', () => {
       expect(html).toContain('install the selected LabVIEW version');
     });
 
-    it('retains blocked Docker/container image runtime facts through packet rendering', () => {
+    it('retains blocked Docker/container image runtime facts through packet rendering (VHS-REQ-155.4, VHS-REQ-155.5)', () => {
       const record = createBaseRecord(
         {
           state: 'not-available',
@@ -747,7 +766,7 @@ describe('comparisonReportPacket retained evidence (VHS-REQ-148)', () => {
       expect(html).toContain('repair Docker connectivity');
     });
 
-    it('preserves runtime selection surface facts separately from doctor summary', () => {
+    it('preserves runtime selection surface facts separately from doctor summary (VHS-REQ-155.5)', () => {
       const record = createBaseRecord(
         {
           state: 'not-available',
@@ -804,8 +823,8 @@ describe('comparisonReportPacket retained evidence (VHS-REQ-148)', () => {
     });
   });
 
-  describe('compact evidence summary rendering (VHS-REQ-148)', () => {
-    it('renders compact evidence summary for failed executions', () => {
+  describe('compact evidence summary rendering (VHS-REQ-148, VHS-REQ-148.5, VHS-REQ-148.6)', () => {
+    it('renders compact evidence summary for failed executions (VHS-REQ-148.4)', () => {
       const record = createBaseRecord({
         state: 'failed',
         attempted: true,
@@ -831,7 +850,7 @@ describe('comparisonReportPacket retained evidence (VHS-REQ-148)', () => {
       expect(html).toContain('<strong>Stderr artifact:</strong>');
     });
 
-    it('renders compact evidence summary for blocked executions', () => {
+    it('renders compact evidence summary for blocked executions (VHS-REQ-148.4)', () => {
       const record = createBaseRecord({
         state: 'not-available',
         attempted: false,
@@ -982,7 +1001,7 @@ describe('comparisonReportPacket retained evidence (VHS-REQ-148)', () => {
 });
 
 describe('comparisonReportPacket dependency caveat (VHS-REQ-624)', () => {
-  it('discloses the newest-tree dependency caveat with the recompile hazard when a tree was materialized', () => {
+  it('discloses the newest-tree dependency caveat with the recompile hazard when a tree was materialized (VHS-REQ-624.7, VHS-REQ-624.8)', () => {
     const record = createBaseRecord({
       materializedTree: {
         root: '/workspace/.storage/reports/repoid123456/fileid123456/container-out/staging',
@@ -1021,7 +1040,7 @@ describe('comparisonReportPacket dependency caveat (VHS-REQ-624)', () => {
 });
 
 describe('comparisonReportPacket library-member caveat (VHS-REQ-625)', () => {
-  it('discloses the library-member caveat naming the owning library when detected', () => {
+  it('discloses the library-member caveat naming the owning library when detected (VHS-REQ-625.3)', () => {
     const record = createBaseRecord();
     record.preflight.comparedViLibraryMembership = {
       isMember: true,
@@ -1037,7 +1056,7 @@ describe('comparisonReportPacket library-member caveat (VHS-REQ-625)', () => {
     expect(html.toLowerCase()).toContain('namespace');
   });
 
-  it('omits the library-member caveat when the compared VI is not a library member', () => {
+  it('omits the library-member caveat when the compared VI is not a library member (VHS-REQ-625.4)', () => {
     const html = renderComparisonReportPacketHtml(createBaseRecord());
 
     expect(html).not.toContain('data-testid="comparison-report-library-member-caveat"');
@@ -1046,7 +1065,7 @@ describe('comparisonReportPacket library-member caveat (VHS-REQ-625)', () => {
 });
 
 describe('comparisonReportPacket commit body (VHS-REQ-644)', () => {
-  it('renders the full commit body for both revision context cards with multi-line preserved', () => {
+  it('renders the full commit body for both revision context cards with multi-line preserved (VHS-REQ-644.1, VHS-REQ-644.4)', () => {
     const record = createBaseRecord(
       {},
       {
@@ -1074,7 +1093,7 @@ describe('comparisonReportPacket commit body (VHS-REQ-644)', () => {
     expect(html).toContain('Base body rationale');
   });
 
-  it('escapes HTML in the commit body', () => {
+  it('escapes HTML in the commit body (VHS-REQ-644.4)', () => {
     const record = createBaseRecord(
       {},
       {
@@ -1092,7 +1111,7 @@ describe('comparisonReportPacket commit body (VHS-REQ-644)', () => {
     expect(html).not.toContain('<script>alert(1)</script>');
   });
 
-  it('renders the empty-body fallback when a revision has a retained but empty commit body', () => {
+  it('renders the empty-body fallback when a revision has a retained but empty commit body (VHS-REQ-644.5)', () => {
     const record = createBaseRecord(
       {},
       {
@@ -1109,7 +1128,7 @@ describe('comparisonReportPacket commit body (VHS-REQ-644)', () => {
     expect(html).toContain('<strong>Body:</strong> <span class="muted">No commit body</span>');
   });
 
-  it('renders the not-retained fallback for the body when revision metadata is undefined', () => {
+  it('renders the not-retained fallback for the body when revision metadata is undefined (VHS-REQ-644.5)', () => {
     const record = createBaseRecord(
       {},
       {
@@ -1125,5 +1144,129 @@ describe('comparisonReportPacket commit body (VHS-REQ-644)', () => {
 
     expect(html).toContain('<strong>Body:</strong> <span class="muted">not retained</span>');
     expect(html).not.toContain('<strong>Body:</strong> <span class="muted">No commit body</span>');
+  });
+});
+
+describe('comparisonReportPacket persistence (VHS-REQ-148)', () => {
+  function createPersistOptions(
+    overrides: {
+      preflightReady?: boolean;
+      provider?: ComparisonReportPacketRecord['runtimeSelection']['provider'];
+      blockedReason?: string;
+    } = {}
+  ): PersistComparisonReportPacketOptions {
+    return {
+      storageRoot: '/workspace/.storage',
+      repositoryRoot: '/workspace/repo',
+      relativePath: 'foo.vi',
+      reportType: 'diff',
+      selectedHash: 'abcdef1234567890',
+      baseHash: '1111111122222222',
+      preflight: {
+        normalizedRelativePath: 'foo.vi',
+        ready: overrides.preflightReady ?? true,
+        left: {
+          revisionId: '1111111122222222',
+          blobSpecifier: '1111111122222222:foo.vi',
+          signature: 'LVIN',
+          isVi: true
+        },
+        right: {
+          revisionId: 'abcdef1234567890',
+          blobSpecifier: 'abcdef1234567890:foo.vi',
+          signature: 'LVCC',
+          isVi: true
+        }
+      },
+      runtimeSelection: {
+        platform: 'win32',
+        bitness: 'x86',
+        provider: overrides.provider ?? 'host-native',
+        engine: 'labview-cli',
+        blockedReason: overrides.blockedReason,
+        notes: [],
+        registryQueryPlans: [],
+        candidates: []
+      }
+    };
+  }
+
+  function createDeps() {
+    const mkdir = vi.fn(async (_path: string, _options?: unknown) => undefined);
+    const writeFile = vi.fn(async (_path: string, _content?: unknown) => undefined);
+    const deps = {
+      now: () => '2026-04-02T00:00:00.000Z',
+      mkdir,
+      writeFile
+    } as unknown as ComparisonReportPacketDeps;
+    return { deps, mkdir, writeFile };
+  }
+
+  it('persists a ready-for-runtime packet and writes metadata then packet artifacts', async () => {
+    const { deps, mkdir, writeFile } = createDeps();
+    const result = await persistComparisonReportPacket(createPersistOptions(), deps);
+
+    expect(result.record.reportStatus).toBe('ready-for-runtime');
+    expect(result.record.runtimeExecutionState).toBe('not-run');
+    expect(result.record.generatedAt).toBe('2026-04-02T00:00:00.000Z');
+    expect(mkdir).toHaveBeenCalledTimes(2);
+    expect(writeFile).toHaveBeenCalledTimes(2);
+    expect(writeFile.mock.calls[0][0]).toBe(result.metadataFilePath);
+    expect(writeFile.mock.calls[1][0]).toBe(result.packetFilePath);
+    expect(() => JSON.parse(writeFile.mock.calls[0][1] as string)).not.toThrow();
+    expect(writeFile.mock.calls[1][1] as string).toContain('Comparison Report');
+  });
+
+  it('marks an unavailable provider as blocked-runtime / not-available', async () => {
+    const { deps } = createDeps();
+    const result = await persistComparisonReportPacket(
+      createPersistOptions({ provider: 'unavailable', blockedReason: 'labview-exe-not-found' }),
+      deps
+    );
+    expect(result.record.reportStatus).toBe('blocked-runtime');
+    expect(result.record.runtimeExecutionState).toBe('not-available');
+  });
+
+  it.each([
+    'container-image-acquisition-failed',
+    'windows-container-image-acquisition-failed'
+  ])('marks a %s container acquisition failure as blocked-runtime / not-available', async (blockedReason) => {
+    const { deps } = createDeps();
+    const result = await persistComparisonReportPacket(
+      createPersistOptions({ provider: 'windows-container', blockedReason }),
+      deps
+    );
+    expect(result.record.reportStatus).toBe('blocked-runtime');
+    expect(result.record.runtimeExecutionState).toBe('not-available');
+  });
+
+  it('marks an unready preflight as blocked-preflight while keeping runtime not-run', async () => {
+    const { deps } = createDeps();
+    const result = await persistComparisonReportPacket(
+      createPersistOptions({ preflightReady: false }),
+      deps
+    );
+    expect(result.record.reportStatus).toBe('blocked-preflight');
+    expect(result.record.runtimeExecutionState).toBe('not-run');
+  });
+
+  it('writeComparisonReportPacketRecord creates directories and writes both artifacts', async () => {
+    const { deps, mkdir, writeFile } = createDeps();
+    const { record } = await persistComparisonReportPacket(createPersistOptions(), deps);
+    mkdir.mockClear();
+    writeFile.mockClear();
+
+    await writeComparisonReportPacketRecord(record, deps);
+
+    expect(mkdir).toHaveBeenCalledWith(record.artifactPlan.reportDirectory, { recursive: true });
+    expect(mkdir).toHaveBeenCalledWith(record.artifactPlan.stagingDirectory, { recursive: true });
+    expect(writeFile).toHaveBeenCalledWith(
+      record.artifactPlan.metadataFilePath,
+      expect.any(String)
+    );
+    expect(writeFile).toHaveBeenCalledWith(
+      record.artifactPlan.packetFilePath,
+      expect.any(String)
+    );
   });
 });

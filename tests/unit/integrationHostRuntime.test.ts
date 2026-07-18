@@ -11,7 +11,8 @@ import {
   inspectIntegrationHostStrategy,
   normalizeIntegrationHostOverride,
   resolveStandardWindowsCodeCliPath,
-  VI_HISTORY_SUITE_LINUX_BOOTSTRAP_COMMAND
+  VI_HISTORY_SUITE_LINUX_BOOTSTRAP_COMMAND,
+  VI_HISTORY_SUITE_LINUX_RUNTIME_PACKAGES
 } from '../../src/tooling/integrationHostRuntime';
 
 function elfStub(): Buffer {
@@ -68,7 +69,7 @@ describe('integrationHostRuntime', () => {
     });
   });
 
-  it('fails fast with actionable remediation when the native Windows VS Code host is missing', () => {
+  it('fails fast with actionable remediation when the native Windows VS Code host is missing (VHS-REQ-598.7)', () => {
     // Reproduces run 27477253718: native-Windows host selected but VS Code is
     // not installed. The guard must throw a clear, doctor-pointing message
     // instead of letting the launcher die with CommandNotFoundException.
@@ -113,6 +114,44 @@ describe('integrationHostRuntime', () => {
           candidate === '/mnt/c/Users/sveld/AppData/Local/Programs/Microsoft VS Code/bin/code'
       })
     ).toBe('/mnt/c/Users/sveld/AppData/Local/Programs/Microsoft VS Code/bin/code');
+  });
+
+  it('derives a user-agnostic LOCALAPPDATA fallback when the environment is absent', () => {
+    // Pass '' (not undefined) for absent env vars: undefined would trigger the
+    // parameter defaults (process.env.LOCALAPPDATA / USERPROFILE), which differ
+    // by host and are set on the Windows CI runner. '' is falsy but keeps the
+    // "absent" simulation host-independent.
+    // With no LOCALAPPDATA, fall back to <USERPROFILE>\AppData\Local, never a
+    // developer-specific hardcoded profile.
+    expect(
+      resolveStandardWindowsCodeCliPath(
+        'win32',
+        '',
+        {
+          existsSync: (candidate) =>
+            candidate ===
+            'C:\\Users\\alice\\AppData\\Local\\Programs\\Microsoft VS Code\\bin\\code.cmd'
+        },
+        'C:\\Users\\alice'
+      )
+    ).toBe('C:\\Users\\alice\\AppData\\Local\\Programs\\Microsoft VS Code\\bin\\code.cmd');
+
+    // With neither LOCALAPPDATA nor USERPROFILE, fall back to the built-in
+    // Windows Default profile (user-agnostic), and never to a real person's name.
+    const resolvedWithoutEnv = resolveStandardWindowsCodeCliPath('win32', '', {
+      existsSync: () => false
+    }, '');
+    expect(resolvedWithoutEnv).not.toContain('sveld');
+    expect(resolvedWithoutEnv).toBe('C:\\Program Files\\Microsoft VS Code\\bin\\code.cmd');
+    // The LOCALAPPDATA-derived candidate uses the Default profile.
+    const defaultProfileResolved = resolveStandardWindowsCodeCliPath('win32', '', {
+      existsSync: (candidate) =>
+        candidate ===
+        'C:\\Users\\Default\\AppData\\Local\\Programs\\Microsoft VS Code\\bin\\code.cmd'
+    }, '');
+    expect(defaultProfileResolved).toBe(
+      'C:\\Users\\Default\\AppData\\Local\\Programs\\Microsoft VS Code\\bin\\code.cmd'
+    );
   });
 
   it('deduplicates missing Linux runtime libraries across the VS Code runtime tree', async () => {
@@ -186,6 +225,13 @@ describe('integrationHostRuntime', () => {
     ).toThrow(
       new RegExp(VI_HISTORY_SUITE_LINUX_BOOTSTRAP_COMMAND.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
     );
+  });
+
+  it('keeps Debian and Ubuntu runtime package remediation aligned with bootstrap expectations', () => {
+    expect(VI_HISTORY_SUITE_LINUX_RUNTIME_PACKAGES.debian).not.toContain('libei1');
+    expect(VI_HISTORY_SUITE_LINUX_RUNTIME_PACKAGES.debian).toContain('libasound2');
+    expect(VI_HISTORY_SUITE_LINUX_RUNTIME_PACKAGES.ubuntu).toContain('libei1');
+    expect(VI_HISTORY_SUITE_LINUX_RUNTIME_PACKAGES.ubuntu).toContain('libasound2t64');
   });
 
   it('accepts a Linux runtime when no shared libraries are missing', async () => {

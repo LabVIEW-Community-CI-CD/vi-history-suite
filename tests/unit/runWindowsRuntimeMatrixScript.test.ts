@@ -127,7 +127,7 @@ describe('runWindowsRuntimeMatrix.ensurePlatformGuard', () => {
     ).not.toThrow();
   });
 
-  it('throws on non-Windows without the test override', () => {
+  it('throws on non-Windows without the test override (VHS-REQ-622.1)', () => {
     expect(() => harness.ensurePlatformGuard('darwin', {})).toThrow(
       /requires Windows/
     );
@@ -135,7 +135,7 @@ describe('runWindowsRuntimeMatrix.ensurePlatformGuard', () => {
 });
 
 describe('runWindowsRuntimeMatrix.buildScenarioPlan', () => {
-  it('emits a per-scenario plan with proof and log paths under the proof directory', () => {
+  it('emits a per-scenario plan with proof and log paths under the proof directory (VHS-REQ-622.2)', () => {
     const plan = harness.buildScenarioPlan({
       scenario: 'all',
       out: 'assurance-closeout-evidence/manual-vhs-req-621.json'
@@ -157,7 +157,7 @@ describe('runWindowsRuntimeMatrix.buildScenarioPlan', () => {
     expect(plan[0].proofPath.startsWith('custom-proof-dir')).toBe(true);
   });
 
-  it('marks port-A to derive its expected port from the selected install ini (VHS-REQ-623)', () => {
+  it('marks port-A to derive its expected port from the selected install ini (VHS-REQ-623.6)', () => {
     const plan = harness.buildScenarioPlan({ scenario: 'port-A', out: 'evidence.json' });
     expect(plan[0].parameters.derivePortFromSelectedIni).toBe(true);
     expect(
@@ -172,7 +172,7 @@ describe('runWindowsRuntimeMatrix.buildScenarioPlan', () => {
 });
 
 describe('runWindowsRuntimeMatrix.buildPowershellArgs', () => {
-  it('passes scenario, bitness, paths, and labview version to the helper', () => {
+  it('passes scenario, bitness, paths, and labview version to the helper (VHS-REQ-622.2)', () => {
     const scenario = {
       id: 'steady-A',
       parameters: {
@@ -205,7 +205,7 @@ describe('runWindowsRuntimeMatrix.buildPowershellArgs', () => {
     expect(args).not.toContain('-KeepRunning');
   });
 
-  it('passes the scenario-specific host/selected years and version-conflict reason (VHS-REQ-653)', () => {
+  it('passes the scenario-specific host/selected years and version-conflict reason (VHS-REQ-653.7)', () => {
     const scenario = {
       id: 'version-A',
       parameters: {
@@ -253,7 +253,7 @@ describe('runWindowsRuntimeMatrix.buildPowershellArgs', () => {
     expect(args).toContain('-KeepRunning');
   });
 
-  it('signals -DerivePortFromSelectedIni (no port number) for the port-admit scenario (VHS-REQ-623)', () => {
+  it('signals -DerivePortFromSelectedIni (no port number) for the port-admit scenario (VHS-REQ-623.6)', () => {
     const scenario = {
       id: 'port-A',
       parameters: {
@@ -329,7 +329,7 @@ describe('runWindowsRuntimeMatrix.summarizeScenario', () => {
     logPath: 'p.scenario.json'
   };
 
-  it('passes when scenario log reports pass and matches expected observations', () => {
+  it('passes when scenario log reports pass and matches expected observations (VHS-REQ-622.2)', () => {
     const summary = harness.summarizeScenario(
       scenario,
       { status: 0 },
@@ -371,7 +371,7 @@ describe('runWindowsRuntimeMatrix.summarizeScenario', () => {
     expect(summary.failureReason).toBe('powershell-exit-7');
   });
 
-  it('passes a version scenario when the proof reports windows-host-version-conflict (VHS-REQ-653)', () => {
+  it('passes a version scenario when the proof reports windows-host-version-conflict (VHS-REQ-653.7)', () => {
     const versionScenario = {
       id: 'version-A',
       parameters: {
@@ -405,7 +405,7 @@ describe('runWindowsRuntimeMatrix.summarizeScenario', () => {
     expect(summary.failureReason).toBeUndefined();
   });
 
-  it('fails a version scenario when the proof still reports a bitness conflict (VHS-REQ-653)', () => {
+  it('fails a version scenario when the proof still reports a bitness conflict (VHS-REQ-653.7)', () => {
     const versionScenario = {
       id: 'version-A',
       parameters: {
@@ -489,7 +489,7 @@ describe('runWindowsRuntimeMatrix.summarizeScenario', () => {
     return log;
   }
 
-  it('passes when the host is admitted and the product observed the selected install ini port (VHS-REQ-623)', () => {
+  it('passes when the host is admitted and the product observed the selected install ini port (VHS-REQ-623.6)', () => {
     const summary = harness.summarizeScenario(portScenario, { status: 0 }, portLog({}));
     expect(summary.pass).toBe(true);
     expect(summary.expected.hostTcpPort).toBe(3366);
@@ -498,7 +498,7 @@ describe('runWindowsRuntimeMatrix.summarizeScenario', () => {
     expect(summary.failureReason).toBeUndefined();
   });
 
-  it('self-configures to whatever non-default port the selected ini declares (VHS-REQ-623)', () => {
+  it('self-configures to whatever non-default port the selected ini declares (VHS-REQ-623.6)', () => {
     const summary = harness.summarizeScenario(
       portScenario,
       { status: 0 },
@@ -508,7 +508,7 @@ describe('runWindowsRuntimeMatrix.summarizeScenario', () => {
     expect(summary.expected.hostTcpPort).toBe(3399);
   });
 
-  it('fails when the observed port does not match the port derived from the selected ini (VHS-REQ-623)', () => {
+  it('fails when the observed port does not match the port derived from the selected ini (VHS-REQ-623.6)', () => {
     const summary = harness.summarizeScenario(
       portScenario,
       { status: 0 },
@@ -519,7 +519,7 @@ describe('runWindowsRuntimeMatrix.summarizeScenario', () => {
     expect(summary.failureReason).toContain('observed=3363');
   });
 
-  it('fails when the product read a DIFFERENT ini than the selected install (latest-used regression guard, VHS-REQ-623)', () => {
+  it('fails when the product read a DIFFERENT ini than the selected install (latest-used regression guard, VHS-REQ-623.6)', () => {
     const summary = harness.summarizeScenario(
       portScenario,
       { status: 0 },
@@ -533,7 +533,7 @@ describe('runWindowsRuntimeMatrix.summarizeScenario', () => {
     expect(summary.failureReason).toContain('LabVIEW 2026');
   });
 
-  it('matches the selected ini path case- and separator-insensitively (VHS-REQ-623)', () => {
+  it('matches the selected ini path case- and separator-insensitively (VHS-REQ-623.6)', () => {
     const summary = harness.summarizeScenario(
       portScenario,
       { status: 0 },
@@ -545,7 +545,7 @@ describe('runWindowsRuntimeMatrix.summarizeScenario', () => {
     expect(summary.pass).toBe(true);
   });
 
-  it('fails when no VI Server port was observed (VHS-REQ-623)', () => {
+  it('fails when no VI Server port was observed (VHS-REQ-623.6)', () => {
     const summary = harness.summarizeScenario(
       portScenario,
       { status: 0 },
@@ -555,7 +555,7 @@ describe('runWindowsRuntimeMatrix.summarizeScenario', () => {
     expect(summary.failureReason).toContain('observed=<none>');
   });
 
-  it('fails when the helper surfaced no port oracle at all (VHS-REQ-623)', () => {
+  it('fails when the helper surfaced no port oracle at all (VHS-REQ-623.6)', () => {
     const summary = harness.summarizeScenario(
       portScenario,
       { status: 0 },
@@ -597,7 +597,7 @@ describe('runWindowsRuntimeMatrix.runRuntimeMatrix', () => {
     };
   }
 
-  it('writes an evidence file with passing summary when both scenarios match expectations', () => {
+  it('writes an evidence file with passing summary when all runtime scenarios match expectations (VHS-REQ-622.1, VHS-REQ-622.3, VHS-REQ-623.6, VHS-REQ-653.7)', () => {
     const spawnSync = vi.fn().mockReturnValue({ status: 0, error: undefined });
     const scenarioLogPayloads = {
       [`assurance-closeout-evidence${require('node:path').sep}runtime-matrix-proofs${require('node:path').sep}steady-A.scenario.json`]: {
@@ -686,8 +686,72 @@ describe('runWindowsRuntimeMatrix.runRuntimeMatrix', () => {
       failed: 0,
       raceCoverage: harness.RACE_COVERAGE_NOTE
     });
-    // Evidence file write recorded.
-    expect(Array.from(fake.writes.keys()).some((key) => key.endsWith('manual-vhs-req-621.json'))).toBe(true);
+    const evidenceWrites = Array.from(fake.writes.entries()).filter(([target]) =>
+      target.endsWith('manual-vhs-req-621.json')
+    );
+    expect(evidenceWrites).toHaveLength(1);
+    const retainedEvidence = JSON.parse(evidenceWrites[0]?.[1] ?? '{}') as {
+      schema: string;
+      runId: string;
+      host: { platform: string; hostname: string };
+      labviewVersion: string;
+      scenarios: Array<{
+        id: string;
+        expected: Record<string, string | number>;
+        observed: Record<string, unknown>;
+        pass: boolean;
+        durationMs: number;
+        artifacts: { proofPath: string; scenarioLogPath: string };
+        portOracle?: {
+          selectedLabviewIniPath: string;
+          derivedExpectedTcpPort: number;
+          isNonDefaultPort: boolean;
+          observedLabviewIniPath: string;
+          observedTcpPort: number;
+        };
+      }>;
+      summary: { passed: number; failed: number; raceCoverage: string };
+    };
+    const retainedPortScenario = retainedEvidence.scenarios.find((scenario) => scenario.id === 'port-A');
+
+    expect(Object.keys(retainedEvidence)).toEqual([
+      'schema',
+      'runId',
+      'host',
+      'labviewVersion',
+      'scenarios',
+      'summary'
+    ]);
+    expect(Object.keys(retainedEvidence.host)).toEqual(['platform', 'hostname']);
+    expect(Object.keys(retainedEvidence.scenarios[0])).toEqual([
+      'id',
+      'expected',
+      'observed',
+      'pass',
+      'durationMs',
+      'artifacts'
+    ]);
+    expect(Object.keys(retainedEvidence.scenarios[0].artifacts)).toEqual(['proofPath', 'scenarioLogPath']);
+    expect(Object.keys(retainedPortScenario ?? {})).toEqual([
+      'id',
+      'expected',
+      'observed',
+      'pass',
+      'durationMs',
+      'artifacts',
+      'portOracle'
+    ]);
+    expect(Object.keys(retainedPortScenario?.portOracle ?? {})).toEqual([
+      'selectedLabviewIniPath',
+      'derivedExpectedTcpPort',
+      'isNonDefaultPort',
+      'observedLabviewIniPath',
+      'observedTcpPort'
+    ]);
+    expect(Object.keys(retainedEvidence.summary)).toEqual(['passed', 'failed', 'raceCoverage']);
+    expect(retainedEvidence.schema).toBe(harness.EVIDENCE_SCHEMA);
+    expect(retainedEvidence.runId).toBe('2026-05-31T00:00:00.000Z');
+    expect(retainedEvidence.summary.failed).toBe(0);
   });
 
   it('tolerates a UTF-8 BOM in the scenario log (Windows PowerShell Set-Content)', () => {
@@ -794,7 +858,7 @@ describe('runWindowsRuntimeMatrix.runRuntimeMatrix', () => {
     });
   });
 
-  it('exits non-zero when any scenario fails', () => {
+  it('exits non-zero when any scenario fails (VHS-REQ-622.3)', () => {
     const spawnSync = vi.fn().mockReturnValue({ status: 0, error: undefined });
     const scenarioLogPayloads = {
       [`assurance-closeout-evidence${require('node:path').sep}runtime-matrix-proofs${require('node:path').sep}steady-A.scenario.json`]: {
@@ -821,7 +885,7 @@ describe('runWindowsRuntimeMatrix.runRuntimeMatrix', () => {
     expect(result.evidence?.summary.failed).toBe(1);
   });
 
-  it('refuses to run on non-Windows without VIHS_FAKE_WINDOWS', () => {
+  it('refuses to run on non-Windows without VIHS_FAKE_WINDOWS (VHS-REQ-622.1)', () => {
     expect(() =>
       harness.runRuntimeMatrix([], {
         spawnSync: vi.fn(),

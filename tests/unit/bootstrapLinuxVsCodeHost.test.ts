@@ -30,7 +30,7 @@ describe('bootstrapLinuxVsCodeHost', () => {
     expect(debianPlan.packages).toContain('xvfb');
     expect(debianPlan.packages).toContain('xauth');
     expect(debianPlan.packages).toContain('libasound2');
-    expect(debianPlan.packages).toContain('libei1');
+    expect(debianPlan.packages).not.toContain('libei1');
     expect(debianPlan.packages).toContain('libpipewire-0.3-0');
     expect(ubuntuPlan.packageFamily).toBe('ubuntu');
     expect(ubuntuPlan.packages).toContain('xvfb');

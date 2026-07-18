@@ -1,3 +1,5 @@
+import * as fs from 'node:fs/promises';
+import * as os from 'node:os';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 
@@ -18,6 +20,43 @@ import {
   isViVersionTooNewFailure,
 } from '../reporting/comparisonReportAction';
 import {
+  deriveComparisonRuntimeNextAction,
+  deriveRejectedProviderSummaryFromDoctorSummary,
+  deriveRuntimeProviderFromDoctorSummary,
+  deriveRuntimeProviderRequestFromDoctorSummary,
+  deriveWindowsContainerAcquisitionStateFromDoctorSummary
+} from './comparisonRuntimeDoctorSummaryParsing';
+
+export {
+  deriveRejectedProviderSummaryFromDoctorSummary,
+  deriveRuntimeProviderRequestFromDoctorSummary,
+  mapLegacyExecutionModeToProviderRequest
+} from './comparisonRuntimeDoctorSummaryParsing';
+import {
+  buildHistoryLoadFailureMessage,
+  buildIneligibilityMessage,
+  formatUntrustedWorkspaceWarning
+} from './openViHistoryCommandMessages';
+
+export {
+  isGitRepositoryResolutionFailure,
+  isInstalledProgramFilesLvIconPath
+} from './openViHistoryCommandMessages';
+import {
+  deriveComparisonCommandLabel,
+  deriveComparisonRuntimePanelStatus,
+  deriveComparisonRuntimeProgressStatus,
+  isComparisonRuntimeBlocked,
+  resolveExplicitComparisonPair,
+  stripTerminalPunctuation
+} from './comparisonRuntimeStatusPrimitives';
+
+export {
+  deriveComparisonRuntimeProgressStatus,
+  resolveExplicitComparisonPair,
+  stripTerminalPunctuation
+} from './comparisonRuntimeStatusPrimitives';
+import {
   MultiReportDashboardActionResult,
 } from '../dashboard/multiReportDashboardAction';
 import {
@@ -26,9 +65,6 @@ import {
 import {
   ReviewDecisionRecordActionResult,
 } from '../scenarios/reviewDecisionRecordAction';
-import {
-  HumanReviewSubmissionActionResult
-} from '../review/humanReviewSubmissionAction';
 import { ViHistoryService } from '../services/viHistoryService';
 import {
   renderHistoryPanelHtml,
@@ -40,25 +76,15 @@ import {
 } from '../ui/historyPanelTracker';
 import { INSTALL_DOCKER_URL } from '../ui/runtimeAvailabilityNotice';
 import { ViHistoryViewModel } from '../services/viHistoryModel';
-import { isWorktreeRevision, WORKTREE_REVISION_SENTINEL } from '../git/gitCli';
+import { runGit } from '../git/gitCli';
+import { materializeRevisionViTree, parseLsTreeOutput } from '../git/revisionViTree';
+import { readRevisionBlob } from '../reporting/comparisonReportPreflight';
+import { VI_PREVIEW_VIEW_TYPE } from '../ui/viPreviewEditor';
+import { isViPreviewEnabled } from '../ui/viPreviewRenderHost';
 
 interface ComparisonRuntimePanelDetail {
   label: string;
   value: string;
-}
-
-const UNTRUSTED_WORKSPACE_TRUST_RATIONALE =
-  'to prevent external process execution';
-const UNTRUSTED_WORKSPACE_ALLOWED_PATHS_SUFFIX =
-  'Documentation and local runtime settings CLI preparation remain available.';
-
-/**
- * Formats a user-actionable warning message for features blocked in untrusted workspaces.
- * @param featurePrefix - The feature-specific prefix (e.g., "VI History and comparison are disabled")
- * @returns The complete warning message with trust rationale and allowed paths
- */
-function formatUntrustedWorkspaceWarning(featurePrefix: string): string {
-  return `${featurePrefix} in untrusted workspaces ${UNTRUSTED_WORKSPACE_TRUST_RATIONALE}. ${UNTRUSTED_WORKSPACE_ALLOWED_PATHS_SUFFIX}`;
 }
 
 /**
@@ -145,14 +171,7 @@ export function createOpenViHistoryCommand(
   }) => Promise<ReviewDecisionRecordActionResult>,
   openDocumentationAction?: (request?: {
     pageId?: string;
-  }) => Promise<DocumentationActionResult>,
-  humanReviewSubmissionAction?: (request: {
-    model: Awaited<ReturnType<ViHistoryService['load']>>;
-    source: 'history-panel';
-    draftOutcome?: string;
-    draftConfidence?: string;
-    draftNote?: string;
-  }) => Promise<HumanReviewSubmissionActionResult>
+  }) => Promise<DocumentationActionResult>
 ): (uri?: vscode.Uri) => Promise<void> {
   return async (uri?: vscode.Uri) => {
     const targetUri = uri ?? vscode.window.activeTextEditor?.document.uri;
@@ -192,8 +211,6 @@ export function createOpenViHistoryCommand(
       repositorySupport?.allowCoreReviewActions ?? true;
     const decisionRecordActionsAllowed =
       repositorySupport?.allowDecisionRecordActions ?? true;
-    const humanReviewSubmissionAllowed =
-      repositorySupport?.allowHumanReviewSubmission ?? true;
     const surfaceCapabilities = {
       comparisonGenerationAvailable:
         coreReviewActionsAllowed &&
@@ -209,10 +226,7 @@ export function createOpenViHistoryCommand(
         decisionRecordActionsAllowed &&
         reviewDecisionRecordAction !== undefined,
       documentationAvailable: openDocumentationAction !== undefined,
-      benchmarkStatusAvailable: false,
-      humanReviewSubmissionAvailable:
-        humanReviewSubmissionAllowed &&
-        humanReviewSubmissionAction !== undefined
+      benchmarkStatusAvailable: false
     };
     let model = await hydrateRetainedComparisonEvidenceAvailability(
       {
@@ -224,7 +238,7 @@ export function createOpenViHistoryCommand(
     if (repositorySupport?.tier === 'unsupported') {
       void vscode.window.showWarningMessage(repositorySupport.supportGuidance);
     }
-    const renderedHtml = renderHistoryPanelHtml(model);
+    const renderedHtml = renderHistoryPanelHtml(model, { previewEnabled: isViPreviewEnabled() });
     const panel = vscode.window.createWebviewPanel(
       'viHistorySuite.history',
       `VI History: ${path.basename(targetUri.fsPath)}`,
@@ -461,6 +475,7 @@ export function createOpenViHistoryCommand(
           model,
           result
         );
+        const blockedRuntimeResult = isComparisonRuntimeBlocked(result);
 
         if (result.outcome === 'cancelled') {
           void vscode.window.showInformationMessage(cancelledMessage);
@@ -480,11 +495,11 @@ export function createOpenViHistoryCommand(
           void vscode.window.showInformationMessage(
             'VI History has no previous retained revision for this entry.'
           );
-        } else if (result.outcome === 'missing-retained-comparison-report') {
+        } else if (result.outcome === 'missing-retained-comparison-report' && !blockedRuntimeResult) {
           void vscode.window.showInformationMessage(
             'No retained VI Comparison Report exists for this pair yet. Use the compare preflight section to generate retained evidence for it.'
           );
-        } else if (result.outcome === 'invalid-retained-comparison-report') {
+        } else if (result.outcome === 'invalid-retained-comparison-report' && !blockedRuntimeResult) {
           void vscode.window.showInformationMessage(
             'Retained VI Comparison evidence for this pair is stale or invalid. Use the compare preflight section to rebuild retained evidence for it.'
           );
@@ -706,7 +721,7 @@ export function createOpenViHistoryCommand(
             const selectedCommit = model.commits.find((commit) => commit.hash === selectedHash);
             if (selectedCommit && (!baseHash || selectedCommit.previousHash === baseHash)) {
               selectedCommit.retainedComparisonEvidenceAvailable = true;
-              safeUpdatePanelHtml(renderHistoryPanelHtml(model));
+              safeUpdatePanelHtml(renderHistoryPanelHtml(model, { previewEnabled: isViPreviewEnabled() }));
             }
           }
         }
@@ -861,7 +876,7 @@ export function createOpenViHistoryCommand(
             model,
             hasRetainedComparisonReport
           );
-          panel.webview.html = renderHistoryPanelHtml(model);
+          panel.webview.html = renderHistoryPanelHtml(model, { previewEnabled: isViPreviewEnabled() });
         }
         return;
       }
@@ -944,119 +959,6 @@ export function createOpenViHistoryCommand(
           mismatchSummary: result.mismatchSummary,
           cancellationStage: result.cancellationStage,
           title: result.title
-        });
-        return;
-      }
-
-      if (command === 'submitHumanReview') {
-        if (!humanReviewSubmissionAction) {
-          void safePostPanelMessage({
-            type: 'humanReviewSubmissionResult',
-            status: 'blocked',
-            message:
-              'Blocked: host-machine review submission is not available in this extension build.'
-          });
-          void vscode.window.showInformationMessage(
-            'Host-machine human review submission is not available in this extension build.'
-          );
-          panelTracker?.recordAction({
-            command,
-            outcome: 'unsupported-command'
-          });
-          return;
-        }
-
-        let result;
-        try {
-          result = await humanReviewSubmissionAction({
-            model,
-            source: 'history-panel',
-            draftOutcome: message.reviewOutcome,
-            draftConfidence: message.reviewConfidence,
-            draftNote: message.reviewNote
-          });
-        } catch {
-          const humanReviewSubmissionStatusMessage =
-            'Host review submission failed before the retained artifact could be written. Retry after confirming the workspace is local and deterministic.';
-          void vscode.window.showErrorMessage(humanReviewSubmissionStatusMessage);
-          void safePostPanelMessage({
-            type: 'humanReviewSubmissionResult',
-            status: 'blocked',
-            message: humanReviewSubmissionStatusMessage
-          });
-          panelTracker?.recordAction({
-            command,
-            outcome: 'failed-human-review-submission'
-          });
-          return;
-        }
-        let humanReviewSubmissionStatusMessage =
-          'Host review submission did not complete.';
-        if (result.outcome === 'submitted-human-review') {
-          humanReviewSubmissionStatusMessage =
-            'Host review submitted and retained in latest-human-review-submission.json.';
-          void vscode.window.showInformationMessage(
-            'Host-machine review submitted and retained. Future sessions can consume the retained latest-review manifest automatically.'
-          );
-        } else if (result.outcome === 'workspace-untrusted') {
-          humanReviewSubmissionStatusMessage =
-            `Blocked: host-machine review submission is disabled in untrusted workspaces ${UNTRUSTED_WORKSPACE_TRUST_RATIONALE}.`;
-          void vscode.window.showWarningMessage(
-            formatUntrustedWorkspaceWarning('Host-machine review submission is disabled')
-          );
-        } else if (result.outcome === 'missing-storage-uri') {
-          humanReviewSubmissionStatusMessage =
-            'Blocked: open the repository as a workspace before submitting the host review.';
-          void vscode.window.showWarningMessage(
-            'Host-machine review submission requires an open workspace so review artifacts can be stored under workspace-scoped extension storage.'
-          );
-        } else if (result.outcome === 'canonical-machine-mismatch') {
-          humanReviewSubmissionStatusMessage =
-            'Blocked: this machine is not the canonical Windows 11 host allowed to submit the maintainer review.';
-          void vscode.window.showWarningMessage(
-            'This review submission was blocked because the current machine fingerprint does not match the canonical Windows 11 review host.'
-          );
-        } else if (result.outcome === 'nondeterministic-review-surface') {
-          humanReviewSubmissionStatusMessage =
-            result.validationMessage ??
-            'Blocked: host-machine review submission requires the deterministic local fixture workspace instead of a OneDrive-backed path.';
-          void vscode.window.showWarningMessage(humanReviewSubmissionStatusMessage);
-        } else if (result.validationMessage) {
-          humanReviewSubmissionStatusMessage = result.validationMessage;
-          void vscode.window.showInformationMessage(result.validationMessage);
-        }
-        void safePostPanelMessage({
-          type: 'humanReviewSubmissionResult',
-          status:
-            result.outcome === 'submitted-human-review'
-              ? 'success'
-              : result.outcome === 'invalid-human-review-submission'
-                ? 'validation'
-                : 'blocked',
-          message: humanReviewSubmissionStatusMessage
-        });
-
-        panelTracker?.recordAction({
-          command,
-          outcome:
-            result.outcome === 'submitted-human-review'
-              ? 'submitted-human-review'
-              : result.outcome === 'workspace-untrusted'
-                ? 'workspace-untrusted'
-              : result.outcome === 'missing-storage-uri'
-                ? 'missing-human-review-storage'
-              : result.outcome === 'canonical-machine-mismatch'
-                ? 'canonical-machine-mismatch'
-                : result.outcome === 'nondeterministic-review-surface'
-                  ? 'nondeterministic-human-review-surface'
-                : 'invalid-human-review-submission',
-          humanReviewSubmissionFilePath: result.submissionFilePath,
-          humanReviewLatestManifestPath: result.latestSubmissionFilePath,
-          humanReviewCanonicalMachineFilePath: result.canonicalHostMachineFilePath,
-          humanReviewMachineFingerprintId: result.machineFingerprintId,
-          humanReviewCanonicalMachineFingerprintId:
-            result.canonicalMachineFingerprintId,
-          humanReviewValidationMessage: result.validationMessage
         });
         return;
       }
@@ -1154,6 +1056,88 @@ export function createOpenViHistoryCommand(
           hash,
           outcome: 'missing-git-uri'
         });
+        return;
+      }
+
+      if (command === 'previewRevision') {
+        if (!isViPreviewEnabled()) {
+          void vscode.window.showInformationMessage(
+            'VI Preview is off. Select the Docker runtime and enable VI preview in the "VI History: Runtime & Report Settings" command to preview revisions.'
+          );
+          return;
+        }
+        if (!hash) {
+          void vscode.window.showInformationMessage(
+            'VI History could not determine which revision to preview.'
+          );
+          panelTracker?.recordAction({ command, hash, outcome: 'ignored-missing-hash' });
+          return;
+        }
+
+        try {
+          // VHS-REQ-659: materialize the selected revision's VI (plus sibling
+          // source dependencies) into a scratch directory, then hand it to the
+          // shared read-only preview editor via openWith so it reuses the warm
+          // container session and content cache.
+          const destinationDirectory = await fs.mkdtemp(
+            path.join(os.tmpdir(), 'vihs-vi-revision-')
+          );
+          const materialized = await materializeRevisionViTree(
+            {
+              revisionId: hash,
+              relativePath: model.relativePath,
+              destinationDirectory
+            },
+            {
+              listTreeFiles: async (revisionId, repoRelativeDirectory) =>
+                parseLsTreeOutput(
+                  String(
+                    await runGit(
+                      [
+                        'ls-tree',
+                        '-r',
+                        '-l',
+                        revisionId,
+                        ...(repoRelativeDirectory ? ['--', repoRelativeDirectory] : [])
+                      ],
+                      model.repositoryRoot,
+                      'utf8'
+                    )
+                  )
+                ),
+              readBlob: (revisionId, repoRelativePath) =>
+                readRevisionBlob(model.repositoryRoot, revisionId, repoRelativePath),
+              ensureDirectory: async (directory) => {
+                await fs.mkdir(directory, { recursive: true });
+              },
+              writeFile: (filePath, data) => fs.writeFile(filePath, data)
+            }
+          );
+
+          await vscode.commands.executeCommand(
+            'vscode.openWith',
+            vscode.Uri.file(materialized.viFilePath),
+            VI_PREVIEW_VIEW_TYPE
+          );
+          panelTracker?.recordAction({ command, hash, outcome: 'opened-revision-preview' });
+
+          // The preview editor stages the materialized tree during resolve; retire
+          // the scratch directory after a generous delay so cleanup never races the
+          // render. Best-effort: failures here are non-fatal temp-dir leftovers.
+          setTimeout(
+            () => {
+              void fs.rm(destinationDirectory, { recursive: true, force: true }).catch(() => undefined);
+            },
+            5 * 60 * 1000
+          );
+        } catch (error) {
+          void vscode.window.showWarningMessage(
+            `VI History could not preview this revision: ${
+              (error as Error)?.message ?? String(error)
+            }`
+          );
+          panelTracker?.recordAction({ command, hash, outcome: 'revision-preview-failed' });
+        }
         return;
       }
 
@@ -1577,189 +1561,6 @@ function buildComparisonRuntimeInformationMessage(
   return segments.join(' ');
 }
 
-function deriveComparisonRuntimePanelStatus(
-  result: ComparisonReportActionResult
-): 'idle' | 'blocked' | 'failed' | 'succeeded' | 'cancelled' {
-  if (result.outcome === 'cancelled') {
-    return 'cancelled';
-  }
-
-  if (
-    result.reportStatus === 'blocked-preflight' ||
-    result.reportStatus === 'blocked-runtime' ||
-    result.runtimeExecutionState === 'not-available'
-  ) {
-    return 'blocked';
-  }
-
-  if (result.runtimeExecutionState === 'failed') {
-    return 'failed';
-  }
-
-  if (result.runtimeExecutionState === 'succeeded') {
-    return 'succeeded';
-  }
-
-  return 'idle';
-}
-
-function deriveComparisonRuntimeProgressStatus(
-  message: string
-): 'running' | 'acquiring' | undefined {
-  if (
-    message.startsWith('Acquiring container image ') ||
-    message.startsWith('Pulling container image:') ||
-    message.startsWith('Container image ready:')
-  ) {
-    return 'acquiring';
-  }
-
-  if (
-    message === 'Selecting comparison-report runtime.' ||
-    message === 'Persisting comparison-report packet.' ||
-    message === 'Executing LabVIEW comparison-report runtime.' ||
-    message === 'Archiving comparison-report evidence.'
-  ) {
-    return 'running';
-  }
-
-  return undefined;
-}
-
-function deriveComparisonCommandLabel(actionCommand: string): string {
-  if (actionCommand === 'diffPrevious') {
-    return 'Open compare';
-  }
-  if (actionCommand === 'generateComparisonReportFromSelection') {
-    return 'Selected compare';
-  }
-  return 'Generate compare';
-}
-
-function resolveExplicitComparisonPair(
-  model: ViHistoryViewModel,
-  selectedHashes: string[]
-): { selectedHash: string; baseHash: string } | undefined {
-  const uniqueHashes = [...new Set(selectedHashes)];
-  if (uniqueHashes.length !== 2) {
-    return undefined;
-  }
-
-  // VHS-REQ-641: the working-tree sentinel is not a committed revision, so it is
-  // not present in model.commits. When exactly one selected entry is the
-  // working-tree row, pair the uncommitted on-disk version (selected/newer side)
-  // against the other checked commit (base/older side).
-  const worktreeHashes = uniqueHashes.filter((candidateHash) => isWorktreeRevision(candidateHash));
-  if (worktreeHashes.length === 1) {
-    const baseHash = uniqueHashes.find((candidateHash) => !isWorktreeRevision(candidateHash));
-    if (!baseHash || model.commits.findIndex((commit) => commit.hash === baseHash) < 0) {
-      return undefined;
-    }
-    return {
-      selectedHash: WORKTREE_REVISION_SENTINEL,
-      baseHash
-    };
-  }
-
-  const rankedCommits = uniqueHashes
-    .map((candidateHash) => ({
-      hash: candidateHash,
-      index: model.commits.findIndex((commit) => commit.hash === candidateHash)
-    }))
-    .filter((candidate) => candidate.index >= 0)
-    .sort((left, right) => left.index - right.index);
-
-  if (rankedCommits.length !== 2) {
-    return undefined;
-  }
-
-  return {
-    selectedHash: rankedCommits[0].hash,
-    baseHash: rankedCommits[1].hash
-  };
-}
-
-function deriveComparisonRuntimeNextAction(
-  summaryLines: string[] | undefined
-): string | undefined {
-  return summaryLines?.find((line) => line.startsWith('Next action:'));
-}
-
-function deriveRuntimeProviderFromDoctorSummary(
-  summaryLines: string[] | undefined
-): string | undefined {
-  const selectedProviderLine = summaryLines?.find((line) =>
-    line.startsWith('Selected provider=')
-  );
-  if (!selectedProviderLine) {
-    return undefined;
-  }
-
-  const match = selectedProviderLine.match(/^Selected provider=([^;]+);/);
-  return match?.[1];
-}
-
-function deriveRuntimeProviderRequestFromDoctorSummary(
-  summaryLines: string[] | undefined
-): string | undefined {
-  const providerRequestLine = summaryLines?.find((line) =>
-    line.startsWith('Provider request=')
-  );
-  if (providerRequestLine) {
-    const match = providerRequestLine.match(/^Provider request=([^.;]+)[.;]?$/);
-    return match?.[1];
-  }
-
-  const executionModeLine = summaryLines?.find((line) =>
-    line.startsWith('Selected execution mode=')
-  );
-  if (!executionModeLine) {
-    return undefined;
-  }
-
-  const match = executionModeLine.match(/^Selected execution mode=([^.;]+)[.;]?$/);
-  return mapLegacyExecutionModeToProviderRequest(match?.[1]);
-}
-
-function deriveWindowsContainerAcquisitionStateFromDoctorSummary(
-  summaryLines: string[] | undefined
-): string | undefined {
-  const toolFactsLine = summaryLines?.find((line) => line.startsWith('Tool facts:'));
-  if (!toolFactsLine) {
-    return undefined;
-  }
-
-  const match = toolFactsLine.match(/ContainerAcquisitionState=([^;]+)/);
-  return match?.[1];
-}
-
-function stripTerminalPunctuation(value: string): string {
-  return value.replace(/[.!?]+$/u, '');
-}
-
-function deriveRejectedProviderSummaryFromDoctorSummary(
-  summaryLines: string[] | undefined
-): string | undefined {
-  const rejectedProviderDetails = summaryLines
-    ?.filter((line) => line.startsWith('Provider decision: rejected '))
-    .map((line) => {
-      const match = line.match(/^Provider decision: rejected ([^ ]+) because (.+)\.$/);
-      if (!match) {
-        return undefined;
-      }
-
-      const [, provider, reason] = match;
-      return `${provider} because ${reason}`;
-    })
-    .filter((value): value is string => Boolean(value));
-
-  if (!rejectedProviderDetails?.length) {
-    return undefined;
-  }
-
-  return rejectedProviderDetails.join(' | ');
-}
-
 function buildComparisonRuntimePanelDetails(
   result: ComparisonReportActionResult,
   runtimeProvider: string | undefined,
@@ -1822,90 +1623,4 @@ function buildComparisonRuntimePanelDetails(
   }
 
   return details;
-}
-
-function mapLegacyExecutionModeToProviderRequest(
-  executionMode: string | undefined
-): string | undefined {
-  if (!executionMode) {
-    return undefined;
-  }
-
-  if (executionMode === 'host-only') {
-    return 'host';
-  }
-
-  if (executionMode === 'docker-only') {
-    return 'docker';
-  }
-
-  return executionMode;
-}
-
-function buildHistoryLoadFailureMessage(
-  targetFsPath: string,
-  error: unknown
-): string {
-  if (isInstalledProgramFilesLvIconPath(targetFsPath)) {
-    return 'The selected installed copy of lv_icon.vi is not the review surface. Open resource/plugins/lv_icon.vi from a Git-backed ni/labview-icon-editor clone instead; the Program Files copy has no commit history for VI Comparison Report generation.';
-  }
-
-  if (isGitRepositoryResolutionFailure(error)) {
-    return 'VI History could not load the selected file because it is not inside a tracked Git repository. Open a local Git-backed LabVIEW VI with commit history instead.';
-  }
-
-  return 'VI History could not load the selected file.';
-}
-
-function isInstalledProgramFilesLvIconPath(targetFsPath: string): boolean {
-  const normalizedPath = targetFsPath.replaceAll('/', '\\');
-  const lowerPath = normalizedPath.toLowerCase();
-
-  return (
-    path.win32.basename(normalizedPath).toLowerCase() === 'lv_icon.vi' &&
-    lowerPath.includes('\\program files') &&
-    lowerPath.includes('\\national instruments\\')
-  );
-}
-
-function isGitRepositoryResolutionFailure(error: unknown): boolean {
-  if (!(error instanceof Error)) {
-    return false;
-  }
-
-  const message = error.message.toLowerCase();
-  return (
-    message.includes('not a git repository') ||
-    message.includes('rev-parse') ||
-    message.includes('--show-toplevel')
-  );
-}
-
-/**
- * Builds a factual message explaining why a file is not eligible for VI History
- * and provides a next action the user can take.
- */
-function buildIneligibilityMessage(
-  model: ViHistoryViewModel
-): string {
-  const hasUnknownSignature = model.signature === 'unknown';
-  const commitCount = model.commits.length;
-
-  if (hasUnknownSignature && commitCount === 0) {
-    return 'The selected file is not a recognized LabVIEW VI format and has no Git commit history. Open a tracked LabVIEW VI (.vi, .vim, .vit, .ctl, .ctt, .lvclass, .lvlib) with at least two commits.';
-  }
-
-  if (hasUnknownSignature) {
-    return 'The selected file is not a recognized LabVIEW VI format. Open a LabVIEW VI (.vi, .vim, .vit, .ctl, .ctt, .lvclass, .lvlib) to view its history.';
-  }
-
-  if (commitCount === 0) {
-    return 'The selected file has no Git commit history. Commit the file at least twice to build reviewable history.';
-  }
-
-  if (commitCount === 1) {
-    return 'The selected file has only one Git commit. Commit additional changes to build reviewable history.';
-  }
-
-  return 'The selected file is not currently eligible for VI History. Open a tracked LabVIEW VI with at least two commits.';
 }

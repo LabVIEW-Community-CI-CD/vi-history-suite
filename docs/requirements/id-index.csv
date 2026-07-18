@@ -5,7 +5,7 @@ VHS-REQ-003,Software,Active,srs.md#vhs-req-003-optional-strict-rsrc-header,,,pre
 VHS-REQ-004,Software,Active,srs.md#vhs-req-004-explorer-and-editor-menu-contributions,,,pre-simplification docs/requirements/srs.md
 VHS-REQ-005,Software,Superseded,,VHS-REQ-013,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
 VHS-REQ-006,Software,Active,srs.md#vhs-req-006-tracked-history-eligibility,,,pre-simplification docs/requirements/srs.md
-VHS-REQ-007,Software,Active,srs.md#vhs-req-007-nul-safe-tracked-file-enumeration,,,pre-simplification docs/requirements/srs.md
+VHS-REQ-007,Software,Active,srs.md#vhs-req-007-nul-safe-git-path-parsing,,,pre-simplification docs/requirements/srs.md
 VHS-REQ-008,Software,Active,srs.md#vhs-req-008-bounded-commit-queries,,,pre-simplification docs/requirements/srs.md
 VHS-REQ-009,Software,Superseded,,VHS-REQ-601,Covered by a curated active requirement block in the restored GitHub-first SRS.,pre-simplification docs/requirements/srs.md
 VHS-REQ-010,Software,Active,srs.md#vhs-req-010-minimal-local-probe-reads,,,pre-simplification docs/requirements/srs.md
@@ -644,6 +644,7 @@ VHS-REQ-625,Software,Active,srs.md#vhs-req-625-library-member-compared-vi-disclo
 VHS-REQ-626,Software,Active,srs.md#vhs-req-626-comparison-report-export-for-external-viewing,,,docs/requirements/srs.md
 VHS-REQ-627,Software,Active,srs.md#vhs-req-627-labview-cli-prerequisite-gate-for-vi-history-open,,,docs/requirements/srs.md
 VHS-REQ-628,Software,Active,srs.md#vhs-req-628-actionable-vi-server-disabled-comparison-guidance,,,docs/requirements/srs.md
+VHS-REQ-663,Software,Active,srs.md#vhs-req-663-linux-container-bind-mount-visibility-diagnostic,,,docs/requirements/srs.md
 VHS-REQ-629,Software,Active,srs.md#vhs-req-629-labview-cli-install-offer-when-labview-is-installed,,,docs/requirements/srs.md
 VHS-REQ-630,Software,Active,srs.md#vhs-req-630-actionable-vi-server-guidance-for-labview-cli-connection-failure,,,docs/requirements/srs.md
 VHS-REQ-631,Software,Active,srs.md#vhs-req-631-pre-panel-vi-server-prerequisite-gate-for-vi-history-open,,,docs/requirements/srs.md
@@ -675,3 +676,12 @@ VHS-REQ-655,Software,Active,srs.md#vhs-req-655-stable-byte-percentage-pull-progr
 VHS-REQ-656,Software,Active,srs.md#vhs-req-656-container-image-pull-phase-signaling,,,docs/requirements/srs.md
 VHS-REQ-657,Software,Active,srs.md#vhs-req-657-version-aware-labview-container-execution,,,docs/requirements/srs.md
 VHS-REQ-658,Software,Active,srs.md#vhs-req-658-labview-vi-version-too-new-compare-failure-diagnostic,,,docs/requirements/srs.md
+VHS-REQ-659,Software,Active,srs.md#vhs-req-659-single-vi-interactive-preview-rendering,,,docs/requirements/srs.md
+VHS-REQ-660,Software,Active,srs.md#vhs-req-660-source-control-semantic-change-hover,,,docs/requirements/srs.md
+VHS-REQ-661,Software,Active,srs.md#vhs-req-661-on-demand-vi-semantic-pr-review-workflow,,,docs/requirements/srs.md
+VHS-REQ-662,Software,Active,srs.md#vhs-req-662-vi-semantic-comparison-model-and-agent-mcp-surface,,,docs/requirements/srs.md
+VHS-REQ-664,Software,Active,srs.md#vhs-req-664-preview-and-comparison-cache-warming-on-vi-change,,,docs/requirements/srs.md
+VHS-REQ-665,Software,Active,srs.md#vhs-req-665-win32-host-native-headless-comparison-for-32-bit-labview-parity,,,docs/requirements/srs.md
+VHS-REQ-666,Software,Active,srs.md#vhs-req-666-mandatory-local-vagrant-release-attestation,,,docs/requirements/srs.md
+VHS-REQ-667,Software,Active,srs.md#vhs-req-667-versioned-dev-tools-github-release-channel,,,docs/requirements/srs.md
+VHS-REQ-668,Software,Active,srs.md#vhs-req-668-supply-chain-state-read-model,,,docs/requirements/srs.md

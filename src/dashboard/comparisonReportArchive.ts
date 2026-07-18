@@ -1,7 +1,11 @@
-import { createHash } from 'node:crypto';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
+import { createDeterministicId } from '../support/deterministicId';
+import { requireNonEmpty } from '../support/requireNonEmpty';
+import { joinPreservingExplicitPathStyle } from '../support/pathStyle';
+import { pathExistsViaFsAccess as defaultPathExists } from '../support/fsExists';
+import { nowIso as defaultNow } from '../support/clock';
 import {
   ComparisonReportPacketRecord
 } from '../reporting/comparisonReportPacket';
@@ -9,6 +13,16 @@ import {
   ComparisonReportType,
   buildComparisonArtifactPlan
 } from '../reporting/comparisonReportPlan';
+import { isWorktreeRevision } from '../git/gitCli';
+import {
+  DEFAULT_WORKTREE_SNAPSHOT_RETENTION_LIMIT,
+  WORKTREE_SNAPSHOT_INDEX_FILENAME,
+  appendWorktreeSnapshotRecord,
+  createEmptyWorktreeSnapshotIndex,
+  parseWorktreeSnapshotIndex,
+  serializeWorktreeSnapshotIndex,
+  type WorktreeSnapshotRecord
+} from './worktreeSnapshotIndex';
 
 const REPORT_HISTORY_DIRECTORY = 'report-history';
 const SOURCE_RECORD_FILENAME = 'source-record.json';
@@ -45,6 +59,14 @@ export interface ArchiveComparisonReportSourceDeps {
   copyFile?: typeof fs.copyFile;
   copyDirectory?: typeof fs.cp;
   pathExists?: (targetPath: string) => Promise<boolean>;
+  readFile?: typeof fs.readFile;
+  removePath?: typeof fs.rm;
+  /**
+   * VHS-REQ-641 (Phase 3): keep-last-N limit applied to the working-tree
+   * snapshot retention index (0 disables retention). Defaults to
+   * `DEFAULT_WORKTREE_SNAPSHOT_RETENTION_LIMIT`.
+   */
+  worktreeSnapshotRetentionLimit?: number;
 }
 
 export interface ReadArchivedComparisonReportSourceRecordDeps {
@@ -70,7 +92,8 @@ export function buildComparisonReportArchivePlan(
     selectedHash: record.selectedHash,
     baseHash: record.baseHash,
     repoId: record.artifactPlan.repoId,
-    fileId: record.artifactPlan.fileId
+    fileId: record.artifactPlan.fileId,
+    worktreeSnapshotId: record.runtimeExecution?.worktreeSnapshotId
   });
 }
 
@@ -90,6 +113,16 @@ export function buildComparisonReportArchivePlanFromSelection(options: {
   runtimeProcessObservationFilename?: string;
   repoId?: string;
   fileId?: string;
+  /**
+   * VHS-REQ-641 (Phase 3, issue #1366): content-addressed identity of the
+   * staged working-tree bytes for a side that is the `WORKTREE` sentinel. When
+   * provided, the sentinel is replaced by `WORKTREE:<id>` in the deterministic
+   * pair-ID so repeated comparisons of unchanged uncommitted content resolve to
+   * the same retained pair (idempotent) while changed content yields a distinct
+   * pair — instead of every working-tree compare colliding on the bare
+   * `WORKTREE` token. Ignored for a side that is a committed hash.
+   */
+  worktreeSnapshotId?: string;
 }): ComparisonReportArchivePlan {
   const artifactPlan = buildComparisonArtifactPlan({
     storageRoot: options.storageRoot,
@@ -99,7 +132,10 @@ export function buildComparisonReportArchivePlanFromSelection(options: {
   });
   const reportFilename = options.reportFilename ?? artifactPlan.reportFilename;
   const pairId = createDeterministicId(
-    `${options.reportType}\n${options.baseHash}\n${options.selectedHash}`
+    `${options.reportType}\n${contentAddressRevisionForPairId(
+      options.baseHash,
+      options.worktreeSnapshotId
+    )}\n${contentAddressRevisionForPairId(options.selectedHash, options.worktreeSnapshotId)}`
   );
   const archiveDirectory = joinPreservingExplicitPathStyle(
     options.storageRoot,
@@ -235,7 +271,94 @@ export async function archiveComparisonReportSource(
     JSON.stringify(archivedRecord, null, 2),
     'utf8'
   );
+
+  // VHS-REQ-641 (Phase 3, issue #1366): when this is a working-tree comparison,
+  // append it to the per-VI retention index so the dashboard can rediscover the
+  // retained snapshot (its pair-ID is content-addressed, not derivable from the
+  // commit list), and garbage-collect evicted snapshots' archive directories.
+  const worktreeSnapshotId = record.runtimeExecution?.worktreeSnapshotId;
+  if (worktreeSnapshotId) {
+    await updateWorktreeSnapshotIndexForArchive(
+      { archivePlan, worktreeSnapshotId, record, archivedAt: archivedRecord.archivedAt },
+      { mkdir, writeFile, pathExists, readFile: deps.readFile ?? fs.readFile, removePath: deps.removePath ?? fs.rm },
+      deps.worktreeSnapshotRetentionLimit ?? DEFAULT_WORKTREE_SNAPSHOT_RETENTION_LIMIT
+    );
+  }
   return archivedRecord;
+}
+
+/** Absolute path of a VI's working-tree snapshot retention index file. */
+export function buildWorktreeSnapshotIndexFilePath(archivePlan: ComparisonReportArchivePlan): string {
+  return joinPreservingExplicitPathStyle(
+    archivePlan.storageRoot,
+    REPORT_HISTORY_DIRECTORY,
+    archivePlan.repoId,
+    archivePlan.fileId,
+    WORKTREE_SNAPSHOT_INDEX_FILENAME
+  );
+}
+
+function buildRetainedPairDirectory(
+  archivePlan: ComparisonReportArchivePlan,
+  pairId: string
+): string {
+  return joinPreservingExplicitPathStyle(
+    archivePlan.storageRoot,
+    REPORT_HISTORY_DIRECTORY,
+    archivePlan.repoId,
+    archivePlan.fileId,
+    'pairs',
+    pairId
+  );
+}
+
+async function updateWorktreeSnapshotIndexForArchive(
+  context: {
+    archivePlan: ComparisonReportArchivePlan;
+    worktreeSnapshotId: string;
+    record: ComparisonReportPacketRecord;
+    archivedAt: string;
+  },
+  deps: {
+    mkdir: typeof fs.mkdir;
+    writeFile: typeof fs.writeFile;
+    pathExists: (targetPath: string) => Promise<boolean>;
+    readFile: typeof fs.readFile;
+    removePath: typeof fs.rm;
+  },
+  retentionLimit: number
+): Promise<void> {
+  const indexFilePath = buildWorktreeSnapshotIndexFilePath(context.archivePlan);
+  let index = createEmptyWorktreeSnapshotIndex();
+  if (await deps.pathExists(indexFilePath)) {
+    const parsed = parseWorktreeSnapshotIndex(await deps.readFile(indexFilePath, 'utf8'));
+    if (parsed) {
+      index = parsed;
+    }
+  }
+
+  const newRecord: WorktreeSnapshotRecord = {
+    snapshotId: context.worktreeSnapshotId,
+    pairId: context.archivePlan.pairId,
+    baseHash: context.record.baseHash,
+    reportType: context.archivePlan.reportType,
+    retainedAt: context.archivedAt,
+    relativePath: context.record.artifactPlan.normalizedRelativePath
+  };
+  const { index: nextIndex, evicted } = appendWorktreeSnapshotRecord(index, newRecord, retentionLimit);
+
+  await deps.mkdir(path.dirname(indexFilePath), { recursive: true });
+  await deps.writeFile(indexFilePath, serializeWorktreeSnapshotIndex(nextIndex), 'utf8');
+
+  // Delete the archive directory of each evicted snapshot (keep-last-N GC). The
+  // just-written record is never evicted unless the limit is 0, in which case
+  // its own archive is removed too — matching the "0 disables retention" contract.
+  for (const removed of evicted) {
+    const pairDirectory = buildRetainedPairDirectory(context.archivePlan, removed.pairId);
+    if (await deps.pathExists(pairDirectory)) {
+      await deps.removePath(pairDirectory, { recursive: true, force: true });
+    }
+  }
 }
 
 export async function readArchivedComparisonReportSourceRecordFromSelection(
@@ -265,16 +388,22 @@ export function buildReportAssetsDirectoryName(reportFilename: string): string {
   return reportFilename.replace(/\.html$/i, '') + '_files';
 }
 
-function createDeterministicId(value: string): string {
-  return createHash('sha256').update(value).digest('hex').slice(0, 12);
-}
-
-function joinPreservingExplicitPathStyle(rootPath: string, ...segments: string[]): string {
-  if (rootPath.startsWith('/')) {
-    return path.posix.join(rootPath, ...segments.map((segment) => segment.replace(/\\/g, '/')));
+/**
+ * VHS-REQ-641 (Phase 3): maps a revision id to the token used in the
+ * deterministic pair-ID. A committed hash is used verbatim. The `WORKTREE`
+ * sentinel is content-addressed as `WORKTREE:<snapshotId>` when a snapshot id
+ * is available so distinct uncommitted snapshots produce distinct retained
+ * pairs; without a snapshot id it falls back to the bare sentinel (preserving
+ * the pre-Phase-3 pair-ID for any legacy caller).
+ */
+function contentAddressRevisionForPairId(
+  revisionId: string,
+  worktreeSnapshotId: string | undefined
+): string {
+  if (isWorktreeRevision(revisionId) && worktreeSnapshotId && worktreeSnapshotId.length > 0) {
+    return `${revisionId}:${worktreeSnapshotId}`;
   }
-
-  return path.join(rootPath, ...segments);
+  return revisionId;
 }
 
 async function copyIfExists(
@@ -292,26 +421,4 @@ async function copyIfExists(
 
   await deps.mkdir(path.dirname(destinationPath), { recursive: true });
   await deps.copyFile(sourcePath, destinationPath);
-}
-
-async function defaultPathExists(targetPath: string): Promise<boolean> {
-  try {
-    await fs.access(targetPath);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function defaultNow(): string {
-  return new Date().toISOString();
-}
-
-function requireNonEmpty(value: string, field: string): string {
-  const trimmed = value.trim();
-  if (!trimmed) {
-    throw new Error(`${field} must be non-empty`);
-  }
-
-  return trimmed;
 }

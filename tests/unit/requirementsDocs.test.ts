@@ -72,6 +72,72 @@ function parseCsv(text: string): Array<Record<string, string>> {
   });
 }
 
+function extractConfigStringArray(configText: string, key: string): string[] {
+  const match = configText.match(new RegExp(`${key}:\\s*\\[([\\s\\S]*?)\\]`, 'u'));
+  return match ? [...match[1].matchAll(/'([^']+)'/gu)].map((item) => item[1]) : [];
+}
+
+function extractCoverageGlobArrays(vitestConfig: string): { include: string[]; exclude: string[] } {
+  const coverageStart = vitestConfig.indexOf('coverage: {');
+  const thresholdsStart = vitestConfig.indexOf('thresholds:', coverageStart);
+  const coverageBlock = vitestConfig.slice(coverageStart, thresholdsStart);
+  return {
+    include: extractConfigStringArray(coverageBlock, 'include'),
+    exclude: extractConfigStringArray(coverageBlock, 'exclude')
+  };
+}
+
+function extractGlobalCoverageThresholds(vitestConfig: string) {
+  const thresholdsStart = vitestConfig.indexOf('thresholds: {');
+  const perFileThresholdsStart = vitestConfig.indexOf("'src/reporting/comparisonRuntimeLocator.ts'", thresholdsStart);
+  const thresholdBlock = vitestConfig.slice(thresholdsStart, perFileThresholdsStart);
+
+  return Object.fromEntries(
+    ['statements', 'branches', 'functions', 'lines'].map((metric) => {
+      const match = new RegExp(`${metric}:\\s*(\\d+)`, 'u').exec(thresholdBlock);
+      if (!match) {
+        throw new Error(`Missing global coverage threshold for ${metric}`);
+      }
+      return [metric, Number(match[1])];
+    })
+  ) as Record<'statements' | 'branches' | 'functions' | 'lines', number>;
+}
+
+function globToRegExp(pattern: string): RegExp {
+  const normalized = pattern.replace(/\\/g, '/');
+  let source = '';
+  for (let index = 0; index < normalized.length;) {
+    if (normalized.slice(index, index + 3) === '**/') {
+      source += '(?:.*/)?';
+      index += 3;
+      continue;
+    }
+    if (normalized.slice(index, index + 2) === '**') {
+      source += '.*';
+      index += 2;
+      continue;
+    }
+
+    const character = normalized[index];
+    source += character === '*'
+      ? '[^/]*'
+      : character.replace(/[|\\{}()[\]^$+?.]/gu, '\\$&');
+    index += 1;
+  }
+  return new RegExp(`^${source}$`, 'u');
+}
+
+function isCoveredByVitestCoverage(
+  pathValue: string,
+  globs: { include: string[]; exclude: string[] }
+): boolean {
+  const normalized = pathValue.replace(/\\/g, '/');
+  return (
+    globs.include.some((pattern) => globToRegExp(pattern).test(normalized)) &&
+    !globs.exclude.some((pattern) => globToRegExp(pattern).test(normalized))
+  );
+}
+
 function extractSrsBlocks(text: string): Array<{
   id: string;
   title: string;
@@ -167,7 +233,7 @@ describe('requirements documentation coherence', () => {
     }
   });
 
-  it('keeps active SRS requirements and RTM rows on the same ID set', () => {
+  it('keeps active SRS requirements and RTM rows on the same ID set (VHS-REQ-601.2)', () => {
     const srsIds = new Set(
       extractSrsBlocks(readRepoText('docs', 'requirements', 'srs.md')).map((block) => block.id)
     );
@@ -201,7 +267,7 @@ describe('requirements documentation coherence', () => {
     }
   });
 
-  it('keeps RTM implementation and verification references resolvable', () => {
+  it('keeps RTM implementation and verification references resolvable (VHS-REQ-601.11)', () => {
     const rows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
 
     for (const row of rows) {
@@ -217,7 +283,52 @@ describe('requirements documentation coherence', () => {
     }
   });
 
-  it('keeps historical IDs discoverable through the ID index', () => {
+  it('keeps every requirements CSV row aligned to its header column count (VHS-REQ-601)', () => {
+    const {
+      checkRequirementsCsvColumns
+    } = require('../../scripts/checkRequirementsCsvColumns.js') as {
+      checkRequirementsCsvColumns: (cwd: string) => {
+        success: boolean;
+        files: Array<{
+          relativePath: string;
+          violations: Array<{ lineNumber: number; id: string; columns: number; expectedColumns: number }>;
+        }>;
+      };
+    };
+
+    const result = checkRequirementsCsvColumns(repoRoot);
+    const violations = result.files.flatMap((file) =>
+      file.violations.map(
+        (violation) =>
+          `${file.relativePath}:${violation.lineNumber} (${violation.id}) has ` +
+          `${violation.columns} columns, expected ${violation.expectedColumns}`
+      )
+    );
+
+    expect(violations, `malformed requirements CSV rows:\n${violations.join('\n')}`).toEqual([]);
+    expect(result.success).toBe(true);
+  });
+
+  it('keeps requirements cross-references resolvable (VHS-REQ-601)', () => {
+    const {
+      checkRequirementsIntegrity
+    } = require('../../scripts/checkRequirementsIntegrity.js') as {
+      checkRequirementsIntegrity: (cwd: string) => {
+        success: boolean;
+        checks: Array<{ key: string; violations: Array<{ subject: string; detail: string }> }>;
+      };
+    };
+
+    const result = checkRequirementsIntegrity(repoRoot);
+    const violations = result.checks.flatMap((check) =>
+      check.violations.map((violation) => `[${check.key}] ${violation.subject}: ${violation.detail}`)
+    );
+
+    expect(violations, `requirements cross-reference violations:\n${violations.join('\n')}`).toEqual([]);
+    expect(result.success).toBe(true);
+  });
+
+  it('keeps historical IDs discoverable through the ID index (VHS-REQ-601.3)', () => {
     const indexRows = parseCsv(readRepoText('docs', 'requirements', 'id-index.csv'));
     const indexById = new Map(indexRows.map((row) => [row.ID, row]));
     const activeRtmIds = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv')).map(
@@ -287,7 +398,7 @@ describe('requirements documentation coherence', () => {
     expect(titles).toContain('Devcontainer Source Evaluation');
   });
 
-  it('keeps lightweight hosted CI traceability and docs link gating documented', () => {
+  it('keeps lightweight hosted CI traceability and docs link gating documented (VHS-REQ-597.8)', () => {
     const syrs = readRepoText('docs', 'requirements', 'syrs.md');
     const srs = readRepoText('docs', 'requirements', 'srs.md');
     const testPlan = readRepoText('docs', 'testing', 'test-plan.md');
@@ -324,8 +435,8 @@ describe('requirements documentation coherence', () => {
     expect(srs).toContain('coverage/cobertura-coverage.xml');
     expect(srs).toContain('coverage/coverage-summary.json');
     expect(srs).toContain('baseline global coverage thresholds declared in');
-    expect(srs).toContain('72% statements, 61% branches, 79% functions');
-    expect(syrs).toContain('post-wave hosted floors are 72% statements');
+    expect(srs).toContain('80% statements, 70% branches, 84% functions');
+    expect(syrs).toContain('post-wave hosted floors are 80% statements');
     expect(testPlan).toContain('npm run traceability:audit');
     expect(testPlan).toContain('npm run docs:links');
     expect(testPlan).toContain('npm run dod:gate');
@@ -348,13 +459,49 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain('PR Coverage Gate / coverage');
     expect(testPlan).toContain('coverage/cobertura-coverage.xml');
     expect(testPlan).toContain('coverage/coverage-summary.json');
-    expect(testPlan).toContain('72% statements');
-    expect(testPlan).toContain('61% branches');
-    expect(testPlan).toContain('79% functions');
-    expect(testPlan).toContain('72% lines');
-    expect(testPlan).toContain('74.97% statements, 64.60% branches');
+    expect(testPlan).toContain('80% statements');
+    expect(testPlan).toContain('70% branches');
+    expect(testPlan).toContain('84% functions');
+    expect(testPlan).toContain('80% lines');
+    expect(testPlan).toContain('82.16% statements, 72.32% branches');
     expect(testPlan).toContain('Coverage Traceability Map');
     expect(testPlan).toContain('npm run coverage:map');
+    expect(testPlan).toContain('Criterion Closure Docket');
+    expect(testPlan).toContain('513/513 criterion-level citations');
+    expect(testPlan).toContain('0 uncited');
+    expect(testPlan).toContain('`exact-testable`');
+    expect(testPlan).toContain('`needs-new-behavior-test`');
+    expect(testPlan).toContain('`manual/process`');
+    expect(testPlan).toContain('`broad-regression`');
+    expect(testPlan).toContain('`defer/product-decision`');
+    expect(testPlan).toContain('Current closure docket');
+    expect(testPlan).not.toContain(`\`${['VHS-REQ-631', '4'].join('.')}\``);
+    expect(testPlan).not.toContain(`\`${['VHS-REQ-634', '3'].join('.')}\``);
+    expect(testPlan).not.toContain(`\`${['VHS-REQ-650', '7'].join('.')}\``);
+    expect(testPlan).not.toContain(`\`${['VHS-REQ-657', '4'].join('.')}\``);
+    expect(testPlan).not.toContain(`\`${['VHS-REQ-624', '9'].join('.')}\``);
+    expect(testPlan).not.toContain(`\`${['VHS-REQ-641', '3'].join('.')}\``);
+    expect(testPlan).not.toContain(`\`${['VHS-REQ-641', '5'].join('.')}\``);
+    expect(testPlan).not.toContain(`\`${['VHS-REQ-659', '7'].join('.')}\``);
+    expect(testPlan).not.toContain(`\`${['VHS-REQ-659', '12'].join('.')}\``);
+    expect(testPlan).not.toContain(`\`${['VHS-REQ-659', '15'].join('.')}\``);
+    expect(testPlan).not.toContain(`\`${['VHS-REQ-615', '2'].join('.')}\``);
+    expect(testPlan).not.toContain(`\`${['VHS-REQ-656', '5'].join('.')}\``);
+    expect(testPlan).not.toContain(`\`${['VHS-REQ-631', '6'].join('.')}\``);
+    expect(testPlan).not.toContain(`\`${['VHS-REQ-636', '9'].join('.')}\``);
+    expect(testPlan).not.toContain(`\`${['VHS-REQ-642', '5'].join('.')}\``);
+    expect(testPlan).not.toContain(`\`${['VHS-REQ-644', '2'].join('.')}\``);
+    expect(testPlan).not.toContain(`\`${['VHS-REQ-644', '6'].join('.')}\``);
+    expect(testPlan).not.toContain(`\`${['VHS-REQ-614', '3'].join('.')}\``);
+    expect(testPlan).not.toContain(`\`${['VHS-REQ-614', '4'].join('.')}\``);
+    expect(testPlan).toContain('Final closure disposition for issue #1005');
+    expect(testPlan).toContain('no uncited criteria remain');
+    expect(testPlan).toContain('Criterion-linkage enforcement is now fail-closed in hosted CI');
+    expect(testPlan).toContain('Enforce requirement criterion citation');
+    expect(testPlan).toContain('Classify future uncited criteria before enforcement');
+    expect(testPlan).toContain('Recommended implementation order');
+    expect(testPlan).toContain('Do not add a `VHS-REQ-N.M` citation unless');
+    expect(testPlan).toContain('node scripts/auditRequirementCriteriaInventory.js --json');
     expect(testPlan).toContain('| VHS-REQ-016 | TEST-016 | src/commands/openViHistoryCommand.ts');
     expect(testPlan).toContain('| VHS-REQ-017 | TEST-017 | src/services/viHistoryModel.ts');
     expect(testPlan).toContain('| VHS-REQ-039 | TEST-039 | src/commands/openViHistoryCommand.ts');
@@ -362,13 +509,14 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain('| VHS-REQ-147 | TEST-147 | src/reporting/comparisonReportRuntimeExecution.ts');
     expect(testPlan).toContain('| VHS-REQ-148 | TEST-148 | src/reporting/comparisonReportRuntimeExecution.ts');
     expect(testPlan).toContain('| VHS-REQ-155 | TEST-155 | src/reporting/comparisonRuntimeLocator.ts');
-    expect(testPlan).toContain('| VHS-REQ-635 | TEST-635 | src/commands/openViHistoryCommand.ts');
-    expect(testPlan).toContain('avoids repository-wide VI indexing as a prerequisite');
+    expect(testPlan).toContain('| VHS-REQ-635 | TEST-635 | src/extension.ts; src/commands/openViHistoryCommand.ts');
+    expect(testPlan).toContain('tests/unit/extensionActivationLazySideEffects.test.ts; tests/unit/openViHistoryCommand.test.ts');
+    expect(testPlan).toContain('avoid repository-wide VI indexing as a prerequisite');
     expect(testPlan).toContain('| VHS-REQ-610 | TEST-610 | src/dashboard/comparisonReportArchive.ts');
     expect(testPlan).toContain('src/dashboard/multiReportDashboard.ts; src/dashboard/multiReportDashboardAction.ts');
     expect(testPlan).toContain('tests/unit/multiReportDashboard.test.ts; tests/unit/multiReportDashboardAction.test.ts');
     expect(testPlan).toContain('tests/unit/retainedDashboardEvidence.test.ts');
-    expect(testPlan).toContain('review submission boundaries, decision records, scenario contracts');
+    expect(testPlan).toContain('proof seeding, decision records, scenario contracts');
     expect(testPlan).toContain('| VHS-REQ-611 | TEST-611 | src/docs/bundledDocumentation.ts');
     expect(testPlan).toContain('| VHS-REQ-612 | TEST-612 | src/tooling/localRuntimeSettingsCli.ts');
     expect(testPlan).toContain('tests/unit/localRuntimeSettingsCli.test.ts');
@@ -392,11 +540,11 @@ describe('requirements documentation coherence', () => {
       'node scripts/auditCustomizationGovernance.js'
     );
     expect(packageJson.scripts['docs:links']).toBe('node scripts/checkDocsLinks.js');
-    expect(vitestConfig).toContain('statements: 72');
-    expect(vitestConfig).toContain('branches: 61');
-    expect(vitestConfig).toContain('functions: 79');
-    expect(vitestConfig).toContain('lines: 72');
-    expect(vitestConfig).toContain('scripts/mapCoverageToTraceability.js');
+    expect(vitestConfig).toContain('statements: 80');
+    expect(vitestConfig).toContain('branches: 70');
+    expect(vitestConfig).toContain('functions: 84');
+    expect(vitestConfig).toContain('lines: 80');
+    expect(vitestConfig).toContain('scripts/*.js');
     expect(requirementRow?.ImplementationRefs).toContain('.github/workflows/ci.yml');
     expect(requirementRow?.ImplementationRefs).toContain('docs/testing/test-plan.md');
     expect(requirementRow?.ImplementationRefs).toContain('scripts/checkDocsLinks.js');
@@ -478,7 +626,45 @@ describe('requirements documentation coherence', () => {
     expect(coverageTestRow?.Notes).toContain('VHS-REQ-613');
   });
 
-  it('keeps VS Code test harness architecture traceable for VHS-REQ-614', () => {
+  it('keeps the coverage floor ratchet at or above the initial baseline (VHS-REQ-613.6)', () => {
+    const srs = readRepoText('docs', 'requirements', 'srs.md');
+    const thresholds = extractGlobalCoverageThresholds(readRepoText('vitest.config.ts'));
+    const initialFloor = { statements: 40, branches: 33, functions: 47, lines: 40 } as const;
+
+    expect(srs).toContain('The initial coverage floor ratchet is statements 40%, branches 33%,');
+    expect(srs).toContain('functions 47%, and lines 40%.');
+    for (const [metric, floor] of Object.entries(initialFloor)) {
+      expect(thresholds[metric as keyof typeof thresholds]).toBeGreaterThanOrEqual(floor);
+    }
+  });
+
+  it('keeps coverage instrumentation scoped to product code and requirement-supporting scripts (VHS-REQ-613.5)', () => {
+    const vitestConfig = readRepoText('vitest.config.ts');
+    const coverageGlobs = extractCoverageGlobArrays(vitestConfig);
+
+    expect(coverageGlobs.include).toEqual(['src/**/*.ts', 'scripts/*.js']);
+    for (const excludedScript of [
+      'scripts/bootstrapLinuxVsCodeHost.js',
+      'scripts/runLinuxIntegrationHost.js',
+      'scripts/runWindowsIntegrationHost.js',
+      'scripts/preparePublicRepoClone.js',
+      'scripts/preparePublicTestFixture.js',
+      'scripts/publicRepoCloneCore.js'
+    ]) {
+      expect(isCoveredByVitestCoverage(excludedScript, coverageGlobs)).toBe(false);
+    }
+    for (const measuredScript of [
+      'scripts/mapCoverageToTraceability.js',
+      'scripts/checkDocsLinks.js',
+      'scripts/auditTraceabilitySteward.js',
+      'scripts/generateCloseoutEvidence.js',
+      'scripts/verifyMarketplaceListing.js'
+    ]) {
+      expect(isCoveredByVitestCoverage(measuredScript, coverageGlobs)).toBe(true);
+    }
+  });
+
+  it('keeps VS Code test harness architecture traceable for VHS-REQ-614 (VHS-REQ-614.3, VHS-REQ-614.4)', () => {
     const srs = readRepoText('docs', 'requirements', 'srs.md');
     const testPlan = readRepoText('docs', 'testing', 'test-plan.md');
     const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
@@ -496,9 +682,14 @@ describe('requirements documentation coherence', () => {
     );
     expect(srs).toContain('commands, webviews, workspace storage, filesystem, clipboard');
     expect(srs).toContain('Runtime behavior, command IDs, persisted formats');
+    expect(srs).toContain('Production refactors for later coverage work remain limited');
+    expect(srs).toContain('Do not change');
+    expect(srs).toContain('extension command exposure');
+    expect(srs).toContain('runtime selection behavior');
     expect(testPlan).toContain('| VHS-REQ-614 | TEST-614 | tests/unit/vscodeTestHarness.ts');
     expect(requirementRow?.ParentID).toBe('VHS-SYS-REQ-017');
-    expect(requirementRow?.ImplementationRefs).toContain('tests/unit/vscodeTestHarness.ts');
+    expect(requirementRow?.ImplementationRefs).toBe('tests/unit/vscodeTestHarness.ts');
+    expect(requirementRow?.ImplementationRefs).not.toMatch(/(^|;)src\/|package\.json|marketplace|\.github\/workflows\//u);
     expect(requirementRow?.VerificationRefs).toContain('tests/unit/vscodeTestHarness.test.ts');
     expect(requirementRow?.VerificationRefs).toContain('tests/unit/requirementsDocs.test.ts');
     expect(indexRow?.CurrentAnchor).toBe(
@@ -512,12 +703,13 @@ describe('requirements documentation coherence', () => {
     expect(harnessTestRow?.Notes).toContain('VHS-REQ-614');
   });
 
-  it('keeps Definition-of-Done operating requirement traceable for VHS-REQ-615', () => {
+  it('keeps Definition-of-Done operating requirement traceable for VHS-REQ-615 (VHS-REQ-615.2, VHS-REQ-615.8)', () => {
     const readme = readRepoText('docs', 'requirements', 'README.md');
     const maintainerOperations = readRepoText('docs', 'maintainer-operations.md');
     const cmPlan = readRepoText('docs', 'cm', 'cm-plan.md');
     const srs = readRepoText('docs', 'requirements', 'srs.md');
     const testPlan = readRepoText('docs', 'testing', 'test-plan.md');
+    const prTemplate = readRepoText('.github', 'pull_request_template.md');
     const troubleshooting = readRepoText('TROUBLESHOOTING.md');
     const packageJson = JSON.parse(readRepoText('package.json')) as {
       scripts: Record<string, string>;
@@ -543,6 +735,12 @@ describe('requirements documentation coherence', () => {
     const checkerTestRow = inventoryRows.find(
       (row) => row.Path === 'tests/unit/definitionOfDoneGate.test.ts'
     );
+    const closeoutEvidenceTestRow = inventoryRows.find(
+      (row) => row.Path === 'tests/unit/closeoutEvidenceScript.test.ts'
+    );
+    const marketplaceWorkflowTestRow = inventoryRows.find(
+      (row) => row.Path === 'tests/unit/marketplaceReleaseWorkflow.test.ts'
+    );
     const customizationAuditTestRow = inventoryRows.find(
       (row) => row.Path === 'tests/unit/customizationGovernanceAuditScript.test.ts'
     );
@@ -562,18 +760,24 @@ describe('requirements documentation coherence', () => {
     expect(srs).toContain('The repo-native `npm run dod:gate` command verifies the DoD contract');
     expect(srs).toContain('coverage-to-traceability mapping');
     expect(srs).toContain('Standards closeout evidence runs `npm run coverage:map`');
+    expect(packageJson.scripts['quality:local']).toBe(
+      'npm run check && npm test && npm run traceability:audit && npm run customization:audit && npm run docs:links && npm run coverage:map && npm run requirements:verify'
+    );
     expect(srs).toContain('Hosted CI includes `DoD Gate / dod` running `npm run dod:gate`');
     expect(srs).toContain('`scripts/generateCloseoutEvidence.js`');
     expect(srs).toContain('`.github/workflows/ci.yml`');
     expect(testPlan).toContain(
       '| VHS-REQ-615 | TEST-615 | package.json; .github/workflows/ci.yml; .github/workflows/marketplace-release.yml'
     );
+    expect(testPlan).toContain('tests/unit/definitionOfDoneGate.test.ts; tests/unit/closeoutEvidenceScript.test.ts; tests/unit/multiStandardsAuditScript.test.ts; tests/unit/marketplaceReleaseWorkflow.test.ts');
     expect(testPlan).toContain('scripts/checkDefinitionOfDone.js; scripts/auditCustomizationGovernance.js');
+    expect(testPlan).toContain('scripts/generateCloseoutEvidence.js; scripts/runMultiStandardsAudit.js; scripts/verifyMarketplaceListing.js');
     expect(testPlan).toContain('scripts/verifyMarketplaceListing.js; .github/pull_request_template.md');
     expect(testPlan).toContain('docs/maintainer-operations.md; docs/requirements/srs.md');
     expect(testPlan).toContain('.github/pull_request_template.md; docs/maintainer-operations.md');
     expect(testPlan).toContain('docs/requirements/traceability-inventory.csv');
     expect(testPlan).toContain('lightweight evidence surface');
+    expect(testPlan).toContain('name the linked issue with `Refs #...` unless');
     expect(testPlan).toContain('target requirement');
     expect(testPlan).toContain('validation commands');
     expect(testPlan).toContain('traceability/RTM impact');
@@ -597,6 +801,8 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain('non-retryable');
     expect(testPlan).toContain('hosted `DoD Gate / dod` enforcement in `.github/workflows/ci.yml`');
     expect(testPlan).toContain('release-evidence/release-evidence-contract.json');
+    expect(prTemplate).toContain('Linked issue (required):** `Refs #<issue>`');
+    expect(prTemplate).not.toContain('Closes #<issue>');
     expect(maintainerOperations).toContain('## Non-Interactive Closeout Authentication');
     expect(maintainerOperations).toContain('GIT_ASKPASS');
     expect(maintainerOperations).toContain('docker login registry.gitlab.com');
@@ -622,6 +828,8 @@ describe('requirements documentation coherence', () => {
     expect(requirementRow?.ImplementationRefs).toContain('docs/testing/test-plan.md');
     expect(requirementRow?.ImplementationRefs).toContain('docs/requirements/traceability-inventory.csv');
     expect(requirementRow?.VerificationRefs).toContain('tests/unit/definitionOfDoneGate.test.ts');
+    expect(requirementRow?.VerificationRefs).toContain('tests/unit/closeoutEvidenceScript.test.ts');
+    expect(requirementRow?.VerificationRefs).toContain('tests/unit/marketplaceReleaseWorkflow.test.ts');
     expect(requirementRow?.VerificationRefs).toContain(
       'tests/unit/customizationGovernanceAuditScript.test.ts'
     );
@@ -665,6 +873,12 @@ describe('requirements documentation coherence', () => {
     expect(checkerTestRow?.Classification).toBe('mapped');
     expect(checkerTestRow?.RtmCoverage).toBe('Yes');
     expect(checkerTestRow?.Notes).toContain('VHS-REQ-615');
+    expect(closeoutEvidenceTestRow?.Classification).toBe('mapped');
+    expect(closeoutEvidenceTestRow?.RtmCoverage).toBe('Yes');
+    expect(closeoutEvidenceTestRow?.Notes).toContain('VHS-REQ-615');
+    expect(marketplaceWorkflowTestRow?.Classification).toBe('mapped');
+    expect(marketplaceWorkflowTestRow?.RtmCoverage).toBe('Yes');
+    expect(marketplaceWorkflowTestRow?.Notes).toContain('VHS-REQ-615');
     expect(customizationAuditTestRow?.Classification).toBe('mapped');
     expect(customizationAuditTestRow?.RtmCoverage).toBe('Yes');
     expect(customizationAuditTestRow?.Notes).toContain('VHS-REQ-615');
@@ -825,7 +1039,7 @@ describe('requirements documentation coherence', () => {
     );
   });
 
-  it('keeps governed branch promotion and Marketplace release automation traceable', () => {
+  it('keeps governed branch promotion and Marketplace release automation traceable (VHS-REQ-609.11)', () => {
     const syrs = readRepoText('docs', 'requirements', 'syrs.md');
     const srs = readRepoText('docs', 'requirements', 'srs.md');
     const cmPlan = readRepoText('docs', 'cm', 'cm-plan.md');
@@ -856,9 +1070,20 @@ describe('requirements documentation coherence', () => {
     expect(srs).toContain('traceability audit, docs link check, tests');
     expect(srs).toContain('The CM plan records release baselines');
     expect(cmPlan).toContain('Controlled Baselines');
+    expect(cmPlan).toContain('Marketplace release');
+    expect(cmPlan).toContain('Exact `vX.Y.Z` tag reachable from `main`');
     expect(cmPlan).toContain('Change Control');
+    expect(cmPlan).toContain('Normal work flows from `feature/<issue#>-*` into `develop`');
+    expect(cmPlan).toContain('[Maintainer Operations](../maintainer-operations.md)');
     expect(cmPlan).toContain('Status Accounting');
+    expect(cmPlan).toContain('Closeout evidence is the status-accounting packet');
+    expect(cmPlan).toContain('User-Information Review Trigger');
+    expect(cmPlan).toContain('npm run closeout:evidence -- --kind release');
+    expect(cmPlan).toContain('release-26514-review-scorecard.txt');
     expect(cmPlan).toContain('Documentation Workbench Status');
+    expect(cmPlan).toMatch(/standards\s+detector should report `supported: true`/);
+    expect(cmPlan).toContain('docs/documentation-workbench.md');
+    expect(cmPlan).toContain('remain available for standards review');
 
     expect(requirementRow?.ParentID).toBe('VHS-SYS-REQ-016');
     expect(requirementRow?.ImplementationRefs).toContain('.github/workflows/ci.yml');
@@ -963,9 +1188,6 @@ describe('requirements documentation coherence', () => {
       'tests/unit/retainedDashboardEvidence.test.ts'
     );
     expect(requirementRow?.VerificationRefs).toContain(
-      'tests/unit/humanReviewSubmission.test.ts'
-    );
-    expect(requirementRow?.VerificationRefs).toContain(
       'tests/unit/reviewDecisionRecord.test.ts'
     );
     expect(requirementRow?.VerificationRefs).toContain(
@@ -1051,6 +1273,53 @@ describe('requirements documentation coherence', () => {
     );
   });
 
+  it('keeps the LabVIEW CLI open gate traceable for VHS-REQ-627', () => {
+    const srs = readRepoText('docs', 'requirements', 'srs.md');
+    const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
+    const inventoryRows = parseCsv(readRepoText('docs', 'requirements', 'traceability-inventory.csv'));
+    const requirementRow = rtmRows.find((row) => row.ReqID === 'VHS-REQ-627');
+    const activationTestRow = inventoryRows.find(
+      (row) => row.Path === 'tests/unit/extensionActivationLazySideEffects.test.ts'
+    );
+
+    expect(srs).toContain('### VHS-REQ-627: LabVIEW CLI Prerequisite Gate For VI History Open');
+    expect(srs).toContain('cached runtime detection');
+    expect(srs).toContain('tests/unit/extensionActivationLazySideEffects.test.ts');
+    expect(requirementRow?.ParentID).toBe('VHS-SYS-REQ-004');
+    expect(requirementRow?.ImplementationRefs).toContain('src/extension.ts');
+    expect(requirementRow?.ImplementationRefs).toContain('src/ui/runtimeAvailabilityNotice.ts');
+    expect(requirementRow?.VerificationRefs).toContain(
+      'tests/unit/extensionActivationLazySideEffects.test.ts'
+    );
+    expect(requirementRow?.VerificationRefs).toContain('tests/unit/runtimeAvailabilityNotice.test.ts');
+    expect(requirementRow?.VerificationRefs).toContain('tests/unit/requirementsDocs.test.ts');
+    expect(activationTestRow?.Notes).toContain('VHS-REQ-627');
+  });
+
+  it('keeps pre-panel runtime open-gate wiring traceable for VHS-REQ-631 and VHS-REQ-634', () => {
+    const srs = readRepoText('docs', 'requirements', 'srs.md');
+    const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
+    const inventoryRows = parseCsv(readRepoText('docs', 'requirements', 'traceability-inventory.csv'));
+    const viServerRow = rtmRows.find((row) => row.ReqID === 'VHS-REQ-631');
+    const registryFallbackRow = rtmRows.find((row) => row.ReqID === 'VHS-REQ-634');
+    const activationTestRow = inventoryRows.find(
+      (row) => row.Path === 'tests/unit/extensionActivationLazySideEffects.test.ts'
+    );
+
+    expect(srs).toContain('### VHS-REQ-631: Pre-Panel VI Server Prerequisite Gate For VI History Open');
+    expect(srs).toContain('### VHS-REQ-634: Authoritative Host Fallback For LabVIEW CLI Open Gate');
+    for (const row of [viServerRow, registryFallbackRow]) {
+      expect(row?.ImplementationRefs).toContain('src/extension.ts');
+      expect(row?.VerificationRefs).toContain(
+        'tests/unit/extensionActivationLazySideEffects.test.ts'
+      );
+      expect(row?.VerificationRefs).toContain('tests/unit/runtimeAvailabilityNotice.test.ts');
+      expect(row?.VerificationRefs).toContain('tests/unit/requirementsDocs.test.ts');
+    }
+    expect(activationTestRow?.Notes).toContain('VHS-REQ-631');
+    expect(activationTestRow?.Notes).toContain('VHS-REQ-634');
+  });
+
   it('keeps onboarding feedback traceable to source evaluation and Marketplace metadata', () => {
     const srs = readRepoText('docs', 'requirements', 'srs.md');
     const firstRun = readRepoText('FIRST-RUN.md');
@@ -1083,7 +1352,52 @@ describe('requirements documentation coherence', () => {
     );
   });
 
-  it('keeps the requirement-targeted issue template aligned with the agent contract', () => {
+  it('keeps VI Preview custom-editor contribution traceable for VHS-REQ-659 (VHS-REQ-659.8)', () => {
+    const srs = readRepoText('docs', 'requirements', 'srs.md');
+    const manifest = JSON.parse(readRepoText('package.json')) as {
+      contributes?: {
+        customEditors?: Array<{
+          viewType?: string;
+          priority?: string;
+          selector?: Array<{ filenamePattern?: string }>;
+        }>;
+      };
+    };
+    const rtmRows = parseCsv(readRepoText('docs', 'requirements', 'rtm.csv'));
+    const inventoryRows = parseCsv(readRepoText('docs', 'requirements', 'traceability-inventory.csv'));
+    const requirementRow = rtmRows.find((row) => row.ReqID === 'VHS-REQ-659');
+    const packageRow = inventoryRows.find((row) => row.Path === 'package.json');
+    const packageManifestTestRow = inventoryRows.find(
+      (row) => row.Path === 'tests/unit/packageManifest.test.ts'
+    );
+    const viPreviewEditorTestRow = inventoryRows.find(
+      (row) => row.Path === 'tests/unit/viPreviewEditor.test.ts'
+    );
+    const editor = manifest.contributes?.customEditors?.find(
+      (entry) => entry.viewType === 'viHistorySuite.viPreview'
+    );
+
+    expect(srs).toContain('Opening a `.vi`, `.vit`, `.vim`, or `.ctl` file activates the');
+    expect(srs).toContain('`viHistorySuite.viPreview` read-only custom editor');
+    expect(editor?.priority).toBe('default');
+    expect(editor?.selector?.map((entry) => entry.filenamePattern)).toEqual([
+      '*.vi',
+      '*.vit',
+      '*.vim',
+      '*.ctl'
+    ]);
+    expect(requirementRow?.ImplementationRefs).toContain('package.json');
+    expect(requirementRow?.ImplementationRefs).toContain('src/ui/viPreviewEditor.ts');
+    expect(requirementRow?.VerificationRefs).toContain('tests/unit/packageManifest.test.ts');
+    expect(requirementRow?.VerificationRefs).toContain('tests/unit/viPreviewEditor.test.ts');
+    expect(packageRow?.Notes).toContain('VHS-REQ-659');
+    expect(packageManifestTestRow?.Notes).toContain('VHS-REQ-659');
+    expect(viPreviewEditorTestRow?.Classification).toBe('mapped');
+    expect(viPreviewEditorTestRow?.RtmCoverage).toBe('Yes');
+    expect(viPreviewEditorTestRow?.Notes).toContain('VHS-REQ-659');
+  });
+
+  it('keeps the requirement-targeted issue template aligned with the agent contract (VHS-REQ-601.4, VHS-REQ-601.5, VHS-REQ-601.6, VHS-REQ-601.7, VHS-REQ-601.8, VHS-REQ-601.9, VHS-REQ-601.10)', () => {
     const template = readRepoText('.github', 'ISSUE_TEMPLATE', 'requirement_target.yml');
     const requirementsReadme = readRepoText('docs', 'requirements', 'README.md');
     const issueWaveGuidance = readRepoText(
@@ -1401,7 +1715,7 @@ describe('requirements documentation coherence', () => {
     expect(syrs).toContain('Repositories with thousands of VIs do not need a full tracked-VI scan');
 
     expect(srs).toContain('### VHS-REQ-635: Selected-File On-Demand Eligibility');
-    expect(srs).toContain('shall not wait for or require a repository-wide');
+    expect(srs).toContain('without waiting for or requiring a repository-wide');
     expect(srs).toContain('Opening history for one selected file does not enumerate every tracked VI');
     expect(srs).toContain('Manifest menu visibility remains a hint');
     expect(srs).toContain('Selected-file eligibility is independent of repository-wide indexing');
@@ -1426,7 +1740,7 @@ describe('requirements documentation coherence', () => {
     );
   });
 
-  it('keeps selected-file eligibility intake separated from runtime validation output', () => {
+  it('keeps selected-file eligibility intake separated from runtime validation output (VHS-REQ-607.1, VHS-REQ-607.2, VHS-REQ-607.3, VHS-REQ-607.4, VHS-REQ-607.5)', () => {
     const bugTemplate = readRepoText('.github', 'ISSUE_TEMPLATE', 'bug_report.yml');
     const onboardingTemplate = readRepoText(
       '.github',
@@ -1440,14 +1754,19 @@ describe('requirements documentation coherence', () => {
       expect(template).toContain('Compare/runtime validation');
       expect(template).toContain('id: eligibility_evidence');
       expect(template).toContain('Eligibility / Git History Evidence');
+      expect(template).toContain('tracking/history observations');
       expect(template).toContain('Selected file path or extension');
       expect(template).toContain('Is the file tracked in Git');
       expect(template).toContain('Commit count or history facts shown');
       expect(template).toContain('Ineligibility message or Git/history error');
       expect(template).toContain('id: runtime_validation_output');
+      expect(template).toContain('Paste concise `vihs --validate` or comparison-runtime output');
       expect(template).toContain('separately from eligibility evidence');
       expect(template).toContain('Do not include secrets');
+      expect(template).toContain('Leave blank for runtime-only');
       expect(template).toContain('Leave blank for eligibility-only');
+      expect(template).not.toContain('indexing cache');
+      expect(template).not.toContain('repository-wide VI counts');
     }
   });
 
@@ -1688,8 +2007,6 @@ describe('requirements documentation coherence', () => {
     }
 
     const reviewScenarioSupportingPaths = [
-      'src/review/humanReviewSubmission.ts',
-      'src/review/humanReviewSubmissionAction.ts',
       'src/scenarios/decisionRecord.ts',
       'src/scenarios/reviewDecisionRecordAction.ts',
       'src/scenarios/reviewScenarioRegistry.ts',
@@ -1704,7 +2021,6 @@ describe('requirements documentation coherence', () => {
       'tests/unit/multiReportDashboard.test.ts',
       'tests/unit/multiReportDashboardAction.test.ts',
       'tests/unit/retainedDashboardEvidence.test.ts',
-      'tests/unit/humanReviewSubmission.test.ts',
       'tests/unit/reviewDecisionRecord.test.ts',
       'tests/unit/reviewScenarioSupportPolicy.test.ts'
     ]) {

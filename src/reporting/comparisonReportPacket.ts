@@ -1,6 +1,13 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
+import { nowIso as defaultNow } from '../support/clock';
+import { escapeHtml } from '../support/escapeHtml';
+import {
+  renderRevisionBodyValue,
+  renderRevisionMetadataValue,
+  renderOptionalYesNo
+} from './comparisonReportPacketHtmlValues';
 import {
   buildComparisonArtifactPlan,
   buildStagedRevisionPlan,
@@ -11,6 +18,12 @@ import {
 import { buildComparisonRuntimeDoctorSummary } from './comparisonRuntimeDoctor';
 import { ComparisonRuntimeSelection } from './comparisonRuntimeLocator';
 import { ComparisonReportPreflightResult } from './comparisonReportPreflight';
+import { formatComparisonRevisionHashDisplay } from './comparisonRevisionHashDisplay';
+export { formatComparisonRevisionHashDisplay } from './comparisonRevisionHashDisplay';
+import { deriveProviderRequestLabel } from './comparisonProviderRequestLabel';
+import { renderCommand } from './comparisonReportCommandRendering';
+import { renderRuntimeNote } from './comparisonReportRuntimeNote';
+import { renderCompactEvidenceSummary } from './comparisonReportCompactEvidenceSummary';
 
 export type ComparisonReportRuntimeExecutionState =
   | 'not-run'
@@ -28,6 +41,13 @@ export interface ComparisonReportRuntimeExecution {
   failureReason?: string;
   diagnosticReason?: string;
   diagnosticNotes?: string[];
+  /**
+   * VHS-REQ-641 (Phase 3, issue #1366): content-addressed identity of the staged
+   * working-tree bytes when a compared side was the WORKTREE sentinel; undefined
+   * for a committed pair. Carries the snapshot identity to the archive seam so a
+   * retained working-tree comparison gets a content-addressed pair-ID.
+   */
+  worktreeSnapshotId?: string;
   diagnosticLogSourcePath?: string;
   diagnosticLogArtifactPath?: string;
   labviewIniPath?: string;
@@ -489,35 +509,6 @@ export function renderComparisonReportPacketHtml(record: ComparisonReportPacketR
 </html>`;
 }
 
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
-}
-
-function deriveProviderRequestLabel(runtimeSelection: ComparisonRuntimeSelection): string {
-  if (runtimeSelection.requestedProvider) {
-    return runtimeSelection.requestedProvider;
-  }
-
-  if (runtimeSelection.executionMode === 'host-only') {
-    return 'host';
-  }
-
-  if (runtimeSelection.executionMode === 'docker-only') {
-    return 'docker';
-  }
-
-  return runtimeSelection.executionMode ?? 'auto';
-}
-
-function defaultNow(): string {
-  return new Date().toISOString();
-}
-
 function buildInitialRuntimeExecution(
   preflight: ComparisonReportPreflightResult,
   runtimeSelection: ComparisonRuntimeSelection,
@@ -570,120 +561,6 @@ function buildInitialRuntimeExecution(
   };
 }
 
-function renderRuntimeNote(record: ComparisonReportPacketRecord): string {
-  if (record.runtimeExecutionState === 'not-available') {
-    if (
-      record.runtimeExecution.blockedReason === 'container-image-acquisition-failed' ||
-      record.runtimeExecution.blockedReason === 'windows-container-image-acquisition-failed'
-    ) {
-      return 'No LabVIEW-generated comparison report has been executed because the container image could not be acquired before runtime launch.';
-    }
-
-    return 'No LabVIEW-generated comparison report has been executed because the runtime selection is currently unavailable for this workspace and platform.';
-  }
-
-  if (record.runtimeExecutionState === 'succeeded') {
-    return 'LabVIEW-generated comparison report execution succeeded and the HTML output is retained at the report path shown below.';
-  }
-
-  if (record.runtimeExecutionState === 'failed') {
-    return 'LabVIEW-generated comparison report execution was attempted, but the output is not currently usable. Review the retained execution summary and stdout/stderr artifact paths below.';
-  }
-
-  return 'No LabVIEW-generated comparison report has been executed yet. This retained packet captures the preflight, runtime selection, and artifact plan for the selected revision pair.';
-}
-
-/**
- * Renders a compact evidence summary for failed or blocked executions that humans and agents
- * can read without digging through raw artifacts first. Returns empty string for succeeded
- * or not-run states since those do not require a quick-glance summary.
- */
-function renderCompactEvidenceSummary(record: ComparisonReportPacketRecord): string {
-  const runtimeExecution = record.runtimeExecution;
-  const state = record.runtimeExecutionState;
-
-  // Only render for failed or blocked (not-available) states
-  if (state !== 'failed' && state !== 'not-available') {
-    return '';
-  }
-
-  const summaryLines: string[] = [];
-
-  // Outcome line
-  if (state === 'not-available') {
-    summaryLines.push(`<li><strong>Outcome:</strong> ${escapeHtml('blocked')}</li>`);
-  } else {
-    summaryLines.push(`<li><strong>Outcome:</strong> ${escapeHtml('failed')}</li>`);
-  }
-
-  // Blocked reason
-  if (runtimeExecution.blockedReason) {
-    summaryLines.push(
-      `<li><strong>Blocked reason:</strong> ${escapeHtml(runtimeExecution.blockedReason)}</li>`
-    );
-  }
-
-  // Failure reason
-  if (runtimeExecution.failureReason) {
-    summaryLines.push(
-      `<li><strong>Failure reason:</strong> ${escapeHtml(runtimeExecution.failureReason)}</li>`
-    );
-  }
-
-  // Diagnostic reason if present
-  if (runtimeExecution.diagnosticReason) {
-    summaryLines.push(
-      `<li><strong>Diagnostic reason:</strong> ${escapeHtml(runtimeExecution.diagnosticReason)}</li>`
-    );
-  }
-
-  // Exit code if attempted
-  if (runtimeExecution.exitCode !== undefined) {
-    summaryLines.push(
-      `<li><strong>Exit code:</strong> ${escapeHtml(String(runtimeExecution.exitCode))}</li>`
-    );
-  }
-
-  // Duration if available
-  if (runtimeExecution.durationMs !== undefined) {
-    summaryLines.push(
-      `<li><strong>Duration:</strong> ${escapeHtml(String(runtimeExecution.durationMs))}ms</li>`
-    );
-  }
-
-  // Report existence
-  summaryLines.push(
-    `<li><strong>Report produced:</strong> ${escapeHtml(runtimeExecution.reportExists ? 'yes' : 'no')}</li>`
-  );
-
-  // Artifact paths
-  if (runtimeExecution.stdoutFilePath) {
-    summaryLines.push(
-      `<li><strong>Stdout artifact:</strong> ${escapeHtml(runtimeExecution.stdoutFilePath)}</li>`
-    );
-  }
-
-  if (runtimeExecution.stderrFilePath) {
-    summaryLines.push(
-      `<li><strong>Stderr artifact:</strong> ${escapeHtml(runtimeExecution.stderrFilePath)}</li>`
-    );
-  }
-
-  // Doctor summary lines if present (first 3 for compact view)
-  if (runtimeExecution.doctorSummaryLines && runtimeExecution.doctorSummaryLines.length > 0) {
-    const displayedLines = runtimeExecution.doctorSummaryLines.slice(0, 3);
-    const hasMore = runtimeExecution.doctorSummaryLines.length > 3;
-    summaryLines.push(
-      `<li><strong>Doctor summary:</strong><ul>${displayedLines.map((line) => `<li>${escapeHtml(line)}</li>`).join('')}${hasMore ? '<li><em>(see full doctor summary below)</em></li>' : ''}</ul></li>`
-    );
-  }
-
-  return `<div class="status" data-testid="comparison-report-compact-evidence-summary">
-      <strong>Compact evidence summary</strong>
-      <ul>${summaryLines.join('\n      ')}</ul>
-    </div>`;
-}
-
 function renderComparisonContextSection(record: ComparisonReportPacketRecord): string {
   return `<div class="context" data-testid="comparison-report-context">
       <strong>Comparison context</strong>
@@ -713,46 +590,12 @@ function renderRevisionContextCard(
 ): string {
   return `<div class="context-card" data-testid="${testId}">
       <strong>${escapeHtml(label)}</strong>
-      <div><code>${escapeHtml(revision?.hash ?? hash)}</code></div>
+      <div><code>${escapeHtml(formatComparisonRevisionHashDisplay(revision?.hash ?? hash))}</code></div>
       <div><strong>Date:</strong> ${renderRevisionMetadataValue(revision?.authorDate)}</div>
       <div><strong>Author:</strong> ${renderRevisionMetadataValue(revision?.authorName)}</div>
       <div><strong>Subject:</strong> ${renderRevisionMetadataValue(revision?.subject)}</div>
       <div><strong>Body:</strong> ${renderRevisionBodyValue(revision?.body)}</div>
     </div>`;
-}
-
-function renderRevisionBodyValue(value: string | undefined): string {
-  if (value === undefined) {
-    return '<span class="muted">not retained</span>';
-  }
-
-  if (value.trim().length === 0) {
-    return '<span class="muted">No commit body</span>';
-  }
-
-  return escapeHtml(value).replace(/\r\n?|\n/g, '<br />');
-}
-
-function renderRevisionMetadataValue(value: string | undefined): string {
-  return value && value.length > 0
-    ? escapeHtml(value)
-    : '<span class="muted">not retained</span>';
-}
-
-function renderCommand(runtimeExecution: ComparisonReportRuntimeExecution): string {
-  if (!runtimeExecution.executable) {
-    return 'none';
-  }
-
-  return [runtimeExecution.executable, ...(runtimeExecution.args ?? [])].join(' ');
-}
-
-function renderOptionalYesNo(value: boolean | undefined): string {
-  if (value === undefined) {
-    return 'none';
-  }
-
-  return value ? 'yes' : 'no';
 }
 
 function deriveReportStatus(

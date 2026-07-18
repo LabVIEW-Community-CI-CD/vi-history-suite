@@ -38,12 +38,12 @@ const detectionMissing: GitPrerequisiteDetection = {
 };
 
 describe('buildGitStatusBarPresentation', () => {
-  it('hides the status bar item when Git is available', () => {
+  it('hides the status bar item when Git is available (VHS-REQ-619.2)', () => {
     const presentation = buildGitStatusBarPresentation(detectionAvailable);
     expect(presentation.visible).toBe(false);
   });
 
-  it('shows a warning status bar item when Git is missing', () => {
+  it('shows a warning status bar item when Git is missing (VHS-REQ-619.2)', () => {
     const presentation = buildGitStatusBarPresentation(detectionMissing);
     expect(presentation).toEqual({
       visible: true,
@@ -61,7 +61,7 @@ describe('decideGitFirstRunPresentation', () => {
     });
   });
 
-  it('shows the first-run info notice when Git is missing and notice has not been shown', () => {
+  it('shows the first-run info notice when Git is missing and notice has not been shown (VHS-REQ-619.3)', () => {
     expect(decideGitFirstRunPresentation(detectionMissing, false)).toEqual({
       kind: 'first-run-info',
       shouldMarkShown: true
@@ -117,7 +117,7 @@ function makeContext(firstRunNoticeShown = false): {
 }
 
 describe('createGitPrerequisiteWatcher', () => {
-  it('caches an available detection and never marks or surfaces the first-run notice', async () => {
+  it('caches an available detection and never marks or surfaces the first-run notice (VHS-REQ-619.1, VHS-REQ-619.3)', async () => {
     const { context, globalState } = makeContext();
     const showInfo = vi.spyOn(vscode.window, 'showInformationMessage');
     showInfo.mockClear();
@@ -133,7 +133,7 @@ describe('createGitPrerequisiteWatcher', () => {
     watcher.dispose();
   });
 
-  it('caches a missing detection, marks the first-run notice once, and offers Install Git', async () => {
+  it('caches a missing detection, marks the first-run notice once, and offers Install Git (VHS-REQ-619.1, VHS-REQ-619.3, VHS-REQ-619.4)', async () => {
     const { context, globalState } = makeContext();
     const showInfo = vi.spyOn(vscode.window, 'showInformationMessage');
     const openExternal = vi.spyOn(vscode.env, 'openExternal');
@@ -186,7 +186,7 @@ describe('createGitPrerequisiteWatcher', () => {
     watcher.dispose();
   });
 
-  it('swallows detection errors so activation never throws', async () => {
+  it('swallows detection errors so activation never throws (VHS-REQ-619.6)', async () => {
     const { context } = makeContext();
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
@@ -205,7 +205,7 @@ describe('createGitPrerequisiteWatcher', () => {
 });
 
 describe('presentOpenBlockedToast', () => {
-  it('opens the install URL when the user chooses Install Git', async () => {
+  it('opens the install URL when the user chooses Install Git (VHS-REQ-619.5)', async () => {
     const showWarning = vi.spyOn(vscode.window, 'showWarningMessage');
     const openExternal = vi.spyOn(vscode.env, 'openExternal');
     showWarning.mockClear();

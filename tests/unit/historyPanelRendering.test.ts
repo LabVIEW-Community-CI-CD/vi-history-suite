@@ -59,7 +59,7 @@ function createTestViewModel(overrides: Partial<ViHistoryViewModel> = {}): ViHis
 
 describe('historyPanelRendering', () => {
   describe('panel title (orientation header)', () => {
-    it('renders a slim title with the relative path and commit count', () => {
+    it('renders a slim title with the relative path and commit count (VHS-REQ-017.1)', () => {
       const model = createTestViewModel({
         relativePath: 'Examples/Sample.vi',
         commits: [
@@ -87,6 +87,26 @@ describe('historyPanelRendering', () => {
 
       expect(html).not.toContain('<script>Test</script>');
       expect(html).toContain('Examples/&lt;script&gt;Test&lt;/script&gt;.vi');
+    });
+
+    it('embeds the distinct-hash guard in the webview compare-pair resolver (VHS-REQ-133.3)', () => {
+      // The webview resolveSelectedPair must reject a duplicate-hash selection,
+      // mirroring the tested resolveSelectedComparePair guard, so a self-compare
+      // pair can never be posted from the panel.
+      const html = renderHistoryPanelHtml(createTestViewModel());
+      expect(html).toContain('ranked[0].hash === ranked[1].hash');
+    });
+  });
+
+  describe('per-revision preview button (VHS-REQ-659.7, VHS-REQ-659.15)', () => {
+    it('shows the Preview button when VI Preview is enabled and comparison is available', () => {
+      const html = renderHistoryPanelHtml(createTestViewModel(), { previewEnabled: true });
+      expect(html).toContain('data-testid="history-action-preview"');
+    });
+
+    it('hides the Preview button when VI Preview is disabled (opt-in default)', () => {
+      const html = renderHistoryPanelHtml(createTestViewModel(), { previewEnabled: false });
+      expect(html).not.toContain('data-testid="history-action-preview"');
     });
   });
 
@@ -121,7 +141,7 @@ describe('historyPanelRendering', () => {
     });
   });
 
-  describe('commit table rendering (VHS-REQ-017, VHS-REQ-639)', () => {
+  describe('commit table rendering (VHS-REQ-017.2, VHS-REQ-639)', () => {
     it('renders history table with all commit rows', () => {
       const model = createTestViewModel({
         commits: [
@@ -177,7 +197,7 @@ describe('historyPanelRendering', () => {
       expect(html).toContain('Add feature X');
     });
 
-    it('renders the commit body in a dedicated cell for each row', () => {
+    it('renders the commit body in a dedicated cell for each row (VHS-REQ-639.1, VHS-REQ-639.2)', () => {
       const model = createTestViewModel({
         commits: [createTestCommit({ hash: 'abc123', body: 'Investigated the wiring change' })]
       });
@@ -189,7 +209,7 @@ describe('historyPanelRendering', () => {
       expect(html).not.toContain('data-testid="history-compare-base"');
     });
 
-    it('preserves multi-line commit bodies as line breaks and escapes HTML', () => {
+    it('preserves multi-line commit bodies as line breaks and escapes HTML (VHS-REQ-639.4)', () => {
       const model = createTestViewModel({
         commits: [
           createTestCommit({
@@ -216,7 +236,7 @@ describe('historyPanelRendering', () => {
       expect(html).toContain('  - indented bullet<br />    nested detail');
     });
 
-    it('renders a factual fallback for commits with an empty body', () => {
+    it('renders a factual fallback for commits with an empty body (VHS-REQ-017.3, VHS-REQ-639.5)', () => {
       const model = createTestViewModel({
         commits: [createTestCommit({ hash: 'oldest123', body: '' })]
       });
@@ -226,7 +246,7 @@ describe('historyPanelRendering', () => {
       expect(html).toContain('No commit body');
     });
 
-    it('does not render per-row commit action buttons (VHS-REQ-017)', () => {
+    it('does not render per-row commit action buttons (VHS-REQ-017.4)', () => {
       const model = createTestViewModel({
         commits: [createTestCommit({ hash: 'actioncommit1234567890123456789012345678' })]
       });
@@ -265,7 +285,7 @@ describe('historyPanelRendering', () => {
       );
     });
 
-    it('renders a selection checkbox for each commit row', () => {
+    it('renders a selection checkbox for each commit row (VHS-REQ-639.6)', () => {
       const model = createTestViewModel({
         commits: [
           createTestCommit({ hash: 'a1', previousHash: 'a2' }),
@@ -341,7 +361,7 @@ describe('historyPanelRendering', () => {
   });
 
   describe('minimized panel surface', () => {
-    it('does not render the removed factual/guidance/runtime/preflight sections', () => {
+    it('does not render the removed factual/guidance/runtime/preflight sections (VHS-REQ-017.5)', () => {
       const html = renderHistoryPanelHtml(createTestViewModel());
 
       expect(html).not.toContain('data-testid="history-review-packet"');

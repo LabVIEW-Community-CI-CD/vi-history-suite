@@ -180,6 +180,7 @@ Missing numeric IDs are intentional.
 - Verification References:
   - `tests/unit/gitCli.test.ts`
   - `tests/unit/viHistoryService.test.ts`
+  - `tests/unit/viHistoryModel.test.ts`
 - Change Guidance:
   - Keep minimum eligibility reads scoped to the requested file rather than
     introducing repository-wide VI scans.
@@ -280,6 +281,7 @@ Missing numeric IDs are intentional.
   - `src/extension.ts`
 - Verification References:
   - `tests/unit/packageManifest.test.ts`
+  - `tests/unit/extensionActivationLazySideEffects.test.ts`
   - `tests/integration/suite/extensionHost.test.ts`
 - Change Guidance:
   - Treat command IDs as public extension API.
@@ -376,6 +378,7 @@ Missing numeric IDs are intentional.
   - `src/ui/historyPanel.ts`
   - `src/services/viHistoryService.ts`
 - Verification References:
+  - `tests/unit/openViHistoryCommand.test.ts`
   - `tests/integration/suite/extensionHost.test.ts`
   - `tests/unit/viHistoryService.test.ts`
 - Change Guidance:
@@ -414,11 +417,16 @@ Missing numeric IDs are intentional.
 - Agent Work Scope:
   - Change `historyPanel` rendering, unit tests, and extension-host assertions
     together.
+  - Change shared panel escaping or inline-script serialization safeguards with
+    the owning renderer and unit tests together.
 - Implementation References:
   - `src/ui/historyPanel.ts`
   - `src/services/viHistoryModel.ts`
+  - `src/ui/runtimeReportPanel.ts`
 - Verification References:
+  - `tests/unit/viHistoryModel.test.ts`
   - `tests/unit/historyPanelRendering.test.ts`
+  - `tests/unit/runtimeReportPanel.test.ts`
   - `tests/integration/suite/extensionHost.test.ts`
 - Change Guidance:
   - Do not replace factual Git content with inferred summaries. Keep the panel
@@ -554,9 +562,12 @@ Missing numeric IDs are intentional.
   - `src/ui/historyPanel.ts`
   - `src/commands/openViHistoryCommand.ts`
   - `src/reporting/comparisonReportPreflight.ts`
+  - `src/reporting/comparisonReportAction.ts`
 - Verification References:
   - `tests/unit/explicitComparePairWorkflow.test.ts`
+  - `tests/unit/openViHistoryCommand.test.ts`
   - `tests/unit/comparisonReportPreflight.test.ts`
+  - `tests/unit/comparisonReportAction.test.ts`
   - `tests/integration/suite/extensionHost.test.ts`
 - Change Guidance:
   - Keep pair selection explicit and reviewable.
@@ -740,12 +751,15 @@ Missing numeric IDs are intentional.
   - Change the export module, panel registration, command registration, and
     export tests together when changing export behavior.
 - Implementation References:
+  - `package.json`
   - `src/reporting/comparisonReportExport.ts`
   - `src/reporting/comparisonReportAction.ts`
   - `src/reporting/comparisonReportContextMarkup.ts`
   - `src/extension.ts`
 - Verification References:
+  - `tests/unit/packageManifest.test.ts`
   - `tests/unit/comparisonReportExport.test.ts`
+  - `tests/unit/comparisonReportAction.test.ts`
 - Change Guidance:
   - Keep the export limited to retained comparison evidence placed in an
     accessible location; the exported copy may embed retained revision context
@@ -804,12 +818,12 @@ Missing numeric IDs are intentional.
     existing date, author, and subject facts. Because the packet export
     (VHS-REQ-626 fallback) copies this retained packet HTML, the exported packet
     carries the commit body as well.
-  - The in-panel comparison context cards render the same per-revision commit
-    body through the shared panel context markup. The preferred graphics-report
-    export (VHS-REQ-626/VHS-REQ-640) copies the LabVIEW-generated report file
-    unchanged and therefore renders no revision context cards at all (neither
-    body nor date/author/subject); embedding revision context into the generated
-    graphics report is out of scope for this requirement.
+  - The in-panel comparison context cards and the exported generated-report copy
+    render the same per-revision commit body through the shared panel context
+    markup. Per VHS-REQ-626, generated-report export injects revision context
+    into the exported copy only while leaving the retained LabVIEW-generated
+    source report unchanged; packet export copies the retained packet HTML,
+    which already renders the cards.
   - Commit body text is sourced from the in-memory retained-history commits
     already passed to comparison-report generation, without additional Git
     history reads (no regression of VHS-REQ-008).
@@ -830,9 +844,11 @@ Missing numeric IDs are intentional.
 - Implementation References:
   - `src/reporting/comparisonReportPacket.ts`
   - `src/reporting/comparisonReportAction.ts`
+  - `src/reporting/comparisonReportExport.ts`
 - Verification References:
   - `tests/unit/comparisonReportPacket.test.ts`
   - `tests/unit/comparisonReportAction.test.ts`
+  - `tests/unit/comparisonReportExport.test.ts`
 - Change Guidance:
   - Reuse the commit-body escaping, line-break preservation, and empty-body
     fallback pattern established for the history panel (VHS-REQ-639); do not
@@ -882,6 +898,7 @@ Missing numeric IDs are intentional.
   - `src/ui/runtimeReportPanel.ts`
   - `src/commands/openRuntimeReportPanelCommand.ts`
 - Verification References:
+  - `tests/unit/packageManifest.test.ts`
   - `tests/unit/comparisonReportExecutionPlan.test.ts`
   - `tests/unit/comparisonReportAction.test.ts`
   - `tests/unit/runtimeReportPanel.test.ts`
@@ -971,9 +988,9 @@ Missing numeric IDs are intentional.
 - Parent: VHS-SYS-REQ-019
 - Area: Runtime Discovery
 - Statement: The extension shall discover available LabVIEW container versions
-  from images already present on the local Docker host, so already-pulled images
-  are selectable offline and are not needlessly re-pulled, and shall merge them
-  with published results into one availability catalog.
+  from images already present on the local Docker host, merge them with published
+  results into one availability catalog, and keep already-pulled images
+  selectable offline without needless re-pulls.
 - Acceptance Criteria:
   - Local discovery enumerates `nationalinstruments/labview` images on the host
     and parses each reference through VHS-REQ-646.
@@ -1069,9 +1086,9 @@ Missing numeric IDs are intentional.
 - Parent: VHS-SYS-REQ-019
 - Area: Runtime Discovery
 - Statement: The comparison runtime locator shall consume the selected container
-  image version for both the Windows-container and Linux-container providers, and
-  shall fail closed when a selected version cannot be launched rather than
-  silently substituting a different version.
+  image version for both the Windows-container and Linux-container providers and
+  fail closed when a selected version cannot be launched rather than silently
+  substituting a different version.
 - Acceptance Criteria:
   - When `viHistorySuite.container.imageVersion` is set to a valid version for
     the active container platform, the locator resolves it to the concrete
@@ -1184,8 +1201,12 @@ Missing numeric IDs are intentional.
   - `src/commands/openRuntimeReportPanelCommand.ts`
   - `src/ui/runtimeReportPanel.ts`
   - `src/commands/pickContainerImageVersionCommand.ts`
+  - `src/extension.ts`
+  - `package.json`
 - Verification References:
   - `tests/unit/openRuntimeReportPanelCommand.test.ts`
+  - `tests/unit/extensionActivationLazySideEffects.test.ts`
+  - `tests/unit/packageManifest.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
 - Change Guidance:
   - Keep the container image selection co-located with the docker provider choice
@@ -1212,10 +1233,36 @@ Missing numeric IDs are intentional.
     is invoked.
   - The working-tree side resolves in-repo dependencies against the committed
     tree so the loose VI loads its siblings.
-  - Working-tree comparisons are labeled as uncommitted and are excluded from
-    retained dashboard pair evidence; committed-pair behavior is unchanged.
+  - Working-tree comparisons are labeled as uncommitted; committed-pair
+    behavior is unchanged. A working-tree comparison that produces a
+    content-addressed snapshot identity is retained (see the retention-index
+    criterion below) rather than discarded, and is surfaced in the dashboard as
+    a non-reproducible uncommitted snapshot.
   - The working-tree comparison is read-only and never writes into the user's
     working directory, and the comparison-report webview keeps scripts disabled.
+  - A working-tree comparison records the content-addressed identity of the
+    compared uncommitted snapshot (a hash of the staged on-disk bytes) as
+    provenance in the retained runtime diagnostic notes, so the evidence names
+    which uncommitted content was compared; this is provenance only and does not
+    add the comparison to the reproducible retained dashboard pair evidence.
+  - A persisted per-VI working-tree snapshot retention index
+    (`vi-history-suite/worktree-snapshot-index@v1`) provides a pure, I/O-free
+    data model that records each retained working-tree comparison
+    content-addressed by the staged on-disk bytes and applies a keep-last-N
+    retention limit (a limit of 0 disables retention), de-duplicating a repeated
+    comparison of unchanged content so it is idempotent while changed content
+    yields a distinct entry, and fails closed when parsing a malformed index; it
+    lets retained working-tree snapshots be enumerated independently of the
+    commit list. When a working-tree comparison produces a content-addressed
+    snapshot identity, it is archived under a content-addressed retained pair-ID,
+    appended to that index, and surfaced in the dashboard as a non-reproducible
+    "uncommitted snapshot" entry (re-running compares current on-disk bytes and
+    may differ), while evicted snapshots beyond the retention limit have their
+    retained archive directories garbage-collected; the retention limit is
+    user-configurable through `viHistorySuite.comparison.worktreeSnapshotRetentionLimit`
+    (default 5, 0 disables). A working-tree comparison that produced no snapshot
+    identity (for example a blocked or daemon-down run that never staged bytes)
+    stays unarchived.
 - Agent Work Scope:
   - Change the eligibility model, panel working-tree selection row,
     preflight/runtime revision readers, and their tests together; use the
@@ -1226,17 +1273,29 @@ Missing numeric IDs are intentional.
   - `src/reporting/comparisonReportPreflight.ts`
   - `src/reporting/comparisonReportRuntimeExecution.ts`
   - `src/reporting/comparisonReportAction.ts`
+  - `src/reporting/comparisonReportPacket.ts`
   - `src/commands/openViHistoryCommand.ts`
   - `src/ui/historyPanel.ts`
+  - `src/dashboard/worktreeSnapshotIndex.ts`
+  - `src/dashboard/comparisonReportArchive.ts`
+  - `src/dashboard/multiReportDashboard.ts`
+  - `package.json`
 - Verification References:
   - `tests/unit/gitCli.test.ts`
   - `tests/unit/viHistoryModel.test.ts`
   - `tests/unit/comparisonReportPreflight.test.ts`
+  - `tests/unit/comparisonReportRuntimeExecution.test.ts`
   - `tests/unit/comparisonReportAction.test.ts`
+  - `tests/unit/openViHistoryCommand.test.ts`
+  - `tests/unit/worktreeSnapshotIndex.test.ts`
+  - `tests/unit/comparisonReportArchive.test.ts`
+  - `tests/unit/multiReportDashboard.test.ts`
 - Change Guidance:
   - Keep the working-tree side read-only (never write to the user's working
-    directory) and keep working-tree comparisons out of the reproducible
-    retained-evidence path; do not weaken the committed two-revision flow.
+    directory). Working-tree comparisons are retained only when a
+    content-addressed snapshot identity is available, under a content-addressed
+    pair-ID and a bounded keep-last-N index; do not weaken the committed
+    two-revision flow.
 
 ### VHS-REQ-638: Comparison Report VI History Re-Entry Action
 
@@ -1312,7 +1371,8 @@ Missing numeric IDs are intentional.
     (`archiveFailureReason === 'retained-archive-write-failed'`); on a real
     archive write failure the action falls through to open the webview directly
     so the user is never left without a diagnostics surface. A working-tree
-    comparison that is intentionally not archived (VHS-REQ-641,
+    comparison that is not archived because a blocked/daemon-down run produced no
+    content-addressed snapshot identity (VHS-REQ-641,
     `archiveFailureReason === 'retained-archive-unavailable'`,
     `retainedArchiveAvailable === false`) is still suppressed — the guard keys on
     the genuine write-failure reason, not on `retainedArchiveAvailable`, so a
@@ -1377,7 +1437,8 @@ Missing numeric IDs are intentional.
     (`archiveFailureReason === 'retained-archive-write-failed'`), in which case
     it falls through to open the webview directly so diagnostics are never lost
     (parity with the VHS-REQ-642 archive-failure fallback). A working-tree
-    comparison intentionally not archived (VHS-REQ-641,
+    comparison not archived because a blocked/daemon-down run produced no
+    content-addressed snapshot identity (VHS-REQ-641,
     `retained-archive-unavailable`) is still suppressed.
   - The comparison-report command shows a single warning notification whose copy
     is built by `buildDockerNotInstalledMessage(platform)` and names the
@@ -1446,6 +1507,7 @@ Missing numeric IDs are intentional.
   - `tests/unit/comparisonRuntimeDoctor.test.ts`
   - `tests/unit/comparisonReportPacket.test.ts`
   - `tests/unit/comparisonReportRuntimeExecution.test.ts`
+  - `tests/unit/comparisonReportAction.test.ts`
   - `manual:runtime-discovery-missing-tool-check`
 - Change Guidance:
   - Keep runtime diagnostics factual and provider-specific.
@@ -1489,15 +1551,31 @@ Missing numeric IDs are intentional.
   - The compact summary includes outcome, failure/blocked reason, exit code,
     duration, report existence, artifact paths, and doctor summary lines.
   - HTML rendering escapes all user-controlled or path-derived values.
+  - Windows host-native `labview-cli` comparisons retry exactly once when the
+    first attempt fails with the cold-launch `labview-cli-connection-failed`
+    (`-350000`) VI Server connect race, reusing the port derived from the
+    selected install's `LabVIEW.ini` (`-PortNumber`) against the now-resident
+    LabVIEW without closing it first. The windows-container (in-script) and
+    Linux retry paths keep their existing behavior.
 - Agent Work Scope:
   - Change execution result shape, packet rendering, and runtime tests together.
 - Implementation References:
   - `src/reporting/comparisonReportRuntimeExecution.ts`
   - `src/reporting/comparisonReportPacket.ts`
   - `src/reporting/comparisonReportExecutionPlan.ts`
+  - `src/reporting/comparisonReportAction.ts`
+  - `src/reporting/comparisonRuntimeDoctor.ts`
+  - `src/reporting/diagnostics/diagnosticsRecorder.ts`
+  - `src/reporting/runtime/labviewCliIni.ts`
 - Verification References:
   - `tests/unit/comparisonReportRuntimeExecution.test.ts`
   - `tests/unit/comparisonReportPacket.test.ts`
+  - `tests/unit/comparisonReportAction.test.ts`
+  - `tests/unit/comparisonRuntimeDoctor.test.ts`
+  - `tests/unit/diagnosticsRecorder.test.ts`
+  - `tests/unit/labviewCliIni.test.ts`
+  - `tests/unit/windowsContainerLabviewCliScript.test.ts`
+  - `tests/unit/linuxContainerLabviewCliScript.test.ts`
 - Change Guidance:
   - Treat external tool execution as evidence-producing, not inherently
     trustworthy.
@@ -1508,13 +1586,13 @@ Missing numeric IDs are intentional.
 - Parent: VHS-SYS-REQ-007
 - Area: Comparison Reports
 - Statement: When the active runtime selection is host-native LabVIEW CLI on
-  Linux, the comparison execution plan shall keep the invocation
-  non-headless by default and only pass `-Headless` when the operator
-  explicitly opts in via `LV_RTE_LINUX_HEADLESS=1`. Runtime classification
-  shall recognize a broken `HeadlessManager` (LabVIEW logs `Failed to
-  initialize headless LabVIEW.`) and the `(Hex 0x8) File permission error.`
-  + `CreateComparisonReport operation failed.` stderr signature so operators
-  receive an actionable, classified failure instead of an unbounded stall.
+  Linux, the comparison execution path shall provide opt-in headless invocation
+  and actionable headless-failure classification by keeping the invocation
+  non-headless by default, passing `-Headless` only when the operator explicitly
+  opts in via `LV_RTE_LINUX_HEADLESS=1`, and recognizing a broken
+  `HeadlessManager` (LabVIEW logs `Failed to initialize headless LabVIEW.`) plus
+  the `(Hex 0x8) File permission error.` + `CreateComparisonReport operation
+  failed.` stderr signature instead of allowing an unbounded stall.
 - Acceptance Criteria:
   - Linux host-native LabVIEWCLI args do not include `-Headless` unless
     `LV_RTE_LINUX_HEADLESS=1` is set in the extension host environment.
@@ -1657,8 +1735,8 @@ Missing numeric IDs are intentional.
   - The workflow retains `coverage/cobertura-coverage.xml` and
     `coverage/coverage-summary.json` as PR coverage evidence.
   - The workflow enforces the baseline global coverage thresholds declared in
-    `vitest.config.ts`: 72% statements, 61% branches, 79% functions, and
-    72% lines after the coverage-led assurance wave.
+    `vitest.config.ts`: 80% statements, 70% branches, 84% functions, and
+    80% lines after the coverage-led assurance wave.
   - The workflow runs `npm run package`.
   - The workflow runs `npm run dod:gate` through the `DoD Gate / dod` step
     after `npm run package`.
@@ -1737,6 +1815,7 @@ Missing numeric IDs are intentional.
   - `tests/unit/windowsLabviewMaintainerWorkflow.test.ts`
   - `tests/unit/checkMaintainerRunnerPrerequisites.test.ts`
   - `tests/unit/integrationHostRuntime.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
   - `manual:trusted-windows-labview-runner-dispatch`
 - Change Guidance:
   - Do not run self-hosted validation on arbitrary pull request code.
@@ -1781,6 +1860,7 @@ Missing numeric IDs are intentional.
 - Verification References:
   - `tests/unit/linuxLabviewMaintainerWorkflow.test.ts`
   - `tests/unit/checkMaintainerRunnerPrerequisites.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
   - `manual:trusted-linux-labview-runner-dispatch`
 - Change Guidance:
   - Do not run self-hosted validation on arbitrary pull request code.
@@ -1790,12 +1870,16 @@ Missing numeric IDs are intentional.
 - Status: Active
 - Parent: VHS-SYS-REQ-013
 - Area: CI And Developer Environment
-- Statement: Vagrant shall remain an optional human-run local validation helper,
-  not a release requirement.
+- Statement: Vagrant shall remain an optional, human-run local validation helper
+  that hosted CI never requires and that is never wired into
+  `.github/workflows`. The mandatory local release attestation the Vagrant lane
+  produces is governed separately by VHS-REQ-666; Vagrant itself imposes no
+  hosted-CI hypervisor dependency.
 - Acceptance Criteria:
-  - Vagrant documentation states the optional role.
+  - Vagrant documentation states its CI-independent role and its
+    release-attestation relationship to VHS-REQ-666.
   - `npm run vagrant:validate` remains available.
-  - Hosted CI does not require Vagrant.
+  - Hosted CI does not require a Vagrant or hypervisor install.
   - Vagrant provisioning scripts prepare the guest environment without CI
     dependency.
 - Agent Work Scope:
@@ -1810,7 +1894,9 @@ Missing numeric IDs are intentional.
   - `tests/unit/packageManifest.test.ts`
   - `manual:vagrant-validate-when-installed`
 - Change Guidance:
-  - Keep Vagrant useful for humans without making it a public release gate.
+  - Keep Vagrant useful for humans and free of any hosted-CI hypervisor
+    dependency; the release gate it feeds (VHS-REQ-666) is enforced by reading a
+    committed ledger, never by invoking Vagrant inside `.github/workflows`.
 
 ### VHS-REQ-600: Marketplace Identity And Public Source Metadata
 
@@ -1879,6 +1965,35 @@ Missing numeric IDs are intentional.
     remote agents from maintainer-local advisory checks that depend on local
     skills or read-only evidence checkouts.
   - CI fails when active requirement references drift from existing repo paths.
+  - CI fails when any requirements CSV row (rtm.csv, id-index.csv, or
+    traceability-inventory.csv) does not match its header column count, and the
+    check prints the enforced contract and the validated requirement IDs to the
+    run summary so they are front-facing on every pull request.
+  - CI fails when a requirements cross-reference is broken: an Active id-index
+    anchor that does not resolve to its specification heading, an RTM ParentID
+    that is not an Active system requirement, a traceability-inventory Path that
+    does not exist on disk, an id-index ReplacementID that does not resolve, an
+    SRS block whose Implementation or Verification References disagree with the
+    RTM evidence map, an Active system requirement whose Verification References
+    are absent or do not resolve on disk, or an Active requirement that declares
+    no Verification Reference.
+  - A requirement verification-linkage report lists Active requirements whose
+    verification-reference tests do not cite the requirement ID (advisory; the
+    RTM remains the authoritative requirement-to-test linkage).
+  - CI fails when an Active requirement's verification-reference tests do not
+    cite the requirement ID, enforced by running the verification-linkage guard
+    in `--enforce` mode; the default report remains advisory.
+  - A requirement acceptance-criteria inventory assigns each Active
+    requirement's criteria a positional `VHS-REQ-NNN.M` id and reports which are
+    cited at the criterion level by a verification-reference test (advisory; the
+    positional ids are derived from srs.md bullet order, not annotated in it).
+  - A unified requirement verification-health report aggregates structural
+    integrity, requirement linkage, criterion citation, coverage risk, and
+    mutation score into a single advisory per-requirement signal.
+  - The unified report supports a strict mode that exits non-zero when a
+    requirement is unlinked, structural integrity fails, a criterion lacks its
+    `VHS-REQ-NNN.M` citation, or a requirement-mapped file is below the coverage
+    risk threshold.
   - A committed traceability inventory defines classifications for mapped,
     supporting, dev-only, release-ci, asset-doc, and gap surfaces.
   - A repeatable local audit command reports unmapped implementation candidates,
@@ -1903,6 +2018,23 @@ Missing numeric IDs are intentional.
   - Closeout summaries treat Definition-of-Done evidence as active closeout
     evidence and separate any unresolved findings into blocking follow-up
     issues.
+  - A versioned requirements manifest is generated under `out/requirements/` at
+    build time, stamped with the extension version, commit, and a stable
+    content digest, so the packaged VSIX ships the exact active requirements it
+    was built from and a future consumer can detect requirements drift between
+    shipped versions.
+  - A ranked risk-ledger aggregator combines coverage, requirement-health, and
+    optional standards signals into one advisory ledger with a single
+    selectable next target, parking platform-proof risk that cannot be executed
+    on the host as a non-selectable awareness list.
+  - The risk ledger surfaces real-runtime validation freshness from a committed
+    runtime-validation ledger that records each Linux-executable
+    comparison-runtime track's last-validated build version, and any track not
+    validated at the current build version is ranked as a selectable
+    re-validation risk.
+  - A committed helper records a comparison-runtime track's validation for a
+    build version into the runtime-validation ledger and fails closed on an
+    unknown track or a malformed version.
 - Agent Work Scope:
   - Change requirements docs, GitHub issue templates, and the coherence test
     together.
@@ -1918,12 +2050,31 @@ Missing numeric IDs are intentional.
   - `docs/requirements/id-index.csv`
   - `docs/requirements/traceability-inventory.csv`
   - `scripts/auditTraceabilitySteward.js`
+  - `scripts/checkRequirementsCsvColumns.js`
+  - `scripts/checkRequirementsIntegrity.js`
   - `scripts/generateCloseoutEvidence.js`
+  - `scripts/auditRequirementVerificationLinkage.js`
+  - `scripts/auditRequirementCriteriaInventory.js`
+  - `scripts/verifyRequirementsHealth.js`
+  - `scripts/exportRequirementsManifest.js`
+  - `scripts/buildRiskLedger.js`
+  - `docs/requirements/runtime-validation-ledger.json`
+  - `scripts/recordRuntimeValidation.js`
   - `.github/ISSUE_TEMPLATE/requirement_target.yml`
 - Verification References:
   - `tests/unit/requirementsDocs.test.ts`
   - `tests/unit/traceabilityAuditScript.test.ts`
+  - `tests/unit/requirementsCsvColumns.test.ts`
+  - `tests/unit/requirementsIntegrity.test.ts`
   - `tests/unit/closeoutEvidenceScript.test.ts`
+  - `tests/unit/requirementVerificationLinkage.test.ts`
+  - `tests/unit/requirementCriteriaInventory.test.ts`
+  - `tests/unit/verifyRequirementsHealth.test.ts`
+  - `tests/unit/requirementsManifestExport.test.ts`
+  - `tests/unit/riskLedgerScript.test.ts`
+  - `tests/unit/schemaEnvelopeLib.test.ts`
+  - `tests/unit/outputContractLib.test.ts`
+  - `tests/unit/recordRuntimeValidationScript.test.ts`
   - `manual:requirements-quality-check-system-scope`
 - Change Guidance:
   - Do not silently remove requirement IDs; retire or supersede them through the
@@ -1936,9 +2087,9 @@ Missing numeric IDs are intentional.
 - Parent: VHS-SYS-REQ-012
 - Area: CI And Developer Environment
 - Statement: Dependency maintenance automation shall keep routine dependency
-  updates reviewable while preserving package-audit diagnostics for failed VSIX
-  runtime-surface checks. CodeQL security analysis shall run on main, develop,
-  pull requests, weekly schedule, and manual dispatch.
+  updates and security-analysis coverage reviewable by preserving package-audit
+  diagnostics for failed VSIX runtime-surface checks and running CodeQL security
+  analysis on main, develop, pull requests, weekly schedule, and manual dispatch.
 - Acceptance Criteria:
   - Dependabot groups npm development minor and patch updates separately from
     npm runtime minor and patch updates.
@@ -2044,7 +2195,8 @@ Missing numeric IDs are intentional.
 - Parent: VHS-SYS-REQ-016
 - Area: CI And Developer Environment
 - Statement: Hosted automation shall enforce governed branch promotion and
-  publish Marketplace releases only from exact release tags on `main`.
+  publish Marketplace releases only from exact release tags on `main` via a
+  manual maintainer dispatch with no automatic trigger.
 - Acceptance Criteria:
   - Hosted CI admits pull requests to `main` only from `release/vX.Y.Z` or
     `hotfix/vX.Y.Z` branches.
@@ -2079,6 +2231,11 @@ Missing numeric IDs are intentional.
     documentation-workbench support status without replacing the maintainer
     operations runbook.
   - Release evidence is retained as a workflow artifact.
+  - The Marketplace release workflow has no automatic trigger: it runs only
+    from a manual maintainer `workflow_dispatch` on an exact `vX.Y.Z` tag ref
+    (dispatch on the tag preserves the exact-tag, package-version, and
+    `origin/main` reachability guards), and agents must never dispatch or
+    approve it.
 - Agent Work Scope:
   - Change branch-governance workflow logic, Marketplace release workflow YAML,
     maintainer operations docs, requirements, and static tests together.
@@ -2135,6 +2292,11 @@ Missing numeric IDs are intentional.
   - `tests/unit/niComparisonReportParser.test.ts`
   - `tests/unit/comparisonReportArchive.test.ts`
   - `tests/unit/dashboardLatestRun.test.ts`
+  - `tests/unit/multiReportDashboard.test.ts`
+  - `tests/unit/multiReportDashboardAction.test.ts`
+  - `tests/unit/retainedDashboardEvidence.test.ts`
+  - `tests/unit/reviewDecisionRecord.test.ts`
+  - `tests/unit/reviewScenarioSupportPolicy.test.ts`
 - Change Guidance:
   - Keep dashboard behavior concentrated on evidence aggregation and review, not
     comparison execution.
@@ -2156,8 +2318,8 @@ Missing numeric IDs are intentional.
     `resources/bundled-docs` assets and renders an in-product documentation
     panel.
   - Packaged bundled documentation includes the manifest and shipped HTML pages
-    for overview, user workflow, install/release, and comparison/dashboard
-    review guidance.
+    for overview, user workflow, install/release, comparison/dashboard review,
+    and Copilot agent-mode guidance.
 - Agent Work Scope:
   - Change bundled documentation command routing, packaged docs assets,
     requirements mapping, and verification references together.
@@ -2169,6 +2331,7 @@ Missing numeric IDs are intentional.
   - `resources/bundled-docs/pages/user-workflow.html`
   - `resources/bundled-docs/pages/install-and-release.html`
   - `resources/bundled-docs/pages/comparison-reports-and-dashboard-review.html`
+  - `resources/bundled-docs/pages/copilot-agent-mode.html`
   - `package.json`
   - `src/extension.ts`
 - Verification References:
@@ -2187,12 +2350,11 @@ Missing numeric IDs are intentional.
 - Status: Active
 - Parent: VHS-SYS-REQ-004
 - Area: Runtime Settings
-- Statement: The extension shall expose installed runtime settings CLI
-  preparation through `labviewViHistory.prepareLocalRuntimeSettingsCli` and
-  shall additionally auto-materialize the local `vihs` launcher on every
-  activation so users do not need to rerun the prepare command after install
-  or upgrade. Preparation failures, including stale-launcher recovery, must
-  surface actionable outcomes.
+- Statement: The extension shall keep installed runtime settings CLI preparation
+  available through `labviewViHistory.prepareLocalRuntimeSettingsCli` while
+  auto-materializing the local `vihs` launcher on every activation and surfacing
+  preparation failures, including stale-launcher recovery, as actionable outcomes
+  so users do not need to rerun the prepare command after install or upgrade.
 - Acceptance Criteria:
   - The extension manifest contributes
     `labviewViHistory.prepareLocalRuntimeSettingsCli` and activates on
@@ -2220,6 +2382,7 @@ Missing numeric IDs are intentional.
   - `src/extension.ts`
   - `src/tooling/localRuntimeSettingsCli.ts`
 - Verification References:
+  - `tests/unit/localRuntimeSettingsCli.test.ts`
   - `tests/unit/packageManifest.test.ts`
   - `tests/unit/extensionActivationLazySideEffects.test.ts`
   - `tests/integration/suite/extensionHost.test.ts`
@@ -2248,6 +2411,13 @@ Missing numeric IDs are intentional.
     functions.
   - The report highlights zero-coverage supporting files tied to active
     requirements.
+  - `npm run coverage:map:enforce` fails closed when a requirement-mapped file
+    is below the risk threshold or a supporting file tied to a requirement has
+    zero coverage; the hosted CI coverage-risk gate runs it after `npm test`.
+  - Coverage measurement instruments the product `src` tree and the
+    requirement-supporting `scripts/*.js` guard and tool scripts, excluding
+    dev-only host and CI-infrastructure runner scripts that require a real host,
+    integration host, or git remote to exercise.
   - The initial coverage floor ratchet is statements 40%, branches 33%,
     functions 47%, and lines 40%.
   - The command fails closed with an actionable message when coverage evidence
@@ -2255,6 +2425,8 @@ Missing numeric IDs are intentional.
   - Standards closeout invokes the coverage map after `npm test` and before
     package validation so coverage-risk findings are retained with other
     release-readiness evidence.
+  - A scheduled advisory workflow runs Stryker mutation testing on the pure
+    detection core and retains the mutation report as run evidence.
 - Agent Work Scope:
   - Change the coverage mapping command, coverage floor configuration,
     requirements mapping, and verification references together.
@@ -2264,11 +2436,13 @@ Missing numeric IDs are intentional.
   - `package.json`
   - `vitest.config.ts`
   - `docs/testing/test-plan.md`
+  - `.github/workflows/mutation.yml`
 - Verification References:
   - `tests/unit/coverageMapScript.test.ts`
   - `tests/unit/closeoutEvidenceScript.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
   - `tests/unit/traceabilityAuditScript.test.ts`
+  - `tests/unit/mutationWorkflow.test.ts`
 - Change Guidance:
   - Keep this requirement focused on coverage intelligence and risk
     prioritization; do not use it to hide dev-only sources or reduce coverage
@@ -2353,6 +2527,17 @@ Missing numeric IDs are intentional.
   - Release-readiness evidence remains decision-complete by naming traceability
     audit, docs link check, tests, package validation, Marketplace listing
     evidence, and closeout expectation for release closeout review.
+  - Local assurance-state evidence retains supplied post-merge review findings
+    as classified planning signals with URL, issue, PR, and merge provenance.
+  - A release-readiness verdict composes existing signals (risk ledger,
+    requirements-manifest digest, and version/CHANGELOG coherence) into one
+    advisory `READY`/`ATTENTION` status bound to the extension version and
+    commit, with a display-only human-attested runtime line that never gates,
+    so a maintainer can read one signal before the separate manual release.
+  - The release-readiness runtime line is derived by default from the committed
+    runtime-validation ledger, naming the real-runtime tracks validated at the
+    candidate build version and any stale tracks needing re-validation, and
+    remains display-only.
 - Agent Work Scope:
   - Change requirements docs, RTM, ID index, test plan, and requirements
     coherence tests together.
@@ -2361,8 +2546,12 @@ Missing numeric IDs are intentional.
   - `.github/workflows/ci.yml`
   - `package.json`
   - `scripts/checkDefinitionOfDone.js`
+  - `scripts/auditCustomizationGovernance.js`
   - `scripts/generateCloseoutEvidence.js`
+  - `scripts/generateAssuranceState.js`
+  - `scripts/runMultiStandardsAudit.js`
   - `scripts/verifyMarketplaceListing.js`
+  - `scripts/checkReleaseReadiness.js`
   - `.github/pull_request_template.md`
   - `docs/maintainer-operations.md`
   - `docs/cm/cm-plan.md`
@@ -2374,8 +2563,14 @@ Missing numeric IDs are intentional.
   - `docs/requirements/traceability-inventory.csv`
 - Verification References:
   - `tests/unit/definitionOfDoneGate.test.ts`
+  - `tests/unit/closeoutEvidenceScript.test.ts`
+  - `tests/unit/assuranceStateScript.test.ts`
+  - `tests/unit/multiStandardsAuditScript.test.ts`
+  - `tests/unit/marketplaceReleaseWorkflow.test.ts`
+  - `tests/unit/releaseReadinessScript.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
   - `tests/unit/traceabilityAuditScript.test.ts`
+  - `tests/unit/customizationGovernanceAuditScript.test.ts`
   - `manual:definition-of-done-release-readiness-review`
 - Change Guidance:
   - Keep this requirement as the operating contract for Done and keep hosted
@@ -2388,7 +2583,7 @@ Missing numeric IDs are intentional.
 - Area: Runtime Settings
 - Statement: The extension shall detect installed comparison runtimes
   (LabVIEW host \u22652025 and Docker CLI) on activation through a bounded
-  filesystem-only probe, and shall seed or repair the persisted
+  filesystem-only probe and seed or repair the persisted
   `viHistorySuite.runtimeProvider`, `viHistorySuite.labviewVersion`, and
   `viHistorySuite.labviewBitness` user settings so a working comparison
   selection is in place after fresh installs and upgrades without requiring a
@@ -2436,10 +2631,10 @@ Missing numeric IDs are intentional.
 - Parent: VHS-SYS-REQ-004
 - Area: Runtime Settings
 - Statement: The extension shall surface comparison runtime availability in
-  the VS Code status bar and shall raise a one-time first-run notification
-  when no comparison runtime is detected, with a focus-event re-detect that is
-  throttled so users learn promptly when they install LabVIEW or Docker
-  without paying repeated detection costs.
+  the VS Code status bar and raise a one-time first-run notification when no
+  comparison runtime is detected, with a focus-event re-detect that is throttled
+  so users learn promptly when they install LabVIEW or Docker without paying
+  repeated detection costs.
 - Acceptance Criteria:
   - A status bar item titled `VI History runtime` is shown after activation
     and reflects the latest detection outcome. When a runtime is available,
@@ -2486,6 +2681,8 @@ Missing numeric IDs are intentional.
 - Verification References:
   - `tests/unit/runtimeAvailabilityNotice.test.ts`
   - `tests/unit/runtimeCommands.test.ts`
+  - `tests/unit/runtimeAvailabilityWatcher.test.ts`
+  - `tests/unit/extensionActivationLazySideEffects.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
 - Change Guidance:
   - Keep first-run gating, throttling, and copy in this requirement; runtime
@@ -2541,6 +2738,7 @@ Missing numeric IDs are intentional.
 - Verification References:
   - `tests/unit/gitPrerequisiteDetect.test.ts`
   - `tests/unit/gitPrerequisiteNotice.test.ts`
+  - `tests/unit/extensionActivationLazySideEffects.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
 - Change Guidance:
   - Keep Git detection synchronous in spirit (one probe, cached) and never
@@ -2553,28 +2751,18 @@ Missing numeric IDs are intentional.
 - Status: Active
 - Parent: VHS-SYS-REQ-004
 - Area: Runtime Settings
-- Statement: The extension shall source the `VI History runtime` status bar
-  label from the user's persisted runtime selection
-  (`viHistorySuite.runtimeProvider`, `viHistorySuite.labviewVersion`,
-  `viHistorySuite.labviewBitness`) when the selection is complete and the
-  combination is satisfiable on this host — a host selection requires all three
-  keys, while a docker selection is LabVIEW-agnostic and complete with
-  `runtimeProvider` alone (VHS-REQ-657) — fall back silently to the
-  auto-detection recommendation otherwise, refresh the label immediately on
-  `vscode.workspace.onDidChangeConfiguration` so a `vihs --provider …` CLI
-  invocation or a manual `settings.json` edit is reflected without waiting
-  for the focus-event throttle, and open a status-bar-targeted Runtime &
-  Report Settings panel (`labviewViHistory.pickRuntimeProvider`) whose runtime
-  provider section writes the same three settings keys to
-  `ConfigurationTarget.Global` (or clears them). For the
-  docker provider the `VI History runtime` status bar label shall additionally
-  name the active LabVIEW container image (`Docker @ <tag>`), sourced from
-  `viHistorySuite.container.imageVersion` when selected and a built-in default
-  tag otherwise, and refresh it on the same `onDidChangeConfiguration` event.
-  When the selected docker image platform conflicts with the confirmed active
-  Docker daemon container mode, the label shall render a warning state
-  (`$(warning) …`) with a conflict tooltip so the misconfiguration is visible
-  before a comparison is attempted (VHS-REQ-650).
+- Statement: The extension shall keep the `VI History runtime` status bar label
+  and Runtime & Report Settings panel synchronized with persisted runtime and
+  container-image selection by sourcing the label from the user's complete and
+  satisfiable persisted runtime selection (`viHistorySuite.runtimeProvider`,
+  `viHistorySuite.labviewVersion`, `viHistorySuite.labviewBitness`), falling
+  back silently to the auto-detection recommendation otherwise, refreshing the
+  label immediately on `vscode.workspace.onDidChangeConfiguration`, opening the
+  status-bar-targeted `labviewViHistory.pickRuntimeProvider` panel to write or
+  clear the same settings keys at `ConfigurationTarget.Global`, naming the active
+  Docker container image as `Docker @ <tag>`, and rendering a warning label with
+  a conflict tooltip when the selected docker image platform conflicts with the
+  confirmed active Docker daemon container mode (VHS-REQ-650).
 - Acceptance Criteria:
   - `selectActiveRuntime(detection, persisted)` honors a persisted selection
     only when it is complete and satisfiable per
@@ -2640,6 +2828,15 @@ Missing numeric IDs are intentional.
     warning; other `viHistorySuite` changes re-render from the cached mode
     without a probe. An unset image selection is never flagged because the
     compare-time default adapts to the active platform.
+  - The Runtime & Report Settings panel exposes an Advanced runtime control that
+    edits the LabVIEW CLI connect timeout
+    (`viHistorySuite.runtime.cliConnectTimeoutSeconds`): the panel renders the
+    current value with the supported range, and applying an edit clamps the
+    requested value into the supported window (rounding fractional entries and
+    substituting the shipped default for a non-numeric request) before
+    persisting to `ConfigurationTarget.Global`, so an out-of-range or fractional
+    entry never reaches user settings and the panel re-renders the normalized
+    value.
 - Agent Work Scope:
   - Keep the persisted-selection arbitration in
     `src/ui/runtimeAvailabilityNotice.ts::selectActiveRuntime` reusing
@@ -2656,6 +2853,7 @@ Missing numeric IDs are intentional.
   - `src/ui/runtimeAvailabilityNotice.ts`
   - `src/ui/runtimeReportPanel.ts`
   - `src/commands/openRuntimeReportPanelCommand.ts`
+  - `src/reporting/comparisonReportAction.ts`
   - `src/tooling/dockerDaemonPlatform.ts`
   - `src/tooling/containerImageCatalog.ts`
   - `src/commands/pickRuntimeProviderCommand.ts`
@@ -2665,6 +2863,7 @@ Missing numeric IDs are intentional.
   - `tests/unit/runtimeAvailabilityWatcher.test.ts`
   - `tests/unit/runtimeReportPanel.test.ts`
   - `tests/unit/openRuntimeReportPanelCommand.test.ts`
+  - `tests/unit/comparisonReportAction.test.ts`
   - `tests/unit/dockerDaemonPlatform.test.ts`
   - `tests/unit/containerImageCatalog.test.ts`
   - `tests/unit/pickRuntimeProviderCommand.test.ts`
@@ -3112,11 +3311,11 @@ Missing numeric IDs are intentional.
 - Status: Active
 - Parent: VHS-SYS-REQ-019
 - Area: Runtime Discovery
-- Statement: The Linux-container comparison provider shall derive the
-  in-container LabVIEW executable and headless-engagement mechanism from the
-  selected container image's LabVIEW release year, and the Docker runtime
-  provider shall be LabVIEW-version-agnostic in its settings and labels because
-  the selected container image already determines the LabVIEW version.
+- Statement: Container runtime behavior shall derive the in-container LabVIEW
+  executable and headless-engagement mechanism from the selected container
+  image's LabVIEW release year while treating the Docker runtime provider as
+  LabVIEW-version-agnostic in settings and labels because the selected container
+  image already determines the LabVIEW version.
 - Acceptance Criteria:
   - For a Linux container image of LabVIEW 2026 Q1 or later, the LabVIEWCLI
     `CreateComparisonReport` invocation targets
@@ -3245,6 +3444,7 @@ Missing numeric IDs are intentional.
   - `src/extension.ts`
   - `src/ui/runtimeAvailabilityNotice.ts`
 - Verification References:
+  - `tests/unit/extensionActivationLazySideEffects.test.ts`
   - `tests/unit/runtimeAvailabilityNotice.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
 - Change Guidance:
@@ -3339,11 +3539,11 @@ Missing numeric IDs are intentional.
   out-of-scope for this harness.
 - Acceptance Criteria:
   - `scripts/runWindowsRuntimeMatrix.js` exposes a pure
-    `runRuntimeMatrix(deps)` module entry whose `spawnSync`,
-    `getCimProcesses`, `closeLabview`, `now`, and `cwd` collaborators
-    are injectable for deterministic unit tests; the default CLI
-    binding refuses to run on non-Windows hosts unless
-    `VIHS_FAKE_WINDOWS=1` is set for tests.
+    `runRuntimeMatrix(argv, deps)` module entry whose process execution,
+    filesystem, clock, host identity, environment, working directory,
+    and output-stream collaborators are injectable for deterministic unit
+    tests; the default CLI binding refuses to run on non-Windows hosts
+    unless `VIHS_FAKE_WINDOWS=1` is set for tests.
   - Two scenarios — `steady-A` (`HostBitness=x64,
     SelectedBitness=x86`) and `steady-B` (`HostBitness=x86,
     SelectedBitness=x64`) — are driven by per-scenario PowerShell
@@ -3364,10 +3564,9 @@ Missing numeric IDs are intentional.
   - A new `.github/workflows/windows-runtime-matrix.yml` GitHub Actions
     workflow is `workflow_dispatch`-only, runs on
     `[self-hosted, Windows, X64, vihs-windows-labview-maintainer]`,
-    enforces the trusted-ref allow-list (`main`, `release/v*`,
-    `v*.*.*` tags, and the `chore/phase6-windows-runtime-matrix-*`
-    branch for the introduction PR), and uploads the matrix evidence
-    plus captured proofs as a build artifact.
+    enforces the trusted-ref allow-list (`main`, `release/v*`, and
+    `v*.*.*` tags only), and uploads the matrix evidence plus captured
+    proofs as a build artifact.
 - Agent Work Scope:
   - Reuse the `vihs --validate --proof-out` channel as the assertion
     surface rather than parsing extension UI; do not extend the CLI
@@ -3385,6 +3584,7 @@ Missing numeric IDs are intentional.
   - `.github/workflows/windows-runtime-matrix.yml`
 - Verification References:
   - `tests/unit/runWindowsRuntimeMatrixScript.test.ts`
+  - `tests/unit/windowsRuntimeMatrixWorkflow.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
 - Change Guidance:
   - Keep the assertion key on `runtimeBlockedReason` string equality
@@ -3543,6 +3743,55 @@ Missing numeric IDs are intentional.
     connect with `-350000` (`labview-cli-connection-failed`), the failed
     next-action also names VI Server.
 
+### VHS-REQ-663: Linux Container Bind-Mount Visibility Diagnostic
+
+- Status: Active
+- Parent: VHS-SYS-REQ-007
+- Area: Comparison Reports
+- Statement: When a Linux container comparison fails with an invalid-VI-path
+  signature (`labview-cli-invalid-vi-path`) and the host report directory that
+  is bind-mounted into the container is outside the user's home directory, the
+  extension shall attach an actionable diagnostic note naming snap-Docker
+  bind-mount confinement as the likely cause and the remediation (keep report
+  storage under the home directory, or connect the required snap interface), so
+  the operator is not left decoding a generic path error for a mount-visibility
+  problem.
+- Acceptance Criteria:
+  - `buildLinuxContainerBindMountVisibilityNote(options)` returns an actionable
+    remediation note only when `provider === 'linux-container'`, the
+    `diagnosticReason` or `failureReason` is `labview-cli-invalid-vi-path`, and
+    the supplied host bind-mount path is a non-empty path outside the supplied
+    home directory; it returns `undefined` for any other provider, any other
+    failure signature, a bind-mount path inside the home directory, or a missing
+    host path or home directory.
+  - The note names the offending host bind-mount path and home directory,
+    identifies snap-packaged Docker confinement (only the connected `home`
+    interface is mounted by default) as the cause, and offers the two
+    remediations (keep report storage under the home directory, or
+    `sudo snap connect docker:removable-media`), noting native Docker is
+    unaffected.
+  - `executeComparisonReport` appends the note to the failed run's
+    `diagnosticNotes` for a `linux-container` provider only, and never for a
+    successful run; the note is derived from `record.artifactPlan.reportDirectory`
+    (the bind-mount source) and the resolved home directory, and does not change
+    the `failureReason` or `diagnosticReason`.
+- Agent Work Scope:
+  - Keep the detection a pure exported helper next to
+    `classifyLabviewCliDiagnosticText` and wire it through the existing
+    `mergeDiagnosticNotes` assembly, gated on run failure; do not add a new
+    provider probe or spawn `snap` at runtime. Detection of the invalid-path
+    signature stays in `classifyLabviewCliDiagnosticText`; this requirement owns
+    only the added remediation note.
+- Implementation References:
+  - `src/reporting/comparisonReportRuntimeExecution.ts`
+- Verification References:
+  - `tests/unit/comparisonReportRuntimeExecution.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - Scope strictly to the Linux container invalid-VI-path case; never attach the
+    note to other providers or other failure signatures. Keep the remediation
+    copy aligned with the TROUBLESHOOTING snap-Docker bind-mount section.
+
 ### VHS-REQ-630: Actionable VI Server Guidance For LabVIEW CLI Connection Failure
 
 - Status: Active
@@ -3586,8 +3835,10 @@ Missing numeric IDs are intentional.
     unit tests. Do not change the `-350000` classification, the
     VHS-REQ-623 / VHS-REQ-156 ini preflight, or add a pre-panel gate.
 - Implementation References:
+  - `src/reporting/comparisonReportRuntimeExecution.ts`
   - `src/reporting/comparisonRuntimeDoctor.ts`
 - Verification References:
+  - `tests/unit/comparisonReportRuntimeExecution.test.ts`
   - `tests/unit/comparisonRuntimeDoctor.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
 - Change Guidance:
@@ -3608,7 +3859,7 @@ Missing numeric IDs are intentional.
   Server configuration when `labviewViHistory.open` is invoked and refuse
   to open the VI History panel with a warning toast when that
   configuration does not explicitly enable VI Server TCP, so users learn
-  before selecting revisions that VI Server must be turned on instead of
+  before selecting revisions that VI Server TCP needs enabling instead of
   meeting a `-350000` connection failure at compare time. Per the
   maintainer decision the gate requires an explicit opt-in: an absent
   `server.tcp.enabled` key is treated as not enabled, a stricter rule than
@@ -3656,6 +3907,7 @@ Missing numeric IDs are intentional.
   - `src/extension.ts`
   - `src/ui/runtimeAvailabilityNotice.ts`
 - Verification References:
+  - `tests/unit/extensionActivationLazySideEffects.test.ts`
   - `tests/unit/runtimeAvailabilityNotice.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
 - Change Guidance:
@@ -3830,6 +4082,7 @@ Missing numeric IDs are intentional.
   - `src/extension.ts`
 - Verification References:
   - `tests/unit/comparisonRuntimeLocator.test.ts`
+  - `tests/unit/extensionActivationLazySideEffects.test.ts`
   - `tests/unit/runtimeAvailabilityNotice.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
 - Change Guidance:
@@ -3845,7 +4098,7 @@ Missing numeric IDs are intentional.
 - Parent: VHS-SYS-REQ-018
 - Area: Git History Eligibility
 - Statement: The `labviewViHistory.open` command shall evaluate eligibility for
-  the selected URI on demand and shall not wait for or require a repository-wide
+  the selected URI on demand without waiting for or requiring a repository-wide
   VI eligibility index before opening that file's history or returning a factual
   ineligibility message.
 - Acceptance Criteria:
@@ -3869,12 +4122,14 @@ Missing numeric IDs are intentional.
     selected-file eligibility contract changes. Do not reintroduce
     repository-wide VI scans as a prerequisite for opening one selected file.
 - Implementation References:
+  - `src/extension.ts`
   - `src/commands/openViHistoryCommand.ts`
   - `src/services/viHistoryModel.ts`
   - `src/services/viHistoryService.ts`
   - `src/git/gitCli.ts`
   - `package.json`
 - Verification References:
+  - `tests/unit/extensionActivationLazySideEffects.test.ts`
   - `tests/unit/openViHistoryCommand.test.ts`
   - `tests/unit/viHistoryModel.test.ts`
   - `tests/unit/viHistoryService.test.ts`
@@ -4058,3 +4313,870 @@ Missing numeric IDs are intentional.
     host years. Offer Docker as one recovery option rather than a requirement,
     and reuse the `Pick Runtime Provider` quick-pick rather than auto-switching
     `viHistorySuite.labviewVersion`.
+
+### VHS-REQ-659: Single-VI Interactive Preview Rendering
+
+- Status: Active
+- Parent: VHS-SYS-REQ-008
+- Area: Comparison Reports
+- Statement: The extension shall let a reviewer preview a single LabVIEW VI ("G
+  code") as a self-contained HTML document rendered by NI's
+  `PrintToSingleFileHtml` custom LabVIEWCLI operation (vendored under
+  `resources/labview-cli-operations/PrintToSingleFileHtml`, sourced from
+  ni/labview-for-containers), so a selected VI revision can be inspected without
+  a second revision to compare against. The preview reuses the configured
+  comparison runtime (host-native or LabVIEW container); the command-plan layer
+  specified here builds the host and Linux-container invocations and is the
+  first landed slice of the preview capability.
+- Acceptance Criteria:
+  - `buildLabviewCliPrintToSingleFileHtmlPlan` produces a `LabVIEWCLI`
+    `-OperationName PrintToSingleFileHtml` command that passes the input VI via
+    `-VI`, the output document via `-OutputPath`, and the vendored operation
+    root via `-AdditionalOperationDirectory`, defaulting to `-LogToConsole
+    TRUE`, `-c`, and `-o`; it emits `-LabVIEWPath`, `-PortNumber`, and
+    `-Headless` only when those inputs are provided, and never emits the two-VI
+    `CreateComparisonReport` flags (`-VI1`/`-VI2`/`-ReportPath`).
+  - `rewriteViPreviewArgsForLinuxContainerWorkspace` maps `-VI` and
+    `-OutputPath` to workspace-relative container paths, repoints
+    `-AdditionalOperationDirectory` at the mounted operation root, replaces the
+    host `-LabVIEWPath` with the in-container executable exactly once, and keeps
+    `-Headless` present exactly once.
+  - `buildLinuxContainerViPreviewCommandPlan` assembles a shell-less
+    `docker run --rm` plan that bind-mounts the host workspace directory at the
+    container workspace root and the vendored operation directory read-only at
+    the operation root, and delivers the LabVIEWCLI invocation as a single
+    `bash -lc` script.
+  - `buildWindowsContainerViPreviewCommandPlan` assembles the Windows-container
+    plan: the host PowerShell (`resolveWindowsPowerShellHostExecutable`) runs
+    `docker run ... powershell -EncodedCommand <inner>`, bind-mounting the host
+    workspace and the vendored operation directory at the Windows container
+    roots. The inner PowerShell hardens the `LabVIEWCLI.ini` connect timeouts,
+    optionally pre-launches LabVIEW, and retries once on the cold-launch
+    `-350000`/`-350051` VI Server failure, mirroring the Windows-container
+    comparison recipe. `mapComparisonRuntimeSelectionToViPreview` resolves the
+    Windows runtime (image, in-container LabVIEW path, and host PowerShell from
+    the injected process platform), and `executeViPreview` blocks with
+    `windows-powershell-host-unavailable` when no host PowerShell resolves.
+  - The container script enables VI Server in the per-version LabVIEW config
+    with a widened connect window and retries once on the cold-launch `-350000`
+    VI Server connectivity failure, with fail-soft config mutation, matching the
+    comparison runtime recipe (VHS-REQ-148 / VHS-REQ-156 / VHS-REQ-657).
+  - `executeViPreview` selects the host-native or Linux-container plan from the
+    resolved runtime selection (blocking with `labview-cli-selection-incomplete`
+    or `container-image-unavailable` when the selection is incomplete), runs it
+    through an injected command runner, and classifies the result as `rendered`
+    (zero exit with the output document present), `failed` (a nonzero exit is
+    `labview-cli-connection-failed` for the cold-launch `-350000` signature,
+    `labview-preview-operation-load-failed` for the operation-class load
+    error 1125 — the selected LabVIEW is likely too old — otherwise
+    `command-exited-nonzero`; a zero exit that leaves no document is
+    `preview-output-not-produced`), or `blocked`.
+  - VI Preview is opt-in and Docker-only: the `viHistorySuite.preview.enabled`
+    setting defaults to `false`, so a freshly installed extension renders nothing
+    until the user turns it on. The Runtime & Report Settings panel offers the
+    toggle only when Docker is the effective runtime (`applyViPreviewEnabledSelection`
+    writes the flag; `isViPreviewEnabled` reads it). When off, the custom editor
+    shows an enable prompt (no render), the history-panel per-revision **Preview**
+    button is hidden, and the `previewRevision` command reports that the feature
+    is off. Enabling it (via the panel or a settings edit) immediately starts
+    background caching through the warm Docker session; disabling it, or switching
+    off the Docker runtime, cancels in-progress caching (`reconcilePreviewWarming`
+    in `extension.ts` over the warmer's `startWarming`/`cancelWarming`).
+  - Opening a `.vi`, `.vit`, `.vim`, or `.ctl` file activates the
+    `viHistorySuite.viPreview` read-only custom editor (registered at `default`
+    priority). When VI Preview is enabled and the resolved runtime is a container
+    (Docker) provider it renders the file through
+    `mapComparisonRuntimeSelectionToViPreview` and displays the produced
+    document; when the resolved runtime is host-native it shows a "requires
+    Docker" prompt and does not render (Docker-only feature). In an untrusted
+    workspace the editor shows a disabled-preview message and never launches an
+    external process. For a non-`file` document URI (for example the base side of
+    a Source Control diff, served under the `git` scheme) the editor materializes
+    the base revision's VI together with its project dependency tree —
+    `resolveViPreviewRenderSource` runs `materializeRevisionViTree` at the ref
+    resolved by `parseGitPreviewRef` — and renders that, so the committed revision
+    renders with its subVIs resolved rather than the on-disk working-tree file;
+    when the ref or repository cannot be resolved it falls back to materializing
+    the single committed blob so behavior is never worse than reading the lone
+    blob.
+  - `buildViPreviewWebviewHtml` injects a strict Content-Security-Policy
+    (`script-src 'none'`, `img-src data:`, inline styles only) into the rendered
+    LabVIEW document, and renders themed loading and error states carrying the
+    same policy with all interpolated text escaped.
+  - `renderViPreviewForFile` stages the opened VI together with its LabVIEW
+    source dependencies (covering
+    `.vi`/`.vit`/`.vim`/`.ctl`/`.lvlib`/`.lvclass`/`.lvproj`/`.llb`) so subVI and
+    type-definition references resolve at load time. It prefers the enclosing
+    LabVIEW project (`.lvproj`) tree (`planViPreviewStagingWithProjectRoot` /
+    `selectViPreviewStagingRoot`, resolved from the on-disk VI by walking up to
+    the nearest project directory) so dependencies in sibling directories
+    resolve, stepping the staging root down to the VI's containing-directory tree
+    and then to single-file staging when a tree exceeds the file-count or
+    total-size guard.
+  - When a render cache is available, `renderViPreviewForFile` serves an
+    unchanged VI (keyed by `computeViPreviewCacheKey` over the target VI plus the
+    staged file set by path/size/mtime, so VIs sharing a staged tree never
+    collide) from the cache without staging or launching LabVIEW, and populates
+    the cache after a fresh render; cache read and write failures are non-fatal.
+  - After VI Preview is enabled (or the first successful preview opens), a
+    background warmer renders the
+    remaining workspace VIs serially through a single warm session, populating
+    the render cache. Progress is surfaced only as a monotonically increasing
+    status-bar percentage (`formatWarmStatusLabel` over `warmViPreviewCache`); if
+    every render fails the indicator becomes a warning (`VI previews could not be
+    cached (0/N)`, warn-colored and lingering longer) instead of a misleading
+    success check. Warming runs at most once per cycle; `cancelWarming` stops an
+    in-progress cycle (on disable, a runtime switch off Docker, or disposal) and
+    allows a later restart. The
+    `viHistorySuite.preview.backgroundWarming` setting governs when it runs
+    (`shouldWarmViPreviewProvider`): `docker-only` (default) warms only the
+    container providers, so a host-native runtime does not warm and never
+    occupies the user's host LabVIEW; `always` also warms the host-native
+    runtime; `off` disables background warming entirely.
+  - The warm container session (`buildLinuxContainerSessionStartArgs` /
+    `buildLinuxContainerSessionHardenScript` /
+    `buildLinuxContainerExecViPreviewCommandPlan`, orchestrated by
+    `startViPreviewSession`) keeps LabVIEW resident across renders: it starts one
+    detached container with the workspace bind-mounted once, hardens VI Server on
+    start, and renders each VI in a per-render subdirectory via `docker exec`, so
+    only the first render pays the cold launch and later renders connect in
+    seconds. The session container and scratch are removed on disposal.
+  - A single shared session manager (`createViPreviewSessionManager`) owns one
+    warm session used by both the interactive editor and the background warmer:
+    renders are serialized (one resident LabVIEW), interactive renders are
+    prioritized over background warm renders (`selectNextRender`), and the
+    session is disposed after an idle window (and re-created lazily on the next
+    render).
+  - The history panel exposes a per-revision **Preview** button (shown when the
+    comparison/runtime surface is available) whose `previewRevision` message
+    materializes that revision's VI together with its project source tree
+    (`materializeRevisionViTree` lists the whole tree via `git ls-tree -r -l` and
+    reuses `planViPreviewStagingWithProjectRoot`, so cross-directory dependencies
+    in the enclosing project resolve, stepping down to the containing-directory
+    tree and then single-file staging when the guard trips or the listing fails)
+    into a scratch directory, then
+    opens it in the `viHistorySuite.viPreview` editor via `vscode.openWith` so
+    the revision preview reuses the same warm session and render cache. The VI
+    blob is fatal if unreadable, missing sibling blobs are skipped, and the
+    scratch directory is retired after a delay.
+  - The preview may be presented as an interactive block diagram: the extension
+    recovers a position-aware frames model from the flat `PrintToSingleFileHtml`
+    export and renders it the way the LabVIEW editor shows a diagram — the root
+    diagram painted once with every Case / Event / Stacked-Sequence structure
+    composited in place, each carrying a `◀ n/N ▶` case selector that pages its
+    cases without the diagram jumping, and nested structures paging inside the
+    owning case. `buildFramesModelFromFlatExport` extracts the Block Diagram
+    section's inline images (`extractBlockDiagramFrames`), decodes each PNG's
+    pixel size from its IHDR (`decodePngSize`), treats the first image as the
+    root diagram, and groups the remaining images by identical pixel size into
+    structures (a structure's cases share its fixed border size — the only
+    structural signal the flat export exposes), laying each group out stacked
+    below the diagram since the flat export carries no coordinates.
+  - `normalizeViPreviewFrames` normalizes the frames wire model (tolerant of the
+    `Image`/`Base64 Image`, `Position` Width/Height-or-Right/Bottom,
+    `Children`/`Child Indices`, and `Label` field variants), dropping
+    out-of-range, self-referential, and duplicate child indices so a malformed
+    export can never drive infinite paint recursion; `findFramesRoot` resolves
+    the unreferenced frame as the root and `groupFramesIntoStructures` groups
+    same-rectangle children into one structure. Child rectangles are
+    parent-relative by contract, so the viewer places each child at its own
+    `left`/`top` within the parent without subtracting the parent offset.
+  - `buildViPreviewFramesViewerHtml` builds the interactive viewer webview
+    document under a strict nonce-based Content-Security-Policy (only the single
+    nonce'd script runs, `img-src data:`, inline styles only, all remote origins
+    forbidden); the frames model is embedded in a JSON island with `<` and the
+    U+2028/U+2029 line terminators escaped so a hostile label or image cannot
+    break out of the script tag. The viewer supports drag-to-pan, Ctrl/Cmd+scroll
+    and double-click zoom, a Fit control, and arrow-key paging of the
+    last-touched structure.
+  - `selectViPreviewDocument` chooses the presentation for a rendered document:
+    `document` mode returns the strict script-free flat webview, while
+    `interactive` mode builds the frames viewer from the flat export and falls
+    back to `document` mode when no nonce is supplied or no block-diagram frames
+    extract (for example a `.ctl` with no diagram), so an interactive request can
+    never produce an empty pane; the returned mode reflects what was actually
+    used. The custom editor requests `interactive` mode (enabling webview scripts
+    with a per-load nonce) when the `viHistorySuite.preview.blockDiagramInteractive`
+    setting is on, and `document` mode otherwise.
+  - VI previews are GENERATED on Docker and DISPLAYED from the render cache, so a
+    live render is Docker-only while serving a cached document (which launches no
+    external process) works on any runtime. On a host-native runtime the custom
+    editor performs a cache-only peek (`renderViPreviewForFile` with `cacheOnly`,
+    which returns `preview-cache-miss` rather than staging or launching LabVIEW):
+    a hit is displayed, and a miss shows guidance to generate the cache on Docker
+    and reopen on Host. The `viHistorySuite.preview.allowHostNativeRender` setting
+    (default off) lets a Docker-less LabVIEW environment — for example the Vagrant
+    LabVIEW VM — render previews live on host-native so it can both generate the
+    cache and visualize previews for troubleshooting without Docker.
+- Agent Work Scope:
+  - Keep the command-plan builders pure and dependency-free so they stay
+    deterministically unit-testable without a LabVIEW runtime. Reuse the
+    `ComparisonCommandPlan` shape and the existing container runtime conventions
+    (workspace mount, temp roots, `-350000` retry) rather than introducing a new
+    execution transport. Do not change `CreateComparisonReport` behavior. The
+    on-disk render stages the VI's dependency source tree, caches renders by
+    staged-file identity, and reuses a warm container session so only the first
+    render is slow. A history-panel per-revision preview
+    (`materializeRevisionViTree`) stages any revision's VI tree from git and
+    reuses the same editor, warm session, and cache. Dependency staging prefers
+    the enclosing LabVIEW project (`.lvproj`) tree so dependencies outside the
+    VI's containing directory resolve, with a guarded step-down to the
+    containing-directory tree and then single-file staging. The Windows
+    container renders per invocation through `renderViPreviewForFile` (the warm
+    session and background cache warmer stay Linux-container-only); keep the
+    Windows transport mirroring the comparison Windows-container recipe rather
+    than introducing a new one.
+- Implementation References:
+  - `package.json`
+  - `src/reporting/viPreview/viPreviewCommandPlan.ts`
+  - `src/reporting/viPreview/viPreviewExecution.ts`
+  - `src/reporting/viPreview/viPreviewFileRender.ts`
+  - `src/reporting/viPreview/viPreviewStaging.ts`
+  - `src/reporting/viPreview/viPreviewCache.ts`
+  - `src/reporting/viPreview/viPreviewCacheWarmer.ts`
+  - `src/reporting/viPreview/viPreviewRuntimeAdapter.ts`
+  - `src/reporting/viPreview/viPreviewWebview.ts`
+  - `src/reporting/viPreview/viPreviewRenderSource.ts`
+  - `src/reporting/viPreview/viPreviewFramesModel.ts`
+  - `src/reporting/viPreview/viPreviewFramesViewer.ts`
+  - `src/reporting/viPreview/viPreviewFlatFrames.ts`
+  - `src/reporting/viPreview/viPreviewRenderMode.ts`
+  - `src/ui/viPreviewEditor.ts`
+  - `src/ui/viPreviewRenderHost.ts`
+  - `src/ui/viPreviewCacheWarmerService.ts`
+  - `src/ui/viPreviewContainerSession.ts`
+  - `src/ui/viPreviewSessionManager.ts`
+  - `src/git/revisionViTree.ts`
+  - `src/reporting/viPreview/viPreviewSessionRuntime.ts`
+  - `src/reporting/viPreview/viPreviewVerification.ts`
+  - `src/tooling/viPreviewVerifyCli.ts`
+  - `resources/labview-cli-operations/PrintToSingleFileHtml/PrintToSingleFileHtml.lvclass`
+- Verification References:
+  - `tests/unit/packageManifest.test.ts`
+  - `tests/unit/viPreviewEditor.test.ts`
+  - `tests/unit/viPreviewCommandPlan.test.ts`
+  - `tests/unit/viPreviewExecution.test.ts`
+  - `tests/unit/viPreviewFileRender.test.ts`
+  - `tests/unit/viPreviewStaging.test.ts`
+  - `tests/unit/viPreviewCache.test.ts`
+  - `tests/unit/viPreviewCacheWarmer.test.ts`
+  - `tests/unit/viPreviewRuntimeAdapter.test.ts`
+  - `tests/unit/viPreviewWebview.test.ts`
+  - `tests/unit/viPreviewRenderSource.test.ts`
+  - `tests/unit/viPreviewFramesModel.test.ts`
+  - `tests/unit/viPreviewFramesViewer.test.ts`
+  - `tests/unit/viPreviewFlatFrames.test.ts`
+  - `tests/unit/viPreviewRenderMode.test.ts`
+  - `tests/unit/viPreviewSessionManager.test.ts`
+  - `tests/unit/viPreviewSessionRuntime.test.ts`
+  - `tests/unit/viPreviewVerification.test.ts`
+  - `tests/unit/viPreviewVerifyCli.test.ts`
+  - `tests/unit/revisionViTree.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - The renderer is NI's `PrintToSingleFileHtml` operation (from
+    ni/labview-for-containers); it renders headless on the LabVIEW Linux
+    container without the Web Services (`wsapi`) image-to-PNG dependency that
+    blocks the alternative gpreview renderer. Keep the vendored operation folder
+    intact and pointed at by `-AdditionalOperationDirectory` (the parent of the
+    `PrintToSingleFileHtml/` class folder). Keep the container `-VI` /
+    `-OutputPath` rewriting and the `-350000` retry in lockstep with the
+    comparison runtime so the two share cold-launch behavior.
+  - The Windows-container transport mirrors the comparison Windows recipe
+    (host PowerShell -> `docker run ... powershell -EncodedCommand`, INI connect-
+    timeout hardening, optional LabVIEW pre-launch, one-shot `-350000` retry).
+    Keep `buildWindowsContainerViPreviewCommandPlan` aligned with
+    `buildWindowsContainerLabviewCliScript`/`buildWindowsContainerCommandPlan`
+    so both Windows paths share cold-launch behavior; the Windows LabVIEW
+    container uses backslash workspace paths and `-Headless`.
+
+### VHS-REQ-660: Source Control Semantic Change Hover
+
+- Status: Active
+- Parent: VHS-SYS-REQ-008
+- Area: Review Workflow
+- Statement: The extension shall surface the semantic "what changed" narrative
+  for a changed VI as a Source Control file decoration (a badge plus a hover
+  tooltip shown in the Source Control, Explorer, and editor-tab surfaces),
+  served only from a cache of previously produced comparison narratives and
+  gated on workspace trust, so a reviewer can see what changed in a VI without
+  opening the full comparison report. The decoration reflects the working-tree
+  change (HEAD versus the uncommitted VI); committed-pair comparisons are out of
+  scope for the Source Control surface. A modified VI that has no cached
+  narrative shows a subtle pending decoration prompting a comparison, so the
+  feature is discoverable before one is run.
+- Acceptance Criteria:
+  - VHS-REQ-660.1: `computeViSemanticNarrativeCacheKey` derives a deterministic
+    key from the separator-normalized repository-relative path plus the base and
+    selected content signatures, and the file-backed `ViSemanticNarrativeCache`
+    round-trips a stored narrative, returns undefined for a miss or an invalid
+    key, treats a read failure as a miss, and never throws on a write failure.
+  - VHS-REQ-660.2: `recordViSemanticNarrativeFromReport` projects a produced
+    comparison report onto the semantic model and writes the narrative and
+    changed surfaces to the cache keyed by the compared VI and its content
+    signatures, reusing the already-produced report HTML without invoking a
+    LabVIEW runtime, and caches nothing when the report shows no differences.
+  - VHS-REQ-660.3: `resolveViSemanticFileDecoration` returns a decoration whose
+    badge is the semantic-change marker and whose tooltip is the cached
+    narrative when a narrative is present.
+  - VHS-REQ-660.4: The file decoration provider returns no decoration in an
+    untrusted workspace and for non-VI files, and matches a cached narrative
+    only while the VI's current HEAD and working-tree content signatures still
+    equal the compared signatures, so a stale narrative badge clears once the VI
+    changes again (VHS-REQ-012 fail-closed alignment).
+  - VHS-REQ-660.5: The provider exposes a `refresh` method that raises its
+    `onDidChangeFileDecorations` event (fired after a comparison completes so a
+    newly cached narrative appears), and `registerViSemanticDecorationProvider`
+    registers it through `window.registerFileDecorationProvider` with tracked
+    disposables.
+  - VHS-REQ-660.6: For a modified tracked VI whose HEAD content differs from the
+    working tree and that has no cached narrative, `resolveViSemanticFileDecoration`
+    and the provider return a subtle pending badge with a tooltip prompting the
+    reviewer to run Compare; an unchanged VI, and a VI missing either content
+    signature, receive no decoration.
+- Agent Work Scope:
+  - Keep the cache key, narrative recorder, and decoration-resolution logic pure
+    and dependency-injected so they stay unit-testable without VS Code or a Git
+    process. Do not change comparison execution, preflight, or packet behavior;
+    populate the cache at the comparison-action boundary in the extension
+    wiring. Serve decorations only from the cache and never trigger or block on a
+    LabVIEW comparison from the decoration path.
+- Implementation References:
+  - `src/semantic/viSemanticNarrativeCache.ts`
+  - `src/ui/viSemanticDecorationProvider.ts`
+  - `src/extension.ts`
+- Verification References:
+  - `tests/unit/viSemanticNarrativeCache.test.ts`
+  - `tests/unit/viSemanticDecorationProvider.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+  - `manual:source-control-semantic-change-hover`
+- Change Guidance:
+  - Keep the decoration path cache-only and workspace-trust gated; never run or
+    await a LabVIEW comparison from a hover. Keep the narrative text the single
+    `renderViSemanticNarrative` output shared with the MCP tools and PR/CI
+    comment surfaces rather than introducing a second narrative dialect.
+
+### VHS-REQ-661: On-Demand VI Semantic PR Review Workflow
+
+- Status: Active
+- Parent: VHS-SYS-REQ-013
+- Area: CI And Developer Environment
+- Statement: VI semantic PR review automation shall run against any target
+  repository and pull request on a GitHub-hosted Linux runner (docker provided),
+  pull the NI LabVIEW image, post the result as a sticky comment on the target
+  pull request using a cross-repository token supplied through a secret, and
+  expose the review logic through a reusable `workflow_call` unit so any LabVIEW
+  repository can consume the same source of truth as the maintainer dispatch.
+- Acceptance Criteria:
+  - VHS-REQ-661.1: The workflow triggers only through `workflow_dispatch` and
+    never through `pull_request` or `push`, so running untrusted target-repo VIs
+    in a LabVIEW container is always a deliberate maintainer action.
+  - VHS-REQ-661.2: The workflow exposes `repository`, `pr_number`, and
+    `container_image_version` dispatch inputs, grants read-only repository
+    contents permission, and fails closed to trusted `vi-history-suite` refs
+    before the privileged cross-repository token can be used.
+  - VHS-REQ-661.3: The workflow runs on a GitHub-hosted `ubuntu-latest` runner
+    and, as a fail-fast gate, verifies docker is available and pulls the
+    `nationalinstruments/labview:<version>-linux` image.
+  - VHS-REQ-661.4: The workflow clones the target repository, resolves the
+    review range as the merge-base of the PR base branch and the PR head commit,
+    and invokes `runViSemanticPrReview` over that range with the docker runtime
+    provider, passing the canonical `<version>-linux` container tag (the runtime
+    locator falls back to the default image for a bare version, so a non-default
+    `container_image_version` would otherwise run the wrong image). The PR head
+    is fetched via the canonical `refs/pull/<n>/head` ref (which the base repo
+    serves even for fork PRs whose head is not directly fetchable by SHA) and
+    cross-checked against the API head, failing closed on a mismatch. The docker
+    comparison stages under the runner workspace temp (`$RUNNER_TEMP`) rather
+    than the default `/tmp`, so a snap-packaged Docker daemon (which uses a
+    private `/tmp` mount namespace) can bind-mount the staging tree into the
+    LabVIEW container.
+  - VHS-REQ-661.5: Posting to the target pull request uses a cross-repository
+    token supplied through a secret (`VI_REVIEW_TARGET_TOKEN`) passed as
+    `GH_TOKEN`, and the sticky comment is upserted by the hidden marker so
+    re-runs update the existing comment in place rather than adding new ones.
+  - VHS-REQ-661.6: The workflow uploads the produced review artifact
+    (`review-out/**`) and contains no `vagrant` reference (VHS-REQ-599
+    alignment).
+  - VHS-REQ-661.7: The review steps live in a reusable `workflow_call` workflow
+    (`vi-semantic-pr-review-callable.yml`) that declares the review inputs and
+    the required `VI_REVIEW_TARGET_TOKEN` secret and gates the trusted-ref guard
+    on an `enforce_trusted_ref` input; the maintainer `workflow_dispatch`
+    workflow delegates to it with the guard enforced, and an external LabVIEW
+    repository can call it directly with its own runner and token.
+  - VHS-REQ-661.8: A consumer auto-trigger template
+    (`docs/consumer-workflows/vi-semantic-review-on-pr.yml`) lets any LabVIEW
+    repository run the review automatically on every pull request (including
+    fork PRs) with no comment or label: it triggers on `pull_request_target`,
+    never checks out or runs the untrusted PR code (it only dispatches the
+    review in vi-history-suite), gates the dispatch on the PR author's real
+    repository permission resolved via the API (not the event payload's
+    `author_association`, which reports `CONTRIBUTOR` for fork PRs even for org
+    members), grants read-only permissions, and uses a least-privilege
+    `VI_REVIEW_DISPATCH_TOKEN` (never the target-write token).
+  - VHS-REQ-661.9: The reusable workflow announces a "review in progress" sticky
+    comment (via the CLI `--announce-start` flag) before the container-backed
+    comparison, so a reviewer sees the review was triggered during the
+    multi-minute run; the final review upserts over it by the shared marker
+    (one comment), and a run that never completes leaves the pending state as an
+    actionable signal.
+  - VHS-REQ-661.10: When writing artifacts to an output directory, the CLI
+    copies each completed VI's self-contained comparison report (which embeds
+    the rendered block-diagram/front-panel difference images) into a `reports/`
+    subdirectory, so the uploaded review artifact carries the full visual diff
+    and not only the narrative summary. A `--from-file` post skips this, since
+    its saved report paths are stale temp locations from the original run.
+  - VHS-REQ-661.11: With the CLI `--publish-images` flag (post mode only), the
+    review uploads each changed VI's overview difference images (the block-
+    diagram/front-panel comparison shots embedded as `data:` URIs in the
+    self-contained report) to an assets branch in the target repository via the
+    GitHub contents API and embeds the hosted image URLs as a collapsed
+    visual-diff gallery in the sticky comment, since GitHub strips `data:` image
+    URIs from rendered comments. Image hosting requires a token with
+    `contents: write`; a hosting failure is best-effort and never blocks the
+    textual review from posting. For a private target repository the hosted raw
+    image URLs do not render inline in the rendered comment; the uploaded
+    review artifact still carries the full visual diff as the fallback.
+  - VHS-REQ-661.12: With the CLI `--commit-status` flag (exposed as the optional
+    `create_commit_status` workflow input), the review posts a "VI Semantic
+    Review" GitHub commit status on the PR head commit so the result is a
+    branch-protection-gateable status on the pull request: `success` when the
+    review completed (differences are informational, and a partial review is
+    still success) and `failure` only when `--fail-on-incomplete` is set and a
+    changed VI was not compared. A commit status (unlike a check run, which only
+    a GitHub App can create) works with a plain token that has `statuses: write`,
+    matching the PAT-based token model; a status failure is best-effort and
+    never blocks the textual review.
+- Agent Work Scope:
+  - Change the workflow YAML and its static contract test together. Keep the
+    workflow thin CI plumbing around the already-shipped
+    `runViSemanticPrReview` CLI; do not add a review engine to the workflow.
+    Keep the runner docker-based (not host LabVIEW) as the counterpart to the
+    host-LabVIEW maintainer workflow (VHS-REQ-652).
+- Implementation References:
+  - `.github/workflows/vi-semantic-pr-review.yml`
+  - `.github/workflows/vi-semantic-pr-review-callable.yml`
+  - `docs/consumer-workflows/vi-semantic-review-on-pr.yml`
+  - `src/cli/runViSemanticPrReview.ts`
+  - `src/semantic/viSemanticPrReview.ts`
+  - `src/semantic/stickyPrComment.ts`
+  - `src/semantic/viSemanticReviewMarkdown.ts`
+  - `src/semantic/viComparisonReportImages.ts`
+  - `src/semantic/viReviewCommitStatus.ts`
+- Verification References:
+  - `tests/unit/viSemanticPrReviewWorkflow.test.ts`
+  - `tests/unit/viSemanticReviewOnPrTemplate.test.ts`
+  - `tests/unit/viSemanticReviewMarkdown.test.ts`
+  - `tests/unit/viComparisonReportImages.test.ts`
+  - `tests/unit/viReviewCommitStatus.test.ts`
+  - `tests/unit/viSemanticPrReview.test.ts`
+  - `tests/unit/stickyPrComment.test.ts`
+  - `tests/unit/runViSemanticPrReview.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+  - `manual:vi-semantic-pr-review-workflow-dispatch`
+- Change Guidance:
+  - Never add a `pull_request` or `push` trigger; the LabVIEW container runs
+    untrusted target-repo VIs and must stay a deliberate maintainer dispatch.
+    Keep the cross-repo token in a secret, never in the workflow's own
+    `GITHUB_TOKEN`, and never reference `vagrant`.
+
+### VHS-REQ-662: VI Semantic Comparison Model And Agent MCP Surface
+
+- Status: Active
+- Parent: VHS-SYS-REQ-008
+- Area: Review Workflow
+- Statement: The suite shall project a produced LabVIEW VI comparison onto a
+  versioned dependency-free semantic model with a plain-language what-changed
+  narrative, publish that model together with the VI history and
+  repository-index models as an open JSON-Schema standard with an offline
+  subset validator, and expose the model and its Git-driven orchestrators to
+  agents through a dependency-free JSON-RPC MCP server that VS Code registers
+  so Copilot agent mode can discover and launch the tools. The model, schemas,
+  and MCP handler stay free of VS Code and network dependencies so they are
+  unit-testable in isolation and reused by the Source Control hover
+  (VHS-REQ-660) and the on-demand PR-review workflow (VHS-REQ-661).
+- Acceptance Criteria:
+  - VHS-REQ-662.1: `buildViSemanticComparisonModel` and the HTML entrypoint
+    `buildViSemanticComparisonModelFromHtml` project a parsed NI comparison
+    report onto the versioned `vi-history-suite/vi-semantic-comparison@v1`
+    model, classifying each changed surface through `deriveViChangeSurface`,
+    and `renderViSemanticNarrative` renders the single shared plain-language
+    what-changed narrative reused by the hover and PR/CI comment surfaces.
+  - VHS-REQ-662.2: `viSemanticSchemas` publishes the Draft-07 JSON Schemas for
+    the comparison, history, and repository-index models under stable `@v1`
+    schema ids, and `validateViSemanticDocument` with
+    `validateAgainstJsonSchema` provide a dependency-free subset validator that
+    fails closed on schema-id drift and on non-conforming documents.
+  - VHS-REQ-662.3: `handleViSemanticMcpMessage` implements a dependency-free
+    JSON-RPC 2.0 handler that answers `initialize` (advertising the tools
+    capability and `VI_SEMANTIC_MCP_PROTOCOL_VERSION`), `tools/list`, and
+    `tools/call`, and returns a structured JSON-RPC error for an unknown method
+    or tool instead of throwing.
+  - VHS-REQ-662.4: `VI_SEMANTIC_MCP_TOOLS` exposes the agent tool set
+    (`summarize_vi_comparison`, `get_vi_semantic_comparison`,
+    `compare_vi_revisions`, `summarize_vi_history`, `index_repository_vis`,
+    `build_vi_pr_review`, `get_vi_semantic_schema`, and
+    `validate_vi_semantic_document`), each with a declared input schema.
+  - VHS-REQ-662.5: `compareViRevisions` is a dependency-injected orchestrator
+    that runs a real LabVIEW comparison for two VI revisions through the
+    vscode-free reporting primitives and projects the report onto the model,
+    reporting a completed, blocked, or failed outcome and validating its inputs
+    at the boundary; it powers the `compare_vi_revisions` tool.
+  - VHS-REQ-662.6: `buildViSemanticHistory` walks a VI Git revision history and
+    compares adjacent pairs to build the depth-bounded versioned
+    `vi-history-suite/vi-semantic-history@v1` timeline, and
+    `buildViRepositoryIndex` surveys the repository's tracked VIs through Git to
+    build the activity-ranked `vi-history-suite/vi-repository-index@v1` model
+    with no LabVIEW runtime; they power the `summarize_vi_history` and
+    `index_repository_vis` tools.
+  - VHS-REQ-662.7: `registerViSemanticMcpServerProvider` registers the stdio
+    MCP server with VS Code through `vscode.McpStdioServerDefinition` (fields
+    built by `buildViSemanticMcpServerDefinitionFields` and the script path
+    resolved by `resolveViSemanticMcpServerScriptPath`) with tracked
+    disposables so Copilot agent mode can discover and launch the tools.
+  - VHS-REQ-662.8: `compareViRevisions` accepts an optional content-addressed
+    comparison-model cache: when supplied it resolves each side's revision
+    commit id (`git rev-parse <revision>^{commit}` by default) so the full tree
+    and dependency context is captured, and on a cache hit it returns the
+    stored model (with the caller's revision identifiers rehydrated and `cache`
+    runtime provenance) and skips the container comparison, while a fresh
+    success is written back. The cache is keyed by the repository-relative
+    path, both revision commit ids, and the report type; a hit reuses the model
+    and narrative but not the on-disk report (like a `--from-file` review). With
+    no cache injected the orchestrator behaves exactly as before.
+- Agent Work Scope:
+  - Keep the model, schemas, MCP handler, and orchestrators pure and
+    dependency-injected so they stay unit-testable without VS Code, a network,
+    or a LabVIEW runtime on the read-only paths. Route real comparisons only
+    through the injected reporting primitives. Do not fork the narrative text
+    or the versioned schema ids; the hover (VHS-REQ-660) and the PR review
+    (VHS-REQ-661) reuse them.
+- Implementation References:
+  - `src/semantic/viSemanticModel.ts`
+  - `src/semantic/viSemanticSchemas.ts`
+  - `src/semantic/viSemanticComparisonMcp.ts`
+  - `src/semantic/compareViRevisions.ts`
+  - `src/semantic/viComparisonModelCache.ts`
+  - `src/semantic/viSemanticHistory.ts`
+  - `src/semantic/viRepositoryIndex.ts`
+  - `src/mcp/viSemanticMcpServerProvider.ts`
+  - `src/mcp/viSemanticMcpServerDeps.ts`
+- Verification References:
+  - `tests/unit/viSemanticModel.test.ts`
+  - `tests/unit/viSemanticSchemas.test.ts`
+  - `tests/unit/viSemanticComparisonMcp.test.ts`
+  - `tests/unit/compareViRevisions.test.ts`
+  - `tests/unit/viComparisonModelCache.test.ts`
+  - `tests/unit/viSemanticHistory.test.ts`
+  - `tests/unit/viRepositoryIndex.test.ts`
+  - `tests/unit/viSemanticMcpServerProvider.test.ts`
+  - `tests/unit/viSemanticMcpServerDeps.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+  - `manual:vi-semantic-comparison-mcp-surface`
+- Change Guidance:
+  - Keep the MCP handler and model dependency-free and offline; never add VS
+    Code or network imports to the read-only tools. When adding a tool, extend
+    `VI_SEMANTIC_MCP_TOOLS` and the handler together, and keep the schema ids
+    versioned so external consumers of the open VI-diff standard are not
+    broken.
+
+### VHS-REQ-664: Preview And Comparison Cache Warming On VI Change
+
+- Status: Active
+- Parent: VHS-SYS-REQ-008
+- Area: Comparison Reports
+- Statement: When the Docker comparison runtime is selected, the extension shall
+  warm the caches for a LabVIEW VI as soon as it changes on disk so a reviewer
+  finds both its preview and its Source Control change hover ready without
+  waiting on a cold LabVIEW run. A `FileSystemWatcher` observes
+  `.vi`/`.vit`/`.vim`/`.ctl` create and change events, debounces the burst of
+  writes LabVIEW makes per save, and processes settled changes one at a time so
+  overlapping background LabVIEW runs never start. For a settled change it warms
+  the VI's preview render through the shared warm session (VHS-REQ-659) and runs
+  a background HEAD-versus-working-tree comparison whose produced report records
+  the semantic narrative (VHS-REQ-660), so the hover updates from its pending
+  badge to the change summary without a manual comparison. The feature is opt-in
+  and Docker-only: it is governed by `viHistorySuite.preview.warmOnChange`
+  (default true), the preview warm additionally requires
+  `viHistorySuite.preview.enabled`, and the comparison warm additionally requires
+  a trusted workspace because it launches LabVIEW. Warming is best-effort and
+  never surfaces an error.
+- Acceptance Criteria:
+  - `createViChangeWarmScheduler` debounces change notifications per path so the
+    several writes LabVIEW makes while saving one VI coalesce into a single
+    settled warm, and `dispose` cancels every pending timer so no warm fires
+    after disposal.
+  - `resolveViChangeWarmPlan` warms nothing unless the runtime is Docker and
+    `viHistorySuite.preview.warmOnChange` is on; when it warms, the preview
+    render warm additionally requires `viHistorySuite.preview.enabled` and the
+    comparison narrative warm additionally requires workspace trust.
+  - `warmChangedVi` performs the permitted warms best-effort and independently:
+    a preview-warm failure never blocks the comparison warm, a comparison-warm
+    failure is swallowed, and neither throws to the caller so a background warm
+    never surfaces an error.
+- Agent Work Scope:
+  - Keep the debounce scheduler, the gating decision, and the warm orchestrator
+    pure and dependency-injected in
+    `src/reporting/viPreview/viChangeWarmScheduler.ts` so they are unit-testable
+    without VS Code or a runtime, and keep the `FileSystemWatcher` registration
+    and the concrete preview/comparison warm wiring thin in
+    `src/ui/viChangeWarmerService.ts` and `src/extension.ts`. Reuse the shared
+    warm session (VHS-REQ-659) for the preview warm and the existing worktree
+    comparison path that records the narrative (VHS-REQ-660) for the comparison
+    warm rather than introducing a new execution transport; skip the comparison
+    when the VI is unchanged versus HEAD or its narrative is already cached.
+- Implementation References:
+  - `src/reporting/viPreview/viChangeWarmScheduler.ts`
+  - `src/ui/viChangeWarmerService.ts`
+  - `src/extension.ts`
+  - `package.json`
+- Verification References:
+  - `tests/unit/viChangeWarmScheduler.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+  - `manual:warm-changed-vi-caches`
+- Change Guidance:
+  - Warming must stay Docker-only, opt-in, and best-effort: never launch host
+    LabVIEW on change, never let a warm failure surface to the user, and keep
+    the per-path debounce and single-flight serialization so a burst of LabVIEW
+    saves cannot start overlapping background runs.
+
+### VHS-REQ-665: Win32 Host-Native Headless Comparison For 32-bit LabVIEW Parity
+
+- Status: Active
+- Parent: VHS-SYS-REQ-007
+- Area: Comparison Reports
+- Statement: When the extension runs natively on Windows against a host-native
+  LabVIEWCLI comparison and the opt-in `LV_RTE_WIN_HOSTNATIVE_HEADLESS=1`
+  environment toggle is set, the runtime shall prelaunch the selected LabVIEW
+  with `--headless` (binding the VI Server without an interactive desktop),
+  tune the LabVIEWCLI.ini connect window, run the CLI, and retry once on the
+  cold-launch VI Server connect race (`-350000`/`-350051`), reusing the same
+  launch technique as the authoritative windows-container provider so a
+  non-interactive session (for example a Vagrant WinRM session) can drive a
+  real comparison against a locally installed 32-bit LabVIEW 2026 — the bitness
+  the x64-only windows-container provider cannot exercise. The default
+  host-native path (no toggle) is unchanged.
+- Acceptance Criteria:
+  - `buildWindowsHostNativeHeadlessCommandPlan(record, commandPlan, processPlatform, cliConnectTimeoutSeconds?)`
+    returns a `powershell -NoProfile -EncodedCommand <script>` command plan only
+    for the `labview-cli` engine when a PowerShell host is resolvable, and
+    `undefined` otherwise (e.g. the `lvcompare` engine), leaving the caller's
+    bare command plan unchanged.
+  - The generated script prelaunches the configured LabVIEW `--headless`
+    hidden, sets the `OpenAppReferenceTimeoutInSecond` and
+    `AfterLaunchOpenAppReferenceTimeoutInSecond` LabVIEWCLI.ini tokens (to the
+    explicit `cliConnectTimeoutSeconds` when supplied, else the host-native
+    default), runs the original CLI executable and arguments verbatim, retries
+    once on `-350000`/`-350051`/"failed to establish a connection", and emits a
+    `[vi-history-suite-hostnative-meta]` provenance line distinct from the
+    container `[vi-history-suite-container-meta]` line; it does not pin
+    `$env:TEMP` (it uses the ambient temp directory, unlike the container path).
+  - `prepareExecutionContext` wraps the bare host-native command plan with this
+    headless plan only when `processPlatform === 'win32'`, the effective runtime
+    platform is `win32`, and `LV_RTE_WIN_HOSTNATIVE_HEADLESS === '1'`; otherwise
+    the bare command plan is used unchanged.
+  - The shared launch script builder produces byte-identical output for the
+    pre-existing windows-container provider (regression-guarded by the container
+    execution-context tests).
+- Agent Work Scope:
+  - Factor the windows-container launch script into a shared builder and reuse
+    it for the host-native headless path; keep the toggle opt-in and the default
+    interactive host-native path untouched. Do not add a docker/container
+    dependency to the host-native path. The Vagrant lane that exercises this is
+    a local maintainer helper only and never a CI gate.
+- Implementation References:
+  - `src/reporting/comparisonReportRuntimeExecution.ts`
+- Verification References:
+  - `tests/unit/comparisonReportRuntimeExecution.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+  - `manual:vagrant-hostnative-x86-headless`
+- Change Guidance:
+  - Keep the headless launch technique aligned with the windows-container
+    provider (prelaunch, ini connect-window tuning, single cold-launch retry);
+    when the container defaults change, review the host-native defaults for
+    parity. Never make the toggle default-on and never wire the Vagrant lane
+    into `.github/workflows` (VHS-REQ-599).
+
+### VHS-REQ-666: Mandatory Local Vagrant Release Attestation
+
+- Status: Active
+- Parent: VHS-SYS-REQ-013
+- Area: CI And Developer Environment
+- Statement: Kicking off a marketplace release shall require a fresh local
+  Vagrant Windows/LabVIEW validation attestation for the exact release version.
+  The maintainer runs the Vagrant lane locally and records a release-gating
+  attestation into the committed runtime-validation ledger; the
+  release-readiness check exposes an opt-in gate that fails closed unless that
+  attestation matches the release version, and the marketplace-release workflow
+  runs that gate before publishing. Enforcement reads the committed ledger, so
+  hosted CI needs no hypervisor and the workflow YAML never names the Vagrant
+  helper (VHS-REQ-599 alignment).
+- Acceptance Criteria:
+  - `scripts/checkReleaseReadiness.js --require-release-attestation` appends a
+    gating `release-attestation` check that passes only when a `releaseGating`
+    track in the runtime-validation ledger has `lastValidatedVersion` equal to
+    the release version; an absent or stale gating track fails the check and, in
+    `--strict` mode, exits nonzero.
+  - Without `--require-release-attestation` the readiness verdict is unchanged
+    (the three advisory checks plus the display-only runtime line), preserving
+    the VHS-REQ-615.13 contract.
+  - The marketplace-release workflow runs the attestation gate
+    (`--strict --require-release-attestation`) before the publish step, reading
+    the committed runtime-validation ledger, and the workflow YAML contains no
+    Vagrant reference.
+  - `npm run vagrant:validate:release` runs the Vagrant lane and, on a passing
+    in-guest comparison, records the release-gating attestation into the ledger
+    via `scripts/recordRuntimeValidation.js`.
+  - Under `--require-release-attestation` the readiness gate also appends a
+    CI-safe `box-manifest-integrity` check that fails closed unless the
+    committed `vagrant/box-manifest.json` is present, matches the
+    `vi-history-suite/vagrant-box-manifest@v1` schema, has a 64-hex `sha256`, a
+    positive-integer `sizeBytes`, and a non-empty `recordedForVersion`. The
+    check does not require `recordedForVersion` to equal the release version
+    (the box is identified by its `sha256` and is regenerated only when
+    rebuilt, while the release version bumps every release; attestation
+    freshness is enforced separately by the `release-attestation` check). The
+    check reads only the committed manifest (never the box
+    artifact), so it needs no hypervisor in hosted CI; byte-level box hashing
+    stays in `scripts/verifyVagrantBox.cjs --verify` as a maintainer-local step.
+  - Under `--require-release-attestation` the readiness gate also appends a
+    `box-provenance-binding` check that fails closed when a release-gating track
+    records a structured `boxSha256` that does not equal the committed box
+    manifest's `sha256`. A gating track with no recorded `boxSha256` soft-passes
+    so pre-binding attestations are not forced to re-record;
+    `scripts/recordRuntimeValidation.js --box-sha256` records the structured
+    binding, and the Vagrant release/proof drivers pass the committed box
+    manifest `sha256` automatically.
+- Agent Work Scope:
+  - Change the readiness gate, the release workflow gate step, the ledger
+    release-gating track, and the maintainer/vagrant docs together; keep the
+    gate enforced by reading the committed ledger and never invoke Vagrant from
+    `.github/workflows`.
+- Implementation References:
+  - `scripts/checkReleaseReadiness.js`
+  - `.github/workflows/marketplace-release.yml`
+  - `docs/requirements/runtime-validation-ledger.json`
+  - `vagrant/box-manifest.json`
+  - `package.json`
+  - `docs/vagrant.md`
+  - `docs/maintainer-operations.md`
+- Verification References:
+  - `tests/unit/releaseReadinessScript.test.ts`
+  - `tests/unit/marketplaceReleaseWorkflow.test.ts`
+  - `tests/unit/packageManifest.test.ts`
+  - `manual:vagrant-validate-release`
+- Change Guidance:
+  - Keep the mandatory attestation enforced through the committed ledger and the
+    readiness gate; never satisfy it by naming or invoking Vagrant inside
+    `.github/workflows`, and never make the gate default-on for local advisory
+    readiness runs.
+
+### VHS-REQ-667: Versioned Dev-Tools GitHub Release Channel
+
+- Status: Active
+- Parent: VHS-SYS-REQ-013
+- Area: CI And Developer Environment
+- Statement: The development toolset (scripts CLIs, maintainer drivers, the
+  compiled MCP server, requirements documents, and agent-customization surfaces)
+  shall be distributable as a versioned, content-addressed GitHub Release
+  artifact independent of the marketplace release, so that maintainers and
+  agents can pin and verify a known-good toolset bound to its requirements
+  state. A committed toolset manifest defines exactly which files ship; a
+  builder produces a deterministic content digest and a provenance manifest; a
+  fail-closed verifier confirms a downloaded or in-tree toolset matches that
+  manifest; and a release workflow publishes to GitHub Releases only when the
+  content digest changes.
+- Acceptance Criteria:
+  - `docs/devtools-release.manifest.json` is the committed source of truth for
+    the bundled toolset (include globs grouped by category plus exclude
+    patterns) under schema `vi-history-suite/devtools-release@v1`.
+  - `scripts/buildDevToolsRelease.js` resolves the manifest into a deterministic
+    sorted file list, hashes each file, folds those into a single aggregate
+    `contentDigest`, and emits a provenance manifest binding the toolset to its
+    requirements state (requirements-manifest digest, per-file sha256, git
+    commit, build version, channel); identical inputs yield an identical digest.
+  - `scripts/buildDevToolsRelease.js --pack` produces a reproducible (POSIX
+    ustar plus gzip) tarball using Node built-ins only, so identical inputs
+    yield a byte-identical archive.
+  - `scripts/verifyDevToolsRelease.js` fails closed unless an extracted toolset
+    (`--manifest`/`--root`) or the in-tree toolset (`--verify-self`) matches the
+    provenance manifest's per-file sha256 and aggregate content digest.
+  - `.github/workflows/devtools-release.yml` builds and self-verifies the
+    toolset, deduplicates on the content digest against the latest release of
+    the channel, defaults `workflow_dispatch` to a dry run, maps `develop` to a
+    prerelease channel and `main` to the stable channel, and names no Vagrant
+    helper (VHS-REQ-599 alignment).
+- Agent Work Scope:
+  - Change the toolset manifest, the builder/verifier scripts, and the release
+    workflow together; keep the builder and verifier pure/injectable with thin
+    CLIs and keep the workflow content-digest deduplicated and dry-run-first.
+- Implementation References:
+  - `docs/devtools-release.manifest.json`
+  - `scripts/buildDevToolsRelease.js`
+  - `scripts/verifyDevToolsRelease.js`
+  - `.github/workflows/devtools-release.yml`
+  - `package.json`
+- Verification References:
+  - `tests/unit/buildDevToolsReleaseScript.test.ts`
+  - `tests/unit/verifyDevToolsReleaseScript.test.ts`
+  - `tests/unit/devToolsReleaseWorkflow.test.ts`
+- Change Guidance:
+  - Keep the content digest deterministic (sorted inputs, normalized archive
+    metadata) and the release workflow dry-run-first; never publish on a no-op
+    content digest, and never bundle a file not declared in the committed
+    toolset manifest.
+
+### VHS-REQ-668: Supply-Chain State Read-Model
+
+- Status: Active
+- Parent: VHS-SYS-REQ-013
+- Area: CI And Developer Environment
+- Statement: The repository shall provide a read-only aggregator that reports the
+  provenance state of every shipped artifact bound to a committed digest in one
+  schema-versioned packet, so maintainers and agents can see at a glance whether
+  everything that ships is cryptographically bound and fresh for the current
+  build. It reads existing ledgers and manifests only, mutates no source, and
+  gates nothing by default.
+- Acceptance Criteria:
+  - `scripts/buildSupplyChainState.js` aggregates four provenance streams into a
+    single `vi-history-suite/supply-chain-state@v1` packet: the Vagrant box
+    manifest, the runtime-validation ledger, the requirements manifest, and the
+    dev-tools toolset content digest; each source graceful-degrades to
+    unavailable when absent.
+  - Each artifact record reports availability, whether it gates a release, its
+    digest, a tri-state freshness against the current build version, and a
+    drift reason; the runtime record enumerates per-track validated-version
+    freshness.
+  - The packet rolls up a `status` of `attention` when any release-gating
+    artifact is unavailable or stale, otherwise `fresh`; `--strict` exits
+    nonzero on `attention` as an opt-in local signal and is not wired into any
+    CI gate.
+  - `npm run supply-chain:state` renders text by default, with `--json`,
+    `--markdown`, and `--schema` output modes plus optional `--include-provenance`
+    and a path-safe `--output`; the emitted packet is self-describing with a
+    top-level `$schema` and `schemaVersion`, and Markdown table cells escape
+    backslashes before pipes.
+  - The release-readiness gate exposes an opt-in `--require-supply-chain-fresh`
+    flag that promotes the read-model to a hard check, failing the verdict
+    unless every artifact is fresh with zero attention and failing closed when
+    the read-model is unavailable; the check is absent from the default advisory
+    verdict.
+- Agent Work Scope:
+  - Keep the aggregator read-only and pure/injectable with a thin CLI; reuse the
+    existing runtime-validation and dev-tools builders rather than reimplementing
+    digest logic; never mutate a source ledger or manifest.
+- Implementation References:
+  - `scripts/buildSupplyChainState.js`
+  - `scripts/checkReleaseReadiness.js`
+  - `.github/workflows/marketplace-release.yml`
+  - `.github/workflows/ci.yml`
+  - `package.json`
+- Verification References:
+  - `tests/unit/supplyChainStateScript.test.ts`
+  - `tests/unit/releaseReadinessScript.test.ts`
+  - `tests/unit/marketplaceReleaseWorkflow.test.ts`
+  - `tests/unit/branchGovernanceWorkflow.test.ts`
+- Change Guidance:
+  - Keep the read-model non-gating by default and its JSON packet
+    schema-versioned; add new provenance streams as additional artifact records
+    rather than changing the existing record shape.

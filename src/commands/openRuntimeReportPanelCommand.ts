@@ -25,6 +25,7 @@ import * as vscode from 'vscode';
 
 import {
   applyPickRuntimeProviderSelection,
+  applyViPreviewEnabledSelection,
   buildPickRuntimeProviderItems,
   type PickRuntimeProviderOption
 } from './pickRuntimeProviderCommand';
@@ -48,7 +49,12 @@ import {
 } from '../tooling/dockerDaemonPlatform';
 import {
   applyComparisonReportOptionSelection,
-  readComparisonReportOptions
+  applyCliConnectTimeoutSelection,
+  readCliConnectTimeoutSeconds,
+  readComparisonReportOptions,
+  DEFAULT_CLI_CONNECT_TIMEOUT_SECONDS,
+  MIN_CLI_CONNECT_TIMEOUT_SECONDS,
+  MAX_CLI_CONNECT_TIMEOUT_SECONDS
 } from '../reporting/comparisonReportAction';
 import {
   buildAvailableStatusBarSuffix,
@@ -91,6 +97,8 @@ interface RuntimeReportPanelMessage {
   readonly includeKey?: string;
   readonly include?: boolean;
   readonly tag?: string;
+  readonly enabled?: boolean;
+  readonly seconds?: number;
 }
 
 export interface RegisterOpenRuntimeReportPanelCommandDeps {
@@ -103,7 +111,7 @@ export interface RegisterOpenRuntimeReportPanelCommandDeps {
   readonly containerPlatform?: ContainerImagePlatform;
 }
 
-function presenceLabel(
+export function presenceLabel(
   version: AvailableContainerImageVersion,
   localPresenceUnknown = false
 ): string {
@@ -118,7 +126,7 @@ function presenceLabel(
   return version.publishedToRegistry ? 'Available to pull' : 'Available';
 }
 
-function toPanelProviderOption(
+export function toPanelProviderOption(
   option: PickRuntimeProviderOption
 ): RuntimeProviderPanelOption {
   if (option.kind === 'host') {
@@ -147,7 +155,7 @@ function toPanelProviderOption(
   };
 }
 
-function buildActiveProviderSummary(
+export function buildActiveProviderSummary(
   watcher: RuntimeAvailabilityWatcher
 ): { summary: string; source?: 'persisted' | 'auto-detected' } {
   const snapshot = watcher.getLastSnapshot();
@@ -241,8 +249,20 @@ export function registerOpenRuntimeReportPanelCommand(
         versions,
         notes: containerCache.notes
       },
+      preview: {
+        // Docker-only: the VI Preview toggle appears only when Docker is the
+        // effective runtime (same gate as the container-image section).
+        visible: dockerAvailable,
+        enabled: configuration.get<boolean>('preview.enabled', false)
+      },
       report: {
         includeFlags: deriveReportIncludeFlags(reportOptions)
+      },
+      advanced: {
+        cliConnectTimeoutSeconds: readCliConnectTimeoutSeconds(configuration),
+        defaultTimeoutSeconds: DEFAULT_CLI_CONNECT_TIMEOUT_SECONDS,
+        minSeconds: MIN_CLI_CONNECT_TIMEOUT_SECONDS,
+        maxSeconds: MAX_CLI_CONNECT_TIMEOUT_SECONDS
       }
     };
   };
@@ -321,6 +341,20 @@ export function registerOpenRuntimeReportPanelCommand(
           },
           { update }
         );
+        return;
+      }
+      case 'setPreviewEnabled': {
+        await applyViPreviewEnabledSelection(message.enabled === true, { update });
+        return;
+      }
+      case 'setCliConnectTimeout': {
+        if (typeof message.seconds !== 'number') {
+          return;
+        }
+        await applyCliConnectTimeoutSelection(message.seconds, { update });
+        // Re-render so an out-of-range or fractional entry snaps back to the
+        // clamped value the setting now holds.
+        rerender();
         return;
       }
       default:
