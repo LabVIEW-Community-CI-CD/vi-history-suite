@@ -56,6 +56,7 @@ src/reporting/comparisonReportPacket.ts,mapped,Yes,Comparison report packet; map
 src/reporting/comparisonReportPlan.ts,mapped,Yes,Comparison report plan; mapped through RTM.
 src/reporting/comparisonReportPreflight.ts,mapped,Yes,Comparison report preflight; mapped through RTM.
 src/reporting/comparisonReportRuntimeExecution.ts,mapped,Yes,Comparison runtime execution; mapped through RTM.
+src/reporting/comparisonReportRuntimeExecutionWorktreeSnapshot.ts,supporting,No,"Pure worktree-snapshot identity/provenance helpers (deriveWorktreeSnapshotIdentity, deriveComparedWorktreeSnapshotId, buildWorktreeSnapshotProvenanceNote) extracted verbatim from comparisonReportRuntimeExecution and re-exported to preserve the public API while isolating content-addressed snapshot identity from runtime orchestration; supporting VHS-REQ-641."
 src/reporting/comparisonRuntimeDoctor.ts,mapped,Yes,Comparison runtime doctor; mapped through RTM.
 src/reporting/comparisonRuntimeLocator.ts,mapped,Yes,Comparison runtime locator; mapped through RTM.
 src/reporting/diagnostics/diagnosticsRecorder.ts,mapped,Yes,Comparison runtime diagnostics bundle recorder; retained runtime evidence schema mapped through RTM (VHS-REQ-148).
@@ -118,6 +119,7 @@ tests/unit/comparisonReportExport.test.ts,mapped,Yes,Comparison report export te
 tests/unit/comparisonReportPacket.test.ts,mapped,Yes,Comparison report packet tests; mapped through RTM.
 tests/unit/comparisonReportPreflight.test.ts,mapped,Yes,Comparison report preflight tests; mapped through RTM.
 tests/unit/comparisonReportRuntimeExecution.test.ts,mapped,Yes,Comparison runtime execution tests; mapped through RTM including VHS-REQ-630 connection-failure classification preservation.
+tests/unit/comparisonReportRuntimeExecutionWorktreeSnapshot.test.ts,supporting,No,"Pure worktree-snapshot identity/provenance unit tests (content-addressed identity stability, sentinel-side selection, provenance note formatting); supporting VHS-REQ-641."
 tests/unit/comparisonRuntimeDoctor.test.ts,mapped,Yes,Comparison runtime doctor tests; mapped through RTM.
 tests/unit/comparisonRuntimeLocator.test.ts,mapped,Yes,Comparison runtime locator tests; mapped through RTM.
 tests/unit/dashboardEtaAccuracy.test.ts,mapped,Yes,Dashboard ETA accuracy tests; mapped to VHS-REQ-610.
