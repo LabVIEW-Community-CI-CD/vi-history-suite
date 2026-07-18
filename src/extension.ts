@@ -433,7 +433,24 @@ export async function activate(
   context.subscriptions.push(viPreviewCacheWarmer);
   registerViPreviewCustomEditor(context, {
     sessionManager: viPreviewSessionManager,
-    onPreviewOpened: (viFsPath) => viPreviewCacheWarmer.notePreviewOpened(viFsPath)
+    onPreviewOpened: (viFsPath) => viPreviewCacheWarmer.notePreviewOpened(viFsPath),
+    // Test-only: when the integration test sets VIHS_TEST_CAPTURE_PREVIEW=1 (and
+    // VIHS_TEST_PREVIEW_OUT), persist the exact rendered custom-editor webview
+    // HTML so an automated test can assert the live content. The env is checked
+    // at render time (not activation) so a test can toggle it in-process before
+    // opening a VI. Never active in production (env unset). (VHS-REQ-659.)
+    onPreviewRendered: (viFsPath, html, mode) => {
+      if (process.env.VIHS_TEST_CAPTURE_PREVIEW !== '1') {
+        return;
+      }
+      const outPath = process.env.VIHS_TEST_PREVIEW_OUT;
+      if (!outPath) {
+        return;
+      }
+      void fs.writeFile(outPath, `${mode}\n${html}`, 'utf8').catch(() => {
+        /* test-only capture; ignore write failures */
+      });
+    }
   });
 
   // VHS-REQ-659: VI Preview is Docker-only + opt-in. Enabling it (via the
