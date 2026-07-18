@@ -442,6 +442,16 @@ export async function activate(
   // disabling it, or switching off the Docker runtime, cancels in-progress
   // caching. Reconcile on the settings that determine "enabled + Docker".
   const reconcilePreviewWarming = async (): Promise<void> => {
+    // Gate on workspace trust: background warming schedules whole-workspace
+    // preview rendering, which launches LabVIEW/Docker as external tooling. The
+    // interactive custom editor refuses to render in untrusted workspaces for
+    // the same reason, so warming must never run external tooling against
+    // untrusted files before the user trusts the folder. Reconcile again on
+    // trust grant (see onDidGrantWorkspaceTrust below).
+    if (!vscode.workspace.isTrusted) {
+      viPreviewCacheWarmer.cancelWarming();
+      return;
+    }
     if (!isViPreviewEnabled()) {
       viPreviewCacheWarmer.cancelWarming();
       return;
@@ -512,7 +522,12 @@ export async function activate(
       }
     }),
     vscode.workspace.onDidChangeWorkspaceFolders(clearSelectedEligibilityCache),
-    vscode.workspace.onDidGrantWorkspaceTrust(clearSelectedEligibilityCache)
+    vscode.workspace.onDidGrantWorkspaceTrust(clearSelectedEligibilityCache),
+    // Once the workspace becomes trusted, reconcile preview warming so a
+    // grant unblocks background caching that was suppressed while untrusted.
+    vscode.workspace.onDidGrantWorkspaceTrust(() => {
+      void reconcilePreviewWarming();
+    })
   );
 
   const ensureWorkspaceRuntime = async (): Promise<WorkspaceRuntime> => {
