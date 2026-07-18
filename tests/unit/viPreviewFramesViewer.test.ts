@@ -54,6 +54,10 @@ describe('buildViPreviewFramesViewerHtml', () => {
     expect(html).toContain("sel.style.transform = 'scale(' + inv + ')';");
     // apply() refreshes the counter-scale whenever the zoom changes.
     expect(html).toContain('for (var i = 0; i < selectors.length; i++) { scaleSelector(selectors[i]); }');
+    // The full inverse scale is applied (no restrictive upper cap), so the
+    // control keeps its true size even at the minimum supported zoom (0.04).
+    expect(html).toContain('var inv = currentZoom > 0 ? 1 / currentZoom : 1;');
+    expect(html).not.toMatch(/if \(inv > \d+\)/);
     // The selector counter-scale is anchored at the top-left.
     const styleMatch = html.match(/\.lvr-sel\s*\{[^}]*\}/);
     expect(styleMatch).not.toBeNull();
