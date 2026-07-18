@@ -45,6 +45,16 @@ import {
   WINDOWS_SHARED_LABVIEW_CLI_PATH
 } from '../tooling/labviewInstallCatalog';
 import {
+  DEFAULT_WINDOWS_CONTAINER_IMAGE,
+  DEFAULT_LINUX_CONTAINER_IMAGE,
+  WINDOWS_CONTAINER_LABVIEW_EXE,
+  WINDOWS_CONTAINER_LABVIEW_CLI,
+  WINDOWS_CONTAINER_LVCOMPARE,
+  LINUX_CONTAINER_LABVIEW_CLI,
+  LINUX_CONTAINER_LVCOMPARE,
+  resolveContainerImageForHostMode
+} from './runtime/containerRuntimePaths';
+import {
   ContainerImageVersionPlatformConflict,
   detectContainerImageVersionPlatformConflict,
   parseLabviewContainerImageReference,
@@ -236,19 +246,6 @@ export interface BuildProviderDecisionsOptions {
 }
 
 const WINDOWS_SHARED_LABVIEW_CLI = WINDOWS_SHARED_LABVIEW_CLI_PATH;
-const DEFAULT_WINDOWS_CONTAINER_IMAGE = 'nationalinstruments/labview:2026q1-windows';
-const DEFAULT_LINUX_CONTAINER_IMAGE = 'nationalinstruments/labview:2026q1-linux';
-const WINDOWS_CONTAINER_LABVIEW_EXE =
-  'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe';
-const WINDOWS_CONTAINER_LABVIEW_CLI = WINDOWS_SHARED_LABVIEW_CLI;
-const WINDOWS_CONTAINER_LVCOMPARE =
-  'C:\\Program Files\\National Instruments\\Shared\\LabVIEW Compare\\LVCompare.exe';
-// VHS-REQ-657: the displayed in-container LabVIEW executable is derived per image
-// from `resolveLinuxContainerLabviewProfile` (e.g. LabVIEW-2025-64/labview vs
-// LabVIEW-2026-64/labview); only the shared CLI and LVCompare launchers are
-// version-independent symlinks on PATH.
-const LINUX_CONTAINER_LABVIEW_CLI = '/usr/local/bin/LabVIEWCLI';
-const LINUX_CONTAINER_LVCOMPARE = '/usr/local/bin/LVCompare';
 
 interface WindowsHostRuntimeSurfaceFacts {
   hostLabviewIniPath?: string;
@@ -1681,16 +1678,6 @@ function buildContainerToolCandidates(
       exists: true
     }
   };
-}
-
-function resolveContainerImageForHostMode(options: {
-  hostMode?: DockerContainerHostMode;
-  windowsContainerImage: string;
-  linuxContainerImage: string;
-}): string {
-  return options.hostMode === 'linux'
-    ? options.linuxContainerImage
-    : options.windowsContainerImage;
 }
 
 function describeContainerProviderLabel(
