@@ -41,6 +41,7 @@ const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 const { buildAndVerifyDevToolsPrerelease } = require('./lib/devtoolsPrereleaseConsumer.cjs');
 const { DEFAULT_BOX, isBoxOverride, readCommittedBoxSha256 } = require('./lib/vagrantBoxProvenance.cjs');
+const { parseDriverArgs } = require('./lib/vagrantDriverArgs.cjs');
 
 const repoRoot = path.resolve(__dirname, '..');
 const vagrantDir = path.join(repoRoot, 'vagrant');
@@ -77,17 +78,6 @@ function run(command, args, options = {}) {
   return result;
 }
 
-function parseArgs(argv) {
-  const options = { skipUp: false, evidence: undefined };
-  for (let index = 0; index < argv.length; index += 1) {
-    const arg = argv[index];
-    if (arg === '--skip-up') options.skipUp = true;
-    else if (arg === '--evidence') options.evidence = argv[++index];
-    else fail(`Unknown argument: ${arg}`);
-  }
-  return options;
-}
-
 function getPackageVersion() {
   return JSON.parse(fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf8')).version;
 }
@@ -121,7 +111,10 @@ function consumeDevToolsPrerelease() {
 }
 
 function main() {
-  const options = parseArgs(process.argv.slice(2));
+  const { options, error } = parseDriverArgs(process.argv.slice(2));
+  if (error) {
+    fail(error);
+  }
   const version = getPackageVersion();
   const commit = getCommit();
   log(`Validating release candidate ${version} (${commit}) via the Vagrant Windows/LabVIEW lane.`);
