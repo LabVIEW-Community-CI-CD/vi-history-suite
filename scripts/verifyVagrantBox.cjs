@@ -35,6 +35,7 @@ const crypto = require('node:crypto');
 const repoRoot = path.resolve(__dirname, '..');
 const MANIFEST_PATH = path.join(repoRoot, 'vagrant', 'box-manifest.json');
 const MANIFEST_SCHEMA = 'vi-history-suite/vagrant-box-manifest@v1';
+const SHA256_PATTERN = /^[0-9a-f]{64}$/;
 
 function log(message) {
   process.stdout.write(`[verify-vagrant-box] ${message}\n`);
@@ -44,6 +45,37 @@ function fail(message) {
   process.stderr.write(`[verify-vagrant-box] ERROR: ${message}\n`);
   process.exit(1);
 }
+
+/**
+ * Validate the structural shape of a parsed box manifest. Pure; returns an array
+ * of human-readable problems (empty when the manifest is well-formed). Callers
+ * fail fast on any problem BEFORE streaming a ~71 GB box through SHA-256, so a
+ * malformed committed manifest produces a clear message instead of an expensive
+ * hash-then-"records undefined" comparison.
+ *
+ * @param {unknown} manifest
+ * @returns {string[]}
+ */
+function validateManifestShape(manifest) {
+  const problems = [];
+  if (manifest === null || typeof manifest !== 'object') {
+    return ['manifest is not a JSON object'];
+  }
+  if (manifest.schema !== MANIFEST_SCHEMA) {
+    problems.push(`schema must be "${MANIFEST_SCHEMA}" (found ${JSON.stringify(manifest.schema)})`);
+  }
+  if (manifest.schemaVersion !== 1) {
+    problems.push(`schemaVersion must be 1 (found ${JSON.stringify(manifest.schemaVersion)})`);
+  }
+  if (typeof manifest.sha256 !== 'string' || !SHA256_PATTERN.test(manifest.sha256)) {
+    problems.push('sha256 must be a 64-character lowercase hex digest');
+  }
+  if (!Number.isInteger(manifest.sizeBytes) || manifest.sizeBytes <= 0) {
+    problems.push('sizeBytes must be a positive integer');
+  }
+  return problems;
+}
+
 
 function parseArgs(argv) {
   const options = { mode: undefined, boxPath: undefined, note: undefined };
@@ -128,6 +160,13 @@ async function generate(options) {
 
 async function verify(options) {
   const manifest = readManifest();
+  const problems = validateManifestShape(manifest);
+  if (problems.length > 0) {
+    fail(
+      `Committed box manifest (${MANIFEST_PATH}) is malformed and cannot be trusted: ${problems.join('; ')}. ` +
+        'Regenerate it with --generate against the golden box.'
+    );
+  }
   if (!fs.existsSync(options.boxPath)) {
     fail(`Box file not found: ${options.boxPath}`);
   }
@@ -167,6 +206,14 @@ async function main() {
   }
 }
 
-main().catch((error) => {
-  fail(error instanceof Error ? error.message : String(error));
-});
+module.exports = {
+  MANIFEST_SCHEMA,
+  SHA256_PATTERN,
+  validateManifestShape
+};
+
+if (require.main === module) {
+  main().catch((error) => {
+    fail(error instanceof Error ? error.message : String(error));
+  });
+}
