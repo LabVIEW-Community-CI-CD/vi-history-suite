@@ -4,6 +4,8 @@ This changelog records user-facing release history for `vi-history-suite`.
 
 ## [Unreleased]
 
+## [1.34.1] - 2026-07-18
+
 ### Added
 
 - The single-VI **block diagram preview** can now be shown as an **interactive**
