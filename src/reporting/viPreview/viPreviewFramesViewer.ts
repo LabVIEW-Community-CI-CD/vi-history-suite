@@ -59,7 +59,12 @@ const VIEWER_STYLE = `
     touch-action: none;
   }
   .lvr-viewport.lvr-grabbing { cursor: grabbing; }
-  .lvr-stage { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+  .lvr-stage {
+    position: absolute; left: 0; top: 0; transform-origin: 0 0;
+    /* LabVIEW diagrams are drawn on white; keep the preview surface white
+       regardless of the VS Code color theme so dark mode never tints it. */
+    background: #ffffff;
+  }
   .lvr-layer, .lvr-case { position: absolute; left: 0; top: 0; }
   .lvr-img { display: block; user-select: none; -webkit-user-drag: none; }
   .lvr-struct { position: absolute; }
@@ -67,6 +72,10 @@ const VIEWER_STYLE = `
   .lvr-case .lvr-img { width: 100%; height: 100%; }
   .lvr-sel {
     position: absolute; left: 0; top: -20px; height: 18px;
+    /* Counter-scaled by the viewer against the stage zoom so the control keeps
+       a constant, clickable on-screen size even when the diagram is fit to a
+       small zoom; anchor the counter-scale at the top-left. */
+    transform-origin: 0 0;
     display: inline-flex; align-items: center; gap: 2px;
     padding: 0 4px; font-size: 11px; line-height: 18px; white-space: nowrap;
     background: var(--vscode-editorWidget-background, #333);
@@ -139,6 +148,20 @@ const VIEWER_SCRIPT = `
   }
 
   var stageState = { active: null };
+  // Every case-stepper selector, so the viewer can keep them a constant
+  // on-screen size by counter-scaling against the stage zoom (VHS-REQ-659).
+  var selectors = [];
+  var currentZoom = 1;
+  function scaleSelector(sel) {
+    // Counter-scale by the FULL 1/zoom so the control keeps its true nominal
+    // on-screen size across the whole supported zoom range (fit() can select
+    // down to 0.04 for large VIs / small panes — a capped inverse would still
+    // leave the control unclickable there). Only clamp the lower bound so we
+    // never shrink below nominal when zoomed in past 1x.
+    var inv = currentZoom > 0 ? 1 / currentZoom : 1;
+    if (inv < 1) { inv = 1; }
+    sel.style.transform = 'scale(' + inv + ')';
+  }
 
   function paintFrame(frameIdx, layer) {
     var frame = frames[frameIdx];
@@ -182,8 +205,7 @@ const VIEWER_SCRIPT = `
       var raw = (f && f.label) ? String(f.label) : '';
       var ord = N > 1 ? (i + 1) + '/' + N : '1';
       return raw ? (ord + '  ' + raw) : ord;
-    }
-    function show(i) {
+    }    function show(i) {
       idx = (i + N) % N;
       for (var k = 0; k < caseLayers.length; k++) { caseLayers[k].style.display = k === idx ? 'block' : 'none'; }
       lbl.textContent = caseLabel(idx);
@@ -194,6 +216,8 @@ const VIEWER_SCRIPT = `
     next.addEventListener('click', function (e) { e.stopPropagation(); show(idx + 1); });
     host.addEventListener('pointerdown', function () { stageState.active = host; });
     host.__step = function (d) { show(idx + d); };
+    selectors.push(sel);
+    scaleSelector(sel);
     show(0);
   }
 
@@ -203,7 +227,11 @@ const VIEWER_SCRIPT = `
 
   var zoom = 1, panX = 0, panY = 0, dragging = false, sx = 0, sy = 0, px = 0, py = 0;
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
-  function apply() { stage.style.transform = 'translate(' + panX + 'px,' + panY + 'px) scale(' + zoom + ')'; }
+  function apply() {
+    stage.style.transform = 'translate(' + panX + 'px,' + panY + 'px) scale(' + zoom + ')';
+    currentZoom = zoom;
+    for (var i = 0; i < selectors.length; i++) { scaleSelector(selectors[i]); }
+  }
   function zoomAt(nz, ax, ay) {
     nz = clamp(nz, 0.04, 8);
     var r = viewport.getBoundingClientRect();
@@ -243,16 +271,33 @@ const VIEWER_SCRIPT = `
     zoomAt(zoom > 1 ? 1 : 2, e.clientX, e.clientY);
   });
 
+  // The content bounds are the union of the root image and every frame rect,
+  // so synthesized case steppers stacked below the root diagram (flat-export
+  // fallback) are included in the stage size and the Fit target instead of
+  // being clipped outside the fitted viewport.
+  function contentBounds(w, h) {
+    var right = w, bottom = h;
+    for (var i = 0; i < frames.length; i += 1) {
+      var r = rectOf(frames[i]);
+      var fr = (r.left || 0) + (r.width || 0);
+      var fb = (r.top || 0) + (r.height || 0);
+      if (fr > right) { right = fr; }
+      if (fb > bottom) { bottom = fb; }
+    }
+    return { width: right, height: bottom };
+  }
+
   var rootRect = rectOf(frames[rootIndex]);
   var probe = new Image();
   probe.onload = probe.onerror = function () {
     var w = probe.naturalWidth || rootRect.width || 800;
     var h = probe.naturalHeight || rootRect.height || 600;
-    stage.style.width = w + 'px'; stage.style.height = h + 'px';
+    var bounds = contentBounds(w, h);
+    stage.style.width = bounds.width + 'px'; stage.style.height = bounds.height + 'px';
     paintFrame(rootIndex, root);
-    fit(w, h);
-    (window.requestAnimationFrame || function (f) { f(); })(function () { fit(w, h); });
-    resetBtn.__w = w; resetBtn.__h = h;
+    fit(bounds.width, bounds.height);
+    (window.requestAnimationFrame || function (f) { f(); })(function () { fit(bounds.width, bounds.height); });
+    resetBtn.__w = bounds.width; resetBtn.__h = bounds.height;
   };
   probe.src = (frames[rootIndex] && frames[rootIndex].image) || '';
 

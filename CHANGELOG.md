@@ -4,6 +4,18 @@ This changelog records user-facing release history for `vi-history-suite`.
 
 ## [Unreleased]
 
+## [1.34.2] - 2026-07-18
+
+### Changed
+
+- Concurrent host-native single-VI preview renders that target the same local
+  LabVIEW **VI Server** endpoint are now serialized through an in-process
+  acquisition lock (VHS-REQ-669), so overlapping renders take turns on the one
+  VI Server instead of racing it. Container and Docker renders are unaffected,
+  and previews against different endpoints still run concurrently.
+
+## [1.34.1] - 2026-07-18
+
 ### Added
 
 - The single-VI **block diagram preview** can now be shown as an **interactive**

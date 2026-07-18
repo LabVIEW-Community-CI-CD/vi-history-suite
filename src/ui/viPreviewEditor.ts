@@ -62,6 +62,14 @@ function isHostNativeRenderAllowed(): boolean {
 export interface RegisterViPreviewCustomEditorOptions {
   /** Invoked with the VI path after a preview renders successfully (drives cache warming). */
   onPreviewOpened?: (viFsPath: string) => void;
+  /**
+   * Test-only hook invoked with the exact rendered webview HTML and its mode
+   * after a preview is displayed. Production never supplies this; the extension
+   * wires it only under integration-test intent (VIHS_TEST_CAPTURE_PREVIEW) so
+   * an automated test can assert the live custom-editor webview content without
+   * a human opening the file. (VHS-REQ-659.)
+   */
+  onPreviewRendered?: (viFsPath: string, html: string, mode: string) => void;
   /** Shared warm-session manager; used for the Docker runtime so opens are fast once warm. */
   sessionManager?: ViPreviewSessionManager;
 }
@@ -103,7 +111,8 @@ class ViPreviewEditorProvider implements vscode.CustomReadonlyEditorProvider<ViP
   constructor(
     private readonly context: vscode.ExtensionContext,
     private readonly onPreviewOpened?: (viFsPath: string) => void,
-    private readonly sessionManager?: ViPreviewSessionManager
+    private readonly sessionManager?: ViPreviewSessionManager,
+    private readonly onPreviewRendered?: (viFsPath: string, html: string, mode: string) => void
   ) {
     this.cache = createViPreviewCache(context);
   }
@@ -135,6 +144,9 @@ class ViPreviewEditorProvider implements vscode.CustomReadonlyEditorProvider<ViP
     });
     webviewPanel.webview.options = { enableScripts: selected.mode === 'interactive' };
     webviewPanel.webview.html = selected.html;
+    // Test-only capture of the exact rendered webview HTML (wired only under
+    // integration-test intent; never in production).
+    this.onPreviewRendered?.(viFsPath, selected.html, selected.mode);
     // Successful open signals user intent; warm the rest of the workspace.
     this.onPreviewOpened?.(viFsPath);
   }
@@ -300,7 +312,7 @@ export function registerViPreviewCustomEditor(
 ): vscode.Disposable {
   const registration = vscode.window.registerCustomEditorProvider(
     VI_PREVIEW_VIEW_TYPE,
-    new ViPreviewEditorProvider(context, options.onPreviewOpened, options.sessionManager),
+    new ViPreviewEditorProvider(context, options.onPreviewOpened, options.sessionManager, options.onPreviewRendered),
     {
       supportsMultipleEditorsPerDocument: false,
       webviewOptions: { retainContextWhenHidden: true }

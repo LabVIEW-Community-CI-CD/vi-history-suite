@@ -259,4 +259,83 @@ describe('executeViPreview', () => {
     expect(runCommand).toHaveBeenCalledOnce();
     expect(sleep).not.toHaveBeenCalled();
   });
+
+  it('acquires a local VI Server slot before a host-native launch and releases it after (VHS-REQ-669.3)', async () => {
+    const releaseSlot = vi.fn();
+    const acquireLocalViServerSlot = vi.fn().mockResolvedValue(releaseSlot);
+    const runCommand = vi.fn().mockImplementation(async () => {
+      // The slot is held for the duration of the launch, not released early.
+      expect(releaseSlot).not.toHaveBeenCalled();
+      return { exitCode: 0, stdout: 'ok', stderr: '' };
+    });
+
+    const result = await executeViPreview(baseOptions(), {
+      runCommand,
+      pathExists: vi.fn().mockResolvedValue(true),
+      acquireLocalViServerSlot
+    });
+
+    expect(result.outcome).toBe('rendered');
+    expect(acquireLocalViServerSlot).toHaveBeenCalledWith('host-native:default');
+    expect(releaseSlot).toHaveBeenCalledOnce();
+  });
+
+  it('keys the slot by the derived VI Server port (VHS-REQ-669.2)', async () => {
+    const releaseSlot = vi.fn();
+    const acquireLocalViServerSlot = vi.fn().mockResolvedValue(releaseSlot);
+
+    await executeViPreview(
+      baseOptions({
+        runtime: {
+          provider: 'host-native',
+          labviewCliPath: '/usr/local/bin/LabVIEWCLI',
+          portNumber: 3363
+        }
+      }),
+      {
+        runCommand: vi.fn().mockResolvedValue({ exitCode: 0, stdout: 'ok', stderr: '' }),
+        pathExists: vi.fn().mockResolvedValue(true),
+        acquireLocalViServerSlot
+      }
+    );
+
+    expect(acquireLocalViServerSlot).toHaveBeenCalledWith('host-native:3363');
+  });
+
+  it('releases the local VI Server slot even when the host-native launch fails (VHS-REQ-669.4)', async () => {
+    const releaseSlot = vi.fn();
+    const acquireLocalViServerSlot = vi.fn().mockResolvedValue(releaseSlot);
+    const runCommand = vi
+      .fn()
+      .mockResolvedValue({ exitCode: 1, stdout: '', stderr: 'some other error' });
+
+    const result = await executeViPreview(baseOptions(), {
+      runCommand,
+      pathExists: vi.fn().mockResolvedValue(false),
+      acquireLocalViServerSlot
+    });
+
+    expect(result.outcome).toBe('failed');
+    expect(releaseSlot).toHaveBeenCalledOnce();
+  });
+
+  it('does not acquire a local VI Server slot for a container run (VHS-REQ-669.3)', async () => {
+    const acquireLocalViServerSlot = vi.fn();
+
+    await executeViPreview(
+      baseOptions({
+        runtime: {
+          provider: 'linux-container',
+          containerImage: 'nationalinstruments/labview:2026q1-linux'
+        }
+      }),
+      {
+        runCommand: vi.fn().mockResolvedValue({ exitCode: 0, stdout: 'ok', stderr: '' }),
+        pathExists: vi.fn().mockResolvedValue(true),
+        acquireLocalViServerSlot
+      }
+    );
+
+    expect(acquireLocalViServerSlot).not.toHaveBeenCalled();
+  });
 });
