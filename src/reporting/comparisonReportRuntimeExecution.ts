@@ -31,12 +31,12 @@ export {
 } from './runtime/labviewExecutablePathInference';
 import {
   normalizeWindowsInteropPath,
-  normalizeWindowsInteropExecutable,
-  normalizeComparablePath
+  resolveHostReadableWindowsPath
 } from './runtime/windowsInteropPaths';
 export {
   normalizeWindowsInteropPath,
-  normalizeWindowsInteropExecutable
+  normalizeWindowsInteropExecutable,
+  resolveHostReadableWindowsPath
 } from './runtime/windowsInteropPaths';
 import {
   resolveWindowsPowerShellHostExecutable,
@@ -3806,26 +3806,6 @@ async function forceRemovePathResilient(
     readdir: deps.readdir
   });
   await deps.removePath(targetPath, { recursive: true, force: true });
-}
-
-function resolveHostReadableWindowsPath(
-  filePath: string,
-  processPlatform: NodeJS.Platform = process.platform
-): string | undefined {
-  const trimmed = filePath.trim();
-  if (!trimmed) {
-    return undefined;
-  }
-
-  if (processPlatform === 'win32') {
-    return trimmed.replaceAll('/', '\\');
-  }
-
-  if (trimmed.startsWith('/')) {
-    return trimmed;
-  }
-
-  return normalizeWindowsInteropExecutable(trimmed);
 }
 
 // VHS-REQ-623: a Linux container comparison bind-mounts the host report directory
