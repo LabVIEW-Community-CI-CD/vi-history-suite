@@ -110,6 +110,28 @@ function consumeDevToolsPrerelease() {
   return buildAndVerifyDevToolsPrerelease({ repoRoot, run, log, fail });
 }
 
+// Build the in-guest PowerShell that runs the shipped comparison primitives for
+// the release-gating validation. The env contract is load-bearing (VHS-REQ-665):
+// this track attests an x86 host-native headless comparison, so the script MUST
+// set WIN_PROVIDER=host, WIN_LV_BITNESS=x86, and LV_RTE_WIN_HOSTNATIVE_HEADLESS=1.
+// A drift here (e.g. x86->x64) would silently record a wrong-mode attestation as
+// if it were x86 host-native, so this is extracted and unit-tested.
+function buildReleaseComparisonGuestScript(paths) {
+  return [
+    '$ErrorActionPreference = "Stop"',
+    '$env:LV_RTE_WIN_HOSTNATIVE_HEADLESS = "1"',
+    '$env:WIN_PROVIDER = "host"',
+    '$env:WIN_LV_BITNESS = "x86"',
+    `$env:WIN_REPO_ROOT = "${paths.repo}"`,
+    `$env:WIN_VI_PATH = "${paths.viPath}"`,
+    `$env:WIN_BASE = "${paths.base}"`,
+    `$env:WIN_SELECTED = "${paths.selected}"`,
+    `cd ${paths.repo}`,
+    'npm run compile',
+    'node scripts\\windows-compare-driver.cjs'
+  ].join('; ');
+}
+
 function main() {
   const { options, error } = parseDriverArgs(process.argv.slice(2));
   if (error) {
@@ -157,19 +179,12 @@ function main() {
 
   // 3. Run the shipped comparison primitives in-guest over WinRM.
   log('Running the in-guest comparison validation (x86 host-native headless, VHS-REQ-665)...');
-  const guestScript = [
-    '$ErrorActionPreference = "Stop"',
-    '$env:LV_RTE_WIN_HOSTNATIVE_HEADLESS = "1"',
-    '$env:WIN_PROVIDER = "host"',
-    '$env:WIN_LV_BITNESS = "x86"',
-    `$env:WIN_REPO_ROOT = "${GUEST_REPO}"`,
-    `$env:WIN_VI_PATH = "${GUEST_VI_PATH}"`,
-    `$env:WIN_BASE = "${GUEST_BASE}"`,
-    `$env:WIN_SELECTED = "${GUEST_SELECTED}"`,
-    `cd ${GUEST_REPO}`,
-    'npm run compile',
-    'node scripts\\windows-compare-driver.cjs'
-  ].join('; ');
+  const guestScript = buildReleaseComparisonGuestScript({
+    repo: GUEST_REPO,
+    viPath: GUEST_VI_PATH,
+    base: GUEST_BASE,
+    selected: GUEST_SELECTED
+  });
 
   const guest = run('vagrant', ['powershell', '-c', guestScript], { cwd: vagrantDir });
   if (guest.status !== 0) {
@@ -210,4 +225,11 @@ function main() {
   log('then verify the gate with: npm run release:readiness:gate');
 }
 
-main();
+module.exports = {
+  TRACK_ID,
+  buildReleaseComparisonGuestScript
+};
+
+if (require.main === module) {
+  main();
+}
