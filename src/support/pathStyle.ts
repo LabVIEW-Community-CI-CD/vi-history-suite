@@ -13,6 +13,11 @@ export function usesExplicitPosixPathStyle(rootPath: string): boolean {
   return rootPath.startsWith('/');
 }
 
+// Normalize backslashes to forward slashes so a path renders in POSIX style.
+export function toPosix(value: string): string {
+  return value.replace(/\\/g, '/');
+}
+
 // Join `rootPath` with `segments`, preserving explicit POSIX style: when the
 // root is POSIX-style, join via `path.posix` and normalize backslashes in each
 // appended segment; otherwise defer to the platform `path.join`.

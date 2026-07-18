@@ -15,6 +15,8 @@
  * filesystem.
  */
 
+import { toPosix } from '../../support/pathStyle';
+
 /** LabVIEW source/library file extensions worth staging for dependency resolution. */
 export const LABVIEW_SOURCE_EXTENSIONS = [
   '.vi',
@@ -53,10 +55,6 @@ export interface ViPreviewStagingPlan {
   viRelativePath: string;
   /** Why single-file staging was chosen, when it was. */
   reason?: 'too-many-files' | 'too-large' | 'no-siblings';
-}
-
-function toPosix(value: string): string {
-  return value.replace(/\\/g, '/');
 }
 
 export function isLabviewSourceFile(relativePath: string): boolean {

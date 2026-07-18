@@ -1,6 +1,7 @@
 import * as path from 'node:path';
 
 import { planViPreviewStagingWithProjectRoot, type ViPreviewStagingEntry } from '../reporting/viPreview/viPreviewStaging';
+import { toPosix } from '../support/pathStyle';
 
 /**
  * VHS-REQ-659: materialize a VI (and its LabVIEW source dependencies) at a
@@ -66,10 +67,6 @@ export interface MaterializedRevisionVi {
   viFilePath: string;
   stagedFileCount: number;
   strategy: 'dependency-tree' | 'single-file';
-}
-
-function toPosix(value: string): string {
-  return value.replace(/\\/g, '/');
 }
 
 /**
