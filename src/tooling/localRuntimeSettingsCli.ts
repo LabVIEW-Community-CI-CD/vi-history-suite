@@ -4,7 +4,7 @@ import * as path from 'node:path';
 import { execFile as execFileCallback } from 'node:child_process';
 import { createInterface } from 'node:readline/promises';
 import { promisify } from 'node:util';
-import { applyEdits, modify, parse, type ParseError } from 'jsonc-parser';
+import { parse } from 'jsonc-parser';
 import {
   locateComparisonRuntime,
   type ComparisonRuntimeEngine,
@@ -32,6 +32,15 @@ import {
   normalizeProvider,
   resolveCliRuntimePlatform
 } from './localRuntimeSettingsRuntimeStatus';
+import {
+  applySettingsJsoncEdit,
+  assertSupportedSettingsTarget,
+  detectSettingsEndOfLine,
+  ensureTerminalNewline,
+  isMissingFileError,
+  normalizeSettingsJsoncText,
+  readTrimmedSettingsProperty
+} from './localRuntimeSettingsFileText';
 
 export {
   buildPathPrependValue,
@@ -1160,101 +1169,6 @@ async function readExistingSettingsFileText(
 
     throw error;
   }
-}
-
-function normalizeSettingsJsoncText(
-  existingSettingsText: string | undefined,
-  settingsFilePath: string
-): string {
-  const candidateText = stripUtf8ByteOrderMark(
-    existingSettingsText?.trim() ? existingSettingsText : '{}'
-  );
-  const parseErrors: ParseError[] = [];
-  const parsed = parse(candidateText, parseErrors, {
-    allowTrailingComma: true,
-    disallowComments: false
-  }) as unknown;
-
-  if (parseErrors.length > 0) {
-    throw new Error(`Failed to parse VS Code settings JSONC at ${settingsFilePath}.`);
-  }
-
-  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-    throw new Error('VS Code settings.json must contain a JSON object.');
-  }
-
-  return candidateText;
-}
-
-function stripUtf8ByteOrderMark(text: string): string {
-  return text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
-}
-
-function applySettingsJsoncEdit(
-  settingsText: string,
-  pathSegments: readonly string[],
-  value: string,
-  endOfLine: '\n' | '\r\n'
-): string {
-  const edits = modify(settingsText, [...pathSegments], value, {
-    formattingOptions: {
-      insertSpaces: true,
-      tabSize: 2,
-      eol: endOfLine
-    }
-  });
-  return applyEdits(settingsText, edits);
-}
-
-function detectSettingsEndOfLine(existingSettingsText: string | undefined): '\n' | '\r\n' {
-  if (existingSettingsText?.includes('\r\n')) {
-    return '\r\n';
-  }
-  return '\n';
-}
-
-function ensureTerminalNewline(settingsText: string, endOfLine: '\n' | '\r\n'): string {
-  if (settingsText.endsWith(endOfLine)) {
-    return settingsText;
-  }
-  return `${settingsText}${endOfLine}`;
-}
-
-function assertSupportedSettingsTarget(settingsFilePath: string): void {
-  const normalizedSegments = path
-    .normalize(settingsFilePath)
-    .split(/[\\/]+/)
-    .map((segment) => segment.toLowerCase());
-  const finalSegment = normalizedSegments.at(-1);
-  const parentSegment = normalizedSegments.at(-2);
-
-  if (parentSegment === '.vscode' && finalSegment === 'settings.json') {
-    throw new Error(
-      'Workspace settings are not supported for VI History runtime-settings CLI. Use the default user settings.json target or an explicit non-workspace settings-file path.'
-    );
-  }
-}
-
-function isMissingFileError(error: unknown): error is NodeJS.ErrnoException {
-  return (
-    !!error &&
-    typeof error === 'object' &&
-    'code' in error &&
-    (error as NodeJS.ErrnoException).code === 'ENOENT'
-  );
-}
-
-function readTrimmedSettingsProperty(
-  settingsObject: Record<string, unknown>,
-  propertyName: string
-): string | undefined {
-  const value = settingsObject[propertyName];
-  if (typeof value !== 'string') {
-    return undefined;
-  }
-
-  const trimmedValue = value.trim();
-  return trimmedValue ? trimmedValue : undefined;
 }
 
 async function ensurePersistentUserPathAdmission(
