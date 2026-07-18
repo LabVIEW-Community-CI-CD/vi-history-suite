@@ -65,3 +65,30 @@ export function normalizeComparablePath(filePath?: string): string | undefined {
   const windowsPath = normalizeWindowsInteropPath(trimmed) ?? trimmed.replaceAll('/', '\\');
   return windowsPath.replaceAll('/', '\\').toLowerCase();
 }
+
+/**
+ * Resolve a path into a form the host (or interop layer) can read: on win32 use
+ * backslashes; on a POSIX host pass through an already-absolute POSIX path, else
+ * fall through to the interop-executable normalization (drive-letter -> /mnt).
+ * Extracted verbatim from comparisonReportRuntimeExecution and re-exported by the
+ * parent to preserve the public API.
+ */
+export function resolveHostReadableWindowsPath(
+  filePath: string,
+  processPlatform: NodeJS.Platform = process.platform
+): string | undefined {
+  const trimmed = filePath.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+
+  if (processPlatform === 'win32') {
+    return trimmed.replaceAll('/', '\\');
+  }
+
+  if (trimmed.startsWith('/')) {
+    return trimmed;
+  }
+
+  return normalizeWindowsInteropExecutable(trimmed);
+}
