@@ -4491,6 +4491,7 @@ Missing numeric IDs are intentional.
   - `src/reporting/viPreview/viPreviewFramesModel.ts`
   - `src/reporting/viPreview/viPreviewFramesViewer.ts`
   - `src/reporting/viPreview/viPreviewFlatFrames.ts`
+  - `src/reporting/viPreview/viPreviewRenderMode.ts`
   - `src/ui/viPreviewEditor.ts`
   - `src/ui/viPreviewRenderHost.ts`
   - `src/ui/viPreviewCacheWarmerService.ts`
@@ -4516,6 +4517,7 @@ Missing numeric IDs are intentional.
   - `tests/unit/viPreviewFramesModel.test.ts`
   - `tests/unit/viPreviewFramesViewer.test.ts`
   - `tests/unit/viPreviewFlatFrames.test.ts`
+  - `tests/unit/viPreviewRenderMode.test.ts`
   - `tests/unit/viPreviewSessionManager.test.ts`
   - `tests/unit/viPreviewSessionRuntime.test.ts`
   - `tests/unit/viPreviewVerification.test.ts`
