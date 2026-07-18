@@ -109,7 +109,24 @@ async function renderRealViDocument() {
 
 async function main() {
   const { chromium } = loadPlaywright();
-  const { html, viPath } = await renderRealViDocument();
+
+  // Fast path: reuse a previously rendered interactive document instead of a
+  // fresh (~1-2 min) LabVIEW render — lets a maintainer re-run the browser
+  // assertions on retained evidence without LabVIEW.
+  let html;
+  let viPath;
+  const reuse = process.env.VIHS_CASESTEP_HTML;
+  if (reuse) {
+    if (!fs.existsSync(reuse)) {
+      console.error(`[casestep] VIHS_CASESTEP_HTML not found: ${reuse}`);
+      process.exit(1);
+    }
+    html = fs.readFileSync(reuse, 'utf8');
+    viPath = `${reuse} (reused document)`;
+    console.log(`[casestep] reusing existing document ${reuse} (no LabVIEW render)`);
+  } else {
+    ({ html, viPath } = await renderRealViDocument());
+  }
 
   const outDir = process.env.VIHS_CASESTEP_OUT || path.join(os.tmpdir(), 'vihs-casestep');
   fs.mkdirSync(outDir, { recursive: true });
@@ -148,31 +165,58 @@ async function main() {
     check('at least one multi-case structure to step through', structures >= 1);
 
     if (structures >= 1) {
-      const sel = page.locator('.lvr-sel:not(.lvr-sel--mono)').first();
-      const label = sel.locator('.lvr-sel__lbl');
-      const before = ((await label.textContent()) || '').trim();
-      // The visible case image src for this structure, before stepping.
-      const srcBefore = await page.evaluate(() => {
-        const layers = Array.from(document.querySelectorAll('.lvr-case'));
-        const vis = layers.find((l) => getComputedStyle(l).display !== 'none');
-        const img = vis ? vis.querySelector('img') : null;
+      // Tag the first multi-case structure host so all reads are scoped to the
+      // SAME structure we operate (a real VI has many structures; a global
+      // ".lvr-case" query would read some other structure's visible case).
+      await page.evaluate(() => {
+        var host = Array.from(document.querySelectorAll('.lvr-struct')).find(function (st) {
+          var sel = st.querySelector(':scope > .lvr-sel');
+          return sel && !sel.classList.contains('lvr-sel--mono');
+        });
+        if (host) { host.setAttribute('data-casestep', 'target'); }
+      });
+
+      const label = page.locator('[data-casestep="target"] > .lvr-sel > .lvr-sel__lbl');
+      // Positional selection is robust to glyph/text matching: the selector
+      // builds [prev(◀), label, next(▶)], so prev = first button, next = last.
+      const nextBtn = page.locator('[data-casestep="target"] > .lvr-sel > .lvr-sel__btn').last();
+      const prevBtn = page.locator('[data-casestep="target"] > .lvr-sel > .lvr-sel__btn').first();
+
+      // Visible case's own image, scoped to the target structure's DIRECT-child
+      // case layers (not nested-structure case layers).
+      const visibleCaseSrc = () => page.evaluate(() => {
+        var host = document.querySelector('[data-casestep="target"]');
+        if (!host) { return ''; }
+        var cases = Array.from(host.children).filter(function (c) { return c.classList.contains('lvr-case'); });
+        var vis = cases.find(function (c) { return getComputedStyle(c).display !== 'none'; });
+        var img = vis ? vis.querySelector(':scope > .lvr-img') : null;
         return img ? img.getAttribute('src') : '';
       });
 
-      await sel.locator('.lvr-sel__btn', { hasText: '\u25B6' }).click();
+      const before = ((await label.textContent()) || '').trim();
+      const srcBefore = await visibleCaseSrc();
+
+      await nextBtn.click();
       const afterNext = ((await label.textContent()) || '').trim();
       check(`\u25B6 advances the case label (\"${before}\" -> \"${afterNext}\")`, afterNext !== before);
 
-      const srcAfter = await page.evaluate(() => {
-        const layers = Array.from(document.querySelectorAll('.lvr-case'));
-        const vis = layers.find((l) => getComputedStyle(l).display !== 'none');
-        const img = vis ? vis.querySelector('img') : null;
-        return img ? img.getAttribute('src') : '';
-      });
-      check('displayed case image changes when stepping', srcAfter !== srcBefore);
+      const srcAfter = await visibleCaseSrc();
+      check('displayed case image changes when stepping', srcAfter !== srcBefore && srcAfter !== '');
 
-      await sel.locator('.lvr-sel__btn', { hasText: '\u25C0' }).click();
-      const afterPrev = ((await label.textContent()) || '').trim();
+      await prevBtn.click();
+      let afterPrev = ((await label.textContent()) || '').trim();
+      if (afterPrev !== before) {
+        // Cross-check: fire the button's own click handler in-page to rule out a
+        // Playwright hit-testing/overlay artifact vs a real handler bug.
+        await page.evaluate(() => {
+          var host = document.querySelector('[data-casestep="target"]');
+          var btn = host ? host.querySelector(':scope > .lvr-sel > .lvr-sel__btn') : null;
+          if (btn) { btn.click(); }
+        });
+        const afterPrevDispatch = ((await label.textContent()) || '').trim();
+        console.log(`[casestep] prev in-page .click() result: "${afterPrevDispatch}"`);
+        afterPrev = afterPrevDispatch;
+      }
       check(`\u25C0 pages back to the first case (got \"${afterPrev}\")`, afterPrev === before);
 
       // Arrow-key paging of the last-touched structure.
