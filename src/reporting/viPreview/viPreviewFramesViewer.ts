@@ -59,7 +59,12 @@ const VIEWER_STYLE = `
     touch-action: none;
   }
   .lvr-viewport.lvr-grabbing { cursor: grabbing; }
-  .lvr-stage { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+  .lvr-stage {
+    position: absolute; left: 0; top: 0; transform-origin: 0 0;
+    /* LabVIEW diagrams are drawn on white; keep the preview surface white
+       regardless of the VS Code color theme so dark mode never tints it. */
+    background: #ffffff;
+  }
   .lvr-layer, .lvr-case { position: absolute; left: 0; top: 0; }
   .lvr-img { display: block; user-select: none; -webkit-user-drag: none; }
   .lvr-struct { position: absolute; }
