@@ -50,6 +50,7 @@ src/git/gitApi.ts,mapped,Yes,Git API wrapper enabling viHistoryService Git state
 src/git/gitCli.ts,mapped,Yes,Git CLI wrapper; mapped through RTM.
 src/reporting/comparisonReportAction.ts,mapped,Yes,Comparison report action; mapped through RTM.
 src/reporting/comparisonBlockedReason.ts,supporting,No,"Pure comparison blocked-reason projection (deriveComparisonBlockedReason) extracted verbatim from comparisonReportAction and imported back to preserve behavior while isolating the runtime/preflight blocked-reason selection from action orchestration; supporting VHS-REQ-624."
+src/reporting/comparisonRevisionMetadata.ts,supporting,No,"Pure revision-metadata projection (toRevisionMetadata) extracted verbatim from comparisonReportAction and imported back to preserve behavior while isolating commit-to-packet revision-metadata mapping from action orchestration; supporting VHS-REQ-643."
 src/reporting/comparisonReportExecutionPlan.ts,mapped,Yes,Comparison execution plan; mapped through RTM.
 src/reporting/comparisonReportExport.ts,mapped,Yes,Comparison report export to an accessible location for external browser viewing plus the source VI path threaded for report re-entry; mapped to VHS-REQ-626 and VHS-REQ-638.
 src/reporting/comparisonReportContextMarkup.ts,mapped,Yes,Shared revision-context renderer used by the in-panel comparison report and the exported graphics report; mapped to VHS-REQ-626 and VHS-REQ-644.

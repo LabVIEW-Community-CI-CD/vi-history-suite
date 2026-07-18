@@ -42,6 +42,8 @@ import {
   persistComparisonReportPacket
 } from './comparisonReportPacket';
 import { deriveComparisonBlockedReason } from './comparisonBlockedReason';
+import { toRevisionMetadata } from './comparisonRevisionMetadata';
+export { toRevisionMetadata } from './comparisonRevisionMetadata';
 import { executeComparisonReport, materializeSelectedRevisionTreeWithGit } from './comparisonReportRuntimeExecution';
 import { ComparisonReportExportRegistry } from './comparisonReportExport';
 import { ComparisonReportOptions } from './comparisonReportPlan';
@@ -1336,27 +1338,6 @@ async function renderPersistedComparisonReportPacketPanelHtml(options: {
   } catch {
     return renderComparisonReportPanelHtml(options);
   }
-}
-
-function toRevisionMetadata(
-  commit:
-    | Pick<ViHistoryViewModel['commits'][number], 'hash' | 'authorDate' | 'authorName' | 'subject' | 'body'>
-    | undefined,
-  fallbackHash: string
-): ComparisonReportRevisionMetadata {
-  if (!commit) {
-    return {
-      hash: fallbackHash
-    };
-  }
-
-  return {
-    hash: commit.hash,
-    authorDate: commit.authorDate,
-    authorName: commit.authorName,
-    subject: commit.subject,
-    body: commit.body
-  };
 }
 
 export interface ApplyComparisonReportOptionSelectionDeps {
