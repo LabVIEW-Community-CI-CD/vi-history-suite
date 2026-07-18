@@ -65,6 +65,7 @@ src/reporting/runtime/labviewCliPortArg.ts,supporting,No,"Pure LabVIEW CLI port-
 src/reporting/comparisonRuntimeDoctor.ts,mapped,Yes,Comparison runtime doctor; mapped through RTM.
 src/reporting/comparisonRuntimeLocator.ts,mapped,Yes,Comparison runtime locator; mapped through RTM.
 src/reporting/runtime/windowsRegistryCandidateParsing.ts,supporting,No,"Pure Windows registry LabVIEW candidate parser (parseWindowsRegistryLabviewCandidates) extracted verbatim from comparisonRuntimeLocator and re-exported to preserve the public API while isolating registry-text parsing and unsupported-year filtering from runtime-locator orchestration; supporting VHS-REQ-634."
+src/reporting/runtime/documentedRuntimeCandidates.ts,supporting,No,"Pure documented runtime candidate builders (buildDocumentedRuntimeCandidates, buildWindowsRegistryQueryPlans) extracted verbatim from comparisonRuntimeLocator and re-exported to preserve the public API while isolating catalog-derived scan-candidate and registry-query-plan construction from runtime-locator orchestration; supporting VHS-REQ-632."
 src/reporting/diagnostics/diagnosticsRecorder.ts,mapped,Yes,Comparison runtime diagnostics bundle recorder; retained runtime evidence schema mapped through RTM (VHS-REQ-148).
 src/reporting/runtime/labviewCliIni.ts,mapped,Yes,LabVIEWCLI.ini connect-window hardening helper for Windows host-native compare; mapped through RTM (VHS-REQ-148).
 src/scenarios/decisionRecord.ts,supporting,No,Decision record persistence infrastructure; supporting VHS-REQ-610 dashboard aggregate review.
@@ -134,6 +135,7 @@ tests/unit/labviewCliPortArg.test.ts,supporting,No,"Pure LabVIEW CLI port-argume
 tests/unit/comparisonRuntimeDoctor.test.ts,mapped,Yes,Comparison runtime doctor tests; mapped through RTM.
 tests/unit/comparisonRuntimeLocator.test.ts,mapped,Yes,Comparison runtime locator tests; mapped through RTM.
 tests/unit/windowsRegistryCandidateParsing.test.ts,supporting,No,"Pure Windows registry LabVIEW candidate parser unit tests (direct-exe and install-directory forms, dedup, unsupported-year drop, supported-year keep, empty input); supporting VHS-REQ-634."
+tests/unit/documentedRuntimeCandidates.test.ts,supporting,No,"Pure documented runtime candidate builder unit tests (Windows registry query plans, win32/linux scan-candidate construction, unsupported-platform empty result); supporting VHS-REQ-632."
 tests/unit/dashboardEtaAccuracy.test.ts,mapped,Yes,Dashboard ETA accuracy tests; mapped to VHS-REQ-610.
 tests/unit/dashboardLatestRun.test.ts,mapped,Yes,Dashboard latest-run record tests; mapped to VHS-REQ-610.
 tests/unit/devHostLoop.test.ts,dev-only,No,Development host loop tests; development tooling.
