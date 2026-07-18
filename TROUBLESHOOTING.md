@@ -67,6 +67,25 @@ docker info --format "{{.OSType}}"
 
 The first Docker compare can pull a large LabVIEW runtime image.
 
+## VI Preview shows "requires Docker to generate the cache" on the Host runtime
+
+VI previews are **generated on Docker** and **displayed from the render cache**.
+On the Host (installed LabVIEW) runtime the editor shows a cached preview when
+one exists and otherwise guides you to generate it on Docker, because a live
+render is Docker-only. Two ways to see a preview on Host:
+
+- **Generate on Docker, then view on Host.** With `viHistorySuite.preview.enabled`
+  on and Docker selected, the background warmer caches the workspace's VIs. Then
+  switch to the Host runtime and reopen the VI — the display reads the cache and
+  does not run Docker. Note the cache is keyed by the VI file's on-disk identity,
+  so this applies to directly-opened `.vi` files (not Source Control diff bases).
+- **Let a Docker-less LabVIEW environment render directly.** For a dedicated
+  LabVIEW VM with no Docker (for example the Vagrant LabVIEW VM, since Docker and
+  Vagrant cannot run at once), set `viHistorySuite.preview.allowHostNativeRender: true`
+  so the Host both generates the cache and visualizes previews. Turn on
+  `viHistorySuite.preview.blockDiagramInteractive` for the interactive
+  pan/zoom/case-stepper view.
+
 ## Windows + Docker (Linux container) compare fails instantly with a bash parse error
 
 ### Symptom
