@@ -59,7 +59,6 @@ export {
 } from './runtimeAvailabilityGatePredicates';
 import {
   decideFirstRunPresentation,
-  evaluateRuntimeAvailability,
   selectActiveRuntime
 } from './runtimeSelection';
 
