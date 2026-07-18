@@ -19,8 +19,8 @@
       "image": "nationalinstruments/labview:2026q1-linux",
       "linuxExecutable": true,
       "lastValidatedVersion": "1.33.2",
-      "lastValidatedCommit": "9ea4ab13",
-      "evidence": "issue:#1317",
+      "lastValidatedCommit": "27f069be",
+      "evidence": "coupled-extraction kickoff baseline: real docker linux-container 2026q1 CreateComparisonReport of lv_icon.vi (5376833..fc09736) succeeded, reportExists=true, 2026-07-18",
       "fixture": "labview-icon-editor resource/plugins/lv_icon.vi"
     },
     {
