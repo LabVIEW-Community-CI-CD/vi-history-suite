@@ -3,7 +3,7 @@ import { pathExistsViaFsAccess as defaultPathExists } from '../support/fsExists'
 import { escapeHtml } from '../support/escapeHtml';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
-import { isValidArchivedComparisonReportSourceRecord } from './comparisonReportArchiveRecordValidation';
+import { readValidatedArchivedComparisonReportSourceRecord } from './archivedComparisonReportSourceRecordReader';
 import {
   readCliConnectTimeoutSeconds,
   readComparisonReportOptions,
@@ -464,42 +464,6 @@ export function createOpenRetainedComparisonReportAction(
       deps
     );
   };
-}
-
-async function readValidatedArchivedComparisonReportSourceRecord(options: {
-  storageRoot: string;
-  expectedArchivePlan: ReturnType<typeof buildComparisonReportArchivePlanFromSelection>;
-  selectedHash: string;
-  baseHash: string;
-  pathExists: (targetPath: string) => Promise<boolean>;
-  readFile: typeof fs.readFile;
-}): Promise<ArchivedComparisonReportSourceRecord | undefined> {
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(
-      await options.readFile(options.expectedArchivePlan.sourceRecordFilePath, 'utf8')
-    );
-  } catch {
-    return undefined;
-  }
-
-  if (
-    !isValidArchivedComparisonReportSourceRecord(
-      parsed,
-      options.storageRoot,
-      options.expectedArchivePlan,
-      options.selectedHash,
-      options.baseHash
-    )
-  ) {
-    return undefined;
-  }
-
-  if (!(await options.pathExists(parsed.archivePlan.packetFilePath))) {
-    return undefined;
-  }
-
-  return parsed;
 }
 
 async function ensureComparisonReportEvidence(
