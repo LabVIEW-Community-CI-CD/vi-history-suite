@@ -75,6 +75,8 @@ export {
 } from './runtime/diagnosticNotes';
 import { parseSubmoduleGitlinks } from './runtime/submoduleGitlinkParsing';
 export { parseSubmoduleGitlinks } from './runtime/submoduleGitlinkParsing';
+import { appendLabviewCliPortNumberArg } from './runtime/labviewCliPortArg';
+export { appendLabviewCliPortNumberArg } from './runtime/labviewCliPortArg';
 import {
   isPathInsideDirectory,
   posixDirname,
@@ -1934,24 +1936,6 @@ export async function resolveWindowsLabviewTcpSettingsForLabviewPath(
       `Derived VI Server TCP port ${String(labviewTcpPort)} from ${labviewIniPath} and passed it explicitly to LabVIEW CLI.`
     ]
   };
-}
-
-export function appendLabviewCliPortNumberArg(
-  args: string[],
-  labviewTcpPort: number | undefined
-): string[] {
-  if (!Number.isInteger(labviewTcpPort) || (labviewTcpPort ?? 0) <= 0) {
-    return [...args];
-  }
-
-  const existingPortIndex = args.findIndex((argument) => argument.toLowerCase() === '-portnumber');
-  if (existingPortIndex >= 0) {
-    const updated = [...args];
-    updated[existingPortIndex + 1] = String(labviewTcpPort);
-    return updated;
-  }
-
-  return [...args, '-PortNumber', String(labviewTcpPort)];
 }
 
 const DEFAULT_LINUX_LABVIEW_TCP_PORT = 3363;
