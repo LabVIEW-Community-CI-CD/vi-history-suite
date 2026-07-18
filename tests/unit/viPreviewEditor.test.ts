@@ -4,6 +4,7 @@ const {
   registerCustomEditorProviderMock,
   workspaceTrusted,
   blockDiagramInteractive,
+  hostNativeRenderAllowed,
   isViPreviewEnabledMock,
   resolvePreviewRuntimeMock,
   renderViPreviewForFileMock,
@@ -13,6 +14,7 @@ const {
   registerCustomEditorProviderMock: vi.fn(),
   workspaceTrusted: { value: true },
   blockDiagramInteractive: { value: false },
+  hostNativeRenderAllowed: { value: false },
   isViPreviewEnabledMock: vi.fn(),
   resolvePreviewRuntimeMock: vi.fn(),
   renderViPreviewForFileMock: vi.fn(),
@@ -30,7 +32,11 @@ vi.mock('vscode', () => ({
     },
     getConfiguration: () => ({
       get: (key: string, fallback: unknown) =>
-        key === 'preview.blockDiagramInteractive' ? blockDiagramInteractive.value : fallback
+        key === 'preview.blockDiagramInteractive'
+          ? blockDiagramInteractive.value
+          : key === 'preview.allowHostNativeRender'
+            ? hostNativeRenderAllowed.value
+            : fallback
     })
   }
 }));
@@ -97,6 +103,7 @@ describe('VI Preview custom editor (VHS-REQ-659.8)', () => {
     vi.clearAllMocks();
     workspaceTrusted.value = true;
     blockDiagramInteractive.value = false;
+    hostNativeRenderAllowed.value = false;
     isViPreviewEnabledMock.mockReturnValue(true);
     resolvePreviewRuntimeMock.mockResolvedValue({
       outcome: 'ready',
@@ -151,18 +158,69 @@ describe('VI Preview custom editor (VHS-REQ-659.8)', () => {
     expect(renderViPreviewForFileMock).not.toHaveBeenCalled();
   });
 
-  it('requires Docker and does not render when the resolved runtime is host-native (VHS-REQ-659.7)', async () => {
+  it('guides to Docker when host-native has no cached preview (VHS-REQ-659.7)', async () => {
     resolvePreviewRuntimeMock.mockResolvedValueOnce({
       outcome: 'ready',
       runtime: { provider: 'host-native', labviewCliPath: 'C:\\LabVIEWCLI.exe' }
+    });
+    // Host-native does a cache-only peek; a miss must NOT launch LabVIEW.
+    renderViPreviewForFileMock.mockResolvedValueOnce({
+      outcome: 'failed',
+      failureReason: 'preview-cache-miss'
     });
     const provider = providerFromLastRegistrationAfterRegister();
 
     const panel = await resolveEditor(provider);
 
-    expect(panel.webview.html).toContain('VI Preview requires Docker');
-    expect(panel.webview.html).toContain('VI Preview runs on the Docker runtime');
-    expect(renderViPreviewForFileMock).not.toHaveBeenCalled();
+    expect(panel.webview.html).toContain('requires Docker to generate the cache');
+    // The peek ran in cacheOnly mode (no live render / LabVIEW launch).
+    expect(renderViPreviewForFileMock).toHaveBeenCalledWith(
+      expect.objectContaining({ cacheOnly: true }),
+      expect.anything()
+    );
+  });
+
+  it('displays a cached preview on host-native without launching LabVIEW (VHS-REQ-659.7)', async () => {
+    resolvePreviewRuntimeMock.mockResolvedValueOnce({
+      outcome: 'ready',
+      runtime: { provider: 'host-native', labviewCliPath: 'C:\\LabVIEWCLI.exe' }
+    });
+    renderViPreviewForFileMock.mockResolvedValueOnce({
+      outcome: 'rendered',
+      html: '<html>cached host preview</html>',
+      cached: true
+    });
+    const provider = providerFromLastRegistrationAfterRegister();
+
+    const panel = await resolveEditor(provider);
+
+    expect(panel.webview.html).toContain('cached host preview');
+    expect(renderViPreviewForFileMock).toHaveBeenCalledWith(
+      expect.objectContaining({ cacheOnly: true }),
+      expect.anything()
+    );
+  });
+
+  it('renders live on host-native when allowHostNativeRender is on (Vagrant; VHS-REQ-659.7)', async () => {
+    hostNativeRenderAllowed.value = true;
+    resolvePreviewRuntimeMock.mockResolvedValueOnce({
+      outcome: 'ready',
+      runtime: { provider: 'host-native', labviewCliPath: 'C:\\LabVIEWCLI.exe' }
+    });
+    renderViPreviewForFileMock.mockResolvedValueOnce({
+      outcome: 'rendered',
+      html: '<html>vagrant live preview</html>'
+    });
+    const provider = providerFromLastRegistrationAfterRegister();
+
+    const panel = await resolveEditor(provider);
+
+    expect(panel.webview.html).toContain('vagrant live preview');
+    // A live render (not a cacheOnly peek) generates and caches on the VM.
+    expect(renderViPreviewForFileMock).toHaveBeenCalledWith(
+      expect.not.objectContaining({ cacheOnly: true }),
+      expect.anything()
+    );
   });
 
   it('renders through the shared warm session for a Docker runtime and starts warming (VHS-REQ-659.12)', async () => {

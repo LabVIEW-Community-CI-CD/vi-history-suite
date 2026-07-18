@@ -249,6 +249,11 @@
           "default": false,
           "description": "Show the VI block diagram as an interactive view instead of a static picture: pan by dragging, zoom with Ctrl/Cmd+scroll, and step through each Case/Event/Sequence structure's cases in place with the ◀ n/N ▶ selector or the arrow keys. Off by default (the static document view is shown). Requires VI Preview to be on."
         },
+        "viHistorySuite.preview.allowHostNativeRender": {
+          "type": "boolean",
+          "default": false,
+          "description": "Allow the Host (installed LabVIEW) runtime to render VI previews directly, instead of only displaying previews already cached on Docker. Off by default: Docker generates the cache and the Host displays it. Turn this on for a dedicated LabVIEW environment that has no Docker (for example the Vagrant LabVIEW VM) so it can both generate the cache and visualize previews. Requires VI Preview to be on."
+        },
         "viHistorySuite.preview.warmOnChange": {
           "type": "boolean",
           "default": true,

@@ -73,7 +73,8 @@ export type ViPreviewFailureReason =
   | 'labview-cli-connection-failed'
   | 'labview-preview-operation-load-failed'
   | 'command-exited-nonzero'
-  | 'preview-output-not-produced';
+  | 'preview-output-not-produced'
+  | 'preview-cache-miss';
 
 export interface ViPreviewExecutionResult {
   outcome: 'rendered' | 'blocked' | 'failed';
