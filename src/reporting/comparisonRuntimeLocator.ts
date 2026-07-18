@@ -71,6 +71,10 @@ export { inferBitnessFromPath } from './runtime/bitnessHelpers';
 import { resolveConfiguredCandidates } from './runtime/configuredCandidateResolution';
 import { resolveExactWindowsHostRuntime } from './runtime/exactWindowsHostRuntime';
 import { buildLegacyWindowsContainerProviderFacts } from './runtime/legacyWindowsContainerFacts';
+import {
+  resolveEffectiveExecutionMode,
+  selectPreferredLabviewCandidate
+} from './runtime/runtimeSelectionHelpers';
 
 const execFileAsync = promisify(execFile);
 
@@ -1447,18 +1451,6 @@ export async function locateComparisonRuntime(
   };
 }
 
-function resolveEffectiveExecutionMode(
-  settings: ComparisonRuntimeSettings
-): RuntimeExecutionMode {
-  if (settings.requestedProvider === 'host') {
-    return 'host-only';
-  }
-  if (settings.requestedProvider === 'docker') {
-    return 'docker-only';
-  }
-  return settings.executionMode ?? 'auto';
-}
-
 async function observeWindowsHostRuntimeSurfaceFacts(
   labviewPath: string,
   deps: {
@@ -1583,23 +1575,6 @@ async function resolveScanCandidates(
       exists: await pathExists(candidate.path)
     }))
   );
-}
-
-function selectPreferredLabviewCandidate(
-  candidates: RuntimeToolCandidate[],
-  bitness: RuntimeBitness,
-  platform: RuntimePlatform
-): RuntimeToolCandidate | undefined {
-  const priorities = bitness === 'x64' ? ['x64', 'x86'] : ['x86', 'x64'];
-
-  for (const priority of priorities) {
-    const selected = candidates.find((candidate) => candidate.bitness === priority);
-    if (selected) {
-      return selected;
-    }
-  }
-
-  return candidates[0];
 }
 
 async function defaultPathExists(filePath: string): Promise<boolean> {
