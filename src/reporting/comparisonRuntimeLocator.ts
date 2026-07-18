@@ -68,8 +68,9 @@ import {
   detectContainerImageVersionPlatformConflict,
   parseLabviewContainerImageReference
 } from '../tooling/containerImageCatalog';
-import { describeBitness, inferBitnessFromPath } from './runtime/bitnessHelpers';
+import { describeBitness } from './runtime/bitnessHelpers';
 export { inferBitnessFromPath } from './runtime/bitnessHelpers';
+import { resolveConfiguredCandidates } from './runtime/configuredCandidateResolution';
 
 const execFileAsync = promisify(execFile);
 
@@ -1559,41 +1560,6 @@ function buildLegacyWindowsContainerProviderFacts(
     notes: imageAvailable
       ? [`Windows container image ${image} was available through the legacy image-inspect probe.`]
       : [`Legacy Windows container image probe did not find image ${image} on the current host.`]
-  };
-}
-
-async function resolveConfiguredCandidates(
-  settings: ComparisonRuntimeSettings,
-  pathExists: (filePath: string) => Promise<boolean>
-): Promise<RuntimeToolCandidate[]> {
-  const configured = [
-    buildConfiguredCandidate('labview-cli', settings.labviewCliPath),
-    buildConfiguredCandidate('labview-exe', settings.labviewExePath)
-  ].filter((candidate): candidate is Omit<RuntimeToolCandidate, 'exists'> => Boolean(candidate));
-
-  return Promise.all(
-    configured.map(async (candidate) => ({
-      ...candidate,
-      exists: await pathExists(candidate.path)
-    }))
-  );
-}
-
-function buildConfiguredCandidate(
-  kind: RuntimeCandidateKind,
-  rawPath: string | undefined
-): Omit<RuntimeToolCandidate, 'exists'> | undefined {
-  const trimmed = rawPath?.trim();
-  if (!trimmed) {
-    return undefined;
-  }
-
-  return {
-    kind,
-    path: trimmed,
-    source: 'configured',
-    bitness:
-      kind === 'labview-exe' || kind === 'labview-cli' ? inferBitnessFromPath(trimmed) : undefined
   };
 }
 
