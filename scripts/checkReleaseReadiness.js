@@ -655,7 +655,7 @@ function renderMarkdown(verdict) {
   lines.push('| Check | Result | Details |');
   lines.push('| --- | --- | --- |');
   for (const check of verdict.checks) {
-    lines.push(`| ${check.name} | ${check.passed ? 'PASS' : 'ATTENTION'} | ${check.details.replace(/\|/g, '\\|')} |`);
+    lines.push(`| ${check.name} | ${check.passed ? 'PASS' : 'ATTENTION'} | ${check.details.replace(/\\/g, '\\\\').replace(/\|/g, '\\|')} |`);
   }
   lines.push('');
   lines.push(`_Runtime attestation:_ ${verdict.runtimeAttestation}`);

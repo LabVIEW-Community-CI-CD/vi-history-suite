@@ -260,8 +260,8 @@ function renderManifestMarkdown(manifest) {
   lines.push('| Requirement | Area | Title | Criteria |');
   lines.push('| --- | --- | --- | ---: |');
   for (const requirement of manifest.requirements) {
-    const title = requirement.title.replace(/\|/g, '\\|');
-    const area = requirement.area.replace(/\|/g, '\\|');
+    const title = requirement.title.replace(/\\/g, '\\\\').replace(/\|/g, '\\|');
+    const area = requirement.area.replace(/\\/g, '\\\\').replace(/\|/g, '\\|');
     lines.push(
       `| \`${requirement.id}\` | ${area} | ${title} | ${requirement.acceptanceCriteria.length} |`
     );
