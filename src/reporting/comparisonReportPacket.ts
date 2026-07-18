@@ -21,6 +21,7 @@ import { ComparisonReportPreflightResult } from './comparisonReportPreflight';
 import { formatComparisonRevisionHashDisplay } from './comparisonRevisionHashDisplay';
 export { formatComparisonRevisionHashDisplay } from './comparisonRevisionHashDisplay';
 import { deriveProviderRequestLabel } from './comparisonProviderRequestLabel';
+import { renderCommand } from './comparisonReportCommandRendering';
 
 export type ComparisonReportRuntimeExecutionState =
   | 'not-run'
@@ -707,14 +708,6 @@ function renderRevisionContextCard(
       <div><strong>Subject:</strong> ${renderRevisionMetadataValue(revision?.subject)}</div>
       <div><strong>Body:</strong> ${renderRevisionBodyValue(revision?.body)}</div>
     </div>`;
-}
-
-function renderCommand(runtimeExecution: ComparisonReportRuntimeExecution): string {
-  if (!runtimeExecution.executable) {
-    return 'none';
-  }
-
-  return [runtimeExecution.executable, ...(runtimeExecution.args ?? [])].join(' ');
 }
 
 function deriveReportStatus(
