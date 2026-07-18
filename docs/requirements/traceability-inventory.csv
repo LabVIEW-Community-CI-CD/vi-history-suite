@@ -332,11 +332,13 @@ src/tooling/containerImageCatalog.ts,mapped,Yes,LabVIEW container image tag mode
 src/tooling/runtimeAutoDetect.ts,mapped,Yes,Filesystem-only host and Docker runtime detector mapped to VHS-REQ-616.
 src/tooling/runtimeSettingsSeed.ts,mapped,Yes,Activation seed-or-repair policy for VI History runtime settings mapped to VHS-REQ-616.
 src/ui/runtimeAvailabilityNotice.ts,mapped,Yes,Status bar and first-run missing-runtime notification surface mapped to VHS-REQ-617; LabVIEW CLI open-command gate helpers mapped to VHS-REQ-627; LabVIEW-installed CLI-missing install offer mapped to VHS-REQ-629; pre-panel VI Server open gate mapped to VHS-REQ-631.
+src/ui/runtimeAvailabilityMessages.ts,supporting,No,"Runtime open-blocked/mismatch message builders (buildBitnessOpenBlockedMessage, buildVersionOpenBlockedMessage, buildContainerImagePlatformMismatchTooltip) extracted verbatim from runtimeAvailabilityNotice and re-exported to preserve the public API while separating pure window-free message building from status-bar/gate orchestration; supporting VHS-REQ-636, VHS-REQ-637, VHS-REQ-650."
 src/commands/runtimeCommands.ts,mapped,Yes,Runtime convenience commands (detectRuntimeNow; resetFirstRunNotice; showRuntimeSummary) mapped to VHS-REQ-617.
 tests/unit/labviewInstallCatalog.test.ts,mapped,Yes,Install catalog builder unit tests mapped to VHS-REQ-632.
 tests/unit/runtimeAutoDetect.test.ts,mapped,Yes,Detector unit tests mapped to VHS-REQ-616.
 tests/unit/runtimeSettingsSeed.test.ts,mapped,Yes,Settings seed-or-repair unit tests mapped to VHS-REQ-616.
 tests/unit/runtimeAvailabilityNotice.test.ts,mapped,Yes,Missing-runtime UX unit tests mapped to VHS-REQ-617; LabVIEW CLI open-command gate tests mapped to VHS-REQ-627; LabVIEW-installed CLI-missing install offer tests mapped to VHS-REQ-629; pre-panel VI Server open gate tests mapped to VHS-REQ-631.
+tests/unit/runtimeAvailabilityMessages.test.ts,supporting,No,"Runtime open-blocked/mismatch message builder unit tests (bitness/version blocked-open toasts with/without year+bitness, container-image platform-mismatch tooltip); supporting VHS-REQ-636, VHS-REQ-637, VHS-REQ-650."
 tests/unit/runtimeCommands.test.ts,mapped,Yes,Runtime convenience command unit tests mapped to VHS-REQ-617.
 src/tooling/gitPrerequisiteDetect.ts,mapped,Yes,Git --version probe with injectable runner mapped to VHS-REQ-619.
 src/ui/gitPrerequisiteNotice.ts,mapped,Yes,Git prerequisite status bar and first-run notice helpers mapped to VHS-REQ-619.
