@@ -78,7 +78,14 @@ export { parseSubmoduleGitlinks } from './runtime/submoduleGitlinkParsing';
 import { appendLabviewCliPortNumberArg } from './runtime/labviewCliPortArg';
 export { appendLabviewCliPortNumberArg } from './runtime/labviewCliPortArg';
 import {
-  isPathInsideDirectory,
+  shouldUseLinuxHostNativeShortPathStaging,
+  buildLinuxHostNativeShortPathLayout
+} from './runtime/linuxHostNativeStaging';
+export {
+  shouldUseLinuxHostNativeShortPathStaging,
+  buildLinuxHostNativeShortPathLayout
+} from './runtime/linuxHostNativeStaging';
+import {
   posixDirname,
   buildReportAssetsDirectoryPath
 } from './runtime/runtimePathHelpers';
@@ -2969,68 +2976,6 @@ function buildWindowsInteropLayout(
     leftFilePath: path.join(stagingDirectory, record.stagedRevisionPlan.leftFilename),
     rightFilePath: path.join(stagingDirectory, record.stagedRevisionPlan.rightFilename),
     reportFilePath: path.join(reportDirectory, record.artifactPlan.reportFilename)
-  };
-}
-
-/**
- * VHS-REQ-156: Linux host-native short-path staging.
- *
- * LabVIEW 2026 (26.1.1f1) on Linux logs `Possible path leak, unable to purge elements
- * of base #0` and fails CreateComparisonReport with LabVIEW error 8 (file permission)
- * when staged VIs / report paths live under deep, dot-prefixed paths such as
- * `~/.config/Code/User/workspaceStorage/<hash>/<extension>/reports/...`. Mirroring
- * the staged inputs under a short tmpdir avoids the path-table corruption.
- */
-export function shouldUseLinuxHostNativeShortPathStaging(
-  record: ComparisonReportPacketRecord,
-  processPlatform: NodeJS.Platform,
-  processEnv: NodeJS.ProcessEnv = process.env
-): boolean {
-  if (processPlatform !== 'linux') {
-    return false;
-  }
-  if (record.runtimeSelection.platform !== 'linux') {
-    return false;
-  }
-  if (record.runtimeSelection.provider !== 'host-native') {
-    return false;
-  }
-  if (processEnv.LVIE_LINUX_DISABLE_RUNTIME_TMPDIR === '1') {
-    return false;
-  }
-  const tmpRoot = resolveLinuxRuntimeTmpRoot(processEnv);
-  const reportDir = record.artifactPlan.reportDirectory;
-  if (typeof reportDir === 'string' && isPathInsideDirectory(reportDir, tmpRoot)) {
-    return false;
-  }
-  return true;
-}
-
-function resolveLinuxRuntimeTmpRoot(processEnv: NodeJS.ProcessEnv): string {
-  const override = processEnv.LVIE_LINUX_RUNTIME_TMPDIR?.trim();
-  if (override) {
-    return override;
-  }
-  return path.join(os.tmpdir(), 'vi-history-suite-runtime');
-}
-
-export function buildLinuxHostNativeShortPathLayout(
-  record: ComparisonReportPacketRecord,
-  processEnv: NodeJS.ProcessEnv = process.env
-): WindowsInteropLayout {
-  const baseDir = resolveLinuxRuntimeTmpRoot(processEnv);
-  const reportDirectory = path.posix.join(
-    baseDir,
-    record.artifactPlan.repoId,
-    record.artifactPlan.fileId
-  );
-  const stagingDirectory = path.posix.join(reportDirectory, 'staging');
-  return {
-    reportDirectory,
-    stagingDirectory,
-    leftFilePath: path.posix.join(stagingDirectory, record.stagedRevisionPlan.leftFilename),
-    rightFilePath: path.posix.join(stagingDirectory, record.stagedRevisionPlan.rightFilename),
-    reportFilePath: path.posix.join(reportDirectory, record.artifactPlan.reportFilename)
   };
 }
 
