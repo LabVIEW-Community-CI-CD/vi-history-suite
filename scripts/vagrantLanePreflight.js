@@ -261,15 +261,26 @@ function main(deps = {}) {
   const argv = deps.argv ?? process.argv.slice(2);
   const stdout = deps.stdout ?? process.stdout;
   const stderr = deps.stderr ?? process.stderr;
-  const mode = argv[0] || 'preflight';
+  const jsonMode = argv.includes('--json');
+  const positional = argv.filter((arg) => !arg.startsWith('--'));
+  const mode = positional[0] || 'preflight';
 
   if (mode === 'status') {
     const status = inspectVagrantStatus(deps);
+    if (jsonMode) {
+      stdout.write(`${JSON.stringify({ mode: 'status', ...status }, null, 2)}\n`);
+      return 0;
+    }
     stdout.write(`[vagrant-status] ${status.detail}\n`);
     return 0;
   }
 
   const report = inspectVagrantLane(deps);
+  if (jsonMode) {
+    const stream = report.satisfied ? stdout : stderr;
+    stream.write(`${JSON.stringify({ mode: 'preflight', ...report }, null, 2)}\n`);
+    return report.satisfied ? 0 : 1;
+  }
   const rendered = formatPreflightReport(report);
   if (report.satisfied) {
     stdout.write(`${rendered}\n`);
