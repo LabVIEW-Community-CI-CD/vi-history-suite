@@ -42,7 +42,7 @@ function createFakeFs(presentFiles: readonly string[]): RuntimeAutoDetectFs {
 }
 
 describe('runtime auto-detect (VHS-REQ-616)', () => {
-  it('detects Windows host installations across folder name variants and prefers x64 within a year', async () => {
+  it('detects Windows host installations through filesystem/PATH probing and prefers x64 within a year (VHS-REQ-616.1, VHS-REQ-616.6)', async () => {
     const fs = createFakeFs([
       'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe',
       'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe',
@@ -79,7 +79,7 @@ describe('runtime auto-detect (VHS-REQ-616)', () => {
     });
   });
 
-  it('falls back to docker when no host LabVIEW is installed but docker is on PATH', async () => {
+  it('falls back to docker when no host LabVIEW is installed but docker is on PATH (VHS-REQ-616.6)', async () => {
     const fs = createFakeFs([
       'C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe'
     ]);
@@ -106,7 +106,30 @@ describe('runtime auto-detect (VHS-REQ-616)', () => {
     });
   });
 
-  it('reports no runtime when neither LabVIEW nor docker is present', async () => {
+  it('detects docker when its Windows PATH segment is quoted (VHS-REQ-616.6)', async () => {
+    const fs = createFakeFs([
+      'C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe'
+    ]);
+
+    const detection = await detectAvailableRuntimes({
+      fs,
+      platform: 'win32',
+      env: {
+        ProgramFiles: 'C:\\Program Files',
+        'ProgramFiles(x86)': 'C:\\Program Files (x86)',
+        // The Docker segment is wrapped in double quotes, as Windows commonly
+        // does for PATH entries containing spaces.
+        PATH: '"C:\\Program Files\\Docker\\Docker\\resources\\bin";C:\\Windows'
+      }
+    });
+
+    expect(detection.docker).toEqual({
+      cliAvailable: true,
+      cliPath: 'C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe'
+    });
+  });
+
+  it('reports no runtime when neither LabVIEW nor docker is present (VHS-REQ-616.6)', async () => {
     const fs = createFakeFs([]);
 
     const detection = await detectAvailableRuntimes({
@@ -120,7 +143,7 @@ describe('runtime auto-detect (VHS-REQ-616)', () => {
     expect(recommendRuntimeFromDetection(detection)).toEqual({ provider: 'none' });
   });
 
-  it('detects Linux LabVIEW and the shared /usr/local/bin LabVIEWCLI launcher (issue #346)', async () => {
+  it('detects Linux LabVIEW and the shared /usr/local/bin LabVIEWCLI launcher through filesystem/PATH probing (VHS-REQ-616.1, issue #346)', async () => {
     // Real NI Linux installs expose the CLI as the shared, version-independent
     // /usr/local/bin/LabVIEWCLI symlink, not a sibling of the versioned labview
     // binary. Detection probes that fixed absolute location (it does not search
@@ -216,8 +239,8 @@ describe('runtime auto-detect (VHS-REQ-616)', () => {
     ]);
   });
 
-  it('detects a Linux quarterly install directory (LabVIEW-<year>Q1-64) (issue #352)', async () => {
-    // VHS-REQ-632: a host whose only LabVIEW lives in the quarterly install
+  it('detects a Linux quarterly install directory (LabVIEW-<year>Q1-64) (VHS-REQ-632.2, issue #352)', async () => {
+    // VHS-REQ-632.2: a host whose only LabVIEW lives in the quarterly install
     // directory must be detected so the LabVIEW CLI open-gate does not
     // false-block it, matching the comparison runtime locator's documented
     // candidates (which already scan the quarterly form).
@@ -247,8 +270,8 @@ describe('runtime auto-detect (VHS-REQ-616)', () => {
     });
   });
 
-  it('detects a Windows install at a year not in the legacy locator list (VHS-REQ-632)', async () => {
-    // VHS-REQ-632: detection and the locator now share a 2025-2030 catalog, so a
+  it('detects a Windows install at a year not in the legacy locator list (VHS-REQ-632.2)', async () => {
+    // VHS-REQ-632.2: detection and the locator now share a 2025-2030 catalog, so a
     // newer-year Windows install (e.g. 2027) is recognized by activation
     // detection instead of being missed by a hardcoded folder list.
     const fs = createFakeFs([
@@ -270,7 +293,7 @@ describe('runtime auto-detect (VHS-REQ-616)', () => {
     ]);
   });
 
-  it('only checks docker on macOS (LabVIEW host comparison is unsupported)', async () => {
+  it('only checks docker on macOS through PATH probing because LabVIEW host comparison is unsupported (VHS-REQ-616.1)', async () => {
     const fs = createFakeFs(['/usr/local/bin/docker']);
 
     const detection = await detectAvailableRuntimes({
@@ -312,7 +335,7 @@ describe('runtime auto-detect (VHS-REQ-616)', () => {
     ]);
   });
 
-  it('pickPreferredHostInstallation returns undefined for empty input and prefers higher years', () => {
+  it('pickPreferredHostInstallation returns undefined for empty input and prefers higher years (VHS-REQ-616.6)', () => {
     expect(pickPreferredHostInstallation([])).toBeUndefined();
 
     const installations: DetectedHostInstallation[] = [

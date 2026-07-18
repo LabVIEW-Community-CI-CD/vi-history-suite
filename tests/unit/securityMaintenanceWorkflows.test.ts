@@ -27,12 +27,14 @@ describe('security maintenance workflows', () => {
   it('groups routine npm updates while leaving major updates independently reviewable', () => {
     const dependabot = readRepoFile('.github', 'dependabot.yml');
 
+    // VHS-REQ-602.1
     expect(dependabot).toMatch(
       /npm-development-minor-patch:[\s\S]*dependency-type:\s+development[\s\S]*update-types:[\s\S]*-\s+minor[\s\S]*-\s+patch/
     );
     expect(dependabot).toMatch(
       /npm-runtime-minor-patch:[\s\S]*dependency-type:\s+production[\s\S]*update-types:[\s\S]*-\s+minor[\s\S]*-\s+patch/
     );
+    // VHS-REQ-602.2, VHS-REQ-602.3
     expect(dependabot).not.toMatch(/^\s+-\s+major\s*$/m);
     expect(dependabot).toMatch(
       /dependency-name:\s+"@types\/node"[\s\S]*version-update:semver-major/
@@ -42,19 +44,24 @@ describe('security maintenance workflows', () => {
     );
   });
 
-  it('runs CodeQL on main, pull requests, schedule, and manual dispatch', () => {
+  it('runs CodeQL on main, pull requests, a weekly schedule, and manual dispatch', () => {
     const codeql = readRepoFile('.github', 'workflows', 'codeql.yml');
 
     expect(codeql).toContain('name: CodeQL');
     expect(codeql).toMatch(/push:\n\s+branches:\n\s+- main\n\s+- develop/);
     expect(codeql).toMatch(/pull_request:\n\s+branches:\n\s+- main\n\s+- develop/);
     expect(codeql).toContain('schedule:');
+    // VHS-REQ-602.5: the schedule must be weekly (a cron with a fixed
+    // day-of-week and wildcard day-of-month/month), not merely present, so a
+    // regression to a daily or other cadence fails closed.
+    expect(codeql).toMatch(/schedule:\n\s+- cron: "\d+ \d+ \* \* [0-6]"/);
     expect(codeql).toContain('workflow_dispatch:');
   });
 
   it('grants CodeQL only the repository permissions it needs', () => {
     const codeql = readRepoFile('.github', 'workflows', 'codeql.yml');
 
+    // VHS-REQ-602.6
     expect(codeql).toContain('actions: read');
     expect(codeql).toContain('contents: read');
     expect(codeql).toContain('security-events: write');

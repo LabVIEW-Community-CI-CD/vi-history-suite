@@ -60,6 +60,15 @@ body:
     validations:
       required: true
   - type: textarea
+    id: extension_development_host
+    attributes:
+      label: Extension Development Host Result
+      description: For source-evaluation paths (Codespaces, Dev Containers, or local clone), what happened when you launched the Extension Development Host (F5 / "Run VI History Suite")? Leave blank for Marketplace or VSIX install feedback.
+      placeholder: |
+        Example: F5 opened the Extension Development Host and VI History appeared in the .vi context menu.
+    validations:
+      required: false
+  - type: textarea
     id: friction
     attributes:
       label: What Was Unclear Or Blocked?

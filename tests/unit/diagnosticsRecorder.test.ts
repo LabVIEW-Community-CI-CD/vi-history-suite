@@ -543,6 +543,71 @@ describe('diagnosticsRecorder', () => {
       expect(parsed.matchedFragment).toBeUndefined();
       expect(parsed.matchedFragmentSource).toBeUndefined();
     });
+
+    it('falls back to the diagnostic log when the stderr read fails', async () => {
+      const diagnosticLog =
+        'DEBUG launcher\nError code : -350000 while opening the VI reference\ntrailing context\n';
+      const reads: Record<string, string> = {
+        '/reports/repoid/fileid/runtime-diagnostic-log.txt': diagnosticLog
+      };
+      const harness = createHarness({
+        readFile: (async (filePath: string) => {
+          const value = reads[String(filePath).replace(/\\/g, '/')];
+          if (value == null) {
+            // stderr path is not in `reads`, so its read fails and the loop
+            // must continue to the diagnostic-log source.
+            throw new Error('ENOENT');
+          }
+          return value;
+        }) as never
+      });
+      const record = createRecord();
+      await harness.recorder.recordFailureClassification(record, 1, {
+        failureReason: 'labview-cli-connection-failed',
+        artifactPaths: {
+          stderr: '/reports/repoid/fileid/runtime-stderr.txt',
+          diagnosticLog: '/reports/repoid/fileid/runtime-diagnostic-log.txt'
+        }
+      });
+
+      const classificationWrite = harness.writes.find((w) =>
+        w.filePath.includes(FAILURE_CLASSIFICATION_FILENAME)
+      );
+      const parsed = JSON.parse(classificationWrite!.contents);
+      expect(parsed.matchedFragmentSource).toBe('diagnostic-log');
+      expect(parsed.matchedFragment).toContain('-350000');
+    });
+
+    it('skips sources without a configured path and matches stdout', async () => {
+      const stdout = 'Error code : -350000 reported by the CLI\n';
+      const reads: Record<string, string> = {
+        '/reports/repoid/fileid/runtime-stdout.txt': stdout
+      };
+      const harness = createHarness({
+        readFile: (async (filePath: string) => {
+          const value = reads[String(filePath).replace(/\\/g, '/')];
+          if (value == null) {
+            throw new Error('ENOENT');
+          }
+          return value;
+        }) as never
+      });
+      const record = createRecord();
+      // Only stdout is configured; stderr/diagnostic-log candidates are skipped.
+      await harness.recorder.recordFailureClassification(record, 1, {
+        failureReason: 'labview-cli-connection-failed',
+        artifactPaths: {
+          stdout: '/reports/repoid/fileid/runtime-stdout.txt'
+        }
+      });
+
+      const classificationWrite = harness.writes.find((w) =>
+        w.filePath.includes(FAILURE_CLASSIFICATION_FILENAME)
+      );
+      const parsed = JSON.parse(classificationWrite!.contents);
+      expect(parsed.matchedFragmentSource).toBe('stdout');
+      expect(parsed.matchedFragment).toContain('-350000');
+    });
   });
 
   describe('noopDiagnosticsRecorder', () => {

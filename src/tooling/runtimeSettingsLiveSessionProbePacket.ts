@@ -1,6 +1,7 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
+import { serializeJsonArtifact } from '../support/jsonArtifact';
 import {
   RuntimeSettingsLiveSessionHistoryStance,
   RuntimeSettingsLiveSessionProviderSelectionCoverage,
@@ -89,11 +90,11 @@ export async function persistRuntimeSettingsLiveSessionProbePacket(
   };
 
   await fsApi.mkdir(runDirectory, { recursive: true });
-  await fsApi.writeFile(packetJsonPath, `${JSON.stringify(packetSummary, null, 2)}\n`, 'utf8');
+  await fsApi.writeFile(packetJsonPath, serializeJsonArtifact(packetSummary), 'utf8');
   await fsApi.writeFile(packetMarkdownPath, renderProbeSummaryMarkdown(packetSummary), 'utf8');
   await fsApi.writeFile(
     latestPacketJsonPath,
-    `${JSON.stringify(packetSummary, null, 2)}\n`,
+    serializeJsonArtifact(packetSummary),
     'utf8'
   );
   await fsApi.writeFile(

@@ -2,7 +2,7 @@
   "name": "vi-history-suite",
   "displayName": "VI History Suite",
   "description": "VS Code extension for content-detected LabVIEW VI history review in Git repositories.",
-  "version": "1.33.2",
+  "version": "1.34.1",
   "publisher": "svelderrainruiz",
   "license": "0BSD",
   "private": true,
@@ -15,7 +15,7 @@
     "url": "https://github.com/LabVIEW-Community-CI-CD/vi-history-suite/issues"
   },
   "engines": {
-    "vscode": "^1.90.0"
+    "vscode": "^1.101.0"
   },
   "capabilities": {
     "untrustedWorkspaces": {
@@ -49,6 +49,12 @@
     "onStartupFinished"
   ],
   "contributes": {
+    "mcpServerDefinitionProviders": [
+      {
+        "id": "viHistorySuiteSemantic",
+        "label": "VI History Suite: VI Semantic Comparison"
+      }
+    ],
     "commands": [
       {
         "command": "labviewViHistory.open",
@@ -141,6 +147,27 @@
         }
       ]
     },
+    "customEditors": [
+      {
+        "viewType": "viHistorySuite.viPreview",
+        "displayName": "VI History Preview",
+        "selector": [
+          {
+            "filenamePattern": "*.vi"
+          },
+          {
+            "filenamePattern": "*.vit"
+          },
+          {
+            "filenamePattern": "*.vim"
+          },
+          {
+            "filenamePattern": "*.ctl"
+          }
+        ],
+        "priority": "default"
+      }
+    ],
     "configuration": {
       "title": "VI History Suite",
       "properties": {
@@ -197,12 +224,53 @@
           "type": "string",
           "description": "Which LabVIEW Docker image to use for Docker comparisons (for example 2026q1-windows). Leave empty to use the newest supported image. Run the VI History: Runtime & Report Settings command to pick from images available on Docker Hub or already downloaded; new National Instruments patches and years appear automatically."
         },
+        "viHistorySuite.preview.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Turn on VI Preview (Docker runtime only): opening a LabVIEW VI (.vi/.vit/.vim/.ctl) renders it as a read-only picture of its front panel and block diagram, and the extension silently caches every VI in the repository in the background. Off by default. Manage this from the VI History: Runtime & Report Settings command — the toggle appears there when Docker is selected."
+        },
+        "viHistorySuite.preview.backgroundWarming": {
+          "type": "string",
+          "enum": [
+            "docker-only",
+            "always",
+            "off"
+          ],
+          "enumDescriptions": [
+            "Only pre-render in the background when comparisons run in Docker, so your installed LabVIEW is never tied up. Recommended default.",
+            "Also pre-render in the background when using your installed (Host) LabVIEW, so you see caching progress on Host too. This keeps LabVIEW busy while it caches a large workspace.",
+            "Never pre-render previews in the background."
+          ],
+          "default": "docker-only",
+          "description": "After you open a VI preview, whether VI History quietly pre-renders the other VIs in the workspace so they open instantly, shown as a caching percentage in the status bar. Docker-only (default) skips this when using Host so your LabVIEW stays free; choose Always to see caching progress on Host too."
+        },
+        "viHistorySuite.preview.blockDiagramInteractive": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show the VI block diagram as an interactive view instead of a static picture: pan by dragging, zoom with Ctrl/Cmd+scroll, and step through each Case/Event/Sequence structure's cases in place with the ◀ n/N ▶ selector or the arrow keys. Off by default (the static document view is shown). Requires VI Preview to be on."
+        },
+        "viHistorySuite.preview.allowHostNativeRender": {
+          "type": "boolean",
+          "default": false,
+          "description": "Allow the Host (installed LabVIEW) runtime to render VI previews directly, instead of only displaying previews already cached on Docker. Off by default: Docker generates the cache and the Host displays it. Turn this on for a dedicated LabVIEW environment that has no Docker (for example the Vagrant LabVIEW VM) so it can both generate the cache and visualize previews. Requires VI Preview to be on."
+        },
+        "viHistorySuite.preview.warmOnChange": {
+          "type": "boolean",
+          "default": true,
+          "description": "When Docker is selected, automatically cache a VI as soon as you change it on disk so its preview opens instantly and the Source Control change summary is ready. Warms the preview render (requires VI Preview to be on) and runs a background comparison against the last commit (requires a trusted workspace). On by default; only runs on the Docker runtime."
+        },
         "viHistorySuite.runtime.cliConnectTimeoutSeconds": {
           "type": "integer",
           "default": 180,
           "minimum": 30,
           "maximum": 600,
           "description": "How long (in seconds) to wait for LabVIEW to start before a comparison gives up. Increase this if the first comparison after opening VS Code times out on a slow machine. Default is 180."
+        },
+        "viHistorySuite.comparison.worktreeSnapshotRetentionLimit": {
+          "type": "integer",
+          "default": 5,
+          "minimum": 0,
+          "description": "How many working-tree (uncommitted) comparison snapshots to keep per VI in the retained dashboard history. Each uncommitted comparison is saved as a content-addressed snapshot; older ones beyond this limit are pruned. Set to 0 to turn off retaining uncommitted comparisons entirely. Default is 5."
         },
         "viHistorySuite.report.ignoreViAttributes": {
           "type": "boolean",
@@ -234,8 +302,13 @@
   },
   "scripts": {
     "clean": "rimraf out out-tests coverage",
-    "compile": "tsc -p . && node scripts/generateBuildInfo.js",
+    "deps:check": "node scripts/checkDevDependencies.js",
+    "precompile": "node scripts/checkDevDependencies.js",
+    "compile": "tsc -p . && node scripts/generateBuildInfo.js && node scripts/exportRequirementsManifest.js",
+    "precheck": "node scripts/checkDevDependencies.js",
     "check": "tsc -p . --noEmit",
+    "quality:local": "npm run check && npm test && npm run traceability:audit && npm run customization:audit && npm run docs:links && npm run coverage:map && npm run requirements:verify",
+    "branch-protection:audit": "node scripts/auditBranchProtectionSettings.js",
     "customization:audit": "node scripts/auditCustomizationGovernance.js",
     "dev:watch": "tsc -p . --watch --preserveWatchOutput",
     "dev:workspace": "npm run compile && node out/cli/runDevHost.js --prepare-workspace-only",
@@ -244,6 +317,9 @@
     "public:fixture:icon-editor": "node scripts/preparePublicTestFixture.js",
     "public:repo:clone": "node scripts/preparePublicRepoClone.js",
     "vagrant:validate": "cd vagrant && vagrant validate",
+    "vagrant:preflight": "node scripts/vagrantLanePreflight.js preflight",
+    "vagrant:status": "node scripts/vagrantLanePreflight.js status",
+    "vagrant:validate:release": "node scripts/vagrantReleaseValidate.cjs",
     "pretest": "npm run compile",
     "test": "vitest run --coverage",
     "test:watch": "vitest",
@@ -251,28 +327,57 @@
     "test:integration": "npm run compile && npm run test:integration:compile && node out-tests/tests/integration/runTests.js",
     "test:integration:linux": "node scripts/runLinuxIntegrationHost.js",
     "test:integration:windows": "node scripts/runWindowsIntegrationHost.js",
+    "assurance:state": "node scripts/generateAssuranceState.js",
+    "standards:audit": "node scripts/runMultiStandardsAudit.js",
+    "issue:standards-triage": "node scripts/runIssueStandardsTriage.js",
     "package:audit": "node scripts/auditPackagedRuntimeSurface.js",
     "package": "npm run compile && npm run package:audit && node scripts/runPinnedVsce.js package",
     "traceability:audit": "node scripts/auditTraceabilitySteward.js",
+    "requirements:csv-check": "node scripts/checkRequirementsCsvColumns.js",
+    "requirements:integrity": "node scripts/checkRequirementsIntegrity.js",
+    "requirements:linkage": "node scripts/auditRequirementVerificationLinkage.js",
+    "requirements:linkage:enforce": "node scripts/auditRequirementVerificationLinkage.js --enforce",
+    "requirements:criteria": "node scripts/auditRequirementCriteriaInventory.js",
+    "requirements:criteria:enforce": "node scripts/auditRequirementCriteriaInventory.js --enforce",
+    "requirements:verify": "node scripts/verifyRequirementsHealth.js",
+    "requirements:verify:strict": "node scripts/verifyRequirementsHealth.js --strict",
+    "requirements:manifest": "node scripts/exportRequirementsManifest.js",
+    "risk:ledger": "node scripts/buildRiskLedger.js",
+    "risk:ledger:strict": "node scripts/buildRiskLedger.js --strict",
+    "runtime:validation:record": "node scripts/recordRuntimeValidation.js",
+    "devtools:release": "node scripts/buildDevToolsRelease.js",
+    "devtools:release:verify": "node scripts/verifyDevToolsRelease.js",
+    "supply-chain:state": "node scripts/buildSupplyChainState.js",
+    "release:readiness": "node scripts/checkReleaseReadiness.js",
+    "release:readiness:strict": "node scripts/checkReleaseReadiness.js --strict",
+    "release:readiness:gate": "node scripts/checkReleaseReadiness.js --strict --require-release-attestation",
+    "verify:preview": "npm run compile && node out/tooling/viPreviewVerifyCli.js",
     "docs:links": "node scripts/checkDocsLinks.js",
     "docs:gate": "node scripts/checkDocumentationWorkbench.js",
     "coverage:map": "node scripts/mapCoverageToTraceability.js",
+    "coverage:map:enforce": "node scripts/mapCoverageToTraceability.js --enforce",
+    "test:mutation": "stryker run",
     "dod:gate": "node scripts/checkDefinitionOfDone.js",
     "closeout:evidence": "node scripts/generateCloseoutEvidence.js",
     "validation:file-gap": "node scripts/fileLinuxValidationGap.js"
   },
   "devDependencies": {
-    "@types/node": "^24.13.2",
-    "@types/vscode": "^1.90.0",
-    "@vitest/coverage-v8": "^4.1.9",
+    "@stryker-mutator/core": "^9.6.1",
+    "@stryker-mutator/vitest-runner": "^9.6.1",
+    "@types/node": "^24.13.3",
+    "@types/vscode": "^1.101.0",
+    "@vitest/coverage-v8": "^4.1.10",
     "@vscode/test-electron": "^3.0.0",
     "@vscode/vsce": "3.9.2",
-    "marked": "^18.0.5",
+    "marked": "^18.0.6",
     "rimraf": "^6.0.1",
-    "typescript": "^6.0.3",
+    "typescript": "^7.0.2",
     "vitest": "^4.1.8"
   },
   "dependencies": {
     "jsonc-parser": "^3.3.1"
+  },
+  "overrides": {
+    "qs": "^6.15.3"
   }
 }

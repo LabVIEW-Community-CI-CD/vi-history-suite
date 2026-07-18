@@ -1,3 +1,6 @@
+import { execFile } from 'node:child_process';
+import * as fs from 'node:fs/promises';
+import * as os from 'node:os';
 import * as path from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -11,7 +14,21 @@ import {
   resolveLocalRuntimeSettingsCliContract,
   runInteractiveLocalRuntimeSettingsCli,
   runLocalRuntimeSettingsCli,
-  runLocalRuntimeSettingsCliMain
+  runLocalRuntimeSettingsCliMain,
+  writeVsCodeSettingsFile,
+  readPersistedRuntimeSettingsFacts,
+  normalizeLabviewBitness,
+  normalizeProvider,
+  isSupportedInstalledLabviewVersion,
+  buildReportableEnvironment,
+  isSecretLikeEnvironmentKey,
+  formatPersistedFact,
+  resolveCliRuntimePlatform,
+  resolveCurrentPlatformLauncherPath,
+  buildPathPrependValue,
+  quoteLauncherPathForShell,
+  escapeWindowsBatchEcho,
+  escapeSingleQuotedShellString
 } from '../../src/tooling/localRuntimeSettingsCli';
 import type { ComparisonRuntimeSelection } from '../../src/reporting/comparisonRuntimeLocator';
 
@@ -110,6 +127,21 @@ function readyRuntimeSelection(): ComparisonRuntimeSelection {
   };
 }
 
+function dockerReadyRuntimeSelection(): ComparisonRuntimeSelection {
+  return {
+    platform: 'win32',
+    executionMode: 'docker-only',
+    requestedProvider: 'docker',
+    requestedLabviewVersion: '2026',
+    bitness: 'x64',
+    provider: 'windows-container',
+    engine: 'labview-cli',
+    notes: ['Windows container runtime selected.'],
+    registryQueryPlans: [],
+    candidates: []
+  };
+}
+
 function blockedRuntimeSelection(blockedReason: string): ComparisonRuntimeSelection {
   return {
     platform: 'linux',
@@ -125,6 +157,28 @@ function blockedRuntimeSelection(blockedReason: string): ComparisonRuntimeSelect
     registryQueryPlans: [],
     candidates: []
   };
+}
+
+function execNodeScript(
+  scriptPath: string,
+  args: string[],
+  env: NodeJS.ProcessEnv
+): Promise<{ exitCode: number; stdout: string; stderr: string }> {
+  return new Promise((resolve) => {
+    execFile(
+      process.execPath,
+      [scriptPath, ...args],
+      { env, windowsHide: true },
+      (error, stdout, stderr) => {
+        const maybeExitError = error as (Error & { code?: number }) | null;
+        resolve({
+          exitCode: typeof maybeExitError?.code === 'number' ? maybeExitError.code : 0,
+          stdout: String(stdout ?? ''),
+          stderr: String(stderr ?? '')
+        });
+      }
+    );
+  });
 }
 
 describe('local runtime settings CLI (VHS-REQ-612)', () => {
@@ -206,7 +260,7 @@ describe('local runtime settings CLI (VHS-REQ-612)', () => {
     ).rejects.toThrow('Workspace settings are not supported');
   });
 
-  it('materializes launchers, honors platform injection, and refreshes idempotently', async () => {
+  it('materializes launchers with stale-module self-heal logic, honors platform injection, and refreshes idempotently (VHS-REQ-612.6)', async () => {
     const memoryFs = new MemoryFs();
     const plan = buildLocalRuntimeSettingsCliMaterialization(
       '/global-storage',
@@ -242,12 +296,16 @@ describe('local runtime settings CLI (VHS-REQ-612)', () => {
     );
     expect(materialized.pathPrependValue).toBe(`${materialized.rootDirectoryPath}:`);
     expect(environment.prepend).toHaveBeenCalledWith('PATH', materialized.pathPrependValue);
-    expect(memoryFs.text(materialized.javascriptLauncherPath)).toContain(
-      'runLocalRuntimeSettingsCliMain'
-    );
-    expect(memoryFs.text(materialized.javascriptLauncherPath)).toContain(
-      JSON.stringify(plan.modulePath)
-    );
+    const javascriptLauncher = memoryFs.text(materialized.javascriptLauncherPath);
+    expect(javascriptLauncher).toContain('runLocalRuntimeSettingsCliMain');
+    expect(javascriptLauncher).toContain(JSON.stringify(plan.modulePath));
+    expect(javascriptLauncher).toContain('svelderrainruiz.vi-history-suite-');
+    expect(javascriptLauncher).toContain('out/tooling/localRuntimeSettingsCli.js');
+    expect(javascriptLauncher).toContain('findInstalledExtensionModulePath');
+    expect(javascriptLauncher).toContain("path.join(home, '.vscode', 'extensions')");
+    expect(javascriptLauncher).toContain("path.join(home, '.vscode-server', 'extensions')");
+    expect(javascriptLauncher).toContain('compareExtensionFolderNames');
+    expect(javascriptLauncher).toContain('if (fallback && fallback !== stampedModulePath)');
     expect(memoryFs.text(materialized.posixLauncherPath)).toContain('#!/usr/bin/env sh');
     expect(memoryFs.text(materialized.windowsLauncherPath)).toContain(
       'VI History runtime-settings CLI requires'
@@ -261,6 +319,67 @@ describe('local runtime settings CLI (VHS-REQ-612)', () => {
     );
     expect(refreshed).toEqual(materialized);
     expect(memoryFs.text(materialized.javascriptLauncherPath)).not.toBe('stale');
+  });
+
+  it('executes the generated launcher through an installed-extension fallback when the stamped module is missing (VHS-REQ-612.6)', async () => {
+    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-launcher-self-heal-'));
+    try {
+      const homeDirectory = path.join(tempRoot, 'home');
+      const extensionRoot = path.join(tempRoot, 'stamped-extension');
+      const globalStorageRoot = path.join(tempRoot, 'global-storage');
+      const stampedModulePath = path.join(
+        extensionRoot,
+        'out',
+        'tooling',
+        'localRuntimeSettingsCli.js'
+      );
+      await fs.mkdir(path.dirname(stampedModulePath), { recursive: true });
+      await fs.writeFile(stampedModulePath, 'module.exports = {};', 'utf8');
+
+      const materialized = await ensureLocalRuntimeSettingsCli(globalStorageRoot, extensionRoot, {
+        platform: 'linux'
+      });
+      await fs.rm(extensionRoot, { recursive: true, force: true });
+
+      const fallbackModulePath = path.join(
+        homeDirectory,
+        '.vscode',
+        'extensions',
+        'svelderrainruiz.vi-history-suite-99.0.0',
+        'out',
+        'tooling',
+        'localRuntimeSettingsCli.js'
+      );
+      await fs.mkdir(path.dirname(fallbackModulePath), { recursive: true });
+      await fs.writeFile(
+        fallbackModulePath,
+        [
+          'module.exports = {',
+          '  runLocalRuntimeSettingsCliMain: async (args) => {',
+          "    console.log(`fallback-loaded:${args.join('|')}`);",
+          '    return 0;',
+          '  }',
+          '};'
+        ].join('\n'),
+        'utf8'
+      );
+
+      const result = await execNodeScript(
+        materialized.javascriptLauncherPath,
+        ['--validate'],
+        {
+          ...process.env,
+          HOME: homeDirectory,
+          USERPROFILE: homeDirectory
+        }
+      );
+
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout).toContain('fallback-loaded:--validate');
+      expect(result.stderr).toBe('');
+    } finally {
+      await fs.rm(tempRoot, { recursive: true, force: true });
+    }
   });
 
   it('updates settings JSONC and keeps repeated refreshes stable', async () => {
@@ -402,7 +521,7 @@ describe('local runtime settings CLI (VHS-REQ-612)', () => {
     );
   });
 
-  it('serializes the observed non-default host VI Server port into the validation proof (VHS-REQ-623)', async () => {
+  it('serializes the observed non-default host VI Server port into the validation proof (VHS-REQ-623.6)', async () => {
     // A maintainer host runs LabVIEW installs on non-default VI Server ports.
     // The locator observes the selected install's server.tcp.port; the proof
     // must carry it (and the LabVIEW.ini it was read from) so real-hardware
@@ -572,6 +691,129 @@ describe('local runtime settings CLI (VHS-REQ-612)', () => {
     expect(promptLine).toHaveBeenCalledTimes(4);
   });
 
+  it('drives the interactive docker provider branch and persists docker defaults', async () => {
+    const memoryFs = new MemoryFs();
+    const stdout = createWritable();
+    memoryFs.seed('/build/buildInfo.json', JSON.stringify({
+      extensionVersion: '1.4.2',
+      extensionCommit: 'abcdef1234567890'
+    }));
+    const locateRuntime = vi.fn().mockResolvedValue(dockerReadyRuntimeSelection());
+    // provider=docker, then platform / year / bitness accept the docker defaults.
+    const promptLine = vi
+      .fn()
+      .mockResolvedValueOnce('docker')
+      .mockResolvedValueOnce('')
+      .mockResolvedValueOnce('')
+      .mockResolvedValueOnce('');
+
+    const result = await runInteractiveLocalRuntimeSettingsCli({
+      fs: memoryFs as never,
+      stdout: stdout.stream,
+      promptLine,
+      platform: 'win32',
+      env: { APPDATA: 'C:\\Users\\Test\\AppData\\Roaming' },
+      homedir: () => 'C:\\Users\\Test',
+      locateRuntime,
+      buildInfoDeps: {
+        fs: memoryFs as never,
+        buildInfoPath: '/build/buildInfo.json',
+        packageJsonPath: '/package.json'
+      }
+    });
+
+    expect(result).toMatchObject({
+      outcome: 'validated-settings',
+      persistedProvider: 'docker',
+      persistedLabviewVersion: '2026',
+      persistedLabviewBitness: 'x64',
+      runtimeValidationOutcome: 'ready'
+    });
+    expect(promptLine).toHaveBeenCalledTimes(4);
+  });
+
+  it('drives the interactive linux host branch and defaults host bitness to x64', async () => {
+    const memoryFs = new MemoryFs();
+    const stdout = createWritable();
+    memoryFs.seed('/build/buildInfo.json', JSON.stringify({
+      extensionVersion: '1.4.2',
+      extensionCommit: 'abcdef1234567890'
+    }));
+    const locateRuntime = vi.fn().mockResolvedValue(readyRuntimeSelection());
+    // provider default (host), platform=linux, year default, bitness default (x64 on linux).
+    const promptLine = vi
+      .fn()
+      .mockResolvedValueOnce('')
+      .mockResolvedValueOnce('linux')
+      .mockResolvedValueOnce('')
+      .mockResolvedValueOnce('');
+
+    const result = await runInteractiveLocalRuntimeSettingsCli({
+      fs: memoryFs as never,
+      stdout: stdout.stream,
+      promptLine,
+      platform: 'linux',
+      env: { HOME: '/home/test' },
+      homedir: () => '/home/test',
+      locateRuntime,
+      buildInfoDeps: {
+        fs: memoryFs as never,
+        buildInfoPath: '/build/buildInfo.json',
+        packageJsonPath: '/package.json'
+      }
+    });
+
+    expect(result).toMatchObject({
+      outcome: 'validated-settings',
+      persistedProvider: 'host',
+      persistedLabviewBitness: 'x64'
+    });
+    expect(promptLine).toHaveBeenCalledTimes(4);
+  });
+
+  it('re-prompts on an invalid enum answer and resolves a newer/manual LabVIEW year', async () => {
+    const memoryFs = new MemoryFs();
+    const stdout = createWritable();
+    memoryFs.seed('/build/buildInfo.json', JSON.stringify({
+      extensionVersion: '1.4.2',
+      extensionCommit: 'abcdef1234567890'
+    }));
+    const locateRuntime = vi.fn().mockResolvedValue(readyRuntimeSelection());
+    // provider: invalid then valid (reprompt loop); platform default (windows);
+    // year: 'newer' then manual '2027'; bitness default (x86 on windows host).
+    const promptLine = vi
+      .fn()
+      .mockResolvedValueOnce('nonsense')
+      .mockResolvedValueOnce('host')
+      .mockResolvedValueOnce('')
+      .mockResolvedValueOnce('newer')
+      .mockResolvedValueOnce('2027')
+      .mockResolvedValueOnce('');
+
+    const result = await runInteractiveLocalRuntimeSettingsCli({
+      fs: memoryFs as never,
+      stdout: stdout.stream,
+      promptLine,
+      platform: 'win32',
+      env: { APPDATA: 'C:\\Users\\Test\\AppData\\Roaming' },
+      homedir: () => 'C:\\Users\\Test',
+      locateRuntime,
+      buildInfoDeps: {
+        fs: memoryFs as never,
+        buildInfoPath: '/build/buildInfo.json',
+        packageJsonPath: '/package.json'
+      }
+    });
+
+    expect(result).toMatchObject({
+      outcome: 'validated-settings',
+      persistedProvider: 'host',
+      persistedLabviewVersion: '2027',
+      persistedLabviewBitness: 'x86'
+    });
+    expect(promptLine).toHaveBeenCalledTimes(6);
+  });
+
   it('prints terminal entrypoint discovery when no non-interactive args are supplied', async () => {
     const stdout = createWritable();
 
@@ -584,5 +826,339 @@ describe('local runtime settings CLI (VHS-REQ-612)', () => {
     expect(stdout.text()).toContain('VI History runtime-settings terminal entrypoint');
     expect(stdout.text()).toContain('vihs --provider host --labview-version 2026 --labview-bitness x86');
     expect(stdout.text()).toContain('vihs --validate');
+  });
+});
+
+describe('local runtime settings CLI validation taxonomy and argument guards (VHS-REQ-612)', () => {
+  async function runValidateWithSelection(selection: ComparisonRuntimeSelection): Promise<string> {
+    const memoryFs = new MemoryFs();
+    const stdout = createWritable();
+    const settingsFilePath = path.resolve('/workspace', 'runtime-settings.json');
+    memoryFs.seed(
+      settingsFilePath,
+      JSON.stringify({
+        'viHistorySuite.runtimeProvider': 'docker',
+        'viHistorySuite.labviewVersion': '2026',
+        'viHistorySuite.labviewBitness': 'x64'
+      })
+    );
+    memoryFs.seed(
+      '/build/buildInfo.json',
+      JSON.stringify({ extensionVersion: '1.4.2', extensionCommit: 'abcdef1234567890' })
+    );
+    await runLocalRuntimeSettingsCli(['--validate', '--settings-file', 'runtime-settings.json'], {
+      cwd: () => '/workspace',
+      env: { PATH: '/usr/bin' },
+      fs: memoryFs as never,
+      stdout: stdout.stream,
+      platform: 'linux',
+      locateRuntime: vi.fn().mockResolvedValue(selection),
+      buildInfoDeps: {
+        fs: memoryFs as never,
+        buildInfoPath: '/build/buildInfo.json',
+        packageJsonPath: '/package.json'
+      }
+    });
+    return stdout.text();
+  }
+
+  it.each([
+    ['installed-provider-invalid', 'VIHS_E_PROVIDER_INVALID'],
+    ['labview-runtime-selection-required', 'VIHS_E_RUNTIME_SELECTION_REQUIRED'],
+    ['labview-version-required', 'VIHS_E_LABVIEW_VERSION_REQUIRED'],
+    ['labview-version-unsupported-for-comparison-report', 'VIHS_E_LABVIEW_VERSION_UNSUPPORTED'],
+    ['labview-bitness-required', 'VIHS_E_LABVIEW_BITNESS_REQUIRED'],
+    ['labview-2026q1-unsupported-on-macos', 'VIHS_E_PLATFORM_UNSUPPORTED'],
+    ['docker-provider-not-supported-on-platform', 'VIHS_E_PLATFORM_UNSUPPORTED'],
+    ['configured-labview-exe-path-missing', 'VIHS_E_CONFIGURED_PATH_MISSING'],
+    [
+      'docker-provider-labview-version-not-implemented',
+      'VIHS_E_DOCKER_PROVIDER_VERSION_NOT_IMPLEMENTED'
+    ],
+    ['docker-provider-requires-windows-x64', 'VIHS_E_DOCKER_PROVIDER_UNSUPPORTED_BITNESS'],
+    ['docker-only-requires-windows-x64-provider', 'VIHS_E_DOCKER_PROVIDER_UNSUPPORTED_BITNESS'],
+    ['docker-provider-unavailable', 'VIHS_E_DOCKER_UNAVAILABLE'],
+    ['docker-only-provider-unavailable', 'VIHS_E_DOCKER_UNAVAILABLE'],
+    ['auto-docker-installed-provider-unavailable', 'VIHS_E_DOCKER_UNAVAILABLE'],
+    ['labview-exe-not-found', 'VIHS_E_LABVIEW_NOT_FOUND'],
+    ['labview-exe-ambiguous', 'VIHS_E_LABVIEW_AMBIGUOUS'],
+    ['labview-cli-not-found-for-bitness', 'VIHS_E_LABVIEW_CLI_BITNESS_NOT_FOUND'],
+    ['canonical-labview-cli-not-found', 'VIHS_E_COMPARISON_TOOL_NOT_FOUND'],
+    ['comparison-tool-not-found', 'VIHS_E_COMPARISON_TOOL_NOT_FOUND'],
+    ['windows-host-runtime-surface-contaminated', 'VIHS_E_RUNTIME_SURFACE_CONTAMINATED'],
+    ['an-unmapped-future-reason', 'VIHS_E_RUNTIME_VALIDATION_BLOCKED']
+  ])(
+    'maps blocked reason %s to stable runtime error code %s',
+    async (blockedReason, expectedCode) => {
+      const text = await runValidateWithSelection(blockedRuntimeSelection(blockedReason));
+      expect(text).toContain(`runtimeBlockedReason=${blockedReason}`);
+      expect(text).toContain(`runtimeErrorCode=${expectedCode}`);
+      expect(text).toContain('runtimeValidationOutcome=blocked');
+      expect(text).toContain('runtimeProofStatus=blocked-with-actionable-error');
+    }
+  );
+
+  it('reports VIHS_OK and implemented status for a ready runtime selection', async () => {
+    const text = await runValidateWithSelection(readyRuntimeSelection());
+    expect(text).toContain('runtimeValidationOutcome=ready');
+    expect(text).toContain('runtimeErrorCode=VIHS_OK');
+    expect(text).toContain('runtimeProofStatus=ready');
+    expect(text).toContain('runtimeImplementationStatus=implemented');
+  });
+
+  it.each([
+    'docker-provider-labview-version-not-implemented',
+    'docker-provider-requires-windows-x64',
+    'docker-only-requires-windows-x64-provider',
+    'docker-provider-not-supported-on-platform',
+    'labview-2026q1-unsupported-on-macos'
+  ])('classifies %s as a not-implemented runtime path', async (blockedReason) => {
+    const text = await runValidateWithSelection(blockedRuntimeSelection(blockedReason));
+    expect(text).toContain('runtimeImplementationStatus=not-implemented');
+  });
+
+  it('classifies a prerequisite gap as blocked-or-missing-prerequisite', async () => {
+    const text = await runValidateWithSelection(blockedRuntimeSelection('labview-exe-not-found'));
+    expect(text).toContain('runtimeImplementationStatus=blocked-or-missing-prerequisite');
+  });
+
+  it('rejects an unknown argument with a stable message', () => {
+    expect(() => parseLocalRuntimeSettingsCliArgs(['--bogus'])).toThrow('Unknown argument: --bogus');
+  });
+
+  it.each([
+    [['--labview-version', '2026', '--labview-bitness', 'x86'], 'Missing required --provider.'],
+    [['--provider', 'host', '--labview-bitness', 'x86'], 'Missing required --labview-version.'],
+    [['--provider', 'host', '--labview-version', '2026'], 'Missing required --labview-bitness.']
+  ])('rejects incomplete non-validate invocation %j', async (argv, expectedMessage) => {
+    await expect(runLocalRuntimeSettingsCli(argv, {})).rejects.toThrow(expectedMessage);
+  });
+
+  it('resolves default VS Code settings paths across supported platforms', () => {
+    expect(resolveDefaultVsCodeSettingsPath('win32', {}, () => 'C:\\Users\\Test')).toBe(
+      'C:\\Users\\Test\\AppData\\Roaming\\Code\\User\\settings.json'
+    );
+    expect(
+      resolveDefaultVsCodeSettingsPath(
+        'win32',
+        { APPDATA: '/mnt/c/Users/Test/AppData/Roaming' },
+        () => 'C:\\Users\\Test'
+      )
+    ).toBe('/mnt/c/Users/Test/AppData/Roaming/Code/User/settings.json');
+    expect(resolveDefaultVsCodeSettingsPath('linux', {}, () => '/home/test')).toBe(
+      '/home/test/.config/Code/User/settings.json'
+    );
+    expect(resolveDefaultVsCodeSettingsPath('darwin', {}, () => '/Users/test')).toBe(
+      '/Users/test/Library/Application Support/Code/User/settings.json'
+    );
+  });
+
+  it('throws for an unsupported settings platform', () => {
+    expect(() =>
+      resolveDefaultVsCodeSettingsPath('freebsd' as NodeJS.Platform, {}, () => '/home/test')
+    ).toThrow('Unsupported platform for VI History settings CLI: freebsd');
+  });
+});
+
+describe('writeVsCodeSettingsFile / readPersistedRuntimeSettingsFacts (VHS-REQ-623)', () => {
+  const settingsPath = '/home/test/.config/Code/User/settings.json';
+
+  it('creates the parent directory and writes the three viHistorySuite keys', async () => {
+    const memory = new MemoryFs();
+
+    await writeVsCodeSettingsFile(settingsPath, 'host', '2026', 'x64', memory);
+
+    expect(memory.mkdir).toHaveBeenCalledWith(path.dirname(settingsPath), { recursive: true });
+    const written = memory.text(settingsPath);
+    expect(written).toContain('"viHistorySuite.runtimeProvider": "host"');
+    expect(written).toContain('"viHistorySuite.labviewVersion": "2026"');
+    expect(written).toContain('"viHistorySuite.labviewBitness": "x64"');
+  });
+
+  it('preserves unrelated pre-existing settings keys when upserting', async () => {
+    const memory = new MemoryFs();
+    memory.seed(
+      settingsPath,
+      '{\n  "editor.fontSize": 14,\n  "viHistorySuite.runtimeProvider": "docker"\n}\n'
+    );
+
+    await writeVsCodeSettingsFile(settingsPath, 'host', '2025', 'x86', memory);
+
+    const written = memory.text(settingsPath);
+    // Unrelated keys survive the edit.
+    expect(written).toContain('"editor.fontSize": 14');
+    // The provider is updated in place, not duplicated.
+    expect(written).toContain('"viHistorySuite.runtimeProvider": "host"');
+    expect(written).not.toContain('"docker"');
+  });
+
+  it('round-trips written settings back through readPersistedRuntimeSettingsFacts', async () => {
+    const memory = new MemoryFs();
+
+    await writeVsCodeSettingsFile(settingsPath, 'docker', '2026', 'x64', memory);
+    const facts = await readPersistedRuntimeSettingsFacts(settingsPath, memory);
+
+    expect(facts.persistedProvider).toBe('docker');
+    expect(facts.persistedLabviewVersion).toBe('2026');
+    expect(facts.persistedLabviewBitness).toBe('x64');
+    expect(facts.runtimeSettings.requestedProvider).toBe('docker');
+    // The docker provider clears the existing-Windows-host allowance.
+    expect(facts.runtimeSettings.allowExistingWindowsHostRuntime).toBe(false);
+    expect(facts.runtimeSettings.bitness).toBe('x64');
+  });
+
+  it('returns undefined persisted values with defaulted runtime settings for a missing file', async () => {
+    const memory = new MemoryFs();
+
+    const facts = await readPersistedRuntimeSettingsFacts(settingsPath, memory);
+
+    expect(facts.persistedProvider).toBeUndefined();
+    expect(facts.persistedLabviewVersion).toBeUndefined();
+    expect(facts.persistedLabviewBitness).toBeUndefined();
+    expect(facts.runtimeSettings.requestedProvider).toBeUndefined();
+    expect(facts.runtimeSettings.invalidRequestedProvider).toBeUndefined();
+    // A missing/non-docker provider keeps the existing-Windows-host allowance on.
+    expect(facts.runtimeSettings.allowExistingWindowsHostRuntime).toBe(true);
+    expect(facts.runtimeSettings.bitness).toBeUndefined();
+  });
+
+  it('captures an invalid provider without resolving a requested provider', async () => {
+    const memory = new MemoryFs();
+    memory.seed(settingsPath, '{ "viHistorySuite.runtimeProvider": "bogus" }');
+
+    const facts = await readPersistedRuntimeSettingsFacts(settingsPath, memory);
+
+    expect(facts.runtimeSettings.requestedProvider).toBeUndefined();
+    expect(facts.runtimeSettings.invalidRequestedProvider).toBe('bogus');
+  });
+
+  it('drops an unsupported bitness while keeping a supported one', async () => {
+    const memory = new MemoryFs();
+    memory.seed(settingsPath, '{ "viHistorySuite.labviewBitness": "arm64" }');
+    const invalid = await readPersistedRuntimeSettingsFacts(settingsPath, memory);
+    expect(invalid.runtimeSettings.bitness).toBeUndefined();
+
+    memory.seed(settingsPath, '{ "viHistorySuite.labviewBitness": "x86" }');
+    const valid = await readPersistedRuntimeSettingsFacts(settingsPath, memory);
+    expect(valid.runtimeSettings.bitness).toBe('x86');
+  });
+});
+
+describe('localRuntimeSettingsCli pure helpers (VHS-REQ-623 coverage)', () => {
+  describe('normalizeLabviewBitness', () => {
+    it('accepts x86/x64 case- and whitespace-insensitively', () => {
+      expect(normalizeLabviewBitness(' X64 ')).toBe('x64');
+      expect(normalizeLabviewBitness('x86')).toBe('x86');
+    });
+    it('throws for an unsupported bitness', () => {
+      expect(() => normalizeLabviewBitness('arm64')).toThrow(/Unsupported LabVIEW bitness/);
+    });
+  });
+
+  describe('normalizeProvider', () => {
+    it('accepts host/docker case- and whitespace-insensitively', () => {
+      expect(normalizeProvider(' Host ')).toBe('host');
+      expect(normalizeProvider('DOCKER')).toBe('docker');
+    });
+    it('throws for an unsupported provider', () => {
+      expect(() => normalizeProvider('podman')).toThrow(/Unsupported compare provider/);
+    });
+  });
+
+  describe('isSupportedInstalledLabviewVersion', () => {
+    it('is true only for a parseable year >= 2025', () => {
+      expect(isSupportedInstalledLabviewVersion('2025')).toBe(true);
+      expect(isSupportedInstalledLabviewVersion('2026')).toBe(true);
+      expect(isSupportedInstalledLabviewVersion('2024')).toBe(false);
+      expect(isSupportedInstalledLabviewVersion('nope')).toBe(false);
+      expect(isSupportedInstalledLabviewVersion(undefined)).toBe(false);
+    });
+  });
+
+  describe('isSecretLikeEnvironmentKey', () => {
+    it('never redacts PATH-family keys', () => {
+      expect(isSecretLikeEnvironmentKey('PATH')).toBe(false);
+      expect(isSecretLikeEnvironmentKey('GOPATH')).toBe(false);
+      expect(isSecretLikeEnvironmentKey('LD_LIBRARY_PATH')).toBe(false);
+    });
+    it('flags token/secret/password/credential/auth/key-like keys', () => {
+      for (const key of ['GITHUB_TOKEN', 'MY_PAT', 'DB_PASSWORD', 'PASSWD', 'API_SECRET', 'PRIVATE_THING', 'AWS_CREDENTIAL', 'GH_AUTH', 'SIGNING_KEY']) {
+        expect(isSecretLikeEnvironmentKey(key)).toBe(true);
+      }
+    });
+    it('does not flag ordinary keys', () => {
+      expect(isSecretLikeEnvironmentKey('HOME')).toBe(false);
+      expect(isSecretLikeEnvironmentKey('LANG')).toBe(false);
+    });
+  });
+
+  describe('buildReportableEnvironment', () => {
+    it('redacts secret-like values, keeps others, and sorts keys', () => {
+      const result = buildReportableEnvironment({
+        ZED: 'last',
+        GITHUB_TOKEN: 'ghp_xxx',
+        ALPHA: 'first',
+        PATH: '/usr/bin'
+      });
+      expect(Object.keys(result)).toEqual(['ALPHA', 'GITHUB_TOKEN', 'PATH', 'ZED']);
+      expect(result.GITHUB_TOKEN).toBe('<redacted-secret-like-env-var>');
+      expect(result.PATH).toBe('/usr/bin');
+      expect(result.ALPHA).toBe('first');
+    });
+    it('coerces an undefined value to an empty string', () => {
+      expect(buildReportableEnvironment({ EMPTY: undefined })).toEqual({ EMPTY: '' });
+    });
+  });
+
+  describe('formatPersistedFact', () => {
+    it('returns the value or a <missing> placeholder', () => {
+      expect(formatPersistedFact('host')).toBe('host');
+      expect(formatPersistedFact(undefined)).toBe('<missing>');
+    });
+  });
+
+  describe('resolveCliRuntimePlatform', () => {
+    it('passes through supported platforms', () => {
+      expect(resolveCliRuntimePlatform('win32')).toBe('win32');
+      expect(resolveCliRuntimePlatform('linux')).toBe('linux');
+      expect(resolveCliRuntimePlatform('darwin')).toBe('darwin');
+    });
+    it('throws for an unsupported platform', () => {
+      expect(() => resolveCliRuntimePlatform('aix' as NodeJS.Platform)).toThrow(
+        /Unsupported runtime platform/
+      );
+    });
+  });
+
+  describe('resolveCurrentPlatformLauncherPath', () => {
+    it('picks the windows launcher on win32, else posix', () => {
+      expect(resolveCurrentPlatformLauncherPath('W.cmd', 'p.sh', 'win32')).toBe('W.cmd');
+      expect(resolveCurrentPlatformLauncherPath('W.cmd', 'p.sh', 'linux')).toBe('p.sh');
+    });
+  });
+
+  describe('buildPathPrependValue', () => {
+    it('appends the platform PATH separator', () => {
+      expect(buildPathPrependValue('C:\\bin', 'win32')).toBe('C:\\bin;');
+      expect(buildPathPrependValue('/usr/bin', 'linux')).toBe('/usr/bin:');
+    });
+  });
+
+  describe('quoteLauncherPathForShell', () => {
+    it('double-quotes and escapes embedded quotes on win32', () => {
+      expect(quoteLauncherPathForShell('C:\\a "b".cmd', 'win32')).toBe('"C:\\a ""b"".cmd"');
+    });
+    it('single-quotes and escapes for posix', () => {
+      expect(quoteLauncherPathForShell("/a/it's.sh", 'linux')).toBe(`'/a/it'"'"'s.sh'`);
+    });
+  });
+
+  describe('escapeWindowsBatchEcho / escapeSingleQuotedShellString', () => {
+    it('escapes double quotes for batch echo', () => {
+      expect(escapeWindowsBatchEcho('say "hi"')).toBe('say ""hi""');
+    });
+    it('escapes single quotes for a POSIX single-quoted string', () => {
+      expect(escapeSingleQuotedShellString("a'b")).toBe(`a'"'"'b`);
+    });
   });
 });

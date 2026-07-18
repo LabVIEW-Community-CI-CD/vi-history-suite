@@ -279,4 +279,86 @@ describe('applyLabVIEWCliIniHardening', () => {
     expect(DEFAULT_LABVIEW_CLI_INI_CANDIDATE_PATHS.length).toBeGreaterThan(0);
     expect(DEFAULT_LABVIEW_CLI_INI_CANDIDATE_PATHS[0]).toContain('LabVIEWCLI.ini');
   });
+
+  it('applies primary write even when the backup write throws (fail-soft backup)', async () => {
+    const iniPath = 'C:\\fake\\LabVIEWCLI.ini';
+    const backupPath = `${iniPath}${LABVIEW_CLI_INI_BACKUP_SUFFIX}`;
+    const { state, deps } = createHarness({
+      initialFiles: { [iniPath]: 'A=1\n' }
+    });
+    const innerWrite = deps.writeFile as unknown as (
+      p: string,
+      c: string
+    ) => Promise<void>;
+    deps.writeFile = (async (filePath: string, contents: string) => {
+      if (String(filePath) === backupPath) {
+        throw new Error('backup-write-denied');
+      }
+      return innerWrite(filePath, contents);
+    }) as never;
+
+    const result = await applyLabVIEWCliIniHardening({
+      candidatePaths: [iniPath],
+      requestedValueSeconds: 180,
+      deps
+    });
+    expect(result.applied).toBe(true);
+    expect(result.backupCreated).toBe(false);
+    expect(state.files.has(backupPath)).toBe(false);
+    const finalContents = state.files.get(iniPath)!;
+    expect(finalContents).toContain('OpenAppReferenceTimeoutInSecond=180');
+  });
+
+  it('proceeds to write when only one of the two keys already matches', async () => {
+    const iniPath = 'C:\\fake\\LabVIEWCLI.ini';
+    const { state, deps } = createHarness({
+      initialFiles: {
+        [iniPath]: `${LABVIEW_CLI_INI_OPEN_APP_KEY}=180\n`
+      }
+    });
+    const result = await applyLabVIEWCliIniHardening({
+      candidatePaths: [iniPath],
+      requestedValueSeconds: 180,
+      deps
+    });
+    expect(result.applied).toBe(true);
+    expect(result.reason).toBeUndefined();
+    expect(state.renameCalls).toHaveLength(1);
+    const finalContents = state.files.get(iniPath)!;
+    expect(finalContents).toContain(`${LABVIEW_CLI_INI_AFTER_LAUNCH_KEY}=180`);
+  });
+
+  it('decodes a Buffer returned by readFile before parsing', async () => {
+    const iniPath = 'C:\\fake\\LabVIEWCLI.ini';
+    const { state, deps } = createHarness({
+      initialFiles: { [iniPath]: 'A=1\n' }
+    });
+    deps.readFile = (async () => Buffer.from('A=1\n', 'utf8')) as never;
+    const result = await applyLabVIEWCliIniHardening({
+      candidatePaths: [iniPath],
+      requestedValueSeconds: 180,
+      deps
+    });
+    expect(result.applied).toBe(true);
+    const finalContents = state.files.get(iniPath)!;
+    expect(finalContents).toContain('OpenAppReferenceTimeoutInSecond=180');
+  });
+});
+
+describe('parseLabVIEWCliIniValue and setLabVIEWCliIniValue edge cases', () => {
+  it('parseLabVIEWCliIniValue trims surrounding whitespace around the value', () => {
+    expect(parseLabVIEWCliIniValue('Key =  spaced  \n', 'Key')).toBe('spaced');
+  });
+
+  it('parseLabVIEWCliIniValue returns an empty string when the value is blank', () => {
+    expect(parseLabVIEWCliIniValue('Key=\n', 'Key')).toBe('');
+  });
+
+  it('setLabVIEWCliIniValue appends without a leading newline on empty contents', () => {
+    expect(setLabVIEWCliIniValue('', 'Key', 'val')).toBe('Key=val\n');
+  });
+
+  it('setLabVIEWCliIniValue trims trailing whitespace before appending', () => {
+    expect(setLabVIEWCliIniValue('A=1\n\n  \n', 'Key', 'val')).toBe('A=1\nKey=val\n');
+  });
 });

@@ -23,7 +23,14 @@ import {
   isHostVersionConflictBlock,
   isViVersionTooNewFailure,
   readComparisonReportOptions,
-  readComparisonRuntimeSettings
+  readComparisonRuntimeSettings,
+  readCliConnectTimeoutSeconds,
+  readWorktreeSnapshotRetentionLimit,
+  clampCliConnectTimeoutSeconds,
+  applyCliConnectTimeoutSelection,
+  renderComparisonReportPanelHtml,
+  resolveRuntimePlatform,
+  DEFAULT_CLI_CONNECT_TIMEOUT_SECONDS
 } from '../../src/reporting/comparisonReportAction';
 import { buildComparisonReportArchivePlanFromSelection } from '../../src/dashboard/comparisonReportArchive';
 import {
@@ -203,7 +210,7 @@ describe('comparison report action orchestration (VHS-REQ-133/148/155)', () => {
     harness.reset();
   });
 
-  it('uses the explicit selected/base pair, executes ready packets, archives evidence, and opens the generated report', async () => {
+  it('uses the explicit selected/base pair, executes ready packets, archives evidence, and opens the generated report (VHS-REQ-644.3, VHS-REQ-644.6)', async () => {
     const context = harness.createContext();
     const preflight = createPreflight();
     const runtimeSelection = createRuntimeSelection();
@@ -293,7 +300,9 @@ describe('comparison report action orchestration (VHS-REQ-133/148/155)', () => {
         materializeSelectedRevisionTree: expect.any(Function)
       })
     );
-    expect(archiveComparisonReportSource).toHaveBeenCalledWith(executedRecord);
+    expect(archiveComparisonReportSource).toHaveBeenCalledWith(executedRecord, {
+      worktreeSnapshotRetentionLimit: 5
+    });
     expect(result).toMatchObject({
       outcome: 'opened-comparison-report',
       reportStatus: 'ready-for-runtime',
@@ -324,7 +333,7 @@ describe('comparison report action orchestration (VHS-REQ-133/148/155)', () => {
     );
   });
 
-  it('renders a self-contained single-file report with embedded data-URI images (VHS-REQ-640)', async () => {
+  it('renders a self-contained single-file report with embedded data-URI images (VHS-REQ-640.2, VHS-REQ-640.3)', async () => {
     const context = harness.createContext();
     const preflight = createPreflight();
     const runtimeSelection = createRuntimeSelection();
@@ -387,13 +396,14 @@ describe('comparison report action orchestration (VHS-REQ-133/148/155)', () => {
     const html = harness.panels[0]?.webview.html ?? '';
     // The embedded data URI survives into the rendered webview unchanged.
     expect(html).toContain(dataUri);
+    expect(harness.panels[0]?.options).toMatchObject({ enableScripts: false });
     // The CSP permits inline data: images and the report needs no _files directory.
     expect(html).toContain('img-src');
     expect(html).toContain('data:');
     expect(html).not.toContain('_files');
   });
 
-  it('compares the working tree against HEAD and does not retain the evidence (VHS-REQ-641)', async () => {
+  it('compares the working tree against HEAD and does not retain the evidence (VHS-REQ-641.2, VHS-REQ-641.4, VHS-REQ-641.5)', async () => {
     const context = harness.createContext();
     const preflight = createPreflight();
     const runtimeSelection = createRuntimeSelection();
@@ -460,7 +470,7 @@ describe('comparison report action orchestration (VHS-REQ-133/148/155)', () => {
         rightRevisionId: 'WORKTREE'
       })
     );
-    // VHS-REQ-644: the synthesized working-tree revision has no commit body, so
+    // VHS-REQ-644.5: the synthesized working-tree revision has no commit body, so
     // it carries an empty body through the revision metadata (rendered as the
     // empty-body fallback) rather than erroring.
     expect(persistComparisonReport).toHaveBeenCalledWith(
@@ -469,13 +479,80 @@ describe('comparison report action orchestration (VHS-REQ-133/148/155)', () => {
       })
     );
     expect(result.outcome).toBe('opened-comparison-report');
-    // VHS-REQ-641: working-tree comparisons are not reproducible, so they are
-    // never archived into retained dashboard evidence.
+    // VHS-REQ-641 (Phase 3): a working-tree comparison whose record carries no
+    // content-addressed snapshot identity (e.g. the runtime did not stage the
+    // bytes) is still not archived — its evidence could not be content-addressed.
     expect(archiveComparisonReportSource).not.toHaveBeenCalled();
     expect(result.retainedArchiveAvailable).toBe(false);
+    expect(harness.panels[0]?.options).toMatchObject({ enableScripts: false });
   });
 
-  it('opens the report Beside and threads the source VI path for re-entry (VHS-REQ-638)', async () => {
+  it('archives a working-tree comparison when the record carries a content-addressed snapshot identity (VHS-REQ-641.7)', async () => {
+    const context = harness.createContext();
+    const preflight = createPreflight();
+    const runtimeSelection = createRuntimeSelection();
+    const executedRecord = createPacketRecord({
+      preflight,
+      runtimeSelection,
+      runtimeExecution: {
+        state: 'succeeded',
+        attempted: true,
+        reportExists: true,
+        worktreeSnapshotId: 'aaaa000000000000',
+        stdoutFilePath: '/workspace/storage/runtime-stdout.log',
+        stderrFilePath: '/workspace/storage/runtime-stderr.log'
+      }
+    });
+    const worktreeRecord: ComparisonReportPacketRecord = {
+      ...executedRecord,
+      selectedHash: 'WORKTREE',
+      baseHash: 'c3'
+    };
+    const preflightComparisonReport = vi.fn().mockResolvedValue(preflight);
+    const locateRuntime = vi.fn().mockResolvedValue(runtimeSelection);
+    const persistComparisonReport = vi.fn().mockResolvedValue(createPacketResult(worktreeRecord));
+    const executeComparisonReport = vi.fn().mockResolvedValue(createPacketResult(worktreeRecord));
+    const archiveComparisonReportSource = vi.fn().mockResolvedValue(undefined);
+    const readFile = vi
+      .fn()
+      .mockResolvedValue('<html><head></head><body>worktree report</body></html>');
+
+    const action = createComparisonReportAction(context as never, {
+      preflightComparisonReport,
+      locateRuntime,
+      getRuntimeSettings: () => ({
+        requestedProvider: 'host',
+        labviewVersion: '2026',
+        bitness: 'x64'
+      }),
+      persistComparisonReport,
+      executeComparisonReport,
+      archiveComparisonReportSource,
+      readFile: readFile as never
+    });
+
+    const model: ViHistoryViewModel = {
+      ...createModel(),
+      workingTree: { hasUncommittedChanges: true, headHash: 'c3' }
+    };
+
+    const result = await action({
+      model,
+      selectedHash: 'WORKTREE',
+      baseHash: 'c3',
+      reportProgress: vi.fn()
+    });
+
+    expect(result.outcome).toBe('opened-comparison-report');
+    // The snapshot identity makes the retained pair reproducible/collision-free,
+    // so the working-tree comparison IS archived.
+    expect(archiveComparisonReportSource).toHaveBeenCalledWith(worktreeRecord, {
+      worktreeSnapshotRetentionLimit: 5
+    });
+    expect(result.retainedArchiveAvailable).toBe(true);
+  });
+
+  it('opens the report Beside and threads the source VI path for re-entry (VHS-REQ-638.4)', async () => {
     const context = harness.createContext();
     const preflight = createPreflight();
     const runtimeSelection = createRuntimeSelection();
@@ -542,7 +619,7 @@ describe('comparison report action orchestration (VHS-REQ-133/148/155)', () => {
     const expectedSourceViFsPath = path.join('/workspace/repo', 'Source/Sample.vi');
     expect(registeredSources).toHaveLength(1);
     expect(registeredSources[0]?.sourceViFsPath).toBe(expectedSourceViFsPath);
-    // VHS-REQ-626: the registered export source carries the in-panel revision
+    // VHS-REQ-626.3: the registered export source carries the in-panel revision
     // context so the exported graphics report embeds the same selected/base
     // hashes and metadata instead of "not retained" fallbacks.
     expect(registeredSources[0]?.relativePath).toBe('Source/Sample.vi');
@@ -611,7 +688,7 @@ describe('comparison report action orchestration (VHS-REQ-133/148/155)', () => {
     });
   });
 
-  it('retains runtime-discovery failure summaries and opens the packet when no generated report exists', async () => {
+  it('retains runtime-discovery failure summaries and opens the packet when no generated report exists (VHS-REQ-155.3, VHS-REQ-155.5)', async () => {
     const context = harness.createContext();
     const runtimeSelection = createRuntimeSelection({
       provider: 'unavailable',
@@ -671,7 +748,7 @@ describe('comparison report action orchestration (VHS-REQ-133/148/155)', () => {
     expect(harness.panels[0]?.webview.html).toContain('LabVIEW executable missing');
   });
 
-  it('opens retained archived comparison evidence only when the source record and packet match the requested pair', async () => {
+  it('opens retained archived comparison evidence only when the source record and packet match the requested pair (VHS-REQ-640.4)', async () => {
     const context = harness.createContext();
     const model = createModel();
     const archivePlan = buildComparisonReportArchivePlanFromSelection({
@@ -701,7 +778,7 @@ describe('comparison report action orchestration (VHS-REQ-133/148/155)', () => {
       ),
       readFile: vi.fn(async (targetPath: string) => {
         if (targetPath !== archivePlan.sourceRecordFilePath) {
-          return '<html><body>Generated report was missing</body></html>';
+          return '<html><body>Generated report was missing<img class="difference-image" src="diff-report-Sample.vi_files/0_0_1.png"></body></html>';
         }
 
         return JSON.stringify({
@@ -735,7 +812,14 @@ describe('comparison report action orchestration (VHS-REQ-133/148/155)', () => {
       retainedArchiveAvailable: true
     });
     expect(harness.panels[0]?.viewType).toBe('viHistorySuite.comparisonReport');
+    // VHS-REQ-626.7 / VHS-REQ-645.4: the comparison-report webview renders
+    // LabVIEW-authored HTML with scripts disabled; the export action is driven
+    // through the command surface, never in-webview script.
+    expect(harness.panels[0]?.options).toMatchObject({ enableScripts: false });
     expect(harness.panels[0]?.webview.html).toContain('Generated report was missing');
+    expect(harness.panels[0]?.webview.html).toContain(
+      '<img loading="lazy" class="difference-image" src="diff-report-Sample.vi_files/0_0_1.png"'
+    );
   });
 
   it('rejects malformed retained archive records before opening a panel', async () => {
@@ -756,7 +840,7 @@ describe('comparison report action orchestration (VHS-REQ-133/148/155)', () => {
   });
 });
 
-describe('readComparisonRuntimeSettings manual overrides (VHS-REQ-633)', () => {
+describe('readComparisonRuntimeSettings manual overrides (VHS-REQ-633.2)', () => {
   function fakeConfiguration(values: Record<string, string | undefined>) {
     return {
       get: (key: string) => values[key]
@@ -796,7 +880,7 @@ describe('readComparisonRuntimeSettings manual overrides (VHS-REQ-633)', () => {
   });
 });
 
-describe('readComparisonReportOptions (VHS-REQ-645)', () => {
+describe('readComparisonReportOptions (VHS-REQ-645.3)', () => {
   function fakeConfiguration(values: Record<string, unknown>) {
     return {
       get: (key: string) => values[key]
@@ -851,6 +935,210 @@ describe('readComparisonReportOptions (VHS-REQ-645)', () => {
   });
 });
 
+describe('readComparisonRuntimeSettings provider and bitness parsing (VHS-REQ-621, VHS-REQ-633.2)', () => {
+  function fakeConfiguration(values: Record<string, unknown>) {
+    return {
+      get: (key: string) => values[key]
+    } as never;
+  }
+
+  it('falls back to the host provider when runtimeProvider is unset', () => {
+    const settings = readComparisonRuntimeSettings(fakeConfiguration({}));
+
+    expect(settings.requestedProvider).toBe('host');
+    expect(settings.invalidRequestedProvider).toBeUndefined();
+    // Host (non-docker) keeps the existing-Windows-host allowance on.
+    expect(settings.allowExistingWindowsHostRuntime).toBe(true);
+  });
+
+  it('carries an invalid runtimeProvider through without defaulting to host', () => {
+    const settings = readComparisonRuntimeSettings(
+      fakeConfiguration({ runtimeProvider: 'bad-provider' })
+    );
+
+    // An invalid provider must not silently resolve to host: the requested
+    // provider is undefined and the invalid value is retained for diagnostics.
+    expect(settings.requestedProvider).toBeUndefined();
+    expect(settings.invalidRequestedProvider).toBe('bad-provider');
+  });
+
+  it('disables allowExistingWindowsHostRuntime when the docker provider is selected', () => {
+    const settings = readComparisonRuntimeSettings(
+      fakeConfiguration({ runtimeProvider: 'docker' })
+    );
+
+    expect(settings.requestedProvider).toBe('docker');
+    expect(settings.allowExistingWindowsHostRuntime).toBe(false);
+  });
+
+  it('accepts a valid labviewBitness and rejects an unsupported one', () => {
+    expect(
+      readComparisonRuntimeSettings(fakeConfiguration({ runtimeProvider: 'host', labviewBitness: 'x86' }))
+        .bitness
+    ).toBe('x86');
+    expect(
+      readComparisonRuntimeSettings(fakeConfiguration({ runtimeProvider: 'host', labviewBitness: 'arm64' }))
+        .bitness
+    ).toBeUndefined();
+  });
+
+  it('trims the containerImageVersion override and drops a blank one', () => {
+    expect(
+      readComparisonRuntimeSettings(
+        fakeConfiguration({ runtimeProvider: 'docker', 'container.imageVersion': '  2026q1-linux  ' })
+      ).containerImageVersion
+    ).toBe('2026q1-linux');
+    expect(
+      readComparisonRuntimeSettings(
+        fakeConfiguration({ runtimeProvider: 'docker', 'container.imageVersion': '   ' })
+      ).containerImageVersion
+    ).toBeUndefined();
+  });
+});
+
+describe('readCliConnectTimeoutSeconds clamping (VHS-REQ-148)', () => {
+  function fakeConfiguration(value: unknown) {
+    return {
+      get: (key: string) => (key === 'runtime.cliConnectTimeoutSeconds' ? value : undefined)
+    } as never;
+  }
+
+  it('accepts an in-range integer', () => {
+    expect(readCliConnectTimeoutSeconds(fakeConfiguration(240))).toBe(240);
+  });
+
+  it('falls back to the default for a non-integer value', () => {
+    expect(readCliConnectTimeoutSeconds(fakeConfiguration(180.5))).toBe(
+      DEFAULT_CLI_CONNECT_TIMEOUT_SECONDS
+    );
+  });
+
+  it('falls back to the default for a below-minimum value', () => {
+    expect(readCliConnectTimeoutSeconds(fakeConfiguration(29))).toBe(
+      DEFAULT_CLI_CONNECT_TIMEOUT_SECONDS
+    );
+  });
+
+  it('falls back to the default for an above-maximum value', () => {
+    expect(readCliConnectTimeoutSeconds(fakeConfiguration(601))).toBe(
+      DEFAULT_CLI_CONNECT_TIMEOUT_SECONDS
+    );
+  });
+
+  it('falls back to the default for a non-number value (misconfigured settings.json)', () => {
+    expect(readCliConnectTimeoutSeconds(fakeConfiguration('240'))).toBe(
+      DEFAULT_CLI_CONNECT_TIMEOUT_SECONDS
+    );
+  });
+});
+
+describe('readWorktreeSnapshotRetentionLimit (VHS-REQ-641.7)', () => {
+  function fakeConfiguration(value: unknown) {
+    return {
+      get: (key: string) =>
+        key === 'comparison.worktreeSnapshotRetentionLimit' ? value : undefined
+    } as never;
+  }
+
+  it('accepts a non-negative integer, including 0 (retention disabled)', () => {
+    expect(readWorktreeSnapshotRetentionLimit(fakeConfiguration(10))).toBe(10);
+    expect(readWorktreeSnapshotRetentionLimit(fakeConfiguration(0))).toBe(0);
+  });
+
+  it('defaults to 5 when unset', () => {
+    expect(readWorktreeSnapshotRetentionLimit(fakeConfiguration(undefined))).toBe(5);
+  });
+
+  it('falls back to the default for negative, fractional, or non-number values', () => {
+    expect(readWorktreeSnapshotRetentionLimit(fakeConfiguration(-1))).toBe(5);
+    expect(readWorktreeSnapshotRetentionLimit(fakeConfiguration(2.5))).toBe(5);
+    expect(readWorktreeSnapshotRetentionLimit(fakeConfiguration('3'))).toBe(5);
+  });
+});
+
+describe('clampCliConnectTimeoutSeconds (VHS-REQ-620.8)', () => {
+  it('passes an in-range integer through unchanged', () => {
+    expect(clampCliConnectTimeoutSeconds(240)).toBe(240);
+  });
+
+  it('rounds a fractional value to an integer', () => {
+    expect(clampCliConnectTimeoutSeconds(180.5)).toBe(181);
+  });
+
+  it('clamps below-min and above-max values to the bounds', () => {
+    expect(clampCliConnectTimeoutSeconds(5)).toBe(30);
+    expect(clampCliConnectTimeoutSeconds(9999)).toBe(600);
+  });
+
+  it('falls back to the default for a non-finite or non-number request', () => {
+    expect(clampCliConnectTimeoutSeconds(Number.NaN)).toBe(DEFAULT_CLI_CONNECT_TIMEOUT_SECONDS);
+    expect(clampCliConnectTimeoutSeconds('240')).toBe(DEFAULT_CLI_CONNECT_TIMEOUT_SECONDS);
+  });
+});
+
+describe('applyCliConnectTimeoutSelection (VHS-REQ-620.8)', () => {
+  it('writes the clamped value to the runtime setting at global scope and returns it', async () => {
+    const update = vi.fn().mockResolvedValue(undefined);
+
+    const written = await applyCliConnectTimeoutSelection(9999, { update });
+
+    expect(written).toBe(600);
+    expect(update).toHaveBeenCalledWith(
+      'runtime.cliConnectTimeoutSeconds',
+      600,
+      harness.vscode.ConfigurationTarget.Global
+    );
+  });
+
+  it('normalizes a fractional in-range entry before persisting', async () => {
+    const update = vi.fn().mockResolvedValue(undefined);
+    const written = await applyCliConnectTimeoutSelection(240.4, { update });
+    expect(written).toBe(240);
+    expect(update).toHaveBeenCalledWith(
+      'runtime.cliConnectTimeoutSeconds',
+      240,
+      harness.vscode.ConfigurationTarget.Global
+    );
+  });
+});
+
+describe('resolveRuntimePlatform (VHS-REQ-621)', () => {
+  it('passes through the supported platforms', () => {
+    expect(resolveRuntimePlatform('win32')).toBe('win32');
+    expect(resolveRuntimePlatform('linux')).toBe('linux');
+    expect(resolveRuntimePlatform('darwin')).toBe('darwin');
+  });
+
+  it('maps an unsupported platform to linux', () => {
+    expect(resolveRuntimePlatform('freebsd' as NodeJS.Platform)).toBe('linux');
+  });
+});
+
+describe('buildContainerImagePlatformMismatchMessage fallback wording (VHS-REQ-650)', () => {
+  it('names the concrete switch and pick targets for a linux image under windows-container mode', () => {
+    const message = buildContainerImagePlatformMismatchMessage({
+      selectedImagePlatform: 'linux',
+      activeEnginePlatform: 'windows'
+    });
+
+    expect(message).toContain('Windows-container mode');
+    expect(message).toContain('Switch Docker to Linux containers');
+    expect(message).toContain('pick a Windows image version');
+  });
+
+  it('degrades to generic wording when the platforms are unknown', () => {
+    const message = buildContainerImagePlatformMismatchMessage({});
+
+    // Undefined facts must not produce "undefined" in the surfaced message; the
+    // helper falls back to generic phrasing while staying actionable.
+    expect(message).not.toContain('undefined');
+    expect(message).toContain('a different mode');
+    // Default switch/pick targets when nothing is known.
+    expect(message).toContain('Switch Docker to Windows containers');
+    expect(message).toContain('pick a Linux image version');
+  });
+});
+
 describe('isHostBitnessConflictBlock / isHostVersionConflictBlock (#530)', () => {
   it('isHostBitnessConflictBlock is true only for a blocked-runtime windows-host-bitness-conflict', () => {
     expect(
@@ -899,7 +1187,7 @@ describe('isHostBitnessConflictBlock / isHostVersionConflictBlock (#530)', () =>
 });
 
 describe('buildHostBitnessConflictMessage / buildHostVersionConflictMessage (#530)', () => {
-  it('names running vs selected LabVIEW and steers to close + Retry Compare (bitness)', () => {
+  it('names running vs selected LabVIEW and steers to close + Retry Compare (bitness, VHS-REQ-621.5)', () => {
     const message = buildHostBitnessConflictMessage({
       observedBitness: 'x64',
       observedYear: '2025',
@@ -917,7 +1205,7 @@ describe('buildHostBitnessConflictMessage / buildHostVersionConflictMessage (#53
     expect(message).not.toContain('LabVIEWCLI');
   });
 
-  it('names running vs selected LabVIEW and steers to close + Retry Compare (version)', () => {
+  it('names running vs selected LabVIEW and steers to close + Retry Compare (version, VHS-REQ-653.6)', () => {
     const message = buildHostVersionConflictMessage({
       observedBitness: 'x64',
       observedYear: '2026',
@@ -938,7 +1226,7 @@ describe('buildHostBitnessConflictMessage / buildHostVersionConflictMessage (#53
 });
 
 describe('isViVersionTooNewFailure / buildViVersionTooNewMessage (#595, VHS-REQ-658)', () => {
-  it('isViVersionTooNewFailure is true only for the labview-vi-version-too-new failure reason', () => {
+  it('isViVersionTooNewFailure is true only for the labview-vi-version-too-new failure reason (VHS-REQ-658.3)', () => {
     expect(
       isViVersionTooNewFailure({ runtimeFailureReason: 'labview-vi-version-too-new' })
     ).toBe(true);
@@ -948,7 +1236,7 @@ describe('isViVersionTooNewFailure / buildViVersionTooNewMessage (#595, VHS-REQ-
     expect(isViVersionTooNewFailure({ runtimeFailureReason: undefined })).toBe(false);
   });
 
-  it('names the selected LabVIEW and steers to pick a newer installed LabVIEW', () => {
+  it('names the selected LabVIEW and steers to pick a newer installed LabVIEW (VHS-REQ-658.3)', () => {
     const message = buildViVersionTooNewMessage({
       selectedYear: '2025',
       selectedBitness: 'x64'
@@ -977,7 +1265,7 @@ describe('VI version-too-new failure comparison gate (#597, VHS-REQ-658)', () =>
     harness.reset();
   });
 
-  it('suppresses the report webview and returns the failed-vi-version-too-new outcome', async () => {
+  it('suppresses the report webview and returns the failed-vi-version-too-new outcome (VHS-REQ-658.2, VHS-REQ-658.4)', async () => {
     const context = harness.createContext();
     const runtimeSelection = createRuntimeSelection({
       requestedLabviewVersion: '2025',
@@ -1069,7 +1357,7 @@ describe('Host bitness/version conflict comparison gate (#530)', () => {
     harness.reset();
   });
 
-  it('suppresses the report webview, surfaces structured facts, and returns the bitness-conflict outcome', async () => {
+  it('suppresses the report webview, surfaces structured facts, and returns the bitness-conflict outcome (VHS-REQ-621.5)', async () => {
     const context = harness.createContext();
     const runtimeSelection = createRuntimeSelection({
       provider: 'unavailable',
@@ -1115,7 +1403,7 @@ describe('Host bitness/version conflict comparison gate (#530)', () => {
     expect(harness.panels).toHaveLength(0);
   });
 
-  it('suppresses the report webview even when archiving is unavailable (no archive guard, unlike Docker)', async () => {
+  it('suppresses the report webview even when archiving is unavailable (no archive guard, unlike Docker, VHS-REQ-653.6)', async () => {
     const context = harness.createContext();
     const runtimeSelection = createRuntimeSelection({
       provider: 'unavailable',
@@ -1262,7 +1550,7 @@ describe('Container image platform mismatch comparison gate (#532)', () => {
   });
 });
 
-describe('isDockerDaemonNotRunningBlock (VHS-REQ-642)', () => {
+describe('isDockerDaemonNotRunningBlock (VHS-REQ-642, VHS-REQ-642.1)', () => {
   const DAEMON_DOWN_REASONS = [
     'docker-provider-unavailable',
     'docker-only-provider-unavailable',
@@ -1283,7 +1571,7 @@ describe('isDockerDaemonNotRunningBlock (VHS-REQ-642)', () => {
     }
   );
 
-  // VHS-REQ-642: the daemon-unreachable block must also fire when the Docker CLI
+  // VHS-REQ-642.1: the daemon-unreachable block must also fire when the Docker CLI
   // presence fact is unconfirmed (`undefined`). This is the real-world shape
   // that previously leaked the verbose toast + auto-opened report: the doctor
   // next action already said "start Docker Desktop" (CLI not explicitly absent),
@@ -1355,7 +1643,7 @@ describe('Docker daemon not running comparison gate (VHS-REQ-642)', () => {
     harness.reset();
   });
 
-  it('suppresses the diagnostics webview, still archives the packet, and returns the daemon-down outcome', async () => {
+  it('suppresses the diagnostics webview, still archives the packet, and returns the daemon-down outcome (VHS-REQ-642.2, VHS-REQ-642.3)', async () => {
     const context = harness.createContext();
     const runtimeSelection = createRuntimeSelection({
       executionMode: 'docker-only',
@@ -1409,6 +1697,7 @@ describe('Docker daemon not running comparison gate (VHS-REQ-642)', () => {
       blockedReason: 'docker-provider-unavailable',
       dockerCliAvailable: true,
       dockerDaemonReachable: false,
+      platform: 'win32',
       retainedArchiveAvailable: true
     });
     expect(createWebviewPanel).not.toHaveBeenCalled();
@@ -1416,7 +1705,7 @@ describe('Docker daemon not running comparison gate (VHS-REQ-642)', () => {
     expect(archiveComparisonReportSource).toHaveBeenCalledTimes(1);
   });
 
-  it('suppresses the diagnostics webview for a working-tree daemon-down compare even though it is intentionally not archived (VHS-REQ-641/642)', async () => {
+  it('suppresses the diagnostics webview for a working-tree daemon-down compare even though it is intentionally not archived (VHS-REQ-641/642, VHS-REQ-642.3)', async () => {
     const context = harness.createContext();
     const runtimeSelection = createRuntimeSelection({
       executionMode: 'docker-only',
@@ -1480,7 +1769,7 @@ describe('Docker daemon not running comparison gate (VHS-REQ-642)', () => {
     expect(harness.panels).toHaveLength(0);
   });
 
-  it('still opens the diagnostics webview when Docker is installed but the daemon is reachable (different block)', async () => {
+  it('still opens the diagnostics webview when Docker is installed but the daemon is reachable (different block) (VHS-REQ-642.5)', async () => {
     const context = harness.createContext();
     const runtimeSelection = createRuntimeSelection({
       executionMode: 'docker-only',
@@ -1525,7 +1814,7 @@ describe('Docker daemon not running comparison gate (VHS-REQ-642)', () => {
     expect(harness.panels).toHaveLength(1);
   });
 
-  it('opens the diagnostics webview directly when archiving fails so diagnostics are never lost', async () => {
+  it('opens the diagnostics webview directly when archiving fails so diagnostics are never lost (VHS-REQ-642.3)', async () => {
     const context = harness.createContext();
     const runtimeSelection = createRuntimeSelection({
       executionMode: 'docker-only',
@@ -1576,7 +1865,7 @@ describe('Docker daemon not running comparison gate (VHS-REQ-642)', () => {
   });
 });
 
-describe('isDockerNotInstalledBlock (VHS-REQ-643)', () => {
+describe('isDockerNotInstalledBlock (VHS-REQ-643, VHS-REQ-643.1)', () => {
   const PROVIDER_UNAVAILABLE_REASONS = [
     'docker-provider-unavailable',
     'docker-only-provider-unavailable',
@@ -1663,7 +1952,7 @@ describe('Docker not installed comparison gate (VHS-REQ-643)', () => {
     harness.reset();
   });
 
-  it('suppresses the diagnostics webview, still archives the packet, and returns the not-installed outcome', async () => {
+  it('suppresses the diagnostics webview, still archives the packet, and returns the not-installed outcome (VHS-REQ-643.2, VHS-REQ-643.3)', async () => {
     const context = harness.createContext();
     const runtimeSelection = createRuntimeSelection({
       executionMode: 'docker-only',
@@ -1707,6 +1996,8 @@ describe('Docker not installed comparison gate (VHS-REQ-643)', () => {
       reportStatus: 'blocked-runtime',
       blockedReason: 'docker-provider-unavailable',
       dockerCliAvailable: false,
+      dockerDaemonReachable: false,
+      platform: 'win32',
       retainedArchiveAvailable: true
     });
     expect(createWebviewPanel).not.toHaveBeenCalled();
@@ -1714,7 +2005,7 @@ describe('Docker not installed comparison gate (VHS-REQ-643)', () => {
     expect(archiveComparisonReportSource).toHaveBeenCalledTimes(1);
   });
 
-  it('suppresses the diagnostics webview for a working-tree not-installed compare even though it is intentionally not archived (VHS-REQ-641/643)', async () => {
+  it('suppresses the diagnostics webview for a working-tree not-installed compare even though it is intentionally not archived (VHS-REQ-641/643, VHS-REQ-643.3)', async () => {
     const context = harness.createContext();
     const runtimeSelection = createRuntimeSelection({
       executionMode: 'docker-only',
@@ -1774,7 +2065,7 @@ describe('Docker not installed comparison gate (VHS-REQ-643)', () => {
     expect(harness.panels).toHaveLength(0);
   });
 
-  it('opens the diagnostics webview directly when archiving fails so diagnostics are never lost', async () => {
+  it('opens the diagnostics webview directly when archiving fails so diagnostics are never lost (VHS-REQ-643.3)', async () => {
     const context = harness.createContext();
     const runtimeSelection = createRuntimeSelection({
       executionMode: 'docker-only',
@@ -1818,5 +2109,804 @@ describe('Docker not installed comparison gate (VHS-REQ-643)', () => {
     expect(result.outcome).toBe('opened-comparison-report');
     expect(result.retainedArchiveAvailable).toBe(false);
     expect(harness.panels).toHaveLength(1);
+  });
+});
+
+describe('renderComparisonReportPanelHtml (VHS-REQ-621, VHS-REQ-644)', () => {
+  function baseOptions(): Parameters<typeof renderComparisonReportPanelHtml>[0] {
+    return {
+      title: 'Comparison report',
+      reportWebviewUri: 'https://file.example/report.html',
+      reportStatus: 'ready-for-runtime',
+      runtimeExecutionState: 'succeeded',
+      generatedReportExists: true,
+      retainedArchiveAvailable: false,
+      displayedEvidenceKind: 'generated-report',
+      cspSource: 'vscode-resource://authority'
+    };
+  }
+
+  it('renders a full HTML document with the CSP frame-src, title, and report iframe', () => {
+    const html = renderComparisonReportPanelHtml(baseOptions());
+
+    expect(html.startsWith('<!DOCTYPE html>')).toBe(true);
+    expect(html).toContain('frame-src vscode-resource://authority https:;');
+    expect(html).toContain('<title>Comparison report</title>');
+    expect(html).toContain(
+      '<iframe data-testid="comparison-report-panel-frame" src="https://file.example/report.html" title="Comparison report">'
+    );
+    // The shared revision-context block is embedded.
+    expect(html).toContain('data-testid="comparison-report-panel-context"');
+  });
+
+  it('escapes HTML-special characters in the title', () => {
+    const html = renderComparisonReportPanelHtml({
+      ...baseOptions(),
+      title: 'A <b>"bold"</b> & risky title'
+    });
+
+    expect(html).toContain('<title>A &lt;b&gt;&quot;bold&quot;&lt;/b&gt; &amp; risky title</title>');
+    // The raw, unescaped markup must not leak into the document.
+    expect(html).not.toContain('<b>"bold"</b>');
+  });
+
+  it('escapes the report webview URI and CSP source so attributes cannot be broken out of', () => {
+    const html = renderComparisonReportPanelHtml({
+      ...baseOptions(),
+      reportWebviewUri: 'https://x/report.html?a=1&b="2"',
+      cspSource: 'vscode-resource://a"b'
+    });
+
+    expect(html).toContain('src="https://x/report.html?a=1&amp;b=&quot;2&quot;"');
+    expect(html).toContain('frame-src vscode-resource://a&quot;b https:;');
+  });
+
+  it('renders supplied relative path and revision metadata in the context cards', () => {
+    const html = renderComparisonReportPanelHtml({
+      ...baseOptions(),
+      relativePath: 'src/Widget.vi',
+      selectedHash: 'fc09736a',
+      baseHash: '53768339',
+      selectedRevision: {
+        hash: 'fc09736a',
+        authorName: 'Ada Lovelace',
+        authorDate: '2026-07-15',
+        subject: 'Update widget',
+        body: 'Detailed body'
+      },
+      baseRevision: {
+        hash: '53768339',
+        authorName: 'Grace Hopper',
+        authorDate: '2026-07-01',
+        subject: 'Initial widget',
+        body: ''
+      }
+    });
+
+    expect(html).toContain('src/Widget.vi');
+    expect(html).toContain('Ada Lovelace');
+    expect(html).toContain('Update widget');
+    expect(html).toContain('<code>fc09736a</code>');
+    expect(html).toContain('<code>53768339</code>');
+    // An empty commit body falls back to the muted placeholder.
+    expect(html).toContain('No commit body');
+  });
+
+  it('falls back to "not retained" when the relative path and revisions are absent', () => {
+    const html = renderComparisonReportPanelHtml(baseOptions());
+
+    expect(html).toContain('not retained');
+  });
+
+  it('renders the working-tree sentinel as a human-readable label, not the raw token (VHS-REQ-641.6)', () => {
+    const html = renderComparisonReportPanelHtml({
+      ...baseOptions(),
+      relativePath: 'src/Widget.vi',
+      selectedHash: 'WORKTREE',
+      baseHash: '53768339',
+      selectedRevision: {
+        hash: 'WORKTREE',
+        authorName: 'Working tree',
+        authorDate: '',
+        subject: 'Uncommitted working-tree changes',
+        body: ''
+      },
+      baseRevision: {
+        hash: '53768339',
+        authorName: 'Grace Hopper',
+        authorDate: '2026-07-01',
+        subject: 'Base',
+        body: 'Base body'
+      }
+    });
+
+    expect(html).toContain('<code>Working tree (uncommitted)</code>');
+    // The raw sentinel token is not shown inside a code chip.
+    expect(html).not.toContain('<code>WORKTREE</code>');
+  });
+});
+
+describe('ensureComparisonReportEvidence guard and cancellation outcomes (VHS-REQ-621, VHS-REQ-644)', () => {
+  beforeEach(() => {
+    harness.reset();
+  });
+
+  const runtimeSettings = () => ({
+    requestedProvider: 'host' as const,
+    labviewVersion: '2026',
+    bitness: 'x64' as const
+  });
+
+  it('returns workspace-untrusted before touching the model', async () => {
+    const context = harness.createContext();
+    harness.setWorkspaceTrusted(false);
+    const preflightComparisonReport = vi.fn();
+    const action = createEnsureComparisonReportEvidenceAction(context as never, {
+      preflightComparisonReport
+    });
+
+    const result = await action({ model: createModel(), selectedHash: 'c3', baseHash: 'a1' });
+
+    expect(result.outcome).toBe('workspace-untrusted');
+    // The guard short-circuits before any preflight work.
+    expect(preflightComparisonReport).not.toHaveBeenCalled();
+  });
+
+  it('returns missing-storage-uri when the extension context has no storage URI', async () => {
+    const context = harness.createContext({ storageUri: undefined });
+    const action = createEnsureComparisonReportEvidenceAction(context as never, {});
+
+    const result = await action({ model: createModel(), selectedHash: 'c3', baseHash: 'a1' });
+
+    expect(result.outcome).toBe('missing-storage-uri');
+  });
+
+  it('returns missing-selected-commit when the selected hash is not a committed revision', async () => {
+    const context = harness.createContext();
+    const action = createEnsureComparisonReportEvidenceAction(context as never, {});
+
+    const result = await action({ model: createModel(), selectedHash: 'not-a-commit' });
+
+    expect(result.outcome).toBe('missing-selected-commit');
+  });
+
+  it('returns missing-previous-hash when the base revision cannot be derived', async () => {
+    const context = harness.createContext();
+    const action = createEnsureComparisonReportEvidenceAction(context as never, {});
+
+    // 'a1' is the oldest commit (no previousHash) and no explicit baseHash is supplied.
+    const result = await action({ model: createModel(), selectedHash: 'a1' });
+
+    expect(result.outcome).toBe('missing-previous-hash');
+  });
+
+  it('returns cancelled/before-revision-pair-resolution when the token is already cancelled', async () => {
+    const context = harness.createContext();
+    const action = createEnsureComparisonReportEvidenceAction(context as never, {});
+
+    const result = await action({
+      model: createModel(),
+      selectedHash: 'c3',
+      baseHash: 'a1',
+      cancellationToken: harness.createCancellationToken(true) as never
+    });
+
+    expect(result).toEqual({
+      outcome: 'cancelled',
+      cancellationStage: 'before-revision-pair-resolution'
+    });
+  });
+
+  it('returns cancelled/before-preflight when cancelled during pair resolution', async () => {
+    const context = harness.createContext();
+    const token = harness.createCancellationToken(false);
+    const preflightComparisonReport = vi.fn();
+    const action = createEnsureComparisonReportEvidenceAction(context as never, {
+      preflightComparisonReport
+    });
+
+    const result = await action({
+      model: createModel(),
+      selectedHash: 'c3',
+      baseHash: 'a1',
+      cancellationToken: token as never,
+      // Flip cancellation while resolving the pair, before the preflight checkpoint.
+      reportProgress: (report) => {
+        if (report.message === 'Resolving retained revision pair.') {
+          (token as { isCancellationRequested: boolean }).isCancellationRequested = true;
+        }
+      }
+    });
+
+    expect(result).toEqual({ outcome: 'cancelled', cancellationStage: 'before-preflight' });
+    expect(preflightComparisonReport).not.toHaveBeenCalled();
+  });
+
+  it('returns cancelled/after-preflight when cancelled during preflight', async () => {
+    const context = harness.createContext();
+    const token = harness.createCancellationToken(false);
+    const preflightComparisonReport = vi.fn().mockImplementation(async () => {
+      (token as { isCancellationRequested: boolean }).isCancellationRequested = true;
+      return createPreflight();
+    });
+    const locateRuntime = vi.fn();
+    const action = createEnsureComparisonReportEvidenceAction(context as never, {
+      preflightComparisonReport,
+      locateRuntime,
+      getRuntimeSettings: runtimeSettings
+    });
+
+    const result = await action({
+      model: createModel(),
+      selectedHash: 'c3',
+      baseHash: 'a1',
+      cancellationToken: token as never
+    });
+
+    expect(result).toEqual({ outcome: 'cancelled', cancellationStage: 'after-preflight' });
+    // Runtime selection is not reached once cancellation is observed after preflight.
+    expect(locateRuntime).not.toHaveBeenCalled();
+  });
+
+  it('returns cancelled/after-runtime-selection when cancelled during runtime selection', async () => {
+    const context = harness.createContext();
+    const token = harness.createCancellationToken(false);
+    const preflightComparisonReport = vi.fn().mockResolvedValue(createPreflight());
+    const locateRuntime = vi.fn().mockImplementation(async () => {
+      (token as { isCancellationRequested: boolean }).isCancellationRequested = true;
+      return createRuntimeSelection();
+    });
+    const action = createEnsureComparisonReportEvidenceAction(context as never, {
+      preflightComparisonReport,
+      locateRuntime,
+      getRuntimeSettings: runtimeSettings
+    });
+
+    const result = await action({
+      model: createModel(),
+      selectedHash: 'c3',
+      baseHash: 'a1',
+      cancellationToken: token as never
+    });
+
+    expect(result).toEqual({ outcome: 'cancelled', cancellationStage: 'after-runtime-selection' });
+  });
+});
+
+describe('createOpenRetainedComparisonReportAction guard and cancellation outcomes (VHS-REQ-621, VHS-REQ-644)', () => {
+  beforeEach(() => {
+    harness.reset();
+  });
+
+  it('returns cancelled/before-retained-comparison-resolution when the token is already cancelled', async () => {
+    const context = harness.createContext();
+    const action = createOpenRetainedComparisonReportAction(context as never, {});
+
+    const result = await action({
+      model: createModel(),
+      selectedHash: 'c3',
+      baseHash: 'a1',
+      cancellationToken: harness.createCancellationToken(true) as never
+    });
+
+    expect(result).toEqual({
+      outcome: 'cancelled',
+      cancellationStage: 'before-retained-comparison-resolution'
+    });
+  });
+
+  it('returns workspace-untrusted for an untrusted workspace', async () => {
+    const context = harness.createContext();
+    harness.setWorkspaceTrusted(false);
+    const action = createOpenRetainedComparisonReportAction(context as never, {});
+
+    const result = await action({ model: createModel(), selectedHash: 'c3', baseHash: 'a1' });
+
+    expect(result.outcome).toBe('workspace-untrusted');
+  });
+
+  it('returns missing-storage-uri when the context has no storage URI', async () => {
+    const context = harness.createContext({ storageUri: undefined });
+    const action = createOpenRetainedComparisonReportAction(context as never, {});
+
+    const result = await action({ model: createModel(), selectedHash: 'c3', baseHash: 'a1' });
+
+    expect(result.outcome).toBe('missing-storage-uri');
+  });
+
+  it('returns missing-selected-commit for an unknown selected hash', async () => {
+    const context = harness.createContext();
+    const action = createOpenRetainedComparisonReportAction(context as never, {});
+
+    const result = await action({ model: createModel(), selectedHash: 'not-a-commit' });
+
+    expect(result.outcome).toBe('missing-selected-commit');
+  });
+
+  it('returns missing-previous-hash when no base revision can be derived', async () => {
+    const context = harness.createContext();
+    const action = createOpenRetainedComparisonReportAction(context as never, {});
+
+    const result = await action({ model: createModel(), selectedHash: 'a1' });
+
+    expect(result.outcome).toBe('missing-previous-hash');
+  });
+
+  it('returns missing-retained-comparison-report when no retained source record exists', async () => {
+    const context = harness.createContext();
+    const pathExists = vi.fn().mockResolvedValue(false);
+    const action = createOpenRetainedComparisonReportAction(context as never, { pathExists });
+
+    const result = await action({ model: createModel(), selectedHash: 'c3', baseHash: 'a1' });
+
+    expect(result.outcome).toBe('missing-retained-comparison-report');
+    expect(pathExists).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns cancelled/before-retained-comparison-open when cancelled during evidence resolution', async () => {
+    const context = harness.createContext();
+    const token = harness.createCancellationToken(false);
+    const pathExists = vi.fn().mockResolvedValue(false);
+    const action = createOpenRetainedComparisonReportAction(context as never, { pathExists });
+
+    const result = await action({
+      model: createModel(),
+      selectedHash: 'c3',
+      baseHash: 'a1',
+      cancellationToken: token as never,
+      reportProgress: (report) => {
+        if (report.message === 'Resolving retained pair comparison evidence.') {
+          (token as { isCancellationRequested: boolean }).isCancellationRequested = true;
+        }
+      }
+    });
+
+    expect(result).toEqual({
+      outcome: 'cancelled',
+      cancellationStage: 'before-retained-comparison-open'
+    });
+    // Cancellation short-circuits before the archive plan is probed.
+    expect(pathExists).not.toHaveBeenCalled();
+  });
+});
+
+describe('ensureComparisonReportEvidence lifecycle and container-acquisition paths (VHS-REQ-621, VHS-REQ-644)', () => {
+  beforeEach(() => {
+    harness.reset();
+  });
+
+  const runtimeSettings = () => ({
+    requestedProvider: 'host' as const,
+    labviewVersion: '2026',
+    bitness: 'x64' as const
+  });
+
+  function baseDeps(overrides: Record<string, unknown> = {}) {
+    return {
+      preflightComparisonReport: vi.fn().mockResolvedValue(createPreflight()),
+      locateRuntime: vi.fn().mockResolvedValue(createRuntimeSelection()),
+      getRuntimeSettings: runtimeSettings,
+      ...overrides
+    };
+  }
+
+  it('returns cancelled/after-packet-persist when cancelled during persistence', async () => {
+    const context = harness.createContext();
+    const token = harness.createCancellationToken(false);
+    const persistComparisonReport = vi.fn().mockImplementation(async () => {
+      (token as { isCancellationRequested: boolean }).isCancellationRequested = true;
+      return createPacketResult(createPacketRecord({ reportStatus: 'blocked-runtime' }));
+    });
+    const executeComparisonReport = vi.fn();
+    const action = createEnsureComparisonReportEvidenceAction(
+      context as never,
+      baseDeps({ persistComparisonReport, executeComparisonReport }) as never
+    );
+
+    const result = await action({
+      model: createModel(),
+      selectedHash: 'c3',
+      baseHash: 'a1',
+      cancellationToken: token as never
+    });
+
+    expect(result).toEqual(
+      expect.objectContaining({ outcome: 'cancelled', cancellationStage: 'after-packet-persist' })
+    );
+    expect(executeComparisonReport).not.toHaveBeenCalled();
+  });
+
+  it('returns cancelled/after-runtime-execution when cancelled during runtime execution', async () => {
+    const context = harness.createContext();
+    const token = harness.createCancellationToken(false);
+    const persistComparisonReport = vi
+      .fn()
+      .mockResolvedValue(createPacketResult(createPacketRecord({ reportStatus: 'ready-for-runtime' })));
+    const executeComparisonReport = vi.fn().mockImplementation(async () => {
+      (token as { isCancellationRequested: boolean }).isCancellationRequested = true;
+      return createPacketResult(createPacketRecord({ reportStatus: 'ready-for-runtime' }));
+    });
+    const action = createEnsureComparisonReportEvidenceAction(
+      context as never,
+      baseDeps({ persistComparisonReport, executeComparisonReport }) as never
+    );
+
+    const result = await action({
+      model: createModel(),
+      selectedHash: 'c3',
+      baseHash: 'a1',
+      cancellationToken: token as never
+    });
+
+    expect(result).toEqual(
+      expect.objectContaining({ outcome: 'cancelled', cancellationStage: 'after-runtime-execution' })
+    );
+  });
+
+  it('returns cancelled/after-archive when cancelled after a successful archive write', async () => {
+    const context = harness.createContext();
+    const token = harness.createCancellationToken(false);
+    const persistComparisonReport = vi
+      .fn()
+      .mockResolvedValue(createPacketResult(createPacketRecord({ reportStatus: 'blocked-runtime' })));
+    const archiveComparisonReportSource = vi.fn().mockImplementation(async () => {
+      (token as { isCancellationRequested: boolean }).isCancellationRequested = true;
+    });
+    const action = createEnsureComparisonReportEvidenceAction(
+      context as never,
+      baseDeps({ persistComparisonReport, archiveComparisonReportSource }) as never
+    );
+
+    const result = await action({
+      model: createModel(),
+      selectedHash: 'c3',
+      baseHash: 'a1',
+      cancellationToken: token as never
+    });
+
+    expect(archiveComparisonReportSource).toHaveBeenCalledTimes(1);
+    expect(result).toEqual(
+      expect.objectContaining({
+        outcome: 'cancelled',
+        cancellationStage: 'after-archive',
+        retainedArchiveAvailable: true
+      })
+    );
+  });
+
+  it('records retained-archive-write-failed when the archive write throws', async () => {
+    const context = harness.createContext();
+    const persistComparisonReport = vi
+      .fn()
+      .mockResolvedValue(createPacketResult(createPacketRecord({ reportStatus: 'blocked-runtime' })));
+    const archiveComparisonReportSource = vi.fn().mockRejectedValue(new Error('disk full'));
+    const action = createEnsureComparisonReportEvidenceAction(
+      context as never,
+      baseDeps({ persistComparisonReport, archiveComparisonReportSource }) as never
+    );
+
+    const result = await action({ model: createModel(), selectedHash: 'c3', baseHash: 'a1' });
+
+    expect(result.outcome).toBe('retained-comparison-report-evidence');
+    expect(result.archiveFailureReason).toBe('retained-archive-write-failed');
+    expect(result.retainedArchiveAvailable).toBe(false);
+  });
+
+  it('records retained-archive-unavailable for a non-archivable working-tree comparison', async () => {
+    const context = harness.createContext();
+    const worktreeRecord = createPacketRecord({ reportStatus: 'blocked-runtime' });
+    worktreeRecord.selectedHash = 'WORKTREE';
+    const persistComparisonReport = vi.fn().mockResolvedValue(createPacketResult(worktreeRecord));
+    const archiveComparisonReportSource = vi.fn();
+    const action = createEnsureComparisonReportEvidenceAction(
+      context as never,
+      baseDeps({ persistComparisonReport, archiveComparisonReportSource }) as never
+    );
+
+    const result = await action({ model: createModel(), selectedHash: 'WORKTREE', baseHash: 'c3' });
+
+    expect(result.outcome).toBe('retained-comparison-report-evidence');
+    expect(result.archiveFailureReason).toBe('retained-archive-unavailable');
+    // A working-tree comparison is intentionally never archived.
+    expect(archiveComparisonReportSource).not.toHaveBeenCalled();
+  });
+
+  it('acquires a required container image before launch and continues to persistence', async () => {
+    const context = harness.createContext();
+    const locateRuntime = vi.fn().mockResolvedValue(
+      createRuntimeSelection({
+        provider: 'linux-container',
+        containerImage: 'nationalinstruments/labview:2026q1-linux',
+        containerAcquisitionState: 'required'
+      })
+    );
+    const acquireWindowsContainerImage = vi.fn().mockResolvedValue({
+      acquisitionState: 'acquired',
+      image: 'nationalinstruments/labview:2026q1-linux',
+      notes: []
+    });
+    const persistComparisonReport = vi
+      .fn()
+      .mockResolvedValue(createPacketResult(createPacketRecord({ reportStatus: 'blocked-runtime' })));
+    const action = createEnsureComparisonReportEvidenceAction(
+      context as never,
+      baseDeps({ locateRuntime, acquireWindowsContainerImage, persistComparisonReport }) as never
+    );
+
+    const result = await action({ model: createModel(), selectedHash: 'c3', baseHash: 'a1' });
+
+    expect(acquireWindowsContainerImage).toHaveBeenCalledWith(
+      'nationalinstruments/labview:2026q1-linux',
+      process.platform,
+      expect.objectContaining({ reportProgress: undefined })
+    );
+    // The acquired runtime selection flows into persistence.
+    expect(persistComparisonReport).toHaveBeenCalledWith(
+      expect.objectContaining({
+        runtimeSelection: expect.objectContaining({ containerAcquisitionState: 'acquired' })
+      })
+    );
+    expect(result.outcome).toBe('retained-comparison-report-evidence');
+  });
+
+  it('marks the runtime container-image-acquisition-failed when acquisition fails', async () => {
+    const context = harness.createContext();
+    const locateRuntime = vi.fn().mockResolvedValue(
+      createRuntimeSelection({
+        provider: 'linux-container',
+        containerImage: 'nationalinstruments/labview:2026q1-linux',
+        containerAcquisitionState: 'required'
+      })
+    );
+    const acquireWindowsContainerImage = vi.fn().mockResolvedValue({
+      acquisitionState: 'failed',
+      image: 'nationalinstruments/labview:2026q1-linux',
+      notes: ['pull failed']
+    });
+    const persistComparisonReport = vi
+      .fn()
+      .mockResolvedValue(createPacketResult(createPacketRecord({ reportStatus: 'blocked-runtime' })));
+    const action = createEnsureComparisonReportEvidenceAction(
+      context as never,
+      baseDeps({ locateRuntime, acquireWindowsContainerImage, persistComparisonReport }) as never
+    );
+
+    await action({ model: createModel(), selectedHash: 'c3', baseHash: 'a1' });
+
+    expect(persistComparisonReport).toHaveBeenCalledWith(
+      expect.objectContaining({
+        runtimeSelection: expect.objectContaining({
+          blockedReason: 'container-image-acquisition-failed',
+          containerAcquisitionState: 'failed'
+        })
+      })
+    );
+  });
+
+  it('returns cancelled/after-runtime-acquisition when cancelled during image acquisition', async () => {
+    const context = harness.createContext();
+    const token = harness.createCancellationToken(false);
+    const locateRuntime = vi.fn().mockResolvedValue(
+      createRuntimeSelection({
+        provider: 'linux-container',
+        containerImage: 'nationalinstruments/labview:2026q1-linux',
+        containerAcquisitionState: 'required'
+      })
+    );
+    const acquireWindowsContainerImage = vi.fn().mockImplementation(async () => {
+      (token as { isCancellationRequested: boolean }).isCancellationRequested = true;
+      return {
+        acquisitionState: 'acquired',
+        image: 'nationalinstruments/labview:2026q1-linux',
+        notes: []
+      };
+    });
+    const persistComparisonReport = vi.fn();
+    const action = createEnsureComparisonReportEvidenceAction(
+      context as never,
+      baseDeps({ locateRuntime, acquireWindowsContainerImage, persistComparisonReport }) as never
+    );
+
+    const result = await action({
+      model: createModel(),
+      selectedHash: 'c3',
+      baseHash: 'a1',
+      cancellationToken: token as never
+    });
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        outcome: 'cancelled',
+        cancellationStage: 'after-runtime-acquisition'
+      })
+    );
+    expect(persistComparisonReport).not.toHaveBeenCalled();
+  });
+});
+
+describe('openPersistedComparisonReportPanel result assembly and render fallback (VHS-REQ-621, VHS-REQ-644)', () => {
+  beforeEach(() => {
+    harness.reset();
+  });
+
+  it('surfaces the full runtime diagnostic and observation field set on the opened result', async () => {
+    const context = harness.createContext();
+    const runtimeSelection = createRuntimeSelection();
+    const executedRecord = createPacketRecord({
+      runtimeSelection,
+      runtimeExecutionState: 'failed',
+      runtimeExecution: {
+        state: 'failed',
+        attempted: true,
+        reportExists: false,
+        failureReason: 'labview-cli-connection-failed',
+        diagnosticReason: 'labview-cli-connection-failed',
+        diagnosticNotes: ['Runtime could not connect to the VI Server.'],
+        diagnosticLogSourcePath: '/tmp/run/labviewcli.log',
+        diagnosticLogArtifactPath: '/workspace/storage/labviewcli.log',
+        doctorSummaryLines: ['Selected provider=host-native; blocked=none'],
+        executable: 'LabVIEWCLI',
+        args: ['-OperationName', 'CreateComparisonReport'],
+        processObservationArtifactPath: '/workspace/storage/process-observation.json',
+        processObservationCapturedAt: '2026-07-15T00:00:00.000Z',
+        processObservationTrigger: 'post-launch',
+        observedProcessNames: ['LabVIEW', 'LabVIEWCLI'],
+        labviewProcessObserved: true,
+        labviewCliProcessObserved: true,
+        lvcompareProcessObserved: false,
+        exitProcessObservationCapturedAt: '2026-07-15T00:01:00.000Z',
+        exitProcessObservationTrigger: 'post-exit',
+        exitObservedProcessNames: ['LabVIEW'],
+        labviewProcessObservedAtExit: true,
+        labviewCliProcessObservedAtExit: false,
+        lvcompareProcessObservedAtExit: false
+      }
+    });
+    const readFile = vi
+      .fn()
+      .mockResolvedValue('<html><body>Packet diagnostics</body></html>');
+    const action = createComparisonReportAction(context as never, {
+      preflightComparisonReport: vi.fn().mockResolvedValue(createPreflight()),
+      locateRuntime: vi.fn().mockResolvedValue(runtimeSelection),
+      persistComparisonReport: vi.fn().mockResolvedValue(createPacketResult(executedRecord)),
+      executeComparisonReport: vi.fn().mockResolvedValue(createPacketResult(executedRecord)),
+      archiveComparisonReportSource: vi.fn().mockResolvedValue(undefined),
+      readFile: readFile as never
+    });
+
+    const result = await action({ model: createModel(), selectedHash: 'c3', baseHash: 'a1' });
+
+    expect(result.outcome).toBe('opened-comparison-report');
+    expect(result.runtimeDiagnosticReason).toBe('labview-cli-connection-failed');
+    expect(result.runtimeDiagnosticNotes).toEqual(['Runtime could not connect to the VI Server.']);
+    expect(result.runtimeDiagnosticLogSourcePath).toBe('/tmp/run/labviewcli.log');
+    expect(result.runtimeDiagnosticLogArtifactPath).toBe('/workspace/storage/labviewcli.log');
+    expect(result.runtimeDoctorSummaryLines).toEqual(['Selected provider=host-native; blocked=none']);
+    expect(result.runtimeExecutable).toBe('LabVIEWCLI');
+    expect(result.runtimeArgs).toEqual(['-OperationName', 'CreateComparisonReport']);
+    expect(result.runtimeProcessObservationArtifactPath).toBe(
+      '/workspace/storage/process-observation.json'
+    );
+    expect(result.runtimeProcessObservationCapturedAt).toBe('2026-07-15T00:00:00.000Z');
+    expect(result.runtimeProcessObservationTrigger).toBe('post-launch');
+    expect(result.runtimeObservedProcessNames).toEqual(['LabVIEW', 'LabVIEWCLI']);
+    expect(result.runtimeLabviewProcessObserved).toBe(true);
+    expect(result.runtimeLabviewCliProcessObserved).toBe(true);
+    expect(result.runtimeLvcompareProcessObserved).toBe(false);
+    expect(result.runtimeExitProcessObservationCapturedAt).toBe('2026-07-15T00:01:00.000Z');
+    expect(result.runtimeExitProcessObservationTrigger).toBe('post-exit');
+    expect(result.runtimeExitObservedProcessNames).toEqual(['LabVIEW']);
+    expect(result.runtimeLabviewProcessObservedAtExit).toBe(true);
+    expect(result.runtimeLabviewCliProcessObservedAtExit).toBe(false);
+    expect(result.runtimeLvcompareProcessObservedAtExit).toBe(false);
+  });
+
+  it('falls back to the packet view when generated-report rendering fails to read the report file', async () => {
+    const context = harness.createContext();
+    const runtimeSelection = createRuntimeSelection();
+    const generatedRecord = createPacketRecord({
+      runtimeSelection,
+      runtimeExecutionState: 'succeeded',
+      runtimeExecution: {
+        state: 'succeeded',
+        attempted: true,
+        reportExists: true
+      }
+    });
+    // The generated-report read fails; the packet read (fallback) succeeds.
+    const readFile = vi.fn(async (targetPath: string) => {
+      if (String(targetPath).includes('report')) {
+        if (String(targetPath).endsWith('.html') && !String(targetPath).includes('packet')) {
+          throw new Error('report file missing');
+        }
+      }
+      return '<html><body>Packet fallback view</body></html>';
+    });
+    const action = createComparisonReportAction(context as never, {
+      preflightComparisonReport: vi.fn().mockResolvedValue(createPreflight()),
+      locateRuntime: vi.fn().mockResolvedValue(runtimeSelection),
+      persistComparisonReport: vi.fn().mockResolvedValue(createPacketResult(generatedRecord)),
+      executeComparisonReport: vi.fn().mockResolvedValue(createPacketResult(generatedRecord)),
+      archiveComparisonReportSource: vi.fn().mockResolvedValue(undefined),
+      readFile: readFile as never
+    });
+
+    const result = await action({ model: createModel(), selectedHash: 'c3', baseHash: 'a1' });
+
+    expect(result.outcome).toBe('opened-comparison-report');
+    // Generated render threw, so the panel degrades to the packet evidence view.
+    expect(result.displayedEvidenceKind).toBe('packet');
+    expect(harness.panels[0]?.webview.html).toContain('Packet fallback view');
+  });
+});
+
+describe('comparison report panel body injection with $-sequences (VHS-REQ-644)', () => {
+  beforeEach(() => {
+    harness.reset();
+  });
+
+  it('inserts a commit body containing $-sequences literally into the generated report panel', async () => {
+    const context = harness.createContext();
+    const runtimeSelection = createRuntimeSelection();
+    const executedRecord = createPacketRecord({
+      runtimeSelection,
+      runtimeExecutionState: 'succeeded',
+      runtimeExecution: { state: 'succeeded', attempted: true, reportExists: true }
+    });
+    // A commit body with $-sequences: escapeHtml does not escape `$`, so a string
+    // .replace() would misinterpret these in the replacement and corrupt the panel.
+    executedRecord.selectedRevision = {
+      ...executedRecord.selectedRevision,
+      body: 'Fix $1 and $& parsing'
+    };
+    const action = createComparisonReportAction(context as never, {
+      preflightComparisonReport: vi.fn().mockResolvedValue(createPreflight()),
+      locateRuntime: vi.fn().mockResolvedValue(runtimeSelection),
+      getRuntimeSettings: () => ({ requestedProvider: 'host', labviewVersion: '2026', bitness: 'x64' }),
+      persistComparisonReport: vi.fn().mockResolvedValue(createPacketResult(executedRecord)),
+      executeComparisonReport: vi.fn().mockResolvedValue(createPacketResult(executedRecord)),
+      archiveComparisonReportSource: vi.fn().mockResolvedValue(undefined),
+      readFile: vi
+        .fn()
+        .mockResolvedValue('<html><head></head><body><h1>Generated</h1></body></html>') as never
+    });
+
+    await action({ model: createModel(), selectedHash: 'c3', baseHash: 'a1' });
+
+    expect(harness.panels[0]?.webview.html).toContain('Fix $1 and $&amp; parsing');
+  });
+
+  it('inserts a commit body containing $-sequences literally into the packet panel', async () => {
+    const context = harness.createContext();
+    const runtimeSelection = createRuntimeSelection();
+    const blockedRecord = createPacketRecord({
+      runtimeSelection,
+      reportStatus: 'blocked-runtime',
+      runtimeExecutionState: 'not-available',
+      runtimeExecution: {
+        state: 'not-available',
+        attempted: false,
+        reportExists: false,
+        blockedReason: 'labview-exe-not-found'
+      }
+    });
+    blockedRecord.selectedRevision = {
+      ...blockedRecord.selectedRevision,
+      body: 'Refund $$5 for $`x`'
+    };
+    const action = createComparisonReportAction(context as never, {
+      preflightComparisonReport: vi.fn().mockResolvedValue(createPreflight()),
+      locateRuntime: vi.fn().mockResolvedValue(runtimeSelection),
+      getRuntimeSettings: () => ({ requestedProvider: 'host', labviewVersion: '2026', bitness: 'x64' }),
+      persistComparisonReport: vi.fn().mockResolvedValue(createPacketResult(blockedRecord)),
+      archiveComparisonReportSource: vi.fn().mockResolvedValue(undefined),
+      readFile: vi
+        .fn()
+        .mockResolvedValue('<html><head></head><body>Packet</body></html>') as never
+    });
+
+    await action({ model: createModel(), selectedHash: 'c3', baseHash: 'a1' });
+
+    expect(harness.panels[0]?.webview.html).toContain('Refund $$5 for $`x`');
   });
 });

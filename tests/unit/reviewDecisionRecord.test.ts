@@ -8,6 +8,7 @@ vi.mock('vscode', async () => {
 import type { BuildMultiReportDashboardResult, MultiReportDashboardRecord } from '../../src/dashboard/multiReportDashboard';
 import {
   buildDecisionRecordMissingOrBlockedFacts,
+  buildReviewDecisionRecordArtifactPlan,
   collectDecisionRecordPairwiseReportPaths,
   persistReviewDecisionRecord,
   renderReviewDecisionRecordMarkdown
@@ -305,5 +306,187 @@ describe('review decision records (VHS-REQ-610 supporting evidence)', () => {
       mismatchSummary: expect.stringContaining('requires at least 2 comparison pairs')
     });
     expect(persistDecisionRecord).not.toHaveBeenCalled();
+  });
+});
+
+describe('buildReviewDecisionRecordArtifactPlan', () => {
+  it('nests the decision directory under the dashboard artifact plan ids and derives file paths', () => {
+    const dashboardRecord = createDashboardRecord();
+    const plan = buildReviewDecisionRecordArtifactPlan(
+      '/workspace/storage',
+      dashboardRecord,
+      'SCENARIO-VHS-001',
+      'Reviewer One',
+      '2026-05-04T12:00:00.000Z'
+    );
+
+    expect(plan.scenarioId).toBe('SCENARIO-VHS-001');
+    expect(plan.decisionId).toMatch(/^[0-9a-f]{12}$/);
+    const expectedDir = [
+      '/workspace/storage',
+      'decision-records',
+      'repo',
+      'file',
+      'window',
+      'SCENARIO-VHS-001',
+      plan.decisionId
+    ].join('/');
+    expect(plan.decisionDirectory.replace(/\\/g, '/')).toBe(expectedDir);
+    expect(plan.jsonFilePath.replace(/\\/g, '/')).toBe(`${expectedDir}/decision-record.json`);
+    expect(plan.markdownFilePath.replace(/\\/g, '/')).toBe(`${expectedDir}/decision-record.md`);
+  });
+
+  it('is deterministic for identical inputs and differs when the reviewer changes', () => {
+    const dashboardRecord = createDashboardRecord();
+    const a = buildReviewDecisionRecordArtifactPlan(
+      '/root',
+      dashboardRecord,
+      'SCENARIO-VHS-001',
+      'Reviewer One',
+      '2026-05-04T12:00:00.000Z'
+    );
+    const b = buildReviewDecisionRecordArtifactPlan(
+      '/root',
+      dashboardRecord,
+      'SCENARIO-VHS-001',
+      'Reviewer One',
+      '2026-05-04T12:00:00.000Z'
+    );
+    const c = buildReviewDecisionRecordArtifactPlan(
+      '/root',
+      dashboardRecord,
+      'SCENARIO-VHS-001',
+      'Reviewer Two',
+      '2026-05-04T12:00:00.000Z'
+    );
+    expect(a.decisionId).toBe(b.decisionId);
+    expect(a.decisionId).not.toBe(c.decisionId);
+  });
+
+  it('folds empty commit-window hashes into the decision id without throwing', () => {
+    const dashboardRecord = createDashboardRecord({
+      commitWindow: {
+        commitCount: 3,
+        pairCount: 2,
+        newestHash: undefined,
+        oldestHash: undefined
+      }
+    });
+    const plan = buildReviewDecisionRecordArtifactPlan(
+      '/root',
+      dashboardRecord,
+      'SCENARIO-VHS-001',
+      'Reviewer One',
+      '2026-05-04T12:00:00.000Z'
+    );
+    expect(plan.decisionId).toMatch(/^[0-9a-f]{12}$/);
+  });
+});
+
+describe('renderReviewDecisionRecordMarkdown and persist default branches', () => {
+  function baseRecord(): Parameters<typeof renderReviewDecisionRecordMarkdown>[0] {
+    return {
+      scenarioId: 'SCENARIO-VHS-001',
+      scenarioTitle: 'Aggregate Review',
+      harnessId: undefined,
+      repositoryUrl: 'https://github.com/ni/labview-icon-editor.git',
+      repositoryName: 'labview-icon-editor',
+      viPath: 'resource/plugins/lv_icon.vi',
+      commitWindowStart: undefined,
+      commitWindowEnd: undefined,
+      comparisonPairsIncluded: 0,
+      dashboardPacketPath: '/s/dashboard.json',
+      dashboardHtmlPath: '/s/dashboard.html',
+      generatedAt: '2026-05-04T12:00:00.000Z',
+      reviewer: 'Reviewer One',
+      reviewQuestion: 'Ready?',
+      evidenceUsed: {
+        dashboardHtmlPath: '/s/dashboard.html',
+        dashboardPacketPath: '/s/dashboard.json',
+        underlyingPairwiseReportPaths: [],
+        missingOrBlockedFacts: []
+      },
+      reviewerOutcome: {
+        outcome: 'approved',
+        confidence: 'high',
+        decisionRationale: 'Looks complete.'
+      },
+      followUp: {
+        additionalReportGenerationRequired: false,
+        additionalManualLabVIEWInspectionRequired: false,
+        issuesOrBacklogItemsCreated: []
+      }
+    };
+  }
+
+  it('renders "- none" for empty pairwise reports, missing facts, and issues, and "none" harness', () => {
+    const markdown = renderReviewDecisionRecordMarkdown(baseRecord());
+    // Each of the three list sections falls back to the "- none" branch.
+    expect((markdown.match(/- none/g) ?? []).length).toBe(3);
+    expect(markdown).toContain('Harness ID: none');
+    expect(markdown).toContain('Commit-window start: unknown');
+    expect(markdown).toContain('Commit-window end: unknown');
+  });
+
+  it('renders the "no" follow-up branch when no additional work is required', () => {
+    const markdown = renderReviewDecisionRecordMarkdown(baseRecord());
+    expect(markdown).toContain('Additional report generation required: no');
+    expect(markdown).toContain('Additional manual LabVIEW inspection required: no');
+  });
+
+  it('renders the populated list and "yes" follow-up branches', () => {
+    const record = baseRecord();
+    record.harnessId = 'HARNESS-1';
+    record.commitWindowStart = 'a1';
+    record.commitWindowEnd = 'c3';
+    record.evidenceUsed.underlyingPairwiseReportPaths = ['/r/one.html', '/r/two.html'];
+    record.evidenceUsed.missingOrBlockedFacts = ['Missing archived pair evidence: p1'];
+    record.followUp.additionalReportGenerationRequired = true;
+    record.followUp.additionalManualLabVIEWInspectionRequired = true;
+    record.followUp.issuesOrBacklogItemsCreated = ['#42'];
+    const markdown = renderReviewDecisionRecordMarkdown(record);
+    expect(markdown).toContain('- /r/one.html');
+    expect(markdown).toContain('- /r/two.html');
+    expect(markdown).toContain('- Missing archived pair evidence: p1');
+    expect(markdown).toContain('- #42');
+    expect(markdown).toContain('Harness ID: HARNESS-1');
+    expect(markdown).toContain('Additional report generation required: yes');
+    expect(markdown).not.toContain('- none');
+  });
+
+  it('persistReviewDecisionRecord applies the follow-up defaults when optional fields are omitted', async () => {
+    const dashboardRecord = createDashboardRecord();
+    const writes = new Map<string, string>();
+    const result = await persistReviewDecisionRecord(
+      '/workspace/storage',
+      {
+        scenario: { id: 'SCENARIO-VHS-001', title: 'Aggregate Review', harnessId: undefined } as never,
+        harnessId: undefined,
+        repositoryUrl: 'https://github.com/ni/labview-icon-editor.git',
+        targetRelativePath: dashboardRecord.relativePath,
+        dashboardRecord,
+        dashboardHtmlPath: '/s/dashboard.html',
+        dashboardJsonPath: '/s/dashboard.json',
+        reviewer: 'Reviewer One',
+        reviewQuestion: 'Ready?',
+        outcome: 'approved',
+        confidence: 'high',
+        decisionRationale: 'Complete.',
+        pairwiseReportPaths: [],
+        missingOrBlockedFacts: []
+        // additionalReportGenerationRequired / additionalManualLabVIEWInspectionRequired /
+        // issuesOrBacklogItemsCreated intentionally omitted -> default branches
+      },
+      {
+        now: () => '2026-05-04T12:30:00.000Z',
+        mkdir: vi.fn(async () => undefined) as never,
+        writeFile: vi.fn(async (filePath: string, content: string) => {
+          writes.set(filePath, content);
+        }) as never
+      }
+    );
+    expect(result.record.followUp.additionalReportGenerationRequired).toBe(false);
+    expect(result.record.followUp.additionalManualLabVIEWInspectionRequired).toBe(false);
+    expect(result.record.followUp.issuesOrBacklogItemsCreated).toEqual([]);
   });
 });

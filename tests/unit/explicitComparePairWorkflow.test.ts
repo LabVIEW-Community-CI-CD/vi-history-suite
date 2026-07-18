@@ -56,7 +56,7 @@ describe('explicitComparePairWorkflow HTML rendering (VHS-REQ-133)', () => {
       expect(html).toContain('data-hash="def45678"');
     });
 
-    it('renders commit-index attribute for selection ordering', () => {
+    it('renders commit-index attribute for selection ordering (VHS-REQ-133.2)', () => {
       const model = createTestViewModel([
         { hash: 'newer123', previousHash: 'older456' },
         { hash: 'older456' }
@@ -91,7 +91,7 @@ describe('explicitComparePairWorkflow HTML rendering (VHS-REQ-133)', () => {
       expect(html).toContain('data-command="generateComparisonReportFromSelection"');
     });
 
-    it('does not auto-trigger compare when the selection state changes', () => {
+    it('does not auto-trigger compare when the selection state changes (VHS-REQ-133.4)', () => {
       const model = createTestViewModel([
         { hash: 'abc123', previousHash: 'def456' },
         { hash: 'def456' }
@@ -126,7 +126,7 @@ describe('explicitComparePairWorkflow HTML rendering (VHS-REQ-133)', () => {
   });
 
   describe('two distinct revisions resolve to a newer=selected / older=base pair', () => {
-    it('resolves the lower-commit-index revision as selected and the higher as base', () => {
+    it('resolves the lower-commit-index revision as selected and the higher as base (VHS-REQ-133.1, VHS-REQ-133.2)', () => {
       const model = createTestViewModel([
         { hash: 'newer123', previousHash: 'older456' },
         { hash: 'older456' }
@@ -154,7 +154,7 @@ describe('explicitComparePairWorkflow HTML rendering (VHS-REQ-133)', () => {
       expect(html).toContain("addEventListener('change'");
     });
 
-    it('caps the selection at two revisions', () => {
+    it('caps the selection at two revisions (VHS-REQ-133.3)', () => {
       const model = createTestViewModel([
         { hash: 'abc123', previousHash: 'def456' },
         { hash: 'def456' }
@@ -168,7 +168,7 @@ describe('explicitComparePairWorkflow HTML rendering (VHS-REQ-133)', () => {
   });
 
   describe('selection persists across a panel reload (#561)', () => {
-    it('persists the selected hashes to webview state on change and restores them on load', () => {
+    it('persists the selected hashes to webview state on change and restores them on load (VHS-REQ-133.6)', () => {
       const model = createTestViewModel([
         { hash: 'abc123', previousHash: 'def456' },
         { hash: 'def456' }

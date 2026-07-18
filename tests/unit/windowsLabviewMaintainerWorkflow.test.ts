@@ -13,7 +13,7 @@ function readWorkflow(): string {
 }
 
 describe('Windows LabVIEW maintainer workflow', () => {
-  it('is manual-only and cannot run on pull requests or pushes', () => {
+  it('is manual-only and cannot run on pull requests or pushes (VHS-REQ-598.1)', () => {
     const workflow = readWorkflow();
 
     expect(workflow).toContain('workflow_dispatch:');
@@ -21,7 +21,7 @@ describe('Windows LabVIEW maintainer workflow', () => {
     expect(workflow).not.toMatch(/^\s*push:/m);
   });
 
-  it('uses the maintainer-only runner label with read-only permissions', () => {
+  it('uses the maintainer-only runner label with read-only permissions (VHS-REQ-598.2)', () => {
     const workflow = readWorkflow();
 
     expect(workflow).toContain('permissions:\n  contents: read');
@@ -38,7 +38,7 @@ describe('Windows LabVIEW maintainer workflow', () => {
     expect(workflow).not.toContain('shell: pwsh');
   });
 
-  it('fails closed to trusted refs and avoids Marketplace publishing secrets', () => {
+  it('fails closed to trusted refs and avoids Marketplace publishing secrets (VHS-REQ-598.3, VHS-REQ-598.5)', () => {
     const workflow = readWorkflow();
 
     expect(workflow).toContain("refs/heads/main");
@@ -54,7 +54,7 @@ describe('Windows LabVIEW maintainer workflow', () => {
     expect(workflow).not.toMatch(/\bvsce\s+publish\b/i);
   });
 
-  it('captures explicit maintainer evidence and uploads it as an artifact', () => {
+  it('captures explicit maintainer evidence and uploads it as an artifact (VHS-REQ-598.4, VHS-REQ-598.6)', () => {
     const workflow = readWorkflow();
 
     expect(workflow).toContain('npm.cmd ci');
@@ -64,6 +64,13 @@ describe('Windows LabVIEW maintainer workflow', () => {
     expect(workflow).toContain('Evidence summary path: runner-evidence/windows-labview-maintainer-summary.txt');
     expect(workflow).toContain('LabVIEWCLI detected:');
     expect(workflow).toContain('Runner labels: $env:RUNNER_LABELS');
+    // VHS-REQ-598 criterion 4: the evidence summary must also carry the ref,
+    // commit SHA, and Node/npm versions, not just runner context and the VSIX
+    // path, so a regression dropping them from the maintainer evidence fails.
+    expect(workflow).toContain('Ref: $env:GITHUB_REF');
+    expect(workflow).toContain('SHA: $env:GITHUB_SHA');
+    expect(workflow).toContain('Node: $(node --version)');
+    expect(workflow).toContain('npm: $(npm.cmd --version)');
     expect(workflow).toContain('VSIX evidence path: pending package step');
     expect(workflow).toContain('VSIX evidence path: $($vsix.FullName)');
     expect(workflow).toContain("Join-Path 'runner-evidence' 'windows-labview-maintainer-summary.txt'");
@@ -85,7 +92,7 @@ describe('Windows LabVIEW maintainer workflow', () => {
     expect(workflow).toContain('Add-Content -LiteralPath $summaryPath -Value $vsixLine');
   });
 
-  it('gates on a runner prerequisite doctor after checkout and before install (fail-fast)', () => {
+  it('gates on a runner prerequisite doctor after checkout and before install (fail-fast) (VHS-REQ-598.7)', () => {
     const workflow = readWorkflow();
 
     // The prerequisite doctor must run as a fail-fast gate so a missing host

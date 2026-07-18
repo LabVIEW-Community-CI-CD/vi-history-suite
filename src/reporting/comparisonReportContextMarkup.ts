@@ -1,4 +1,6 @@
 import type { ComparisonReportRevisionMetadata } from './comparisonReportPacket';
+import { formatComparisonRevisionHashDisplay } from './comparisonReportPacket';
+import { escapeHtml } from '../support/escapeHtml';
 
 /**
  * Shared revision-context rendering for comparison reports.
@@ -57,7 +59,7 @@ function renderComparisonReportPanelRevisionCard(
 ): string {
   return `<div class="vihs-compare-context-card" data-testid="${testId}">
       <strong>${escapeHtml(label)}</strong>
-      <div><code>${escapeHtml(revision?.hash ?? hash ?? 'not retained')}</code></div>
+      <div><code>${escapeHtml(formatComparisonRevisionHashDisplay(revision?.hash ?? hash))}</code></div>
       <div><strong>Date:</strong> ${renderPanelRevisionMetadataValue(revision?.authorDate)}</div>
       <div><strong>Author:</strong> ${renderPanelRevisionMetadataValue(revision?.authorName)}</div>
       <div><strong>Subject:</strong> ${renderPanelRevisionMetadataValue(revision?.subject)}</div>
@@ -81,13 +83,4 @@ function renderPanelRevisionMetadataValue(value: string | undefined): string {
   return value && value.length > 0
     ? escapeHtml(value)
     : '<span class="vihs-compare-context-muted">not retained</span>';
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
 }

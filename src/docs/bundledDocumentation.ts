@@ -1,6 +1,7 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
+import { escapeHtml } from '../support/escapeHtml';
 
 export interface BundledDocumentationPage {
   id: string;
@@ -253,13 +254,4 @@ export function renderBundledDocumentationPanelHtml(options: {
     </script>
   </body>
 </html>`;
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
 }

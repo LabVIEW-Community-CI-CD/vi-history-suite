@@ -66,10 +66,10 @@ the machine-readable coverage outputs from that run through the
 - `coverage/coverage-summary.json`
 
 The enforced coverage thresholds in `vitest.config.ts` are evidence-backed
-baseline regression floors: 72% statements, 61% branches, 79% functions, and
-72% lines. These floors were ratcheted toward the measured `develop` actuals at
-v1.21.0, which measured 74.97% statements, 64.60% branches, 80.54% functions,
-and 75.02% lines on the Linux run (the lower-running Ubuntu CI leg historically
+baseline regression floors: 80% statements, 70% branches, 84% functions, and
+80% lines. These floors were ratcheted toward the measured `develop` actuals at
+v1.33.2, which measured 82.16% statements, 72.32% branches, 86.48% functions,
+and 82.21% lines locally (the lower-running Ubuntu CI leg historically
 trails by ~1 point); they are not a claim that the repository has complete
 coverage. The two highest-risk
 comparison-runtime files
@@ -79,6 +79,46 @@ floors pinned just under their current actuals to prevent silent branch-coverage
 drift on provider-selection and fail-closed paths. Raise the thresholds only in
 a PR that shows new coverage evidence and updates this test plan with the new
 baseline.
+
+### Coverage Floor Policy
+
+The global floors intentionally sit roughly two points below the measured
+`develop` actuals. That gap is a cross-runner margin, not slack to be spent: the
+Ubuntu CI leg measures coverage about one point below the local/Windows figure,
+so a floor held ~1 point under the Ubuntu actual keeps ordinary cross-runner
+variance from reddening the gate on unrelated pull requests.
+
+Ratchet a floor only when it is durable, not merely reachable:
+
+- Raise a floor in a PR that first adds real coverage lifting the actual, so the
+  new floor still keeps ~2 points local (~1 point Ubuntu) margin. The Ubuntu
+  `Build, Test, Package` leg validates the floor before merge — if a floor is
+  set too high the PR reddens; lower it and repush.
+- Move the floor in lockstep across its five pinned locations: `vitest.config.ts`,
+  this test plan (floors plus the measured actuals), `docs/requirements/srs.md`
+  (VHS-REQ-597), `docs/requirements/syrs.md`, and
+  `tests/unit/requirementsDocs.test.ts`.
+- Spend the coverage that unlocks a ratchet on requirement-mapped product logic.
+  Do not chase coverage on excluded VS Code host bindings, network or socket
+  boundary callbacks, or fixture-heavy integration paths purely to move a floor —
+  that is low-value churn, and much of it is already excluded in
+  `vitest.config.ts`.
+
+The floors are a regression net, not a coverage-completeness claim. Once they sit
+within ~2 points of actuals, further ratcheting buys marginal protection for
+disproportionate effort; prefer targeted assurance (mutation testing, the
+coverage traceability map) over percentage chasing.
+
+## Mutation Testing (Advisory)
+
+Run `npm run test:mutation` (Stryker, `stryker.config.mjs`) to mutation-test the
+pure `src/domain` detection core. Coverage proves lines execute; mutation proves
+the tests catch regressions, so surviving mutants pinpoint weak or missing
+assertions behind requirement-mapped behavior. It is advisory
+(`thresholds.break` is null) and never fails the build; use the surviving-mutant
+report in `reports/mutation/mutation.json` to close assertion gaps. Widening the
+mutate scope beyond `src/domain` and adding a scheduled run are separate
+maintainer decisions.
 
 ## Coverage Traceability Map
 
@@ -93,11 +133,74 @@ map after `npm test` and before package validation so release-readiness evidence
 captures coverage-risk backlog candidates without changing the Vitest threshold
 gate semantics.
 
+## Criterion Closure Docket
+
+`npm run requirements:criteria` remains advisory (exit 0). It is useful for finding
+acceptance criteria that lack a literal `VHS-REQ-N.M` citation in a verification
+reference test, but the remaining Phase-3b backlog should not be closed by
+adding citation text alone. `npm run requirements:criteria:enforce` (or the
+`--enforce` flag) makes the same guard fail closed (exit 1) when any Active
+criterion is not yet cited at the criterion level. Hosted CI runs this enforce
+guard in the `Requirements CSV Integrity` job (the `Enforce requirement
+criterion citation` step, after requirement-linkage enforcement), so criterion
+citation is now gated on every pull request. As of 2026-07-13, after the LabVIEW CLI open-gate,
+Definition-of-Done governance, VI Server gate, registry-fallback, container
+image mismatch remediation, Linux container headless-recovery evidence,
+staged-tree working-tree evidence, VI Preview lifecycle, PR evidence contract,
+pull download-phase regression, pre-panel/compare-time gate separation, Docker
+daemon fallback, comparison commit-body export, and test-harness boundary
+branches, the baseline is 513/513 criterion-level citations with 0 uncited
+criteria.
+
+Classify each remaining uncited criterion before adding citations or proposing
+enforcement:
+
+| Bucket | Meaning | Closure action |
+| --- | --- | --- |
+| `exact-testable` | An existing verification-ref test, or a small focused unit test, directly proves the criterion. | Add the citation to the proving test or add the focused assertion and cite it. |
+| `needs-new-behavior-test` | The criterion names a plausible regression risk, but no current test proves it. | Open a follow-up issue and add a real behavior test; do not cite until the assertion exists. |
+| `manual/process` | The evidence is owned by a manual dispatch, release process, closeout packet, or external validation surface. | Name the manual or process evidence in this test plan or the RTM instead of forcing a unit-test citation. |
+| `broad-regression` | The criterion says broad behavior is unchanged or no unrelated surface regressed. | Keep advisory unless it can be decomposed into concrete assertions. |
+| `defer/product-decision` | The criterion depends on a UX, runtime, governance, or tooling decision. | Track the decision explicitly; do not create assertion theater. |
+
+Current closure docket:
+
+| Bucket | Criteria | Next action |
+| --- | --- | --- |
+| `exact-testable` | None currently assigned after the 513/513 refresh. | Keep available for newly classified criteria backed by concrete assertions. |
+| `needs-new-behavior-test` | None currently assigned after the 513/513 refresh. | Decompose concrete assertions before citation; leave uncited if the proof would only restate policy or broad non-regression. |
+| `manual/process` | None currently assigned after the 488/513 refresh. | Keep available for future closeout or release-review evidence that cannot be unit-tested. |
+| `broad-regression` | None currently assigned after the 513/513 refresh. | Keep advisory unless each is decomposed into a concrete regression assertion that would fail on a real behavior change. |
+| `defer/product-decision` | None currently assigned after aligning VHS-REQ-644.2 with the VHS-REQ-626 generated-report export contract. | Track future product decisions explicitly; do not create assertion theater. |
+
+Final closure disposition for issue #1005: no uncited criteria remain. The last
+test-harness boundary criteria are covered by the VHS-REQ-614 requirements-docs
+guard, which pins the requirement to test-harness-only implementation refs and
+keeps runtime, package, command, persisted-format, and Marketplace surfaces owned
+by their dedicated requirements.
+
+Recommended implementation order:
+
+1. Criterion-linkage enforcement is now fail-closed in hosted CI (the
+   `Enforce requirement criterion citation` step in the `Requirements CSV
+   Integrity` job). The `npm run requirements:criteria:enforce` guard also fails
+   closed locally; the default `npm run requirements:criteria` stays advisory.
+2. Classify future uncited criteria before enforcement changes; do not add a
+   citation unless a verification test demonstrates the criterion.
+
+Do not add a `VHS-REQ-N.M` citation unless the cited verification test actually
+demonstrates that criterion. When a true proof lives in a different verification
+file, update SRS and RTM references together and run `npm run requirements:integrity`.
+Use `node scripts/auditRequirementCriteriaInventory.js --json` to build or refresh
+the docket. Criterion-linkage enforcement should wait until every remaining
+criterion is either exactly proved or explicitly assigned to one of the other
+buckets above.
+
 ## Critical-Path Verification Evidence
 
 | Requirement | Test Evidence | Code Path | Test Path | Coverage / Rationale |
 | --- | --- | --- | --- | --- |
-| VHS-REQ-597 | TEST-597 | .github/workflows/ci.yml; vitest.config.ts | tests/unit/branchGovernanceWorkflow.test.ts; tests/unit/requirementsDocs.test.ts | Hosted CI retains coverage artifacts, enforces evidence-backed baseline thresholds at 72% statements, 61% branches, 79% functions, and 72% lines, and runs `DoD Gate / dod` (`npm run dod:gate`) after packaging. |
+| VHS-REQ-597 | TEST-597 | .github/workflows/ci.yml; vitest.config.ts | tests/unit/branchGovernanceWorkflow.test.ts; tests/unit/requirementsDocs.test.ts | Hosted CI retains coverage artifacts, enforces evidence-backed baseline thresholds at 80% statements, 70% branches, 84% functions, and 80% lines, and runs `DoD Gate / dod` (`npm run dod:gate`) after packaging. |
 | VHS-REQ-016 | TEST-016 | src/commands/openViHistoryCommand.ts | tests/unit/openViHistoryCommand.test.ts | User-facing command stops cover missing URI, trust gate, ineligible file guidance, history-load failures, documentation routing, and explicit cancellation stages. |
 | VHS-REQ-017 | TEST-017 | src/services/viHistoryModel.ts; src/ui/historyPanel.ts | tests/unit/viHistoryModel.test.ts; tests/unit/historyPanelRendering.test.ts | History model facts cover repository/path/signature/history-window decisions and previous-hash links; the minimized panel renders a slim title and the selectable commit table (hash, date, author, subject, full body) with HTML escaping. |
 | VHS-REQ-639 | TEST-639 | src/git/gitCli.ts; src/services/viHistoryModel.ts; src/ui/historyPanel.ts | tests/unit/gitCli.test.ts; tests/unit/historyPanelRendering.test.ts | Commit body (git `%b`) is captured per retained revision and rendered as a dedicated commit body column replacing the adjacent-pair column, HTML-escaped with multi-line preserved and an empty-body fallback. |
@@ -106,13 +209,13 @@ gate semantics.
 | VHS-REQ-147 | TEST-147 | src/reporting/comparisonReportRuntimeExecution.ts; src/reporting/comparisonReportPlan.ts | tests/unit/comparisonReportRuntimeExecution.test.ts | Runtime execution stages deterministic inputs from historical blobs and preserves canonical names across container report output. |
 | VHS-REQ-148 | TEST-148 | src/reporting/comparisonReportRuntimeExecution.ts; src/reporting/comparisonReportPacket.ts; src/reporting/comparisonReportExecutionPlan.ts; src/reporting/comparisonReportAction.ts | tests/unit/comparisonReportRuntimeExecution.test.ts; tests/unit/comparisonReportPacket.test.ts; tests/unit/comparisonReportAction.test.ts | Retained execution evidence covers failed runtime attempts, stale output rejection, archive creation, and packet fallback display. |
 | VHS-REQ-155 | TEST-155 | src/reporting/comparisonRuntimeLocator.ts; src/reporting/comparisonRuntimeDoctor.ts; src/reporting/comparisonReportAction.ts; src/reporting/comparisonReportPacket.ts | tests/unit/comparisonRuntimeLocator.test.ts; tests/unit/comparisonRuntimeDoctor.test.ts; tests/unit/comparisonReportAction.test.ts; tests/unit/comparisonReportPacket.test.ts; tests/unit/comparisonReportRuntimeExecution.test.ts | Runtime discovery diagnostics cover host/container provider decisions and user-facing blocked-runtime summaries. |
-| VHS-REQ-635 | TEST-635 | src/commands/openViHistoryCommand.ts; src/services/viHistoryModel.ts; src/services/viHistoryService.ts; src/git/gitCli.ts | tests/unit/openViHistoryCommand.test.ts; tests/unit/viHistoryModel.test.ts; tests/unit/viHistoryService.test.ts; tests/unit/gitCli.test.ts; tests/unit/packageManifest.test.ts | Opening VI History evaluates the selected file directly, keeps menu visibility as a hint, preserves factual ineligibility stops, and avoids repository-wide VI indexing as a prerequisite. |
-| VHS-REQ-610 | TEST-610 | src/dashboard/comparisonReportArchive.ts; src/dashboard/dashboardLatestRun.ts; src/dashboard/multiReportDashboard.ts; src/dashboard/multiReportDashboardAction.ts; src/dashboard/retainedDashboardEvidence.ts; src/review/humanReviewSubmission.ts; src/scenarios/decisionRecord.ts; src/scenarios/reviewScenarioRegistry.ts; src/support/repositorySupportPolicy.ts | tests/unit/comparisonReportArchive.test.ts; tests/unit/dashboardLatestRun.test.ts; tests/unit/multiReportDashboard.test.ts; tests/unit/multiReportDashboardAction.test.ts; tests/unit/retainedDashboardEvidence.test.ts; tests/unit/humanReviewSubmission.test.ts; tests/unit/reviewDecisionRecord.test.ts; tests/unit/reviewScenarioSupportPolicy.test.ts | Dashboard retained-evidence archive, latest-run, aggregate rendering, action routing, proof seeding, review submission boundaries, decision records, scenario contracts, and support-tier rules have focused unit coverage. |
+| VHS-REQ-635 | TEST-635 | src/extension.ts; src/commands/openViHistoryCommand.ts; src/services/viHistoryModel.ts; src/services/viHistoryService.ts; src/git/gitCli.ts | tests/unit/extensionActivationLazySideEffects.test.ts; tests/unit/openViHistoryCommand.test.ts; tests/unit/viHistoryModel.test.ts; tests/unit/viHistoryService.test.ts; tests/unit/gitCli.test.ts; tests/unit/packageManifest.test.ts | Opening VI History and extension API history loading evaluate the selected file directly, keep menu visibility as a hint, preserve factual ineligibility stops, and avoid repository-wide VI indexing as a prerequisite. |
+| VHS-REQ-610 | TEST-610 | src/dashboard/comparisonReportArchive.ts; src/dashboard/dashboardLatestRun.ts; src/dashboard/multiReportDashboard.ts; src/dashboard/multiReportDashboardAction.ts; src/dashboard/retainedDashboardEvidence.ts; src/scenarios/decisionRecord.ts; src/scenarios/reviewScenarioRegistry.ts; src/support/repositorySupportPolicy.ts | tests/unit/comparisonReportArchive.test.ts; tests/unit/dashboardLatestRun.test.ts; tests/unit/multiReportDashboard.test.ts; tests/unit/multiReportDashboardAction.test.ts; tests/unit/retainedDashboardEvidence.test.ts; tests/unit/reviewDecisionRecord.test.ts; tests/unit/reviewScenarioSupportPolicy.test.ts | Dashboard retained-evidence archive, latest-run, aggregate rendering, action routing, proof seeding, decision records, scenario contracts, and support-tier rules have focused unit coverage. |
 | VHS-REQ-611 | TEST-611 | src/docs/bundledDocumentation.ts; src/docs/bundledDocumentationAction.ts | tests/unit/bundledDocumentation.test.ts; tests/unit/bundledDocumentationAction.test.ts | Installed documentation manifest/page loading and command routing are covered directly. |
 | VHS-REQ-612 | TEST-612 | src/tooling/localRuntimeSettingsCli.ts; src/extension.ts | tests/unit/localRuntimeSettingsCli.test.ts; tests/unit/packageManifest.test.ts; tests/unit/extensionActivationLazySideEffects.test.ts; tests/integration/suite/extensionHost.test.ts | Installed runtime settings CLI command exposure, argument parsing, launcher materialization, idempotent settings refresh, malformed-config errors, validation proof output, terminal output, and missing global-storage handling are verified without changing runtime selection behavior. |
 | VHS-REQ-613 | TEST-613 | scripts/mapCoverageToTraceability.js; vitest.config.ts | tests/unit/coverageMapScript.test.ts; tests/unit/requirementsDocs.test.ts | Coverage map links retained coverage evidence to RTM/inventory risk and protects evidence-backed threshold ratchets. |
 | VHS-REQ-614 | TEST-614 | tests/unit/vscodeTestHarness.ts | tests/unit/vscodeTestHarness.test.ts; tests/unit/requirementsDocs.test.ts | Shared VS Code fakes support coverage-led command, webview, storage, filesystem, clipboard, progress, output, and runtime CLI tests. |
-| VHS-REQ-615 | TEST-615 | package.json; .github/workflows/ci.yml; .github/workflows/marketplace-release.yml; scripts/checkDefinitionOfDone.js; scripts/auditCustomizationGovernance.js; scripts/generateCloseoutEvidence.js; scripts/verifyMarketplaceListing.js; .github/pull_request_template.md; docs/maintainer-operations.md; docs/requirements/srs.md; docs/requirements/rtm.csv; docs/requirements/id-index.csv; docs/requirements/README.md; docs/testing/test-plan.md; docs/requirements/traceability-inventory.csv | tests/unit/definitionOfDoneGate.test.ts; tests/unit/customizationGovernanceAuditScript.test.ts; tests/unit/requirementsDocs.test.ts; tests/unit/traceabilityAuditScript.test.ts | Definition-of-Done operating contract covers issue quality, PR evidence, hosted CI order, local gates, standards provenance, closeout evidence, traceability drift prevention, release evidence, and hosted `DoD Gate / dod` enforcement in `.github/workflows/ci.yml`. |
+| VHS-REQ-615 | TEST-615 | package.json; .github/workflows/ci.yml; .github/workflows/marketplace-release.yml; scripts/checkDefinitionOfDone.js; scripts/auditCustomizationGovernance.js; scripts/generateCloseoutEvidence.js; scripts/runMultiStandardsAudit.js; scripts/verifyMarketplaceListing.js; .github/pull_request_template.md; docs/maintainer-operations.md; docs/requirements/srs.md; docs/requirements/rtm.csv; docs/requirements/id-index.csv; docs/requirements/README.md; docs/testing/test-plan.md; docs/requirements/traceability-inventory.csv | tests/unit/definitionOfDoneGate.test.ts; tests/unit/closeoutEvidenceScript.test.ts; tests/unit/multiStandardsAuditScript.test.ts; tests/unit/marketplaceReleaseWorkflow.test.ts; tests/unit/customizationGovernanceAuditScript.test.ts; tests/unit/requirementsDocs.test.ts; tests/unit/traceabilityAuditScript.test.ts | Definition-of-Done operating contract covers issue quality, PR evidence, hosted CI order, local gates, standards provenance, closeout evidence, traceability drift prevention, release evidence, and hosted `DoD Gate / dod` enforcement in `.github/workflows/ci.yml`. |
 | VHS-REQ-616 | TEST-616 | src/extension.ts; src/tooling/runtimeAutoDetect.ts; src/tooling/runtimeSettingsSeed.ts | tests/unit/runtimeAutoDetect.test.ts; tests/unit/runtimeSettingsSeed.test.ts; tests/unit/extensionActivationLazySideEffects.test.ts; tests/unit/requirementsDocs.test.ts | Activation runs the filesystem-only runtime detector and seeds or repairs `viHistorySuite.runtimeProvider`/`labviewVersion`/`labviewBitness` so fresh installs and upgrades arrive with a working comparison provider; preserves satisfiable persisted values; reports `no-runtime-detected` without writing when nothing is found. |
 | VHS-REQ-617 | TEST-617 | src/extension.ts; src/ui/runtimeAvailabilityNotice.ts; src/commands/runtimeCommands.ts | tests/unit/runtimeAvailabilityNotice.test.ts; tests/unit/runtimeCommands.test.ts; tests/unit/requirementsDocs.test.ts | Status bar item reflects detection outcome, first-run information notice fires once via globalState `vihs.firstRunNoRuntimeNoticeShown`, and `onDidChangeWindowState` re-detect is throttled by `RUNTIME_RE_DETECT_THROTTLE_MS`. Three trust-gated VS Code commands expose runtime state: `Detect Runtime Now` bypasses the throttle, `Reset First-Run Runtime Notice` requires modal confirmation to clear the globalState flag, and `Show Runtime Summary` writes a structured report to the `VI History: Runtime` output channel with a clipboard Copy action. |
 | VHS-REQ-620 | TEST-620 | src/extension.ts; src/ui/runtimeAvailabilityNotice.ts; src/ui/runtimeReportPanel.ts; src/commands/openRuntimeReportPanelCommand.ts; src/commands/pickRuntimeProviderCommand.ts; src/commands/runtimeCommands.ts | tests/unit/runtimeAvailabilityNotice.test.ts; tests/unit/runtimeAvailabilityWatcher.test.ts; tests/unit/runtimeReportPanel.test.ts; tests/unit/openRuntimeReportPanelCommand.test.ts; tests/unit/pickRuntimeProviderCommand.test.ts; tests/unit/runtimeCommands.test.ts; tests/unit/requirementsDocs.test.ts | Status bar label is sourced from the persisted runtime selection when `viHistorySuite.runtimeProvider`/`labviewVersion`/`labviewBitness` are populated and the combination is satisfiable per `isPersistedSelectionSatisfiable`, otherwise the auto-detection recommendation is used (silent fallback). The watcher subscribes to `onDidChangeConfiguration` filtered to `viHistorySuite` and re-renders from the cached detection without re-probing, so a `vihs --provider …` CLI invocation or manual settings.json edit updates the label immediately. The `labviewViHistory.pickRuntimeProvider` command opens the Runtime & Report Settings panel whose runtime provider section is built from the cached detection (host installations + Docker if `cliAvailable` + Clear option) and writes selections to `ConfigurationTarget.Global`; the same panel exposes the LabVIEW container image version and the comparison-report Include controls (VHS-REQ-645/651). The `Show Runtime Summary` report appends a `Drift:` line with three states: `none`, `selection differs from recommendation`, and `selection unsatisfiable on this host; falling back to recommendation`. |
@@ -191,9 +294,49 @@ This check requires a LabVIEW comparison runtime and is not a required public
 PR gate; the deterministic staging contract is covered by
 `tests/unit/comparisonReportRuntimeExecution.test.ts`.
 
+## Source Control Semantic Change Hover Check
+
+`manual:source-control-semantic-change-hover` (VHS-REQ-660). The Source Control
+semantic change decoration has two states: a modified VI first shows a subtle
+pending badge prompting a comparison, and once a working-tree comparison has
+produced a narrative for the VI's current change the decoration upgrades to the
+semantic "what changed" tooltip (served from cache). On a host with a LabVIEW
+comparison provider available (a local Docker engine with the
+`nationalinstruments/labview:<release>-linux` image is sufficient), verify both
+states end to end:
+
+1. Launch the Extension Development Host (`F5`, `Run VI History Suite`) and open
+   a trusted Git repository that contains a tracked LabVIEW VI (for example,
+   `ni/actor-framework`). Confirm a comparison runtime is configured with
+   `VI History: Set Up Comparison Runtime`.
+2. Make an uncommitted edit to a tracked `.vi` so it appears under Source
+   Control as a working-tree change, and confirm the VI shows the pending badge
+   whose tooltip prompts you to run Compare.
+3. Open `VI History` on that VI, select the uncommitted working-tree entry
+   paired with the most recent committed revision (HEAD), and choose `Compare`.
+   Wait for the comparison to complete with differences.
+4. Hover the changed VI in the Source Control view (or the Explorer) and confirm
+   the decoration has upgraded to the `VI change: ...` narrative, matching the
+   report's what-changed summary.
+5. Confirm the decoration clears once it no longer applies: revert or commit the
+   edit and confirm the badge is gone after the Source Control view refreshes.
+
+Expected scope: the decoration reflects the HEAD-versus-working-tree change
+only. A modified VI shows the pending badge before any comparison; the narrative
+tooltip requires a completed working-tree comparison. Comparing the working tree
+against an older revision (not HEAD), or comparing two committed revisions, does
+not light the narrative decoration by design, and an untrusted workspace shows
+no decoration.
+
+This check requires a LabVIEW comparison runtime and is not a required public PR
+gate; the cache, recorder, and decoration-resolution logic are covered by
+`tests/unit/viSemanticNarrativeCache.test.ts` and
+`tests/unit/viSemanticDecorationProvider.test.ts`.
+
 ## Marketplace Release Check
 
-Marketplace publication is tag-only. Create an exact `vX.Y.Z` tag on the
+Marketplace publication is tag-only and runs only from a manual maintainer
+dispatch (no automatic trigger). Create an exact `vX.Y.Z` tag on the
 merged `main` commit after release evidence is complete. The `Marketplace
 Release` workflow verifies the tag, package version, `origin/main`
 reachability, lightweight package checks, pinned VSIX publication, bounded live
@@ -224,6 +367,9 @@ snapshot built from `git ls-files`, preserving symlink targets as text rather
 than following them into generated cache roots. It tries host Python first in
 `auto` mode and falls back to the published GitLab registry workbench image
 when host preflight is unavailable.
+For release closeout, use `--kind release`; the same packet retains quick-triage
+standards evidence plus `release-gate` and `26514-review` scorecards, and any
+non-PASS or missing release profile gate blocks closure.
 When `--save-dir` is provided, closeout evidence writes a machine-readable
 `closeout-summary.json` artifact with gate status, standards status, provenance
 status, closure-decision state, and `standards.auditTarget` fields for
@@ -249,9 +395,13 @@ Requirement-scoped pull requests must keep a lightweight evidence surface and
 name the linked issue with `Refs #...` unless the PR actually completes the
 closeout contract. PR evidence must include the target requirement, validation commands,
 and traceability/RTM impact; it must also include an out-of-scope statement and
-closeout readiness. Keep local gates explicit (including `npm run dod:gate`) plus
-hosted CI and standards provenance or closeout status. If optional/authenticated
-evidence is blocked, note the blocker and the follow-up issue.
+closeout readiness. Keep required hosted CI checks, local gates, targeted tests,
+standards provenance or closeout status, and environment blockers explicit.
+Local validation evidence includes `npm run traceability:audit`,
+`npm run docs:links`, `npm run check`, `npm test`, `npm run coverage:map`,
+`npm run package`, and the targeted tests for the changed requirement or
+implementation surface. If optional/authenticated evidence is blocked, note the
+blocker and the follow-up issue.
 
 ## Optional Vagrant Check
 

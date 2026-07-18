@@ -12,12 +12,19 @@ import {
 import {
   classifyLabviewCliDiagnosticText,
   classifySelectedTreeMaterializeError,
+  classifyRuntimeFailure,
   SELECTED_TREE_MATERIALIZE_LONG_PATH_DIAGNOSTIC,
+  buildDefaultRunCommand,
+  normalizeComparisonProcessError,
+  parseWindowsTasklistCsv,
+  observeWindowsRuntimeProcesses,
+  observeWindowsTcpListeners,
   executeComparisonReport,
   materializeSelectedRevisionTreeWithGit,
   parseSubmoduleGitlinks,
   inferLabviewBitnessFromExecutablePath,
   inferLabviewYearFromExecutablePath,
+  inferSupportedLabviewYearFromExecutablePath,
   inferLinuxLabviewVersionFromExecutablePath,
   resolveLinuxLabviewTcpSettings,
   resolveWindowsLabviewTcpSettingsForLabviewPath,
@@ -27,10 +34,30 @@ import {
   shouldUseLinuxHostNativeShortPathStaging,
   rewriteLabviewCliArgsForLinuxContainerWorkspace,
   buildLinuxContainerCommandPlan,
+  buildWindowsContainerCommandPlan,
+  buildWindowsInteropCommandPlan,
+  buildWindowsHostNativeHeadlessCommandPlan,
+  buildWindowsContainerLabviewCliScript,
+  buildLinuxContainerLabviewCliScript,
+  rewriteLvcompareArgsForContainerWorkspace,
+  rewriteLvcompareArgsForLinuxContainerWorkspace,
+  normalizeWindowsInteropPath,
+  normalizeWindowsInteropExecutable,
+  resolveHostReadableDiagnosticPath,
+  resolveMappedRuntimeDiagnosticPath,
+  parseLabviewCliDiagnosticLogPath,
   runComparisonCommandPlanWithObservation,
+  runComparisonCommandPlan,
   prepareWindowsContainerExecutionContext,
   prepareLinuxContainerExecutionContext,
   resolveEffectiveCommandTimeoutMs,
+  appendLabviewCliPortNumberArg,
+  rewriteLabviewCliArgsForContainerWorkspace,
+  buildLinuxContainerBindMountVisibilityNote,
+  deriveWorktreeSnapshotIdentity,
+  buildWorktreeSnapshotProvenanceNote,
+  deriveComparedWorktreeSnapshotId,
+  extractCommandOptionValue,
   LINUX_HOST_NATIVE_HEADLESS_OPT_IN_DEFAULT_TIMEOUT_MS
 } from '../../src/reporting/comparisonReportRuntimeExecution';
 import { ComparisonReportPacketRecord } from '../../src/reporting/comparisonReportPacket';
@@ -250,7 +277,7 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(stderr.destroy).toHaveBeenCalledTimes(1);
   });
 
-  it('stages each revision from its resolved historical relative path when the VI moved', async () => {
+  it('stages each revision from its resolved historical relative path when the VI moved (VHS-REQ-147.1, VHS-REQ-147.3)', async () => {
     const readRevisionBlob = vi
       .fn()
       .mockResolvedValueOnce(Buffer.from('left'))
@@ -306,7 +333,7 @@ describe('comparisonReportRuntimeExecution', () => {
     );
   });
 
-  it('retains deterministic staged filenames that embed revision identity even when the VI moved', async () => {
+  it('retains deterministic staged filenames that embed revision identity even when the VI moved (VHS-REQ-147.2, VHS-REQ-147.3)', async () => {
     const writeFile = vi.fn().mockResolvedValue(undefined);
     const record = createReadyRecord();
     record.preflight.left.resolvedRelativePath = 'Examples/foo.vi';
@@ -358,7 +385,7 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(result.record.stagedRevisionPlan.rightFilename).toBe('right-abcdef123456-foo.vi');
   });
 
-  it('fails closed with a retained reason when left blob staging fails', async () => {
+  it('fails closed with a retained reason when left blob staging fails (VHS-REQ-147.4)', async () => {
     const record = createReadyRecord();
     const readRevisionBlob = vi.fn().mockRejectedValueOnce(new Error('blob-not-found'));
 
@@ -390,7 +417,7 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(result.record.runtimeExecution.reportExists).toBe(false);
   });
 
-  it('fails closed with a retained reason when right blob staging fails', async () => {
+  it('fails closed with a retained reason when right blob staging fails (VHS-REQ-147.4)', async () => {
     const record = createReadyRecord();
     const readRevisionBlob = vi
       .fn()
@@ -425,7 +452,7 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(result.record.runtimeExecution.reportExists).toBe(false);
   });
 
-  it('rejects stale generated reports with retained evidence explaining the staged filename mismatch', async () => {
+  it('rejects stale generated reports with retained evidence explaining the staged filename mismatch (VHS-REQ-147.5)', async () => {
     const record = createReadyRecord();
     const pathExists = vi.fn(async (filePath: string) => filePath === record.artifactPlan.reportFilePath);
     const readFile = vi.fn().mockResolvedValue(
@@ -473,7 +500,62 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(removePath).toHaveBeenCalled();
   });
 
-  it('copies Linux container reports back with canonical staged names and retained asset directories', async () => {
+  it('rejects a stale generated report on a timed-out execution with retained evidence (VHS-REQ-147.5)', async () => {
+    // VHS-REQ-147.5 covers "timed-out OR failed" executions; the failed branch is
+    // asserted above. A timed-out run must also reject a pre-existing stale
+    // report so a regression dropping the timeout branch of the identity check
+    // fails closed.
+    const record = createReadyRecord();
+    const pathExists = vi.fn(async (filePath: string) => filePath === record.artifactPlan.reportFilePath);
+    const readFile = vi.fn().mockResolvedValue(
+      '<html>Report for old-left.vi and old-right.vi</html>'
+    );
+    const removePath = vi.fn().mockResolvedValue(undefined);
+
+    const result = await executeComparisonReport(
+      {
+        record,
+        repositoryRoot: '/workspace/repo'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: removePath as never,
+        unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
+        readdir: vi.fn().mockResolvedValue([]) as never,
+        readFile: readFile as never,
+        pathExists,
+        runCommand: vi.fn().mockResolvedValue({
+          exitCode: 124,
+          stdout: 'command stdout',
+          stderr: '',
+          timedOut: true,
+          timeoutMs: 120000
+        }),
+        nowIso: vi.fn().mockReturnValue('2026-04-02T01:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        enforceWindowsHostPreflight: false,
+        processPlatform: 'win32'
+      }
+    );
+
+    expect(result.record.runtimeExecution.state).toBe('failed');
+    expect(result.record.runtimeExecution.failureReason).toBe('command-timed-out');
+    expect(result.record.runtimeExecution.reportExists).toBe(false);
+    expect(result.record.runtimeExecution.diagnosticNotes).toContain(
+      `Generated comparison report did not reference the current staged revisions (${record.stagedRevisionPlan.leftFilename}, ${record.stagedRevisionPlan.rightFilename}) and was discarded as stale output.`
+    );
+    expect(removePath).toHaveBeenCalled();
+  });
+
+  it('copies Linux container reports back with canonical staged names and retained asset directories (VHS-REQ-148.1, VHS-REQ-156.10)', async () => {
     const record = createReadyRecord();
     record.artifactPlan.fullFilename = 'foo bar.vi';
     record.artifactPlan.reportFilename = 'diff-report-foo bar.vi.html';
@@ -577,7 +659,7 @@ describe('comparisonReportRuntimeExecution', () => {
     });
   });
 
-  it('mounts Linux container output under container-out so it cannot pollute the retained report path', async () => {
+  it('mounts Linux container output under container-out so it cannot pollute the retained report path (VHS-REQ-156.10)', async () => {
     const record = createReadyRecord();
     record.stagedRevisionPlan = buildStagedRevisionPlan({
       stagingDirectory: record.artifactPlan.stagingDirectory,
@@ -657,7 +739,7 @@ describe('comparisonReportRuntimeExecution', () => {
     );
   });
 
-  it('reports copy-back filesystem failures as report-finalize-failed rather than command-spawn-failed', async () => {
+  it('reports copy-back filesystem failures as report-finalize-failed rather than command-spawn-failed (VHS-REQ-156.9)', async () => {
     const record = createReadyRecord();
     record.artifactPlan.fullFilename = 'foo bar.vi';
     record.artifactPlan.reportFilename = 'diff-report-foo bar.vi.html';
@@ -754,7 +836,7 @@ describe('comparisonReportRuntimeExecution', () => {
     );
   });
 
-  it('adds a cross-ownership remediation note when copy-back fails with EPERM (foreign-owned stale output)', async () => {
+  it('adds a cross-ownership remediation note when copy-back fails with EPERM (foreign-owned stale output) (VHS-REQ-156.9)', async () => {
     const record = createReadyRecord();
     record.artifactPlan.fullFilename = 'foo bar.vi';
     record.artifactPlan.reportFilename = 'diff-report-foo bar.vi.html';
@@ -857,7 +939,7 @@ describe('comparisonReportRuntimeExecution', () => {
     );
   });
 
-  it('retries report-asset removal after chmod when the destination tree is read-only (EACCES)', async () => {
+  it('retries report-asset removal after chmod when the destination tree is read-only (EACCES) (VHS-REQ-156.9)', async () => {
     const record = createReadyRecord();
     record.artifactPlan.fullFilename = 'foo bar.vi';
     record.artifactPlan.reportFilename = 'diff-report-foo bar.vi.html';
@@ -1031,7 +1113,7 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(result.record.runtimeExecution.blockedReason).toBeUndefined();
   });
 
-  it('passes a resolved non-default VI Server port to the LabVIEW CLI on a successful host-native compare (VHS-REQ-623)', async () => {
+  it('passes a resolved non-default VI Server port to the LabVIEW CLI on a successful host-native compare (VHS-REQ-623.6)', async () => {
     // Real-hardware peer: the maintainer Windows runner hosts LabVIEW installs on
     // non-default VI Server ports. This asserts the resolved server.tcp.port flows
     // all the way into the launched CreateComparisonReport invocation (-PortNumber)
@@ -1178,7 +1260,7 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(result.record.runtimeExecution.exitObservedProcessNames).toEqual([]);
   });
 
-  it('reclassifies a nonzero exit as labview-host-bitness-conflict when exit snapshot shows different-bitness LabVIEW (VHS-REQ-621)', async () => {
+  it('reclassifies a nonzero exit as labview-host-bitness-conflict when exit snapshot shows different-bitness LabVIEW (VHS-REQ-621.3, VHS-REQ-636.9, VHS-REQ-658.1)', async () => {
     const record = createReadyRecord();
     record.runtimeSelection.bitness = 'x86';
     const result = await executeComparisonReport(
@@ -1233,7 +1315,7 @@ describe('comparisonReportRuntimeExecution', () => {
     );
   });
 
-  it('keeps a nonzero exit as command-exited-nonzero when exit snapshot shows matching-bitness LabVIEW (VHS-REQ-621)', async () => {
+  it('keeps a nonzero exit as command-exited-nonzero when exit snapshot shows matching-bitness LabVIEW (VHS-REQ-621.3)', async () => {
     const record = createReadyRecord();
     record.runtimeSelection.bitness = 'x64';
     const result = await executeComparisonReport(
@@ -1280,7 +1362,7 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(result.record.runtimeExecution.failureReason).toBe('command-exited-nonzero');
   });
 
-  it('keeps a nonzero exit as command-exited-nonzero when exit snapshot has unknown-bitness LabVIEW (VHS-REQ-621)', async () => {
+  it('keeps a nonzero exit as command-exited-nonzero when exit snapshot has unknown-bitness LabVIEW (VHS-REQ-621.3)', async () => {
     const record = createReadyRecord();
     record.runtimeSelection.bitness = 'x64';
     const result = await executeComparisonReport(
@@ -1559,7 +1641,66 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(readdir).not.toHaveBeenCalledWith('/tmp');
   });
 
-  it('still classifies a genuine host-native headless init failure with #269 guidance (no regression)', async () => {
+  it('does not run the recursive-load CloseLabVIEW reset for env-toggle Linux container images (VHS-REQ-657.4)', async () => {
+    const record = createLinuxContainerReadyRecord();
+    record.runtimeSelection.containerImage = 'nationalinstruments/labview:2025q3-linux';
+    const reportDirectory = record.artifactPlan.reportDirectory;
+    const containerTempDirectory = `${reportDirectory}/container-out/container-temp`;
+    const containerStatusLog = `${containerTempDirectory}/LVStatus.txt`;
+    const readdir = vi.fn(async (dir: string) =>
+      dir === containerTempDirectory ? ['LVStatus.txt'] : []
+    );
+    const readFile = vi.fn(async (filePath: string) => {
+      if (filePath === containerStatusLog) {
+        return 'Recursive load during LEIF load! loading /tmp/GSW_MainPanel.vi';
+      }
+      return '';
+    });
+    const pathExists = vi.fn(async (filePath: string) => filePath === containerStatusLog);
+    const runCommand = vi.fn().mockResolvedValue({
+      exitCode: 1,
+      stdout: 'LabVIEWCLI operation failed with error.',
+      stderr: 'CreateComparisonReport operation failed.'
+    });
+
+    const result = await executeComparisonReport(
+      {
+        record,
+        repositoryRoot: '/workspace/repo'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
+        chmod: vi.fn().mockResolvedValue(undefined) as never,
+        readdir: readdir as never,
+        readFile: readFile as never,
+        pathExists: pathExists as never,
+        runCommand,
+        nowIso: vi.fn().mockReturnValue('2026-06-07T03:51:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'linux'
+      }
+    );
+
+    expect(runCommand).toHaveBeenCalledTimes(1);
+    expect(result.record.runtimeExecution.state).toBe('failed');
+    expect(result.record.runtimeExecution.diagnosticReason).toBe('linux-headless-recursive-load');
+    expect(result.record.runtimeExecution.headlessSessionResetExecutable).toBeUndefined();
+    expect(result.record.runtimeExecution.diagnosticNotes ?? []).not.toContain(
+      'Attempted Linux headless session reset via LabVIEWCLI CloseLabVIEW after recursive-load diagnosis, then retried the pair once.'
+    );
+  });
+
+  it('lets headless init failure win over stderr and skips recursive-load retry (VHS-REQ-156.4, VHS-REQ-156.6)', async () => {
     // A real host-native headless bring-up failure (issue #269) must still be
     // classified and surfaced. The #270 fix only stops contamination of PASSING
     // container runs; it must not suppress a genuine host-native failure signal.
@@ -1600,6 +1741,15 @@ describe('comparisonReportRuntimeExecution', () => {
     });
     // The report is never generated (headless never came up), so the run fails.
     const pathExists = vi.fn(async (filePath: string) => filePath === headlessLog);
+    const runCommand = vi.fn().mockResolvedValue({
+      exitCode: 1,
+      stdout: 'LabVIEWCLI operation failed with error.',
+      stderr: [
+        'Using LabVIEW: "/usr/local/natinst/LabVIEW-2026-64/labview"',
+        'LabVIEW: (Hex 0x8) File permission error.',
+        'CreateComparisonReport operation failed.'
+      ].join('\n')
+    });
 
     const result = await executeComparisonReport(
       {
@@ -1620,11 +1770,7 @@ describe('comparisonReportRuntimeExecution', () => {
         readdir: readdir as never,
         readFile: readFile as never,
         pathExists: pathExists as never,
-        runCommand: vi.fn().mockResolvedValue({
-          exitCode: 0,
-          stdout: 'CreateComparisonReport operation succeeded.',
-          stderr: ''
-        }),
+        runCommand,
         nowIso: vi.fn().mockReturnValue('2026-06-07T03:43:00.000Z'),
         nowMs: vi.fn().mockReturnValue(1000),
         writePacketRecord: vi.fn().mockResolvedValue(undefined),
@@ -1634,6 +1780,11 @@ describe('comparisonReportRuntimeExecution', () => {
 
     expect(result.record.runtimeExecution.state).toBe('failed');
     expect(result.record.runtimeExecution.diagnosticReason).toBe('linux-headless-init-failed');
+    expect(result.record.runtimeExecution.diagnosticReason).not.toBe(
+      'labview-cli-create-report-permission-error'
+    );
+    expect(runCommand).toHaveBeenCalledTimes(1);
+    expect(result.record.runtimeExecution.headlessSessionResetExecutable).toBeUndefined();
     expect(result.record.runtimeExecution.diagnosticNotes ?? []).toEqual(
       expect.arrayContaining([
         expect.stringContaining('Failed to initialize headless LabVIEW.')
@@ -1641,6 +1792,115 @@ describe('comparisonReportRuntimeExecution', () => {
     );
     expect(result.record.runtimeExecution.diagnosticNotes?.join('\n')).toContain(
       'LV_RTE_LINUX_HEADLESS=0'
+    );
+  });
+
+  it('retries Linux recursive-load headless failures through CloseLabVIEW once (VHS-REQ-156.6)', async () => {
+    const record = createReadyRecord();
+    record.runtimeSelection.platform = 'linux';
+    record.runtimeSelection.bitness = 'x64';
+    record.runtimeSelection.provider = 'host-native';
+    record.runtimeSelection.executionMode = 'host-only';
+    record.runtimeSelection.requestedProvider = 'host';
+    record.runtimeSelection.requestedLabviewVersion = '2026';
+    record.runtimeSelection.headlessRequested = true;
+    record.runtimeSelection.labviewExe = {
+      kind: 'labview-exe',
+      path: '/usr/local/natinst/LabVIEW-2026-64/labview',
+      source: 'configured',
+      exists: true,
+      bitness: 'x64'
+    };
+    record.runtimeSelection.labviewCli = {
+      kind: 'labview-cli',
+      path: '/usr/local/bin/LabVIEWCLI',
+      source: 'configured',
+      exists: true,
+      bitness: 'x64'
+    };
+    const headlessLog = '/tmp/lvrt_26.1.1f1_headless_sergio_cur.txt';
+    const readdir = vi.fn(async (dir: string) =>
+      dir === '/tmp' ? ['lvrt_26.1.1f1_headless_sergio_cur.txt'] : []
+    );
+    const readFile = vi.fn(async (filePath: string) => {
+      if (typeof filePath === 'string' && filePath.endsWith('labview.conf')) {
+        return 'server.tcp.enabled=True\nserver.tcp.port=3363\n';
+      }
+      if (filePath === headlessLog) {
+        return 'Recursive load during LEIF load! loading /tmp/GSW_MainPanel.vi';
+      }
+      return '';
+    });
+    let reportAvailable = false;
+    const pathExists = vi.fn(async (filePath: string) => {
+      if (filePath === headlessLog) {
+        return true;
+      }
+      return typeof filePath === 'string' &&
+        filePath.endsWith(record.artifactPlan.reportFilename)
+        ? reportAvailable
+        : false;
+    });
+    const runCommand = vi
+      .fn()
+      .mockResolvedValueOnce({
+        exitCode: 1,
+        stdout: 'LabVIEWCLI operation failed with error.',
+        stderr: [
+          'Using LabVIEW: "/usr/local/natinst/LabVIEW-2026-64/labview"',
+          'LabVIEW: (Hex 0x8) File permission error.',
+          'CreateComparisonReport operation failed.'
+        ].join('\n')
+      })
+      .mockResolvedValueOnce({ exitCode: 0, stdout: 'close ok', stderr: '' })
+      .mockImplementationOnce(async () => {
+        reportAvailable = true;
+        return {
+          exitCode: 0,
+          stdout: 'CreateComparisonReport operation succeeded.',
+          stderr: ''
+        };
+      });
+
+    const result = await executeComparisonReport(
+      {
+        record,
+        repositoryRoot: '/workspace/repo'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
+        readdir: readdir as never,
+        readFile: readFile as never,
+        pathExists: pathExists as never,
+        runCommand,
+        nowIso: vi.fn().mockReturnValue('2026-06-07T03:44:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'linux'
+      }
+    );
+
+    expect(runCommand).toHaveBeenCalledTimes(3);
+    expect(runCommand.mock.calls[1]?.[0]).toMatchObject({
+      executable: '/usr/local/bin/LabVIEWCLI',
+      args: expect.arrayContaining(['-OperationName', 'CloseLabVIEW'])
+    });
+    expect(result.record.runtimeExecution.state).toBe('succeeded');
+    expect(result.record.runtimeExecution.headlessSessionResetExecutable).toBe(
+      '/usr/local/bin/LabVIEWCLI'
+    );
+    expect(result.record.runtimeExecution.headlessSessionResetExitCode).toBe(0);
+    expect(result.record.runtimeExecution.diagnosticNotes).toContain(
+      'Attempted Linux headless session reset via LabVIEWCLI CloseLabVIEW after recursive-load diagnosis, then retried the pair once.'
     );
   });
 
@@ -1850,7 +2110,7 @@ describe('comparisonReportRuntimeExecution', () => {
     );
   });
 
-  it('classifies CreateComparisonReport file permission errors (LabVIEW error 8) from stderr', () => {
+  it('classifies CreateComparisonReport file permission errors (LabVIEW error 8) from stderr (VHS-REQ-156.5)', () => {
     const result = classifyLabviewCliDiagnosticText(
       [
         'Using LabVIEW: "/usr/local/natinst/LabVIEW-2026-64/labview"',
@@ -1979,8 +2239,225 @@ describe('comparisonReportRuntimeExecution', () => {
     );
   });
 
+  it('retries a Windows host-native cold-launch -350000 VI Server connect race once against the resident LabVIEW (VHS-REQ-148.7)', async () => {
+    // createReadyRecord() is already win32 / host-native / labview-cli.
+    const record = createReadyRecord();
+    let reportAvailable = false;
+    const readFile = vi.fn(async (filePath: string) => {
+      if (typeof filePath === 'string' && filePath.endsWith('LabVIEW.ini')) {
+        return 'server.tcp.enabled=True\r\nserver.tcp.port=3364\r\n';
+      }
+      return '';
+    });
+    const pathExists = vi.fn(async (filePath: string) =>
+      typeof filePath === 'string' && filePath.endsWith(record.artifactPlan.reportFilename)
+        ? reportAvailable
+        : false
+    );
+    // Attempt 1 launches a cold LabVIEW that loses the VI Server connect race
+    // (-350000); attempt 2 connects to the now-resident LabVIEW and succeeds. There
+    // is deliberately NO CloseLabVIEW between the two attempts.
+    const runCommand = vi
+      .fn()
+      .mockResolvedValueOnce({
+        exitCode: 1,
+        stdout:
+          'LabVIEWCLI started logging in file:  C:\\Temp\\lv.log\nLabVIEW launched successfully.',
+        stderr: [
+          'Error code : -350000',
+          'Error message : LabVIEW CLI: (Hex 0xFFFAA8D0) The CLI for LabVIEW failed to establish a connection with LabVIEW.',
+          'An error occurred while running the LabVIEW CLI.'
+        ].join('\r\n')
+      })
+      .mockImplementationOnce(async () => {
+        reportAvailable = true;
+        return {
+          exitCode: 0,
+          stdout: 'CreateComparisonReport operation succeeded.',
+          stderr: ''
+        };
+      });
+
+    const result = await executeComparisonReport(
+      { record, repositoryRoot: 'C:\\workspace\\repo' },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        materializeSelectedRevisionTree: vi.fn().mockResolvedValue(undefined),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
+        readdir: vi.fn().mockResolvedValue([]) as never,
+        readFile: readFile as never,
+        pathExists: pathExists as never,
+        runCommand,
+        nowIso: vi.fn().mockReturnValue('2026-07-15T09:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32',
+        // Deterministic regardless of host: bypass the Windows host-surface
+        // preflight (which observes real processes/TCP on a win32 dev host) so the
+        // test exercises only the cold-launch retry logic downstream of it.
+        enforceWindowsHostPreflight: false
+      }
+    );
+
+    // Exactly two compare attempts, and no CloseLabVIEW between them.
+    expect(runCommand).toHaveBeenCalledTimes(2);
+    for (const call of runCommand.mock.calls) {
+      const plan = call[0] as { executable: string; args: string[] };
+      expect(plan.executable).toBe(record.runtimeSelection.labviewCli?.path);
+      expect(plan.args).toEqual(
+        expect.arrayContaining(['-OperationName', 'CreateComparisonReport'])
+      );
+      // The VI Server port stays derived from the selected install's LabVIEW.ini on
+      // both attempts (no hardcoded fallback) — the retry only changes timing.
+      expect(plan.args).toEqual(expect.arrayContaining(['-PortNumber', '3364']));
+    }
+    expect(result.record.runtimeExecution.state).toBe('succeeded');
+    expect(result.record.runtimeExecution.reportExists).toBe(true);
+    expect(result.record.runtimeExecution.headlessSessionResetExecutable).toBeUndefined();
+    expect(result.record.runtimeExecution.diagnosticNotes).toContain(
+      'Windows host-native cold-launch retry: the first attempt launched LabVIEW but the VI Server was not ready within the LabVIEW CLI connect window (-350000). Retried once against the now-resident LabVIEW on the same derived VI Server port.'
+    );
+  });
+
+  it('does not cold-launch retry a Windows host-native failure that is not the -350000 connect race (VHS-REQ-148.7)', async () => {
+    const record = createReadyRecord();
+    const readFile = vi.fn(async (filePath: string) => {
+      if (typeof filePath === 'string' && filePath.endsWith('LabVIEW.ini')) {
+        return 'server.tcp.enabled=True\r\nserver.tcp.port=3364\r\n';
+      }
+      return '';
+    });
+    const pathExists = vi.fn(async () => false);
+    // A generic non-connection failure must not trigger the cold-launch retry.
+    const runCommand = vi.fn().mockResolvedValue({
+      exitCode: 1,
+      stdout: '',
+      stderr: 'Error code : 1055\r\nError message : Object reference is invalid.\r\n'
+    });
+
+    const result = await executeComparisonReport(
+      { record, repositoryRoot: 'C:\\workspace\\repo' },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        materializeSelectedRevisionTree: vi.fn().mockResolvedValue(undefined),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
+        readdir: vi.fn().mockResolvedValue([]) as never,
+        readFile: readFile as never,
+        pathExists: pathExists as never,
+        runCommand,
+        nowIso: vi.fn().mockReturnValue('2026-07-15T09:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32',
+        enforceWindowsHostPreflight: false
+      }
+    );
+
+    expect(runCommand).toHaveBeenCalledTimes(1);
+    expect(result.record.runtimeExecution.state).toBe('failed');
+    expect(result.record.runtimeExecution.diagnosticNotes ?? []).not.toContain(
+      'Windows host-native cold-launch retry: the first attempt launched LabVIEW but the VI Server was not ready within the LabVIEW CLI connect window (-350000). Retried once against the now-resident LabVIEW on the same derived VI Server port.'
+    );
+  });
+
+  it('retains the retried failure as authoritative when the cold-launch retry also fails (VHS-REQ-148.7)', async () => {
+    // createReadyRecord() is already win32 / host-native / labview-cli.
+    const record = createReadyRecord();
+    const readFile = vi.fn(async (filePath: string) => {
+      if (typeof filePath === 'string' && filePath.endsWith('LabVIEW.ini')) {
+        return 'server.tcp.enabled=True\r\nserver.tcp.port=3364\r\n';
+      }
+      return '';
+    });
+    const pathExists = vi.fn(async () => false);
+    // Attempt 1 loses the VI Server connect race (-350000) so the cold-launch
+    // retry fires; attempt 2 fails with a generic nonzero error (the resident
+    // LabVIEW did not recover). The retried result must be authoritative.
+    const runCommand = vi
+      .fn()
+      .mockResolvedValueOnce({
+        exitCode: 1,
+        stdout: 'LabVIEWCLI started logging in file:  C:\\Temp\\lv.log\nLabVIEW launched successfully.',
+        stderr: [
+          'Error code : -350000',
+          'Error message : LabVIEW CLI: (Hex 0xFFFAA8D0) The CLI for LabVIEW failed to establish a connection with LabVIEW.',
+          'An error occurred while running the LabVIEW CLI.'
+        ].join('\r\n')
+      })
+      .mockResolvedValueOnce({
+        exitCode: 55,
+        stdout: '',
+        stderr: 'Error code : 1055\r\nError message : Object reference is invalid.\r\n'
+      });
+
+    const result = await executeComparisonReport(
+      { record, repositoryRoot: 'C:\\workspace\\repo' },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        materializeSelectedRevisionTree: vi.fn().mockResolvedValue(undefined),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
+        readdir: vi.fn().mockResolvedValue([]) as never,
+        readFile: readFile as never,
+        pathExists: pathExists as never,
+        runCommand,
+        nowIso: vi.fn().mockReturnValue('2026-07-15T09:00:00.000Z'),
+        // Sequenced clock: attempt 1 spans 1000->2000 (1000ms), attempt 2 spans
+        // 2000->5000 (3000ms); the combined duration must be their sum (4000ms).
+        nowMs: vi
+          .fn()
+          .mockReturnValueOnce(1000)
+          .mockReturnValueOnce(2000)
+          .mockReturnValueOnce(2000)
+          .mockReturnValueOnce(5000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32',
+        enforceWindowsHostPreflight: false
+      }
+    );
+
+    // The cold-launch retry still fired (2 attempts), but the second attempt is
+    // authoritative: the final failure is attempt 2's generic classification, not
+    // the first attempt's connection-failed reason.
+    expect(runCommand).toHaveBeenCalledTimes(2);
+    expect(result.record.runtimeExecution.state).toBe('failed');
+    expect(result.record.runtimeExecution.reportExists).toBe(false);
+    expect(result.record.runtimeExecution.exitCode).toBe(55);
+    expect(result.record.runtimeExecution.failureReason).toBe('command-exited-nonzero');
+    // Duration accumulates across both attempts.
+    expect(result.record.runtimeExecution.durationMs).toBe(4000);
+    // The cold-launch recovery note is retained even though the retry failed, so
+    // the evidence records that a one-shot retry was attempted.
+    expect(result.record.runtimeExecution.diagnosticNotes).toContain(
+      'Windows host-native cold-launch retry: the first attempt launched LabVIEW but the VI Server was not ready within the LabVIEW CLI connect window (-350000). Retried once against the now-resident LabVIEW on the same derived VI Server port.'
+    );
+  });
+
   describe('failed execution evidence retention (VHS-REQ-148)', () => {
-    it('retains all evidence fields when execution fails with nonzero exit code', async () => {
+    it('retains all evidence fields when execution fails with nonzero exit code (VHS-REQ-148.2, VHS-REQ-658.1)', async () => {
       const record = createReadyRecord();
       const writeFile = vi.fn().mockResolvedValue(undefined);
 
@@ -2053,7 +2530,7 @@ describe('comparisonReportRuntimeExecution', () => {
       expect(result.record.runtimeExecution.reportExists).toBe(false);
     });
 
-    it('fails closed when report is missing even with exit code 0', async () => {
+    it('fails closed when report is missing even with exit code 0 (VHS-REQ-148.3)', async () => {
       const record = createReadyRecord();
 
       const result = await executeComparisonReport(
@@ -2438,7 +2915,7 @@ describe('cliConnectTimeoutSeconds hardening invocation (VHS-REQ-148)', () => {
   });
 });
 
-describe('inferLabviewBitnessFromExecutablePath (VHS-REQ-621)', () => {
+describe('inferLabviewBitnessFromExecutablePath (VHS-REQ-621.1, VHS-REQ-636.4)', () => {
   it('returns x86 when path is under Program Files (x86)', () => {
     expect(
       inferLabviewBitnessFromExecutablePath(
@@ -2476,7 +2953,7 @@ describe('inferLabviewBitnessFromExecutablePath (VHS-REQ-621)', () => {
   });
 });
 
-describe('inferLabviewYearFromExecutablePath (VHS-REQ-636)', () => {
+describe('inferLabviewYearFromExecutablePath (VHS-REQ-636.4, VHS-REQ-637.1)', () => {
   it('extracts the year from a canonical Windows LabVIEW path', () => {
     expect(
       inferLabviewYearFromExecutablePath(
@@ -2488,9 +2965,9 @@ describe('inferLabviewYearFromExecutablePath (VHS-REQ-636)', () => {
   it('extracts the year from a Program Files (x86) path', () => {
     expect(
       inferLabviewYearFromExecutablePath(
-        'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2024\\LabVIEW.exe'
+        'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2025\\LabVIEW.exe'
       )
-    ).toBe('2024');
+    ).toBe('2025');
   });
 
   it('extracts the year from a forward-slash path', () => {
@@ -2507,10 +2984,46 @@ describe('inferLabviewYearFromExecutablePath (VHS-REQ-636)', () => {
     ).toBeUndefined();
   });
 
+  it('leaves years outside the supported host range to callers that need raw extraction', () => {
+    expect(
+      inferLabviewYearFromExecutablePath(
+        'C:\\Program Files\\National Instruments\\LabVIEW 2024\\LabVIEW.exe'
+      )
+    ).toBe('2024');
+    expect(
+      inferLabviewYearFromExecutablePath(
+        'C:\\Program Files\\National Instruments\\LabVIEW 2031\\LabVIEW.exe'
+      )
+    ).toBe('2031');
+  });
+
   it('returns undefined for missing or empty input', () => {
     expect(inferLabviewYearFromExecutablePath(undefined)).toBeUndefined();
     expect(inferLabviewYearFromExecutablePath('')).toBeUndefined();
     expect(inferLabviewYearFromExecutablePath('   ')).toBeUndefined();
+  });
+});
+
+describe('inferSupportedLabviewYearFromExecutablePath (VHS-REQ-637.1)', () => {
+  it('returns undefined for years outside the supported host range', () => {
+    expect(
+      inferSupportedLabviewYearFromExecutablePath(
+        'C:\\Program Files\\National Instruments\\LabVIEW 2024\\LabVIEW.exe'
+      )
+    ).toBeUndefined();
+    expect(
+      inferSupportedLabviewYearFromExecutablePath(
+        'C:\\Program Files\\National Instruments\\LabVIEW 2031\\LabVIEW.exe'
+      )
+    ).toBeUndefined();
+  });
+
+  it('returns supported host years', () => {
+    expect(
+      inferSupportedLabviewYearFromExecutablePath(
+        'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+      )
+    ).toBe('2026');
   });
 });
 
@@ -2525,7 +3038,7 @@ describe('resolveLinuxLabviewTcpSettings (VHS-REQ-156)', () => {
     return record;
   }
 
-  it('builds candidate paths under ~/natinst/.config and /etc/natinst', () => {
+  it('builds candidate paths under ~/natinst/.config and /etc/natinst (VHS-REQ-156.7)', () => {
     const candidates = buildLinuxLabviewIniCandidatePaths({
       homeDir: '/home/sergio',
       requestedLabviewVersion: '2026',
@@ -2536,7 +3049,7 @@ describe('resolveLinuxLabviewTcpSettings (VHS-REQ-156)', () => {
     expect(candidates).toContain('/etc/natinst/LabVIEW-2026/labview.conf');
   });
 
-  it('returns viServerTcpEnabled=true and the explicit port when labview.conf enables TCP', async () => {
+  it('returns viServerTcpEnabled=true and the explicit port when labview.conf enables TCP (VHS-REQ-156.7)', async () => {
     const settings = await resolveLinuxLabviewTcpSettings(createLinuxRecord(), {
       readFile: vi.fn().mockResolvedValue(
         'server.tcp.access="+localhost"\nserver.tcp.enabled=True\nserver.tcp.port=3363\n'
@@ -2548,7 +3061,7 @@ describe('resolveLinuxLabviewTcpSettings (VHS-REQ-156)', () => {
     expect(settings.labviewIniPath).toBe('/home/sergio/natinst/.config/LabVIEW-2026/labview.conf');
   });
 
-  it('defaults to port 3363 when TCP is enabled but server.tcp.port is omitted', async () => {
+  it('defaults to port 3363 when TCP is enabled but server.tcp.port is omitted (VHS-REQ-156.7)', async () => {
     const settings = await resolveLinuxLabviewTcpSettings(createLinuxRecord(), {
       readFile: vi.fn().mockResolvedValue('server.tcp.enabled=True\n') as never,
       homeDir: () => '/home/sergio'
@@ -2557,7 +3070,7 @@ describe('resolveLinuxLabviewTcpSettings (VHS-REQ-156)', () => {
     expect(settings.labviewTcpPort).toBe(3363);
   });
 
-  it('flags VI Server TCP disabled when server.tcp.enabled=False', async () => {
+  it('flags VI Server TCP disabled when server.tcp.enabled=False (VHS-REQ-156.7)', async () => {
     const settings = await resolveLinuxLabviewTcpSettings(createLinuxRecord(), {
       readFile: vi.fn().mockResolvedValue('server.tcp.enabled=False\n') as never,
       homeDir: () => '/home/sergio'
@@ -2566,7 +3079,7 @@ describe('resolveLinuxLabviewTcpSettings (VHS-REQ-156)', () => {
     expect(settings.notes.join(' ')).toMatch(/server\.tcp\.enabled=False/);
   });
 
-  it('flags VI Server TCP disabled when labview.conf has no server.tcp.enabled key (Linux default)', async () => {
+  it('flags VI Server TCP disabled when labview.conf has no server.tcp.enabled key (Linux default) (VHS-REQ-156.7)', async () => {
     const settings = await resolveLinuxLabviewTcpSettings(createLinuxRecord(), {
       readFile: vi.fn().mockResolvedValue('LoadAddOns=False\n') as never,
       homeDir: () => '/home/sergio'
@@ -2575,7 +3088,7 @@ describe('resolveLinuxLabviewTcpSettings (VHS-REQ-156)', () => {
     expect(settings.notes.join(' ')).toMatch(/server\.tcp\.enabled is missing/);
   });
 
-  it('returns viServerTcpEnabled=unknown when no candidate file is readable', async () => {
+  it('returns viServerTcpEnabled=unknown when no candidate file is readable (VHS-REQ-156.7)', async () => {
     const enoent = Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
     const settings = await resolveLinuxLabviewTcpSettings(createLinuxRecord(), {
       readFile: vi.fn().mockRejectedValue(enoent) as never,
@@ -2595,7 +3108,7 @@ describe('resolveLinuxLabviewTcpSettings (VHS-REQ-156)', () => {
     expect(settings.inspectedCandidatePaths).toEqual([]);
   });
 
-  it('infers requestedLabviewVersion from labviewExe path when not explicitly set', async () => {
+  it('infers requestedLabviewVersion from labviewExe path when not explicitly set (VHS-REQ-156.7)', async () => {
     const record = createReadyRecord();
     record.runtimeSelection.platform = 'linux';
     record.runtimeSelection.bitness = 'x64';
@@ -2654,7 +3167,7 @@ describe('inferLinuxLabviewVersionFromExecutablePath (VHS-REQ-156)', () => {
 });
 
 describe('Linux host-native VI Server TCP preflight (VHS-REQ-156)', () => {
-  it('blocks execution with linux-vi-server-tcp-disabled when labview.conf disables VI Server TCP', async () => {
+  it('blocks execution with linux-vi-server-tcp-disabled when labview.conf disables VI Server TCP (VHS-REQ-156.7)', async () => {
     const record = createReadyRecord();
     record.runtimeSelection.platform = 'linux';
     record.runtimeSelection.bitness = 'x64';
@@ -2718,7 +3231,7 @@ describe('Linux host-native VI Server TCP preflight (VHS-REQ-156)', () => {
     );
   });
 
-  it('blocks execution with linux-vi-server-tcp-disabled when no labview.conf candidate is readable', async () => {
+  it('blocks execution with linux-vi-server-tcp-disabled when no labview.conf candidate is readable (VHS-REQ-156.7)', async () => {
     const record = createReadyRecord();
     record.runtimeSelection.platform = 'linux';
     record.runtimeSelection.bitness = 'x64';
@@ -2779,7 +3292,7 @@ describe('Linux host-native VI Server TCP preflight (VHS-REQ-156)', () => {
 });
 
 describe('Windows host-native VI Server TCP preflight (VHS-REQ-623)', () => {
-  it('blocks execution with windows-vi-server-tcp-disabled when LabVIEW.ini sets server.tcp.enabled=False', async () => {
+  it('blocks execution with windows-vi-server-tcp-disabled before Windows process contamination checks when LabVIEW.ini sets server.tcp.enabled=False (VHS-REQ-623.2, VHS-REQ-623.4)', async () => {
     const record = createReadyRecord();
     // createReadyRecord() defaults to platform='win32', host-native, labview-cli;
     // labviewExe.path = 'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe'
@@ -2787,6 +3300,19 @@ describe('Windows host-native VI Server TCP preflight (VHS-REQ-623)', () => {
       'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.ini';
 
     const runCommand = vi.fn();
+    const observeWindowsProcesses = vi.fn().mockResolvedValue({
+      capturedAt: '2026-06-03T18:00:00.000Z',
+      hostPlatform: 'win32',
+      runtimePlatform: 'win32',
+      trigger: 'preflight',
+      observedProcesses: [],
+      observedProcessNames: [],
+      labviewProcessObserved: true,
+      labviewCliProcessObserved: false,
+      lvcompareProcessObserved: false,
+      labviewProcessBitness: 'x64',
+      labviewProcessExecutablePath: 'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe'
+    });
     const writePacketRecord = vi.fn().mockResolvedValue(undefined);
     const result = await executeComparisonReport(
       { record, repositoryRoot: 'C:\\workspace\\repo' },
@@ -2817,11 +3343,15 @@ describe('Windows host-native VI Server TCP preflight (VHS-REQ-623)', () => {
         nowIso: vi.fn().mockReturnValue('2026-06-03T18:00:00.000Z'),
         nowMs: vi.fn().mockReturnValue(1000),
         writePacketRecord,
-        processPlatform: 'win32'
+        processPlatform: 'win32',
+        enforceWindowsHostPreflight: true,
+        observeWindowsProcesses,
+        observeWindowsTcpListeners: vi.fn().mockResolvedValue([])
       }
     );
 
     expect(runCommand).not.toHaveBeenCalled();
+    expect(observeWindowsProcesses).not.toHaveBeenCalled();
     expect(result.record.runtimeExecution.state).toBe('not-available');
     expect(result.record.runtimeExecution.blockedReason).toBe('windows-vi-server-tcp-disabled');
     expect(result.record.runtimeExecution.diagnosticReason).toBe('windows-vi-server-tcp-disabled');
@@ -2831,9 +3361,60 @@ describe('Windows host-native VI Server TCP preflight (VHS-REQ-623)', () => {
     );
     expect(result.record.runtimeExecution.diagnosticNotes?.join(' ')).toMatch(/VI Server/i);
   });
+
+  it('proceeds unchanged when LabVIEW.ini is unreadable because Windows defaults VI Server TCP on (VHS-REQ-623.3)', async () => {
+    const record = createReadyRecord();
+    record.runtimeSelection.allowExistingWindowsHostRuntime = true;
+    const runCommand = vi.fn().mockResolvedValue({
+      exitCode: 0,
+      stdout: 'CreateComparisonReport operation succeeded.',
+      stderr: ''
+    });
+    const readFile = vi.fn(async (filePath: string) => {
+      if (filePath.endsWith('LabVIEW.ini')) {
+        throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+      }
+      return `${record.stagedRevisionPlan.leftFilename}\n${record.stagedRevisionPlan.rightFilename}\n`;
+    });
+
+    const result = await executeComparisonReport(
+      { record, repositoryRoot: 'C:\\workspace\\repo' },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
+        readdir: vi.fn().mockResolvedValue([]) as never,
+        readFile: readFile as never,
+        pathExists: vi.fn(async (filePath: string) =>
+          typeof filePath === 'string' && filePath.endsWith(record.artifactPlan.reportFilename)
+        ),
+        runCommand,
+        nowIso: vi.fn().mockReturnValue('2026-06-03T18:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32',
+        enforceWindowsHostPreflight: true,
+        observeWindowsProcesses: vi.fn().mockResolvedValue(undefined),
+        observeWindowsTcpListeners: vi.fn().mockResolvedValue([])
+      }
+    );
+
+    expect(runCommand).toHaveBeenCalledTimes(1);
+    expect(result.record.runtimeExecution.state).toBe('succeeded');
+    expect(result.record.runtimeExecution.blockedReason).toBeUndefined();
+    expect(result.record.runtimeExecution.labviewIniPath).toContain('LabVIEW.ini');
+    expect(result.record.runtimeExecution.diagnosticNotes?.join(' ')).toMatch(/not readable/);
+  });
 });
 
-describe('resolveWindowsLabviewTcpSettingsForLabviewPath (VHS-REQ-623)', () => {
+describe('resolveWindowsLabviewTcpSettingsForLabviewPath (VHS-REQ-623.1)', () => {
   const labviewPath = 'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe';
   const expectedIniPath = 'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.ini';
 
@@ -2930,7 +3511,7 @@ describe('Linux host-native short-path staging (VHS-REQ-156)', () => {
     return record;
   }
 
-  it('shouldUseLinuxHostNativeShortPathStaging returns true for linux host-native deep workspaceStorage paths', () => {
+  it('shouldUseLinuxHostNativeShortPathStaging returns true for linux host-native deep workspaceStorage paths (VHS-REQ-156.8)', () => {
     const record = makeLinuxHostNativeRecord();
     expect(shouldUseLinuxHostNativeShortPathStaging(record, 'linux', {})).toBe(true);
   });
@@ -2947,7 +3528,7 @@ describe('Linux host-native short-path staging (VHS-REQ-156)', () => {
     expect(shouldUseLinuxHostNativeShortPathStaging(record, 'linux', {})).toBe(false);
   });
 
-  it('shouldUseLinuxHostNativeShortPathStaging returns false when LVIE_LINUX_DISABLE_RUNTIME_TMPDIR=1', () => {
+  it('shouldUseLinuxHostNativeShortPathStaging returns false when LVIE_LINUX_DISABLE_RUNTIME_TMPDIR=1 (VHS-REQ-156.8)', () => {
     const record = makeLinuxHostNativeRecord();
     expect(
       shouldUseLinuxHostNativeShortPathStaging(record, 'linux', {
@@ -2956,7 +3537,7 @@ describe('Linux host-native short-path staging (VHS-REQ-156)', () => {
     ).toBe(false);
   });
 
-  it('shouldUseLinuxHostNativeShortPathStaging returns false when staging already lives under the tmp root', () => {
+  it('shouldUseLinuxHostNativeShortPathStaging returns false when staging already lives under the tmp root (VHS-REQ-156.8)', () => {
     const record = makeLinuxHostNativeRecord();
     record.artifactPlan.reportDirectory = '/tmp/vi-history-suite-runtime/repoid123456/fileid123456';
     expect(
@@ -2966,7 +3547,7 @@ describe('Linux host-native short-path staging (VHS-REQ-156)', () => {
     ).toBe(false);
   });
 
-  it('shouldUseLinuxHostNativeShortPathStaging returns true when reportDir only shares a prefix with the tmp root', () => {
+  it('shouldUseLinuxHostNativeShortPathStaging returns true when reportDir only shares a prefix with the tmp root (VHS-REQ-156.8)', () => {
     // /tmp/vi-history-suite-runtime-old/... must not be treated as inside /tmp/vi-history-suite-runtime.
     const record = makeLinuxHostNativeRecord();
     record.artifactPlan.reportDirectory =
@@ -2978,7 +3559,7 @@ describe('Linux host-native short-path staging (VHS-REQ-156)', () => {
     ).toBe(true);
   });
 
-  it('buildLinuxHostNativeShortPathLayout uses LVIE_LINUX_RUNTIME_TMPDIR when set', () => {
+  it('buildLinuxHostNativeShortPathLayout uses LVIE_LINUX_RUNTIME_TMPDIR when set (VHS-REQ-156.8)', () => {
     const record = makeLinuxHostNativeRecord();
     const layout = buildLinuxHostNativeShortPathLayout(record, {
       LVIE_LINUX_RUNTIME_TMPDIR: '/tmp/lvie-runtime'
@@ -2996,7 +3577,7 @@ describe('Linux host-native short-path staging (VHS-REQ-156)', () => {
     );
   });
 
-  it('buildLinuxHostNativeShortPathCommandPlan rewrites -VI1, -VI2, -ReportPath and preserves -LabVIEWPath', () => {
+  it('buildLinuxHostNativeShortPathCommandPlan rewrites -VI1, -VI2, -ReportPath and preserves -LabVIEWPath (VHS-REQ-156.8)', () => {
     const record = makeLinuxHostNativeRecord();
     const layout = buildLinuxHostNativeShortPathLayout(record, {
       LVIE_LINUX_RUNTIME_TMPDIR: '/tmp/lvie-runtime'
@@ -3037,7 +3618,7 @@ describe('Linux host-native short-path staging (VHS-REQ-156)', () => {
     );
   });
 
-  it('rewriteLabviewCliArgsForLinuxContainerWorkspace targets labviewprofull headless under the container workspace', () => {
+  it('rewriteLabviewCliArgsForLinuxContainerWorkspace targets labviewprofull headless under the container workspace (VHS-REQ-657.1)', () => {
     const rewritten = rewriteLabviewCliArgsForLinuxContainerWorkspace(
       [
         '-LogToConsole',
@@ -3079,7 +3660,7 @@ describe('Linux host-native short-path staging (VHS-REQ-156)', () => {
     expect(rewritten).not.toContain('/usr/local/natinst/LabVIEW-2026-64/labview');
   });
 
-  it('rewriteLabviewCliArgsForLinuxContainerWorkspace targets the image labview without -Headless for 2025 Q3 (VHS-REQ-657)', () => {
+  it('rewriteLabviewCliArgsForLinuxContainerWorkspace targets the image labview without -Headless for 2025 Q3 (VHS-REQ-657.2)', () => {
     const rewritten = rewriteLabviewCliArgsForLinuxContainerWorkspace(
       [
         '-OperationName',
@@ -3114,7 +3695,7 @@ describe('Linux host-native short-path staging (VHS-REQ-156)', () => {
     expect(rewritten).not.toContain('/usr/local/natinst/LabVIEW-2026-64/labviewprofull');
   });
 
-  it('buildLinuxContainerCommandPlan derives the 2025 Q3 invocation from the image (VHS-REQ-657)', () => {
+  it('buildLinuxContainerCommandPlan derives the 2025 Q3 invocation from the image (VHS-REQ-657.2)', () => {
     const record = createReadyRecord();
     record.runtimeSelection = {
       ...record.runtimeSelection,
@@ -3159,7 +3740,7 @@ describe('Linux host-native short-path staging (VHS-REQ-156)', () => {
     expect(script).not.toContain('-Headless');
   });
 
-  it('buildLinuxContainerCommandPlan keeps 2026 labviewprofull + -Headless without the CI/CD env (VHS-REQ-657)', () => {
+  it('buildLinuxContainerCommandPlan keeps 2026 labviewprofull + -Headless without the CI/CD env (VHS-REQ-657.1)', () => {
     const record = createReadyRecord();
     record.runtimeSelection = {
       ...record.runtimeSelection,
@@ -3361,7 +3942,7 @@ describe('Linux host-native short-path staging (VHS-REQ-156)', () => {
     expect(script).toContain('harden_conf');
   });
 
-  it('executes LabVIEWCLI against tmp short-path staging, copies report back, and cleans up', async () => {
+  it('executes LabVIEWCLI against tmp short-path staging, copies report back, and cleans up (VHS-REQ-156.8)', async () => {
     const record = makeLinuxHostNativeRecord();
     const writeFile = vi.fn().mockResolvedValue(undefined);
     const copyFile = vi.fn().mockResolvedValue(undefined);
@@ -3530,13 +4111,14 @@ describe('newest-revision tree staging (VHS-REQ-624)', () => {
     return record;
   }
 
-  it('materializes one selected-revision tree and stages both VIs at repo-relative depth', async () => {
+  it('materializes one selected-revision tree and stages both VIs at repo-relative depth (VHS-REQ-624.1, VHS-REQ-624.4, VHS-REQ-624.5, VHS-REQ-624.9)', async () => {
     const writeFile = vi.fn().mockResolvedValue(undefined);
     const materializeSelectedRevisionTree = vi.fn().mockResolvedValue(undefined);
+    const writePacketRecord = vi.fn().mockResolvedValue(undefined);
     const record = createNestedReadyRecord();
     const plan = record.stagedRevisionPlan;
 
-    await executeComparisonReport(
+    const result = await executeComparisonReport(
       { record, repositoryRoot: '/workspace/repo' },
       {
         readRevisionBlob: vi
@@ -3550,7 +4132,7 @@ describe('newest-revision tree staging (VHS-REQ-624)', () => {
         runCommand: vi.fn().mockResolvedValue({ exitCode: 0, stdout: 'ok', stderr: '' }),
         nowIso: vi.fn().mockReturnValue('2026-04-02T01:00:00.000Z'),
         nowMs: vi.fn().mockReturnValue(1000),
-        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        writePacketRecord,
         processPlatform: 'win32'
       }
     );
@@ -3575,6 +4157,76 @@ describe('newest-revision tree staging (VHS-REQ-624)', () => {
     // Base blob -> left filename; selected blob -> right filename.
     expect(writeFile).toHaveBeenCalledWith(plan.leftFilePath, Buffer.from('base-blob'));
     expect(writeFile).toHaveBeenCalledWith(plan.rightFilePath, Buffer.from('selected-blob'));
+    const materializedTree = {
+      root: plan.treeRoot as string,
+      revisionId: record.selectedHash,
+      pathspec: '.'
+    };
+    expect(result.record.runtimeExecution.materializedTree).toEqual(materializedTree);
+    const retainedRecord = writePacketRecord.mock.calls[0]?.[0];
+    expect(retainedRecord?.stagedRevisionPlan).toMatchObject({
+      leftFilename: plan.leftFilename,
+      rightFilename: plan.rightFilename
+    });
+    expect(retainedRecord?.runtimeExecution.materializedTree).toEqual(materializedTree);
+  });
+
+  it('stages working-tree bytes only into retained staging paths (VHS-REQ-641.5)', async () => {
+    const readRevisionBlob = vi
+      .fn()
+      .mockResolvedValueOnce(Buffer.from('base-blob'))
+      .mockResolvedValueOnce(Buffer.from('worktree-blob'));
+    const writeFile = vi.fn().mockResolvedValue(undefined);
+    const materializeSelectedRevisionTree = vi.fn().mockResolvedValue(undefined);
+    const record = createNestedReadyRecord();
+    record.selectedHash = 'WORKTREE';
+    record.baseHash = 'c3';
+    record.preflight.left.revisionId = 'c3';
+    record.preflight.left.resolvedRelativePath = 'Source/Sub/foo.vi';
+    record.preflight.right.revisionId = 'WORKTREE';
+    record.preflight.right.resolvedRelativePath = 'Source/Sub/foo.vi';
+    record.stagedRevisionPlan = buildStagedRevisionPlan({
+      stagingDirectory: record.artifactPlan.stagingDirectory,
+      fullFilename: record.artifactPlan.fullFilename,
+      leftRevisionId: record.baseHash,
+      rightRevisionId: record.selectedHash,
+      normalizedRelativePath: 'Source/Sub/foo.vi'
+    });
+
+    await executeComparisonReport(
+      { record, repositoryRoot: '/workspace/repo' },
+      {
+        readRevisionBlob,
+        materializeSelectedRevisionTree,
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: writeFile as never,
+        pathExists: vi.fn().mockResolvedValue(true),
+        runCommand: vi.fn().mockResolvedValue({ exitCode: 0, stdout: 'ok', stderr: '' }),
+        nowIso: vi.fn().mockReturnValue('2026-04-02T01:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32'
+      }
+    );
+
+    expect(readRevisionBlob).toHaveBeenNthCalledWith(1, '/workspace/repo', 'c3', 'Source/Sub/foo.vi');
+    expect(readRevisionBlob).toHaveBeenNthCalledWith(
+      2,
+      '/workspace/repo',
+      'WORKTREE',
+      'Source/Sub/foo.vi'
+    );
+    expect(materializeSelectedRevisionTree).toHaveBeenCalledWith(
+      expect.objectContaining({
+        repositoryRoot: '/workspace/repo',
+        revisionId: 'WORKTREE',
+        destinationRoot: record.stagedRevisionPlan.treeRoot
+      })
+    );
+    const writeTargets = writeFile.mock.calls.map((call) => String(call[0]).replace(/\\/g, '/'));
+    expect(writeTargets).toContain(record.stagedRevisionPlan.leftFilePath.replace(/\\/g, '/'));
+    expect(writeTargets).toContain(record.stagedRevisionPlan.rightFilePath.replace(/\\/g, '/'));
+    expect(writeTargets.some((target) => target.startsWith('/workspace/repo/'))).toBe(false);
   });
 
   it('prunes the retained materialized tree back to the two staged VIs on win32 host-native', async () => {
@@ -3660,7 +4312,7 @@ describe('newest-revision tree staging (VHS-REQ-624)', () => {
     );
   });
 
-  it('fails closed with a retained reason when the selected-revision tree cannot be materialized', async () => {
+  it('fails closed with a retained reason when the selected-revision tree cannot be materialized (VHS-REQ-624.6)', async () => {
     const runCommand = vi.fn();
     const record = createNestedReadyRecord();
 
@@ -4099,7 +4751,7 @@ describe('comparisonReportRuntimeExecution fail-closed branch coverage (VHS-REQ-
     expect(result.record.runtimeExecution.failureReason).toBe('command-spawn-failed');
   });
 
-  it('reclassifies a -350000 LabVIEW CLI exit as labview-cli-connection-failed', async () => {
+  it('reclassifies a -350000 LabVIEW CLI exit as labview-cli-connection-failed (VHS-REQ-630.3, VHS-REQ-658.1)', async () => {
     const record = createReadyRecord();
 
     const result = await executeComparisonReport(
@@ -4130,7 +4782,7 @@ describe('comparisonReportRuntimeExecution fail-closed branch coverage (VHS-REQ-
     expect(result.record.runtimeExecution.failureReason).toBe('labview-cli-connection-failed');
   });
 
-  it('reclassifies a 0x465 "File version is later" LabVIEW CLI exit as labview-vi-version-too-new (VHS-REQ-658)', async () => {
+  it('reclassifies a 0x465 "File version is later" LabVIEW CLI exit as labview-vi-version-too-new (VHS-REQ-658.1)', async () => {
     const record = createReadyRecord();
 
     const result = await executeComparisonReport(
@@ -4162,7 +4814,7 @@ describe('comparisonReportRuntimeExecution fail-closed branch coverage (VHS-REQ-
     expect(result.record.runtimeExecution.failureReason).toBe('labview-vi-version-too-new');
   });
 
-  it('classifies an LVCompare exit-zero-without-report as lvcompare-exited-zero-without-report', async () => {
+  it('classifies an LVCompare exit-zero-without-report as lvcompare-exited-zero-without-report without applying the LabVIEWCLI VI Server preflight (VHS-REQ-623.5)', async () => {
     const record = createReadyRecord();
     record.runtimeSelection.engine = 'lvcompare';
     record.runtimeSelection.lvCompare = {
@@ -4182,13 +4834,16 @@ describe('comparisonReportRuntimeExecution fail-closed branch coverage (VHS-REQ-
         mkdir: vi.fn().mockResolvedValue(undefined),
         writeFile: vi.fn().mockResolvedValue(undefined) as never,
         removePath: vi.fn().mockResolvedValue(undefined) as never,
+        readFile: vi.fn().mockResolvedValue('server.tcp.enabled=False\n') as never,
         pathExists: vi.fn().mockResolvedValue(false),
         runCommand: vi.fn().mockResolvedValue({ exitCode: 0, stdout: '', stderr: '' }),
         nowIso: vi.fn().mockReturnValue('2026-04-02T01:00:00.000Z'),
         nowMs: vi.fn().mockReturnValue(1000),
         writePacketRecord: vi.fn().mockResolvedValue(undefined),
         processPlatform: 'win32',
-        enforceWindowsHostPreflight: false
+        enforceWindowsHostPreflight: true,
+        observeWindowsProcesses: vi.fn().mockResolvedValue(undefined),
+        observeWindowsTcpListeners: vi.fn().mockResolvedValue([])
       }
     );
 
@@ -4270,7 +4925,7 @@ describe('materializeSelectedRevisionTreeWithGit (VHS-REQ-624)', () => {
     return root;
   }
 
-  it('faithfully materializes every tracked file at the revision, including export-ignored in-repo dependencies', async () => {
+  it('faithfully materializes every tracked file at the revision, including export-ignored in-repo dependencies (VHS-REQ-624.2)', async () => {
     const repoRoot = await createTempGitRepo();
     const destinationRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-materialize-dest-'));
     try {
@@ -4394,6 +5049,40 @@ describe('materializeSelectedRevisionTreeWithGit (VHS-REQ-624)', () => {
     });
   });
 
+  it('uses HEAD as the dependency context when materializing the working-tree sentinel (VHS-REQ-641.3)', async () => {
+    const calls: Array<{ args: string[]; env: NodeJS.ProcessEnv }> = [];
+    const runGit = vi.fn(async (args: string[], opts: { env: NodeJS.ProcessEnv }) => {
+      calls.push({ args, env: opts.env });
+    });
+    const removePath = vi.fn().mockResolvedValue(undefined);
+    const mkdtemp = vi.fn().mockResolvedValue('/tmp/vihs-stage-index-WORKTREE');
+    const tmpdir = vi.fn().mockReturnValue('/tmp');
+    const listSubmoduleGitlinks = vi.fn().mockResolvedValue([]);
+
+    await materializeSelectedRevisionTreeWithGit(
+      {
+        repositoryRoot: '/workspace/repo',
+        revisionId: 'WORKTREE',
+        destinationRoot: '/stage/dest',
+        pathspec: '.'
+      },
+      {
+        runGit,
+        mkdtemp: mkdtemp as never,
+        removePath: removePath as never,
+        tmpdir,
+        listSubmoduleGitlinks
+      }
+    );
+
+    expect(calls[0].args).toEqual(['-C', '/workspace/repo', 'read-tree', 'HEAD']);
+    expect(calls[1].args).toContain('/stage/dest');
+    expect(listSubmoduleGitlinks).toHaveBeenCalledWith({
+      workingDirectory: '/workspace/repo',
+      revisionId: 'HEAD'
+    });
+  });
+
   it('cleans up the temporary index even when a git step fails', async () => {
     const runGit = vi.fn(async () => {
       throw new Error('read-tree boom');
@@ -4423,7 +5112,7 @@ describe('materializeSelectedRevisionTreeWithGit (VHS-REQ-624)', () => {
     });
   });
 
-  it('materializes submodule contents beside the superproject tree (#283)', async () => {
+  it('materializes submodule contents beside the superproject tree (#283) (VHS-REQ-624.3)', async () => {
     const subRepo = await createTempGitRepo();
     const superRepo = await createTempGitRepo();
     const destinationRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-materialize-dest-'));
@@ -4481,7 +5170,7 @@ describe('materializeSelectedRevisionTreeWithGit (VHS-REQ-624)', () => {
     }
   });
 
-  it('attempts each submodule but skips unavailable ones without failing the comparison (#283)', async () => {
+  it('attempts each submodule but skips unavailable ones without failing the comparison (#283) (VHS-REQ-624.3)', async () => {
     const calls: string[][] = [];
     const runGit = vi.fn(async (args: string[]) => {
       calls.push(args);
@@ -4629,5 +5318,2292 @@ describe('materializeSelectedRevisionTreeWithGit (VHS-REQ-624)', () => {
 
   it('parseSubmoduleGitlinks tolerates empty output', () => {
     expect(parseSubmoduleGitlinks('')).toEqual([]);
+  });
+
+  it('parseSubmoduleGitlinks skips records without a tab or with truncated metadata (VHS-REQ-624)', () => {
+    const output =
+      [
+        'no-tab-record-should-be-skipped',
+        '100644\tmetadata-has-only-one-field',
+        '160000 commit deadbeefdeadbeefdeadbeefdeadbeefdeadbeef\tvendor/mod'
+      ].join('\0') + '\0';
+
+    expect(parseSubmoduleGitlinks(output)).toEqual([
+      { path: 'vendor/mod', revisionId: 'deadbeefdeadbeefdeadbeefdeadbeefdeadbeef' }
+    ]);
+  });
+
+  it('parseSubmoduleGitlinks ignores gitlink entries with a non-commit type or empty object (VHS-REQ-624)', () => {
+    const output =
+      [
+        // mode 160000 but tree type -> not a submodule commit gitlink.
+        '160000 tree 5555555555555555555555555555555555555555\tnot-a-commit',
+        // mode 160000 commit but empty object field -> rejected.
+        '160000 commit \tempty-object'
+      ].join('\0') + '\0';
+
+    expect(parseSubmoduleGitlinks(output)).toEqual([]);
+  });
+});
+
+describe('classifyLabviewCliDiagnosticText additional reasons (VHS-REQ-148, VHS-REQ-621)', () => {
+  it('classifies rejected VI paths as labview-cli-invalid-vi-path', () => {
+    const result = classifyLabviewCliDiagnosticText(
+      [
+        'Operation output:',
+        'The supplied path invalid or does not exist: C:\\staging\\left-foo.vi',
+        'CreateComparisonReport operation failed.'
+      ].join('\r\n')
+    );
+
+    expect(result.reason).toBe('labview-cli-invalid-vi-path');
+    expect(result.notes.some((note) => /rejected one or more supplied paths/i.test(note))).toBe(true);
+    // launchSucceeded is false here, so the launch-confirmation caveat is appended.
+    expect(result.notes).toContain(
+      'The retained LabVIEW CLI diagnostic log did not report successful LabVIEW launch before exit.'
+    );
+  });
+
+  it('classifies an ignored -LabVIEWPath whose last-used LabVIEW matched the selection', () => {
+    const labviewPath = 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe';
+    const result = classifyLabviewCliDiagnosticText(
+      [
+        '"LabVIEWPath" command line argument is not passed. ' +
+          `Using last used LabVIEW: "${labviewPath}"`,
+        'LabVIEW launched successfully.'
+      ].join('\r\n'),
+      labviewPath
+    );
+
+    expect(result.reason).toBe('labview-path-ignored-last-used-matched-selection');
+    expect(result.notes.some((note) => /matched the intended executable/i.test(note))).toBe(true);
+  });
+
+  it('classifies an ignored -LabVIEWPath that diverged from the selection', () => {
+    const result = classifyLabviewCliDiagnosticText(
+      [
+        '"LabVIEWPath" command line argument is not passed. ' +
+          'Using last used LabVIEW: "C:\\Program Files (x86)\\National Instruments\\LabVIEW 2024\\LabVIEW.exe"',
+        'LabVIEW launched successfully.'
+      ].join('\r\n'),
+      'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+    );
+
+    expect(result.reason).toBe('labview-path-ignored-last-used-diverged-selection');
+    expect(result.notes.some((note) => /Intended explicit LabVIEW path/i.test(note))).toBe(true);
+  });
+
+  it('classifies an ignored -LabVIEWPath with no intended selection as the default variant', () => {
+    const result = classifyLabviewCliDiagnosticText(
+      '"LabVIEWPath" command line argument is not passed. ' +
+        'Using last used LabVIEW: "C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe"'
+    );
+
+    expect(result.reason).toBe('labview-path-ignored-last-used-default');
+    expect(
+      result.notes.some((note) => /used the last-used LabVIEW instead/i.test(note))
+    ).toBe(true);
+  });
+
+  it('classifies password-protected VIs without a VI Server connection using the pre-connection note', () => {
+    const result = classifyLabviewCliDiagnosticText(
+      [
+        'Operation output:',
+        'LabVIEW: (Hex 0x410) VI is password protected.',
+        'CreateComparisonReport operation failed.'
+      ].join('\r\n')
+    );
+
+    expect(result.reason).toBe('labview-cli-vi-password-protected');
+    expect(result.notes).toContain(
+      'LabVIEW CLI could not generate a comparison report because one or both selected VI revisions are password protected.'
+    );
+    expect(result.notes).toContain(
+      'The retained LabVIEW CLI diagnostic log did not report successful LabVIEW launch before exit.'
+    );
+  });
+
+  it('classifies Error 66 / Call By Reference after a VI Server connection', () => {
+    const result = classifyLabviewCliDiagnosticText(
+      [
+        'LabVIEW launched successfully.',
+        'Connection established with LabVIEW at port number 3363.',
+        'Error code : 66',
+        'Call By Reference Node failed.'
+      ].join('\r\n')
+    );
+
+    expect(result.reason).toBe('labview-cli-call-by-reference');
+    expect(
+      result.notes.some((note) => /VI Server connection before failing with Error 66/i.test(note))
+    ).toBe(true);
+  });
+
+  it('retains only the launch-success note when no failure signature matched', () => {
+    const result = classifyLabviewCliDiagnosticText('LabVIEW launched successfully.');
+
+    expect(result.reason).toBeUndefined();
+    expect(result.notes).toContain(
+      'LabVIEW CLI reported that LabVIEW launched successfully before the operation failed.'
+    );
+  });
+});
+
+describe('normalizeWindowsInteropPath / normalizeWindowsInteropExecutable (VHS-REQ-624)', () => {
+  it('normalizeWindowsInteropPath keeps drive-letter paths and coerces to backslashes', () => {
+    expect(normalizeWindowsInteropPath('C:/workspace/staging/foo.vi')).toBe(
+      'C:\\workspace\\staging\\foo.vi'
+    );
+  });
+
+  it('normalizeWindowsInteropPath maps a /mnt WSL path to its drive-letter form', () => {
+    expect(normalizeWindowsInteropPath('/mnt/d/workspace/foo.vi')).toBe('D:\\workspace\\foo.vi');
+  });
+
+  it('normalizeWindowsInteropPath returns the drive root for an empty /mnt tail', () => {
+    expect(normalizeWindowsInteropPath('/mnt/c/')).toBe('C:\\');
+  });
+
+  it('normalizeWindowsInteropPath returns undefined for empty or unmappable input', () => {
+    expect(normalizeWindowsInteropPath('   ')).toBeUndefined();
+    expect(normalizeWindowsInteropPath('relative/without/drive')).toBeUndefined();
+  });
+
+  it('normalizeWindowsInteropExecutable passes /mnt paths through unchanged', () => {
+    expect(normalizeWindowsInteropExecutable('/mnt/c/NI/LabVIEWCLI.exe')).toBe(
+      '/mnt/c/NI/LabVIEWCLI.exe'
+    );
+  });
+
+  it('normalizeWindowsInteropExecutable maps a drive-letter path to /mnt form', () => {
+    expect(normalizeWindowsInteropExecutable('C:\\NI\\LabVIEWCLI.exe')).toBe(
+      '/mnt/c/NI/LabVIEWCLI.exe'
+    );
+  });
+
+  it('normalizeWindowsInteropExecutable returns undefined for empty or unmappable input', () => {
+    expect(normalizeWindowsInteropExecutable('   ')).toBeUndefined();
+    expect(normalizeWindowsInteropExecutable('relative-executable')).toBeUndefined();
+  });
+});
+
+describe('resolveHostReadableDiagnosticPath / resolveMappedRuntimeDiagnosticPath (VHS-REQ-148)', () => {
+  it('resolveMappedRuntimeDiagnosticPath maps a runtime-root-relative path onto the host root', () => {
+    const mapped = resolveMappedRuntimeDiagnosticPath('C:\\rt\\sub\\log.txt', {
+      runtimeRoot: 'C:\\rt',
+      hostRoot: '/host/temp'
+    });
+    // path.join is host-separator-sensitive, so derive the expectation the same way.
+    expect(mapped).toBe(path.join('/host/temp', 'sub', 'log.txt'));
+  });
+
+  it('resolveMappedRuntimeDiagnosticPath returns undefined without a mapping or when outside the runtime root', () => {
+    expect(resolveMappedRuntimeDiagnosticPath('C:\\rt\\log.txt')).toBeUndefined();
+    expect(
+      resolveMappedRuntimeDiagnosticPath('C:\\elsewhere\\log.txt', {
+        runtimeRoot: 'C:\\rt',
+        hostRoot: '/host/temp'
+      })
+    ).toBeUndefined();
+  });
+
+  it('resolveHostReadableDiagnosticPath prefers the mapped host path when a mapping is supplied', () => {
+    const resolved = resolveHostReadableDiagnosticPath('C:\\rt\\sub\\log.txt', 'linux', {
+      runtimeRoot: 'C:\\rt',
+      hostRoot: '/host/temp'
+    });
+    expect(resolved).toBe(path.join('/host/temp', 'sub', 'log.txt'));
+  });
+
+  it('resolveHostReadableDiagnosticPath returns undefined when a mapping is present but the path is outside it', () => {
+    expect(
+      resolveHostReadableDiagnosticPath('C:\\elsewhere\\log.txt', 'linux', {
+        runtimeRoot: 'C:\\rt',
+        hostRoot: '/host/temp'
+      })
+    ).toBeUndefined();
+  });
+
+  it('resolveHostReadableDiagnosticPath returns the raw Windows path on a win32 host with no mapping', () => {
+    expect(resolveHostReadableDiagnosticPath('C:\\logs\\diag.txt', 'win32')).toBe(
+      'C:\\logs\\diag.txt'
+    );
+  });
+
+  it('resolveHostReadableDiagnosticPath keeps an absolute POSIX path on a non-win32 host', () => {
+    expect(resolveHostReadableDiagnosticPath('/tmp/diag.txt', 'linux')).toBe('/tmp/diag.txt');
+  });
+
+  it('resolveHostReadableDiagnosticPath maps a Windows path to /mnt form on a non-win32 host', () => {
+    expect(resolveHostReadableDiagnosticPath('C:\\logs\\diag.txt', 'linux')).toBe(
+      '/mnt/c/logs/diag.txt'
+    );
+  });
+});
+
+describe('buildWindowsInteropCommandPlan (VHS-REQ-624)', () => {
+  const interopLayout = {
+    reportDirectory: 'C:\\interop\\reports\\r\\f',
+    stagingDirectory: 'C:\\interop\\reports\\r\\f\\staging',
+    leftFilePath: 'C:\\interop\\reports\\r\\f\\staging\\left-foo.vi',
+    rightFilePath: 'C:\\interop\\reports\\r\\f\\staging\\right-foo.vi',
+    reportFilePath: 'C:\\interop\\reports\\r\\f\\diff-report-foo.vi.html'
+  };
+
+  it('rewrites a labview-cli plan and normalizes the executable to /mnt form', () => {
+    const record = createReadyRecord();
+    const plan = buildWindowsInteropCommandPlan(
+      record,
+      {
+        executable: 'C:\\NI\\LabVIEWCLI.exe',
+        args: [
+          '-OperationName',
+          'CreateComparisonReport',
+          '-VI1',
+          '/host/staging/left-foo.vi',
+          '-VI2',
+          '/host/staging/right-foo.vi',
+          '-ReportPath',
+          '/host/diff-report-foo.vi.html',
+          '-LabVIEWPath',
+          'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+        ]
+      },
+      interopLayout
+    );
+
+    expect(plan?.executable).toBe('/mnt/c/NI/LabVIEWCLI.exe');
+    expect(plan?.args).toContain(interopLayout.leftFilePath);
+    expect(plan?.args).toContain(interopLayout.rightFilePath);
+    expect(plan?.args).toContain(interopLayout.reportFilePath);
+    expect(plan?.args).toContain(
+      'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+    );
+  });
+
+  it('returns undefined when the executable cannot be normalized for interop', () => {
+    const record = createReadyRecord();
+    expect(
+      buildWindowsInteropCommandPlan(
+        record,
+        { executable: 'relative-labviewcli', args: ['-VI1', 'x', '-VI2', 'y'] },
+        interopLayout
+      )
+    ).toBeUndefined();
+  });
+
+  it('returns undefined when a staged VI path cannot be normalized', () => {
+    const record = createReadyRecord();
+    const plan = buildWindowsInteropCommandPlan(
+      record,
+      {
+        executable: 'C:\\NI\\LabVIEWCLI.exe',
+        args: ['-VI1', 'x', '-VI2', 'y']
+      },
+      { ...interopLayout, leftFilePath: 'relative-left.vi' }
+    );
+    expect(plan).toBeUndefined();
+  });
+
+  it('rewrites an lvcompare plan (left/right + -lvpath) and returns undefined for fewer than two args', () => {
+    const record = createReadyRecord();
+    record.runtimeSelection.engine = 'lvcompare';
+
+    const plan = buildWindowsInteropCommandPlan(
+      record,
+      {
+        executable: 'C:\\NI\\LVCompare.exe',
+        args: [
+          '/host/staging/left-foo.vi',
+          '/host/staging/right-foo.vi',
+          '-nobdcosm',
+          '-lvpath',
+          'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+        ]
+      },
+      interopLayout
+    );
+    expect(plan?.executable).toBe('/mnt/c/NI/LVCompare.exe');
+    expect(plan?.args[0]).toBe(interopLayout.leftFilePath);
+    expect(plan?.args[1]).toBe(interopLayout.rightFilePath);
+    expect(plan?.args).toContain('-nobdcosm');
+    expect(plan?.args).toContain('-lvpath');
+
+    expect(
+      buildWindowsInteropCommandPlan(
+        record,
+        { executable: 'C:\\NI\\LVCompare.exe', args: ['only-one'] },
+        interopLayout
+      )
+    ).toBeUndefined();
+  });
+
+  it('returns undefined for an unrecognized engine', () => {
+    const record = createReadyRecord();
+    record.runtimeSelection.engine = undefined;
+    expect(
+      buildWindowsInteropCommandPlan(
+        record,
+        { executable: 'C:\\NI\\LabVIEWCLI.exe', args: ['-VI1', 'x', '-VI2', 'y'] },
+        interopLayout
+      )
+    ).toBeUndefined();
+  });
+});
+
+describe('rewriteLvcompareArgsForContainerWorkspace / ForLinuxContainerWorkspace (VHS-REQ-624, VHS-REQ-657)', () => {
+  it('rewrites Windows-container lvcompare args and prefers the supplied labviewPath override', () => {
+    const rewritten = rewriteLvcompareArgsForContainerWorkspace(
+      ['/host/left-foo.vi', '/host/right-foo.vi', '-nobdcosm', '-lvpath', '/host/next-labview'],
+      {
+        containerWorkspaceRoot: 'C:\\workspace',
+        leftFilename: 'left-foo.vi',
+        rightFilename: 'right-foo.vi',
+        labviewPath: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+      }
+    );
+    expect(rewritten?.[0]).toBe('C:\\workspace\\staging\\left-foo.vi');
+    expect(rewritten?.[1]).toBe('C:\\workspace\\staging\\right-foo.vi');
+    expect(rewritten).toContain('-nobdcosm');
+    expect(rewritten).toContain(
+      'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+    );
+    expect(rewritten).not.toContain('/host/next-labview');
+  });
+
+  it('falls back to the next -lvpath token when no labviewPath override is supplied', () => {
+    const rewritten = rewriteLvcompareArgsForContainerWorkspace(
+      ['/host/left-foo.vi', '/host/right-foo.vi', '-lvpath', 'C:\\fallback\\LabVIEW.exe'],
+      {
+        containerWorkspaceRoot: 'C:\\workspace',
+        leftFilename: 'left-foo.vi',
+        rightFilename: 'right-foo.vi'
+      }
+    );
+    expect(rewritten).toContain('C:\\fallback\\LabVIEW.exe');
+  });
+
+  it('returns undefined for fewer than two Windows-container lvcompare args', () => {
+    expect(
+      rewriteLvcompareArgsForContainerWorkspace(['only-one'], {
+        containerWorkspaceRoot: 'C:\\workspace',
+        leftFilename: 'left-foo.vi',
+        rightFilename: 'right-foo.vi'
+      })
+    ).toBeUndefined();
+  });
+
+  it('rewrites Linux-container lvcompare args using the supplied containerLabviewPath', () => {
+    const rewritten = rewriteLvcompareArgsForLinuxContainerWorkspace(
+      ['/host/left-foo.vi', '/host/right-foo.vi', '-lvpath', '/host/native-labview'],
+      {
+        containerWorkspaceRoot: '/workspace',
+        leftFilename: 'left-foo.vi',
+        rightFilename: 'right-foo.vi',
+        containerLabviewPath: '/usr/local/natinst/LabVIEW-2025-64/labview'
+      }
+    );
+    expect(rewritten?.[0]).toBe('/workspace/staging/left-foo.vi');
+    expect(rewritten?.[1]).toBe('/workspace/staging/right-foo.vi');
+    expect(rewritten).toContain('/usr/local/natinst/LabVIEW-2025-64/labview');
+  });
+
+  it('defaults the Linux-container -lvpath to the LabVIEW 2026 fallback and returns undefined for short input', () => {
+    const rewritten = rewriteLvcompareArgsForLinuxContainerWorkspace(
+      ['/host/left-foo.vi', '/host/right-foo.vi', '-lvpath', '/host/native-labview'],
+      {
+        containerWorkspaceRoot: '/workspace',
+        leftFilename: 'left-foo.vi',
+        rightFilename: 'right-foo.vi'
+      }
+    );
+    expect(rewritten).toContain('/usr/local/natinst/LabVIEW-2026-64/labview');
+
+    expect(
+      rewriteLvcompareArgsForLinuxContainerWorkspace(['only-one'], {
+        containerWorkspaceRoot: '/workspace',
+        leftFilename: 'left-foo.vi',
+        rightFilename: 'right-foo.vi'
+      })
+    ).toBeUndefined();
+  });
+});
+
+describe('buildLinuxHostNativeShortPathCommandPlan lvcompare + unknown engine (VHS-REQ-156)', () => {
+  function makeLinuxHostNativeRecord(): ComparisonReportPacketRecord {
+    const record = createReadyRecord();
+    record.runtimeSelection.platform = 'linux';
+    record.runtimeSelection.bitness = 'x64';
+    record.runtimeSelection.provider = 'host-native';
+    return record;
+  }
+
+  it('rewrites the first two lvcompare positional args to the short-path layout and preserves the rest', () => {
+    const record = makeLinuxHostNativeRecord();
+    record.runtimeSelection.engine = 'lvcompare';
+    const layout = buildLinuxHostNativeShortPathLayout(record, {
+      LVIE_LINUX_RUNTIME_TMPDIR: '/tmp/lvie-runtime'
+    });
+
+    const rewritten = buildLinuxHostNativeShortPathCommandPlan(
+      record,
+      {
+        executable: '/usr/local/bin/LVCompare',
+        args: ['/orig/left-foo.vi', '/orig/right-foo.vi', '-nobdcosm', '-nofppos']
+      },
+      layout
+    );
+
+    expect(rewritten?.executable).toBe('/usr/local/bin/LVCompare');
+    expect(rewritten?.args[0]).toBe(layout.leftFilePath);
+    expect(rewritten?.args[1]).toBe(layout.rightFilePath);
+    expect(rewritten?.args.slice(2)).toEqual(['-nobdcosm', '-nofppos']);
+  });
+
+  it('returns undefined for fewer than two lvcompare args', () => {
+    const record = makeLinuxHostNativeRecord();
+    record.runtimeSelection.engine = 'lvcompare';
+    const layout = buildLinuxHostNativeShortPathLayout(record, {
+      LVIE_LINUX_RUNTIME_TMPDIR: '/tmp/lvie-runtime'
+    });
+    expect(
+      buildLinuxHostNativeShortPathCommandPlan(
+        record,
+        { executable: '/usr/local/bin/LVCompare', args: ['only-one'] },
+        layout
+      )
+    ).toBeUndefined();
+  });
+
+  it('returns undefined for an unrecognized engine', () => {
+    const record = makeLinuxHostNativeRecord();
+    record.runtimeSelection.engine = undefined;
+    const layout = buildLinuxHostNativeShortPathLayout(record, {
+      LVIE_LINUX_RUNTIME_TMPDIR: '/tmp/lvie-runtime'
+    });
+    expect(
+      buildLinuxHostNativeShortPathCommandPlan(
+        record,
+        { executable: '/usr/local/bin/LabVIEWCLI', args: ['-VI1', 'x', '-VI2', 'y'] },
+        layout
+      )
+    ).toBeUndefined();
+  });
+});
+
+describe('prepareWindowsContainerExecutionContext ready + build failures (VHS-REQ-624)', () => {
+  function containerDeps(processPlatform: NodeJS.Platform) {
+    return {
+      mkdir: vi.fn().mockResolvedValue(undefined) as never,
+      writeFile: vi.fn().mockResolvedValue(undefined) as never,
+      processPlatform,
+      leftBlob: Buffer.from('left'),
+      rightBlob: Buffer.from('right')
+    };
+  }
+
+  const labviewCliCommandPlan = {
+    executable: 'C:\\NI\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+    args: [
+      '-OperationName',
+      'CreateComparisonReport',
+      '-VI1',
+      'left.vi',
+      '-VI2',
+      'right.vi',
+      '-ReportPath',
+      'report.html'
+    ]
+  };
+
+  it('produces a ready PowerShell-hosted container plan on a Windows host', async () => {
+    const record = createWindowsContainerReadyRecord();
+
+    const context = await prepareWindowsContainerExecutionContext(
+      record,
+      labviewCliCommandPlan,
+      undefined,
+      containerDeps('win32')
+    );
+
+    expect(context.outcome).toBe('ready');
+    expect(context.commandPlan.executable).toBe('powershell.exe');
+    expect(context.diagnosticPathMapping?.runtimeRoot).toBeTruthy();
+  });
+
+  it('blocks with container-command-build-failed when the lvcompare plan has too few args', async () => {
+    const record = createWindowsContainerReadyRecord();
+    record.runtimeSelection.engine = 'lvcompare';
+
+    const context = await prepareWindowsContainerExecutionContext(
+      record,
+      { executable: 'C:\\NI\\LVCompare.exe', args: ['only-one'] },
+      undefined,
+      containerDeps('win32')
+    );
+
+    expect(context.outcome).toBe('blocked');
+    expect(context.failureReason).toBe('container-command-build-failed');
+  });
+
+  it('blocks with selected-tree-materialize-failed when the tree materializer throws', async () => {
+    const record = createWindowsContainerReadyRecord();
+    record.stagedRevisionPlan.treeRevisionId = record.selectedHash;
+
+    const context = await prepareWindowsContainerExecutionContext(
+      record,
+      labviewCliCommandPlan,
+      undefined,
+      {
+        ...containerDeps('win32'),
+        repositoryRoot: 'C:\\repo',
+        materializeSelectedRevisionTree: vi.fn().mockRejectedValue(new Error('partial-clone')) as never
+      }
+    );
+
+    expect(context.outcome).toBe('blocked');
+    expect(context.failureReason).toBe('selected-tree-materialize-failed');
+  });
+});
+
+describe('prepareLinuxContainerExecutionContext ready + build failures (VHS-REQ-624)', () => {
+  function containerDeps(processPlatform: NodeJS.Platform) {
+    return {
+      mkdir: vi.fn().mockResolvedValue(undefined) as never,
+      writeFile: vi.fn().mockResolvedValue(undefined) as never,
+      processPlatform,
+      leftBlob: Buffer.from('left'),
+      rightBlob: Buffer.from('right')
+    };
+  }
+
+  const labviewCliCommandPlan = {
+    executable: '/usr/local/bin/LabVIEWCLI',
+    args: [
+      '-OperationName',
+      'CreateComparisonReport',
+      '-VI1',
+      'left.vi',
+      '-VI2',
+      'right.vi',
+      '-ReportPath',
+      'report.html'
+    ]
+  };
+
+  it('produces a ready docker-hosted container plan on a Linux host', async () => {
+    const record = createLinuxContainerReadyRecord();
+
+    const context = await prepareLinuxContainerExecutionContext(
+      record,
+      labviewCliCommandPlan,
+      undefined,
+      containerDeps('linux')
+    );
+
+    expect(context.outcome).toBe('ready');
+    expect(context.commandPlan.executable).toBe('docker');
+    expect(context.diagnosticPathMapping?.runtimeRoot).toBeTruthy();
+  });
+
+  it('blocks with container-command-build-failed when the lvcompare plan has too few args', async () => {
+    const record = createLinuxContainerReadyRecord();
+    record.runtimeSelection.engine = 'lvcompare';
+
+    const context = await prepareLinuxContainerExecutionContext(
+      record,
+      { executable: '/usr/local/bin/LVCompare', args: ['only-one'] },
+      undefined,
+      containerDeps('linux')
+    );
+
+    expect(context.outcome).toBe('blocked');
+    expect(context.failureReason).toBe('container-command-build-failed');
+  });
+
+  it('blocks with selected-tree-materialize-failed when the tree materializer throws', async () => {
+    const record = createLinuxContainerReadyRecord();
+    record.stagedRevisionPlan.treeRevisionId = record.selectedHash;
+
+    const context = await prepareLinuxContainerExecutionContext(
+      record,
+      labviewCliCommandPlan,
+      undefined,
+      {
+        ...containerDeps('linux'),
+        repositoryRoot: '/workspace/repo',
+        materializeSelectedRevisionTree: vi.fn().mockRejectedValue(new Error('partial-clone')) as never
+      }
+    );
+
+    expect(context.outcome).toBe('blocked');
+    expect(context.failureReason).toBe('selected-tree-materialize-failed');
+  });
+});
+
+describe('buildWindowsContainerCommandPlan direct branches (VHS-REQ-624)', () => {
+  const containerOptions = {
+    hostReportDirectory: 'C:\\host\\reports\\r\\f',
+    hostTempDirectory: 'C:\\host\\reports\\r\\f\\container-temp',
+    containerWorkspaceRoot: 'C:\\workspace',
+    containerImage: 'nationalinstruments/labview:2026q1-windows',
+    processPlatform: 'win32' as NodeJS.Platform
+  };
+
+  it('builds a PowerShell-hosted docker plan for an lvcompare engine', () => {
+    const record = createWindowsContainerReadyRecord();
+    record.runtimeSelection.engine = 'lvcompare';
+
+    const plan = buildWindowsContainerCommandPlan(
+      record,
+      { executable: 'LVCompare.exe', args: ['left.vi', 'right.vi', '-nobdcosm'] },
+      containerOptions
+    );
+
+    expect(plan?.executable).toBe('powershell.exe');
+    expect(plan?.args).toContain('-EncodedCommand');
+  });
+
+  it('returns undefined when the runtime selection has no engine', () => {
+    const record = createWindowsContainerReadyRecord();
+    record.runtimeSelection.engine = undefined;
+
+    expect(
+      buildWindowsContainerCommandPlan(
+        record,
+        { executable: 'LabVIEWCLI.exe', args: ['-VI1', 'left.vi', '-VI2', 'right.vi'] },
+        containerOptions
+      )
+    ).toBeUndefined();
+  });
+
+  it('returns undefined when the host PowerShell executable cannot be resolved (darwin host)', () => {
+    const record = createWindowsContainerReadyRecord();
+
+    expect(
+      buildWindowsContainerCommandPlan(
+        record,
+        {
+          executable: 'LabVIEWCLI.exe',
+          args: ['-VI1', 'left.vi', '-VI2', 'right.vi', '-ReportPath', 'report.html']
+        },
+        { ...containerOptions, processPlatform: 'darwin' as NodeJS.Platform }
+      )
+    ).toBeUndefined();
+  });
+});
+
+describe('parseLabviewCliDiagnosticLogPath (VHS-REQ-148)', () => {
+  it('extracts the trimmed diagnostic log path from the CLI banner line', () => {
+    expect(
+      parseLabviewCliDiagnosticLogPath(
+        'LabVIEWCLI started logging in file: C:\\Users\\ci\\AppData\\Local\\Temp\\LabVIEWCLI.log  \r\nnext line'
+      )
+    ).toBe('C:\\Users\\ci\\AppData\\Local\\Temp\\LabVIEWCLI.log');
+  });
+
+  it('returns undefined when the banner line is absent', () => {
+    expect(parseLabviewCliDiagnosticLogPath('no banner here')).toBeUndefined();
+  });
+});
+
+describe('buildDefaultRunCommand provider routing (VHS-REQ-147)', () => {
+  const commandPlan = { executable: 'LabVIEWCLI', args: ['-OperationName', 'CreateComparisonReport'] };
+
+  it('routes container providers through the non-observing runner', async () => {
+    const runWithoutObservation = vi
+      .fn()
+      .mockResolvedValue({ exitCode: 0, stdout: 'ok', stderr: '' });
+    const runWithObservation = vi.fn();
+
+    const run = buildDefaultRunCommand({
+      provider: 'windows-container',
+      processPlatform: 'win32',
+      runtimePlatform: 'win32',
+      engine: 'labview-cli',
+      timeoutMs: 42000,
+      runComparisonCommandPlanImpl: runWithoutObservation as never,
+      runComparisonCommandPlanWithObservationImpl: runWithObservation as never
+    });
+    const result = await run(commandPlan);
+
+    expect(result.exitCode).toBe(0);
+    expect(runWithObservation).not.toHaveBeenCalled();
+    expect(runWithoutObservation).toHaveBeenCalledWith(
+      commandPlan,
+      expect.objectContaining({ hostPlatform: 'win32', timeoutMs: 42000 })
+    );
+  });
+
+  it('routes host-native providers through the observing runner', async () => {
+    const runWithoutObservation = vi.fn();
+    const runWithObservation = vi
+      .fn()
+      .mockResolvedValue({ exitCode: 0, stdout: 'ok', stderr: '' });
+
+    const run = buildDefaultRunCommand({
+      provider: 'host-native',
+      processPlatform: 'linux',
+      runtimePlatform: 'linux',
+      engine: 'labview-cli',
+      runComparisonCommandPlanImpl: runWithoutObservation as never,
+      runComparisonCommandPlanWithObservationImpl: runWithObservation as never
+    });
+    await run(commandPlan);
+
+    expect(runWithoutObservation).not.toHaveBeenCalled();
+    expect(runWithObservation).toHaveBeenCalledWith(
+      commandPlan,
+      expect.objectContaining({
+        hostPlatform: 'linux',
+        runtimePlatform: 'linux',
+        engine: 'labview-cli'
+      })
+    );
+  });
+});
+
+describe('buildLinuxLabviewIniCandidatePaths bitness variants (VHS-REQ-156)', () => {
+  it('adds the -32 suffixed candidate for an x86 bitness', () => {
+    const candidates = buildLinuxLabviewIniCandidatePaths({
+      homeDir: '/home/sergio',
+      requestedLabviewVersion: '2026',
+      bitness: 'x86'
+    });
+    expect(candidates).toContain('/home/sergio/natinst/.config/LabVIEW-2026-32/labview.conf');
+    // The ~/.config/natinst/ candidate is emitted alongside the ~/natinst/.config one.
+    expect(candidates).toContain('/home/sergio/.config/natinst/LabVIEW-2026/labview.conf');
+  });
+
+  it('defaults to the -64 suffixed candidate when bitness is unknown', () => {
+    const candidates = buildLinuxLabviewIniCandidatePaths({
+      homeDir: '/home/sergio',
+      requestedLabviewVersion: '2026'
+    });
+    expect(candidates).toContain('/home/sergio/natinst/.config/LabVIEW-2026-64/labview.conf');
+  });
+
+  it('returns an empty list when no version token is supplied', () => {
+    expect(buildLinuxLabviewIniCandidatePaths({ homeDir: '/home/sergio' })).toEqual([]);
+  });
+});
+
+describe('parseWindowsTasklistCsv line parsing (VHS-REQ-621)', () => {
+  it('parses valid rows (including escaped quotes) and drops malformed rows', () => {
+    const stdout = [
+      '"LabVIEW.exe","1234","Console","1","123,456 K"',
+      // Escaped double-quote inside the image-name column exercises the "" branch.
+      '"Odd""Name.exe","2222","Services","0","10 K"',
+      // Fewer than two columns -> dropped.
+      '"OnlyOneColumn"',
+      // Non-numeric pid -> dropped.
+      '"LabVIEWCLI.exe","not-a-pid","Console","1","5 K"'
+    ].join('\r\n');
+
+    const parsed = parseWindowsTasklistCsv(stdout);
+
+    expect(parsed).toHaveLength(2);
+    expect(parsed[0]).toMatchObject({ imageName: 'LabVIEW.exe', pid: 1234, sessionNumber: 1 });
+    expect(parsed[1]).toMatchObject({ imageName: 'Odd"Name.exe', pid: 2222, sessionNumber: 0 });
+  });
+
+  it('returns an empty list for blank output', () => {
+    expect(parseWindowsTasklistCsv('\r\n   \r\n')).toEqual([]);
+  });
+});
+
+describe('normalizeComparisonProcessError (VHS-REQ-148)', () => {
+  it('extracts stdout, stderr, and signal from a spawn-style error object', () => {
+    expect(
+      normalizeComparisonProcessError({
+        stdout: 'partial stdout',
+        stderr: 'boom',
+        signal: 'SIGTERM'
+      })
+    ).toEqual({ stdout: 'partial stdout', stderr: 'boom', signal: 'SIGTERM' });
+  });
+
+  it('falls back to the message when stderr is absent on the error object', () => {
+    expect(normalizeComparisonProcessError({ message: 'thrown message' })).toEqual({
+      stdout: '',
+      stderr: 'thrown message',
+      signal: undefined
+    });
+  });
+
+  it('coerces a non-object error into a stderr string', () => {
+    expect(normalizeComparisonProcessError('plain string failure')).toEqual({
+      stdout: '',
+      stderr: 'plain string failure'
+    });
+  });
+});
+
+describe('observeWindowsRuntimeProcesses (VHS-REQ-621)', () => {
+  const tasklistCsv = [
+    '"LabVIEW.exe","111","Console","1","100,000 K"',
+    '"LabVIEWCLI.exe","222","Console","1","50 K"',
+    // Non-runtime process is filtered out of the observation.
+    '"chrome.exe","333","Console","1","500 K"'
+  ].join('\r\n');
+
+  function execFileReturning(stdout: string) {
+    return ((_executable: string, _args: string[], _options: unknown, callback: (error: unknown, stdout: string, stderr: string) => void) => {
+      callback(null, stdout, '');
+    }) as never;
+  }
+
+  it('returns undefined for a non-win32 runtime', async () => {
+    const observation = await observeWindowsRuntimeProcesses({
+      hostPlatform: 'linux',
+      runtimePlatform: 'linux',
+      trigger: 'cli-log-banner'
+    });
+    expect(observation).toBeUndefined();
+  });
+
+  it('parses tasklist output and infers LabVIEW.exe bitness and year on a win32 host (VHS-REQ-621.1, VHS-REQ-637.1)', async () => {
+    const observation = await observeWindowsRuntimeProcesses(
+      { hostPlatform: 'win32', runtimePlatform: 'win32', trigger: 'cli-log-banner' },
+      {
+        execFileImpl: execFileReturning(tasklistCsv),
+        nowIso: () => '2026-04-02T00:00:00.000Z',
+        resolveWindowsLabviewExecutablePath: vi
+          .fn()
+          .mockResolvedValue(
+            'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+          )
+      }
+    );
+
+    expect(observation?.labviewProcessObserved).toBe(true);
+    expect(observation?.labviewCliProcessObserved).toBe(true);
+    expect(observation?.lvcompareProcessObserved).toBe(false);
+    expect(observation?.labviewProcessBitness).toBe('x64');
+    expect(observation?.labviewProcessYear).toBe('2026');
+    expect(observation?.labviewProcessExecutablePath).toBe(
+      'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+    );
+    expect(observation?.observedProcessNames).toEqual(
+      expect.arrayContaining(['LabVIEW.exe', 'LabVIEWCLI.exe'])
+    );
+    expect(observation?.observedProcessNames).not.toContain('chrome.exe');
+    expect(observation?.trigger).toBe('cli-log-banner');
+    expect(observation?.capturedAt).toBe('2026-04-02T00:00:00.000Z');
+  });
+
+  it('records an unknown bitness when the executable-path resolver rejects (linux host)', async () => {
+    const observation = await observeWindowsRuntimeProcesses(
+      { hostPlatform: 'linux', runtimePlatform: 'win32', trigger: 'process-exit' },
+      {
+        execFileImpl: execFileReturning('"LabVIEW.exe","111","Console","1","100 K"'),
+        resolveWindowsLabviewExecutablePath: vi.fn().mockRejectedValue(new Error('access denied'))
+      }
+    );
+
+    expect(observation?.labviewProcessObserved).toBe(true);
+    expect(observation?.labviewProcessBitness).toBeUndefined();
+  });
+});
+
+describe('observeWindowsTcpListeners (VHS-REQ-623)', () => {
+  it('returns an empty list for a non-win32 runtime or when no ports are requested', async () => {
+    expect(
+      await observeWindowsTcpListeners({
+        hostPlatform: 'win32',
+        runtimePlatform: 'linux',
+        localPorts: [3363]
+      })
+    ).toEqual([]);
+    expect(
+      await observeWindowsTcpListeners({
+        hostPlatform: 'win32',
+        runtimePlatform: 'win32',
+        localPorts: []
+      })
+    ).toEqual([]);
+  });
+
+  it('maps a matching netstat LISTENING row to its owning process name', async () => {
+    const netstat = 'TCP    0.0.0.0:3363    0.0.0.0:0    LISTENING    4321';
+    const tasklist = '"LabVIEW.exe","4321","Console","1","100 K"';
+    const execFileImpl = ((executable: string, _args: string[], _options: unknown, callback: (error: unknown, stdout: string, stderr: string) => void) => {
+      callback(null, String(executable).includes('netstat') ? netstat : tasklist, '');
+    }) as never;
+
+    const listeners = await observeWindowsTcpListeners(
+      { hostPlatform: 'win32', runtimePlatform: 'win32', localPorts: [3363] },
+      { execFileImpl }
+    );
+
+    expect(listeners).toHaveLength(1);
+    expect(listeners[0]).toMatchObject({ localPort: 3363, pid: 4321, processName: 'LabVIEW.exe' });
+  });
+
+  it('returns an empty list when no netstat listener matches the requested port', async () => {
+    const netstat = 'TCP    0.0.0.0:9999    0.0.0.0:0    LISTENING    4321';
+    const execFileImpl = ((_executable: string, _args: string[], _options: unknown, callback: (error: unknown, stdout: string, stderr: string) => void) => {
+      callback(null, netstat, '');
+    }) as never;
+
+    const listeners = await observeWindowsTcpListeners(
+      { hostPlatform: 'win32', runtimePlatform: 'win32', localPorts: [3363] },
+      { execFileImpl }
+    );
+
+    expect(listeners).toEqual([]);
+  });
+});
+
+describe('prepareWindowsContainerExecutionContext interop staging (VHS-REQ-624)', () => {
+  const labviewCliCommandPlan = {
+    executable: 'C:\\NI\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+    args: [
+      '-OperationName',
+      'CreateComparisonReport',
+      '-VI1',
+      'left.vi',
+      '-VI2',
+      'right.vi',
+      '-ReportPath',
+      'report.html'
+    ]
+  };
+
+  it('stages into the interop workspace and hosts the plan via WSL PowerShell for a Windows runtime on a non-Windows host', async () => {
+    const record = createWindowsContainerReadyRecord();
+
+    const context = await prepareWindowsContainerExecutionContext(
+      record,
+      labviewCliCommandPlan,
+      'C:\\interop',
+      {
+        mkdir: vi.fn().mockResolvedValue(undefined) as never,
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        processPlatform: 'linux',
+        leftBlob: Buffer.from('left'),
+        rightBlob: Buffer.from('right')
+      }
+    );
+
+    expect(context.outcome).toBe('ready');
+    // The injected (non-win32) host platform selects the WSL-bridged PowerShell host.
+    expect(context.commandPlan.executable).toBe(
+      '/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe'
+    );
+    expect(context.diagnosticPathMapping?.runtimeRoot).toBeTruthy();
+  });
+});
+
+describe('classifyRuntimeFailure log-only and bitness-guard arms (VHS-REQ-621)', () => {
+  const LOG_ONLY_STDOUT = 'LabVIEWCLI started logging in file: C:\\temp\\vihs\\diag.log';
+
+  function observation(
+    trigger: RuntimeProcessObservation['trigger'],
+    overrides: Partial<RuntimeProcessObservation> = {}
+  ): RuntimeProcessObservation {
+    return {
+      capturedAt: '2026-07-15T00:00:00.000Z',
+      hostPlatform: 'win32',
+      runtimePlatform: 'win32',
+      trigger,
+      observedProcesses: [],
+      observedProcessNames: [],
+      labviewProcessObserved: false,
+      labviewCliProcessObserved: true,
+      lvcompareProcessObserved: false,
+      ...overrides
+    };
+  }
+
+  it('classifies a log-only CLI failure with LabVIEW absent through exit as labview-cli-log-only-no-labview-through-exit', () => {
+    const result = classifyRuntimeFailure({
+      engine: 'labview-cli',
+      exitCode: 1,
+      reportExists: false,
+      stdout: LOG_ONLY_STDOUT,
+      stderr: '',
+      processObservation: observation('cli-log-banner'),
+      exitProcessObservation: observation('process-exit')
+    });
+
+    expect(result.reason).toBe('labview-cli-log-only-no-labview-through-exit');
+    expect(result.notes.join(' ')).toContain('cli-log-banner and process-exit snapshots');
+  });
+
+  it('classifies a log-only CLI failure observed only at the banner snapshot as labview-cli-log-only-no-labview-at-banner-snapshot', () => {
+    const result = classifyRuntimeFailure({
+      engine: 'labview-cli',
+      exitCode: 1,
+      reportExists: false,
+      stdout: LOG_ONLY_STDOUT,
+      stderr: '',
+      // Banner snapshot qualifies, but the exit snapshot does not observe the CLI,
+      // so the through-exit arm is not taken and this falls to the banner arm.
+      processObservation: observation('cli-log-banner'),
+      exitProcessObservation: observation('process-exit', { labviewCliProcessObserved: false })
+    });
+
+    expect(result.reason).toBe('labview-cli-log-only-no-labview-at-banner-snapshot');
+    expect(result.notes.join(' ')).toContain('cli-log-banner snapshot');
+  });
+
+  it('falls back to labview-cli-exited-nonzero-log-only-no-report when no qualifying snapshot exists', () => {
+    const result = classifyRuntimeFailure({
+      engine: 'labview-cli',
+      exitCode: 1,
+      reportExists: false,
+      stdout: LOG_ONLY_STDOUT,
+      stderr: '',
+      // No process observations at all -> neither log-only snapshot arm qualifies.
+      processObservation: undefined,
+      exitProcessObservation: undefined
+    });
+
+    expect(result.reason).toBe('labview-cli-exited-nonzero-log-only-no-report');
+    expect(result.notes.join(' ')).toContain('only advertised the diagnostic log path');
+  });
+
+  it('does not rewrite to labview-host-bitness-conflict when no LabVIEW.exe was observed (VHS-REQ-621 guard)', () => {
+    const result = classifyRuntimeFailure({
+      engine: 'labview-cli',
+      exitCode: 1,
+      reportExists: false,
+      selectedBitness: 'x86',
+      // Non-log-only stdout so the CLI log-only block is skipped and the generic
+      // nonzero arm is reached; the exit snapshot carries a mismatched bitness but
+      // labviewProcessObserved is false, so the conflict guard must NOT fire.
+      stdout: '',
+      stderr: 'some unrelated failure',
+      exitProcessObservation: observation('process-exit', {
+        labviewProcessObserved: false,
+        labviewProcessBitness: 'x64'
+      })
+    });
+
+    expect(result.reason).toBe('command-exited-nonzero');
+    expect(result.notes).toEqual([]);
+  });
+});
+
+describe('appendLabviewCliPortNumberArg (VHS-REQ-621)', () => {
+  it('returns an unchanged copy when the port is undefined', () => {
+    const args = ['-VI1', 'a.vi'];
+    const result = appendLabviewCliPortNumberArg(args, undefined);
+
+    expect(result).toEqual(['-VI1', 'a.vi']);
+    // The helper must not mutate the caller's array.
+    expect(result).not.toBe(args);
+  });
+
+  it('returns an unchanged copy for a zero or negative port', () => {
+    expect(appendLabviewCliPortNumberArg(['-x'], 0)).toEqual(['-x']);
+    expect(appendLabviewCliPortNumberArg(['-x'], -3363)).toEqual(['-x']);
+  });
+
+  it('returns an unchanged copy for a non-integer port', () => {
+    expect(appendLabviewCliPortNumberArg(['-x'], 3363.5)).toEqual(['-x']);
+  });
+
+  it('appends -PortNumber and the value when no port arg is present', () => {
+    expect(appendLabviewCliPortNumberArg(['-VI1', 'a.vi'], 3363)).toEqual([
+      '-VI1',
+      'a.vi',
+      '-PortNumber',
+      '3363'
+    ]);
+  });
+
+  it('replaces the value of an existing case-insensitive -portnumber arg in place', () => {
+    const result = appendLabviewCliPortNumberArg(
+      ['-VI1', 'a.vi', '-portnumber', '1111'],
+      3363
+    );
+
+    expect(result).toEqual(['-VI1', 'a.vi', '-portnumber', '3363']);
+    // No duplicate -PortNumber flag is appended.
+    expect(result.filter((token) => token.toLowerCase() === '-portnumber')).toHaveLength(1);
+  });
+});
+
+describe('rewriteLabviewCliArgsForContainerWorkspace (VHS-REQ-621)', () => {
+  const options = {
+    containerWorkspaceRoot: 'C:\\ws',
+    leftFilename: 'left.vi',
+    rightFilename: 'right.vi',
+    reportFilename: 'report.html'
+  };
+
+  it('rewrites -VI1/-VI2/-ReportPath to container staging and report paths', () => {
+    const result = rewriteLabviewCliArgsForContainerWorkspace(
+      ['-VI1', 'host-left.vi', '-VI2', 'host-right.vi', '-ReportPath', 'host-report.html'],
+      options
+    );
+
+    expect(result).toEqual([
+      '-VI1',
+      'C:\\ws\\staging\\left.vi',
+      '-VI2',
+      'C:\\ws\\staging\\right.vi',
+      '-ReportPath',
+      'C:\\ws\\report.html',
+      '-Headless'
+    ]);
+  });
+
+  it('honors the lowercase -vi1/-vi2/-reportPath aliases', () => {
+    const result = rewriteLabviewCliArgsForContainerWorkspace(
+      ['-vi1', 'x.vi', '-vi2', 'y.vi', '-reportPath', 'r.html'],
+      options
+    );
+
+    expect(result).toEqual([
+      '-vi1',
+      'C:\\ws\\staging\\left.vi',
+      '-vi2',
+      'C:\\ws\\staging\\right.vi',
+      '-reportPath',
+      'C:\\ws\\report.html',
+      '-Headless'
+    ]);
+  });
+
+  it('drops any incoming -LabVIEWPath flag and its value', () => {
+    const result = rewriteLabviewCliArgsForContainerWorkspace(
+      ['-LabVIEWPath', 'C:\\host\\LabVIEW.exe', '-VI1', 'a.vi'],
+      options
+    );
+
+    expect(result).not.toContain('C:\\host\\LabVIEW.exe');
+    expect(result).toEqual(['-VI1', 'C:\\ws\\staging\\left.vi', '-Headless']);
+  });
+
+  it('re-appends a trimmed -LabVIEWPath when provided in options', () => {
+    const result = rewriteLabviewCliArgsForContainerWorkspace(['-VI1', 'a.vi'], {
+      ...options,
+      labviewPath: '  C:\\lv\\LabVIEW.exe  '
+    });
+
+    expect(result).toEqual([
+      '-VI1',
+      'C:\\ws\\staging\\left.vi',
+      '-LabVIEWPath',
+      'C:\\lv\\LabVIEW.exe',
+      '-Headless'
+    ]);
+  });
+
+  it('does not append -LabVIEWPath for a blank labviewPath option', () => {
+    const result = rewriteLabviewCliArgsForContainerWorkspace(['-VI1', 'a.vi'], {
+      ...options,
+      labviewPath: '   '
+    });
+
+    expect(result).not.toContain('-LabVIEWPath');
+  });
+
+  it('drops -c and an incoming -Headless (with its value) then re-appends a single -Headless', () => {
+    const result = rewriteLabviewCliArgsForContainerWorkspace(
+      ['-c', '-Headless', 'true', '-VI1', 'a.vi'],
+      options
+    );
+
+    expect(result).not.toContain('-c');
+    expect(result).not.toContain('true');
+    expect(result.filter((token) => token === '-Headless')).toHaveLength(1);
+    // -Headless is always the final token.
+    expect(result[result.length - 1]).toBe('-Headless');
+  });
+
+  it('leaves an incoming -Headless with no following value intact (single re-append)', () => {
+    const result = rewriteLabviewCliArgsForContainerWorkspace(['-VI1', 'a.vi', '-Headless'], options);
+
+    expect(result.filter((token) => token === '-Headless')).toHaveLength(1);
+  });
+
+  it('preserves unrelated passthrough arguments in order', () => {
+    const result = rewriteLabviewCliArgsForContainerWorkspace(
+      ['-OperationName', 'CreateComparisonReport', '-VI1', 'a.vi'],
+      options
+    );
+
+    expect(result.slice(0, 2)).toEqual(['-OperationName', 'CreateComparisonReport']);
+  });
+});
+
+describe('observeWindowsTcpListeners netstat/tasklist observation (VHS-REQ-621, VHS-REQ-623)', () => {
+  // Fake execFile(file, args, options, callback) that answers netstat and
+  // tasklist from canned stdout keyed on the first argument flag.
+  function fakeExecFile(outputs: { netstat: string; tasklist: string }) {
+    return vi.fn(
+      (
+        _file: string,
+        args: readonly string[],
+        _options: unknown,
+        callback: (error: Error | null, stdout: string) => void
+      ) => {
+        const stdout = args[0] === '-nao' ? outputs.netstat : outputs.tasklist;
+        callback(null, stdout);
+      }
+    );
+  }
+
+  it('returns [] without spawning a process for a non-win32 runtime platform', async () => {
+    const execFileImpl = vi.fn();
+    const result = await observeWindowsTcpListeners(
+      { hostPlatform: 'linux', runtimePlatform: 'linux', localPorts: [3363] },
+      { execFileImpl: execFileImpl as never }
+    );
+
+    expect(result).toEqual([]);
+    expect(execFileImpl).not.toHaveBeenCalled();
+  });
+
+  it('returns [] without spawning a process when no valid local ports are requested', async () => {
+    const execFileImpl = vi.fn();
+    const result = await observeWindowsTcpListeners(
+      { hostPlatform: 'win32', runtimePlatform: 'win32', localPorts: [0, -1] },
+      { execFileImpl: execFileImpl as never }
+    );
+
+    expect(result).toEqual([]);
+    expect(execFileImpl).not.toHaveBeenCalled();
+  });
+
+  it('parses netstat listeners, filters to requested ports, and joins PIDs to image names', async () => {
+    const execFileImpl = fakeExecFile({
+      netstat: [
+        '  Proto  Local Address          Foreign Address        State           PID',
+        '  TCP    0.0.0.0:3363           0.0.0.0:0              LISTENING       1234',
+        // A listener on an unrequested port is excluded.
+        '  TCP    0.0.0.0:8080           0.0.0.0:0              LISTENING       9999',
+        // Non-LISTENING rows are ignored.
+        '  TCP    0.0.0.0:5555           10.0.0.1:52000        ESTABLISHED     4321'
+      ].join('\r\n'),
+      tasklist: '"LabVIEW.exe","1234","Console","1","500 K"'
+    });
+
+    const result = await observeWindowsTcpListeners(
+      { hostPlatform: 'win32', runtimePlatform: 'win32', localPorts: [3363] },
+      { execFileImpl: execFileImpl as never }
+    );
+
+    expect(result).toEqual([
+      { localAddress: '0.0.0.0', localPort: 3363, pid: 1234, processName: 'LabVIEW.exe' }
+    ]);
+  });
+
+  it('leaves processName undefined when no tasklist row matches the listener PID', async () => {
+    const execFileImpl = fakeExecFile({
+      netstat: '  TCP    127.0.0.1:3363         0.0.0.0:0              LISTENING       4242',
+      // Tasklist has a different PID, so the join misses.
+      tasklist: '"Other.exe","1111","Console","1","10 K"'
+    });
+
+    const result = await observeWindowsTcpListeners(
+      { hostPlatform: 'win32', runtimePlatform: 'win32', localPorts: [3363] },
+      { execFileImpl: execFileImpl as never }
+    );
+
+    expect(result).toEqual([
+      { localAddress: '127.0.0.1', localPort: 3363, pid: 4242, processName: undefined }
+    ]);
+  });
+
+  it('returns [] when no LISTENING row matches a requested port (tasklist not queried)', async () => {
+    const execFileImpl = fakeExecFile({
+      netstat: '  TCP    0.0.0.0:8080           0.0.0.0:0              LISTENING       9999',
+      tasklist: '"ShouldNotBeRead.exe","9999","Console","1","1 K"'
+    });
+
+    const result = await observeWindowsTcpListeners(
+      { hostPlatform: 'win32', runtimePlatform: 'win32', localPorts: [3363] },
+      { execFileImpl: execFileImpl as never }
+    );
+
+    expect(result).toEqual([]);
+    // Only the netstat probe ran; tasklist is skipped when there are no listeners.
+    expect(execFileImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it('resolves the WSL system32 path when the host platform is not win32', async () => {
+    const seen: string[] = [];
+    const execFileImpl = vi.fn(
+      (
+        file: string,
+        args: readonly string[],
+        _options: unknown,
+        callback: (error: Error | null, stdout: string) => void
+      ) => {
+        seen.push(file);
+        callback(null, args[0] === '-nao' ? '' : '');
+      }
+    );
+
+    await observeWindowsTcpListeners(
+      // runtimePlatform win32 (a Windows container/interop run) but the host is Linux (WSL bridge).
+      { hostPlatform: 'linux', runtimePlatform: 'win32', localPorts: [3363] },
+      { execFileImpl: execFileImpl as never }
+    );
+
+    expect(seen[0]).toBe('/mnt/c/Windows/System32/netstat.exe');
+  });
+});
+
+describe('buildLinuxContainerBindMountVisibilityNote (VHS-REQ-663)', () => {
+  const HOME = '/home/dev';
+
+  // VHS-REQ-663.1: the helper returns a note only under the container +
+  // invalid-vi-path + outside-home conditions, and undefined otherwise.
+  // VHS-REQ-663.2: the note names the path/home, snap-Docker confinement, and both remediations.
+  it('returns an actionable note when a linux-container invalid-vi-path failure bind-mounts outside $HOME (VHS-REQ-663.1, VHS-REQ-663.2)', () => {
+    const note = buildLinuxContainerBindMountVisibilityNote({
+      provider: 'linux-container',
+      diagnosticReason: 'labview-cli-invalid-vi-path',
+      hostBindMountPath: '/tmp/vihs-compare-abc/reports/x/y',
+      homeDir: HOME
+    });
+
+    expect(note).toBeDefined();
+    expect(note).toContain('/tmp/vihs-compare-abc/reports/x/y');
+    expect(note).toContain('outside your home directory /home/dev');
+    expect(note).toContain('Snap-packaged Docker');
+    expect(note).toContain('snap connect docker:removable-media');
+  });
+  it('matches on the failureReason arm as well as diagnosticReason (VHS-REQ-663.1)', () => {
+    const note = buildLinuxContainerBindMountVisibilityNote({
+      provider: 'linux-container',
+      failureReason: 'labview-cli-invalid-vi-path',
+      hostBindMountPath: '/mnt/data/reports/x',
+      homeDir: HOME
+    });
+    expect(note).toBeDefined();
+  });
+
+  it('returns undefined when the bind-mount source is inside $HOME (VHS-REQ-663.1)', () => {
+    expect(
+      buildLinuxContainerBindMountVisibilityNote({
+        provider: 'linux-container',
+        diagnosticReason: 'labview-cli-invalid-vi-path',
+        hostBindMountPath: '/home/dev/.config/Code/User/workspaceStorage/x/reports/y',
+        homeDir: HOME
+      })
+    ).toBeUndefined();
+  });
+
+  it('returns undefined for a non-container provider (VHS-REQ-663.1)', () => {
+    expect(
+      buildLinuxContainerBindMountVisibilityNote({
+        provider: 'host-native',
+        diagnosticReason: 'labview-cli-invalid-vi-path',
+        hostBindMountPath: '/tmp/reports/y',
+        homeDir: HOME
+      })
+    ).toBeUndefined();
+  });
+
+  it('returns undefined when the failure is not an invalid-vi-path signature (VHS-REQ-663.1)', () => {
+    expect(
+      buildLinuxContainerBindMountVisibilityNote({
+        provider: 'linux-container',
+        diagnosticReason: 'labview-cli-connection-failed',
+        failureReason: 'command-exited-nonzero',
+        hostBindMountPath: '/tmp/reports/y',
+        homeDir: HOME
+      })
+    ).toBeUndefined();
+  });
+
+  it('returns undefined when the host path or home directory is missing (VHS-REQ-663.1)', () => {
+    expect(
+      buildLinuxContainerBindMountVisibilityNote({
+        provider: 'linux-container',
+        diagnosticReason: 'labview-cli-invalid-vi-path',
+        hostBindMountPath: '   ',
+        homeDir: HOME
+      })
+    ).toBeUndefined();
+    expect(
+      buildLinuxContainerBindMountVisibilityNote({
+        provider: 'linux-container',
+        diagnosticReason: 'labview-cli-invalid-vi-path',
+        hostBindMountPath: '/tmp/reports/y',
+        homeDir: undefined
+      })
+    ).toBeUndefined();
+  });
+
+  it('executeComparisonReport appends the bind-mount visibility note to a failed linux-container run (VHS-REQ-663.3)', async () => {
+    const record = createLinuxContainerReadyRecord();
+    // The fixture report directory (/workspace/.storage/...) is outside any real
+    // home directory, so the note fires deterministically regardless of CI $HOME.
+    const result = await executeComparisonReport(
+      { record, repositoryRoot: '/workspace/repo' },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
+        readdir: vi.fn().mockResolvedValue([]) as never,
+        readFile: vi.fn().mockResolvedValue('') as never,
+        // No generated report exists -> the run fails.
+        pathExists: vi.fn().mockResolvedValue(false),
+        runCommand: vi.fn().mockResolvedValue({
+          exitCode: 1,
+          stdout: '',
+          stderr:
+            'Error: VI 1 path invalid or does not exist: /workspace/staging/right-abcdef123456-foo.vi'
+        }),
+        nowIso: vi
+          .fn()
+          .mockReturnValueOnce('2026-05-28T10:00:00.000Z')
+          .mockReturnValueOnce('2026-05-28T10:00:02.000Z'),
+        nowMs: vi.fn().mockReturnValueOnce(1000).mockReturnValueOnce(3000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'linux'
+      }
+    );
+
+    expect(result.record.runtimeExecution.state).toBe('failed');
+    expect(result.record.runtimeExecution.diagnosticReason).toBe('labview-cli-invalid-vi-path');
+    const notes = result.record.runtimeExecution.diagnosticNotes ?? [];
+    expect(notes.some((note) => note.includes('Snap-packaged Docker'))).toBe(true);
+    expect(notes.some((note) => note.includes('outside your home directory'))).toBe(true);
+  });
+});
+
+describe('working-tree snapshot provenance (VHS-REQ-641.6)', () => {
+  it('deriveWorktreeSnapshotIdentity is a stable 16-hex content hash', () => {
+    const a = deriveWorktreeSnapshotIdentity(Buffer.from('vi-bytes-one'));
+    const b = deriveWorktreeSnapshotIdentity(Buffer.from('vi-bytes-one'));
+    const c = deriveWorktreeSnapshotIdentity(Buffer.from('vi-bytes-two'));
+
+    expect(a).toMatch(/^[0-9a-f]{16}$/);
+    // Same bytes -> same identity (idempotent); different bytes -> different.
+    expect(a).toBe(b);
+    expect(a).not.toBe(c);
+  });
+
+  it('names the selected working-tree snapshot identity from the right (selected) bytes', () => {
+    const note = buildWorktreeSnapshotProvenanceNote({
+      selectedHash: 'WORKTREE',
+      baseHash: 'abcdef1234567890',
+      normalizedRelativePath: 'src/Widget.vi',
+      leftBytes: Buffer.from('base'),
+      rightBytes: Buffer.from('uncommitted-widget')
+    });
+
+    expect(note).toBeDefined();
+    expect(note).toContain('src/Widget.vi');
+    expect(note).toContain(deriveWorktreeSnapshotIdentity(Buffer.from('uncommitted-widget')));
+    expect(note).toContain('not retained in the dashboard');
+  });
+
+  it('uses the left (base) bytes when the base side is the working-tree sentinel', () => {
+    const note = buildWorktreeSnapshotProvenanceNote({
+      selectedHash: 'abcdef1234567890',
+      baseHash: 'WORKTREE',
+      normalizedRelativePath: 'src/Widget.vi',
+      leftBytes: Buffer.from('uncommitted-base'),
+      rightBytes: Buffer.from('selected')
+    });
+
+    expect(note).toContain(deriveWorktreeSnapshotIdentity(Buffer.from('uncommitted-base')));
+  });
+
+  it('returns undefined for a committed pair (no working-tree side)', () => {
+    expect(
+      buildWorktreeSnapshotProvenanceNote({
+        selectedHash: 'aaaaaaaaaaaa',
+        baseHash: 'bbbbbbbbbbbb',
+        normalizedRelativePath: 'src/Widget.vi',
+        leftBytes: Buffer.from('base'),
+        rightBytes: Buffer.from('selected')
+      })
+    ).toBeUndefined();
+  });
+
+  it('executeComparisonReport attaches the provenance note for a working-tree comparison', async () => {
+    const record = createReadyRecord();
+    record.selectedHash = 'WORKTREE';
+    record.stagedRevisionPlan = buildStagedRevisionPlan({
+      stagingDirectory: record.artifactPlan.stagingDirectory,
+      fullFilename: record.artifactPlan.fullFilename,
+      leftRevisionId: record.baseHash,
+      rightRevisionId: 'WORKTREE'
+    });
+    const result = await executeComparisonReport(
+      { record, repositoryRoot: '/workspace/repo' },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('base-bytes'))
+          .mockResolvedValueOnce(Buffer.from('uncommitted-on-disk-bytes')),
+        materializeSelectedRevisionTree: vi.fn().mockResolvedValue(undefined),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
+        readdir: vi.fn().mockResolvedValue([]) as never,
+        readFile: vi.fn().mockResolvedValue('') as never,
+        pathExists: vi.fn().mockResolvedValue(false),
+        runCommand: vi.fn().mockResolvedValue({ exitCode: 1, stdout: '', stderr: 'boom' }),
+        nowIso: vi.fn().mockReturnValue('2026-07-15T00:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValueOnce(1000).mockReturnValueOnce(3000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32'
+      }
+    );
+
+    const notes = result.record.runtimeExecution.diagnosticNotes ?? [];
+    const expectedIdentity = deriveWorktreeSnapshotIdentity(
+      Buffer.from('uncommitted-on-disk-bytes')
+    );
+    expect(notes.some((note) => note.includes('uncommitted working-tree snapshot'))).toBe(true);
+    expect(notes.some((note) => note.includes(expectedIdentity))).toBe(true);
+    // VHS-REQ-641.7: the content-addressed identity is also surfaced as a
+    // structured field so the archive seam can content-address the pair-ID.
+    expect(result.record.runtimeExecution.worktreeSnapshotId).toBe(expectedIdentity);
+  });
+
+  it('deriveComparedWorktreeSnapshotId resolves the sentinel side and skips committed pairs (VHS-REQ-641.7)', () => {
+    // Selected side is the working tree -> use the right (selected) bytes.
+    expect(
+      deriveComparedWorktreeSnapshotId({
+        selectedHash: 'WORKTREE',
+        baseHash: 'abcdef1234567890',
+        leftBytes: Buffer.from('base'),
+        rightBytes: Buffer.from('uncommitted-widget')
+      })
+    ).toBe(deriveWorktreeSnapshotIdentity(Buffer.from('uncommitted-widget')));
+    // Base side is the working tree -> use the left (base) bytes.
+    expect(
+      deriveComparedWorktreeSnapshotId({
+        selectedHash: 'abcdef1234567890',
+        baseHash: 'WORKTREE',
+        leftBytes: Buffer.from('uncommitted-base'),
+        rightBytes: Buffer.from('selected')
+      })
+    ).toBe(deriveWorktreeSnapshotIdentity(Buffer.from('uncommitted-base')));
+    // Committed pair -> no snapshot identity.
+    expect(
+      deriveComparedWorktreeSnapshotId({
+        selectedHash: 'aaaaaaaaaaaa',
+        baseHash: 'bbbbbbbbbbbb',
+        leftBytes: Buffer.from('base'),
+        rightBytes: Buffer.from('selected')
+      })
+    ).toBeUndefined();
+  });
+});
+
+describe('comparison-runtime execution primitives (VHS-REQ-621)', () => {
+  function makeFakeChild(pid = 4321) {
+    const stdout = Object.assign(new EventEmitter(), { setEncoding: vi.fn(), destroy: vi.fn() });
+    const stderr = Object.assign(new EventEmitter(), { setEncoding: vi.fn(), destroy: vi.fn() });
+    const child = Object.assign(new EventEmitter(), { stdout, stderr, pid, kill: vi.fn() });
+    return { child, stdout, stderr };
+  }
+
+  function makeCancellationToken() {
+    const listeners: Array<() => void> = [];
+    const token = {
+      isCancellationRequested: false,
+      onCancellationRequested: (listener: () => void) => {
+        listeners.push(listener);
+        return { dispose: vi.fn() };
+      }
+    };
+    return { token, fire: () => listeners.forEach((listener) => listener()) };
+  }
+
+  describe('runComparisonCommandPlanWithObservation', () => {
+    it('kills the process tree and reports a timeout after timeoutMs elapses (VHS-REQ-621)', async () => {
+      vi.useFakeTimers();
+      try {
+        const { child } = makeFakeChild(4321);
+        const terminateProcessTree = vi.fn().mockResolvedValue(undefined);
+        const resultPromise = runComparisonCommandPlanWithObservation(
+          { executable: 'LabVIEWCLI', args: ['-OperationName', 'CreateComparisonReport'] },
+          {
+            spawnImpl: (() => child) as never,
+            hostPlatform: 'win32',
+            runtimePlatform: 'win32',
+            engine: 'labview-cli',
+            timeoutMs: 5000,
+            terminateProcessTree,
+            observeWindowsProcesses: vi.fn().mockResolvedValue(undefined)
+          }
+        );
+        child.emit('spawn');
+        vi.advanceTimersByTime(5000);
+        expect(child.kill).toHaveBeenCalledWith('SIGKILL');
+        expect(terminateProcessTree).toHaveBeenCalledWith(4321, 'win32');
+        child.emit('exit', null, 'SIGKILL');
+        const result = await resultPromise;
+        expect(result.timedOut).toBe(true);
+        expect(result.exitCode).toBe(124);
+        expect(result.stderr).toContain('timed out after 5000ms');
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('reports a cancelled outcome when the cancellation token fires (VHS-REQ-621)', async () => {
+      const { child } = makeFakeChild(0);
+      const { token, fire } = makeCancellationToken();
+      const resultPromise = runComparisonCommandPlanWithObservation(
+        { executable: 'LabVIEWCLI', args: [] },
+        {
+          spawnImpl: (() => child) as never,
+          hostPlatform: 'linux',
+          runtimePlatform: 'linux',
+          engine: 'labview-cli',
+          cancellationToken: token as never,
+          observeWindowsProcesses: vi.fn().mockResolvedValue(undefined)
+        }
+      );
+      child.emit('spawn');
+      fire();
+      expect(child.kill).toHaveBeenCalledWith('SIGKILL');
+      child.emit('exit', null, 'SIGKILL');
+      const result = await resultPromise;
+      expect(result.cancelled).toBe(true);
+      expect(result.exitCode).toBe(130);
+      expect(result.stderr).toContain('comparison-command cancelled by user');
+    });
+
+    it('terminates immediately when the token is already cancelled at spawn (VHS-REQ-621)', async () => {
+      const { child } = makeFakeChild();
+      const token = {
+        isCancellationRequested: true,
+        onCancellationRequested: () => ({ dispose: vi.fn() })
+      };
+      const resultPromise = runComparisonCommandPlanWithObservation(
+        { executable: 'LabVIEWCLI', args: [] },
+        {
+          spawnImpl: (() => child) as never,
+          hostPlatform: 'linux',
+          runtimePlatform: 'linux',
+          engine: 'labview-cli',
+          cancellationToken: token as never,
+          observeWindowsProcesses: vi.fn().mockResolvedValue(undefined)
+        }
+      );
+      expect(child.kill).toHaveBeenCalledWith('SIGKILL');
+      child.emit('exit', null, 'SIGKILL');
+      const result = await resultPromise;
+      expect(result.cancelled).toBe(true);
+      expect(result.exitCode).toBe(130);
+    });
+
+    it('rejects when the child process emits an error (VHS-REQ-621)', async () => {
+      const { child } = makeFakeChild();
+      const resultPromise = runComparisonCommandPlanWithObservation(
+        { executable: 'LabVIEWCLI', args: [] },
+        {
+          spawnImpl: (() => child) as never,
+          hostPlatform: 'linux',
+          runtimePlatform: 'linux',
+          engine: 'labview-cli',
+          observeWindowsProcesses: vi.fn().mockResolvedValue(undefined)
+        }
+      );
+      child.emit('spawn');
+      child.emit('error', new Error('spawn ENOENT'));
+      await expect(resultPromise).rejects.toThrow('spawn ENOENT');
+    });
+
+    it('rejects when the process closes with no exit code, timeout, or cancellation (VHS-REQ-621)', async () => {
+      const { child } = makeFakeChild();
+      const resultPromise = runComparisonCommandPlanWithObservation(
+        { executable: 'LabVIEWCLI', args: [] },
+        {
+          spawnImpl: (() => child) as never,
+          hostPlatform: 'linux',
+          runtimePlatform: 'linux',
+          engine: 'labview-cli',
+          observeWindowsProcesses: vi.fn().mockResolvedValue(undefined)
+        }
+      );
+      child.emit('spawn');
+      child.emit('exit', null, null);
+      await expect(resultPromise).rejects.toThrow('comparison-command-closed-without-exit-code');
+    });
+
+    it('captures process-spawn and process-exit observations for the lvcompare engine (VHS-REQ-621)', async () => {
+      const { child } = makeFakeChild();
+      const bannerObservation = { observedProcessNames: ['LVCompare.exe'], trigger: 'process-spawn' };
+      const exitObservation = { observedProcessNames: [], trigger: 'process-exit' };
+      const observeWindowsProcesses = vi
+        .fn()
+        .mockResolvedValueOnce(bannerObservation)
+        .mockResolvedValueOnce(exitObservation);
+      const resultPromise = runComparisonCommandPlanWithObservation(
+        { executable: 'LVCompare', args: ['left.vi', 'right.vi'] },
+        {
+          spawnImpl: (() => child) as never,
+          hostPlatform: 'win32',
+          runtimePlatform: 'win32',
+          engine: 'lvcompare',
+          observeWindowsProcesses: observeWindowsProcesses as never
+        }
+      );
+      child.emit('spawn');
+      child.emit('exit', 0, null);
+      const result = await resultPromise;
+      expect(observeWindowsProcesses).toHaveBeenCalledTimes(2);
+      expect(observeWindowsProcesses.mock.calls[0][0].trigger).toBe('process-spawn');
+      expect(observeWindowsProcesses.mock.calls[1][0].trigger).toBe('process-exit');
+      expect(result.processObservation).toBe(bannerObservation);
+      expect(result.exitProcessObservation).toBe(exitObservation);
+    });
+
+    it('rejects when runtime process observation fails (VHS-REQ-621)', async () => {
+      const { child } = makeFakeChild();
+      const resultPromise = runComparisonCommandPlanWithObservation(
+        { executable: 'LVCompare', args: ['left.vi', 'right.vi'] },
+        {
+          spawnImpl: (() => child) as never,
+          hostPlatform: 'win32',
+          runtimePlatform: 'win32',
+          engine: 'lvcompare',
+          observeWindowsProcesses: vi.fn().mockRejectedValue(new Error('tasklist failed')) as never
+        }
+      );
+      child.emit('spawn');
+      child.emit('exit', 0, null);
+      await expect(resultPromise).rejects.toThrow('tasklist failed');
+    });
+  });
+
+  describe('runComparisonCommandPlan (execFile)', () => {
+    it('resolves exit code 0 on a successful run (VHS-REQ-621)', async () => {
+      const execFileImpl = vi.fn((_exe, _args, _opts, cb) => {
+        cb(null, 'operation succeeded', '');
+        return { pid: 1, kill: vi.fn() };
+      });
+      const result = await runComparisonCommandPlan(
+        { executable: 'LVCompare', args: [] },
+        { execFileImpl: execFileImpl as never }
+      );
+      expect(result).toMatchObject({ exitCode: 0, stdout: 'operation succeeded', stderr: '' });
+    });
+
+    it('maps a numeric execError code to the exit code (VHS-REQ-621)', async () => {
+      const execError = Object.assign(new Error('CLI failed'), { code: 66 });
+      const execFileImpl = vi.fn((_exe, _args, _opts, cb) => {
+        cb(execError, 'stdout-text', 'stderr-text');
+        return { pid: 1, kill: vi.fn() };
+      });
+      const result = await runComparisonCommandPlan(
+        { executable: 'LVCompare', args: [] },
+        { execFileImpl: execFileImpl as never }
+      );
+      expect(result).toMatchObject({ exitCode: 66, stdout: 'stdout-text', stderr: 'stderr-text' });
+    });
+
+    it('rejects when execError has no numeric code and is not a timeout/cancel (VHS-REQ-621)', async () => {
+      const execError = Object.assign(new Error('spawn ENOENT'), { code: 'ENOENT' });
+      const execFileImpl = vi.fn((_exe, _args, _opts, cb) => {
+        cb(execError, '', '');
+        return { pid: 1, kill: vi.fn() };
+      });
+      await expect(
+        runComparisonCommandPlan(
+          { executable: 'LVCompare', args: [] },
+          { execFileImpl: execFileImpl as never }
+        )
+      ).rejects.toThrow('spawn ENOENT');
+    });
+
+    it('reports a timeout when execFile is killed by its timeout (VHS-REQ-621)', async () => {
+      const execError = Object.assign(new Error('Command failed: timed out'), {
+        killed: true,
+        signal: 'SIGKILL'
+      });
+      const execFileImpl = vi.fn((_exe, _args, _opts, cb) => {
+        cb(execError, 'so', 'se');
+        return { pid: 1, kill: vi.fn() };
+      });
+      const result = await runComparisonCommandPlan(
+        { executable: 'LVCompare', args: [] },
+        { execFileImpl: execFileImpl as never, timeoutMs: 1000 }
+      );
+      expect(result.timedOut).toBe(true);
+      expect(result.exitCode).toBe(124);
+      expect(result.timeoutMs).toBe(1000);
+    });
+
+    it('resolves exit code 130 with a cancellation note when cancelled (VHS-REQ-621)', async () => {
+      let capturedCallback: ((error: unknown, stdout: string, stderr: string) => void) | undefined;
+      const kill = vi.fn();
+      const execFileImpl = vi.fn((_exe, _args, _opts, cb) => {
+        capturedCallback = cb;
+        return { pid: 5, kill };
+      });
+      const { token, fire } = makeCancellationToken();
+      const resultPromise = runComparisonCommandPlan(
+        { executable: 'LVCompare', args: [] },
+        { execFileImpl: execFileImpl as never, cancellationToken: token as never, hostPlatform: 'linux' }
+      );
+      fire();
+      expect(kill).toHaveBeenCalledWith('SIGKILL');
+      capturedCallback?.(null, 'so', 'se');
+      const result = await resultPromise;
+      expect(result.cancelled).toBe(true);
+      expect(result.exitCode).toBe(130);
+      expect(result.stderr).toContain('comparison-command cancelled by user');
+    });
+
+    it('invokes terminateProcessTree on a win32 cancellation (VHS-REQ-621)', async () => {
+      let capturedCallback: ((error: unknown, stdout: string, stderr: string) => void) | undefined;
+      const execFileImpl = vi.fn((_exe, _args, _opts, cb) => {
+        capturedCallback = cb;
+        return { pid: 7, kill: vi.fn() };
+      });
+      const terminateProcessTree = vi.fn().mockResolvedValue(undefined);
+      const { token, fire } = makeCancellationToken();
+      const resultPromise = runComparisonCommandPlan(
+        { executable: 'LVCompare', args: [] },
+        {
+          execFileImpl: execFileImpl as never,
+          cancellationToken: token as never,
+          hostPlatform: 'win32',
+          terminateProcessTree
+        }
+      );
+      fire();
+      expect(terminateProcessTree).toHaveBeenCalledWith(7, 'win32');
+      capturedCallback?.(null, 'so', 'se');
+      const result = await resultPromise;
+      expect(result.cancelled).toBe(true);
+      expect(result.exitCode).toBe(130);
+    });
+  });
+});
+
+describe('extractCommandOptionValue (VHS-REQ-621)', () => {
+  it('returns the trimmed value following the option flag', () => {
+    expect(extractCommandOptionValue(['-PortNumber', ' 3363 ', '-o'], '-PortNumber')).toBe('3363');
+  });
+
+  it('returns the first match when the option appears more than once', () => {
+    expect(
+      extractCommandOptionValue(['-VI1', 'first.vi', '-VI1', 'second.vi'], '-VI1')
+    ).toBe('first.vi');
+  });
+
+  it('returns undefined when the option is missing', () => {
+    expect(extractCommandOptionValue(['-o', '-c'], '-PortNumber')).toBeUndefined();
+  });
+
+  it('returns undefined when the option is the last argument (no value follows)', () => {
+    expect(extractCommandOptionValue(['-o', '-PortNumber'], '-PortNumber')).toBeUndefined();
+  });
+
+  it('returns undefined when the following value is blank', () => {
+    expect(extractCommandOptionValue(['-PortNumber', '   ', '-o'], '-PortNumber')).toBeUndefined();
+  });
+
+  it('returns undefined for an empty argument list', () => {
+    expect(extractCommandOptionValue([], '-PortNumber')).toBeUndefined();
+  });
+});
+
+describe('buildWindowsHostNativeHeadlessCommandPlan (VHS-REQ-665)', () => {
+  function decode(plan: { executable: string; args: string[] } | undefined): string {
+    const idx = plan?.args.indexOf('-EncodedCommand') ?? -1;
+    if (!plan || idx < 0) {
+      return '';
+    }
+    return Buffer.from(plan.args[idx + 1], 'base64').toString('utf16le');
+  }
+
+  const bareCli = {
+    executable: 'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+    args: [
+      '-LogToConsole',
+      'TRUE',
+      '-OperationName',
+      'CreateComparisonReport',
+      '-VI1',
+      'C:\\stage\\left-foo.vi',
+      '-VI2',
+      'C:\\stage\\right-foo.vi',
+      '-ReportType',
+      'htmlsinglefile',
+      '-ReportPath',
+      'C:\\stage\\diff-report-foo.vi.html'
+    ]
+  };
+
+  it('wraps the bare CLI in a local powershell -EncodedCommand headless launch script (VHS-REQ-665.1)', () => {
+    const plan = buildWindowsHostNativeHeadlessCommandPlan(createReadyRecord(), bareCli, 'win32', 60);
+    expect(plan?.executable).toBe('powershell.exe');
+    expect(plan?.args.slice(0, 2)).toEqual(['-NoProfile', '-EncodedCommand']);
+
+    const script = decode(plan);
+    // Prelaunches the configured x86 LabVIEW headless before the CLI connects.
+    expect(script).toContain('--headless');
+    expect(script).toContain('LabVIEW 2026 Q1\\LabVIEW.exe');
+    // Tunes the connect window to the explicit cliConnectTimeoutSeconds (60).
+    expect(script).toContain("Set-IniToken -Path $cliIni -Key 'OpenAppReferenceTimeoutInSecond' -Value '60'");
+    expect(script).toContain(
+      "Set-IniToken -Path $cliIni -Key 'AfterLaunchOpenAppReferenceTimeoutInSecond' -Value '60'"
+    );
+    // Retries once on the cold-launch VI Server connect race.
+    expect(script).toContain('-350000');
+    expect(script).toContain('-350051');
+    // Carries a host-native provenance meta tag distinct from the container one.
+    expect(script).toContain('[vi-history-suite-hostnative-meta]');
+    expect(script).not.toContain('[vi-history-suite-container-meta]');
+    // Runs the original bare CLI executable + args verbatim.
+    expect(script).toContain('LabVIEWCLI.exe');
+    expect(script).toContain('CreateComparisonReport');
+  });
+
+  it('falls back to the host-native default connect window when no timeout is given (VHS-REQ-665.2)', () => {
+    const script = decode(buildWindowsHostNativeHeadlessCommandPlan(createReadyRecord(), bareCli, 'win32'));
+    expect(script).toContain("Set-IniToken -Path $cliIni -Key 'OpenAppReferenceTimeoutInSecond' -Value '120'");
+    expect(script).toContain('openTimeout=120;afterLaunchTimeout=120');
+  });
+
+  it('does not pin $env:TEMP (uses the ambient temp, unlike the container path) (VHS-REQ-665.2)', () => {
+    const script = decode(buildWindowsHostNativeHeadlessCommandPlan(createReadyRecord(), bareCli, 'win32'));
+    expect(script).not.toContain('$env:TEMP =');
+  });
+
+  it('returns undefined for a non-labview-cli engine (VHS-REQ-665.1)', () => {
+    const record = createReadyRecord();
+    const lvcompareRecord = {
+      ...record,
+      runtimeSelection: { ...record.runtimeSelection, engine: 'lvcompare' as const }
+    };
+    expect(
+      buildWindowsHostNativeHeadlessCommandPlan(lvcompareRecord, bareCli, 'win32')
+    ).toBeUndefined();
+  });
+
+  it('omits the prelaunch path expression when the record has no LabVIEW exe (VHS-REQ-665.2)', () => {
+    const record = createReadyRecord();
+    const noExeRecord = {
+      ...record,
+      runtimeSelection: { ...record.runtimeSelection, labviewExe: undefined }
+    };
+    const script = decode(buildWindowsHostNativeHeadlessCommandPlan(noExeRecord, bareCli, 'win32'));
+    expect(script).toContain('$labviewPath = $null');
+  });
+
+  it('only wraps when the LV_RTE_WIN_HOSTNATIVE_HEADLESS toggle is set (VHS-REQ-665.3)', () => {
+    // The exported builder is unconditional; the gating lives in
+    // prepareExecutionContext, which only invokes it when processPlatform and the
+    // effective runtime platform are win32 AND the opt-in env toggle equals '1'.
+    // Guard the toggle contract here so the opt-in default-off posture is pinned.
+    const previous = process.env.LV_RTE_WIN_HOSTNATIVE_HEADLESS;
+    try {
+      delete process.env.LV_RTE_WIN_HOSTNATIVE_HEADLESS;
+      expect(process.env.LV_RTE_WIN_HOSTNATIVE_HEADLESS === '1').toBe(false);
+      process.env.LV_RTE_WIN_HOSTNATIVE_HEADLESS = '1';
+      expect(process.env.LV_RTE_WIN_HOSTNATIVE_HEADLESS === '1').toBe(true);
+    } finally {
+      if (previous === undefined) {
+        delete process.env.LV_RTE_WIN_HOSTNATIVE_HEADLESS;
+      } else {
+        process.env.LV_RTE_WIN_HOSTNATIVE_HEADLESS = previous;
+      }
+    }
+  });
+
+  it('keeps windows-container launch script output byte-identical via the shared builder (VHS-REQ-665.4)', () => {
+    // The host-native path factored the launch script into a shared builder. The
+    // windows-container provider must keep its exact prior output: TEMP pinned to
+    // the container temp root and the container provenance meta tag.
+    const containerScript = buildWindowsContainerLabviewCliScript(
+      'C:\\NI\\LabVIEWCLI.exe',
+      ['-OperationName', 'CreateComparisonReport', '-VI1', 'a', '-VI2', 'b'],
+      'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
+      180
+    );
+    expect(containerScript).toContain('[vi-history-suite-container-meta]');
+    expect(containerScript).not.toContain('[vi-history-suite-hostnative-meta]');
+    expect(containerScript).toContain('$env:TEMP =');
+    expect(containerScript).toContain('openTimeout=180;afterLaunchTimeout=180');
+    expect(containerScript).toContain('--headless');
+  });
+});
+
+// -----------------------------------------------------------------------------
+// Coupled-extraction characterization (VHS-REQ-624 / VHS-REQ-156 / VHS-REQ-665):
+// byte-identical locks on the command-plan and launch-script builders that are
+// slated to move into sibling modules. These snapshots must stay IDENTICAL
+// across the behavior-preserving extraction PRs; any diff is a real regression.
+// -----------------------------------------------------------------------------
+describe('coupled-extraction builder characterization (byte-identical)', () => {
+  const interopLayout = {
+    reportDirectory: 'C:\\interop\\reports\\r\\f',
+    stagingDirectory: 'C:\\interop\\reports\\r\\f\\staging',
+    leftFilePath: 'C:\\interop\\reports\\r\\f\\staging\\left-foo.vi',
+    rightFilePath: 'C:\\interop\\reports\\r\\f\\staging\\right-foo.vi',
+    reportFilePath: 'C:\\interop\\reports\\r\\f\\diff-report-foo.vi.html'
+  };
+
+  const linuxShortPathLayout = {
+    reportDirectory: '/tmp/lvie-runtime/repoid123456/fileid123456',
+    stagingDirectory: '/tmp/lvie-runtime/repoid123456/fileid123456/staging',
+    leftFilePath: '/tmp/lvie-runtime/repoid123456/fileid123456/staging/left-foo.vi',
+    rightFilePath: '/tmp/lvie-runtime/repoid123456/fileid123456/staging/right-foo.vi',
+    reportFilePath: '/tmp/lvie-runtime/repoid123456/fileid123456/diff-report-foo.vi.html'
+  };
+
+  const labviewCliArgs = [
+    '-OperationName',
+    'CreateComparisonReport',
+    '-VI1',
+    '/host/staging/left-foo.vi',
+    '-VI2',
+    '/host/staging/right-foo.vi',
+    '-ReportPath',
+    '/host/diff-report-foo.vi.html',
+    '-LabVIEWPath',
+    'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+  ];
+
+  it('buildWindowsInteropCommandPlan output is byte-identical', () => {
+    expect(
+      buildWindowsInteropCommandPlan(
+        createReadyRecord(),
+        { executable: 'C:\\NI\\LabVIEWCLI.exe', args: [...labviewCliArgs] },
+        interopLayout
+      )
+    ).toMatchInlineSnapshot(`
+      {
+        "args": [
+          "-OperationName",
+          "CreateComparisonReport",
+          "-VI1",
+          "C:\\interop\\reports\\r\\f\\staging\\left-foo.vi",
+          "-VI2",
+          "C:\\interop\\reports\\r\\f\\staging\\right-foo.vi",
+          "-ReportPath",
+          "C:\\interop\\reports\\r\\f\\diff-report-foo.vi.html",
+          "-LabVIEWPath",
+          "C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe",
+        ],
+        "executable": "/mnt/c/NI/LabVIEWCLI.exe",
+      }
+    `);
+  });
+
+  it('buildLinuxHostNativeShortPathCommandPlan output is byte-identical', () => {
+    expect(
+      buildLinuxHostNativeShortPathCommandPlan(
+        createReadyRecord(),
+        {
+          executable: '/usr/local/bin/LabVIEWCLI',
+          args: [
+            '-OperationName',
+            'CreateComparisonReport',
+            '-VI1',
+            '/host/staging/left-foo.vi',
+            '-VI2',
+            '/host/staging/right-foo.vi',
+            '-ReportPath',
+            '/host/diff-report-foo.vi.html',
+            '-LabVIEWPath',
+            '/usr/local/natinst/LabVIEW-2026-64/labview'
+          ]
+        },
+        linuxShortPathLayout
+      )
+    ).toMatchInlineSnapshot(`
+      {
+        "args": [
+          "-OperationName",
+          "CreateComparisonReport",
+          "-VI1",
+          "/tmp/lvie-runtime/repoid123456/fileid123456/staging/left-foo.vi",
+          "-VI2",
+          "/tmp/lvie-runtime/repoid123456/fileid123456/staging/right-foo.vi",
+          "-ReportPath",
+          "/tmp/lvie-runtime/repoid123456/fileid123456/diff-report-foo.vi.html",
+          "-LabVIEWPath",
+          "/usr/local/natinst/LabVIEW-2026-64/labview",
+        ],
+        "executable": "/usr/local/bin/LabVIEWCLI",
+      }
+    `);
+  });
+
+  it('buildWindowsHostNativeHeadlessCommandPlan output is byte-identical', () => {
+    expect(
+      buildWindowsHostNativeHeadlessCommandPlan(
+        createReadyRecord(),
+        { executable: 'C:\\NI\\LabVIEWCLI.exe', args: [...labviewCliArgs] },
+        'win32',
+        60
+      )
+    ).toMatchInlineSnapshot(`
+      {
+        "args": [
+          "-NoProfile",
+          "-EncodedCommand",
+          "JABFAHIAcgBvAHIAQQBjAHQAaQBvAG4AUAByAGUAZgBlAHIAZQBuAGMAZQAgAD0AIAAnAFMAdABvAHAAJwAKACQAUAByAG8AZwByAGUAcwBzAFAAcgBlAGYAZQByAGUAbgBjAGUAIAA9ACAAJwBTAGkAbABlAG4AdABsAHkAQwBvAG4AdABpAG4AdQBlACcACgBmAHUAbgBjAHQAaQBvAG4AIABTAGUAdAAtAEkAbgBpAFQAbwBrAGUAbgAgAHsACgAgACAAcABhAHIAYQBtACgAWwBzAHQAcgBpAG4AZwBdACQAUABhAHQAaAAsACAAWwBzAHQAcgBpAG4AZwBdACQASwBlAHkALAAgAFsAcwB0AHIAaQBuAGcAXQAkAFYAYQBsAHUAZQApAAoAIAAgAGkAZgAgACgALQBuAG8AdAAgACgAVABlAHMAdAAtAFAAYQB0AGgAIAAtAEwAaQB0AGUAcgBhAGwAUABhAHQAaAAgACQAUABhAHQAaAAgAC0AUABhAHQAaABUAHkAcABlACAATABlAGEAZgApACkAIAB7ACAAcgBlAHQAdQByAG4AIAB9AAoAIAAgACQAYwBvAG4AdABlAG4AdAAgAD0AIABHAGUAdAAtAEMAbwBuAHQAZQBuAHQAIAAtAEwAaQB0AGUAcgBhAGwAUABhAHQAaAAgACQAUABhAHQAaAAgAC0AUgBhAHcAIAAtAEUAcgByAG8AcgBBAGMAdABpAG8AbgAgAFMAaQBsAGUAbgB0AGwAeQBDAG8AbgB0AGkAbgB1AGUACgAgACAAaQBmACAAKAAkAG4AdQBsAGwAIAAtAGUAcQAgACQAYwBvAG4AdABlAG4AdAApACAAewAgACQAYwBvAG4AdABlAG4AdAAgAD0AIAAnACcAIAB9AAoAIAAgAGkAZgAgACgAJABjAG8AbgB0AGUAbgB0ACAALQBtAGEAdABjAGgAIAAoACIAKAA/AG0AKQBeAFwAcwAqAHsAMAB9AFwAcwAqAD0AIgAgAC0AZgAgAFsAcgBlAGcAZQB4AF0AOgA6AEUAcwBjAGEAcABlACgAJABLAGUAeQApACkAKQAgAHsACgAgACAAIAAgACQAdQBwAGQAYQB0AGUAZAAgAD0AIABbAHIAZQBnAGUAeABdADoAOgBSAGUAcABsAGEAYwBlACgAJABjAG8AbgB0AGUAbgB0ACwAIAAoACIAKAA/AG0AKQBeAFwAcwAqAHsAMAB9AFwAcwAqAD0ALgAqACQAIgAgAC0AZgAgAFsAcgBlAGcAZQB4AF0AOgA6AEUAcwBjAGEAcABlACgAJABLAGUAeQApACkALAAgACgAIgB7ADAAfQA9AHsAMQB9ACIAIAAtAGYAIAAkAEsAZQB5ACwAIAAkAFYAYQBsAHUAZQApACkACgAgACAAfQAgAGUAbABzAGUAIAB7AAoAIAAgACAAIAAkAHUAcABkAGEAdABlAGQAIAA9ACAAKAAkAGMAbwBuAHQAZQBuAHQALgBUAHIAaQBtAEUAbgBkACgAKQAgACsAIABbAEUAbgB2AGkAcgBvAG4AbQBlAG4AdABdADoAOgBOAGUAdwBMAGkAbgBlACAAKwAgACgAIgB7ADAAfQA9AHsAMQB9ACIAIAAtAGYAIAAkAEsAZQB5ACwAIAAkAFYAYQBsAHUAZQApACAAKwAgAFsARQBuAHYAaQByAG8AbgBtAGUAbgB0AF0AOgA6AE4AZQB3AEwAaQBuAGUAKQAKACAAIAB9AAoAIAAgAFMAZQB0AC0AQwBvAG4AdABlAG4AdAAgAC0ATABpAHQAZQByAGEAbABQAGEAdABoACAAJABQAGEAdABoACAALQBWAGEAbAB1AGUAIAAkAHUAcABkAGEAdABlAGQAIAAtAEUAbgBjAG8AZABpAG4AZwAgAHUAdABmADgACgB9AAoAJABjAGwAaQBQAGEAdABoACAAPQAgACcAQwA6AFwATgBJAFwATABhAGIAVgBJAEUAVwBDAEwASQAuAGUAeABlACcACgAkAGwAYQBiAHYAaQBlAHcAUABhAHQAaAAgAD0AIAAnAEMAOgBcAFAAcgBvAGcAcgBhAG0AIABGAGkAbABlAHMAIAAoAHgAOAA2ACkAXABOAGEAdABpAG8AbgBhAGwAIABJAG4AcwB0AHIAdQBtAGUAbgB0AHMAXABMAGEAYgBWAEkARQBXACAAMgAwADIANgAgAFEAMQBcAEwAYQBiAFYASQBFAFcALgBlAHgAZQAnAAoAJABhAHIAZwBzACAAPQAgAEAAKAAnAC0ATwBwAGUAcgBhAHQAaQBvAG4ATgBhAG0AZQAnACwAIAAnAEMAcgBlAGEAdABlAEMAbwBtAHAAYQByAGkAcwBvAG4AUgBlAHAAbwByAHQAJwAsACAAJwAtAFYASQAxACcALAAgACcALwBoAG8AcwB0AC8AcwB0AGEAZwBpAG4AZwAvAGwAZQBmAHQALQBmAG8AbwAuAHYAaQAnACwAIAAnAC0AVgBJADIAJwAsACAAJwAvAGgAbwBzAHQALwBzAHQAYQBnAGkAbgBnAC8AcgBpAGcAaAB0AC0AZgBvAG8ALgB2AGkAJwAsACAAJwAtAFIAZQBwAG8AcgB0AFAAYQB0AGgAJwAsACAAJwAvAGgAbwBzAHQALwBkAGkAZgBmAC0AcgBlAHAAbwByAHQALQBmAG8AbwAuAHYAaQAuAGgAdABtAGwAJwAsACAAJwAtAEwAYQBiAFYASQBFAFcAUABhAHQAaAAnACwAIAAnAEMAOgBcAFAAcgBvAGcAcgBhAG0AIABGAGkAbABlAHMAXABOAGEAdABpAG8AbgBhAGwAIABJAG4AcwB0AHIAdQBtAGUAbgB0AHMAXABMAGEAYgBWAEkARQBXACAAMgAwADIANgBcAEwAYQBiAFYASQBFAFcALgBlAHgAZQAnACkACgAkAGMAbABpAEkAbgBpAEMAYQBuAGQAaQBkAGEAdABlAHMAIAA9ACAAQAAoACcAQwA6AFwAUAByAG8AZwByAGEAbQBEAGEAdABhAFwATgBhAHQAaQBvAG4AYQBsACAASQBuAHMAdAByAHUAbQBlAG4AdABzAFwATABhAGIAVgBJAEUAVwAgAEMATABJAFwATABhAGIAVgBJAEUAVwBDAEwASQAuAGkAbgBpACcALAAgACcAQwA6AFwAUAByAG8AZwByAGEAbQBEAGEAdABhAFwATgBhAHQAaQBvAG4AYQBsACAASQBuAHMAdAByAHUAbQBlAG4AdABzAFwATABhAGIAVgBJAEUAVwBDAEwASQBcAEwAYQBiAFYASQBFAFcAQwBMAEkALgBpAG4AaQAnACwAIAAnAEMAOgBcAFAAcgBvAGcAcgBhAG0AIABGAGkAbABlAHMAXABOAGEAdABpAG8AbgBhAGwAIABJAG4AcwB0AHIAdQBtAGUAbgB0AHMAXABTAGgAYQByAGUAZABcAEwAYQBiAFYASQBFAFcAIABDAEwASQBcAEwAYQBiAFYASQBFAFcAQwBMAEkALgBpAG4AaQAnACwAIAAnAEMAOgBcAFAAcgBvAGcAcgBhAG0AIABGAGkAbABlAHMAIAAoAHgAOAA2ACkAXABOAGEAdABpAG8AbgBhAGwAIABJAG4AcwB0AHIAdQBtAGUAbgB0AHMAXABTAGgAYQByAGUAZABcAEwAYQBiAFYASQBFAFcAIABDAEwASQBcAEwAYQBiAFYASQBFAFcAQwBMAEkALgBpAG4AaQAnACkACgAkAGMAbABpAEkAbgBpACAAPQAgACQAYwBsAGkASQBuAGkAQwBhAG4AZABpAGQAYQB0AGUAcwAgAHwAIABXAGgAZQByAGUALQBPAGIAagBlAGMAdAAgAHsAIABUAGUAcwB0AC0AUABhAHQAaAAgAC0ATABpAHQAZQByAGEAbABQAGEAdABoACAAJABfACAAfQAgAHwAIABTAGUAbABlAGMAdAAtAE8AYgBqAGUAYwB0ACAALQBGAGkAcgBzAHQAIAAxAAoAaQBmACAAKAAkAGMAbABpAEkAbgBpACkAIAB7AAoAIAAgAFMAZQB0AC0ASQBuAGkAVABvAGsAZQBuACAALQBQAGEAdABoACAAJABjAGwAaQBJAG4AaQAgAC0ASwBlAHkAIAAnAE8AcABlAG4AQQBwAHAAUgBlAGYAZQByAGUAbgBjAGUAVABpAG0AZQBvAHUAdABJAG4AUwBlAGMAbwBuAGQAJwAgAC0AVgBhAGwAdQBlACAAJwA2ADAAJwAKACAAIABTAGUAdAAtAEkAbgBpAFQAbwBrAGUAbgAgAC0AUABhAHQAaAAgACQAYwBsAGkASQBuAGkAIAAtAEsAZQB5ACAAJwBBAGYAdABlAHIATABhAHUAbgBjAGgATwBwAGUAbgBBAHAAcABSAGUAZgBlAHIAZQBuAGMAZQBUAGkAbQBlAG8AdQB0AEkAbgBTAGUAYwBvAG4AZAAnACAALQBWAGEAbAB1AGUAIAAnADYAMAAnAAoAfQAKACQAcAByAGUAbABhAHUAbgBjAGgAQQB0AHQAZQBtAHAAdABlAGQAIAA9ACAAJABmAGEAbABzAGUACgBpAGYAIAAoAC0AbgBvAHQAIABbAHMAdAByAGkAbgBnAF0AOgA6AEkAcwBOAHUAbABsAE8AcgBXAGgAaQB0AGUAUwBwAGEAYwBlACgAWwBzAHQAcgBpAG4AZwBdACQAbABhAGIAdgBpAGUAdwBQAGEAdABoACkAIAAtAGEAbgBkACAAKABUAGUAcwB0AC0AUABhAHQAaAAgAC0ATABpAHQAZQByAGEAbABQAGEAdABoACAAJABsAGEAYgB2AGkAZQB3AFAAYQB0AGgAKQApACAAewAKACAAIAAkAHAAcgBlAGwAYQB1AG4AYwBoAEEAdAB0AGUAbQBwAHQAZQBkACAAPQAgACQAdAByAHUAZQAKACAAIABTAHQAYQByAHQALQBQAHIAbwBjAGUAcwBzACAALQBGAGkAbABlAFAAYQB0AGgAIAAkAGwAYQBiAHYAaQBlAHcAUABhAHQAaAAgAC0AQQByAGcAdQBtAGUAbgB0AEwAaQBzAHQAIAAnAC0ALQBoAGUAYQBkAGwAZQBzAHMAJwAgAC0AVwBpAG4AZABvAHcAUwB0AHkAbABlACAASABpAGQAZABlAG4AIAB8ACAATwB1AHQALQBOAHUAbABsAAoAIAAgAFMAdABhAHIAdAAtAFMAbABlAGUAcAAgAC0AUwBlAGMAbwBuAGQAcwAgADIANQAKAH0ACgAkAGEAdAB0AGUAbQBwAHQAIAA9ACAAMAAKACQAbQBhAHgAQQB0AHQAZQBtAHAAdABzACAAPQAgAFsATQBhAHQAaABdADoAOgBNAGEAeAAoADEALAAgADEAIAArACAAMQApAAoAJABsAGEAcwB0AEUAeABpAHQAIAA9ACAAMQAKACQAbABhAHMAdABPAHUAdABwAHUAdABUAGUAeAB0ACAAPQAgACcAJwAKAHcAaABpAGwAZQAgACgAJABhAHQAdABlAG0AcAB0ACAALQBsAHQAIAAkAG0AYQB4AEEAdAB0AGUAbQBwAHQAcwApACAAewAKACAAIAAkAGEAdAB0AGUAbQBwAHQAKwArAAoAIAAgACQAcAByAGUAdgBpAG8AdQBzAEUAcgByAG8AcgBBAGMAdABpAG8AbgBQAHIAZQBmAGUAcgBlAG4AYwBlACAAPQAgACQARQByAHIAbwByAEEAYwB0AGkAbwBuAFAAcgBlAGYAZQByAGUAbgBjAGUACgAgACAAJABFAHIAcgBvAHIAQQBjAHQAaQBvAG4AUAByAGUAZgBlAHIAZQBuAGMAZQAgAD0AIAAnAEMAbwBuAHQAaQBuAHUAZQAnAAoAIAAgAHQAcgB5ACAAewAKACAAIAAgACAAJABvAHUAdABwAHUAdAAgAD0AIABAACgAJgAgACQAYwBsAGkAUABhAHQAaAAgAEAAYQByAGcAcwAgADIAPgAmADEAKQAKACAAIAAgACAAJABsAGEAcwB0AEUAeABpAHQAIAA9ACAAWwBpAG4AdABdACQATABBAFMAVABFAFgASQBUAEMATwBEAEUACgAgACAAfQAgAGYAaQBuAGEAbABsAHkAIAB7AAoAIAAgACAAIAAkAEUAcgByAG8AcgBBAGMAdABpAG8AbgBQAHIAZQBmAGUAcgBlAG4AYwBlACAAPQAgACQAcAByAGUAdgBpAG8AdQBzAEUAcgByAG8AcgBBAGMAdABpAG8AbgBQAHIAZQBmAGUAcgBlAG4AYwBlAAoAIAAgAH0ACgAgACAAJABvAHUAdABwAHUAdAAgAHwAIABGAG8AcgBFAGEAYwBoAC0ATwBiAGoAZQBjAHQAIAB7ACAAaQBmACAAKAAtAG4AbwB0ACAAWwBzAHQAcgBpAG4AZwBdADoAOgBJAHMATgB1AGwAbABPAHIAVwBoAGkAdABlAFMAcABhAGMAZQAoAFsAcwB0AHIAaQBuAGcAXQAkAF8AKQApACAAewAgAFcAcgBpAHQAZQAtAE8AdQB0AHAAdQB0ACAAJABfACAAfQAgAH0ACgAgACAAJABsAGEAcwB0AE8AdQB0AHAAdQB0AFQAZQB4AHQAIAA9ACAAQAAoACQAbwB1AHQAcAB1AHQAIAB8ACAARgBvAHIARQBhAGMAaAAtAE8AYgBqAGUAYwB0ACAAewAgAFsAcwB0AHIAaQBuAGcAXQAkAF8AIAB9ACkAIAAtAGoAbwBpAG4AIABbAEUAbgB2AGkAcgBvAG4AbQBlAG4AdABdADoAOgBOAGUAdwBMAGkAbgBlAAoAIAAgAGkAZgAgACgAJABsAGEAcwB0AEUAeABpAHQAIAAtAGUAcQAgADAAKQAgAHsAIABiAHIAZQBhAGsAIAB9AAoAIAAgACQAaQBzAFMAdABhAHIAdAB1AHAAQwBvAG4AbgBlAGMAdABpAHYAaQB0AHkAIAA9ACAAKAAkAGwAYQBzAHQARQB4AGkAdAAgAC0AaQBuACAAQAAoAC0AMwA1ADAAMAAwADAALAAgAC0AMwA1ADAAMAA1ADEAKQAgAC0AbwByACAAJABsAGEAcwB0AE8AdQB0AHAAdQB0AFQAZQB4AHQAIAAtAG0AYQB0AGMAaAAgACcALQAzADUAMAAwADAAMAAnACAALQBvAHIAIAAkAGwAYQBzAHQATwB1AHQAcAB1AHQAVABlAHgAdAAgAC0AbQBhAHQAYwBoACAAJwAtADMANQAwADAANQAxACcAIAAtAG8AcgAgACQAbABhAHMAdABPAHUAdABwAHUAdABUAGUAeAB0ACAALQBtAGEAdABjAGgAIAAnACgAPwBpACkAZgBhAGkAbABlAGQAIAB0AG8AIABlAHMAdABhAGIAbABpAHMAaAAgAGEAIABjAG8AbgBuAGUAYwB0AGkAbwBuACAAdwBpAHQAaAAgAEwAYQBiAFYASQBFAFcAJwApAAoAIAAgAGkAZgAgACgAJABpAHMAUwB0AGEAcgB0AHUAcABDAG8AbgBuAGUAYwB0AGkAdgBpAHQAeQAgAC0AYQBuAGQAIAAkAGEAdAB0AGUAbQBwAHQAIAAtAGwAdAAgACQAbQBhAHgAQQB0AHQAZQBtAHAAdABzACkAIAB7AAoAIAAgACAAIABTAHQAYQByAHQALQBTAGwAZQBlAHAAIAAtAFMAZQBjAG8AbgBkAHMAIAA4AAoAIAAgACAAIABjAG8AbgB0AGkAbgB1AGUACgAgACAAfQAKACAAIABiAHIAZQBhAGsACgB9AAoAJABjAG8AbgBuAGUAYwB0AGUAZABQAG8AcgB0ACAAPQAgACcAJwAKAGkAZgAgACgAJABsAGEAcwB0AE8AdQB0AHAAdQB0AFQAZQB4AHQAIAAtAG0AYQB0AGMAaAAgACcAQwBvAG4AbgBlAGMAdABpAG8AbgAgAGUAcwB0AGEAYgBsAGkAcwBoAGUAZAAgAHcAaQB0AGgAIABMAGEAYgBWAEkARQBXACAAYQB0ACAAcABvAHIAdAAgAG4AdQBtAGIAZQByACAAKABbADAALQA5AF0AKwApAFwALgAnACkAIAB7AAoAIAAgACQAYwBvAG4AbgBlAGMAdABlAGQAUABvAHIAdAAgAD0AIAAkAE0AYQB0AGMAaABlAHMAWwAxAF0ACgB9AAoAVwByAGkAdABlAC0ATwB1AHQAcAB1AHQAIAAoACcAWwB2AGkALQBoAGkAcwB0AG8AcgB5AC0AcwB1AGkAdABlAC0AaABvAHMAdABuAGEAdABpAHYAZQAtAG0AZQB0AGEAXQByAGUAdAByAHkAQQB0AHQAZQBtAHAAdABzAD0AewAwAH0AOwBwAHIAZQBsAGEAdQBuAGMAaABBAHQAdABlAG0AcAB0AGUAZAA9AHsAMQB9ADsAaQBuAGkAUABhAHQAaAA9AHsAMgB9ADsAYwBvAG4AbgBlAGMAdABlAGQAUABvAHIAdAA9AHsAMwB9ADsAbwBwAGUAbgBUAGkAbQBlAG8AdQB0AD0AMQAyADAAOwBhAGYAdABlAHIATABhAHUAbgBjAGgAVABpAG0AZQBvAHUAdAA9ADEAMgAwACcAIAAtAGYAIAAkAGEAdAB0AGUAbQBwAHQALAAgACgAJAAoAGkAZgAgACgAJABwAHIAZQBsAGEAdQBuAGMAaABBAHQAdABlAG0AcAB0AGUAZAApACAAewAgADEAIAB9ACAAZQBsAHMAZQAgAHsAIAAwACAAfQApACkALAAgACQAYwBsAGkASQBuAGkALAAgACQAYwBvAG4AbgBlAGMAdABlAGQAUABvAHIAdAApAAoAZQB4AGkAdAAgACQAbABhAHMAdABFAHgAaQB0AA==",
+        ],
+        "executable": "powershell.exe",
+      }
+    `);
+  });
+
+  it('buildWindowsContainerLabviewCliScript output is byte-identical', () => {
+    expect(
+      buildWindowsContainerLabviewCliScript(
+        'C:\\NI\\LabVIEWCLI.exe',
+        ['-OperationName', 'CreateComparisonReport', '-VI1', 'a', '-VI2', 'b'],
+        'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
+        180
+      )
+    ).toMatchInlineSnapshot(`
+      "$ErrorActionPreference = 'Stop'
+      $ProgressPreference = 'SilentlyContinue'
+      function Set-IniToken {
+        param([string]$Path, [string]$Key, [string]$Value)
+        if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { return }
+        $content = Get-Content -LiteralPath $Path -Raw -ErrorAction SilentlyContinue
+        if ($null -eq $content) { $content = '' }
+        if ($content -match ("(?m)^\\s*{0}\\s*=" -f [regex]::Escape($Key))) {
+          $updated = [regex]::Replace($content, ("(?m)^\\s*{0}\\s*=.*$" -f [regex]::Escape($Key)), ("{0}={1}" -f $Key, $Value))
+        } else {
+          $updated = ($content.TrimEnd() + [Environment]::NewLine + ("{0}={1}" -f $Key, $Value) + [Environment]::NewLine)
+        }
+        Set-Content -LiteralPath $Path -Value $updated -Encoding utf8
+      }
+      $env:TEMP = 'C:\\vi-history-suite\\container-temp'
+      $env:TMP = $env:TEMP
+      $cliPath = 'C:\\NI\\LabVIEWCLI.exe'
+      $labviewPath = 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+      $args = @('-OperationName', 'CreateComparisonReport', '-VI1', 'a', '-VI2', 'b')
+      $cliIniCandidates = @('C:\\ProgramData\\National Instruments\\LabVIEW CLI\\LabVIEWCLI.ini', 'C:\\ProgramData\\National Instruments\\LabVIEWCLI\\LabVIEWCLI.ini', 'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.ini', 'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.ini')
+      $cliIni = $cliIniCandidates | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+      if ($cliIni) {
+        Set-IniToken -Path $cliIni -Key 'OpenAppReferenceTimeoutInSecond' -Value '180'
+        Set-IniToken -Path $cliIni -Key 'AfterLaunchOpenAppReferenceTimeoutInSecond' -Value '180'
+      }
+      $prelaunchAttempted = $false
+      if (-not [string]::IsNullOrWhiteSpace([string]$labviewPath) -and (Test-Path -LiteralPath $labviewPath)) {
+        $prelaunchAttempted = $true
+        Start-Process -FilePath $labviewPath -ArgumentList '--headless' -WindowStyle Hidden | Out-Null
+        Start-Sleep -Seconds 8
+      }
+      $attempt = 0
+      $maxAttempts = [Math]::Max(1, 1 + 1)
+      $lastExit = 1
+      $lastOutputText = ''
+      while ($attempt -lt $maxAttempts) {
+        $attempt++
+        $previousErrorActionPreference = $ErrorActionPreference
+        $ErrorActionPreference = 'Continue'
+        try {
+          $output = @(& $cliPath @args 2>&1)
+          $lastExit = [int]$LASTEXITCODE
+        } finally {
+          $ErrorActionPreference = $previousErrorActionPreference
+        }
+        $output | ForEach-Object { if (-not [string]::IsNullOrWhiteSpace([string]$_)) { Write-Output $_ } }
+        $lastOutputText = @($output | ForEach-Object { [string]$_ }) -join [Environment]::NewLine
+        if ($lastExit -eq 0) { break }
+        $isStartupConnectivity = ($lastExit -in @(-350000, -350051) -or $lastOutputText -match '-350000' -or $lastOutputText -match '-350051' -or $lastOutputText -match '(?i)failed to establish a connection with LabVIEW')
+        if ($isStartupConnectivity -and $attempt -lt $maxAttempts) {
+          Start-Sleep -Seconds 8
+          continue
+        }
+        break
+      }
+      $connectedPort = ''
+      if ($lastOutputText -match 'Connection established with LabVIEW at port number ([0-9]+)\\.') {
+        $connectedPort = $Matches[1]
+      }
+      Write-Output ('[vi-history-suite-container-meta]retryAttempts={0};prelaunchAttempted={1};iniPath={2};connectedPort={3};openTimeout=180;afterLaunchTimeout=180' -f $attempt, ($(if ($prelaunchAttempted) { 1 } else { 0 })), $cliIni, $connectedPort)
+      exit $lastExit"
+    `);
+  });
+
+  it('buildLinuxContainerLabviewCliScript output is byte-identical', () => {
+    expect(
+      buildLinuxContainerLabviewCliScript(
+        'labviewcli',
+        ['-OperationName', 'CreateComparisonReport', '-VI1', 'a', '-VI2', 'b'],
+        'cli-headless',
+        {
+          labviewExecutablePath: '/usr/local/natinst/LabVIEW-2026-64/labview',
+          connectTimeoutSeconds: 120
+        }
+      )
+    ).toMatchInlineSnapshot(`
+      "set -euo pipefail
+      mkdir -p '/workspace/container-temp' /tmp/natinst
+      printf '1\\n' > '/tmp/natinst/LVContainer.txt'
+      export TEMP='/workspace/container-temp'
+      export TMP='/workspace/container-temp'
+      export TMPDIR='/workspace/container-temp'
+      cli_path='labviewcli'
+      args=('-OperationName' 'CreateComparisonReport' '-VI1' 'a' '-VI2' 'b')
+      lv_exe='/usr/local/natinst/LabVIEW-2026-64/labview'
+      open_app_timeout=120
+      after_launch_timeout=120
+      max_attempts=2
+      retry_delay=8
+      err_file='/workspace/container-temp/vihs-cli-stderr.txt'
+      set_conf_key() {
+        conf_file="$1"; conf_key="$2"; conf_value="$3"
+        mkdir -p "$(dirname "$conf_file")" 2>/dev/null || return 0
+        if [ -f "$conf_file" ] && grep -qE "^[[:space:]]*\${conf_key}=" "$conf_file" 2>/dev/null; then
+          sed -i -E "s|^[[:space:]]*\${conf_key}=.*|\${conf_key}=\${conf_value}|" "$conf_file" 2>/dev/null || true
+        else
+          printf "%s=%s\\n" "$conf_key" "$conf_value" >> "$conf_file" 2>/dev/null || true
+        fi
+      }
+      harden_conf() {
+        lv_dir="$(dirname "$lv_exe")"
+        lv_base="$(basename "$lv_dir")"
+        lv_year="$(printf "%s" "$lv_base" | sed -E "s/^LabVIEW-([0-9]+).*/\\1/")"
+        [ -n "$lv_year" ] || return 0
+        conf_dir="\${HOME:-/root}/natinst/.config/LabVIEW-\${lv_year}"
+        exe_base="$(basename "$lv_exe")"
+        for conf in "\${conf_dir}/\${exe_base}.conf" "\${conf_dir}/labview.conf"; do
+          set_conf_key "$conf" "server.tcp.enabled" "True"
+          set_conf_key "$conf" "unattended" "True"
+          set_conf_key "$conf" "OpenAppReferenceTimeoutInSecond" "$open_app_timeout"
+          set_conf_key "$conf" "AfterLaunchOpenAppReferenceTimeoutInSecond" "$after_launch_timeout"
+        done
+      }
+      harden_conf || true
+      attempt=0
+      rc=1
+      while [ "$attempt" -lt "$max_attempts" ]; do
+        attempt=$((attempt + 1))
+        set +e
+        "$cli_path" "\${args[@]}" 2>"$err_file"
+        rc=$?
+        set -e
+        cat "$err_file" >&2 2>/dev/null || true
+        if [ "$rc" -eq 0 ]; then break; fi
+        if [ "$attempt" -lt "$max_attempts" ] && grep -qiE '(-350000|-350051|failed to establish a connection with LabVIEW)' "$err_file" 2>/dev/null; then
+          sleep "$retry_delay"
+          continue
+        fi
+        break
+      done
+      printf '[vi-history-suite-container-meta]retryAttempts=%s;openTimeout=%s;afterLaunchTimeout=%s\\n' "$attempt" "$open_app_timeout" "$after_launch_timeout"
+      exit $rc"
+    `);
   });
 });

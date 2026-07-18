@@ -15,6 +15,7 @@ const {
   IMPLEMENTATION_GLOBS,
   TEST_GLOBS,
   TRACEABILITY_SURFACE_GLOBS,
+  GENERATED_TRACEABILITY_SURFACE_FILES,
   parseCsv,
   splitReferences,
   extractRtmPaths,
@@ -74,7 +75,7 @@ function createAuditFixture(options: {
 }
 
 describe('traceability audit script', () => {
-  it('exports valid classification constants', () => {
+  it('exports valid classification constants (VHS-REQ-601.19)', () => {
     expect(VALID_CLASSIFICATIONS).toContain('mapped');
     expect(VALID_CLASSIFICATIONS).toContain('supporting');
     expect(VALID_CLASSIFICATIONS).toContain('dev-only');
@@ -95,6 +96,7 @@ describe('traceability audit script', () => {
     expect(TRACEABILITY_SURFACE_GLOBS).toContain('resources/bundled-docs/**');
     expect(TRACEABILITY_SURFACE_GLOBS).toContain('.devcontainer/**');
     expect(TRACEABILITY_SURFACE_GLOBS).toContain('.vscode/*.json');
+    expect(GENERATED_TRACEABILITY_SURFACE_FILES.has('.devcontainer/devcontainer-lock.json')).toBe(true);
   });
 
   it('parses CSV with quoted fields and semicolons', () => {
@@ -340,7 +342,7 @@ describe('traceability audit execution', () => {
     expect(capturedStderr).toContain('Gap entries already represented in RTM');
   });
 
-  it('keeps genuine gap entries informational when they are not in RTM', () => {
+  it('keeps genuine gap entries informational when they are not in RTM (VHS-REQ-601.21)', () => {
     const fixtureRoot = createAuditFixture({
       files: ['src/pending.ts'],
       inventoryRows: [
@@ -364,7 +366,7 @@ describe('traceability audit execution', () => {
     expect(capturedStdout).toContain('Gap entries pending classification');
   });
 
-  it('flags missing inventory entries across expanded traceability surface', () => {
+  it('flags missing inventory entries across expanded traceability surface (VHS-REQ-601.20, VHS-REQ-601.22)', () => {
     const fixtureRoot = createAuditFixture({
       files: [
         'docs/architecture/overview.md',
@@ -376,6 +378,7 @@ describe('traceability audit execution', () => {
         'package.json',
         'vagrant/Vagrantfile',
         '.devcontainer/devcontainer.json',
+        '.devcontainer/devcontainer-lock.json',
         '.vscode/tasks.json',
         'README.md'
       ],
@@ -409,6 +412,7 @@ describe('traceability audit execution', () => {
         'README.md'
       ])
     );
+    expect(result.findings.missingInventoryEntries).not.toContain('.devcontainer/devcontainer-lock.json');
   });
 });
 
@@ -419,7 +423,7 @@ describe('traceability policy documentation', () => {
     expect(readme).toContain('traceability:audit');
   });
 
-  it('documents agent response for unmapped code', () => {
+  it('documents agent response for unmapped code (VHS-REQ-601.23)', () => {
     const readme = readRepoText('docs', 'requirements', 'README.md');
     expect(readme.toLowerCase()).toContain('unmapped');
     expect(readme).toContain('gap');

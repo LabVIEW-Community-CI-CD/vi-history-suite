@@ -1,0 +1,49 @@
+name: VI Semantic PR Review
+
+on:
+  workflow_dispatch:
+    inputs:
+      repository:
+        description: 'Target repository (owner/repo) whose pull request should be reviewed.'
+        required: true
+      pr_number:
+        description: 'Pull request number in the target repository to review.'
+        required: true
+      container_image_version:
+        description: 'NI LabVIEW container image version (e.g. 2026q1). The -linux tag is derived.'
+        required: false
+        default: '2026q1'
+      publish_images:
+        description: 'Embed inline diff images in the review comment (needs a contents:write token on the target repo).'
+        required: false
+        default: false
+        type: boolean
+      create_commit_status:
+        description: 'Post a gateable VI Semantic Review commit status on the PR head (needs a statuses:write token on the target repo).'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.repository }}-${{ inputs.pr_number }}
+  cancel-in-progress: false
+
+jobs:
+  # Maintainer dispatch entry point. The review logic lives in the reusable
+  # vi-semantic-pr-review-callable.yml (VHS-REQ-661) so this dispatch and any
+  # external LabVIEW repo share one source of truth; enforce_trusted_ref keeps
+  # the privileged cross-repo token gated to trusted vi-history-suite refs here.
+  review:
+    uses: ./.github/workflows/vi-semantic-pr-review-callable.yml
+    with:
+      repository: ${{ inputs.repository }}
+      pr_number: ${{ inputs.pr_number }}
+      container_image_version: ${{ inputs.container_image_version }}
+      enforce_trusted_ref: true
+      publish_images: ${{ inputs.publish_images }}
+      create_commit_status: ${{ inputs.create_commit_status }}
+    secrets:
+      VI_REVIEW_TARGET_TOKEN: ${{ secrets.VI_REVIEW_TARGET_TOKEN }}

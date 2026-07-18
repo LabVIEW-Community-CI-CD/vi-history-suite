@@ -111,7 +111,7 @@ describe('comparisonRuntimeDoctor diagnostics', () => {
     expect(summary.at(-1)).toContain('or switch viHistorySuite.runtimeProvider to host');
   });
 
-  it('reports the image-derived LabVIEW year for a container provider (VHS-REQ-657)', () => {
+  it('reports the image-derived LabVIEW year for a container provider (VHS-REQ-657.6)', () => {
     const summary = blockedSummary('container-image-acquisition-failed', {
       executionMode: 'docker-only',
       requestedProvider: 'docker',
@@ -149,7 +149,7 @@ describe('comparisonRuntimeDoctor diagnostics', () => {
     expect(summary.at(-1)).toContain('nationalinstruments/labview:2026q1-windows');
   });
 
-  it('guides a container image platform mismatch toward the engine or version fix (VHS-REQ-650)', () => {
+  it('guides a container image platform mismatch toward the engine or version fix (VHS-REQ-650.5)', () => {
     const summary = blockedSummary(
       'container-image-platform-mismatch',
       {
@@ -260,7 +260,7 @@ describe('comparisonRuntimeDoctor diagnostics', () => {
     expect(joinedSummary).toContain('will not auto-switch bitness');
   });
 
-  it('gives an actionable next step for concurrent LabVIEW bitness conflict (VHS-REQ-621)', () => {
+  it('gives an actionable next step for concurrent LabVIEW bitness conflict (VHS-REQ-621.4)', () => {
     const summary = blockedSummary('windows-host-bitness-conflict', {
       bitness: 'x86',
       hostObservedLabviewBitness: 'x64',
@@ -275,7 +275,7 @@ describe('comparisonRuntimeDoctor diagnostics', () => {
     expect(action).toContain('rerun comparison report generation');
   });
 
-  it('falls back to a generic bitness message when the observed bitness is unknown (VHS-REQ-621)', () => {
+  it('falls back to a generic bitness message when the observed bitness is unknown (VHS-REQ-621.4)', () => {
     const summary = blockedSummary('windows-host-bitness-conflict', {
       bitness: 'x64',
       hostObservedLabviewBitness: 'unknown'
@@ -286,7 +286,7 @@ describe('comparisonRuntimeDoctor diagnostics', () => {
     expect(action).toContain('currently x64');
   });
 
-  it('gives an actionable next step for concurrent LabVIEW version conflict (VHS-REQ-653)', () => {
+  it('gives an actionable next step for concurrent LabVIEW version conflict (VHS-REQ-653.5)', () => {
     const summary = blockedSummary('windows-host-version-conflict', {
       bitness: 'x64',
       requestedLabviewVersion: '2026',
@@ -304,7 +304,7 @@ describe('comparisonRuntimeDoctor diagnostics', () => {
     expect(action).toContain('rerun comparison report generation');
   });
 
-  it('gives an actionable next step for post-failure labview-host-bitness-conflict (VHS-REQ-621)', () => {
+  it('gives an actionable next step for post-failure labview-host-bitness-conflict (VHS-REQ-621.4, VHS-REQ-630.4)', () => {
     const runtimeSelection: ComparisonRuntimeSelection = {
       platform: 'win32',
       executionMode: 'host-only',
@@ -337,7 +337,7 @@ describe('comparisonRuntimeDoctor diagnostics', () => {
     expect(action).toContain('rerun comparison report generation');
   });
 
-  it('gives an actionable next step for post-failure labview-vi-version-too-new (VHS-REQ-658)', () => {
+  it('gives an actionable next step for post-failure labview-vi-version-too-new (VHS-REQ-658.5)', () => {
     const runtimeSelection: ComparisonRuntimeSelection = {
       platform: 'win32',
       executionMode: 'host-only',
@@ -370,7 +370,7 @@ describe('comparisonRuntimeDoctor diagnostics', () => {
     expect(action).toContain('rerun comparison report generation');
   });
 
-  it('names VI Server and the enable path for a Windows VI-Server-disabled block (VHS-REQ-628)', () => {
+  it('names VI Server and the enable path for a Windows VI-Server-disabled block (VHS-REQ-628.1, VHS-REQ-628.3, VHS-REQ-628.4)', () => {
     const summary = blockedSummary(
       'windows-vi-server-tcp-disabled',
       { provider: 'host-native', engine: 'labview-cli' },
@@ -384,9 +384,11 @@ describe('comparisonRuntimeDoctor diagnostics', () => {
     expect(action).toContain('server.tcp.enabled=True');
     expect(action).toContain('restart LabVIEW');
     expect(action).toContain('rerun comparison report generation');
+    expect(action).not.toContain('viHistorySuite.');
+    expect(action).not.toContain('VS Code');
   });
 
-  it('names VI Server and the enable path for a Linux VI-Server-disabled block (VHS-REQ-628)', () => {
+  it('names VI Server and the enable path for a Linux VI-Server-disabled block (VHS-REQ-628.2, VHS-REQ-628.3, VHS-REQ-628.4)', () => {
     const summary = blockedSummary(
       'linux-vi-server-tcp-disabled',
       { platform: 'linux', provider: 'host-native', engine: 'labview-cli' },
@@ -398,6 +400,8 @@ describe('comparisonRuntimeDoctor diagnostics', () => {
     expect(action).toContain('server.tcp.enabled=True in labview.conf');
     expect(action).toContain('restart LabVIEW');
     expect(action).toContain('rerun comparison report generation');
+    expect(action).not.toContain('viHistorySuite.');
+    expect(action).not.toContain('VS Code');
   });
 
   describe('cli connect window surfacing (VHS-REQ-148)', () => {
@@ -464,14 +468,281 @@ describe('comparisonRuntimeDoctor diagnostics', () => {
       expect(summary.some((line) => line.startsWith('cli connect window:'))).toBe(false);
     });
 
-    it('names VI Server and the enable path as the next action (VHS-REQ-630)', () => {
+    it('names VI Server and the enable path as the next action (VHS-REQ-630.1, VHS-REQ-630.2)', () => {
       const action = buildLabviewCliConnectFailedSummary().at(-1) ?? '';
       expect(action).toContain('VI Server');
       expect(action).toContain('-350000');
+      expect(action).toContain('could not connect over VI Server');
+      expect(action).toContain('most often because VI Server (TCP/IP) is disabled');
       expect(action).toContain('Tools');
       expect(action).toContain('server.tcp.enabled=True');
+      expect(action).toContain('configured port');
       expect(action).toContain('restart LabVIEW');
       expect(action).toContain('rerun comparison report generation');
+      expect(action).not.toContain('viHistorySuite.');
+      expect(action).not.toContain('VS Code');
     });
+  });
+});
+
+describe('comparisonRuntimeDoctor next-action taxonomy and fact surfaces', () => {
+  function baseSelection(
+    overrides: Partial<ComparisonRuntimeSelection> = {}
+  ): ComparisonRuntimeSelection {
+    return {
+      platform: 'win32',
+      executionMode: 'host-only',
+      requestedProvider: 'host',
+      requestedLabviewVersion: '2026',
+      bitness: 'x64',
+      provider: 'host-native',
+      notes: [],
+      registryQueryPlans: [],
+      candidates: [],
+      ...overrides
+    };
+  }
+
+  function doctor(
+    reportStatus: ComparisonReportPacketRecord['reportStatus'],
+    selectionOverrides: Partial<ComparisonRuntimeSelection> = {},
+    executionOverrides: Partial<ComparisonReportRuntimeExecution> = {},
+    preflightBlockedReason?: string
+  ): string[] {
+    return buildComparisonRuntimeDoctorSummaryFromFacts({
+      reportStatus,
+      preflightBlockedReason,
+      runtimeSelection: baseSelection(selectionOverrides),
+      runtimeExecution: {
+        state: 'not-run',
+        attempted: true,
+        reportExists: false,
+        ...executionOverrides
+      }
+    });
+  }
+
+  it.each([
+    ['installed-provider-invalid', 'set viHistorySuite.runtimeProvider to host or docker'],
+    ['labview-version-required', 'set viHistorySuite.labviewVersion. Then'],
+    ['labview-bitness-required', 'set viHistorySuite.labviewBitness. Then'],
+    ['configured-labview-exe-path-missing', 'correct or remove viHistorySuite.labviewExePath'],
+    ['labview-cli-not-found-for-bitness', 'install LabVIEWCLI, or set viHistorySuite.labviewCliPath'],
+    ['labview-exe-ambiguous', 'set viHistorySuite.labviewExePath to the exact LabVIEW executable'],
+    [
+      'labview-cli-ambiguous-for-bitness',
+      'set viHistorySuite.labviewCliPath to the exact LabVIEWCLI executable'
+    ],
+    ['comparison-tool-not-found', 'install LabVIEWCLI, or set viHistorySuite.labviewCliPath'],
+    ['windows-vi-server-tcp-disabled', 'enable VI Server in LabVIEW (Tools'],
+    ['linux-vi-server-tcp-disabled', 'enable VI Server TCP/IP for the selected LabVIEW'],
+    ['docker-only-provider-not-supported-on-platform', 'runtimeProvider to host on this platform'],
+    ['docker-provider-not-supported-on-platform', 'runtimeProvider to host on this platform'],
+    ['docker-only-requires-windows-x64-provider', 'use Docker with viHistorySuite.labviewBitness=x64'],
+    ['docker-provider-requires-windows-x64', 'use Docker with viHistorySuite.labviewBitness=x64']
+  ])('gives a settings-oriented next action for %s', (reason, expected) => {
+    const summary = blockedSummary(reason);
+    expect(summary.at(-1)).toContain(expected);
+    expect(summary.at(-1)).toContain('rerun comparison report generation');
+  });
+
+  it('offers both host and Docker recovery paths for a contaminated Windows host surface', () => {
+    const hostSummary = blockedSummary('windows-host-runtime-surface-contaminated', {
+      platform: 'win32',
+      requestedProvider: 'host'
+    });
+    expect(hostSummary.at(-1)).toContain(
+      'close existing LabVIEW/LabVIEWCLI/LVCompare sessions'
+    );
+    expect(hostSummary.at(-1)).toContain('switch to a Docker-backed compare path');
+
+    const dockerSummary = blockedSummary('windows-host-runtime-surface-contaminated', {
+      platform: 'win32',
+      requestedProvider: 'docker',
+      executionMode: 'docker-only',
+      dockerCliAvailable: false
+    });
+    expect(dockerSummary.at(-1)).toContain('close existing LabVIEW/LabVIEWCLI/LVCompare sessions');
+    expect(dockerSummary.at(-1)).toContain('install Docker Desktop');
+  });
+
+  it.each([
+    [{ platform: 'win32', dockerCliAvailable: false }, 'install Docker Desktop'],
+    [{ platform: 'linux', dockerCliAvailable: false }, 'install Docker, start the Docker daemon'],
+    [
+      { platform: 'win32', dockerCliAvailable: true, dockerDaemonReachable: false },
+      'start Docker Desktop'
+    ],
+    [
+      { platform: 'linux', dockerCliAvailable: true, dockerDaemonReachable: false },
+      'start or reconnect the Docker daemon'
+    ],
+    [
+      {
+        platform: 'win32',
+        dockerCliAvailable: true,
+        dockerDaemonReachable: true,
+        containerCapabilityAvailable: false
+      },
+      'switch Docker to a supported Linux or Windows container engine'
+    ]
+  ])('derives Docker recovery guidance %j', (overrides, expected) => {
+    const summary = blockedSummary('docker-provider-unavailable', {
+      requestedProvider: 'docker',
+      executionMode: 'docker-only',
+      ...(overrides as Partial<ComparisonRuntimeSelection>)
+    });
+    expect(summary.at(-1)).toContain(expected);
+  });
+
+  it('names the auto-Docker no-host-fallback rule for installed Docker Desktop', () => {
+    const summary = blockedSummary('auto-docker-installed-provider-unavailable', {
+      requestedProvider: 'docker',
+      executionMode: 'docker-only',
+      platform: 'win32',
+      dockerCliAvailable: true,
+      dockerDaemonReachable: false
+    });
+    expect(summary.at(-1)).toContain(
+      'Windows auto execution will not fall back to host-native'
+    );
+  });
+
+  it('names the container-image platform mismatch and both fixes (VHS-REQ-650.5)', () => {
+    const summary = blockedSummary('container-image-platform-mismatch', {
+      requestedProvider: 'docker',
+      executionMode: 'docker-only',
+      containerHostMode: 'windows'
+    });
+    expect(summary.at(-1)).toContain('different platform than the active Docker engine');
+    expect(summary.at(-1)).toContain('windows-container mode');
+  });
+
+  it('falls back to the host-native guidance for an unmapped blocked reason with a host request', () => {
+    const summary = blockedSummary('an-unmapped-future-reason', { requestedProvider: 'host' });
+    expect(summary.at(-1)).toContain('make the selected host-native runtime available');
+  });
+
+  it('falls back to the generic provider guidance for an unmapped reason with an auto request', () => {
+    const summary = blockedSummary('an-unmapped-future-reason', {
+      requestedProvider: undefined,
+      executionMode: 'auto'
+    });
+    expect(summary.at(-1)).toContain(
+      'make the selected runtime provider available or adjust runtime settings'
+    );
+  });
+
+  it('guides password-protected VI comparison failures (VHS-REQ-630.4)', () => {
+    const summary = doctor('ready-for-runtime', {}, {
+      state: 'failed',
+      diagnosticReason: 'labview-cli-vi-password-protected'
+    });
+    expect(summary.at(-1)).toContain('not password protected');
+  });
+
+  it('guides forward-version VI failures with the selected engine facts (VHS-REQ-658)', () => {
+    const summary = doctor(
+      'ready-for-runtime',
+      { requestedLabviewVersion: '2025', bitness: 'x64' },
+      { state: 'failed', failureReason: 'labview-vi-version-too-new' }
+    );
+    expect(summary.at(-1)).toContain('saved in a newer LabVIEW than the selected LabVIEW 2025 (x64)');
+    expect(summary.at(-1)).toContain('Pick a newer installed LabVIEW');
+  });
+
+  it('guides host-native CreateComparisonReport timeouts through retained observations (VHS-REQ-630.4)', () => {
+    const summary = doctor(
+      'ready-for-runtime',
+      { platform: 'win32', provider: 'host-native' },
+      {
+        state: 'failed',
+        failureReason: 'command-timed-out',
+        diagnosticReason: 'labview-cli-timeout-no-labview-at-banner-snapshot'
+      }
+    );
+    expect(summary.at(-1)).toContain('review the retained runtime process observations');
+  });
+
+  it('falls back to retained runtime notes for an unclassified failure', () => {
+    const summary = doctor('ready-for-runtime', {}, {
+      state: 'failed',
+      failureReason: 'some-unclassified-failure'
+    });
+    expect(summary.at(-1)).toContain('use the retained runtime notes');
+  });
+
+  it('points a succeeded run at the retained report and dashboard surfaces', () => {
+    const summary = doctor('ready-for-runtime', {}, { state: 'succeeded' });
+    expect(summary.at(-1)).toContain('review the retained LabVIEW comparison report');
+  });
+
+  it('points an unrun trusted-workspace state at report generation', () => {
+    const summary = doctor('ready-for-runtime', {}, { state: 'not-run' });
+    expect(summary.at(-1)).toContain(
+      'run comparison report generation from a trusted workspace'
+    );
+  });
+
+  it('resolves a preflight block into a preflight next action', () => {
+    const summary = doctor(
+      'blocked-preflight',
+      {},
+      { state: 'not-run' },
+      'unsupported-selected-file'
+    );
+    expect(summary.at(-1)).toContain('resolve the preflight block (unsupported-selected-file)');
+    expect(summary).toContain('Preflight blocked reason: unsupported-selected-file.');
+  });
+
+  it('surfaces selected host runtime tool facts', () => {
+    const summary = doctor(
+      'ready-for-runtime',
+      {
+        provider: 'host-native',
+        labviewExe: {
+          kind: 'labview-exe',
+          path: 'C:\\LV\\LabVIEW.exe',
+          source: 'scan',
+          exists: true,
+          bitness: 'x64'
+        },
+        labviewCli: {
+          kind: 'labview-cli',
+          path: 'C:\\LV\\LabVIEWCLI.exe',
+          source: 'scan',
+          exists: true,
+          bitness: 'x64'
+        },
+        hostLabviewIniPath: 'C:\\LV\\LabVIEW.ini',
+        hostLabviewTcpPort: 3363,
+        hostRuntimeConflictDetected: false
+      },
+      { state: 'succeeded' }
+    );
+    const toolLine = summary.find((line) => line.startsWith('Selected runtime tools:'));
+    expect(toolLine).toBeDefined();
+    expect(toolLine).toContain('LabVIEW=C:\\LV\\LabVIEW.exe');
+    expect(toolLine).toContain('LabVIEWCLI=C:\\LV\\LabVIEWCLI.exe');
+    expect(toolLine).toContain('HostLabVIEW.ini=C:\\LV\\LabVIEW.ini');
+    expect(toolLine).toContain('HostVITcpPort=3363');
+    expect(toolLine).toContain('HostConflictDetected=no');
+  });
+
+  it('reports a container-derived LabVIEW version label for container providers (VHS-REQ-657.6)', () => {
+    const summary = doctor(
+      'ready-for-runtime',
+      {
+        provider: 'linux-container',
+        requestedProvider: 'docker',
+        executionMode: 'docker-only',
+        requestedLabviewVersion: undefined,
+        containerImage: 'nationalinstruments/labview:2026q1patch2-windows'
+      },
+      { state: 'succeeded' }
+    );
+    expect(summary).toContain(
+      'Requested runtime: provider=docker; LabVIEW=2026; bitness=x64.'
+    );
   });
 });

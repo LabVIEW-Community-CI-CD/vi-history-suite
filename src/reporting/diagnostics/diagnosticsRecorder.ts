@@ -5,6 +5,7 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 
 import { ComparisonReportPacketRecord } from '../comparisonReportPacket';
+import { serializeJsonArtifact } from '../../support/jsonArtifact';
 import {
   ObserveWindowsProcessesOptions,
   ObserveWindowsTcpListenersOptions,
@@ -223,7 +224,7 @@ export function createDiagnosticsRecorder(deps: DiagnosticsRecorderDeps = {}): D
   const safeWriteJson = async (filePath: string, value: unknown): Promise<boolean> => {
     try {
       await mkdir(path.dirname(filePath), { recursive: true });
-      await writeFile(filePath, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
+      await writeFile(filePath, serializeJsonArtifact(value), 'utf8');
       return true;
     } catch {
       return false;

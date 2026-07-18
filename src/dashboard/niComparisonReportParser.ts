@@ -151,10 +151,31 @@ function normalizeText(value: string): string {
 }
 
 function decodeHtmlEntities(value: string): string {
-  return value
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>');
+  const namedEntities: Record<string, string> = {
+    quot: '"',
+    apos: "'",
+    amp: '&',
+    lt: '<',
+    gt: '>',
+    nbsp: ' '
+  };
+  // Single pass so an already-escaped ampersand (e.g. `&amp;lt;`) is not
+  // double-decoded into `<`. Supports the common named entities plus decimal
+  // and hexadecimal numeric character references.
+  const fromCodePoint = (codePoint: number, fallback: string): string => {
+    if (!Number.isInteger(codePoint) || codePoint < 0 || codePoint > 0x10ffff) {
+      return fallback;
+    }
+    return String.fromCodePoint(codePoint);
+  };
+  return value.replace(/&(#\d+|#x[0-9a-fA-F]+|[a-zA-Z]+);/g, (match, entity: string) => {
+    if (entity.startsWith('#x') || entity.startsWith('#X')) {
+      return fromCodePoint(Number.parseInt(entity.slice(2), 16), match);
+    }
+    if (entity.startsWith('#')) {
+      return fromCodePoint(Number.parseInt(entity.slice(1), 10), match);
+    }
+    const decoded = namedEntities[entity.toLowerCase()];
+    return decoded ?? match;
+  });
 }

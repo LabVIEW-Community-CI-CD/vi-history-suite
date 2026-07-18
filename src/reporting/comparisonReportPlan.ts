@@ -1,6 +1,7 @@
-import { createHash } from 'node:crypto';
 import * as path from 'node:path';
 
+import { createDeterministicId } from '../support/deterministicId';
+import { requireNonEmpty } from '../support/requireNonEmpty';
 import { normalizeRelativeGitPath } from '../git/gitCli';
 
 export type ComparisonReportType = 'diff' | 'print';
@@ -299,10 +300,6 @@ export function buildLvComparePlan(options: LvComparePlanOptions): ComparisonCom
   };
 }
 
-function createDeterministicId(value: string): string {
-  return createHash('sha256').update(value).digest('hex').slice(0, 12);
-}
-
 function deriveRelativeDirectory(normalizedRelativePath?: string): string {
   const trimmed = normalizedRelativePath?.trim();
   if (!trimmed) {
@@ -337,13 +334,4 @@ function buildStageLabel(side: 'left' | 'right', revisionId?: string): string {
 
   const sanitized = trimmed.replace(/[^A-Za-z0-9._-]+/g, '-').replace(/-+/g, '-');
   return `${side}-${sanitized.slice(0, 12)}`;
-}
-
-function requireNonEmpty(value: string, field: string): string {
-  const trimmed = value.trim();
-  if (!trimmed) {
-    throw new Error(`${field} must be non-empty`);
-  }
-
-  return trimmed;
 }

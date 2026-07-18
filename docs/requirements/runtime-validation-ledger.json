@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "description": "Committed record of the last real-runtime comparison validation for each Linux-executable comparison-runtime track. The risk ledger (scripts/buildRiskLedger.js, VHS-REQ-601) reads this file and surfaces any track whose lastValidatedVersion is not the current build version as a selectable runtime-fidelity re-validation risk. Windows host-native and windows-container tracks are intentionally NOT listed as Linux-executable tracks: they are covered by the parked platform-proof awareness list (issue #1316) because they are not executable on a Linux host. EXCEPTION: a track marked releaseGating:true (linuxExecutable:false) is the mandatory local Vagrant release attestation (VHS-REQ-666) read by scripts/checkReleaseReadiness.js --require-release-attestation; the marketplace-release workflow fails closed unless its lastValidatedVersion equals the release version. Update a track's lastValidatedVersion/lastValidatedCommit/evidence after re-running its driver against a new build (use scripts/recordRuntimeValidation.js).",
+  "tracks": [
+    {
+      "trackId": "linux-host-native",
+      "platform": "linux",
+      "provider": "host-native",
+      "linuxExecutable": true,
+      "lastValidatedVersion": "1.33.2",
+      "lastValidatedCommit": "c2d4d297",
+      "evidence": "P10 extraction milestone: real Linux host-native LabVIEW 2026 CreateComparisonReport of lv_icon.vi (5376833..fc09736) via EXTRACTED shouldUseLinuxHostNativeShortPathStaging + buildLinuxHostNativeShortPathLayout (linuxHostNativeStaging.ts, present at c2d4d297) succeeded, reportExists=true, short-path staging engaged (materializedTree under /tmp/vi-history-suite-runtime), 2026-07-18",
+      "fixture": "labview-icon-editor resource/plugins/lv_icon.vi"
+    },
+    {
+      "trackId": "linux-container-2026q1",
+      "platform": "linux",
+      "provider": "linux-container",
+      "image": "nationalinstruments/labview:2026q1-linux",
+      "linuxExecutable": true,
+      "lastValidatedVersion": "1.33.2",
+      "lastValidatedCommit": "51c99d93",
+      "evidence": "P3b coupled-extraction milestone: real docker linux-container 2026q1 CreateComparisonReport via EXTRACTED buildLinuxContainerLabviewCliScript (linuxContainerLaunchScriptBuilders.ts, present at merge 51c99d93) succeeded, reportExists=true, byte-identical script len 2200 sha 1ff17a37f0cf7931, 2026-07-18",
+      "fixture": "labview-icon-editor resource/plugins/lv_icon.vi"
+    },
+    {
+      "trackId": "linux-container-2026q1patch2",
+      "platform": "linux",
+      "provider": "linux-container",
+      "image": "nationalinstruments/labview:2026q1patch2-linux",
+      "linuxExecutable": true,
+      "lastValidatedVersion": "1.33.2",
+      "lastValidatedCommit": "9ea4ab13",
+      "evidence": "issue:#1317",
+      "fixture": "labview-icon-editor resource/plugins/lv_icon.vi"
+    },
+    {
+      "trackId": "linux-container-2025q3",
+      "platform": "linux",
+      "provider": "linux-container",
+      "image": "nationalinstruments/labview:2025q3-linux",
+      "linuxExecutable": true,
+      "lastValidatedVersion": "1.33.2",
+      "lastValidatedCommit": "9ea4ab13",
+      "evidence": "issue:#1317",
+      "fixture": "labview-icon-editor resource/plugins/lv_icon.vi"
+    },
+    {
+      "trackId": "linux-container-2025q3patch1",
+      "platform": "linux",
+      "provider": "linux-container",
+      "image": "nationalinstruments/labview:2025q3patch1-linux",
+      "linuxExecutable": true,
+      "lastValidatedVersion": "1.33.2",
+      "lastValidatedCommit": "48e00d7",
+      "evidence": "issue:#1317",
+      "fixture": "labview-icon-editor resource/plugins/lv_icon.vi"
+    },
+    {
+      "trackId": "vagrant-win-x86-hostnative",
+      "platform": "windows",
+      "provider": "vagrant",
+      "linuxExecutable": false,
+      "releaseGating": true,
+      "lastValidatedVersion": "1.34.1",
+      "lastValidatedCommit": "ec611852",
+      "evidence": "vagrant local validation 2026-07-18T17:44:42.710Z; devtools-prerelease contentDigest=5e9518b03f89fb667a55cd52f642ad08b841a748a8678c207ff177f0c1356c85",
+      "fixture": "labview-icon-editor resource/plugins/lv_icon.vi (x86 host-native headless, VHS-REQ-665)",
+      "boxSha256": "4cbbc387e751546541136042702e75880e1e08082f016acf472c6100aaaf5ea1"
+    },
+    {
+      "trackId": "vagrant-win-pathadmit-validation",
+      "platform": "windows",
+      "provider": "vagrant",
+      "linuxExecutable": false,
+      "releaseGating": false,
+      "lastValidatedVersion": "1.33.2",
+      "lastValidatedCommit": "f1ca054a",
+      "evidence": "vagrant pathadmit+validation proof sha256:52d0e648d1b7b81ec5678277c795fafbdc15ae056bbaee354f5840f3b3f68d44 2026-07-17T06:27:36.094Z",
+      "fixture": "real Windows user-PATH admission (persistWindowsUserPathPrepend) + validateLocalRuntimeSettingsCli --proof-out (runtime-validation-proof@v1)"
+    }
+  ]
+}

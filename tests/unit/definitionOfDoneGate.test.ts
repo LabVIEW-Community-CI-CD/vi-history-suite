@@ -105,7 +105,7 @@ describe('Definition-of-Done gate', () => {
     }
   });
 
-  it('passes for the committed repo contract', () => {
+  it('passes for the committed repo contract (VHS-REQ-615.9)', () => {
     const result = runDefinitionOfDoneGate({ cwd: repoRoot });
 
     expect(result.success).toBe(true);
@@ -122,7 +122,7 @@ describe('Definition-of-Done gate', () => {
     expect(renderResult(result)).toContain('[dod-gate] Gate passed.');
   });
 
-  it('keeps the required hosted and closeout gate order explicit', () => {
+  it('keeps the required hosted and closeout gate order explicit (VHS-REQ-613.8, VHS-REQ-615.7)', () => {
     expect(REQUIRED_CI_STEPS).toEqual([
       'Branch Governance',
       'Checkout',
@@ -158,6 +158,23 @@ describe('Definition-of-Done gate', () => {
     ).toBe(true);
   });
 
+  it('pins the hosted scanner-visible DoD gate to the required CI workflow (VHS-REQ-615.10)', () => {
+    const workflow = fs.readFileSync(path.join(repoRoot, '.github', 'workflows', 'ci.yml'), 'utf8');
+
+    expect(workflow).toContain('name: DoD Gate / dod');
+    expect(workflow).toContain('npm run dod:gate');
+    expect(workflow).toContain('npm run package');
+    expect(workflow).toContain('dod-gate-report.txt');
+    expect(
+      assertOrdered(
+        workflow,
+        ['Package', 'DoD Gate / dod', 'Governance Gate Reports / governance-gates'],
+        (step) => `name: ${step}`
+      ).passed
+    ).toBe(true);
+    expect(runDefinitionOfDoneGate({ cwd: repoRoot }).success).toBe(true);
+  });
+
   it('fails ordered checks when a required predecessor moves later', () => {
     const result = assertOrdered(
       "['docs:links']\n['traceability:audit']",
@@ -187,7 +204,7 @@ describe('Definition-of-Done gate', () => {
     expect(parseCsvLine('A,"B, C","D ""quoted"""')).toEqual(['A', 'B, C', 'D "quoted"']);
   });
 
-  it('requires decision-complete issue template fields and optional copilot prompt slot', () => {
+  it('requires decision-complete issue template fields and optional copilot prompt slot (VHS-REQ-615.1)', () => {
     expect(REQUIRED_DECISION_COMPLETE_ISSUE_TEMPLATE_FIELDS).toEqual([
       'requirement_id',
       'files_to_inspect',
@@ -216,7 +233,7 @@ describe('Definition-of-Done gate', () => {
     expect(completeResult.passed).toBe(true);
   });
 
-  it('requires lightweight requirement-targeted PR evidence in docs and PR template', () => {
+  it('requires lightweight requirement-targeted PR evidence in docs and PR template (VHS-REQ-615.3, VHS-REQ-615.4)', () => {
     const missingTemplateFieldRoot = createFixture({
       'docs/testing/test-plan.md': `## PR Evidence Contract
 linked issue
@@ -225,8 +242,17 @@ validation commands
 traceability/RTM impact
 out-of-scope
 closeout readiness
-\`npm run dod:gate\`
+required hosted CI checks
+local gates
+targeted tests
 standards provenance
+environment blockers
+\`npm run traceability:audit\`
+\`npm run docs:links\`
+\`npm run check\`
+\`npm test\`
+\`npm run coverage:map\`
+\`npm run package\`
 `,
       '.github/pull_request_template.md': `## Requirement-Targeted PR Evidence (lightweight)
 - **Linked issue (required):**
@@ -249,8 +275,17 @@ validation commands
 traceability/RTM impact
 out-of-scope
 closeout readiness
-\`npm run dod:gate\`
+required hosted CI checks
+local gates
+targeted tests
 standards provenance
+environment blockers
+\`npm run traceability:audit\`
+\`npm run docs:links\`
+\`npm run check\`
+\`npm test\`
+\`npm run coverage:map\`
+\`npm run package\`
 `,
       '.github/pull_request_template.md': `## Requirement-Targeted PR Evidence (lightweight)
 - **Linked issue (required):**

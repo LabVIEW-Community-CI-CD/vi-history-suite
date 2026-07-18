@@ -280,8 +280,17 @@ function checkPrEvidenceDocs(cwd) {
     'traceability/RTM impact',
     'out-of-scope',
     'closeout readiness',
-    '`npm run dod:gate`',
-    'standards provenance'
+    'required hosted CI checks',
+    'local gates',
+    'targeted tests',
+    'standards provenance',
+    'environment blockers',
+    '`npm run traceability:audit`',
+    '`npm run docs:links`',
+    '`npm run check`',
+    '`npm test`',
+    '`npm run coverage:map`',
+    '`npm run package`'
   ];
   const requiredInTemplate = [
     '## Requirement-Targeted PR Evidence (lightweight)',
@@ -317,6 +326,10 @@ function checkTraceabilityMapping(cwd) {
   const marketplaceListingRow = inventory.find((entry) => entry.Path === 'scripts/verifyMarketplaceListing.js');
   const maintainerOpsRow = inventory.find((entry) => entry.Path === 'docs/maintainer-operations.md');
   const testRow = inventory.find((entry) => entry.Path === 'tests/unit/definitionOfDoneGate.test.ts');
+  const closeoutTestRow = inventory.find((entry) => entry.Path === 'tests/unit/closeoutEvidenceScript.test.ts');
+  const marketplaceWorkflowTestRow = inventory.find(
+    (entry) => entry.Path === 'tests/unit/marketplaceReleaseWorkflow.test.ts'
+  );
   const customizationTestRow = inventory.find(
     (entry) => entry.Path === 'tests/unit/customizationGovernanceAuditScript.test.ts'
   );
@@ -337,6 +350,8 @@ function checkTraceabilityMapping(cwd) {
   ];
   const requiredVerification = [
     'tests/unit/definitionOfDoneGate.test.ts',
+    'tests/unit/closeoutEvidenceScript.test.ts',
+    'tests/unit/marketplaceReleaseWorkflow.test.ts',
     'tests/unit/customizationGovernanceAuditScript.test.ts',
     'tests/unit/requirementsDocs.test.ts',
     'tests/unit/traceabilityAuditScript.test.ts'
@@ -367,6 +382,12 @@ function checkTraceabilityMapping(cwd) {
     testRow?.Classification === 'mapped' &&
     testRow?.RtmCoverage === 'Yes' &&
     testRow?.Notes.includes('VHS-REQ-615') &&
+    closeoutTestRow?.Classification === 'mapped' &&
+    closeoutTestRow?.RtmCoverage === 'Yes' &&
+    closeoutTestRow?.Notes.includes('VHS-REQ-615') &&
+    marketplaceWorkflowTestRow?.Classification === 'mapped' &&
+    marketplaceWorkflowTestRow?.RtmCoverage === 'Yes' &&
+    marketplaceWorkflowTestRow?.Notes.includes('VHS-REQ-615') &&
     customizationTestRow?.Classification === 'mapped' &&
     customizationTestRow?.RtmCoverage === 'Yes' &&
     customizationTestRow?.Notes.includes('VHS-REQ-615') &&

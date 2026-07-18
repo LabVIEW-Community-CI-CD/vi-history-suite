@@ -252,32 +252,46 @@ export function summarizeManifestLayers(manifest: unknown): ImageDownloadSize | 
  * Default registry HTTP boundary: a single bounded HTTPS GET that buffers the
  * (small) JSON body with a size cap and a timeout. Never follows redirects.
  */
-const defaultRegistryHttpRequest: RegistryHttpRequest = (request) =>
-  new Promise<RegistryHttpResponse>((resolve, reject) => {
-    const MAX_BODY_BYTES = 5 * 1024 * 1024;
-    const req = https.request(request.url, { method: 'GET', headers: request.headers }, (response) => {
-      response.setEncoding('utf8');
-      let body = '';
-      let size = 0;
-      response.on('data', (chunk: string) => {
-        size += Buffer.byteLength(chunk, 'utf8');
-        if (size > MAX_BODY_BYTES) {
-          req.destroy(new Error('registry response exceeded size cap'));
-          return;
-        }
-        body += chunk;
+/**
+ * Build the default registry HTTP boundary over an injectable `https.request`:
+ * a single bounded HTTPS GET that buffers the (small) JSON body with a size cap
+ * and a timeout, never following redirects. The request function is a parameter
+ * so the size-cap / timeout / error / end branches can be unit-tested with a
+ * fake request/response pair, matching the codebase injectable-boundary
+ * convention.
+ */
+export function createRegistryHttpRequest(
+  httpRequest: typeof https.request = https.request
+): RegistryHttpRequest {
+  return (request) =>
+    new Promise<RegistryHttpResponse>((resolve, reject) => {
+      const MAX_BODY_BYTES = 5 * 1024 * 1024;
+      const req = httpRequest(request.url, { method: 'GET', headers: request.headers }, (response) => {
+        response.setEncoding('utf8');
+        let body = '';
+        let size = 0;
+        response.on('data', (chunk: string) => {
+          size += Buffer.byteLength(chunk, 'utf8');
+          if (size > MAX_BODY_BYTES) {
+            req.destroy(new Error('registry response exceeded size cap'));
+            return;
+          }
+          body += chunk;
+        });
+        response.on('end', () => {
+          resolve({ statusCode: response.statusCode ?? 0, headers: response.headers, body });
+        });
+        response.on('error', reject);
       });
-      response.on('end', () => {
-        resolve({ statusCode: response.statusCode ?? 0, headers: response.headers, body });
+      req.setTimeout(request.timeoutMs, () => {
+        req.destroy(new Error('registry request timed out'));
       });
-      response.on('error', reject);
+      req.on('error', reject);
+      req.end();
     });
-    req.setTimeout(request.timeoutMs, () => {
-      req.destroy(new Error('registry request timed out'));
-    });
-    req.on('error', reject);
-    req.end();
-  });
+}
+
+const defaultRegistryHttpRequest: RegistryHttpRequest = createRegistryHttpRequest();
 
 function headerValue(
   headers: Readonly<Record<string, string | string[] | undefined>>,

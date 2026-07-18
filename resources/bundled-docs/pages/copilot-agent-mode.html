@@ -1,0 +1,43 @@
+<h1>Copilot Agent Mode</h1>
+<p>VI History Suite ships a built-in Model Context Protocol (MCP) server that exposes its LabVIEW VI comparison, history, and repository analysis to AI agents. When the extension is installed, Copilot <code>agent mode</code> discovers the server automatically, so there is nothing to configure.</p>
+<p>The agent-mode surface requires VS Code 1.101 or later; on older editors the extension skips the registration and every other feature keeps working.</p>
+<h2>What You Can Ask</h2>
+<p>Work with your VIs in plain language, for example:</p>
+<ul>
+<li>Summarize what changed in a VI comparison report.</li>
+<li>Compare the last two revisions of a specific VI and explain the change.</li>
+<li>Walk a VI's recent history and describe how it evolved.</li>
+<li>Index the LabVIEW VIs in the repository, ranked by recent activity.</li>
+<li>Review the LabVIEW VIs changed in a pull request and post a summary comment.</li>
+<li>Fetch or validate the published VI-diff schemas.</li>
+</ul>
+<h2>Available Tools</h2>
+<p>The server provides eight tools:</p>
+<table>
+<thead>
+<tr><th>Tool</th><th>What it does</th><th>Runtime</th></tr>
+</thead>
+<tbody>
+<tr><td><code>summarize_vi_comparison</code></td><td>Concise what-changed narrative for a comparison report.</td><td>None</td></tr>
+<tr><td><code>get_vi_semantic_comparison</code></td><td>Full semantic comparison model for a comparison report.</td><td>None</td></tr>
+<tr><td><code>compare_vi_revisions</code></td><td>Runs a LabVIEW comparison between two Git revisions.</td><td>Comparison runtime</td></tr>
+<tr><td><code>summarize_vi_history</code></td><td>Walks a VI's recent revisions and builds an evolution timeline.</td><td>Comparison runtime</td></tr>
+<tr><td><code>index_repository_vis</code></td><td>Surveys tracked VIs, activity-ranked, with revision counts.</td><td>None (Git only)</td></tr>
+<tr><td><code>build_vi_pr_review</code></td><td>Reviews a pull request by comparing every changed VI; the markdown form is a sticky PR comment.</td><td>Comparison runtime</td></tr>
+<tr><td><code>get_vi_semantic_schema</code></td><td>Returns the published VI-diff JSON Schemas.</td><td>None</td></tr>
+<tr><td><code>validate_vi_semantic_document</code></td><td>Validates a self-describing document against its schema.</td><td>None</td></tr>
+</tbody>
+</table>
+<h2>Runtime Requirements</h2>
+<ul>
+<li><code>compare_vi_revisions</code>, <code>summarize_vi_history</code>, and <code>build_vi_pr_review</code> run a real LabVIEW comparison, so they need a comparison runtime (the same host LabVIEW or Docker image you selected for the interactive compare flow) and may take a few minutes.</li>
+<li>The remaining tools use Git or supplied data only and return immediately.</li>
+</ul>
+<h2>Open VI-Diff Standard</h2>
+<p>The comparison, history, and repository-index results are published as versioned Draft-07 JSON Schemas so other tools can consume or validate them:</p>
+<ul>
+<li><code>vi-history-suite/vi-semantic-comparison@v1</code></li>
+<li><code>vi-history-suite/vi-semantic-history@v1</code></li>
+<li><code>vi-history-suite/vi-repository-index@v1</code></li>
+</ul>
+<p>Fetch a schema with <code>get_vi_semantic_schema</code> and validate any document that carries a <code>schema</code> field with <code>validate_vi_semantic_document</code>. The full tool reference is published in the project repository.</p>

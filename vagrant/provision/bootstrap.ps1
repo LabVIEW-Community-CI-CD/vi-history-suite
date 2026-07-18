@@ -265,6 +265,51 @@ if ($LASTEXITCODE -ne 0) {
 }
 Write-Step "WinRM configured for Vagrant communicator."
 
+# ---------------------------------------------------------------------------
+# 4b. Boot-time account self-heal (VHS-REQ-599 durability)
+# ---------------------------------------------------------------------------
+# A packaged box can ship with a `vagrant` account that Windows later flags as
+# RESTRICTED (disabled, expired password, or a missing logon right), which makes
+# `vagrant up` loop on WinRM "Authentication failure" at the lock screen. Because
+# `vagrant package` does not reliably preserve the un-restricted state, install a
+# SYSTEM startup scheduled task that re-applies repair-vagrant-account.ps1 before
+# the WinRM handshake, so every clone self-heals without an interactive login.
+Write-Step "Installing boot-time account self-heal scheduled task..."
+$selfHealDir = 'C:\vagrant-selfheal'
+if (-not (Test-Path -LiteralPath $selfHealDir)) {
+  New-Item -ItemType Directory -Path $selfHealDir -Force | Out-Null
+}
+$repairSource = Join-Path $PSScriptRoot 'repair-vagrant-account.ps1'
+$repairTarget = Join-Path $selfHealDir 'repair-vagrant-account.ps1'
+# The provisioner uploads only bootstrap.ps1, so $PSScriptRoot may not contain the
+# sibling repair script. Fall back to the mounted workspace synced folder, which is
+# present during `vagrant up`/`vagrant provision`.
+if (-not (Test-Path -LiteralPath $repairSource)) {
+  $workspaceRepair = 'C:\vihs-workspace\vagrant\provision\repair-vagrant-account.ps1'
+  if (Test-Path -LiteralPath $workspaceRepair) {
+    $repairSource = $workspaceRepair
+  }
+}
+if (Test-Path -LiteralPath $repairSource) {
+  Copy-Item -LiteralPath $repairSource -Destination $repairTarget -Force
+  Write-Step "Copied repair-vagrant-account.ps1 into $selfHealDir."
+} else {
+  Write-Step "WARNING: repair-vagrant-account.ps1 not found beside bootstrap; self-heal task will be skipped if the target is also absent."
+}
+if (Test-Path -LiteralPath $repairTarget) {
+  $selfHealAction = New-ScheduledTaskAction -Execute 'powershell.exe' `
+    -Argument "-NonInteractive -ExecutionPolicy Bypass -File `"$repairTarget`""
+  $selfHealTrigger = New-ScheduledTaskTrigger -AtStartup
+  $selfHealPrincipal = New-ScheduledTaskPrincipal -UserId 'SYSTEM' -LogonType ServiceAccount -RunLevel Highest
+  $selfHealSettings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
+    -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Minutes 5)
+  Register-ScheduledTask -TaskName 'VIHSVagrantSelfHeal' -Action $selfHealAction `
+    -Trigger $selfHealTrigger -Principal $selfHealPrincipal -Settings $selfHealSettings -Force | Out-Null
+  Write-Step "Boot-time self-heal task 'VIHSVagrantSelfHeal' registered."
+} else {
+  Write-Step "Self-heal task skipped: repair script not present in $selfHealDir."
+}
+
 # Enable LabVIEW VI Server TCP so LabVIEWCLI can connect and pre-authorize the
 # listener. Without an explicit rule, Windows Defender can block behind an
 # interactive prompt that local automation cannot answer.

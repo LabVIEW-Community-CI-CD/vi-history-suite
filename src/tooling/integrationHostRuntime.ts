@@ -34,7 +34,6 @@ export const VI_HISTORY_SUITE_LINUX_RUNTIME_PACKAGES = {
     'libatk-bridge2.0-0',
     'libatspi2.0-0',
     'libdbus-1-3',
-    'libei1',
     'libgbm1',
     'libgtk-3-0',
     'libnspr4',
@@ -91,11 +90,20 @@ function toWslMountedPath(windowsPath: string): string {
 export function resolveStandardWindowsCodeCliPath(
   platform = process.platform,
   localAppData = process.env.LOCALAPPDATA,
-  deps: ResolveStandardWindowsCodeCliPathDeps = {}
+  deps: ResolveStandardWindowsCodeCliPathDeps = {},
+  userProfile = process.env.USERPROFILE
 ): string {
   const existsSync = deps.existsSync ?? fsSync.existsSync;
+  const trimmedLocalAppData = localAppData?.trim().replace(/\//g, '\\');
+  // Never bake a developer-specific profile into the fallback. Prefer the real
+  // LOCALAPPDATA, then derive `<USERPROFILE>\AppData\Local`, then the built-in
+  // user-agnostic Default profile so an absent environment still resolves to a
+  // valid, non-personal path on any machine.
+  const trimmedUserProfile = userProfile?.trim().replace(/\//g, '\\');
   const normalizedLocalAppData =
-    localAppData?.trim().replace(/\//g, '\\') || 'C:\\Users\\sveld\\AppData\\Local';
+    trimmedLocalAppData ||
+    (trimmedUserProfile ? path.win32.join(trimmedUserProfile, 'AppData', 'Local') : undefined) ||
+    'C:\\Users\\Default\\AppData\\Local';
   const windowsCandidates = [
     'C:\\Program Files\\Microsoft VS Code\\bin\\code.cmd',
     path.win32.join(normalizedLocalAppData, 'Programs', 'Microsoft VS Code', 'bin', 'code.cmd')

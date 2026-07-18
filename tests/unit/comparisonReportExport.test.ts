@@ -157,7 +157,7 @@ describe('describeMissingGraphicsReportReason', () => {
 });
 
 describe('resolveComparisonReportExportPlan', () => {
-  it('prefers the generated report with its assets directory when both exist', async () => {
+  it('prefers the generated report with its assets directory when both exist (VHS-REQ-626.2)', async () => {
     const source = createSource();
     const expectedAssetsDirectoryPath = path.join(
       path.dirname(source.reportFilePath),
@@ -228,7 +228,7 @@ describe('resolveComparisonReportExportPlan', () => {
 });
 
 describe('exportComparisonReportBundle', () => {
-  it('copies the report HTML and its assets directory preserving original names', async () => {
+  it('copies the report HTML and its assets directory preserving original names (VHS-REQ-626.2)', async () => {
     const tempRoot = await makeTempRoot();
     const sourceDir = path.join(tempRoot, 'source');
     const assetsDir = path.join(sourceDir, 'diff-report-foo.vi_files');
@@ -294,7 +294,7 @@ describe('exportComparisonReportBundle', () => {
     ).resolves.toContain('packet');
   });
 
-  it('exports a self-contained single-file report as the HTML alone (VHS-REQ-640)', async () => {
+  it('exports a self-contained single-file report as the HTML alone (VHS-REQ-640, VHS-REQ-626.2)', async () => {
     const tempRoot = await makeTempRoot();
     const sourceDir = path.join(tempRoot, 'source');
     await fs.mkdir(sourceDir, { recursive: true });
@@ -328,7 +328,7 @@ describe('exportComparisonReportBundle', () => {
     ).resolves.toContain('data:image/png;base64,AAAA');
   });
 
-  it('embeds the revision context into the exported generated report without mutating the source (multi-file)', async () => {
+  it('embeds the revision context into the exported generated report without mutating the source (multi-file) (VHS-REQ-626.3, VHS-REQ-644.2)', async () => {
     const tempRoot = await makeTempRoot();
     const sourceDir = path.join(tempRoot, 'source');
     const assetsDir = path.join(sourceDir, 'diff-report-foo.vi_files');
@@ -516,13 +516,21 @@ describe('runComparisonReportExport', () => {
     expect(deps.exportBundle).not.toHaveBeenCalled();
   });
 
-  it('exports the bundle into a timestamped folder under the chosen directory', async () => {
+  it('exports the bundle into timestamped folders under the chosen directory without overwriting prior exports (VHS-REQ-626.5)', async () => {
     const deps = createBaseDeps();
+    const now = vi
+      .fn()
+      .mockReturnValueOnce(new Date('2026-06-07T12:00:00.000Z'))
+      .mockReturnValueOnce(new Date('2026-06-07T12:01:00.000Z'));
+    deps.now = now;
 
     const result = await runComparisonReportExport(createSource(), deps);
+    const secondResult = await runComparisonReportExport(createSource(), deps);
 
     expect(result.outcome).toBe('exported');
+    expect(secondResult.outcome).toBe('exported');
     expect(result.copiedAssets).toBe(true);
+    expect(secondResult.bundleDirectoryPath).not.toBe(result.bundleDirectoryPath);
     expect(deps.exportBundle).toHaveBeenCalledWith({
       plan: expect.objectContaining({ evidenceKind: 'generated-report' }),
       destinationDirectory: path.join(
@@ -535,9 +543,17 @@ describe('runComparisonReportExport', () => {
         baseHash: 'bbbbbbbbbbbb'
       })
     });
+    expect(deps.exportBundle).toHaveBeenCalledWith(
+      expect.objectContaining({
+        destinationDirectory: path.join(
+          '/chosen',
+          'vi-comparison-report-foo-vi-2026-06-07T12-01-00-000Z'
+        )
+      })
+    );
   });
 
-  it('opens the exported HTML in the browser when the user selects that action', async () => {
+  it('opens the exported HTML in the browser when the user selects that action (VHS-REQ-626.6)', async () => {
     const deps = createBaseDeps();
     deps.showInformationMessage = vi.fn(async () => 'Open in Browser' as never);
 
@@ -550,7 +566,7 @@ describe('runComparisonReportExport', () => {
     );
   });
 
-  it('reveals the exported HTML in the OS file manager when requested', async () => {
+  it('reveals the exported HTML in the OS file manager when requested (VHS-REQ-626.6)', async () => {
     const deps = createBaseDeps();
     deps.showInformationMessage = vi.fn(async () => 'Show in Folder' as never);
 
@@ -600,7 +616,7 @@ describe('runComparisonReportExport', () => {
     return deps;
   }
 
-  it('confirms with a modal reason before falling back to the evidence packet', async () => {
+  it('confirms with a modal reason before falling back to the evidence packet (VHS-REQ-626.4)', async () => {
     const deps = createPacketDeps();
     deps.showWarningMessage = vi.fn(async () => 'Export Evidence Packet' as never);
 
@@ -621,7 +637,7 @@ describe('runComparisonReportExport', () => {
     );
   });
 
-  it('cancels without picking a folder when the packet confirmation is declined', async () => {
+  it('cancels without picking a folder when the packet confirmation is declined (VHS-REQ-626.4)', async () => {
     const deps = createPacketDeps();
     deps.showWarningMessage = vi.fn(async () => undefined);
 
@@ -789,5 +805,30 @@ describe('injectRevisionContextIntoExportedReportHtml', () => {
     expect(out).toContain('comparison-report-panel-context');
     expect(out).toContain('<p>loose</p>');
     expect(out).toContain('.vihs-compare-context {');
+  });
+
+  it('inserts a commit subject/body containing $-sequences literally (no replacement-pattern corruption)', () => {
+    // `$&`, `$1`, `$'`, `` $` ``, `$$` are special patterns in a
+    // String.prototype.replace string replacement. escapeHtml does not escape
+    // `$`, so a commit message containing them must still appear verbatim in the
+    // exported revision context.
+    const out = injectRevisionContextIntoExportedReportHtml(
+      '<html><head></head><body><p>report</p></body></html>',
+      {
+        selectedRevision: {
+          hash: 'aaaaaaaaaaaa',
+          subject: 'Fix $1 and $& parsing',
+          body: 'Refund $$5 for $`code` and $\' issues'
+        },
+        baseRevision: { hash: 'bbbbbbbbbbbb', subject: 'Base', body: 'Base body' }
+      }
+    );
+
+    // The literal dollar-sequences survive verbatim (escapeHtml leaves `$` as-is).
+    expect(out).toContain('Fix $1 and $&amp; parsing');
+    expect(out).toContain("Refund $$5 for $`code` and $&#39; issues");
+    // The matched <body> tag is preserved exactly once and the report content remains.
+    expect(out).toContain('<body>');
+    expect(out).toContain('<p>report</p>');
   });
 });

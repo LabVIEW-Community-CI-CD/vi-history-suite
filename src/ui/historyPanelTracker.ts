@@ -7,9 +7,6 @@ export interface HistoryPanelMessage {
   hash?: string;
   selectedHashes?: string[];
   pageId?: string;
-  reviewOutcome?: string;
-  reviewConfidence?: string;
-  reviewNote?: string;
 }
 
 export interface DashboardPanelMessage {
@@ -34,6 +31,8 @@ export interface HistoryPanelActionSummary {
     | 'created-decision-record'
     | 'opened-review-dashboard'
     | 'diffed-previous'
+    | 'opened-revision-preview'
+    | 'revision-preview-failed'
     | 'opened-comparison-report'
     | 'retained-comparison-report-evidence'
     | 'blocked-docker-daemon-not-running'
@@ -62,12 +61,6 @@ export interface HistoryPanelActionSummary {
     | 'opened-benchmark-status'
     | 'missing-bundled-documentation'
     | 'unknown-documentation-page'
-    | 'submitted-human-review'
-    | 'failed-human-review-submission'
-    | 'invalid-human-review-submission'
-    | 'missing-human-review-storage'
-    | 'canonical-machine-mismatch'
-    | 'nondeterministic-human-review-surface'
     | 'unsupported-command';
   openedUri?: string;
   leftUri?: string;
@@ -132,12 +125,6 @@ export interface HistoryPanelActionSummary {
   benchmarkHostLatestSummaryPath?: string;
   benchmarkHostLogPath?: string;
   benchmarkHostState?: 'missing' | 'running' | 'stalled' | 'completed' | 'failed';
-  humanReviewSubmissionFilePath?: string;
-  humanReviewLatestManifestPath?: string;
-  humanReviewCanonicalMachineFilePath?: string;
-  humanReviewMachineFingerprintId?: string;
-  humanReviewCanonicalMachineFingerprintId?: string;
-  humanReviewValidationMessage?: string;
 }
 
 export interface DashboardArtifactActionSummary {

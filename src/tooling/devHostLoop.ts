@@ -4,6 +4,7 @@ import { spawn } from 'node:child_process';
 import * as path from 'node:path';
 
 import { runGit } from '../git/gitCli';
+import { scanFlags } from './cliFlags';
 
 export interface ViHistoryDevHostCliArgs {
   workspacePath?: string;
@@ -81,16 +82,31 @@ function joinPreservingExplicitPathStyle(rootPath: string, ...segments: string[]
   return path.join(rootPath, ...segments);
 }
 
+/**
+ * Converts a WSL `/mnt/<drive>` mount path to its Windows drive-letter form,
+ * or returns `undefined` when the value is not a WSL mount path. Accepts the
+ * bare drive root (`/mnt/c`, `/mnt/c/`) as well as subpaths (`/mnt/c/foo/bar`);
+ * the earlier `length > 7` guard wrongly rejected the drive root.
+ */
+function convertWslMountPathToWindows(trimmed: string): string | undefined {
+  const match = /^\/mnt\/([A-Za-z])(?:\/(.*))?$/.exec(trimmed);
+  if (!match) {
+    return undefined;
+  }
+  const driveLetter = match[1].toUpperCase();
+  const remainder = (match[2] ?? '').replaceAll('/', '\\');
+  return path.win32.normalize(`${driveLetter}:\\${remainder}`);
+}
+
 function normalizeDevHostLaunchPath(value: string): string {
   const trimmed = value.trim();
   if (usesExplicitWindowsPathStyle(trimmed)) {
     return path.win32.normalize(trimmed);
   }
 
-  if (trimmed.startsWith('/mnt/') && trimmed.length > 7) {
-    const driveLetter = trimmed[5].toUpperCase();
-    const remainder = trimmed.slice(7).replaceAll('/', '\\');
-    return path.win32.normalize(`${driveLetter}:\\${remainder}`);
+  const wslWindowsPath = convertWslMountPathToWindows(trimmed);
+  if (wslWindowsPath !== undefined) {
+    return wslWindowsPath;
   }
 
   if (usesExplicitPosixPathStyle(trimmed)) {
@@ -120,45 +136,32 @@ export function parseViHistoryDevHostArgs(argv: string[]): ViHistoryDevHostCliAr
   let prepareWorkspaceOnly = false;
   let helpRequested = false;
 
-  for (let index = 0; index < argv.length; index += 1) {
-    const current = argv[index];
-    const requireValue = (flag: string): string => {
-      const candidate = argv[index + 1];
-      if (!candidate || candidate.startsWith('--')) {
-        throw new Error(`Missing value for ${flag}.\n\n${getViHistoryDevHostUsage()}`);
+  scanFlags(argv, {
+    usage: getViHistoryDevHostUsage,
+    rejectFlagLikeValues: true,
+    boolFlags: {
+      '--stage-extension': () => {
+        stageExtension = true;
+      },
+      '--prepare-workspace-only': () => {
+        prepareWorkspaceOnly = true;
+      },
+      '--help': () => {
+        helpRequested = true;
+      },
+      '-h': () => {
+        helpRequested = true;
       }
-
-      index += 1;
-      return candidate;
-    };
-
-    if (current === '--workspace-path') {
-      workspacePath = requireValue('--workspace-path');
-      continue;
+    },
+    valueFlags: {
+      '--workspace-path': (value) => {
+        workspacePath = value;
+      },
+      '--code-path': (value) => {
+        codePath = value;
+      }
     }
-
-    if (current === '--code-path') {
-      codePath = requireValue('--code-path');
-      continue;
-    }
-
-    if (current === '--stage-extension') {
-      stageExtension = true;
-      continue;
-    }
-
-    if (current === '--prepare-workspace-only') {
-      prepareWorkspaceOnly = true;
-      continue;
-    }
-
-    if (current === '--help' || current === '-h') {
-      helpRequested = true;
-      continue;
-    }
-
-    throw new Error(`Unknown argument: ${current}\n\n${getViHistoryDevHostUsage()}`);
-  }
+  });
 
   return {
     workspacePath,
@@ -175,10 +178,9 @@ export function toWindowsPath(value: string): string {
     return path.win32.normalize(trimmed);
   }
 
-  if (trimmed.startsWith('/mnt/') && trimmed.length > 7) {
-    const driveLetter = trimmed[5].toUpperCase();
-    const remainder = trimmed.slice(7).replaceAll('/', '\\');
-    return path.win32.normalize(`${driveLetter}:\\${remainder}`);
+  const wslWindowsPath = convertWslMountPathToWindows(trimmed);
+  if (wslWindowsPath !== undefined) {
+    return wslWindowsPath;
   }
 
   if (trimmed.startsWith('/')) {
@@ -410,6 +412,7 @@ export function formatViHistoryDevHostSummary(
   }
 
   lines.push('Next step: keep `npm run dev:watch` running, then use `Developer: Reload Window` inside the dev host after code changes.');
+  lines.push('Release readiness: run `npm run release:readiness` to verify this candidate before any release (advisory; the marketplace release stays a separate maintainer-only manual action).');
   return lines;
 }
 
