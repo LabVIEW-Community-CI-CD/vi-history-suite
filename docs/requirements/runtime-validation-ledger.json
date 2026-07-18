@@ -63,9 +63,10 @@
       "linuxExecutable": false,
       "releaseGating": true,
       "lastValidatedVersion": "1.33.2",
-      "lastValidatedCommit": "f1ca054a",
-      "evidence": "vagrant local validation 2026-07-17T06:22:23.704Z",
-      "fixture": "labview-icon-editor resource/plugins/lv_icon.vi (x86 host-native headless, VHS-REQ-665)"
+      "lastValidatedCommit": "8da36e07",
+      "evidence": "vagrant local validation 2026-07-18T13:44:51.470Z; devtools-prerelease contentDigest=3f8e0acdab27f51c7ac39290b9a66740a1646bc21c0da855f616c1d4df67d0e8",
+      "fixture": "labview-icon-editor resource/plugins/lv_icon.vi (x86 host-native headless, VHS-REQ-665)",
+      "boxSha256": "4cbbc387e751546541136042702e75880e1e08082f016acf472c6100aaaf5ea1"
     },
     {
       "trackId": "vagrant-win-pathadmit-validation",
