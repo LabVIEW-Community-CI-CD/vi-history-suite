@@ -39,17 +39,14 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const { spawnSync } = require('node:child_process');
 const { buildAndVerifyDevToolsPrerelease } = require('./lib/devtoolsPrereleaseConsumer.cjs');
+const { isBoxOverride, readCommittedBoxSha256 } = require('./lib/vagrantBoxProvenance.cjs');
 
 const repoRoot = path.resolve(__dirname, '..');
 const vagrantDir = path.join(repoRoot, 'vagrant');
 const TRACK_ID = 'vagrant-win-pathadmit-validation';
-// Must match vagrant/Vagrantfile default box name; setting VIHS_VAGRANT_BOX to
-// this value selects the same committed box and is NOT an override.
-const DEFAULT_BOX = 'vihs/win11-labview2026';
-function isBoxOverride() {
-  const value = (process.env.VIHS_VAGRANT_BOX || '').trim();
-  return value !== '' && value !== DEFAULT_BOX;
-}
+// isBoxOverride / readCommittedBoxSha256 come from
+// scripts/lib/vagrantBoxProvenance.cjs. VIHS_VAGRANT_BOX set to the default box
+// name selects the same committed box and is NOT an override.
 
 // In-guest paths: the Vagrantfile mounts the repo at C:\vihs-workspace.
 const GUEST_REPO = 'C:\\vihs-workspace';
@@ -104,21 +101,11 @@ function getPackageVersion() {
 }
 
 // Read the committed Vagrant box manifest sha256 to bind the attestation to the
-// box it ran on (box-provenance chain). Undefined when absent/unparseable OR
-// when VIHS_VAGRANT_BOX overrides the box (the committed manifest fingerprints
-// the DEFAULT box; binding it to an override run would be false provenance).
+// box it ran on (box-provenance chain). Delegates to
+// scripts/lib/vagrantBoxProvenance.cjs; undefined when absent/unparseable OR
+// when VIHS_VAGRANT_BOX overrides the box.
 function getBoxSha256() {
-  if (isBoxOverride()) {
-    return undefined;
-  }
-  try {
-    const manifest = JSON.parse(fs.readFileSync(path.join(vagrantDir, 'box-manifest.json'), 'utf8'));
-    return typeof manifest.sha256 === 'string' && /^[0-9a-f]{64}$/.test(manifest.sha256)
-      ? manifest.sha256
-      : undefined;
-  } catch {
-    return undefined;
-  }
+  return readCommittedBoxSha256({ vagrantDir });
 }
 
 function getCommit() {
