@@ -46,6 +46,20 @@ describe('buildViPreviewFramesViewerHtml', () => {
     expect(html).toContain('fit(bounds.width, bounds.height);');
   });
 
+  it('counter-scales the case-stepper selectors against zoom so they stay clickable at fit-zoom (VHS-REQ-659)', () => {
+    const html = buildViPreviewFramesViewerHtml(sampleModel(), NONCE);
+    // The viewer keeps a registry of selectors and rescales them in apply().
+    expect(html).toContain('function scaleSelector(');
+    expect(html).toContain('selectors.push(sel);');
+    expect(html).toContain("sel.style.transform = 'scale(' + inv + ')';");
+    // apply() refreshes the counter-scale whenever the zoom changes.
+    expect(html).toContain('for (var i = 0; i < selectors.length; i++) { scaleSelector(selectors[i]); }');
+    // The selector counter-scale is anchored at the top-left.
+    const styleMatch = html.match(/\.lvr-sel\s*\{[^}]*\}/);
+    expect(styleMatch).not.toBeNull();
+    expect(styleMatch![0]).toContain('transform-origin: 0 0');
+  });
+
   it('embeds the frames JSON island with the resolved root and case labels (VHS-REQ-659.11)', () => {
     const html = buildViPreviewFramesViewerHtml(sampleModel(), NONCE);
     const islandMatch = /<script id="lvr-frames"[^>]*>([\s\S]*?)<\/script>/.exec(html);
