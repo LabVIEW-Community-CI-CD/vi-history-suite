@@ -8,8 +8,8 @@
       "provider": "host-native",
       "linuxExecutable": true,
       "lastValidatedVersion": "1.33.2",
-      "lastValidatedCommit": "9ea4ab13",
-      "evidence": "issue:#1317",
+      "lastValidatedCommit": "c2d4d297",
+      "evidence": "P10 extraction milestone: real Linux host-native LabVIEW 2026 CreateComparisonReport of lv_icon.vi (5376833..fc09736) via EXTRACTED shouldUseLinuxHostNativeShortPathStaging + buildLinuxHostNativeShortPathLayout (linuxHostNativeStaging.ts, present at c2d4d297) succeeded, reportExists=true, short-path staging engaged (materializedTree under /tmp/vi-history-suite-runtime), 2026-07-18",
       "fixture": "labview-icon-editor resource/plugins/lv_icon.vi"
     },
     {
