@@ -4,6 +4,11 @@ import * as path from 'node:path';
 import { nowIso as defaultNow } from '../support/clock';
 import { escapeHtml } from '../support/escapeHtml';
 import {
+  renderRevisionBodyValue,
+  renderRevisionMetadataValue,
+  renderOptionalYesNo
+} from './comparisonReportPacketHtmlValues';
+import {
   buildComparisonArtifactPlan,
   buildStagedRevisionPlan,
   ComparisonArtifactPlan,
@@ -732,38 +737,12 @@ function renderRevisionContextCard(
     </div>`;
 }
 
-function renderRevisionBodyValue(value: string | undefined): string {
-  if (value === undefined) {
-    return '<span class="muted">not retained</span>';
-  }
-
-  if (value.trim().length === 0) {
-    return '<span class="muted">No commit body</span>';
-  }
-
-  return escapeHtml(value).replace(/\r\n?|\n/g, '<br />');
-}
-
-function renderRevisionMetadataValue(value: string | undefined): string {
-  return value && value.length > 0
-    ? escapeHtml(value)
-    : '<span class="muted">not retained</span>';
-}
-
 function renderCommand(runtimeExecution: ComparisonReportRuntimeExecution): string {
   if (!runtimeExecution.executable) {
     return 'none';
   }
 
   return [runtimeExecution.executable, ...(runtimeExecution.args ?? [])].join(' ');
-}
-
-function renderOptionalYesNo(value: boolean | undefined): string {
-  if (value === undefined) {
-    return 'none';
-  }
-
-  return value ? 'yes' : 'no';
 }
 
 function deriveReportStatus(
