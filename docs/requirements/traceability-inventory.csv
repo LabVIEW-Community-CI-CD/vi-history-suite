@@ -60,6 +60,7 @@ src/tooling/devHostLoop.ts,dev-only,No,Development host loop; development toolin
 src/tooling/integrationHostRuntime.ts,mapped,Yes,Integration host runtime incl. Windows VS Code readiness guard; mapped to VHS-REQ-598.
 src/tooling/integrationHostStage.ts,dev-only,No,Integration host stage; testing infrastructure.
 src/tooling/localRuntimeSettingsCli.ts,mapped,Yes,Installed runtime settings CLI preparation surface mapped to VHS-REQ-612 through the contributed labviewViHistory.prepareLocalRuntimeSettingsCli command.
+src/tooling/localRuntimeSettingsShellEscaping.ts,supporting,No,"Shell/path escaping helpers (escapeWindowsBatchEcho, escapeSingleQuotedShellString, quoteLauncherPathForShell, buildPathPrependValue, resolveCurrentPlatformLauncherPath) extracted verbatim from localRuntimeSettingsCli and re-exported to preserve the public API while separating pure shell-quoting from CLI orchestration; supporting VHS-REQ-623."
 src/tooling/runtimeSettingsLiveSessionProbe.ts,dev-only,No,Live-session probe command is not contributed in package.json; maintainer diagnostics only and not installed command surface.
 src/tooling/runtimeSettingsLiveSessionProbePacket.ts,dev-only,No,Probe packet persistence supports maintainer-only live-session diagnostics for the non-contributed probe command that is not contributed in package.json.
 src/tooling/runtimeSettingsLiveSessionSafeRestore.ts,dev-only,No,Safe restore supports maintainer-only live-session probing for the non-contributed probe command that is not contributed in package.json.
@@ -123,6 +124,7 @@ tests/unit/historyReviewPacket.test.ts,mapped,Yes,History review packet tests; m
 tests/unit/integrationHostRuntime.test.ts,mapped,Yes,Integration host runtime tests incl. Windows VS Code readiness guard; mapped to VHS-REQ-598.
 tests/unit/integrationHostStage.test.ts,dev-only,No,Integration host stage tests; testing infrastructure.
 tests/unit/localRuntimeSettingsCli.test.ts,mapped,Yes,Installed runtime settings CLI direct tests; mapped to VHS-REQ-612.
+tests/unit/localRuntimeSettingsShellEscaping.test.ts,supporting,No,"Shell/path escaping unit tests (platform launcher selection, PATH prepend separator, win32/posix launcher quoting with embedded-quote escaping, batch-echo and single-quote escaping); supporting VHS-REQ-623."
 tests/unit/marketplaceReleaseWorkflow.test.ts,mapped,Yes,Marketplace release workflow tests; mapped through RTM including VHS-REQ-615 release-readiness evidence and VHS-REQ-609 Marketplace release automation.
 tests/unit/releaseReadinessScript.test.ts,mapped,Yes,Release-readiness verdict aggregator unit tests (composed risk-ledger manifest-digest and version/CHANGELOG checks advisory status strict exit and display-only runtime attestation fixtures); mapped to VHS-REQ-615.
 tests/unit/marketplaceListingVerification.test.ts,mapped,Yes,Marketplace listing verification retry tests; mapped to VHS-REQ-609.

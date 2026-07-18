@@ -16,6 +16,21 @@ import {
 import { readBuildInfo, type BuildInfo, type BuildInfoDeps } from './buildInfo';
 import { scanFlags } from './cliFlags';
 import { serializeJsonArtifact } from '../support/jsonArtifact';
+import {
+  buildPathPrependValue,
+  escapeSingleQuotedShellString,
+  escapeWindowsBatchEcho,
+  quoteLauncherPathForShell,
+  resolveCurrentPlatformLauncherPath
+} from './localRuntimeSettingsShellEscaping';
+
+export {
+  buildPathPrependValue,
+  escapeSingleQuotedShellString,
+  escapeWindowsBatchEcho,
+  quoteLauncherPathForShell,
+  resolveCurrentPlatformLauncherPath
+} from './localRuntimeSettingsShellEscaping';
 const execFileAsync = promisify(execFileCallback);
 
 export type LocalRuntimeSettingsCliBitness = 'x86' | 'x64';
@@ -126,8 +141,6 @@ const SUPPORTED_HOST_LABVIEW_VERSIONS = ['2025', '2026'] as const;
 const FUTURE_HOST_LABVIEW_OPTION = 'newer/manual path';
 const MINIMUM_COMPARISON_REPORT_LABVIEW_YEAR = 2025;
 const SUPPORTED_DOCKER_LABVIEW_VERSION = '2026';
-const WINDOWS_PATH_SEPARATOR = ';';
-const POSIX_PATH_SEPARATOR = ':';
 const DISABLE_PERSISTENT_USER_PATH_ADMISSION_ENV =
   'VI_HISTORY_SUITE_DISABLE_PERSISTENT_USER_PATH_ADMISSION';
 const WINDOWS_NODE_OVERRIDE_ENV = 'VI_HISTORY_SUITE_NODE_EXE';
@@ -1379,18 +1392,6 @@ export function resolveCliRuntimePlatform(platform: NodeJS.Platform): RuntimePla
   );
 }
 
-export function resolveCurrentPlatformLauncherPath(
-  windowsLauncherPath: string,
-  posixLauncherPath: string,
-  platform: NodeJS.Platform
-): string {
-  return platform === 'win32' ? windowsLauncherPath : posixLauncherPath;
-}
-
-export function buildPathPrependValue(rootDirectoryPath: string, platform: NodeJS.Platform): string {
-  return `${rootDirectoryPath}${platform === 'win32' ? WINDOWS_PATH_SEPARATOR : POSIX_PATH_SEPARATOR}`;
-}
-
 async function ensurePersistentUserPathAdmission(
   pathEntry: string,
   deps: LocalRuntimeSettingsCliDeps
@@ -1487,14 +1488,6 @@ function renderTerminalEntrypointDiscoveryText(): string {
     '  add --settings-file <path> to target one explicit non-workspace settings.json file',
     '  add --proof-out <path> to retain validation proof packets'
   ].join('\n');
-}
-
-export function quoteLauncherPathForShell(launcherPath: string, platform: NodeJS.Platform): string {
-  if (platform === 'win32') {
-    return `"${launcherPath.replace(/"/g, '""')}"`;
-  }
-
-  return `'${escapeSingleQuotedShellString(launcherPath)}'`;
 }
 
 export const VI_HISTORY_SUITE_EXTENSION_FOLDER_PREFIX = 'svelderrainruiz.vi-history-suite-';
@@ -1675,14 +1668,6 @@ function renderPosixLauncher(): string {
     'exec node "$SCRIPT_DIR/run-local-runtime-settings-cli.js" "$@"',
     ''
   ].join('\n');
-}
-
-export function escapeWindowsBatchEcho(value: string): string {
-  return value.replace(/"/g, '""');
-}
-
-export function escapeSingleQuotedShellString(value: string): string {
-  return value.replace(/'/g, `'\"'\"'`);
 }
 
 function writeLine(stream: WritableStreamLike, text: string): void {
