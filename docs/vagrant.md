@@ -230,3 +230,36 @@ Keep any evidence produced by local Vagrant testing outside release claims
 unless a future plan explicitly promotes it. Use
 [docs/maintainer-operations.md](./maintainer-operations.md) for the current
 maintainer validation model.
+
+## Lane tooling and tests
+
+The Vagrant lane is driven by a small set of maintainer scripts. The two `.cjs`
+drivers are intentionally thin: their pure logic lives in shared, unit-tested
+helpers under `scripts/lib/`, so a regression is caught by `npm test` without a
+real VM.
+
+Entry-point scripts:
+
+- `scripts/vagrantLanePreflight.js` — host-readiness preflight and VM lifecycle
+  status (`npm run vagrant:preflight` / `vagrant:status`; both accept `--json`).
+- `scripts/vagrantReleaseValidate.cjs` — the mandatory release-gating lane
+  (`npm run vagrant:validate:release`, VHS-REQ-666); consumes the dev-tools
+  prerelease, runs the x86 host-native headless comparison, and records the
+  attestation.
+- `scripts/vagrantValidationProofDriver.cjs` — the advisory PATH-admission +
+  validation-proof driver (track `vagrant-win-pathadmit-validation`).
+- `scripts/verifyVagrantBox.cjs` — golden-box integrity manifest generate/verify
+  (see [Box integrity manifest and durability](#box-integrity-manifest-and-durability)).
+
+Shared helpers (`scripts/lib/`, injectable boundaries, unit-tested):
+
+- `devtoolsPrereleaseConsumer.cjs` — builds the dev-tools prerelease provenance
+  manifest and self-verifies the in-tree toolset against it fail-closed
+  (VHS-REQ-667); used by both drivers before they validate.
+- `vagrantBoxProvenance.cjs` — `VIHS_VAGRANT_BOX` override detection and the
+  committed-manifest `sha256` binding rule (never binds under an override).
+- `vagrantDriverArgs.cjs` — the shared `--skip-up` / `--evidence` CLI parser.
+
+Tests live in `tests/unit/vagrant*.test.ts` and `tests/unit/verifyVagrantBox.test.ts`.
+These are Linux-runnable pure-logic tests (no hypervisor); the real VM boot and
+in-guest comparison remain a local maintainer step.
