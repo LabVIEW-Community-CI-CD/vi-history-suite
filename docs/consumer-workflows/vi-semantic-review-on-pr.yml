@@ -1,0 +1,96 @@
+# VI Semantic Review on PR — consumer template
+#
+# Copy this file into your LabVIEW repository at
+# `.github/workflows/vi-semantic-review-on-pr.yml` to automatically run the
+# vi-history-suite VI semantic PR review on every pull request (including PRs
+# from forks) and post the LabVIEW "what changed" summary as a sticky comment —
+# with no `/comment` or label needed.
+#
+# Prerequisites:
+#   * The maintainer setup on vi-history-suite (VHS-REQ-661): the review runs on
+#     a GitHub-hosted runner (which pulls the NI LabVIEW image) and the
+#     `VI_REVIEW_TARGET_TOKEN` secret is configured there. Nothing to do per
+#     consumer repo.
+#   * One secret in THIS repository: `VI_REVIEW_DISPATCH_TOKEN` — a
+#     least-privilege token (fine-grained PAT or GitHub App installation token)
+#     with `actions: write` on LabVIEW-Community-CI-CD/vi-history-suite. That is
+#     only enough to START the review workflow; the review posts back to this
+#     PR using vi-history-suite's own token, so this repo never holds a
+#     target-write token.
+#
+# Security model:
+#   * `pull_request_target` runs in THIS (base) repo's context with secrets,
+#     which fork `pull_request` events do not get, so it can dispatch the review.
+#   * This job NEVER checks out or executes the untrusted PR code. It only reads
+#     the PR number and starts the review workflow in vi-history-suite; the
+#     untrusted VIs are compared later inside the isolated LabVIEW container on
+#     vi-history-suite's GitHub-hosted runner.
+#   * The dispatch is gated on the PR author's REAL permission on this repo
+#     (admin/write/maintain), resolved via the API — not the event payload's
+#     `author_association`, which reports CONTRIBUTOR for fork PRs even for org
+#     members and would silently skip trusted authors. Untrusted PRs are not
+#     auto-reviewed (a maintainer can still trigger the review manually).
+#
+# Inline diff images:
+#   * On a PUBLIC repository the review embeds the block-diagram/front-panel
+#     difference images inline in the sticky comment. On a PRIVATE repository
+#     GitHub does not render those hosted raw image URLs inline; the review
+#     still posts the textual "what changed" summary and the uploaded review
+#     artifact carries the full visual diff as the fallback.
+
+name: VI Semantic Review on PR
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vi-semantic-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  dispatch-vi-review:
+    name: Dispatch VI semantic review
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Evaluate trust gate
+        id: gate
+        env:
+          # Resolve the PR author's real permission on THIS repo. Use this
+          # repo's own GITHUB_TOKEN (it has metadata read on the repo where the
+          # PR lives); the least-privilege VI_REVIEW_DISPATCH_TOKEN only has
+          # actions:write on vi-history-suite and cannot read this repo's
+          # collaborators, so using it here would fail closed and skip even
+          # trusted authors.
+          GH_TOKEN: ${{ github.token }}
+          ACTOR: ${{ github.event.pull_request.user.login }}
+          TARGET_REPOSITORY: ${{ github.repository }}
+        run: |
+          permission="$(gh api "repos/$TARGET_REPOSITORY/collaborators/$ACTOR/permission" --jq '.permission' 2>/dev/null || echo none)"
+          echo "PR author: $ACTOR - permission on $TARGET_REPOSITORY: '$permission'"
+          case "$permission" in
+            admin|write|maintain)
+              echo "trusted=true" >> "$GITHUB_OUTPUT"
+              echo "Trusted contributor: auto-review will be dispatched." ;;
+            *)
+              echo "trusted=false" >> "$GITHUB_OUTPUT"
+              echo "Untrusted contributor: skipping auto-review (a maintainer can trigger it manually)." ;;
+          esac
+
+      - name: Dispatch the review in vi-history-suite
+        if: ${{ steps.gate.outputs.trusted == 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.VI_REVIEW_DISPATCH_TOKEN }}
+          TARGET_REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          echo "Dispatching VI semantic review for $TARGET_REPOSITORY#$PR_NUMBER"
+          gh workflow run vi-semantic-pr-review.yml \
+            --repo LabVIEW-Community-CI-CD/vi-history-suite \
+            --ref develop \
+            -f repository="$TARGET_REPOSITORY" \
+            -f pr_number="$PR_NUMBER"

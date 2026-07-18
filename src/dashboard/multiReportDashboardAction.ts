@@ -2,6 +2,12 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 
+import {
+  joinPreservingExplicitPathStyle,
+  usesExplicitPosixPathStyle
+} from '../support/pathStyle';
+import { pathExistsViaFsAccess as defaultPathExists } from '../support/fsExists';
+import { escapeHtml } from '../support/escapeHtml';
 import { readArchivedComparisonReportSourceRecordFromSelection } from './comparisonReportArchive';
 import {
   buildDashboardPairEtaAccuracyRecord,
@@ -1023,19 +1029,21 @@ function normalizeDashboardArtifactMessage(message: unknown): DashboardArtifactM
 
 function isDescendantPath(rootPath: string, candidatePath: string): boolean {
   const relativePath = relativePreservingExplicitPathStyle(rootPath, candidatePath);
-  return relativePath !== '' && !relativePath.startsWith('..') && !isAbsolutePreservingExplicitPathStyle(relativePath);
+  return (
+    relativePath !== '' &&
+    !startsWithParentTraversalSegment(relativePath) &&
+    !isAbsolutePreservingExplicitPathStyle(relativePath)
+  );
 }
 
-function usesExplicitPosixPathStyle(rootPath: string): boolean {
-  return rootPath.startsWith('/');
-}
-
-function joinPreservingExplicitPathStyle(rootPath: string, ...segments: string[]): string {
-  if (usesExplicitPosixPathStyle(rootPath)) {
-    return path.posix.join(rootPath, ...segments.map((segment) => segment.replace(/\\/g, '/')));
-  }
-
-  return path.join(rootPath, ...segments);
+/**
+ * Rejects a relative path only when its first component is an actual `..`
+ * traversal segment. A bare `startsWith('..')` wrongly rejected legitimate
+ * descendants whose first component merely begins with two dots (e.g. an
+ * artifact under a directory named `..cache` -> `..cache/report.html`).
+ */
+function startsWithParentTraversalSegment(relativePath: string): boolean {
+  return relativePath.split(/[\\/]/)[0] === '..';
 }
 
 function resolvePreservingExplicitPathStyle(targetPath: string): string {
@@ -1130,7 +1138,10 @@ async function renderInlineDashboardArtifactHtml(options: {
     )}</strong></div>`;
 
     if (/<body\b[^>]*>/i.test(withHead)) {
-      return withHead.replace(/<body\b([^>]*)>/i, `<body$1>${headerMarkup}`);
+      // Function replacer: headerMarkup embeds the report title (arbitrary user
+      // text, HTML-escaped but `$` is not), so a string replacement would
+      // misinterpret `$&`/`$1`/`$$` etc. and corrupt the dashboard artifact.
+      return withHead.replace(/<body\b[^>]*>/i, (match) => `${match}${headerMarkup}`);
     }
 
     return `<!DOCTYPE html><html><head><meta charset="UTF-8" />${headInjection}<title>${escapeHtml(
@@ -1195,15 +1206,6 @@ function enableLazyImageLoading(html: string): string {
   return html.replace(/<img\b(?![^>]*\bloading=)/gi, '<img loading="lazy"');
 }
 
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
-}
-
 function buildDashboardPairKeepaliveMessage(
   pairPrefix: string,
   etaCalibrationPending: boolean,
@@ -1216,13 +1218,4 @@ function buildDashboardPairKeepaliveMessage(
   return `${pairPrefix}Still working; ${calibrationNote}elapsed ${formatEstimatedDuration(
     elapsedSeconds
   )}. Last step: ${normalizedStep}.`;
-}
-
-async function defaultPathExists(targetPath: string): Promise<boolean> {
-  try {
-    await fs.access(targetPath);
-    return true;
-  } catch {
-    return false;
-  }
 }

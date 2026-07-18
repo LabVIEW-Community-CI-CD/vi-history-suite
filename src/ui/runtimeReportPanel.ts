@@ -20,6 +20,7 @@
  */
 
 import type { ComparisonReportOptions } from '../reporting/comparisonReportPlan';
+import { escapeHtml } from '../support/escapeHtml';
 
 /** Stable view-type id for the runtime & report settings webview panel. */
 export const RUNTIME_REPORT_PANEL_VIEW_TYPE = 'viHistorySuite.runtimeReportSettings';
@@ -153,6 +154,28 @@ export interface ReportSectionViewModel {
   readonly includeFlags: Record<ReportIncludeKey, boolean>;
 }
 
+/**
+ * VHS-REQ-148: Advanced runtime section state. Surfaces the LabVIEW CLI
+ * connect-window timeout (`viHistorySuite.runtime.cliConnectTimeoutSeconds`),
+ * which previously could only be changed by hand-editing settings.json.
+ */
+export interface AdvancedSectionViewModel {
+  readonly cliConnectTimeoutSeconds: number;
+  readonly defaultTimeoutSeconds: number;
+  readonly minSeconds: number;
+  readonly maxSeconds: number;
+}
+
+/**
+ * VI Preview section state. Hidden entirely when `visible` is false: the toggle
+ * is offered only when Docker is the effective comparison runtime (VHS-REQ-659),
+ * because preview rendering and its background caching run through Docker.
+ */
+export interface PreviewSectionViewModel {
+  readonly visible: boolean;
+  readonly enabled: boolean;
+}
+
 /** Full view model consumed by {@link renderRuntimeReportPanelHtml}. */
 export interface RuntimeReportPanelViewModel {
   readonly trusted: boolean;
@@ -163,19 +186,12 @@ export interface RuntimeReportPanelViewModel {
   /** Index into `providerOptions` matching the active selection, or -1. */
   readonly selectedProviderIndex: number;
   readonly container: ContainerSectionViewModel;
+  readonly preview: PreviewSectionViewModel;
   readonly report: ReportSectionViewModel;
+  readonly advanced: AdvancedSectionViewModel;
 }
 
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
-}
-
-function serializeForInlineScript(value: unknown): string {
+export function serializeForInlineScript(value: unknown): string {
   return JSON.stringify(value).replaceAll('<', '\\u003C');
 }
 
@@ -295,6 +311,31 @@ function renderProviderSection(model: RuntimeReportPanelViewModel): string {
     </section>`;
 }
 
+function renderPreviewSection(preview: PreviewSectionViewModel): string {
+  // Docker-only: the section is hidden unless Docker is the effective runtime
+  // (mirrors the container-image section visibility).
+  if (!preview.visible) {
+    return '';
+  }
+  return `
+    <section class="card" data-testid="runtime-report-preview-section">
+      <h2>VI Preview</h2>
+      <p class="hint" data-testid="runtime-report-preview-hint">Available with the Docker runtime. Opening a VI renders a read-only picture of its front panel and block diagram, and the extension silently caches every VI in the repository in the background so later opens are instant.</p>
+      <label class="checkbox-row" data-testid="runtime-report-preview-row">
+        <input
+          type="checkbox"
+          data-testid="runtime-report-preview-checkbox"
+          data-command="setPreviewEnabled"
+          ${preview.enabled ? 'checked' : ''}
+        />
+        <span class="checkbox-text">
+          <span class="checkbox-label">Enable VI preview</span>
+          <span class="checkbox-help">Turning this on starts background caching immediately; turning it off cancels it.</span>
+        </span>
+      </label>
+    </section>`;
+}
+
 function renderReportSection(report: ReportSectionViewModel): string {
   const includeRows = REPORT_OPTION_DESCRIPTORS.map((descriptor) => {
     const checked = report.includeFlags[descriptor.includeKey];
@@ -326,6 +367,30 @@ function renderReportSection(report: ReportSectionViewModel): string {
     </section>`;
 }
 
+function renderAdvancedSection(advanced: AdvancedSectionViewModel): string {
+  return `
+    <section class="card" data-testid="runtime-report-advanced-section">
+      <h2>Advanced runtime</h2>
+      <p class="hint" data-testid="runtime-report-advanced-hint">Tune how long the extension waits for LabVIEW CLI to connect to the VI Server before giving up. Increase it on slow or cold-launch machines; the default is ${advanced.defaultTimeoutSeconds}s.</p>
+      <label class="field-row" data-testid="runtime-report-cli-timeout-row">
+        <span class="checkbox-text">
+          <span class="checkbox-label">LabVIEW CLI connect timeout (seconds)</span>
+          <span class="checkbox-help">Allowed range ${advanced.minSeconds}–${advanced.maxSeconds}s. Values outside the range are clamped when saved.</span>
+        </span>
+        <input
+          type="number"
+          class="number-input"
+          data-testid="runtime-report-cli-timeout-input"
+          data-command="setCliConnectTimeout"
+          min="${advanced.minSeconds}"
+          max="${advanced.maxSeconds}"
+          step="1"
+          value="${advanced.cliConnectTimeoutSeconds}"
+        />
+      </label>
+    </section>`;
+}
+
 /**
  * Render the complete Runtime &amp; Report Settings panel HTML for a view model.
  * Pure: no `vscode` access, so it can be asserted directly in unit tests.
@@ -343,8 +408,10 @@ export function renderRuntimeReportPanelHtml(model: RuntimeReportPanelViewModel)
   const interactiveSections = model.trusted
     ? `
     ${renderProviderSection(model)}
+    ${renderPreviewSection(model.preview)}
     ${renderContainerSection(model.container)}
-    ${renderReportSection(model.report)}`
+    ${renderReportSection(model.report)}
+    ${renderAdvancedSection(model.advanced)}`
     : '';
 
   return `<!DOCTYPE html>
@@ -432,6 +499,21 @@ export function renderRuntimeReportPanelHtml(model: RuntimeReportPanelViewModel)
         flex-direction: column;
         gap: 8px;
       }
+      .field-row {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 8px;
+      }
+      .number-input {
+        width: 6em;
+        padding: 4px 6px;
+        background: var(--vscode-input-background);
+        color: var(--vscode-input-foreground);
+        border: 1px solid var(--vscode-input-border, var(--vscode-panel-border));
+        font: inherit;
+      }
       .radio-row,
       .checkbox-row {
         display: flex;
@@ -518,8 +600,19 @@ export function renderRuntimeReportPanelHtml(model: RuntimeReportPanelViewModel)
           });
           return;
         }
+        if (command === 'setPreviewEnabled' && target instanceof HTMLInputElement) {
+          vscode.postMessage({ command, enabled: target.checked });
+          return;
+        }
         if (command === 'selectContainerVersion' && target instanceof HTMLSelectElement) {
           vscode.postMessage({ command, tag: target.value });
+          return;
+        }
+        if (command === 'setCliConnectTimeout' && target instanceof HTMLInputElement) {
+          const seconds = Number(target.value);
+          if (Number.isFinite(seconds)) {
+            vscode.postMessage({ command, seconds });
+          }
           return;
         }
       });

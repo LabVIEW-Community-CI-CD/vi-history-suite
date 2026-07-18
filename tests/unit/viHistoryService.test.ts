@@ -75,6 +75,15 @@ describe('viHistoryService', () => {
     ).toBe('/workspace/repo-a/nested');
   });
 
+  it('matches a repository root when the target path equals the root exactly', () => {
+    expect(
+      selectMostSpecificGitRepositoryRoot('/workspace/repo-a', [
+        { rootUri: { fsPath: '/workspace/repo-a' } },
+        { rootUri: { fsPath: '/workspace/other' } }
+      ] as never)
+    ).toBe('/workspace/repo-a');
+  });
+
   it('matches Git API repository roots across slash variants', () => {
     expect(
       selectMostSpecificGitRepositoryRoot('C:\\workspace\\repo\\nested\\sample.vi', [
@@ -203,6 +212,33 @@ describe('viHistoryService', () => {
       historyLimit: AUTO_HISTORY_ENTRY_CEILING
     });
   });
+
+  it('uses maxHistoryEntries as the historyLimit in capped mode (VHS-REQ-621)', () => {
+    workspaceGetMock.mockImplementation((key: string, fallback: unknown) => {
+      if (key === 'strictRsrcHeader') return false;
+      if (key === 'historyWindowMode') return 'capped';
+      if (key === 'maxHistoryEntries') return 7;
+      return fallback;
+    });
+    expect(getViHistoryServiceSettings()).toEqual({
+      strictRsrcHeader: false,
+      historyWindowMode: 'capped',
+      maxHistoryEntries: 7,
+      historyLimit: 7
+    });
+  });
+
+  it('clamps maxHistoryEntries to a minimum of 2 (VHS-REQ-621)', () => {
+    workspaceGetMock.mockImplementation((key: string, fallback: unknown) => {
+      if (key === 'strictRsrcHeader') return false;
+      if (key === 'historyWindowMode') return 'capped';
+      if (key === 'maxHistoryEntries') return 1;
+      return fallback;
+    });
+    const settings = getViHistoryServiceSettings();
+    expect(settings.maxHistoryEntries).toBe(2);
+    expect(settings.historyLimit).toBe(2);
+  });
 });
 
 describe('viHistoryService eligibility edge cases (VHS-REQ-006, VHS-REQ-061)', () => {
@@ -227,7 +263,7 @@ describe('viHistoryService eligibility edge cases (VHS-REQ-006, VHS-REQ-061)', (
     ).toBeUndefined();
   });
 
-  it('selects the most specific root when multiple nested repositories match', () => {
+  it('selects the most specific root when multiple nested repositories match (VHS-REQ-061.1)', () => {
     expect(
       selectMostSpecificGitRepositoryRoot('/workspace/outer/inner/deep/file.vi', [
         { rootUri: { fsPath: '/workspace/outer' } },
@@ -264,7 +300,7 @@ describe('viHistoryService eligibility edge cases (VHS-REQ-006, VHS-REQ-061)', (
     ).toBe('/home/user/external');
   });
 
-  it('falls back to CLI repository discovery when Git API cannot match a file path', async () => {
+  it('falls back to CLI repository discovery when Git API cannot match a file path (VHS-REQ-061.2)', async () => {
     getRepoRootMock.mockResolvedValue('/workspace/discovered-root');
     loadViHistoryViewModelFromFsPathMock.mockResolvedValue({
       repositoryName: 'discovered-root',
@@ -375,7 +411,7 @@ describe('viHistoryService blocked and empty state handling (VHS-REQ-016)', () =
     expect(result.commits.length).toBe(0);
   });
 
-  it('returns ineligible when file has valid signature but no commits (untracked)', async () => {
+  it('returns ineligible when file has valid signature but no commits (untracked) (VHS-REQ-006.1)', async () => {
     loadViHistoryViewModelFromFsPathMock.mockResolvedValue({
       repositoryName: 'test-repo',
       repositoryRoot: '/workspace/test-repo',
@@ -402,7 +438,7 @@ describe('viHistoryService blocked and empty state handling (VHS-REQ-016)', () =
     expect(result.commits.length).toBe(0);
   });
 
-  it('returns ineligible when file has valid signature but only one commit', async () => {
+  it('returns ineligible when file has valid signature but only one commit (VHS-REQ-006.2)', async () => {
     loadViHistoryViewModelFromFsPathMock.mockResolvedValue({
       repositoryName: 'test-repo',
       repositoryRoot: '/workspace/test-repo',
@@ -431,7 +467,7 @@ describe('viHistoryService blocked and empty state handling (VHS-REQ-016)', () =
     expect(result.commits.length).toBe(1);
   });
 
-  it('returns ineligible when file has unknown signature even with commits', async () => {
+  it('returns ineligible when file has unknown signature even with commits (VHS-REQ-006.3)', async () => {
     loadViHistoryViewModelFromFsPathMock.mockResolvedValue({
       repositoryName: 'test-repo',
       repositoryRoot: '/workspace/test-repo',

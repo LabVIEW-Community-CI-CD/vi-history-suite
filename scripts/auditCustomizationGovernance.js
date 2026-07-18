@@ -3,8 +3,20 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
+const {
+  JSON_SCHEMA_DIALECT,
+  renderSchemaDocument,
+  schemaEnvelopeFields,
+  schemaEnvelopePropertyNodes,
+  provenanceFooterLines,
+  assertSingleOutputMode
+} = require('./lib/schemaEnvelope.js');
+const { parseSharedOutputArgs } = require('./lib/outputContract.js');
+
 const AGENTS_GUIDE_PATH = 'AGENTS.md';
 const ONBOARDING_SKILL_PATH = '.github/skills/onboarding/SKILL.md';
+const CUSTOMIZATION_AUDIT_SCHEMA_ID = 'vi-history-suite/customization-governance-audit@v1';
+const CUSTOMIZATION_AUDIT_SCHEMA_VERSION = 1;
 
 const SKIPPED_DIRECTORIES = new Set([
   '.git',
@@ -774,7 +786,7 @@ function toMachineReadableReport(result, now = new Date()) {
   const failingCategories = categories.filter((category) => category.count > 0).length;
 
   return {
-    schemaVersion: 1,
+    ...schemaEnvelopeFields(CUSTOMIZATION_AUDIT_SCHEMA_ID, CUSTOMIZATION_AUDIT_SCHEMA_VERSION),
     generatedAt: now.toISOString(),
     success: result.success,
     customizationFilesChecked: result.customizationFilesChecked,
@@ -784,6 +796,69 @@ function toMachineReadableReport(result, now = new Date()) {
     },
     categories
   };
+}
+
+// Published JSON Schema for the customization-governance-audit report, so the
+// retained --json artifact can be validated and --schema can publish the
+// contract without running the audit. Shares the self-describing envelope via
+// scripts/lib/schemaEnvelope.js.
+const CUSTOMIZATION_AUDIT_JSON_SCHEMA = {
+  $schema: JSON_SCHEMA_DIALECT,
+  $id: CUSTOMIZATION_AUDIT_SCHEMA_ID,
+  title: 'vi-history-suite customization governance audit',
+  type: 'object',
+  additionalProperties: false,
+  required: [
+    '$schema',
+    'schemaVersion',
+    'generatedAt',
+    'success',
+    'customizationFilesChecked',
+    'totals',
+    'categories'
+  ],
+  properties: {
+    ...schemaEnvelopePropertyNodes(CUSTOMIZATION_AUDIT_SCHEMA_ID, CUSTOMIZATION_AUDIT_SCHEMA_VERSION),
+    generatedAt: { type: 'string' },
+    success: { type: 'boolean' },
+    customizationFilesChecked: { type: 'integer' },
+    totals: {
+      type: 'object',
+      required: ['issues', 'failingCategories'],
+      properties: {
+        issues: { type: 'integer' },
+        failingCategories: { type: 'integer' }
+      }
+    },
+    categories: {
+      type: 'array',
+      items: {
+        type: 'object',
+        required: ['key', 'label', 'count', 'remediation', 'items'],
+        properties: {
+          key: { type: 'string' },
+          label: { type: 'string' },
+          count: { type: 'integer' },
+          remediation: { type: 'string' },
+          items: { type: 'array' }
+        }
+      }
+    },
+    provenance: {
+      type: 'object',
+      required: ['generatedAt', 'cwd', 'outputMode', 'argv'],
+      properties: {
+        generatedAt: { type: 'string' },
+        cwd: { type: 'string' },
+        outputMode: { enum: ['text', 'json', 'schema'] },
+        argv: { type: 'array', items: { type: 'string' } }
+      }
+    }
+  }
+};
+
+function renderSchema(options = {}) {
+  return renderSchemaDocument(CUSTOMIZATION_AUDIT_JSON_SCHEMA, options);
 }
 
 function renderSummary(result) {
@@ -861,29 +936,28 @@ function renderSummary(result) {
 }
 
 function parseMainArgs(argv) {
-  let cwd;
-  let emitJson = false;
+  const { options, positionals } = parseSharedOutputArgs(argv, {
+    defaults: { emitJson: false, emitSchema: false, includeProvenance: false },
+    // Output modes are exposed under emit* keys; --markdown/--strict/--output are
+    // not supported. Single-output-mode (json/schema) is enforced in main.
+    boolFlags: {
+      '--json': 'emitJson',
+      '--schema': 'emitSchema',
+      '--include-provenance': 'includeProvenance'
+    },
+    excludeCommonFlags: ['--markdown', '--strict', '--output'],
+    enforceSingleOutputMode: false
+  });
 
-  for (const arg of argv) {
-    if (arg === '--json') {
-      emitJson = true;
-      continue;
-    }
-
-    if (arg.startsWith('--')) {
-      throw new Error(`Unknown option '${arg}'. Supported options: --json [cwd].`);
-    }
-
-    if (cwd) {
-      throw new Error('Only one cwd argument is supported.');
-    }
-
-    cwd = arg;
+  if (positionals.length > 1) {
+    throw new Error('Only one cwd argument is supported.');
   }
 
   return {
-    cwd: cwd || process.cwd(),
-    emitJson
+    cwd: positionals[0] || process.cwd(),
+    emitJson: options.emitJson,
+    emitSchema: options.emitSchema,
+    includeProvenance: options.includeProvenance
   };
 }
 
@@ -897,15 +971,41 @@ function main(argv = process.argv.slice(2), deps = {}) {
   }
 
   const cwd = deps.cwd || parsedArgs.cwd;
+
+  // json and schema are mutually exclusive output modes; reject rather than
+  // silently letting --schema win over --json.
+  try {
+    assertSingleOutputMode({ json: parsedArgs.emitJson, schema: parsedArgs.emitSchema });
+  } catch (error) {
+    (deps.stderr || process.stderr).write(`${error instanceof Error ? error.message : String(error)}\n`);
+    return 1;
+  }
+
+  const provenance = parsedArgs.includeProvenance
+    ? {
+        generatedAt: (deps.now || new Date()).toISOString(),
+        cwd,
+        outputMode: parsedArgs.emitSchema ? 'schema' : parsedArgs.emitJson ? 'json' : 'text',
+        argv: [...argv]
+      }
+    : undefined;
+
+  // --schema publishes the JSON Schema without running the audit.
+  if (parsedArgs.emitSchema) {
+    (deps.stdout || process.stdout).write(`${renderSchema({ provenance })}\n`);
+    return 0;
+  }
+
   const result = auditCustomizationGovernance({ cwd });
 
   if (parsedArgs.emitJson) {
     const report = toMachineReadableReport(result, deps.now || new Date());
-    (deps.stdout || process.stdout).write(`${JSON.stringify(report, null, 2)}\n`);
+    const jsonReport = provenance ? { ...report, provenance } : report;
+    (deps.stdout || process.stdout).write(`${JSON.stringify(jsonReport, null, 2)}\n`);
     return result.success ? 0 : 1;
   }
 
-  const output = `${renderSummary(result)}\n`;
+  const output = `${[renderSummary(result), ...provenanceFooterLines(provenance, 'customization-audit')].join('\n')}\n`;
 
   if (result.success) {
     (deps.stdout || process.stdout).write(output);
@@ -924,6 +1024,10 @@ module.exports = {
   AGENTS_GUIDE_PATH,
   ALLOWED_AGENT_TOOLS,
   ONBOARDING_SKILL_PATH,
+  CUSTOMIZATION_AUDIT_SCHEMA_ID,
+  CUSTOMIZATION_AUDIT_SCHEMA_VERSION,
+  CUSTOMIZATION_AUDIT_JSON_SCHEMA,
+  renderSchema,
   auditCustomizationGovernance,
   discoverCustomizationFiles,
   extractAgentsCustomizationReferences,

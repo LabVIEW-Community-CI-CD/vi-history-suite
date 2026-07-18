@@ -13,6 +13,10 @@ on:
       - main
       - develop
       - 'feature/**'
+  merge_group:
+    branches:
+      - develop
+      - main
   workflow_dispatch:
 
 permissions:
@@ -131,8 +135,37 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+      - name: Coverage Risk Gate / coverage-risk
+        run: npm run coverage:map:enforce
+
       - name: Package
         run: npm run package
+
+      # Advisory supply-chain provenance report (VHS-REQ-668): render the unified
+      # read-model on every develop/PR build so provenance drift (a stale box,
+      # runtime, or requirements binding) is visible early, long before the
+      # marketplace-release gate would hard-block it. This is advisory only — it
+      # runs WITHOUT --strict, so it never fails the build; the retained JSON/
+      # Markdown lets a reviewer see the exact provenance state for a commit.
+      - name: Supply-Chain Provenance Report / supply-chain-state
+        if: ${{ always() }}
+        run: |
+          set -euo pipefail
+          node scripts/buildSupplyChainState.js | tee supply-chain-state-report.txt
+          node scripts/buildSupplyChainState.js --json --output supply-chain-state.json
+          node scripts/buildSupplyChainState.js --markdown --output supply-chain-state.md
+
+      - name: Supply-Chain Provenance Artifact / supply-chain-state
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: supply-chain-state-${{ github.run_id }}
+          path: |
+            supply-chain-state-report.txt
+            supply-chain-state.json
+            supply-chain-state.md
+          if-no-files-found: ignore
+          retention-days: 30
 
       - name: DoD Gate / dod
         run: |
@@ -150,6 +183,21 @@ jobs:
           path: |
             traceability-audit-report.txt
             dod-gate-report.txt
+          if-no-files-found: ignore
+          retention-days: 30
+
+      # Ephemeral requirements-manifest artifact (VHS-REQ-601): the manifest is
+      # generated under out/ by `npm run package` (compile), so it also ships in
+      # the VSIX. Uploading it here lets a future agent download the exact
+      # requirements set for a commit without waiting on a Marketplace release.
+      - name: Requirements Manifest / requirements-manifest
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: requirements-manifest-${{ github.run_id }}
+          path: |
+            out/requirements/requirements-manifest.json
+            out/requirements/requirements-manifest.md
           if-no-files-found: ignore
           retention-days: 30
 
@@ -212,3 +260,47 @@ jobs:
 
       - name: Integration Host (Linux)
         run: npm run test:integration:linux
+
+  requirements-csv-integrity:
+    name: Requirements CSV Integrity
+    runs-on: ubuntu-24.04
+
+    steps:
+      # Requirements-contract integrity leg (VHS-REQ-601). The requirements CSVs
+      # are parsed by mapping fields onto their headers by index, so a row with
+      # an unescaped comma in an unquoted field silently drops columns and shifts
+      # later fields (for example, a truncated Notes value) without failing any
+      # other gate. The cross-reference guard additionally fails closed on a
+      # dangling id-index anchor, an RTM ParentID that is not an Active system
+      # requirement, an inventory Path that no longer exists, an id-index
+      # ReplacementID that does not resolve, an SRS block whose references
+      # disagree with the RTM evidence map, an Active system requirement whose
+      # Verification References are absent or do not resolve, or an Active
+      # requirement that declares no Verification Reference. Both guards print
+      # their enforced contract to the run summary so the requirements are
+      # front-facing on every pull request. The verification-linkage guard
+      # additionally fails closed (in --enforce mode) when an Active requirement's
+      # verification-reference tests do not cite its ID. The criterion-inventory
+      # guard then fails closed (in --enforce mode) when an Active acceptance
+      # criterion is not cited at the criterion level (VHS-REQ-NNN.M). They need
+      # no dependency install; all use only Node built-ins (plus the sibling
+      # audit and docs-link modules).
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Validate requirements CSV column integrity
+        run: node scripts/checkRequirementsCsvColumns.js
+
+      - name: Validate requirements cross-references
+        run: node scripts/checkRequirementsIntegrity.js
+
+      - name: Enforce requirement verification linkage
+        run: node scripts/auditRequirementVerificationLinkage.js --enforce
+
+      - name: Enforce requirement criterion citation
+        run: node scripts/auditRequirementCriteriaInventory.js --enforce

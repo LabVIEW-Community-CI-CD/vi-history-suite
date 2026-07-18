@@ -204,4 +204,139 @@ describe('runtimeSettingsLiveSessionProbePacket', () => {
     expect(summary.historyStance).toBe('candidate-live-uptake-observed');
     expect(summary.historyProofStatus).toBe('re-evaluation-required');
   });
+
+  function baseSummary(
+    overrides: Record<string, unknown> = {}
+  ): Parameters<typeof persistRuntimeSettingsLiveSessionProbePacket>[0] {
+    return {
+      outcome: 'probed-runtime-settings-live-session',
+      settingsFilePath: '/tmp/settings.json',
+      persistedProvider: 'docker',
+      persistedLabviewVersion: '2026',
+      persistedLabviewBitness: 'x64',
+      baselinePersistedProvider: 'host',
+      baselinePersistedLabviewVersion: '2026',
+      baselinePersistedLabviewBitness: 'x64',
+      liveProvider: 'host',
+      liveLabviewVersion: '2026',
+      liveLabviewBitness: 'x64',
+      providerDrift: true,
+      versionDrift: false,
+      bitnessDrift: false,
+      driftDetected: true,
+      liveUptakeObservation: 'reload-required',
+      mutationProviderTarget: 'docker',
+      mutationTargetPersistedMatch: true,
+      mutationTargetBaselineChanged: true,
+      safeRestoreApplied: true,
+      safeRestoreVerified: true,
+      runtimeValidationOutcome: 'ready',
+      runtimeProvider: 'windows-container',
+      runtimeEngine: 'labview-cli',
+      runtimeBlockedReason: undefined,
+      ...overrides
+    } as Parameters<typeof persistRuntimeSettingsLiveSessionProbePacket>[0];
+  }
+
+  async function freshRoot(): Promise<string> {
+    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-live-probe-branches-'));
+    temporaryDirectories.push(tempRoot);
+    return tempRoot;
+  }
+
+  it('classifies an all-unknown run as insufficient evidence with none receipts', async () => {
+    const tempRoot = await freshRoot();
+    const summary = await persistRuntimeSettingsLiveSessionProbePacket(
+      baseSummary({
+        driftDetected: undefined,
+        liveUptakeObservation: undefined,
+        mutationProviderTarget: undefined,
+        mutationTargetPersistedMatch: undefined,
+        mutationTargetBaselineChanged: undefined
+      }),
+      tempRoot,
+      { now: () => new Date('2026-04-14T13:07:33.123Z') }
+    );
+
+    expect(summary.historyUnknownObservationCount).toBe(1);
+    expect(summary.mutationTargetUnknownCount).toBe(1);
+    expect(summary.mutationTargetPersistedUnknownCount).toBe(1);
+    expect(summary.mutationTargetBaselineUnknownCount).toBe(1);
+    expect(summary.historyStance).toBe('insufficient-evidence');
+    expect(summary.historyProofStatus).toBe('not-fully-proven');
+    expect(summary.providerSelectionCoverage).toBe('insufficient-evidence');
+
+    const markdown = await fs.readFile(summary.packetMarkdownPath, 'utf8');
+    expect(markdown).toContain('Mutation target aligned with persisted provider: `<none>`');
+    expect(markdown).toContain('Baseline provider changed after mutation: `<none>`');
+  });
+
+  it('counts false boolean receipts and a host mutation target as their own branches', async () => {
+    const tempRoot = await freshRoot();
+    const summary = await persistRuntimeSettingsLiveSessionProbePacket(
+      baseSummary({
+        liveUptakeObservation: 'in-session-updated',
+        mutationProviderTarget: 'host',
+        mutationTargetPersistedMatch: false,
+        mutationTargetBaselineChanged: false
+      }),
+      tempRoot,
+      { now: () => new Date('2026-04-14T13:07:33.123Z') }
+    );
+
+    expect(summary.historyInSessionUpdatedCount).toBe(1);
+    expect(summary.mutationTargetHostCount).toBe(1);
+    expect(summary.mutationTargetPersistedMismatchCount).toBe(1);
+    expect(summary.mutationTargetBaselineUnchangedCount).toBe(1);
+    expect(summary.historyStance).toBe('candidate-live-uptake-observed');
+    expect(summary.providerSelectionCoverage).toBe('single-provider-only');
+
+    const markdown = await fs.readFile(summary.packetMarkdownPath, 'utf8');
+    expect(markdown).toContain('Mutation target aligned with persisted provider: `no`');
+    expect(markdown).toContain('Baseline provider changed after mutation: `no`');
+  });
+
+  it('derives a prior run live-uptake observation from persisted driftDetected when re-reading history', async () => {
+    const reloadRoot = await freshRoot();
+    await persistRuntimeSettingsLiveSessionProbePacket(
+      baseSummary({ liveUptakeObservation: undefined, driftDetected: true }),
+      reloadRoot,
+      { now: () => new Date('2026-04-14T13:07:33.123Z') }
+    );
+    const reloadSecond = await persistRuntimeSettingsLiveSessionProbePacket(
+      baseSummary({ liveUptakeObservation: 'reload-required', driftDetected: true }),
+      reloadRoot,
+      { now: () => new Date('2026-04-14T13:08:00.000Z') }
+    );
+    // The prior run contributed a reload-required observation derived from driftDetected.
+    expect(reloadSecond.historyReloadRequiredCount).toBe(2);
+    expect(reloadSecond.historyStance).toBe('live-uptake-not-proven');
+
+    const inSessionRoot = await freshRoot();
+    await persistRuntimeSettingsLiveSessionProbePacket(
+      baseSummary({ liveUptakeObservation: undefined, driftDetected: false }),
+      inSessionRoot,
+      { now: () => new Date('2026-04-14T13:07:33.123Z') }
+    );
+    const inSessionSecond = await persistRuntimeSettingsLiveSessionProbePacket(
+      baseSummary({ liveUptakeObservation: 'in-session-updated', driftDetected: false }),
+      inSessionRoot,
+      { now: () => new Date('2026-04-14T13:08:00.000Z') }
+    );
+    // Both runs resolve to in-session-updated (one direct, one via driftDetected=false).
+    expect(inSessionSecond.historyInSessionUpdatedCount).toBe(2);
+    expect(inSessionSecond.historyStance).toBe('candidate-live-uptake-observed');
+  });
+
+  it('treats an unrecognized mutation-provider-target string as unknown', async () => {
+    const tempRoot = await freshRoot();
+    const summary = await persistRuntimeSettingsLiveSessionProbePacket(
+      baseSummary({ mutationProviderTarget: 'gpu' }),
+      tempRoot,
+      { now: () => new Date('2026-04-14T13:07:33.123Z') }
+    );
+    expect(summary.mutationTargetUnknownCount).toBe(1);
+    expect(summary.mutationTargetHostCount).toBe(0);
+    expect(summary.mutationTargetDockerCount).toBe(0);
+  });
 });

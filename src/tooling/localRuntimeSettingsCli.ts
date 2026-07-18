@@ -4,16 +4,65 @@ import * as path from 'node:path';
 import { execFile as execFileCallback } from 'node:child_process';
 import { createInterface } from 'node:readline/promises';
 import { promisify } from 'node:util';
-import { applyEdits, modify, parse, type ParseError } from 'jsonc-parser';
+import { parse } from 'jsonc-parser';
 import {
   locateComparisonRuntime,
   type ComparisonRuntimeEngine,
   type ComparisonRuntimeLocatorDeps,
   type ComparisonRuntimeProvider,
-  type RuntimePlatform,
   type ComparisonRuntimeSettings
 } from '../reporting/comparisonRuntimeLocator';
 import { readBuildInfo, type BuildInfo, type BuildInfoDeps } from './buildInfo';
+import { scanFlags } from './cliFlags';
+import { serializeJsonArtifact } from '../support/jsonArtifact';
+import {
+  buildPathPrependValue,
+  escapeSingleQuotedShellString,
+  escapeWindowsBatchEcho,
+  quoteLauncherPathForShell,
+  resolveCurrentPlatformLauncherPath
+} from './localRuntimeSettingsShellEscaping';
+import {
+  deriveRuntimeImplementationStatus,
+  deriveRuntimeProofStatus,
+  deriveRuntimeValidationErrorCode,
+  formatPersistedFact,
+  isSupportedInstalledLabviewVersion,
+  normalizeLabviewBitness,
+  normalizeProvider,
+  resolveCliRuntimePlatform
+} from './localRuntimeSettingsRuntimeStatus';
+import {
+  applySettingsJsoncEdit,
+  assertSupportedSettingsTarget,
+  detectSettingsEndOfLine,
+  ensureTerminalNewline,
+  isMissingFileError,
+  normalizeSettingsJsoncText,
+  readTrimmedSettingsProperty
+} from './localRuntimeSettingsFileText';
+import { buildReportableEnvironment } from './localRuntimeSettingsEnvironmentReport';
+
+export {
+  buildReportableEnvironment,
+  isSecretLikeEnvironmentKey
+} from './localRuntimeSettingsEnvironmentReport';
+
+export {
+  buildPathPrependValue,
+  escapeSingleQuotedShellString,
+  escapeWindowsBatchEcho,
+  quoteLauncherPathForShell,
+  resolveCurrentPlatformLauncherPath
+} from './localRuntimeSettingsShellEscaping';
+
+export {
+  formatPersistedFact,
+  isSupportedInstalledLabviewVersion,
+  normalizeLabviewBitness,
+  normalizeProvider,
+  resolveCliRuntimePlatform
+} from './localRuntimeSettingsRuntimeStatus';
 const execFileAsync = promisify(execFileCallback);
 
 export type LocalRuntimeSettingsCliBitness = 'x86' | 'x64';
@@ -122,10 +171,7 @@ const DEFAULT_WINDOWS_HOST_LABVIEW_BITNESS: LocalRuntimeSettingsCliBitness = 'x8
 const DEFAULT_DOCKER_LABVIEW_BITNESS: LocalRuntimeSettingsCliBitness = 'x64';
 const SUPPORTED_HOST_LABVIEW_VERSIONS = ['2025', '2026'] as const;
 const FUTURE_HOST_LABVIEW_OPTION = 'newer/manual path';
-const MINIMUM_COMPARISON_REPORT_LABVIEW_YEAR = 2025;
 const SUPPORTED_DOCKER_LABVIEW_VERSION = '2026';
-const WINDOWS_PATH_SEPARATOR = ';';
-const POSIX_PATH_SEPARATOR = ':';
 const DISABLE_PERSISTENT_USER_PATH_ADMISSION_ENV =
   'VI_HISTORY_SUITE_DISABLE_PERSISTENT_USER_PATH_ADMISSION';
 const WINDOWS_NODE_OVERRIDE_ENV = 'VI_HISTORY_SUITE_NODE_EXE';
@@ -200,36 +246,34 @@ export function parseLocalRuntimeSettingsCliArgs(argv: readonly string[]): Local
     helpRequested: false
   };
 
-  for (let index = 0; index < argv.length; index += 1) {
-    const argument = argv[index];
-    switch (argument) {
-      case '--help':
+  scanFlags(argv, {
+    trimValues: true,
+    boolFlags: {
+      '--help': () => {
         parsed.helpRequested = true;
-        break;
-      case '--validate':
+      },
+      '--validate': () => {
         parsed.validateRequested = true;
-        break;
-      case '--provider':
-        parsed.provider = normalizeProvider(readRequiredArgValue(argv, argument, ++index));
-        break;
-      case '--labview-version':
-        parsed.labviewVersion = readRequiredArgValue(argv, argument, ++index);
-        break;
-      case '--labview-bitness':
-        parsed.labviewBitness = normalizeLabviewBitness(
-          readRequiredArgValue(argv, argument, ++index)
-        );
-        break;
-      case '--settings-file':
-        parsed.settingsFilePath = readRequiredArgValue(argv, argument, ++index);
-        break;
-      case '--proof-out':
-        parsed.proofOutDirectoryPath = readRequiredArgValue(argv, argument, ++index);
-        break;
-      default:
-        throw new Error(`Unknown argument: ${argument}`);
+      }
+    },
+    valueFlags: {
+      '--provider': (value) => {
+        parsed.provider = normalizeProvider(value);
+      },
+      '--labview-version': (value) => {
+        parsed.labviewVersion = value;
+      },
+      '--labview-bitness': (value) => {
+        parsed.labviewBitness = normalizeLabviewBitness(value);
+      },
+      '--settings-file': (value) => {
+        parsed.settingsFilePath = value;
+      },
+      '--proof-out': (value) => {
+        parsed.proofOutDirectoryPath = value;
+      }
     }
-  }
+  });
 
   return parsed;
 }
@@ -575,38 +619,6 @@ export async function runInteractiveLocalRuntimeSettingsCli(
   }
 }
 
-function readRequiredArgValue(argv: readonly string[], flag: string, index: number): string {
-  const value = argv[index];
-  if (!value) {
-    throw new Error(`Missing value for ${flag}.`);
-  }
-
-  const trimmedValue = value.trim();
-  if (!trimmedValue) {
-    throw new Error(`Missing value for ${flag}.`);
-  }
-
-  return trimmedValue;
-}
-
-function normalizeLabviewBitness(value: string): LocalRuntimeSettingsCliBitness {
-  const normalized = value.trim().toLowerCase();
-  if (normalized === 'x86' || normalized === 'x64') {
-    return normalized;
-  }
-
-  throw new Error(`Unsupported LabVIEW bitness: ${value}`);
-}
-
-function normalizeProvider(value: string): LocalRuntimeSettingsCliProvider {
-  const normalized = value.trim().toLowerCase();
-  if (normalized === 'host' || normalized === 'docker') {
-    return normalized;
-  }
-
-  throw new Error(`Unsupported compare provider: ${value}`);
-}
-
 async function resolvePromptLine(
   deps: LocalRuntimeSettingsCliDeps
 ): Promise<PromptLineController> {
@@ -692,14 +704,6 @@ async function promptLabviewVersion(
       }
     }
   }
-}
-
-function isSupportedInstalledLabviewVersion(value: string | undefined): value is string {
-  const requestedYear = Number.parseInt(value ?? '', 10);
-  return (
-    Number.isFinite(requestedYear) &&
-    requestedYear >= MINIMUM_COMPARISON_REPORT_LABVIEW_YEAR
-  );
 }
 
 async function ensureInteractiveDefaultSettings(
@@ -891,117 +895,6 @@ async function validateLocalRuntimeSettingsCli(
   };
 }
 
-function deriveRuntimeValidationErrorCode(
-  blockedReason: string | undefined
-): RuntimeValidationErrorCode {
-  if (!blockedReason) {
-    return 'VIHS_OK';
-  }
-
-  if (blockedReason === 'installed-provider-invalid') {
-    return 'VIHS_E_PROVIDER_INVALID';
-  }
-
-  if (blockedReason === 'labview-runtime-selection-required') {
-    return 'VIHS_E_RUNTIME_SELECTION_REQUIRED';
-  }
-
-  if (blockedReason === 'labview-version-required') {
-    return 'VIHS_E_LABVIEW_VERSION_REQUIRED';
-  }
-
-  if (blockedReason === 'labview-version-unsupported-for-comparison-report') {
-    return 'VIHS_E_LABVIEW_VERSION_UNSUPPORTED';
-  }
-
-  if (blockedReason === 'labview-bitness-required') {
-    return 'VIHS_E_LABVIEW_BITNESS_REQUIRED';
-  }
-
-  if (
-    blockedReason === 'labview-2026q1-unsupported-on-macos' ||
-    blockedReason.endsWith('provider-not-supported-on-platform')
-  ) {
-    return 'VIHS_E_PLATFORM_UNSUPPORTED';
-  }
-
-  if (blockedReason.startsWith('configured-') && blockedReason.endsWith('-path-missing')) {
-    return 'VIHS_E_CONFIGURED_PATH_MISSING';
-  }
-
-  if (blockedReason === 'docker-provider-labview-version-not-implemented') {
-    return 'VIHS_E_DOCKER_PROVIDER_VERSION_NOT_IMPLEMENTED';
-  }
-
-  if (
-    blockedReason === 'docker-provider-requires-windows-x64' ||
-    blockedReason === 'docker-only-requires-windows-x64-provider'
-  ) {
-    return 'VIHS_E_DOCKER_PROVIDER_UNSUPPORTED_BITNESS';
-  }
-
-  if (
-    blockedReason === 'docker-provider-unavailable' ||
-    blockedReason === 'docker-only-provider-unavailable' ||
-    blockedReason === 'auto-docker-installed-provider-unavailable'
-  ) {
-    return 'VIHS_E_DOCKER_UNAVAILABLE';
-  }
-
-  if (blockedReason === 'labview-exe-not-found') {
-    return 'VIHS_E_LABVIEW_NOT_FOUND';
-  }
-
-  if (blockedReason === 'labview-exe-ambiguous') {
-    return 'VIHS_E_LABVIEW_AMBIGUOUS';
-  }
-
-  if (blockedReason === 'labview-cli-not-found-for-bitness') {
-    return 'VIHS_E_LABVIEW_CLI_BITNESS_NOT_FOUND';
-  }
-
-  if (
-    blockedReason === 'canonical-labview-cli-not-found' ||
-    blockedReason === 'comparison-tool-not-found'
-  ) {
-    return 'VIHS_E_COMPARISON_TOOL_NOT_FOUND';
-  }
-
-  if (blockedReason === 'windows-host-runtime-surface-contaminated') {
-    return 'VIHS_E_RUNTIME_SURFACE_CONTAMINATED';
-  }
-
-  return 'VIHS_E_RUNTIME_VALIDATION_BLOCKED';
-}
-
-function deriveRuntimeProofStatus(
-  runtimeValidationOutcome: 'ready' | 'blocked'
-): RuntimeProofStatus {
-  return runtimeValidationOutcome === 'ready'
-    ? 'ready'
-    : 'blocked-with-actionable-error';
-}
-
-function deriveRuntimeImplementationStatus(
-  blockedReason: string | undefined
-): RuntimeImplementationStatus {
-  if (!blockedReason) {
-    return 'implemented';
-  }
-
-  if (
-    blockedReason === 'docker-provider-labview-version-not-implemented' ||
-    blockedReason === 'docker-provider-requires-windows-x64' ||
-    blockedReason === 'docker-only-requires-windows-x64-provider' ||
-    blockedReason.endsWith('provider-not-supported-on-platform') ||
-    blockedReason === 'labview-2026q1-unsupported-on-macos'
-  ) {
-    return 'not-implemented';
-  }
-
-  return 'blocked-or-missing-prerequisite';
-}
-
 interface WriteValidationProofPacketInput {
   parsed: LocalRuntimeSettingsCliArgs;
   settingsFilePath: string;
@@ -1029,7 +922,7 @@ async function writeValidationProofPacket(
   const proofReportPath = path.join(proofRoot, VALIDATION_PROOF_JSON_FILE_NAME);
   const proofIssueBodyPath = path.join(proofRoot, VALIDATION_PROOF_ISSUE_FILE_NAME);
   const proof = buildValidationProof(input, deps);
-  await fsApi.writeFile(proofReportPath, `${JSON.stringify(proof, null, 2)}\n`, 'utf8');
+  await fsApi.writeFile(proofReportPath, serializeJsonArtifact(proof), 'utf8');
   await fsApi.writeFile(proofIssueBodyPath, `${buildValidationIssueBody(proof)}\n`, 'utf8');
   return { proofReportPath, proofIssueBodyPath };
 }
@@ -1112,29 +1005,6 @@ function safeUserName(): string | null {
   } catch {
     return null;
   }
-}
-
-function buildReportableEnvironment(env: NodeJS.ProcessEnv): Record<string, string> {
-  const reportable: Record<string, string> = {};
-  for (const [key, value] of Object.entries(env).sort(([left], [right]) =>
-    left.localeCompare(right)
-  )) {
-    reportable[key] = isSecretLikeEnvironmentKey(key)
-      ? '<redacted-secret-like-env-var>'
-      : String(value ?? '');
-  }
-  return reportable;
-}
-
-function isSecretLikeEnvironmentKey(key: string): boolean {
-  const normalized = key.toUpperCase();
-  if (normalized === 'PATH' || normalized.endsWith('PATH')) {
-    return false;
-  }
-
-  return /TOKEN|(^|_)PAT($|_)|PASSWORD|PASSWD|SECRET|PRIVATE|CREDENTIAL|AUTH|KEY/u.test(
-    normalized
-  );
 }
 
 function buildValidationIssueBody(proof: Record<string, unknown>): string {
@@ -1284,127 +1154,6 @@ async function readExistingSettingsFileText(
   }
 }
 
-function normalizeSettingsJsoncText(
-  existingSettingsText: string | undefined,
-  settingsFilePath: string
-): string {
-  const candidateText = stripUtf8ByteOrderMark(
-    existingSettingsText?.trim() ? existingSettingsText : '{}'
-  );
-  const parseErrors: ParseError[] = [];
-  const parsed = parse(candidateText, parseErrors, {
-    allowTrailingComma: true,
-    disallowComments: false
-  }) as unknown;
-
-  if (parseErrors.length > 0) {
-    throw new Error(`Failed to parse VS Code settings JSONC at ${settingsFilePath}.`);
-  }
-
-  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-    throw new Error('VS Code settings.json must contain a JSON object.');
-  }
-
-  return candidateText;
-}
-
-function stripUtf8ByteOrderMark(text: string): string {
-  return text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
-}
-
-function applySettingsJsoncEdit(
-  settingsText: string,
-  pathSegments: readonly string[],
-  value: string,
-  endOfLine: '\n' | '\r\n'
-): string {
-  const edits = modify(settingsText, [...pathSegments], value, {
-    formattingOptions: {
-      insertSpaces: true,
-      tabSize: 2,
-      eol: endOfLine
-    }
-  });
-  return applyEdits(settingsText, edits);
-}
-
-function detectSettingsEndOfLine(existingSettingsText: string | undefined): '\n' | '\r\n' {
-  if (existingSettingsText?.includes('\r\n')) {
-    return '\r\n';
-  }
-  return '\n';
-}
-
-function ensureTerminalNewline(settingsText: string, endOfLine: '\n' | '\r\n'): string {
-  if (settingsText.endsWith(endOfLine)) {
-    return settingsText;
-  }
-  return `${settingsText}${endOfLine}`;
-}
-
-function assertSupportedSettingsTarget(settingsFilePath: string): void {
-  const normalizedSegments = path
-    .normalize(settingsFilePath)
-    .split(/[\\/]+/)
-    .map((segment) => segment.toLowerCase());
-  const finalSegment = normalizedSegments.at(-1);
-  const parentSegment = normalizedSegments.at(-2);
-
-  if (parentSegment === '.vscode' && finalSegment === 'settings.json') {
-    throw new Error(
-      'Workspace settings are not supported for VI History runtime-settings CLI. Use the default user settings.json target or an explicit non-workspace settings-file path.'
-    );
-  }
-}
-
-function isMissingFileError(error: unknown): error is NodeJS.ErrnoException {
-  return (
-    !!error &&
-    typeof error === 'object' &&
-    'code' in error &&
-    (error as NodeJS.ErrnoException).code === 'ENOENT'
-  );
-}
-
-function readTrimmedSettingsProperty(
-  settingsObject: Record<string, unknown>,
-  propertyName: string
-): string | undefined {
-  const value = settingsObject[propertyName];
-  if (typeof value !== 'string') {
-    return undefined;
-  }
-
-  const trimmedValue = value.trim();
-  return trimmedValue ? trimmedValue : undefined;
-}
-
-function formatPersistedFact(value: string | undefined): string {
-  return value ?? '<missing>';
-}
-
-function resolveCliRuntimePlatform(platform: NodeJS.Platform): RuntimePlatform {
-  if (platform === 'win32' || platform === 'linux' || platform === 'darwin') {
-    return platform;
-  }
-
-  throw new Error(
-    `Unsupported runtime platform for VI History settings CLI validation: ${platform}`
-  );
-}
-
-function resolveCurrentPlatformLauncherPath(
-  windowsLauncherPath: string,
-  posixLauncherPath: string,
-  platform: NodeJS.Platform
-): string {
-  return platform === 'win32' ? windowsLauncherPath : posixLauncherPath;
-}
-
-function buildPathPrependValue(rootDirectoryPath: string, platform: NodeJS.Platform): string {
-  return `${rootDirectoryPath}${platform === 'win32' ? WINDOWS_PATH_SEPARATOR : POSIX_PATH_SEPARATOR}`;
-}
-
 async function ensurePersistentUserPathAdmission(
   pathEntry: string,
   deps: LocalRuntimeSettingsCliDeps
@@ -1501,14 +1250,6 @@ function renderTerminalEntrypointDiscoveryText(): string {
     '  add --settings-file <path> to target one explicit non-workspace settings.json file',
     '  add --proof-out <path> to retain validation proof packets'
   ].join('\n');
-}
-
-function quoteLauncherPathForShell(launcherPath: string, platform: NodeJS.Platform): string {
-  if (platform === 'win32') {
-    return `"${launcherPath.replace(/"/g, '""')}"`;
-  }
-
-  return `'${escapeSingleQuotedShellString(launcherPath)}'`;
 }
 
 export const VI_HISTORY_SUITE_EXTENSION_FOLDER_PREFIX = 'svelderrainruiz.vi-history-suite-';
@@ -1689,14 +1430,6 @@ function renderPosixLauncher(): string {
     'exec node "$SCRIPT_DIR/run-local-runtime-settings-cli.js" "$@"',
     ''
   ].join('\n');
-}
-
-function escapeWindowsBatchEcho(value: string): string {
-  return value.replace(/"/g, '""');
-}
-
-function escapeSingleQuotedShellString(value: string): string {
-  return value.replace(/'/g, `'\"'\"'`);
 }
 
 function writeLine(stream: WritableStreamLike, text: string): void {

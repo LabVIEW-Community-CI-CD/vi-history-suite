@@ -63,6 +63,10 @@ const TRACEABILITY_SURFACE_GLOBS = [
   '.vscode/*.json'
 ];
 
+const GENERATED_TRACEABILITY_SURFACE_FILES = new Set([
+  '.devcontainer/devcontainer-lock.json'
+]);
+
 const ALLOWED_HIDDEN_DIRECTORIES = new Set([
   '.github',
   '.devcontainer',
@@ -294,7 +298,8 @@ function auditTraceability(deps = {}) {
   }
 
   // Find committed traceability surface files that must be inventoried.
-  const candidateFiles = findMatchingFiles(TRACEABILITY_SURFACE_GLOBS, cwd);
+  const candidateFiles = findMatchingFiles(TRACEABILITY_SURFACE_GLOBS, cwd)
+    .filter((file) => !GENERATED_TRACEABILITY_SURFACE_FILES.has(file));
   for (const file of candidateFiles) {
     if (!inventory.byPath.has(file)) {
       findings.missingInventoryEntries.push(file);
@@ -416,6 +421,7 @@ module.exports = {
   IMPLEMENTATION_GLOBS,
   TEST_GLOBS,
   TRACEABILITY_SURFACE_GLOBS,
+  GENERATED_TRACEABILITY_SURFACE_FILES,
   auditTraceability,
   extractRtmPaths,
   findMatchingFiles,

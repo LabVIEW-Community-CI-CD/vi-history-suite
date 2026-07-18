@@ -18,7 +18,10 @@ import * as vscode from 'vscode';
 
 import {
   OPEN_RUNTIME_REPORT_PANEL_COMMAND_ID,
-  registerOpenRuntimeReportPanelCommand
+  registerOpenRuntimeReportPanelCommand,
+  presenceLabel,
+  toPanelProviderOption,
+  buildActiveProviderSummary
 } from '../../src/commands/openRuntimeReportPanelCommand';
 import type { DetectedRuntimes } from '../../src/tooling/runtimeAutoDetect';
 
@@ -120,7 +123,7 @@ beforeEach(() => {
 });
 
 describe('registerOpenRuntimeReportPanelCommand (VHS-REQ-620 / VHS-REQ-645)', () => {
-  it('blocks outside trusted workspaces and does not open a panel', async () => {
+  it('blocks outside trusted workspaces and does not open a panel (VHS-REQ-620.5)', async () => {
     const create = vi.spyOn(vscode.window, 'createWebviewPanel');
     registerOpenRuntimeReportPanelCommand(
       createFakeContext() as never,
@@ -132,7 +135,7 @@ describe('registerOpenRuntimeReportPanelCommand (VHS-REQ-620 / VHS-REQ-645)', ()
     expect(create).not.toHaveBeenCalled();
   });
 
-  it('opens the panel and renders the settings surface', async () => {
+  it('opens the panel and renders the settings surface (VHS-REQ-645.5)', async () => {
     const panel = createMockPanel();
     vi.spyOn(vscode.window, 'createWebviewPanel').mockReturnValue(panel as never);
     registerOpenRuntimeReportPanelCommand(
@@ -160,7 +163,7 @@ describe('registerOpenRuntimeReportPanelCommand (VHS-REQ-620 / VHS-REQ-645)', ()
     expect(panel.reveal).toHaveBeenCalledOnce();
   });
 
-  it('persists a selected runtime provider to the three runtime keys', async () => {
+  it('persists a selected runtime provider to the three runtime keys (VHS-REQ-620.5)', async () => {
     const panel = createMockPanel();
     vi.spyOn(vscode.window, 'createWebviewPanel').mockReturnValue(panel as never);
     registerOpenRuntimeReportPanelCommand(
@@ -188,7 +191,7 @@ describe('registerOpenRuntimeReportPanelCommand (VHS-REQ-620 / VHS-REQ-645)', ()
     );
   });
 
-  it('writes the inverse ignore flag when an include checkbox is toggled', async () => {
+  it('writes the inverse ignore flag when an include checkbox is toggled (VHS-REQ-645.5)', async () => {
     const panel = createMockPanel();
     vi.spyOn(vscode.window, 'createWebviewPanel').mockReturnValue(panel as never);
     registerOpenRuntimeReportPanelCommand(
@@ -221,7 +224,7 @@ describe('registerOpenRuntimeReportPanelCommand (VHS-REQ-620 / VHS-REQ-645)', ()
     );
   });
 
-  it('ignores an unknown setReportFormat message (format option removed, #545)', async () => {
+  it('ignores an unknown setReportFormat message (format option removed, VHS-REQ-645.5, #545)', async () => {
     const panel = createMockPanel();
     vi.spyOn(vscode.window, 'createWebviewPanel').mockReturnValue(panel as never);
     registerOpenRuntimeReportPanelCommand(
@@ -238,7 +241,7 @@ describe('registerOpenRuntimeReportPanelCommand (VHS-REQ-620 / VHS-REQ-645)', ()
     );
   });
 
-  it('persists and clears the container image version selection', async () => {
+  it('persists and clears the container image version selection (VHS-REQ-651.2)', async () => {
     const panel = createMockPanel();
     vi.spyOn(vscode.window, 'createWebviewPanel').mockReturnValue(panel as never);
     registerOpenRuntimeReportPanelCommand(
@@ -263,7 +266,7 @@ describe('registerOpenRuntimeReportPanelCommand (VHS-REQ-620 / VHS-REQ-645)', ()
     );
   });
 
-  it('discovers container image versions through the injected boundaries', async () => {
+  it('discovers container image versions through the injected boundaries (VHS-REQ-657.9)', async () => {
     const panel = createMockPanel();
     vi.spyOn(vscode.window, 'createWebviewPanel').mockReturnValue(panel as never);
     const fetchPublishedTags = vi.fn(async () => ['2026q1-linux']);
@@ -286,7 +289,43 @@ describe('registerOpenRuntimeReportPanelCommand (VHS-REQ-620 / VHS-REQ-645)', ()
     expect(panel.webview.html).toContain('2026q1-linux');
   });
 
-  it('labels image versions "local presence unknown" when the Docker engine is offline (VHS-REQ-649)', async () => {
+  it('degrades to the current container image selection when discovery is unavailable (VHS-REQ-651.3)', async () => {
+    vi.spyOn(vscode.workspace, 'getConfiguration').mockReturnValue({
+      get: vi.fn((key: string) => key === 'container.imageVersion' ? '2026q1-linux' : undefined),
+      update: sharedUpdate,
+      has: vi.fn(),
+      inspect: vi.fn()
+    } as never);
+    const panel = createMockPanel();
+    vi.spyOn(vscode.window, 'createWebviewPanel').mockReturnValue(panel as never);
+    const fetchPublishedTags = vi.fn(async () => {
+      throw new Error('registry unavailable');
+    });
+    const listLocalImages = vi.fn(async () => {
+      throw new Error('docker unavailable');
+    });
+    registerOpenRuntimeReportPanelCommand(
+      createFakeContext() as never,
+      createFakeWatcher(detectionBoth, dockerActiveSnapshot) as never,
+      {
+        isTrusted: () => true,
+        containerPlatform: 'linux',
+        fetchPublishedTags,
+        listLocalImages
+      }
+    );
+    await vscode.commands.executeCommand(OPEN_RUNTIME_REPORT_PANEL_COMMAND_ID);
+
+    await expect(panel.dispatchMessage({ command: 'discoverContainerVersions' })).resolves.toBeUndefined();
+
+    expect(fetchPublishedTags).toHaveBeenCalled();
+    expect(listLocalImages).toHaveBeenCalled();
+    expect(panel.webview.html).toContain('<strong>Selected:</strong> 2026q1-linux');
+    expect(panel.webview.html).toContain('Published LabVIEW container tag discovery was skipped');
+    expect(panel.webview.html).toContain('Local LabVIEW container image discovery could not enumerate pulled images');
+  });
+
+  it('labels image versions "local presence unknown" when the Docker engine is offline (VHS-REQ-649.3)', async () => {
     const panel = createMockPanel();
     vi.spyOn(vscode.window, 'createWebviewPanel').mockReturnValue(panel as never);
     const fetchPublishedTags = vi.fn(async () => ['2026q1-linux']);
@@ -311,7 +350,7 @@ describe('registerOpenRuntimeReportPanelCommand (VHS-REQ-620 / VHS-REQ-645)', ()
     expect(panel.webview.html).not.toContain('Available to pull');
   });
 
-  it('renders the docker provider option as just "Docker" without version/bitness (VHS-REQ-657)', async () => {
+  it('renders the docker provider option as just "Docker" without version/bitness (VHS-REQ-657.9, VHS-REQ-651.1)', async () => {
     const panel = createMockPanel();
     vi.spyOn(vscode.window, 'createWebviewPanel').mockReturnValue(panel as never);
     registerOpenRuntimeReportPanelCommand(
@@ -326,7 +365,7 @@ describe('registerOpenRuntimeReportPanelCommand (VHS-REQ-620 / VHS-REQ-645)', ()
     expect(panel.webview.html).not.toContain('undefined');
   });
 
-  it('hides the container image section when the comparison runtime is host (VHS-REQ-657/651)', async () => {
+  it('hides the container image section when the comparison runtime is host (VHS-REQ-657.9, VHS-REQ-651.4)', async () => {
     const panel = createMockPanel();
     vi.spyOn(vscode.window, 'createWebviewPanel').mockReturnValue(panel as never);
     vi.spyOn(vscode.workspace, 'getConfiguration').mockReturnValue({
@@ -345,5 +384,146 @@ describe('registerOpenRuntimeReportPanelCommand (VHS-REQ-620 / VHS-REQ-645)', ()
     // Even though Docker is available/active, an explicit host selection presents
     // no container section.
     expect(panel.webview.html).not.toContain('data-testid="runtime-report-container-section"');
+  });
+
+  it('clamps and persists a CLI connect-timeout edit from the panel (VHS-REQ-620.8)', async () => {
+    const panel = createMockPanel();
+    vi.spyOn(vscode.window, 'createWebviewPanel').mockReturnValue(panel as never);
+    registerOpenRuntimeReportPanelCommand(
+      createFakeContext() as never,
+      createFakeWatcher(detectionBoth) as never,
+      { isTrusted: () => true, containerPlatform: 'linux' }
+    );
+    await vscode.commands.executeCommand(OPEN_RUNTIME_REPORT_PANEL_COMMAND_ID);
+
+    // An in-range integer is persisted verbatim.
+    await panel.dispatchMessage({ command: 'setCliConnectTimeout', seconds: 300 });
+    expect(sharedUpdate).toHaveBeenCalledWith(
+      'runtime.cliConnectTimeoutSeconds',
+      300,
+      vscode.ConfigurationTarget.Global
+    );
+
+    // An above-max value is clamped before persisting.
+    await panel.dispatchMessage({ command: 'setCliConnectTimeout', seconds: 9999 });
+    expect(sharedUpdate).toHaveBeenCalledWith(
+      'runtime.cliConnectTimeoutSeconds',
+      600,
+      vscode.ConfigurationTarget.Global
+    );
+
+    // A non-number seconds payload is ignored (no additional write).
+    const callsBefore = sharedUpdate.mock.calls.length;
+    await panel.dispatchMessage({ command: 'setCliConnectTimeout' });
+    expect(sharedUpdate.mock.calls.length).toBe(callsBefore);
+  });
+});
+
+describe('openRuntimeReportPanelCommand pure helpers (VHS-REQ-657 / VHS-REQ-649 / VHS-REQ-620 coverage)', () => {
+  function version(overrides: Partial<{ locallyPresent: boolean; publishedToRegistry: boolean }>) {
+    return {
+      year: 2026,
+      quarter: 1,
+      platform: 'windows' as const,
+      tag: '2026q1-windows',
+      reference: 'nationalinstruments/labview:2026q1-windows',
+      locallyPresent: false,
+      publishedToRegistry: false,
+      ...overrides
+    };
+  }
+
+  describe('presenceLabel (VHS-REQ-649)', () => {
+    it('reports pulled-locally first, regardless of engine-offline flag', () => {
+      expect(presenceLabel(version({ locallyPresent: true }))).toBe('Pulled locally');
+      expect(presenceLabel(version({ locallyPresent: true }), true)).toBe('Pulled locally');
+    });
+
+    it('reports unknown presence when the Docker engine is offline (not pulled locally)', () => {
+      expect(presenceLabel(version({ locallyPresent: false }), true)).toBe(
+        'Local presence unknown (Docker engine offline)'
+      );
+    });
+
+    it('distinguishes available-to-pull from available when the engine is online', () => {
+      expect(presenceLabel(version({ publishedToRegistry: true }))).toBe('Available to pull');
+      expect(presenceLabel(version({ publishedToRegistry: false }))).toBe('Available');
+    });
+  });
+
+  describe('toPanelProviderOption (VHS-REQ-657)', () => {
+    it('maps a host option with a version/bitness label', () => {
+      expect(
+        toPanelProviderOption({
+          kind: 'host',
+          label: 'ignored',
+          description: 'desc',
+          detail: 'det',
+          labviewVersion: '2026',
+          labviewBitness: 'x64'
+        })
+      ).toEqual({ kind: 'host', label: 'Host LabVIEW 2026 x64', description: 'desc', detail: 'det' });
+    });
+
+    it('maps a docker option to a version-agnostic "Docker" label', () => {
+      expect(
+        toPanelProviderOption({ kind: 'docker', label: 'ignored', description: 'd', detail: 't' })
+      ).toEqual({ kind: 'docker', label: 'Docker', description: 'd', detail: 't' });
+    });
+
+    it('maps a clear option', () => {
+      expect(toPanelProviderOption({ kind: 'clear', label: 'ignored', detail: 't' })).toEqual({
+        kind: 'clear',
+        label: 'Clear (auto-detect each session)',
+        detail: 't'
+      });
+    });
+  });
+
+  describe('buildActiveProviderSummary (VHS-REQ-620)', () => {
+    function watcherWith(snapshot: unknown) {
+      return { getLastSnapshot: () => snapshot } as never;
+    }
+
+    it('reports "None detected" when there is no snapshot', () => {
+      expect(buildActiveProviderSummary(watcherWith(undefined))).toEqual({ summary: 'None detected' });
+    });
+
+    it('reports "None detected" (with source) for a none-provider snapshot', () => {
+      expect(
+        buildActiveProviderSummary(
+          watcherWith({ label: { provider: 'none' }, source: 'auto-detected' })
+        )
+      ).toEqual({ summary: 'None detected' });
+    });
+
+    it('prefixes "Host" for a host provider snapshot', () => {
+      const result = buildActiveProviderSummary(
+        watcherWith({
+          label: { provider: 'host', labviewVersion: '2026', labviewBitness: 'x64' },
+          source: 'persisted'
+        })
+      );
+      expect(result.summary.startsWith('Host ')).toBe(true);
+      expect(result.source).toBe('persisted');
+    });
+
+    it('uses the bare suffix for a docker provider snapshot', () => {
+      const result = buildActiveProviderSummary(
+        watcherWith({
+          label: { provider: 'docker', containerImageVersion: '2026q1-windows' },
+          source: 'auto-detected'
+        })
+      );
+      expect(result.summary).toContain('Docker');
+      expect(result.summary.startsWith('Host ')).toBe(false);
+    });
+
+    it('falls back to "None detected" (with source) when the suffix is empty', () => {
+      // A host snapshot missing version/bitness yields an empty suffix.
+      expect(
+        buildActiveProviderSummary(watcherWith({ label: { provider: 'host' }, source: 'persisted' }))
+      ).toEqual({ summary: 'None detected', source: 'persisted' });
+    });
   });
 });

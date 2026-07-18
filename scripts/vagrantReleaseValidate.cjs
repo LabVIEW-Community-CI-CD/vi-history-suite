@@ -1,0 +1,235 @@
+#!/usr/bin/env node
+
+/*
+ * Mandatory local Vagrant release validation + attestation recorder (VHS-REQ-666).
+ *
+ * This is the maintainer-run producer of the release-gating runtime attestation
+ * that scripts/checkReleaseReadiness.js --require-release-attestation consumes and
+ * the marketplace-release workflow enforces (fail-closed) before publishing.
+ *
+ * Flow:
+ *   1. Preflight the Vagrant lane (scripts/vagrantLanePreflight.js).
+ *   1b. Consume the dev-tools PRERELEASE: build its provenance manifest
+ *      (scripts/buildDevToolsRelease.js --channel prerelease) and self-verify
+ *      the in-tree toolset against it fail-closed (scripts/verifyDevToolsRelease.js
+ *      --verify-self), proving the synced tree the guest validates is the
+ *      content-addressed prerelease toolset (VHS-REQ-667). Its contentDigest is
+ *      bound into the recorded attestation evidence.
+ *   2. Bring the Windows/LabVIEW guest up (vagrant up); the box self-heals its
+ *      account at boot (VIHSVagrantSelfHeal task), so no interactive login.
+ *   3. Run the shipped comparison primitives IN-GUEST over WinRM against the
+ *      icon-editor lv_icon.vi fixture (x86 host-native headless, VHS-REQ-665),
+ *      using the in-repo scripts/windows-compare-driver.cjs on the synced repo.
+ *   4. On PASS, record the attestation into the committed runtime-validation
+ *      ledger track `vagrant-win-x86-hostnative` at the current package version
+ *      via scripts/recordRuntimeValidation.js, then remind the maintainer to
+ *      commit the ledger.
+ *
+ * This is a maintainer-run driver (human-in-the-loop, decision C of the plan);
+ * it is intentionally a .cjs so it stays outside the scripts/*.js traceability
+ * inventory glob and is not shipped in the VSIX. It never runs in hosted CI.
+ *
+ * Usage:
+ *   npm run vagrant:validate:release
+ *   node scripts/vagrantReleaseValidate.cjs [--skip-up] [--evidence <note>]
+ */
+
+'use strict';
+
+const fs = require('node:fs');
+const path = require('node:path');
+const { spawnSync } = require('node:child_process');
+const { buildAndVerifyDevToolsPrerelease } = require('./lib/devtoolsPrereleaseConsumer.cjs');
+const { DEFAULT_BOX, isBoxOverride, readCommittedBoxSha256 } = require('./lib/vagrantBoxProvenance.cjs');
+const { parseDriverArgs } = require('./lib/vagrantDriverArgs.cjs');
+
+const repoRoot = path.resolve(__dirname, '..');
+const vagrantDir = path.join(repoRoot, 'vagrant');
+const TRACK_ID = 'vagrant-win-x86-hostnative';
+// DEFAULT_BOX / isBoxOverride / readCommittedBoxSha256 come from
+// scripts/lib/vagrantBoxProvenance.cjs. Must match vagrant/Vagrantfile:
+// BOX_NAME = ENV.fetch("VIHS_VAGRANT_BOX", "vihs/win11-labview2026"). Setting
+// VIHS_VAGRANT_BOX to the default value selects the SAME committed box, so it is
+// NOT an override; only a different value is.
+
+// In-guest paths: the Vagrantfile mounts the repo at C:\vihs-workspace.
+const GUEST_REPO = 'C:\\vihs-workspace';
+const GUEST_VI_PATH = 'resource/plugins/lv_icon.vi';
+const GUEST_BASE = '5376833';
+const GUEST_SELECTED = 'fc09736';
+
+function log(message) {
+  process.stdout.write(`[vagrant-release-validate] ${message}\n`);
+}
+
+function fail(message) {
+  process.stderr.write(`[vagrant-release-validate] ERROR: ${message}\n`);
+  process.exit(1);
+}
+
+function run(command, args, options = {}) {
+  const result = spawnSync(command, args, {
+    stdio: options.capture ? ['ignore', 'pipe', 'pipe'] : 'inherit',
+    encoding: 'utf8',
+    cwd: options.cwd || repoRoot,
+    env: { ...process.env, GH_PAGER: 'cat', HOME: process.env.HOME },
+    ...options
+  });
+  return result;
+}
+
+function getPackageVersion() {
+  return JSON.parse(fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf8')).version;
+}
+
+function getCommit() {
+  const result = run('git', ['rev-parse', '--short', 'HEAD'], { capture: true });
+  return result.status === 0 ? String(result.stdout).trim() : 'unknown';
+}
+
+// Read the committed Vagrant box manifest's sha256 so the recorded attestation
+// is structurally bound to the specific box it was produced on (box-provenance
+// chain). Delegates to scripts/lib/vagrantBoxProvenance.cjs: returns undefined
+// when the manifest is absent/unparseable OR when VIHS_VAGRANT_BOX names a
+// NON-default box.
+function getBoxSha256() {
+  return readCommittedBoxSha256({ vagrantDir });
+}
+
+// Build the dev-tools PRERELEASE provenance manifest and self-verify the in-tree
+// toolset against it (fail-closed), then return the aggregate contentDigest.
+//
+// The in-guest comparison validates the synced working tree. Building the
+// prerelease provenance manifest (channel: prerelease, the dev-tools release
+// channel that tracks develop) and self-verifying it proves that synced tree is
+// byte-for-byte the content-addressed prerelease toolset (VHS-REQ-667), so the
+// recorded release attestation is bound to a known dev-tools prerelease rather
+// than an unverified checkout. Shared with the advisory proof driver via
+// scripts/lib/devtoolsPrereleaseConsumer.cjs.
+function consumeDevToolsPrerelease() {
+  return buildAndVerifyDevToolsPrerelease({ repoRoot, run, log, fail });
+}
+
+// Build the in-guest PowerShell that runs the shipped comparison primitives for
+// the release-gating validation. The env contract is load-bearing (VHS-REQ-665):
+// this track attests an x86 host-native headless comparison, so the script MUST
+// set WIN_PROVIDER=host, WIN_LV_BITNESS=x86, and LV_RTE_WIN_HOSTNATIVE_HEADLESS=1.
+// A drift here (e.g. x86->x64) would silently record a wrong-mode attestation as
+// if it were x86 host-native, so this is extracted and unit-tested.
+function buildReleaseComparisonGuestScript(paths) {
+  return [
+    '$ErrorActionPreference = "Stop"',
+    '$env:LV_RTE_WIN_HOSTNATIVE_HEADLESS = "1"',
+    '$env:WIN_PROVIDER = "host"',
+    '$env:WIN_LV_BITNESS = "x86"',
+    `$env:WIN_REPO_ROOT = "${paths.repo}"`,
+    `$env:WIN_VI_PATH = "${paths.viPath}"`,
+    `$env:WIN_BASE = "${paths.base}"`,
+    `$env:WIN_SELECTED = "${paths.selected}"`,
+    `cd ${paths.repo}`,
+    'npm run compile',
+    'node scripts\\windows-compare-driver.cjs'
+  ].join('; ');
+}
+
+function main() {
+  const { options, error } = parseDriverArgs(process.argv.slice(2));
+  if (error) {
+    fail(error);
+  }
+  const version = getPackageVersion();
+  const commit = getCommit();
+  log(`Validating release candidate ${version} (${commit}) via the Vagrant Windows/LabVIEW lane.`);
+
+  // A release-gating attestation must be produced on the committed golden box
+  // that ships (fingerprinted by vagrant/box-manifest.json). A VIHS_VAGRANT_BOX
+  // value naming a DIFFERENT box means the run uses a non-shipped box, so
+  // recording an attestation would let the marketplace gate pass on it. Fail
+  // fast. Setting the env to the default box name is allowed (same box). (The
+  // advisory pathadmit proof lane is non-gating and may run under an override.)
+  if (isBoxOverride()) {
+    fail(
+      `VIHS_VAGRANT_BOX is set to a non-default box ("${process.env.VIHS_VAGRANT_BOX}"). A release-gating attestation must be produced on the committed golden box "${DEFAULT_BOX}" (vagrant/box-manifest.json); unset VIHS_VAGRANT_BOX or set it to the default box, then re-run before recording a release attestation.`
+    );
+  }
+
+  // 1. Preflight.
+  log('Preflighting the Vagrant lane...');
+  const preflight = run('node', [path.join('scripts', 'vagrantLanePreflight.js'), 'preflight']);
+  if (preflight.status !== 0) {
+    fail('Vagrant lane preflight failed. Resolve the FAIL items (see docs/vagrant.md) before release validation.');
+  }
+
+  // 1b. Consume the dev-tools PRERELEASE: build its provenance manifest and
+  // self-verify the in-tree toolset against it (fail-closed) BEFORE the heavy
+  // vagrant up, so an unverified/mismatched toolset is rejected cheaply. The
+  // returned contentDigest is bound into the attestation evidence below.
+  const devtoolsContentDigest = consumeDevToolsPrerelease();
+
+  // 2. Bring the guest up (self-heals its account at boot).
+  if (!options.skipUp) {
+    log('Bringing the Windows/LabVIEW guest up (vagrant up)...');
+    const up = run('vagrant', ['up', '--provider', 'virtualbox'], { cwd: vagrantDir });
+    if (up.status !== 0) {
+      fail('vagrant up failed. Inspect the guest console; the self-heal task should clear a restricted account automatically.');
+    }
+  } else {
+    log('--skip-up: assuming the guest is already running.');
+  }
+
+  // 3. Run the shipped comparison primitives in-guest over WinRM.
+  log('Running the in-guest comparison validation (x86 host-native headless, VHS-REQ-665)...');
+  const guestScript = buildReleaseComparisonGuestScript({
+    repo: GUEST_REPO,
+    viPath: GUEST_VI_PATH,
+    base: GUEST_BASE,
+    selected: GUEST_SELECTED
+  });
+
+  const guest = run('vagrant', ['powershell', '-c', guestScript], { cwd: vagrantDir });
+  if (guest.status !== 0) {
+    fail('In-guest comparison validation FAILED. The release attestation was NOT recorded; do not publish.');
+  }
+  log('In-guest comparison validation PASSED.');
+
+  // 4. Record the attestation into the committed ledger.
+  log(`Recording the release attestation for track ${TRACK_ID} at ${version}...`);
+  const baseEvidence = options.evidence || `vagrant local validation ${new Date().toISOString()}`;
+  // Bind the verified dev-tools prerelease content digest into the evidence so
+  // the recorded attestation references the exact prerelease toolset it validated.
+  const evidence = `${baseEvidence}; devtools-prerelease contentDigest=${devtoolsContentDigest}`;
+  const boxSha256 = getBoxSha256();
+  const recordArgs = [
+    path.join('scripts', 'recordRuntimeValidation.js'),
+    '--track',
+    TRACK_ID,
+    '--version',
+    version,
+    '--commit',
+    commit,
+    '--evidence',
+    evidence
+  ];
+  // Bind the attestation to the committed box. Under a VIHS_VAGRANT_BOX override
+  // main() has already failed out, so this lane only ever records on the default
+  // box; the binding is present when the committed manifest is well-formed.
+  if (boxSha256) {
+    recordArgs.push('--box-sha256', boxSha256);
+  }
+  const record = run('node', recordArgs);
+  if (record.status !== 0) {
+    fail('Failed to record the attestation into the runtime-validation ledger.');
+  }
+
+  log('Release attestation recorded. NEXT: commit docs/requirements/runtime-validation-ledger.json,');
+  log('then verify the gate with: npm run release:readiness:gate');
+}
+
+module.exports = {
+  TRACK_ID,
+  buildReleaseComparisonGuestScript
+};
+
+if (require.main === module) {
+  main();
+}

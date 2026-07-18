@@ -4,8 +4,11 @@ out-tests/
 dist/
 coverage/
 .vscode-test/
+.stryker-tmp/
+reports/
 *.vsix
 *.log
+.devcontainer/devcontainer-lock.json
 .cache/
 tmp/
 assurance-*-evidence/

@@ -238,7 +238,7 @@ describe('checkMaintainerRunnerPrerequisites.inspectMaintainerRunnerPrerequisite
     expect(labview?.satisfied).toBe(true);
   });
 
-  it('surfaces every missing prerequisite at once rather than only the first', () => {
+  it('surfaces every missing prerequisite at once rather than only the first (VHS-REQ-598.7, VHS-REQ-652.7)', () => {
     const report = doctor.inspectMaintainerRunnerPrerequisites('linux', {
       env: { PATH: '' },
       existsSync: () => false
@@ -249,7 +249,7 @@ describe('checkMaintainerRunnerPrerequisites.inspectMaintainerRunnerPrerequisite
 });
 
 describe('checkMaintainerRunnerPrerequisites.formatPrerequisiteReport', () => {
-  it('includes actionable remediation for each missing prerequisite', () => {
+  it('includes actionable remediation for each missing prerequisite (VHS-REQ-652.7)', () => {
     const report = doctor.inspectMaintainerRunnerPrerequisites('win32', {
       env: { PATH: '', PATHEXT: '.CMD' },
       existsSync: () => false
@@ -262,7 +262,7 @@ describe('checkMaintainerRunnerPrerequisites.formatPrerequisiteReport', () => {
 });
 
 describe('checkMaintainerRunnerPrerequisites.main', () => {
-  it('exits non-zero and prints the report when prerequisites are missing', async () => {
+  it('exits non-zero and prints the report when prerequisites are missing (VHS-REQ-652.7)', async () => {
     const stdout = createWritable();
     const code = await doctor.main([], {
       platform: 'linux',
@@ -300,7 +300,7 @@ describe('checkMaintainerRunnerPrerequisites.main', () => {
     expect(stdout.text()).toContain('System clock skew: 0.0s');
   });
 
-  it('keeps a known clock skew advisory by default (exit code unaffected)', async () => {
+  it('keeps a known clock skew advisory by default (exit code unaffected) (VHS-REQ-598.7, VHS-REQ-652.7)', async () => {
     const stdout = createWritable();
     const present = new Set([
       '/usr/bin/code',
@@ -325,7 +325,7 @@ describe('checkMaintainerRunnerPrerequisites.main', () => {
     expect(stdout.text()).toContain('registration has been deleted');
   });
 
-  it('fails on a known over-tolerance skew only with --fail-on-clock-skew', async () => {
+  it('fails on a known over-tolerance skew only with --fail-on-clock-skew (VHS-REQ-652.7)', async () => {
     const stdout = createWritable();
     const present = new Set([
       '/usr/bin/code',
@@ -347,7 +347,7 @@ describe('checkMaintainerRunnerPrerequisites.main', () => {
     expect(stdout.text()).toContain('exceeds the 60s tolerance');
   });
 
-  it('never fails on an unreachable time source even with --fail-on-clock-skew', async () => {
+  it('never fails on an unreachable time source even with --fail-on-clock-skew (VHS-REQ-652.7)', async () => {
     const stdout = createWritable();
     const present = new Set([
       '/usr/bin/code',
@@ -368,7 +368,7 @@ describe('checkMaintainerRunnerPrerequisites.main', () => {
     expect(stdout.text()).toContain('authoritative time source unreachable');
   });
 
-  it('prints usage for --help and rejects unknown args', async () => {
+  it('prints usage for --help and rejects unknown args (VHS-REQ-652.7)', async () => {
     const stdout = createWritable();
     expect(await doctor.main(['--help'], { stdout: stdout.stream })).toBe(0);
     expect(stdout.text()).toContain('Usage: node scripts/checkMaintainerRunnerPrerequisites.js');

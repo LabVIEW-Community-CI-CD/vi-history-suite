@@ -1,5 +1,7 @@
 import * as path from 'node:path';
 
+import { errorMessage } from '../support/errorMessage';
+
 import {
   buildViHistoryDevHostLaunchPlan,
   canWriteDirectory,
@@ -105,7 +107,7 @@ export async function runDevHostCliMain(
     await runDevHostCli(argv, deps);
     return 0;
   } catch (error) {
-    stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
+    stderr.write(`${errorMessage(error)}\n`);
     return 1;
   }
 }
@@ -136,7 +138,7 @@ export function maybeRunDevHostCliAsMain(
   return true;
 }
 
-function normalizeWorkspacePath(candidate: string): string {
+export function normalizeWorkspacePath(candidate: string): string {
   if (/^[A-Za-z]:\\/.test(candidate) || candidate.startsWith('\\\\')) {
     return candidate;
   }
@@ -144,7 +146,7 @@ function normalizeWorkspacePath(candidate: string): string {
   return path.resolve(candidate);
 }
 
-function joinPreservingExplicitPathStyle(rootPath: string, ...segments: string[]): string {
+export function joinPreservingExplicitPathStyle(rootPath: string, ...segments: string[]): string {
   if (rootPath.startsWith('/')) {
     return path.posix.join(rootPath, ...segments.map((segment) => segment.replace(/\\/g, '/')));
   }

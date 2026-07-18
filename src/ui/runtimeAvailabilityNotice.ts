@@ -17,7 +17,6 @@ import * as vscode from 'vscode';
 
 import {
   detectAvailableRuntimes,
-  recommendRuntimeFromDetection,
   type DetectedHostInstallation,
   type DetectedRuntimes,
   type RuntimeAutoDetectDeps,
@@ -26,16 +25,60 @@ import {
 import {
   buildLinuxLabviewIniCandidatePaths,
   inferLabviewYearFromExecutablePath,
+  inferSupportedLabviewYearFromExecutablePath,
   inferLinuxLabviewVersionFromExecutablePath,
   observeWindowsRuntimeProcesses,
   type ObserveWindowsProcessesOptions,
   type RuntimeProcessObservation
 } from '../reporting/comparisonReportRuntimeExecution';
-import { isPersistedSelectionSatisfiable } from '../tooling/runtimeSettingsSeed';
 import {
-  type ContainerImagePlatform,
-  detectContainerImageVersionPlatformConflict
+  type ContainerImagePlatform
 } from '../tooling/containerImageCatalog';
+import {
+  buildBitnessOpenBlockedMessage,
+  buildVersionOpenBlockedMessage
+} from './runtimeAvailabilityMessages';
+
+export {
+  buildBitnessOpenBlockedMessage,
+  buildContainerImagePlatformMismatchTooltip,
+  buildVersionOpenBlockedMessage
+} from './runtimeAvailabilityMessages';
+import {
+  isLabviewCliInstalled,
+  isLabviewHostInstalledWithoutCli,
+  isViServerExplicitlyEnabledInConfig
+} from './runtimeAvailabilityGatePredicates';
+
+export {
+  isLabviewCliInstalled,
+  isLabviewHostInstalledWithoutCli,
+  isViServerExplicitlyEnabledInConfig
+} from './runtimeAvailabilityGatePredicates';
+import {
+  decideFirstRunPresentation,
+  selectActiveRuntime
+} from './runtimeSelection';
+
+export {
+  decideFirstRunPresentation,
+  evaluateRuntimeAvailability,
+  selectActiveRuntime
+} from './runtimeSelection';
+import { buildStatusBarPresentation } from './runtimeStatusBarPresentation';
+
+export {
+  DEFAULT_DOCKER_IMAGE_LABEL_TAG,
+  DEFAULT_WINDOWS_DOCKER_IMAGE_LABEL_TAG,
+  STATUS_BAR_TEXT_AVAILABLE,
+  STATUS_BAR_TEXT_MISSING,
+  STATUS_BAR_TEXT_WARNING,
+  STATUS_BAR_TOOLTIP_AVAILABLE,
+  STATUS_BAR_TOOLTIP_MISSING,
+  buildAvailableStatusBarSuffix,
+  buildStatusBarPresentation,
+  resolveDefaultDockerImageLabelTag
+} from './runtimeStatusBarPresentation';
 import {
   type DockerDaemonPlatformProber,
   defaultProbeDockerDaemonPlatform,
@@ -63,30 +106,6 @@ export const MISSING_RUNTIME_MODAL_BUTTONS = {
   cancel: 'Cancel'
 } as const;
 
-export const STATUS_BAR_TEXT_AVAILABLE = '$(check) VI History runtime';
-export const STATUS_BAR_TEXT_MISSING = '$(warning) VI History runtime: missing';
-
-/**
- * VHS-REQ-650: Warning-state prefix used when the selected docker container
- * image platform conflicts with the confirmed Docker daemon mode, so the label
- * flags the misconfiguration before the user attempts a comparison.
- */
-export const STATUS_BAR_TEXT_WARNING = '$(warning) VI History runtime';
-
-/**
- * VHS-REQ-620: Image tag shown in the `Docker @ <tag>` status-bar suffix when
- * no `viHistorySuite.container.imageVersion` is selected. The comparison runtime
- * resolves the concrete platform-specific default later (see
- * `comparisonRuntimeLocator`); this constant is only the label's stand-in so the
- * status bar always names an image instead of a bare `Docker`.
- */
-export const DEFAULT_DOCKER_IMAGE_LABEL_TAG = '2026q1-linux';
-
-export const STATUS_BAR_TOOLTIP_AVAILABLE =
-  'A LabVIEW or Docker comparison runtime is available.';
-export const STATUS_BAR_TOOLTIP_MISSING =
-  'Install LabVIEW \u22652025 or Docker Desktop to enable VI comparisons.';
-
 /**
  * Status-bar item command (VHS-REQ-620). Clicking the runtime label opens a
  * quick-pick that flips the persisted runtime selection without dropping to
@@ -102,37 +121,6 @@ export const STATUS_BAR_PICK_COMMAND_ID = 'labviewViHistory.pickRuntimeProvider'
  * re-running detection.
  */
 export const RUNTIME_CONFIGURATION_SECTION = 'viHistorySuite';
-
-/**
- * Builds the provider-specific suffix that follows the
- * `VI History runtime:` prefix in the status bar (e.g.,
- * `LabVIEW 2026 x64`, `Docker @ 2026q1patch1-windows`). Accepts either an
- * auto-detection recommendation or a persisted active-runtime label so callers
- * do not need to convert one shape into the other.
- *
- * VHS-REQ-620: the docker suffix names the LabVIEW container image so the label
- * is symmetric with the host case (which already shows version + bitness). It
- * uses the selected `viHistorySuite.container.imageVersion` tag when set and
- * falls back to `DEFAULT_DOCKER_IMAGE_LABEL_TAG` otherwise. The recommendation
- * shape does not carry a container image selection, so it always renders the
- * default.
- */
-export function buildAvailableStatusBarSuffix(
-  source: RuntimeRecommendation | ActiveRuntimeLabel
-): string {
-  if (source.provider === 'host') {
-    if (!source.labviewVersion || !source.labviewBitness) {
-      return '';
-    }
-    return `LabVIEW ${source.labviewVersion} ${source.labviewBitness}`;
-  }
-  if (source.provider === 'docker') {
-    const selectedTag =
-      'containerImageVersion' in source ? source.containerImageVersion?.trim() : undefined;
-    return `Docker @ ${selectedTag && selectedTag.length > 0 ? selectedTag : DEFAULT_DOCKER_IMAGE_LABEL_TAG}`;
-  }
-  return '';
-}
 
 /**
  * The provider/version/bitness pair that the status bar renders. Looser than
@@ -191,103 +179,6 @@ export interface RuntimeAvailabilitySnapshot {
   source: RuntimeLabelSource;
 }
 
-export function evaluateRuntimeAvailability(
-  detection: DetectedRuntimes
-): RuntimeAvailabilitySnapshot {
-  return selectActiveRuntime(detection, {});
-}
-
-/**
- * Decide which provider the status bar should advertise. Per VHS-REQ-620 the
- * persisted selection wins when it is complete *and* satisfiable on this host;
- * otherwise the auto-detection recommendation is used (silent fallback, no
- * `mismatch` state). VHS-REQ-657: a Docker selection is complete with the
- * provider key alone (LabVIEW-agnostic); a host selection still requires the
- * full version + bitness triple.
- */
-export function selectActiveRuntime(
-  detection: DetectedRuntimes,
-  persisted: PersistedRuntimeSelectionInput
-): RuntimeAvailabilitySnapshot {
-  const recommendation = recommendRuntimeFromDetection(detection);
-
-  const persistedProvider =
-    typeof persisted.runtimeProvider === 'string' ? persisted.runtimeProvider : '';
-  // VHS-REQ-657: a persisted Docker selection is LabVIEW-agnostic, so the
-  // provider key alone is a complete selection; host still needs the full
-  // version + bitness triple.
-  const hasCompletePersistedSelection =
-    persistedProvider === 'docker'
-      ? true
-      : persistedProvider.length > 0 &&
-        typeof persisted.labviewVersion === 'string' && persisted.labviewVersion.length > 0 &&
-        typeof persisted.labviewBitness === 'string' && persisted.labviewBitness.length > 0;
-
-  if (hasCompletePersistedSelection && isPersistedSelectionSatisfiable(persisted, detection)) {
-    const provider = persisted.runtimeProvider as 'host' | 'docker';
-    const bitness =
-      persisted.labviewBitness === 'x86' || persisted.labviewBitness === 'x64'
-        ? persisted.labviewBitness
-        : undefined;
-    const version =
-      typeof persisted.labviewVersion === 'string' && persisted.labviewVersion.length > 0
-        ? persisted.labviewVersion
-        : undefined;
-    let installation: DetectedHostInstallation | undefined;
-    if (provider === 'host') {
-      installation = detection.host.installations.find(
-        (entry) => entry.year === version && entry.bitness === bitness
-      );
-    }
-    return {
-      kind: 'available',
-      source: 'persisted',
-      label: {
-        provider,
-        labviewVersion: version,
-        labviewBitness: bitness,
-        installation,
-        containerImageVersion:
-          provider === 'docker' ? persisted.containerImageVersion : undefined
-      },
-      recommendation
-    };
-  }
-
-  if (recommendation.provider === 'none') {
-    return {
-      kind: 'missing',
-      source: 'auto-detected',
-      label: { provider: 'none' },
-      recommendation
-    };
-  }
-  if (recommendation.provider === 'host') {
-    return {
-      kind: 'available',
-      source: 'auto-detected',
-      label: {
-        provider: 'host',
-        labviewVersion: recommendation.labviewVersion,
-        labviewBitness: recommendation.labviewBitness,
-        installation: recommendation.installation
-      },
-      recommendation
-    };
-  }
-  return {
-    kind: 'available',
-    source: 'auto-detected',
-    label: {
-      provider: 'docker',
-      labviewVersion: recommendation.labviewVersion,
-      labviewBitness: recommendation.labviewBitness,
-      containerImageVersion: persisted.containerImageVersion
-    },
-    recommendation
-  };
-}
-
 export type FirstRunPresentationKind = 'first-run-info' | 'silent';
 
 export interface FirstRunPresentationDecision {
@@ -295,116 +186,9 @@ export interface FirstRunPresentationDecision {
   shouldMarkShown: boolean;
 }
 
-export function decideFirstRunPresentation(
-  snapshot: RuntimeAvailabilitySnapshot,
-  hasShownFirstRunNotice: boolean
-): FirstRunPresentationDecision {
-  if (snapshot.kind === 'available') {
-    return { kind: 'silent', shouldMarkShown: false };
-  }
-  if (hasShownFirstRunNotice) {
-    return { kind: 'silent', shouldMarkShown: false };
-  }
-  return { kind: 'first-run-info', shouldMarkShown: true };
-}
-
 export interface StatusBarPresentation {
   text: string;
   tooltip: string;
-}
-
-/**
- * VHS-REQ-650: Build the tooltip for a docker container-image platform mismatch,
- * naming the selected tag, both platforms, and the two fixes.
- */
-export function buildContainerImagePlatformMismatchTooltip(conflict: {
-  selectedTag: string;
-  selectedPlatform: ContainerImagePlatform;
-  activePlatform: ContainerImagePlatform;
-}): string {
-  return (
-    `Selected container image ${conflict.selectedTag} targets the ${conflict.selectedPlatform} platform, ` +
-    `but the active Docker engine is in ${conflict.activePlatform}-container mode, so VI comparisons will fail. ` +
-    `Switch Docker to ${conflict.selectedPlatform} containers, or select a ${conflict.activePlatform} image version.`
-  );
-}
-
-/**
- * Build the status bar text + tooltip from a runtime snapshot.
- *
- * VHS-REQ-650: When `confirmedContainerPlatform` is provided and the active
- * docker label's selected image targets a different platform, the label renders
- * a warning state (`$(warning) …`) with a conflict tooltip. The platform must be
- * CONFIRMED (an explicit override or a successful daemon probe) — a `undefined`
- * platform (Docker stopped/unknown) never warns, so a valid selection is never
- * flagged against a host-OS guess. An unset image version is never flagged: the
- * compare-time default adapts to the active platform.
- */
-export function buildStatusBarPresentation(
-  snapshot: RuntimeAvailabilitySnapshot,
-  confirmedContainerPlatform?: ContainerImagePlatform
-): StatusBarPresentation {
-  if (snapshot.kind === 'available') {
-    const suffix = buildAvailableStatusBarSuffix(snapshot.label);
-    const sourceLine =
-      snapshot.source === 'persisted'
-        ? '\nSelected via settings.json. Click to change.'
-        : '\nAuto-detected. Click to override.';
-
-    const conflict =
-      snapshot.label.provider === 'docker'
-        ? detectContainerImageVersionPlatformConflict(
-            snapshot.label.containerImageVersion,
-            confirmedContainerPlatform
-          )
-        : undefined;
-
-    if (conflict) {
-      return {
-        text: `${STATUS_BAR_TEXT_WARNING}: ${suffix}`,
-        tooltip: `${buildContainerImagePlatformMismatchTooltip(conflict)}${sourceLine}`
-      };
-    }
-
-    return {
-      text: suffix
-        ? `${STATUS_BAR_TEXT_AVAILABLE}: ${suffix}`
-        : STATUS_BAR_TEXT_AVAILABLE,
-      tooltip: `${STATUS_BAR_TOOLTIP_AVAILABLE}${sourceLine}`
-    };
-  }
-  return {
-    text: STATUS_BAR_TEXT_MISSING,
-    tooltip: STATUS_BAR_TOOLTIP_MISSING
-  };
-}
-
-/**
- * VHS-REQ-627: True when at least one detected host LabVIEW installation
- * exposes the LabVIEW CLI (`LabVIEWCLI.exe` on Windows, `labviewcli` on Linux).
- * Host-native VI comparison shells out to the LabVIEW CLI, so its absence means
- * the Compare action cannot succeed.
- */
-export function isLabviewCliInstalled(detection: DetectedRuntimes): boolean {
-  return detection.host.installations.some(
-    (installation) =>
-      typeof installation.labviewCliPath === 'string' &&
-      installation.labviewCliPath.length > 0
-  );
-}
-
-/**
- * VHS-REQ-629: True when at least one host LabVIEW (\u22652025) is installed but
- * none of the detected installations expose the LabVIEW CLI. Detection only
- * records installations for supported years, so a non-empty installation list
- * already implies LabVIEW \u22652025. This is the "LabVIEW present, only the CLI
- * missing" state, which deserves the dedicated LabVIEW CLI download rather than
- * the full LabVIEW installer.
- */
-export function isLabviewHostInstalledWithoutCli(
-  detection: DetectedRuntimes
-): boolean {
-  return detection.host.installations.length > 0 && !isLabviewCliInstalled(detection);
 }
 
 export const LABVIEW_CLI_OPEN_BLOCKED_MESSAGE =
@@ -569,19 +353,6 @@ export async function decideLabviewCliOpenGateWithRegistryFallback(
   return baseDecision;
 }
 
-/**
- * VHS-REQ-631: True only when the supplied LabVIEW VI Server config text
- * explicitly enables VI Server TCP with `server.tcp.enabled=True`. Tolerant of
- * surrounding whitespace, optional quotes, and case. An absent key, an explicit
- * `False`, or unparseable text all return false — the open gate treats those as
- * "VI Server not enabled" per the maintainer decision that the pre-panel gate
- * requires an explicit opt-in (stricter than the VHS-REQ-623 compare-time
- * preflight, which leaves the Windows absent-key default as enabled).
- */
-export function isViServerExplicitlyEnabledInConfig(configText: string): boolean {
-  return /^\s*server\.tcp\.enabled\s*=\s*"?true"?\s*$/im.test(configText);
-}
-
 export const VI_SERVER_OPEN_BLOCKED_MESSAGE =
   'VI History cannot open a comparison because VI Server (TCP/IP) is not enabled for the selected LabVIEW. Enable VI Server in LabVIEW (Tools \u2192 Options \u2192 VI Server), set server.tcp.enabled=True, restart LabVIEW, then reopen VI History.';
 
@@ -711,34 +482,6 @@ export async function presentViServerOpenBlockedToast(
 
 export const BITNESS_OPEN_PICK_PROVIDER_ACTION = 'Pick Runtime Provider';
 
-/**
- * VHS-REQ-636: Build the bitness-conflict open-gate toast. Names the running
- * LabVIEW (year when known plus bitness) and the selected LabVIEW (year plus
- * bitness), and tells the user to save and close the running session — or change
- * the bitness setting — before retrying. Pure string builder so the routing
- * decision stays window-free and unit-testable.
- */
-export function buildBitnessOpenBlockedMessage(facts: {
-  observedBitness: 'x86' | 'x64';
-  selectedBitness: 'x86' | 'x64';
-  observedYear?: string;
-  selectedYear?: string;
-}): string {
-  const describe = (year: string | undefined, bitness: 'x86' | 'x64'): string => {
-    const bits = bitness === 'x86' ? '32-bit' : '64-bit';
-    return year ? `LabVIEW ${year} (${bits})` : `LabVIEW (${bits})`;
-  };
-  const running = describe(facts.observedYear, facts.observedBitness);
-  const selected = describe(facts.selectedYear, facts.selectedBitness);
-  return (
-    `${running} is currently open, but VI History is set to compare with ${selected}. ` +
-    'LabVIEW cannot run two different bitnesses at the same time. Please save and close ' +
-    `your work in ${running}, then reopen VI History \u2014 or change ` +
-    'viHistorySuite.labviewBitness (and viHistorySuite.labviewVersion) to match the ' +
-    'running session.'
-  );
-}
-
 export type BitnessOpenGateKind = 'allow' | 'block';
 
 export interface BitnessOpenGateDecision {
@@ -843,9 +586,9 @@ export async function decideBitnessOpenGate(
     toastMessage: buildBitnessOpenBlockedMessage({
       observedBitness,
       selectedBitness,
-      observedYear: inferLabviewYearFromExecutablePath(
-        observation?.labviewProcessExecutablePath
-      ),
+      observedYear:
+        observation?.labviewProcessYear ??
+        inferLabviewYearFromExecutablePath(observation?.labviewProcessExecutablePath),
       selectedYear: snapshot?.label.labviewVersion
     }),
     actionLabel: BITNESS_OPEN_PICK_PROVIDER_ACTION,
@@ -877,34 +620,6 @@ export async function presentBitnessOpenBlockedToast(
 }
 
 export const VERSION_OPEN_PICK_PROVIDER_ACTION = 'Pick Runtime Provider';
-
-/**
- * VHS-REQ-637: Build the version-mismatch open-gate toast. Names the running
- * LabVIEW (year plus bitness) and the selected LabVIEW (year plus bitness),
- * explains that VI History would otherwise connect to the already-running
- * wrong-version LabVIEW, and lists the recovery options: save and close, change
- * the version setting, or use a Docker-backed compare on x64. Pure string
- * builder so the routing decision stays window-free and unit-testable.
- */
-export function buildVersionOpenBlockedMessage(facts: {
-  observedYear: string;
-  selectedYear: string;
-  observedBitness?: 'x86' | 'x64';
-  selectedBitness: 'x86' | 'x64';
-}): string {
-  const bits = (bitness: 'x86' | 'x64'): string => (bitness === 'x86' ? '32-bit' : '64-bit');
-  const running = facts.observedBitness
-    ? `LabVIEW ${facts.observedYear} (${bits(facts.observedBitness)})`
-    : `LabVIEW ${facts.observedYear}`;
-  const selected = `LabVIEW ${facts.selectedYear} (${bits(facts.selectedBitness)})`;
-  return (
-    `${running} is currently open, but VI History is set to compare with ${selected}. ` +
-    'VI History would connect to the LabVIEW that is already running, which is the wrong ' +
-    `version. Please save and close LabVIEW ${facts.observedYear}, then reopen VI History ` +
-    `\u2014 or change viHistorySuite.labviewVersion to ${facts.observedYear} to match the ` +
-    'running session, or use a Docker-backed compare (x64).'
-  );
-}
 
 export type VersionOpenGateKind = 'allow' | 'block';
 
@@ -1004,9 +719,9 @@ export async function decideVersionOpenGate(
     return { kind: 'allow' };
   }
 
-  const observedYear = inferLabviewYearFromExecutablePath(
-    observation?.labviewProcessExecutablePath
-  );
+  const observedYear =
+    observation?.labviewProcessYear ??
+    inferSupportedLabviewYearFromExecutablePath(observation?.labviewProcessExecutablePath);
   if (!observedYear || observedYear === selectedYear) {
     return { kind: 'allow' };
   }

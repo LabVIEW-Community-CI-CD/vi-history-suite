@@ -3,7 +3,159 @@ import * as fs from 'node:fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
 
+import { joinPreservingExplicitPathStyle } from '../support/pathStyle';
+import { errorMessage } from '../support/errorMessage';
+import {
+  parseWindowsTasklistCsv,
+  isObservedRuntimeProcessName,
+  isExactObservedRuntimeProcessName
+} from './runtime/windowsTasklistParsing';
+export { parseWindowsTasklistCsv } from './runtime/windowsTasklistParsing';
+import { isSafeRelativeSubpath } from './runtime/safeRelativeSubpath';
+import { appendCancellationMessage } from './runtime/cancellationMessage';
+import { shouldAttemptWindowsColdLaunchRecovery } from './runtime/windowsColdLaunchRecovery';
+import { subscribeToCancellation } from './runtime/cancellationSubscription';
+import {
+  shouldCaptureLinuxHeadlessDiagnostics,
+  shouldAttemptLinuxHeadlessRecovery
+} from './runtime/linuxHeadlessPredicates';
+import { shouldAttemptWindowsHeadlessRecovery } from './runtime/windowsHeadlessPredicates';
+import { buildWindowsContainerDirectCommandScript } from './runtime/windowsContainerDirectCommandScript';
+import {
+  describeObservedRuntimeProcesses,
+  describeObservedWindowsTcpListeners
+} from './runtime/windowsRuntimeObservationFormatting';
+import {
+  extractErrorCode,
+  normalizeComparisonProcessError
+} from './runtime/comparisonProcessErrorNormalization';
+export { normalizeComparisonProcessError } from './runtime/comparisonProcessErrorNormalization';
+import {
+  inferLabviewBitnessFromExecutablePath,
+  inferSupportedLabviewYearFromExecutablePath
+} from './runtime/labviewExecutablePathInference';
+export {
+  inferLabviewBitnessFromExecutablePath,
+  inferLabviewYearFromExecutablePath,
+  inferSupportedLabviewYearFromExecutablePath
+} from './runtime/labviewExecutablePathInference';
+import {
+  normalizeWindowsInteropPath,
+  resolveHostReadableWindowsPath
+} from './runtime/windowsInteropPaths';
+export {
+  normalizeWindowsInteropPath,
+  normalizeWindowsInteropExecutable,
+  resolveHostReadableWindowsPath
+} from './runtime/windowsInteropPaths';
+import {
+  resolveWindowsPowerShellHostExecutable,
+  encodeWindowsPowerShellScript,
+  quotePowerShellLiteral,
+  quoteBashLiteral,
+  buildBashArrayLiteral
+} from './runtime/shellScriptEncoding';
+import { parseWindowsContainerRuntimeFacts } from './runtime/windowsContainerRuntimeFacts';
+import {
+  resolveWindowsSystem32Executable,
+  parseWindowsNetstatListeners
+} from './runtime/windowsNetstatListeners';
+import {
+  parseLabviewCliDiagnosticLogPath,
+  resolveHostReadableDiagnosticPath,
+  classifyLabviewCliDiagnosticText,
+  type RuntimeDiagnosticPathMapping
+} from './runtime/labviewCliDiagnostics';
+export {
+  parseLabviewCliDiagnosticLogPath,
+  resolveHostReadableDiagnosticPath,
+  resolveMappedRuntimeDiagnosticPath,
+  classifyLabviewCliDiagnosticText
+} from './runtime/labviewCliDiagnostics';
+import {
+  mergeDiagnosticNotes,
+  buildProcessObservationNotes,
+  buildLinuxContainerBindMountVisibilityNote,
+  extractCommandOptionValue
+} from './runtime/diagnosticNotes';
+export {
+  buildLinuxContainerBindMountVisibilityNote,
+  extractCommandOptionValue
+} from './runtime/diagnosticNotes';
+import { parseSubmoduleGitlinks } from './runtime/submoduleGitlinkParsing';
+export { parseSubmoduleGitlinks } from './runtime/submoduleGitlinkParsing';
+import { appendLabviewCliPortNumberArg } from './runtime/labviewCliPortArg';
+export { appendLabviewCliPortNumberArg } from './runtime/labviewCliPortArg';
+import { buildLabviewCliCloseLabviewCommandPlan } from './runtime/closeLabviewCommandPlan';
+import { buildWindowsInteropLayout } from './runtime/windowsInteropLayout';
+import {
+  buildRecoveredExecutionResult,
+  buildColdLaunchRetryExecutionResult
+} from './runtime/recoveryExecutionResults';
+import {
+  shouldUseLinuxHostNativeShortPathStaging,
+  buildLinuxHostNativeShortPathLayout
+} from './runtime/linuxHostNativeStaging';
+export {
+  shouldUseLinuxHostNativeShortPathStaging,
+  buildLinuxHostNativeShortPathLayout
+} from './runtime/linuxHostNativeStaging';
+import {
+  posixDirname,
+  buildReportAssetsDirectoryPath
+} from './runtime/runtimePathHelpers';
+import {
+  classifyRuntimeFailure,
+  classifyCancelledRuntimeFailure,
+  classifyTimedOutRuntimeDiagnostic
+} from './runtime/runtimeFailureClassification';
+export { classifyRuntimeFailure } from './runtime/runtimeFailureClassification';
+import {
+  buildLinuxContainerRuntimeFilenameAlias,
+  applyRuntimeTextReplacements,
+  type RuntimeTextReplacement
+} from './runtime/runtimeTextReplacements';
+import { selectDiagnosticReason } from './runtime/selectDiagnosticReason';
+import { nowIso } from '../support/clock';
 import { ComparisonCommandPlan, ComparisonReportOptions } from './comparisonReportPlan';
+import {
+  buildLinuxHostNativeShortPathCommandPlan,
+  buildWindowsInteropCommandPlan
+} from './runtime/interopCommandPlanBuilders';
+export {
+  buildLinuxHostNativeShortPathCommandPlan,
+  buildWindowsInteropCommandPlan
+} from './runtime/interopCommandPlanBuilders';
+import {
+  resolveEffectiveRuntimePlatform
+} from './runtime/runtimeSelectionPredicates';
+import {
+  WINDOWS_CONTAINER_WORKSPACE_ROOT,
+  WINDOWS_CONTAINER_TEMP_ROOT,
+  LINUX_CONTAINER_WORKSPACE_ROOT,
+  LINUX_CONTAINER_TEMP_ROOT,
+  LINUX_CONTAINER_LABVIEW_EXECUTABLE
+} from './runtime/containerLaunchConstants';
+import {
+  buildWindowsHostNativeHeadlessCommandPlan,
+  buildWindowsContainerLabviewCliScript
+} from './runtime/headlessLaunchScriptBuilders';
+export {
+  buildWindowsHostNativeHeadlessCommandPlan,
+  buildWindowsContainerLabviewCliScript
+} from './runtime/headlessLaunchScriptBuilders';
+import {
+  buildLinuxContainerLabviewCliScript,
+  buildLinuxContainerDirectCommandScript
+} from './runtime/linuxContainerLaunchScriptBuilders';
+export {
+  buildLinuxContainerLabviewCliScript
+} from './runtime/linuxContainerLaunchScriptBuilders';
+import { resolveEffectiveCommandTimeoutMs } from './runtime/effectiveCommandTimeout';
+export {
+  resolveEffectiveCommandTimeoutMs,
+  LINUX_HOST_NATIVE_HEADLESS_OPT_IN_DEFAULT_TIMEOUT_MS
+} from './runtime/effectiveCommandTimeout';
 import { buildComparisonReportExecutionPlan } from './comparisonReportExecutionPlan';
 import {
   ComparisonReportPacketRecord,
@@ -14,14 +166,49 @@ import { buildComparisonRuntimeDoctorSummary } from './comparisonRuntimeDoctor';
 import { readRevisionBlob } from './comparisonReportPreflight';
 import { isWorktreeRevision } from '../git/gitCli';
 import {
+  buildWorktreeSnapshotProvenanceNote,
+  deriveComparedWorktreeSnapshotId
+} from './comparisonReportRuntimeExecutionWorktreeSnapshot';
+
+export {
+  buildWorktreeSnapshotProvenanceNote,
+  deriveComparedWorktreeSnapshotId,
+  deriveWorktreeSnapshotIdentity
+} from './comparisonReportRuntimeExecutionWorktreeSnapshot';
+import {
+  buildLinuxLabviewIniCandidatePaths,
+  inferLinuxLabviewVersionFromExecutablePath
+} from './runtime/linuxLabviewConfigPaths';
+
+export {
+  buildLinuxLabviewIniCandidatePaths,
+  inferLinuxLabviewVersionFromExecutablePath
+} from './runtime/linuxLabviewConfigPaths';
+import {
+  rewriteLabviewCliArgsForContainerWorkspace,
+  rewriteLvcompareArgsForContainerWorkspace,
+  rewriteLvcompareArgsForLinuxContainerWorkspace
+} from './runtime/containerWorkspaceArgRewrite';
+
+export {
+  rewriteLabviewCliArgsForContainerWorkspace,
+  rewriteLvcompareArgsForContainerWorkspace,
+  rewriteLvcompareArgsForLinuxContainerWorkspace
+} from './runtime/containerWorkspaceArgRewrite';
+import { classifySelectedTreeMaterializeError } from './runtime/selectedTreeMaterializeErrorClassification';
+
+export {
+  classifySelectedTreeMaterializeError,
+  SELECTED_TREE_MATERIALIZE_LONG_PATH_DIAGNOSTIC,
+  type SelectedTreeMaterializeErrorClassification
+} from './runtime/selectedTreeMaterializeErrorClassification';
+import {
   createDiagnosticsRecorder,
   DiagnosticsRecorder,
   noopDiagnosticsRecorder
 } from './diagnostics/diagnosticsRecorder';
 import {
   applyLabVIEWCliIniHardening,
-  LABVIEW_CLI_INI_AFTER_LAUNCH_KEY,
-  LABVIEW_CLI_INI_OPEN_APP_KEY,
   LabVIEWCliIniHardeningResult
 } from './runtime/labviewCliIni';
 import {
@@ -174,6 +361,11 @@ export interface RuntimeProcessObservation {
    */
   labviewProcessBitness?: ObservedLabviewBitness;
   /**
+   * VHS-REQ-637: major LabVIEW version (year) inferred from the observed
+   * `LabVIEW.exe` path. `undefined` when no supported year can be parsed.
+   */
+  labviewProcessYear?: string;
+  /**
    * Path of the first observed LabVIEW.exe that the bitness probe inspected.
    * Captured so doctor notes can name the offending install precisely.
    */
@@ -213,12 +405,6 @@ export interface LinuxLabviewTcpSettings {
    */
   viServerTcpEnabled: boolean | 'unknown';
   inspectedCandidatePaths: string[];
-  notes: string[];
-}
-
-interface WindowsContainerRuntimeFacts {
-  labviewIniPath?: string;
-  labviewTcpPort?: number;
   notes: string[];
 }
 
@@ -264,25 +450,6 @@ export interface RunComparisonCommandPlanWithObservationDeps {
   cancellationToken?: ComparisonRuntimeCancellationToken;
   terminateProcessTree?: (pid: number, hostPlatform: NodeJS.Platform) => Promise<void>;
 }
-
-/**
- * VHS-REQ-156 (issue #269): default command bound (ms) applied only to the Linux
- * host-native headless OPT-IN path (`LV_RTE_LINUX_HEADLESS=1`). On LabVIEW builds
- * with a broken `HeadlessManager` (e.g. 2026 26.1.1f1, which logs "Failed to
- * initialize headless LabVIEW." every 10s and never binds a session) the
- * `-Headless` CLI hangs indefinitely during VI load. The production action wires
- * no `commandTimeoutMs`, so without this bound the post-process headless classifier
- * never fires and the operator sees an unbounded stall. Bounding the opt-in path
- * converts the stall into a deterministic `command-timed-out` failure that still
- * carries the `linux-headless-init-failed` diagnostic and remediation guidance.
- *
- * The value is well above the 180s (`DEFAULT_CLI_CONNECT_TIMEOUT_SECONDS`)
- * app-reference connect window so a legitimately slow-but-working headless run on
- * a healthy build is never killed prematurely; it matches the existing
- * `DEFAULT_GIT_TIMEOUT_MS` convention. The safe non-headless default (no
- * `-Headless`) and the working Linux container provider stay unbounded.
- */
-export const LINUX_HOST_NATIVE_HEADLESS_OPT_IN_DEFAULT_TIMEOUT_MS = 300000;
 
 export async function executeComparisonReport(
   options: ExecuteComparisonReportOptions,
@@ -495,20 +662,6 @@ export function buildDefaultRunCommand(
         });
 }
 
-function subscribeToCancellation(
-  cancellationToken: ComparisonRuntimeCancellationToken | undefined,
-  listener: () => void
-): () => void {
-  if (!cancellationToken?.onCancellationRequested) {
-    return () => undefined;
-  }
-
-  const disposable = cancellationToken.onCancellationRequested(listener);
-  return () => {
-    disposable?.dispose?.();
-  };
-}
-
 async function terminateWindowsProcessTree(
   pid: number,
   _hostPlatform?: NodeJS.Platform
@@ -520,13 +673,7 @@ async function terminateWindowsProcessTree(
   });
 }
 
-function appendCancellationMessage(stderr: string): string {
-  if (/comparison-command cancelled by user/iu.test(stderr)) {
-    return stderr;
-  }
 
-  return `${stderr}comparison-command cancelled by user\n`;
-}
 
 export interface MaterializeSelectedRevisionTreeOptions {
   repositoryRoot: string;
@@ -640,45 +787,6 @@ export async function materializeSelectedRevisionTreeWithGit(
     listSubmoduleGitlinks,
     depth: 0
   });
-}
-
-/**
- * VHS-REQ-624 (#303): actionable diagnostic for a recognized selected-revision
- * tree materialization failure. `failureReason` stays the stable
- * `selected-tree-materialize-failed`; this adds a more specific `diagnosticReason`
- * (plus operator-facing notes) only when the underlying cause is recognizable.
- */
-export const SELECTED_TREE_MATERIALIZE_LONG_PATH_DIAGNOSTIC =
-  'selected-tree-materialize-long-path';
-
-export interface SelectedTreeMaterializeErrorClassification {
-  diagnosticReason?: string;
-  diagnosticNotes?: string[];
-}
-
-/**
- * Classify an error thrown by `materializeSelectedRevisionTreeWithGit`. When git
- * aborts the checkout because a staged dependency path exceeds the Win32 MAX_PATH
- * (260) limit (stderr "Filename too long", or the POSIX "File name too long"
- * spelling), surface an actionable long-path diagnostic so the otherwise opaque
- * `selected-tree-materialize-failed` failure is self-explanatory. Unrecognized
- * errors return an empty classification so the generic failure reason stands
- * alone.
- */
-export function classifySelectedTreeMaterializeError(
-  error: unknown
-): SelectedTreeMaterializeErrorClassification {
-  const message = error instanceof Error ? error.message : String(error ?? '');
-  if (/file ?name too long/i.test(message)) {
-    return {
-      diagnosticReason: SELECTED_TREE_MATERIALIZE_LONG_PATH_DIAGNOSTIC,
-      diagnosticNotes: [
-        'Selected-revision tree staging failed because a staged dependency path exceeded the Windows MAX_PATH (260) limit (git reported "Filename too long").',
-        'Use a shorter report storage root (closer to the drive root), or enable Windows long paths (the "Enable Win32 long paths" policy plus git config core.longpaths=true).'
-      ]
-    };
-  }
-  return {};
 }
 
 interface CheckoutRevisionIntoWorkTreeParams {
@@ -814,20 +922,6 @@ async function materializeSubmoduleTreesBestEffort(
   }
 }
 
-/**
- * VHS-REQ-624 (#283): only accept plain relative subpaths for submodule
- * destinations. Absolute paths, drive prefixes, and `.`/`..` segments are
- * rejected so a tree entry can never resolve outside the staging destination.
- */
-function isSafeRelativeSubpath(candidate: string): boolean {
-  if (!candidate || candidate.startsWith('/') || /^[A-Za-z]:/.test(candidate)) {
-    return false;
-  }
-  return candidate
-    .split('/')
-    .every((segment) => segment.length > 0 && segment !== '.' && segment !== '..');
-}
-
 function spawnGitToCompletion(
   args: string[],
   options: { env: NodeJS.ProcessEnv }
@@ -905,35 +999,6 @@ function spawnGitListSubmoduleGitlinks(options: {
       resolve(parseSubmoduleGitlinks(stdout));
     });
   });
-}
-
-/**
- * VHS-REQ-624 (#283): parse NUL-delimited `git ls-tree -r -z` output and return
- * only the submodule gitlink entries (mode `160000`, type `commit`). Each record
- * is `<mode> <type> <object>\t<path>`; the path is kept verbatim (POSIX,
- * unquoted) because `-z` disables path quoting.
- */
-export function parseSubmoduleGitlinks(lsTreeOutput: string): SubmoduleGitlink[] {
-  const entries: SubmoduleGitlink[] = [];
-  for (const record of lsTreeOutput.split('\0')) {
-    if (!record) {
-      continue;
-    }
-    const tabIndex = record.indexOf('\t');
-    if (tabIndex < 0) {
-      continue;
-    }
-    const metadata = record.slice(0, tabIndex).split(' ');
-    const entryPath = record.slice(tabIndex + 1);
-    if (metadata.length < 3) {
-      continue;
-    }
-    const [mode, type, object] = metadata;
-    if (mode === '160000' && type === 'commit' && object) {
-      entries.push({ path: entryPath, revisionId: object });
-    }
-  }
-  return entries;
 }
 
 /**
@@ -1144,6 +1209,36 @@ async function runHostNativeExecution(
       executionResult.materializedTree = materializedTree;
     } else if (executionContext.materializedTree) {
       executionResult.materializedTree = executionContext.materializedTree;
+    }
+    // VHS-REQ-641: when a working-tree (uncommitted) side was compared, record the
+    // content-addressed identity of the staged snapshot as provenance so the
+    // retained evidence names which on-disk bytes were used. Additive only; does
+    // not affect retention (working-tree pairs remain unarchived, issue #1366).
+    const worktreeSnapshotNote = buildWorktreeSnapshotProvenanceNote({
+      selectedHash: record.selectedHash,
+      baseHash: record.baseHash,
+      normalizedRelativePath:
+        record.preflight.normalizedRelativePath ?? record.artifactPlan.normalizedRelativePath,
+      leftBytes: leftBlob,
+      rightBytes: rightBlob
+    });
+    if (worktreeSnapshotNote) {
+      executionResult.diagnosticNotes = [
+        ...(executionResult.diagnosticNotes ?? []),
+        worktreeSnapshotNote
+      ];
+    }
+    // VHS-REQ-641 (Phase 3): surface the content-addressed snapshot identity on
+    // the execution result so the archive seam can content-address the retained
+    // pair-ID for a working-tree comparison (issue #1366).
+    const worktreeSnapshotId = deriveComparedWorktreeSnapshotId({
+      selectedHash: record.selectedHash,
+      baseHash: record.baseHash,
+      leftBytes: leftBlob,
+      rightBytes: rightBlob
+    });
+    if (worktreeSnapshotId) {
+      executionResult.worktreeSnapshotId = worktreeSnapshotId;
     }
     return executionResult;
   } finally {
@@ -1391,6 +1486,20 @@ async function runHostNativeExecutionWithContext(
         timeoutDiagnostic.notes,
         finalizedReport.validationNotes,
         failureClassification.notes,
+        // VHS-REQ-623: when a Linux container compare fails with an invalid-VI-path
+        // signature and the bind-mount source is outside $HOME, name the likely
+        // snap-Docker confinement cause instead of leaving the opaque path error.
+        succeeded
+          ? []
+          : [
+              buildLinuxContainerBindMountVisibilityNote({
+                provider: record.runtimeSelection.provider,
+                diagnosticReason: diagnostics.reason,
+                failureReason: failureClassification.reason,
+                hostBindMountPath: record.artifactPlan.reportDirectory,
+                homeDir: os.homedir()
+              })
+            ].filter((note): note is string => Boolean(note)),
         executionContext.preparationNotes
       );
 
@@ -1560,6 +1669,24 @@ async function runHostNativeExecutionWithContext(
     );
   }
 
+  if (shouldAttemptWindowsColdLaunchRecovery(record, initialResult)) {
+    // VHS-REQ-148 (Windows host-native parity): the first attempt launched a cold
+    // LabVIEW that lost the VI Server connect race (-350000) but left LabVIEW
+    // resident and warming. Retry once against the now-resident instance using the
+    // same derived -PortNumber / -LabVIEWPath; do NOT close LabVIEW first (that
+    // would kill the instance the retry connects to). Mirrors the windows-container
+    // in-script retry and the VI-preview cold-launch retry (both one-shot on -350000).
+    const retriedResult = await executeAttempt(2);
+    if (deps.diagnosticsRecorder) {
+      await deps.diagnosticsRecorder.archiveAttemptArtifacts(record, 2);
+    }
+    return buildColdLaunchRetryExecutionResult(
+      initialResult,
+      retriedResult,
+      WINDOWS_COLD_LAUNCH_RECOVERY_NOTE
+    );
+  }
+
   return initialResult;
 }
 
@@ -1668,64 +1795,21 @@ interface CapturedRuntimeDiagnostics {
   headlessArtifactPaths?: string[];
 }
 
-interface RuntimeDiagnosticPathMapping {
-  runtimeRoot: string;
-  hostRoot: string;
-}
-
-interface RuntimeTextReplacement {
-  from: string;
-  to: string;
-}
-
-const WINDOWS_CONTAINER_WORKSPACE_ROOT = 'C:\\vi-history-suite';
-const WINDOWS_CONTAINER_TEMP_ROOT = `${WINDOWS_CONTAINER_WORKSPACE_ROOT}\\container-temp`;
-const LINUX_CONTAINER_WORKSPACE_ROOT = '/workspace';
-const LINUX_CONTAINER_TEMP_ROOT = `${LINUX_CONTAINER_WORKSPACE_ROOT}/container-temp`;
 // Linux containers run LabVIEW as root, so anything written into the bind-mounted
 // workspace lands on the host owned by root. Confine that root-owned output to a
 // dedicated subdirectory of the retained report directory so the host-native
 // provider's canonical report path only ever contains user-owned files and never
 // collides with a prior container run's root-owned artifacts.
 const LINUX_CONTAINER_OUTPUT_DIRNAME = 'container-out';
-// NI's official LabVIEW container images bundle the full Professional IDE under
-// `labviewprofull`. NI's own canonical CreateComparisonReport script
-// (`vidiff.sh` in ni/labview-for-containers) invokes `-LabVIEWPath .../labviewprofull`
-// with `-Headless`; the plain `labview` binary fails to fully engage headless mode
-// inside the container (recursive GSW LEIF load). This LabVIEW 2026 constant is the
-// fallback used only when the selected image reference is unparseable; the concrete
-// per-image executable and headless mechanism are derived by
-// `resolveLinuxContainerLabviewProfile` (VHS-REQ-657).
-const LINUX_CONTAINER_LABVIEW_EXECUTABLE = '/usr/local/natinst/LabVIEW-2026-64/labviewprofull';
-const WINDOWS_CONTAINER_OPEN_APP_TIMEOUT_SECONDS = 180;
-const WINDOWS_CONTAINER_AFTER_LAUNCH_TIMEOUT_SECONDS = 180;
-const WINDOWS_CONTAINER_PRELAUNCH_WAIT_SECONDS = 8;
-const WINDOWS_CONTAINER_STARTUP_RETRY_COUNT = 1;
-const WINDOWS_CONTAINER_RETRY_DELAY_SECONDS = 8;
-// VHS-REQ-148 (Linux container parity): the Linux LabVIEW container provider runs
-// LabVIEWCLI once with NI's default connect window, so a slow cold first launch
-// (no LabVIEW already running) fails with VI Server connect error -350000 even
-// though an immediate warm retry succeeds. Mirror the Windows-container hardening
-// on the Linux path: widen the connect window in the per-version LabVIEW `.conf`
-// the launched headless LabVIEW reads, and retry once on the cold-launch
-// connectivity failure. Defaults match the Windows container values.
-const LINUX_CONTAINER_OPEN_APP_TIMEOUT_SECONDS = 180;
-const LINUX_CONTAINER_AFTER_LAUNCH_TIMEOUT_SECONDS = 180;
-const LINUX_CONTAINER_STARTUP_RETRY_COUNT = 1;
-const LINUX_CONTAINER_RETRY_DELAY_SECONDS = 8;
 const LINUX_HEADLESS_RECOVERY_NOTE =
   'Attempted Linux headless session reset via LabVIEWCLI CloseLabVIEW after recursive-load diagnosis, then retried the pair once.';
 const WINDOWS_HEADLESS_RECOVERY_NOTE =
   'Attempted Windows headless session reset via LabVIEWCLI CloseLabVIEW after call-by-reference diagnosis, then retried the pair once.';
+const WINDOWS_COLD_LAUNCH_RECOVERY_NOTE =
+  'Windows host-native cold-launch retry: the first attempt launched LabVIEW but the VI Server was not ready within the LabVIEW CLI connect window (-350000). Retried once against the now-resident LabVIEW on the same derived VI Server port.';
 const HEADLESS_SESSION_RESET_STDOUT_FILENAME = 'headless-session-reset-stdout.txt';
 const HEADLESS_SESSION_RESET_STDERR_FILENAME = 'headless-session-reset-stderr.txt';
 const DEFAULT_WINDOWS_LABVIEW_TCP_PORT = 3363;
-
-function resolveEffectiveRuntimePlatform(
-  selection: ComparisonReportPacketRecord['runtimeSelection']
-): ComparisonReportPacketRecord['runtimeSelection']['platform'] {
-  return selection.containerRuntimePlatform ?? selection.platform;
-}
 
 export async function resolveWindowsLabviewTcpSettings(
   record: ComparisonReportPacketRecord,
@@ -1811,78 +1895,7 @@ export async function resolveWindowsLabviewTcpSettingsForLabviewPath(
   };
 }
 
-export function appendLabviewCliPortNumberArg(
-  args: string[],
-  labviewTcpPort: number | undefined
-): string[] {
-  if (!Number.isInteger(labviewTcpPort) || (labviewTcpPort ?? 0) <= 0) {
-    return [...args];
-  }
-
-  const existingPortIndex = args.findIndex((argument) => argument.toLowerCase() === '-portnumber');
-  if (existingPortIndex >= 0) {
-    const updated = [...args];
-    updated[existingPortIndex + 1] = String(labviewTcpPort);
-    return updated;
-  }
-
-  return [...args, '-PortNumber', String(labviewTcpPort)];
-}
-
 const DEFAULT_LINUX_LABVIEW_TCP_PORT = 3363;
-
-export function buildLinuxLabviewIniCandidatePaths(options: {
-  homeDir: string;
-  requestedLabviewVersion?: string;
-  bitness?: string;
-}): string[] {
-  const homeDir = options.homeDir;
-  const versionTokens = new Set<string>();
-  const requested = options.requestedLabviewVersion?.trim();
-  if (requested) {
-    versionTokens.add(requested);
-    if (options.bitness === 'x64') {
-      versionTokens.add(`${requested}-64`);
-    } else if (options.bitness === 'x86') {
-      versionTokens.add(`${requested}-32`);
-    } else {
-      versionTokens.add(`${requested}-64`);
-    }
-  }
-
-  const candidates: string[] = [];
-  for (const token of versionTokens) {
-    candidates.push(path.posix.join(homeDir, 'natinst', '.config', `LabVIEW-${token}`, 'labview.conf'));
-    candidates.push(path.posix.join(homeDir, '.config', 'natinst', `LabVIEW-${token}`, 'labview.conf'));
-    candidates.push(path.posix.join('/etc', 'natinst', `LabVIEW-${token}`, 'labview.conf'));
-  }
-  // Generic fallback when the version is unknown — caller can iterate via deps.readdir if desired.
-  return [...new Set(candidates)];
-}
-
-/**
- * VHS-REQ-156: Infer the LabVIEW year token (e.g. `2026`) from a Linux
- * `labviewExe.path` like `/usr/local/natinst/LabVIEW-2026-64/labview` so the
- * labview.conf preflight can locate the config when `requestedLabviewVersion`
- * was not explicitly set on the runtime selection. Returns `undefined` when
- * the directory segment does not match the canonical `LabVIEW-<year>[-bits]`
- * shape.
- */
-export function inferLinuxLabviewVersionFromExecutablePath(
-  executablePath: string | undefined
-): string | undefined {
-  if (!executablePath) {
-    return undefined;
-  }
-  const segments = executablePath.split('/').filter(Boolean);
-  for (let index = segments.length - 1; index >= 0; index -= 1) {
-    const match = segments[index].match(/^LabVIEW-(\d{4})(?:-(?:32|64))?$/u);
-    if (match) {
-      return match[1];
-    }
-  }
-  return undefined;
-}
 
 export async function resolveLinuxLabviewTcpSettings(
   record: ComparisonReportPacketRecord,
@@ -2143,26 +2156,6 @@ async function preflightWindowsHostRuntimeSurface(
   };
 }
 
-function describeObservedRuntimeProcesses(processes: RuntimeObservedProcess[]): string {
-  const descriptions = [...new Map(
-    processes.map((processInfo) => [
-      `${processInfo.imageName}:${String(processInfo.pid)}`,
-      `${processInfo.imageName} (pid ${String(processInfo.pid)})`
-    ])
-  ).values()];
-  return descriptions.join(' | ');
-}
-
-function describeObservedWindowsTcpListeners(listeners: WindowsTcpListenerObservation[]): string {
-  return listeners
-    .map((listener) =>
-      `${listener.processName ?? `pid ${String(listener.pid)}`} listening on ${listener.localAddress}:${String(
-        listener.localPort
-      )}`
-    )
-    .join(' | ');
-}
-
 async function captureRuntimeDiagnostics(
   record: ComparisonReportPacketRecord,
   stdout: string,
@@ -2259,144 +2252,6 @@ async function captureRuntimeDiagnostics(
     artifactPath: record.artifactPlan.runtimeDiagnosticLogFilePath,
     headlessArtifactPaths: headlessDiagnostics.artifactPaths
   };
-}
-
-// linux-headless-init-failed is terminal (no retry can help) and linux-headless-recursive-load
-// is the trigger for the headless-session recovery retry. Either headless reason must win when
-// observed in LVStatus.txt / lvrt headless logs, even if stderr or the LabVIEW CLI diagnostic
-// log carry a more specific post-failure reason.
-function selectDiagnosticReason(
-  headlessReason: string | undefined,
-  ...otherReasons: Array<string | undefined>
-): string | undefined {
-  if (
-    headlessReason === 'linux-headless-init-failed' ||
-    headlessReason === 'linux-headless-recursive-load'
-  ) {
-    return headlessReason;
-  }
-  for (const reason of otherReasons) {
-    if (reason) {
-      return reason;
-    }
-  }
-  return headlessReason;
-}
-
-function shouldCaptureLinuxHeadlessDiagnostics(
-  record: ComparisonReportPacketRecord,
-  commandArgs: string[] | undefined
-): boolean {
-  return (
-    resolveEffectiveRuntimePlatform(record.runtimeSelection) === 'linux' &&
-    record.runtimeSelection.engine === 'labview-cli' &&
-    (record.runtimeSelection.provider === 'linux-container' ||
-      record.runtimeSelection.headlessRequested === true ||
-      isHeadlessLabviewCliExecution(commandArgs))
-  );
-}
-
-function shouldAttemptLinuxHeadlessRecovery(
-  record: ComparisonReportPacketRecord,
-  execution: ComparisonReportRuntimeExecution
-): boolean {
-  if (
-    resolveEffectiveRuntimePlatform(record.runtimeSelection) !== 'linux' ||
-    record.runtimeSelection.engine !== 'labview-cli' ||
-    execution.state !== 'failed' ||
-    execution.diagnosticReason !== 'linux-headless-recursive-load'
-  ) {
-    return false;
-  }
-  // VHS-REQ-657: the recursive-load recovery resets a `-Headless` (cli-headless)
-  // session via LabVIEWCLI CloseLabVIEW. A linux container whose image uses the
-  // EnableCICDFeaturesForLabVIEW env path (LabVIEW 2025 Q3 and earlier) never
-  // issued `-Headless`, so a `-Headless` CloseLabVIEW reset would itself fail;
-  // skip recovery for that mode.
-  if (record.runtimeSelection.provider === 'linux-container') {
-    return (
-      resolveLinuxContainerLabviewProfile(record.runtimeSelection.containerImage).headlessMode ===
-      'cli-headless'
-    );
-  }
-  return true;
-}
-
-function shouldAttemptWindowsHeadlessRecovery(
-  record: ComparisonReportPacketRecord,
-  execution: ComparisonReportRuntimeExecution
-): boolean {
-  return (
-    record.runtimeSelection.platform === 'win32' &&
-    record.runtimeSelection.engine === 'labview-cli' &&
-    execution.state === 'failed' &&
-    execution.diagnosticReason === 'labview-cli-call-by-reference' &&
-    wasWindowsHeadlessLabviewCliExecutionRequested(record, execution)
-  );
-}
-
-function wasWindowsHeadlessLabviewCliExecutionRequested(
-  record: ComparisonReportPacketRecord,
-  execution: ComparisonReportRuntimeExecution
-): boolean {
-  return (
-    record.runtimeSelection.provider === 'windows-container' ||
-    record.runtimeSelection.headlessRequested === true ||
-    isHeadlessLabviewCliExecution(execution.args)
-  );
-}
-
-function isHeadlessLabviewCliExecution(args: string[] | undefined): boolean {
-  if (!args || args.length === 0) {
-    return false;
-  }
-
-  const headlessIndex = args.findIndex((argument) => argument.toLowerCase() === '-headless');
-  return headlessIndex >= 0;
-}
-
-/**
- * VHS-REQ-156 (issue #269): the Linux host-native headless OPT-IN path is the only
- * surface that can hang indefinitely on a broken `HeadlessManager`. The env-var
- * opt-in (`LV_RTE_LINUX_HEADLESS=1`) is reflected as `-Headless` in the resolved
- * command plan even when `headlessRequested` was not persisted, so detect both the
- * persisted flag and the actual `-Headless` argument. The linux-container provider
- * is deliberately excluded: its bundled image initializes headless mode correctly
- * and must stay unbounded.
- */
-function isLinuxHostNativeHeadlessOptIn(
-  record: ComparisonReportPacketRecord,
-  commandPlan: ComparisonCommandPlan | undefined
-): boolean {
-  return (
-    resolveEffectiveRuntimePlatform(record.runtimeSelection) === 'linux' &&
-    record.runtimeSelection.engine === 'labview-cli' &&
-    record.runtimeSelection.provider === 'host-native' &&
-    (record.runtimeSelection.headlessRequested === true ||
-      isHeadlessLabviewCliExecution(commandPlan?.args))
-  );
-}
-
-/**
- * VHS-REQ-156 (issue #269): resolve the effective command timeout (ms). An
- * explicitly configured `commandTimeoutMs` always wins (e.g. a validation harness
- * bound). Otherwise the Linux host-native headless opt-in receives a default bound
- * so a broken HeadlessManager surfaces `linux-headless-init-failed` deterministically
- * instead of stalling forever. All other paths (non-headless default, container
- * providers, non-Linux, non-CLI) stay unbounded by returning `undefined`.
- */
-export function resolveEffectiveCommandTimeoutMs(options: {
-  record: ComparisonReportPacketRecord;
-  commandPlan: ComparisonCommandPlan | undefined;
-  configuredTimeoutMs?: number;
-}): number | undefined {
-  if (typeof options.configuredTimeoutMs === 'number') {
-    return options.configuredTimeoutMs;
-  }
-  if (isLinuxHostNativeHeadlessOptIn(options.record, options.commandPlan)) {
-    return LINUX_HOST_NATIVE_HEADLESS_OPT_IN_DEFAULT_TIMEOUT_MS;
-  }
-  return undefined;
 }
 
 async function attemptLabviewCliHeadlessSessionReset(
@@ -2504,7 +2359,7 @@ async function attemptLabviewCliHeadlessSessionReset(
     };
   } catch (error) {
     const durationMs = Math.max(0, deps.nowMs() - startedMs);
-    const message = error instanceof Error ? error.message : String(error);
+    const message = errorMessage(error);
     return {
       notes: [
         `${platformLabel} headless session reset via LabVIEWCLI CloseLabVIEW failed before retry: ${message}.`
@@ -2516,60 +2371,6 @@ async function attemptLabviewCliHeadlessSessionReset(
       stderrFilePath
     };
   }
-}
-
-function buildRecoveredExecutionResult(
-  initialResult: ComparisonReportRuntimeExecution,
-  recovery: {
-    notes: string[];
-    durationMs: number;
-    executable: string;
-    args: string[];
-    exitCode?: number;
-    stdoutFilePath: string;
-    stderrFilePath: string;
-  },
-  retriedResult: ComparisonReportRuntimeExecution,
-  recoveryNote: string
-): ComparisonReportRuntimeExecution {
-  return {
-    ...retriedResult,
-    startedAt: initialResult.startedAt ?? retriedResult.startedAt,
-    durationMs:
-      (initialResult.durationMs ?? 0) +
-      recovery.durationMs +
-      (retriedResult.durationMs ?? 0),
-    diagnosticNotes: mergeDiagnosticNotes(
-      retriedResult.diagnosticNotes,
-      [recoveryNote],
-      recovery.notes
-    ),
-    headlessSessionResetExecutable: recovery.executable,
-    headlessSessionResetArgs: recovery.args,
-    headlessSessionResetExitCode: recovery.exitCode,
-    headlessSessionResetStdoutFilePath: recovery.stdoutFilePath,
-    headlessSessionResetStderrFilePath: recovery.stderrFilePath
-  };
-}
-
-function buildLabviewCliCloseLabviewCommandPlan(
-  executable: string,
-  labviewPath?: string,
-  labviewTcpPort?: number
-): ComparisonCommandPlan {
-  const args = ['-LogToConsole', 'TRUE', '-OperationName', 'CloseLabVIEW'];
-  if (labviewPath?.trim()) {
-    args.push('-LabVIEWPath', labviewPath.trim());
-  }
-  if (Number.isInteger(labviewTcpPort) && (labviewTcpPort ?? 0) > 0) {
-    args.push('-PortNumber', String(labviewTcpPort));
-  }
-  args.push('-Headless');
-
-  return {
-    executable,
-    args
-  };
 }
 
 async function captureLinuxHeadlessDiagnostics(
@@ -2739,9 +2540,26 @@ async function prepareExecutionContext(
   }
 
   if (!requiresWindowsInterop(resolveEffectiveRuntimePlatform(record.runtimeSelection), deps.processPlatform)) {
+    // VHS-REQ-665: opt-in win32 host-native headless launch. When running natively
+    // on Windows against host-native LabVIEW, the default bare CLI plan assumes an
+    // already-running interactive-desktop LabVIEW; a non-interactive session (e.g.
+    // Vagrant WinRM session 0) then fails with the -350000 VI Server connect error.
+    // The opt-in wraps the CLI in the shared headless prelaunch script.
+    const headlessCommandPlan =
+      deps.processPlatform === 'win32' &&
+      resolveEffectiveRuntimePlatform(record.runtimeSelection) === 'win32' &&
+      process.env.LV_RTE_WIN_HOSTNATIVE_HEADLESS === '1'
+        ? buildWindowsHostNativeHeadlessCommandPlan(
+            record,
+            commandPlan,
+            deps.processPlatform,
+            deps.cliConnectTimeoutSeconds
+          )
+        : undefined;
+
     return {
       outcome: 'ready',
-      commandPlan,
+      commandPlan: headlessCommandPlan ?? commandPlan,
       reportFilePath: record.artifactPlan.reportFilePath
     };
   }
@@ -2939,7 +2757,7 @@ async function validateExecutedReportIdentity(
   ];
 }
 
-interface WindowsInteropLayout {
+export interface WindowsInteropLayout {
   reportDirectory: string;
   stagingDirectory: string;
   leftFilePath: string;
@@ -2959,144 +2777,6 @@ interface LinuxContainerWorkspaceLayout {
   reportFilePath: string;
   reportIdentityFilenames: string[];
   reportTextReplacements: RuntimeTextReplacement[];
-}
-
-function buildWindowsInteropLayout(
-  record: ComparisonReportPacketRecord,
-  interopWorkspaceRoot: string
-): WindowsInteropLayout {
-  const reportDirectory = path.join(
-    interopWorkspaceRoot,
-    'reports',
-    record.artifactPlan.repoId,
-    record.artifactPlan.fileId
-  );
-  const stagingDirectory = path.join(reportDirectory, 'staging');
-  return {
-    reportDirectory,
-    stagingDirectory,
-    leftFilePath: path.join(stagingDirectory, record.stagedRevisionPlan.leftFilename),
-    rightFilePath: path.join(stagingDirectory, record.stagedRevisionPlan.rightFilename),
-    reportFilePath: path.join(reportDirectory, record.artifactPlan.reportFilename)
-  };
-}
-
-/**
- * VHS-REQ-156: Linux host-native short-path staging.
- *
- * LabVIEW 2026 (26.1.1f1) on Linux logs `Possible path leak, unable to purge elements
- * of base #0` and fails CreateComparisonReport with LabVIEW error 8 (file permission)
- * when staged VIs / report paths live under deep, dot-prefixed paths such as
- * `~/.config/Code/User/workspaceStorage/<hash>/<extension>/reports/...`. Mirroring
- * the staged inputs under a short tmpdir avoids the path-table corruption.
- */
-export function shouldUseLinuxHostNativeShortPathStaging(
-  record: ComparisonReportPacketRecord,
-  processPlatform: NodeJS.Platform,
-  processEnv: NodeJS.ProcessEnv = process.env
-): boolean {
-  if (processPlatform !== 'linux') {
-    return false;
-  }
-  if (record.runtimeSelection.platform !== 'linux') {
-    return false;
-  }
-  if (record.runtimeSelection.provider !== 'host-native') {
-    return false;
-  }
-  if (processEnv.LVIE_LINUX_DISABLE_RUNTIME_TMPDIR === '1') {
-    return false;
-  }
-  const tmpRoot = resolveLinuxRuntimeTmpRoot(processEnv);
-  const reportDir = record.artifactPlan.reportDirectory;
-  if (typeof reportDir === 'string' && isPathInsideDirectory(reportDir, tmpRoot)) {
-    return false;
-  }
-  return true;
-}
-
-function isPathInsideDirectory(candidate: string, directory: string): boolean {
-  // Use path.posix on Linux short-path staging where both inputs are POSIX strings.
-  const normalizedDir = path.posix.normalize(directory).replace(/\/+$/u, '');
-  const normalizedCandidate = path.posix.normalize(candidate);
-  if (normalizedCandidate === normalizedDir) {
-    return true;
-  }
-  return normalizedCandidate.startsWith(`${normalizedDir}/`);
-}
-
-function resolveLinuxRuntimeTmpRoot(processEnv: NodeJS.ProcessEnv): string {
-  const override = processEnv.LVIE_LINUX_RUNTIME_TMPDIR?.trim();
-  if (override) {
-    return override;
-  }
-  return path.join(os.tmpdir(), 'vi-history-suite-runtime');
-}
-
-export function buildLinuxHostNativeShortPathLayout(
-  record: ComparisonReportPacketRecord,
-  processEnv: NodeJS.ProcessEnv = process.env
-): WindowsInteropLayout {
-  const baseDir = resolveLinuxRuntimeTmpRoot(processEnv);
-  const reportDirectory = path.posix.join(
-    baseDir,
-    record.artifactPlan.repoId,
-    record.artifactPlan.fileId
-  );
-  const stagingDirectory = path.posix.join(reportDirectory, 'staging');
-  return {
-    reportDirectory,
-    stagingDirectory,
-    leftFilePath: path.posix.join(stagingDirectory, record.stagedRevisionPlan.leftFilename),
-    rightFilePath: path.posix.join(stagingDirectory, record.stagedRevisionPlan.rightFilename),
-    reportFilePath: path.posix.join(reportDirectory, record.artifactPlan.reportFilename)
-  };
-}
-
-export function buildLinuxHostNativeShortPathCommandPlan(
-  record: ComparisonReportPacketRecord,
-  commandPlan: ComparisonCommandPlan,
-  layout: WindowsInteropLayout
-): ComparisonCommandPlan | undefined {
-  if (record.runtimeSelection.engine === 'labview-cli') {
-    const args: string[] = [];
-    for (let index = 0; index < commandPlan.args.length; index += 1) {
-      const current = commandPlan.args[index];
-      if (current === '-VI1' || current === '-vi1') {
-        args.push(current, layout.leftFilePath);
-        index += 1;
-        continue;
-      }
-      if (current === '-VI2' || current === '-vi2') {
-        args.push(current, layout.rightFilePath);
-        index += 1;
-        continue;
-      }
-      if (current === '-ReportPath' || current === '-reportPath') {
-        args.push(current, layout.reportFilePath);
-        index += 1;
-        continue;
-      }
-      args.push(current);
-    }
-    return {
-      executable: commandPlan.executable,
-      args
-    };
-  }
-
-  if (record.runtimeSelection.engine === 'lvcompare') {
-    if (commandPlan.args.length < 2) {
-      return undefined;
-    }
-    const args = [layout.leftFilePath, layout.rightFilePath, ...commandPlan.args.slice(2)];
-    return {
-      executable: commandPlan.executable,
-      args
-    };
-  }
-
-  return undefined;
 }
 
 async function prepareLinuxHostNativeShortPathExecutionContext(
@@ -3209,141 +2889,6 @@ function buildLinuxContainerWorkspaceLayout(
     reportIdentityFilenames: [leftFilename, rightFilename],
     reportTextReplacements: replacements
   };
-}
-
-function joinPreservingExplicitPathStyle(rootPath: string, ...segments: string[]): string {
-  if (rootPath.startsWith('/')) {
-    return path.posix.join(rootPath, ...segments.map((segment) => segment.replace(/\\/g, '/')));
-  }
-
-  return path.join(rootPath, ...segments);
-}
-
-function posixDirname(filePath: string): string {
-  if (filePath.startsWith('/')) {
-    return path.posix.dirname(filePath);
-  }
-
-  return path.dirname(filePath);
-}
-
-function buildLinuxContainerRuntimeFilenameAlias(filename: string): string {
-  return filename.replace(/\s+/g, '_');
-}
-
-function applyRuntimeTextReplacements(
-  reportText: string,
-  replacements: RuntimeTextReplacement[]
-): string {
-  return [...replacements]
-    .sort((left, right) => right.from.length - left.from.length)
-    .reduce((updated, replacement) => updated.split(replacement.from).join(replacement.to), reportText);
-}
-
-export function buildWindowsInteropCommandPlan(
-  record: ComparisonReportPacketRecord,
-  commandPlan: ComparisonCommandPlan,
-  interopLayout: WindowsInteropLayout
-): ComparisonCommandPlan | undefined {
-  const executable = normalizeWindowsInteropExecutable(commandPlan.executable);
-  if (!executable) {
-    return undefined;
-  }
-
-  if (record.runtimeSelection.engine === 'labview-cli') {
-    const args: string[] = [];
-    for (let index = 0; index < commandPlan.args.length; index += 1) {
-      const current = commandPlan.args[index];
-      const next = commandPlan.args[index + 1];
-
-      if (current === '-VI1' || current === '-vi1') {
-        const leftFilePath = normalizeWindowsInteropPath(interopLayout.leftFilePath);
-        if (!leftFilePath) {
-          return undefined;
-        }
-        args.push(current, leftFilePath);
-        index += 1;
-        continue;
-      }
-
-      if (current === '-VI2' || current === '-vi2') {
-        const rightFilePath = normalizeWindowsInteropPath(interopLayout.rightFilePath);
-        if (!rightFilePath) {
-          return undefined;
-        }
-        args.push(current, rightFilePath);
-        index += 1;
-        continue;
-      }
-
-      if (current === '-ReportPath' || current === '-reportPath') {
-        const reportFilePath = normalizeWindowsInteropPath(interopLayout.reportFilePath);
-        if (!reportFilePath) {
-          return undefined;
-        }
-        args.push(current, reportFilePath);
-        index += 1;
-        continue;
-      }
-
-      if (current === '-LabVIEWPath') {
-        const labviewPath = normalizeWindowsInteropPath(next ?? '');
-        if (!labviewPath) {
-          return undefined;
-        }
-        args.push(current, labviewPath);
-        index += 1;
-        continue;
-      }
-
-      args.push(current);
-    }
-
-    return {
-      executable,
-      args
-    };
-  }
-
-  if (record.runtimeSelection.engine === 'lvcompare') {
-    if (commandPlan.args.length < 2) {
-      return undefined;
-    }
-
-    const leftFilePath = normalizeWindowsInteropPath(interopLayout.leftFilePath);
-    const rightFilePath = normalizeWindowsInteropPath(interopLayout.rightFilePath);
-    if (!leftFilePath || !rightFilePath) {
-      return undefined;
-    }
-
-    const args = [
-      leftFilePath,
-      rightFilePath
-    ];
-
-    for (let index = 2; index < commandPlan.args.length; index += 1) {
-      const current = commandPlan.args[index];
-      const next = commandPlan.args[index + 1];
-      if (current === '-lvpath') {
-        const labviewPath = normalizeWindowsInteropPath(next ?? '');
-        if (!labviewPath) {
-          return undefined;
-        }
-        args.push(current, labviewPath);
-        index += 1;
-        continue;
-      }
-
-      args.push(current);
-    }
-
-    return {
-      executable,
-      args
-    };
-  }
-
-  return undefined;
 }
 
 interface StagedTreeResult {
@@ -3946,66 +3491,6 @@ export function buildLinuxContainerCommandPlan(
   };
 }
 
-export function rewriteLabviewCliArgsForContainerWorkspace(
-  args: string[],
-  options: {
-    containerWorkspaceRoot: string;
-    leftFilename: string;
-    rightFilename: string;
-    reportFilename: string;
-    labviewPath?: string;
-  }
-): string[] | undefined {
-  const rewritten: string[] = [];
-
-  for (let index = 0; index < args.length; index += 1) {
-    const current = args[index];
-    if (current === '-VI1' || current === '-vi1') {
-      rewritten.push(current, `${options.containerWorkspaceRoot}\\staging\\${options.leftFilename}`);
-      index += 1;
-      continue;
-    }
-
-    if (current === '-VI2' || current === '-vi2') {
-      rewritten.push(current, `${options.containerWorkspaceRoot}\\staging\\${options.rightFilename}`);
-      index += 1;
-      continue;
-    }
-
-    if (current === '-ReportPath' || current === '-reportPath') {
-      rewritten.push(current, `${options.containerWorkspaceRoot}\\${options.reportFilename}`);
-      index += 1;
-      continue;
-    }
-
-    if (current === '-LabVIEWPath') {
-      index += 1;
-      continue;
-    }
-
-    if (current === '-Headless') {
-      const next = args[index + 1];
-      if (next && !next.startsWith('-')) {
-        index += 1;
-      }
-      continue;
-    }
-
-    if (current === '-c') {
-      continue;
-    }
-
-    rewritten.push(current);
-  }
-
-  if (options.labviewPath?.trim()) {
-    rewritten.push('-LabVIEWPath', options.labviewPath.trim());
-  }
-  rewritten.push('-Headless');
-
-  return rewritten.length > 0 ? rewritten : undefined;
-}
-
 export function rewriteLabviewCliArgsForLinuxContainerWorkspace(
   args: string[],
   options: {
@@ -4071,306 +3556,6 @@ export function rewriteLabviewCliArgsForLinuxContainerWorkspace(
   }
 
   return rewritten.length > 0 ? rewritten : undefined;
-}
-
-function buildWindowsPowerShellArrayLiteral(values: string[]): string {
-  return `@(${values.map((value) => quotePowerShellLiteral(value)).join(', ')})`;
-}
-
-function buildBashArrayLiteral(values: string[]): string {
-  return `(${values.map((value) => quoteBashLiteral(value)).join(' ')})`;
-}
-
-export function buildWindowsContainerLabviewCliScript(
-  executable: string,
-  args: string[],
-  labviewPath?: string,
-  cliConnectTimeoutSeconds?: number
-): string {
-  const openAppTimeout =
-    typeof cliConnectTimeoutSeconds === 'number' && Number.isInteger(cliConnectTimeoutSeconds) && cliConnectTimeoutSeconds > 0
-      ? cliConnectTimeoutSeconds
-      : WINDOWS_CONTAINER_OPEN_APP_TIMEOUT_SECONDS;
-  const afterLaunchTimeout =
-    typeof cliConnectTimeoutSeconds === 'number' && Number.isInteger(cliConnectTimeoutSeconds) && cliConnectTimeoutSeconds > 0
-      ? cliConnectTimeoutSeconds
-      : WINDOWS_CONTAINER_AFTER_LAUNCH_TIMEOUT_SECONDS;
-  const cliIniCandidates = [
-    'C:\\ProgramData\\National Instruments\\LabVIEW CLI\\LabVIEWCLI.ini',
-    'C:\\ProgramData\\National Instruments\\LabVIEWCLI\\LabVIEWCLI.ini',
-    'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.ini',
-    'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.ini'
-  ];
-  const effectiveLabviewPath = labviewPath?.trim();
-
-  return [
-    "$ErrorActionPreference = 'Stop'",
-    "$ProgressPreference = 'SilentlyContinue'",
-    'function Set-IniToken {',
-    '  param([string]$Path, [string]$Key, [string]$Value)',
-    '  if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { return }',
-    "  $content = Get-Content -LiteralPath $Path -Raw -ErrorAction SilentlyContinue",
-    "  if ($null -eq $content) { $content = '' }",
-    "  if ($content -match (\"(?m)^\\s*{0}\\s*=\" -f [regex]::Escape($Key))) {",
-    '    $updated = [regex]::Replace($content, ("(?m)^\\s*{0}\\s*=.*$" -f [regex]::Escape($Key)), ("{0}={1}" -f $Key, $Value))',
-    '  } else {',
-    '    $updated = ($content.TrimEnd() + [Environment]::NewLine + ("{0}={1}" -f $Key, $Value) + [Environment]::NewLine)',
-    '  }',
-    "  Set-Content -LiteralPath $Path -Value $updated -Encoding utf8",
-    '}',
-    `$env:TEMP = ${quotePowerShellLiteral(WINDOWS_CONTAINER_TEMP_ROOT)}`,
-    '$env:TMP = $env:TEMP',
-    `$cliPath = ${quotePowerShellLiteral(executable)}`,
-    effectiveLabviewPath
-      ? `$labviewPath = ${quotePowerShellLiteral(effectiveLabviewPath)}`
-      : '$labviewPath = $null',
-    `$args = ${buildWindowsPowerShellArrayLiteral(args)}`,
-    `$cliIniCandidates = ${buildWindowsPowerShellArrayLiteral(cliIniCandidates)}`,
-    '$cliIni = $cliIniCandidates | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1',
-    'if ($cliIni) {',
-    `  Set-IniToken -Path $cliIni -Key '${LABVIEW_CLI_INI_OPEN_APP_KEY}' -Value '${openAppTimeout}'`,
-    `  Set-IniToken -Path $cliIni -Key '${LABVIEW_CLI_INI_AFTER_LAUNCH_KEY}' -Value '${afterLaunchTimeout}'`,
-    '}',
-    '$prelaunchAttempted = $false',
-    "if (-not [string]::IsNullOrWhiteSpace([string]$labviewPath) -and (Test-Path -LiteralPath $labviewPath)) {",
-    '  $prelaunchAttempted = $true',
-    "  Start-Process -FilePath $labviewPath -ArgumentList '--headless' -WindowStyle Hidden | Out-Null",
-    `  Start-Sleep -Seconds ${WINDOWS_CONTAINER_PRELAUNCH_WAIT_SECONDS}`,
-    '}',
-    '$attempt = 0',
-    '$maxAttempts = [Math]::Max(1, 1 + ' + WINDOWS_CONTAINER_STARTUP_RETRY_COUNT + ')',
-    '$lastExit = 1',
-    "$lastOutputText = ''",
-    'while ($attempt -lt $maxAttempts) {',
-    '  $attempt++',
-    "  $previousErrorActionPreference = $ErrorActionPreference",
-    "  $ErrorActionPreference = 'Continue'",
-    '  try {',
-    '    $output = @(& $cliPath @args 2>&1)',
-    '    $lastExit = [int]$LASTEXITCODE',
-    '  } finally {',
-    '    $ErrorActionPreference = $previousErrorActionPreference',
-    '  }',
-    '  $output | ForEach-Object { if (-not [string]::IsNullOrWhiteSpace([string]$_)) { Write-Output $_ } }',
-    "  $lastOutputText = @($output | ForEach-Object { [string]$_ }) -join [Environment]::NewLine",
-    '  if ($lastExit -eq 0) { break }',
-    "  $isStartupConnectivity = ($lastExit -in @(-350000, -350051) -or $lastOutputText -match '-350000' -or $lastOutputText -match '-350051' -or $lastOutputText -match '(?i)failed to establish a connection with LabVIEW')",
-    '  if ($isStartupConnectivity -and $attempt -lt $maxAttempts) {',
-    `    Start-Sleep -Seconds ${WINDOWS_CONTAINER_RETRY_DELAY_SECONDS}`,
-    '    continue',
-    '  }',
-    '  break',
-    '}',
-    "$connectedPort = ''",
-    "if ($lastOutputText -match 'Connection established with LabVIEW at port number ([0-9]+)\\.') {",
-    '  $connectedPort = $Matches[1]',
-    '}',
-    `Write-Output ('[vi-history-suite-container-meta]retryAttempts={0};prelaunchAttempted={1};iniPath={2};connectedPort={3};openTimeout=${WINDOWS_CONTAINER_OPEN_APP_TIMEOUT_SECONDS};afterLaunchTimeout=${WINDOWS_CONTAINER_AFTER_LAUNCH_TIMEOUT_SECONDS}' -f $attempt, ($(if ($prelaunchAttempted) { 1 } else { 0 })), $cliIni, $connectedPort)`,
-    'exit $lastExit'
-  ].join('\n');
-}
-
-function buildWindowsContainerDirectCommandScript(executable: string, args: string[]): string {
-  return [
-    "$ErrorActionPreference = 'Stop'",
-    "$ProgressPreference = 'SilentlyContinue'",
-    `$executable = ${quotePowerShellLiteral(executable)}`,
-    `$args = ${buildWindowsPowerShellArrayLiteral(args)}`,
-    "$previousErrorActionPreference = $ErrorActionPreference",
-    "$ErrorActionPreference = 'Continue'",
-    'try {',
-    '  $output = @(& $executable @args 2>&1)',
-    '} finally {',
-    '  $ErrorActionPreference = $previousErrorActionPreference',
-    '}',
-    '$output | ForEach-Object { if (-not [string]::IsNullOrWhiteSpace([string]$_)) { Write-Output $_ } }',
-    'exit $LASTEXITCODE'
-  ].join('\n');
-}
-
-function buildLinuxContainerScriptPrelude(headlessMode: LinuxContainerHeadlessMode): string[] {
-  const prelude = [
-    'set -euo pipefail',
-    `mkdir -p ${quoteBashLiteral(LINUX_CONTAINER_TEMP_ROOT)} /tmp/natinst`,
-    `printf '1\\n' > ${quoteBashLiteral('/tmp/natinst/LVContainer.txt')}`,
-    `export TEMP=${quoteBashLiteral(LINUX_CONTAINER_TEMP_ROOT)}`,
-    `export TMP=${quoteBashLiteral(LINUX_CONTAINER_TEMP_ROOT)}`,
-    `export TMPDIR=${quoteBashLiteral(LINUX_CONTAINER_TEMP_ROOT)}`
-  ];
-  if (headlessMode === 'enable-cicd-env') {
-    // VHS-REQ-657: LabVIEW 2025 Q3 and earlier engage CI/CD headless behavior
-    // through this environment toggle instead of the LabVIEWCLI `-Headless` flag.
-    prelude.push('export EnableCICDFeaturesForLabVIEW=TRUE');
-  }
-  return prelude;
-}
-
-function resolveLinuxContainerConnectTimeoutSeconds(connectTimeoutSeconds?: number): number {
-  return typeof connectTimeoutSeconds === 'number' &&
-    Number.isInteger(connectTimeoutSeconds) &&
-    connectTimeoutSeconds > 0
-    ? connectTimeoutSeconds
-    : LINUX_CONTAINER_OPEN_APP_TIMEOUT_SECONDS;
-}
-
-function buildLinuxContainerLabviewCliScript(
-  executable: string,
-  args: string[],
-  headlessMode: LinuxContainerHeadlessMode,
-  options?: {
-    labviewExecutablePath?: string;
-    connectTimeoutSeconds?: number;
-  }
-): string {
-  // VHS-REQ-148 (Linux container parity): widen the connect window and retry once
-  // on the cold-launch VI Server connectivity failure (-350000). The launched
-  // headless LabVIEW reads its per-version `.conf` (e.g.
-  // `$HOME/natinst/.config/LabVIEW-<year>/labviewprofull.conf`), which already
-  // carries `server.tcp.enabled=True`; the same file is the Linux analog of the
-  // Windows `LabVIEWCLI.ini` connect-window keys. All `.conf` mutation is
-  // fail-soft (`|| true`) so a read-only or unexpected layout never blocks the
-  // compare; the deterministic guarantee is the one-shot retry on -350000.
-  const openAppTimeout = resolveLinuxContainerConnectTimeoutSeconds(options?.connectTimeoutSeconds);
-  const afterLaunchTimeout = openAppTimeout;
-  const maxAttempts = Math.max(1, 1 + LINUX_CONTAINER_STARTUP_RETRY_COUNT);
-  const labviewExecutablePath = options?.labviewExecutablePath ?? LINUX_CONTAINER_LABVIEW_EXECUTABLE;
-  const errFilePath = `${LINUX_CONTAINER_TEMP_ROOT}/vihs-cli-stderr.txt`;
-
-  return [
-    ...buildLinuxContainerScriptPrelude(headlessMode),
-    `cli_path=${quoteBashLiteral(executable)}`,
-    `args=${buildBashArrayLiteral(args)}`,
-    `lv_exe=${quoteBashLiteral(labviewExecutablePath)}`,
-    `open_app_timeout=${String(openAppTimeout)}`,
-    `after_launch_timeout=${String(afterLaunchTimeout)}`,
-    `max_attempts=${String(maxAttempts)}`,
-    `retry_delay=${String(LINUX_CONTAINER_RETRY_DELAY_SECONDS)}`,
-    `err_file=${quoteBashLiteral(errFilePath)}`,
-    'set_conf_key() {',
-    '  conf_file="$1"; conf_key="$2"; conf_value="$3"',
-    '  mkdir -p "$(dirname "$conf_file")" 2>/dev/null || return 0',
-    '  if [ -f "$conf_file" ] && grep -qE "^[[:space:]]*${conf_key}=" "$conf_file" 2>/dev/null; then',
-    '    sed -i -E "s|^[[:space:]]*${conf_key}=.*|${conf_key}=${conf_value}|" "$conf_file" 2>/dev/null || true',
-    '  else',
-    '    printf "%s=%s\\n" "$conf_key" "$conf_value" >> "$conf_file" 2>/dev/null || true',
-    '  fi',
-    '}',
-    'harden_conf() {',
-    '  lv_dir="$(dirname "$lv_exe")"',
-    '  lv_base="$(basename "$lv_dir")"',
-    '  lv_year="$(printf "%s" "$lv_base" | sed -E "s/^LabVIEW-([0-9]+).*/\\1/")"',
-    '  [ -n "$lv_year" ] || return 0',
-    '  conf_dir="${HOME:-/root}/natinst/.config/LabVIEW-${lv_year}"',
-    '  exe_base="$(basename "$lv_exe")"',
-    '  for conf in "${conf_dir}/${exe_base}.conf" "${conf_dir}/labview.conf"; do',
-    '    set_conf_key "$conf" "server.tcp.enabled" "True"',
-    '    set_conf_key "$conf" "unattended" "True"',
-    '    set_conf_key "$conf" "OpenAppReferenceTimeoutInSecond" "$open_app_timeout"',
-    '    set_conf_key "$conf" "AfterLaunchOpenAppReferenceTimeoutInSecond" "$after_launch_timeout"',
-    '  done',
-    '}',
-    'harden_conf || true',
-    'attempt=0',
-    'rc=1',
-    'while [ "$attempt" -lt "$max_attempts" ]; do',
-    '  attempt=$((attempt + 1))',
-    '  set +e',
-    '  "$cli_path" "${args[@]}" 2>"$err_file"',
-    '  rc=$?',
-    '  set -e',
-    '  cat "$err_file" >&2 2>/dev/null || true',
-    '  if [ "$rc" -eq 0 ]; then break; fi',
-    "  if [ \"$attempt\" -lt \"$max_attempts\" ] && grep -qiE '(-350000|-350051|failed to establish a connection with LabVIEW)' \"$err_file\" 2>/dev/null; then",
-    '    sleep "$retry_delay"',
-    '    continue',
-    '  fi',
-    '  break',
-    'done',
-    "printf '[vi-history-suite-container-meta]retryAttempts=%s;openTimeout=%s;afterLaunchTimeout=%s\\n' \"$attempt\" \"$open_app_timeout\" \"$after_launch_timeout\"",
-    'exit $rc'
-  ].join('\n');
-}
-
-function buildLinuxContainerDirectCommandScript(
-  executable: string,
-  args: string[],
-  headlessMode: LinuxContainerHeadlessMode
-): string {
-  return [
-    ...buildLinuxContainerScriptPrelude(headlessMode),
-    `target=${quoteBashLiteral(executable)}`,
-    `args=${buildBashArrayLiteral(args)}`,
-    '"$target" "${args[@]}"'
-  ].join('\n');
-}
-
-export function rewriteLvcompareArgsForContainerWorkspace(
-  args: string[],
-  options: {
-    containerWorkspaceRoot: string;
-    leftFilename: string;
-    rightFilename: string;
-    labviewPath?: string;
-  }
-): string[] | undefined {
-  if (args.length < 2) {
-    return undefined;
-  }
-
-  const rewritten = [
-    `${options.containerWorkspaceRoot}\\staging\\${options.leftFilename}`,
-    `${options.containerWorkspaceRoot}\\staging\\${options.rightFilename}`
-  ];
-
-  for (let index = 2; index < args.length; index += 1) {
-    const current = args[index];
-    if (current === '-lvpath') {
-      rewritten.push(current, options.labviewPath ?? args[index + 1] ?? '');
-      index += 1;
-      continue;
-    }
-
-    rewritten.push(current);
-  }
-
-  return rewritten;
-}
-
-export function rewriteLvcompareArgsForLinuxContainerWorkspace(
-  args: string[],
-  options: {
-    containerWorkspaceRoot: string;
-    leftFilename: string;
-    rightFilename: string;
-    labviewPath?: string;
-    containerLabviewPath?: string;
-  }
-): string[] | undefined {
-  if (args.length < 2) {
-    return undefined;
-  }
-
-  const rewritten = [
-    `${options.containerWorkspaceRoot}/staging/${options.leftFilename}`,
-    `${options.containerWorkspaceRoot}/staging/${options.rightFilename}`
-  ];
-
-  for (let index = 2; index < args.length; index += 1) {
-    const current = args[index];
-    if (current === '-lvpath') {
-      // VHS-REQ-657: image-derived plain `labview` binary; LabVIEW 2026 fallback.
-      rewritten.push(
-        current,
-        options.containerLabviewPath ?? '/usr/local/natinst/LabVIEW-2026-64/labview'
-      );
-      index += 1;
-      continue;
-    }
-
-    rewritten.push(current);
-  }
-
-  return rewritten;
 }
 
 async function copyReportAssetsDirectory(
@@ -4494,687 +3679,26 @@ async function forceRemovePathResilient(
   await deps.removePath(targetPath, { recursive: true, force: true });
 }
 
-function buildReportAssetsDirectoryPath(reportFilePath: string): string {
-  return reportFilePath.replace(/\.html$/i, '') + '_files';
-}
-
-export function normalizeWindowsInteropPath(filePath: string): string | undefined {
-  const trimmed = filePath.trim();
-  if (!trimmed) {
-    return undefined;
-  }
-
-  if (/^[A-Za-z]:[\\/]/.test(trimmed)) {
-    return trimmed.replaceAll('/', '\\');
-  }
-
-  const match = trimmed.match(/^\/mnt\/([a-zA-Z])\/(.*)$/);
-  if (!match) {
-    return undefined;
-  }
-
-  const [, driveLetter, tail] = match;
-  const normalizedTail = tail
-    .split('/')
-    .filter((segment) => segment.length > 0)
-    .join('\\');
-  return normalizedTail.length > 0
-    ? `${driveLetter.toUpperCase()}:\\${normalizedTail}`
-    : `${driveLetter.toUpperCase()}:\\`;
-}
-
-export function normalizeWindowsInteropExecutable(filePath: string): string | undefined {
-  const trimmed = filePath.trim();
-  if (!trimmed) {
-    return undefined;
-  }
-
-  if (trimmed.startsWith('/mnt/')) {
-    return trimmed;
-  }
-
-  const windowsPathMatch = trimmed.match(/^([A-Za-z]):[\\/](.*)$/);
-  if (!windowsPathMatch) {
-    return undefined;
-  }
-
-  const [, driveLetter, tail] = windowsPathMatch;
-  const normalizedTail = tail.replaceAll('\\', '/');
-  return `/mnt/${driveLetter.toLowerCase()}/${normalizedTail}`;
-}
-
-function resolveHostReadableWindowsPath(
-  filePath: string,
-  processPlatform: NodeJS.Platform = process.platform
-): string | undefined {
-  const trimmed = filePath.trim();
-  if (!trimmed) {
-    return undefined;
-  }
-
-  if (processPlatform === 'win32') {
-    return trimmed.replaceAll('/', '\\');
-  }
-
-  if (trimmed.startsWith('/')) {
-    return trimmed;
-  }
-
-  return normalizeWindowsInteropExecutable(trimmed);
-}
-
-export function parseLabviewCliDiagnosticLogPath(stdout: string): string | undefined {
-  const match = stdout.match(/LabVIEWCLI started logging in file:\s*([^\r\n]+)/m);
-  return match?.[1]?.trim();
-}
-
-function parseWindowsContainerRuntimeFacts(stdout: string): WindowsContainerRuntimeFacts {
-  const notes: string[] = [];
-  const metadata = parseWindowsContainerRuntimeMetadata(stdout);
-  const labviewIniPath = normalizeOptionalRuntimeText(metadata.iniPath);
-  const labviewTcpPort =
-    parsePositiveInteger(metadata.connectedPort) ?? parseLabviewCliConnectedPort(stdout);
-  const retryAttempts = parsePositiveInteger(metadata.retryAttempts);
-  const openTimeoutSeconds = parsePositiveInteger(metadata.openTimeout);
-  const afterLaunchTimeoutSeconds = parsePositiveInteger(metadata.afterLaunchTimeout);
-  const prelaunchAttempted =
-    metadata.prelaunchAttempted === '1'
-      ? 'yes'
-      : metadata.prelaunchAttempted === '0'
-        ? 'no'
-        : undefined;
-
-  if (labviewIniPath) {
-    notes.push(`Windows container runtime retained CLI ini path ${labviewIniPath}.`);
-  }
-
-  if (labviewTcpPort !== undefined) {
-    notes.push(`Windows container LabVIEW CLI connected to VI Server port ${String(labviewTcpPort)}.`);
-  }
-
-  if (
-    retryAttempts !== undefined ||
-    prelaunchAttempted !== undefined ||
-    openTimeoutSeconds !== undefined ||
-    afterLaunchTimeoutSeconds !== undefined
-  ) {
-    const hardeningFacts: string[] = [];
-    if (retryAttempts !== undefined) {
-      hardeningFacts.push(`retryAttempts=${String(retryAttempts)}`);
-    }
-    if (prelaunchAttempted !== undefined) {
-      hardeningFacts.push(`prelaunchAttempted=${prelaunchAttempted}`);
-    }
-    if (openTimeoutSeconds !== undefined) {
-      hardeningFacts.push(`OpenAppReferenceTimeoutInSecond=${String(openTimeoutSeconds)}`);
-    }
-    if (afterLaunchTimeoutSeconds !== undefined) {
-      hardeningFacts.push(
-        `AfterLaunchOpenAppReferenceTimeoutInSecond=${String(afterLaunchTimeoutSeconds)}`
-      );
-    }
-    notes.push(`Windows container startup hardening retained ${hardeningFacts.join(', ')}.`);
-  }
-
-  return {
-    labviewIniPath,
-    labviewTcpPort,
-    notes
-  };
-}
-
-function parseWindowsContainerRuntimeMetadata(stdout: string): Record<string, string> {
-  const match = stdout.match(/\[vi-history-suite-container-meta\]([^\r\n]+)/i);
-  if (!match) {
-    return {};
-  }
-
-  const metadata: Record<string, string> = {};
-  for (const segment of match[1].split(';')) {
-    const separatorIndex = segment.indexOf('=');
-    if (separatorIndex <= 0) {
-      continue;
-    }
-
-    const key = segment.slice(0, separatorIndex).trim();
-    const value = segment.slice(separatorIndex + 1).trim();
-    if (!key) {
-      continue;
-    }
-
-    metadata[key] = value;
-  }
-
-  return metadata;
-}
-
-function parseLabviewCliConnectedPort(stdout: string): number | undefined {
-  const match = stdout.match(/Connection established with LabVIEW at port number ([0-9]+)\./i);
-  return parsePositiveInteger(match?.[1]);
-}
-
-function normalizeOptionalRuntimeText(value: string | undefined): string | undefined {
-  const trimmed = value?.trim();
-  if (!trimmed || /^none$/i.test(trimmed) || /^null$/i.test(trimmed)) {
-    return undefined;
-  }
-
-  return trimmed;
-}
-
-function parsePositiveInteger(value: string | undefined): number | undefined {
-  if (!value?.trim()) {
-    return undefined;
-  }
-
-  const parsed = Number.parseInt(value, 10);
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined;
-}
-
-export function resolveHostReadableDiagnosticPath(
-  diagnosticLogPath: string,
-  processPlatform: NodeJS.Platform = process.platform,
-  diagnosticPathMapping?: RuntimeDiagnosticPathMapping
-): string | undefined {
-  const trimmed = diagnosticLogPath.trim();
-  const mappedContainerPath = resolveMappedRuntimeDiagnosticPath(diagnosticLogPath, diagnosticPathMapping);
-  if (mappedContainerPath) {
-    return mappedContainerPath;
-  }
-
-  if (diagnosticPathMapping) {
-    return undefined;
-  }
-
-  if (processPlatform === 'win32') {
-    return trimmed || undefined;
-  }
-
-  if (trimmed.startsWith('/')) {
-    return trimmed;
-  }
-
-  return normalizeWindowsInteropExecutable(trimmed);
-}
-
-export function resolveMappedRuntimeDiagnosticPath(
-  diagnosticLogPath: string,
-  diagnosticPathMapping?: RuntimeDiagnosticPathMapping
-): string | undefined {
-  if (!diagnosticPathMapping) {
-    return undefined;
-  }
-
-  const normalizedRuntimeRoot = normalizeComparablePath(diagnosticPathMapping.runtimeRoot);
-  const normalizedDiagnostic = normalizeComparablePath(diagnosticLogPath);
-  if (!normalizedRuntimeRoot || !normalizedDiagnostic) {
-    return undefined;
-  }
-
-  if (!normalizedDiagnostic.startsWith(normalizedRuntimeRoot)) {
-    return undefined;
-  }
-
-  const relativeWindowsPath = diagnosticLogPath
-    .trim()
-    .slice(diagnosticPathMapping.runtimeRoot.length)
-    .replace(/^[\\/]+/, '');
-  const relativeSegments = relativeWindowsPath
-    .replaceAll('\\', '/')
-    .split('/')
-    .filter((segment) => segment.length > 0);
-
-  return path.join(diagnosticPathMapping.hostRoot, ...relativeSegments);
-}
-
-export function classifyLabviewCliDiagnosticText(
-  diagnosticText: string,
-  expectedLabviewPath?: string
-): {
-  reason?: string;
-  notes: string[];
-} {
-  const notes: string[] = [];
-  const launchSucceeded = /LabVIEW launched successfully\./i.test(diagnosticText);
-  const connectedToLabview = /Connection established with LabVIEW at port number \d+\./i.test(
-    diagnosticText
-  );
-  const invalidPathLines = diagnosticText.match(/^.*path invalid or does not exist:\s*.+$/gim);
-  if (invalidPathLines && invalidPathLines.length > 0) {
-    notes.push(
-      `LabVIEW CLI rejected one or more supplied paths: ${invalidPathLines
-        .map((line) => line.trim())
-        .join(' | ')}.`
-    );
-    return {
-      reason: 'labview-cli-invalid-vi-path',
-      notes: appendLaunchConfirmationNote(notes, launchSucceeded)
-    };
-  }
-  const ignoredLabviewPathMatch = diagnosticText.match(
-    /"LabVIEWPath" command line argument is not passed\.\s*Using last used LabVIEW:\s*"([^"]+)"/i
-  );
-  if (ignoredLabviewPathMatch) {
-    const actualLabviewPath = ignoredLabviewPathMatch[1];
-    const normalizedExpectedPath = normalizeComparablePath(expectedLabviewPath);
-    const normalizedActualPath = normalizeComparablePath(actualLabviewPath);
-    if (normalizedExpectedPath && normalizedExpectedPath === normalizedActualPath) {
-      notes.push(
-        `LabVIEW CLI ignored the explicit -LabVIEWPath selection, but the last-used LabVIEW matched the intended executable: ${actualLabviewPath}.`
-      );
-      return {
-        reason: 'labview-path-ignored-last-used-matched-selection',
-        notes: appendLaunchConfirmationNote(notes, launchSucceeded)
-      };
-    }
-
-    if (normalizedExpectedPath && normalizedExpectedPath !== normalizedActualPath) {
-      notes.push(
-        `LabVIEW CLI ignored the explicit -LabVIEWPath selection and used a different last-used LabVIEW instead: ${actualLabviewPath}.`
-      );
-      notes.push(`Intended explicit LabVIEW path: ${expectedLabviewPath}.`);
-      return {
-        reason: 'labview-path-ignored-last-used-diverged-selection',
-        notes: appendLaunchConfirmationNote(notes, launchSucceeded)
-      };
-    }
-
-    notes.push(
-      `LabVIEW CLI ignored the explicit -LabVIEWPath selection and used the last-used LabVIEW instead: ${actualLabviewPath}.`
-    );
-    return {
-      reason: 'labview-path-ignored-last-used-default',
-      notes: appendLaunchConfirmationNote(notes, launchSucceeded)
-    };
-  }
-
-  if (/VI is password protected\./i.test(diagnosticText)) {
-    notes.push(
-      connectedToLabview
-        ? 'LabVIEW CLI connected to LabVIEW before CreateComparisonReport failed because one or both selected VI revisions are password protected.'
-        : 'LabVIEW CLI could not generate a comparison report because one or both selected VI revisions are password protected.'
-    );
-    return {
-      reason: 'labview-cli-vi-password-protected',
-      notes: connectedToLabview ? notes : appendLaunchConfirmationNote(notes, launchSucceeded)
-    };
-  }
-
-  if (
-    connectedToLabview &&
-    /Error code\s*:\s*66\b/i.test(diagnosticText) &&
-    /Call By Reference/i.test(diagnosticText)
-  ) {
-    notes.push(
-      'LabVIEW CLI established a VI Server connection before failing with Error 66 / Call By Reference.'
-    );
-    return {
-      reason: 'labview-cli-call-by-reference',
-      notes: appendLaunchConfirmationNote(notes, launchSucceeded)
-    };
-  }
-
-  if (
-    /\(Hex 0x8\) File permission error\./i.test(diagnosticText) &&
-    /CreateComparisonReport operation failed\./i.test(diagnosticText)
-  ) {
-    notes.push(
-      launchSucceeded
-        ? 'LabVIEW CLI launched LabVIEW successfully but CreateComparisonReport returned LabVIEW error 8 (File permission error) while writing the report.'
-        : 'LabVIEW CLI reported CreateComparisonReport returned LabVIEW error 8 (File permission error).'
-    );
-    return {
-      reason: 'labview-cli-create-report-permission-error',
-      notes: appendLaunchConfirmationNote(notes, launchSucceeded)
-    };
-  }
-
-  if (/CreateComparisonReport operation succeeded\./i.test(diagnosticText)) {
-    notes.push('LabVIEW CLI reported that CreateComparisonReport operation succeeded.');
-    return {
-      notes
-    };
-  }
-
-  if (launchSucceeded) {
-    notes.push('LabVIEW CLI reported that LabVIEW launched successfully before the operation failed.');
-  }
-
-  return {
-    notes
-  };
-}
-
-function appendLaunchConfirmationNote(notes: string[], launchSucceeded: boolean): string[] {
-  if (!launchSucceeded) {
-    notes.push('The retained LabVIEW CLI diagnostic log did not report successful LabVIEW launch before exit.');
-  }
-
-  return notes;
-}
-
-function classifyRuntimeFailure(options: {
-  engine?: 'labview-cli' | 'lvcompare';
-  exitCode: number;
-  reportExists: boolean;
-  selectedBitness?: 'x86' | 'x64';
-  stdout: string;
-  stderr: string;
-  processObservation?: RuntimeProcessObservation;
-  exitProcessObservation?: RuntimeProcessObservation;
-}): {
-  reason: string;
-  notes: string[];
-} {
-  if (options.exitCode === 0 && !options.reportExists) {
-    if (options.engine === 'lvcompare') {
-      return {
-        reason: 'lvcompare-exited-zero-without-report',
-        notes: ['LVCompare exited 0 without generating the report file.']
-      };
-    }
-
-    return {
-      reason: 'report-file-not-generated',
-      notes: []
-    };
-  }
-
-  if (
-    options.exitCode !== 0 &&
-    !options.reportExists &&
-    options.engine === 'labview-cli' &&
-    options.stderr.trim().length === 0 &&
-    isLabviewCliLogOnlyStdout(options.stdout)
-  ) {
-    if (
-      options.processObservation?.trigger === 'cli-log-banner' &&
-      options.processObservation.labviewCliProcessObserved &&
-      !options.processObservation.labviewProcessObserved &&
-      options.exitProcessObservation?.trigger === 'process-exit' &&
-      options.exitProcessObservation.labviewCliProcessObserved &&
-      !options.exitProcessObservation.labviewProcessObserved
-    ) {
-      return {
-        reason: 'labview-cli-log-only-no-labview-through-exit',
-        notes: [
-          'LabVIEW CLI exited nonzero without stderr and without generating a report; at the retained cli-log-banner and process-exit snapshots, LabVIEWCLI.exe was observed while LabVIEW.exe was not observed.'
-        ]
-      };
-    }
-
-    if (
-      options.processObservation?.trigger === 'cli-log-banner' &&
-      options.processObservation.labviewCliProcessObserved &&
-      !options.processObservation.labviewProcessObserved
-    ) {
-      return {
-        reason: 'labview-cli-log-only-no-labview-at-banner-snapshot',
-        notes: [
-          'LabVIEW CLI exited nonzero without stderr and without generating a report; at the retained cli-log-banner snapshot, LabVIEWCLI.exe was observed while LabVIEW.exe was not observed.'
-        ]
-      };
-    }
-
-    return {
-      reason: 'labview-cli-exited-nonzero-log-only-no-report',
-      notes: [
-        'LabVIEW CLI exited nonzero without stderr and without generating a report; stdout only advertised the diagnostic log path.'
-      ]
-    };
-  }
-
-  if (options.exitCode !== 0) {
-    // VHS-REQ-658: LabVIEW error 0x465 ("File version is later than the current
-    // LabVIEW version") means a staged revision of the VI was saved in a newer
-    // LabVIEW than the selected engine. LabVIEW is not forward-compatible, so it
-    // refuses to open the VI and the compare fails before any diff is produced.
-    // Surface a specific, actionable reason instead of the generic nonzero exit
-    // so the user is steered to pick a newer installed LabVIEW. Keyed on the
-    // engine-agnostic stderr signature (the CLI propagates the LabVIEW error
-    // code as exit code 1125 = 0x465, but the stderr text is the stable signal).
-    if (/File version is later than the current LabVIEW version/i.test(options.stderr)) {
-      return {
-        reason: 'labview-vi-version-too-new',
-        notes: [
-          'LabVIEW reported that the VI file version is later than the selected LabVIEW version (error 0x465); the VI was saved in a newer LabVIEW than the selected engine, which cannot open a forward-version VI.'
-        ]
-      };
-    }
-
-    if (options.engine === 'labview-cli' && /Error code\s*:\s*-350000\b/i.test(options.stderr)) {
-      return {
-        reason: 'labview-cli-connection-failed',
-        notes: [
-          'LabVIEW CLI launched or reused a headless LabVIEW session but failed to establish the required VI Server connection.'
-        ]
-      };
-    }
-
-    // VHS-REQ-621: Race-condition fallback. Preflight may have admitted a
-    // host runtime that became contaminated by a different-bitness LabVIEW
-    // launched between preflight and process-exit. Reclassify so the user
-    // sees the actionable bitness-conflict diagnostic instead of the generic
-    // nonzero exit message.
-    if (
-      options.selectedBitness &&
-      options.exitProcessObservation?.labviewProcessObserved === true &&
-      options.exitProcessObservation.labviewProcessBitness &&
-      options.exitProcessObservation.labviewProcessBitness !== 'unknown' &&
-      options.exitProcessObservation.labviewProcessBitness !== options.selectedBitness
-    ) {
-      const observed = options.exitProcessObservation.labviewProcessBitness;
-      return {
-        reason: 'labview-host-bitness-conflict',
-        notes: [
-          `LabVIEW ${observed} was running at the retained process-exit snapshot while comparison-report execution targeted LabVIEW ${options.selectedBitness}; LabVIEW refuses to start a second instance at a different bitness, which is consistent with the observed nonzero exit.`
-        ]
-      };
-    }
-
-    return {
-      reason: 'command-exited-nonzero',
-      notes: []
-    };
-  }
-
-  return {
-    reason: 'report-file-not-generated',
-    notes: []
-  };
-}
-
-function classifyCancelledRuntimeFailure(options: {
-  engine?: 'labview-cli' | 'lvcompare';
-  diagnosticReason?: string;
-}): {
-  reason: string;
-  notes: string[];
-} {
-  if (
-    options.engine === 'labview-cli' &&
-    options.diagnosticReason === 'labview-cli-call-by-reference'
-  ) {
-    return {
-      reason: 'command-exited-nonzero',
-      notes: [
-        'Comparison-report runtime retained a LabVIEW CLI Error 66 / Call By Reference failure before a cancellation-shaped transport exit was observed.'
-      ]
-    };
-  }
-
-  return {
-    reason: 'command-cancelled',
-    notes: ['Comparison-report runtime was cancelled before completion.']
-  };
-}
-
-function classifyTimedOutRuntimeDiagnostic(options: {
-  engine?: 'labview-cli' | 'lvcompare';
-  processObservation?: RuntimeProcessObservation;
-  exitProcessObservation?: RuntimeProcessObservation;
-}): {
-  reason?: string;
-  notes: string[];
-} {
-  if (
-    options.engine !== 'labview-cli' ||
-    options.processObservation?.trigger !== 'cli-log-banner' ||
-    !options.processObservation.labviewCliProcessObserved ||
-    options.processObservation.labviewProcessObserved
-  ) {
-    return {
-      notes: []
-    };
-  }
-
-  if (
-    options.exitProcessObservation?.trigger === 'process-exit' &&
-    !options.exitProcessObservation.labviewProcessObserved &&
-    !options.exitProcessObservation.labviewCliProcessObserved &&
-    !options.exitProcessObservation.lvcompareProcessObserved
-  ) {
-    return {
-      reason: 'labview-cli-timeout-no-labview-through-exit',
-      notes: [
-        'LabVIEW CLI timed out without generating a report; at the retained cli-log-banner snapshot, LabVIEWCLI.exe was observed while LabVIEW.exe was not observed, and no LabVIEW-related processes remained at the retained process-exit snapshot.'
-      ]
-    };
-  }
-
-  return {
-    reason: 'labview-cli-timeout-no-labview-at-banner-snapshot',
-    notes: [
-      'LabVIEW CLI timed out without generating a report; at the retained cli-log-banner snapshot, LabVIEWCLI.exe was observed while LabVIEW.exe was not observed.'
-    ]
-  };
-}
-
-function isLabviewCliLogOnlyStdout(stdout: string): boolean {
-  const lines = stdout
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0);
-
-  return (
-    lines.length === 1 &&
-    /^LabVIEWCLI started logging in file:\s*\S+/i.test(lines[0])
-  );
-}
-
-function mergeDiagnosticNotes(...noteGroups: Array<string[] | undefined>): string[] {
-  const merged: string[] = [];
-  for (const noteGroup of noteGroups) {
-    for (const note of noteGroup ?? []) {
-      if (!merged.includes(note)) {
-        merged.push(note);
-      }
-    }
-  }
-
-  return merged;
-}
-
-function buildProcessObservationNotes(
-  observations:
-    | {
-        bannerSnapshot?: RuntimeProcessObservation;
-        exitSnapshot?: RuntimeProcessObservation;
-      }
-    | undefined
-): string[] {
-  const notes: string[] = [];
-  for (const observation of [observations?.bannerSnapshot, observations?.exitSnapshot]) {
-    if (!observation) {
-      continue;
-    }
-
-    const observedProcessNames =
-      observation.observedProcessNames.length > 0
-        ? observation.observedProcessNames.join(', ')
-        : 'none';
-
-    notes.push(
-      `At the retained ${observation.trigger} snapshot (${observation.capturedAt}), observed LabVIEW-related processes: ${observedProcessNames}.`
-    );
-
-    if (observation.labviewCliProcessObserved && !observation.labviewProcessObserved) {
-      notes.push(
-        `At the retained ${observation.trigger} snapshot, LabVIEWCLI.exe was observed while LabVIEW.exe was not observed.`
-      );
-    }
-
-    if (!observation.lvcompareProcessObserved) {
-      notes.push(
-        `At the retained ${observation.trigger} snapshot, LVCompare.exe was not observed.`
-      );
-    }
-  }
-
-  return notes;
-}
-
-export function extractCommandOptionValue(args: string[], optionName: string): string | undefined {
-  for (let index = 0; index < args.length - 1; index += 1) {
-    if (args[index] === optionName) {
-      const value = args[index + 1]?.trim();
-      return value ? value : undefined;
-    }
-  }
-
-  return undefined;
-}
-
-function normalizeComparablePath(filePath?: string): string | undefined {
-  const trimmed = filePath?.trim();
-  if (!trimmed) {
-    return undefined;
-  }
-
-  const windowsPath = normalizeWindowsInteropPath(trimmed) ?? trimmed.replaceAll('/', '\\');
-  return windowsPath.replaceAll('/', '\\').toLowerCase();
-}
-
-function resolveWindowsPowerShellHostExecutable(
-  processPlatform: NodeJS.Platform
-): string | undefined {
-  if (processPlatform === 'win32') {
-    return 'powershell.exe';
-  }
-
-  if (processPlatform === 'linux') {
-    return '/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe';
-  }
-
-  return undefined;
-}
-
-function encodeWindowsPowerShellScript(script: string): string {
-  return Buffer.from(script, 'utf16le').toString('base64');
-}
-
-function quotePowerShellLiteral(value: string): string {
-  return `'${value.replace(/'/g, "''")}'`;
-}
-
-function quoteBashLiteral(value: string): string {
-  return `'${value.replace(/'/g, `'\"'\"'`)}'`;
-}
-
+// VHS-REQ-623: a Linux container comparison bind-mounts the host report directory
+// into the container at /workspace. When that host path is OUTSIDE the user's home
+// directory and Docker is the snap-packaged build (private mount namespace, only
+// the `home` interface connected by default), the bind mount silently resolves to
+// an empty tmpfs, so LabVIEWCLI reports `... path invalid or does not exist:
+// /workspace/staging/...` even though the staged VIs exist on the host. The opaque
+// path error hides the real cause. This pure helper returns an actionable
+// remediation note for exactly that situation so the failure names the fix
+// (keep report storage under $HOME, or connect the snap interface) instead of
+// leaving the user to decode a generic path error. Returns undefined when the
+// situation does not apply (non-container provider, non-invalid-path failure, or a
+// bind-mount source already inside the home directory).
+// VHS-REQ-621 / VHS-REQ-658: classify a nonzero/no-report runtime failure into an
+// explicit, actionable reason. Exported for direct deterministic unit testing of
+// its classification arms, consistent with the other exported helpers in this file.
 export function requiresWindowsInterop(
   runtimePlatform: string,
   processPlatform: NodeJS.Platform = process.platform
 ): boolean {
   return runtimePlatform === 'win32' && processPlatform !== 'win32';
-}
-
-export function parseWindowsTasklistCsv(stdout: string): RuntimeObservedProcess[] {
-  return stdout
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0)
-    .map(parseWindowsTasklistCsvLine)
-    .filter((entry): entry is RuntimeObservedProcess => Boolean(entry));
 }
 
 export async function observeWindowsRuntimeProcesses(
@@ -5218,6 +3742,7 @@ export async function observeWindowsRuntimeProcesses(
     isExactObservedRuntimeProcessName(processInfo.imageName, 'LabVIEW.exe')
   );
   let labviewProcessBitness: ObservedLabviewBitness | undefined;
+  let labviewProcessYear: string | undefined;
   let labviewProcessExecutablePath: string | undefined;
   if (labviewProcess) {
     try {
@@ -5225,8 +3750,10 @@ export async function observeWindowsRuntimeProcesses(
         deps.resolveWindowsLabviewExecutablePath ?? resolveWindowsLabviewExecutablePath;
       labviewProcessExecutablePath = await resolver(labviewProcess.pid, options.hostPlatform);
       labviewProcessBitness = inferLabviewBitnessFromExecutablePath(labviewProcessExecutablePath);
+      labviewProcessYear = inferSupportedLabviewYearFromExecutablePath(labviewProcessExecutablePath);
     } catch {
       labviewProcessBitness = undefined;
+      labviewProcessYear = undefined;
     }
   }
 
@@ -5245,51 +3772,9 @@ export async function observeWindowsRuntimeProcesses(
       isExactObservedRuntimeProcessName(processInfo.imageName, 'LVCompare.exe')
     ),
     labviewProcessBitness,
+    labviewProcessYear,
     labviewProcessExecutablePath
   };
-}
-
-/**
- * VHS-REQ-621: Infer LabVIEW.exe bitness from its filesystem path. The Windows
- * installer for LabVIEW always lands x86 under `Program Files (x86)\National
- * Instruments\...` and x64 under `Program Files\National Instruments\...`. This
- * pattern is the same canonical-path discipline used by the runtime locator's
- * documented scan paths, so reuse it instead of probing PE headers.
- */
-export function inferLabviewBitnessFromExecutablePath(
-  executablePath: string | undefined
-): ObservedLabviewBitness | undefined {
-  if (typeof executablePath !== 'string' || executablePath.trim().length === 0) {
-    return undefined;
-  }
-  const normalized = executablePath.toLowerCase().replace(/\//g, '\\');
-  if (normalized.includes('\\program files (x86)\\')) {
-    return 'x86';
-  }
-  if (normalized.includes('\\program files\\')) {
-    return 'x64';
-  }
-  return 'unknown';
-}
-
-/**
- * VHS-REQ-636: Best-effort LabVIEW major-version (year) inference from a running
- * `LabVIEW.exe` path, for diagnostic messages only. The Windows installer lays
- * each version under a `LabVIEW <year>` directory (for example
- * `C:\Program Files\National Instruments\LabVIEW 2026\LabVIEW.exe`), so a
- * canonical-path scan recovers the year without probing the binary. Returns the
- * 4-digit `20xx` year string, or `undefined` when no plausible year is present.
- * The result is display-only: callers must treat `undefined` as "year unknown"
- * and never block on it.
- */
-export function inferLabviewYearFromExecutablePath(
-  executablePath: string | undefined
-): string | undefined {
-  if (typeof executablePath !== 'string' || executablePath.trim().length === 0) {
-    return undefined;
-  }
-  const match = executablePath.match(/labview[ _-]?(20\d{2})/i);
-  return match ? match[1] : undefined;
 }
 
 /**
@@ -5410,38 +3895,6 @@ export async function observeWindowsTcpListeners(
     ...listener,
     processName: processNamesByPid.get(listener.pid)
   }));
-}
-
-function resolveWindowsSystem32Executable(hostPlatform: NodeJS.Platform, filename: string): string {
-  return hostPlatform === 'win32'
-    ? path.win32.join(process.env.SYSTEMROOT ?? 'C:\\Windows', 'System32', filename)
-    : `/mnt/c/Windows/System32/${filename}`;
-}
-
-function parseWindowsNetstatListeners(stdout: string): WindowsTcpListenerObservation[] {
-  return stdout
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0)
-    .map((line) => {
-      const match = line.match(/^TCP\s+(\S+):(\d+)\s+\S+\s+LISTENING\s+(\d+)$/i);
-      if (!match) {
-        return undefined;
-      }
-
-      const localPort = Number.parseInt(match[2], 10);
-      const pid = Number.parseInt(match[3], 10);
-      if (!Number.isInteger(localPort) || !Number.isInteger(pid)) {
-        return undefined;
-      }
-
-      return {
-        localAddress: match[1],
-        localPort,
-        pid
-      } satisfies WindowsTcpListenerObservation;
-    })
-    .filter((listener): listener is WindowsTcpListenerObservation => Boolean(listener));
 }
 
 export function runComparisonCommandPlanWithObservation(
@@ -5777,113 +4230,10 @@ class ReportFinalizationError extends Error {
   }
 }
 
-function extractErrorCode(error: unknown): string | undefined {
-  if (error && typeof error === 'object') {
-    const code = (error as NodeJS.ErrnoException).code;
-    if (typeof code === 'string') {
-      return code;
-    }
-  }
-  return undefined;
-}
-
-export function normalizeComparisonProcessError(error: unknown): {
-  stdout: string;
-  stderr: string;
-  signal?: string;
-} {
-  if (error && typeof error === 'object') {
-    const maybeError = error as {
-      stdout?: string;
-      stderr?: string;
-      signal?: string;
-      message?: string;
-    };
-
-    return {
-      stdout: String(maybeError.stdout ?? ''),
-      stderr: String(maybeError.stderr ?? maybeError.message ?? ''),
-      signal: maybeError.signal ?? undefined
-    };
-  }
-
-  return {
-    stdout: '',
-    stderr: String(error ?? '')
-  };
-}
-
 export function defaultNowIso(): string {
-  return new Date().toISOString();
+  return nowIso();
 }
 
 export function defaultNowMs(): number {
   return Date.now();
-}
-
-function parseWindowsTasklistCsvLine(line: string): RuntimeObservedProcess | undefined {
-  const columns = parseCsvColumns(line);
-  if (columns.length < 2) {
-    return undefined;
-  }
-
-  const imageName = columns[0]?.trim();
-  const pid = Number.parseInt(columns[1] ?? '', 10);
-  if (!imageName || !Number.isFinite(pid)) {
-    return undefined;
-  }
-
-  const sessionNumber = Number.parseInt((columns[3] ?? '').replaceAll(',', ''), 10);
-
-  return {
-    imageName,
-    pid,
-    sessionName: columns[2]?.trim() || undefined,
-    sessionNumber: Number.isFinite(sessionNumber) ? sessionNumber : undefined,
-    memUsage: columns[4]?.trim() || undefined
-  };
-}
-
-function parseCsvColumns(line: string): string[] {
-  const columns: string[] = [];
-  let current = '';
-  let inQuotes = false;
-
-  for (let index = 0; index < line.length; index += 1) {
-    const character = line[index];
-
-    if (character === '"') {
-      if (inQuotes && line[index + 1] === '"') {
-        current += '"';
-        index += 1;
-        continue;
-      }
-
-      inQuotes = !inQuotes;
-      continue;
-    }
-
-    if (character === ',' && !inQuotes) {
-      columns.push(current);
-      current = '';
-      continue;
-    }
-
-    current += character;
-  }
-
-  columns.push(current);
-  return columns;
-}
-
-function isObservedRuntimeProcessName(imageName: string): boolean {
-  return (
-    isExactObservedRuntimeProcessName(imageName, 'LabVIEW.exe') ||
-    isExactObservedRuntimeProcessName(imageName, 'LabVIEWCLI.exe') ||
-    isExactObservedRuntimeProcessName(imageName, 'LVCompare.exe')
-  );
-}
-
-function isExactObservedRuntimeProcessName(imageName: string, expected: string): boolean {
-  return imageName.trim().toLowerCase() === expected.toLowerCase();
 }

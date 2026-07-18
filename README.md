@@ -91,6 +91,42 @@ front with guidance. Checks include:
 Each block offers a next step (such as **Pick Runtime Provider** or **Pick
 Image Version**) so you can fix the runtime without leaving the panel.
 
+## See what changed in Source Control
+
+When a VI has uncommitted changes, VI History marks it with a small badge in the
+Source Control and Explorer views. Before you compare, the badge hints that you
+can run Compare for a summary; after you compare the VI against its latest
+committed version, hovering the badge shows a short "what changed" summary — the
+same narrative as the full report — without reopening the report.
+
+The summary reflects the change against the latest committed revision and clears
+once you revert or commit the change. The decoration is shown only in trusted
+workspaces.
+
+## Use with Copilot agent mode
+
+VI History Suite also exposes its comparison and history analysis to AI agents
+through a built-in [Model Context Protocol](https://modelcontextprotocol.io)
+(MCP) server. When the extension is installed, Copilot **agent mode** discovers
+the server automatically — there is nothing to configure.
+
+Ask agent mode to work with your VIs in plain language, for example:
+
+- "Summarize what changed in this VI comparison report."
+- "Compare the last two revisions of `Main.vi` and tell me what changed."
+- "Index the LabVIEW VIs in this repository, ranked by recent activity."
+
+The server provides eight tools in total: comparison summaries and the full
+semantic model, on-demand comparison and history across Git revisions, a
+repository VI index, a pull-request VI review, and the published VI-diff schemas
+plus a document validator. The three tools that run comparisons need a
+comparison runtime (the same host LabVIEW or Docker image you set up above) and
+may take a few minutes; the rest use Git only.
+
+For the full tool catalog, inputs, and the open VI-diff schemas, see
+[docs/mcp-server.md](./docs/mcp-server.md). Agent mode requires VS Code 1.101 or
+later.
+
 ## Help and feedback
 
 - Trouble getting started? See [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) and

@@ -1,6 +1,8 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
+import { isMissingFileError, normalizeTrimmed } from './localRuntimeSettingsFileText';
+
 export interface RuntimeSettingsLiveSessionMutationRequest {
   provider: 'host' | 'docker';
   labviewVersion: string;
@@ -154,22 +156,4 @@ export async function runWithRuntimeSettingsSafeRestore<T>(
     value: operationValue as T,
     safeRestoreVerified: true
   };
-}
-
-function normalizeTrimmed(value: string | undefined): string | undefined {
-  if (typeof value !== 'string') {
-    return undefined;
-  }
-
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : undefined;
-}
-
-function isMissingFileError(error: unknown): error is NodeJS.ErrnoException {
-  return (
-    !!error &&
-    typeof error === 'object' &&
-    'code' in error &&
-    (error as NodeJS.ErrnoException).code === 'ENOENT'
-  );
 }

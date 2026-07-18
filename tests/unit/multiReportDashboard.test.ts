@@ -44,8 +44,7 @@ function createModel(): ViHistoryViewModel {
       supportGuidance: 'Known evidence family.',
       allowCoreReviewActions: true,
       allowDecisionRecordActions: true,
-      allowBenchmarkStatus: true,
-      allowHumanReviewSubmission: true
+      allowBenchmarkStatus: true
     },
     commits: [
       {
@@ -335,6 +334,240 @@ describe('multi-report dashboard evidence concentration (VHS-REQ-610)', () => {
     expect(dashboard.record.summary.materializedOverviewImageCount).toBe(2);
   });
 
+  it('discovers retained working-tree snapshots from the per-VI index and flags them non-reproducible (VHS-REQ-641.7)', async () => {
+    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-dashboard-wt-'));
+    tempRoots.push(tempRoot);
+    const storageRoot = path.join(tempRoot, 'workspace-storage');
+    const model = createModel();
+
+    // Retain a working-tree snapshot: write its content-addressed source-record
+    // and the per-VI index that points at it.
+    const snapshotId = 'aaaa000000000000';
+    const archivePlan = buildComparisonReportArchivePlanFromSelection({
+      storageRoot,
+      repositoryRoot: model.repositoryRoot,
+      relativePath: model.relativePath,
+      reportType: 'diff',
+      selectedHash: 'WORKTREE',
+      baseHash: 'c4',
+      worktreeSnapshotId: snapshotId
+    });
+    const packetRecord = createPacketRecord({
+      storageRoot,
+      model,
+      selectedHash: 'WORKTREE',
+      baseHash: 'c4',
+      reportExists: true
+    });
+    const sourceRecord: ArchivedComparisonReportSourceRecord = {
+      archivedAt: '2026-05-04T00:00:00.000Z',
+      archivePlan,
+      packetRecord
+    };
+    await fs.mkdir(archivePlan.archiveDirectory, { recursive: true });
+    await fs.writeFile(archivePlan.packetFilePath, '<html>packet</html>', 'utf8');
+    await fs.writeFile(
+      archivePlan.sourceRecordFilePath,
+      JSON.stringify(sourceRecord, null, 2),
+      'utf8'
+    );
+    const indexDir = path.join(
+      storageRoot,
+      'report-history',
+      archivePlan.repoId,
+      archivePlan.fileId
+    );
+    await fs.mkdir(indexDir, { recursive: true });
+    await fs.writeFile(
+      path.join(indexDir, 'worktree-snapshots.json'),
+      JSON.stringify(
+        {
+          schema: 'vi-history-suite/worktree-snapshot-index@v1',
+          snapshots: [
+            {
+              snapshotId,
+              pairId: archivePlan.pairId,
+              baseHash: 'c4',
+              reportType: 'diff',
+              retainedAt: '2026-05-04T00:00:00.000Z',
+              relativePath: model.relativePath
+            }
+          ]
+        },
+        null,
+        2
+      ),
+      'utf8'
+    );
+
+    const dashboard = await buildAndPersistMultiReportDashboard(storageRoot, model, {
+      now: () => '2026-05-04T12:00:00.000Z'
+    });
+
+    const worktreeEntry = dashboard.record.entries.find(
+      (entry) => entry.worktreeSnapshotId === snapshotId
+    );
+    expect(worktreeEntry).toBeDefined();
+    expect(worktreeEntry?.selectedHash).toBe('WORKTREE');
+    expect(worktreeEntry?.baseHash).toBe('c4');
+    expect(worktreeEntry?.reproducible).toBe(false);
+    expect(worktreeEntry?.archiveStatus).toBe('archived');
+    // The dashboard HTML surfaces the snapshot with a non-reproducible badge.
+    const html = renderMultiReportDashboardHtml(dashboard.record);
+    expect(html).toContain('dashboard-entry-worktree-snapshot');
+    expect(html).toContain(snapshotId);
+  });
+
+  it('ignores a missing working-tree snapshot index without error (VHS-REQ-641.7)', async () => {
+    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-dashboard-wt-none-'));
+    tempRoots.push(tempRoot);
+    const storageRoot = path.join(tempRoot, 'workspace-storage');
+    const model = createModel();
+
+    const dashboard = await buildAndPersistMultiReportDashboard(storageRoot, model, {
+      now: () => '2026-05-04T12:00:00.000Z'
+    });
+    expect(dashboard.record.entries.some((entry) => entry.worktreeSnapshotId)).toBe(false);
+  });
+
+  it('parses the report and lists multiple retained working-tree snapshots (VHS-REQ-641.7)', async () => {
+    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-dashboard-wt-multi-'));
+    tempRoots.push(tempRoot);
+    const storageRoot = path.join(tempRoot, 'workspace-storage');
+    const model = createModel();
+
+    async function writeWorktreeSnapshot(
+      snapshotId: string,
+      baseHash: string,
+      withReport: boolean
+    ): Promise<string> {
+      const archivePlan = buildComparisonReportArchivePlanFromSelection({
+        storageRoot,
+        repositoryRoot: model.repositoryRoot,
+        relativePath: model.relativePath,
+        reportType: 'diff',
+        selectedHash: 'WORKTREE',
+        baseHash,
+        worktreeSnapshotId: snapshotId
+      });
+      const packetRecord = createPacketRecord({
+        storageRoot,
+        model,
+        selectedHash: 'WORKTREE',
+        baseHash,
+        reportExists: withReport
+      });
+      const sourceRecord: ArchivedComparisonReportSourceRecord = {
+        archivedAt: '2026-05-04T00:00:00.000Z',
+        archivePlan,
+        packetRecord
+      };
+      await fs.mkdir(archivePlan.archiveDirectory, { recursive: true });
+      await fs.writeFile(archivePlan.packetFilePath, '<html>packet</html>', 'utf8');
+      if (withReport) {
+        await fs.writeFile(
+          archivePlan.reportFilePath,
+          createNiReportHtml(archivePlan.reportAssetsDirectoryName),
+          'utf8'
+        );
+      }
+      await fs.writeFile(
+        archivePlan.sourceRecordFilePath,
+        JSON.stringify(sourceRecord, null, 2),
+        'utf8'
+      );
+      return archivePlan.pairId;
+    }
+
+    // Derive the per-VI index directory from the archive plan (repoId/fileId are
+    // content-derived from the repo root + relative path, not literals).
+    const referencePlan = buildComparisonReportArchivePlanFromSelection({
+      storageRoot,
+      repositoryRoot: model.repositoryRoot,
+      relativePath: model.relativePath,
+      reportType: 'diff',
+      selectedHash: 'WORKTREE',
+      baseHash: 'WORKTREE'
+    });
+    const indexDir = path.join(
+      storageRoot,
+      'report-history',
+      referencePlan.repoId,
+      referencePlan.fileId
+    );
+    await fs.mkdir(indexDir, { recursive: true });
+
+    // Two retained snapshots: one with a generated report (parsed), one without.
+    const withReportPairId = await writeWorktreeSnapshot('aaaa000000000000', 'c4', true);
+    const noReportPairId = await writeWorktreeSnapshot('bbbb111111111111', 'c3', false);
+    // A third index entry whose source-record was never written -> skipped.
+    const missingPairId = 'ffff999999999999';
+
+    await fs.writeFile(
+      path.join(indexDir, 'worktree-snapshots.json'),
+      JSON.stringify(
+        {
+          schema: 'vi-history-suite/worktree-snapshot-index@v1',
+          snapshots: [
+            {
+              snapshotId: 'aaaa000000000000',
+              pairId: withReportPairId,
+              baseHash: 'c4',
+              reportType: 'diff',
+              retainedAt: '2026-05-04T02:00:00.000Z',
+              relativePath: model.relativePath
+            },
+            {
+              snapshotId: 'bbbb111111111111',
+              pairId: noReportPairId,
+              baseHash: 'c3',
+              reportType: 'diff',
+              retainedAt: '2026-05-04T01:00:00.000Z',
+              relativePath: model.relativePath
+            },
+            {
+              snapshotId: missingPairId,
+              pairId: 'deadbeefdead',
+              baseHash: 'c2',
+              reportType: 'diff',
+              retainedAt: '2026-05-04T00:30:00.000Z',
+              relativePath: model.relativePath
+            }
+          ]
+        },
+        null,
+        2
+      ),
+      'utf8'
+    );
+
+    const dashboard = await buildAndPersistMultiReportDashboard(storageRoot, model, {
+      now: () => '2026-05-04T12:00:00.000Z'
+    });
+
+    const worktreeEntries = dashboard.record.entries.filter((entry) => entry.worktreeSnapshotId);
+    // Two snapshots have source-records; the third (missing source-record) is skipped.
+    expect(worktreeEntries.map((entry) => entry.worktreeSnapshotId).sort()).toEqual([
+      'aaaa000000000000',
+      'bbbb111111111111'
+    ]);
+    expect(worktreeEntries.every((entry) => entry.reproducible === false)).toBe(true);
+
+    const withReportEntry = worktreeEntries.find(
+      (entry) => entry.worktreeSnapshotId === 'aaaa000000000000'
+    );
+    // The generated report was parsed into overview/detail evidence.
+    expect(withReportEntry?.generatedReportExists).toBe(true);
+    expect((withReportEntry?.overviewImageCount ?? 0) + (withReportEntry?.detailItemCount ?? 0)).toBeGreaterThan(0);
+
+    const noReportEntry = worktreeEntries.find(
+      (entry) => entry.worktreeSnapshotId === 'bbbb111111111111'
+    );
+    // No report file on disk -> no parsed evidence, but the entry is still surfaced.
+    expect(noReportEntry?.generatedReportExists).toBe(false);
+    expect(noReportEntry?.evidenceCount).toBe(0);
+  });
+
   it('surfaces overview images that cannot be materialized for single-file reports (VHS-REQ-640)', async () => {
     const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-dashboard-unresolved-'));
     tempRoots.push(tempRoot);
@@ -372,7 +605,7 @@ describe('multi-report dashboard evidence concentration (VHS-REQ-610)', () => {
     expect(dashboard.record.summary.materializedOverviewImageCount).toBe(0);
   });
 
-  it('concentrates generated, blocked, and missing retained evidence into the dashboard record and HTML', async () => {
+  it('concentrates generated, blocked, and missing retained evidence into the dashboard record and HTML (VHS-REQ-610.1, VHS-REQ-610.2, VHS-REQ-610.3, VHS-REQ-610.5)', async () => {
     const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-dashboard-'));
     tempRoots.push(tempRoot);
     const storageRoot = path.join(tempRoot, 'workspace-storage');
@@ -465,6 +698,14 @@ describe('multi-report dashboard evidence concentration (VHS-REQ-610)', () => {
     expect(html).toContain('Block Diagram Overview');
     expect(html).toContain('VI Version : changed from &quot;21.0&quot; to &quot;20.0&quot;');
     expect(html).toContain('archived-blocked');
+    // VHS-REQ-610: each pair with a parsed report leads with a concise semantic
+    // "what changed" narrative derived from the shared VI semantic model. This
+    // pair's only itemized change is a VI attribute, so the narrative leads with
+    // the detailed-change count (the overview captions alone do not imply a
+    // front-panel or block-diagram change).
+    expect(html).toContain('data-testid="dashboard-entry-change-summary"');
+    expect(html).toContain('What changed:');
+    expect(html).toContain('2 detailed changes across 1 section');
     expect(reportProgress).toHaveBeenCalledWith(
       expect.objectContaining({
         message: expect.stringContaining('Concentrating retained comparison-report metadata')
@@ -472,7 +713,7 @@ describe('multi-report dashboard evidence concentration (VHS-REQ-610)', () => {
     );
   });
 
-  it('renders preparation and ETA evidence without mutating the retained dashboard record', () => {
+  it('renders preparation and ETA evidence without mutating the retained dashboard record (VHS-REQ-610.4)', () => {
     const html = renderMultiReportDashboardHtml(
       {
         generatedAt: '2026-05-04T12:00:00.000Z',

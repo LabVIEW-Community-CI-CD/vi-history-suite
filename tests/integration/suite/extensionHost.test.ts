@@ -7,6 +7,17 @@ import { promisify } from 'node:util';
 import * as vscode from 'vscode';
 
 import type { ViHistorySuiteApi } from '../../../src/extension';
+import { createFileViPreviewCache } from '../../../src/reporting/viPreview/viPreviewCache';
+import { renderViPreviewForFile } from '../../../src/reporting/viPreview/viPreviewFileRender';
+import {
+  isViPreviewVerificationPassing,
+  verifyViPreviewRender
+} from '../../../src/reporting/viPreview/viPreviewVerification';
+import { VI_PREVIEW_VIEW_TYPE } from '../../../src/ui/viPreviewEditor';
+import {
+  buildViPreviewRenderDeps,
+  resolvePreviewRuntime
+} from '../../../src/ui/viPreviewRenderHost';
 
 interface IntegrationWorkspaceMetadata {
   workspacePath: string;
@@ -106,6 +117,8 @@ export async function runIntegrationSuite(): Promise<void> {
   await testProbeRuntimeSettingsLiveSession();
   await testRuntimeConvenienceCommandsRegistered();
   await testPanelOpenFlow(api, metadata);
+  await testViPreviewRenderWhenRuntimeAvailable();
+  await testViPreviewCacheDistinguishesProjectVIs();
 }
 
 async function loadMetadata(): Promise<IntegrationWorkspaceMetadata> {
@@ -153,6 +166,153 @@ async function testRuntimeConvenienceCommandsRegistered(): Promise<void> {
       commands.includes(commandId),
       `expected runtime convenience command to be registered: ${commandId}`
     );
+  }
+}
+
+/**
+ * VHS-REQ-659: real verification that the single-VI preview renders end-to-end
+ * through the VS Code host bindings (custom editor + shared render deps) using
+ * the configured runtime. Skips (rather than fails) when no LabVIEW/Docker
+ * runtime is available (e.g. hosted CI), so it runs for real on the maintainer
+ * runner and any dev host with a runtime while staying green in CI.
+ */
+async function testViPreviewRenderWhenRuntimeAvailable(): Promise<void> {
+  const runtime = await resolvePreviewRuntime();
+  if (runtime.outcome !== 'ready') {
+    console.log(
+      `[integration] VI preview render: SKIPPED (runtime not ready: ${
+        (runtime as { reason?: string }).reason ?? 'unavailable'
+      })`
+    );
+    return;
+  }
+
+  const extension = vscode.extensions.getExtension('svelderrainruiz.vi-history-suite');
+  assert.ok(extension, 'extension must be installed in the test host');
+  const operationDirectory = path.join(
+    extension.extensionPath,
+    'resources',
+    'labview-cli-operations'
+  );
+  const sampleViPath = path.join(operationDirectory, 'PrintToSingleFileHtml', 'Make path absolute.vi');
+
+  // VI Preview is opt-in; enable it so the custom editor renders (not the gate).
+  await vscode.workspace
+    .getConfiguration('viHistorySuite')
+    .update('preview.enabled', true, vscode.ConfigurationTarget.Global);
+
+  // Exercise the real custom editor host binding (opens + renders in a webview).
+  await vscode.commands.executeCommand(
+    'vscode.openWith',
+    vscode.Uri.file(sampleViPath),
+    VI_PREVIEW_VIEW_TYPE
+  );
+
+  // Assert the render pipeline produced a self-contained document with embedded
+  // images, through the same host render deps the editor uses (headless forced
+  // so no LabVIEW GUI appears during the run).
+  const proof = await verifyViPreviewRender(
+    { runtime: { ...runtime.runtime, headless: true }, sampleViPath, operationDirectory },
+    buildViPreviewRenderDeps()
+  );
+  console.log(`[integration] VI preview render proof: ${JSON.stringify(proof)}`);
+  assert.ok(
+    isViPreviewVerificationPassing(proof),
+    `expected the sample VI to render with inline images (proof: ${JSON.stringify(proof)})`
+  );
+}
+
+/**
+ * VHS-REQ-659 (#646): end-to-end proof that the render cache distinguishes VIs.
+ * Rendering two different VIs from the same project through the real file-backed
+ * cache must return distinct documents, and re-rendering the first VI must be
+ * served from cache and return the first VI's document (not the second's) — the
+ * regression that made every VI in a project show the first-opened preview.
+ * Skips when no runtime is available (same as the render test above).
+ */
+async function testViPreviewCacheDistinguishesProjectVIs(): Promise<void> {
+  const runtime = await resolvePreviewRuntime();
+  if (runtime.outcome !== 'ready') {
+    console.log('[integration] VI preview cache distinctness: SKIPPED (runtime not ready)');
+    return;
+  }
+
+  const extension = vscode.extensions.getExtension('svelderrainruiz.vi-history-suite');
+  assert.ok(extension, 'extension must be installed in the test host');
+  const operationDirectory = path.join(
+    extension.extensionPath,
+    'resources',
+    'labview-cli-operations'
+  );
+  const projectDirectory = path.join(operationDirectory, 'PrintToSingleFileHtml');
+  const viAPath = path.join(projectDirectory, 'Make path absolute.vi');
+  const viBPath = path.join(projectDirectory, 'Parse inputs.vi');
+
+  // Real (production) file-backed cache in an isolated temp directory, bound to
+  // the shared render deps exactly as the extension wires it.
+  const cacheDirectory = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-preview-cache-it-'));
+  const cache = createFileViPreviewCache(
+    {
+      cacheDirectory,
+      joinPath: (directory, name) => path.join(directory, name)
+    },
+    {
+      ensureDirectory: async (directory) => {
+        await fs.mkdir(directory, { recursive: true });
+      },
+      readFile: (filePath) => fs.readFile(filePath, 'utf8'),
+      writeFile: (filePath, data) => fs.writeFile(filePath, data, 'utf8'),
+      listFiles: (directory) => fs.readdir(directory),
+      fileModifiedMs: async (filePath) => (await fs.stat(filePath)).mtimeMs,
+      removeFile: (filePath) => fs.rm(filePath, { force: true })
+    }
+  );
+  const deps = buildViPreviewRenderDeps(cache);
+  const renderRuntime = { ...runtime.runtime, headless: true };
+
+  try {
+    const renderA = await renderViPreviewForFile(
+      { runtime: renderRuntime, viFilePath: viAPath, operationDirectory },
+      deps
+    );
+    const renderB = await renderViPreviewForFile(
+      { runtime: renderRuntime, viFilePath: viBPath, operationDirectory },
+      deps
+    );
+    const renderAAgain = await renderViPreviewForFile(
+      { runtime: renderRuntime, viFilePath: viAPath, operationDirectory },
+      deps
+    );
+
+    console.log(
+      `[integration] VI preview cache distinctness: A(outcome=${renderA.outcome}, cached=${
+        renderA.cached
+      }, bytes=${renderA.html?.length ?? 0}) B(outcome=${renderB.outcome}, cached=${
+        renderB.cached
+      }, bytes=${renderB.html?.length ?? 0}) A2(outcome=${renderAAgain.outcome}, cached=${
+        renderAAgain.cached
+      })`
+    );
+
+    assert.equal(renderA.outcome, 'rendered', `VI A must render (got ${JSON.stringify(renderA)})`);
+    assert.equal(renderB.outcome, 'rendered', `VI B must render (got ${JSON.stringify(renderB)})`);
+    // #646: two VIs in one project stage the same tree; they must NOT collide on
+    // one cache entry, so their rendered documents differ.
+    assert.notEqual(
+      renderA.html,
+      renderB.html,
+      'different project VIs must render to different documents (cache-key collision regression)'
+    );
+    // The cache is actually exercised: re-rendering VI A is served from cache and
+    // returns VI A's document, not the later-rendered VI B.
+    assert.equal(renderAAgain.cached, true, 'the second render of VI A should be served from cache');
+    assert.equal(
+      renderAAgain.html,
+      renderA.html,
+      'cached VI A must return VI A, not the later-rendered VI B'
+    );
+  } finally {
+    await fs.rm(cacheDirectory, { recursive: true, force: true }).catch(() => undefined);
   }
 }
 

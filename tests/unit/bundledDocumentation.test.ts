@@ -33,18 +33,28 @@ describe('bundled documentation', () => {
       'overview',
       'install-and-release',
       'user-workflow',
-      'comparison-reports-and-dashboard-review'
+      'comparison-reports-and-dashboard-review',
+      'copilot-agent-mode'
     ]);
     expect(manifest.pages.map((page) => page.id)).not.toContain('requirements-and-verification');
     expect(manifest.pages.map((page) => page.id)).not.toContain('architecture');
     expect(manifest.pages.map((page) => page.id)).not.toContain('current-state');
     expect(manifest.pages.map((page) => page.id)).not.toContain('debt-ledger');
 
+    // VHS-REQ-611.4
     for (const page of manifest.pages) {
       expect(
         fs.existsSync(path.join(repoRoot, 'resources', 'bundled-docs', 'pages', page.htmlFileName))
       ).toBe(true);
     }
+  });
+
+  it('returns undefined when the requested page id is absent from the manifest', async () => {
+    const loaded = await loadBundledDocumentationPage(
+      extensionUri as never,
+      'no-such-page-id'
+    );
+    expect(loaded).toBeUndefined();
   });
 
   it('loads concise bundled pages that stay free of private authority links and standards-only pages', async () => {
@@ -101,6 +111,7 @@ describe('bundled documentation', () => {
       pageBodyHtml: loaded!.pageBodyHtml
     });
 
+    // VHS-REQ-611.3
     expect(rendered).toContain('data-testid="documentation-shell"');
     expect(rendered).toContain('data-testid="documentation-sidebar"');
     expect(rendered).toContain('data-testid="documentation-nav"');
@@ -142,6 +153,7 @@ describe('bundled documentation', () => {
     expect(comparisonLoaded?.pageBodyHtml).toContain('selected/base commit hash, date, author, and subject facts');
     expect(comparisonLoaded?.pageBodyHtml).toContain('do not lead the embedded compare view');
     expect(comparisonLoaded?.pageBodyHtml).toContain('<h2>Checkbox-Selected Pair Review</h2>');
+    expect(comparisonLoaded?.pageBodyHtml).toContain('<h2>Source Control Change Summary</h2>');
     expect(comparisonLoaded?.pageBodyHtml).not.toContain('Observed NI Metadata');
     expect(comparisonLoaded?.pageBodyHtml).not.toContain('Exact-Pair Diagnosis');
     expect(comparisonLoaded?.pageBodyHtml).not.toContain('Proof Surfaces');
@@ -159,5 +171,19 @@ describe('bundled documentation', () => {
     expect(overviewLoaded?.pageBodyHtml).toContain('<h2>Install Surfaces</h2>');
     expect(overviewLoaded?.pageBodyHtml).not.toContain('Documentation Workbench');
     expect(overviewLoaded?.pageBodyHtml).not.toContain('Debt Retirement Contract');
+  });
+
+  it('ships a concise Copilot agent-mode page for the in-product docs bundle', async () => {
+    const loaded = await loadBundledDocumentationPage(extensionUri as never, 'copilot-agent-mode');
+    expect(loaded).toBeDefined();
+    expect(loaded?.page.title).toBe('Copilot Agent Mode');
+    expect(loaded?.pageBodyHtml).toContain('<h1>Copilot Agent Mode</h1>');
+    expect(loaded?.pageBodyHtml).toContain('<h2>Available Tools</h2>');
+    expect(loaded?.pageBodyHtml).toContain('<h2>Runtime Requirements</h2>');
+    expect(loaded?.pageBodyHtml).toContain('<h2>Open VI-Diff Standard</h2>');
+    expect(loaded?.pageBodyHtml).toContain('<code>compare_vi_revisions</code>');
+    expect(loaded?.pageBodyHtml).toContain('vi-history-suite/vi-semantic-comparison@v1');
+    expect(loaded?.pageBodyHtml).toContain('VS Code 1.101 or later');
+    expect(loaded?.pageBodyHtml).not.toContain('data-external-href=');
   });
 });

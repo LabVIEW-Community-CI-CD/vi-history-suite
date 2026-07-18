@@ -1,0 +1,10 @@
+{
+  "schema": "vi-history-suite/vagrant-box-manifest@v1",
+  "schemaVersion": 1,
+  "boxFileName": "vihs-selfheal.box",
+  "sha256": "4cbbc387e751546541136042702e75880e1e08082f016acf472c6100aaaf5ea1",
+  "sizeBytes": 71297903213,
+  "recordedAt": "2026-07-17T06:39:32.694Z",
+  "recordedForVersion": "1.33.2",
+  "note": "Windows 11 + LabVIEW 2026 golden box; boot-time WinRM/account self-heal (VIHSVagrantSelfHeal). Registered as vihs/win11-labview2026. Attestations vagrant-win-x86-hostnative and vagrant-win-pathadmit-validation produced on this box."
+}

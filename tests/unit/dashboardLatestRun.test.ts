@@ -12,7 +12,7 @@ import {
 } from '../../src/dashboard/multiReportDashboard';
 
 describe('dashboardLatestRun', () => {
-  it('builds latest-run artifact path and attaches eta context', () => {
+  it('builds latest-run artifact path and attaches eta context (VHS-REQ-610.5)', () => {
     expect(buildDashboardLatestRunFilePath('/workspace/storage')).toBe(
       '/workspace/storage/dashboards/latest-dashboard-run.json'
     );
@@ -37,7 +37,7 @@ describe('dashboardLatestRun', () => {
     expect(attachDashboardEtaAccuracyContext(undefined, { etaAccuracyFilePath: '/unused' })).toBeUndefined();
   });
 
-  it('records dashboard latest-run summary and artifact paths', () => {
+  it('records dashboard latest-run summary and artifact paths (VHS-REQ-610.5)', () => {
     const dashboard = {
       jsonFilePath: '/workspace/storage/dashboards/review/dashboard.json',
       htmlFilePath: '/workspace/storage/dashboards/review/dashboard.html',
@@ -137,5 +137,59 @@ describe('dashboardLatestRun', () => {
       providerSummaries: [{ providerId: 'host', count: 2 }]
     });
     expect(latestRun.preparationSummary).toEqual(preparationSummary);
+  });
+
+  it('builds a windows-style latest-run path and a bare relative path (VHS-REQ-610.5)', () => {
+    expect(buildDashboardLatestRunFilePath('C:\\ws\\storage').replace(/\//g, '\\')).toBe(
+      'C:\\ws\\storage\\dashboards\\latest-dashboard-run.json'
+    );
+    // A bare relative root falls through to the default path.join branch.
+    expect(buildDashboardLatestRunFilePath('storage').replace(/\\/g, '/')).toBe(
+      'storage/dashboards/latest-dashboard-run.json'
+    );
+  });
+
+  it('omits the eta accuracy path and optional records when no eta/preparation/experiment is supplied (VHS-REQ-610.5)', () => {
+    const dashboard = {
+      jsonFilePath: '/ws/storage/dashboards/review/dashboard.json',
+      htmlFilePath: '/ws/storage/dashboards/review/dashboard.html',
+      record: {
+        generatedAt: '2026-05-01T00:00:05.000Z',
+        repositoryName: 'vi-history-suite',
+        repositoryRoot: '/ws/repo',
+        relativePath: 'src/My.vi',
+        signature: { repositoryRoot: '/ws/repo', relativePath: 'src/My.vi', commitHashes: ['a'] },
+        artifactPlan: { dashboardDirectory: '/ws/storage/dashboards/review' },
+        commitWindow: { commitCount: 1, pairCount: 0, newestHash: 'a', oldestHash: 'a' },
+        summary: {
+          representedPairCount: 0,
+          windowCompletenessState: 'complete',
+          archivedPairCount: 0,
+          missingPairCount: 0,
+          missingPairIds: [],
+          generatedReportCount: 0,
+          reportMetadataPairCount: 0,
+          failedPairCount: 0,
+          failedPairIds: [],
+          blockedPairCount: 0,
+          blockedPairIds: [],
+          overviewImageCount: 0,
+          detailItemCount: 0,
+          providerSummaries: []
+        }
+      }
+    } as unknown as BuildMultiReportDashboardResult;
+
+    const latestRun = buildDashboardLatestRunRecord({
+      source: 'vscode-dashboard-action',
+      workspaceStorageRoot: '/ws/storage',
+      dashboard,
+      recordedAt: '2026-05-01T00:00:10.000Z'
+    });
+
+    expect(latestRun.artifactPaths.etaAccuracyFilePath).toBeUndefined();
+    expect(latestRun.preparationSummary).toBeUndefined();
+    expect(latestRun.etaAccuracyRecord).toBeUndefined();
+    expect(latestRun.experiment).toBeUndefined();
   });
 });

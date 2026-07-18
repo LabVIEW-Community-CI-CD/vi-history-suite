@@ -10,7 +10,7 @@ function readWorkflow(): string {
 }
 
 describe('CI branch governance workflow', () => {
-  it('runs hosted CI on governed branch families', () => {
+  it('runs hosted CI on governed branch families (VHS-REQ-597.11)', () => {
     const workflow = readWorkflow();
 
     expect(workflow).toContain('- main');
@@ -21,7 +21,7 @@ describe('CI branch governance workflow', () => {
     expect(workflow).toMatch(/pull_request:\n\s+branches:\n\s+- main\n\s+- develop/);
   });
 
-  it('runs a Windows unit-test leg alongside the required Ubuntu gate', () => {
+  it('runs a Windows unit-test leg alongside the required Ubuntu gate (VHS-REQ-597.1, VHS-REQ-597.2, VHS-REQ-597.6, VHS-REQ-597.13)', () => {
     const workflow = readWorkflow();
 
     expect(workflow).toContain('windows-unit-test:');
@@ -38,7 +38,7 @@ describe('CI branch governance workflow', () => {
     expect(windowsSegment).toContain('run: npm test');
   });
 
-  it('runs a hosted Linux integration-host leg alongside the required Ubuntu gate', () => {
+  it('runs a hosted Linux integration-host leg alongside the required Ubuntu gate (VHS-REQ-597.14)', () => {
     const workflow = readWorkflow();
 
     expect(workflow).toContain('integration-host:');
@@ -54,7 +54,7 @@ describe('CI branch governance workflow', () => {
     expect(integrationSegment).toContain('run: npm run test:integration:linux');
   });
 
-  it('keeps branch governance inside the required build-test-package job', () => {
+  it('keeps branch governance inside the required build-test-package job (VHS-REQ-597.12)', () => {
     const workflow = readWorkflow();
 
     expect(workflow).toContain('name: Build, Test, Package');
@@ -77,7 +77,7 @@ describe('CI branch governance workflow', () => {
     expect(workflow).toContain('main, or dependabot/*');
   });
 
-  it('keeps the traceability audit in the required hosted gate', () => {
+  it('keeps the traceability audit in the required hosted gate (VHS-REQ-597.3)', () => {
     const workflow = readWorkflow();
 
     expect(workflow).toContain('name: Traceability Audit');
@@ -122,7 +122,7 @@ describe('CI branch governance workflow', () => {
     );
   });
 
-  it('keeps the docs link-check lychee gate in the required hosted gate', () => {
+  it('keeps the docs link-check lychee gate in the required hosted gate (VHS-REQ-597.4)', () => {
     const workflow = readWorkflow();
 
     expect(workflow).toContain('name: Docs Link Check / lychee');
@@ -150,7 +150,7 @@ describe('CI branch governance workflow', () => {
     );
   });
 
-  it('retains machine-readable coverage evidence in the required hosted gate', () => {
+  it('retains machine-readable coverage evidence in the required hosted gate (VHS-REQ-597.7)', () => {
     const workflow = readWorkflow();
 
     expect(workflow).toContain('name: PR Coverage Gate / coverage');
@@ -167,11 +167,25 @@ describe('CI branch governance workflow', () => {
     );
   });
 
-  it('keeps the hosted DoD gate in the required CI workflow', () => {
+  it('enforces the coverage risk gate after coverage upload and before packaging (VHS-REQ-613.4)', () => {
+    const workflow = readWorkflow();
+
+    expect(workflow).toContain('name: Coverage Risk Gate / coverage-risk');
+    expect(workflow).toContain('npm run coverage:map:enforce');
+    expect(workflow.indexOf('name: PR Coverage Gate / coverage')).toBeLessThan(
+      workflow.indexOf('name: Coverage Risk Gate / coverage-risk')
+    );
+    expect(workflow.indexOf('name: Coverage Risk Gate / coverage-risk')).toBeLessThan(
+      workflow.indexOf('run: npm run package')
+    );
+  });
+
+  it('keeps the hosted DoD gate in the required CI workflow (VHS-REQ-597.9, VHS-REQ-597.10)', () => {
     const workflow = readWorkflow();
 
     expect(workflow).toContain('name: DoD Gate / dod');
     expect(workflow).toContain('npm run dod:gate');
+    expect(workflow).toContain('run: npm run package');
     expect(workflow).toContain('dod-gate-report.txt');
     expect(workflow.indexOf('run: npm run package')).toBeLessThan(
       workflow.indexOf('name: DoD Gate / dod')
@@ -191,7 +205,7 @@ describe('CI branch governance workflow', () => {
     );
   });
 
-  it('allows only release and hotfix branches to target main', () => {
+  it('allows only release and hotfix branches to target main (VHS-REQ-609.1)', () => {
     const workflow = readWorkflow();
 
     expect(workflow).toContain('main)');
@@ -200,7 +214,7 @@ describe('CI branch governance workflow', () => {
     expect(workflow).toContain('PRs to main must come from release/v* or hotfix/v*');
   });
 
-  it('requires develop-targeted feature branches to reference an issue', () => {
+  it('requires develop-targeted feature branches to reference an issue (VHS-REQ-609.2)', () => {
     const workflow = readWorkflow();
 
     expect(workflow).toContain('develop)');
@@ -227,5 +241,22 @@ describe('CI branch governance workflow', () => {
     // A feature/* base admits fix/* and stacked feature/<issue#>-* heads.
     expect(workflow).toContain('feature/*)');
     expect(workflow).toContain('"$head" =~ ^fix/.+ || "$head" =~ ^feature/[0-9]+-.+');
+  });
+
+  it('surfaces the supply-chain provenance read-model as an advisory report on every build (VHS-REQ-668)', () => {
+    const workflow = readWorkflow();
+
+    // Advisory (non-strict) read-model report + retained artifact so provenance
+    // drift is visible on develop/PR builds before the release gate hard-blocks.
+    expect(workflow).toContain('Supply-Chain Provenance Report / supply-chain-state');
+    expect(workflow).toContain('node scripts/buildSupplyChainState.js | tee supply-chain-state-report.txt');
+    expect(workflow).toContain('node scripts/buildSupplyChainState.js --json --output supply-chain-state.json');
+    expect(workflow).toContain('supply-chain-state-${{ github.run_id }}');
+
+    // It is advisory only — it must NOT run with --strict (which would fail the build).
+    const reportIndex = workflow.indexOf('Supply-Chain Provenance Report / supply-chain-state');
+    const artifactIndex = workflow.indexOf('Supply-Chain Provenance Artifact / supply-chain-state');
+    const reportSegment = workflow.slice(reportIndex, artifactIndex);
+    expect(reportSegment).not.toContain('--strict');
   });
 });

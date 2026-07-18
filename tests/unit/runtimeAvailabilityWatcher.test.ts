@@ -8,6 +8,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 type ConfigListener = (event: { affectsConfiguration: (section: string) => boolean }) => void;
+type WindowStateListener = (event: { focused: boolean }) => void;
 
 interface FakeStatusBarItem {
   text: string;
@@ -40,12 +41,20 @@ let dockerDaemonMode: 'windows' | 'linux' | undefined;
 const probeDaemonPlatform = vi.fn(async () => dockerDaemonMode);
 
 const configListeners: ConfigListener[] = [];
+const configDisposables: Array<ReturnType<typeof vi.fn>> = [];
+const focusListeners: WindowStateListener[] = [];
+const focusDisposables: Array<ReturnType<typeof vi.fn>> = [];
 
 vi.mock('vscode', () => {
   return {
     window: {
       createStatusBarItem: vi.fn(() => fakeStatusBarItem),
-      onDidChangeWindowState: vi.fn(() => ({ dispose: vi.fn() })),
+      onDidChangeWindowState: vi.fn((listener: WindowStateListener) => {
+        focusListeners.push(listener);
+        const dispose = vi.fn();
+        focusDisposables.push(dispose);
+        return { dispose };
+      }),
       showInformationMessage: vi.fn()
     },
     workspace: {
@@ -54,7 +63,9 @@ vi.mock('vscode', () => {
       })),
       onDidChangeConfiguration: vi.fn((listener: ConfigListener) => {
         configListeners.push(listener);
-        return { dispose: vi.fn() };
+        const dispose = vi.fn();
+        configDisposables.push(dispose);
+        return { dispose };
       })
     },
     StatusBarAlignment: { Left: 1, Right: 2 }
@@ -119,12 +130,18 @@ describe('createRuntimeAvailabilityWatcher reactivity (VHS-REQ-620)', () => {
     dockerDaemonMode = undefined;
     probeDaemonPlatform.mockClear();
     configListeners.length = 0;
+    configDisposables.length = 0;
+    focusListeners.length = 0;
+    focusDisposables.length = 0;
     fakeStatusBarItem.text = '';
     fakeStatusBarItem.tooltip = '';
     fakeStatusBarItem.command = '';
+    fakeStatusBarItem.show.mockClear();
+    fakeStatusBarItem.hide.mockClear();
+    fakeStatusBarItem.dispose.mockClear();
   });
 
-  it('renders the auto-detection recommendation when no persisted selection is set', async () => {
+  it('renders the auto-detection recommendation when no persisted selection is set (VHS-REQ-620.4)', async () => {
     const { context } = createFakeContext();
     const watcher = createRuntimeAvailabilityWatcher(context as never, {
       detect: async () => detectionWithBoth,
@@ -141,7 +158,7 @@ describe('createRuntimeAvailabilityWatcher reactivity (VHS-REQ-620)', () => {
     watcher.dispose();
   });
 
-  it('re-renders the label from cached detection when persisted keys flip via onDidChangeConfiguration', async () => {
+  it('re-renders the label from cached detection when persisted keys flip via onDidChangeConfiguration (VHS-REQ-620.3, VHS-REQ-620.4)', async () => {
     const detect = vi.fn(async () => detectionWithBoth);
     const { context } = createFakeContext();
     const watcher = createRuntimeAvailabilityWatcher(context as never, { detect, probeDaemonPlatform });
@@ -164,6 +181,7 @@ describe('createRuntimeAvailabilityWatcher reactivity (VHS-REQ-620)', () => {
     expect(watcher.getLastSnapshot()?.source).toBe('persisted');
 
     watcher.dispose();
+    expect(configDisposables[0]).toHaveBeenCalledTimes(1);
   });
 
   it('silently falls back to the recommendation when the persisted selection becomes unsatisfiable', async () => {
@@ -210,7 +228,7 @@ describe('createRuntimeAvailabilityWatcher reactivity (VHS-REQ-620)', () => {
     watcher.dispose();
   });
 
-  it('warns when the docker image platform conflicts with the confirmed daemon mode (VHS-REQ-650)', async () => {
+  it('warns when the docker image platform conflicts with the confirmed daemon mode (VHS-REQ-620.7)', async () => {
     persistedKeys.runtimeProvider = 'docker';
     persistedKeys.labviewVersion = '2026';
     persistedKeys.labviewBitness = 'x64';
@@ -231,7 +249,7 @@ describe('createRuntimeAvailabilityWatcher reactivity (VHS-REQ-620)', () => {
     watcher.dispose();
   });
 
-  it('re-probes the daemon mode on an image-version change instead of trusting a stale cache (VHS-REQ-650)', async () => {
+  it('re-probes the daemon mode on an image-version change instead of trusting a stale cache (VHS-REQ-620.7)', async () => {
     // Codex review (PR #490): a cached daemon mode could be stale if the engine
     // is switched externally, then a settings change rendered a false warning
     // from the stale cache. The image-version change must re-probe.
@@ -267,7 +285,7 @@ describe('createRuntimeAvailabilityWatcher reactivity (VHS-REQ-620)', () => {
     watcher.dispose();
   });
 
-  it('surfaces a true mismatch warning after an image-version change once the re-probe resolves (VHS-REQ-650)', async () => {
+  it('surfaces a true mismatch warning after an image-version change once the re-probe resolves (VHS-REQ-620.7)', async () => {
     persistedKeys.runtimeProvider = 'docker';
     persistedKeys.labviewVersion = '2026';
     persistedKeys.labviewBitness = 'x64';
@@ -314,7 +332,74 @@ describe('createRuntimeAvailabilityWatcher reactivity (VHS-REQ-620)', () => {
     watcher.dispose();
   });
 
-  it('warns when the selected docker image platform conflicts with the confirmed daemon mode (VHS-REQ-650)', async () => {
+  it('re-detects on focused window changes while throttling repeated focus events (VHS-REQ-617.3)', async () => {
+    let nowMs = 1_000;
+    const detect = vi.fn(async () => detectionWithBoth);
+    const { context } = createFakeContext();
+    const watcher = createRuntimeAvailabilityWatcher(context as never, {
+      detect,
+      now: () => nowMs,
+      probeDaemonPlatform
+    });
+    await flushAsync();
+
+    expect(focusListeners).toHaveLength(1);
+    expect(detect).toHaveBeenCalledTimes(1);
+
+    focusListeners[0]!({ focused: false });
+    await flushAsync();
+    expect(detect).toHaveBeenCalledTimes(1);
+
+    focusListeners[0]!({ focused: true });
+    await flushAsync();
+    expect(detect).toHaveBeenCalledTimes(1);
+
+    nowMs += 5_000;
+    focusListeners[0]!({ focused: true });
+    await flushAsync();
+    expect(detect).toHaveBeenCalledTimes(2);
+
+    watcher.dispose();
+  });
+
+  it('disposes the focus listener, configuration listener, and status bar item', async () => {
+    const { context } = createFakeContext();
+    const watcher = createRuntimeAvailabilityWatcher(context as never, {
+      detect: async () => detectionWithBoth,
+      probeDaemonPlatform
+    });
+    await flushAsync();
+
+    watcher.dispose();
+
+    expect(focusDisposables[0]).toHaveBeenCalledTimes(1);
+    expect(configDisposables[0]).toHaveBeenCalledTimes(1);
+    expect(fakeStatusBarItem.dispose).toHaveBeenCalledTimes(1);
+  });
+
+  it('logs detection failures without throwing out of activation (VHS-REQ-617.5)', async () => {
+    const error = new Error('runtime detection failed');
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const { context } = createFakeContext();
+    const watcher = createRuntimeAvailabilityWatcher(context as never, {
+      detect: async () => {
+        throw error;
+      },
+      probeDaemonPlatform
+    });
+    await flushAsync();
+
+    expect(consoleError).toHaveBeenCalledWith(
+      '[vi-history-suite] Runtime availability watcher detection failed.',
+      error
+    );
+    expect(watcher.getLastDetection()).toBeUndefined();
+
+    watcher.dispose();
+    consoleError.mockRestore();
+  });
+
+  it('warns when the selected docker image platform conflicts with the confirmed daemon mode (VHS-REQ-620.7)', async () => {
     // Persisted docker selection with a -windows image, but the probed daemon
     // is in linux-container mode → confirmed conflict → warning state.
     persistedKeys.runtimeProvider = 'docker';
@@ -341,7 +426,7 @@ describe('createRuntimeAvailabilityWatcher reactivity (VHS-REQ-620)', () => {
     watcher.dispose();
   });
 
-  it('does not warn when the daemon mode is unknown (probe inconclusive) (VHS-REQ-650)', async () => {
+  it('does not warn when the daemon mode is unknown (probe inconclusive) (VHS-REQ-620.7)', async () => {
     // Same -windows selection, but Docker is stopped/unknown (probe undefined).
     // A valid selection must never be flagged against a guess.
     persistedKeys.runtimeProvider = 'docker';
@@ -366,7 +451,7 @@ describe('createRuntimeAvailabilityWatcher reactivity (VHS-REQ-620)', () => {
     watcher.dispose();
   });
 
-  it('does not probe the daemon when the active provider is host (VHS-REQ-650)', async () => {
+  it('does not probe the daemon when the active provider is host (VHS-REQ-620.7)', async () => {
     // Host recommendation → no docker image relevant → no `docker info` call.
     const { context } = createFakeContext();
     const watcher = createRuntimeAvailabilityWatcher(context as never, {

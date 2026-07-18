@@ -5,9 +5,12 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   acquireWindowsContainerImage,
   buildDocumentedRuntimeCandidates,
+  inferBitnessFromPath,
   locateComparisonRuntime,
   parseWindowsRegistryLabviewCandidates,
   probeWindowsRegistryHostLabviewAvailable,
+  queryWindowsContainerImageAvailability,
+  queryWindowsContainerProviderFacts,
   WindowsContainerProviderFacts
 } from '../../src/reporting/comparisonRuntimeLocator';
 
@@ -50,6 +53,34 @@ function quietWindowsHostSurfaceDeps() {
     observeWindowsTcpListeners: vi.fn().mockResolvedValue([]) as never
   };
 }
+
+describe('inferBitnessFromPath (VHS-REQ-633.2)', () => {
+  it('infers x64 from POSIX National Instruments install paths', () => {
+    // Regression: the shared candidate normalizer converts '/' -> '\', which made
+    // these forward-slash POSIX markers unmatchable, so a configured Linux/macOS
+    // LabVIEW path resolved to undefined bitness and could be ignored in favor of
+    // a scanned candidate.
+    expect(inferBitnessFromPath('/usr/local/natinst/LabVIEW-2026-64/labview')).toBe('x64');
+    expect(
+      inferBitnessFromPath('/Applications/National Instruments/LabVIEW 2026/LabVIEW.app')
+    ).toBe('x64');
+  });
+
+  it('still infers Windows bitness from Program Files paths', () => {
+    expect(
+      inferBitnessFromPath('C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe')
+    ).toBe('x64');
+    expect(
+      inferBitnessFromPath(
+        'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+      )
+    ).toBe('x86');
+  });
+
+  it('returns undefined for an unrecognized install location', () => {
+    expect(inferBitnessFromPath('/opt/custom/labview')).toBeUndefined();
+  });
+});
 
 describe('comparisonRuntimeLocator diagnostics', () => {
   it('documents only the canonical shared Windows LabVIEWCLI scan path', () => {
@@ -124,7 +155,7 @@ describe('comparisonRuntimeLocator diagnostics', () => {
     );
   });
 
-  it('blocks unsupported LabVIEW versions before scanning runtime tools', async () => {
+  it('blocks unsupported LabVIEW versions before scanning runtime tools (VHS-REQ-657.5)', async () => {
     const selection = await locateComparisonRuntime('win32', {
       requestedProvider: 'host',
       requireVersionAndBitness: true,
@@ -147,7 +178,7 @@ describe('comparisonRuntimeLocator diagnostics', () => {
     );
   });
 
-  it('retains configured path failures as checked candidate facts', async () => {
+  it('retains configured path failures as checked candidate facts (VHS-REQ-633.2)', async () => {
     const selection = await locateComparisonRuntime(
       'win32',
       {
@@ -182,7 +213,7 @@ describe('comparisonRuntimeLocator diagnostics', () => {
     );
   });
 
-  it('reports a requested LabVIEW bitness miss without switching bitness silently', async () => {
+  it('reports a requested LabVIEW bitness miss without switching bitness silently (VHS-REQ-155.2, VHS-REQ-155.6)', async () => {
     const selection = await locateComparisonRuntime(
       'win32',
       {
@@ -271,7 +302,7 @@ describe('comparisonRuntimeLocator diagnostics', () => {
     expect(selection.blockedReason).toBeUndefined();
   });
 
-  it('reports missing shared Windows LabVIEWCLI after resolving LabVIEW', async () => {
+  it('reports missing shared Windows LabVIEWCLI after resolving LabVIEW (VHS-REQ-155.2)', async () => {
     const selection = await locateComparisonRuntime(
       'win32',
       {
@@ -379,7 +410,7 @@ describe('comparisonRuntimeLocator diagnostics', () => {
     expect(selection.windowsContainerDaemonReachable).toBe(false);
   });
 
-  it('probes Docker on Windows even when version/bitness are unset because the gate is required (VHS-REQ-657)', async () => {
+  it('probes Docker on Windows even when version/bitness are unset because the gate is required (VHS-REQ-657.8)', async () => {
     // Real-world production shape: readComparisonRuntimeSettings always sets
     // requireVersionAndBitness=true, and selecting Docker clears
     // labviewVersion/labviewBitness. The host-native version/bitness gate must
@@ -403,7 +434,7 @@ describe('comparisonRuntimeLocator diagnostics', () => {
     });
   });
 
-  it('still blocks the host-native lane when version/bitness are unset and the gate is required (VHS-REQ-657)', async () => {
+  it('still blocks the host-native lane when version/bitness are unset and the gate is required (VHS-REQ-657.8)', async () => {
     // Guard rail: bypassing the gate for Docker must not weaken it for the
     // host-native provider.
     const selection = await locateComparisonRuntime('win32', {
@@ -587,7 +618,7 @@ describe('comparisonRuntimeLocator diagnostics', () => {
     );
   });
 
-  it('honors an existing configured LabVIEWCLI path for requested x64 LabVIEW', async () => {
+  it('honors an existing configured LabVIEWCLI path for requested x64 LabVIEW (VHS-REQ-633.2)', async () => {
     const configuredLabviewCliPath = 'C:\\custom\\LabVIEWCLI.exe';
     const selection = await locateComparisonRuntime(
       'win32',
@@ -618,7 +649,7 @@ describe('comparisonRuntimeLocator diagnostics', () => {
 });
 
 describe('comparisonRuntimeLocator fact retention (VHS-REQ-155)', () => {
-  it('retains all requested facts when blocking host runtime for missing LabVIEW', async () => {
+  it('retains all requested facts when blocking host runtime for missing LabVIEW (VHS-REQ-155.1)', async () => {
     const selection = await locateComparisonRuntime(
       'win32',
       {
@@ -655,7 +686,7 @@ describe('comparisonRuntimeLocator fact retention (VHS-REQ-155)', () => {
     expect(selection.notes.length).toBeGreaterThan(0);
   });
 
-  it('retains all requested facts when blocking Docker runtime for missing CLI', async () => {
+  it('retains all requested facts when blocking Docker runtime for missing CLI (VHS-REQ-155.1)', async () => {
     const selection = await locateComparisonRuntime(
       'win32',
       {
@@ -787,7 +818,7 @@ describe('comparisonRuntimeLocator concurrent LabVIEW bitness conflict (VHS-REQ-
     };
   }
 
-  it('blocks host-native compare when LabVIEW x64 is running and x86 was requested', async () => {
+  it('blocks host-native compare when LabVIEW x64 is running and x86 was requested (VHS-REQ-621.2)', async () => {
     const selection = await locateComparisonRuntime(
       'win32',
       {
@@ -825,7 +856,7 @@ describe('comparisonRuntimeLocator concurrent LabVIEW bitness conflict (VHS-REQ-
     expect(selection.notes.join('\n')).toContain('comparison-report execution requested LabVIEW x86');
   });
 
-  it('blocks host-native compare even when allowExistingWindowsHostRuntime is true (bitness conflict overrides admit)', async () => {
+  it('blocks host-native compare even when allowExistingWindowsHostRuntime is true (bitness conflict overrides admit, VHS-REQ-621.2)', async () => {
     const selection = await locateComparisonRuntime(
       'win32',
       {
@@ -895,7 +926,7 @@ describe('comparisonRuntimeLocator concurrent LabVIEW bitness conflict (VHS-REQ-
     expect(selection.blockedReason).toBeUndefined();
   });
 
-  it('blocks host-native compare when a same-bitness, different-year LabVIEW is running (VHS-REQ-653)', async () => {
+  it('blocks host-native compare when a same-bitness, different-year LabVIEW is running (VHS-REQ-653.1, VHS-REQ-653.4)', async () => {
     const selection = await locateComparisonRuntime(
       'win32',
       {
@@ -965,6 +996,69 @@ describe('comparisonRuntimeLocator concurrent LabVIEW bitness conflict (VHS-REQ-
 
     expect(selection.provider).toBe('host-native');
     expect(selection.blockedReason).toBeUndefined();
+  });
+
+  it('admits a same-bitness running LabVIEW session when the year cannot be inferred (VHS-REQ-653.2)', async () => {
+    const selection = await locateComparisonRuntime(
+      'win32',
+      {
+        requestedProvider: 'host',
+        requireVersionAndBitness: true,
+        labviewVersion: '2026',
+        bitness: 'x64',
+        allowExistingWindowsHostRuntime: true
+      },
+      {
+        pathExists: pathExistsFor([WINDOWS_LABVIEW_2026_X64, WINDOWS_LABVIEW_CLI_X86]),
+        queryWindowsRegistry: vi.fn().mockResolvedValue(''),
+        readFile: vi.fn().mockRejectedValue(new Error('no ini')) as never,
+        observeWindowsProcesses: vi
+          .fn()
+          .mockResolvedValue(
+            processObservationWithLabviewBitness('x64', 'D:\\Tools\\LabVIEW\\LabVIEW.exe')
+          ) as never,
+        observeWindowsTcpListeners: vi.fn().mockResolvedValue([]) as never
+      }
+    );
+
+    expect(selection.provider).toBe('host-native');
+    expect(selection.blockedReason).toBeUndefined();
+    expect(selection.hostObservedLabviewVersion).toBeUndefined();
+  });
+
+  it('defers to the bitness conflict before version or contaminated-surface blocks (VHS-REQ-653.3)', async () => {
+    const selection = await locateComparisonRuntime(
+      'win32',
+      {
+        requestedProvider: 'host',
+        requireVersionAndBitness: true,
+        labviewVersion: '2026',
+        bitness: 'x64',
+        allowExistingWindowsHostRuntime: true
+      },
+      {
+        pathExists: pathExistsFor([WINDOWS_LABVIEW_2026_X64, WINDOWS_LABVIEW_CLI_X86]),
+        queryWindowsRegistry: vi.fn().mockResolvedValue(''),
+        readFile: vi.fn().mockRejectedValue(new Error('no ini')) as never,
+        observeWindowsProcesses: vi
+          .fn()
+          .mockResolvedValue(
+            processObservationWithLabviewBitness(
+              'x86',
+              'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2025\\LabVIEW.exe'
+            )
+          ) as never,
+        observeWindowsTcpListeners: vi.fn().mockResolvedValue([
+          { localAddress: '0.0.0.0', localPort: 3363, pid: 1234, processName: 'LabVIEW.exe' }
+        ]) as never
+      }
+    );
+
+    expect(selection.blockedReason).toBe('windows-host-bitness-conflict');
+    expect(selection.blockedReason).not.toBe('windows-host-version-conflict');
+    expect(selection.blockedReason).not.toBe('windows-host-runtime-surface-contaminated');
+    expect(selection.hostObservedLabviewBitness).toBe('x86');
+    expect(selection.hostObservedLabviewVersion).toBe('2025');
   });
 });
 
@@ -1043,7 +1137,7 @@ describe('comparisonRuntimeLocator fail-closed branch coverage (VHS-REQ-155, VHS
     expect(selection.notes.join('\n')).toContain('macOS');
   });
 
-  it('retains a missing configured LabVIEW executable path as a checked candidate fact', async () => {
+  it('retains a missing configured LabVIEW executable path as a checked candidate fact (VHS-REQ-633.2)', async () => {
     const selection = await locateComparisonRuntime(
       'win32',
       {
@@ -1072,7 +1166,7 @@ describe('comparisonRuntimeLocator fail-closed branch coverage (VHS-REQ-155, VHS
     );
   });
 
-  it('no longer blocks docker-only execution for a non-2026 LabVIEW version (VHS-REQ-657)', async () => {
+  it('no longer blocks docker-only execution for a non-2026 LabVIEW version (VHS-REQ-657.5)', async () => {
     const selection = await locateComparisonRuntime(
       'win32',
       {
@@ -1091,7 +1185,7 @@ describe('comparisonRuntimeLocator fail-closed branch coverage (VHS-REQ-155, VHS
     expect(selection.provider).toBe('windows-container');
   });
 
-  it('drives the windows-container image from the selected container image version (VHS-REQ-650)', async () => {
+  it('drives the windows-container image from the selected container image version (VHS-REQ-650.1)', async () => {
     const query = vi
       .fn()
       .mockImplementation((windowsImage: string) =>
@@ -1116,7 +1210,7 @@ describe('comparisonRuntimeLocator fail-closed branch coverage (VHS-REQ-155, VHS
     expect(selection.containerImage).toBe('nationalinstruments/labview:2026q1patch2-windows');
   });
 
-  it('preserves the default windows-container image when no version is selected (VHS-REQ-650)', async () => {
+  it('preserves the default windows-container image when no version is selected (VHS-REQ-650.2)', async () => {
     const query = vi
       .fn()
       .mockImplementation((windowsImage: string) =>
@@ -1135,7 +1229,7 @@ describe('comparisonRuntimeLocator fail-closed branch coverage (VHS-REQ-155, VHS
     );
   });
 
-  it('bypasses the version-not-implemented pin when a container image version is selected (VHS-REQ-650)', async () => {
+  it('bypasses the version-not-implemented pin when a container image version is selected (VHS-REQ-650.3)', async () => {
     const query = vi
       .fn()
       .mockImplementation((windowsImage: string) =>
@@ -1160,7 +1254,7 @@ describe('comparisonRuntimeLocator fail-closed branch coverage (VHS-REQ-155, VHS
     );
   });
 
-  it('drives the linux-container image from the selected container image version (VHS-REQ-650)', async () => {
+  it('drives the linux-container image from the selected container image version (VHS-REQ-650.1)', async () => {
     const query = vi.fn().mockResolvedValue(
       windowsContainerFacts({
         image: 'nationalinstruments/labview:2026q1patch1-linux',
@@ -1190,7 +1284,7 @@ describe('comparisonRuntimeLocator fail-closed branch coverage (VHS-REQ-155, VHS
     );
   });
 
-  it('fails closed when the selected container image version platform conflicts with the Docker host mode (VHS-REQ-650)', async () => {
+  it('fails closed when the selected container image version platform conflicts with the Docker host mode (VHS-REQ-650.5)', async () => {
     // Linux image token selected, but the active Docker engine is in
     // windows-container mode. Previously the linux selection was silently
     // dropped and the default windows image ran; now it must fail closed.
@@ -1233,7 +1327,49 @@ describe('comparisonRuntimeLocator fail-closed branch coverage (VHS-REQ-155, VHS
     );
   });
 
-  it('does not flag a platform mismatch when a full image override governs the active platform (VHS-REQ-650)', async () => {
+  it('fails closed on the symmetric polarity: a windows image token under a linux Docker host mode (VHS-REQ-650.5)', async () => {
+    // Symmetric to the linux-token/windows-mode case above: a windows image
+    // token is selected, but the active Docker engine is in linux-container
+    // mode with no linux image override, so it must fail closed rather than
+    // silently running the default linux image.
+    const query = vi.fn().mockResolvedValue(
+      windowsContainerFacts({
+        windowsContainerHostMode: 'linux',
+        provider: 'linux-container',
+        runtimePlatform: 'linux'
+      })
+    );
+    const selection = await locateComparisonRuntime(
+      'win32',
+      {
+        executionMode: 'docker-only',
+        labviewVersion: '2026',
+        bitness: 'x64',
+        containerImageVersion: '2026q1-windows'
+      },
+      { queryWindowsContainerProviderFacts: query }
+    );
+
+    expect(selection).toMatchObject({
+      provider: 'unavailable',
+      blockedReason: 'container-image-platform-mismatch'
+    });
+    expect(selection.containerImageVersionConflict).toMatchObject({
+      selectedTag: '2026q1-windows',
+      selectedPlatform: 'windows',
+      activePlatform: 'linux'
+    });
+    expect(selection.providerDecisions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          outcome: 'rejected',
+          reason: 'container-image-platform-mismatch'
+        })
+      ])
+    );
+  });
+
+  it('does not flag a platform mismatch when a full image override governs the active platform (VHS-REQ-650.1, VHS-REQ-650.5)', async () => {
     // A raw windowsContainerImage override governs the windows host mode, so the
     // conflicting linux version token is moot and must not block.
     const query = vi
@@ -1336,7 +1472,7 @@ describe('comparisonRuntimeLocator fail-closed branch coverage (VHS-REQ-155, VHS
   });
 });
 
-describe('probeWindowsRegistryHostLabviewAvailable (VHS-REQ-634)', () => {
+describe('probeWindowsRegistryHostLabviewAvailable (VHS-REQ-634.1)', () => {
   // A real National Instruments install records the install DIRECTORY (trailing
   // backslash) in the registry `Path` value, not the executable. The probe must
   // derive `<dir>LabVIEW.exe` and validate it on disk (issue #381).
@@ -1438,7 +1574,7 @@ describe('probeWindowsRegistryHostLabviewAvailable (VHS-REQ-634)', () => {
   });
 });
 
-describe('parseWindowsRegistryLabviewCandidates (VHS-REQ-634)', () => {
+describe('parseWindowsRegistryLabviewCandidates (VHS-REQ-634.1)', () => {
   function registryOutput(pathValue: string, subkey = '25.0'): string {
     return [
       `HKEY_LOCAL_MACHINE\\SOFTWARE\\National Instruments\\LabVIEW\\${subkey}`,
@@ -1506,9 +1642,26 @@ describe('parseWindowsRegistryLabviewCandidates (VHS-REQ-634)', () => {
 
     expect(candidates).toEqual([]);
   });
+
+  it('drops registry candidates below the supported minimum year, keeping 2025+ (#644)', () => {
+    const output = [
+      'HKEY_LOCAL_MACHINE\\SOFTWARE\\National Instruments\\LabVIEW\\20.0',
+      '    Path    REG_SZ    C:\\Program Files\\National Instruments\\LabVIEW 2020\\',
+      'HKEY_LOCAL_MACHINE\\SOFTWARE\\National Instruments\\LabVIEW\\26.0',
+      '    Path    REG_SZ    C:\\Program Files\\National Instruments\\LabVIEW 2026\\',
+      ''
+    ].join('\r\n');
+
+    const candidates = parseWindowsRegistryLabviewCandidates(output);
+
+    // The unsupported 2020 install is excluded; only the 2025+ install remains.
+    expect(candidates.map((candidate) => candidate.path)).toEqual([
+      'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+    ]);
+  });
 });
 
-describe('comparisonRuntimeLocator registry candidate disk validation (VHS-REQ-634, #381)', () => {
+describe('comparisonRuntimeLocator registry candidate disk validation (VHS-REQ-634.1, #381)', () => {
   // A non-default install drive that the documented scan never produces (it only
   // covers C:), yet whose bitness is still inferable from `\Program Files\`, so
   // these candidates can only reach selection via the registry parser/probe path.
@@ -1586,7 +1739,7 @@ describe('comparisonRuntimeLocator registry candidate disk validation (VHS-REQ-6
 describe('acquireWindowsContainerImage live pull progress (VHS-REQ-654)', () => {
   const image = 'nationalinstruments/labview:2026q1-windows';
 
-  it('drives the Docker Engine API stream and reports live layer-weighted progress', async () => {
+  it('drives the Docker Engine API stream and reports live layer-weighted progress (VHS-REQ-654.1)', async () => {
     const updates: Array<{ message: string; increment?: number }> = [];
     const streamPull = vi.fn(async (options: { onProgress?: (snap: unknown) => void | Promise<void> }) => {
       // Two 1 GB layers: one done at 50%, both done near the 99% ceiling.
@@ -1624,7 +1777,7 @@ describe('acquireWindowsContainerImage live pull progress (VHS-REQ-654)', () => 
     expect(updates.at(-1)?.message).toBe(`Container image ready: ${image}`);
   });
 
-  it('re-emits the toast when only the downloaded bytes change at the same whole percent', async () => {
+  it('re-emits the toast when only the downloaded bytes change at the same whole percent (VHS-REQ-654.2)', async () => {
     const updates: Array<{ message: string; increment?: number }> = [];
     const streamPull = vi.fn(async (options: { onProgress?: (snap: unknown) => void | Promise<void> }) => {
       const gb = 1024 * 1024 * 1024;
@@ -1659,7 +1812,7 @@ describe('acquireWindowsContainerImage live pull progress (VHS-REQ-654)', () => 
     expect(pullMessages.some((u) => /30% \(1\/3 layers, 2 GB\)/.test(u.message))).toBe(true);
   });
 
-  it('signals the extraction phase and keeps the bar advancing after download (VHS-REQ-656)', async () => {
+  it('signals the extraction phase and keeps the bar advancing after download (VHS-REQ-656.2, VHS-REQ-656.3)', async () => {
     const updates: Array<{ message: string; increment?: number }> = [];
     const gb = 1024 * 1024 * 1024;
     const streamPull = vi.fn(async (options: { onProgress?: (snap: unknown) => void | Promise<void> }) => {
@@ -1756,5 +1909,969 @@ describe('acquireWindowsContainerImage live pull progress (VHS-REQ-654)', () => 
     expect(streamPull).toHaveBeenCalledOnce();
     expect(spawnImpl).toHaveBeenCalledOnce();
     expect(result.acquisitionState).toBe('acquired');
+  });
+});
+
+type DockerExecFileRunner = (
+  file: string,
+  args: readonly string[],
+  options: { windowsHide: boolean; maxBuffer: number }
+) => Promise<{ stdout: string; stderr?: string }>;
+
+function enoentError(message = 'spawn docker ENOENT'): Error {
+  return Object.assign(new Error(message), { code: 'ENOENT' });
+}
+
+function makeFakeDockerChild() {
+  const stdout = Object.assign(new EventEmitter(), { setEncoding: vi.fn() });
+  const stderr = Object.assign(new EventEmitter(), { setEncoding: vi.fn() });
+  const child = Object.assign(new EventEmitter(), { stdout, stderr });
+  return { child, stdout, stderr };
+}
+
+describe('queryWindowsContainerImageAvailability docker command routing (VHS-REQ-642, VHS-REQ-657)', () => {
+  const image = 'nationalinstruments/labview:2026q1-windows';
+  const dockerOptions = expect.objectContaining({ windowsHide: true });
+
+  it('runs `docker image inspect` directly on a win32 host and reports availability', async () => {
+    const runner = vi.fn(async () => ({ stdout: '[]' }));
+    const available = await queryWindowsContainerImageAvailability(image, 'win32', runner as never);
+
+    expect(available).toBe(true);
+    expect(runner).toHaveBeenCalledTimes(1);
+    expect(runner).toHaveBeenCalledWith('docker', ['image', 'inspect', image], dockerOptions);
+  });
+
+  it('reports unavailable on a win32 host when the image inspect rejects', async () => {
+    const runner = vi.fn(async () => {
+      throw new Error('No such image');
+    });
+    const available = await queryWindowsContainerImageAvailability(image, 'win32', runner as never);
+
+    expect(available).toBe(false);
+    expect(runner).toHaveBeenCalledTimes(1);
+  });
+
+  it('retries a missing-docker ENOENT through the WSL cmd.exe bridge on a linux host', async () => {
+    const runner = vi.fn(async (file: string) => {
+      if (file === 'docker') {
+        throw enoentError('spawn docker');
+      }
+      return { stdout: '[]' };
+    });
+    const available = await queryWindowsContainerImageAvailability(image, 'linux', runner as never);
+
+    expect(available).toBe(true);
+    expect(runner).toHaveBeenCalledTimes(2);
+    expect(runner).toHaveBeenLastCalledWith(
+      '/mnt/c/Windows/System32/cmd.exe',
+      ['/c', 'docker', 'image', 'inspect', image],
+      dockerOptions
+    );
+  });
+
+  it('retries when the linux docker error message names a missing command (`not found`)', async () => {
+    const runner = vi.fn(async (file: string) => {
+      if (file === 'docker') {
+        throw new Error('docker: command not found');
+      }
+      return { stdout: '[]' };
+    });
+
+    expect(await queryWindowsContainerImageAvailability(image, 'linux', runner as never)).toBe(true);
+    expect(runner).toHaveBeenLastCalledWith(
+      '/mnt/c/Windows/System32/cmd.exe',
+      ['/c', 'docker', 'image', 'inspect', image],
+      dockerOptions
+    );
+  });
+
+  it('retries when the linux docker error message reads `spawn docker`', async () => {
+    const runner = vi.fn(async (file: string) => {
+      if (file === 'docker') {
+        throw new Error('spawn docker');
+      }
+      return { stdout: '[]' };
+    });
+
+    expect(await queryWindowsContainerImageAvailability(image, 'linux', runner as never)).toBe(true);
+    expect(runner).toHaveBeenCalledTimes(2);
+  });
+
+  it('retries when the linux docker error message contains ENOENT without an errno code', async () => {
+    const runner = vi.fn(async (file: string) => {
+      if (file === 'docker') {
+        throw new Error('ENOENT: no such file or directory');
+      }
+      return { stdout: '[]' };
+    });
+
+    expect(await queryWindowsContainerImageAvailability(image, 'linux', runner as never)).toBe(true);
+    expect(runner).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not retry (rethrows) when the linux docker error is not a missing-docker error', async () => {
+    // A reachable-but-broken daemon (not a missing binary) must be rethrown by
+    // runWindowsDockerCommand rather than retried through the WSL bridge; the
+    // availability probe then reports the image as unavailable.
+    const runner = vi.fn(async () => {
+      throw new Error('Cannot connect to the Docker daemon');
+    });
+
+    expect(await queryWindowsContainerImageAvailability(image, 'linux', runner as never)).toBe(false);
+    expect(runner).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not retry (rethrows) when the linux docker rejection is not an object', async () => {
+    const runner = vi.fn(async () => {
+      const nonObjectFailure: unknown = 'catastrophic docker failure';
+      throw nonObjectFailure;
+    });
+
+    expect(await queryWindowsContainerImageAvailability(image, 'linux', runner as never)).toBe(false);
+    expect(runner).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('queryWindowsContainerProviderFacts docker daemon probing (VHS-REQ-642, VHS-REQ-657)', () => {
+  const windowsImage = 'nationalinstruments/labview:2026q1-windows';
+  const linuxImage = 'nationalinstruments/labview:2026q1-linux';
+
+  function dockerRunner(config: {
+    osType?: string;
+    infoError?: unknown;
+    inspectError?: unknown;
+    enoentFallback?: boolean;
+  }): ReturnType<typeof vi.fn> {
+    return vi.fn(async (file: string, args: readonly string[]) => {
+      if (config.enoentFallback && file === 'docker') {
+        throw enoentError();
+      }
+      if (args.includes('info')) {
+        if (config.infoError !== undefined) {
+          throw config.infoError;
+        }
+        return { stdout: `${config.osType ?? 'windows'}\n` };
+      }
+      if (config.inspectError !== undefined) {
+        throw config.inspectError;
+      }
+      return { stdout: '[]' };
+    });
+  }
+
+  it('reports a reachable Windows-container daemon with the image present locally', async () => {
+    const runner = dockerRunner({ osType: 'windows' });
+    const facts = await queryWindowsContainerProviderFacts(
+      windowsImage,
+      linuxImage,
+      'win32',
+      runner as never
+    );
+
+    expect(facts).toMatchObject({
+      dockerCliAvailable: true,
+      dockerDaemonReachable: true,
+      windowsContainerHostMode: 'windows',
+      windowsContainerCapabilityAvailable: true,
+      provider: 'windows-container',
+      runtimePlatform: 'win32',
+      image: windowsImage,
+      imageAvailable: true
+    });
+    expect(facts.notes.join('\n')).toContain('present locally');
+  });
+
+  it('resolves the linux image and provider when the daemon runs in Linux-container mode', async () => {
+    const runner = dockerRunner({ osType: 'linux' });
+    const facts = await queryWindowsContainerProviderFacts(
+      windowsImage,
+      linuxImage,
+      'win32',
+      runner as never
+    );
+
+    expect(facts).toMatchObject({
+      windowsContainerHostMode: 'linux',
+      provider: 'linux-container',
+      runtimePlatform: 'linux',
+      image: linuxImage,
+      imageAvailable: true
+    });
+  });
+
+  it('flags an unconfirmed container mode when docker info returns an unknown OSType', async () => {
+    const runner = dockerRunner({ osType: 'plan9' });
+    const facts = await queryWindowsContainerProviderFacts(
+      windowsImage,
+      linuxImage,
+      'win32',
+      runner as never
+    );
+
+    expect(facts).toMatchObject({
+      dockerDaemonReachable: true,
+      windowsContainerHostMode: 'unknown',
+      windowsContainerCapabilityAvailable: false,
+      imageAvailable: false
+    });
+    expect(facts.notes.join('\n')).toContain('could not be confirmed');
+  });
+
+  it('records the image as absent when the inspect rejects but the daemon is reachable', async () => {
+    const runner = dockerRunner({ osType: 'windows', inspectError: new Error('No such image') });
+    const facts = await queryWindowsContainerProviderFacts(
+      windowsImage,
+      linuxImage,
+      'win32',
+      runner as never
+    );
+
+    expect(facts).toMatchObject({
+      windowsContainerCapabilityAvailable: true,
+      imageAvailable: false
+    });
+    expect(facts.notes.join('\n')).toContain('not present locally');
+  });
+
+  it('marks the Docker CLI unavailable when docker info reports a missing command', async () => {
+    const runner = dockerRunner({ infoError: enoentError() });
+    const facts = await queryWindowsContainerProviderFacts(
+      windowsImage,
+      linuxImage,
+      'win32',
+      runner as never
+    );
+
+    expect(facts).toMatchObject({
+      dockerCliAvailable: false,
+      dockerDaemonReachable: false,
+      windowsContainerCapabilityAvailable: false
+    });
+    expect(facts.notes.join('\n')).toContain('Docker CLI is not available');
+  });
+
+  it('marks the daemon unreachable when docker info fails with a non-missing error', async () => {
+    const runner = dockerRunner({ infoError: new Error('Cannot connect to the Docker daemon') });
+    const facts = await queryWindowsContainerProviderFacts(
+      windowsImage,
+      linuxImage,
+      'win32',
+      runner as never
+    );
+
+    expect(facts).toMatchObject({
+      dockerCliAvailable: true,
+      dockerDaemonReachable: false,
+      windowsContainerCapabilityAvailable: false
+    });
+    expect(facts.notes.join('\n')).toContain('daemon was not reachable');
+  });
+
+  it('routes docker info + inspect through the WSL cmd.exe bridge on a linux host', async () => {
+    const runner = dockerRunner({ osType: 'windows', enoentFallback: true });
+    const facts = await queryWindowsContainerProviderFacts(
+      windowsImage,
+      linuxImage,
+      'linux',
+      runner as never
+    );
+
+    expect(facts.dockerCliAvailable).toBe(true);
+    expect(facts.imageAvailable).toBe(true);
+    expect(runner).toHaveBeenCalledWith(
+      '/mnt/c/Windows/System32/cmd.exe',
+      ['/c', 'docker', 'info', '--format', '{{.OSType}}'],
+      expect.objectContaining({ windowsHide: true })
+    );
+  });
+
+  it('supports the legacy (image, hostPlatform, runner) call signature', async () => {
+    const runner = dockerRunner({ osType: 'windows' });
+    const facts = await queryWindowsContainerProviderFacts(windowsImage, 'win32', runner as never);
+
+    expect(facts).toMatchObject({
+      dockerCliAvailable: true,
+      windowsContainerHostMode: 'windows',
+      image: windowsImage,
+      imageAvailable: true
+    });
+  });
+});
+
+describe('acquireWindowsContainerImage CLI fallback spawn routing (VHS-REQ-654)', () => {
+  const image = 'nationalinstruments/labview:2026q1-windows';
+
+  function withWslDistro<T>(value: string | undefined, run: () => Promise<T>): Promise<T> {
+    const previous = process.env.WSL_DISTRO_NAME;
+    if (value === undefined) {
+      delete process.env.WSL_DISTRO_NAME;
+    } else {
+      process.env.WSL_DISTRO_NAME = value;
+    }
+    return run().finally(() => {
+      if (previous === undefined) {
+        delete process.env.WSL_DISTRO_NAME;
+      } else {
+        process.env.WSL_DISTRO_NAME = previous;
+      }
+    });
+  }
+
+  it('spawns the pull through the WSL cmd.exe bridge when WSL_DISTRO_NAME is set on linux (VHS-REQ-654.3)', async () => {
+    await withWslDistro('Ubuntu-22.04', async () => {
+      const { child, stdout } = makeFakeDockerChild();
+      const spawnImpl = vi.fn(() => child);
+
+      const resultPromise = acquireWindowsContainerImage(image, 'linux', {
+        spawnImpl: spawnImpl as never
+      });
+
+      await Promise.resolve();
+      await Promise.resolve();
+      stdout.emit('data', 'Status: Downloaded newer image\n');
+      child.emit('close', 0);
+
+      const result = await resultPromise;
+      expect(result.acquisitionState).toBe('acquired');
+      expect(spawnImpl).toHaveBeenCalledWith(
+        '/mnt/c/Windows/System32/cmd.exe',
+        ['/c', 'docker', 'pull', image],
+        expect.objectContaining({ windowsHide: true })
+      );
+    });
+  });
+
+  it('spawns a plain docker pull on a linux host without WSL when the daemon socket is unreachable (VHS-REQ-654.3, VHS-REQ-654.4)', async () => {
+    await withWslDistro(undefined, async () => {
+      const streamPull = vi.fn(async () => ({ attempted: false, succeeded: false, statusLines: [] }));
+      const { child, stdout } = makeFakeDockerChild();
+      const spawnImpl = vi.fn(() => child);
+
+      const resultPromise = acquireWindowsContainerImage(image, 'linux', {
+        streamPull: streamPull as never,
+        spawnImpl: spawnImpl as never
+      });
+
+      await Promise.resolve();
+      await Promise.resolve();
+      stdout.emit('data', 'Status: Image is up to date\n');
+      child.emit('close', 0);
+
+      const result = await resultPromise;
+      expect(streamPull).toHaveBeenCalledOnce();
+      expect(result.acquisitionState).toBe('acquired');
+      expect(spawnImpl).toHaveBeenCalledWith(
+        'docker',
+        ['pull', image],
+        expect.objectContaining({ windowsHide: true })
+      );
+    });
+  });
+
+  it('reports a failed acquisition with the exit code when the CLI pull exits non-zero without output (VHS-REQ-654.4)', async () => {
+    const streamPull = vi.fn(async () => ({ attempted: false, succeeded: false, statusLines: [] }));
+    const { child } = makeFakeDockerChild();
+    const spawnImpl = vi.fn(() => child);
+
+    const resultPromise = acquireWindowsContainerImage(image, 'win32', {
+      streamPull: streamPull as never,
+      spawnImpl: spawnImpl as never
+    });
+
+    await Promise.resolve();
+    await Promise.resolve();
+    child.emit('close', 1);
+
+    const result = await resultPromise;
+    expect(result.acquisitionState).toBe('failed');
+    expect(result.notes.at(-1)).toContain('exit code 1');
+  });
+
+  it('reports a failed acquisition when the CLI pull emits a spawn error (VHS-REQ-654.4)', async () => {
+    const streamPull = vi.fn(async () => ({ attempted: false, succeeded: false, statusLines: [] }));
+    const { child } = makeFakeDockerChild();
+    const spawnImpl = vi.fn(() => child);
+
+    const resultPromise = acquireWindowsContainerImage(image, 'win32', {
+      streamPull: streamPull as never,
+      spawnImpl: spawnImpl as never
+    });
+
+    await Promise.resolve();
+    await Promise.resolve();
+    child.emit('error', new Error('docker binary missing'));
+    child.emit('close', null);
+
+    const result = await resultPromise;
+    expect(result.acquisitionState).toBe('failed');
+    expect(result.notes.at(-1)).toContain('before pull could start');
+    expect(result.notes.at(-1)).toContain('docker binary missing');
+  });
+
+  it('surfaces per-line CLI pull progress from stdout and stderr on the acquisition toast (VHS-REQ-654.3)', async () => {
+    const streamPull = vi.fn(async () => ({ attempted: false, succeeded: false, statusLines: [] }));
+    const { child, stdout, stderr } = makeFakeDockerChild();
+    const spawnImpl = vi.fn(() => child);
+    const updates: Array<{ message: string; increment?: number }> = [];
+
+    const resultPromise = acquireWindowsContainerImage(image, 'win32', {
+      streamPull: streamPull as never,
+      spawnImpl: spawnImpl as never,
+      reportProgress: (update) => {
+        updates.push(update);
+      }
+    });
+
+    await Promise.resolve();
+    await Promise.resolve();
+    stdout.emit('data', 'latest: Pulling from nationalinstruments/labview\n');
+    stderr.emit('data', 'Waiting for layer\n');
+    child.emit('close', 0);
+
+    const result = await resultPromise;
+    expect(result.acquisitionState).toBe('acquired');
+    expect(result.notes).toContain('latest: Pulling from nationalinstruments/labview');
+    expect(result.notes).toContain('Waiting for layer');
+    expect(updates.some((update) => update.message.includes('Pulling container image:'))).toBe(true);
+    expect(updates.at(-1)?.message).toBe(`Container image ready: ${image}`);
+  });
+});
+
+describe('comparisonRuntimeLocator auto-mode container fallback selection (VHS-REQ-621, VHS-REQ-155)', () => {
+  // These fail-through container-selection lanes are only reachable when the
+  // first Windows auto probe does not early-return (it treats the Docker CLI as
+  // absent) yet the injected provider facts still expose a usable container
+  // capability. queryWindowsContainerProviderFacts is the sanctioned dependency
+  // seam for exercising that otherwise-defensive combination.
+  function fallThroughContainerFacts(
+    overrides: Partial<WindowsContainerProviderFacts> = {}
+  ): WindowsContainerProviderFacts {
+    return windowsContainerFacts({
+      dockerCliAvailable: false,
+      dockerDaemonReachable: false,
+      windowsContainerCapabilityAvailable: true,
+      windowsContainerHostMode: 'windows',
+      imageAvailable: true,
+      ...overrides
+    });
+  }
+
+  function runningLabviewObservation(bitness: 'x86' | 'x64', executablePath: string) {
+    return {
+      capturedAt: '2026-05-31T00:00:00.000Z',
+      hostPlatform: 'win32' as const,
+      runtimePlatform: 'win32',
+      trigger: 'preflight' as const,
+      observedProcesses: [{ imageName: 'LabVIEW.exe', pid: 4321 }],
+      observedProcessNames: ['LabVIEW.exe'],
+      labviewProcessObserved: true,
+      labviewCliProcessObserved: false,
+      lvcompareProcessObserved: false,
+      labviewProcessBitness: bitness,
+      labviewProcessExecutablePath: executablePath
+    };
+  }
+
+  it('selects the container provider when no host-native LabVIEW runtime is located', async () => {
+    const selection = await locateComparisonRuntime(
+      'win32',
+      { labviewVersion: '2026', bitness: 'x64' },
+      {
+        pathExists: vi.fn().mockResolvedValue(false),
+        queryWindowsRegistry: vi.fn().mockResolvedValue(''),
+        queryWindowsContainerProviderFacts: vi.fn().mockResolvedValue(fallThroughContainerFacts())
+      }
+    );
+
+    expect(selection.provider).toBe('windows-container');
+    expect(selection.notes.join('\n')).toContain(
+      'No compatible host-native LabVIEW 2025 or newer runtime was located'
+    );
+    expect(selection.providerDecisions).toContainEqual(
+      expect.objectContaining({
+        provider: 'windows-container',
+        outcome: 'selected',
+        reason: 'windows-container-selected-host-runtime-unavailable'
+      })
+    );
+  });
+
+  it('selects the container provider when the validated host runtime surface is contaminated', async () => {
+    const selection = await locateComparisonRuntime(
+      'win32',
+      { labviewVersion: '2026', bitness: 'x64' },
+      {
+        pathExists: pathExistsFor([WINDOWS_LABVIEW_2026_X64, WINDOWS_LABVIEW_CLI_X86]),
+        queryWindowsRegistry: vi.fn().mockResolvedValue(''),
+        queryWindowsContainerProviderFacts: vi.fn().mockResolvedValue(fallThroughContainerFacts()),
+        readFile: vi.fn().mockRejectedValue(new Error('no ini')) as never,
+        observeWindowsProcesses: vi
+          .fn()
+          .mockResolvedValue(runningLabviewObservation('x64', WINDOWS_LABVIEW_2026_X64)) as never,
+        observeWindowsTcpListeners: vi.fn().mockResolvedValue([]) as never
+      }
+    );
+
+    expect(selection.provider).toBe('windows-container');
+    expect(selection.notes.join('\n')).toContain('contaminated');
+    expect(selection.providerDecisions).toContainEqual(
+      expect.objectContaining({
+        provider: 'windows-container',
+        outcome: 'selected',
+        reason: 'auto-required-docker-because-host-runtime-conflict'
+      })
+    );
+  });
+
+  it('selects the container provider when host LabVIEW exists but no host comparison tool is located', async () => {
+    const selection = await locateComparisonRuntime(
+      'win32',
+      { labviewVersion: '2026', bitness: 'x64' },
+      {
+        pathExists: pathExistsFor([WINDOWS_LABVIEW_2026_X64]),
+        queryWindowsRegistry: vi.fn().mockResolvedValue(''),
+        queryWindowsContainerProviderFacts: vi.fn().mockResolvedValue(fallThroughContainerFacts()),
+        ...quietWindowsHostSurfaceDeps()
+      }
+    );
+
+    expect(selection.provider).toBe('windows-container');
+    expect(selection.notes.join('\n')).toContain('no host comparison tool');
+    expect(selection.providerDecisions).toContainEqual(
+      expect.objectContaining({
+        provider: 'windows-container',
+        outcome: 'selected',
+        reason: 'windows-container-selected-because-host-comparison-tool-missing'
+      })
+    );
+  });
+
+  it('requires clearing a contaminated x86 host surface because x86 stays host-native', async () => {
+    const selection = await locateComparisonRuntime(
+      'win32',
+      { executionMode: 'auto', labviewVersion: '2026', bitness: 'x86' },
+      {
+        pathExists: pathExistsFor([WINDOWS_LABVIEW_2026_X86, WINDOWS_LABVIEW_CLI_X86]),
+        queryWindowsRegistry: vi.fn().mockResolvedValue(''),
+        // Docker reported absent so the first auto probe falls through to the
+        // host-native lane, where the x86 contamination branch applies.
+        queryWindowsContainerProviderFacts: vi.fn().mockResolvedValue(
+          windowsContainerFacts({
+            dockerCliAvailable: false,
+            dockerDaemonReachable: false,
+            windowsContainerCapabilityAvailable: false,
+            windowsContainerHostMode: undefined,
+            imageAvailable: false
+          })
+        ),
+        readFile: vi.fn().mockRejectedValue(new Error('no ini')) as never,
+        observeWindowsProcesses: vi
+          .fn()
+          .mockResolvedValue(runningLabviewObservation('x86', WINDOWS_LABVIEW_2026_X86)) as never,
+        observeWindowsTcpListeners: vi.fn().mockResolvedValue([]) as never
+      }
+    );
+
+    expect(selection).toMatchObject({
+      provider: 'unavailable',
+      blockedReason: 'windows-host-runtime-surface-contaminated'
+    });
+    expect(selection.notes.join('\n')).toContain('Windows x86 execution remains host-native');
+  });
+});
+
+describe('comparisonRuntimeLocator legacy queryWindowsContainerImage probe (VHS-REQ-642)', () => {
+  it('derives available Windows container facts from the legacy image-inspect probe', async () => {
+    const queryImage = vi.fn().mockResolvedValue(true);
+    const selection = await locateComparisonRuntime(
+      'win32',
+      { executionMode: 'docker-only', labviewVersion: '2026', bitness: 'x64' },
+      { hostPlatform: 'win32', queryWindowsContainerImage: queryImage }
+    );
+
+    expect(queryImage).toHaveBeenCalledWith('nationalinstruments/labview:2026q1-windows', 'win32');
+    expect(selection).toMatchObject({
+      provider: 'windows-container',
+      dockerCliAvailable: true,
+      containerImageAvailable: true
+    });
+  });
+
+  it('derives unavailable Windows container facts when the legacy probe misses the image', async () => {
+    const queryImage = vi.fn().mockResolvedValue(false);
+    const selection = await locateComparisonRuntime(
+      'win32',
+      { executionMode: 'docker-only', labviewVersion: '2026', bitness: 'x64' },
+      { hostPlatform: 'win32', queryWindowsContainerImage: queryImage }
+    );
+
+    expect(selection).toMatchObject({
+      provider: 'unavailable',
+      blockedReason: 'docker-only-provider-unavailable',
+      dockerCliAvailable: false
+    });
+  });
+});
+
+describe('comparisonRuntimeLocator ambiguous host LabVIEW resolution (VHS-REQ-634.1)', () => {
+  it('blocks when the registry and documented scan resolve two matching LabVIEW executables', async () => {
+    const registryInstallDir = 'D:\\Program Files\\National Instruments\\LabVIEW 2026\\';
+    const registryExe = `${registryInstallDir}LabVIEW.exe`;
+    const selection = await locateComparisonRuntime(
+      'win32',
+      {
+        requestedProvider: 'host',
+        requireVersionAndBitness: true,
+        labviewVersion: '2026',
+        bitness: 'x64'
+      },
+      {
+        pathExists: pathExistsFor([WINDOWS_LABVIEW_2026_X64, registryExe, WINDOWS_LABVIEW_CLI_X86]),
+        queryWindowsRegistry: vi.fn().mockResolvedValue(
+          [
+            'HKEY_LOCAL_MACHINE\\SOFTWARE\\National Instruments\\LabVIEW\\26.0',
+            `    Path    REG_SZ    ${registryInstallDir}`,
+            ''
+          ].join('\r\n')
+        ),
+        ...quietWindowsHostSurfaceDeps()
+      }
+    );
+
+    expect(selection).toMatchObject({
+      provider: 'unavailable',
+      blockedReason: 'labview-exe-ambiguous'
+    });
+    expect(selection.notes.join('\n')).toContain('multiple supported LabVIEW 2026 x64');
+    const hostDecision = selection.providerDecisions?.find(
+      (decision) => decision.provider === 'host-native' && decision.outcome === 'rejected'
+    );
+    expect(hostDecision?.reason).toBe('host-native-labview-exe-ambiguous');
+    expect(hostDecision?.detail).toContain('multiple supported LabVIEW executables');
+  });
+});
+
+describe('comparisonRuntimeLocator platform-specific runtime resolution (VHS-REQ-632, VHS-REQ-657)', () => {
+  it('produces no documented runtime candidates on macOS', () => {
+    expect(buildDocumentedRuntimeCandidates('darwin')).toEqual([]);
+  });
+
+  it('rejects the linux container provider when the requested provider is invalid on linux', async () => {
+    const selection = await locateComparisonRuntime('linux', {
+      invalidRequestedProvider: 'cloud',
+      labviewVersion: '2026',
+      bitness: 'x64'
+    });
+
+    expect(selection).toMatchObject({
+      provider: 'unavailable',
+      blockedReason: 'installed-provider-invalid'
+    });
+    expect(selection.providerDecisions).toContainEqual(
+      expect.objectContaining({
+        provider: 'linux-container',
+        outcome: 'rejected',
+        reason: 'invalid-installed-provider'
+      })
+    );
+  });
+
+  it('reports docker-only execution as unsupported on an out-of-contract platform', async () => {
+    const selection = await locateComparisonRuntime(
+      'freebsd' as never,
+      { executionMode: 'docker-only', labviewVersion: '2026', bitness: 'x64' },
+      {
+        hostPlatform: 'linux',
+        queryWindowsContainerProviderFacts: vi
+          .fn()
+          .mockResolvedValue(windowsContainerFacts({ hostPlatform: 'linux' }))
+      }
+    );
+
+    expect(selection).toMatchObject({
+      provider: 'unavailable',
+      blockedReason: 'docker-only-provider-not-supported-on-platform'
+    });
+    expect(selection.notes.join('\n')).toContain('Windows hosts and Linux hosts');
+  });
+
+  it('selects host-native LabVIEWCLI on linux when a documented CLI and LabVIEW are present (VHS-REQ-632.3)', async () => {
+    const linuxCandidates = buildDocumentedRuntimeCandidates('linux');
+    const linuxExe = linuxCandidates.find((candidate) => candidate.kind === 'labview-exe')!.path;
+    const linuxCli = linuxCandidates.find((candidate) => candidate.kind === 'labview-cli')!.path;
+    const selection = await locateComparisonRuntime(
+      'linux',
+      { requestedProvider: 'host' },
+      { hostPlatform: 'linux', pathExists: pathExistsFor([linuxExe, linuxCli]) }
+    );
+
+    expect(selection).toMatchObject({
+      provider: 'host-native',
+      engine: 'labview-cli'
+    });
+    expect(selection.labviewExe?.path).toBe(linuxExe);
+    expect(selection.labviewCli?.path).toBe(linuxCli);
+  });
+
+  it('blocks linux host compare with only LVCompare present because LabVIEWCLI is canonical', async () => {
+    const linuxCandidates = buildDocumentedRuntimeCandidates('linux');
+    const linuxExe = linuxCandidates.find((candidate) => candidate.kind === 'labview-exe')!.path;
+    const linuxLvCompare = linuxCandidates.find((candidate) => candidate.kind === 'lvcompare')!.path;
+    const selection = await locateComparisonRuntime(
+      'linux',
+      { requestedProvider: 'host' },
+      { hostPlatform: 'linux', pathExists: pathExistsFor([linuxExe, linuxLvCompare]) }
+    );
+
+    expect(selection).toMatchObject({
+      provider: 'unavailable',
+      blockedReason: 'canonical-labview-cli-not-found'
+    });
+    expect(selection.notes.join('\n')).toContain('LVCompare remains an internal parity-only surface');
+  });
+
+  it('reports the best-effort linux guidance when only LabVIEW (no comparison tool) is present', async () => {
+    const linuxCandidates = buildDocumentedRuntimeCandidates('linux');
+    const linuxExe = linuxCandidates.find((candidate) => candidate.kind === 'labview-exe')!.path;
+    const selection = await locateComparisonRuntime(
+      'linux',
+      { requestedProvider: 'host' },
+      { hostPlatform: 'linux', pathExists: pathExistsFor([linuxExe]) }
+    );
+
+    expect(selection).toMatchObject({
+      provider: 'unavailable',
+      blockedReason: 'comparison-tool-not-found'
+    });
+    expect(selection.notes.join('\n')).toContain('Linux report generation remains best-effort');
+    expect(selection.notes.join('\n')).toContain('Install LabVIEWCLI');
+  });
+
+  it('reports no located LabVIEW executable on linux when nothing is on disk', async () => {
+    const selection = await locateComparisonRuntime(
+      'linux',
+      { requestedProvider: 'host' },
+      { hostPlatform: 'linux', pathExists: vi.fn().mockResolvedValue(false) }
+    );
+
+    expect(selection).toMatchObject({
+      provider: 'unavailable',
+      blockedReason: 'labview-exe-not-found'
+    });
+  });
+});
+
+describe('comparisonRuntimeLocator linux container image override suppresses version conflict (VHS-REQ-650)', () => {
+  it('does not flag a platform mismatch when a linux image override governs a linux-container host mode (VHS-REQ-650.1, VHS-REQ-650.5)', async () => {
+    // The linux-side of the active-platform override branch: a linux image
+    // override plus a linux-container host mode makes the conflicting windows
+    // version token moot, so the selection proceeds instead of failing closed.
+    const query = vi.fn().mockResolvedValue(
+      windowsContainerFacts({
+        image: 'nationalinstruments/labview:2026q1patch4-linux',
+        provider: 'linux-container',
+        runtimePlatform: 'linux',
+        windowsContainerHostMode: 'linux'
+      })
+    );
+    const selection = await locateComparisonRuntime(
+      'win32',
+      {
+        labviewVersion: '2026',
+        bitness: 'x64',
+        containerImageVersion: '2026q1-windows',
+        linuxContainerImage: 'nationalinstruments/labview:2026q1patch4-linux'
+      },
+      {
+        pathExists: vi.fn().mockResolvedValue(false),
+        queryWindowsRegistry: vi.fn().mockResolvedValue(''),
+        queryWindowsContainerProviderFacts: query
+      }
+    );
+
+    expect(selection.blockedReason).not.toBe('container-image-platform-mismatch');
+    expect(selection.provider).toBe('linux-container');
+  });
+});
+
+describe('comparisonRuntimeLocator Docker-unavailable fallback notes (VHS-REQ-621, VHS-REQ-642)', () => {
+  function dockerAbsentFacts(): WindowsContainerProviderFacts {
+    return windowsContainerFacts({
+      dockerCliAvailable: false,
+      dockerDaemonReachable: false,
+      windowsContainerCapabilityAvailable: false,
+      windowsContainerHostMode: undefined,
+      imageAvailable: false
+    });
+  }
+
+  function runningLabviewObservation(bitness: 'x86' | 'x64', executablePath: string) {
+    return {
+      capturedAt: '2026-05-31T00:00:00.000Z',
+      hostPlatform: 'win32' as const,
+      runtimePlatform: 'win32',
+      trigger: 'preflight' as const,
+      observedProcesses: [{ imageName: 'LabVIEW.exe', pid: 4321 }],
+      observedProcessNames: ['LabVIEW.exe'],
+      labviewProcessObserved: true,
+      labviewCliProcessObserved: false,
+      lvcompareProcessObserved: false,
+      labviewProcessBitness: bitness,
+      labviewProcessExecutablePath: executablePath
+    };
+  }
+
+  it('notes the unavailable Docker provider when neither a host runtime nor a container is available', async () => {
+    const selection = await locateComparisonRuntime(
+      'win32',
+      { labviewVersion: '2026', bitness: 'x64' },
+      {
+        pathExists: vi.fn().mockResolvedValue(false),
+        queryWindowsRegistry: vi.fn().mockResolvedValue(''),
+        queryWindowsContainerProviderFacts: vi.fn().mockResolvedValue(dockerAbsentFacts())
+      }
+    );
+
+    // The `labview-exe-not-found` return builds its own guidance notes, so the
+    // interim "container unavailable" note (which this case exercises) is not
+    // itself surfaced; the assertion pins the returned guidance instead.
+    expect(selection).toMatchObject({
+      provider: 'unavailable',
+      blockedReason: 'labview-exe-not-found'
+    });
+    expect(selection.notes.join('\n')).toContain(
+      'No supported LabVIEW 2026 runtime was located for report generation'
+    );
+  });
+
+  it('notes the unavailable Docker provider when the host surface is contaminated with no container', async () => {
+    const selection = await locateComparisonRuntime(
+      'win32',
+      { labviewVersion: '2026', bitness: 'x64' },
+      {
+        pathExists: pathExistsFor([WINDOWS_LABVIEW_2026_X64, WINDOWS_LABVIEW_CLI_X86]),
+        queryWindowsRegistry: vi.fn().mockResolvedValue(''),
+        queryWindowsContainerProviderFacts: vi.fn().mockResolvedValue(dockerAbsentFacts()),
+        readFile: vi.fn().mockRejectedValue(new Error('no ini')) as never,
+        observeWindowsProcesses: vi
+          .fn()
+          .mockResolvedValue(runningLabviewObservation('x64', WINDOWS_LABVIEW_2026_X64)) as never,
+        observeWindowsTcpListeners: vi.fn().mockResolvedValue([]) as never
+      }
+    );
+
+    expect(selection).toMatchObject({
+      provider: 'unavailable',
+      blockedReason: 'windows-host-runtime-surface-contaminated'
+    });
+    expect(selection.notes.join('\n')).toContain(
+      'Validated Windows host runtime surface required Docker, but'
+    );
+  });
+
+  it('notes the unavailable Docker provider when host LabVIEW exists but no comparison tool or container is available', async () => {
+    const selection = await locateComparisonRuntime(
+      'win32',
+      { labviewVersion: '2026', bitness: 'x64' },
+      {
+        pathExists: pathExistsFor([WINDOWS_LABVIEW_2026_X64]),
+        queryWindowsRegistry: vi.fn().mockResolvedValue(''),
+        queryWindowsContainerProviderFacts: vi.fn().mockResolvedValue(dockerAbsentFacts()),
+        ...quietWindowsHostSurfaceDeps()
+      }
+    );
+
+    expect(selection).toMatchObject({
+      provider: 'unavailable',
+      blockedReason: 'comparison-tool-not-found'
+    });
+    expect(selection.notes.join('\n')).toContain('The Docker provider was not available because');
+  });
+
+  it('names the daemon-unreachable reason for docker-only when the CLI is present but the daemon is down', async () => {
+    const selection = await locateComparisonRuntime(
+      'win32',
+      { executionMode: 'docker-only', labviewVersion: '2026', bitness: 'x64' },
+      {
+        queryWindowsContainerProviderFacts: vi.fn().mockResolvedValue(
+          windowsContainerFacts({
+            dockerCliAvailable: true,
+            dockerDaemonReachable: false,
+            windowsContainerCapabilityAvailable: false,
+            windowsContainerHostMode: undefined,
+            imageAvailable: false
+          })
+        )
+      }
+    );
+
+    expect(selection).toMatchObject({
+      provider: 'unavailable',
+      blockedReason: 'docker-only-provider-unavailable'
+    });
+    expect(selection.notes.join('\n')).toContain('the Docker daemon was not reachable');
+  });
+
+  it('names the unconfirmed-engine reason for docker-only when the container mode is unknown', async () => {
+    const selection = await locateComparisonRuntime(
+      'win32',
+      { executionMode: 'docker-only', labviewVersion: '2026', bitness: 'x64' },
+      {
+        queryWindowsContainerProviderFacts: vi.fn().mockResolvedValue(
+          windowsContainerFacts({
+            dockerCliAvailable: true,
+            dockerDaemonReachable: true,
+            windowsContainerCapabilityAvailable: false,
+            windowsContainerHostMode: 'unknown',
+            imageAvailable: false
+          })
+        )
+      }
+    );
+
+    expect(selection).toMatchObject({
+      provider: 'unavailable',
+      blockedReason: 'docker-only-provider-unavailable'
+    });
+    expect(selection.notes.join('\n')).toContain('could not be confirmed');
+  });
+});
+
+describe('acquireWindowsContainerImage stream progress gating (VHS-REQ-654)', () => {
+  const image = 'nationalinstruments/labview:2026q1-windows';
+
+  it('skips a progress emit while the pull snapshot has no computable percentage yet (VHS-REQ-654.2)', async () => {
+    const updates: Array<{ message: string; increment?: number }> = [];
+    const streamPull = vi.fn(async (options: { onProgress?: (snap: unknown) => void | Promise<void> }) => {
+      // A percent-less snapshot (no download/overall percent) must not emit a toast.
+      await options.onProgress?.({
+        downloadedBytes: 0,
+        totalBytes: 0,
+        completedLayers: 0,
+        totalLayers: 2
+      });
+      await options.onProgress?.({
+        percent: 40,
+        downloadedBytes: 1,
+        totalBytes: 2,
+        completedLayers: 1,
+        totalLayers: 2
+      });
+      return { attempted: true, succeeded: true, statusLines: [] };
+    });
+
+    const result = await acquireWindowsContainerImage(image, 'win32', {
+      streamPull: streamPull as never,
+      reportProgress: (update) => {
+        updates.push(update);
+      }
+    });
+
+    expect(result.acquisitionState).toBe('acquired');
+    // Only the second (percentaged) snapshot produced a pull toast before "ready".
+    const pullUpdates = updates.filter((update) => update.message.includes('Pulling container image'));
+    expect(pullUpdates).toHaveLength(1);
+    expect(pullUpdates[0].message).toContain('40%');
   });
 });

@@ -1,5 +1,5 @@
 /**
- * VHS-REQ-645: unit tests for the comparison-report option settings writer used
+ * VHS-REQ-645.5: unit tests for the comparison-report option settings writer used
  * by the Runtime & Report Settings panel. Confirms the Include-checkbox to
  * `report.ignore*` inversion and the format allow-list guard.
  */
@@ -15,7 +15,7 @@ import * as vscode from 'vscode';
 
 import { applyComparisonReportOptionSelection } from '../../src/reporting/comparisonReportAction';
 
-describe('applyComparisonReportOptionSelection (VHS-REQ-645)', () => {
+describe('applyComparisonReportOptionSelection (VHS-REQ-645.5)', () => {
   it('writes ignore=true when an include checkbox is deselected', async () => {
     const update = vi.fn(async () => undefined);
     await applyComparisonReportOptionSelection(
