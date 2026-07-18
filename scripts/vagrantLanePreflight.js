@@ -84,6 +84,9 @@ function boxIsRegistered(stdout, boxName) {
 /**
  * Parse `vagrant status` output into a lifecycle state.
  * Example line: "  vihs-local-win11         not created (virtualbox)".
+ * Recognizes the VirtualBox provider lifecycle states Vagrant reports: not
+ * created, running, poweroff, saved, aborted, stopped, stopping, paused, and
+ * inaccessible.
  * @param {string} stdout
  * @returns {{ state: string|null }}
  */
@@ -92,7 +95,7 @@ function parseVagrantStatus(stdout) {
     return { state: null };
   }
   const match = stdout.match(
-    /^\s*\S+\s+(not created|running|poweroff|saved|aborted|stopped)\b/im
+    /^\s*\S+\s+(not created|running|poweroff|saved|aborted|stopped|stopping|paused|inaccessible)\b/im
   );
   return { state: match ? match[1] : null };
 }

@@ -89,6 +89,12 @@ describe('vagrantLanePreflight parsers', () => {
     expect(parseVagrantStatus('  vihs-local-win11   running (virtualbox)').state).toBe('running');
     expect(parseVagrantStatus('no recognizable line').state).toBeNull();
   });
+
+  it('parses the extended VirtualBox lifecycle states', () => {
+    for (const state of ['poweroff', 'saved', 'aborted', 'stopped', 'stopping', 'paused', 'inaccessible']) {
+      expect(parseVagrantStatus(`  vihs-local-win11   ${state} (virtualbox)`).state).toBe(state);
+    }
+  });
 });
 
 describe('inspectVagrantLane', () => {
