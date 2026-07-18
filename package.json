@@ -244,6 +244,11 @@
           "default": "docker-only",
           "description": "After you open a VI preview, whether VI History quietly pre-renders the other VIs in the workspace so they open instantly, shown as a caching percentage in the status bar. Docker-only (default) skips this when using Host so your LabVIEW stays free; choose Always to see caching progress on Host too."
         },
+        "viHistorySuite.preview.blockDiagramInteractive": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show the VI block diagram as an interactive view instead of a static picture: pan by dragging, zoom with Ctrl/Cmd+scroll, and step through each Case/Event/Sequence structure's cases in place with the ◀ n/N ▶ selector or the arrow keys. Off by default (the static document view is shown). Requires VI Preview to be on."
+        },
         "viHistorySuite.preview.warmOnChange": {
           "type": "boolean",
           "default": true,

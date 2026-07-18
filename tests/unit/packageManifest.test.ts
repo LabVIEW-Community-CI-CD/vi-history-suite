@@ -322,6 +322,16 @@ describe('extension manifest public metadata', () => {
     });
   });
 
+  it('keeps the interactive block-diagram presentation opt-in (VHS-REQ-659.19)', () => {
+    const manifest = readManifest();
+    const properties = manifest.contributes?.configuration?.properties ?? {};
+
+    expect(properties['viHistorySuite.preview.blockDiagramInteractive']).toMatchObject({
+      type: 'boolean',
+      default: false
+    });
+  });
+
   it('contributes the VI Preview custom editor at default priority (VHS-REQ-659.8)', () => {
     const manifest = readManifest();
     const editor = manifest.contributes?.customEditors?.find(

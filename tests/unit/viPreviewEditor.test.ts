@@ -25,7 +25,10 @@ vi.mock('vscode', () => ({
   workspace: {
     get isTrusted() {
       return workspaceTrusted.value;
-    }
+    },
+    getConfiguration: () => ({
+      get: (_key: string, fallback: unknown) => fallback
+    })
   }
 }));
 

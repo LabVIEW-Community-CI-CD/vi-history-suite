@@ -1,4 +1,5 @@
 import * as path from 'node:path';
+import { randomBytes } from 'node:crypto';
 
 import * as vscode from 'vscode';
 
@@ -8,6 +9,7 @@ import {
   type RenderViPreviewForFileResult
 } from '../reporting/viPreview/viPreviewFileRender';
 import { buildViPreviewWebviewHtml } from '../reporting/viPreview/viPreviewWebview';
+import { selectViPreviewDocument } from '../reporting/viPreview/viPreviewRenderMode';
 import { toViPreviewSessionRuntime } from '../reporting/viPreview/viPreviewSessionRuntime';
 import {
   buildViPreviewRenderDeps,
@@ -30,6 +32,18 @@ import type { ViPreviewSessionManager } from './viPreviewSessionManager';
  */
 
 export const VI_PREVIEW_VIEW_TYPE = 'viHistorySuite.viPreview';
+
+/**
+ * Whether the interactive block-diagram presentation is enabled
+ * (`viHistorySuite.preview.blockDiagramInteractive`, default false). When on,
+ * the editor renders the scripted in-place case-stepper viewer; otherwise it
+ * shows the static, script-free document. (VHS-REQ-659.)
+ */
+function isBlockDiagramInteractiveEnabled(): boolean {
+  return vscode.workspace
+    .getConfiguration('viHistorySuite')
+    .get<boolean>('preview.blockDiagramInteractive', false);
+}
 
 export interface RegisterViPreviewCustomEditorOptions {
   /** Invoked with the VI path after a preview renders successfully (drives cache warming). */
@@ -184,10 +198,21 @@ class ViPreviewEditorProvider implements vscode.CustomReadonlyEditorProvider<ViP
         }
 
         if (result.outcome === 'rendered' && result.html) {
-          webviewPanel.webview.html = buildViPreviewWebviewHtml({
-            kind: 'rendered',
-            labviewHtml: result.html
+          // Interactive block-diagram mode runs an inline (nonce'd) script in
+          // the webview; the static document mode does not. Enable scripts and
+          // mint a per-load nonce (shared by the webview options and the viewer
+          // CSP) only for the interactive presentation. (VHS-REQ-659.)
+          const interactive = isBlockDiagramInteractiveEnabled();
+          const nonce = interactive ? randomBytes(16).toString('base64') : undefined;
+          if (interactive) {
+            webviewPanel.webview.options = { enableScripts: true };
+          }
+          const selected = selectViPreviewDocument({
+            labviewHtml: result.html,
+            mode: interactive ? 'interactive' : 'document',
+            nonce
           });
+          webviewPanel.webview.html = selected.html;
           // Successful open signals user intent; warm the rest of the workspace.
           this.onPreviewOpened?.(document.uri.fsPath);
           return;
