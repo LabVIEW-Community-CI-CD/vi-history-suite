@@ -248,16 +248,33 @@ const VIEWER_SCRIPT = `
     zoomAt(zoom > 1 ? 1 : 2, e.clientX, e.clientY);
   });
 
+  // The content bounds are the union of the root image and every frame rect,
+  // so synthesized case steppers stacked below the root diagram (flat-export
+  // fallback) are included in the stage size and the Fit target instead of
+  // being clipped outside the fitted viewport.
+  function contentBounds(w, h) {
+    var right = w, bottom = h;
+    for (var i = 0; i < frames.length; i += 1) {
+      var r = rectOf(frames[i]);
+      var fr = (r.left || 0) + (r.width || 0);
+      var fb = (r.top || 0) + (r.height || 0);
+      if (fr > right) { right = fr; }
+      if (fb > bottom) { bottom = fb; }
+    }
+    return { width: right, height: bottom };
+  }
+
   var rootRect = rectOf(frames[rootIndex]);
   var probe = new Image();
   probe.onload = probe.onerror = function () {
     var w = probe.naturalWidth || rootRect.width || 800;
     var h = probe.naturalHeight || rootRect.height || 600;
-    stage.style.width = w + 'px'; stage.style.height = h + 'px';
+    var bounds = contentBounds(w, h);
+    stage.style.width = bounds.width + 'px'; stage.style.height = bounds.height + 'px';
     paintFrame(rootIndex, root);
-    fit(w, h);
-    (window.requestAnimationFrame || function (f) { f(); })(function () { fit(w, h); });
-    resetBtn.__w = w; resetBtn.__h = h;
+    fit(bounds.width, bounds.height);
+    (window.requestAnimationFrame || function (f) { f(); })(function () { fit(bounds.width, bounds.height); });
+    resetBtn.__w = bounds.width; resetBtn.__h = bounds.height;
   };
   probe.src = (frames[rootIndex] && frames[rootIndex].image) || '';
 
