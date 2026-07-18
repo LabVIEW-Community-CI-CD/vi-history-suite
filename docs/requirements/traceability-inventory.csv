@@ -56,6 +56,7 @@ src/reporting/comparisonReportExecutionPlan.ts,mapped,Yes,Comparison execution p
 src/reporting/comparisonReportExport.ts,mapped,Yes,Comparison report export to an accessible location for external browser viewing plus the source VI path threaded for report re-entry; mapped to VHS-REQ-626 and VHS-REQ-638.
 src/reporting/comparisonReportContextMarkup.ts,mapped,Yes,Shared revision-context renderer used by the in-panel comparison report and the exported graphics report; mapped to VHS-REQ-626 and VHS-REQ-644.
 src/reporting/comparisonReportPacket.ts,mapped,Yes,Comparison report packet; mapped through RTM.
+src/reporting/comparisonReportPacketHtmlValues.ts,supporting,No,"Pure packet HTML value renderers (renderRevisionBodyValue, renderRevisionMetadataValue, renderOptionalYesNo) extracted verbatim from comparisonReportPacket and imported back to preserve behavior while isolating muted-placeholder/HTML-escaped revision-metadata and tri-state yes/no value rendering from packet HTML orchestration; supporting VHS-REQ-643."
 src/reporting/comparisonReportPlan.ts,mapped,Yes,Comparison report plan; mapped through RTM.
 src/reporting/comparisonReportPreflight.ts,mapped,Yes,Comparison report preflight; mapped through RTM.
 src/reporting/comparisonReportRuntimeExecution.ts,mapped,Yes,Comparison runtime execution; mapped through RTM.
