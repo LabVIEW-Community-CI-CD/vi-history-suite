@@ -196,15 +196,21 @@ class ViPreviewEditorProvider implements vscode.CustomReadonlyEditorProvider<ViP
       // cache and visualize (troubleshoot without Docker); when that is on we
       // fall through to the normal render path below. (VHS-REQ-659.)
       if (runtime.runtime.provider === 'host-native' && !isHostNativeRenderAllowed()) {
-        const cachedSource = await resolveViPreviewRenderSource(
-          document.uri,
-          buildViPreviewRenderSourceDeps(document.uri)
-        );
-        try {
+        // The render cache is keyed by staged-file path/size/mtime. Only a
+        // directly-opened on-disk `file` VI has stable mtimes that match the
+        // entry a Docker render produced from the same on-disk file, so the
+        // cache-only peek is reliable there. A materialized source (the `git`
+        // diff base or a `previewRevision` temp tree) is staged into a fresh
+        // temp directory with new mtimes, so its key can never match the
+        // Docker-generated entry — peeking would always miss and wrongly show
+        // the "generate on Docker" guidance even after it was generated. So we
+        // peek only for `file` URIs and send materialized sources straight to
+        // the guidance. (VHS-REQ-659.)
+        if (document.uri.scheme === 'file') {
           const cachePeek = await renderViPreviewForFile(
             {
               runtime: runtime.runtime,
-              viFilePath: cachedSource.renderPath,
+              viFilePath: document.uri.fsPath,
               operationDirectory: getViPreviewOperationDirectory(this.context),
               cacheOnly: true
             },
@@ -214,8 +220,6 @@ class ViPreviewEditorProvider implements vscode.CustomReadonlyEditorProvider<ViP
             this.renderResultToWebview(webviewPanel, cachePeek.html, document.uri.fsPath);
             return;
           }
-        } finally {
-          await cachedSource.cleanup();
         }
         webviewPanel.webview.html = buildViPreviewWebviewHtml({
           kind: 'error',
