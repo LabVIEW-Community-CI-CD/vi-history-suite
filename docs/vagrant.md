@@ -52,12 +52,18 @@ validation attestation for the exact release version. Produce it with:
 npm run vagrant:validate:release
 ```
 
-This brings the guest up (self-healing its account at boot), runs the shipped
+This first **consumes the dev-tools prerelease**: it builds the prerelease
+provenance manifest (`scripts/buildDevToolsRelease.js --channel prerelease`) and
+self-verifies the in-tree toolset against it fail-closed
+(`scripts/verifyDevToolsRelease.js --verify-self`), proving the synced tree the
+guest validates is the content-addressed prerelease toolset (VHS-REQ-667). It
+then brings the guest up (self-healing its account at boot), runs the shipped
 comparison primitives in-guest against the icon-editor `lv_icon.vi` fixture
 (x86 host-native headless, VHS-REQ-665), and — only on a passing comparison —
 records a release-gating attestation into
 `docs/requirements/runtime-validation-ledger.json` (track
-`vagrant-win-x86-hostnative`) via `scripts/recordRuntimeValidation.js`. Commit
+`vagrant-win-x86-hostnative`) via `scripts/recordRuntimeValidation.js`, binding
+the verified prerelease `contentDigest` into the attestation evidence. Commit
 the updated ledger.
 
 Verify the gate locally before opening the release PR:
