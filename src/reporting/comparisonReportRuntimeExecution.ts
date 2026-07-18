@@ -19,9 +19,8 @@ import {
   shouldCaptureLinuxHeadlessDiagnostics,
   shouldAttemptLinuxHeadlessRecovery
 } from './runtime/linuxHeadlessPredicates';
-import {
-  shouldAttemptWindowsHeadlessRecovery
-} from './runtime/windowsHeadlessPredicates';
+import { shouldAttemptWindowsHeadlessRecovery } from './runtime/windowsHeadlessPredicates';
+import { buildWindowsContainerDirectCommandScript } from './runtime/windowsContainerDirectCommandScript';
 import {
   describeObservedRuntimeProcesses,
   describeObservedWindowsTcpListeners
@@ -54,7 +53,6 @@ import {
   encodeWindowsPowerShellScript,
   quotePowerShellLiteral,
   quoteBashLiteral,
-  buildWindowsPowerShellArrayLiteral,
   buildBashArrayLiteral
 } from './runtime/shellScriptEncoding';
 import { parseWindowsContainerRuntimeFacts } from './runtime/windowsContainerRuntimeFacts';
@@ -3558,24 +3556,6 @@ export function rewriteLabviewCliArgsForLinuxContainerWorkspace(
   }
 
   return rewritten.length > 0 ? rewritten : undefined;
-}
-
-function buildWindowsContainerDirectCommandScript(executable: string, args: string[]): string {
-  return [
-    "$ErrorActionPreference = 'Stop'",
-    "$ProgressPreference = 'SilentlyContinue'",
-    `$executable = ${quotePowerShellLiteral(executable)}`,
-    `$args = ${buildWindowsPowerShellArrayLiteral(args)}`,
-    "$previousErrorActionPreference = $ErrorActionPreference",
-    "$ErrorActionPreference = 'Continue'",
-    'try {',
-    '  $output = @(& $executable @args 2>&1)',
-    '} finally {',
-    '  $ErrorActionPreference = $previousErrorActionPreference',
-    '}',
-    '$output | ForEach-Object { if (-not [string]::IsNullOrWhiteSpace([string]$_)) { Write-Output $_ } }',
-    'exit $LASTEXITCODE'
-  ].join('\n');
 }
 
 async function copyReportAssetsDirectory(
