@@ -41,6 +41,7 @@ import {
   ComparisonReportRevisionMetadata,
   persistComparisonReportPacket
 } from './comparisonReportPacket';
+import { deriveComparisonBlockedReason } from './comparisonBlockedReason';
 import { executeComparisonReport, materializeSelectedRevisionTreeWithGit } from './comparisonReportRuntimeExecution';
 import { ComparisonReportExportRegistry } from './comparisonReportExport';
 import { ComparisonReportOptions } from './comparisonReportPlan';
@@ -792,16 +793,6 @@ function canArchiveComparisonReport(
       record.artifactPlan.reportFilename &&
       record.artifactPlan.packetFilename
   );
-}
-
-function deriveComparisonBlockedReason(
-  record: Awaited<ReturnType<typeof persistComparisonReportPacket>>['record']
-): string | undefined {
-  return record.reportStatus === 'blocked-runtime'
-    ? record.runtimeSelection?.blockedReason
-    : record.reportStatus === 'blocked-preflight'
-      ? record.preflight?.blockedReason
-      : undefined;
 }
 
 function buildRetainedComparisonReportEvidenceResult(
