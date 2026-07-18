@@ -47,6 +47,7 @@ export { toRevisionMetadata } from './comparisonRevisionMetadata';
 import { buildCancelledComparisonReportResult } from './cancelledComparisonReportResult';
 import { buildRetainedComparisonReportEvidenceResult } from './retainedComparisonReportEvidenceResult';
 import { canArchiveComparisonReport } from './canArchiveComparisonReport';
+import { applyWindowsContainerAcquisitionResult } from './windowsContainerAcquisitionResult';
 import { executeComparisonReport, materializeSelectedRevisionTreeWithGit } from './comparisonReportRuntimeExecution';
 import { ComparisonReportExportRegistry } from './comparisonReportExport';
 import { ComparisonReportOptions } from './comparisonReportPlan';
@@ -707,44 +708,6 @@ async function ensureComparisonReportEvidence(
       retainedArchiveAvailable,
       archiveFailureReason
     })
-  };
-}
-
-function applyWindowsContainerAcquisitionResult(
-  runtimeSelection: Awaited<ReturnType<typeof locateComparisonRuntime>>,
-  acquisition: Awaited<ReturnType<typeof acquireWindowsContainerImage>>
-): Awaited<ReturnType<typeof locateComparisonRuntime>> {
-  if (acquisition.acquisitionState === 'acquired') {
-    return {
-      ...runtimeSelection,
-      containerImage: acquisition.image,
-      containerImageAvailable: true,
-      containerAcquisitionState: 'acquired',
-      windowsContainerImage: acquisition.image,
-      windowsContainerImageAvailable: true,
-      windowsContainerAcquisitionState: 'acquired',
-      notes: [
-        ...runtimeSelection.notes,
-        `Container image ${acquisition.image} was acquired before container launch.`,
-        ...acquisition.notes
-      ]
-    };
-  }
-
-  return {
-    ...runtimeSelection,
-    blockedReason: 'container-image-acquisition-failed',
-    containerImage: acquisition.image,
-    containerImageAvailable: false,
-    containerAcquisitionState: 'failed',
-    windowsContainerImage: acquisition.image,
-    windowsContainerImageAvailable: false,
-    windowsContainerAcquisitionState: 'failed',
-    notes: [
-      ...runtimeSelection.notes,
-      `Container image ${acquisition.image} could not be acquired before container launch.`,
-      ...acquisition.notes
-    ]
   };
 }
 
