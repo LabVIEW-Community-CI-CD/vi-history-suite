@@ -44,6 +44,7 @@ import {
 import { deriveComparisonBlockedReason } from './comparisonBlockedReason';
 import { toRevisionMetadata } from './comparisonRevisionMetadata';
 export { toRevisionMetadata } from './comparisonRevisionMetadata';
+import { buildCancelledComparisonReportResult } from './cancelledComparisonReportResult';
 import { executeComparisonReport, materializeSelectedRevisionTreeWithGit } from './comparisonReportRuntimeExecution';
 import { ComparisonReportExportRegistry } from './comparisonReportExport';
 import { ComparisonReportOptions } from './comparisonReportPlan';
@@ -743,35 +744,6 @@ function applyWindowsContainerAcquisitionResult(
       ...acquisition.notes
     ]
   };
-}
-
-function buildCancelledComparisonReportResult(
-  cancellationStage: string,
-  packet: Awaited<ReturnType<typeof persistComparisonReportPacket>> | Awaited<ReturnType<typeof executeComparisonReport>>,
-  options: {
-    retainedArchiveAvailable?: boolean;
-    archiveFailureReason?: ComparisonReportActionResult['archiveFailureReason'];
-  } = {}
-): ComparisonReportActionResult {
-  const result: ComparisonReportActionResult = {
-    outcome: 'cancelled',
-    cancellationStage,
-    reportStatus: packet.record.reportStatus,
-    runtimeExecutionState: packet.record.runtimeExecutionState,
-    blockedReason: deriveComparisonBlockedReason(packet.record),
-    runtimeFailureReason: packet.record.runtimeExecution.failureReason,
-    packetFilePath: packet.packetFilePath,
-    reportFilePath: packet.reportFilePath,
-    metadataFilePath: packet.metadataFilePath,
-    generatedReportExists: packet.record.runtimeExecution.reportExists
-  };
-  if (options.retainedArchiveAvailable !== undefined) {
-    result.retainedArchiveAvailable = options.retainedArchiveAvailable;
-  }
-  if (options.archiveFailureReason) {
-    result.archiveFailureReason = options.archiveFailureReason;
-  }
-  return result;
 }
 
 function canArchiveComparisonReport(
