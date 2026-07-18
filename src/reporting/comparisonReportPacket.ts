@@ -20,6 +20,7 @@ import { ComparisonRuntimeSelection } from './comparisonRuntimeLocator';
 import { ComparisonReportPreflightResult } from './comparisonReportPreflight';
 import { formatComparisonRevisionHashDisplay } from './comparisonRevisionHashDisplay';
 export { formatComparisonRevisionHashDisplay } from './comparisonRevisionHashDisplay';
+import { deriveProviderRequestLabel } from './comparisonProviderRequestLabel';
 
 export type ComparisonReportRuntimeExecutionState =
   | 'not-run'
@@ -503,22 +504,6 @@ export function renderComparisonReportPacketHtml(record: ComparisonReportPacketR
     </div>
   </body>
 </html>`;
-}
-
-function deriveProviderRequestLabel(runtimeSelection: ComparisonRuntimeSelection): string {
-  if (runtimeSelection.requestedProvider) {
-    return runtimeSelection.requestedProvider;
-  }
-
-  if (runtimeSelection.executionMode === 'host-only') {
-    return 'host';
-  }
-
-  if (runtimeSelection.executionMode === 'docker-only') {
-    return 'docker';
-  }
-
-  return runtimeSelection.executionMode ?? 'auto';
 }
 
 function buildInitialRuntimeExecution(
