@@ -1,4 +1,6 @@
 import { ComparisonCommandPlan } from '../comparisonReportPlan';
+import { resolveWindowsPowerShellHostExecutable } from '../runtime/shellScriptEncoding';
+export { resolveWindowsPowerShellHostExecutable } from '../runtime/shellScriptEncoding';
 
 /**
  * VHS-REQ-659: single-VI interactive preview command planning.
@@ -588,24 +590,6 @@ export const WINDOWS_CONTAINER_VI_PREVIEW_TEMP_ROOT = `${WINDOWS_CONTAINER_VI_PR
 
 /** Seconds to wait after a best-effort LabVIEW pre-launch before the CLI run. */
 const WINDOWS_CONTAINER_VI_PREVIEW_PRELAUNCH_WAIT_SECONDS = 8;
-
-/**
- * Resolves the host PowerShell executable that launches `docker run` for a
- * Windows-container render: `powershell.exe` on a Windows host, the WSL interop
- * path from a Linux host, otherwise undefined (Windows containers cannot run
- * from macOS). Pure mirror of the comparison runtime resolver.
- */
-export function resolveWindowsPowerShellHostExecutable(
-  processPlatform: NodeJS.Platform
-): string | undefined {
-  if (processPlatform === 'win32') {
-    return 'powershell.exe';
-  }
-  if (processPlatform === 'linux') {
-    return '/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe';
-  }
-  return undefined;
-}
 
 function quotePowerShellLiteral(value: string): string {
   return `'${value.replace(/'/g, "''")}'`;
