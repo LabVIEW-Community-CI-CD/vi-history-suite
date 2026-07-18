@@ -65,9 +65,13 @@ export {
 import {
   mergeDiagnosticNotes,
   buildProcessObservationNotes,
+  buildLinuxContainerBindMountVisibilityNote,
   extractCommandOptionValue
 } from './runtime/diagnosticNotes';
-export { extractCommandOptionValue } from './runtime/diagnosticNotes';
+export {
+  buildLinuxContainerBindMountVisibilityNote,
+  extractCommandOptionValue
+} from './runtime/diagnosticNotes';
 import {
   isPathInsideDirectory,
   posixDirname,
@@ -4552,40 +4556,6 @@ function resolveHostReadableWindowsPath(
 // leaving the user to decode a generic path error. Returns undefined when the
 // situation does not apply (non-container provider, non-invalid-path failure, or a
 // bind-mount source already inside the home directory).
-export function buildLinuxContainerBindMountVisibilityNote(options: {
-  provider?: string;
-  diagnosticReason?: string;
-  failureReason?: string;
-  hostBindMountPath?: string;
-  homeDir?: string;
-}): string | undefined {
-  if (options.provider !== 'linux-container') {
-    return undefined;
-  }
-  const reasons = [options.diagnosticReason, options.failureReason];
-  if (!reasons.includes('labview-cli-invalid-vi-path')) {
-    return undefined;
-  }
-  const hostPath = options.hostBindMountPath?.trim();
-  const homeDir = options.homeDir?.trim();
-  if (!hostPath || !homeDir) {
-    return undefined;
-  }
-  if (isPathInsideDirectory(hostPath, homeDir)) {
-    return undefined;
-  }
-  return (
-    `The Linux container bind-mounts the report directory ${hostPath}, which is ` +
-    `outside your home directory ${homeDir}. Snap-packaged Docker cannot see such ` +
-    `paths by default (only the connected \`home\` interface is mounted), so the ` +
-    `container receives an empty /workspace and LabVIEW CLI reports the VI path as ` +
-    `invalid even though the staged files exist on the host. Keep the extension's ` +
-    `report storage under your home directory, or connect the required snap ` +
-    `interface (for removable media, \`sudo snap connect docker:removable-media\`). ` +
-    `Native (non-snap) Docker is unaffected.`
-  );
-}
-
 // VHS-REQ-621 / VHS-REQ-658: classify a nonzero/no-report runtime failure into an
 // explicit, actionable reason. Exported for direct deterministic unit testing of
 // its classification arms, consistent with the other exported helpers in this file.

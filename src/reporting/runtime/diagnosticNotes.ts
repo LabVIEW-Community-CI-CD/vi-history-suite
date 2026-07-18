@@ -4,6 +4,7 @@
 // orchestration (per the reporting-orchestration guardrails). Behavior is
 // unchanged.
 import type { RuntimeProcessObservation } from '../comparisonReportRuntimeExecution';
+import { isPathInsideDirectory } from './runtimePathHelpers';
 
 // True when the CLI stdout consists solely of the "started logging in file:"
 // banner (i.e. no other diagnostic content was emitted).
@@ -86,4 +87,38 @@ export function extractCommandOptionValue(args: string[], optionName: string): s
   }
 
   return undefined;
+}
+
+export function buildLinuxContainerBindMountVisibilityNote(options: {
+  provider?: string;
+  diagnosticReason?: string;
+  failureReason?: string;
+  hostBindMountPath?: string;
+  homeDir?: string;
+}): string | undefined {
+  if (options.provider !== 'linux-container') {
+    return undefined;
+  }
+  const reasons = [options.diagnosticReason, options.failureReason];
+  if (!reasons.includes('labview-cli-invalid-vi-path')) {
+    return undefined;
+  }
+  const hostPath = options.hostBindMountPath?.trim();
+  const homeDir = options.homeDir?.trim();
+  if (!hostPath || !homeDir) {
+    return undefined;
+  }
+  if (isPathInsideDirectory(hostPath, homeDir)) {
+    return undefined;
+  }
+  return (
+    `The Linux container bind-mounts the report directory ${hostPath}, which is ` +
+    `outside your home directory ${homeDir}. Snap-packaged Docker cannot see such ` +
+    `paths by default (only the connected \`home\` interface is mounted), so the ` +
+    `container receives an empty /workspace and LabVIEW CLI reports the VI path as ` +
+    `invalid even though the staged files exist on the host. Keep the extension's ` +
+    `report storage under your home directory, or connect the required snap ` +
+    `interface (for removable media, \`sudo snap connect docker:removable-media\`). ` +
+    `Native (non-snap) Docker is unaffected.`
+  );
 }

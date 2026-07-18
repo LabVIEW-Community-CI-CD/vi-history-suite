@@ -4,6 +4,7 @@ import {
   isLabviewCliLogOnlyStdout,
   mergeDiagnosticNotes,
   buildProcessObservationNotes,
+  buildLinuxContainerBindMountVisibilityNote,
   extractCommandOptionValue
 } from '../../src/reporting/runtime/diagnosticNotes';
 
@@ -67,5 +68,64 @@ describe('extractCommandOptionValue', () => {
     expect(extractCommandOptionValue(['-x', 'y'], '-LabVIEWPath')).toBeUndefined();
     expect(extractCommandOptionValue(['-LabVIEWPath'], '-LabVIEWPath')).toBeUndefined();
     expect(extractCommandOptionValue(['-LabVIEWPath', '   '], '-LabVIEWPath')).toBeUndefined();
+  });
+});
+
+describe('buildLinuxContainerBindMountVisibilityNote', () => {
+  const base = {
+    provider: 'linux-container',
+    diagnosticReason: 'labview-cli-invalid-vi-path',
+    hostBindMountPath: '/mnt/data/reports',
+    homeDir: '/home/u'
+  };
+
+  it('builds the snap-Docker visibility note when the report dir is outside home', () => {
+    const note = buildLinuxContainerBindMountVisibilityNote(base);
+    expect(note).toContain('/mnt/data/reports');
+    expect(note).toContain('/home/u');
+    expect(note).toContain('snap connect docker:removable-media');
+  });
+
+  it('matches on failureReason as well as diagnosticReason', () => {
+    const note = buildLinuxContainerBindMountVisibilityNote({
+      provider: 'linux-container',
+      failureReason: 'labview-cli-invalid-vi-path',
+      hostBindMountPath: '/mnt/data/reports',
+      homeDir: '/home/u'
+    });
+    expect(note).toBeTruthy();
+  });
+
+  it('returns undefined for a non-linux-container provider', () => {
+    expect(
+      buildLinuxContainerBindMountVisibilityNote({ ...base, provider: 'windows-container' })
+    ).toBeUndefined();
+  });
+
+  it('returns undefined for an unrelated failure reason', () => {
+    expect(
+      buildLinuxContainerBindMountVisibilityNote({
+        ...base,
+        diagnosticReason: 'something-else'
+      })
+    ).toBeUndefined();
+  });
+
+  it('returns undefined when the report dir is inside the home directory', () => {
+    expect(
+      buildLinuxContainerBindMountVisibilityNote({
+        ...base,
+        hostBindMountPath: '/home/u/reports'
+      })
+    ).toBeUndefined();
+  });
+
+  it('returns undefined when the host path or home dir is missing', () => {
+    expect(
+      buildLinuxContainerBindMountVisibilityNote({ ...base, hostBindMountPath: '  ' })
+    ).toBeUndefined();
+    expect(
+      buildLinuxContainerBindMountVisibilityNote({ ...base, homeDir: undefined })
+    ).toBeUndefined();
   });
 });
