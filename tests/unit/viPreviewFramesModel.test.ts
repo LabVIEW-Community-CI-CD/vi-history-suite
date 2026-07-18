@@ -46,9 +46,9 @@ describe('normalizeViPreviewFrames', () => {
       { Image: 'A', Children: [0, 1, 1, 9, -1] },
       { Image: 'B' }
     ]);
-    // 0 (self) is allowed structurally by index range but de-duplicated set keeps
-    // valid in-range indices; 9 and -1 are dropped, duplicate 1 collapsed.
-    expect(model!.frames[0].children).toEqual([0, 1]);
+    // 0 is the frame's OWN index (self-reference) and is dropped to prevent
+    // infinite recursion; 9 and -1 are out of range; duplicate 1 is collapsed.
+    expect(model!.frames[0].children).toEqual([1]);
   });
 
   it('resolves the root as the unreferenced frame (VHS-REQ-659.11)', () => {

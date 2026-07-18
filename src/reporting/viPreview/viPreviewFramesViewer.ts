@@ -130,18 +130,18 @@ const VIEWER_SCRIPT = `
     return groups;
   }
 
-  // LabVIEW positions are relative to the owning diagram, but exports vary
-  // between absolute (top-level) and parent-relative, so detect per child.
-  function placeWithin(parentRect, pw, ph, childRect) {
-    var relL = childRect.left - parentRect.left, relT = childRect.top - parentRect.top;
-    if (relL >= -2 && relT >= -2 && relL <= pw + 2 && relT <= ph + 2) { return { x: relL, y: relT }; }
+  // Child rects are parent-relative by contract (see ViPreviewFrame.rect): a
+  // child at (30,30) inside a parent at (20,20) sits at (30,30) within the
+  // parent, NOT (10,10). Placing directly avoids shifting valid nested cases
+  // up/left, which subtracting the parent offset would do.
+  function placeWithin(childRect) {
     return { x: childRect.left, y: childRect.top };
   }
 
   var stageState = { active: null };
 
   function paintFrame(frameIdx, layer) {
-    var frame = frames[frameIdx], myRect = rectOf(frame);
+    var frame = frames[frameIdx];
     var img = el('img', 'lvr-img', layer);
     img.src = frame.image || '';
     img.alt = frame.label || 'diagram';
@@ -149,18 +149,16 @@ const VIEWER_SCRIPT = `
     var kids = (frame.children || []).slice();
     if (!kids.length) { return; }
     var mount = function () {
-      var pw = img.naturalWidth || myRect.width || layer.offsetWidth;
-      var ph = img.naturalHeight || myRect.height || layer.offsetHeight;
       var groups = groupStructures(kids);
       for (var i = 0; i < groups.length; i++) {
-        mountStructure(groups[i], layer, myRect, pw, ph);
+        mountStructure(groups[i], layer);
       }
     };
     if (img.complete && img.naturalWidth) { mount(); } else { img.addEventListener('load', mount, { once: true }); }
   }
 
-  function mountStructure(group, parentLayer, parentRect, pw, ph) {
-    var place = placeWithin(parentRect, pw, ph, group.rect);
+  function mountStructure(group, parentLayer) {
+    var place = placeWithin(group.rect);
     var host = el('div', 'lvr-struct', parentLayer);
     host.style.left = place.x + 'px';
     host.style.top = place.y + 'px';

@@ -56,4 +56,12 @@ describe('buildViPreviewFramesViewerHtml', () => {
     // The runtime script contains the empty-state fallback text.
     expect(html).toContain('No diagram frames to display.');
   });
+
+  it('places child structures parent-relative without subtracting the parent offset (VHS-REQ-659.11)', () => {
+    const html = buildViPreviewFramesViewerHtml(sampleModel(), NONCE);
+    // Regression guard for the #1904 P2: the earlier absolute-vs-relative
+    // heuristic subtracted the parent offset and shifted valid nested cases.
+    expect(html).not.toContain('childRect.left - parentRect.left');
+    expect(html).toContain('function placeWithin(childRect)');
+  });
 });

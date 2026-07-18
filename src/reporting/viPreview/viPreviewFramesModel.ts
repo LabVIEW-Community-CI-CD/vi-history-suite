@@ -43,7 +43,12 @@ export interface FrameRect {
 export interface ViPreviewFrame {
   /** Inline image as a `data:` URI (base64 PNG). Empty string when absent. */
   image: string;
-  /** Frame rectangle in the owning diagram's coordinates. */
+  /**
+   * Frame rectangle relative to the OWNING frame's top-left (parent-relative).
+   * The root frame's rect is relative to the stage origin. The viewer places a
+   * child at `rect.left`/`rect.top` within its parent without subtracting the
+   * parent's offset, so the export contract must emit parent-relative geometry.
+   */
   rect: FrameRect;
   /** Indices (into the normalized frame array) of this frame's child frames. */
   children: number[];
@@ -86,7 +91,11 @@ function normalizeImage(raw: Record<string, unknown>): string {
   return value.startsWith('data:') ? value : `data:image/png;base64,${value}`;
 }
 
-function normalizeChildren(raw: Record<string, unknown>, frameCount: number): number[] {
+function normalizeChildren(
+  raw: Record<string, unknown>,
+  frameCount: number,
+  selfIndex: number
+): number[] {
   const list = raw.Children ?? raw['Child Indices'] ?? raw.children ?? [];
   if (!Array.isArray(list)) {
     return [];
@@ -95,9 +104,10 @@ function normalizeChildren(raw: Record<string, unknown>, frameCount: number): nu
   const out: number[] = [];
   for (const entry of list) {
     const idx = asInt(entry);
-    // Drop out-of-range and self/duplicate references so a malformed export can
-    // never produce an infinite paint loop or a dangling child.
-    if (idx >= 0 && idx < frameCount && !seen.has(idx)) {
+    // Drop out-of-range, self, and duplicate references so a malformed export
+    // can never produce an infinite paint loop (a self child would recurse into
+    // the same frame forever) or a dangling child.
+    if (idx >= 0 && idx < frameCount && idx !== selfIndex && !seen.has(idx)) {
       seen.add(idx);
       out.push(idx);
     }
@@ -145,12 +155,12 @@ export function normalizeViPreviewFrames(raw: unknown): ViPreviewFramesModel | u
     return undefined;
   }
   const frameCount = raw.length;
-  const frames: ViPreviewFrame[] = raw.map((entry) => {
+  const frames: ViPreviewFrame[] = raw.map((entry, index) => {
     const record = (entry ?? {}) as Record<string, unknown>;
     return {
       image: normalizeImage(record),
       rect: normalizeRect(record.Position ?? record.position ?? record.Cluster ?? record.cluster),
-      children: normalizeChildren(record, frameCount),
+      children: normalizeChildren(record, frameCount, index),
       label: normalizeLabel(record)
     };
   });
