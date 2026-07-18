@@ -201,6 +201,22 @@ describe('VI Preview custom editor (VHS-REQ-659.8)', () => {
     );
   });
 
+  it('does not peek the cache for a materialized (non-file) source on host-native (VHS-REQ-659.7)', async () => {
+    // A `git`-scheme diff base / previewRevision temp tree is staged with fresh
+    // mtimes, so its cache key can never match the Docker-generated entry; the
+    // editor must skip the peek and show guidance rather than falsely miss.
+    resolvePreviewRuntimeMock.mockResolvedValueOnce({
+      outcome: 'ready',
+      runtime: { provider: 'host-native', labviewCliPath: 'C:\\LabVIEWCLI.exe' }
+    });
+    const provider = providerFromLastRegistrationAfterRegister();
+
+    const panel = await resolveEditor(provider, createPanel(), '/workspace/repo/Base.vi', 'git');
+
+    expect(panel.webview.html).toContain('requires Docker to generate the cache');
+    expect(renderViPreviewForFileMock).not.toHaveBeenCalled();
+  });
+
   it('renders live on host-native when allowHostNativeRender is on (Vagrant; VHS-REQ-659.7)', async () => {
     hostNativeRenderAllowed.value = true;
     resolvePreviewRuntimeMock.mockResolvedValueOnce({
