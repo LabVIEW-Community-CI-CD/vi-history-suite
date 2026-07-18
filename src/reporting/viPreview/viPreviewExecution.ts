@@ -8,6 +8,10 @@ import {
   VI_PREVIEW_RETRY_DELAY_SECONDS,
   VI_PREVIEW_STARTUP_RETRY_COUNT
 } from './viPreviewCommandPlan';
+import {
+  localViServerLockKey,
+  sharedLocalViServerAcquisitionLock
+} from '../runtime/localViServerAcquisitionLock';
 
 /**
  * VHS-REQ-659: single-VI preview execution orchestration.
@@ -100,6 +104,14 @@ export interface ViPreviewExecutionDeps {
    * Injected in tests so retries do not actually wait; defaults to a real timer.
    */
   sleep?: (milliseconds: number) => Promise<void>;
+  /**
+   * VHS-REQ-669: acquires a serialization slot for a local VI Server endpoint
+   * before a host-native LabVIEWCLI launch and returns a release function, so
+   * concurrent host-native launches against the same local VI Server take turns
+   * instead of contending. Container/docker runs never acquire a slot. Defaults
+   * to the process-wide shared lock; injected in tests.
+   */
+  acquireLocalViServerSlot?: (key: string) => Promise<() => void>;
 }
 
 /**
@@ -284,23 +296,41 @@ export async function executeViPreview(
   // the orchestrator applies the same retry budget here: rerun on the
   // connectivity signature until the just-launched LabVIEW's VI Server is
   // reachable (a warm retry after a slow cold launch).
-  const maxAttempts =
-    options.runtime.provider === 'host-native'
-      ? Math.max(1, 1 + VI_PREVIEW_STARTUP_RETRY_COUNT)
-      : 1;
+  const isHostNative = options.runtime.provider === 'host-native';
+  const maxAttempts = isHostNative ? Math.max(1, 1 + VI_PREVIEW_STARTUP_RETRY_COUNT) : 1;
   const sleep = deps.sleep ?? defaultViPreviewSleep;
 
+  // VHS-REQ-669: serialize concurrent host-native launches that would contend
+  // on the same local VI Server endpoint. Container/docker runs never acquire a
+  // slot. The slot is released after the launch completes, success or failure.
+  let releaseLocalViServerSlot: (() => void) | undefined;
+  if (isHostNative) {
+    const acquire =
+      deps.acquireLocalViServerSlot ??
+      ((key: string) => sharedLocalViServerAcquisitionLock.acquire(key));
+    releaseLocalViServerSlot = await acquire(
+      localViServerLockKey({
+        provider: 'host-native',
+        portNumber: options.runtime.portNumber
+      })
+    );
+  }
+
   let run: RunViPreviewCommandResult = { exitCode: 0, stdout: '', stderr: '' };
-  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-    run = await deps.runCommand(commandPlan);
-    if (run.exitCode === 0) {
+  try {
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+      run = await deps.runCommand(commandPlan);
+      if (run.exitCode === 0) {
+        break;
+      }
+      if (attempt < maxAttempts && isViPreviewConnectivityFailure(run)) {
+        await sleep(VI_PREVIEW_RETRY_DELAY_SECONDS * 1000);
+        continue;
+      }
       break;
     }
-    if (attempt < maxAttempts && isViPreviewConnectivityFailure(run)) {
-      await sleep(VI_PREVIEW_RETRY_DELAY_SECONDS * 1000);
-      continue;
-    }
-    break;
+  } finally {
+    releaseLocalViServerSlot?.();
   }
 
   if (run.exitCode !== 0) {
