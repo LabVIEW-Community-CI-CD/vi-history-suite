@@ -72,6 +72,10 @@ const VIEWER_STYLE = `
   .lvr-case .lvr-img { width: 100%; height: 100%; }
   .lvr-sel {
     position: absolute; left: 0; top: -20px; height: 18px;
+    /* Counter-scaled by the viewer against the stage zoom so the control keeps
+       a constant, clickable on-screen size even when the diagram is fit to a
+       small zoom; anchor the counter-scale at the top-left. */
+    transform-origin: 0 0;
     display: inline-flex; align-items: center; gap: 2px;
     padding: 0 4px; font-size: 11px; line-height: 18px; white-space: nowrap;
     background: var(--vscode-editorWidget-background, #333);
@@ -144,6 +148,19 @@ const VIEWER_SCRIPT = `
   }
 
   var stageState = { active: null };
+  // Every case-stepper selector, so the viewer can keep them a constant
+  // on-screen size by counter-scaling against the stage zoom (VHS-REQ-659).
+  var selectors = [];
+  var currentZoom = 1;
+  function scaleSelector(sel) {
+    // Counter-scale by 1/zoom so a small fit-zoom does not shrink the control
+    // below a clickable size. Clamp so a very small zoom does not blow it up
+    // unboundedly.
+    var inv = currentZoom > 0 ? 1 / currentZoom : 1;
+    if (inv > 6) { inv = 6; }
+    if (inv < 1) { inv = 1; }
+    sel.style.transform = 'scale(' + inv + ')';
+  }
 
   function paintFrame(frameIdx, layer) {
     var frame = frames[frameIdx];
@@ -187,8 +204,7 @@ const VIEWER_SCRIPT = `
       var raw = (f && f.label) ? String(f.label) : '';
       var ord = N > 1 ? (i + 1) + '/' + N : '1';
       return raw ? (ord + '  ' + raw) : ord;
-    }
-    function show(i) {
+    }    function show(i) {
       idx = (i + N) % N;
       for (var k = 0; k < caseLayers.length; k++) { caseLayers[k].style.display = k === idx ? 'block' : 'none'; }
       lbl.textContent = caseLabel(idx);
@@ -199,6 +215,8 @@ const VIEWER_SCRIPT = `
     next.addEventListener('click', function (e) { e.stopPropagation(); show(idx + 1); });
     host.addEventListener('pointerdown', function () { stageState.active = host; });
     host.__step = function (d) { show(idx + d); };
+    selectors.push(sel);
+    scaleSelector(sel);
     show(0);
   }
 
@@ -208,7 +226,11 @@ const VIEWER_SCRIPT = `
 
   var zoom = 1, panX = 0, panY = 0, dragging = false, sx = 0, sy = 0, px = 0, py = 0;
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
-  function apply() { stage.style.transform = 'translate(' + panX + 'px,' + panY + 'px) scale(' + zoom + ')'; }
+  function apply() {
+    stage.style.transform = 'translate(' + panX + 'px,' + panY + 'px) scale(' + zoom + ')';
+    currentZoom = zoom;
+    for (var i = 0; i < selectors.length; i++) { scaleSelector(selectors[i]); }
+  }
   function zoomAt(nz, ax, ay) {
     nz = clamp(nz, 0.04, 8);
     var r = viewport.getBoundingClientRect();
