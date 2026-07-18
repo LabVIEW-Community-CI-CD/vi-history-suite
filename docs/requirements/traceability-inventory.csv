@@ -382,6 +382,7 @@ vagrant/provision/bootstrap.ps1,supporting,Yes,Vagrant bootstrap provisioner; ma
 vagrant/provision/prepare-cold-labview.ps1,supporting,Yes,Vagrant cold LabVIEW preparation; mapped to VHS-REQ-599.
 vagrant/provision/repair-vagrant-account.ps1,supporting,No,Interactive in-guest repair for a restricted vagrant account blocking WinRM/guest-control logon; local maintainer helper only.
 vagrant/playwright/viPreviewViewerInteraction.cjs,supporting,No,"Maintainer Playwright harness that drives the shipped interactive block-diagram viewer builder in a real browser (case-stepper, arrow-key paging, nonce script); not a hosted-CI gate; mapped to VHS-REQ-659."
+vagrant/verify-interactive-preview.cjs,supporting,No,"Maintainer driver that renders a real VI on host-native LabVIEW via the shipped out/ modules and asserts the interactive block-diagram document (nonce CSP, frames island, >=1 frame, inline images); not a hosted-CI gate; mapped to VHS-REQ-659."
 vagrant/playwright/README.md,supporting,No,Maintainer runbook for the in-guest Playwright viewer interaction harness (kept out of npm test and root package.json); mapped to VHS-REQ-659.
 .devcontainer/devcontainer.json,supporting,Yes,Devcontainer configuration; mapped through RTM.
 .vscode/extensions.json,dev-only,No,VS Code recommended extensions; workspace configuration.
