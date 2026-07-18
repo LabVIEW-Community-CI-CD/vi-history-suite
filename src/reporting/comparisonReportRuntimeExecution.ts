@@ -78,6 +78,7 @@ export { parseSubmoduleGitlinks } from './runtime/submoduleGitlinkParsing';
 import { appendLabviewCliPortNumberArg } from './runtime/labviewCliPortArg';
 export { appendLabviewCliPortNumberArg } from './runtime/labviewCliPortArg';
 import { buildLabviewCliCloseLabviewCommandPlan } from './runtime/closeLabviewCommandPlan';
+import { buildWindowsInteropLayout } from './runtime/windowsInteropLayout';
 import {
   shouldUseLinuxHostNativeShortPathStaging,
   buildLinuxHostNativeShortPathLayout
@@ -2938,26 +2939,6 @@ interface LinuxContainerWorkspaceLayout {
   reportFilePath: string;
   reportIdentityFilenames: string[];
   reportTextReplacements: RuntimeTextReplacement[];
-}
-
-function buildWindowsInteropLayout(
-  record: ComparisonReportPacketRecord,
-  interopWorkspaceRoot: string
-): WindowsInteropLayout {
-  const reportDirectory = path.join(
-    interopWorkspaceRoot,
-    'reports',
-    record.artifactPlan.repoId,
-    record.artifactPlan.fileId
-  );
-  const stagingDirectory = path.join(reportDirectory, 'staging');
-  return {
-    reportDirectory,
-    stagingDirectory,
-    leftFilePath: path.join(stagingDirectory, record.stagedRevisionPlan.leftFilename),
-    rightFilePath: path.join(stagingDirectory, record.stagedRevisionPlan.rightFilename),
-    reportFilePath: path.join(reportDirectory, record.artifactPlan.reportFilename)
-  };
 }
 
 async function prepareLinuxHostNativeShortPathExecutionContext(
