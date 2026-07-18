@@ -20,6 +20,9 @@ import {
   shouldAttemptLinuxHeadlessRecovery
 } from './runtime/linuxHeadlessPredicates';
 import {
+  shouldAttemptWindowsHeadlessRecovery
+} from './runtime/windowsHeadlessPredicates';
+import {
   describeObservedRuntimeProcesses,
   describeObservedWindowsTcpListeners
 } from './runtime/windowsRuntimeObservationFormatting';
@@ -126,8 +129,7 @@ export {
   buildWindowsInteropCommandPlan
 } from './runtime/interopCommandPlanBuilders';
 import {
-  resolveEffectiveRuntimePlatform,
-  isHeadlessLabviewCliExecution
+  resolveEffectiveRuntimePlatform
 } from './runtime/runtimeSelectionPredicates';
 import {
   WINDOWS_CONTAINER_WORKSPACE_ROOT,
@@ -2252,30 +2254,6 @@ async function captureRuntimeDiagnostics(
     artifactPath: record.artifactPlan.runtimeDiagnosticLogFilePath,
     headlessArtifactPaths: headlessDiagnostics.artifactPaths
   };
-}
-
-function shouldAttemptWindowsHeadlessRecovery(
-  record: ComparisonReportPacketRecord,
-  execution: ComparisonReportRuntimeExecution
-): boolean {
-  return (
-    record.runtimeSelection.platform === 'win32' &&
-    record.runtimeSelection.engine === 'labview-cli' &&
-    execution.state === 'failed' &&
-    execution.diagnosticReason === 'labview-cli-call-by-reference' &&
-    wasWindowsHeadlessLabviewCliExecutionRequested(record, execution)
-  );
-}
-
-function wasWindowsHeadlessLabviewCliExecutionRequested(
-  record: ComparisonReportPacketRecord,
-  execution: ComparisonReportRuntimeExecution
-): boolean {
-  return (
-    record.runtimeSelection.provider === 'windows-container' ||
-    record.runtimeSelection.headlessRequested === true ||
-    isHeadlessLabviewCliExecution(execution.args)
-  );
 }
 
 async function attemptLabviewCliHeadlessSessionReset(
