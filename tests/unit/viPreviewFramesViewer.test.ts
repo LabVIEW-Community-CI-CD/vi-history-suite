@@ -26,6 +26,15 @@ describe('buildViPreviewFramesViewerHtml', () => {
     expect(html).toContain(`<script nonce="${NONCE}">`);
   });
 
+  it('paints the diagram stage on a fixed white surface in all themes (VHS-REQ-659)', () => {
+    const html = buildViPreviewFramesViewerHtml(sampleModel(), NONCE);
+    const styleMatch = html.match(/\.lvr-stage\s*\{[^}]*\}/);
+    expect(styleMatch).not.toBeNull();
+    expect(styleMatch![0]).toContain('background: #ffffff');
+    // The white surface must not depend on the VS Code theme variable.
+    expect(styleMatch![0]).not.toContain('--vscode-editor-background');
+  });
+
   it('embeds the frames JSON island with the resolved root and case labels (VHS-REQ-659.11)', () => {
     const html = buildViPreviewFramesViewerHtml(sampleModel(), NONCE);
     const islandMatch = /<script id="lvr-frames"[^>]*>([\s\S]*?)<\/script>/.exec(html);
