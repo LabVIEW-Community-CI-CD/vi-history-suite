@@ -43,9 +43,10 @@ import {
   WINDOWS_SHARED_LABVIEW_CLI_PATH
 } from '../tooling/labviewInstallCatalog';
 import {
-  DEFAULT_WINDOWS_CONTAINER_IMAGE,
   DEFAULT_LINUX_CONTAINER_IMAGE,
-  resolveContainerImageForHostMode
+  resolveContainerImageForHostMode,
+  resolveWindowsContainerImage,
+  resolveLinuxContainerImage
 } from './runtime/containerRuntimePaths';
 import {
   resolveContainerProvider,
@@ -67,7 +68,6 @@ import {
   detectContainerImageVersionPlatformConflict,
   parseLabviewContainerImageReference
 } from '../tooling/containerImageCatalog';
-import { resolveConfiguredContainerImageReference } from './runtime/containerImageReference';
 import { describeBitness, inferBitnessFromPath } from './runtime/bitnessHelpers';
 export { inferBitnessFromPath } from './runtime/bitnessHelpers';
 
@@ -1560,30 +1560,6 @@ function buildLegacyWindowsContainerProviderFacts(
       ? [`Windows container image ${image} was available through the legacy image-inspect probe.`]
       : [`Legacy Windows container image probe did not find image ${image} on the current host.`]
   };
-}
-
-function resolveWindowsContainerImage(
-  rawImage: string | undefined,
-  versionSelection?: string
-): string {
-  return resolveConfiguredContainerImageReference({
-    fullOverride: rawImage,
-    versionSelection,
-    platform: 'windows',
-    defaultReference: DEFAULT_WINDOWS_CONTAINER_IMAGE
-  });
-}
-
-function resolveLinuxContainerImage(
-  rawImage: string | undefined,
-  versionSelection?: string
-): string {
-  return resolveConfiguredContainerImageReference({
-    fullOverride: rawImage,
-    versionSelection,
-    platform: 'linux',
-    defaultReference: DEFAULT_LINUX_CONTAINER_IMAGE
-  });
 }
 
 async function resolveConfiguredCandidates(

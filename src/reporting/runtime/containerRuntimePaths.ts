@@ -1,5 +1,6 @@
 import { WINDOWS_SHARED_LABVIEW_CLI_PATH } from '../../tooling/labviewInstallCatalog';
 import type { DockerContainerHostMode } from '../comparisonRuntimeLocator';
+import { resolveConfiguredContainerImageReference } from './containerImageReference';
 
 /**
  * Container runtime image references and in-container tool paths extracted
@@ -36,4 +37,28 @@ export function resolveContainerImageForHostMode(options: {
   return options.hostMode === 'linux'
     ? options.linuxContainerImage
     : options.windowsContainerImage;
+}
+
+export function resolveWindowsContainerImage(
+  rawImage: string | undefined,
+  versionSelection?: string
+): string {
+  return resolveConfiguredContainerImageReference({
+    fullOverride: rawImage,
+    versionSelection,
+    platform: 'windows',
+    defaultReference: DEFAULT_WINDOWS_CONTAINER_IMAGE
+  });
+}
+
+export function resolveLinuxContainerImage(
+  rawImage: string | undefined,
+  versionSelection?: string
+): string {
+  return resolveConfiguredContainerImageReference({
+    fullOverride: rawImage,
+    versionSelection,
+    platform: 'linux',
+    defaultReference: DEFAULT_LINUX_CONTAINER_IMAGE
+  });
 }
