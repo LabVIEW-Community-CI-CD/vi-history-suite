@@ -4459,6 +4459,45 @@ Missing numeric IDs are intentional.
     the revision preview reuses the same warm session and render cache. The VI
     blob is fatal if unreadable, missing sibling blobs are skipped, and the
     scratch directory is retired after a delay.
+  - The preview may be presented as an interactive block diagram: the extension
+    recovers a position-aware frames model from the flat `PrintToSingleFileHtml`
+    export and renders it the way the LabVIEW editor shows a diagram — the root
+    diagram painted once with every Case / Event / Stacked-Sequence structure
+    composited in place, each carrying a `◀ n/N ▶` case selector that pages its
+    cases without the diagram jumping, and nested structures paging inside the
+    owning case. `buildFramesModelFromFlatExport` extracts the Block Diagram
+    section's inline images (`extractBlockDiagramFrames`), decodes each PNG's
+    pixel size from its IHDR (`decodePngSize`), treats the first image as the
+    root diagram, and groups the remaining images by identical pixel size into
+    structures (a structure's cases share its fixed border size — the only
+    structural signal the flat export exposes), laying each group out stacked
+    below the diagram since the flat export carries no coordinates.
+  - `normalizeViPreviewFrames` normalizes the frames wire model (tolerant of the
+    `Image`/`Base64 Image`, `Position` Width/Height-or-Right/Bottom,
+    `Children`/`Child Indices`, and `Label` field variants), dropping
+    out-of-range, self-referential, and duplicate child indices so a malformed
+    export can never drive infinite paint recursion; `findFramesRoot` resolves
+    the unreferenced frame as the root and `groupFramesIntoStructures` groups
+    same-rectangle children into one structure. Child rectangles are
+    parent-relative by contract, so the viewer places each child at its own
+    `left`/`top` within the parent without subtracting the parent offset.
+  - `buildViPreviewFramesViewerHtml` builds the interactive viewer webview
+    document under a strict nonce-based Content-Security-Policy (only the single
+    nonce'd script runs, `img-src data:`, inline styles only, all remote origins
+    forbidden); the frames model is embedded in a JSON island with `<` and the
+    U+2028/U+2029 line terminators escaped so a hostile label or image cannot
+    break out of the script tag. The viewer supports drag-to-pan, Ctrl/Cmd+scroll
+    and double-click zoom, a Fit control, and arrow-key paging of the
+    last-touched structure.
+  - `selectViPreviewDocument` chooses the presentation for a rendered document:
+    `document` mode returns the strict script-free flat webview, while
+    `interactive` mode builds the frames viewer from the flat export and falls
+    back to `document` mode when no nonce is supplied or no block-diagram frames
+    extract (for example a `.ctl` with no diagram), so an interactive request can
+    never produce an empty pane; the returned mode reflects what was actually
+    used. The custom editor requests `interactive` mode (enabling webview scripts
+    with a per-load nonce) when the `viHistorySuite.preview.blockDiagramInteractive`
+    setting is on, and `document` mode otherwise.
 - Agent Work Scope:
   - Keep the command-plan builders pure and dependency-free so they stay
     deterministically unit-testable without a LabVIEW runtime. Reuse the

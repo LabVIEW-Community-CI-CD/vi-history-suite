@@ -14,7 +14,7 @@ function sampleModel() {
 }
 
 describe('buildViPreviewFramesViewerHtml', () => {
-  it('emits a nonce-scoped CSP that forbids remote origins and non-nonce scripts (VHS-REQ-659.11)', () => {
+  it('emits a nonce-scoped CSP that forbids remote origins and non-nonce scripts (VHS-REQ-659.18)', () => {
     const html = buildViPreviewFramesViewerHtml(sampleModel(), NONCE);
     expect(html).toContain('<!DOCTYPE html>');
     expect(html).toContain('Content-Security-Policy');

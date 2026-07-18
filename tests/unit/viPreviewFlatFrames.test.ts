@@ -46,7 +46,7 @@ describe('extractBlockDiagramFrames', () => {
 });
 
 describe('buildFramesModelFromFlatExport', () => {
-  it('makes the first image the root and groups equal-size cases into structures (VHS-REQ-659.12)', () => {
+  it('makes the first image the root and groups equal-size cases into structures (VHS-REQ-659.16)', () => {
     const html = blockDiagramHtml([PNG_200x150, PNG_60x40, PNG_60x40]);
     const model = buildFramesModelFromFlatExport(html)!;
     expect(model.rootIndex).toBe(0);

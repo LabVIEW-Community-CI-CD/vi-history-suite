@@ -15,7 +15,7 @@ describe('normalizeViPreviewFrames', () => {
     expect(normalizeViPreviewFrames([])).toBeUndefined();
   });
 
-  it('normalizes field-name variants and prefixes bare base64 with a data URI (VHS-REQ-659.11)', () => {
+  it('normalizes field-name variants and prefixes bare base64 with a data URI (VHS-REQ-659.17)', () => {
     const model = normalizeViPreviewFrames([
       {
         'Base64 Image': 'AAAA',

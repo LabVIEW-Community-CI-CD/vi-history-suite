@@ -14,7 +14,7 @@ function diagramHtml(): string {
 const NONCE = 'sel123NONCE';
 
 describe('selectViPreviewDocument', () => {
-  it('returns the static document for document mode (VHS-REQ-659.13)', () => {
+  it('returns the static document for document mode (VHS-REQ-659.19)', () => {
     const out = selectViPreviewDocument({ labviewHtml: diagramHtml(), mode: 'document' });
     expect(out.mode).toBe('document');
     expect(out.html).toContain('Content-Security-Policy');
