@@ -79,29 +79,30 @@ function validateManifestShape(manifest) {
 
 function parseArgs(argv) {
   const options = { mode: undefined, boxPath: undefined, note: undefined };
-  for (let index = 0; index < argv.length; index += 1) {
-    const arg = argv[index];
+  const args = Array.isArray(argv) ? argv : [];
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
     if (arg === '--generate') {
       options.mode = 'generate';
-      options.boxPath = argv[++index];
+      options.boxPath = args[++index];
     } else if (arg === '--verify') {
       options.mode = 'verify';
-      options.boxPath = argv[++index];
+      options.boxPath = args[++index];
     } else if (arg === '--print') {
       options.mode = 'print';
     } else if (arg === '--note') {
-      options.note = argv[++index];
+      options.note = args[++index];
     } else {
-      fail(`Unknown argument: ${arg}`);
+      return { options, error: `Unknown argument: ${arg}` };
     }
   }
   if (!options.mode) {
-    fail('One of --generate <box>, --verify <box>, or --print is required.');
+    return { options, error: 'One of --generate <box>, --verify <box>, or --print is required.' };
   }
   if ((options.mode === 'generate' || options.mode === 'verify') && !options.boxPath) {
-    fail(`--${options.mode} requires a box file path.`);
+    return { options, error: `--${options.mode} requires a box file path.` };
   }
-  return options;
+  return { options, error: null };
 }
 
 // Stream the file through SHA-256 so a 71 GB box never lands in memory.
@@ -196,7 +197,10 @@ function printManifest() {
 }
 
 async function main() {
-  const options = parseArgs(process.argv.slice(2));
+  const { options, error } = parseArgs(process.argv.slice(2));
+  if (error) {
+    fail(error);
+  }
   if (options.mode === 'generate') {
     await generate(options);
   } else if (options.mode === 'verify') {
@@ -209,7 +213,8 @@ async function main() {
 module.exports = {
   MANIFEST_SCHEMA,
   SHA256_PATTERN,
-  validateManifestShape
+  validateManifestShape,
+  parseArgs
 };
 
 if (require.main === module) {

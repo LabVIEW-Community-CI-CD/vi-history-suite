@@ -6,7 +6,7 @@ const verifyVagrantBox = require('../../scripts/verifyVagrantBox.cjs');
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const committedManifest = require('../../vagrant/box-manifest.json');
 
-const { MANIFEST_SCHEMA, SHA256_PATTERN, validateManifestShape } = verifyVagrantBox;
+const { MANIFEST_SCHEMA, SHA256_PATTERN, validateManifestShape, parseArgs } = verifyVagrantBox;
 
 function validManifest() {
   return {
@@ -80,5 +80,50 @@ describe('verifyVagrantBox.validateManifestShape', () => {
     expect(SHA256_PATTERN.test('a'.repeat(64))).toBe(true);
     expect(SHA256_PATTERN.test('A'.repeat(64))).toBe(false);
     expect(SHA256_PATTERN.test('a'.repeat(63))).toBe(false);
+  });
+});
+
+describe('verifyVagrantBox.parseArgs', () => {
+  it('parses --print mode', () => {
+    const { options, error } = parseArgs(['--print']);
+    expect(error).toBeNull();
+    expect(options.mode).toBe('print');
+  });
+
+  it('parses --generate with a box path and optional --note', () => {
+    const { options, error } = parseArgs(['--generate', 'box.box', '--note', 'hi']);
+    expect(error).toBeNull();
+    expect(options).toMatchObject({ mode: 'generate', boxPath: 'box.box', note: 'hi' });
+  });
+
+  it('parses --verify with a box path', () => {
+    const { options, error } = parseArgs(['--verify', 'box.box']);
+    expect(error).toBeNull();
+    expect(options).toMatchObject({ mode: 'verify', boxPath: 'box.box' });
+  });
+
+  it('requires a mode', () => {
+    const { error } = parseArgs([]);
+    expect(error).toBe('One of --generate <box>, --verify <box>, or --print is required.');
+  });
+
+  it('requires a box path for --generate', () => {
+    const { error } = parseArgs(['--generate']);
+    expect(error).toBe('--generate requires a box file path.');
+  });
+
+  it('requires a box path for --verify', () => {
+    const { error } = parseArgs(['--verify']);
+    expect(error).toBe('--verify requires a box file path.');
+  });
+
+  it('reports an unknown argument', () => {
+    const { error } = parseArgs(['--bogus']);
+    expect(error).toBe('Unknown argument: --bogus');
+  });
+
+  it('treats a non-array argv as empty (missing mode)', () => {
+    const { error } = parseArgs(undefined);
+    expect(error).toBe('One of --generate <box>, --verify <box>, or --print is required.');
   });
 });
