@@ -13,6 +13,7 @@ import {
 export { parseWindowsTasklistCsv } from './runtime/windowsTasklistParsing';
 import { isSafeRelativeSubpath } from './runtime/safeRelativeSubpath';
 import { appendCancellationMessage } from './runtime/cancellationMessage';
+import { shouldAttemptWindowsColdLaunchRecovery } from './runtime/windowsColdLaunchRecovery';
 import {
   describeObservedRuntimeProcesses,
   describeObservedWindowsTcpListeners
@@ -2311,28 +2312,6 @@ function shouldAttemptWindowsHeadlessRecovery(
     execution.state === 'failed' &&
     execution.diagnosticReason === 'labview-cli-call-by-reference' &&
     wasWindowsHeadlessLabviewCliExecutionRequested(record, execution)
-  );
-}
-
-/**
- * VHS-REQ-148 (Windows host-native parity): a Windows host-native `labview-cli`
- * compare whose first attempt failed with the cold-launch VI Server connect race
- * (`labview-cli-connection-failed` / `-350000`) is retried exactly once. Attempt 1
- * launches LabVIEW and leaves it resident and warming, so attempt 2 connects on the
- * same derived `-PortNumber`. The windows-container provider (its own in-script
- * retry) and the Linux paths are deliberately excluded; container/headless failures
- * are handled by the dedicated recovery branches above.
- */
-function shouldAttemptWindowsColdLaunchRecovery(
-  record: ComparisonReportPacketRecord,
-  execution: ComparisonReportRuntimeExecution
-): boolean {
-  return (
-    record.runtimeSelection.platform === 'win32' &&
-    record.runtimeSelection.provider === 'host-native' &&
-    record.runtimeSelection.engine === 'labview-cli' &&
-    execution.state === 'failed' &&
-    execution.failureReason === 'labview-cli-connection-failed'
   );
 }
 
