@@ -22,6 +22,7 @@ import { formatComparisonRevisionHashDisplay } from './comparisonRevisionHashDis
 export { formatComparisonRevisionHashDisplay } from './comparisonRevisionHashDisplay';
 import { deriveProviderRequestLabel } from './comparisonProviderRequestLabel';
 import { renderCommand } from './comparisonReportCommandRendering';
+import { renderRuntimeNote } from './comparisonReportRuntimeNote';
 
 export type ComparisonReportRuntimeExecutionState =
   | 'not-run'
@@ -557,29 +558,6 @@ function buildInitialRuntimeExecution(
     diagnosticLogArtifactPath: artifactPlan.runtimeDiagnosticLogFilePath,
     diagnosticNotes: []
   };
-}
-
-function renderRuntimeNote(record: ComparisonReportPacketRecord): string {
-  if (record.runtimeExecutionState === 'not-available') {
-    if (
-      record.runtimeExecution.blockedReason === 'container-image-acquisition-failed' ||
-      record.runtimeExecution.blockedReason === 'windows-container-image-acquisition-failed'
-    ) {
-      return 'No LabVIEW-generated comparison report has been executed because the container image could not be acquired before runtime launch.';
-    }
-
-    return 'No LabVIEW-generated comparison report has been executed because the runtime selection is currently unavailable for this workspace and platform.';
-  }
-
-  if (record.runtimeExecutionState === 'succeeded') {
-    return 'LabVIEW-generated comparison report execution succeeded and the HTML output is retained at the report path shown below.';
-  }
-
-  if (record.runtimeExecutionState === 'failed') {
-    return 'LabVIEW-generated comparison report execution was attempted, but the output is not currently usable. Review the retained execution summary and stdout/stderr artifact paths below.';
-  }
-
-  return 'No LabVIEW-generated comparison report has been executed yet. This retained packet captures the preflight, runtime selection, and artifact plan for the selected revision pair.';
 }
 
 /**
