@@ -78,4 +78,15 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     privileged: true,
     path: "provision/repair-vagrant-account.ps1",
     run: "never"
+
+  # Guest-local Playwright + Chromium for the interactive block-diagram preview
+  # browser validation (VHS-REQ-659). Installed into C:\vihs-pw (NOT the synced
+  # node_modules, which is shared with the host). Opt-in; enable once when baking
+  # a golden box so future VMs already have the browser:
+  #   vagrant provision --provision-with playwright-preview
+  config.vm.provision "playwright-preview",
+    type: "shell",
+    privileged: false,
+    path: "provision/install-playwright-preview.ps1",
+    run: "never"
 end

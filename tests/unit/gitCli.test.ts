@@ -416,12 +416,19 @@ describe('gitCli parsing', () => {
     expect(chosen).toBe('C:\\Program Files\\Git\\cmd\\git.exe');
   });
 
-  it('falls back to bare git when no Windows candidate exists and rejects Git subprocess failures', async () => {
+  it('falls back to bare git when no Windows candidate exists', () => {
+    // Pure, subprocess-free: no win32 candidate resolves -> bare "git".
     expect(resolveGitExecutable({}, 'win32', () => false)).toBe('git');
+  });
 
-    const repoRoot = await createTempGitRepo();
+  it('rejects Git subprocess failures', async () => {
+    // A non-existent subcommand rejects regardless of repo state, so use a plain
+    // temp dir (no `git init`) — this keeps the assertion off the slow
+    // createTempGitRepo() path that intermittently timed out on Windows CI (#1960).
+    const workingDirectory = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-git-reject-'));
+    tempDirectories.push(workingDirectory);
 
-    await expect(runGit(['definitely-not-a-real-subcommand'], repoRoot, 'utf8')).rejects.toThrow();
+    await expect(runGit(['definitely-not-a-real-subcommand'], workingDirectory, 'utf8')).rejects.toThrow();
   });
 
   it.skipIf(process.platform === 'win32')(
