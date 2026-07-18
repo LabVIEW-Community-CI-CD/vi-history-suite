@@ -4,6 +4,8 @@ This changelog records user-facing release history for `vi-history-suite`.
 
 ## [Unreleased]
 
+## [1.34.2] - 2026-07-18
+
 ### Changed
 
 - Concurrent host-native single-VI preview renders that target the same local
