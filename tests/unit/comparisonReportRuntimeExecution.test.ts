@@ -38,6 +38,7 @@ import {
   buildWindowsInteropCommandPlan,
   buildWindowsHostNativeHeadlessCommandPlan,
   buildWindowsContainerLabviewCliScript,
+  buildLinuxContainerLabviewCliScript,
   rewriteLvcompareArgsForContainerWorkspace,
   rewriteLvcompareArgsForLinuxContainerWorkspace,
   normalizeWindowsInteropPath,
@@ -7337,5 +7338,272 @@ describe('buildWindowsHostNativeHeadlessCommandPlan (VHS-REQ-665)', () => {
     expect(containerScript).toContain('$env:TEMP =');
     expect(containerScript).toContain('openTimeout=180;afterLaunchTimeout=180');
     expect(containerScript).toContain('--headless');
+  });
+});
+
+// -----------------------------------------------------------------------------
+// Coupled-extraction characterization (VHS-REQ-624 / VHS-REQ-156 / VHS-REQ-665):
+// byte-identical locks on the command-plan and launch-script builders that are
+// slated to move into sibling modules. These snapshots must stay IDENTICAL
+// across the behavior-preserving extraction PRs; any diff is a real regression.
+// -----------------------------------------------------------------------------
+describe('coupled-extraction builder characterization (byte-identical)', () => {
+  const interopLayout = {
+    reportDirectory: 'C:\\interop\\reports\\r\\f',
+    stagingDirectory: 'C:\\interop\\reports\\r\\f\\staging',
+    leftFilePath: 'C:\\interop\\reports\\r\\f\\staging\\left-foo.vi',
+    rightFilePath: 'C:\\interop\\reports\\r\\f\\staging\\right-foo.vi',
+    reportFilePath: 'C:\\interop\\reports\\r\\f\\diff-report-foo.vi.html'
+  };
+
+  const linuxShortPathLayout = {
+    reportDirectory: '/tmp/lvie-runtime/repoid123456/fileid123456',
+    stagingDirectory: '/tmp/lvie-runtime/repoid123456/fileid123456/staging',
+    leftFilePath: '/tmp/lvie-runtime/repoid123456/fileid123456/staging/left-foo.vi',
+    rightFilePath: '/tmp/lvie-runtime/repoid123456/fileid123456/staging/right-foo.vi',
+    reportFilePath: '/tmp/lvie-runtime/repoid123456/fileid123456/diff-report-foo.vi.html'
+  };
+
+  const labviewCliArgs = [
+    '-OperationName',
+    'CreateComparisonReport',
+    '-VI1',
+    '/host/staging/left-foo.vi',
+    '-VI2',
+    '/host/staging/right-foo.vi',
+    '-ReportPath',
+    '/host/diff-report-foo.vi.html',
+    '-LabVIEWPath',
+    'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+  ];
+
+  it('buildWindowsInteropCommandPlan output is byte-identical', () => {
+    expect(
+      buildWindowsInteropCommandPlan(
+        createReadyRecord(),
+        { executable: 'C:\\NI\\LabVIEWCLI.exe', args: [...labviewCliArgs] },
+        interopLayout
+      )
+    ).toMatchInlineSnapshot(`
+      {
+        "args": [
+          "-OperationName",
+          "CreateComparisonReport",
+          "-VI1",
+          "C:\\interop\\reports\\r\\f\\staging\\left-foo.vi",
+          "-VI2",
+          "C:\\interop\\reports\\r\\f\\staging\\right-foo.vi",
+          "-ReportPath",
+          "C:\\interop\\reports\\r\\f\\diff-report-foo.vi.html",
+          "-LabVIEWPath",
+          "C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe",
+        ],
+        "executable": "/mnt/c/NI/LabVIEWCLI.exe",
+      }
+    `);
+  });
+
+  it('buildLinuxHostNativeShortPathCommandPlan output is byte-identical', () => {
+    expect(
+      buildLinuxHostNativeShortPathCommandPlan(
+        createReadyRecord(),
+        {
+          executable: '/usr/local/bin/LabVIEWCLI',
+          args: [
+            '-OperationName',
+            'CreateComparisonReport',
+            '-VI1',
+            '/host/staging/left-foo.vi',
+            '-VI2',
+            '/host/staging/right-foo.vi',
+            '-ReportPath',
+            '/host/diff-report-foo.vi.html',
+            '-LabVIEWPath',
+            '/usr/local/natinst/LabVIEW-2026-64/labview'
+          ]
+        },
+        linuxShortPathLayout
+      )
+    ).toMatchInlineSnapshot(`
+      {
+        "args": [
+          "-OperationName",
+          "CreateComparisonReport",
+          "-VI1",
+          "/tmp/lvie-runtime/repoid123456/fileid123456/staging/left-foo.vi",
+          "-VI2",
+          "/tmp/lvie-runtime/repoid123456/fileid123456/staging/right-foo.vi",
+          "-ReportPath",
+          "/tmp/lvie-runtime/repoid123456/fileid123456/diff-report-foo.vi.html",
+          "-LabVIEWPath",
+          "/usr/local/natinst/LabVIEW-2026-64/labview",
+        ],
+        "executable": "/usr/local/bin/LabVIEWCLI",
+      }
+    `);
+  });
+
+  it('buildWindowsHostNativeHeadlessCommandPlan output is byte-identical', () => {
+    expect(
+      buildWindowsHostNativeHeadlessCommandPlan(
+        createReadyRecord(),
+        { executable: 'C:\\NI\\LabVIEWCLI.exe', args: [...labviewCliArgs] },
+        'win32',
+        60
+      )
+    ).toMatchInlineSnapshot(`
+      {
+        "args": [
+          "-NoProfile",
+          "-EncodedCommand",
+          "JABFAHIAcgBvAHIAQQBjAHQAaQBvAG4AUAByAGUAZgBlAHIAZQBuAGMAZQAgAD0AIAAnAFMAdABvAHAAJwAKACQAUAByAG8AZwByAGUAcwBzAFAAcgBlAGYAZQByAGUAbgBjAGUAIAA9ACAAJwBTAGkAbABlAG4AdABsAHkAQwBvAG4AdABpAG4AdQBlACcACgBmAHUAbgBjAHQAaQBvAG4AIABTAGUAdAAtAEkAbgBpAFQAbwBrAGUAbgAgAHsACgAgACAAcABhAHIAYQBtACgAWwBzAHQAcgBpAG4AZwBdACQAUABhAHQAaAAsACAAWwBzAHQAcgBpAG4AZwBdACQASwBlAHkALAAgAFsAcwB0AHIAaQBuAGcAXQAkAFYAYQBsAHUAZQApAAoAIAAgAGkAZgAgACgALQBuAG8AdAAgACgAVABlAHMAdAAtAFAAYQB0AGgAIAAtAEwAaQB0AGUAcgBhAGwAUABhAHQAaAAgACQAUABhAHQAaAAgAC0AUABhAHQAaABUAHkAcABlACAATABlAGEAZgApACkAIAB7ACAAcgBlAHQAdQByAG4AIAB9AAoAIAAgACQAYwBvAG4AdABlAG4AdAAgAD0AIABHAGUAdAAtAEMAbwBuAHQAZQBuAHQAIAAtAEwAaQB0AGUAcgBhAGwAUABhAHQAaAAgACQAUABhAHQAaAAgAC0AUgBhAHcAIAAtAEUAcgByAG8AcgBBAGMAdABpAG8AbgAgAFMAaQBsAGUAbgB0AGwAeQBDAG8AbgB0AGkAbgB1AGUACgAgACAAaQBmACAAKAAkAG4AdQBsAGwAIAAtAGUAcQAgACQAYwBvAG4AdABlAG4AdAApACAAewAgACQAYwBvAG4AdABlAG4AdAAgAD0AIAAnACcAIAB9AAoAIAAgAGkAZgAgACgAJABjAG8AbgB0AGUAbgB0ACAALQBtAGEAdABjAGgAIAAoACIAKAA/AG0AKQBeAFwAcwAqAHsAMAB9AFwAcwAqAD0AIgAgAC0AZgAgAFsAcgBlAGcAZQB4AF0AOgA6AEUAcwBjAGEAcABlACgAJABLAGUAeQApACkAKQAgAHsACgAgACAAIAAgACQAdQBwAGQAYQB0AGUAZAAgAD0AIABbAHIAZQBnAGUAeABdADoAOgBSAGUAcABsAGEAYwBlACgAJABjAG8AbgB0AGUAbgB0ACwAIAAoACIAKAA/AG0AKQBeAFwAcwAqAHsAMAB9AFwAcwAqAD0ALgAqACQAIgAgAC0AZgAgAFsAcgBlAGcAZQB4AF0AOgA6AEUAcwBjAGEAcABlACgAJABLAGUAeQApACkALAAgACgAIgB7ADAAfQA9AHsAMQB9ACIAIAAtAGYAIAAkAEsAZQB5ACwAIAAkAFYAYQBsAHUAZQApACkACgAgACAAfQAgAGUAbABzAGUAIAB7AAoAIAAgACAAIAAkAHUAcABkAGEAdABlAGQAIAA9ACAAKAAkAGMAbwBuAHQAZQBuAHQALgBUAHIAaQBtAEUAbgBkACgAKQAgACsAIABbAEUAbgB2AGkAcgBvAG4AbQBlAG4AdABdADoAOgBOAGUAdwBMAGkAbgBlACAAKwAgACgAIgB7ADAAfQA9AHsAMQB9ACIAIAAtAGYAIAAkAEsAZQB5ACwAIAAkAFYAYQBsAHUAZQApACAAKwAgAFsARQBuAHYAaQByAG8AbgBtAGUAbgB0AF0AOgA6AE4AZQB3AEwAaQBuAGUAKQAKACAAIAB9AAoAIAAgAFMAZQB0AC0AQwBvAG4AdABlAG4AdAAgAC0ATABpAHQAZQByAGEAbABQAGEAdABoACAAJABQAGEAdABoACAALQBWAGEAbAB1AGUAIAAkAHUAcABkAGEAdABlAGQAIAAtAEUAbgBjAG8AZABpAG4AZwAgAHUAdABmADgACgB9AAoAJABjAGwAaQBQAGEAdABoACAAPQAgACcAQwA6AFwATgBJAFwATABhAGIAVgBJAEUAVwBDAEwASQAuAGUAeABlACcACgAkAGwAYQBiAHYAaQBlAHcAUABhAHQAaAAgAD0AIAAnAEMAOgBcAFAAcgBvAGcAcgBhAG0AIABGAGkAbABlAHMAIAAoAHgAOAA2ACkAXABOAGEAdABpAG8AbgBhAGwAIABJAG4AcwB0AHIAdQBtAGUAbgB0AHMAXABMAGEAYgBWAEkARQBXACAAMgAwADIANgAgAFEAMQBcAEwAYQBiAFYASQBFAFcALgBlAHgAZQAnAAoAJABhAHIAZwBzACAAPQAgAEAAKAAnAC0ATwBwAGUAcgBhAHQAaQBvAG4ATgBhAG0AZQAnACwAIAAnAEMAcgBlAGEAdABlAEMAbwBtAHAAYQByAGkAcwBvAG4AUgBlAHAAbwByAHQAJwAsACAAJwAtAFYASQAxACcALAAgACcALwBoAG8AcwB0AC8AcwB0AGEAZwBpAG4AZwAvAGwAZQBmAHQALQBmAG8AbwAuAHYAaQAnACwAIAAnAC0AVgBJADIAJwAsACAAJwAvAGgAbwBzAHQALwBzAHQAYQBnAGkAbgBnAC8AcgBpAGcAaAB0AC0AZgBvAG8ALgB2AGkAJwAsACAAJwAtAFIAZQBwAG8AcgB0AFAAYQB0AGgAJwAsACAAJwAvAGgAbwBzAHQALwBkAGkAZgBmAC0AcgBlAHAAbwByAHQALQBmAG8AbwAuAHYAaQAuAGgAdABtAGwAJwAsACAAJwAtAEwAYQBiAFYASQBFAFcAUABhAHQAaAAnACwAIAAnAEMAOgBcAFAAcgBvAGcAcgBhAG0AIABGAGkAbABlAHMAXABOAGEAdABpAG8AbgBhAGwAIABJAG4AcwB0AHIAdQBtAGUAbgB0AHMAXABMAGEAYgBWAEkARQBXACAAMgAwADIANgBcAEwAYQBiAFYASQBFAFcALgBlAHgAZQAnACkACgAkAGMAbABpAEkAbgBpAEMAYQBuAGQAaQBkAGEAdABlAHMAIAA9ACAAQAAoACcAQwA6AFwAUAByAG8AZwByAGEAbQBEAGEAdABhAFwATgBhAHQAaQBvAG4AYQBsACAASQBuAHMAdAByAHUAbQBlAG4AdABzAFwATABhAGIAVgBJAEUAVwAgAEMATABJAFwATABhAGIAVgBJAEUAVwBDAEwASQAuAGkAbgBpACcALAAgACcAQwA6AFwAUAByAG8AZwByAGEAbQBEAGEAdABhAFwATgBhAHQAaQBvAG4AYQBsACAASQBuAHMAdAByAHUAbQBlAG4AdABzAFwATABhAGIAVgBJAEUAVwBDAEwASQBcAEwAYQBiAFYASQBFAFcAQwBMAEkALgBpAG4AaQAnACwAIAAnAEMAOgBcAFAAcgBvAGcAcgBhAG0AIABGAGkAbABlAHMAXABOAGEAdABpAG8AbgBhAGwAIABJAG4AcwB0AHIAdQBtAGUAbgB0AHMAXABTAGgAYQByAGUAZABcAEwAYQBiAFYASQBFAFcAIABDAEwASQBcAEwAYQBiAFYASQBFAFcAQwBMAEkALgBpAG4AaQAnACwAIAAnAEMAOgBcAFAAcgBvAGcAcgBhAG0AIABGAGkAbABlAHMAIAAoAHgAOAA2ACkAXABOAGEAdABpAG8AbgBhAGwAIABJAG4AcwB0AHIAdQBtAGUAbgB0AHMAXABTAGgAYQByAGUAZABcAEwAYQBiAFYASQBFAFcAIABDAEwASQBcAEwAYQBiAFYASQBFAFcAQwBMAEkALgBpAG4AaQAnACkACgAkAGMAbABpAEkAbgBpACAAPQAgACQAYwBsAGkASQBuAGkAQwBhAG4AZABpAGQAYQB0AGUAcwAgAHwAIABXAGgAZQByAGUALQBPAGIAagBlAGMAdAAgAHsAIABUAGUAcwB0AC0AUABhAHQAaAAgAC0ATABpAHQAZQByAGEAbABQAGEAdABoACAAJABfACAAfQAgAHwAIABTAGUAbABlAGMAdAAtAE8AYgBqAGUAYwB0ACAALQBGAGkAcgBzAHQAIAAxAAoAaQBmACAAKAAkAGMAbABpAEkAbgBpACkAIAB7AAoAIAAgAFMAZQB0AC0ASQBuAGkAVABvAGsAZQBuACAALQBQAGEAdABoACAAJABjAGwAaQBJAG4AaQAgAC0ASwBlAHkAIAAnAE8AcABlAG4AQQBwAHAAUgBlAGYAZQByAGUAbgBjAGUAVABpAG0AZQBvAHUAdABJAG4AUwBlAGMAbwBuAGQAJwAgAC0AVgBhAGwAdQBlACAAJwA2ADAAJwAKACAAIABTAGUAdAAtAEkAbgBpAFQAbwBrAGUAbgAgAC0AUABhAHQAaAAgACQAYwBsAGkASQBuAGkAIAAtAEsAZQB5ACAAJwBBAGYAdABlAHIATABhAHUAbgBjAGgATwBwAGUAbgBBAHAAcABSAGUAZgBlAHIAZQBuAGMAZQBUAGkAbQBlAG8AdQB0AEkAbgBTAGUAYwBvAG4AZAAnACAALQBWAGEAbAB1AGUAIAAnADYAMAAnAAoAfQAKACQAcAByAGUAbABhAHUAbgBjAGgAQQB0AHQAZQBtAHAAdABlAGQAIAA9ACAAJABmAGEAbABzAGUACgBpAGYAIAAoAC0AbgBvAHQAIABbAHMAdAByAGkAbgBnAF0AOgA6AEkAcwBOAHUAbABsAE8AcgBXAGgAaQB0AGUAUwBwAGEAYwBlACgAWwBzAHQAcgBpAG4AZwBdACQAbABhAGIAdgBpAGUAdwBQAGEAdABoACkAIAAtAGEAbgBkACAAKABUAGUAcwB0AC0AUABhAHQAaAAgAC0ATABpAHQAZQByAGEAbABQAGEAdABoACAAJABsAGEAYgB2AGkAZQB3AFAAYQB0AGgAKQApACAAewAKACAAIAAkAHAAcgBlAGwAYQB1AG4AYwBoAEEAdAB0AGUAbQBwAHQAZQBkACAAPQAgACQAdAByAHUAZQAKACAAIABTAHQAYQByAHQALQBQAHIAbwBjAGUAcwBzACAALQBGAGkAbABlAFAAYQB0AGgAIAAkAGwAYQBiAHYAaQBlAHcAUABhAHQAaAAgAC0AQQByAGcAdQBtAGUAbgB0AEwAaQBzAHQAIAAnAC0ALQBoAGUAYQBkAGwAZQBzAHMAJwAgAC0AVwBpAG4AZABvAHcAUwB0AHkAbABlACAASABpAGQAZABlAG4AIAB8ACAATwB1AHQALQBOAHUAbABsAAoAIAAgAFMAdABhAHIAdAAtAFMAbABlAGUAcAAgAC0AUwBlAGMAbwBuAGQAcwAgADIANQAKAH0ACgAkAGEAdAB0AGUAbQBwAHQAIAA9ACAAMAAKACQAbQBhAHgAQQB0AHQAZQBtAHAAdABzACAAPQAgAFsATQBhAHQAaABdADoAOgBNAGEAeAAoADEALAAgADEAIAArACAAMQApAAoAJABsAGEAcwB0AEUAeABpAHQAIAA9ACAAMQAKACQAbABhAHMAdABPAHUAdABwAHUAdABUAGUAeAB0ACAAPQAgACcAJwAKAHcAaABpAGwAZQAgACgAJABhAHQAdABlAG0AcAB0ACAALQBsAHQAIAAkAG0AYQB4AEEAdAB0AGUAbQBwAHQAcwApACAAewAKACAAIAAkAGEAdAB0AGUAbQBwAHQAKwArAAoAIAAgACQAcAByAGUAdgBpAG8AdQBzAEUAcgByAG8AcgBBAGMAdABpAG8AbgBQAHIAZQBmAGUAcgBlAG4AYwBlACAAPQAgACQARQByAHIAbwByAEEAYwB0AGkAbwBuAFAAcgBlAGYAZQByAGUAbgBjAGUACgAgACAAJABFAHIAcgBvAHIAQQBjAHQAaQBvAG4AUAByAGUAZgBlAHIAZQBuAGMAZQAgAD0AIAAnAEMAbwBuAHQAaQBuAHUAZQAnAAoAIAAgAHQAcgB5ACAAewAKACAAIAAgACAAJABvAHUAdABwAHUAdAAgAD0AIABAACgAJgAgACQAYwBsAGkAUABhAHQAaAAgAEAAYQByAGcAcwAgADIAPgAmADEAKQAKACAAIAAgACAAJABsAGEAcwB0AEUAeABpAHQAIAA9ACAAWwBpAG4AdABdACQATABBAFMAVABFAFgASQBUAEMATwBEAEUACgAgACAAfQAgAGYAaQBuAGEAbABsAHkAIAB7AAoAIAAgACAAIAAkAEUAcgByAG8AcgBBAGMAdABpAG8AbgBQAHIAZQBmAGUAcgBlAG4AYwBlACAAPQAgACQAcAByAGUAdgBpAG8AdQBzAEUAcgByAG8AcgBBAGMAdABpAG8AbgBQAHIAZQBmAGUAcgBlAG4AYwBlAAoAIAAgAH0ACgAgACAAJABvAHUAdABwAHUAdAAgAHwAIABGAG8AcgBFAGEAYwBoAC0ATwBiAGoAZQBjAHQAIAB7ACAAaQBmACAAKAAtAG4AbwB0ACAAWwBzAHQAcgBpAG4AZwBdADoAOgBJAHMATgB1AGwAbABPAHIAVwBoAGkAdABlAFMAcABhAGMAZQAoAFsAcwB0AHIAaQBuAGcAXQAkAF8AKQApACAAewAgAFcAcgBpAHQAZQAtAE8AdQB0AHAAdQB0ACAAJABfACAAfQAgAH0ACgAgACAAJABsAGEAcwB0AE8AdQB0AHAAdQB0AFQAZQB4AHQAIAA9ACAAQAAoACQAbwB1AHQAcAB1AHQAIAB8ACAARgBvAHIARQBhAGMAaAAtAE8AYgBqAGUAYwB0ACAAewAgAFsAcwB0AHIAaQBuAGcAXQAkAF8AIAB9ACkAIAAtAGoAbwBpAG4AIABbAEUAbgB2AGkAcgBvAG4AbQBlAG4AdABdADoAOgBOAGUAdwBMAGkAbgBlAAoAIAAgAGkAZgAgACgAJABsAGEAcwB0AEUAeABpAHQAIAAtAGUAcQAgADAAKQAgAHsAIABiAHIAZQBhAGsAIAB9AAoAIAAgACQAaQBzAFMAdABhAHIAdAB1AHAAQwBvAG4AbgBlAGMAdABpAHYAaQB0AHkAIAA9ACAAKAAkAGwAYQBzAHQARQB4AGkAdAAgAC0AaQBuACAAQAAoAC0AMwA1ADAAMAAwADAALAAgAC0AMwA1ADAAMAA1ADEAKQAgAC0AbwByACAAJABsAGEAcwB0AE8AdQB0AHAAdQB0AFQAZQB4AHQAIAAtAG0AYQB0AGMAaAAgACcALQAzADUAMAAwADAAMAAnACAALQBvAHIAIAAkAGwAYQBzAHQATwB1AHQAcAB1AHQAVABlAHgAdAAgAC0AbQBhAHQAYwBoACAAJwAtADMANQAwADAANQAxACcAIAAtAG8AcgAgACQAbABhAHMAdABPAHUAdABwAHUAdABUAGUAeAB0ACAALQBtAGEAdABjAGgAIAAnACgAPwBpACkAZgBhAGkAbABlAGQAIAB0AG8AIABlAHMAdABhAGIAbABpAHMAaAAgAGEAIABjAG8AbgBuAGUAYwB0AGkAbwBuACAAdwBpAHQAaAAgAEwAYQBiAFYASQBFAFcAJwApAAoAIAAgAGkAZgAgACgAJABpAHMAUwB0AGEAcgB0AHUAcABDAG8AbgBuAGUAYwB0AGkAdgBpAHQAeQAgAC0AYQBuAGQAIAAkAGEAdAB0AGUAbQBwAHQAIAAtAGwAdAAgACQAbQBhAHgAQQB0AHQAZQBtAHAAdABzACkAIAB7AAoAIAAgACAAIABTAHQAYQByAHQALQBTAGwAZQBlAHAAIAAtAFMAZQBjAG8AbgBkAHMAIAA4AAoAIAAgACAAIABjAG8AbgB0AGkAbgB1AGUACgAgACAAfQAKACAAIABiAHIAZQBhAGsACgB9AAoAJABjAG8AbgBuAGUAYwB0AGUAZABQAG8AcgB0ACAAPQAgACcAJwAKAGkAZgAgACgAJABsAGEAcwB0AE8AdQB0AHAAdQB0AFQAZQB4AHQAIAAtAG0AYQB0AGMAaAAgACcAQwBvAG4AbgBlAGMAdABpAG8AbgAgAGUAcwB0AGEAYgBsAGkAcwBoAGUAZAAgAHcAaQB0AGgAIABMAGEAYgBWAEkARQBXACAAYQB0ACAAcABvAHIAdAAgAG4AdQBtAGIAZQByACAAKABbADAALQA5AF0AKwApAFwALgAnACkAIAB7AAoAIAAgACQAYwBvAG4AbgBlAGMAdABlAGQAUABvAHIAdAAgAD0AIAAkAE0AYQB0AGMAaABlAHMAWwAxAF0ACgB9AAoAVwByAGkAdABlAC0ATwB1AHQAcAB1AHQAIAAoACcAWwB2AGkALQBoAGkAcwB0AG8AcgB5AC0AcwB1AGkAdABlAC0AaABvAHMAdABuAGEAdABpAHYAZQAtAG0AZQB0AGEAXQByAGUAdAByAHkAQQB0AHQAZQBtAHAAdABzAD0AewAwAH0AOwBwAHIAZQBsAGEAdQBuAGMAaABBAHQAdABlAG0AcAB0AGUAZAA9AHsAMQB9ADsAaQBuAGkAUABhAHQAaAA9AHsAMgB9ADsAYwBvAG4AbgBlAGMAdABlAGQAUABvAHIAdAA9AHsAMwB9ADsAbwBwAGUAbgBUAGkAbQBlAG8AdQB0AD0AMQAyADAAOwBhAGYAdABlAHIATABhAHUAbgBjAGgAVABpAG0AZQBvAHUAdAA9ADEAMgAwACcAIAAtAGYAIAAkAGEAdAB0AGUAbQBwAHQALAAgACgAJAAoAGkAZgAgACgAJABwAHIAZQBsAGEAdQBuAGMAaABBAHQAdABlAG0AcAB0AGUAZAApACAAewAgADEAIAB9ACAAZQBsAHMAZQAgAHsAIAAwACAAfQApACkALAAgACQAYwBsAGkASQBuAGkALAAgACQAYwBvAG4AbgBlAGMAdABlAGQAUABvAHIAdAApAAoAZQB4AGkAdAAgACQAbABhAHMAdABFAHgAaQB0AA==",
+        ],
+        "executable": "powershell.exe",
+      }
+    `);
+  });
+
+  it('buildWindowsContainerLabviewCliScript output is byte-identical', () => {
+    expect(
+      buildWindowsContainerLabviewCliScript(
+        'C:\\NI\\LabVIEWCLI.exe',
+        ['-OperationName', 'CreateComparisonReport', '-VI1', 'a', '-VI2', 'b'],
+        'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
+        180
+      )
+    ).toMatchInlineSnapshot(`
+      "$ErrorActionPreference = 'Stop'
+      $ProgressPreference = 'SilentlyContinue'
+      function Set-IniToken {
+        param([string]$Path, [string]$Key, [string]$Value)
+        if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { return }
+        $content = Get-Content -LiteralPath $Path -Raw -ErrorAction SilentlyContinue
+        if ($null -eq $content) { $content = '' }
+        if ($content -match ("(?m)^\\s*{0}\\s*=" -f [regex]::Escape($Key))) {
+          $updated = [regex]::Replace($content, ("(?m)^\\s*{0}\\s*=.*$" -f [regex]::Escape($Key)), ("{0}={1}" -f $Key, $Value))
+        } else {
+          $updated = ($content.TrimEnd() + [Environment]::NewLine + ("{0}={1}" -f $Key, $Value) + [Environment]::NewLine)
+        }
+        Set-Content -LiteralPath $Path -Value $updated -Encoding utf8
+      }
+      $env:TEMP = 'C:\\vi-history-suite\\container-temp'
+      $env:TMP = $env:TEMP
+      $cliPath = 'C:\\NI\\LabVIEWCLI.exe'
+      $labviewPath = 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+      $args = @('-OperationName', 'CreateComparisonReport', '-VI1', 'a', '-VI2', 'b')
+      $cliIniCandidates = @('C:\\ProgramData\\National Instruments\\LabVIEW CLI\\LabVIEWCLI.ini', 'C:\\ProgramData\\National Instruments\\LabVIEWCLI\\LabVIEWCLI.ini', 'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.ini', 'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.ini')
+      $cliIni = $cliIniCandidates | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+      if ($cliIni) {
+        Set-IniToken -Path $cliIni -Key 'OpenAppReferenceTimeoutInSecond' -Value '180'
+        Set-IniToken -Path $cliIni -Key 'AfterLaunchOpenAppReferenceTimeoutInSecond' -Value '180'
+      }
+      $prelaunchAttempted = $false
+      if (-not [string]::IsNullOrWhiteSpace([string]$labviewPath) -and (Test-Path -LiteralPath $labviewPath)) {
+        $prelaunchAttempted = $true
+        Start-Process -FilePath $labviewPath -ArgumentList '--headless' -WindowStyle Hidden | Out-Null
+        Start-Sleep -Seconds 8
+      }
+      $attempt = 0
+      $maxAttempts = [Math]::Max(1, 1 + 1)
+      $lastExit = 1
+      $lastOutputText = ''
+      while ($attempt -lt $maxAttempts) {
+        $attempt++
+        $previousErrorActionPreference = $ErrorActionPreference
+        $ErrorActionPreference = 'Continue'
+        try {
+          $output = @(& $cliPath @args 2>&1)
+          $lastExit = [int]$LASTEXITCODE
+        } finally {
+          $ErrorActionPreference = $previousErrorActionPreference
+        }
+        $output | ForEach-Object { if (-not [string]::IsNullOrWhiteSpace([string]$_)) { Write-Output $_ } }
+        $lastOutputText = @($output | ForEach-Object { [string]$_ }) -join [Environment]::NewLine
+        if ($lastExit -eq 0) { break }
+        $isStartupConnectivity = ($lastExit -in @(-350000, -350051) -or $lastOutputText -match '-350000' -or $lastOutputText -match '-350051' -or $lastOutputText -match '(?i)failed to establish a connection with LabVIEW')
+        if ($isStartupConnectivity -and $attempt -lt $maxAttempts) {
+          Start-Sleep -Seconds 8
+          continue
+        }
+        break
+      }
+      $connectedPort = ''
+      if ($lastOutputText -match 'Connection established with LabVIEW at port number ([0-9]+)\\.') {
+        $connectedPort = $Matches[1]
+      }
+      Write-Output ('[vi-history-suite-container-meta]retryAttempts={0};prelaunchAttempted={1};iniPath={2};connectedPort={3};openTimeout=180;afterLaunchTimeout=180' -f $attempt, ($(if ($prelaunchAttempted) { 1 } else { 0 })), $cliIni, $connectedPort)
+      exit $lastExit"
+    `);
+  });
+
+  it('buildLinuxContainerLabviewCliScript output is byte-identical', () => {
+    expect(
+      buildLinuxContainerLabviewCliScript(
+        'labviewcli',
+        ['-OperationName', 'CreateComparisonReport', '-VI1', 'a', '-VI2', 'b'],
+        'cli-headless',
+        {
+          labviewExecutablePath: '/usr/local/natinst/LabVIEW-2026-64/labview',
+          connectTimeoutSeconds: 120
+        }
+      )
+    ).toMatchInlineSnapshot(`
+      "set -euo pipefail
+      mkdir -p '/workspace/container-temp' /tmp/natinst
+      printf '1\\n' > '/tmp/natinst/LVContainer.txt'
+      export TEMP='/workspace/container-temp'
+      export TMP='/workspace/container-temp'
+      export TMPDIR='/workspace/container-temp'
+      cli_path='labviewcli'
+      args=('-OperationName' 'CreateComparisonReport' '-VI1' 'a' '-VI2' 'b')
+      lv_exe='/usr/local/natinst/LabVIEW-2026-64/labview'
+      open_app_timeout=120
+      after_launch_timeout=120
+      max_attempts=2
+      retry_delay=8
+      err_file='/workspace/container-temp/vihs-cli-stderr.txt'
+      set_conf_key() {
+        conf_file="$1"; conf_key="$2"; conf_value="$3"
+        mkdir -p "$(dirname "$conf_file")" 2>/dev/null || return 0
+        if [ -f "$conf_file" ] && grep -qE "^[[:space:]]*\${conf_key}=" "$conf_file" 2>/dev/null; then
+          sed -i -E "s|^[[:space:]]*\${conf_key}=.*|\${conf_key}=\${conf_value}|" "$conf_file" 2>/dev/null || true
+        else
+          printf "%s=%s\\n" "$conf_key" "$conf_value" >> "$conf_file" 2>/dev/null || true
+        fi
+      }
+      harden_conf() {
+        lv_dir="$(dirname "$lv_exe")"
+        lv_base="$(basename "$lv_dir")"
+        lv_year="$(printf "%s" "$lv_base" | sed -E "s/^LabVIEW-([0-9]+).*/\\1/")"
+        [ -n "$lv_year" ] || return 0
+        conf_dir="\${HOME:-/root}/natinst/.config/LabVIEW-\${lv_year}"
+        exe_base="$(basename "$lv_exe")"
+        for conf in "\${conf_dir}/\${exe_base}.conf" "\${conf_dir}/labview.conf"; do
+          set_conf_key "$conf" "server.tcp.enabled" "True"
+          set_conf_key "$conf" "unattended" "True"
+          set_conf_key "$conf" "OpenAppReferenceTimeoutInSecond" "$open_app_timeout"
+          set_conf_key "$conf" "AfterLaunchOpenAppReferenceTimeoutInSecond" "$after_launch_timeout"
+        done
+      }
+      harden_conf || true
+      attempt=0
+      rc=1
+      while [ "$attempt" -lt "$max_attempts" ]; do
+        attempt=$((attempt + 1))
+        set +e
+        "$cli_path" "\${args[@]}" 2>"$err_file"
+        rc=$?
+        set -e
+        cat "$err_file" >&2 2>/dev/null || true
+        if [ "$rc" -eq 0 ]; then break; fi
+        if [ "$attempt" -lt "$max_attempts" ] && grep -qiE '(-350000|-350051|failed to establish a connection with LabVIEW)' "$err_file" 2>/dev/null; then
+          sleep "$retry_delay"
+          continue
+        fi
+        break
+      done
+      printf '[vi-history-suite-container-meta]retryAttempts=%s;openTimeout=%s;afterLaunchTimeout=%s\\n' "$attempt" "$open_app_timeout" "$after_launch_timeout"
+      exit $rc"
+    `);
   });
 });
