@@ -35,6 +35,17 @@ describe('buildViPreviewFramesViewerHtml', () => {
     expect(styleMatch![0]).not.toContain('--vscode-editor-background');
   });
 
+  it('sizes the stage and Fit target to the content bounds so stacked case frames are not clipped (VHS-REQ-659)', () => {
+    const html = buildViPreviewFramesViewerHtml(sampleModel(), NONCE);
+    // The viewer computes a content bounding box (union of root + all frame
+    // rects) and sizes/fits to it, not to the root image dimensions alone, so
+    // flat-export case steppers stacked below the diagram stay in the viewport.
+    expect(html).toContain('function contentBounds(');
+    expect(html).toContain('var bounds = contentBounds(w, h);');
+    expect(html).toContain("stage.style.width = bounds.width + 'px'; stage.style.height = bounds.height + 'px';");
+    expect(html).toContain('fit(bounds.width, bounds.height);');
+  });
+
   it('embeds the frames JSON island with the resolved root and case labels (VHS-REQ-659.11)', () => {
     const html = buildViPreviewFramesViewerHtml(sampleModel(), NONCE);
     const islandMatch = /<script id="lvr-frames"[^>]*>([\s\S]*?)<\/script>/.exec(html);
