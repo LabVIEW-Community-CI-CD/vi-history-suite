@@ -14,6 +14,7 @@ export { parseWindowsTasklistCsv } from './runtime/windowsTasklistParsing';
 import { isSafeRelativeSubpath } from './runtime/safeRelativeSubpath';
 import { appendCancellationMessage } from './runtime/cancellationMessage';
 import { shouldAttemptWindowsColdLaunchRecovery } from './runtime/windowsColdLaunchRecovery';
+import { subscribeToCancellation } from './runtime/cancellationSubscription';
 import {
   describeObservedRuntimeProcesses,
   describeObservedWindowsTcpListeners
@@ -655,20 +656,6 @@ export function buildDefaultRunCommand(
           timeoutMs: options.timeoutMs,
           cancellationToken: options.cancellationToken
         });
-}
-
-function subscribeToCancellation(
-  cancellationToken: ComparisonRuntimeCancellationToken | undefined,
-  listener: () => void
-): () => void {
-  if (!cancellationToken?.onCancellationRequested) {
-    return () => undefined;
-  }
-
-  const disposable = cancellationToken.onCancellationRequested(listener);
-  return () => {
-    disposable?.dispose?.();
-  };
 }
 
 async function terminateWindowsProcessTree(
