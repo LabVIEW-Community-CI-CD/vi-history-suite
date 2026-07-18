@@ -655,7 +655,7 @@ function renderMarkdown(ledger) {
   lines.push('| Rank | ID | Dimension | Tier | Score | Selectable | Title |');
   lines.push('| ---: | --- | --- | --- | ---: | :---: | --- |');
   ledger.entries.forEach((entry, index) => {
-    const title = entry.title.replace(/\|/g, '\\|');
+    const title = entry.title.replace(/\\/g, '\\\\').replace(/\|/g, '\\|');
     lines.push(
       `| ${index + 1} | \`${entry.id}\` | ${entry.dimension} | ${entry.severityTier} | ${entry.severityScore} | ${entry.selectable ? 'yes' : 'no'} | ${title} |`
     );
