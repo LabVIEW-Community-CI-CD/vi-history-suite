@@ -60,6 +60,30 @@ describe('parseArgs (VHS-REQ-671.6)', () => {
     expect(parsed.limit).toBeUndefined();
     expect(parsed.cacheMaxEntries).toBeUndefined();
   });
+
+  it('parses a valid zero-based --shard index/count', () => {
+    expect(parseArgs(['--shard', '0/4']).shard).toEqual({ index: 0, count: 4 });
+    expect(parseArgs(['--shard', '3/4']).shard).toEqual({ index: 3, count: 4 });
+  });
+
+  it('rejects malformed or out-of-range --shard values', () => {
+    // Non-matching format, index >= count, and zero count are all ignored.
+    expect(parseArgs(['--shard', 'abc']).shard).toBeUndefined();
+    expect(parseArgs(['--shard', '4/4']).shard).toBeUndefined();
+    expect(parseArgs(['--shard', '0/0']).shard).toBeUndefined();
+  });
+
+  it('ignores a non-positive --connect-timeout', () => {
+    expect(parseArgs(['--connect-timeout', '0']).connectTimeoutSeconds).toBeUndefined();
+    expect(parseArgs(['--connect-timeout', 'nope']).connectTimeoutSeconds).toBeUndefined();
+  });
+
+  it('accepts and ignores a non-docker --provider without setting a field', () => {
+    // The worker is docker-only: it consumes the provider value but records nothing.
+    const parsed = parseArgs(['--provider', 'host', '--cache-dir', '/c']);
+    expect(parsed.cacheDirectory).toBe('/c');
+    expect('provider' in parsed).toBe(false);
+  });
 });
 
 describe('runViPreviewCacheWarm (VHS-REQ-671.3)', () => {
@@ -286,5 +310,38 @@ describe('preview-cache-warm CLI main (VHS-REQ-671.6)', () => {
     const writeOutput = vi.fn(async () => undefined);
     await main(['--cache-dir', '/cache', '--output', 'evidence/warm.json'], { run, writeOutput });
     expect(writeOutput).toHaveBeenCalledWith('evidence/warm.json', expect.stringContaining(PREVIEW_CACHE_WARM_SCHEMA));
+  });
+
+  it('rejects an absolute --output path through the default path-safe writer', async () => {
+    const run = vi.fn(async () => ({
+      $schema: PREVIEW_CACHE_WARM_SCHEMA,
+      schemaVersion: 1 as const,
+      generatedAt: '2026-07-18T00:00:00.000Z',
+      repositoryRoot: '/repo',
+      cacheDirectory: '/cache',
+      runtime: { outcome: 'ready' as const, provider: 'linux-container' },
+      totals: { total: 0, rendered: 0, cacheHit: 0, failed: 0, blocked: 0, bytes: 0 },
+      entries: []
+    }));
+    // No writeOutput dep -> exercises defaultWriteOutput, which rejects absolute paths.
+    await expect(main(['--cache-dir', '/cache', '--output', '/etc/evil.json'], { run })).rejects.toThrow(
+      /--output must be a relative path/
+    );
+  });
+
+  it('rejects a parent-escaping --output path through the default path-safe writer', async () => {
+    const run = vi.fn(async () => ({
+      $schema: PREVIEW_CACHE_WARM_SCHEMA,
+      schemaVersion: 1 as const,
+      generatedAt: '2026-07-18T00:00:00.000Z',
+      repositoryRoot: '/repo',
+      cacheDirectory: '/cache',
+      runtime: { outcome: 'ready' as const, provider: 'linux-container' },
+      totals: { total: 0, rendered: 0, cacheHit: 0, failed: 0, blocked: 0, bytes: 0 },
+      entries: []
+    }));
+    await expect(
+      main(['--cache-dir', '/cache', '--output', '../escape.json'], { run })
+    ).rejects.toThrow(/--output must stay within the working directory/);
   });
 });
