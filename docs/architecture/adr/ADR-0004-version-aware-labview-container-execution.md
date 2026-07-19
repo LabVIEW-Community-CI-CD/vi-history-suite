@@ -8,7 +8,9 @@
 > requirement text, and `VHS-REQ-620` is amended for the LabVIEW-agnostic Docker
 > settings/label behavior. The text below is the design record. This ADR
 > supersedes the LabVIEW-2026-pin aspect of [ADR-0003](./ADR-0003-dynamic-labview-container-image-selection.md);
-> ADR-0003 remains Accepted as the image-selection design of record.
+> ADR-0003 remains Accepted as the image-selection design of record. The
+> governing system requirement is VHS-SYS-REQ-019 (Selectable LabVIEW Container
+> Runtime Versions).
 
 ## Context
 
