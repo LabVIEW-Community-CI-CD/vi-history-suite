@@ -176,6 +176,24 @@ describe('extractEmbeddedCoordinateFramesJson', () => {
     expect(extractEmbeddedCoordinateFramesJson('')).toBeUndefined();
     expect(extractEmbeddedCoordinateFramesJson(undefined as unknown as string)).toBeUndefined();
   });
+
+  it('extracts correctly when a preceding script has a > inside a quoted attribute (#2123)', () => {
+    // bad-tag-filter hardening: a `[^>]*` start-tag match would mis-parse the
+    // first script (its title attribute contains `>`), corrupting the scan. The
+    // quoted-attribute-aware pattern skips it and finds the real island.
+    const body = '[{"Image":"A","Position":{"Left":0,"Top":0,"Width":1,"Height":1}}]';
+    const html =
+      '<HTML><BODY><script type="text/javascript" title="a>b">var x=1;</script>' +
+      `<script type="application/json" id="${EMBEDDED_COORDINATE_FRAMES_ISLAND_ID}">${body}</script></BODY></HTML>`;
+    expect(extractEmbeddedCoordinateFramesJson(html)).toBe(body);
+  });
+
+  it('handles a </script > end tag with whitespace before the > (#2123)', () => {
+    const body = '[{"Image":"A"}]';
+    const html =
+      `<HTML><BODY><script type="application/json" id="${EMBEDDED_COORDINATE_FRAMES_ISLAND_ID}">${body}</script ></BODY></HTML>`;
+    expect(extractEmbeddedCoordinateFramesJson(html)).toBe(body);
+  });
 });
 
 describe('findFramesRoot', () => {

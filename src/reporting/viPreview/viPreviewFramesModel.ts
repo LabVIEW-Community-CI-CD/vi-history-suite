@@ -244,7 +244,11 @@ export function extractEmbeddedCoordinateFramesJson(html: string): string | unde
   if (typeof html !== 'string' || html.length === 0) {
     return undefined;
   }
-  const scriptPattern = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi;
+  // The start-tag attribute group tolerates a `>` inside a quoted attribute value
+  // (`(?:[^>"']|"[^"]*"|'[^']*')*`), and the end tag tolerates whitespace before
+  // `>` (`</script\s*>`), so a crafted document cannot hide or mis-terminate a
+  // script the way a `[^>]*` / `</script>` filter would (CodeQL js/bad-tag-filter).
+  const scriptPattern = /<script\b((?:[^>"']|"[^"]*"|'[^']*')*)>([\s\S]*?)<\/script\s*>/gi;
   let match: RegExpExecArray | null;
   while ((match = scriptPattern.exec(html)) !== null) {
     const attributes = match[1];
