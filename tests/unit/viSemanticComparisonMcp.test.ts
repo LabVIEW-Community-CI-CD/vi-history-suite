@@ -42,6 +42,20 @@ function successResult(response: ReturnType<typeof handleViSemanticMcpMessage>):
   return (response as JsonRpcSuccess).result;
 }
 
+/**
+ * Asserts the response is a structured JSON-RPC -32602 (Invalid params) error and
+ * returns its `error` object (with field-level `data.issues`) for further checks.
+ */
+function invalidParamsError(
+  response: ReturnType<typeof handleViSemanticMcpMessage>
+): { code: number; message: string; data?: { issues?: Array<{ field: string; expected: string; received: string }> } } {
+  expect(response).not.toBeNull();
+  expect(response).toHaveProperty('error');
+  const error = (response as { error: { code: number; message: string; data?: { issues?: Array<{ field: string; expected: string; received: string }> } } }).error;
+  expect(error.code).toBe(-32602);
+  return error;
+}
+
 describe('viSemanticComparisonMcp', () => {
   it('answers the initialize handshake with protocol and server info', () => {
     const result = successResult(
@@ -173,17 +187,21 @@ describe('viSemanticComparisonMcp', () => {
     expect(result.content[0].text).toContain('The block diagram differs.');
   });
 
-  it('reports a tool error through the result envelope for invalid arguments', () => {
-    const result = successResult(
+  it('rejects invalid arguments with a structured -32602 naming the field', () => {
+    const error = invalidParamsError(
       handleViSemanticMcpMessage({
         jsonrpc: '2.0',
         id: 6,
         method: 'tools/call',
         params: { name: 'summarize_vi_comparison', arguments: { reportHtml: '' } }
       })
-    ) as { content: Array<{ text: string }>; isError: boolean };
-    expect(result.isError).toBe(true);
-    expect(result.content[0].text).toContain('reportHtml is required');
+    );
+    expect(error.message).toContain('reportHtml');
+    expect(error.data?.issues?.[0]).toMatchObject({
+      field: 'reportHtml',
+      expected: 'a non-empty string',
+      received: 'empty string'
+    });
   });
 
   it('rejects an unknown tool and a missing tool name as invalid params', () => {
@@ -241,16 +259,15 @@ describe('viSemanticComparisonMcp', () => {
     const schema = JSON.parse(one.content[0].text) as { $id: string };
     expect(schema.$id).toBe('vi-history-suite/vi-semantic-history@v1');
 
-    const unknown = successResult(
+    const unknown = invalidParamsError(
       handleViSemanticMcpMessage({
         jsonrpc: '2.0',
         id: 62,
         method: 'tools/call',
         params: { name: 'get_vi_semantic_schema', arguments: { schema: 'nope@v9' } }
       })
-    ) as { content: Array<{ text: string }>; isError: boolean };
-    expect(unknown.isError).toBe(true);
-    expect(unknown.content[0].text).toContain('unknown schema');
+    );
+    expect(unknown.data?.issues?.[0]).toMatchObject({ field: 'schema' });
   });
 
   it('validates a document through validate_vi_semantic_document', () => {
@@ -294,17 +311,16 @@ describe('viSemanticComparisonMcp', () => {
     expect(report.errors.length).toBeGreaterThan(0);
   });
 
-  it('reports a tool error when validate_vi_semantic_document lacks a document', () => {
-    const result = successResult(
+  it('rejects validate_vi_semantic_document without a document as -32602', () => {
+    const error = invalidParamsError(
       handleViSemanticMcpMessage({
         jsonrpc: '2.0',
         id: 65,
         method: 'tools/call',
         params: { name: 'validate_vi_semantic_document', arguments: {} }
       })
-    ) as { content: Array<{ text: string }>; isError: boolean };
-    expect(result.isError).toBe(true);
-    expect(result.content[0].text).toContain('document is required');
+    );
+    expect(error.data?.issues?.[0]).toMatchObject({ field: 'document' });
   });
 
   it('directs a synchronous compare_vi_revisions call to the async entrypoint', () => {
@@ -462,13 +478,11 @@ describe('viSemanticComparisonMcp', () => {
       const compareViRevisions = vi.fn(
         async (): Promise<CompareViRevisionsResult> => ({ status: 'failed', reason: 'unused' })
       );
-      const response = successResult(
-        await handleViSemanticMcpMessageAsync(compareCall({ repositoryRoot: '/repo' }), {
-          compareViRevisions
-        })
-      ) as { content: Array<{ text: string }>; isError: boolean };
-      expect(response.isError).toBe(true);
-      expect(response.content[0].text).toContain('relativePath is required');
+      const response = await handleViSemanticMcpMessageAsync(compareCall({ repositoryRoot: '/repo' }), {
+        compareViRevisions
+      });
+      const error = invalidParamsError(response);
+      expect(error.data?.issues?.[0]).toMatchObject({ field: 'relativePath' });
       expect(compareViRevisions).not.toHaveBeenCalled();
     });
 
@@ -547,13 +561,11 @@ describe('viSemanticComparisonMcp', () => {
       const buildViSemanticHistory = vi.fn(
         async (): Promise<ViSemanticHistory> => ({}) as ViSemanticHistory
       );
-      const response = successResult(
-        await handleViSemanticMcpMessageAsync(historyCall({ repositoryRoot: '/repo' }), {
-          buildViSemanticHistory
-        })
-      ) as { content: Array<{ text: string }>; isError: boolean };
-      expect(response.isError).toBe(true);
-      expect(response.content[0].text).toContain('relativePath is required');
+      const response = await handleViSemanticMcpMessageAsync(historyCall({ repositoryRoot: '/repo' }), {
+        buildViSemanticHistory
+      });
+      const error = invalidParamsError(response);
+      expect(error.data?.issues?.[0]).toMatchObject({ field: 'relativePath' });
       expect(buildViSemanticHistory).not.toHaveBeenCalled();
     });
 
@@ -669,11 +681,9 @@ describe('viSemanticComparisonMcp', () => {
       const buildViRepositoryIndex = vi.fn(
         async (): Promise<ViRepositoryIndex> => ({}) as ViRepositoryIndex
       );
-      const response = successResult(
-        await handleViSemanticMcpMessageAsync(indexCall({}), { buildViRepositoryIndex })
-      ) as { content: Array<{ text: string }>; isError: boolean };
-      expect(response.isError).toBe(true);
-      expect(response.content[0].text).toContain('repositoryRoot is required');
+      const response = await handleViSemanticMcpMessageAsync(indexCall({}), { buildViRepositoryIndex });
+      const error = invalidParamsError(response);
+      expect(error.data?.issues?.[0]).toMatchObject({ field: 'repositoryRoot' });
       expect(buildViRepositoryIndex).not.toHaveBeenCalled();
     });
 
@@ -768,13 +778,11 @@ describe('viSemanticComparisonMcp', () => {
 
     it('rejects invalid PR-review arguments before invoking the orchestrator', async () => {
       const buildViSemanticPrReview = vi.fn(async (): Promise<ViSemanticPrReview> => prReview);
-      const response = successResult(
-        await handleViSemanticMcpMessageAsync(prReviewCall({ repositoryRoot: '/repo' }), {
-          buildViSemanticPrReview
-        })
-      ) as { content: Array<{ text: string }>; isError: boolean };
-      expect(response.isError).toBe(true);
-      expect(response.content[0].text).toContain('baseHash is required');
+      const response = await handleViSemanticMcpMessageAsync(prReviewCall({ repositoryRoot: '/repo' }), {
+        buildViSemanticPrReview
+      });
+      const error = invalidParamsError(response);
+      expect(error.data?.issues?.[0]).toMatchObject({ field: 'baseHash' });
       expect(buildViSemanticPrReview).not.toHaveBeenCalled();
     });
 
@@ -861,16 +869,14 @@ describe('viSemanticComparisonMcp', () => {
       expect(deps.previewCacheInspector.search).toHaveBeenCalledWith('/cache', 'interactive');
     });
 
-    it('rejects an unknown search marker', async () => {
+    it('rejects an unknown search marker as -32602', async () => {
       const deps = { previewCacheInspector: inspector() };
-      const response = successResult(
-        await handleViSemanticMcpMessageAsync(
-          cacheCall('search_preview_cache', { cacheDirectory: '/cache', marker: 'nope' }),
-          deps
-        )
-      ) as { content: Array<{ text: string }>; isError: boolean };
-      expect(response.isError).toBe(true);
-      expect(response.content[0].text).toContain('marker must be one of');
+      const response = await handleViSemanticMcpMessageAsync(
+        cacheCall('search_preview_cache', { cacheDirectory: '/cache', marker: 'nope' }),
+        deps
+      );
+      const error = invalidParamsError(response);
+      expect(error.data?.issues?.[0]).toMatchObject({ field: 'marker' });
     });
 
     it('fetches one preview-cache entry with includeHtml', async () => {
@@ -917,13 +923,11 @@ describe('viSemanticComparisonMcp', () => {
       expect(response.content[0].text).toContain('not wired');
     });
 
-    it('requires cacheDirectory for cache tools', async () => {
+    it('rejects cache tools without cacheDirectory as -32602', async () => {
       const deps = { previewCacheInspector: inspector() };
-      const response = successResult(
-        await handleViSemanticMcpMessageAsync(cacheCall('list_preview_cache', {}), deps)
-      ) as { content: Array<{ text: string }>; isError: boolean };
-      expect(response.isError).toBe(true);
-      expect(response.content[0].text).toContain('cacheDirectory is required');
+      const response = await handleViSemanticMcpMessageAsync(cacheCall('list_preview_cache', {}), deps);
+      const error = invalidParamsError(response);
+      expect(error.data?.issues?.[0]).toMatchObject({ field: 'cacheDirectory' });
     });
   });
 
@@ -983,16 +987,14 @@ describe('viSemanticComparisonMcp', () => {
       expect(parsed.blockedReason).toBe('labview-version-required');
     });
 
-    it('rejects an invalid platform for get_runtime_health', async () => {
+    it('rejects an invalid platform for get_runtime_health as -32602', async () => {
       const resolveRuntimeHealth = vi.fn();
-      const response = successResult(
-        await handleViSemanticMcpMessageAsync(
-          toolCall('get_runtime_health', { platform: 'solaris' }),
-          { resolveRuntimeHealth }
-        )
-      ) as { content: Array<{ text: string }>; isError: boolean };
-      expect(response.isError).toBe(true);
-      expect(response.content[0].text).toContain('platform must be one of');
+      const response = await handleViSemanticMcpMessageAsync(
+        toolCall('get_runtime_health', { platform: 'solaris' }),
+        { resolveRuntimeHealth }
+      );
+      const error = invalidParamsError(response);
+      expect(error.data?.issues?.[0]).toMatchObject({ field: 'platform', received: 'string' });
       expect(resolveRuntimeHealth).not.toHaveBeenCalled();
     });
 
@@ -1025,16 +1027,17 @@ describe('viSemanticComparisonMcp', () => {
       expect(parsed.schema).toBe('vi-history-suite/preview-diagnostics@v1');
     });
 
-    it('rejects an empty cacheDirectory for get_preview_diagnostics', async () => {
+    it('rejects an empty cacheDirectory for get_preview_diagnostics as -32602', async () => {
       const collectPreviewDiagnostics = vi.fn();
-      const response = successResult(
-        await handleViSemanticMcpMessageAsync(
-          toolCall('get_preview_diagnostics', { cacheDirectory: '' }),
-          { collectPreviewDiagnostics }
-        )
-      ) as { content: Array<{ text: string }>; isError: boolean };
-      expect(response.isError).toBe(true);
-      expect(response.content[0].text).toContain('cacheDirectory must be a non-empty string');
+      const response = await handleViSemanticMcpMessageAsync(
+        toolCall('get_preview_diagnostics', { cacheDirectory: '' }),
+        { collectPreviewDiagnostics }
+      );
+      const error = invalidParamsError(response);
+      expect(error.data?.issues?.[0]).toMatchObject({
+        field: 'cacheDirectory',
+        received: 'empty string'
+      });
       expect(collectPreviewDiagnostics).not.toHaveBeenCalled();
     });
 
