@@ -22,6 +22,26 @@ const INTERACTIVE_HTML =
 const ERROR_HTML = '<html><body>preview-cache-miss</body></html>';
 const EMPTY_HTML = '   ';
 
+/** Builds a base64 data URI for a minimal PNG of the given pixel size (IHDR only). */
+function pngDataUri(width: number, height: number): string {
+  const header = Buffer.alloc(24);
+  header.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], 0);
+  header.writeUInt32BE(13, 8); // IHDR chunk length
+  header.set([0x49, 0x48, 0x44, 0x52], 12); // "IHDR"
+  header.writeUInt32BE(width, 16);
+  header.writeUInt32BE(height, 20);
+  return `data:image/png;base64,${header.toString('base64')}`;
+}
+
+/**
+ * A flat `PrintToSingleFileHtml` export with a Block Diagram section — the shape
+ * the extension actually caches (the `lvr-frames` viewer island is injected only
+ * later by the display path, so it is never present in a cached document).
+ */
+const FLAT_INTERACTIVE_HTML =
+  `<html><body><h3>Block Diagram</h3><img src="${pngDataUri(100, 80)}"/>` +
+  `<img src="${pngDataUri(40, 40)}"/></body></html>`;
+
 function fakeFs(files: Record<string, string>): ViPreviewCacheInspectionFsDeps {
   return {
     listFiles: async () => Object.keys(files),
@@ -62,6 +82,22 @@ describe('classifyPreviewCacheDocument (VHS-REQ-659.21)', () => {
     expect(result.inlineImageCount).toBe(1);
     expect(result.interactive).toBe(true);
     expect(result.flags).toEqual([]);
+  });
+
+  it('detects interactive capability from a cached flat export (Block Diagram frames, no lvr-frames marker)', () => {
+    // The extension caches the flat export, which never contains lvr-frames;
+    // interactivity must be derived from its Block Diagram frames, matching the
+    // display path (selectViPreviewDocument / buildFramesModelFromFlatExport).
+    expect(FLAT_INTERACTIVE_HTML).not.toMatch(/lvr-frames/);
+    const result = classifyPreviewCacheDocument(FLAT_INTERACTIVE_HTML);
+    expect(result.interactive).toBe(true);
+    expect(result.inlineImageCount).toBe(2);
+    expect(result.flags).toEqual([]);
+  });
+
+  it('does not mark a rendered document without a Block Diagram section interactive', () => {
+    // HEALTHY_HTML has inline images but no Block Diagram heading -> not interactive.
+    expect(classifyPreviewCacheDocument(HEALTHY_HTML).interactive).toBe(false);
   });
 
   it('flags an error marker document', () => {
