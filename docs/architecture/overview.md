@@ -141,3 +141,10 @@ box and want extra confidence.
 - local LabVIEW plus matching `LabVIEWCLI` for host comparison
 - optional Docker engine for the explicit Docker provider path
 - `jsonc-parser` as the only runtime npm dependency
+
+## Related Architecture Notes
+
+- [Preview-Cache Fabric](./preview-cache-fabric.md): the content-addressed
+  preview cache as portable, verifiable, shareable infrastructure — the
+  VHS-REQ-671..675 arc that lets a Codespace or CI runner generate caches once
+  and share them.

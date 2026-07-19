@@ -687,3 +687,4 @@ VHS-REQ-667,Software,Active,srs.md#vhs-req-667-versioned-dev-tools-github-releas
 VHS-REQ-668,Software,Active,srs.md#vhs-req-668-supply-chain-state-read-model,,,docs/requirements/srs.md
 VHS-REQ-669,Software,Active,srs.md#vhs-req-669-serialized-local-vi-server-acquisition,,,docs/requirements/srs.md
 VHS-REQ-670,Software,Active,srs.md#vhs-req-670-release-state-read-model-and-gated-publish-authority,,,docs/requirements/srs.md
+VHS-REQ-671,Software,Active,srs.md#vhs-req-671-headless-preview-cache-worker,,,docs/requirements/srs.md
