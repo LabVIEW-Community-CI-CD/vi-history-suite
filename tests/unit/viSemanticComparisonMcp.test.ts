@@ -74,7 +74,12 @@ describe('viSemanticComparisonMcp', () => {
       'index_repository_vis',
       'build_vi_pr_review',
       'get_vi_semantic_schema',
-      'validate_vi_semantic_document'
+      'validate_vi_semantic_document',
+      'list_preview_cache',
+      'summarize_preview_cache',
+      'diagnose_preview_cache',
+      'search_preview_cache',
+      'get_preview_cache_entry'
     ]);
     expect(result.tools).toEqual(VI_SEMANTIC_MCP_TOOLS);
   });
@@ -734,6 +739,154 @@ describe('viSemanticComparisonMcp', () => {
       expect(response.isError).toBe(true);
       expect(response.content[0].text).toContain('baseHash is required');
       expect(buildViSemanticPrReview).not.toHaveBeenCalled();
+    });
+
+    const cacheCall = (name: string, args: unknown, id = 80) => ({
+      jsonrpc: '2.0' as const,
+      id,
+      method: 'tools/call' as const,
+      params: { name, arguments: args }
+    });
+    const sampleEntry = {
+      key: 'a'.repeat(64),
+      filePath: '/cache/' + 'a'.repeat(64) + '.html',
+      bytes: 1024,
+      inlineImageCount: 3,
+      interactive: true,
+      flags: [] as never[],
+      healthy: true
+    };
+    const inspector = () => ({
+      list: vi.fn(async () => [sampleEntry]),
+      summarize: vi.fn(async () => ({
+        directory: '/cache',
+        entryCount: 2,
+        totalBytes: 2048,
+        healthyCount: 1,
+        flaggedCount: 1,
+        interactiveCount: 1,
+        flagged: [{ key: 'b'.repeat(64), flags: ['error-marker' as const] }]
+      })),
+      search: vi.fn(async () => [sampleEntry]),
+      get: vi.fn(async () => ({ ...sampleEntry, html: '<html></html>' }))
+    });
+
+    it('lists preview-cache entries through the injected inspector', async () => {
+      const deps = { previewCacheInspector: inspector() };
+      const response = successResult(
+        await handleViSemanticMcpMessageAsync(
+          cacheCall('list_preview_cache', { cacheDirectory: '/cache' }),
+          deps
+        )
+      ) as { content: Array<{ text: string }>; isError: boolean };
+      expect(response.isError).toBe(false);
+      expect(deps.previewCacheInspector.list).toHaveBeenCalledWith('/cache');
+      const parsed = JSON.parse(response.content[0].text) as { entries: unknown[] };
+      expect(parsed.entries).toHaveLength(1);
+    });
+
+    it('summarizes a preview cache', async () => {
+      const deps = { previewCacheInspector: inspector() };
+      const response = successResult(
+        await handleViSemanticMcpMessageAsync(
+          cacheCall('summarize_preview_cache', { cacheDirectory: '/cache' }),
+          deps
+        )
+      ) as { content: Array<{ text: string }>; isError: boolean };
+      expect(response.isError).toBe(false);
+      const parsed = JSON.parse(response.content[0].text) as { flaggedCount: number };
+      expect(parsed.flaggedCount).toBe(1);
+    });
+
+    it('diagnoses a preview cache into the diagnostics schema', async () => {
+      const deps = { previewCacheInspector: inspector() };
+      const response = successResult(
+        await handleViSemanticMcpMessageAsync(
+          cacheCall('diagnose_preview_cache', { cacheDirectory: '/cache' }),
+          deps
+        )
+      ) as { content: Array<{ text: string }>; isError: boolean };
+      expect(response.isError).toBe(false);
+      const parsed = JSON.parse(response.content[0].text) as { schema: string; healthy: boolean };
+      expect(parsed.schema).toBe('vi-history-suite/preview-cache-diagnostics@v1');
+      expect(parsed.healthy).toBe(false);
+    });
+
+    it('searches a preview cache by marker', async () => {
+      const deps = { previewCacheInspector: inspector() };
+      const response = successResult(
+        await handleViSemanticMcpMessageAsync(
+          cacheCall('search_preview_cache', { cacheDirectory: '/cache', marker: 'interactive' }),
+          deps
+        )
+      ) as { content: Array<{ text: string }>; isError: boolean };
+      expect(response.isError).toBe(false);
+      expect(deps.previewCacheInspector.search).toHaveBeenCalledWith('/cache', 'interactive');
+    });
+
+    it('rejects an unknown search marker', async () => {
+      const deps = { previewCacheInspector: inspector() };
+      const response = successResult(
+        await handleViSemanticMcpMessageAsync(
+          cacheCall('search_preview_cache', { cacheDirectory: '/cache', marker: 'nope' }),
+          deps
+        )
+      ) as { content: Array<{ text: string }>; isError: boolean };
+      expect(response.isError).toBe(true);
+      expect(response.content[0].text).toContain('marker must be one of');
+    });
+
+    it('fetches one preview-cache entry with includeHtml', async () => {
+      const deps = { previewCacheInspector: inspector() };
+      const response = successResult(
+        await handleViSemanticMcpMessageAsync(
+          cacheCall('get_preview_cache_entry', {
+            cacheDirectory: '/cache',
+            key: 'a'.repeat(64),
+            includeHtml: true
+          }),
+          deps
+        )
+      ) as { content: Array<{ text: string }>; isError: boolean };
+      expect(response.isError).toBe(false);
+      expect(deps.previewCacheInspector.get).toHaveBeenCalledWith('/cache', 'a'.repeat(64), {
+        includeHtml: true
+      });
+      const parsed = JSON.parse(response.content[0].text) as { html: string };
+      expect(parsed.html).toBe('<html></html>');
+    });
+
+    it('reports an error when the requested cache entry is absent', async () => {
+      const deps = {
+        previewCacheInspector: { ...inspector(), get: vi.fn(async () => undefined) }
+      };
+      const response = successResult(
+        await handleViSemanticMcpMessageAsync(
+          cacheCall('get_preview_cache_entry', { cacheDirectory: '/cache', key: 'a'.repeat(64) }),
+          deps
+        )
+      ) as { content: Array<{ text: string }>; isError: boolean };
+      expect(response.isError).toBe(true);
+      expect(response.content[0].text).toContain('no cache entry');
+    });
+
+    it('reports a wired-up error when no preview-cache inspector is injected', async () => {
+      const response = successResult(
+        await handleViSemanticMcpMessageAsync(
+          cacheCall('list_preview_cache', { cacheDirectory: '/cache' })
+        )
+      ) as { content: Array<{ text: string }>; isError: boolean };
+      expect(response.isError).toBe(true);
+      expect(response.content[0].text).toContain('not wired');
+    });
+
+    it('requires cacheDirectory for cache tools', async () => {
+      const deps = { previewCacheInspector: inspector() };
+      const response = successResult(
+        await handleViSemanticMcpMessageAsync(cacheCall('list_preview_cache', {}), deps)
+      ) as { content: Array<{ text: string }>; isError: boolean };
+      expect(response.isError).toBe(true);
+      expect(response.content[0].text).toContain('cacheDirectory is required');
     });
   });
 });

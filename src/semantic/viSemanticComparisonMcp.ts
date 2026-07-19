@@ -19,6 +19,12 @@ import {
   renderViSemanticPrReviewMarkdown
 } from './viSemanticReviewMarkdown';
 import type { ViRepositoryIndex, ViRepositoryIndexInput } from './viRepositoryIndex';
+import type {
+  ViPreviewCacheEntry,
+  ViPreviewCacheEntryDocument,
+  ViPreviewCacheSummary,
+  ViPreviewCacheSearchMarker
+} from '../reporting/viPreview/viPreviewCacheInspection';
 import {
   validateViSemanticDocument,
   VI_SEMANTIC_SCHEMAS,
@@ -279,6 +285,58 @@ const DOCUMENT_VALIDATION_INPUT_SCHEMA = {
   required: ['document']
 } as const;
 
+// VHS-REQ-659: read-only preview-cache inspection tools. Every tool takes a
+// local cache DIRECTORY path (e.g. a cache downloaded off a Codespace) and never
+// renders or launches LabVIEW.
+const PREVIEW_CACHE_DIR_INPUT_SCHEMA = {
+  type: 'object',
+  properties: {
+    cacheDirectory: {
+      type: 'string',
+      description:
+        'Path to a VI-preview render cache directory (contains <sha256>.html documents), e.g. a cache downloaded from a Codespace.'
+    }
+  },
+  required: ['cacheDirectory']
+} as const;
+
+const PREVIEW_CACHE_GET_INPUT_SCHEMA = {
+  type: 'object',
+  properties: {
+    cacheDirectory: {
+      type: 'string',
+      description: 'Path to a VI-preview render cache directory.'
+    },
+    key: {
+      type: 'string',
+      description: 'The cache key (a cached document basename without ".html"; sha256-hex for real keys).'
+    },
+    includeHtml: {
+      type: 'boolean',
+      description:
+        'When true, return the raw preview HTML (can be ~2MB with hundreds of inline images). Default false returns metadata + a file-path pointer.'
+    }
+  },
+  required: ['cacheDirectory', 'key']
+} as const;
+
+const PREVIEW_CACHE_SEARCH_INPUT_SCHEMA = {
+  type: 'object',
+  properties: {
+    cacheDirectory: {
+      type: 'string',
+      description: 'Path to a VI-preview render cache directory.'
+    },
+    marker: {
+      type: 'string',
+      enum: ['error', 'interactive', 'image', 'empty'],
+      description:
+        'Content marker to match: "error" (error markers), "interactive" (block-diagram viewer), "image" (>=1 inline image), or "empty".'
+    }
+  },
+  required: ['cacheDirectory', 'marker']
+} as const;
+
 export const VI_SEMANTIC_MCP_TOOLS = [
   {
     name: 'summarize_vi_comparison',
@@ -338,6 +396,45 @@ export const VI_SEMANTIC_MCP_TOOLS = [
       'Validate a self-describing semantic document against its published JSON Schema; ' +
       'returns { valid, errors }.',
     inputSchema: DOCUMENT_VALIDATION_INPUT_SCHEMA
+  },
+  {
+    name: 'list_preview_cache',
+    description:
+      'List the entries in a VI-preview render cache directory (each with its cache key, size, ' +
+      'inline image count, interactive-viewer flag, and health flags). Read-only; no comparison ' +
+      'runtime required.',
+    inputSchema: PREVIEW_CACHE_DIR_INPUT_SCHEMA
+  },
+  {
+    name: 'summarize_preview_cache',
+    description:
+      'Summarize a VI-preview render cache directory: entry/byte counts, healthy vs flagged, ' +
+      'interactive count, and the list of flagged entries (empty / error-marker / no-rendered-content). ' +
+      'Read-only.',
+    inputSchema: PREVIEW_CACHE_DIR_INPUT_SCHEMA
+  },
+  {
+    name: 'diagnose_preview_cache',
+    description:
+      'Return a vi-history-suite/preview-cache-diagnostics@v1 snapshot for a cache directory ' +
+      '(entry/byte counts, health rollup, newest entry) so an agent can answer "is the preview ' +
+      'cache healthy?" in one call. Read-only.',
+    inputSchema: PREVIEW_CACHE_DIR_INPUT_SCHEMA
+  },
+  {
+    name: 'search_preview_cache',
+    description:
+      'Find cache entries by content marker: "error", "interactive", "image", or "empty". ' +
+      'Returns the matching entries (metadata only). Read-only.',
+    inputSchema: PREVIEW_CACHE_SEARCH_INPUT_SCHEMA
+  },
+  {
+    name: 'get_preview_cache_entry',
+    description:
+      'Fetch one preview-cache entry by cache key. Returns metadata plus a file-path pointer by ' +
+      'default (a cached preview can be ~2MB with hundreds of inline images); pass includeHtml:true ' +
+      'to return the raw HTML. Read-only.',
+    inputSchema: PREVIEW_CACHE_GET_INPUT_SCHEMA
   }
 ] as const;
 
@@ -461,10 +558,16 @@ export function handleViSemanticMcpMessage(
         params.name === 'compare_vi_revisions' ||
         params.name === 'summarize_vi_history' ||
         params.name === 'index_repository_vis' ||
-        params.name === 'build_vi_pr_review'
+        params.name === 'build_vi_pr_review' ||
+        params.name === 'list_preview_cache' ||
+        params.name === 'summarize_preview_cache' ||
+        params.name === 'diagnose_preview_cache' ||
+        params.name === 'search_preview_cache' ||
+        params.name === 'get_preview_cache_entry'
       ) {
-        // These invoking tools run real comparisons and are only available
-        // through the async server entrypoint, which injects the orchestrators.
+        // These tools touch a runtime or the filesystem and are only available
+        // through the async server entrypoint, which injects the orchestrators
+        // (comparison runtimes) or the read-only cache inspector (filesystem).
         return success(
           id,
           toolTextResult(
@@ -652,6 +755,28 @@ export interface ViSemanticMcpAsyncDeps {
    * wired-up error.
    */
   buildViSemanticPrReview?: (input: ViSemanticPrReviewInput) => Promise<ViSemanticPrReview>;
+  /**
+   * Read-only preview-cache inspector (filesystem). Injected by the stdio
+   * entrypoint with a node-fs adapter; when absent, the `*_preview_cache` tools
+   * report a wired-up error. Keeps the reporting/fs boundary out of the pure
+   * handler (VHS-REQ-659).
+   */
+  previewCacheInspector?: ViPreviewCacheInspectorDeps;
+}
+
+/** Injected read-only preview-cache inspection surface for the MCP tools. */
+export interface ViPreviewCacheInspectorDeps {
+  list: (cacheDirectory: string) => Promise<ViPreviewCacheEntry[]>;
+  summarize: (cacheDirectory: string) => Promise<ViPreviewCacheSummary>;
+  search: (
+    cacheDirectory: string,
+    marker: ViPreviewCacheSearchMarker
+  ) => Promise<ViPreviewCacheEntry[]>;
+  get: (
+    cacheDirectory: string,
+    key: string,
+    options: { includeHtml?: boolean }
+  ) => Promise<ViPreviewCacheEntryDocument | undefined>;
 }
 
 async function invokeInjectedTool<TInput, TResult>(
@@ -726,6 +851,93 @@ export async function handleViSemanticMcpMessageAsync(
         (review) => renderPrReviewResult(review, format)
       );
     }
+    if (
+      params.name === 'list_preview_cache' ||
+      params.name === 'summarize_preview_cache' ||
+      params.name === 'diagnose_preview_cache' ||
+      params.name === 'search_preview_cache' ||
+      params.name === 'get_preview_cache_entry'
+    ) {
+      return handlePreviewCacheTool(id, params.name, params.arguments, deps.previewCacheInspector);
+    }
   }
   return handleViSemanticMcpMessage(message);
+}
+
+function requireCacheDirectory(rawArguments: unknown): { cacheDirectory: string; args: Record<string, unknown> } {
+  if (typeof rawArguments !== 'object' || rawArguments === null) {
+    throw new Error('tool arguments must be an object');
+  }
+  const args = rawArguments as Record<string, unknown>;
+  if (typeof args.cacheDirectory !== 'string' || args.cacheDirectory.length === 0) {
+    throw new Error('cacheDirectory is required and must be a non-empty string');
+  }
+  return { cacheDirectory: args.cacheDirectory, args };
+}
+
+const PREVIEW_CACHE_DIAGNOSTICS_SCHEMA = 'vi-history-suite/preview-cache-diagnostics@v1';
+
+async function handlePreviewCacheTool(
+  id: JsonRpcSuccess['id'],
+  name: string,
+  rawArguments: unknown,
+  inspector: ViPreviewCacheInspectorDeps | undefined
+): Promise<JsonRpcResponse> {
+  if (!inspector) {
+    return success(
+      id,
+      toolTextResult(`Tool error: ${name} is not wired (no preview-cache inspector injected)`, true)
+    );
+  }
+  try {
+    const { cacheDirectory, args } = requireCacheDirectory(rawArguments);
+    if (name === 'list_preview_cache') {
+      const entries = await inspector.list(cacheDirectory);
+      return success(id, toolTextResult(JSON.stringify({ cacheDirectory, entries }, null, 2)));
+    }
+    if (name === 'summarize_preview_cache') {
+      const summary = await inspector.summarize(cacheDirectory);
+      return success(id, toolTextResult(JSON.stringify(summary, null, 2)));
+    }
+    if (name === 'diagnose_preview_cache') {
+      const summary = await inspector.summarize(cacheDirectory);
+      const diagnostics = {
+        schema: PREVIEW_CACHE_DIAGNOSTICS_SCHEMA,
+        cacheDirectory,
+        entryCount: summary.entryCount,
+        totalBytes: summary.totalBytes,
+        healthyCount: summary.healthyCount,
+        flaggedCount: summary.flaggedCount,
+        interactiveCount: summary.interactiveCount,
+        healthy: summary.entryCount > 0 && summary.flaggedCount === 0,
+        flagged: summary.flagged
+      };
+      return success(id, toolTextResult(JSON.stringify(diagnostics, null, 2)));
+    }
+    if (name === 'search_preview_cache') {
+      const marker = args.marker;
+      if (
+        marker !== 'error' &&
+        marker !== 'interactive' &&
+        marker !== 'image' &&
+        marker !== 'empty'
+      ) {
+        throw new Error('marker must be one of: error, interactive, image, empty');
+      }
+      const entries = await inspector.search(cacheDirectory, marker);
+      return success(id, toolTextResult(JSON.stringify({ cacheDirectory, marker, entries }, null, 2)));
+    }
+    // get_preview_cache_entry
+    if (typeof args.key !== 'string' || args.key.length === 0) {
+      throw new Error('key is required and must be a non-empty string');
+    }
+    const includeHtml = args.includeHtml === true;
+    const entry = await inspector.get(cacheDirectory, args.key, { includeHtml });
+    if (!entry) {
+      return success(id, toolTextResult(`Tool error: no cache entry for key ${args.key}`, true));
+    }
+    return success(id, toolTextResult(JSON.stringify(entry, null, 2)));
+  } catch (error) {
+    return success(id, toolTextResult(`Tool error: ${errorMessage(error)}`, true));
+  }
 }
