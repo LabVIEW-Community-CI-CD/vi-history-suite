@@ -11,6 +11,11 @@ code --install-extension svelderrainruiz.vi-history-suite
 The Marketplace identity stays stable even though the source repository moved
 to the LabVIEW Community CI/CD GitHub organization.
 
+Releases follow the VS Code channel convention: an **even** minor version (for
+example `1.34.x`) is a stable release, and an **odd** minor version (for example
+`1.35.x`) is a pre-release. Enable **Install Pre-Release Versions** on the
+extension in the Extensions view to receive pre-release builds.
+
 If the Marketplace listing, install command, or source/support links disagree,
 record the mismatch in the first-time onboarding tracker:
 
