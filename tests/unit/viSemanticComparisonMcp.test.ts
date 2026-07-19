@@ -66,7 +66,7 @@ describe('viSemanticComparisonMcp', () => {
     ) as Record<string, unknown>;
     expect(result.protocolVersion).toBe(VI_SEMANTIC_MCP_PROTOCOL_VERSION);
     expect(result.serverInfo).toEqual(VI_SEMANTIC_MCP_SERVER_INFO);
-    expect(result.capabilities).toMatchObject({ tools: {}, prompts: {}, resources: {} });
+    expect(result.capabilities).toMatchObject({ tools: {}, prompts: {}, resources: {}, completions: {} });
   });
 
   it('returns no response for notifications', () => {
@@ -228,8 +228,8 @@ describe('viSemanticComparisonMcp', () => {
 
   it('rejects an unknown method with method-not-found', () => {
     expect(
-      handleViSemanticMcpMessage({ jsonrpc: '2.0', id: 9, method: 'completion/complete' })
-    ).toMatchObject({ error: { code: -32601, message: 'unknown method: completion/complete' } });
+      handleViSemanticMcpMessage({ jsonrpc: '2.0', id: 9, method: 'resources/subscribe' })
+    ).toMatchObject({ error: { code: -32601, message: 'unknown method: resources/subscribe' } });
   });
 
   it('returns all published schemas for get_vi_semantic_schema', () => {
@@ -1326,6 +1326,75 @@ describe('viSemanticComparisonMcp', () => {
       );
       expect(response).toMatchObject({ error: { code: -32602 } });
       expect((response as { error: { message: string } }).error.message).toContain('async MCP server entrypoint');
+    });
+  });
+
+  describe('completion/complete', () => {
+    const call = (params: unknown, id = 500) => ({
+      jsonrpc: '2.0' as const,
+      id,
+      method: 'completion/complete',
+      params
+    });
+
+    it('completes the check_compare_readiness platform argument', () => {
+      const result = successResult(
+        handleViSemanticMcpMessage(
+          call({
+            ref: { type: 'ref/prompt', name: 'check_compare_readiness' },
+            argument: { name: 'platform', value: 'win' }
+          })
+        )
+      ) as { completion: { values: string[]; total: number; hasMore: boolean } };
+      expect(result.completion.values).toEqual(['win32']);
+      expect(result.completion.total).toBe(1);
+      expect(result.completion.hasMore).toBe(false);
+    });
+
+    it('offers all platforms for an empty partial value', () => {
+      const result = successResult(
+        handleViSemanticMcpMessage(
+          call({
+            ref: { type: 'ref/prompt', name: 'check_compare_readiness' },
+            argument: { name: 'platform', value: '' }
+          })
+        )
+      ) as { completion: { values: string[] } };
+      expect(result.completion.values).toEqual(['win32', 'linux', 'darwin']);
+    });
+
+    it('completes schema ids for the schema resource template ref', () => {
+      const result = successResult(
+        handleViSemanticMcpMessage(
+          call({
+            ref: { type: 'ref/resource', uri: 'vi-history-suite://schema/vi-semantic-comparison@v1' },
+            argument: { name: 'uri', value: 'vi-semantic' }
+          })
+        )
+      ) as { completion: { values: string[] } };
+      expect(result.completion.values).toContain('vi-semantic-comparison@v1');
+      expect(result.completion.values).toContain('vi-semantic-history@v1');
+      expect(result.completion.values).not.toContain('vi-repository-index@v1');
+    });
+
+    it('completes to nothing for an unknown argument (never errors)', () => {
+      const result = successResult(
+        handleViSemanticMcpMessage(
+          call({
+            ref: { type: 'ref/prompt', name: 'review_pull_request' },
+            argument: { name: 'repositoryRoot', value: '/x' }
+          })
+        )
+      ) as { completion: { values: string[]; total: number } };
+      expect(result.completion.values).toEqual([]);
+      expect(result.completion.total).toBe(0);
+    });
+
+    it('completes to nothing for a malformed request (never errors)', () => {
+      const result = successResult(handleViSemanticMcpMessage(call({}))) as {
+        completion: { values: string[] };
+      };
+      expect(result.completion.values).toEqual([]);
     });
   });
 });
