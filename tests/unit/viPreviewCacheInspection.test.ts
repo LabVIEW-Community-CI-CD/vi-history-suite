@@ -114,6 +114,29 @@ describe('classifyPreviewCacheDocument (VHS-REQ-659.21)', () => {
     expect(result.flags).toEqual([]);
   });
 
+  it('names the fidelity fallback reason for a low-fidelity flat export (#2096)', () => {
+    const imgs = Array.from({ length: 10 }, (_v, i) => `<img src="${pngDataUri(100 + i, 50 + i)}"/>`).join('');
+    const complexFlat = `<html><body><h3>Block Diagram</h3>${imgs}</body></html>`;
+    const result = classifyPreviewCacheDocument(complexFlat);
+    expect(result.interactive).toBe(false);
+    expect(result.interactiveFallbackReason).toBeDefined();
+    expect(result.interactiveFallbackReason).toMatch(/structure groups|stacked child frames/);
+  });
+
+  it('carries no fallback reason for a plain non-diagram document (not a fidelity fallback) (#2096)', () => {
+    // HEALTHY_HTML has no Block Diagram section => no frames model => plain
+    // non-diagram doc, which is not a fidelity fallback.
+    const result = classifyPreviewCacheDocument(HEALTHY_HTML);
+    expect(result.interactive).toBe(false);
+    expect(result.interactiveFallbackReason).toBeUndefined();
+  });
+
+  it('carries no fallback reason for a faithful interactive flat export (#2096)', () => {
+    const result = classifyPreviewCacheDocument(FLAT_INTERACTIVE_HTML);
+    expect(result.interactive).toBe(true);
+    expect(result.interactiveFallbackReason).toBeUndefined();
+  });
+
   it('flags an error marker document', () => {
     expect(classifyPreviewCacheDocument(ERROR_HTML).flags).toContain('error-marker');
   });

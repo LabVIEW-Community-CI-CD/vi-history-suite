@@ -58,6 +58,15 @@ export interface ViPreviewCacheEntry {
    * is also recognized.
    */
   interactive: boolean;
+  /**
+   * When `interactive` is false because a block-diagram frames model DID extract
+   * but was too low-fidelity to present (a complex, coordinate-less diagram that
+   * the display path falls back to the flat document for), the concise reason
+   * from `assessFramesModelFidelity`. Undefined when the document is interactive,
+   * or when it simply has no block diagram (e.g. a `.ctl`) — that is a plain
+   * non-diagram document, not a fidelity fallback.
+   */
+  interactiveFallbackReason?: string;
   /** Health flags; empty means a healthy rendered preview. */
   flags: ViPreviewCacheEntryFlag[];
   /** Convenience: true when `flags` is empty. */
@@ -74,10 +83,22 @@ const INLINE_IMAGE_PATTERN = /data:image\//gi;
  * a block-diagram frames model extracts AND it is faithful enough to show (a
  * complex, coordinate-less diagram is rejected). Mirrors `selectViPreviewDocument`
  * so the cache's `interactive` signal matches what the display path would do.
+ * When a model extracts but is not faithful, `fallbackReason` names why (an
+ * absent model is a plain non-diagram document, so it carries no reason).
  */
-function framesModelIsPresentable(html: string): boolean {
+function assessFlatExportInteractivity(html: string): {
+  presentable: boolean;
+  fallbackReason?: string;
+} {
   const model = buildFramesModelFromFlatExport(html);
-  return model !== undefined && assessFramesModelFidelity(model).faithful;
+  if (model === undefined) {
+    return { presentable: false };
+  }
+  const fidelity = assessFramesModelFidelity(model);
+  if (fidelity.faithful) {
+    return { presentable: true };
+  }
+  return { presentable: false, fallbackReason: fidelity.reason };
 }
 
 /**
@@ -89,6 +110,7 @@ export function classifyPreviewCacheDocument(content: string): {
   flags: ViPreviewCacheEntryFlag[];
   inlineImageCount: number;
   interactive: boolean;
+  interactiveFallbackReason?: string;
 } {
   const text = typeof content === 'string' ? content : '';
   const inlineImageCount = (text.match(INLINE_IMAGE_PATTERN) ?? []).length;
@@ -98,11 +120,16 @@ export function classifyPreviewCacheDocument(content: string): {
   // frames model that is ALSO faithful enough to present (a complex diagram falls
   // back to the flat document), while still recognizing an already-assembled
   // viewer island (`lvr-frames`) for the case a viewer document is inspected.
-  const interactive = /lvr-frames/i.test(text) || framesModelIsPresentable(text);
+  const hasViewerIsland = /lvr-frames/i.test(text);
+  const flatInteractivity = hasViewerIsland
+    ? { presentable: true as const, fallbackReason: undefined }
+    : assessFlatExportInteractivity(text);
+  const interactive = flatInteractivity.presentable;
+  const interactiveFallbackReason = interactive ? undefined : flatInteractivity.fallbackReason;
   const flags: ViPreviewCacheEntryFlag[] = [];
   if (text.trim().length === 0) {
     flags.push('empty');
-    return { flags, inlineImageCount, interactive };
+    return { flags, inlineImageCount, interactive, interactiveFallbackReason };
   }
   if (ERROR_MARKER_PATTERN.test(text)) {
     flags.push('error-marker');
@@ -110,7 +137,7 @@ export function classifyPreviewCacheDocument(content: string): {
   if (!RENDERED_CONTENT_PATTERN.test(text)) {
     flags.push('no-rendered-content');
   }
-  return { flags, inlineImageCount, interactive };
+  return { flags, inlineImageCount, interactive, interactiveFallbackReason };
 }
 
 function cacheKeyFromName(name: string): string {
@@ -152,13 +179,15 @@ export async function listPreviewCacheEntries(
       content = '';
       bytes = 0;
     }
-    const { flags, inlineImageCount, interactive } = classifyPreviewCacheDocument(content);
+    const { flags, inlineImageCount, interactive, interactiveFallbackReason } =
+      classifyPreviewCacheDocument(content);
     entries.push({
       key: cacheKeyFromName(name),
       filePath,
       bytes,
       inlineImageCount,
       interactive,
+      ...(interactiveFallbackReason ? { interactiveFallbackReason } : {}),
       flags,
       healthy: flags.length === 0
     });
@@ -245,13 +274,15 @@ export async function getPreviewCacheEntry(
   } catch {
     return undefined;
   }
-  const { flags, inlineImageCount, interactive } = classifyPreviewCacheDocument(content);
+  const { flags, inlineImageCount, interactive, interactiveFallbackReason } =
+    classifyPreviewCacheDocument(content);
   const entry: ViPreviewCacheEntryDocument = {
     key,
     filePath,
     bytes: Buffer.byteLength(content, 'utf8'),
     inlineImageCount,
     interactive,
+    ...(interactiveFallbackReason ? { interactiveFallbackReason } : {}),
     flags,
     healthy: flags.length === 0
   };
