@@ -689,3 +689,4 @@ VHS-REQ-669,Software,Active,srs.md#vhs-req-669-serialized-local-vi-server-acquis
 VHS-REQ-670,Software,Active,srs.md#vhs-req-670-release-state-read-model-and-gated-publish-authority,,,docs/requirements/srs.md
 VHS-REQ-671,Software,Active,srs.md#vhs-req-671-headless-preview-cache-worker,,,docs/requirements/srs.md
 VHS-REQ-675,Software,Active,srs.md#vhs-req-675-preview-cache-health-read-model,,,docs/requirements/srs.md
+VHS-REQ-672,Software,Active,srs.md#vhs-req-672-portable-preview-cache-bundle,,,docs/requirements/srs.md

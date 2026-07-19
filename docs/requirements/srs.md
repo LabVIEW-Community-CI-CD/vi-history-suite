@@ -5471,3 +5471,59 @@ Missing numeric IDs are intentional.
     inputs (workspace, manifest, cache directory). Detecting per-VI content drift
     against the current bytes (beyond manifest-key presence) belongs to the
     portable-bundle verification (VHS-REQ-672), not this coverage model.
+### VHS-REQ-672: Portable Preview-Cache Bundle
+
+- Status: Active
+- Parent: VHS-SYS-REQ-008
+- Area: Comparison Reports
+- Statement: The repository shall provide a portable, content-addressed
+  preview-cache bundle format with export, verification, and lossless import, so
+  a preview cache generated in one environment (a Codespace worker or CI fleet,
+  VHS-REQ-671) can be packaged into a self-describing, verifiable artifact and
+  reused in another. Each bundle entry carries an integrity digest of its
+  document bytes and the VI path(s) it renders; because the entries are
+  content-addressed (VHS-REQ-659), a bundle merges into a target cache
+  order-independently and de-duplicating. This is the portability slice of the
+  preview-cache fabric.
+- Acceptance Criteria:
+  - `buildViPreviewCacheBundleManifest` produces a
+    `vi-history-suite/preview-cache-bundle@v1` manifest with a top-level
+    `$schema` and `schemaVersion`, an entry count, total bytes, and a per-entry
+    record carrying the content-addressed key, a SHA-256 integrity digest of the
+    document bytes, the byte length, and the sorted VI path(s); it drops invalid
+    keys, collapses duplicate keys (merging their VI paths), normalizes path
+    separators, sorts entries by key, and records optional provenance.
+  - `verifyViPreviewCacheBundle` reports each entry as `ok`, `integrity-mismatch`,
+    or `missing-document` against the bundle's documents, and is overall `ok`
+    only when every entry verifies, so a tampered or incomplete bundle is
+    detected without throwing.
+  - `planViPreviewCacheBundleImport` plans a lossless merge into a target cache:
+    a key already present is `skip-present`, a document that fails its integrity
+    digest (or is missing) is `reject-integrity-mismatch` (never written), and
+    the rest are `add`; content-addressing makes the merge order-independent and
+    safe.
+  - `node out/cli/runViPreviewCacheBundle.js` (npm run `preview:cache:bundle`)
+    `bundle` exports a cache directory into a portable bundle directory (a
+    `manifest.json` plus `<key>.html` files), optionally naming each entry's VI
+    path(s) from a `preview-cache-warm@v1` manifest and recording a `--source`
+    label; `unbundle` verifies a bundle against its manifest and merges it into a
+    `--into` target cache, failing closed (exit nonzero) on a not-found or
+    integrity-failed bundle and never writing a rejected document.
+- Agent Work Scope:
+  - Keep the bundle model pure and injectable (manifest construction,
+    verification, and merge planning operate on in-memory records; the CLI wires
+    the filesystem); reuse the content-addressed cache key rather than a new
+    identity; keep import lossless and fail-closed on integrity so a shared
+    bundle can never corrupt a consumer's cache.
+- Implementation References:
+  - `src/cli/runViPreviewCacheBundle.ts`
+  - `src/reporting/viPreview/viPreviewCacheBundle.ts`
+  - `package.json`
+- Verification References:
+  - `tests/unit/viPreviewCacheBundle.test.ts`
+  - `tests/unit/viPreviewCacheBundleCli.test.ts`
+- Change Guidance:
+  - Keep the bundle self-describing and content-addressed; extend the manifest
+    additively (new fields, not reshaped records). Distribution (publishing and
+    fetching bundles) belongs to the cache exchange (VHS-REQ-673), not this
+    format.

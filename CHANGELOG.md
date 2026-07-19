@@ -15,6 +15,15 @@ This changelog records user-facing release history for `vi-history-suite`.
   `vi-history-suite/preview-cache-health@v1` packet. `--strict` fails closed when
   the cache does not fully cover the workspace, so CI can gate on coverage and an
   agent can drive incremental re-warms. Read-only; never renders.
+- A portable, content-addressed preview-cache **bundle** (`npm run
+  preview:cache:bundle`, VHS-REQ-672) packages a cache directory into a
+  self-describing, verifiable artifact (a `vi-history-suite/preview-cache-bundle@v1`
+  manifest with a per-entry integrity digest and VI paths, plus the `<key>.html`
+  documents) and losslessly merges one back into a target cache — content-addressing
+  makes the merge order-independent and de-duplicating, and a tampered or missing
+  document is rejected rather than written. `bundle` exports; `unbundle` verifies
+  and imports. This lets a cache generated once (e.g. by a Codespace worker) be
+  moved to and reused on any machine.
 - A headless preview-cache worker CLI (`npm run preview:cache:warm`,
   VHS-REQ-671) turns any Docker-capable environment — a GitHub Codespace, a CI
   runner, or a developer box — into a worker that generates and stores VI
