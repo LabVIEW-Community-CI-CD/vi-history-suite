@@ -342,6 +342,20 @@ describe('extension manifest public metadata', () => {
     });
   });
 
+  it('defaults the dev-tools version to the bundled build and update-tracking off (VHS-REQ-677.1)', () => {
+    const manifest = readManifest();
+    const properties = manifest.contributes?.configuration?.properties ?? {};
+
+    expect(properties['viHistorySuite.devTools.version']).toMatchObject({
+      type: 'string',
+      default: 'bundled'
+    });
+    expect(properties['viHistorySuite.devTools.checkForUpdates']).toMatchObject({
+      type: 'boolean',
+      default: false
+    });
+  });
+
   it('contributes the VI Preview custom editor at default priority (VHS-REQ-659.8)', () => {
     const manifest = readManifest();
     const editor = manifest.contributes?.customEditors?.find(

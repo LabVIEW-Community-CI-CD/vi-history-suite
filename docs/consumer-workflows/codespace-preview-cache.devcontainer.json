@@ -20,9 +20,12 @@
 // generated cache is valid on any machine for the same VI content.
 //
 // Extension source: the published Marketplace id is used below for zero setup.
-// To pin a specific build instead, install the dev-tools VSIX from a GitHub
-// Release (see the vi-history-suite dev-tools release channel) via a
-// postCreateCommand `code --install-extension <vsix>` rather than the id.
+// To run a specific dev-tools build (the MCP server and companion tooling)
+// without waiting for a Marketplace update, keep the Marketplace extension and
+// pin its "viHistorySuite.devTools.version" setting to a "devtools-vX.Y.Z" tag
+// from the vi-history-suite dev-tools release channel; the extension downloads
+// and integrity-verifies that release into global storage. (The dev-tools
+// channel ships an archive, not a VSIX — the extension itself is Marketplace-only.)
 {
   "name": "labview-preview-cache-worker",
   "image": "mcr.microsoft.com/devcontainers/base:bookworm",

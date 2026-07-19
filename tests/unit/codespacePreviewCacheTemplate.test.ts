@@ -33,6 +33,12 @@ describe('Codespace preview-cache worker devcontainer template (VHS-REQ-671)', (
     expect(parsed.image).toBeTypeOf('string');
   });
 
+  it('directs users to pin the dev-tools version instead of installing a dev-tools VSIX (VHS-REQ-677.5)', () => {
+    const template = readTemplate();
+    expect(template).not.toMatch(/dev-tools VSIX/);
+    expect(template).toContain('viHistorySuite.devTools.version');
+  });
+
   it('enables Docker-in-Docker because a live preview render is Docker-only (VHS-REQ-671.7)', () => {
     const features = parseTemplate().features as Record<string, unknown>;
     const keys = Object.keys(features);

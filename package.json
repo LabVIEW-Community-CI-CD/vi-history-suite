@@ -254,6 +254,17 @@
           "default": false,
           "description": "Allow the Host (installed LabVIEW) runtime to render VI previews directly, instead of only displaying previews already cached on Docker. Off by default: Docker generates the cache and the Host displays it. Turn this on for a dedicated LabVIEW environment that has no Docker (for example the Vagrant LabVIEW VM) so it can both generate the cache and visualize previews. Requires VI Preview to be on."
         },
+        "viHistorySuite.devTools.version": {
+          "type": "string",
+          "default": "bundled",
+          "pattern": "^(bundled|(devtools-)?v?(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(-[0-9A-Za-z-.]+)?(\\+[0-9A-Za-z-.]+)?)$",
+          "markdownDescription": "Which dev-tools build (the compiled MCP server and companion tooling) the extension runs. `bundled` (default) uses the build shipped with the extension and never touches the network. Pin an independent dev-tools release with a `devtools-vX.Y.Z` tag (SemVer 2.0) to run that version without waiting for a Marketplace update; the extension downloads it once into global storage, verifies its integrity, and launches it only in a trusted workspace. Requires a matching published dev-tools release."
+        },
+        "viHistorySuite.devTools.checkForUpdates": {
+          "type": "boolean",
+          "default": false,
+          "description": "Opt in to a background check that notifies you when a newer stable dev-tools version than the one you have pinned is available. Off by default and never contacts the network unless enabled. Only stable releases are surfaced (prereleases are ignored)."
+        },
         "viHistorySuite.preview.warmOnChange": {
           "type": "boolean",
           "default": true,
