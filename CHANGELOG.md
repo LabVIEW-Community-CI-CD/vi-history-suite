@@ -6,6 +6,16 @@ This changelog records user-facing release history for `vi-history-suite`.
 
 ### Added
 
+- The Marketplace release workflow can now publish to the **pre-release
+  channel** (VHS-REQ-678). The channel is selected from the release tag's
+  minor-version parity following the VS Code convention — an **odd** minor
+  (e.g. `v1.35.0`) publishes as a pre-release, an **even** minor (e.g.
+  `v1.34.2`) as stable — and an optional `channel` dispatch input must agree
+  with that parity or the run fails closed. Every existing release guard
+  (protected environment approval, exact-tag, `origin/main` reachability,
+  release-state authority, runtime attestation, supply-chain freshness, and
+  bounded post-publish listing verification) applies unchanged to both channels.
+
 - The extension can now **pin and runtime-consume an independent dev-tools
   version** for its MCP server without waiting for a Marketplace update
   (VHS-REQ-677). Set `viHistorySuite.devTools.version` to a `devtools-vX.Y.Z`

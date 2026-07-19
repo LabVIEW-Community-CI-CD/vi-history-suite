@@ -5762,3 +5762,52 @@ Missing numeric IDs are intentional.
     If the Marketplace pre-release channel lands (VHS-REQ-678), keep dev-tools
     version pinning independent of the extension version.
 
+### VHS-REQ-678: Marketplace Pre-Release Channel
+
+- Status: Active
+- Parent: VHS-SYS-REQ-016
+- Area: CI And Developer Environment
+- Statement: The Marketplace release workflow (VHS-REQ-609) shall publish to
+  either the stable or the pre-release Marketplace channel selected from the
+  release tag's minor-version parity (an odd minor publishes as a pre-release, an
+  even minor as stable, per the VS Code convention), preserving every existing
+  release guard for both channels, so pre-release builds can be shipped for
+  real-world testing through the same single manual, gated release lever.
+- Acceptance Criteria:
+  - A `Determine Release Channel` step, running after the package-version check
+    and before publication, derives the channel from the tag's minor-version
+    parity (odd minor → pre-release, even minor → stable) and exposes the derived
+    channel and a `pre_release` flag as step outputs.
+  - The `Publish To Marketplace` step passes `--pre-release` to the pinned VSCE
+    publish command only on the pre-release channel and publishes without it on
+    the stable channel, while remaining a single step still gated by the
+    idempotent pre-publish check (skipped when the version is already published).
+  - The workflow exposes an optional `channel` dispatch input (`stable` or
+    `prerelease`, empty by default meaning derive-from-parity) that, when
+    non-empty, must agree with the parity-derived channel or the run fails closed,
+    so a stable tag can never be mis-published to the pre-release channel or vice
+    versa.
+  - Every existing release guard from VHS-REQ-609 and VHS-REQ-670 (protected
+    `marketplace-release` environment approval, exact `vX.Y.Z` tag, package
+    version equals tag, tag reachable from `origin/main`, release-state
+    `--strict` authority guard, runtime attestation, supply-chain freshness, and
+    bounded post-publish listing verification with retained evidence) applies
+    unchanged to both channels, and the workflow keeps its manual
+    `workflow_dispatch`-only trigger with no automatic trigger.
+- Agent Work Scope:
+  - Change the Marketplace release workflow YAML, maintainer operations docs,
+    requirements, and the static workflow-contract test together. Do not add an
+    automatic trigger, do not weaken any existing release guard, and keep the
+    channel derivation and dispatch-input agreement fail-closed.
+- Implementation References:
+  - `.github/workflows/marketplace-release.yml`
+  - `docs/maintainer-operations.md`
+- Verification References:
+  - `tests/unit/marketplaceReleaseWorkflow.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - Keep the channel derived from version parity as the source of truth and the
+    dispatch input only a fail-closed cross-check. If a future change adds a
+    third channel, extend the derivation and the agreement guard together rather
+    than bypassing either.
+
