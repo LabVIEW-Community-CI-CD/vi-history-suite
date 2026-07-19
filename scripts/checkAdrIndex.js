@@ -1,0 +1,147 @@
+#!/usr/bin/env node
+
+'use strict';
+
+/**
+ * ADR infrastructure gate (issue #2028).
+ *
+ * Fails closed when the Architecture Decision Record set under
+ * docs/architecture/adr/ drifts from its index or required structure. It checks:
+ *   - the ADR index (README.md) and the ADR template exist;
+ *   - every ADR-NNNN-*.md file appears in the index and vice versa;
+ *   - ADR numbers are sequential from 0001 with no gaps or duplicates;
+ *   - every ADR carries the required `# ADR-NNNN:` heading plus `- Status:` and
+ *     `- Date:` fields and the Context/Decision/Consequences sections.
+ *
+ * Pure over an injected filesystem so it is unit-testable, with a thin CLI that
+ * exits non-zero on any violation. Wired to `npm run adr:check` and the
+ * pre-push git hook.
+ */
+
+const fs = require('node:fs');
+const path = require('node:path');
+
+const ADR_DIR = path.join('docs', 'architecture', 'adr');
+const INDEX_FILE = 'README.md';
+const TEMPLATE_FILE = 'ADR-template.md';
+const ADR_FILE_PATTERN = /^ADR-(\d{4})-[a-z0-9-]+\.md$/;
+const REQUIRED_SECTIONS = ['## Context', '## Decision', '## Consequences'];
+
+function defaultDeps() {
+  return {
+    readdirSync: (dir) => fs.readdirSync(dir),
+    readFileSync: (file) => fs.readFileSync(file, 'utf8'),
+    existsSync: (file) => fs.existsSync(file)
+  };
+}
+
+/**
+ * Audits the ADR set rooted at `repoRoot`. Returns { ok, violations: string[] }.
+ * All filesystem access is injected via `deps` for testability.
+ */
+function auditAdrIndex(repoRoot, deps = defaultDeps()) {
+  const violations = [];
+  const adrDir = path.join(repoRoot, ADR_DIR);
+  const indexPath = path.join(adrDir, INDEX_FILE);
+  const templatePath = path.join(adrDir, TEMPLATE_FILE);
+
+  if (!deps.existsSync(templatePath)) {
+    violations.push(`Missing ADR template: ${path.join(ADR_DIR, TEMPLATE_FILE)}`);
+  }
+  if (!deps.existsSync(indexPath)) {
+    violations.push(`Missing ADR index: ${path.join(ADR_DIR, INDEX_FILE)}`);
+    return { ok: false, violations };
+  }
+
+  const index = deps.readFileSync(indexPath);
+
+  const entries = deps
+    .readdirSync(adrDir)
+    .filter((name) => ADR_FILE_PATTERN.test(name))
+    .sort();
+
+  const numbers = [];
+  for (const name of entries) {
+    const match = ADR_FILE_PATTERN.exec(name);
+    const number = Number.parseInt(match[1], 10);
+    numbers.push(number);
+
+    // Every ADR file must be linked from the index.
+    if (!index.includes(name)) {
+      violations.push(`ADR file not listed in ${INDEX_FILE}: ${name}`);
+    }
+
+    // Structural checks on the ADR body.
+    const body = deps.readFileSync(path.join(adrDir, name));
+    if (!new RegExp(`^# ADR-${match[1]}:`, 'm').test(body)) {
+      violations.push(`ADR ${name} is missing a "# ADR-${match[1]}: <title>" heading.`);
+    }
+    if (!/^- Status:\s*\S/m.test(body)) {
+      violations.push(`ADR ${name} is missing a "- Status:" field.`);
+    }
+    if (!/^- Date:\s*\S/m.test(body)) {
+      violations.push(`ADR ${name} is missing a "- Date:" field.`);
+    }
+    for (const section of REQUIRED_SECTIONS) {
+      if (!body.includes(section)) {
+        violations.push(`ADR ${name} is missing the "${section}" section.`);
+      }
+    }
+
+    // Requirement linkage: an ADR records a design decision, so it must cite the
+    // requirements it is the design record for — including at least one SYRS
+    // (system requirement) id so the ADR is anchored to the requirement tree,
+    // not only to software requirements.
+    if (!/VHS-SYS-REQ-\d+/.test(body)) {
+      violations.push(
+        `ADR ${name} does not cite a SYRS requirement (VHS-SYS-REQ-NNN); an ADR must be anchored to at least one system requirement.`
+      );
+    }
+  }
+
+  // The index must not reference ADR numbers that have no file.
+  const indexedNumbers = [...index.matchAll(/ADR-(\d{4})/g)].map((m) => Number.parseInt(m[1], 10));
+  for (const indexed of new Set(indexedNumbers)) {
+    if (!numbers.includes(indexed)) {
+      violations.push(`Index references ADR-${String(indexed).padStart(4, '0')} but no such ADR file exists.`);
+    }
+  }
+
+  // Numbers must be sequential from 1 with no gaps or duplicates.
+  const sorted = [...numbers].sort((a, b) => a - b);
+  for (let i = 0; i < sorted.length; i += 1) {
+    if (sorted[i] !== i + 1) {
+      violations.push(
+        `ADR numbering is not sequential from 0001: expected ADR-${String(i + 1).padStart(4, '0')} but found ADR-${String(sorted[i]).padStart(4, '0')}.`
+      );
+      break;
+    }
+  }
+  if (new Set(numbers).size !== numbers.length) {
+    violations.push('Duplicate ADR numbers detected.');
+  }
+  if (numbers.length === 0) {
+    violations.push('No ADR files found under docs/architecture/adr/.');
+  }
+
+  return { ok: violations.length === 0, violations };
+}
+
+function main(repoRoot = process.cwd()) {
+  const result = auditAdrIndex(repoRoot);
+  if (result.ok) {
+    process.stdout.write('[adr-check] ADR index and structure are consistent.\n');
+    return 0;
+  }
+  process.stderr.write('[adr-check] ADR infrastructure check failed:\n');
+  for (const violation of result.violations) {
+    process.stderr.write(`  - ${violation}\n`);
+  }
+  return 1;
+}
+
+if (require.main === module) {
+  process.exitCode = main();
+}
+
+module.exports = { auditAdrIndex, ADR_DIR };

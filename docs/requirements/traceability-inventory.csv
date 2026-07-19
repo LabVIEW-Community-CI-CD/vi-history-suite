@@ -9,6 +9,7 @@ scripts/auditTraceabilitySteward.js,mapped,Yes,Traceability steward audit script
 scripts/checkRequirementsCsvColumns.js,mapped,Yes,Requirements CSV column-integrity guard; fails closed on any row whose column count differs from its header and prints the contract plus validated requirement IDs to the CI run summary; mapped to VHS-REQ-601.
 scripts/checkRequirementsIntegrity.js,mapped,Yes,Requirements cross-reference integrity guard; fails closed on dangling id-index anchors non-Active RTM parents missing inventory paths unresolved replacement IDs SRS/RTM evidence-reference disagreement missing or unresolved system-requirement references and Active requirements without a verification reference; prints the contract to the CI run summary; mapped to VHS-REQ-601.
 scripts/checkDocsLinks.js,mapped,Yes,Documentation link-check command with generated validation/evidence root exclusions; mapped to VHS-REQ-597.
+scripts/checkAdrIndex.js,dev-only,No,"Architecture decision record infrastructure gate (index/template presence, file<->index agreement, sequential numbering, required fields/sections); npm run adr:check and the pre-push hook; injected fs boundary; documentation infrastructure."
 scripts/checkDefinitionOfDone.js,mapped,Yes,Definition-of-Done gate checker; mapped to VHS-REQ-615.
 scripts/auditBranchProtectionSettings.js,dev-only,No,Maintainer branch protection settings audit for canonical GitHub required status checks and protection flags; gh-only injected execution boundary.
 scripts/checkDocumentationWorkbench.js,dev-only,No,Documentation workbench gate verifying the docs-authoring image documentation-workbench guide and docs:gate script surfaces exist and stay coherent; CI and dev documentation infrastructure.
@@ -147,6 +148,7 @@ scripts/verifyDevToolsRelease.js,mapped,Yes,"Dev-tools GitHub Release fail-close
 tests/unit/bootstrapLinuxVsCodeHost.test.ts,dev-only,No,Tests for Linux VS Code host bootstrap.
 tests/unit/branchGovernanceWorkflow.test.ts,mapped,Yes,Branch governance workflow tests; mapped through RTM.
 tests/unit/branchProtectionSettingsAuditScript.test.ts,dev-only,No,Tests for the maintainer branch protection settings audit command with mocked GitHub CLI execution and drift rendering.
+tests/unit/checkAdrIndexScript.test.ts,dev-only,No,"Tests for the ADR infrastructure gate (checkAdrIndex.js) covering index/template presence, missing file/index agreement, numbering gaps, and required field/section checks over synthetic ADR fixtures."
 tests/unit/buildInfo.test.ts,dev-only,No,Build info tests; development tooling.
 tests/unit/checkDevDependencies.test.ts,dev-only,No,Contributor dev-loop dependency preflight tests; development tooling.
 tests/unit/closeoutEvidenceScript.test.ts,mapped,Yes,Closeout evidence automation Docker runner standards audit snapshot standards toolchain provenance coverage-risk mapping and DoD evidence-source hygiene tests; mapped to VHS-REQ-601 VHS-REQ-613 and VHS-REQ-615.
@@ -367,6 +369,10 @@ docs/architecture/adr/ADR-0001-github-first-release-and-traceability-governance.
 docs/architecture/adr/ADR-0002-selected-file-on-demand-vi-history-eligibility.md,asset-doc,No,Architecture decision record reference documentation for selected-file on-demand VI History eligibility; not directly mapped in RTM.
 docs/architecture/adr/ADR-0003-dynamic-labview-container-image-selection.md,asset-doc,No,Architecture decision record for dynamic LabVIEW container image selection (VHS-SYS-REQ-019 design of record); not directly mapped in RTM.
 docs/architecture/adr/ADR-0004-version-aware-labview-container-execution.md,asset-doc,No,Architecture decision record for version-aware LabVIEW container execution (VHS-REQ-657 design of record; supersedes the 2026-pin aspect of ADR-0003); not directly mapped in RTM.
+docs/architecture/adr/ADR-0005-preview-cache-fabric.md,asset-doc,No,Architecture decision record for the content-addressed preview-cache fabric (VHS-REQ-671-675 design of record); not directly mapped in RTM.
+docs/architecture/adr/ADR-0006-independent-dev-tools-versioning.md,asset-doc,No,"Architecture decision record for independent dev-tools versioning, runtime pinning, and the Marketplace pre-release channel (VHS-REQ-676-680 design of record); not directly mapped in RTM."
+docs/architecture/adr/README.md,asset-doc,No,Architecture decision record index and how ADRs are leveraged by documentation; enforced by scripts/checkAdrIndex.js; not directly mapped in RTM.
+docs/architecture/adr/ADR-template.md,asset-doc,No,Architecture decision record template for new ADRs; not directly mapped in RTM.
 docs/architecture/diagnostics-bundle.md,asset-doc,No,Comparison runtime diagnostics bundle schema and analyzer guide; reference documentation supporting VHS-REQ-148 retained runtime evidence; not directly mapped in RTM.
 docs/simplification/github-cutover-runbook.md,asset-doc,No,GitHub cutover runbook documentation; simplification process reference.
 docs/simplification/github-first-simplification-analysis.md,asset-doc,No,GitHub-first simplification analysis documentation; process reference.

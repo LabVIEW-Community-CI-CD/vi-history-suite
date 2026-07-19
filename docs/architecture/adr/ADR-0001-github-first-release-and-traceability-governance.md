@@ -26,6 +26,10 @@ release tags, Marketplace publication evidence, and release back-sync. The
 requirements package remains the active authority for agent-targeted work,
 traceability closure, and standards evidence classification.
 
+This decision is anchored to system requirement VHS-SYS-REQ-016 (Governed
+Release Branch Promotion) and realized in software requirement VHS-REQ-609
+(Governed Branch Promotion And Marketplace Release Automation).
+
 ## Rationale
 
 This keeps release evidence and agent work evidence in one reviewable public
