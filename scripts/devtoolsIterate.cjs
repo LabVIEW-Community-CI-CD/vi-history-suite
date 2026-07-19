@@ -55,6 +55,7 @@ function parseArgs(argv) {
     else if (a === '--remote') opts.remote = next();
     else if (a === '--no-inject') opts.inject = false;
     else if (a === '--dry-run') opts.dryRun = true;
+    else if (a === '--publish-current-branch') opts.publishCurrentBranch = true;
     else throw new Error(`Unknown argument: ${a}`);
   }
   opts.repo = opts.repo ?? process.env.DEVTOOLS_ITERATE_REPO ?? DEFAULT_REPO;
@@ -82,6 +83,18 @@ function nextVersion(current, bump, setVersion) {
   return `${maj}.${min}.${pat + 1}`;
 }
 
+/** Returns the higher of two X.Y.Z versions; tolerates undefined. */
+function pickHigherVersion(a, b) {
+  if (!a) return b;
+  if (!b) return a;
+  const pa = a.split('.').map(Number);
+  const pb = b.split('.').map(Number);
+  for (let i = 0; i < 3; i += 1) {
+    if (pa[i] !== pb[i]) return pa[i] > pb[i] ? a : b;
+  }
+  return a;
+}
+
 function readManifestVersion() {
   return JSON.parse(fs.readFileSync(MANIFEST, 'utf8')).version;
 }
@@ -98,34 +111,84 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/**
+ * Latest published stable dev-tools version (from the release tags), or undefined.
+ * The base version derives from what is ACTUALLY published, not the committed
+ * manifest, so sequential iterations never collide even when develop lags.
+ */
+function latestPublishedVersion(repo) {
+  const res = run(
+    'gh',
+    ['api', '--paginate', '--slurp', `/repos/${repo}/releases`],
+    { allowFail: true }
+  );
+  if (res.status !== 0) return undefined;
+  try {
+    const pages = JSON.parse(res.stdout);
+    const tags = pages
+      .flat()
+      .filter((r) => r.prerelease === false && typeof r.tag_name === 'string' && r.tag_name.startsWith('devtools-v'))
+      .map((r) => r.tag_name.replace(/^devtools-v/, ''))
+      .filter((v) => /^\d+\.\d+\.\d+$/.test(v));
+    tags.sort((a, b) => {
+      const pa = a.split('.').map(Number);
+      const pb = b.split('.').map(Number);
+      return pa[0] - pb[0] || pa[1] - pb[1] || pa[2] - pb[2];
+    });
+    return tags[tags.length - 1];
+  } catch {
+    return undefined;
+  }
+}
+
 async function main() {
   const opts = parseArgs(process.argv.slice(2));
-  const current = readManifestVersion();
+  // Base the next version on the LATEST PUBLISHED release (not the committed
+  // manifest), so sequential iterations never collide. Fall back to the manifest
+  // when nothing is published yet.
+  const published = latestPublishedVersion(opts.repo);
+  const manifestVersion = readManifestVersion();
+  const current = pickHigherVersion(published, manifestVersion);
   const version = nextVersion(current, opts.bump, opts.setVersion);
   const tag = `devtools-v${version}`;
   const branch = `feature/${opts.issue}-devtools-v${version.replace(/\./g, '-')}`;
-  console.log(`[iterate] dev-tools ${current} -> ${version} (tag ${tag}, branch ${branch}, repo ${opts.repo})`);
+  console.log(`[iterate] base=${current} (published=${published ?? 'none'}, manifest=${manifestVersion}) -> ${version} [${opts.bump}] (tag ${tag}, branch ${branch})`);
   if (opts.dryRun) {
     console.log('[iterate] --dry-run: stopping before any write/dispatch.');
     return;
   }
 
-  // 1) Bump + commit on a fresh branch off the remote develop tip.
-  run('git', ['fetch', opts.remote, 'develop', '--quiet']);
-  run('git', ['checkout', '-B', branch, `${opts.remote}/develop`, '--quiet']);
-  setManifestVersion(version);
-  run('git', ['add', 'docs/devtools-release.manifest.json']);
-  run('git', ['commit', '--quiet', '-m', `release(devtools): bump dev-tools version ${current} -> ${version}\n\nRefs #${opts.issue}`]);
-  run('git', ['push', '-u', opts.remote, branch, '--force-with-lease']);
-  console.log(`[iterate] pushed ${branch}`);
+  // 1) Prepare the release branch. Default: fresh branch off develop with only
+  //    the manifest bump. With --publish-current-branch, the CURRENT branch is
+  //    used as-is (the caller has already committed a genuine toolset change),
+  //    and only the manifest version is bumped on top.
+  if (opts.publishCurrentBranch) {
+    const cur = run('git', ['rev-parse', '--abbrev-ref', 'HEAD']).stdout.trim();
+    console.log(`[iterate] --publish-current-branch: using ${cur}`);
+    setManifestVersion(version);
+    run('git', ['add', 'docs/devtools-release.manifest.json']);
+    run('git', ['commit', '--quiet', '-m', `release(devtools): set dev-tools version ${version}\n\nRefs #${opts.issue}`]);
+    run('git', ['push', '-u', opts.remote, cur, '--force-with-lease']);
+    opts.branchRef = cur;
+  } else {
+    run('git', ['fetch', opts.remote, 'develop', '--quiet']);
+    run('git', ['checkout', '-B', branch, `${opts.remote}/develop`, '--quiet']);
+    setManifestVersion(version);
+    run('git', ['add', 'docs/devtools-release.manifest.json']);
+    run('git', ['commit', '--quiet', '-m', `release(devtools): bump dev-tools version ${current} -> ${version}\n\nRefs #${opts.issue}`]);
+    run('git', ['push', '-u', opts.remote, branch, '--force-with-lease']);
+    opts.branchRef = branch;
+  }
+  console.log(`[iterate] pushed ${opts.branchRef}`);
 
   // 2) Dispatch the stable publish from the feature branch (no approval gate).
-  run('gh', ['workflow', 'run', 'devtools-release.yml', '--repo', opts.repo, '--ref', branch, '-f', 'channel=stable', '-f', 'dry_run=false']);
+  run('gh', ['workflow', 'run', 'devtools-release.yml', '--repo', opts.repo, '--ref', opts.branchRef, '-f', 'channel=stable', '-f', 'dry_run=false']);
   console.log('[iterate] dispatched devtools-release (stable, publish)');
   await sleep(6000);
   const listRes = run('gh', ['run', 'list', '--repo', opts.repo, '--workflow', 'devtools-release.yml', '--limit', '1', '--json', 'databaseId,headBranch', '--jq', '.[0].databaseId']);
   const runId = listRes.stdout.trim();
   console.log(`[iterate] run ${runId}`);
+
 
   // 3) Poll to completion.
   let conclusion = '';
