@@ -1,7 +1,7 @@
 {
   "schema": "vi-history-suite/devtools-release@v1",
   "schemaVersion": 1,
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "Source of truth for the development-tools GitHub Release channel. Lists the include globs (grouped by category) and exclude patterns that scripts/buildDevToolsRelease.js resolves into a deterministic, content-addressed toolset. Compiled output (out/**) must be built with `npm run compile` before packaging. Byte-for-byte edits to this file change which files ship and therefore the release content digest. The `version` field is the independent SemVer 2.0 dev-tools version line (devtools-vX.Y.Z), moved separately from the extension's Marketplace version; bump it deliberately when publishing a new dev-tools release.",
   "categories": [
     {
@@ -21,10 +21,17 @@
     },
     {
       "id": "mcp",
-      "description": "Compiled Model Context Protocol server.",
+      "description": "Compiled Model Context Protocol server and its full transitive out/ dependency closure (the server entrypoint requires modules across out/semantic, out/reporting, out/dashboard, out/domain, out/git, out/support, and out/tooling, so shipping only out/mcp + the entrypoint left the pinned server unable to resolve its own imports).",
       "include": [
         "out/mcp/**/*.js",
-        "out/cli/runViSemanticMcpServer.js"
+        "out/cli/runViSemanticMcpServer.js",
+        "out/semantic/**/*.js",
+        "out/reporting/**/*.js",
+        "out/dashboard/**/*.js",
+        "out/domain/**/*.js",
+        "out/git/**/*.js",
+        "out/support/**/*.js",
+        "out/tooling/**/*.js"
       ]
     },
     {
