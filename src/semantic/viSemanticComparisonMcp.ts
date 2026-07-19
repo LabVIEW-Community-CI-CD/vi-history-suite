@@ -859,17 +859,19 @@ function renderPrompt(name: string, rawArguments: unknown): { description: strin
   }
   if (name === 'check_compare_readiness') {
     let platformClause = '';
+    let previewPlatformClause = '';
     if (args.platform !== undefined) {
       const platform = requireEnumArg(args, 'platform', RUNTIME_PLATFORM_VALUES);
       platformClause = ` with \`platform="${platform}"\``;
+      previewPlatformClause = ` with \`processPlatform="${platform}"\``;
     }
     const text =
       'Determine whether this environment can run a LabVIEW VI comparison.\n\n' +
       `Call \`get_runtime_health\`${platformClause}. If \`blocked\` is true, explain ` +
-      '`blockedReason` and the concrete fix. Then call `get_preview_diagnostics` and report ' +
-      'Docker availability, visible LabVIEW images, and whether a preview cache is populated. ' +
-      'Conclude with a one-line verdict: ready (and by which provider) or blocked (and the ' +
-      'single next action).';
+      `\`blockedReason\` and the concrete fix. Then call \`get_preview_diagnostics\`${previewPlatformClause} ` +
+      'and report Docker availability, visible LabVIEW images, and whether a preview cache is ' +
+      'populated. Conclude with a one-line verdict: ready (and by which provider) or blocked (and ' +
+      'the single next action).';
     return {
       description: 'Guided comparison-readiness check.',
       messages: [{ role: 'user', content: { type: 'text', text } }]
