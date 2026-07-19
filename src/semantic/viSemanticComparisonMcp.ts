@@ -626,25 +626,135 @@ export const VI_SEMANTIC_MCP_SYNC_CAPABLE_TOOL_NAMES: readonly string[] = [
 function failure(
   id: JsonRpcError['id'],
   code: number,
-  message: string
+  message: string,
+  data?: unknown
 ): JsonRpcError {
-  return { jsonrpc: '2.0', id, error: { code, message } };
+  const error: JsonRpcError['error'] = { code, message };
+  if (data !== undefined) {
+    error.data = data;
+  }
+  return { jsonrpc: '2.0', id, error };
 }
 
 function toolTextResult(text: string, isError = false): unknown {
   return { content: [{ type: 'text', text }], isError };
 }
 
+/**
+ * A single field-level problem with a tool's `arguments` object: which field is
+ * wrong, what was expected, and what was received. Emitted as JSON-RPC error
+ * `data.issues` so an agent host can correct the call programmatically instead
+ * of parsing a free-text message.
+ */
+export interface ToolArgumentIssue {
+  field: string;
+  expected: string;
+  received: string;
+}
+
+/**
+ * Argument-shape validation failure. Thrown by the `parse*Arguments` helpers and
+ * mapped by the dispatcher to a JSON-RPC `-32602` (Invalid params) error with
+ * structured `data.issues`. Distinct from tool *execution* failures (a comparison
+ * that failed, a cache miss), which stay in the result envelope as `isError`.
+ */
+export class ToolArgumentError extends Error {
+  readonly issues: ToolArgumentIssue[];
+  constructor(issues: ToolArgumentIssue[]) {
+    super(formatToolArgumentIssues(issues));
+    this.name = 'ToolArgumentError';
+    this.issues = issues;
+  }
+}
+
+function formatToolArgumentIssues(issues: ToolArgumentIssue[]): string {
+  const detail = issues
+    .map((issue) => `${issue.field} must be ${issue.expected} (received ${issue.received})`)
+    .join('; ');
+  return `Invalid arguments: ${detail}`;
+}
+
+function describeReceived(value: unknown): string {
+  if (value === undefined) {
+    return 'undefined';
+  }
+  if (value === null) {
+    return 'null';
+  }
+  if (Array.isArray(value)) {
+    return 'array';
+  }
+  if (typeof value === 'string') {
+    return value.length === 0 ? 'empty string' : 'string';
+  }
+  return typeof value;
+}
+
+function throwArgumentError(field: string, expected: string, received: unknown): never {
+  throw new ToolArgumentError([{ field, expected, received: describeReceived(received) }]);
+}
+
+function requireArgumentsObject(rawArguments: unknown): Record<string, unknown> {
+  if (typeof rawArguments !== 'object' || rawArguments === null || Array.isArray(rawArguments)) {
+    throwArgumentError('arguments', 'an object', rawArguments);
+  }
+  return rawArguments as Record<string, unknown>;
+}
+
+function requireStringArg(args: Record<string, unknown>, field: string): string {
+  const value = args[field];
+  if (typeof value !== 'string' || value.length === 0) {
+    throwArgumentError(field, 'a non-empty string', value);
+  }
+  return value as string;
+}
+
+function requireObjectArg(args: Record<string, unknown>, field: string): Record<string, unknown> {
+  const value = args[field];
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    throwArgumentError(field, 'an object', value);
+  }
+  return value as Record<string, unknown>;
+}
+
+function requireFiniteNumberArg(args: Record<string, unknown>, field: string): number {
+  const value = args[field];
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    throwArgumentError(field, 'a finite number', value);
+  }
+  return value as number;
+}
+
+function requireEnumArg<T extends string>(
+  args: Record<string, unknown>,
+  field: string,
+  allowed: readonly T[]
+): T {
+  const value = args[field];
+  if (typeof value !== 'string' || !allowed.includes(value as T)) {
+    const expected = `one of ${allowed.map((option) => `"${option}"`).join(', ')}`;
+    throwArgumentError(field, expected, value);
+  }
+  return value as T;
+}
+
+/**
+ * Maps a thrown parse error to a response: a {@link ToolArgumentError} becomes a
+ * structured JSON-RPC `-32602` (with field-level `data.issues`); any other error
+ * stays a tool-execution failure in the result envelope (`isError`).
+ */
+function toArgumentFailure(id: JsonRpcSuccess['id'], error: unknown): JsonRpcResponse {
+  if (error instanceof ToolArgumentError) {
+    return failure(id, JSON_RPC_INVALID_PARAMS, error.message, { issues: error.issues });
+  }
+  return success(id, toolTextResult(`Tool error: ${errorMessage(error)}`, true));
+}
+
 function parseComparisonArguments(rawArguments: unknown): ViComparisonToolArguments {
-  if (typeof rawArguments !== 'object' || rawArguments === null) {
-    throw new Error('tool arguments must be an object');
-  }
-  const args = rawArguments as Record<string, unknown>;
-  if (typeof args.reportHtml !== 'string' || args.reportHtml.length === 0) {
-    throw new Error('reportHtml is required and must be a non-empty string');
-  }
+  const args = requireArgumentsObject(rawArguments);
+  const reportHtml = requireStringArg(args, 'reportHtml');
   return {
-    reportHtml: args.reportHtml,
+    reportHtml,
     reportFilePath:
       typeof args.reportFilePath === 'string' ? args.reportFilePath : undefined,
     revisions: (args.revisions as ViSemanticRevisionFacts | undefined) ?? undefined,
@@ -661,7 +771,7 @@ function callSchemaTool(rawArguments: unknown): unknown {
   if (typeof args.schema === 'string') {
     const schema = VI_SEMANTIC_SCHEMAS[args.schema];
     if (!schema) {
-      throw new Error(`unknown schema: ${args.schema}`);
+      throwArgumentError('schema', 'a published semantic schema id', args.schema);
     }
     return toolTextResult(JSON.stringify(schema, null, 2));
   }
@@ -670,7 +780,7 @@ function callSchemaTool(rawArguments: unknown): unknown {
 
 function callValidateTool(rawArguments: unknown): unknown {
   if (typeof rawArguments !== 'object' || rawArguments === null || !('document' in rawArguments)) {
-    throw new Error('document is required');
+    throwArgumentError('document', 'present', rawArguments);
   }
   const result = validateViSemanticDocument((rawArguments as Record<string, unknown>).document);
   return toolTextResult(JSON.stringify(result, null, 2));
@@ -755,10 +865,10 @@ export function handleViSemanticMcpMessage(
       try {
         return success(id, callTool(params.name, params.arguments));
       } catch (error) {
-        // Tool-level failures are reported through the result envelope (isError)
-        // per MCP, not as protocol errors, so the agent can read the message.
-        const detail = errorMessage(error);
-        return success(id, toolTextResult(`Tool error: ${detail}`, true));
+        // Argument-shape failures become a structured -32602 (Invalid params)
+        // with field-level detail; genuine tool-execution failures stay in the
+        // result envelope (isError) per MCP so the agent can read the message.
+        return toArgumentFailure(id, error);
       }
     }
 
@@ -768,22 +878,12 @@ export function handleViSemanticMcpMessage(
 }
 
 function parseCompareRevisionsArguments(rawArguments: unknown): CompareViRevisionsInput {
-  if (typeof rawArguments !== 'object' || rawArguments === null) {
-    throw new Error('tool arguments must be an object');
-  }
-  const args = rawArguments as Record<string, unknown>;
-  const requireString = (key: string): string => {
-    const value = args[key];
-    if (typeof value !== 'string' || value.length === 0) {
-      throw new Error(`${key} is required and must be a non-empty string`);
-    }
-    return value;
-  };
+  const args = requireArgumentsObject(rawArguments);
   const input: CompareViRevisionsInput = {
-    repositoryRoot: requireString('repositoryRoot'),
-    relativePath: requireString('relativePath'),
-    baseHash: requireString('baseHash'),
-    selectedHash: requireString('selectedHash')
+    repositoryRoot: requireStringArg(args, 'repositoryRoot'),
+    relativePath: requireStringArg(args, 'relativePath'),
+    baseHash: requireStringArg(args, 'baseHash'),
+    selectedHash: requireStringArg(args, 'selectedHash')
   };
   if (typeof args.reportType === 'string') {
     input.reportType = args.reportType as CompareViRevisionsInput['reportType'];
@@ -808,20 +908,10 @@ function renderCompareResult(
 }
 
 function parseHistoryArguments(rawArguments: unknown): ViSemanticHistoryInput {
-  if (typeof rawArguments !== 'object' || rawArguments === null) {
-    throw new Error('tool arguments must be an object');
-  }
-  const args = rawArguments as Record<string, unknown>;
-  const requireString = (key: string): string => {
-    const value = args[key];
-    if (typeof value !== 'string' || value.length === 0) {
-      throw new Error(`${key} is required and must be a non-empty string`);
-    }
-    return value;
-  };
+  const args = requireArgumentsObject(rawArguments);
   const input: ViSemanticHistoryInput = {
-    repositoryRoot: requireString('repositoryRoot'),
-    relativePath: requireString('relativePath')
+    repositoryRoot: requireStringArg(args, 'repositoryRoot'),
+    relativePath: requireStringArg(args, 'relativePath')
   };
   if (typeof args.maxRevisions === 'number') {
     input.maxRevisions = args.maxRevisions;
@@ -843,14 +933,8 @@ function renderHistoryResult(
 }
 
 function parseRepositoryIndexArguments(rawArguments: unknown): ViRepositoryIndexInput {
-  if (typeof rawArguments !== 'object' || rawArguments === null) {
-    throw new Error('tool arguments must be an object');
-  }
-  const args = rawArguments as Record<string, unknown>;
-  if (typeof args.repositoryRoot !== 'string' || args.repositoryRoot.length === 0) {
-    throw new Error('repositoryRoot is required and must be a non-empty string');
-  }
-  const input: ViRepositoryIndexInput = { repositoryRoot: args.repositoryRoot };
+  const args = requireArgumentsObject(rawArguments);
+  const input: ViRepositoryIndexInput = { repositoryRoot: requireStringArg(args, 'repositoryRoot') };
   if (typeof args.maxVis === 'number') {
     input.maxVis = args.maxVis;
   }
@@ -862,21 +946,11 @@ function renderRepositoryIndexResult(index: ViRepositoryIndex): unknown {
 }
 
 function parsePrReviewArguments(rawArguments: unknown): ViSemanticPrReviewInput {
-  if (typeof rawArguments !== 'object' || rawArguments === null) {
-    throw new Error('tool arguments must be an object');
-  }
-  const args = rawArguments as Record<string, unknown>;
-  const requireString = (key: string): string => {
-    const value = args[key];
-    if (typeof value !== 'string' || value.length === 0) {
-      throw new Error(`${key} is required and must be a non-empty string`);
-    }
-    return value;
-  };
+  const args = requireArgumentsObject(rawArguments);
   const input: ViSemanticPrReviewInput = {
-    repositoryRoot: requireString('repositoryRoot'),
-    baseHash: requireString('baseHash'),
-    selectedHash: requireString('selectedHash')
+    repositoryRoot: requireStringArg(args, 'repositoryRoot'),
+    baseHash: requireStringArg(args, 'baseHash'),
+    selectedHash: requireStringArg(args, 'selectedHash')
   };
   if (typeof args.maxVis === 'number') {
     input.maxVis = args.maxVis;
@@ -976,8 +1050,16 @@ async function invokeInjectedTool<TInput, TResult>(
       toolTextResult(`Tool error: ${toolName} is not wired (no orchestrator injected)`, true)
     );
   }
+  let input: TInput;
   try {
-    const result = await orchestrator(parseArguments());
+    input = parseArguments();
+  } catch (error) {
+    // Argument-shape failures become a structured -32602; other parse errors
+    // fall through to the isError envelope via toArgumentFailure.
+    return toArgumentFailure(id, error);
+  }
+  try {
+    const result = await orchestrator(input);
     return success(id, render(result));
   } catch (error) {
     const detail = errorMessage(error);
@@ -1066,28 +1148,25 @@ export async function handleViSemanticMcpMessageAsync(
   return handleViSemanticMcpMessage(message);
 }
 
-const RUNTIME_PLATFORMS: ReadonlySet<string> = new Set(['win32', 'linux', 'darwin']);
+const RUNTIME_PLATFORM_VALUES = ['win32', 'linux', 'darwin'] as const;
+const PREVIEW_CACHE_MARKERS: readonly ViPreviewCacheSearchMarker[] = [
+  'error',
+  'interactive',
+  'image',
+  'empty'
+];
 
 function parseRuntimeHealthArguments(rawArguments: unknown): RuntimeHealthInput {
   if (rawArguments === undefined || rawArguments === null) {
     return {};
   }
-  if (typeof rawArguments !== 'object') {
-    throw new Error('tool arguments must be an object');
-  }
-  const args = rawArguments as Record<string, unknown>;
+  const args = requireArgumentsObject(rawArguments);
   const input: RuntimeHealthInput = {};
   if (args.platform !== undefined) {
-    if (typeof args.platform !== 'string' || !RUNTIME_PLATFORMS.has(args.platform)) {
-      throw new Error('platform must be one of "win32", "linux", or "darwin"');
-    }
-    input.platform = args.platform as RuntimePlatform;
+    input.platform = requireEnumArg(args, 'platform', RUNTIME_PLATFORM_VALUES);
   }
   if (args.settings !== undefined) {
-    if (typeof args.settings !== 'object' || args.settings === null) {
-      throw new Error('settings must be an object');
-    }
-    input.settings = args.settings as ComparisonRuntimeSettings;
+    input.settings = requireObjectArg(args, 'settings') as ComparisonRuntimeSettings;
   }
   return input;
 }
@@ -1096,47 +1175,27 @@ function parsePreviewDiagnosticsArguments(rawArguments: unknown): CollectViPrevi
   if (rawArguments === undefined || rawArguments === null) {
     return {};
   }
-  if (typeof rawArguments !== 'object') {
-    throw new Error('tool arguments must be an object');
-  }
-  const args = rawArguments as Record<string, unknown>;
+  const args = requireArgumentsObject(rawArguments);
   const options: CollectViPreviewDiagnosticsOptions = {};
   if (args.cacheDirectory !== undefined) {
-    if (typeof args.cacheDirectory !== 'string' || args.cacheDirectory.length === 0) {
-      throw new Error('cacheDirectory must be a non-empty string');
-    }
-    options.cacheDirectory = args.cacheDirectory;
+    options.cacheDirectory = requireStringArg(args, 'cacheDirectory');
   }
   if (args.processPlatform !== undefined) {
-    if (typeof args.processPlatform !== 'string' || !RUNTIME_PLATFORMS.has(args.processPlatform)) {
-      throw new Error('processPlatform must be one of "win32", "linux", or "darwin"');
-    }
-    options.processPlatform = args.processPlatform as NodeJS.Platform;
+    options.processPlatform = requireEnumArg(args, 'processPlatform', RUNTIME_PLATFORM_VALUES);
   }
   if (args.settings !== undefined) {
-    if (typeof args.settings !== 'object' || args.settings === null) {
-      throw new Error('settings must be an object');
-    }
-    options.settings = args.settings as ComparisonRuntimeSettings;
+    options.settings = requireObjectArg(args, 'settings') as ComparisonRuntimeSettings;
   }
   if (args.connectTimeoutSeconds !== undefined) {
-    if (typeof args.connectTimeoutSeconds !== 'number' || !Number.isFinite(args.connectTimeoutSeconds)) {
-      throw new Error('connectTimeoutSeconds must be a finite number');
-    }
-    options.connectTimeoutSeconds = args.connectTimeoutSeconds;
+    options.connectTimeoutSeconds = requireFiniteNumberArg(args, 'connectTimeoutSeconds');
   }
   return options;
 }
 
 function requireCacheDirectory(rawArguments: unknown): { cacheDirectory: string; args: Record<string, unknown> } {
-  if (typeof rawArguments !== 'object' || rawArguments === null) {
-    throw new Error('tool arguments must be an object');
-  }
-  const args = rawArguments as Record<string, unknown>;
-  if (typeof args.cacheDirectory !== 'string' || args.cacheDirectory.length === 0) {
-    throw new Error('cacheDirectory is required and must be a non-empty string');
-  }
-  return { cacheDirectory: args.cacheDirectory, args };
+  const args = requireArgumentsObject(rawArguments);
+  const cacheDirectory = requireStringArg(args, 'cacheDirectory');
+  return { cacheDirectory, args };
 }
 
 const PREVIEW_CACHE_DIAGNOSTICS_SCHEMA = 'vi-history-suite/preview-cache-diagnostics@v1';
@@ -1179,29 +1238,19 @@ async function handlePreviewCacheTool(
       return success(id, toolTextResult(JSON.stringify(diagnostics, null, 2)));
     }
     if (name === 'search_preview_cache') {
-      const marker = args.marker;
-      if (
-        marker !== 'error' &&
-        marker !== 'interactive' &&
-        marker !== 'image' &&
-        marker !== 'empty'
-      ) {
-        throw new Error('marker must be one of: error, interactive, image, empty');
-      }
+      const marker = requireEnumArg(args, 'marker', PREVIEW_CACHE_MARKERS);
       const entries = await inspector.search(cacheDirectory, marker);
       return success(id, toolTextResult(JSON.stringify({ cacheDirectory, marker, entries }, null, 2)));
     }
     // get_preview_cache_entry
-    if (typeof args.key !== 'string' || args.key.length === 0) {
-      throw new Error('key is required and must be a non-empty string');
-    }
+    const key = requireStringArg(args, 'key');
     const includeHtml = args.includeHtml === true;
-    const entry = await inspector.get(cacheDirectory, args.key, { includeHtml });
+    const entry = await inspector.get(cacheDirectory, key, { includeHtml });
     if (!entry) {
-      return success(id, toolTextResult(`Tool error: no cache entry for key ${args.key}`, true));
+      return success(id, toolTextResult(`Tool error: no cache entry for key ${key}`, true));
     }
     return success(id, toolTextResult(JSON.stringify(entry, null, 2)));
   } catch (error) {
-    return success(id, toolTextResult(`Tool error: ${errorMessage(error)}`, true));
+    return toArgumentFailure(id, error);
   }
 }

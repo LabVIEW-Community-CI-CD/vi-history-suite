@@ -62,6 +62,20 @@ filesystem) — the same set that requires the async server entrypoint — and
 `validate_vi_semantic_document`). Hints are advisory, not a security boundary;
 they let hosts auto-approve read-only calls and warn before open-world effects.
 
+### Error handling
+
+The server distinguishes two failure classes so an agent can react correctly:
+
+- **Argument-shape problems** (a missing or wrong-typed field, a bad enum value)
+  return a JSON-RPC `-32602` (Invalid params) error whose `data.issues` lists the
+  offending fields as `{ field, expected, received }`, e.g.
+  `{ "field": "relativePath", "expected": "a non-empty string", "received": "undefined" }`.
+  A host can correct the call programmatically instead of parsing a message.
+- **Tool-execution failures** (a comparison that failed, an absent cache entry, a
+  tool invoked without its injected dependency) stay in the result envelope as
+  `{ content: [...], isError: true }` per the MCP spec, so the message reaches the
+  model.
+
 ### Output format
 
 `summarize_vi_comparison`, `get_vi_semantic_comparison`, `compare_vi_revisions`,
