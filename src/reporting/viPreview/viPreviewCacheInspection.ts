@@ -293,12 +293,15 @@ export async function getPreviewCacheEntry(
 }
 
 /** A search predicate over a cache document. */
-export type ViPreviewCacheSearchMarker = 'error' | 'interactive' | 'image' | 'empty';
+export type ViPreviewCacheSearchMarker = 'error' | 'interactive' | 'image' | 'empty' | 'fallback';
 
 /**
  * Returns the entries whose content matches a marker: `error` (any error flag),
- * `interactive` (has the block-diagram viewer island), `image` (>=1 inline
- * image), or `empty`. Reuses the same classification as the listing.
+ * `interactive` (the block-diagram viewer would be presented), `image` (>=1
+ * inline image), `empty`, or `fallback` (a block diagram rendered but was too
+ * low-fidelity to present interactively, so the display path falls back to the
+ * flat document — i.e. `interactiveFallbackReason` is set). Reuses the same
+ * classification as the listing.
  */
 export async function searchPreviewCache(
   directory: string,
@@ -316,6 +319,8 @@ export async function searchPreviewCache(
         return entry.interactive;
       case 'image':
         return entry.inlineImageCount > 0;
+      case 'fallback':
+        return entry.interactiveFallbackReason !== undefined;
       default:
         return false;
     }

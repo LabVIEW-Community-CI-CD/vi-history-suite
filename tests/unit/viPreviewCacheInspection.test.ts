@@ -230,6 +230,22 @@ describe('searchPreviewCache (VHS-REQ-659.21)', () => {
     expect(found.map((e) => e.key)).toEqual([KEY_D]);
   });
 
+  it('finds fidelity-fallback entries (#2096)', async () => {
+    // A low-fidelity flat export: rendered fine (has images) but too complex to
+    // present interactively. `fallback` finds it; `interactive` does not.
+    const imgs = Array.from({ length: 10 }, (_v, i) => `<img src="${pngDataUri(100 + i, 50 + i)}"/>`).join('');
+    const fallbackHtml = `<html><body><h3>Block Diagram</h3>${imgs}</body></html>`;
+    const cache = {
+      [`${KEY_A}.html`]: FLAT_INTERACTIVE_HTML, // interactive, not a fallback
+      [`${KEY_B}.html`]: fallbackHtml, // rendered but low-fidelity => fallback
+      [`${KEY_C}.html`]: HEALTHY_HTML // no diagram => not a fallback
+    };
+    const fallback = await searchPreviewCache('/cache', 'fallback', fakeFs(cache));
+    expect(fallback.map((e) => e.key)).toEqual([KEY_B]);
+    const interactive = await searchPreviewCache('/cache', 'interactive', fakeFs(cache));
+    expect(interactive.map((e) => e.key)).toEqual([KEY_A]);
+  });
+
   it('returns [] for an unrecognized marker (default branch)', async () => {
     // The public marker type is a closed union, but the runtime default arm is a
     // real guard: an unknown marker must match nothing rather than everything.
