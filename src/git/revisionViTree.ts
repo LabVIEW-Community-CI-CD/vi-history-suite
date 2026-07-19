@@ -32,7 +32,10 @@ export function parseLsTreeOutput(stdout: string): RevisionTreeFileEntry[] {
       continue;
     }
     const meta = rawLine.slice(0, tabIndex).trim().split(/\s+/);
-    const repoRelativePath = rawLine.slice(tabIndex + 1).trim();
+    // Everything after the tab is the path, verbatim. Strip only a trailing
+    // carriage return (CRLF-terminated output); never the path's own leading or
+    // trailing whitespace, which would fetch a different (or missing) blob.
+    const repoRelativePath = rawLine.slice(tabIndex + 1).replace(/\r$/, '');
     if (meta.length < 4 || meta[1] !== 'blob' || repoRelativePath.length === 0) {
       continue;
     }
