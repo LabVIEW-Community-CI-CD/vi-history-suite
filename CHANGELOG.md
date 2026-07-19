@@ -6,6 +6,13 @@ This changelog records user-facing release history for `vi-history-suite`.
 
 ### Added
 
+- New **VI History: Show Dev-Tools Status** command reports which dev-tools build
+  is active (bundled vs a pinned version), whether a pinned version is installed
+  and verified, and the installed versions — completing the pin lifecycle
+  alongside the install and uninstall commands (VHS-REQ-680). The consumer-facing
+  dev-tools pinning workflow (pin a version, install/uninstall/status, opt-in
+  update check, trust gating) is now documented in the dev-tools release guide.
+
 - The Marketplace release workflow can now publish to the **pre-release
   channel** (VHS-REQ-678). The channel is selected from the release tag's
   minor-version parity following the VS Code convention — an **odd** minor

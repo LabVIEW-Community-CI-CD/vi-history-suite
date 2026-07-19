@@ -187,7 +187,7 @@ describe('extension manifest public metadata', () => {
     });
   });
 
-  it('contributes the dev-tools install and uninstall commands under the VI History category (VHS-REQ-679.2, VHS-REQ-679.4)', () => {
+  it('contributes the dev-tools install, uninstall, and status commands under the VI History category (VHS-REQ-679.2, VHS-REQ-679.4, VHS-REQ-680.1)', () => {
     const manifest = readManifest();
     const commands = manifest.contributes?.commands ?? [];
     const byId = new Map(commands.map((entry) => [entry.command ?? '', entry]));
@@ -198,6 +198,10 @@ describe('extension manifest public metadata', () => {
     });
     expect(byId.get('labviewViHistory.uninstallDevTools')).toMatchObject({
       title: 'Uninstall Dev-Tools Version',
+      category: 'VI History'
+    });
+    expect(byId.get('labviewViHistory.showDevToolsStatus')).toMatchObject({
+      title: 'Show Dev-Tools Status',
       category: 'VI History'
     });
   });

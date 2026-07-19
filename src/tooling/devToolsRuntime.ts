@@ -10,13 +10,13 @@
  */
 
 import {
+  DEVTOOLS_RELEASE_TAG_PREFIX,
   installDevToolsRelease,
   normalizeDevToolsVersionSetting,
   planDevToolsUpdateCheck,
   formatDevToolsUpdateNotice,
   type DevToolsInstallResult
-} from './devToolsResolver';
-import { createDevToolsInstallDeps, type DevToolsInstallDeps } from './devToolsInstaller';
+} from './devToolsResolver';import { createDevToolsInstallDeps, type DevToolsInstallDeps } from './devToolsInstaller';
 
 /** Minimal notifier surface (a thin slice of `vscode.window`). */
 export interface DevToolsNotifier {
@@ -191,5 +191,73 @@ export async function uninstallDevTools(
     );
   }
   return { removed: true, version: chosen, reason: '' };
+}
+
+export interface DevToolsStatus {
+  /** The pinned selection: `bundled`, or the pinned `devtools-vX.Y.Z` version. */
+  readonly pinned: string;
+  /** True when a specific version is pinned (not `bundled`) and well-formed. */
+  readonly isPinned: boolean;
+  /** True when the pinned version is installed AND integrity-verified. */
+  readonly pinnedInstalled: boolean;
+  /** Which build the MCP server launches: `bundled` or `pinned`. */
+  readonly activeSource: 'bundled' | 'pinned';
+  /** Verified installed versions under global storage (sorted). */
+  readonly installedVersions: readonly string[];
+  /** Opt-in update tracking flag (viHistorySuite.devTools.checkForUpdates). */
+  readonly checkForUpdates: boolean;
+}
+
+export interface ReportDevToolsStatusOptions {
+  readonly installBaseDir: string;
+  readonly versionSetting: string | undefined;
+  readonly checkForUpdates: boolean;
+  readonly notifier: DevToolsNotifier;
+  readonly deps?: Pick<DevToolsInstallDeps, 'listInstalledVersions'>;
+}
+
+/**
+ * Reports the read-only dev-tools status: the pinned setting, whether that pin
+ * is installed and integrity-verified, which build the MCP server currently
+ * launches (bundled vs pinned — a pin only becomes active once installed), the
+ * verified installed versions, and the update-tracking flag. Read-only: it never
+ * installs, downloads, or mutates anything, so it is safe in any workspace. The
+ * summary is surfaced through the notifier and returned for callers/tests.
+ */
+export async function reportDevToolsStatus(
+  options: ReportDevToolsStatusOptions
+): Promise<DevToolsStatus> {
+  let pinned = 'bundled';
+  let isPinned = false;
+  try {
+    const selection = normalizeDevToolsVersionSetting(options.versionSetting);
+    if (selection.kind === 'pinned') {
+      pinned = selection.tag;
+      isPinned = true;
+    }
+  } catch {
+    // A malformed setting reports as bundled (the fail-closed launch behavior).
+    pinned = 'bundled';
+    isPinned = false;
+  }
+  const deps = options.deps ?? createDevToolsInstallDeps();
+  const installedVersions = await deps.listInstalledVersions(options.installBaseDir);
+  const pinnedInstalled =
+    isPinned && installedVersions.includes(pinned.slice(DEVTOOLS_RELEASE_TAG_PREFIX.length));
+  const activeSource: 'bundled' | 'pinned' = pinnedInstalled ? 'pinned' : 'bundled';
+  const status: DevToolsStatus = {
+    pinned,
+    isPinned,
+    pinnedInstalled,
+    activeSource,
+    installedVersions,
+    checkForUpdates: options.checkForUpdates
+  };
+  const installedSummary =
+    installedVersions.length > 0 ? installedVersions.join(', ') : 'none';
+  options.notifier.info(
+    `Dev-tools: pinned=${pinned}; MCP launches the ${activeSource} build; installed=[${installedSummary}]; update check ${options.checkForUpdates ? 'on' : 'off'}.`
+  );
+  return status;
 }
 

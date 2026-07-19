@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   installPinnedDevTools,
+  reportDevToolsStatus,
   runDevToolsUpdateCheck,
   uninstallDevTools,
   type DevToolsNotifier
@@ -224,5 +225,86 @@ describe('uninstallDevTools (VHS-REQ-679.4)', () => {
     });
     expect(result.removed).toBe(true);
     expect(messages.some((m) => m.level === 'warn' && m.message.includes('still pinned'))).toBe(true);
+  });
+});
+
+describe('reportDevToolsStatus (VHS-REQ-680.1)', () => {
+  it('reports bundled with no pin', async () => {
+    const { notifier, messages } = makeNotifier();
+    const status = await reportDevToolsStatus({
+      installBaseDir: '/store/devtools',
+      versionSetting: 'bundled',
+      checkForUpdates: false,
+      notifier,
+      deps: { listInstalledVersions: () => Promise.resolve([]) }
+    });
+    expect(status).toMatchObject({ pinned: 'bundled', isPinned: false, activeSource: 'bundled' });
+    expect(messages[0].message).toContain('bundled build');
+  });
+
+  it('reports a pinned-but-not-installed version as bundled-active', async () => {
+    const { notifier } = makeNotifier();
+    const status = await reportDevToolsStatus({
+      installBaseDir: '/store/devtools',
+      versionSetting: 'devtools-v1.2.3',
+      checkForUpdates: true,
+      notifier,
+      deps: { listInstalledVersions: () => Promise.resolve(['9.9.9']) }
+    });
+    expect(status).toMatchObject({
+      pinned: 'devtools-v1.2.3',
+      isPinned: true,
+      pinnedInstalled: false,
+      activeSource: 'bundled',
+      checkForUpdates: true
+    });
+    expect(status.installedVersions).toEqual(['9.9.9']);
+  });
+
+  it('reports a pinned-and-installed version as pinned-active', async () => {
+    const { notifier, messages } = makeNotifier();
+    const status = await reportDevToolsStatus({
+      installBaseDir: '/store/devtools',
+      versionSetting: 'devtools-v1.2.3',
+      checkForUpdates: false,
+      notifier,
+      deps: { listInstalledVersions: () => Promise.resolve(['1.2.3']) }
+    });
+    expect(status).toMatchObject({ pinnedInstalled: true, activeSource: 'pinned' });
+    expect(messages[0].message).toContain('pinned build');
+  });
+
+  it('reports a malformed setting as bundled (fail-closed) via an injected listing (VHS-REQ-680.2)', async () => {
+    const { notifier } = makeNotifier();
+    const status = await reportDevToolsStatus({
+      installBaseDir: '/store/devtools',
+      versionSetting: 'latest',
+      checkForUpdates: false,
+      notifier,
+      deps: { listInstalledVersions: () => Promise.resolve([]) }
+    });
+    expect(status).toMatchObject({ pinned: 'bundled', isPinned: false, activeSource: 'bundled' });
+  });
+});
+
+describe('consumer documentation of the dev-tools pinning lifecycle (VHS-REQ-680.3)', () => {
+  const read = (rel: string): string =>
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    require('node:fs').readFileSync(require('node:path').resolve(__dirname, '..', '..', rel), 'utf8');
+
+  it('documents pinning + install/uninstall/status + update check in devtools-release.md', () => {
+    const doc = read('docs/devtools-release.md');
+    expect(doc).toContain('Pinning a dev-tools version in the extension');
+    expect(doc).toContain('viHistorySuite.devTools.version');
+    expect(doc).toContain('VI History: Install Pinned Dev-Tools Version');
+    expect(doc).toContain('VI History: Uninstall Dev-Tools Version');
+    expect(doc).toContain('VI History: Show Dev-Tools Status');
+    expect(doc).toContain('viHistorySuite.devTools.checkForUpdates');
+  });
+
+  it('notes the pinned-build launch in mcp-server.md', () => {
+    const doc = read('docs/mcp-server.md');
+    expect(doc).toContain('Pinned build');
+    expect(doc).toContain('viHistorySuite.devTools.version');
   });
 });

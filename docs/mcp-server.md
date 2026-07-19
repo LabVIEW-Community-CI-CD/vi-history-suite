@@ -15,6 +15,11 @@ configure.
 - **Transport** — VS Code launches the bundled stdio entrypoint
   (`out/cli/runViSemanticMcpServer.js`) with the editor's own Node runtime and
   exchanges newline-delimited JSON-RPC 2.0 messages with it.
+- **Pinned build (optional)** — when `viHistorySuite.devTools.version` pins a
+  dev-tools release and that version has been installed and integrity-verified
+  (see [Pinning a dev-tools version](./devtools-release.md#pinning-a-dev-tools-version-in-the-extension)),
+  the server launches from the pinned build instead; otherwise it falls back to
+  the bundled entrypoint above.
 - **Discovery** — in an agent-mode chat the tools become available automatically;
   refer to them by name or in plain language (for example, "index the VIs in this
   repository").

@@ -20,6 +20,7 @@ import {
 } from './mcp/viSemanticMcpServerProvider';
 import {
   installPinnedDevTools,
+  reportDevToolsStatus,
   runDevToolsUpdateCheck,
   uninstallDevTools,
   type DevToolsNotifier
@@ -1049,6 +1050,24 @@ export async function activate(
               placeHolder: 'Select an installed dev-tools version to remove'
             })
           )
+      });
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('labviewViHistory.showDevToolsStatus', async () => {
+      if (devToolsInstallBaseDir === undefined) {
+        void vscode.window.showInformationMessage(
+          'Dev-tools status is unavailable because the extension global storage is unavailable.'
+        );
+        return;
+      }
+      await reportDevToolsStatus({
+        installBaseDir: devToolsInstallBaseDir,
+        versionSetting: readDevToolsVersionSetting(),
+        checkForUpdates:
+          vscode.workspace.getConfiguration('viHistorySuite').get<boolean>('devTools.checkForUpdates') ?? false,
+        notifier: devToolsNotifier
       });
     })
   );

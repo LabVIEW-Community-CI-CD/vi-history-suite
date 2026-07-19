@@ -56,6 +56,39 @@ still matches a manifest:
 node scripts/verifyDevToolsRelease.js --verify-self --manifest devtools-release.json
 ```
 
+## Pinning a dev-tools version in the extension
+
+The extension normally runs the dev-tools build it ships with (the MCP server
+and companion tooling). You can instead **pin an independent dev-tools release**
+and run it without waiting for a Marketplace update — useful for trying a newer
+toolset or reproducing a specific version.
+
+1. Set `viHistorySuite.devTools.version` to a release tag, for example
+   `devtools-v1.4.0` (the default `bundled` uses the shipped build and never
+   touches the network).
+2. Run **VI History: Install Pinned Dev-Tools Version**. In a trusted workspace
+   the extension downloads that release from the official repository over HTTPS,
+   verifies its integrity (per-file SHA-256 plus the aggregate content digest),
+   and stores it under the extension's global storage. Reload the window so the
+   MCP server launches from the pinned build.
+
+The pin is **fail-closed**: until a pinned version is installed and verified — or
+if the workspace is untrusted — the MCP server keeps launching the bundled
+build, and the extension offers to install the pin when it detects one is
+missing.
+
+Related commands and settings:
+
+- **VI History: Show Dev-Tools Status** — reports the pinned setting, whether it
+  is installed and verified, which build the MCP server currently launches, and
+  the installed versions.
+- **VI History: Uninstall Dev-Tools Version** — removes an installed version
+  (and warns when you remove the one still pinned).
+- `viHistorySuite.devTools.checkForUpdates` (off by default) — opt in to a
+  best-effort activation check that notifies you when a newer **stable**
+  dev-tools version is available. It contacts the network only when enabled, a
+  version is pinned, and the workspace is trusted.
+
 ## The release workflow
 
 [`.github/workflows/devtools-release.yml`](../.github/workflows/devtools-release.yml)
