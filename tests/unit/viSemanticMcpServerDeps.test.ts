@@ -52,6 +52,7 @@ describe('buildViSemanticMcpServerDeps', () => {
     const deps = buildViSemanticMcpServerDeps(cache);
     expect(typeof deps.resolveRuntimeHealth).toBe('function');
     expect(typeof deps.collectPreviewDiagnostics).toBe('function');
+    expect(typeof deps.listChangedVis).toBe('function');
   });
 
   it('binds compare_vi_revisions to the shared comparison-model cache', async () => {
