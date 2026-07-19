@@ -26,9 +26,10 @@ configure.
 
 ## Tools
 
-The server exposes eight tools. Five operate purely on Git or supplied data;
-three invoke a real LabVIEW comparison and therefore need a comparison runtime
-(host LabVIEW or a Docker LabVIEW image) and may take minutes.
+The server exposes 13 tools. Ten operate purely on Git, supplied data, or a
+local preview-cache directory; three invoke a real LabVIEW comparison and
+therefore need a comparison runtime (host LabVIEW or a Docker LabVIEW image) and
+may take minutes.
 
 | Tool | What it does | Runtime | Required input |
 | --- | --- | --- | --- |
