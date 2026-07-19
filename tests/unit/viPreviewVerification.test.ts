@@ -50,6 +50,42 @@ describe('summarizeViPreviewRender', () => {
     expect(proof.htmlBytes).toBe(0);
     expect(proof.failureReason).toBe('command-exited-nonzero');
   });
+
+  it('retains the tail of stderr (last 4000 chars) when present', () => {
+    // A failing render can produce long LabVIEW/CLI stderr; the proof keeps only
+    // the last 4000 chars so evidence stays bounded but the actionable tail (the
+    // final error) is preserved.
+    const longTail = 'END-OF-STDERR-MARKER';
+    const stderr = 'x'.repeat(5000) + longTail;
+    const proof = summarizeViPreviewRender('host-native', '/repo/Sample.vi', {
+      outcome: 'failed',
+      failureReason: 'command-exited-nonzero',
+      stderr
+    });
+    expect(proof.stderr).toHaveLength(4000);
+    expect(proof.stderr?.endsWith(longTail)).toBe(true);
+    // The head beyond the 4000-char window is dropped.
+    expect(proof.stderr?.startsWith('x')).toBe(true);
+  });
+
+  it('defaults cached to false when the render result omits it', () => {
+    // result.cached is optional; an absent value must summarize as false (not
+    // undefined and not true), so the `?? false` fallback is a real contract.
+    const proof = summarizeViPreviewRender('linux-container', '/repo/Sample.vi', {
+      outcome: 'rendered',
+      html: htmlWith(2)
+    });
+    expect(proof.cached).toBe(false);
+  });
+
+  it('preserves a cached:true render result', () => {
+    const proof = summarizeViPreviewRender('linux-container', '/repo/Sample.vi', {
+      outcome: 'rendered',
+      html: htmlWith(2),
+      cached: true
+    });
+    expect(proof.cached).toBe(true);
+  });
 });
 
 describe('isViPreviewVerificationPassing', () => {
