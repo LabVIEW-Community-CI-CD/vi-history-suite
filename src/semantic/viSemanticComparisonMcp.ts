@@ -631,6 +631,195 @@ export const VI_SEMANTIC_MCP_TOOLS = [
   }
 ] as const;
 
+/**
+ * MCP prompts (per the 2025-06-18 spec) — host-surfaced, guided workflows that
+ * orchestrate the tools above. Each prompt encodes a multi-step job an agent
+ * would otherwise assemble tool-by-tool, so the design invariant (enforced by
+ * test) is that every prompt references >=2 distinct tools OR a tool plus an
+ * explicit decision step; a 1:1 wrapper over a single tool is rejected.
+ *
+ * Future (separate release): a `post_pr_review` prompt that reviews AND posts to
+ * GitHub belongs in the GitHub-native-posting release, not here — it carries an
+ * auth/side-effect risk class the pure prompt surface deliberately avoids.
+ */
+export const VI_SEMANTIC_MCP_PROMPTS = [
+  {
+    name: 'review_pull_request',
+    title: 'Review pull-request VIs',
+    description:
+      'Scope the VIs changed between two revisions and produce a review-ready Markdown ' +
+      'review (chains list_changed_vis + build_vi_pr_review, with a runtime-health fallback).',
+    arguments: [
+      { name: 'repositoryRoot', description: 'Absolute path to the Git repository.', required: true },
+      { name: 'baseHash', description: 'Base (older) revision identifier.', required: true },
+      { name: 'selectedHash', description: 'Selected (newer) revision identifier.', required: true },
+      { name: 'maxVis', description: 'Optional cap on VIs compared (default 50, ceiling 200).', required: false }
+    ]
+  },
+  {
+    name: 'explain_vi_history',
+    title: 'Explain a VI\u2019s evolution',
+    description:
+      "Walk a VI's recent revisions and narrate how it evolved (chains summarize_vi_history " +
+      'with a runtime-health fallback).',
+    arguments: [
+      { name: 'repositoryRoot', description: 'Absolute path to the Git repository.', required: true },
+      { name: 'relativePath', description: 'Repository-relative path of the .vi.', required: true },
+      { name: 'maxRevisions', description: 'Optional recent-revision count (default 3, ceiling 20).', required: false }
+    ]
+  },
+  {
+    name: 'check_compare_readiness',
+    title: 'Check comparison readiness',
+    description:
+      'Determine whether this environment can run a VI comparison and, if not, what to fix ' +
+      '(chains get_runtime_health + get_preview_diagnostics into a verdict).',
+    arguments: [
+      { name: 'platform', description: 'Optional target platform (win32 | linux | darwin).', required: false }
+    ]
+  }
+] as const;
+
+/** Every prompt name published by the registry (the authoritative known set). */
+const KNOWN_PROMPT_NAMES: ReadonlySet<string> = new Set(
+  VI_SEMANTIC_MCP_PROMPTS.map((prompt) => prompt.name)
+);
+
+/**
+ * MCP resources (per the 2025-06-18 spec) — the published semantic JSON Schemas,
+ * the open, versioned VI-diff standard, made addressable as read-only context.
+ * URI scheme `vi-history-suite://schema/<id>`, where `<id>` is the schema's own
+ * `$id` path part verbatim (`vi-semantic-comparison@v1`), plus the `schema/index`
+ * aggregate. The `@vN` version stays in the URI so a future schema v2 is a new,
+ * distinct resource rather than a silently-repointed "latest".
+ */
+const RESOURCE_URI_PREFIX = 'vi-history-suite://schema/';
+const SCHEMA_INDEX_URI = `${RESOURCE_URI_PREFIX}index`;
+
+export const VI_SEMANTIC_MCP_RESOURCES = [
+  {
+    uri: `${RESOURCE_URI_PREFIX}vi-semantic-comparison@v1`,
+    name: 'vi-semantic-comparison@v1 schema',
+    title: 'VI semantic comparison schema',
+    description: 'JSON Schema for the vi-history-suite/vi-semantic-comparison@v1 model.',
+    mimeType: 'application/schema+json'
+  },
+  {
+    uri: `${RESOURCE_URI_PREFIX}vi-semantic-history@v1`,
+    name: 'vi-semantic-history@v1 schema',
+    title: 'VI semantic history schema',
+    description: 'JSON Schema for the vi-history-suite/vi-semantic-history@v1 model.',
+    mimeType: 'application/schema+json'
+  },
+  {
+    uri: `${RESOURCE_URI_PREFIX}vi-repository-index@v1`,
+    name: 'vi-repository-index@v1 schema',
+    title: 'VI repository index schema',
+    description: 'JSON Schema for the vi-history-suite/vi-repository-index@v1 model.',
+    mimeType: 'application/schema+json'
+  },
+  {
+    uri: SCHEMA_INDEX_URI,
+    name: 'vi-diff schema index',
+    title: 'Open VI-diff standard (all schemas)',
+    description: 'The full map of published vi-history-suite semantic JSON Schemas.',
+    mimeType: 'application/json'
+  }
+] as const;
+
+interface PromptMessage {
+  role: 'user';
+  content: { type: 'text'; text: string };
+}
+
+/**
+ * Renders a prompt into its `{ description, messages }` payload. Required
+ * arguments are validated through the same ToolArgumentError -> -32602 machinery
+ * the tools use, so a prompt is as strict as the tools it front-ends. Optional
+ * arguments are interpolated conditionally so an absent value yields clean prose.
+ */
+function renderPrompt(name: string, rawArguments: unknown): { description: string; messages: PromptMessage[] } {
+  const args = requireArgumentsObject(rawArguments ?? {});
+  if (name === 'review_pull_request') {
+    const repositoryRoot = requireStringArg(args, 'repositoryRoot');
+    const baseHash = requireStringArg(args, 'baseHash');
+    const selectedHash = requireStringArg(args, 'selectedHash');
+    const maxVisClause =
+      typeof args.maxVis === 'number' ? `, \`maxVis=${args.maxVis}\`` : '';
+    const text =
+      'Review the LabVIEW VIs changed in this pull request.\n\n' +
+      `1. Call \`list_changed_vis\` with \`repositoryRoot="${repositoryRoot}"\`, ` +
+      `\`baseHash="${baseHash}"\`, \`selectedHash="${selectedHash}"\` to scope the changed ` +
+      '`.vi`/`.vit`/`.vim`/`.ctl` set. If `count` is 0, report that no VIs changed and stop.\n' +
+      '2. If VIs changed, call `build_vi_pr_review` with the same ' +
+      `\`repositoryRoot\`/\`baseHash\`/\`selectedHash\`${maxVisClause}, \`format="markdown"\` ` +
+      'to produce the review body.\n' +
+      '3. Present the returned Markdown as the PR review, leading with the aggregate narrative, ' +
+      'then the per-VI what-changed summaries.\n\n' +
+      'If `list_changed_vis` or `build_vi_pr_review` returns a blocked/failed status, first call ' +
+      '`get_runtime_health` to explain why a comparison could not run and what to fix.';
+    return {
+      description: 'Guided LabVIEW VI pull-request review.',
+      messages: [{ role: 'user', content: { type: 'text', text } }]
+    };
+  }
+  if (name === 'explain_vi_history') {
+    const repositoryRoot = requireStringArg(args, 'repositoryRoot');
+    const relativePath = requireStringArg(args, 'relativePath');
+    const maxRevisionsClause =
+      typeof args.maxRevisions === 'number' ? `, \`maxRevisions=${args.maxRevisions}\`` : '';
+    const text =
+      `Explain how the LabVIEW VI at \`${relativePath}\` has evolved.\n\n` +
+      `Call \`summarize_vi_history\` with \`repositoryRoot="${repositoryRoot}"\`, ` +
+      `\`relativePath="${relativePath}"\`${maxRevisionsClause}. Summarize the returned ` +
+      'vi-history-suite/vi-semantic-history@v1 timeline as a chronological narrative: the ' +
+      "overall arc first, then each transition's key changes. If the runtime is unavailable, " +
+      'call `get_runtime_health` and report the blocker.';
+    return {
+      description: 'Guided VI evolution narrative.',
+      messages: [{ role: 'user', content: { type: 'text', text } }]
+    };
+  }
+  if (name === 'check_compare_readiness') {
+    let platformClause = '';
+    if (args.platform !== undefined) {
+      const platform = requireEnumArg(args, 'platform', RUNTIME_PLATFORM_VALUES);
+      platformClause = ` with \`platform="${platform}"\``;
+    }
+    const text =
+      'Determine whether this environment can run a LabVIEW VI comparison.\n\n' +
+      `Call \`get_runtime_health\`${platformClause}. If \`blocked\` is true, explain ` +
+      '`blockedReason` and the concrete fix. Then call `get_preview_diagnostics` and report ' +
+      'Docker availability, visible LabVIEW images, and whether a preview cache is populated. ' +
+      'Conclude with a one-line verdict: ready (and by which provider) or blocked (and the ' +
+      'single next action).';
+    return {
+      description: 'Guided comparison-readiness check.',
+      messages: [{ role: 'user', content: { type: 'text', text } }]
+    };
+  }
+  throwArgumentError('name', 'a known prompt name', name);
+}
+
+/** Resolves a resource URI to its `resources/read` contents (schema JSON). */
+function resolveResource(uri: string): { uri: string; mimeType: string; text: string } {
+  if (uri === SCHEMA_INDEX_URI) {
+    return {
+      uri,
+      mimeType: 'application/json',
+      text: JSON.stringify(VI_SEMANTIC_SCHEMAS, null, 2)
+    };
+  }
+  if (uri.startsWith(RESOURCE_URI_PREFIX)) {
+    const schemaId = `vi-history-suite/${uri.slice(RESOURCE_URI_PREFIX.length)}`;
+    const schema = VI_SEMANTIC_SCHEMAS[schemaId];
+    if (schema) {
+      return { uri, mimeType: 'application/schema+json', text: JSON.stringify(schema, null, 2) };
+    }
+  }
+  throwArgumentError('uri', 'a known vi-history-suite:// resource URI', uri);
+}
+
 function success(id: JsonRpcSuccess['id'], result: unknown): JsonRpcSuccess {
   return { jsonrpc: '2.0', id, result };
 }
@@ -877,7 +1066,7 @@ export function handleViSemanticMcpMessage(
     case 'initialize':
       return success(id, {
         protocolVersion: VI_SEMANTIC_MCP_PROTOCOL_VERSION,
-        capabilities: { tools: {} },
+        capabilities: { tools: {}, prompts: {}, resources: {} },
         serverInfo: VI_SEMANTIC_MCP_SERVER_INFO
       });
 
@@ -891,6 +1080,39 @@ export function handleViSemanticMcpMessage(
 
     case 'tools/list':
       return success(id, { tools: VI_SEMANTIC_MCP_TOOLS });
+
+    case 'prompts/list':
+      return success(id, { prompts: VI_SEMANTIC_MCP_PROMPTS });
+
+    case 'prompts/get': {
+      const params = (message.params ?? {}) as { name?: unknown; arguments?: unknown };
+      if (typeof params.name !== 'string') {
+        return failure(id, JSON_RPC_INVALID_PARAMS, 'prompts/get requires a string "name"');
+      }
+      if (!KNOWN_PROMPT_NAMES.has(params.name)) {
+        return failure(id, JSON_RPC_INVALID_PARAMS, `unknown prompt: ${params.name}`);
+      }
+      try {
+        return success(id, renderPrompt(params.name, params.arguments));
+      } catch (error) {
+        return toArgumentFailure(id, error);
+      }
+    }
+
+    case 'resources/list':
+      return success(id, { resources: VI_SEMANTIC_MCP_RESOURCES });
+
+    case 'resources/read': {
+      const params = (message.params ?? {}) as { uri?: unknown };
+      if (typeof params.uri !== 'string') {
+        return failure(id, JSON_RPC_INVALID_PARAMS, 'resources/read requires a string "uri"');
+      }
+      try {
+        return success(id, { contents: [resolveResource(params.uri)] });
+      } catch (error) {
+        return toArgumentFailure(id, error);
+      }
+    }
 
     case 'tools/call': {
       const params = (message.params ?? {}) as {
