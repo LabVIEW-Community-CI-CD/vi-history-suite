@@ -4,6 +4,16 @@ This changelog records user-facing release history for `vi-history-suite`.
 
 ## [Unreleased]
 
+### Fixed
+
+- The independent dev-tools release payload now ships the compiled MCP server's
+  full transitive dependency closure (`out/semantic`, `out/reporting`,
+  `out/dashboard`, `out/domain`, `out/git`, `out/support`, `out/tooling`). A
+  pinned dev-tools build previously shipped only `out/mcp` plus the server
+  entrypoint, so the pinned MCP server failed to start with
+  `Cannot find module '../semantic/viSemanticComparisonMcp'`. Dev-tools line
+  bumped to `2.2.1`.
+
 ## [1.36.1] - 2026-07-19
 
 ### Fixed
