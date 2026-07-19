@@ -132,6 +132,11 @@ This file provides concise, actionable guidance for AI coding agents working in 
 
 ### Custom Agents (Workspace)
 - `.github/agents/workflow-governor.agent.md`: task execution with branch policy, requirement traceability, test gates, and PR evidence compliance
+- `.github/agents/docs-scribe.agent.md`: documentation-only changes verified against ground truth, no behavior change
+- `.github/agents/requirements-steward.agent.md`: requirement-targeted work keeping SRS/RTM/id-index/inventory coherent
+- `.github/agents/test-engineer.agent.md`: risk-led deterministic tests and coverage-map gap closure
+- `.github/agents/adr-author.agent.md`: architecture decision records and the `npm run adr:check` gate
+- `.github/agents/release-operator.agent.md`: release automation, Marketplace workflow, and dev-tools versioning with fail-closed guards
 
 ### File Instructions (Workspace)
 - `.github/instructions/reporting-orchestration.instructions.md`: guardrails for report orchestration files in `src/reporting/**`

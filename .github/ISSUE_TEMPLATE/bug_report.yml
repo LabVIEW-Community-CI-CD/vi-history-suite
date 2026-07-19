@@ -8,6 +8,20 @@ body:
     attributes:
       value: |
         Thanks for reporting a problem. Please include enough context for a maintainer to reproduce or route it.
+  - type: dropdown
+    id: delegated_agent
+    attributes:
+      label: Suggested Agent (optional)
+      description: If you know which specialized agent should fix this, suggest it. See .github/agents/.
+      options:
+        - unsure / maintainer to route
+        - workflow-governor (general implementation)
+        - docs-scribe (documentation-only)
+        - test-engineer (tests and coverage)
+        - requirements-steward (requirement/RTM changes)
+        - release-operator (release/Marketplace/dev-tools)
+    validations:
+      required: false
   - type: textarea
     id: summary
     attributes:
