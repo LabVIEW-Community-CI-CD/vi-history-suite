@@ -8,6 +8,20 @@ body:
     attributes:
       value: |
         Thanks for suggesting an improvement. Please describe the workflow or user need first.
+  - type: dropdown
+    id: delegated_agent
+    attributes:
+      label: Suggested Agent (optional)
+      description: If you know which specialized agent should implement this, suggest it. See .github/agents/.
+      options:
+        - unsure / maintainer to route
+        - workflow-governor (general implementation)
+        - requirements-steward (requirement/RTM changes)
+        - docs-scribe (documentation-only)
+        - test-engineer (tests and coverage)
+        - release-operator (release/Marketplace/dev-tools)
+    validations:
+      required: false
   - type: textarea
     id: problem
     attributes:
