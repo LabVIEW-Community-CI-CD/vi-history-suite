@@ -80,6 +80,7 @@ export function createDefaultPreviewCacheInspectionFsDeps(): ViPreviewCacheInspe
     listFiles: (directory) => fsp.readdir(directory),
     readFile: (filePath) => fsp.readFile(filePath, 'utf8'),
     fileSizeBytes: async (filePath) => (await fsp.stat(filePath)).size,
+    fileModifiedMs: async (filePath) => (await fsp.stat(filePath)).mtimeMs,
     joinPath: path.join
   };
 }

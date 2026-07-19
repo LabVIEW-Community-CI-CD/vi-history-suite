@@ -814,7 +814,8 @@ describe('viSemanticComparisonMcp', () => {
         healthyCount: 1,
         flaggedCount: 1,
         interactiveCount: 1,
-        flagged: [{ key: 'b'.repeat(64), flags: ['error-marker' as const] }]
+        flagged: [{ key: 'b'.repeat(64), flags: ['error-marker' as const] }],
+        newestModifiedAt: '2026-07-19T12:00:00.000Z'
       })),
       search: vi.fn(async () => [sampleEntry]),
       get: vi.fn(async () => ({ ...sampleEntry, html: '<html></html>' }))
@@ -856,9 +857,16 @@ describe('viSemanticComparisonMcp', () => {
         )
       ) as { content: Array<{ text: string }>; isError: boolean };
       expect(response.isError).toBe(false);
-      const parsed = JSON.parse(response.content[0].text) as { schema: string; healthy: boolean };
+      const parsed = JSON.parse(response.content[0].text) as {
+        schema: string;
+        healthy: boolean;
+        newestModifiedAt: string | null;
+      };
       expect(parsed.schema).toBe('vi-history-suite/preview-cache-diagnostics@v1');
       expect(parsed.healthy).toBe(false);
+      // #2107: the diagnostics payload now delivers the freshness signal the
+      // tool description promises.
+      expect(parsed.newestModifiedAt).toBe('2026-07-19T12:00:00.000Z');
     });
 
     it('searches a preview cache by marker', async () => {

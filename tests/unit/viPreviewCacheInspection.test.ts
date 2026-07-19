@@ -60,6 +60,20 @@ function fakeFs(files: Record<string, string>): ViPreviewCacheInspectionFsDeps {
   };
 }
 
+/** Like {@link fakeFs}, plus a `fileModifiedMs` source keyed by `${key}.html`. */
+function fakeFsWithMtimes(
+  files: Record<string, string>,
+  mtimes: Record<string, number>
+): ViPreviewCacheInspectionFsDeps {
+  return {
+    ...fakeFs(files),
+    fileModifiedMs: async (filePath: string) => {
+      const name = filePath.split('/').pop() as string;
+      return mtimes[name] ?? 0;
+    }
+  };
+}
+
 const CACHE = {
   [`${KEY_A}.html`]: HEALTHY_HTML,
   [`${KEY_B}.html`]: INTERACTIVE_HTML,
@@ -177,6 +191,25 @@ describe('summarizePreviewCache (VHS-REQ-659.21)', () => {
     expect(summary.interactiveCount).toBe(1);
     expect(summary.flagged.map((f) => f.key).sort()).toEqual([KEY_C, KEY_D].sort());
     expect(summary.totalBytes).toBeGreaterThan(0);
+  });
+
+  it('reports newestModifiedAt as null when the fs exposes no fileModifiedMs (#2107)', async () => {
+    const summary = await summarizePreviewCache('/cache', fakeFs(CACHE));
+    expect(summary.newestModifiedAt).toBeNull();
+  });
+
+  it('reports newestModifiedAt as the most recent entry mtime (#2107)', async () => {
+    const newest = Date.parse('2026-07-19T12:00:00.000Z');
+    const summary = await summarizePreviewCache(
+      '/cache',
+      fakeFsWithMtimes(CACHE, {
+        [`${KEY_A}.html`]: Date.parse('2026-07-18T00:00:00.000Z'),
+        [`${KEY_B}.html`]: newest,
+        [`${KEY_C}.html`]: Date.parse('2026-07-17T00:00:00.000Z'),
+        [`${KEY_D}.html`]: Date.parse('2026-07-16T00:00:00.000Z')
+      })
+    );
+    expect(summary.newestModifiedAt).toBe(new Date(newest).toISOString());
   });
 });
 
