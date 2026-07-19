@@ -13,6 +13,7 @@ const {
   REQUIRED_OPTIONAL_ISSUE_TEMPLATE_FIELDS,
   assertOrdered,
   checkIssueTemplate,
+  checkLocalAgentTemplates,
   checkPrEvidenceDocs,
   checkStaleDodDeferrals,
   parseCsvLine,
@@ -29,6 +30,7 @@ const {
     needleForLabel: (label: string) => string
   ) => { passed: boolean; details: string };
   checkIssueTemplate: (cwd: string) => { name: string; passed: boolean; details: string };
+  checkLocalAgentTemplates: (cwd: string) => { name: string; passed: boolean; details: string };
   checkPrEvidenceDocs: (cwd: string) => { name: string; passed: boolean; details: string };
   checkStaleDodDeferrals: (cwd: string) => { passed: boolean; details: string };
   parseCsvLine: (line: string) => string[];
@@ -116,6 +118,7 @@ describe('Definition-of-Done gate', () => {
       'standards provenance configuration',
       'requirement-target issue template',
       'PR evidence documentation',
+      'local agent-workflow templates',
       'DoD checker traceability mapping',
       'stale deferred DoD language'
     ]);
@@ -298,5 +301,41 @@ environment blockers
     });
     const completeResult = checkPrEvidenceDocs(completeRoot);
     expect(completeResult.passed).toBe(true);
+  });
+
+  it('requires the local agent-workflow templates to mirror the enforced contracts (VHS-REQ-615.3, VHS-REQ-615.4)', () => {
+    const proposalHeadings = [
+      '## Target Requirement ID',
+      '## Files To Inspect',
+      '## Acceptance Criteria',
+      '## Validation Commands',
+      '## Out-Of-Scope Boundaries',
+      '## Requirement And RTM Updates'
+    ].join('\n');
+    const evidenceAnchors = [
+      '## Requirement-Targeted PR Evidence (lightweight)',
+      '- **Linked issue (required):**',
+      '- **Target requirement (required):**',
+      '- **Validation commands (required):**',
+      '- **Traceability / RTM impact (required):**',
+      '- **Out-of-scope (required):**',
+      '- **Closeout readiness (required):**'
+    ].join('\n');
+
+    const completeRoot = createFixture({
+      'docs/agent-workflows/templates/local-change-proposal.md': proposalHeadings,
+      'docs/agent-workflows/templates/local-pr-evidence.md': evidenceAnchors
+    });
+    expect(checkLocalAgentTemplates(completeRoot).passed).toBe(true);
+
+    const driftedRoot = createFixture({
+      'docs/agent-workflows/templates/local-change-proposal.md': '## Target Requirement ID\n',
+      'docs/agent-workflows/templates/local-pr-evidence.md':
+        '## Requirement-Targeted PR Evidence (lightweight)\n- **Linked issue (required):**\n'
+    });
+    const driftedResult = checkLocalAgentTemplates(driftedRoot);
+    expect(driftedResult.passed).toBe(false);
+    expect(driftedResult.details).toContain('## Files To Inspect');
+    expect(driftedResult.details).toContain('Closeout readiness (required)');
   });
 });
