@@ -2,7 +2,13 @@
 
 This changelog records user-facing release history for `vi-history-suite`.
 
-## [Unreleased]
+## [1.36.1] - 2026-07-19
+
+### Fixed
+
+- Refreshed the committed Vagrant release-gating attestation so release
+  readiness gates can verify a clean-VM `vagrant-win-x86-hostnative`
+  validation at the 1.36.1 release line.
 
 ## [1.36.0] - 2026-07-19
 
