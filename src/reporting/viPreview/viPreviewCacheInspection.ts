@@ -1,4 +1,5 @@
 import { isSha256HexKey } from '../../support/cacheKey';
+import { extractBlockDiagramFrames } from './viPreviewFlatFrames';
 
 /**
  * VHS-REQ-659: read-only inspection of a VI-preview render cache directory.
@@ -43,7 +44,14 @@ export interface ViPreviewCacheEntry {
   bytes: number;
   /** Count of inline `data:image/...` occurrences (preview render images). */
   inlineImageCount: number;
-  /** True when the document contains the interactive block-diagram viewer island. */
+  /**
+   * True when an interactive block-diagram viewer can be presented from this
+   * document. The cache stores NI's flat `PrintToSingleFileHtml` export (the
+   * `lvr-frames` viewer island is injected only later by the display path), so
+   * capability is derived the same way `selectViPreviewDocument` decides — the
+   * flat export yields at least one decodable Block Diagram frame — and the
+   * already-assembled viewer island is also recognized.
+   */
   interactive: boolean;
   /** Health flags; empty means a healthy rendered preview. */
   flags: ViPreviewCacheEntryFlag[];
@@ -68,7 +76,12 @@ export function classifyPreviewCacheDocument(content: string): {
 } {
   const text = typeof content === 'string' ? content : '';
   const inlineImageCount = (text.match(INLINE_IMAGE_PATTERN) ?? []).length;
-  const interactive = /lvr-frames/i.test(text);
+  // The cache stores the flat LabVIEW export, whose interactive viewer is only
+  // built at display time; so derive interactive capability the way the display
+  // path (`selectViPreviewDocument`) does — the flat export yields at least one
+  // decodable Block Diagram frame — while still recognizing an already-assembled
+  // viewer island (`lvr-frames`) for the case a viewer document is inspected.
+  const interactive = /lvr-frames/i.test(text) || extractBlockDiagramFrames(text).length > 0;
   const flags: ViPreviewCacheEntryFlag[] = [];
   if (text.trim().length === 0) {
     flags.push('empty');
