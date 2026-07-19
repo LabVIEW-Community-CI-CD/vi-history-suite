@@ -21,6 +21,19 @@ import {
   getPreviewCacheEntry,
   type ViPreviewCacheInspectionFsDeps
 } from '../reporting/viPreview/viPreviewCacheInspection';
+import {
+  locateComparisonRuntime,
+  type RuntimePlatform
+} from '../reporting/comparisonRuntimeLocator';
+import {
+  collectViPreviewDiagnostics,
+  type CollectViPreviewDiagnosticsOptions
+} from '../tooling/viPreviewDiagnostics';
+import {
+  RUNTIME_HEALTH_SCHEMA,
+  type RuntimeHealthInput,
+  type ViRuntimeHealth
+} from '../semantic/viSemanticComparisonMcp';
 
 /**
  * VHS-REQ-662.7 / VHS-REQ-662.8: assembles the orchestrator set injected into
@@ -88,6 +101,32 @@ export function buildViSemanticMcpServerDeps(
       search: (cacheDirectory, marker) => searchPreviewCache(cacheDirectory, marker, previewCacheFs),
       get: (cacheDirectory, key, options) =>
         getPreviewCacheEntry(cacheDirectory, key, previewCacheFs, options)
-    }
+    },
+    resolveRuntimeHealth: (input) => resolveRuntimeHealth(input),
+    collectPreviewDiagnostics: (input: CollectViPreviewDiagnosticsOptions) =>
+      collectViPreviewDiagnostics(input)
+  };
+}
+
+/**
+ * Resolves the comparison runtime (never running a comparison) and projects the
+ * compact runtime-health snapshot the `get_runtime_health` MCP tool returns. The
+ * heavy locator selection is reduced to the fields an agent needs to decide
+ * whether — and by which provider — it can compare.
+ */
+async function resolveRuntimeHealth(input: RuntimeHealthInput): Promise<ViRuntimeHealth> {
+  const platform: RuntimePlatform =
+    input.platform ?? (process.platform === 'win32' ? 'win32' : 'linux');
+  const selection = await locateComparisonRuntime(platform, input.settings ?? {});
+  return {
+    schema: RUNTIME_HEALTH_SCHEMA,
+    platform: selection.platform,
+    provider: selection.provider,
+    engine: selection.engine ?? null,
+    bitness: selection.bitness,
+    containerImage: selection.containerImage ?? null,
+    blocked: selection.provider === 'unavailable' || Boolean(selection.blockedReason),
+    blockedReason: selection.blockedReason ?? null,
+    notes: selection.notes
   };
 }

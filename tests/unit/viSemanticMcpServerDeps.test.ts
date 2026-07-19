@@ -48,6 +48,12 @@ describe('buildViSemanticMcpServerDeps', () => {
     expect(typeof deps.previewCacheInspector?.get).toBe('function');
   });
 
+  it('wires the read-only diagnostics resolvers', () => {
+    const deps = buildViSemanticMcpServerDeps(cache);
+    expect(typeof deps.resolveRuntimeHealth).toBe('function');
+    expect(typeof deps.collectPreviewDiagnostics).toBe('function');
+  });
+
   it('binds compare_vi_revisions to the shared comparison-model cache', async () => {
     const compareFn = vi.fn(
       async (
