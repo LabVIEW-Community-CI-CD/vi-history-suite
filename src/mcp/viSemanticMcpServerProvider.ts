@@ -16,6 +16,7 @@ import * as vscode from 'vscode';
 
 import {
   DEVTOOLS_MCP_SERVER_SCRIPT_SEGMENTS,
+  DEVTOOLS_VERIFIED_MARKER,
   decideDevToolsLaunch,
   normalizeDevToolsVersionSetting,
   type DevToolsMcpLaunchResolution
@@ -51,10 +52,11 @@ export function resolveViSemanticMcpServerScriptPath(extensionPath: string): str
 
 /**
  * Filename of the marker written into a pinned dev-tools install directory once
- * its integrity has been verified (VHS-REQ-677). The MCP launch treats a pinned
- * version as usable only when this marker is present.
+ * its integrity has been verified (VHS-REQ-677). Re-exported from the resolver
+ * (the single source of truth) so existing importers of the provider are
+ * unaffected while the installer (VHS-REQ-679) shares the same constant.
  */
-export const DEVTOOLS_VERIFIED_MARKER = '.vihs-devtools-verified.json';
+export { DEVTOOLS_VERIFIED_MARKER };
 
 /** True when a pinned dev-tools version is installed and integrity-verified. */
 export function isVerifiedDevToolsInstall(

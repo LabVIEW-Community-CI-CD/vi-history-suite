@@ -187,6 +187,21 @@ describe('extension manifest public metadata', () => {
     });
   });
 
+  it('contributes the dev-tools install and uninstall commands under the VI History category (VHS-REQ-679.2, VHS-REQ-679.4)', () => {
+    const manifest = readManifest();
+    const commands = manifest.contributes?.commands ?? [];
+    const byId = new Map(commands.map((entry) => [entry.command ?? '', entry]));
+
+    expect(byId.get('labviewViHistory.installPinnedDevTools')).toMatchObject({
+      title: 'Install Pinned Dev-Tools Version',
+      category: 'VI History'
+    });
+    expect(byId.get('labviewViHistory.uninstallDevTools')).toMatchObject({
+      title: 'Uninstall Dev-Tools Version',
+      category: 'VI History'
+    });
+  });
+
   it('contributes the visibility gate in explorer and editor title menus (VHS-REQ-004.1, VHS-REQ-004.2, VHS-REQ-004.3, VHS-REQ-013.1)', () => {
     const manifest = readManifest();
     const expectedMenuEntry = {

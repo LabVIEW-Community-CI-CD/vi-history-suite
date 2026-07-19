@@ -28,6 +28,14 @@ export const DEVTOOLS_VERSION_BUNDLED = 'bundled';
 export const DEVTOOLS_RELEASE_TAG_PREFIX = 'devtools-v';
 
 /**
+ * Filename of the marker written into a pinned dev-tools install directory once
+ * its integrity has been verified (VHS-REQ-677). The MCP launch treats a pinned
+ * version as usable only when this marker is present, and the installer writes
+ * it only after a successful integrity verification (VHS-REQ-679).
+ */
+export const DEVTOOLS_VERIFIED_MARKER = '.vihs-devtools-verified.json';
+
+/**
  * Path segments, relative to a resolved dev-tools root, of the MCP server stdio
  * entrypoint. Matches the bundled layout so bundled and pinned installs launch
  * the same script under their respective roots.

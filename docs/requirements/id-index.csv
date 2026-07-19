@@ -695,3 +695,4 @@ VHS-REQ-674,Software,Active,srs.md#vhs-req-674-preview-cache-generation-fleet,,,
 VHS-REQ-676,Software,Active,srs.md#vhs-req-676-independent-semver-dev-tools-version-line,,,docs/requirements/srs.md
 VHS-REQ-677,Software,Active,srs.md#vhs-req-677-runtime-dev-tools-version-pinning-for-the-mcp-server,,,docs/requirements/srs.md
 VHS-REQ-678,Software,Active,srs.md#vhs-req-678-marketplace-pre-release-channel,,,docs/requirements/srs.md
+VHS-REQ-679,Software,Active,srs.md#vhs-req-679-runtime-dev-tools-install-lifecycle,,,docs/requirements/srs.md

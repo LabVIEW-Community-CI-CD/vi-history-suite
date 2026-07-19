@@ -107,6 +107,16 @@
         "title": "Open VI History",
         "category": "VI History",
         "icon": "$(history)"
+      },
+      {
+        "command": "labviewViHistory.installPinnedDevTools",
+        "title": "Install Pinned Dev-Tools Version",
+        "category": "VI History"
+      },
+      {
+        "command": "labviewViHistory.uninstallDevTools",
+        "title": "Uninstall Dev-Tools Version",
+        "category": "VI History"
       }
     ],
     "menus": {
