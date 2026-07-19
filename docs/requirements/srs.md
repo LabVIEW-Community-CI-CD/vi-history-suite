@@ -2196,7 +2196,8 @@ Missing numeric IDs are intentional.
 - Area: CI And Developer Environment
 - Statement: Hosted automation shall enforce governed branch promotion and
   publish Marketplace releases only from exact release tags on `main` via a
-  manual maintainer dispatch with no automatic trigger.
+  manual dispatch that an authorized agent is responsible for performing, with
+  no automatic trigger.
 - Acceptance Criteria:
   - Hosted CI admits pull requests to `main` only from `release/vX.Y.Z` or
     `hotfix/vX.Y.Z` branches.
@@ -2232,10 +2233,10 @@ Missing numeric IDs are intentional.
     operations runbook.
   - Release evidence is retained as a workflow artifact.
   - The Marketplace release workflow has no automatic trigger: it runs only
-    from a manual maintainer `workflow_dispatch` on an exact `vX.Y.Z` tag ref
+    from a manual `workflow_dispatch` on an exact `vX.Y.Z` tag ref
     (dispatch on the tag preserves the exact-tag, package-version, and
-    `origin/main` reachability guards), and agents must never dispatch or
-    approve it.
+    `origin/main` reachability guards), and an authorized agent is responsible
+    for dispatching and approving it (a maintainer may also do so).
 - Agent Work Scope:
   - Change branch-governance workflow logic, Marketplace release workflow YAML,
     maintainer operations docs, requirements, and static tests together.

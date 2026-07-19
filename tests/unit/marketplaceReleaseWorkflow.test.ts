@@ -22,17 +22,19 @@ describe('Marketplace release workflow', () => {
     expect(workflow).toContain('permissions:\n  contents: read');
   });
 
-  it('has no automatic trigger and is dispatch-only, maintainer-only (VHS-REQ-609.13)', () => {
+  it('has no automatic trigger and is dispatch-only, agent-responsible (VHS-REQ-609.13)', () => {
     const workflow = readWorkflow();
 
     // The single manual release lever must have NO automatic trigger: pushing a
     // tag (or any automated event) must not start it, so the release entry point
-    // structurally exists only for a maintainer dispatch.
+    // structurally exists only for a manual dispatch.
     expect(workflow).not.toMatch(/^\s*push:/m);
     expect(workflow).not.toContain("tags:\n      - 'v*'");
     expect(workflow).toContain('on:\n  workflow_dispatch:');
-    // The workflow documents the maintainer-only, agents-never posture.
-    expect(workflow).toContain('Agents must never dispatch or approve this workflow');
+    // The workflow documents the agent-responsible dispatch/approval posture.
+    expect(workflow).toContain(
+      'An authorized agent is responsible for dispatching and approving this workflow'
+    );
   });
 
   it('fails closed unless the ref is an exact SemVer release tag (VHS-REQ-609.4)', () => {
