@@ -354,6 +354,7 @@
     "release:readiness:strict": "node scripts/checkReleaseReadiness.js --strict",
     "release:readiness:gate": "node scripts/checkReleaseReadiness.js --strict --require-release-attestation",
     "verify:preview": "npm run compile && node out/tooling/viPreviewVerifyCli.js",
+    "preview:diagnostics": "npm run compile && node out/tooling/viPreviewVerifyCli.js --diagnostics",
     "docs:links": "node scripts/checkDocsLinks.js",
     "docs:gate": "node scripts/checkDocumentationWorkbench.js",
     "coverage:map": "node scripts/mapCoverageToTraceability.js",
