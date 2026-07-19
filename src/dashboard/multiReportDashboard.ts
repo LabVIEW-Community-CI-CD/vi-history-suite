@@ -933,32 +933,45 @@ async function buildDashboardEntry(
   });
   const sourceRecordExists = await deps.pathExists(archivePlan.sourceRecordFilePath);
 
+  // A retained archive that is absent OR unreadable/corrupt degrades to the same
+  // "no usable archive" evidence state so one bad file never aborts the whole
+  // dashboard (the missing-index / malformed-index paths already degrade this way).
+  const missingArchiveEntry = (): MultiReportDashboardEntry => ({
+    pairId: archivePlan.pairId,
+    selectedHash: pair.selected.hash,
+    baseHash: pair.base.hash,
+    selectedAuthorDate: pair.selected.authorDate,
+    selectedAuthorName: pair.selected.authorName,
+    selectedSubject: pair.selected.subject,
+    baseAuthorDate: pair.base.authorDate,
+    baseAuthorName: pair.base.authorName,
+    baseSubject: pair.base.subject,
+    archiveStatus: 'missing',
+    archivePlan,
+    pairEvidenceState: 'missing-archive',
+    generatedReportExists: false,
+    dashboardImageAssets: [],
+    artifactLinks: [],
+    overviewImageCount: 0,
+    detailItemCount: 0,
+    evidenceCount: 0
+  });
+
   if (!sourceRecordExists) {
-    return {
-      pairId: archivePlan.pairId,
-      selectedHash: pair.selected.hash,
-      baseHash: pair.base.hash,
-      selectedAuthorDate: pair.selected.authorDate,
-      selectedAuthorName: pair.selected.authorName,
-      selectedSubject: pair.selected.subject,
-      baseAuthorDate: pair.base.authorDate,
-      baseAuthorName: pair.base.authorName,
-      baseSubject: pair.base.subject,
-      archiveStatus: 'missing',
-      archivePlan,
-      pairEvidenceState: 'missing-archive',
-      generatedReportExists: false,
-      dashboardImageAssets: [],
-      artifactLinks: [],
-      overviewImageCount: 0,
-      detailItemCount: 0,
-      evidenceCount: 0
-    };
+    return missingArchiveEntry();
   }
 
-  const sourceRecord = JSON.parse(
-    await deps.readFile(archivePlan.sourceRecordFilePath, 'utf8')
-  ) as ArchivedComparisonReportSourceRecord;
+  let sourceRecord: ArchivedComparisonReportSourceRecord;
+  try {
+    sourceRecord = JSON.parse(
+      await deps.readFile(archivePlan.sourceRecordFilePath, 'utf8')
+    ) as ArchivedComparisonReportSourceRecord;
+  } catch {
+    // Malformed/truncated source record (interrupted write, corruption, or a race
+    // where the file vanished after the existence check): degrade this one pair
+    // rather than throw and lose every other pair's evidence.
+    return missingArchiveEntry();
+  }
   const generatedReportExists =
     sourceRecord.packetRecord.runtimeExecution.reportExists &&
     (await deps.pathExists(sourceRecord.archivePlan.reportFilePath));
@@ -1057,9 +1070,16 @@ async function buildRetainedWorktreeSnapshotEntries(
     if (!(await deps.pathExists(archivePlan.sourceRecordFilePath))) {
       continue;
     }
-    const sourceRecord = JSON.parse(
-      await deps.readFile(archivePlan.sourceRecordFilePath, 'utf8')
-    ) as ArchivedComparisonReportSourceRecord;
+    let sourceRecord: ArchivedComparisonReportSourceRecord;
+    try {
+      sourceRecord = JSON.parse(
+        await deps.readFile(archivePlan.sourceRecordFilePath, 'utf8')
+      ) as ArchivedComparisonReportSourceRecord;
+    } catch {
+      // Malformed/truncated retained snapshot record: skip it (matching the
+      // missing-record skip above) rather than aborting the whole dashboard.
+      continue;
+    }
     const generatedReportExists =
       sourceRecord.packetRecord.runtimeExecution.reportExists &&
       (await deps.pathExists(sourceRecord.archivePlan.reportFilePath));

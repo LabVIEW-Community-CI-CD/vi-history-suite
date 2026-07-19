@@ -713,6 +713,65 @@ describe('multi-report dashboard evidence concentration (VHS-REQ-610)', () => {
     );
   });
 
+  it('degrades a single malformed retained source-record without aborting the whole dashboard (#2111)', async () => {
+    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-dashboard-'));
+    tempRoots.push(tempRoot);
+    const storageRoot = path.join(tempRoot, 'workspace-storage');
+    const model = createModel();
+    const generatedArchivePlan = buildComparisonReportArchivePlanFromSelection({
+      storageRoot,
+      repositoryRoot: model.repositoryRoot,
+      relativePath: model.relativePath,
+      reportType: 'diff',
+      selectedHash: 'c4',
+      baseHash: 'c3'
+    });
+    // Pair c4/c3: a healthy generated report.
+    await writeArchiveSourceRecord({
+      storageRoot,
+      model,
+      selectedHash: 'c4',
+      baseHash: 'c3',
+      reportExists: true,
+      reportHtml: createNiReportHtml(generatedArchivePlan.reportAssetsDirectoryName)
+    });
+    // Pair c3/b2: write a valid record, then corrupt its source-record file so
+    // JSON.parse throws when the dashboard reads it.
+    await writeArchiveSourceRecord({
+      storageRoot,
+      model,
+      selectedHash: 'c3',
+      baseHash: 'b2',
+      reportExists: false
+    });
+    const corruptPlan = buildComparisonReportArchivePlanFromSelection({
+      storageRoot,
+      repositoryRoot: model.repositoryRoot,
+      relativePath: model.relativePath,
+      reportType: 'diff',
+      selectedHash: 'c3',
+      baseHash: 'b2'
+    });
+    await fs.writeFile(corruptPlan.sourceRecordFilePath, '{ this is not valid json', 'utf8');
+
+    // The build completes instead of throwing, and only the corrupt pair degrades.
+    const dashboard = await buildAndPersistMultiReportDashboard(storageRoot, model, {
+      now: () => '2026-05-04T12:00:00.000Z'
+    });
+
+    const byPair = new Map(
+      dashboard.record.entries.map((entry) => [`${entry.selectedHash}/${entry.baseHash}`, entry])
+    );
+    expect(byPair.get('c4/c3')?.pairEvidenceState).toBe('archived-generated-report');
+    // The corrupt c3/b2 record degrades exactly like a missing archive.
+    expect(byPair.get('c3/b2')?.pairEvidenceState).toBe('missing-archive');
+    expect(byPair.get('c3/b2')?.archiveStatus).toBe('missing');
+    // b2/a1 has no record at all -> also missing, and the whole window still built.
+    expect(byPair.get('b2/a1')?.pairEvidenceState).toBe('missing-archive');
+    expect(dashboard.record.commitWindow.pairCount).toBe(3);
+    await expect(fs.access(dashboard.jsonFilePath)).resolves.toBeUndefined();
+  });
+
   it('renders preparation and ETA evidence without mutating the retained dashboard record (VHS-REQ-610.4)', () => {
     const html = renderMultiReportDashboardHtml(
       {
