@@ -16,6 +16,10 @@ This changelog records user-facing release history for `vi-history-suite`.
 
 ### Fixed
 
+- Corrected the MCP tool count across the docs (the server now ships 13 tools,
+  not eight) and added the five preview-cache tools to the bundled Copilot
+  agent-mode documentation page, which had omitted them.
+
 - Removed a duplicated `if` opener in the dev-tools release workflow's channel
   decision step that left an unbalanced bash conditional (a shell syntax error);
   added a regression guard so the channel branch stays balanced.
