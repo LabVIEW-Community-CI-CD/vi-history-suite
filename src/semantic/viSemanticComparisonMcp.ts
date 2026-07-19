@@ -55,7 +55,7 @@ export const VI_SEMANTIC_MCP_PROTOCOL_VERSION = '2025-06-18';
 
 export const VI_SEMANTIC_MCP_SERVER_INFO = {
   name: 'vi-history-suite-semantic',
-  version: '0.1.0'
+  version: '1.0.0'
 } as const;
 
 /** Schema id for the compact runtime-health snapshot the async server emits. */
@@ -829,6 +829,49 @@ function renderPrompt(name: string, rawArguments: unknown): { description: strin
   throwArgumentError('name', 'a known prompt name', name);
 }
 
+interface CompletionResult {
+  values: string[];
+  total: number;
+  hasMore: false;
+}
+
+/**
+ * Computes argument-value completions (MCP `completion/complete`). Offers the
+ * known enum/value set for the arguments that have one — the `platform` argument
+ * of `check_compare_readiness`, and the schema id of the schema resource
+ * template — filtered by the partial value the host has typed. Unknown refs or
+ * free-form arguments complete to nothing (never an error), so a host can call
+ * this on any argument safely.
+ */
+function completeArgument(rawRef: unknown, rawArgument: unknown): CompletionResult {
+  const empty: CompletionResult = { values: [], total: 0, hasMore: false };
+  if (typeof rawRef !== 'object' || rawRef === null) {
+    return empty;
+  }
+  if (typeof rawArgument !== 'object' || rawArgument === null) {
+    return empty;
+  }
+  const ref = rawRef as { type?: unknown; name?: unknown; uri?: unknown };
+  const argument = rawArgument as { name?: unknown; value?: unknown };
+  const argName = typeof argument.name === 'string' ? argument.name : '';
+  const partial = typeof argument.value === 'string' ? argument.value : '';
+
+  let candidates: readonly string[] = [];
+  if (ref.type === 'ref/prompt' && ref.name === 'check_compare_readiness' && argName === 'platform') {
+    candidates = RUNTIME_PLATFORM_VALUES;
+  } else if (
+    ref.type === 'ref/resource' &&
+    typeof ref.uri === 'string' &&
+    ref.uri.startsWith(RESOURCE_URI_PREFIX)
+  ) {
+    // Complete the schema-id path segment of the schema resource template.
+    candidates = Object.keys(VI_SEMANTIC_SCHEMAS).map((id) => id.replace(/^vi-history-suite\//, ''));
+  }
+
+  const values = candidates.filter((value) => value.startsWith(partial));
+  return { values, total: values.length, hasMore: false };
+}
+
 /** Resolves a resource URI to its `resources/read` contents (schema JSON). */
 function resolveResource(uri: string): { uri: string; mimeType: string; text: string } {
   if (uri === SCHEMA_INDEX_URI) {
@@ -1122,7 +1165,7 @@ export function handleViSemanticMcpMessage(
     case 'initialize':
       return success(id, {
         protocolVersion: VI_SEMANTIC_MCP_PROTOCOL_VERSION,
-        capabilities: { tools: {}, prompts: {}, resources: {} },
+        capabilities: { tools: {}, prompts: {}, resources: {}, completions: {} },
         serverInfo: VI_SEMANTIC_MCP_SERVER_INFO
       });
 
@@ -1160,6 +1203,11 @@ export function handleViSemanticMcpMessage(
 
     case 'resources/templates/list':
       return success(id, { resourceTemplates: VI_SEMANTIC_MCP_RESOURCE_TEMPLATES });
+
+    case 'completion/complete': {
+      const params = (message.params ?? {}) as { ref?: unknown; argument?: unknown };
+      return success(id, { completion: completeArgument(params.ref, params.argument) });
+    }
 
     case 'resources/read': {
       const params = (message.params ?? {}) as { uri?: unknown };

@@ -1,7 +1,7 @@
 {
   "schema": "vi-history-suite/devtools-release@v1",
   "schemaVersion": 1,
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Source of truth for the development-tools GitHub Release channel. Lists the include globs (grouped by category) and exclude patterns that scripts/buildDevToolsRelease.js resolves into a deterministic, content-addressed toolset. Compiled output (out/**) must be built with `npm run compile` before packaging. Byte-for-byte edits to this file change which files ship and therefore the release content digest. The `version` field is the independent SemVer 2.0 dev-tools version line (devtools-vX.Y.Z), moved separately from the extension's Marketplace version; bump it deliberately when publishing a new dev-tools release.",
   "categories": [
     {
