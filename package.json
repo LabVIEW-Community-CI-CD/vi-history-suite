@@ -348,6 +348,8 @@
     "devtools:release": "node scripts/buildDevToolsRelease.js",
     "devtools:release:verify": "node scripts/verifyDevToolsRelease.js",
     "supply-chain:state": "node scripts/buildSupplyChainState.js",
+    "release:state": "node scripts/buildReleaseState.js",
+    "release:state:strict": "node scripts/buildReleaseState.js --strict",
     "release:readiness": "node scripts/checkReleaseReadiness.js",
     "release:readiness:strict": "node scripts/checkReleaseReadiness.js --strict",
     "release:readiness:gate": "node scripts/checkReleaseReadiness.js --strict --require-release-attestation",

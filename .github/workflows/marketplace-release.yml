@@ -72,6 +72,19 @@ jobs:
           fi
           echo "Release tag is reachable from origin/main." | tee -a "$GITHUB_STEP_SUMMARY"
 
+      - name: Guard Release Authority
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          set -euo pipefail
+          # VHS-REQ-670: fail closed if the gated publish-authority posture is
+          # DEFINITIVELY incomplete. The release-state read-model degrades to a
+          # pass when it cannot verify the protected environment (e.g. the token
+          # lacks environments:read), so this never false-blocks a release; it
+          # only bites when authority is provably incomplete.
+          node scripts/buildReleaseState.js --strict | tee -a "$GITHUB_STEP_SUMMARY"
+
       - name: Release Baseline / baseline
         run: |
           {

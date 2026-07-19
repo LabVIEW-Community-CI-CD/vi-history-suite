@@ -4,6 +4,15 @@ This changelog records user-facing release history for `vi-history-suite`.
 
 ## [Unreleased]
 
+### Added
+
+- A release-state read-model (`npm run release:state`, VHS-REQ-670) reports where
+  a version is across its durable release stages (`develop-ready`, `tagged`,
+  `on-main`, `published`, `backsynced`) and its gated publish-authority posture
+  in one schema-versioned packet, so a release can be driven idempotently. The
+  release-readiness verdict now fails closed on incomplete publish authority in a
+  release context, and the Marketplace release workflow guards it before publish.
+
 ## [1.34.2] - 2026-07-18
 
 ### Changed

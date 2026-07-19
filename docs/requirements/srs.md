@@ -5233,3 +5233,76 @@ Missing numeric IDs are intentional.
     the same shared lock; when wiring it, acquire the shared lock with the same
     `localViServerLockKey` derivation so preview and comparison launches share
     one queue per endpoint.
+
+### VHS-REQ-670: Release State Read-Model And Gated Publish Authority
+
+- Status: Active
+- Parent: VHS-SYS-REQ-016
+- Area: CI And Developer Environment
+- Statement: The repository shall provide a read-only aggregator that reports the
+  release-progress state of a version across its durable, ground-truth-derived
+  stages and its gated publish-authority posture in one schema-versioned packet,
+  failing the release-readiness verdict closed on incomplete publish authority in
+  a release context, so an agent (or maintainer) can drive the Marketplace
+  release idempotently and resumably.
+- Acceptance Criteria:
+  - `scripts/buildReleaseState.js` emits a `vi-history-suite/release-state@v1`
+    packet with a top-level `$schema` and `schemaVersion`, and derives each
+    durable stage (`develop-ready`, `tagged`, `on-main`, `published`,
+    `backsynced`) from ground truth, where each stage `reached` is `true`,
+    `false`, or `null` (null when the signal cannot be verified in the current
+    environment).
+  - The packet reports the furthest reached `stage`, any `stageGaps` (a
+    definitively unreached stage before the furthest reached one), and a rollup
+    `status` of `attention` when authority is definitively incomplete or a stage
+    gap exists, otherwise `ready`; `--strict` exits nonzero when the status is
+    not `ready`.
+  - The packet reports a gated single-principal `authority` posture: one
+    authorized principal both dispatches and approves the release, and the
+    safety control is the protected `marketplace-release` environment enforcing
+    an explicit manual-approval step (not an independent second identity);
+    `complete` is `true` only when that manual-approval gate is enforced and a
+    publish token is present, `false` when definitively incomplete, and `null`
+    when it cannot be verified (degrading to unverified rather than a false
+    negative).
+  - All git, `gh`, and `vsce` process boundaries are injected so the aggregator
+    is deterministically unit-testable with no network, checkout, or publisher;
+    the release baseline `main` and `develop` refs are configurable (defaults
+    `origin/main` and `origin/develop`); the `backsynced` stage is derived from
+    the `develop` tip so it does not flip true when the release merely reaches
+    `main`; and a default live-Marketplace reader (pinned `vsce show`) lets the
+    `published` stage resolve outside injected tests.
+  - `node scripts/buildReleaseState.js` renders text by default with `--json`,
+    `--markdown`, and `--schema` output modes plus optional
+    `--include-provenance` and a path-safe `--output`; Markdown table cells
+    escape backslashes before pipes.
+  - The release-readiness verdict adds a `release-authority` check that is
+    evaluated only under an explicit `--release-context` marker (never
+    piggybacked on `--require-release-attestation`, so the attestation workflow
+    step that has no publish token is unaffected), so an advisory
+    `npm run release:readiness` run is unaffected; in a release context the
+    check fails closed when authority is definitively incomplete and passes with
+    a note when authority is unverified.
+  - The Marketplace release workflow runs `node scripts/buildReleaseState.js
+    --strict` as a guard so a publish fails closed when the gated publish
+    authority is provably incomplete, while degrading to a pass when authority
+    cannot be verified.
+- Agent Work Scope:
+  - Keep the aggregator read-only, pure, and injectable with a thin CLI; reuse
+    the shared schema-envelope and output-contract helpers; never mutate a
+    source; keep the authority signal degrade-not-fail so advisory reads never
+    false-block.
+- Implementation References:
+  - `scripts/buildReleaseState.js`
+  - `scripts/checkReleaseReadiness.js`
+  - `.github/workflows/marketplace-release.yml`
+  - `package.json`
+- Verification References:
+  - `tests/unit/releaseStateScript.test.ts`
+  - `tests/unit/releaseReadinessScript.test.ts`
+  - `tests/unit/marketplaceReleaseWorkflow.test.ts`
+- Change Guidance:
+  - Keep the read-model non-mutating and its stages derived from ground truth;
+    add new stages as additional ordered records rather than changing the packet
+    shape. Keep the release-authority gate release-context-guarded so advisory
+    runs stay exit 0.
