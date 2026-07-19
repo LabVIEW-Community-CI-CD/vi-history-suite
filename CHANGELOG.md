@@ -4,6 +4,34 @@ This changelog records user-facing release history for `vi-history-suite`.
 
 ## [Unreleased]
 
+## [1.36.0] - 2026-07-19
+
+### Added
+
+- The bundled Copilot agent-mode MCP server graduated into a complete MCP server:
+  16 tools, 3 guided prompts, and 4 schema resources.
+  - Diagnostics tools `get_runtime_health` and `get_preview_diagnostics` let an
+    agent inspect the comparison runtime and preview environment (host vs Docker
+    availability, blockers, LabVIEW images, cache population) before spending
+    minutes on a comparison, instead of discovering blockers by failing.
+  - `list_changed_vis` returns a cheap, Git-only listing of the VI files changed
+    between two revisions so an agent can scope a review before running it.
+  - Guided prompts (`review_pull_request`, `explain_vi_history`,
+    `check_compare_readiness`) surface multi-step review workflows as one-click,
+    host-surfaced templates that orchestrate the tools.
+  - Resources expose the published, versioned VI-diff JSON Schemas as addressable
+    read-only context under the `vi-history-suite://schema/` URI scheme.
+  - Read-only tool annotations (`readOnlyHint`/`openWorldHint`) let agent hosts
+    auto-approve safe calls and warn before open-world side effects.
+
+### Changed
+
+- MCP tool argument errors now return a structured JSON-RPC `-32602` (Invalid
+  params) with field-level detail (`data.issues` naming the offending field,
+  expected type, and received value) so agent hosts can correct malformed calls
+  programmatically. Genuine tool-execution failures continue to use the result
+  envelope (`isError`).
+
 ## [1.34.3] - 2026-07-19
 
 ### Documentation

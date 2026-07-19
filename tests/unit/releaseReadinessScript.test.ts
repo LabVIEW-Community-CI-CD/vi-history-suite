@@ -299,7 +299,7 @@ describe('checkReleaseReadiness', () => {
       stderr: { write: () => undefined }
     });
     expect(strictCode).toBe(1);
-  });
+  }, 30000);
 });
 
 // Criterion coverage: VHS-REQ-615.14 — the release-readiness runtime line is

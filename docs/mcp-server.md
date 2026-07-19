@@ -26,10 +26,11 @@ configure.
 
 ## Tools
 
-The server exposes 13 tools. Ten operate purely on Git, supplied data, or a
-local preview-cache directory; three invoke a real LabVIEW comparison and
-therefore need a comparison runtime (host LabVIEW or a Docker LabVIEW image) and
-may take minutes.
+The server exposes 16 tools plus 3 guided prompts and 4 schema resources. Thirteen
+tools operate without running a comparison (Git, supplied data, a local
+preview-cache directory, or read-only runtime/environment probes); three invoke a
+real LabVIEW comparison and therefore need a comparison runtime (host LabVIEW or a
+Docker LabVIEW image) and may take minutes.
 
 | Tool | What it does | Runtime | Required input |
 | --- | --- | --- | --- |
@@ -46,6 +47,68 @@ may take minutes.
 | `diagnose_preview_cache` | Returns a `vi-history-suite/preview-cache-diagnostics@v1` snapshot (counts, byte totals, health rollup) so an agent can answer "is the preview cache healthy?" in one call. | None (read-only fs) | `cacheDirectory` |
 | `search_preview_cache` | Finds cache entries by content marker (`error`, `interactive`, `image`, or `empty`); returns metadata only. | None (read-only fs) | `cacheDirectory`, `marker` |
 | `get_preview_cache_entry` | Fetches one cache entry by key; returns metadata plus a file-path pointer by default, or the raw HTML when `includeHtml` is true. | None (read-only fs) | `cacheDirectory`, `key` |
+| `get_runtime_health` | Resolves the comparison runtime **without running a comparison** and returns a `vi-history-suite/runtime-health@v1` snapshot (selected provider/engine/container image, or the `blockedReason` when none is available) so an agent can answer "can I compare here, and if not why?" before spending minutes on a real run. | Runtime resolution (never renders) | none (`platform`, `settings` optional) |
+| `get_preview_diagnostics` | Returns a `vi-history-suite/preview-diagnostics@v1` environment snapshot (resolved preview runtime, Docker availability + OS type + LabVIEW images, optional cache statistics) so an agent can answer "is preview generation possible here, and is the cache populated?" in one call. | Runtime + Docker probe (never renders) | none (`cacheDirectory`, `processPlatform`, `settings` optional) |
+| `list_changed_vis` | Lists the VI source files (`.vi`/`.vit`/`.vim`/`.ctl`) changed between two Git revisions — a cheap `vi-history-suite/changed-vis@v1` listing (no comparison runtime) so an agent can scope a review before running the minutes-long `build_vi_pr_review`. | None (pure Git) | `repositoryRoot`, `baseHash`, `selectedHash` |
+
+### Tool annotations
+
+Every tool advertises MCP [`ToolAnnotations`](https://modelcontextprotocol.io/specification/2025-06-18/server/tools#tool)
+behavioral hints so an agent host can reason about a call before making it. All
+vi-history-suite tools are non-mutating, so each carries `readOnlyHint: true`
+and `destructiveHint: false`. `openWorldHint` is `true` only for the tools that
+reach an external system (Git, a LabVIEW comparison runtime, or the preview-cache
+filesystem) — the same set that requires the async server entrypoint — and
+`false` for the pure, in-process tools (`summarize_vi_comparison`,
+`get_vi_semantic_comparison`, `get_vi_semantic_schema`,
+`validate_vi_semantic_document`). Hints are advisory, not a security boundary;
+they let hosts auto-approve read-only calls and warn before open-world effects.
+
+### Error handling
+
+The server distinguishes two failure classes so an agent can react correctly:
+
+- **Argument-shape problems** (a missing or wrong-typed field, a bad enum value)
+  return a JSON-RPC `-32602` (Invalid params) error whose `data.issues` lists the
+  offending fields as `{ field, expected, received }`, e.g.
+  `{ "field": "relativePath", "expected": "a non-empty string", "received": "undefined" }`.
+  A host can correct the call programmatically instead of parsing a message.
+- **Tool-execution failures** (a comparison that failed, an absent cache entry, a
+  tool invoked without its injected dependency) stay in the result envelope as
+  `{ content: [...], isError: true }` per the MCP spec, so the message reaches the
+  model.
+
+### Prompts
+
+The server advertises the `prompts` capability and exposes guided, host-surfaced
+workflows (VS Code shows them alongside slash commands). Each prompt orchestrates
+multiple tools — a prompt is never a 1:1 wrapper over a single tool.
+
+| Prompt | What it drives | Arguments |
+| --- | --- | --- |
+| `review_pull_request` | Scope with `list_changed_vis`, then `build_vi_pr_review` (Markdown), with a `get_runtime_health` fallback. | `repositoryRoot`, `baseHash`, `selectedHash`, `maxVis?` |
+| `explain_vi_history` | Narrate `summarize_vi_history`, with a `get_runtime_health` fallback. | `repositoryRoot`, `relativePath`, `maxRevisions?` |
+| `check_compare_readiness` | Combine `get_runtime_health` + `get_preview_diagnostics` into a readiness verdict. | `platform?` |
+
+`prompts/get` validates required arguments through the same `-32602` contract as
+tools (a missing required argument returns `data.issues` naming the field).
+
+### Resources
+
+The server advertises the `resources` capability and exposes the published
+semantic JSON Schemas — the open, versioned VI-diff standard — as addressable,
+read-only context under the `vi-history-suite://schema/` URI scheme. The `@vN`
+version stays in the URI, so a future schema `v2` is a new, distinct resource
+rather than a silently-repointed "latest".
+
+| Resource URI | Contents | mimeType |
+| --- | --- | --- |
+| `vi-history-suite://schema/vi-semantic-comparison@v1` | Comparison model schema | `application/schema+json` |
+| `vi-history-suite://schema/vi-semantic-history@v1` | History model schema | `application/schema+json` |
+| `vi-history-suite://schema/vi-repository-index@v1` | Repository-index schema | `application/schema+json` |
+| `vi-history-suite://schema/index` | All published schemas | `application/json` |
+
+`resources/read` of an unknown URI returns a `-32602` naming the `uri` field.
 
 ### Output format
 

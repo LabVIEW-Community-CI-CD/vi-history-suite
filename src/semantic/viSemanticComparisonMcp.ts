@@ -25,6 +25,17 @@ import type {
   ViPreviewCacheSummary,
   ViPreviewCacheSearchMarker
 } from '../reporting/viPreview/viPreviewCacheInspection';
+// Type-only: the async handler resolves runtime health and preview diagnostics
+// through injected orchestrators, so this module stays free of the reporting /
+// node-fs boundaries those probes touch.
+import type {
+  ComparisonRuntimeSettings,
+  RuntimePlatform
+} from '../reporting/comparisonRuntimeLocator';
+import type {
+  CollectViPreviewDiagnosticsOptions,
+  ViPreviewDiagnosticsSnapshot
+} from '../tooling/viPreviewDiagnostics';
 import {
   validateViSemanticDocument,
   VI_SEMANTIC_SCHEMAS,
@@ -46,6 +57,58 @@ export const VI_SEMANTIC_MCP_SERVER_INFO = {
   name: 'vi-history-suite-semantic',
   version: '0.1.0'
 } as const;
+
+/** Schema id for the compact runtime-health snapshot the async server emits. */
+export const RUNTIME_HEALTH_SCHEMA = 'vi-history-suite/runtime-health@v1';
+
+/** Arguments accepted by the `get_runtime_health` tool. */
+export interface RuntimeHealthInput {
+  platform?: RuntimePlatform;
+  settings?: ComparisonRuntimeSettings;
+}
+
+/**
+ * Compact, agent-facing projection of a resolved comparison-runtime selection.
+ * `blocked` is the one-glance signal; `blockedReason` names the fix path when
+ * blocked. The full locator selection is not exposed — only the fields an agent
+ * needs to decide whether (and how) it can compare.
+ */
+export interface ViRuntimeHealth {
+  schema: typeof RUNTIME_HEALTH_SCHEMA;
+  platform: string;
+  provider: string;
+  engine: string | null;
+  bitness: string;
+  containerImage: string | null;
+  blocked: boolean;
+  blockedReason: string | null;
+  notes: string[];
+}
+
+/** Schema id for the changed-VI listing the async server emits. */
+export const CHANGED_VIS_SCHEMA = 'vi-history-suite/changed-vis@v1';
+
+/** Arguments accepted by the `list_changed_vis` tool. */
+export interface ChangedVisInput {
+  repositoryRoot: string;
+  baseHash: string;
+  selectedHash: string;
+}
+
+/**
+ * Cheap, Git-only listing of the VI source files changed between two revisions
+ * (no comparison runtime, no rendering). Lets an agent scope a review — deciding
+ * whether to run the minutes-long `build_vi_pr_review` at all, and against how
+ * many VIs — before committing to it.
+ */
+export interface ViChangedVis {
+  schema: typeof CHANGED_VIS_SCHEMA;
+  repositoryRoot: string;
+  baseHash: string;
+  selectedHash: string;
+  changedVis: string[];
+  count: number;
+}
 
 export interface JsonRpcRequest {
   jsonrpc: '2.0';
@@ -337,17 +400,105 @@ const PREVIEW_CACHE_SEARCH_INPUT_SCHEMA = {
   required: ['cacheDirectory', 'marker']
 } as const;
 
+const RUNTIME_HEALTH_INPUT_SCHEMA = {
+  type: 'object',
+  properties: {
+    platform: {
+      type: 'string',
+      enum: ['win32', 'linux', 'darwin'],
+      description:
+        'Target platform to resolve the comparison runtime for. Defaults to the server host platform.'
+    },
+    settings: {
+      type: 'object',
+      description:
+        'Optional comparison-runtime settings (e.g. provider, labviewVersion, bitness, containerImageVersion) to evaluate, mirroring the extension settings an operator would pick.'
+    }
+  }
+} as const;
+
+const PREVIEW_DIAGNOSTICS_INPUT_SCHEMA = {
+  type: 'object',
+  properties: {
+    cacheDirectory: {
+      type: 'string',
+      description:
+        'Optional VI-preview render cache directory to inspect (entry/byte counts, newest entry). Omit to skip cache statistics.'
+    },
+    processPlatform: {
+      type: 'string',
+      enum: ['win32', 'linux', 'darwin'],
+      description: 'Platform to resolve the preview runtime for. Defaults to the server host platform.'
+    },
+    settings: {
+      type: 'object',
+      description: 'Optional comparison-runtime settings to evaluate during runtime resolution.'
+    },
+    connectTimeoutSeconds: {
+      type: 'number',
+      description: 'Optional preview-runtime connect timeout (seconds).'
+    }
+  }
+} as const;
+
+const CHANGED_VIS_INPUT_SCHEMA = {
+  type: 'object',
+  properties: {
+    repositoryRoot: {
+      type: 'string',
+      description: 'Absolute path to the Git repository.'
+    },
+    baseHash: {
+      type: 'string',
+      description: 'Base (older) revision identifier, e.g. a PR merge base.'
+    },
+    selectedHash: {
+      type: 'string',
+      description: 'Selected (newer) revision identifier, e.g. the PR head.'
+    }
+  },
+  required: ['repositoryRoot', 'baseHash', 'selectedHash']
+} as const;
+
+/**
+ * MCP tool annotations (per the 2025-06-18 spec `ToolAnnotations`) declaring
+ * behavioral hints so an agent host can reason about a tool before calling it.
+ * Every vi-history-suite tool is read-only (none mutate the repository or VIs),
+ * so all carry `readOnlyHint: true` and `destructiveHint: false`. The two
+ * annotation shapes differ only in `openWorldHint`:
+ *   - CLOSED: pure, in-process tools that operate solely on their arguments
+ *     (schema discovery, document validation, and HTML-in comparison rendering).
+ *   - OPEN: tools that reach an external system — Git, a LabVIEW comparison
+ *     runtime (host or Docker), or the preview-cache filesystem.
+ * Hints are advisory (not a security boundary); they let hosts auto-approve
+ * read-only calls and warn before open-world side effects.
+ */
+const READ_ONLY_CLOSED_WORLD = {
+  readOnlyHint: true,
+  destructiveHint: false,
+  idempotentHint: true,
+  openWorldHint: false
+} as const;
+const READ_ONLY_OPEN_WORLD = {
+  readOnlyHint: true,
+  destructiveHint: false,
+  idempotentHint: true,
+  openWorldHint: true
+} as const;
+
 export const VI_SEMANTIC_MCP_TOOLS = [
   {
     name: 'summarize_vi_comparison',
     description:
       'Return a concise, human- and agent-readable "what changed" narrative for a LabVIEW VI comparison report.',
-    inputSchema: COMPARISON_INPUT_SCHEMA
+    inputSchema: COMPARISON_INPUT_SCHEMA,
+    annotations: { title: 'Summarize VI comparison', ...READ_ONLY_CLOSED_WORLD }
   },
   {
     name: 'get_vi_semantic_comparison',
     description: `Return the full ${VI_SEMANTIC_COMPARISON_SCHEMA} semantic model (changed surfaces, attributes, detail sections, totals, and narrative) for a LabVIEW VI comparison report.`,
-    inputSchema: COMPARISON_INPUT_SCHEMA
+    inputSchema: COMPARISON_INPUT_SCHEMA,
+    annotations: { title: 'Get VI semantic comparison', ...READ_ONLY_CLOSED_WORLD }
   },
   {
     name: 'compare_vi_revisions',
@@ -355,7 +506,8 @@ export const VI_SEMANTIC_MCP_TOOLS = [
       'Invoke a LabVIEW comparison between two Git revisions of a VI and return the full ' +
       `${VI_SEMANTIC_COMPARISON_SCHEMA} semantic model. Requires a comparison runtime ` +
       '(host LabVIEW or a Docker LabVIEW image) to be available; a run may take minutes.',
-    inputSchema: COMPARE_REVISIONS_INPUT_SCHEMA
+    inputSchema: COMPARE_REVISIONS_INPUT_SCHEMA,
+    annotations: { title: 'Compare VI revisions', ...READ_ONLY_OPEN_WORLD }
   },
   {
     name: 'summarize_vi_history',
@@ -363,7 +515,8 @@ export const VI_SEMANTIC_MCP_TOOLS = [
       "Walk a VI's recent Git revisions and invoke a comparison across each adjacent pair, " +
       'returning a vi-history-suite/vi-semantic-history@v1 evolution timeline (per-transition ' +
       'narratives plus an aggregate story). Requires a comparison runtime; a run may take several minutes.',
-    inputSchema: HISTORY_INPUT_SCHEMA
+    inputSchema: HISTORY_INPUT_SCHEMA,
+    annotations: { title: 'Summarize VI history', ...READ_ONLY_OPEN_WORLD }
   },
   {
     name: 'index_repository_vis',
@@ -371,7 +524,8 @@ export const VI_SEMANTIC_MCP_TOOLS = [
       "Survey a Git repository's tracked VIs and return a vi-history-suite/vi-repository-index@v1 " +
       'index (each VI with its revision count and latest change, activity-ranked). Pure Git; no ' +
       'comparison runtime required.',
-    inputSchema: REPOSITORY_INDEX_INPUT_SCHEMA
+    inputSchema: REPOSITORY_INDEX_INPUT_SCHEMA,
+    annotations: { title: 'Index repository VIs', ...READ_ONLY_OPEN_WORLD }
   },
   {
     name: 'build_vi_pr_review',
@@ -380,7 +534,8 @@ export const VI_SEMANTIC_MCP_TOOLS = [
       'and returning a vi-history-suite/vi-semantic-pr-review@v1 review (a per-VI what-changed ' +
       'summary plus an aggregate narrative). Request the markdown format to get a review-ready, ' +
       'sticky PR-comment body. Requires a comparison runtime; a run may take several minutes.',
-    inputSchema: PR_REVIEW_INPUT_SCHEMA
+    inputSchema: PR_REVIEW_INPUT_SCHEMA,
+    annotations: { title: 'Build VI PR review', ...READ_ONLY_OPEN_WORLD }
   },
   {
     name: 'get_vi_semantic_schema',
@@ -388,14 +543,16 @@ export const VI_SEMANTIC_MCP_TOOLS = [
       'Return the published JSON Schema(s) for the vi-history-suite semantic models ' +
       '(comparison, history, repository index) - the open, versioned VI-diff standard. ' +
       'Omit "schema" to receive all.',
-    inputSchema: SCHEMA_DISCOVERY_INPUT_SCHEMA
+    inputSchema: SCHEMA_DISCOVERY_INPUT_SCHEMA,
+    annotations: { title: 'Get VI semantic schema', ...READ_ONLY_CLOSED_WORLD }
   },
   {
     name: 'validate_vi_semantic_document',
     description:
       'Validate a self-describing semantic document against its published JSON Schema; ' +
       'returns { valid, errors }.',
-    inputSchema: DOCUMENT_VALIDATION_INPUT_SCHEMA
+    inputSchema: DOCUMENT_VALIDATION_INPUT_SCHEMA,
+    annotations: { title: 'Validate VI semantic document', ...READ_ONLY_CLOSED_WORLD }
   },
   {
     name: 'list_preview_cache',
@@ -403,7 +560,8 @@ export const VI_SEMANTIC_MCP_TOOLS = [
       'List the entries in a VI-preview render cache directory (each with its cache key, size, ' +
       'inline image count, interactive-viewer flag, and health flags). Read-only; no comparison ' +
       'runtime required.',
-    inputSchema: PREVIEW_CACHE_DIR_INPUT_SCHEMA
+    inputSchema: PREVIEW_CACHE_DIR_INPUT_SCHEMA,
+    annotations: { title: 'List preview cache', ...READ_ONLY_OPEN_WORLD }
   },
   {
     name: 'summarize_preview_cache',
@@ -411,7 +569,8 @@ export const VI_SEMANTIC_MCP_TOOLS = [
       'Summarize a VI-preview render cache directory: entry/byte counts, healthy vs flagged, ' +
       'interactive count, and the list of flagged entries (empty / error-marker / no-rendered-content). ' +
       'Read-only.',
-    inputSchema: PREVIEW_CACHE_DIR_INPUT_SCHEMA
+    inputSchema: PREVIEW_CACHE_DIR_INPUT_SCHEMA,
+    annotations: { title: 'Summarize preview cache', ...READ_ONLY_OPEN_WORLD }
   },
   {
     name: 'diagnose_preview_cache',
@@ -419,14 +578,16 @@ export const VI_SEMANTIC_MCP_TOOLS = [
       'Return a vi-history-suite/preview-cache-diagnostics@v1 snapshot for a cache directory ' +
       '(entry/byte counts, health rollup, newest entry) so an agent can answer "is the preview ' +
       'cache healthy?" in one call. Read-only.',
-    inputSchema: PREVIEW_CACHE_DIR_INPUT_SCHEMA
+    inputSchema: PREVIEW_CACHE_DIR_INPUT_SCHEMA,
+    annotations: { title: 'Diagnose preview cache', ...READ_ONLY_OPEN_WORLD }
   },
   {
     name: 'search_preview_cache',
     description:
       'Find cache entries by content marker: "error", "interactive", "image", or "empty". ' +
       'Returns the matching entries (metadata only). Read-only.',
-    inputSchema: PREVIEW_CACHE_SEARCH_INPUT_SCHEMA
+    inputSchema: PREVIEW_CACHE_SEARCH_INPUT_SCHEMA,
+    annotations: { title: 'Search preview cache', ...READ_ONLY_OPEN_WORLD }
   },
   {
     name: 'get_preview_cache_entry',
@@ -434,36 +595,410 @@ export const VI_SEMANTIC_MCP_TOOLS = [
       'Fetch one preview-cache entry by cache key. Returns metadata plus a file-path pointer by ' +
       'default (a cached preview can be ~2MB with hundreds of inline images); pass includeHtml:true ' +
       'to return the raw HTML. Read-only.',
-    inputSchema: PREVIEW_CACHE_GET_INPUT_SCHEMA
+    inputSchema: PREVIEW_CACHE_GET_INPUT_SCHEMA,
+    annotations: { title: 'Get preview cache entry', ...READ_ONLY_OPEN_WORLD }
+  },
+  {
+    name: 'get_runtime_health',
+    description:
+      'Resolve the LabVIEW comparison runtime WITHOUT running a comparison and return a ' +
+      `${RUNTIME_HEALTH_SCHEMA} snapshot (selected provider/engine/container image, or the ` +
+      'blockedReason when none is available) so an agent can answer "can I compare here, and if ' +
+      'not, why?" in one cheap call before spending minutes on compare_vi_revisions / ' +
+      'build_vi_pr_review. Read-only; never renders.',
+    inputSchema: RUNTIME_HEALTH_INPUT_SCHEMA,
+    annotations: { title: 'Get runtime health', ...READ_ONLY_OPEN_WORLD }
+  },
+  {
+    name: 'get_preview_diagnostics',
+    description:
+      'Return a vi-history-suite/preview-diagnostics@v1 environment snapshot (resolved preview ' +
+      'runtime, Docker availability + OS type + LabVIEW images, and optional cache statistics) so ' +
+      'an agent can answer "is preview generation possible here, and is the cache populated?" in ' +
+      'one call. Read-only; never renders.',
+    inputSchema: PREVIEW_DIAGNOSTICS_INPUT_SCHEMA,
+    annotations: { title: 'Get preview diagnostics', ...READ_ONLY_OPEN_WORLD }
+  },
+  {
+    name: 'list_changed_vis',
+    description:
+      'List the VI source files (.vi/.vit/.vim/.ctl) changed between two Git revisions \u2014 a cheap, ' +
+      `Git-only ${CHANGED_VIS_SCHEMA} listing (no comparison runtime, no rendering) so an agent can ` +
+      'scope a review (whether to run the minutes-long build_vi_pr_review at all, and against how ' +
+      'many VIs) before committing to it. Read-only.',
+    inputSchema: CHANGED_VIS_INPUT_SCHEMA,
+    annotations: { title: 'List changed VIs', ...READ_ONLY_OPEN_WORLD }
   }
 ] as const;
+
+/**
+ * MCP prompts (per the 2025-06-18 spec) — host-surfaced, guided workflows that
+ * orchestrate the tools above. Each prompt encodes a multi-step job an agent
+ * would otherwise assemble tool-by-tool, so the design invariant (enforced by
+ * test) is that every prompt references >=2 distinct tools OR a tool plus an
+ * explicit decision step; a 1:1 wrapper over a single tool is rejected.
+ *
+ * Future (separate release): a `post_pr_review` prompt that reviews AND posts to
+ * GitHub belongs in the GitHub-native-posting release, not here — it carries an
+ * auth/side-effect risk class the pure prompt surface deliberately avoids.
+ */
+export const VI_SEMANTIC_MCP_PROMPTS = [
+  {
+    name: 'review_pull_request',
+    title: 'Review pull-request VIs',
+    description:
+      'Scope the VIs changed between two revisions and produce a review-ready Markdown ' +
+      'review (chains list_changed_vis + build_vi_pr_review, with a runtime-health fallback).',
+    arguments: [
+      { name: 'repositoryRoot', description: 'Absolute path to the Git repository.', required: true },
+      { name: 'baseHash', description: 'Base (older) revision identifier.', required: true },
+      { name: 'selectedHash', description: 'Selected (newer) revision identifier.', required: true },
+      { name: 'maxVis', description: 'Optional cap on VIs compared (default 50, ceiling 200).', required: false }
+    ]
+  },
+  {
+    name: 'explain_vi_history',
+    title: 'Explain a VI\u2019s evolution',
+    description:
+      "Walk a VI's recent revisions and narrate how it evolved (chains summarize_vi_history " +
+      'with a runtime-health fallback).',
+    arguments: [
+      { name: 'repositoryRoot', description: 'Absolute path to the Git repository.', required: true },
+      { name: 'relativePath', description: 'Repository-relative path of the .vi.', required: true },
+      { name: 'maxRevisions', description: 'Optional recent-revision count (default 3, ceiling 20).', required: false }
+    ]
+  },
+  {
+    name: 'check_compare_readiness',
+    title: 'Check comparison readiness',
+    description:
+      'Determine whether this environment can run a VI comparison and, if not, what to fix ' +
+      '(chains get_runtime_health + get_preview_diagnostics into a verdict).',
+    arguments: [
+      { name: 'platform', description: 'Optional target platform (win32 | linux | darwin).', required: false }
+    ]
+  }
+] as const;
+
+/** Every prompt name published by the registry (the authoritative known set). */
+const KNOWN_PROMPT_NAMES: ReadonlySet<string> = new Set(
+  VI_SEMANTIC_MCP_PROMPTS.map((prompt) => prompt.name)
+);
+
+/**
+ * MCP resources (per the 2025-06-18 spec) — the published semantic JSON Schemas,
+ * the open, versioned VI-diff standard, made addressable as read-only context.
+ * URI scheme `vi-history-suite://schema/<id>`, where `<id>` is the schema's own
+ * `$id` path part verbatim (`vi-semantic-comparison@v1`), plus the `schema/index`
+ * aggregate. The `@vN` version stays in the URI so a future schema v2 is a new,
+ * distinct resource rather than a silently-repointed "latest".
+ */
+const RESOURCE_URI_PREFIX = 'vi-history-suite://schema/';
+const SCHEMA_INDEX_URI = `${RESOURCE_URI_PREFIX}index`;
+
+export const VI_SEMANTIC_MCP_RESOURCES = [
+  {
+    uri: `${RESOURCE_URI_PREFIX}vi-semantic-comparison@v1`,
+    name: 'vi-semantic-comparison@v1 schema',
+    title: 'VI semantic comparison schema',
+    description: 'JSON Schema for the vi-history-suite/vi-semantic-comparison@v1 model.',
+    mimeType: 'application/schema+json'
+  },
+  {
+    uri: `${RESOURCE_URI_PREFIX}vi-semantic-history@v1`,
+    name: 'vi-semantic-history@v1 schema',
+    title: 'VI semantic history schema',
+    description: 'JSON Schema for the vi-history-suite/vi-semantic-history@v1 model.',
+    mimeType: 'application/schema+json'
+  },
+  {
+    uri: `${RESOURCE_URI_PREFIX}vi-repository-index@v1`,
+    name: 'vi-repository-index@v1 schema',
+    title: 'VI repository index schema',
+    description: 'JSON Schema for the vi-history-suite/vi-repository-index@v1 model.',
+    mimeType: 'application/schema+json'
+  },
+  {
+    uri: SCHEMA_INDEX_URI,
+    name: 'vi-diff schema index',
+    title: 'Open VI-diff standard (all schemas)',
+    description: 'The full map of published vi-history-suite semantic JSON Schemas.',
+    mimeType: 'application/json'
+  }
+] as const;
+
+interface PromptMessage {
+  role: 'user';
+  content: { type: 'text'; text: string };
+}
+
+/**
+ * Renders a prompt into its `{ description, messages }` payload. Required
+ * arguments are validated through the same ToolArgumentError -> -32602 machinery
+ * the tools use, so a prompt is as strict as the tools it front-ends. Optional
+ * arguments are interpolated conditionally so an absent value yields clean prose.
+ */
+function renderPrompt(name: string, rawArguments: unknown): { description: string; messages: PromptMessage[] } {
+  const args = requireArgumentsObject(rawArguments ?? {});
+  if (name === 'review_pull_request') {
+    const repositoryRoot = requireStringArg(args, 'repositoryRoot');
+    const baseHash = requireStringArg(args, 'baseHash');
+    const selectedHash = requireStringArg(args, 'selectedHash');
+    const maxVisClause =
+      typeof args.maxVis === 'number' ? `, \`maxVis=${args.maxVis}\`` : '';
+    const text =
+      'Review the LabVIEW VIs changed in this pull request.\n\n' +
+      `1. Call \`list_changed_vis\` with \`repositoryRoot="${repositoryRoot}"\`, ` +
+      `\`baseHash="${baseHash}"\`, \`selectedHash="${selectedHash}"\` to scope the changed ` +
+      '`.vi`/`.vit`/`.vim`/`.ctl` set. If `count` is 0, report that no VIs changed and stop.\n' +
+      '2. If VIs changed, call `build_vi_pr_review` with the same ' +
+      `\`repositoryRoot\`/\`baseHash\`/\`selectedHash\`${maxVisClause}, \`format="markdown"\` ` +
+      'to produce the review body.\n' +
+      '3. Present the returned Markdown as the PR review, leading with the aggregate narrative, ' +
+      'then the per-VI what-changed summaries.\n\n' +
+      'If `list_changed_vis` or `build_vi_pr_review` returns a blocked/failed status, first call ' +
+      '`get_runtime_health` to explain why a comparison could not run and what to fix.';
+    return {
+      description: 'Guided LabVIEW VI pull-request review.',
+      messages: [{ role: 'user', content: { type: 'text', text } }]
+    };
+  }
+  if (name === 'explain_vi_history') {
+    const repositoryRoot = requireStringArg(args, 'repositoryRoot');
+    const relativePath = requireStringArg(args, 'relativePath');
+    const maxRevisionsClause =
+      typeof args.maxRevisions === 'number' ? `, \`maxRevisions=${args.maxRevisions}\`` : '';
+    const text =
+      `Explain how the LabVIEW VI at \`${relativePath}\` has evolved.\n\n` +
+      `Call \`summarize_vi_history\` with \`repositoryRoot="${repositoryRoot}"\`, ` +
+      `\`relativePath="${relativePath}"\`${maxRevisionsClause}. Summarize the returned ` +
+      'vi-history-suite/vi-semantic-history@v1 timeline as a chronological narrative: the ' +
+      "overall arc first, then each transition's key changes. If the runtime is unavailable, " +
+      'call `get_runtime_health` and report the blocker.';
+    return {
+      description: 'Guided VI evolution narrative.',
+      messages: [{ role: 'user', content: { type: 'text', text } }]
+    };
+  }
+  if (name === 'check_compare_readiness') {
+    let platformClause = '';
+    if (args.platform !== undefined) {
+      const platform = requireEnumArg(args, 'platform', RUNTIME_PLATFORM_VALUES);
+      platformClause = ` with \`platform="${platform}"\``;
+    }
+    const text =
+      'Determine whether this environment can run a LabVIEW VI comparison.\n\n' +
+      `Call \`get_runtime_health\`${platformClause}. If \`blocked\` is true, explain ` +
+      '`blockedReason` and the concrete fix. Then call `get_preview_diagnostics` and report ' +
+      'Docker availability, visible LabVIEW images, and whether a preview cache is populated. ' +
+      'Conclude with a one-line verdict: ready (and by which provider) or blocked (and the ' +
+      'single next action).';
+    return {
+      description: 'Guided comparison-readiness check.',
+      messages: [{ role: 'user', content: { type: 'text', text } }]
+    };
+  }
+  throwArgumentError('name', 'a known prompt name', name);
+}
+
+/** Resolves a resource URI to its `resources/read` contents (schema JSON). */
+function resolveResource(uri: string): { uri: string; mimeType: string; text: string } {
+  if (uri === SCHEMA_INDEX_URI) {
+    return {
+      uri,
+      mimeType: 'application/json',
+      text: JSON.stringify(VI_SEMANTIC_SCHEMAS, null, 2)
+    };
+  }
+  if (uri.startsWith(RESOURCE_URI_PREFIX)) {
+    const schemaId = `vi-history-suite/${uri.slice(RESOURCE_URI_PREFIX.length)}`;
+    const schema = VI_SEMANTIC_SCHEMAS[schemaId];
+    if (schema) {
+      return { uri, mimeType: 'application/schema+json', text: JSON.stringify(schema, null, 2) };
+    }
+  }
+  throwArgumentError('uri', 'a known vi-history-suite:// resource URI', uri);
+}
 
 function success(id: JsonRpcSuccess['id'], result: unknown): JsonRpcSuccess {
   return { jsonrpc: '2.0', id, result };
 }
 
+/**
+ * Tool names that touch a comparison runtime or the filesystem, so they are only
+ * available through the async server entrypoint (which injects the orchestrators
+ * or the read-only cache inspector). The synchronous dispatcher rejects them with
+ * a clear tool-error result rather than running them without their dependencies.
+ * Single source of truth — the sync-capable set is derived as the registry minus
+ * this set, so adding a tool to VI_SEMANTIC_MCP_TOOLS can never silently fall
+ * through to "unknown tool".
+ */
+const ASYNC_ONLY_TOOL_NAMES: ReadonlySet<string> = new Set([
+  'compare_vi_revisions',
+  'summarize_vi_history',
+  'index_repository_vis',
+  'build_vi_pr_review',
+  'list_preview_cache',
+  'summarize_preview_cache',
+  'diagnose_preview_cache',
+  'search_preview_cache',
+  'get_preview_cache_entry',
+  'get_runtime_health',
+  'get_preview_diagnostics',
+  'list_changed_vis'
+]);
+
+/** Every tool name published by the registry (the authoritative known set). */
+const KNOWN_TOOL_NAMES: ReadonlySet<string> = new Set(
+  VI_SEMANTIC_MCP_TOOLS.map((tool) => tool.name)
+);
+
+/**
+ * Exposed for tests: the async-only and sync-capable partitions of the tool
+ * registry. `SYNC_CAPABLE_TOOL_NAMES` is derived (registry minus async-only) so
+ * the two can never drift from `VI_SEMANTIC_MCP_TOOLS`.
+ */
+export const VI_SEMANTIC_MCP_ASYNC_ONLY_TOOL_NAMES: readonly string[] = [
+  ...ASYNC_ONLY_TOOL_NAMES
+].sort();
+export const VI_SEMANTIC_MCP_SYNC_CAPABLE_TOOL_NAMES: readonly string[] = [
+  ...KNOWN_TOOL_NAMES
+]
+  .filter((name) => !ASYNC_ONLY_TOOL_NAMES.has(name))
+  .sort();
+
 function failure(
   id: JsonRpcError['id'],
   code: number,
-  message: string
+  message: string,
+  data?: unknown
 ): JsonRpcError {
-  return { jsonrpc: '2.0', id, error: { code, message } };
+  const error: JsonRpcError['error'] = { code, message };
+  if (data !== undefined) {
+    error.data = data;
+  }
+  return { jsonrpc: '2.0', id, error };
 }
 
 function toolTextResult(text: string, isError = false): unknown {
   return { content: [{ type: 'text', text }], isError };
 }
 
+/**
+ * A single field-level problem with a tool's `arguments` object: which field is
+ * wrong, what was expected, and what was received. Emitted as JSON-RPC error
+ * `data.issues` so an agent host can correct the call programmatically instead
+ * of parsing a free-text message.
+ */
+export interface ToolArgumentIssue {
+  field: string;
+  expected: string;
+  received: string;
+}
+
+/**
+ * Argument-shape validation failure. Thrown by the `parse*Arguments` helpers and
+ * mapped by the dispatcher to a JSON-RPC `-32602` (Invalid params) error with
+ * structured `data.issues`. Distinct from tool *execution* failures (a comparison
+ * that failed, a cache miss), which stay in the result envelope as `isError`.
+ */
+export class ToolArgumentError extends Error {
+  readonly issues: ToolArgumentIssue[];
+  constructor(issues: ToolArgumentIssue[]) {
+    super(formatToolArgumentIssues(issues));
+    this.name = 'ToolArgumentError';
+    this.issues = issues;
+  }
+}
+
+function formatToolArgumentIssues(issues: ToolArgumentIssue[]): string {
+  const detail = issues
+    .map((issue) => `${issue.field} must be ${issue.expected} (received ${issue.received})`)
+    .join('; ');
+  return `Invalid arguments: ${detail}`;
+}
+
+function describeReceived(value: unknown): string {
+  if (value === undefined) {
+    return 'undefined';
+  }
+  if (value === null) {
+    return 'null';
+  }
+  if (Array.isArray(value)) {
+    return 'array';
+  }
+  if (typeof value === 'string') {
+    return value.length === 0 ? 'empty string' : 'string';
+  }
+  return typeof value;
+}
+
+function throwArgumentError(field: string, expected: string, received: unknown): never {
+  throw new ToolArgumentError([{ field, expected, received: describeReceived(received) }]);
+}
+
+function requireArgumentsObject(rawArguments: unknown): Record<string, unknown> {
+  if (typeof rawArguments !== 'object' || rawArguments === null || Array.isArray(rawArguments)) {
+    throwArgumentError('arguments', 'an object', rawArguments);
+  }
+  return rawArguments as Record<string, unknown>;
+}
+
+function requireStringArg(args: Record<string, unknown>, field: string): string {
+  const value = args[field];
+  if (typeof value !== 'string' || value.length === 0) {
+    throwArgumentError(field, 'a non-empty string', value);
+  }
+  return value as string;
+}
+
+function requireObjectArg(args: Record<string, unknown>, field: string): Record<string, unknown> {
+  const value = args[field];
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    throwArgumentError(field, 'an object', value);
+  }
+  return value as Record<string, unknown>;
+}
+
+function requireFiniteNumberArg(args: Record<string, unknown>, field: string): number {
+  const value = args[field];
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    throwArgumentError(field, 'a finite number', value);
+  }
+  return value as number;
+}
+
+function requireEnumArg<T extends string>(
+  args: Record<string, unknown>,
+  field: string,
+  allowed: readonly T[]
+): T {
+  const value = args[field];
+  if (typeof value !== 'string' || !allowed.includes(value as T)) {
+    const expected = `one of ${allowed.map((option) => `"${option}"`).join(', ')}`;
+    throwArgumentError(field, expected, value);
+  }
+  return value as T;
+}
+
+/**
+ * Maps a thrown parse error to a response: a {@link ToolArgumentError} becomes a
+ * structured JSON-RPC `-32602` (with field-level `data.issues`); any other error
+ * stays a tool-execution failure in the result envelope (`isError`).
+ */
+function toArgumentFailure(id: JsonRpcSuccess['id'], error: unknown): JsonRpcResponse {
+  if (error instanceof ToolArgumentError) {
+    return failure(id, JSON_RPC_INVALID_PARAMS, error.message, { issues: error.issues });
+  }
+  return success(id, toolTextResult(`Tool error: ${errorMessage(error)}`, true));
+}
+
 function parseComparisonArguments(rawArguments: unknown): ViComparisonToolArguments {
-  if (typeof rawArguments !== 'object' || rawArguments === null) {
-    throw new Error('tool arguments must be an object');
-  }
-  const args = rawArguments as Record<string, unknown>;
-  if (typeof args.reportHtml !== 'string' || args.reportHtml.length === 0) {
-    throw new Error('reportHtml is required and must be a non-empty string');
-  }
+  const args = requireArgumentsObject(rawArguments);
+  const reportHtml = requireStringArg(args, 'reportHtml');
   return {
-    reportHtml: args.reportHtml,
+    reportHtml,
     reportFilePath:
       typeof args.reportFilePath === 'string' ? args.reportFilePath : undefined,
     revisions: (args.revisions as ViSemanticRevisionFacts | undefined) ?? undefined,
@@ -480,7 +1015,7 @@ function callSchemaTool(rawArguments: unknown): unknown {
   if (typeof args.schema === 'string') {
     const schema = VI_SEMANTIC_SCHEMAS[args.schema];
     if (!schema) {
-      throw new Error(`unknown schema: ${args.schema}`);
+      throwArgumentError('schema', 'a published semantic schema id', args.schema);
     }
     return toolTextResult(JSON.stringify(schema, null, 2));
   }
@@ -489,7 +1024,7 @@ function callSchemaTool(rawArguments: unknown): unknown {
 
 function callValidateTool(rawArguments: unknown): unknown {
   if (typeof rawArguments !== 'object' || rawArguments === null || !('document' in rawArguments)) {
-    throw new Error('document is required');
+    throwArgumentError('document', 'present', rawArguments);
   }
   const result = validateViSemanticDocument((rawArguments as Record<string, unknown>).document);
   return toolTextResult(JSON.stringify(result, null, 2));
@@ -531,7 +1066,7 @@ export function handleViSemanticMcpMessage(
     case 'initialize':
       return success(id, {
         protocolVersion: VI_SEMANTIC_MCP_PROTOCOL_VERSION,
-        capabilities: { tools: {} },
+        capabilities: { tools: {}, prompts: {}, resources: {} },
         serverInfo: VI_SEMANTIC_MCP_SERVER_INFO
       });
 
@@ -546,6 +1081,39 @@ export function handleViSemanticMcpMessage(
     case 'tools/list':
       return success(id, { tools: VI_SEMANTIC_MCP_TOOLS });
 
+    case 'prompts/list':
+      return success(id, { prompts: VI_SEMANTIC_MCP_PROMPTS });
+
+    case 'prompts/get': {
+      const params = (message.params ?? {}) as { name?: unknown; arguments?: unknown };
+      if (typeof params.name !== 'string') {
+        return failure(id, JSON_RPC_INVALID_PARAMS, 'prompts/get requires a string "name"');
+      }
+      if (!KNOWN_PROMPT_NAMES.has(params.name)) {
+        return failure(id, JSON_RPC_INVALID_PARAMS, `unknown prompt: ${params.name}`);
+      }
+      try {
+        return success(id, renderPrompt(params.name, params.arguments));
+      } catch (error) {
+        return toArgumentFailure(id, error);
+      }
+    }
+
+    case 'resources/list':
+      return success(id, { resources: VI_SEMANTIC_MCP_RESOURCES });
+
+    case 'resources/read': {
+      const params = (message.params ?? {}) as { uri?: unknown };
+      if (typeof params.uri !== 'string') {
+        return failure(id, JSON_RPC_INVALID_PARAMS, 'resources/read requires a string "uri"');
+      }
+      try {
+        return success(id, { contents: [resolveResource(params.uri)] });
+      } catch (error) {
+        return toArgumentFailure(id, error);
+      }
+    }
+
     case 'tools/call': {
       const params = (message.params ?? {}) as {
         name?: unknown;
@@ -554,17 +1122,12 @@ export function handleViSemanticMcpMessage(
       if (typeof params.name !== 'string') {
         return failure(id, JSON_RPC_INVALID_PARAMS, 'tools/call requires a string "name"');
       }
-      if (
-        params.name === 'compare_vi_revisions' ||
-        params.name === 'summarize_vi_history' ||
-        params.name === 'index_repository_vis' ||
-        params.name === 'build_vi_pr_review' ||
-        params.name === 'list_preview_cache' ||
-        params.name === 'summarize_preview_cache' ||
-        params.name === 'diagnose_preview_cache' ||
-        params.name === 'search_preview_cache' ||
-        params.name === 'get_preview_cache_entry'
-      ) {
+      // Reject an unknown tool up front against the authoritative registry set,
+      // so a name not published by tools/list can never reach a handler.
+      if (!KNOWN_TOOL_NAMES.has(params.name)) {
+        return failure(id, JSON_RPC_INVALID_PARAMS, `unknown tool: ${params.name}`);
+      }
+      if (ASYNC_ONLY_TOOL_NAMES.has(params.name)) {
         // These tools touch a runtime or the filesystem and are only available
         // through the async server entrypoint, which injects the orchestrators
         // (comparison runtimes) or the read-only cache inspector (filesystem).
@@ -576,21 +1139,13 @@ export function handleViSemanticMcpMessage(
           )
         );
       }
-      if (
-        params.name !== 'summarize_vi_comparison' &&
-        params.name !== 'get_vi_semantic_comparison' &&
-        params.name !== 'get_vi_semantic_schema' &&
-        params.name !== 'validate_vi_semantic_document'
-      ) {
-        return failure(id, JSON_RPC_INVALID_PARAMS, `unknown tool: ${params.name}`);
-      }
       try {
         return success(id, callTool(params.name, params.arguments));
       } catch (error) {
-        // Tool-level failures are reported through the result envelope (isError)
-        // per MCP, not as protocol errors, so the agent can read the message.
-        const detail = errorMessage(error);
-        return success(id, toolTextResult(`Tool error: ${detail}`, true));
+        // Argument-shape failures become a structured -32602 (Invalid params)
+        // with field-level detail; genuine tool-execution failures stay in the
+        // result envelope (isError) per MCP so the agent can read the message.
+        return toArgumentFailure(id, error);
       }
     }
 
@@ -600,22 +1155,12 @@ export function handleViSemanticMcpMessage(
 }
 
 function parseCompareRevisionsArguments(rawArguments: unknown): CompareViRevisionsInput {
-  if (typeof rawArguments !== 'object' || rawArguments === null) {
-    throw new Error('tool arguments must be an object');
-  }
-  const args = rawArguments as Record<string, unknown>;
-  const requireString = (key: string): string => {
-    const value = args[key];
-    if (typeof value !== 'string' || value.length === 0) {
-      throw new Error(`${key} is required and must be a non-empty string`);
-    }
-    return value;
-  };
+  const args = requireArgumentsObject(rawArguments);
   const input: CompareViRevisionsInput = {
-    repositoryRoot: requireString('repositoryRoot'),
-    relativePath: requireString('relativePath'),
-    baseHash: requireString('baseHash'),
-    selectedHash: requireString('selectedHash')
+    repositoryRoot: requireStringArg(args, 'repositoryRoot'),
+    relativePath: requireStringArg(args, 'relativePath'),
+    baseHash: requireStringArg(args, 'baseHash'),
+    selectedHash: requireStringArg(args, 'selectedHash')
   };
   if (typeof args.reportType === 'string') {
     input.reportType = args.reportType as CompareViRevisionsInput['reportType'];
@@ -640,20 +1185,10 @@ function renderCompareResult(
 }
 
 function parseHistoryArguments(rawArguments: unknown): ViSemanticHistoryInput {
-  if (typeof rawArguments !== 'object' || rawArguments === null) {
-    throw new Error('tool arguments must be an object');
-  }
-  const args = rawArguments as Record<string, unknown>;
-  const requireString = (key: string): string => {
-    const value = args[key];
-    if (typeof value !== 'string' || value.length === 0) {
-      throw new Error(`${key} is required and must be a non-empty string`);
-    }
-    return value;
-  };
+  const args = requireArgumentsObject(rawArguments);
   const input: ViSemanticHistoryInput = {
-    repositoryRoot: requireString('repositoryRoot'),
-    relativePath: requireString('relativePath')
+    repositoryRoot: requireStringArg(args, 'repositoryRoot'),
+    relativePath: requireStringArg(args, 'relativePath')
   };
   if (typeof args.maxRevisions === 'number') {
     input.maxRevisions = args.maxRevisions;
@@ -675,14 +1210,8 @@ function renderHistoryResult(
 }
 
 function parseRepositoryIndexArguments(rawArguments: unknown): ViRepositoryIndexInput {
-  if (typeof rawArguments !== 'object' || rawArguments === null) {
-    throw new Error('tool arguments must be an object');
-  }
-  const args = rawArguments as Record<string, unknown>;
-  if (typeof args.repositoryRoot !== 'string' || args.repositoryRoot.length === 0) {
-    throw new Error('repositoryRoot is required and must be a non-empty string');
-  }
-  const input: ViRepositoryIndexInput = { repositoryRoot: args.repositoryRoot };
+  const args = requireArgumentsObject(rawArguments);
+  const input: ViRepositoryIndexInput = { repositoryRoot: requireStringArg(args, 'repositoryRoot') };
   if (typeof args.maxVis === 'number') {
     input.maxVis = args.maxVis;
   }
@@ -694,21 +1223,11 @@ function renderRepositoryIndexResult(index: ViRepositoryIndex): unknown {
 }
 
 function parsePrReviewArguments(rawArguments: unknown): ViSemanticPrReviewInput {
-  if (typeof rawArguments !== 'object' || rawArguments === null) {
-    throw new Error('tool arguments must be an object');
-  }
-  const args = rawArguments as Record<string, unknown>;
-  const requireString = (key: string): string => {
-    const value = args[key];
-    if (typeof value !== 'string' || value.length === 0) {
-      throw new Error(`${key} is required and must be a non-empty string`);
-    }
-    return value;
-  };
+  const args = requireArgumentsObject(rawArguments);
   const input: ViSemanticPrReviewInput = {
-    repositoryRoot: requireString('repositoryRoot'),
-    baseHash: requireString('baseHash'),
-    selectedHash: requireString('selectedHash')
+    repositoryRoot: requireStringArg(args, 'repositoryRoot'),
+    baseHash: requireStringArg(args, 'baseHash'),
+    selectedHash: requireStringArg(args, 'selectedHash')
   };
   if (typeof args.maxVis === 'number') {
     input.maxVis = args.maxVis;
@@ -762,6 +1281,28 @@ export interface ViSemanticMcpAsyncDeps {
    * handler (VHS-REQ-659).
    */
   previewCacheInspector?: ViPreviewCacheInspectorDeps;
+  /**
+   * Read-only runtime-health resolver. Resolves the comparison runtime (never
+   * running a comparison) and projects a compact {@link ViRuntimeHealth}
+   * snapshot. Injected by the stdio entrypoint; when absent,
+   * `get_runtime_health` reports a wired-up error.
+   */
+  resolveRuntimeHealth?: (input: RuntimeHealthInput) => Promise<ViRuntimeHealth>;
+  /**
+   * Read-only preview-diagnostics collector. Bundles runtime resolution, Docker
+   * probing, and optional cache statistics into a preview-diagnostics@v1
+   * snapshot (never renders). Injected by the stdio entrypoint; when absent,
+   * `get_preview_diagnostics` reports a wired-up error.
+   */
+  collectPreviewDiagnostics?: (
+    input: CollectViPreviewDiagnosticsOptions
+  ) => Promise<ViPreviewDiagnosticsSnapshot>;
+  /**
+   * Read-only changed-VI lister. Lists the VI source files changed between two
+   * Git revisions (pure Git; never renders). Injected by the stdio entrypoint;
+   * when absent, `list_changed_vis` reports a wired-up error.
+   */
+  listChangedVis?: (input: ChangedVisInput) => Promise<ViChangedVis>;
 }
 
 /** Injected read-only preview-cache inspection surface for the MCP tools. */
@@ -792,8 +1333,16 @@ async function invokeInjectedTool<TInput, TResult>(
       toolTextResult(`Tool error: ${toolName} is not wired (no orchestrator injected)`, true)
     );
   }
+  let input: TInput;
   try {
-    const result = await orchestrator(parseArguments());
+    input = parseArguments();
+  } catch (error) {
+    // Argument-shape failures become a structured -32602; other parse errors
+    // fall through to the isError envelope via toArgumentFailure.
+    return toArgumentFailure(id, error);
+  }
+  try {
+    const result = await orchestrator(input);
     return success(id, render(result));
   } catch (error) {
     const detail = errorMessage(error);
@@ -860,19 +1409,93 @@ export async function handleViSemanticMcpMessageAsync(
     ) {
       return handlePreviewCacheTool(id, params.name, params.arguments, deps.previewCacheInspector);
     }
+    if (params.name === 'get_runtime_health') {
+      return invokeInjectedTool(
+        id,
+        'get_runtime_health',
+        deps.resolveRuntimeHealth,
+        () => parseRuntimeHealthArguments(params.arguments),
+        (health) => toolTextResult(JSON.stringify(health, null, 2))
+      );
+    }
+    if (params.name === 'get_preview_diagnostics') {
+      return invokeInjectedTool(
+        id,
+        'get_preview_diagnostics',
+        deps.collectPreviewDiagnostics,
+        () => parsePreviewDiagnosticsArguments(params.arguments),
+        (snapshot) => toolTextResult(JSON.stringify(snapshot, null, 2))
+      );
+    }
+    if (params.name === 'list_changed_vis') {
+      return invokeInjectedTool(
+        id,
+        'list_changed_vis',
+        deps.listChangedVis,
+        () => parseChangedVisArguments(params.arguments),
+        (changed) => toolTextResult(JSON.stringify(changed, null, 2))
+      );
+    }
   }
   return handleViSemanticMcpMessage(message);
 }
 
+const RUNTIME_PLATFORM_VALUES = ['win32', 'linux', 'darwin'] as const;
+const PREVIEW_CACHE_MARKERS: readonly ViPreviewCacheSearchMarker[] = [
+  'error',
+  'interactive',
+  'image',
+  'empty'
+];
+
+function parseRuntimeHealthArguments(rawArguments: unknown): RuntimeHealthInput {
+  if (rawArguments === undefined || rawArguments === null) {
+    return {};
+  }
+  const args = requireArgumentsObject(rawArguments);
+  const input: RuntimeHealthInput = {};
+  if (args.platform !== undefined) {
+    input.platform = requireEnumArg(args, 'platform', RUNTIME_PLATFORM_VALUES);
+  }
+  if (args.settings !== undefined) {
+    input.settings = requireObjectArg(args, 'settings') as ComparisonRuntimeSettings;
+  }
+  return input;
+}
+
+function parseChangedVisArguments(rawArguments: unknown): ChangedVisInput {
+  const args = requireArgumentsObject(rawArguments);
+  return {
+    repositoryRoot: requireStringArg(args, 'repositoryRoot'),
+    baseHash: requireStringArg(args, 'baseHash'),
+    selectedHash: requireStringArg(args, 'selectedHash')
+  };
+}
+
+function parsePreviewDiagnosticsArguments(rawArguments: unknown): CollectViPreviewDiagnosticsOptions {
+  if (rawArguments === undefined || rawArguments === null) {
+    return {};
+  }  const args = requireArgumentsObject(rawArguments);
+  const options: CollectViPreviewDiagnosticsOptions = {};
+  if (args.cacheDirectory !== undefined) {
+    options.cacheDirectory = requireStringArg(args, 'cacheDirectory');
+  }
+  if (args.processPlatform !== undefined) {
+    options.processPlatform = requireEnumArg(args, 'processPlatform', RUNTIME_PLATFORM_VALUES);
+  }
+  if (args.settings !== undefined) {
+    options.settings = requireObjectArg(args, 'settings') as ComparisonRuntimeSettings;
+  }
+  if (args.connectTimeoutSeconds !== undefined) {
+    options.connectTimeoutSeconds = requireFiniteNumberArg(args, 'connectTimeoutSeconds');
+  }
+  return options;
+}
+
 function requireCacheDirectory(rawArguments: unknown): { cacheDirectory: string; args: Record<string, unknown> } {
-  if (typeof rawArguments !== 'object' || rawArguments === null) {
-    throw new Error('tool arguments must be an object');
-  }
-  const args = rawArguments as Record<string, unknown>;
-  if (typeof args.cacheDirectory !== 'string' || args.cacheDirectory.length === 0) {
-    throw new Error('cacheDirectory is required and must be a non-empty string');
-  }
-  return { cacheDirectory: args.cacheDirectory, args };
+  const args = requireArgumentsObject(rawArguments);
+  const cacheDirectory = requireStringArg(args, 'cacheDirectory');
+  return { cacheDirectory, args };
 }
 
 const PREVIEW_CACHE_DIAGNOSTICS_SCHEMA = 'vi-history-suite/preview-cache-diagnostics@v1';
@@ -915,29 +1538,19 @@ async function handlePreviewCacheTool(
       return success(id, toolTextResult(JSON.stringify(diagnostics, null, 2)));
     }
     if (name === 'search_preview_cache') {
-      const marker = args.marker;
-      if (
-        marker !== 'error' &&
-        marker !== 'interactive' &&
-        marker !== 'image' &&
-        marker !== 'empty'
-      ) {
-        throw new Error('marker must be one of: error, interactive, image, empty');
-      }
+      const marker = requireEnumArg(args, 'marker', PREVIEW_CACHE_MARKERS);
       const entries = await inspector.search(cacheDirectory, marker);
       return success(id, toolTextResult(JSON.stringify({ cacheDirectory, marker, entries }, null, 2)));
     }
     // get_preview_cache_entry
-    if (typeof args.key !== 'string' || args.key.length === 0) {
-      throw new Error('key is required and must be a non-empty string');
-    }
+    const key = requireStringArg(args, 'key');
     const includeHtml = args.includeHtml === true;
-    const entry = await inspector.get(cacheDirectory, args.key, { includeHtml });
+    const entry = await inspector.get(cacheDirectory, key, { includeHtml });
     if (!entry) {
-      return success(id, toolTextResult(`Tool error: no cache entry for key ${args.key}`, true));
+      return success(id, toolTextResult(`Tool error: no cache entry for key ${key}`, true));
     }
     return success(id, toolTextResult(JSON.stringify(entry, null, 2)));
   } catch (error) {
-    return success(id, toolTextResult(`Tool error: ${errorMessage(error)}`, true));
+    return toArgumentFailure(id, error);
   }
 }
