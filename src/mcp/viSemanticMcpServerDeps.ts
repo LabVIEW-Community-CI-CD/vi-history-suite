@@ -145,19 +145,34 @@ export async function listChangedVis(
 }
 
 /**
+ * Maps a Node host platform to the runtime platform the comparison locator
+ * understands: `win32`/`linux`/`darwin` pass through, and any other platform
+ * falls back to `linux`. Mirrors `resolveRuntimePlatform` in the reporting layer
+ * (which imports `vscode` and so cannot be used from the dependency-free MCP
+ * server) so a darwin host is not silently coerced to the linux runtime path.
+ */
+function resolveHostRuntimePlatform(platform: NodeJS.Platform): RuntimePlatform {
+  if (platform === 'win32' || platform === 'linux' || platform === 'darwin') {
+    return platform;
+  }
+  return 'linux';
+}
+
+/**
  * Resolves the comparison runtime (never running a comparison) and projects the
  * compact runtime-health snapshot the `get_runtime_health` MCP tool returns. The
  * heavy locator selection is reduced to the fields an agent needs to decide
  * whether — and by which provider — it can compare. The locator is injectable so
  * the projection (null-coalescing, blocked derivation) is unit-testable with a
- * fake selection, without a real runtime probe.
+ * fake selection, without a real runtime probe. The host platform is injectable
+ * for the same reason (so the darwin/linux/win32 default is testable off-host).
  */
 export async function resolveRuntimeHealth(
   input: RuntimeHealthInput,
-  locateRuntime: typeof locateComparisonRuntime = locateComparisonRuntime
+  locateRuntime: typeof locateComparisonRuntime = locateComparisonRuntime,
+  hostPlatform: NodeJS.Platform = process.platform
 ): Promise<ViRuntimeHealth> {
-  const platform: RuntimePlatform =
-    input.platform ?? (process.platform === 'win32' ? 'win32' : 'linux');
+  const platform: RuntimePlatform = input.platform ?? resolveHostRuntimePlatform(hostPlatform);
   const selection = await locateRuntime(platform, input.settings ?? {});
   return {
     schema: RUNTIME_HEALTH_SCHEMA,
