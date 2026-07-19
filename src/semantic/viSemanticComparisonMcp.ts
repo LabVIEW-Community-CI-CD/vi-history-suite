@@ -337,17 +337,45 @@ const PREVIEW_CACHE_SEARCH_INPUT_SCHEMA = {
   required: ['cacheDirectory', 'marker']
 } as const;
 
+/**
+ * MCP tool annotations (per the 2025-06-18 spec `ToolAnnotations`) declaring
+ * behavioral hints so an agent host can reason about a tool before calling it.
+ * Every vi-history-suite tool is read-only (none mutate the repository or VIs),
+ * so all carry `readOnlyHint: true` and `destructiveHint: false`. The two
+ * annotation shapes differ only in `openWorldHint`:
+ *   - CLOSED: pure, in-process tools that operate solely on their arguments
+ *     (schema discovery, document validation, and HTML-in comparison rendering).
+ *   - OPEN: tools that reach an external system — Git, a LabVIEW comparison
+ *     runtime (host or Docker), or the preview-cache filesystem.
+ * Hints are advisory (not a security boundary); they let hosts auto-approve
+ * read-only calls and warn before open-world side effects.
+ */
+const READ_ONLY_CLOSED_WORLD = {
+  readOnlyHint: true,
+  destructiveHint: false,
+  idempotentHint: true,
+  openWorldHint: false
+} as const;
+const READ_ONLY_OPEN_WORLD = {
+  readOnlyHint: true,
+  destructiveHint: false,
+  idempotentHint: true,
+  openWorldHint: true
+} as const;
+
 export const VI_SEMANTIC_MCP_TOOLS = [
   {
     name: 'summarize_vi_comparison',
     description:
       'Return a concise, human- and agent-readable "what changed" narrative for a LabVIEW VI comparison report.',
-    inputSchema: COMPARISON_INPUT_SCHEMA
+    inputSchema: COMPARISON_INPUT_SCHEMA,
+    annotations: { title: 'Summarize VI comparison', ...READ_ONLY_CLOSED_WORLD }
   },
   {
     name: 'get_vi_semantic_comparison',
     description: `Return the full ${VI_SEMANTIC_COMPARISON_SCHEMA} semantic model (changed surfaces, attributes, detail sections, totals, and narrative) for a LabVIEW VI comparison report.`,
-    inputSchema: COMPARISON_INPUT_SCHEMA
+    inputSchema: COMPARISON_INPUT_SCHEMA,
+    annotations: { title: 'Get VI semantic comparison', ...READ_ONLY_CLOSED_WORLD }
   },
   {
     name: 'compare_vi_revisions',
@@ -355,7 +383,8 @@ export const VI_SEMANTIC_MCP_TOOLS = [
       'Invoke a LabVIEW comparison between two Git revisions of a VI and return the full ' +
       `${VI_SEMANTIC_COMPARISON_SCHEMA} semantic model. Requires a comparison runtime ` +
       '(host LabVIEW or a Docker LabVIEW image) to be available; a run may take minutes.',
-    inputSchema: COMPARE_REVISIONS_INPUT_SCHEMA
+    inputSchema: COMPARE_REVISIONS_INPUT_SCHEMA,
+    annotations: { title: 'Compare VI revisions', ...READ_ONLY_OPEN_WORLD }
   },
   {
     name: 'summarize_vi_history',
@@ -363,7 +392,8 @@ export const VI_SEMANTIC_MCP_TOOLS = [
       "Walk a VI's recent Git revisions and invoke a comparison across each adjacent pair, " +
       'returning a vi-history-suite/vi-semantic-history@v1 evolution timeline (per-transition ' +
       'narratives plus an aggregate story). Requires a comparison runtime; a run may take several minutes.',
-    inputSchema: HISTORY_INPUT_SCHEMA
+    inputSchema: HISTORY_INPUT_SCHEMA,
+    annotations: { title: 'Summarize VI history', ...READ_ONLY_OPEN_WORLD }
   },
   {
     name: 'index_repository_vis',
@@ -371,7 +401,8 @@ export const VI_SEMANTIC_MCP_TOOLS = [
       "Survey a Git repository's tracked VIs and return a vi-history-suite/vi-repository-index@v1 " +
       'index (each VI with its revision count and latest change, activity-ranked). Pure Git; no ' +
       'comparison runtime required.',
-    inputSchema: REPOSITORY_INDEX_INPUT_SCHEMA
+    inputSchema: REPOSITORY_INDEX_INPUT_SCHEMA,
+    annotations: { title: 'Index repository VIs', ...READ_ONLY_OPEN_WORLD }
   },
   {
     name: 'build_vi_pr_review',
@@ -380,7 +411,8 @@ export const VI_SEMANTIC_MCP_TOOLS = [
       'and returning a vi-history-suite/vi-semantic-pr-review@v1 review (a per-VI what-changed ' +
       'summary plus an aggregate narrative). Request the markdown format to get a review-ready, ' +
       'sticky PR-comment body. Requires a comparison runtime; a run may take several minutes.',
-    inputSchema: PR_REVIEW_INPUT_SCHEMA
+    inputSchema: PR_REVIEW_INPUT_SCHEMA,
+    annotations: { title: 'Build VI PR review', ...READ_ONLY_OPEN_WORLD }
   },
   {
     name: 'get_vi_semantic_schema',
@@ -388,14 +420,16 @@ export const VI_SEMANTIC_MCP_TOOLS = [
       'Return the published JSON Schema(s) for the vi-history-suite semantic models ' +
       '(comparison, history, repository index) - the open, versioned VI-diff standard. ' +
       'Omit "schema" to receive all.',
-    inputSchema: SCHEMA_DISCOVERY_INPUT_SCHEMA
+    inputSchema: SCHEMA_DISCOVERY_INPUT_SCHEMA,
+    annotations: { title: 'Get VI semantic schema', ...READ_ONLY_CLOSED_WORLD }
   },
   {
     name: 'validate_vi_semantic_document',
     description:
       'Validate a self-describing semantic document against its published JSON Schema; ' +
       'returns { valid, errors }.',
-    inputSchema: DOCUMENT_VALIDATION_INPUT_SCHEMA
+    inputSchema: DOCUMENT_VALIDATION_INPUT_SCHEMA,
+    annotations: { title: 'Validate VI semantic document', ...READ_ONLY_CLOSED_WORLD }
   },
   {
     name: 'list_preview_cache',
@@ -403,7 +437,8 @@ export const VI_SEMANTIC_MCP_TOOLS = [
       'List the entries in a VI-preview render cache directory (each with its cache key, size, ' +
       'inline image count, interactive-viewer flag, and health flags). Read-only; no comparison ' +
       'runtime required.',
-    inputSchema: PREVIEW_CACHE_DIR_INPUT_SCHEMA
+    inputSchema: PREVIEW_CACHE_DIR_INPUT_SCHEMA,
+    annotations: { title: 'List preview cache', ...READ_ONLY_OPEN_WORLD }
   },
   {
     name: 'summarize_preview_cache',
@@ -411,7 +446,8 @@ export const VI_SEMANTIC_MCP_TOOLS = [
       'Summarize a VI-preview render cache directory: entry/byte counts, healthy vs flagged, ' +
       'interactive count, and the list of flagged entries (empty / error-marker / no-rendered-content). ' +
       'Read-only.',
-    inputSchema: PREVIEW_CACHE_DIR_INPUT_SCHEMA
+    inputSchema: PREVIEW_CACHE_DIR_INPUT_SCHEMA,
+    annotations: { title: 'Summarize preview cache', ...READ_ONLY_OPEN_WORLD }
   },
   {
     name: 'diagnose_preview_cache',
@@ -419,14 +455,16 @@ export const VI_SEMANTIC_MCP_TOOLS = [
       'Return a vi-history-suite/preview-cache-diagnostics@v1 snapshot for a cache directory ' +
       '(entry/byte counts, health rollup, newest entry) so an agent can answer "is the preview ' +
       'cache healthy?" in one call. Read-only.',
-    inputSchema: PREVIEW_CACHE_DIR_INPUT_SCHEMA
+    inputSchema: PREVIEW_CACHE_DIR_INPUT_SCHEMA,
+    annotations: { title: 'Diagnose preview cache', ...READ_ONLY_OPEN_WORLD }
   },
   {
     name: 'search_preview_cache',
     description:
       'Find cache entries by content marker: "error", "interactive", "image", or "empty". ' +
       'Returns the matching entries (metadata only). Read-only.',
-    inputSchema: PREVIEW_CACHE_SEARCH_INPUT_SCHEMA
+    inputSchema: PREVIEW_CACHE_SEARCH_INPUT_SCHEMA,
+    annotations: { title: 'Search preview cache', ...READ_ONLY_OPEN_WORLD }
   },
   {
     name: 'get_preview_cache_entry',
@@ -434,7 +472,8 @@ export const VI_SEMANTIC_MCP_TOOLS = [
       'Fetch one preview-cache entry by cache key. Returns metadata plus a file-path pointer by ' +
       'default (a cached preview can be ~2MB with hundreds of inline images); pass includeHtml:true ' +
       'to return the raw HTML. Read-only.',
-    inputSchema: PREVIEW_CACHE_GET_INPUT_SCHEMA
+    inputSchema: PREVIEW_CACHE_GET_INPUT_SCHEMA,
+    annotations: { title: 'Get preview cache entry', ...READ_ONLY_OPEN_WORLD }
   }
 ] as const;
 

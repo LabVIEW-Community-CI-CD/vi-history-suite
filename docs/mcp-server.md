@@ -47,6 +47,19 @@ may take minutes.
 | `search_preview_cache` | Finds cache entries by content marker (`error`, `interactive`, `image`, or `empty`); returns metadata only. | None (read-only fs) | `cacheDirectory`, `marker` |
 | `get_preview_cache_entry` | Fetches one cache entry by key; returns metadata plus a file-path pointer by default, or the raw HTML when `includeHtml` is true. | None (read-only fs) | `cacheDirectory`, `key` |
 
+### Tool annotations
+
+Every tool advertises MCP [`ToolAnnotations`](https://modelcontextprotocol.io/specification/2025-06-18/server/tools#tool)
+behavioral hints so an agent host can reason about a call before making it. All
+vi-history-suite tools are non-mutating, so each carries `readOnlyHint: true`
+and `destructiveHint: false`. `openWorldHint` is `true` only for the tools that
+reach an external system (Git, a LabVIEW comparison runtime, or the preview-cache
+filesystem) — the same set that requires the async server entrypoint — and
+`false` for the pure, in-process tools (`summarize_vi_comparison`,
+`get_vi_semantic_comparison`, `get_vi_semantic_schema`,
+`validate_vi_semantic_document`). Hints are advisory, not a security boundary;
+they let hosts auto-approve read-only calls and warn before open-world effects.
+
 ### Output format
 
 `summarize_vi_comparison`, `get_vi_semantic_comparison`, `compare_vi_revisions`,
