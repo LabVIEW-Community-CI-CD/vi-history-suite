@@ -358,7 +358,8 @@ scripts/recordRuntimeValidation.js,mapped,Yes,Runtime-validation ledger recorder
 docs/requirements/copilot-web-issue-generation-prompt.md,mapped,Yes,Copilot web issue generation prompt; mapped through RTM.
 docs/development.md,asset-doc,Yes,Development documentation; mapped through RTM.
 docs/maintainer-operations.md,asset-doc,Yes,Maintainer operations documentation including Marketplace release evidence contract guidance; mapped through RTM including VHS-REQ-609 and VHS-REQ-615.
-docs/mcp-server.md,asset-doc,No,Copilot agent-mode MCP server and semantic VI-diff tool reference; documents the eight MCP tools and the published vi-history-suite schemas; reference documentation not directly mapped in RTM.
+docs/mcp-server.md,asset-doc,Yes,"Copilot agent-mode MCP server and semantic VI-diff tool reference; documents the MCP tools, the published vi-history-suite schemas, and the pinned dev-tools build launch; mapped through RTM including VHS-REQ-680."
+docs/devtools-release.md,asset-doc,Yes,"Dev-tools GitHub Release channel reference: what ships, building/verifying the artifact, the release workflow, and the consumer-facing pinning lifecycle (pin a version, install/uninstall/status commands, opt-in update check); mapped through RTM including VHS-REQ-680."
 docs/cm/cm-plan.md,asset-doc,Yes,Configuration management proof map for baselines change control status accounting standards audit cadence user-information review triggers and documentation-workbench status; mapped through RTM including VHS-REQ-609 and VHS-REQ-615.
 docs/architecture/overview.md,asset-doc,No,Architecture overview reference documentation; not directly mapped in RTM.
 docs/architecture/preview-cache-fabric.md,asset-doc,No,"Preview-Cache Fabric north-star architecture doc (content-addressed cache as portable/verifiable/shareable infrastructure; VHS-REQ-671..675 arc); reference documentation, not directly mapped in RTM."

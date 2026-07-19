@@ -5866,3 +5866,43 @@ Missing numeric IDs are intentional.
     VHS-REQ-677 orchestrator and VHS-REQ-676 SemVer utility rather than
     duplicating verification or comparison logic, and keep the tar handling
     dependency-free.
+
+### VHS-REQ-680: Dev-Tools Status Command And Consumer Documentation
+
+- Status: Active
+- Parent: VHS-SYS-REQ-013
+- Area: CI And Developer Environment
+- Statement: The extension shall surface the dev-tools pinning status through a
+  read-only command and accompanying consumer documentation, so a user can see
+  which dev-tools build is active and learn how to pin, install, uninstall, and
+  update-check a version.
+- Acceptance Criteria:
+  - The `labviewViHistory.showDevToolsStatus` command reports the pinned
+    `viHistorySuite.devTools.version` setting, whether that pin is installed and
+    integrity-verified, which build the MCP server launches (bundled vs pinned,
+    where a pin becomes active only once installed), the verified installed
+    versions, and the update-tracking flag; it is read-only and mutates nothing.
+  - The status reporter is a VS Code-free orchestration with its install-listing
+    effect injected, so it is unit-testable, and it degrades a malformed version
+    setting to the bundled status rather than throwing.
+  - Consumer documentation in `docs/devtools-release.md` describes pinning a
+    dev-tools version in the extension, the install/uninstall/status commands,
+    the opt-in update check, workspace-trust gating, and the fail-closed fallback
+    to the bundled build, and `docs/mcp-server.md` notes that the MCP server
+    launches the pinned build when one is installed.
+- Agent Work Scope:
+  - Keep the status command read-only and injectable. Reuse the VHS-REQ-677
+    normalization and the VHS-REQ-679 install-listing rather than duplicating
+    logic. Keep documentation aligned with the shipped setting and command names.
+- Implementation References:
+  - `src/tooling/devToolsRuntime.ts`
+  - `src/extension.ts`
+  - `package.json`
+  - `docs/devtools-release.md`
+  - `docs/mcp-server.md`
+- Verification References:
+  - `tests/unit/devToolsRuntime.test.ts`
+  - `tests/unit/packageManifest.test.ts`
+- Change Guidance:
+  - Keep the status read-only; if new lifecycle state is added, extend the
+    reported status additively rather than changing existing fields.
