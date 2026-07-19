@@ -124,6 +124,20 @@ Reading one requires the async server entrypoint (it reads the cache filesystem
 through the injected inspector). A malformed URI returns `-32602`; a missing
 entry returns `-32602` (`preview-cache resource not found`).
 
+### Argument completions
+
+The server advertises the `completions` capability and answers
+`completion/complete` for the arguments that have a known value set, filtered by
+the partial value the host has typed:
+
+| Ref | Argument | Completions |
+| --- | --- | --- |
+| `ref/prompt` `check_compare_readiness` | `platform` | `win32`, `linux`, `darwin` |
+| `ref/resource` (schema template) | `uri` | the published schema ids (`vi-semantic-comparison@v1`, …) |
+
+Any other ref or free-form argument completes to an empty list (never an error),
+so a host can safely request completions for any argument.
+
 ### Output format
 
 `summarize_vi_comparison`, `get_vi_semantic_comparison`, `compare_vi_revisions`,
