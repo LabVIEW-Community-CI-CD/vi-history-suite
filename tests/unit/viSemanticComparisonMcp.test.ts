@@ -1116,7 +1116,11 @@ describe('viSemanticComparisonMcp', () => {
       expect(result.prompts.map((p) => p.name)).toEqual([
         'review_pull_request',
         'explain_vi_history',
-        'check_compare_readiness'
+        'check_compare_readiness',
+        'survey_repository_vis',
+        'inspect_vi_change',
+        'audit_preview_cache',
+        'diagnose_runtime_cache'
       ]);
       expect(result.prompts).toEqual(VI_SEMANTIC_MCP_PROMPTS);
     });
@@ -1144,6 +1148,103 @@ describe('viSemanticComparisonMcp', () => {
       const text = result.messages[0].content.text;
       expect(text).toContain('get_runtime_health');
       expect(text).toContain('get_preview_diagnostics');
+      expect(text).not.toContain('platform=');
+    });
+
+    it('renders survey_repository_vis chaining the index into a history drill-down', () => {
+      const result = successResult(
+        handleViSemanticMcpMessage(
+          call('prompts/get', {
+            name: 'survey_repository_vis',
+            arguments: { repositoryRoot: '/repo', maxVis: 40 }
+          })
+        )
+      ) as { messages: Array<{ content: { text: string } }> };
+      const text = result.messages[0].content.text;
+      expect(text).toContain('index_repository_vis');
+      expect(text).toContain('summarize_vi_history');
+      expect(text).toContain('maxVis=40');
+      expect(text).toContain('highest-activity VI');
+    });
+
+    it('renders survey_repository_vis drilling into an explicit VI when relativePath is given', () => {
+      const result = successResult(
+        handleViSemanticMcpMessage(
+          call('prompts/get', {
+            name: 'survey_repository_vis',
+            arguments: { repositoryRoot: '/repo', relativePath: 'a/b.vi' }
+          })
+        )
+      ) as { messages: Array<{ content: { text: string } }> };
+      const text = result.messages[0].content.text;
+      expect(text).toContain('the VI at `a/b.vi`');
+      expect(text).not.toContain('maxVis=');
+    });
+
+    it('renders inspect_vi_change gating on runtime health before comparing', () => {
+      const result = successResult(
+        handleViSemanticMcpMessage(
+          call('prompts/get', {
+            name: 'inspect_vi_change',
+            arguments: { repositoryRoot: '/repo', relativePath: 'a/b.vi', baseHash: 'aaaa', selectedHash: 'bbbb' }
+          })
+        )
+      ) as { messages: Array<{ content: { text: string } }> };
+      const text = result.messages[0].content.text;
+      expect(text).toContain('get_runtime_health');
+      expect(text).toContain('compare_vi_revisions');
+      expect(text).toContain('relativePath="a/b.vi"');
+    });
+
+    it('renders audit_preview_cache chaining diagnostics with a search and runtime correlation', () => {
+      const result = successResult(
+        handleViSemanticMcpMessage(
+          call('prompts/get', {
+            name: 'audit_preview_cache',
+            arguments: { cacheDirectory: '/cache', platform: 'linux' }
+          })
+        )
+      ) as { messages: Array<{ content: { text: string } }> };
+      const text = result.messages[0].content.text;
+      expect(text).toContain('diagnose_preview_cache');
+      expect(text).toContain('search_preview_cache');
+      expect(text).toContain('get_preview_diagnostics');
+      expect(text).toContain('platform="linux"');
+    });
+
+    it('renders diagnose_runtime_cache fusing runtime resolution with cache health', () => {
+      const result = successResult(
+        handleViSemanticMcpMessage(
+          call('prompts/get', {
+            name: 'diagnose_runtime_cache',
+            arguments: { cacheDirectory: '/cache', platform: 'win32' }
+          })
+        )
+      ) as { messages: Array<{ content: { text: string } }> };
+      const text = result.messages[0].content.text;
+      expect(text).toContain('get_preview_diagnostics');
+      expect(text).toContain('get_runtime_health');
+      expect(text).toContain('diagnose_preview_cache');
+      expect(text).toContain('search_preview_cache');
+      // Runtime-centric caching states the diagnosis must distinguish.
+      expect(text).toContain('COLD');
+      expect(text).toContain('BLOCKED');
+      expect(text).toContain('BROKEN');
+      expect(text).toContain('HEALTHY');
+      // The platform flows into both the preview and runtime calls.
+      expect(text).toContain('processPlatform="win32"');
+      expect(text).toContain('platform="win32"');
+    });
+
+    it('renders diagnose_runtime_cache without a platform (no platform clauses)', () => {
+      const result = successResult(
+        handleViSemanticMcpMessage(
+          call('prompts/get', { name: 'diagnose_runtime_cache', arguments: { cacheDirectory: '/cache' } })
+        )
+      ) as { messages: Array<{ content: { text: string } }> };
+      const text = result.messages[0].content.text;
+      expect(text).toContain('get_preview_diagnostics');
+      expect(text).not.toContain('processPlatform=');
       expect(text).not.toContain('platform=');
     });
 
@@ -1361,6 +1462,32 @@ describe('viSemanticComparisonMcp', () => {
         )
       ) as { completion: { values: string[] } };
       expect(result.completion.values).toEqual(['win32', 'linux', 'darwin']);
+    });
+
+    it('completes the audit_preview_cache platform argument', () => {
+      const result = successResult(
+        handleViSemanticMcpMessage(
+          call({
+            ref: { type: 'ref/prompt', name: 'audit_preview_cache' },
+            argument: { name: 'platform', value: 'dar' }
+          })
+        )
+      ) as { completion: { values: string[]; total: number } };
+      expect(result.completion.values).toEqual(['darwin']);
+      expect(result.completion.total).toBe(1);
+    });
+
+    it('completes the diagnose_runtime_cache platform argument', () => {
+      const result = successResult(
+        handleViSemanticMcpMessage(
+          call({
+            ref: { type: 'ref/prompt', name: 'diagnose_runtime_cache' },
+            argument: { name: 'platform', value: 'lin' }
+          })
+        )
+      ) as { completion: { values: string[]; total: number } };
+      expect(result.completion.values).toEqual(['linux']);
+      expect(result.completion.total).toBe(1);
     });
 
     it('completes schema ids for the schema resource template ref', () => {

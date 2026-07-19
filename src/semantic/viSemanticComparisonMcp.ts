@@ -677,6 +677,54 @@ export const VI_SEMANTIC_MCP_PROMPTS = [
     arguments: [
       { name: 'platform', description: 'Optional target platform (win32 | linux | darwin).', required: false }
     ]
+  },
+  {
+    name: 'survey_repository_vis',
+    title: 'Survey a repository\u2019s VIs',
+    description:
+      'Map a repository\u2019s tracked VIs by activity, then narrate how the most-active VI ' +
+      '(or a chosen one) evolved (chains index_repository_vis + summarize_vi_history).',
+    arguments: [
+      { name: 'repositoryRoot', description: 'Absolute path to the Git repository.', required: true },
+      { name: 'maxVis', description: 'Optional cap on VIs detailed (default 100, ceiling 500).', required: false },
+      { name: 'relativePath', description: 'Optional VI to drill into instead of the most-active one.', required: false }
+    ]
+  },
+  {
+    name: 'inspect_vi_change',
+    title: 'Inspect a single VI change',
+    description:
+      'Deep-dive one VI\u2019s change between two revisions: gate on runtime health, then run the ' +
+      'full semantic comparison and narrate it (chains get_runtime_health + compare_vi_revisions).',
+    arguments: [
+      { name: 'repositoryRoot', description: 'Absolute path to the Git repository.', required: true },
+      { name: 'relativePath', description: 'Repository-relative path of the .vi to inspect.', required: true },
+      { name: 'baseHash', description: 'Base (older) revision identifier.', required: true },
+      { name: 'selectedHash', description: 'Selected (newer) revision identifier.', required: true }
+    ]
+  },
+  {
+    name: 'audit_preview_cache',
+    title: 'Audit a VI preview cache',
+    description:
+      'Health-check a VI-preview render cache directory and surface flagged entries ' +
+      '(chains diagnose_preview_cache + search_preview_cache, correlated with get_preview_diagnostics).',
+    arguments: [
+      { name: 'cacheDirectory', description: 'Path to a VI-preview render cache directory.', required: true },
+      { name: 'platform', description: 'Optional target platform (win32 | linux | darwin) for the runtime correlation.', required: false }
+    ]
+  },
+  {
+    name: 'diagnose_runtime_cache',
+    title: 'Diagnose runtime preview caching',
+    description:
+      'Diagnose whether the active preview runtime is populating a healthy render cache \u2014 ' +
+      'distinguishing a cold cache from a broken runtime or an error-poisoned cache ' +
+      '(chains get_preview_diagnostics + get_runtime_health + diagnose_preview_cache + search_preview_cache).',
+    arguments: [
+      { name: 'cacheDirectory', description: 'Path to the VI-preview render cache directory the runtime writes to.', required: true },
+      { name: 'platform', description: 'Optional target platform (win32 | linux | darwin) to resolve the runtime for.', required: false }
+    ]
   }
 ] as const;
 
@@ -826,6 +874,103 @@ function renderPrompt(name: string, rawArguments: unknown): { description: strin
       messages: [{ role: 'user', content: { type: 'text', text } }]
     };
   }
+  if (name === 'survey_repository_vis') {
+    const repositoryRoot = requireStringArg(args, 'repositoryRoot');
+    const maxVisClause = typeof args.maxVis === 'number' ? `, \`maxVis=${args.maxVis}\`` : '';
+    const drillClause =
+      typeof args.relativePath === 'string' && args.relativePath.length > 0
+        ? `the VI at \`${args.relativePath}\``
+        : 'the highest-activity VI it reports';
+    const text =
+      'Survey the LabVIEW VIs in this repository and drill into the one that changes most.\n\n' +
+      `1. Call \`index_repository_vis\` with \`repositoryRoot="${repositoryRoot}"\`${maxVisClause} ` +
+      'to get the vi-history-suite/vi-repository-index@v1 activity-ranked map (each VI with its ' +
+      'revision count and latest change).\n' +
+      `2. Choose ${drillClause}, then call \`summarize_vi_history\` with the same ` +
+      '`repositoryRoot` and that VI\u2019s `relativePath` to walk its evolution timeline.\n' +
+      '3. Report the repository shape first (how many VIs, which are hottest), then the chosen ' +
+      'VI\u2019s chronological story. If `summarize_vi_history` reports the runtime is unavailable, ' +
+      'still present the index and note the comparison could not run.';
+    return {
+      description: 'Guided repository VI survey with a history drill-down.',
+      messages: [{ role: 'user', content: { type: 'text', text } }]
+    };
+  }
+  if (name === 'inspect_vi_change') {
+    const repositoryRoot = requireStringArg(args, 'repositoryRoot');
+    const relativePath = requireStringArg(args, 'relativePath');
+    const baseHash = requireStringArg(args, 'baseHash');
+    const selectedHash = requireStringArg(args, 'selectedHash');
+    const text =
+      `Inspect exactly how the LabVIEW VI at \`${relativePath}\` changed between two revisions.\n\n` +
+      '1. Call `get_runtime_health` first. If `blocked` is true, explain `blockedReason` and the ' +
+      'fix, and stop \u2014 the comparison cannot run.\n' +
+      `2. Otherwise call \`compare_vi_revisions\` with \`repositoryRoot="${repositoryRoot}"\`, ` +
+      `\`relativePath="${relativePath}"\`, \`baseHash="${baseHash}"\`, ` +
+      `\`selectedHash="${selectedHash}"\` to get the full ` +
+      'vi-history-suite/vi-semantic-comparison@v1 model (a run may take minutes).\n' +
+      '3. Narrate what changed leading with the model\u2019s `narrative`, then the changed surfaces, ' +
+      'attributes, and totals. Call out any structural or connector-pane change explicitly.';
+    return {
+      description: 'Guided single-VI change deep-dive.',
+      messages: [{ role: 'user', content: { type: 'text', text } }]
+    };
+  }
+  if (name === 'audit_preview_cache') {
+    const cacheDirectory = requireStringArg(args, 'cacheDirectory');
+    let platformClause = '';
+    if (args.platform !== undefined) {
+      const platform = requireEnumArg(args, 'platform', RUNTIME_PLATFORM_VALUES);
+      platformClause = ` with \`platform="${platform}"\``;
+    }
+    const text =
+      `Audit the VI-preview render cache at \`${cacheDirectory}\`.\n\n` +
+      `1. Call \`diagnose_preview_cache\` with \`cacheDirectory="${cacheDirectory}"\` for the ` +
+      'vi-history-suite/preview-cache-diagnostics@v1 health rollup (entry/byte counts, healthy vs ' +
+      'flagged, newest entry).\n' +
+      `2. If any entries are flagged, call \`search_preview_cache\` with the same ` +
+      '`cacheDirectory` and `marker="error"`, then again with `marker="empty"`, to enumerate the ' +
+      'specific broken entries.\n' +
+      `3. Call \`get_preview_diagnostics\`${platformClause} to correlate cache health with the ` +
+      'current runtime (Docker availability, visible LabVIEW images).\n' +
+      '4. Conclude with a one-line verdict: healthy, or the count of flagged entries and the single ' +
+      'next action (e.g. re-render the flagged VIs on a working runtime).';
+    return {
+      description: 'Guided VI preview-cache audit.',
+      messages: [{ role: 'user', content: { type: 'text', text } }]
+    };
+  }
+  if (name === 'diagnose_runtime_cache') {
+    const cacheDirectory = requireStringArg(args, 'cacheDirectory');
+    let previewPlatformClause = '';
+    let runtimePlatformClause = '';
+    if (args.platform !== undefined) {
+      const platform = requireEnumArg(args, 'platform', RUNTIME_PLATFORM_VALUES);
+      previewPlatformClause = `, \`processPlatform="${platform}"\``;
+      runtimePlatformClause = ` with \`platform="${platform}"\``;
+    }
+    const text =
+      'Diagnose whether the active preview runtime is populating a healthy render cache at ' +
+      `\`${cacheDirectory}\`.\n\n` +
+      `1. Call \`get_preview_diagnostics\` with \`cacheDirectory="${cacheDirectory}"\`` +
+      `${previewPlatformClause} to get the resolved preview runtime, Docker availability + visible ` +
+      'LabVIEW images, and the cache statistics (entry/byte counts, newest entry) in one call.\n' +
+      `2. Call \`get_runtime_health\`${runtimePlatformClause} to confirm the comparison runtime is ` +
+      'not `blocked`; if it is, report `blockedReason` \u2014 nothing will be cached until it is fixed.\n' +
+      `3. Call \`diagnose_preview_cache\` with the same \`cacheDirectory\` for the health rollup, then ` +
+      '`search_preview_cache` with `marker="error"` and again `marker="interactive"` to tell a broken ' +
+      'runtime (entries present but error-marked) from a working one (interactive/image entries).\n' +
+      '4. Classify the caching state and give the single next action:\n' +
+      '   - runtime ready + zero entries \u2192 COLD (nothing rendered yet; trigger a render to populate it).\n' +
+      '   - runtime blocked \u2192 BLOCKED (fix `blockedReason`; the cache cannot fill).\n' +
+      '   - entries present but error-marked / no interactive \u2192 BROKEN (the runtime is producing ' +
+      'unusable renders; inspect one with `get_preview_cache_entry` and re-render on a working runtime).\n' +
+      '   - healthy interactive/image entries \u2192 HEALTHY (report entry count and newest entry).';
+    return {
+      description: 'Guided runtime preview-caching diagnosis.',
+      messages: [{ role: 'user', content: { type: 'text', text } }]
+    };
+  }
   throwArgumentError('name', 'a known prompt name', name);
 }
 
@@ -858,6 +1003,10 @@ function completeArgument(rawRef: unknown, rawArgument: unknown): CompletionResu
 
   let candidates: readonly string[] = [];
   if (ref.type === 'ref/prompt' && ref.name === 'check_compare_readiness' && argName === 'platform') {
+    candidates = RUNTIME_PLATFORM_VALUES;
+  } else if (ref.type === 'ref/prompt' && ref.name === 'audit_preview_cache' && argName === 'platform') {
+    candidates = RUNTIME_PLATFORM_VALUES;
+  } else if (ref.type === 'ref/prompt' && ref.name === 'diagnose_runtime_cache' && argName === 'platform') {
     candidates = RUNTIME_PLATFORM_VALUES;
   } else if (
     ref.type === 'ref/resource' &&
