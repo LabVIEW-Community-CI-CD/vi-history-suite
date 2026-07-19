@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   buildFramesModelFromFlatExport,
+  assessFramesModelFidelity,
   decodePngSize,
   extractBlockDiagramFrames
 } from '../../src/reporting/viPreview/viPreviewFlatFrames';
@@ -74,5 +75,59 @@ describe('buildFramesModelFromFlatExport', () => {
 
   it('returns undefined when no decodable block-diagram image exists', () => {
     expect(buildFramesModelFromFlatExport('<HTML><BODY><H3>Block Diagram</H3></BODY></HTML>')).toBeUndefined();
+  });
+});
+
+// Builds a minimal PNG data URI (signature + IHDR only) at an arbitrary size so
+// the extractor decodes distinct dimensions without shipping many fixtures.
+function pngDataUri(width: number, height: number): string {
+  const header = Buffer.alloc(24);
+  header.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], 0);
+  header.writeUInt32BE(13, 8);
+  header.write('IHDR', 12, 'ascii');
+  header.writeUInt32BE(width, 16);
+  header.writeUInt32BE(height, 20);
+  return `data:image/png;base64,${header.toString('base64')}`;
+}
+
+describe('assessFramesModelFidelity', () => {
+  it('rates a small reconstruction as faithful (#2096)', () => {
+    const model = buildFramesModelFromFlatExport(
+      blockDiagramHtml([PNG_200x150, PNG_60x40, PNG_60x40])
+    )!;
+    const fidelity = assessFramesModelFidelity(model);
+    expect(fidelity.faithful).toBe(true);
+    expect(fidelity.childCount).toBe(2);
+    expect(fidelity.structureGroupCount).toBe(1);
+    expect(fidelity.reason).toBeUndefined();
+  });
+
+  it('keeps a single many-case structure faithful (one group, bounded children) (#2096)', () => {
+    // 20 equal-size cases of ONE structure: one group, under the child cap.
+    const cases = Array.from({ length: 20 }, () => PNG_60x40);
+    const model = buildFramesModelFromFlatExport(blockDiagramHtml([PNG_200x150, ...cases]))!;
+    const fidelity = assessFramesModelFidelity(model);
+    expect(fidelity.structureGroupCount).toBe(1);
+    expect(fidelity.faithful).toBe(true);
+  });
+
+  it('flags too many distinct same-size structure groups as low fidelity (#2096)', () => {
+    // 9 differently-sized block-diagram images => 9 structure groups (> 8).
+    const many = Array.from({ length: 9 }, (_value, index) => pngDataUri(100 + index, 50 + index));
+    const model = buildFramesModelFromFlatExport(blockDiagramHtml([PNG_200x150, ...many]))!;
+    const fidelity = assessFramesModelFidelity(model);
+    expect(fidelity.structureGroupCount).toBe(9);
+    expect(fidelity.faithful).toBe(false);
+    expect(fidelity.reason).toContain('structure groups');
+  });
+
+  it('flags an oversized stacked child count as low fidelity (#2096)', () => {
+    // 25 equal-size children: one group, but the stack exceeds the child cap.
+    const cases = Array.from({ length: 25 }, () => PNG_60x40);
+    const model = buildFramesModelFromFlatExport(blockDiagramHtml([PNG_200x150, ...cases]))!;
+    const fidelity = assessFramesModelFidelity(model);
+    expect(fidelity.childCount).toBe(25);
+    expect(fidelity.faithful).toBe(false);
+    expect(fidelity.reason).toContain('stacked child frames');
   });
 });

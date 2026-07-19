@@ -52,4 +52,25 @@ describe('selectViPreviewDocument', () => {
     expect(out.mode).toBe('document');
     expect(out.html).not.toContain('id="lvr-frames"');
   });
+
+  it('falls back to the document when the reconstruction is too low-fidelity (#2096)', () => {
+    // A complex diagram: 9 differently-sized block-diagram images reconstruct
+    // into 9 coordinate-less structure groups (> the fidelity cap), so the
+    // interactive layout would misrepresent the diagram — fall back instead.
+    const png = (w: number, h: number): string => {
+      const header = Buffer.alloc(24);
+      header.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], 0);
+      header.writeUInt32BE(13, 8);
+      header.write('IHDR', 12, 'ascii');
+      header.writeUInt32BE(w, 16);
+      header.writeUInt32BE(h, 20);
+      return `data:image/png;base64,${header.toString('base64')}`;
+    };
+    const imgs = Array.from({ length: 10 }, (_v, i) => `<P><IMG src="${png(100 + i, 50 + i)}"></P>`).join('\n');
+    const complex = `<HTML><BODY>\n<H3>Block Diagram</H3>\n${imgs}\n<H3>VI Revision History</H3>\n</BODY></HTML>`;
+    const out = selectViPreviewDocument({ labviewHtml: complex, mode: 'interactive', nonce: NONCE });
+    expect(out.mode).toBe('document');
+    expect(out.html).toContain("script-src 'none'");
+    expect(out.html).not.toContain('id="lvr-frames"');
+  });
 });
