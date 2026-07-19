@@ -25,6 +25,17 @@ import type {
   ViPreviewCacheSummary,
   ViPreviewCacheSearchMarker
 } from '../reporting/viPreview/viPreviewCacheInspection';
+// Type-only: the async handler resolves runtime health and preview diagnostics
+// through injected orchestrators, so this module stays free of the reporting /
+// node-fs boundaries those probes touch.
+import type {
+  ComparisonRuntimeSettings,
+  RuntimePlatform
+} from '../reporting/comparisonRuntimeLocator';
+import type {
+  CollectViPreviewDiagnosticsOptions,
+  ViPreviewDiagnosticsSnapshot
+} from '../tooling/viPreviewDiagnostics';
 import {
   validateViSemanticDocument,
   VI_SEMANTIC_SCHEMAS,
@@ -46,6 +57,33 @@ export const VI_SEMANTIC_MCP_SERVER_INFO = {
   name: 'vi-history-suite-semantic',
   version: '0.1.0'
 } as const;
+
+/** Schema id for the compact runtime-health snapshot the async server emits. */
+export const RUNTIME_HEALTH_SCHEMA = 'vi-history-suite/runtime-health@v1';
+
+/** Arguments accepted by the `get_runtime_health` tool. */
+export interface RuntimeHealthInput {
+  platform?: RuntimePlatform;
+  settings?: ComparisonRuntimeSettings;
+}
+
+/**
+ * Compact, agent-facing projection of a resolved comparison-runtime selection.
+ * `blocked` is the one-glance signal; `blockedReason` names the fix path when
+ * blocked. The full locator selection is not exposed — only the fields an agent
+ * needs to decide whether (and how) it can compare.
+ */
+export interface ViRuntimeHealth {
+  schema: typeof RUNTIME_HEALTH_SCHEMA;
+  platform: string;
+  provider: string;
+  engine: string | null;
+  bitness: string;
+  containerImage: string | null;
+  blocked: boolean;
+  blockedReason: string | null;
+  notes: string[];
+}
 
 export interface JsonRpcRequest {
   jsonrpc: '2.0';
@@ -337,6 +375,47 @@ const PREVIEW_CACHE_SEARCH_INPUT_SCHEMA = {
   required: ['cacheDirectory', 'marker']
 } as const;
 
+const RUNTIME_HEALTH_INPUT_SCHEMA = {
+  type: 'object',
+  properties: {
+    platform: {
+      type: 'string',
+      enum: ['win32', 'linux', 'darwin'],
+      description:
+        'Target platform to resolve the comparison runtime for. Defaults to the server host platform.'
+    },
+    settings: {
+      type: 'object',
+      description:
+        'Optional comparison-runtime settings (e.g. provider, labviewVersion, bitness, containerImageVersion) to evaluate, mirroring the extension settings an operator would pick.'
+    }
+  }
+} as const;
+
+const PREVIEW_DIAGNOSTICS_INPUT_SCHEMA = {
+  type: 'object',
+  properties: {
+    cacheDirectory: {
+      type: 'string',
+      description:
+        'Optional VI-preview render cache directory to inspect (entry/byte counts, newest entry). Omit to skip cache statistics.'
+    },
+    processPlatform: {
+      type: 'string',
+      enum: ['win32', 'linux', 'darwin'],
+      description: 'Platform to resolve the preview runtime for. Defaults to the server host platform.'
+    },
+    settings: {
+      type: 'object',
+      description: 'Optional comparison-runtime settings to evaluate during runtime resolution.'
+    },
+    connectTimeoutSeconds: {
+      type: 'number',
+      description: 'Optional preview-runtime connect timeout (seconds).'
+    }
+  }
+} as const;
+
 /**
  * MCP tool annotations (per the 2025-06-18 spec `ToolAnnotations`) declaring
  * behavioral hints so an agent host can reason about a tool before calling it.
@@ -474,6 +553,27 @@ export const VI_SEMANTIC_MCP_TOOLS = [
       'to return the raw HTML. Read-only.',
     inputSchema: PREVIEW_CACHE_GET_INPUT_SCHEMA,
     annotations: { title: 'Get preview cache entry', ...READ_ONLY_OPEN_WORLD }
+  },
+  {
+    name: 'get_runtime_health',
+    description:
+      'Resolve the LabVIEW comparison runtime WITHOUT running a comparison and return a ' +
+      `${RUNTIME_HEALTH_SCHEMA} snapshot (selected provider/engine/container image, or the ` +
+      'blockedReason when none is available) so an agent can answer "can I compare here, and if ' +
+      'not, why?" in one cheap call before spending minutes on compare_vi_revisions / ' +
+      'build_vi_pr_review. Read-only; never renders.',
+    inputSchema: RUNTIME_HEALTH_INPUT_SCHEMA,
+    annotations: { title: 'Get runtime health', ...READ_ONLY_OPEN_WORLD }
+  },
+  {
+    name: 'get_preview_diagnostics',
+    description:
+      'Return a vi-history-suite/preview-diagnostics@v1 environment snapshot (resolved preview ' +
+      'runtime, Docker availability + OS type + LabVIEW images, and optional cache statistics) so ' +
+      'an agent can answer "is preview generation possible here, and is the cache populated?" in ' +
+      'one call. Read-only; never renders.',
+    inputSchema: PREVIEW_DIAGNOSTICS_INPUT_SCHEMA,
+    annotations: { title: 'Get preview diagnostics', ...READ_ONLY_OPEN_WORLD }
   }
 ] as const;
 
@@ -499,7 +599,9 @@ const ASYNC_ONLY_TOOL_NAMES: ReadonlySet<string> = new Set([
   'summarize_preview_cache',
   'diagnose_preview_cache',
   'search_preview_cache',
-  'get_preview_cache_entry'
+  'get_preview_cache_entry',
+  'get_runtime_health',
+  'get_preview_diagnostics'
 ]);
 
 /** Every tool name published by the registry (the authoritative known set). */
@@ -828,6 +930,22 @@ export interface ViSemanticMcpAsyncDeps {
    * handler (VHS-REQ-659).
    */
   previewCacheInspector?: ViPreviewCacheInspectorDeps;
+  /**
+   * Read-only runtime-health resolver. Resolves the comparison runtime (never
+   * running a comparison) and projects a compact {@link ViRuntimeHealth}
+   * snapshot. Injected by the stdio entrypoint; when absent,
+   * `get_runtime_health` reports a wired-up error.
+   */
+  resolveRuntimeHealth?: (input: RuntimeHealthInput) => Promise<ViRuntimeHealth>;
+  /**
+   * Read-only preview-diagnostics collector. Bundles runtime resolution, Docker
+   * probing, and optional cache statistics into a preview-diagnostics@v1
+   * snapshot (never renders). Injected by the stdio entrypoint; when absent,
+   * `get_preview_diagnostics` reports a wired-up error.
+   */
+  collectPreviewDiagnostics?: (
+    input: CollectViPreviewDiagnosticsOptions
+  ) => Promise<ViPreviewDiagnosticsSnapshot>;
 }
 
 /** Injected read-only preview-cache inspection surface for the MCP tools. */
@@ -926,8 +1044,88 @@ export async function handleViSemanticMcpMessageAsync(
     ) {
       return handlePreviewCacheTool(id, params.name, params.arguments, deps.previewCacheInspector);
     }
+    if (params.name === 'get_runtime_health') {
+      return invokeInjectedTool(
+        id,
+        'get_runtime_health',
+        deps.resolveRuntimeHealth,
+        () => parseRuntimeHealthArguments(params.arguments),
+        (health) => toolTextResult(JSON.stringify(health, null, 2))
+      );
+    }
+    if (params.name === 'get_preview_diagnostics') {
+      return invokeInjectedTool(
+        id,
+        'get_preview_diagnostics',
+        deps.collectPreviewDiagnostics,
+        () => parsePreviewDiagnosticsArguments(params.arguments),
+        (snapshot) => toolTextResult(JSON.stringify(snapshot, null, 2))
+      );
+    }
   }
   return handleViSemanticMcpMessage(message);
+}
+
+const RUNTIME_PLATFORMS: ReadonlySet<string> = new Set(['win32', 'linux', 'darwin']);
+
+function parseRuntimeHealthArguments(rawArguments: unknown): RuntimeHealthInput {
+  if (rawArguments === undefined || rawArguments === null) {
+    return {};
+  }
+  if (typeof rawArguments !== 'object') {
+    throw new Error('tool arguments must be an object');
+  }
+  const args = rawArguments as Record<string, unknown>;
+  const input: RuntimeHealthInput = {};
+  if (args.platform !== undefined) {
+    if (typeof args.platform !== 'string' || !RUNTIME_PLATFORMS.has(args.platform)) {
+      throw new Error('platform must be one of "win32", "linux", or "darwin"');
+    }
+    input.platform = args.platform as RuntimePlatform;
+  }
+  if (args.settings !== undefined) {
+    if (typeof args.settings !== 'object' || args.settings === null) {
+      throw new Error('settings must be an object');
+    }
+    input.settings = args.settings as ComparisonRuntimeSettings;
+  }
+  return input;
+}
+
+function parsePreviewDiagnosticsArguments(rawArguments: unknown): CollectViPreviewDiagnosticsOptions {
+  if (rawArguments === undefined || rawArguments === null) {
+    return {};
+  }
+  if (typeof rawArguments !== 'object') {
+    throw new Error('tool arguments must be an object');
+  }
+  const args = rawArguments as Record<string, unknown>;
+  const options: CollectViPreviewDiagnosticsOptions = {};
+  if (args.cacheDirectory !== undefined) {
+    if (typeof args.cacheDirectory !== 'string' || args.cacheDirectory.length === 0) {
+      throw new Error('cacheDirectory must be a non-empty string');
+    }
+    options.cacheDirectory = args.cacheDirectory;
+  }
+  if (args.processPlatform !== undefined) {
+    if (typeof args.processPlatform !== 'string' || !RUNTIME_PLATFORMS.has(args.processPlatform)) {
+      throw new Error('processPlatform must be one of "win32", "linux", or "darwin"');
+    }
+    options.processPlatform = args.processPlatform as NodeJS.Platform;
+  }
+  if (args.settings !== undefined) {
+    if (typeof args.settings !== 'object' || args.settings === null) {
+      throw new Error('settings must be an object');
+    }
+    options.settings = args.settings as ComparisonRuntimeSettings;
+  }
+  if (args.connectTimeoutSeconds !== undefined) {
+    if (typeof args.connectTimeoutSeconds !== 'number' || !Number.isFinite(args.connectTimeoutSeconds)) {
+      throw new Error('connectTimeoutSeconds must be a finite number');
+    }
+    options.connectTimeoutSeconds = args.connectTimeoutSeconds;
+  }
+  return options;
 }
 
 function requireCacheDirectory(rawArguments: unknown): { cacheDirectory: string; args: Record<string, unknown> } {
