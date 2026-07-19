@@ -4419,10 +4419,11 @@ Missing numeric IDs are intentional.
     and then to single-file staging when a tree exceeds the file-count or
     total-size guard.
   - When a render cache is available, `renderViPreviewForFile` serves an
-    unchanged VI (keyed by `computeViPreviewCacheKey` over the target VI plus the
-    staged file set by path/size/mtime, so VIs sharing a staged tree never
-    collide) from the cache without staging or launching LabVIEW, and populates
-    the cache after a fresh render; cache read and write failures are non-fatal.
+    unchanged VI (keyed by `computeViPreviewCacheKey` over the target VI plus a
+    content digest of each staged file, so the key is portable across machines
+    and VIs sharing a staged tree never collide) from the cache without staging
+    or launching LabVIEW, and populates the cache after a fresh render; cache
+    read and write failures are non-fatal.
   - After VI Preview is enabled (or the first successful preview opens), a
     background warmer renders the
     remaining workspace VIs serially through a single warm session, populating
@@ -5357,16 +5358,20 @@ Missing numeric IDs are intentional.
     and zeroed totals rather than throwing, so the block is emitted as evidence.
   - `runViPreviewCacheWarm` warms every enumerated VI serially through the shared
     warm loop with a file-backed render cache attached at the target cache
-    directory, recording each VI as a manifest entry carrying its
-    repository-relative path, its content-addressed cache key (or null when the
-    key could not be computed), an outcome (`rendered`, `cache-hit`, `failed`, or
-    `blocked`), the produced byte count, the inline preview-image count when a
-    document was produced, and a failure reason when not successful; a per-VI
-    render failure is recorded and the loop continues.
+    directory, which by default retains every rendered entry (eviction disabled)
+    so a whole-workspace warm never evicts earlier VIs as later ones render,
+    recording each VI as a manifest entry carrying its repository-relative path,
+    its content-addressed cache key (or null when the key could not be computed),
+    an outcome (`rendered`, `cache-hit`, `failed`, or `blocked`), the produced
+    byte count, the inline preview-image count when a document was produced, and
+    a failure reason when not successful; a fresh render that could not be
+    persisted to the cache is recorded as `failed`, and a per-VI render failure
+    is recorded while the loop continues.
   - `renderViPreviewForFile` returns the content-addressed cache key it used for
     cache hits, cache-only misses, and completed renders (undefined only when a
-    staged file was missing from the enumeration and the render proceeded
-    uncached), so the worker can build the key-to-VI-path manifest without
+    staged file could not be hashed and the render proceeded uncached) and
+    reports whether a fresh render was persisted to the cache, so the worker can
+    build the key-to-VI-path manifest and detect a non-persisted render without
     recomputing staging.
   - The worker emits a `vi-history-suite/preview-cache-warm@v1` packet with a
     top-level `$schema` and `schemaVersion`, the repository root, the cache

@@ -1,6 +1,7 @@
 import * as fs from 'node:fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
+import { createHash } from 'node:crypto';
 
 import { serializeJsonArtifact } from '../support/jsonArtifact';
 import { errorMessage } from '../support/errorMessage';
@@ -118,6 +119,8 @@ export function buildNodeViPreviewRenderDeps(
     copyFile: (source, destination) => fs.copyFile(source, destination),
     readFile: (filePath) => fs.readFile(filePath, 'utf8'),
     removeDirectory: (directory) => fs.rm(directory, { recursive: true, force: true }),
+    hashFile: async (filePath) =>
+      createHash('sha256').update(await fs.readFile(filePath)).digest('hex'),
     execution: {
       runCommand: async (plan: ComparisonCommandPlan) => {
         return runExecFileText(plan.executable, plan.args, {
