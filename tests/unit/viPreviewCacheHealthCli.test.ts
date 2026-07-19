@@ -1,4 +1,8 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import * as fs from 'node:fs/promises';
+import * as os from 'node:os';
+import * as path from 'node:path';
 
 import {
   main,
@@ -131,5 +135,130 @@ describe('preview-cache-health CLI main (VHS-REQ-675.3)', () => {
       'evidence/health.json',
       expect.stringContaining(PREVIEW_CACHE_HEALTH_SCHEMA)
     );
+  });
+});
+
+// Exercises the default (uninjected) node-fs adapters + main output against a
+// real temp directory so the node builder factories and the path-safe writer
+// are covered rather than always replaced by injected deps.
+describe('preview-cache-health default node deps over a real filesystem (VHS-REQ-675.3)', () => {
+  const KEY = 'a'.repeat(64);
+  let root: string;
+  let originalCwd: string;
+
+  beforeEach(async () => {
+    originalCwd = process.cwd();
+    root = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-health-fs-'));
+  });
+
+  afterEach(async () => {
+    process.chdir(originalCwd);
+    await fs.rm(root, { recursive: true, force: true });
+  });
+
+  it('enumerates workspace VIs, lists cache keys, and parses the manifest from disk', async () => {
+    const repoRoot = path.join(root, 'repo');
+    const cacheDir = path.join(root, 'cache');
+    await fs.mkdir(path.join(repoRoot, 'sub'), { recursive: true });
+    await fs.mkdir(path.join(repoRoot, 'node_modules'), { recursive: true });
+    await fs.mkdir(cacheDir, { recursive: true });
+    await fs.writeFile(path.join(repoRoot, 'sub', 'One.vi'), 'vi');
+    await fs.writeFile(path.join(repoRoot, 'Two.ctl'), 'ctl');
+    await fs.writeFile(path.join(repoRoot, 'node_modules', 'Dep.vi'), 'ignored');
+    await fs.writeFile(path.join(cacheDir, `${KEY}.html`), '<html></html>');
+    await fs.writeFile(path.join(cacheDir, 'not-a-cache.txt'), 'skip');
+    const manifestPath = path.join(root, 'warm.json');
+    await fs.writeFile(
+      manifestPath,
+      JSON.stringify({
+        entries: [
+          { relativePath: 'sub/One.vi', key: KEY, outcome: 'rendered' },
+          { relativePath: 'Two.ctl', key: 'b'.repeat(64), outcome: 'rendered' }
+        ]
+      })
+    );
+
+    const report = await runViPreviewCacheHealth({
+      repositoryRoot: repoRoot,
+      cacheDirectory: cacheDir,
+      manifestPath
+    });
+
+    // node_modules excluded; both source VIs enumerated repo-relative.
+    expect(report.totals.workspaceVis).toBe(2);
+    const byPath = Object.fromEntries(report.entries.map((e) => [e.relativePath, e.status]));
+    expect(byPath['sub/One.vi']).toBe('cached'); // KEY present on disk
+    expect(byPath['Two.ctl']).toBe('stale'); // manifest key absent on disk
+    expect(report.manifestPresent).toBe(true);
+  });
+
+  it('treats a missing or unparseable manifest as no manifest', async () => {
+    const cacheDir = path.join(root, 'cache2');
+    await fs.mkdir(cacheDir, { recursive: true });
+    const missing = await runViPreviewCacheHealth({
+      repositoryRoot: root,
+      cacheDirectory: cacheDir,
+      manifestPath: path.join(root, 'nope.json')
+    });
+    expect(missing.manifestPresent).toBe(false);
+
+    const bad = path.join(root, 'bad.json');
+    await fs.writeFile(bad, 'not json at all');
+    const report = await runViPreviewCacheHealth({
+      repositoryRoot: root,
+      cacheDirectory: cacheDir,
+      manifestPath: bad
+    });
+    expect(report.manifestPresent).toBe(false);
+  });
+
+  it('returns empty cache keys when the cache directory is unreadable', async () => {
+    const report = await runViPreviewCacheHealth({
+      repositoryRoot: root,
+      cacheDirectory: path.join(root, 'does-not-exist')
+    });
+    expect(report.totals.orphanedCacheFiles).toBe(0);
+  });
+
+  it('main writes the report to disk via the default path-safe writer and prints a summary', async () => {
+    const cacheDir = path.join(root, 'cache3');
+    await fs.mkdir(cacheDir, { recursive: true });
+    process.chdir(root);
+    const code = await main(['--repo-root', root, '--cache-dir', cacheDir, '--output', 'out/health.json']);
+    expect(code).toBe(0);
+    const written = await fs.readFile(path.join(root, 'out', 'health.json'), 'utf8');
+    expect(written).toContain(PREVIEW_CACHE_HEALTH_SCHEMA);
+  });
+
+  it('main default writer rejects an absolute --output path', async () => {
+    const cacheDir = path.join(root, 'cache4');
+    await fs.mkdir(cacheDir, { recursive: true });
+    process.chdir(root);
+    await expect(main(['--cache-dir', cacheDir, '--output', '/etc/evil.json'])).rejects.toThrow(
+      /relative path/
+    );
+  });
+
+  it('main default writer rejects a parent-escaping --output path', async () => {
+    const cacheDir = path.join(root, 'cache5');
+    await fs.mkdir(cacheDir, { recursive: true });
+    process.chdir(root);
+    await expect(main(['--cache-dir', cacheDir, '--output', '../escape.json'])).rejects.toThrow(
+      /within the working directory/
+    );
+  });
+
+  it('main prints JSON on stdout under --json with the default runner', async () => {
+    const cacheDir = path.join(root, 'cache6');
+    await fs.mkdir(cacheDir, { recursive: true });
+    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    try {
+      const code = await main(['--repo-root', root, '--cache-dir', cacheDir, '--json']);
+      expect(code).toBe(0);
+      const printed = log.mock.calls.map((call) => String(call[0])).join('\n');
+      expect(printed).toContain(PREVIEW_CACHE_HEALTH_SCHEMA);
+    } finally {
+      log.mockRestore();
+    }
   });
 });
