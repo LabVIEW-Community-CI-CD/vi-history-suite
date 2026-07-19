@@ -68,7 +68,8 @@ Bootstrap sequence:
    from step 5) are complete.
 8. Tag the merged `main` commit as `vX.Y.Z`.
 9. Manually dispatch the `Marketplace Release` workflow on that exact tag
-   (maintainer-only; agents must never dispatch or approve it).
+   (an authorized agent is responsible for dispatching and approving it; a
+   maintainer may also do so).
 10. Verify the Marketplace version and links with:
 
    ```powershell
@@ -120,7 +121,7 @@ Marketplace publishing path.
 
 It must:
 
-- run from a manual maintainer `workflow_dispatch` on an exact `vX.Y.Z` tag ref, with no automatic push/tag trigger, and agents must never dispatch or approve it
+- run from a manual `workflow_dispatch` on an exact `vX.Y.Z` tag ref, with no automatic push/tag trigger; an authorized agent is responsible for dispatching and approving it (a maintainer may also do so)
 - fail closed unless `package.json` version equals the tag without `v`
 - fail closed unless the tagged commit is reachable from `origin/main`
 - run `npm ci`, `npm run check`, `npm test`, and `npm run package`
