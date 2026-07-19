@@ -358,6 +358,7 @@
     "preview:cache:warm": "npm run compile 1>&2 && node out/cli/runViPreviewCacheWarmer.js",
     "preview:cache:health": "npm run compile 1>&2 && node out/cli/runViPreviewCacheHealth.js",
     "preview:cache:bundle": "npm run compile 1>&2 && node out/cli/runViPreviewCacheBundle.js",
+    "preview:cache:exchange": "npm run compile 1>&2 && node out/cli/runViPreviewCacheExchange.js",
     "docs:links": "node scripts/checkDocsLinks.js",
     "docs:gate": "node scripts/checkDocumentationWorkbench.js",
     "coverage:map": "node scripts/mapCoverageToTraceability.js",

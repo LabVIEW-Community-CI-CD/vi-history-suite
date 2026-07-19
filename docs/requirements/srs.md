@@ -5527,3 +5527,59 @@ Missing numeric IDs are intentional.
     additively (new fields, not reshaped records). Distribution (publishing and
     fetching bundles) belongs to the cache exchange (VHS-REQ-673), not this
     format.
+
+### VHS-REQ-673: Preview-Cache Exchange
+
+- Status: Active
+- Parent: VHS-SYS-REQ-016
+- Area: CI And Developer Environment
+- Statement: The repository shall provide a preview-cache exchange that publishes
+  a portable cache bundle (VHS-REQ-672) to a content-addressed GitHub Release and
+  fetches a published bundle back, verifying and losslessly merging it into a
+  target cache, so a preview cache generated in one environment (a Codespace
+  worker or CI fleet, VHS-REQ-671) can be distributed to and reused in another.
+  It reuses the dev-tools release-channel transport (VHS-REQ-667): a single
+  tarball asset plus a detached manifest per release, addressed by a content
+  digest so a bundle is published once and de-duplicated on re-publish. This is
+  the distribution slice of the preview-cache fabric.
+- Acceptance Criteria:
+  - `computeBundleContentDigest` derives an order-independent SHA-256 over a
+    bundle manifest's entries (key + integrity digest), and
+    `deriveExchangeReleaseTag` maps it to a stable `preview-cache-<12-hex>`
+    release tag, so identical cache content resolves to the same tag regardless
+    of build order.
+  - `planExchangePublish` decides `publish`, `skip-existing` (the
+    content-addressed tag is already published — idempotent re-publish), or
+    `skip-empty` (no entries), from the manifest and the set of existing tags,
+    purely and without side effects.
+  - `selectExchangeReleaseToFetch` selects the release matching an explicit tag
+    when given, otherwise the most recently created `preview-cache-*` release,
+    ignoring unrelated release tags, and returns undefined when nothing matches.
+  - `node out/cli/runViPreviewCacheExchange.js` (npm run `preview:cache:exchange`)
+    `publish` reads a bundle directory's manifest, and when the plan is to
+    publish, packs the bundle into a tarball and creates the content-addressed
+    release attaching the tarball plus the detached manifest; `fetch` downloads
+    the selected release, extracts it, verifies the bundle against its manifest
+    integrity digests, and losslessly merges it into a `--into` target cache
+    (reusing the bundle verify + content-addressed import), failing closed on a
+    missing release, a missing/corrupt archive, or an integrity failure. All
+    GitHub (`gh`), tar, and filesystem boundaries are injected so the
+    orchestration is unit-testable offline.
+- Agent Work Scope:
+  - Keep the publish/fetch decisions pure (`viPreviewCacheExchange`) and the CLI
+    a thin injected-boundary wiring; reuse the bundle format and its verify +
+    import rather than a new merge path; keep publish idempotent and fetch
+    fail-closed so a shared exchange can never corrupt a consumer's cache. Do not
+    add an auto-publishing workflow here (that is the fleet, VHS-REQ-674).
+- Implementation References:
+  - `src/cli/runViPreviewCacheExchange.ts`
+  - `src/reporting/viPreview/viPreviewCacheExchange.ts`
+  - `package.json`
+- Verification References:
+  - `tests/unit/viPreviewCacheExchange.test.ts`
+  - `tests/unit/viPreviewCacheExchangeCli.test.ts`
+- Change Guidance:
+  - Keep the exchange content-addressed and idempotent; reuse the dev-tools
+    release-channel transport conventions. If bundle sizes outgrow release
+    assets, an OCI/registry transport is the scale-out alternative — add it as a
+    new transport behind the same pure planning layer rather than reshaping it.
