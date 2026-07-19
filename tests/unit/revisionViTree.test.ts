@@ -30,6 +30,24 @@ describe('parseLsTreeOutput', () => {
       { repoRelativePath: 'support/Sub.vi', sizeBytes: 20 }
     ]);
   });
+
+  it('preserves leading/trailing whitespace in the path field (#2113)', () => {
+    // Everything after the tab is the path verbatim; git does not quote spaces,
+    // so a path with edge whitespace must round-trip exactly (trimming it would
+    // fetch the wrong blob and drop the file from the materialized tree).
+    const stdout = '100644 blob 0abc 10\t lib/ Padded .vi \n';
+    expect(parseLsTreeOutput(stdout)).toEqual([
+      { repoRelativePath: ' lib/ Padded .vi ', sizeBytes: 10 }
+    ]);
+  });
+
+  it('strips a trailing carriage return from CRLF-terminated lines without touching path whitespace (#2113)', () => {
+    const stdout = '100644 blob 0abc 10\t lib/Foo .vi\r\n100644 blob 1def 20\tSub.vi\r\n';
+    expect(parseLsTreeOutput(stdout)).toEqual([
+      { repoRelativePath: ' lib/Foo .vi', sizeBytes: 10 },
+      { repoRelativePath: 'Sub.vi', sizeBytes: 20 }
+    ]);
+  });
 });
 
 describe('materializeRevisionViTree (VHS-REQ-659.15)', () => {
