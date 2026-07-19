@@ -5385,6 +5385,14 @@ Missing numeric IDs are intentional.
     `--json`, retains the packet through a path-safe `--output` (rejecting
     absolute or parent-escaping paths), and exits nonzero when the runtime is
     blocked or any VI failed to render.
+  - A reusable consumer devcontainer template
+    (`docs/consumer-workflows/codespace-preview-cache.devcontainer.json`) lets a
+    user open a Codespace on any LabVIEW repository as a preview-cache worker: it
+    enables the Docker-in-Docker feature (a live preview render is Docker-only),
+    installs the VI History Suite extension by its Marketplace id, turns on the
+    Docker-only preview feature with aggressive background warming, and documents
+    the `gh codespace ssh -- 'npm run preview:cache:warm --cache-dir ...'`
+    invocation; the template is kept under `docs/` (out of the packaged VSIX).
 - Agent Work Scope:
   - Keep the enumerator and the warm orchestration pure and injectable (no VS
     Code, Docker, or real filesystem required to unit-test); reuse
@@ -5396,10 +5404,12 @@ Missing numeric IDs are intentional.
   - `src/cli/runViPreviewCacheWarmer.ts`
   - `src/reporting/viPreview/viPreviewWorkspaceScan.ts`
   - `src/reporting/viPreview/viPreviewFileRender.ts`
+  - `docs/consumer-workflows/codespace-preview-cache.devcontainer.json`
   - `package.json`
 - Verification References:
   - `tests/unit/viPreviewWorkspaceScan.test.ts`
   - `tests/unit/viPreviewCacheWarmerCli.test.ts`
+  - `tests/unit/codespacePreviewCacheTemplate.test.ts`
 - Change Guidance:
   - Keep the worker read-only against the workspace (it only reads VIs and writes
     into the cache directory), Docker-only, and pure/injectable. Extend the

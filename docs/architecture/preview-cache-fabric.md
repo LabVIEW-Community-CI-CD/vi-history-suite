@@ -104,3 +104,9 @@ gh codespace ssh -c <codespace> -- \
 The worker requires an explicit `--cache-dir` (a scratch directory is
 recommended); the extension's own cache lives under the host's
 `globalStorage/<publisher>.vi-history-suite/vi-preview-cache`.
+
+To open a Codespace on **any** LabVIEW repository as a worker, copy
+[`docs/consumer-workflows/codespace-preview-cache.devcontainer.json`](../consumer-workflows/codespace-preview-cache.devcontainer.json)
+into that repository's `.devcontainer/devcontainer.json`: it enables
+Docker-in-Docker, installs the extension, and turns on the preview feature so
+the Codespace is ready to generate and store caches.

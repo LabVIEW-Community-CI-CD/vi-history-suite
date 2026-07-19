@@ -1,0 +1,49 @@
+// Consumer devcontainer template — VI History Suite preview-cache worker (VHS-REQ-671).
+//
+// Copy this into `.devcontainer/devcontainer.json` of ANY LabVIEW repository to
+// turn a GitHub Codespace opened on that repo into a preview-cache WORKER: the
+// VI History Suite extension is installed, background warming runs, and you can
+// generate + store the repository's single-VI preview caches headlessly.
+//
+// Why Docker-in-Docker: a live preview render is Docker-only (the LabVIEW
+// container renders the VI); a Codespace has no host LabVIEW, so the worker
+// drives the Docker (linux-container) preview runtime.
+//
+// After the Codespace starts, generate the whole-workspace cache over SSH:
+//
+//   gh codespace ssh -c <codespace> -- \
+//     'cd /workspaces/<repo> && npm run preview:cache:warm -- \
+//        --cache-dir .vihs-preview-cache --json'
+//
+// The worker requires an explicit --cache-dir (a scratch dir is recommended).
+// Because preview cache entries are content-addressed and reproducible, the
+// generated cache is valid on any machine for the same VI content.
+//
+// Extension source: the published Marketplace id is used below for zero setup.
+// To pin a specific build instead, install the dev-tools VSIX from a GitHub
+// Release (see the vi-history-suite dev-tools release channel) via a
+// postCreateCommand `code --install-extension <vsix>` rather than the id.
+{
+  "name": "labview-preview-cache-worker",
+  "image": "mcr.microsoft.com/devcontainers/base:bookworm",
+  "features": {
+    // Docker-in-Docker: required — the preview render runs in a LabVIEW container.
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/node:1": {},
+    "ghcr.io/devcontainers/features/git:1": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        // The VI History Suite extension (Marketplace id).
+        "svelderrainruiz.vi-history-suite"
+      ],
+      "settings": {
+        // The preview feature is opt-in and Docker-only; enable it and warm
+        // aggressively so the Codespace pre-renders the workspace's VIs.
+        "viHistorySuite.preview.enabled": true,
+        "viHistorySuite.preview.backgroundWarming": "always"
+      }
+    }
+  }
+}
