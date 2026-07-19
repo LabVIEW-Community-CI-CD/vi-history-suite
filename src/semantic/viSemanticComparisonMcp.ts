@@ -442,6 +442,46 @@ function success(id: JsonRpcSuccess['id'], result: unknown): JsonRpcSuccess {
   return { jsonrpc: '2.0', id, result };
 }
 
+/**
+ * Tool names that touch a comparison runtime or the filesystem, so they are only
+ * available through the async server entrypoint (which injects the orchestrators
+ * or the read-only cache inspector). The synchronous dispatcher rejects them with
+ * a clear tool-error result rather than running them without their dependencies.
+ * Single source of truth — the sync-capable set is derived as the registry minus
+ * this set, so adding a tool to VI_SEMANTIC_MCP_TOOLS can never silently fall
+ * through to "unknown tool".
+ */
+const ASYNC_ONLY_TOOL_NAMES: ReadonlySet<string> = new Set([
+  'compare_vi_revisions',
+  'summarize_vi_history',
+  'index_repository_vis',
+  'build_vi_pr_review',
+  'list_preview_cache',
+  'summarize_preview_cache',
+  'diagnose_preview_cache',
+  'search_preview_cache',
+  'get_preview_cache_entry'
+]);
+
+/** Every tool name published by the registry (the authoritative known set). */
+const KNOWN_TOOL_NAMES: ReadonlySet<string> = new Set(
+  VI_SEMANTIC_MCP_TOOLS.map((tool) => tool.name)
+);
+
+/**
+ * Exposed for tests: the async-only and sync-capable partitions of the tool
+ * registry. `SYNC_CAPABLE_TOOL_NAMES` is derived (registry minus async-only) so
+ * the two can never drift from `VI_SEMANTIC_MCP_TOOLS`.
+ */
+export const VI_SEMANTIC_MCP_ASYNC_ONLY_TOOL_NAMES: readonly string[] = [
+  ...ASYNC_ONLY_TOOL_NAMES
+].sort();
+export const VI_SEMANTIC_MCP_SYNC_CAPABLE_TOOL_NAMES: readonly string[] = [
+  ...KNOWN_TOOL_NAMES
+]
+  .filter((name) => !ASYNC_ONLY_TOOL_NAMES.has(name))
+  .sort();
+
 function failure(
   id: JsonRpcError['id'],
   code: number,
@@ -554,17 +594,12 @@ export function handleViSemanticMcpMessage(
       if (typeof params.name !== 'string') {
         return failure(id, JSON_RPC_INVALID_PARAMS, 'tools/call requires a string "name"');
       }
-      if (
-        params.name === 'compare_vi_revisions' ||
-        params.name === 'summarize_vi_history' ||
-        params.name === 'index_repository_vis' ||
-        params.name === 'build_vi_pr_review' ||
-        params.name === 'list_preview_cache' ||
-        params.name === 'summarize_preview_cache' ||
-        params.name === 'diagnose_preview_cache' ||
-        params.name === 'search_preview_cache' ||
-        params.name === 'get_preview_cache_entry'
-      ) {
+      // Reject an unknown tool up front against the authoritative registry set,
+      // so a name not published by tools/list can never reach a handler.
+      if (!KNOWN_TOOL_NAMES.has(params.name)) {
+        return failure(id, JSON_RPC_INVALID_PARAMS, `unknown tool: ${params.name}`);
+      }
+      if (ASYNC_ONLY_TOOL_NAMES.has(params.name)) {
         // These tools touch a runtime or the filesystem and are only available
         // through the async server entrypoint, which injects the orchestrators
         // (comparison runtimes) or the read-only cache inspector (filesystem).
@@ -575,14 +610,6 @@ export function handleViSemanticMcpMessage(
             true
           )
         );
-      }
-      if (
-        params.name !== 'summarize_vi_comparison' &&
-        params.name !== 'get_vi_semantic_comparison' &&
-        params.name !== 'get_vi_semantic_schema' &&
-        params.name !== 'validate_vi_semantic_document'
-      ) {
-        return failure(id, JSON_RPC_INVALID_PARAMS, `unknown tool: ${params.name}`);
       }
       try {
         return success(id, callTool(params.name, params.arguments));
