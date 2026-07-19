@@ -50,6 +50,14 @@ export interface RenderViPreviewForFileResult {
   html?: string;
   /** True when the document was served from the render cache. */
   cached?: boolean;
+  /**
+   * The content-addressed cache key used for this VI (target VI plus staged
+   * file set), when it could be computed. Present for cache hits, cache-only
+   * misses, and completed renders so callers can build a key->VI-path manifest
+   * (VHS-REQ-671); undefined when a staged file was missing from the
+   * enumeration and the render proceeded uncached.
+   */
+  cacheKey?: string;
   failureReason?: ViPreviewFailureReason;
   stderr?: string;
 }
@@ -142,7 +150,7 @@ export async function renderViPreviewForFile(
   if (deps.cache && cacheKey) {
     const cached = await deps.cache.get(cacheKey).catch(() => undefined);
     if (cached !== undefined) {
-      return { outcome: 'rendered', html: cached, cached: true };
+      return { outcome: 'rendered', html: cached, cached: true, cacheKey };
     }
   }
 
@@ -151,7 +159,7 @@ export async function renderViPreviewForFile(
   // render is Docker-only). When requested and the cache misses, return without
   // staging or executing LabVIEW so the caller can fall back. (VHS-REQ-659.)
   if (options.cacheOnly) {
-    return { outcome: 'failed', failureReason: 'preview-cache-miss' };
+    return { outcome: 'failed', failureReason: 'preview-cache-miss', cacheKey };
   }
 
   const workspaceDirectory = await deps.createWorkspaceDirectory();
@@ -198,13 +206,14 @@ export async function renderViPreviewForFile(
           /* ignore cache write failure */
         }
       }
-      return { outcome: 'rendered', html, cached: false };
+      return { outcome: 'rendered', html, cached: false, cacheKey };
     }
 
     return {
       outcome: result.outcome,
       failureReason: result.failureReason,
-      stderr: result.stderr
+      stderr: result.stderr,
+      cacheKey
     };
   } finally {
     // Best-effort cleanup: a completed render must not fail because the throwaway

@@ -119,6 +119,37 @@ describe('renderViPreviewForFile', () => {
     expect(cache.set).not.toHaveBeenCalled();
   });
 
+  it('returns the content-addressed cache key on a hit and a fresh render (VHS-REQ-671.4)', async () => {
+    const entries = [{ relativePath: 'Foo.vi', sizeBytes: 10, mtimeMs: 111 }];
+    // Hit path: the served entry carries the key it was fetched by.
+    const hitDeps = makeDeps({ exitCode: 0, stdout: '', stderr: '' }, true, '<HTML>fresh</HTML>', entries);
+    const hitCache = {
+      get: vi.fn().mockResolvedValue('<HTML>cached</HTML>'),
+      set: vi.fn().mockResolvedValue(undefined)
+    };
+    const hit = await renderViPreviewForFile(
+      { runtime: hostRuntime, viFilePath: '/repo/Foo.vi', operationDirectory: '/ops' },
+      { ...hitDeps, cache: hitCache }
+    );
+    expect(hit.cacheKey).toBeTypeOf('string');
+    expect(hit.cacheKey).toHaveLength(64);
+    // The key the entry was served under is exactly the key `get` was called with.
+    expect(hitCache.get).toHaveBeenCalledWith(hit.cacheKey);
+
+    // Fresh render (miss): the same key is returned so the caller can map it.
+    const missDeps = makeDeps({ exitCode: 0, stdout: '', stderr: '' }, true, '<HTML>fresh</HTML>', entries);
+    const missCache = {
+      get: vi.fn().mockResolvedValue(undefined),
+      set: vi.fn().mockResolvedValue(undefined)
+    };
+    const miss = await renderViPreviewForFile(
+      { runtime: hostRuntime, viFilePath: '/repo/Foo.vi', operationDirectory: '/ops' },
+      { ...missDeps, cache: missCache }
+    );
+    expect(miss.cacheKey).toBe(hit.cacheKey);
+    expect(missCache.set).toHaveBeenCalledWith(hit.cacheKey, '<HTML>fresh</HTML>');
+  });
+
   it('renders and populates the cache on a miss (VHS-REQ-659.11)', async () => {
     const deps = makeDeps({ exitCode: 0, stdout: '', stderr: '' }, true, '<HTML>fresh</HTML>', [
       { relativePath: 'Foo.vi', sizeBytes: 10, mtimeMs: 111 }
