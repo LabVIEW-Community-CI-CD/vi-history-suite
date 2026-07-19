@@ -192,6 +192,33 @@ describe('searchPreviewCache (VHS-REQ-659.21)', () => {
     const found = await searchPreviewCache('/cache', 'empty', fakeFs(CACHE));
     expect(found.map((e) => e.key)).toEqual([KEY_D]);
   });
+
+  it('returns [] for an unrecognized marker (default branch)', async () => {
+    // The public marker type is a closed union, but the runtime default arm is a
+    // real guard: an unknown marker must match nothing rather than everything.
+    const found = await searchPreviewCache('/cache', 'bogus-marker' as never, fakeFs(CACHE));
+    expect(found).toEqual([]);
+  });
+});
+
+describe('listPreviewCacheEntries unreadable-file handling (VHS-REQ-659.21)', () => {
+  it('classifies a listed cache file whose read fails as empty (0 bytes)', async () => {
+    // listFiles surfaces the entry but readFile rejects (e.g. a file removed or
+    // permission-denied between listing and reading). The entry is retained but
+    // treated as empty rather than throwing the whole inspection.
+    const deps: ViPreviewCacheInspectionFsDeps = {
+      listFiles: async () => [`${KEY_A}.html`],
+      readFile: async () => {
+        throw new Error('EACCES');
+      },
+      fileSizeBytes: async () => 0,
+      joinPath: (directory: string, name: string) => `${directory}/${name}`
+    };
+    const entries = await listPreviewCacheEntries('/cache', deps);
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toMatchObject({ key: KEY_A, bytes: 0 });
+    expect(entries[0].flags).toContain('empty');
+  });
 });
 
 describe('isPreviewCacheKey', () => {
