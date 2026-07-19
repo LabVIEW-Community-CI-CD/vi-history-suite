@@ -392,9 +392,9 @@ const PREVIEW_CACHE_SEARCH_INPUT_SCHEMA = {
     },
     marker: {
       type: 'string',
-      enum: ['error', 'interactive', 'image', 'empty'],
+      enum: ['error', 'interactive', 'image', 'empty', 'fallback'],
       description:
-        'Content marker to match: "error" (error markers), "interactive" (block-diagram viewer), "image" (>=1 inline image), or "empty".'
+        'Content marker to match: "error" (error markers), "interactive" (block-diagram viewer), "image" (>=1 inline image), "empty", or "fallback" (a block diagram rendered but was too low-fidelity to present interactively).'
     }
   },
   required: ['cacheDirectory', 'marker']
@@ -584,7 +584,8 @@ export const VI_SEMANTIC_MCP_TOOLS = [
   {
     name: 'search_preview_cache',
     description:
-      'Find cache entries by content marker: "error", "interactive", "image", or "empty". ' +
+      'Find cache entries by content marker: "error", "interactive", "image", "empty", or "fallback" ' +
+      '(a block diagram rendered but was too low-fidelity to present interactively). ' +
       'Returns the matching entries (metadata only). Read-only.',
     inputSchema: PREVIEW_CACHE_SEARCH_INPUT_SCHEMA,
     annotations: { title: 'Search preview cache', ...READ_ONLY_OPEN_WORLD }
@@ -1735,7 +1736,8 @@ const PREVIEW_CACHE_MARKERS: readonly ViPreviewCacheSearchMarker[] = [
   'error',
   'interactive',
   'image',
-  'empty'
+  'empty',
+  'fallback'
 ];
 
 function parseRuntimeHealthArguments(rawArguments: unknown): RuntimeHealthInput {
