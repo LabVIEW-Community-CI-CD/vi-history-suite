@@ -14,7 +14,16 @@ import {
   runGit,
   WORKTREE_REVISION_SENTINEL
 } from './git/gitCli';
-import { registerViSemanticMcpServerProvider } from './mcp/viSemanticMcpServerProvider';
+import {
+  registerViSemanticMcpServerProvider,
+  resolveViSemanticMcpLaunch
+} from './mcp/viSemanticMcpServerProvider';
+import {
+  installPinnedDevTools,
+  runDevToolsUpdateCheck,
+  uninstallDevTools,
+  type DevToolsNotifier
+} from './tooling/devToolsRuntime';
 import {
   computeViSemanticNarrativeCacheKey,
   createFileViSemanticNarrativeCache,
@@ -991,6 +1000,95 @@ export async function activate(
   // mode can discover and launch its tools. Guarded for hosts predating the
   // stable MCP provider API (VS Code 1.101); a no-op on older hosts.
   registerViSemanticMcpServerProvider(context);
+
+  // VHS-REQ-679: dev-tools install/uninstall commands and the opt-in update
+  // check. The pinned dev-tools version (VHS-REQ-677) is installed on demand
+  // into global storage, integrity-verified, and launched by the MCP provider;
+  // these commands and the activation check make that lifecycle drivable.
+  const devToolsInstallBaseDir = context.globalStorageUri
+    ? path.join(context.globalStorageUri.fsPath, 'devtools')
+    : undefined;
+  const devToolsNotifier: DevToolsNotifier = {
+    info: (message) => void vscode.window.showInformationMessage(message),
+    warn: (message) => void vscode.window.showWarningMessage(message),
+    error: (message) => void vscode.window.showErrorMessage(message)
+  };
+  const readDevToolsVersionSetting = (): string | undefined =>
+    vscode.workspace.getConfiguration('viHistorySuite').get<string>('devTools.version');
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('labviewViHistory.installPinnedDevTools', async () => {
+      if (devToolsInstallBaseDir === undefined) {
+        void vscode.window.showErrorMessage(
+          'Dev-tools cannot be installed because the extension global storage is unavailable.'
+        );
+        return;
+      }
+      await installPinnedDevTools({
+        versionSetting: readDevToolsVersionSetting(),
+        installBaseDir: devToolsInstallBaseDir,
+        isWorkspaceTrusted: vscode.workspace.isTrusted,
+        notifier: devToolsNotifier
+      });
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('labviewViHistory.uninstallDevTools', async () => {
+      if (devToolsInstallBaseDir === undefined) {
+        void vscode.window.showInformationMessage('No pinned dev-tools versions are installed.');
+        return;
+      }
+      await uninstallDevTools({
+        installBaseDir: devToolsInstallBaseDir,
+        versionSetting: readDevToolsVersionSetting(),
+        notifier: devToolsNotifier,
+        pickVersion: (installedVersions) =>
+          Promise.resolve(
+            vscode.window.showQuickPick([...installedVersions], {
+              placeHolder: 'Select an installed dev-tools version to remove'
+            })
+          )
+      });
+    })
+  );
+
+  // Opt-in, best-effort update check on activation (no network unless enabled,
+  // a version is pinned, and the workspace is trusted).
+  if (devToolsInstallBaseDir !== undefined) {
+    void runDevToolsUpdateCheck({
+      checkForUpdates:
+        vscode.workspace.getConfiguration('viHistorySuite').get<boolean>('devTools.checkForUpdates') ?? false,
+      versionSetting: readDevToolsVersionSetting(),
+      isWorkspaceTrusted: vscode.workspace.isTrusted,
+      notifier: devToolsNotifier
+    });
+  }
+
+  // When a dev-tools version is pinned but not yet installed, the MCP server
+  // launches from the bundled build (fail-closed). Surface an actionable
+  // notification offering to run the install command so the pin takes effect.
+  if (context.globalStorageUri) {
+    const mcpLaunch = resolveViSemanticMcpLaunch({
+      extensionPath: context.extensionPath,
+      globalStorageDir: context.globalStorageUri.fsPath,
+      isWorkspaceTrusted: vscode.workspace.isTrusted,
+      devToolsVersionSetting: readDevToolsVersionSetting()
+    });
+    if (mcpLaunch.fallbackReason === 'pinned-install-missing') {
+      void vscode.window
+        .showWarningMessage(
+          'A dev-tools version is pinned but not installed; the MCP server is using the bundled build. Install the pinned version to use it.',
+          'Install Pinned Dev-Tools'
+        )
+        .then((choice) => {
+          if (choice === 'Install Pinned Dev-Tools') {
+            void vscode.commands.executeCommand('labviewViHistory.installPinnedDevTools');
+          }
+        });
+    }
+  }
+
 
   return {
     refreshEligibility: async () => undefined,

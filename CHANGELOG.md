@@ -15,6 +15,16 @@ This changelog records user-facing release history for `vi-history-suite`.
   (protected environment approval, exact-tag, `origin/main` reachability,
   release-state authority, runtime attestation, supply-chain freshness, and
   bounded post-publish listing verification) applies unchanged to both channels.
+- The extension can now **install, uninstall, and update-check a pinned
+  dev-tools version** end-to-end (VHS-REQ-679). New commands **VI History:
+  Install Pinned Dev-Tools Version** and **VI History: Uninstall Dev-Tools
+  Version** download a `devtools-vX.Y.Z` release from the official repository
+  over HTTPS, extract it with Node built-ins (no new dependency), integrity-verify
+  it before use, and remove it on request — all gated on workspace trust and
+  fail-closed. When a version is pinned but not installed, an actionable
+  notification offers to install it (the MCP server meanwhile uses the bundled
+  build), and the opt-in `viHistorySuite.devTools.checkForUpdates` check now
+  surfaces a notification when a newer stable version is available.
 
 - The extension can now **pin and runtime-consume an independent dev-tools
   version** for its MCP server without waiting for a Marketplace update

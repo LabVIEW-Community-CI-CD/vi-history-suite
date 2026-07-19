@@ -68,6 +68,9 @@ describe('resolveViSemanticMcpLaunch (VHS-REQ-677.2)', () => {
       { existsSync: () => false }
     );
     expect(decision.scriptPath.replace(/\\/g, '/')).toBe('/opt/ext/out/cli/runViSemanticMcpServer.js');
+    // The pinned-install-missing reason drives the extension's actionable
+    // "install pinned dev-tools" notification (VHS-REQ-679.5) while the launch
+    // stays on the bundled build.
     expect(decision.fallbackReason).toBe('pinned-install-missing');
   });
 

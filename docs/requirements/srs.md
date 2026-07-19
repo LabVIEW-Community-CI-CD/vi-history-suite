@@ -5811,3 +5811,58 @@ Missing numeric IDs are intentional.
     third channel, extend the derivation and the agreement guard together rather
     than bypassing either.
 
+
+### VHS-REQ-679: Runtime Dev-Tools Install Lifecycle
+
+- Status: Active
+- Parent: VHS-SYS-REQ-013
+- Area: CI And Developer Environment
+- Statement: The extension shall provide the runtime filesystem and network
+  boundary and the user-facing commands that install, uninstall, and check for
+  updates to a pinned dev-tools version (VHS-REQ-677), fetching releases only
+  from the official repository over HTTPS, integrity-verifying every install
+  before use, and gating every effect on workspace trust, so a pinned dev-tools
+  version can be driven end-to-end from the extension without a Marketplace
+  republish.
+- Acceptance Criteria:
+  - A dependency-free install boundary downloads a `devtools-vX.Y.Z` release from
+    the official repository over HTTPS, extracts its deterministic POSIX ustar +
+    gzip tarball with Node built-ins (no tar dependency), refuses any entry that
+    would extract outside the install directory, and folds the aggregate content
+    digest byte-for-byte identically to `scripts/buildDevToolsRelease.js`.
+  - The `labviewViHistory.installPinnedDevTools` command installs the version
+    named by `viHistorySuite.devTools.version` through the VHS-REQ-677
+    orchestrator (integrity-verified, workspace-trust-gated, fail-closed), and
+    reports a clear outcome for bundled, malformed, untrusted, success, and
+    failure cases.
+  - The opt-in activation update check runs only when
+    `viHistorySuite.devTools.checkForUpdates` is on, a version is pinned, and the
+    workspace is trusted; it surfaces only newer stable versions (prereleases
+    ignored) and swallows network errors so activation is never disrupted.
+  - The `labviewViHistory.uninstallDevTools` command lists the verified installed
+    versions, removes the chosen one, and warns when the removed version is still
+    the pinned one (the MCP launch then falls back to the bundled build); listing
+    reports only installs that carry the verified marker.
+  - When a version is pinned but not installed, the extension surfaces an
+    actionable notification offering to run the install command, and the MCP
+    server meanwhile launches from the bundled build (fail-closed).
+- Agent Work Scope:
+  - Keep the install boundary dependency-free and its HTTP/filesystem effects
+    injected so the policy is unit-testable. Never fetch from a non-official
+    source, never launch or mark-verified an install that failed integrity
+    verification, and keep every effect gated on workspace trust.
+- Implementation References:
+  - `src/tooling/devToolsInstaller.ts`
+  - `src/tooling/devToolsRuntime.ts`
+  - `src/extension.ts`
+  - `package.json`
+- Verification References:
+  - `tests/unit/devToolsInstaller.test.ts`
+  - `tests/unit/devToolsRuntime.test.ts`
+  - `tests/unit/packageManifest.test.ts`
+  - `tests/unit/viSemanticMcpServerProvider.test.ts`
+- Change Guidance:
+  - Preserve the fail-closed, official-source-only, trust-gated posture. Reuse the
+    VHS-REQ-677 orchestrator and VHS-REQ-676 SemVer utility rather than
+    duplicating verification or comparison logic, and keep the tar handling
+    dependency-free.
