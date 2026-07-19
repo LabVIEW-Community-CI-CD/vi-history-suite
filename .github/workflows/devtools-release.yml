@@ -123,7 +123,6 @@ jobs:
             exit 1
           fi
           if [ "$CHANNEL" = "stable" ]; then
-          if [ "$CHANNEL" = "stable" ]; then
             want_prerelease="false"
             echo "tag=devtools-v${version}" >> "$GITHUB_OUTPUT"
           else

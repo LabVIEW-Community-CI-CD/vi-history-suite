@@ -129,4 +129,16 @@ describe('Dev-tools release workflow (DS3)', () => {
     const workflow = readWorkflow().toLowerCase();
     expect(workflow).not.toContain('vagrant');
   });
+
+  it('keeps the channel-branch conditional balanced in the decide step (VHS-REQ-676.4)', () => {
+    const workflow = readWorkflow();
+    // Regression guard: the "Decide release vs dedup" step opens the
+    // stable-vs-prerelease conditional exactly once. A duplicated `if` opener
+    // (two `if ... then`, one `fi`) is an unbalanced bash conditional that
+    // breaks the workflow at runtime but is invisible to string-contains checks.
+    const multilineOpeners = workflow
+      .split('\n')
+      .filter((line) => line.trim() === 'if [ "$CHANNEL" = "stable" ]; then');
+    expect(multilineOpeners).toHaveLength(1);
+  });
 });

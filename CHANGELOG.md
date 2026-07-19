@@ -4,6 +4,12 @@ This changelog records user-facing release history for `vi-history-suite`.
 
 ## [Unreleased]
 
+### Fixed
+
+- Removed a duplicated `if` opener in the dev-tools release workflow's channel
+  decision step that left an unbalanced bash conditional (a shell syntax error);
+  added a regression guard so the channel branch stays balanced.
+
 ### Added
 
 - The Marketplace release workflow can now publish to the **pre-release
