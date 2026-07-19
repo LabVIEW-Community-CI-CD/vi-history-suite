@@ -30,6 +30,12 @@ export interface ViPreviewCacheInspectionFsDeps {
   readFile: (filePath: string) => Promise<string>;
   /** Returns a document's size in bytes (cheaper than reading it). */
   fileSizeBytes: (filePath: string) => Promise<number>;
+  /**
+   * Optional: returns a document's last-modified time in epoch milliseconds.
+   * Supplied by the node-fs adapters; when absent, freshness (`newestModifiedAt`)
+   * is reported as null rather than failing.
+   */
+  fileModifiedMs?: (filePath: string) => Promise<number>;
   /** Joins a directory and a file name into a path. */
   joinPath: (directory: string, name: string) => string;
 }
@@ -205,9 +211,15 @@ export interface ViPreviewCacheSummary {
   flaggedCount: number;
   interactiveCount: number;
   flagged: Array<{ key: string; flags: ViPreviewCacheEntryFlag[] }>;
+  /**
+   * ISO-8601 timestamp of the most recently modified cache entry, or null when
+   * the cache is empty or the fs boundary exposes no `fileModifiedMs`. A freshness
+   * signal for "is the cache stale?", mirroring get_preview_diagnostics.
+   */
+  newestModifiedAt: string | null;
 }
 
-/** Summarizes a cache directory (counts, bytes, and the flagged entries). */
+/** Summarizes a cache directory (counts, bytes, freshness, and flagged entries). */
 export async function summarizePreviewCache(
   directory: string,
   deps: ViPreviewCacheInspectionFsDeps
@@ -216,6 +228,7 @@ export async function summarizePreviewCache(
   let totalBytes = 0;
   let healthyCount = 0;
   let interactiveCount = 0;
+  let newestMs = 0;
   const flagged: Array<{ key: string; flags: ViPreviewCacheEntryFlag[] }> = [];
   for (const entry of entries) {
     totalBytes += entry.bytes;
@@ -227,6 +240,16 @@ export async function summarizePreviewCache(
     if (entry.interactive) {
       interactiveCount += 1;
     }
+    if (deps.fileModifiedMs) {
+      try {
+        const mtimeMs = await deps.fileModifiedMs(entry.filePath);
+        if (Number.isFinite(mtimeMs) && mtimeMs > newestMs) {
+          newestMs = mtimeMs;
+        }
+      } catch {
+        /* an unreadable mtime does not fail the summary */
+      }
+    }
   }
   return {
     directory,
@@ -235,7 +258,8 @@ export async function summarizePreviewCache(
     healthyCount,
     flaggedCount: flagged.length,
     interactiveCount,
-    flagged
+    flagged,
+    newestModifiedAt: newestMs > 0 ? new Date(newestMs).toISOString() : null
   };
 }
 

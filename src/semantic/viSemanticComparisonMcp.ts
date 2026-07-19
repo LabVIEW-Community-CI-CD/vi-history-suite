@@ -1845,6 +1845,7 @@ async function handlePreviewCacheTool(
         flaggedCount: summary.flaggedCount,
         interactiveCount: summary.interactiveCount,
         healthy: summary.entryCount > 0 && summary.flaggedCount === 0,
+        newestModifiedAt: summary.newestModifiedAt,
         flagged: summary.flagged
       };
       return success(id, toolTextResult(JSON.stringify(diagnostics, null, 2)));
