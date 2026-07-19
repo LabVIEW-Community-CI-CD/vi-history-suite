@@ -2237,6 +2237,10 @@ Missing numeric IDs are intentional.
     (dispatch on the tag preserves the exact-tag, package-version, and
     `origin/main` reachability guards), and an authorized agent is responsible
     for dispatching and approving it (a maintainer may also do so).
+  - Hosted CI admits pull requests to a `feature/*` branch only from a `fix/*`
+    branch or a stacked `feature/<issue#>-*` branch, and rejects a `fix/*`
+    branch that targets `develop` or `main` directly, so the branch flow is
+    `fix/* -> feature/<issue#>-* -> develop -> main`.
 - Agent Work Scope:
   - Change branch-governance workflow logic, Marketplace release workflow YAML,
     maintainer operations docs, requirements, and static tests together.
