@@ -1,0 +1,50 @@
+name: Preview Cache Fleet
+
+# Maintainer-dispatched entrypoint for the preview-cache generation fleet
+# (VHS-REQ-674). Delegates to the reusable workflow with the trusted-ref guard
+# enforced. Publishing is opt-in via the `publish` input (default false = dry
+# run that only generates + uploads shard/merged bundles as artifacts).
+
+on:
+  workflow_dispatch:
+    inputs:
+      repository:
+        description: 'Target repository (owner/repo) whose VIs should be pre-rendered.'
+        required: true
+        type: string
+      ref:
+        description: 'Git ref of the target repository to render (default: its default branch).'
+        required: false
+        default: ''
+        type: string
+      shard_count:
+        description: 'Number of parallel render shards (1-32).'
+        required: false
+        default: 4
+        type: number
+      container_image_version:
+        description: 'NI LabVIEW container image version (e.g. 2026q1).'
+        required: false
+        default: '2026q1'
+        type: string
+      publish:
+        description: 'Publish the merged bundle to the cache exchange (default false = dry run).'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  fleet:
+    uses: ./.github/workflows/preview-cache-fleet-callable.yml
+    with:
+      repository: ${{ inputs.repository }}
+      ref: ${{ inputs.ref }}
+      shard_count: ${{ inputs.shard_count }}
+      container_image_version: ${{ inputs.container_image_version }}
+      publish: ${{ inputs.publish }}
+      enforce_trusted_ref: true
+    secrets:
+      PREVIEW_CACHE_TARGET_TOKEN: ${{ secrets.PREVIEW_CACHE_TARGET_TOKEN }}

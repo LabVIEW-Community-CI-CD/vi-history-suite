@@ -19,8 +19,10 @@ import { classifyPreviewCacheDocument } from '../reporting/viPreview/viPreviewCa
 import { warmViPreviewCache } from '../reporting/viPreview/viPreviewCacheWarmer';
 import {
   listWorkspaceViFiles,
+  selectWorkspaceViShard,
   type ViPreviewWorkspaceDirEntry,
-  type ViPreviewWorkspaceScanFsDeps
+  type ViPreviewWorkspaceScanFsDeps,
+  type ViPreviewWorkspaceShard
 } from '../reporting/viPreview/viPreviewWorkspaceScan';
 import {
   buildNodeViPreviewRenderDeps,
@@ -122,6 +124,12 @@ export interface RunViPreviewCacheWarmOptions {
   connectTimeoutSeconds?: number;
   operationDirectory?: string;
   limit?: number;
+  /**
+   * When set, render only this shard of the workspace VI set (round-robin by
+   * position). Used by the cache-generation fleet (VHS-REQ-674) to split the
+   * work across a runner matrix; the union of all shards is the whole set.
+   */
+  shard?: ViPreviewWorkspaceShard;
   includeProvenance?: boolean;
   argv?: readonly string[];
 }
@@ -260,7 +268,12 @@ export async function runViPreviewCacheWarm(
     };
   }
 
-  const viFilePaths = await listViFiles(options.repositoryRoot, options.limit);
+  const enumerated = await listViFiles(options.repositoryRoot, options.limit);
+  // A fleet shard renders a disjoint slice of the workspace; without a shard the
+  // whole enumerated set is warmed.
+  const viFilePaths = options.shard
+    ? selectWorkspaceViShard(enumerated, options.shard)
+    : enumerated;
   const entries: ViPreviewCacheWarmManifestEntry[] = [];
 
   await warmViPreviewCache(viFilePaths, {
@@ -376,6 +389,7 @@ interface ParsedWarmArgs {
   connectTimeoutSeconds?: number;
   operationDirectory?: string;
   limit?: number;
+  shard?: ViPreviewWorkspaceShard;
   json?: boolean;
   includeProvenance?: boolean;
   outputPath?: string;
@@ -410,6 +424,17 @@ export function parseArgs(argv: readonly string[]): ParsedWarmArgs {
       const value = Number.parseInt(next(), 10);
       if (Number.isInteger(value) && value > 0) {
         parsed.limit = value;
+      }
+    } else if (arg === '--shard') {
+      // Format: <index>/<count> (zero-based index), e.g. 0/4. The fleet passes
+      // one shard per matrix job so each renders a disjoint slice.
+      const match = /^(\d+)\/(\d+)$/.exec(next());
+      if (match) {
+        const shardIndex = Number.parseInt(match[1], 10);
+        const shardCount = Number.parseInt(match[2], 10);
+        if (Number.isInteger(shardCount) && shardCount > 0 && shardIndex >= 0 && shardIndex < shardCount) {
+          parsed.shard = { index: shardIndex, count: shardCount };
+        }
       }
     } else if (arg === '--provider') {
       // Docker-only worker: accept and ignore an explicit `docker`; reject others.
@@ -470,6 +495,7 @@ export async function main(
     connectTimeoutSeconds: parsed.connectTimeoutSeconds,
     operationDirectory: parsed.operationDirectory,
     limit: parsed.limit,
+    shard: parsed.shard,
     includeProvenance: parsed.includeProvenance,
     argv
   });

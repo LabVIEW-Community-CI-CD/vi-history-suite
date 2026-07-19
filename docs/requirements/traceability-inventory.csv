@@ -319,6 +319,8 @@ tests/integration/prepareTestWorkspace.ts,dev-only,No,Integration test workspace
 .github/workflows/linux-labview-maintainer.yml,release-ci,Yes,Linux LabVIEW maintainer workflow; mapped through RTM.
 .github/workflows/vi-semantic-pr-review.yml,release-ci,Yes,On-demand VI semantic PR review workflow; mapped through RTM (VHS-REQ-661).
 .github/workflows/vi-semantic-pr-review-callable.yml,release-ci,Yes,Reusable (workflow_call) VI semantic PR review unit consumed by the dispatch workflow and external LabVIEW repos; mapped through RTM (VHS-REQ-661).
+.github/workflows/preview-cache-fleet-callable.yml,release-ci,Yes,"Reusable (workflow_call) sharded preview-cache generation fleet: plan shard matrix, render (matrix) warms each --shard slice + bundles it, merge combines shard bundles and publishes to the cache exchange; mapped through RTM (VHS-REQ-674)."
+.github/workflows/preview-cache-fleet.yml,release-ci,Yes,"Maintainer workflow_dispatch wrapper delegating to the reusable preview-cache fleet with the trusted-ref guard enforced; mapped through RTM (VHS-REQ-674)."
 .github/workflows/windows-labview-maintainer.yml,release-ci,Yes,Windows LabVIEW maintainer workflow; mapped through RTM.
 .github/dependabot.yml,release-ci,Yes,Dependabot configuration; mapped through RTM.
 .github/ISSUE_TEMPLATE/bug_report.yml,asset-doc,Yes,Bug report template; mapped through RTM.
@@ -453,6 +455,7 @@ tests/unit/viPreviewCacheBundle.test.ts,mapped,Yes,"Portable preview-cache bundl
 tests/unit/viPreviewCacheBundleCli.test.ts,mapped,Yes,"Portable preview-cache bundle CLI unit tests (parseArgs, real-fs export/unbundle round-trip, skip-present merge, tampered/not-found fail-closed, main usage/exit codes); mapped to VHS-REQ-672."
 tests/unit/viPreviewCacheExchange.test.ts,mapped,Yes,"Preview-cache exchange planning unit tests (content digest order-independence, content-addressed tag, publish/skip-existing/skip-empty, fetch selection explicit/most-recent/none); mapped to VHS-REQ-673."
 tests/unit/viPreviewCacheExchangeCli.test.ts,mapped,Yes,"Preview-cache exchange CLI unit tests (parseArgs, injected-gh/tar publish->fetch round-trip, idempotent re-publish skip, bundle-not-found/no-release fail-closed, main usage/exit codes); mapped to VHS-REQ-673."
+tests/unit/previewCacheFleetWorkflow.test.ts,mapped,Yes,"Preview-cache generation fleet workflow contract test (dispatch delegation + trusted-ref, reusable plan/render/merge job ordering + shard matrix, shard render+bundle, merge+publish gating, SHA-pinned checkout, no vagrant); mapped to VHS-REQ-674."
 tests/unit/codespacePreviewCacheTemplate.test.ts,mapped,Yes,"Consumer Codespace preview-cache worker devcontainer template contract test (jsonc parse, docker-in-docker feature, extension id, preview settings, gh codespace ssh worker invocation); mapped to VHS-REQ-671."
 tests/unit/viPreviewCacheHealth.test.ts,mapped,Yes,"Preview-cache health read-model unit tests (cached/stale/missing/failed classification, orphaned/removed detection, coverage %, no-manifest all-missing, normalization); mapped to VHS-REQ-675."
 tests/unit/viPreviewCacheHealthCli.test.ts,mapped,Yes,"Preview-cache health CLI unit tests (parseArgs, input gathering over injected fs, --cache-dir fail-closed, --strict exit, path-safe --output); mapped to VHS-REQ-675."

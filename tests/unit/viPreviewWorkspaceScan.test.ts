@@ -4,6 +4,7 @@ import {
   DEFAULT_WORKSPACE_SCAN_EXCLUDES,
   isViPreviewTargetFile,
   listWorkspaceViFiles,
+  selectWorkspaceViShard,
   type ViPreviewWorkspaceDirEntry,
   type ViPreviewWorkspaceScanFsDeps
 } from '../../src/reporting/viPreview/viPreviewWorkspaceScan';
@@ -121,5 +122,43 @@ describe('listWorkspaceViFiles (VHS-REQ-671.1)', () => {
   it('returns [] when the root itself is unreadable', async () => {
     const fs = treeFs({});
     expect(await listWorkspaceViFiles('/missing', fs)).toEqual([]);
+  });
+});
+
+describe('selectWorkspaceViShard (VHS-REQ-674.1)', () => {
+  const paths = ['a.vi', 'b.vi', 'c.vi', 'd.vi', 'e.vi', 'f.vi', 'g.vi'];
+
+  it('splits the set into disjoint shards whose union is the whole input', () => {
+    const count = 3;
+    const shards = [0, 1, 2].map((index) => selectWorkspaceViShard(paths, { index, count }));
+    // Disjoint: no path appears in two shards.
+    const seen = new Set<string>();
+    for (const shard of shards) {
+      for (const p of shard) {
+        expect(seen.has(p)).toBe(false);
+        seen.add(p);
+      }
+    }
+    // Union is exactly the input.
+    expect([...seen].sort()).toEqual([...paths].sort());
+  });
+
+  it('assigns round-robin by position', () => {
+    expect(selectWorkspaceViShard(paths, { index: 0, count: 3 })).toEqual(['a.vi', 'd.vi', 'g.vi']);
+    expect(selectWorkspaceViShard(paths, { index: 1, count: 3 })).toEqual(['b.vi', 'e.vi']);
+    expect(selectWorkspaceViShard(paths, { index: 2, count: 3 })).toEqual(['c.vi', 'f.vi']);
+  });
+
+  it('returns the whole list for a single shard', () => {
+    expect(selectWorkspaceViShard(paths, { index: 0, count: 1 })).toEqual(paths);
+  });
+
+  it('returns [] for an out-of-range shard index', () => {
+    expect(selectWorkspaceViShard(paths, { index: 3, count: 3 })).toEqual([]);
+    expect(selectWorkspaceViShard(paths, { index: -1, count: 3 })).toEqual([]);
+  });
+
+  it('treats a non-positive count as a single shard', () => {
+    expect(selectWorkspaceViShard(paths, { index: 0, count: 0 })).toEqual(paths);
   });
 });

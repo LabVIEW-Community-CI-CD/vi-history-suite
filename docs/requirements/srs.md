@@ -5583,3 +5583,61 @@ Missing numeric IDs are intentional.
     release-channel transport conventions. If bundle sizes outgrow release
     assets, an OCI/registry transport is the scale-out alternative — add it as a
     new transport behind the same pure planning layer rather than reshaping it.
+
+### VHS-REQ-674: Preview-Cache Generation Fleet
+
+- Status: Active
+- Parent: VHS-SYS-REQ-016
+- Area: CI And Developer Environment
+- Statement: The repository shall provide a reusable GitHub Actions workflow that
+  renders a target repository's LabVIEW VI previews across a sharded runner
+  matrix, then merges the per-shard portable bundles into one bundle and
+  publishes it to the content-addressed cache exchange (VHS-REQ-673), so a whole
+  repository's preview cache is generated in parallel and shared once. This is
+  the scale slice of the preview-cache fabric, composing the worker
+  (VHS-REQ-671), bundle (VHS-REQ-672), and exchange (VHS-REQ-673); it reuses the
+  reusable-workflow delegation pattern (VHS-REQ-661) with a trusted-ref guard.
+- Acceptance Criteria:
+  - `selectWorkspaceViShard` splits an ordered VI path list into a requested
+    shard by round-robin position (`position % count === index`), so the shards
+    are disjoint and their union is exactly the input; an out-of-range index
+    yields an empty shard and a non-positive count yields the whole list, without
+    throwing. The worker CLI accepts `--shard <index>/<count>` and renders only
+    that shard's slice.
+  - `preview-cache-fleet-callable.yml` is a `workflow_call` reusable workflow
+    whose `plan` job computes a bounded (1..32) shard matrix, whose `render`
+    matrix job warms each shard's disjoint slice into a cache and packages it as
+    a portable bundle artifact, and whose `merge` job (needs `render`) combines
+    the shard bundles into one cache (content-addressed, de-duplicating) and
+    re-bundles the union; the tool checkout is pinned to the reusable workflow's
+    own commit SHA (`job.workflow_sha`), failing closed when unavailable.
+  - The `merge` job publishes the merged bundle to the cache exchange only when
+    the `publish` input is true (default false is a dry run that uploads the
+    shard and merged bundles as workflow artifacts), and publishing requires the
+    `PREVIEW_CACHE_TARGET_TOKEN` secret, failing closed with an actionable
+    message when it is absent.
+  - `preview-cache-fleet.yml` is a maintainer `workflow_dispatch` wrapper that
+    delegates to the reusable workflow with `enforce_trusted_ref: true` and
+    read-only top-level permissions; the reusable workflow's `plan` job fails
+    closed on an untrusted ref when `enforce_trusted_ref` is set, and no fleet
+    workflow references the optional Vagrant helper (VHS-REQ-599).
+- Agent Work Scope:
+  - Keep the shard selection pure and reuse the worker/bundle/exchange CLIs
+    rather than reimplementing render, merge, or publish; keep the reusable
+    workflow trusted-ref-guarded and SHA-pinned like the PR-review reusable
+    workflow; keep publishing opt-in so a dry run never writes a release. Assert
+    the workflow contract by step/job-name ordering, not brittle `run:` snippets.
+- Implementation References:
+  - `.github/workflows/preview-cache-fleet-callable.yml`
+  - `.github/workflows/preview-cache-fleet.yml`
+  - `src/cli/runViPreviewCacheWarmer.ts`
+  - `src/reporting/viPreview/viPreviewWorkspaceScan.ts`
+- Verification References:
+  - `tests/unit/previewCacheFleetWorkflow.test.ts`
+  - `tests/unit/viPreviewWorkspaceScan.test.ts`
+  - `tests/unit/viPreviewCacheWarmerCli.test.ts`
+- Change Guidance:
+  - Keep the fleet a thin composition of the existing worker/bundle/exchange
+    CLIs; add render capacity via the shard matrix, not new render logic. Keep
+    the dispatch wrapper delegating to the SHA-pinned reusable workflow, and keep
+    publishing opt-in and trusted-ref-guarded.
