@@ -4,6 +4,7 @@ import {
   findFramesRoot,
   groupFramesIntoStructures,
   normalizeViPreviewFrames,
+  buildFramesModelFromCoordinateJson,
   type ViPreviewFrame
 } from '../../src/reporting/viPreview/viPreviewFramesModel';
 
@@ -89,6 +90,52 @@ describe('normalizeViPreviewFrames', () => {
     ]);
     expect(model!.frames[0].children).toEqual([]);
     expect(model!.frames[1].children).toEqual([]);
+  });
+});
+
+describe('buildFramesModelFromCoordinateJson', () => {
+  const oneFrame = [{ Image: 'AAAA', Position: { Left: 0, Top: 0, Width: 10, Height: 8 } }];
+
+  it('parses a JSON-string bare frames array (#2117)', () => {
+    const model = buildFramesModelFromCoordinateJson(JSON.stringify(oneFrame));
+    expect(model).toBeDefined();
+    expect(model!.frames).toHaveLength(1);
+    expect(model!.frames[0].rect).toEqual({ left: 0, top: 0, width: 10, height: 8 });
+  });
+
+  it('parses an object wrapping the array under frames/Frames (#2117)', () => {
+    expect(buildFramesModelFromCoordinateJson(JSON.stringify({ frames: oneFrame }))!.frames).toHaveLength(1);
+    expect(buildFramesModelFromCoordinateJson(JSON.stringify({ Frames: oneFrame }))!.frames).toHaveLength(1);
+  });
+
+  it('accepts an already-parsed value (array or wrapper object) (#2117)', () => {
+    expect(buildFramesModelFromCoordinateJson(oneFrame)!.frames).toHaveLength(1);
+    expect(buildFramesModelFromCoordinateJson({ frames: oneFrame })!.frames).toHaveLength(1);
+  });
+
+  it('returns undefined for absent, empty, unparseable, or wrong-shaped payloads (#2117)', () => {
+    expect(buildFramesModelFromCoordinateJson(undefined)).toBeUndefined();
+    expect(buildFramesModelFromCoordinateJson('')).toBeUndefined();
+    expect(buildFramesModelFromCoordinateJson('   ')).toBeUndefined();
+    expect(buildFramesModelFromCoordinateJson('{ not valid json')).toBeUndefined();
+    expect(buildFramesModelFromCoordinateJson('[]')).toBeUndefined();
+    expect(buildFramesModelFromCoordinateJson(JSON.stringify({ frames: [] }))).toBeUndefined();
+    expect(buildFramesModelFromCoordinateJson(JSON.stringify({ other: 1 }))).toBeUndefined();
+    expect(buildFramesModelFromCoordinateJson(42)).toBeUndefined();
+  });
+
+  it('preserves real coordinates and structure (no size-grouping heuristic) (#2117)', () => {
+    // A root plus two same-size children at DIFFERENT positions: the coordinate
+    // model keeps their real rects (the flat builder would have collapsed them
+    // into one stacked group).
+    const model = buildFramesModelFromCoordinateJson([
+      { Image: 'root', Position: { Left: 0, Top: 0, Width: 100, Height: 80 }, Children: [1, 2] },
+      { Image: 'caseA', Position: { Left: 10, Top: 20, Width: 30, Height: 30 } },
+      { Image: 'caseB', Position: { Left: 50, Top: 20, Width: 30, Height: 30 } }
+    ])!;
+    expect(model.rootIndex).toBe(0);
+    expect(model.frames[1].rect).toEqual({ left: 10, top: 20, width: 30, height: 30 });
+    expect(model.frames[2].rect).toEqual({ left: 50, top: 20, width: 30, height: 30 });
   });
 });
 

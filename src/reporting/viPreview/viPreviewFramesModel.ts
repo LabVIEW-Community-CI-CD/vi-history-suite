@@ -168,6 +168,60 @@ export function normalizeViPreviewFrames(raw: unknown): ViPreviewFramesModel | u
 }
 
 /**
+ * Extracts the frames array from a position-aware export payload. Accepts the
+ * documented top-level shapes a LabVIEW exporter may emit: a bare frames array,
+ * or an object wrapping the array under `frames`/`Frames`. Returns `undefined`
+ * for anything else so callers fall back to the flat preview.
+ */
+function extractFramesArray(payload: unknown): unknown[] | undefined {
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+  if (typeof payload === 'object' && payload !== null) {
+    const record = payload as Record<string, unknown>;
+    const framesField = record.frames ?? record.Frames;
+    if (Array.isArray(framesField)) {
+      return framesField;
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Builds a {@link ViPreviewFramesModel} from a position-aware ("PrintToImagesJson")
+ * export payload — the real-coordinate source the flat `PrintToSingleFileHtml`
+ * export cannot provide (VHS-REQ-659). Accepts a JSON string or an already-parsed
+ * value; tolerates a bare frames array or an object with a `frames`/`Frames`
+ * array. Returns `undefined` when the payload is absent, unparseable, or not a
+ * non-empty frames array, so the caller can fall back to the flat-export builder.
+ *
+ * Unlike `buildFramesModelFromFlatExport`, this model carries the diagram's real
+ * geometry, so it needs no size-grouping fidelity heuristic: a coordinate model
+ * is faithful by construction.
+ */
+export function buildFramesModelFromCoordinateJson(
+  payload: string | unknown
+): ViPreviewFramesModel | undefined {
+  let parsed: unknown = payload;
+  if (typeof payload === 'string') {
+    const trimmed = payload.trim();
+    if (trimmed.length === 0) {
+      return undefined;
+    }
+    try {
+      parsed = JSON.parse(trimmed);
+    } catch {
+      return undefined;
+    }
+  }
+  const frames = extractFramesArray(parsed);
+  if (!frames) {
+    return undefined;
+  }
+  return normalizeViPreviewFrames(frames);
+}
+
+/**
  * Groups a frame's child indices into structures: children sharing the same
  * Position rectangle are the cases of one multi-case structure. Preserves the
  * first-seen order of each distinct rectangle. Pure so grouping is testable

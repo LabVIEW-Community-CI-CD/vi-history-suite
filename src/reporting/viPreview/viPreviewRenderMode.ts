@@ -13,7 +13,10 @@
  *
  * This module is the pure decision + assembly layer between them: given the
  * rendered LabVIEW HTML, the requested mode, and a per-load nonce, it returns
- * the finished webview document plus the mode actually used. The interactive
+ * the finished webview document plus the mode actually used. For interactive
+ * mode it prefers a position-aware coordinate frames payload when supplied
+ * ({@link buildFramesModelFromCoordinateJson}) and otherwise reconstructs from
+ * the flat export. The interactive
  * mode falls back to the document mode when the export yields no extractable
  * block-diagram frames (e.g. a control `.ctl` with no diagram) or when the
  * reconstructed frames model is too low-fidelity to present faithfully (a
@@ -23,6 +26,7 @@
  */
 
 import { buildFramesModelFromFlatExport, assessFramesModelFidelity } from './viPreviewFlatFrames';
+import { buildFramesModelFromCoordinateJson } from './viPreviewFramesModel';
 import { buildViPreviewFramesViewerHtml } from './viPreviewFramesViewer';
 import { buildViPreviewWebviewHtml } from './viPreviewWebview';
 
@@ -39,6 +43,15 @@ export interface SelectViPreviewDocumentOptions {
    * interactive mode; the webview host must pass the same nonce to the webview).
    */
   nonce?: string;
+  /**
+   * Optional position-aware ("PrintToImagesJson") frames payload (JSON string or
+   * parsed value) carrying the diagram's real coordinates. When present, valid,
+   * and interactive mode is requested with a nonce, it is PREFERRED over the
+   * coordinate-less flat-export reconstruction and renders the interactive viewer
+   * directly (no size-grouping fidelity gate — a coordinate model is faithful by
+   * construction). Absent/invalid payloads fall back to the flat-export path.
+   */
+  coordinateFramesJson?: string | unknown;
 }
 
 export interface SelectedViPreviewDocument {
@@ -77,6 +90,21 @@ export function selectViPreviewDocument(
   // it cannot be built safely, so fall back rather than emit an unusable pane.
   if (!options.nonce) {
     return documentFallback();
+  }
+
+  // Prefer a position-aware coordinate model when the exporter supplied one: it
+  // carries the diagram's real geometry, so it renders the interactive viewer
+  // faithfully even for complex diagrams the flat reconstruction would reject.
+  if (options.coordinateFramesJson !== undefined) {
+    const coordinateModel = buildFramesModelFromCoordinateJson(options.coordinateFramesJson);
+    if (coordinateModel) {
+      return {
+        html: buildViPreviewFramesViewerHtml(coordinateModel, options.nonce),
+        mode: 'interactive'
+      };
+    }
+    // An absent/invalid coordinate payload is not fatal — fall through to the
+    // flat-export path below (which may itself fall back to the document view).
   }
 
   const model = buildFramesModelFromFlatExport(options.labviewHtml);
