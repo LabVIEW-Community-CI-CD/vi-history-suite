@@ -6,6 +6,17 @@ This changelog records user-facing release history for `vi-history-suite`.
 
 ### Added
 
+- The extension can now **pin and runtime-consume an independent dev-tools
+  version** for its MCP server without waiting for a Marketplace update
+  (VHS-REQ-677). Set `viHistorySuite.devTools.version` to a `devtools-vX.Y.Z`
+  tag (from the SemVer 2.0 dev-tools line, VHS-REQ-676) and the extension
+  downloads that release into global storage, verifies its integrity (per-file
+  SHA-256 plus aggregate content digest), and launches it — but only in a
+  trusted workspace, and it fails closed to the bundled build if a pin is
+  missing, unverified, or the workspace is untrusted. `bundled` (default) touches
+  no network. An opt-in `viHistorySuite.devTools.checkForUpdates` notifies when a
+  newer stable dev-tools version is available.
+
 - The dev-tools GitHub Release channel now carries an **independent SemVer 2.0
   version line** (`devtools-v<version>`, VHS-REQ-676), decoupled from the
   extension's Marketplace version, sourced from a committed `version` field in

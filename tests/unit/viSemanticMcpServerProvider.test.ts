@@ -19,6 +19,7 @@ import {
   VI_SEMANTIC_MCP_SERVER_LABEL,
   buildViSemanticMcpServerDefinitionFields,
   registerViSemanticMcpServerProvider,
+  resolveViSemanticMcpLaunch,
   resolveViSemanticMcpServerScriptPath
 } from '../../src/mcp/viSemanticMcpServerProvider';
 import { defaultVsCodeTestHarness } from './vscodeTestHarness';
@@ -31,6 +32,60 @@ describe('resolveViSemanticMcpServerScriptPath', () => {
   it('resolves the bundled stdio entrypoint under the extension out directory', () => {
     const resolved = resolveViSemanticMcpServerScriptPath('/opt/ext');
     expect(resolved.replace(/\\/g, '/')).toBe('/opt/ext/out/cli/runViSemanticMcpServer.js');
+  });
+});
+
+describe('resolveViSemanticMcpLaunch (VHS-REQ-677.2)', () => {
+  const base = {
+    extensionPath: '/opt/ext',
+    globalStorageDir: '/store',
+    isWorkspaceTrusted: true
+  };
+
+  it('launches the bundled build by default', () => {
+    const decision = resolveViSemanticMcpLaunch(
+      { ...base, devToolsVersionSetting: 'bundled' },
+      { existsSync: () => false }
+    );
+    expect(decision.scriptPath.replace(/\\/g, '/')).toBe('/opt/ext/out/cli/runViSemanticMcpServer.js');
+    expect(decision.fallbackReason).toBe('');
+  });
+
+  it('launches a verified pin from global storage in a trusted workspace', () => {
+    const decision = resolveViSemanticMcpLaunch(
+      { ...base, devToolsVersionSetting: 'devtools-v1.2.3' },
+      { existsSync: () => true }
+    );
+    expect(decision.scriptPath.replace(/\\/g, '/')).toBe(
+      '/store/devtools/1.2.3/out/cli/runViSemanticMcpServer.js'
+    );
+    expect(decision.fallbackReason).toBe('');
+  });
+
+  it('fails closed to the bundled build when a pin is unverified', () => {
+    const decision = resolveViSemanticMcpLaunch(
+      { ...base, devToolsVersionSetting: 'devtools-v1.2.3' },
+      { existsSync: () => false }
+    );
+    expect(decision.scriptPath.replace(/\\/g, '/')).toBe('/opt/ext/out/cli/runViSemanticMcpServer.js');
+    expect(decision.fallbackReason).toBe('pinned-install-missing');
+  });
+
+  it('fails closed to the bundled build in an untrusted workspace', () => {
+    const decision = resolveViSemanticMcpLaunch(
+      { ...base, isWorkspaceTrusted: false, devToolsVersionSetting: 'devtools-v1.2.3' },
+      { existsSync: () => true }
+    );
+    expect(decision.scriptPath.replace(/\\/g, '/')).toBe('/opt/ext/out/cli/runViSemanticMcpServer.js');
+    expect(decision.fallbackReason).toBe('workspace-not-trusted');
+  });
+
+  it('fails closed to the bundled build on a malformed setting', () => {
+    const decision = resolveViSemanticMcpLaunch(
+      { ...base, devToolsVersionSetting: 'latest' },
+      { existsSync: () => true }
+    );
+    expect(decision.scriptPath.replace(/\\/g, '/')).toBe('/opt/ext/out/cli/runViSemanticMcpServer.js');
   });
 });
 

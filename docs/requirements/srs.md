@@ -5699,3 +5699,66 @@ Missing numeric IDs are intentional.
     additively. If the extension later pins a dev-tools version (VHS-REQ-677),
     reuse this SemVer utility for comparison rather than adding a semver
     dependency.
+
+### VHS-REQ-677: Runtime Dev-Tools Version Pinning For The MCP Server
+
+- Status: Active
+- Parent: VHS-SYS-REQ-013
+- Area: CI And Developer Environment
+- Statement: The Marketplace-installed extension shall be able to pin and
+  runtime-consume an independent dev-tools version (the SemVer 2.0
+  `devtools-vX.Y.Z` line from VHS-REQ-676) for its MCP server launch, without a
+  Marketplace republish, downloading and integrity-verifying the pinned release
+  into global storage and launching it only in a trusted workspace, with an
+  opt-in check that notifies when a newer stable dev-tools version is available.
+  The scope is the MCP server launch only, so a malformed or unverified pin
+  fails closed to the bundled build rather than silently running mismatched code.
+- Acceptance Criteria:
+  - The `viHistorySuite.devTools.version` setting selects the dev-tools build:
+    `bundled` (default) uses the build shipped with the extension and touches no
+    network, while a `devtools-vX.Y.Z` tag (or bare SemVer 2.0 version) pins that
+    release; normalization fails closed on any other value rather than silently
+    falling back to bundled, and `viHistorySuite.devTools.checkForUpdates`
+    defaults off.
+  - The MCP server launch resolves through `src/tooling/devToolsResolver.ts`:
+    the bundled build always launches from the extension `out/`, while a pinned
+    version launches from `<globalStorage>/devtools/<version>/` only when the
+    workspace is trusted and the install is integrity-verified; otherwise the
+    launch fails closed to the bundled build (never launching unverified pinned
+    code) and reports the reason.
+  - Installing a pinned release is fully fail-closed and IO/network-injected: it
+    selects the exact release tag from the official repo, downloads the archive
+    plus its manifest, verifies every manifest file's SHA-256 and the aggregate
+    content digest (the same deterministic scheme as VHS-REQ-676's builder),
+    marks the install verified only on success, and removes partial installs on
+    any download, manifest-version, or verification failure.
+  - The opt-in update check surfaces only newer STABLE dev-tools versions
+    (prereleases ignored), using the VHS-REQ-676 SemVer comparison, and produces
+    a notification only when a strictly greater stable version than the pinned
+    one exists.
+  - Consumer documentation no longer directs users to install a dev-tools VSIX
+    (the dev-tools channel ships an archive, not a VSIX; the extension itself is
+    Marketplace-only); it directs them to pin `viHistorySuite.devTools.version`
+    instead.
+- Agent Work Scope:
+  - Keep all filesystem and network access dependency-injected in the resolver so
+    the policy stays unit-testable and fail-closed. Do not broaden the scope
+    beyond the MCP server launch. Reuse the VHS-REQ-676 SemVer utility for all
+    version comparisons; add no semver dependency. Gate any download and any
+    pinned launch on workspace trust and integrity verification.
+- Implementation References:
+  - `src/tooling/devToolsResolver.ts`
+  - `src/mcp/viSemanticMcpServerProvider.ts`
+  - `package.json`
+  - `docs/consumer-workflows/codespace-preview-cache.devcontainer.json`
+- Verification References:
+  - `tests/unit/devToolsResolver.test.ts`
+  - `tests/unit/viSemanticMcpServerProvider.test.ts`
+  - `tests/unit/packageManifest.test.ts`
+  - `tests/unit/codespacePreviewCacheTemplate.test.ts`
+- Change Guidance:
+  - Preserve the fail-closed posture: an unverified or untrusted pin must fall
+    back to the bundled build, never to unverified pinned code. Keep IO injected.
+    If the Marketplace pre-release channel lands (VHS-REQ-678), keep dev-tools
+    version pinning independent of the extension version.
+
