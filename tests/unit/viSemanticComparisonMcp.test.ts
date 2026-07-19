@@ -9,7 +9,9 @@ import {
   JsonRpcSuccess,
   VI_SEMANTIC_MCP_PROTOCOL_VERSION,
   VI_SEMANTIC_MCP_SERVER_INFO,
-  VI_SEMANTIC_MCP_TOOLS
+  VI_SEMANTIC_MCP_TOOLS,
+  VI_SEMANTIC_MCP_ASYNC_ONLY_TOOL_NAMES,
+  VI_SEMANTIC_MCP_SYNC_CAPABLE_TOOL_NAMES
 } from '../../src/semantic/viSemanticComparisonMcp';
 import type { CompareViRevisionsResult } from '../../src/semantic/compareViRevisions';
 import type { ViSemanticHistory } from '../../src/semantic/viSemanticHistory';
@@ -82,6 +84,24 @@ describe('viSemanticComparisonMcp', () => {
       'get_preview_cache_entry'
     ]);
     expect(result.tools).toEqual(VI_SEMANTIC_MCP_TOOLS);
+  });
+
+  it('partitions every registered tool into exactly one of async-only or sync-capable', () => {
+    const registryNames = VI_SEMANTIC_MCP_TOOLS.map((tool) => tool.name).sort();
+    const asyncOnly = new Set(VI_SEMANTIC_MCP_ASYNC_ONLY_TOOL_NAMES);
+    const syncCapable = new Set(VI_SEMANTIC_MCP_SYNC_CAPABLE_TOOL_NAMES);
+
+    // The union covers the whole registry (no tool silently falls through to
+    // "unknown tool" in the dispatcher) ...
+    expect([...asyncOnly, ...syncCapable].sort()).toEqual(registryNames);
+    // ... and the two partitions are disjoint (no tool is both).
+    for (const name of asyncOnly) {
+      expect(syncCapable.has(name)).toBe(false);
+    }
+    // Every async-only name is a real registered tool.
+    for (const name of asyncOnly) {
+      expect(registryNames).toContain(name);
+    }
   });
 
   it('summarizes a comparison into a narrative through tools/call', () => {
