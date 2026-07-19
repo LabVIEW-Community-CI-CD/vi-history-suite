@@ -1,5 +1,8 @@
 import { isSha256HexKey } from '../../support/cacheKey';
-import { extractBlockDiagramFrames } from './viPreviewFlatFrames';
+import {
+  assessFramesModelFidelity,
+  buildFramesModelFromFlatExport
+} from './viPreviewFlatFrames';
 
 /**
  * VHS-REQ-659: read-only inspection of a VI-preview render cache directory.
@@ -45,12 +48,14 @@ export interface ViPreviewCacheEntry {
   /** Count of inline `data:image/...` occurrences (preview render images). */
   inlineImageCount: number;
   /**
-   * True when an interactive block-diagram viewer can be presented from this
-   * document. The cache stores NI's flat `PrintToSingleFileHtml` export (the
-   * `lvr-frames` viewer island is injected only later by the display path), so
-   * capability is derived the same way `selectViPreviewDocument` decides — the
-   * flat export yields at least one decodable Block Diagram frame — and the
-   * already-assembled viewer island is also recognized.
+   * True when an interactive block-diagram viewer would actually be presented
+   * from this document. The cache stores NI's flat `PrintToSingleFileHtml` export
+   * (the `lvr-frames` viewer island is injected only later by the display path),
+   * so capability is derived exactly the way `selectViPreviewDocument` decides —
+   * the flat export yields a block-diagram frames model AND that model is faithful
+   * enough to present (a complex, coordinate-less diagram falls back to the flat
+   * document; see `assessFramesModelFidelity`). An already-assembled viewer island
+   * is also recognized.
    */
   interactive: boolean;
   /** Health flags; empty means a healthy rendered preview. */
@@ -63,6 +68,17 @@ const ERROR_MARKER_PATTERN =
   /preview-cache-miss|error 1125|labview-preview-operation-load-failed|placeholder/i;
 const RENDERED_CONTENT_PATTERN = /data:image\/|lvr-frames|difference-image/i;
 const INLINE_IMAGE_PATTERN = /data:image\//gi;
+
+/**
+ * Whether a flat export would actually yield a presentable interactive viewer:
+ * a block-diagram frames model extracts AND it is faithful enough to show (a
+ * complex, coordinate-less diagram is rejected). Mirrors `selectViPreviewDocument`
+ * so the cache's `interactive` signal matches what the display path would do.
+ */
+function framesModelIsPresentable(html: string): boolean {
+  const model = buildFramesModelFromFlatExport(html);
+  return model !== undefined && assessFramesModelFidelity(model).faithful;
+}
 
 /**
  * Classifies a preview document's content into health flags plus derived
@@ -78,10 +94,11 @@ export function classifyPreviewCacheDocument(content: string): {
   const inlineImageCount = (text.match(INLINE_IMAGE_PATTERN) ?? []).length;
   // The cache stores the flat LabVIEW export, whose interactive viewer is only
   // built at display time; so derive interactive capability the way the display
-  // path (`selectViPreviewDocument`) does — the flat export yields at least one
-  // decodable Block Diagram frame — while still recognizing an already-assembled
+  // path (`selectViPreviewDocument`) does — the flat export yields a block-diagram
+  // frames model that is ALSO faithful enough to present (a complex diagram falls
+  // back to the flat document), while still recognizing an already-assembled
   // viewer island (`lvr-frames`) for the case a viewer document is inspected.
-  const interactive = /lvr-frames/i.test(text) || extractBlockDiagramFrames(text).length > 0;
+  const interactive = /lvr-frames/i.test(text) || framesModelIsPresentable(text);
   const flags: ViPreviewCacheEntryFlag[] = [];
   if (text.trim().length === 0) {
     flags.push('empty');
