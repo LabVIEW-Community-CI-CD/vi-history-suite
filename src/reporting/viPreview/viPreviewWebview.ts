@@ -15,7 +15,7 @@
 export type ViPreviewWebviewState =
   | { kind: 'loading'; title: string; detail?: string }
   | { kind: 'error'; title: string; message: string }
-  | { kind: 'rendered'; labviewHtml: string };
+  | { kind: 'rendered'; labviewHtml: string; notice?: string };
 
 /** Strict CSP for the rendered LabVIEW document: inline styles + data-URI images only. */
 const RENDERED_CSP =
@@ -45,6 +45,30 @@ export function injectPreviewCsp(labviewHtml: string): string {
     return `${labviewHtml.slice(0, insertAt)}${cspMetaTag()}${labviewHtml.slice(insertAt)}`;
   }
   return `${cspMetaTag()}\n${labviewHtml}`;
+}
+
+/** Inline-styled, script-free banner (CSP-safe) shown above a rendered preview. */
+function noticeBanner(notice: string): string {
+  return (
+    '<div style="font-family: var(--vscode-font-family); color: var(--vscode-foreground); ' +
+    'background: var(--vscode-editorInfo-background, var(--vscode-editorWidget-background)); ' +
+    'border: 1px solid var(--vscode-editorInfo-border, var(--vscode-widget-border)); ' +
+    `border-radius: 4px; padding: 8px 12px; margin: 8px; line-height: 1.4;">${escapeHtml(notice)}</div>`
+  );
+}
+
+/**
+ * Injects a notice banner immediately after the document's `<body>` (LabVIEW
+ * emits uppercase tags, so the match is case-insensitive). When no body element
+ * is present the banner is prepended so it still shows above the content.
+ */
+export function injectPreviewNotice(html: string, notice: string): string {
+  const bodyOpen = /<body[^>]*>/i.exec(html);
+  if (bodyOpen) {
+    const insertAt = bodyOpen.index + bodyOpen[0].length;
+    return `${html.slice(0, insertAt)}${noticeBanner(notice)}${html.slice(insertAt)}`;
+  }
+  return `${noticeBanner(notice)}\n${html}`;
 }
 
 function themedShell(title: string, bodyHtml: string): string {
@@ -84,7 +108,8 @@ function themedShell(title: string, bodyHtml: string): string {
 /** Builds the full webview document for a preview state. */
 export function buildViPreviewWebviewHtml(state: ViPreviewWebviewState): string {
   if (state.kind === 'rendered') {
-    return injectPreviewCsp(state.labviewHtml);
+    const withCsp = injectPreviewCsp(state.labviewHtml);
+    return state.notice ? injectPreviewNotice(withCsp, state.notice) : withCsp;
   }
 
   if (state.kind === 'loading') {
