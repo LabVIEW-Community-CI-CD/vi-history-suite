@@ -11,7 +11,8 @@ body:
         Issues must be decision-complete before implementation starts: requirement ID, files to inspect, acceptance criteria,
         validation commands, out-of-scope boundaries, and requirement/RTM update expectations.
         Agents should inspect the SRS block and RTM row before editing.
-  - type: input
+        Agents can iterate locally first with the compliant templates in
+        `docs/agent-workflows/templates/`, then promote the filled proposal here field-for-field.  - type: input
     id: requirement_id
     attributes:
       label: Target Requirement ID
