@@ -10,7 +10,9 @@ import { describe, expect, it, vi } from 'vitest';
 
 import {
   buildViSemanticMcpServerDeps,
-  createDefaultComparisonModelCache
+  createDefaultComparisonModelCache,
+  resolveRuntimeHealth,
+  listChangedVis
 } from '../../src/mcp/viSemanticMcpServerDeps';
 import type {
   CompareViRevisionsDeps,
@@ -46,6 +48,84 @@ describe('buildViSemanticMcpServerDeps', () => {
     expect(typeof deps.previewCacheInspector?.summarize).toBe('function');
     expect(typeof deps.previewCacheInspector?.search).toBe('function');
     expect(typeof deps.previewCacheInspector?.get).toBe('function');
+  });
+
+  it('wires the read-only diagnostics resolvers', () => {
+    const deps = buildViSemanticMcpServerDeps(cache);
+    expect(typeof deps.resolveRuntimeHealth).toBe('function');
+    expect(typeof deps.collectPreviewDiagnostics).toBe('function');
+    expect(typeof deps.listChangedVis).toBe('function');
+  });
+
+  it('projects a resolved runtime selection into the runtime-health snapshot', async () => {
+    const health = await resolveRuntimeHealth({ platform: 'linux' }, async () => ({
+      platform: 'linux',
+      bitness: 'x64',
+      provider: 'linux-container',
+      engine: 'lvcompare-cli',
+      containerImage: 'ni/labview:2026q1',
+      notes: ['resolved'],
+      registryQueryPlans: [],
+      candidates: []
+    }) as never);
+    expect(health).toMatchObject({
+      schema: 'vi-history-suite/runtime-health@v1',
+      platform: 'linux',
+      provider: 'linux-container',
+      engine: 'lvcompare-cli',
+      containerImage: 'ni/labview:2026q1',
+      blocked: false,
+      blockedReason: null
+    });
+  });
+
+  it('marks the runtime-health snapshot blocked when the locator reports no provider', async () => {
+    const health = await resolveRuntimeHealth({}, async () => ({
+      platform: 'linux',
+      bitness: 'x64',
+      provider: 'unavailable',
+      blockedReason: 'labview-version-required',
+      notes: [],
+      registryQueryPlans: [],
+      candidates: []
+    }) as never);
+    expect(health.blocked).toBe(true);
+    expect(health.blockedReason).toBe('labview-version-required');
+    expect(health.engine).toBeNull();
+    expect(health.containerImage).toBeNull();
+  });
+
+  it('resolves the runtime through the injected deps orchestrator (exercises the wiring)', async () => {
+    const deps = buildViSemanticMcpServerDeps(cache);
+    const health = await deps.resolveRuntimeHealth?.({ platform: 'linux' });
+    expect(health?.schema).toBe('vi-history-suite/runtime-health@v1');
+    expect(typeof health?.blocked).toBe('boolean');
+  });
+
+  it('projects a changed-path diff into the changed-VIs listing (VI-filtered, sorted)', async () => {
+    const changed = await listChangedVis(
+      { repositoryRoot: '/repo', baseHash: 'aaaa', selectedHash: 'bbbb' },
+      async () => ['docs/readme.md', 'vis/B.ctl', 'vis/A.vi', 'src/x.ts']
+    );
+    expect(changed).toMatchObject({
+      schema: 'vi-history-suite/changed-vis@v1',
+      repositoryRoot: '/repo',
+      baseHash: 'aaaa',
+      selectedHash: 'bbbb',
+      changedVis: ['vis/A.vi', 'vis/B.ctl'],
+      count: 2
+    });
+  });
+
+  it('lists changed VIs through the injected deps orchestrator (exercises the wiring)', async () => {
+    const deps = buildViSemanticMcpServerDeps(cache);
+    const changed = await deps.listChangedVis?.({
+      repositoryRoot: process.cwd(),
+      baseHash: 'HEAD',
+      selectedHash: 'HEAD'
+    });
+    expect(changed?.schema).toBe('vi-history-suite/changed-vis@v1');
+    expect(changed?.count).toBe(0);
   });
 
   it('binds compare_vi_revisions to the shared comparison-model cache', async () => {

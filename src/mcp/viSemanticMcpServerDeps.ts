@@ -8,7 +8,11 @@ import {
 } from '../semantic/compareViRevisions';
 import { buildViSemanticHistory } from '../semantic/viSemanticHistory';
 import { buildViRepositoryIndex } from '../semantic/viRepositoryIndex';
-import { buildViSemanticPrReview } from '../semantic/viSemanticPrReview';
+import {
+  buildViSemanticPrReview,
+  createDefaultListChangedPaths,
+  isViSourcePath
+} from '../semantic/viSemanticPrReview';
 import {
   createFileViComparisonModelCache,
   type ViComparisonModelCache
@@ -21,6 +25,22 @@ import {
   getPreviewCacheEntry,
   type ViPreviewCacheInspectionFsDeps
 } from '../reporting/viPreview/viPreviewCacheInspection';
+import {
+  locateComparisonRuntime,
+  type RuntimePlatform
+} from '../reporting/comparisonRuntimeLocator';
+import {
+  collectViPreviewDiagnostics,
+  type CollectViPreviewDiagnosticsOptions
+} from '../tooling/viPreviewDiagnostics';
+import {
+  RUNTIME_HEALTH_SCHEMA,
+  CHANGED_VIS_SCHEMA,
+  type RuntimeHealthInput,
+  type ViRuntimeHealth,
+  type ChangedVisInput,
+  type ViChangedVis
+} from '../semantic/viSemanticComparisonMcp';
 
 /**
  * VHS-REQ-662.7 / VHS-REQ-662.8: assembles the orchestrator set injected into
@@ -88,6 +108,66 @@ export function buildViSemanticMcpServerDeps(
       search: (cacheDirectory, marker) => searchPreviewCache(cacheDirectory, marker, previewCacheFs),
       get: (cacheDirectory, key, options) =>
         getPreviewCacheEntry(cacheDirectory, key, previewCacheFs, options)
-    }
+    },
+    resolveRuntimeHealth: (input) => resolveRuntimeHealth(input),
+    collectPreviewDiagnostics: (input: CollectViPreviewDiagnosticsOptions) =>
+      collectViPreviewDiagnostics(input),
+    listChangedVis: (input) => listChangedVis(input)
+  };
+}
+
+/**
+ * Lists the VI source files changed between two Git revisions (pure Git; never
+ * renders) and projects the `vi-history-suite/changed-vis@v1` listing the
+ * `list_changed_vis` MCP tool returns. Filters `git diff --name-only` to LabVIEW
+ * source paths so an agent can scope a review before running it. The path lister
+ * is injectable so the projection (VI filtering, sort, count) is unit-testable
+ * with a fake diff, without a real Git process.
+ */
+export async function listChangedVis(
+  input: ChangedVisInput,
+  listChangedPaths: (
+    repositoryRoot: string,
+    baseHash: string,
+    selectedHash: string
+  ) => Promise<string[]> = createDefaultListChangedPaths()
+): Promise<ViChangedVis> {
+  const changed = await listChangedPaths(input.repositoryRoot, input.baseHash, input.selectedHash);
+  const changedVis = changed.filter((relativePath) => isViSourcePath(relativePath)).sort();
+  return {
+    schema: CHANGED_VIS_SCHEMA,
+    repositoryRoot: input.repositoryRoot,
+    baseHash: input.baseHash,
+    selectedHash: input.selectedHash,
+    changedVis,
+    count: changedVis.length
+  };
+}
+
+/**
+ * Resolves the comparison runtime (never running a comparison) and projects the
+ * compact runtime-health snapshot the `get_runtime_health` MCP tool returns. The
+ * heavy locator selection is reduced to the fields an agent needs to decide
+ * whether — and by which provider — it can compare. The locator is injectable so
+ * the projection (null-coalescing, blocked derivation) is unit-testable with a
+ * fake selection, without a real runtime probe.
+ */
+export async function resolveRuntimeHealth(
+  input: RuntimeHealthInput,
+  locateRuntime: typeof locateComparisonRuntime = locateComparisonRuntime
+): Promise<ViRuntimeHealth> {
+  const platform: RuntimePlatform =
+    input.platform ?? (process.platform === 'win32' ? 'win32' : 'linux');
+  const selection = await locateRuntime(platform, input.settings ?? {});
+  return {
+    schema: RUNTIME_HEALTH_SCHEMA,
+    platform: selection.platform,
+    provider: selection.provider,
+    engine: selection.engine ?? null,
+    bitness: selection.bitness,
+    containerImage: selection.containerImage ?? null,
+    blocked: selection.provider === 'unavailable' || Boolean(selection.blockedReason),
+    blockedReason: selection.blockedReason ?? null,
+    notes: selection.notes
   };
 }
