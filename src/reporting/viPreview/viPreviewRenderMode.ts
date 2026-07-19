@@ -46,6 +46,12 @@ export interface SelectedViPreviewDocument {
   html: string;
   /** The presentation actually used (may differ from the request on fallback). */
   mode: ViPreviewRenderMode;
+  /**
+   * When an `interactive` request was downgraded to `document`, a concise reason
+   * (e.g. the diagram is too complex to reconstruct faithfully). Undefined when
+   * the returned mode matches the request or `document` was requested outright.
+   */
+  fallbackReason?: string;
 }
 
 /**
@@ -57,9 +63,10 @@ export interface SelectedViPreviewDocument {
 export function selectViPreviewDocument(
   options: SelectViPreviewDocumentOptions
 ): SelectedViPreviewDocument {
-  const documentFallback = (): SelectedViPreviewDocument => ({
-    html: buildViPreviewWebviewHtml({ kind: 'rendered', labviewHtml: options.labviewHtml }),
-    mode: 'document'
+  const documentFallback = (fallbackReason?: string, notice?: string): SelectedViPreviewDocument => ({
+    html: buildViPreviewWebviewHtml({ kind: 'rendered', labviewHtml: options.labviewHtml, notice }),
+    mode: 'document',
+    ...(fallbackReason ? { fallbackReason } : {})
   });
 
   if (options.mode !== 'interactive') {
@@ -80,9 +87,16 @@ export function selectViPreviewDocument(
   // The flat export carries no node coordinates, so a complex diagram
   // reconstructs into a large, misleading vertical stack. When the model is too
   // low-fidelity to present faithfully, fall back to the faithful flat document
-  // view rather than an interactive layout that misrepresents the diagram.
-  if (!assessFramesModelFidelity(model).faithful) {
-    return documentFallback();
+  // view rather than an interactive layout that misrepresents the diagram, and
+  // tell the user why the interactive stepper was skipped.
+  const fidelity = assessFramesModelFidelity(model);
+  if (!fidelity.faithful) {
+    const reason =
+      fidelity.reason ?? 'the diagram is too complex to reconstruct faithfully from the flat export';
+    return documentFallback(
+      reason,
+      `Showing the full flat preview. The interactive block-diagram viewer was skipped because ${reason}.`
+    );
   }
 
   return {

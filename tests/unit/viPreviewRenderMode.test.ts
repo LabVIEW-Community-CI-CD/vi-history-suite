@@ -72,5 +72,15 @@ describe('selectViPreviewDocument', () => {
     expect(out.mode).toBe('document');
     expect(out.html).toContain("script-src 'none'");
     expect(out.html).not.toContain('id="lvr-frames"');
+    // The user is told why the interactive stepper was skipped.
+    expect(out.fallbackReason).toBeDefined();
+    expect(out.html).toContain('interactive block-diagram viewer was skipped');
+  });
+
+  it('does not attach a fallback reason or notice for an explicit document request (#2096)', () => {
+    const out = selectViPreviewDocument({ labviewHtml: diagramHtml(), mode: 'document', nonce: NONCE });
+    expect(out.mode).toBe('document');
+    expect(out.fallbackReason).toBeUndefined();
+    expect(out.html).not.toContain('interactive block-diagram viewer was skipped');
   });
 });
