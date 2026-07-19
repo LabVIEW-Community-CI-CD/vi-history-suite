@@ -118,6 +118,20 @@ describe('auditAdrIndex', () => {
     expect(result.violations.some((v) => v.includes('not sequential'))).toBe(true);
   });
 
+  it('fails on an unknown header status value', () => {
+    const body = validAdr('0001', 'First').replace('- Status: Accepted', '- Status: Acceptd');
+    const root = makeAdrRepo({ 'ADR-0001-first.md': body }, { index: 'ADR-0001-first.md\n' });
+    const result = auditAdrIndex(root);
+    expect(result.ok).toBe(false);
+    expect(result.violations.some((v) => v.includes('unknown status') && v.includes('Acceptd'))).toBe(true);
+  });
+
+  it('accepts a large ADR whose header status is valid despite embedded status lines', () => {
+    const body = validAdr('0001', 'First') + '\n\n> Embedded sub-decision.\n- Status: Whatever\n';
+    const root = makeAdrRepo({ 'ADR-0001-first.md': body }, { index: 'ADR-0001-first.md\n' });
+    expect(auditAdrIndex(root).ok).toBe(true);
+  });
+
   it('fails when a required field or section is missing', () => {
     const root = makeAdrRepo(
       { 'ADR-0001-first.md': '# ADR-0001: First\n\n- Date: 2026-07-19\n\n## Context\nx\n## Decision\ny\n' },

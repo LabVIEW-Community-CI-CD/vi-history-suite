@@ -27,6 +27,7 @@ const TEMPLATE_FILE = 'ADR-template.md';
 const ADR_FILE_PATTERN = /^ADR-(\d{4})-[a-z0-9-]+\.md$/;
 const REQUIRED_SECTIONS = ['## Context', '## Decision', '## Consequences'];
 const RTM_FILE = path.join('docs', 'requirements', 'rtm.csv');
+const ALLOWED_STATUSES = ['Proposed', 'Accepted', 'Active', 'Superseded', 'Deprecated'];
 
 function defaultDeps() {
   return {
@@ -79,6 +80,15 @@ function auditAdrIndex(repoRoot, deps = defaultDeps()) {
     }
     if (!/^- Status:\s*\S/m.test(body)) {
       violations.push(`ADR ${name} is missing a "- Status:" field.`);
+    } else {
+      // Validate the FIRST (header) status only; large ADRs may embed later
+      // status lines for sub-decisions.
+      const status = /^- Status:\s*(\S+)/m.exec(body)[1];
+      if (!ALLOWED_STATUSES.includes(status)) {
+        violations.push(
+          `ADR ${name} has an unknown status "${status}"; expected one of: ${ALLOWED_STATUSES.join(', ')}.`
+        );
+      }
     }
     if (!/^- Date:\s*\S/m.test(body)) {
       violations.push(`ADR ${name} is missing a "- Date:" field.`);
