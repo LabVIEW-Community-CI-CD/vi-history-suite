@@ -206,6 +206,32 @@ describe('extension manifest public metadata', () => {
     });
   });
 
+  it('documents every contributed command ID in the quick reference (docs drift guard)', () => {
+    const manifest = readManifest();
+    const quickReference = readRepoText('docs', 'quick-reference.md');
+    const commandIds = (manifest.contributes?.commands ?? [])
+      .map((entry) => entry.command)
+      .filter((id): id is string => typeof id === 'string');
+
+    expect(commandIds.length).toBeGreaterThan(0);
+    const undocumented = commandIds.filter((id) => !quickReference.includes(id));
+    expect(undocumented, `command IDs missing from docs/quick-reference.md: ${undocumented.join(', ')}`).toEqual(
+      []
+    );
+  });
+
+  it('documents every contributed setting ID in the quick reference (docs drift guard)', () => {
+    const manifest = readManifest();
+    const quickReference = readRepoText('docs', 'quick-reference.md');
+    const settingIds = Object.keys(manifest.contributes?.configuration?.properties ?? {});
+
+    expect(settingIds.length).toBeGreaterThan(0);
+    const undocumented = settingIds.filter((id) => !quickReference.includes(id));
+    expect(undocumented, `setting IDs missing from docs/quick-reference.md: ${undocumented.join(', ')}`).toEqual(
+      []
+    );
+  });
+
   it('contributes the visibility gate in explorer and editor title menus (VHS-REQ-004.1, VHS-REQ-004.2, VHS-REQ-004.3, VHS-REQ-013.1)', () => {
     const manifest = readManifest();
     const expectedMenuEntry = {

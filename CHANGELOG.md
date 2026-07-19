@@ -4,6 +4,16 @@ This changelog records user-facing release history for `vi-history-suite`.
 
 ## [Unreleased]
 
+### Documentation
+
+- Documented the full extension surface for users: `docs/quick-reference.md` now
+  indexes every contributed command and setting, `docs/user-guide.md` gains a
+  Commands and Settings section (including VI Preview and dev-tools pinning), and
+  README/FIRST-RUN/INSTALL/FAQ/glossary surface the interactive block-diagram
+  preview, the dev-tools pinning lifecycle, and the Marketplace pre-release
+  channel. TROUBLESHOOTING gains a pinned-dev-tools section. A test now guards
+  the quick-reference index against command/setting drift.
+
 ### Fixed
 
 - Removed a duplicated `if` opener in the dev-tools release workflow's channel

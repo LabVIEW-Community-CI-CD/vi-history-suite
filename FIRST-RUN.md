@@ -13,6 +13,12 @@
 8. Choose `Review VI History`, select two revisions, review the preflight, and
    choose `Compare`.
 
+Optional next steps:
+
+- Turn on `viHistorySuite.preview.enabled` (Docker runtime) to preview VIs as
+  read-only pictures, and `viHistorySuite.preview.blockDiagramInteractive` for
+  an interactive, pannable block diagram. See [README.md](README.md#preview-a-vi).
+
 If validation reports a blocked runtime, fix that runtime first. The extension
 does not silently switch provider, year, or bitness during compare.
 

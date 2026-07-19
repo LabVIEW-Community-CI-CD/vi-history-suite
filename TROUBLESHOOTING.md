@@ -86,6 +86,31 @@ render is Docker-only. Two ways to see a preview on Host:
   `viHistorySuite.preview.blockDiagramInteractive` for the interactive
   pan/zoom/case-stepper view.
 
+## A pinned dev-tools version is not being used
+
+Run **VI History: Show Dev-Tools Status** first — it reports the pinned setting,
+whether that version is installed and verified, and which build the MCP server
+is actually launching. The pinned build is used only when it is **installed and
+integrity-verified in a trusted workspace**; otherwise the extension fails
+closed to the bundled build. Common causes:
+
+- **Pinned but not installed.** Run **VI History: Install Pinned Dev-Tools
+  Version** (the extension also offers this when it detects a missing pin).
+  Reload the window after a successful install so the MCP server relaunches.
+- **Untrusted workspace.** Installing and launching a pinned version requires a
+  trusted workspace. Trust the workspace, then install.
+- **Install failed.** The status message names the reason:
+  - `release-not-found` — no published `devtools-vX.Y.Z` release matches the
+    pinned tag; check the tag against the dev-tools releases.
+  - `download-failed` — network or asset access problem; retry.
+  - a digest/`content-digest-mismatch` — the downloaded release failed integrity
+    verification and was removed; do not use it.
+- **Malformed setting.** `viHistorySuite.devTools.version` must be `bundled` or a
+  `devtools-vX.Y.Z` tag; any other value falls back to bundled.
+
+To return to the shipped build, set `viHistorySuite.devTools.version` back to
+`bundled` (optionally run **Uninstall Dev-Tools Version** to reclaim storage).
+
 ## Windows + Docker (Linux container) compare fails instantly with a bash parse error
 
 ### Symptom

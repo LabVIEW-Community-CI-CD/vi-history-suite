@@ -39,6 +39,54 @@ See also:
 | Validate a change before PR handoff | `docs/testing/test-plan.md`, `docs/requirements/README.md` | Local validation commands and PR evidence. |
 | Find troubleshooting help | `TROUBLESHOOTING.md`, `SUPPORT.md`, `docs/faq.md` | Diagnosed runtime, Git, or environment next action. |
 
+## Commands And Settings
+
+All extension commands are under the **VI History** category in the Command
+Palette (`Ctrl`/`Cmd`+`Shift`+`P`), and all settings live under
+`viHistorySuite.*` in the Settings UI. For the full catalogue of every command
+ID and setting ID, see [docs/quick-reference.md](quick-reference.md).
+
+Common entry points:
+
+- **Review VI History** — open the history view for a selected `.vi`/`.ctl`/`.vit`.
+- **Export Comparison Report (HTML)** — save the current comparison as a
+  standalone HTML report.
+- **Runtime & Report Settings** / **Set Up Comparison Runtime** — choose whether
+  comparisons run on your installed LabVIEW (Host) or an NI container (Docker),
+  pick the LabVIEW version/bitness or container image, and set which change
+  types the report includes.
+- **Show Runtime Summary** / **Detect Runtime Now** — inspect or re-detect the
+  LabVIEW comparison runtime.
+
+### VI Preview
+
+Turn on `viHistorySuite.preview.enabled` (Docker runtime) to render a VI as a
+read-only picture of its front panel and block diagram when you open it; the
+extension caches the rest of the workspace in the background so later previews
+open instantly. Set `viHistorySuite.preview.blockDiagramInteractive` to view the
+block diagram as an interactive, pannable and zoomable diagram with a
+Case/Event/Sequence case stepper (`◀ n/N ▶` or the arrow keys) instead of a
+static picture.
+
+### Dev-tools version (advanced)
+
+The extension ships with a bundled dev-tools build (the compiled MCP server and
+companion tooling). You can instead pin an independently released dev-tools
+version without waiting for a Marketplace update:
+
+- Set `viHistorySuite.devTools.version` to a `devtools-vX.Y.Z` tag (the default
+  `bundled` uses the shipped build and never uses the network).
+- Run **Install Pinned Dev-Tools Version** to download and integrity-verify that
+  release into the extension's storage (trusted workspace only). It is
+  fail-closed: until a pin is installed and verified, the bundled build is used.
+- **Show Dev-Tools Status** reports which build is active and what is installed;
+  **Uninstall Dev-Tools Version** removes an installed version.
+- `viHistorySuite.devTools.checkForUpdates` (off by default) opts in to a notice
+  when a newer stable dev-tools version is available.
+
+See [docs/devtools-release.md](devtools-release.md#pinning-a-dev-tools-version-in-the-extension)
+for details.
+
 ## Navigation
 
 - Primary route: `README.md` for project overview, install links, and workflow entry.
