@@ -4,8 +4,9 @@ import * as path from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-const { auditAdrIndex } = require('../../scripts/checkAdrIndex.js') as {
+const { auditAdrIndex, auditSyrsCoverage } = require('../../scripts/checkAdrIndex.js') as {
   auditAdrIndex: (repoRoot: string) => { ok: boolean; violations: string[] };
+  auditSyrsCoverage: (repoRoot: string) => { ok: boolean; violations: string[] };
 };
 
 const tempRoots: string[] = [];
@@ -38,7 +39,7 @@ function validAdr(num: string, title: string): string {
     '- Date: 2026-07-19',
     '',
     '## Context',
-    'Anchored to VHS-SYS-REQ-001.',
+    'Records the decision behind VHS-REQ-001.',
     '## Decision',
     'y',
     '## Consequences',
@@ -133,24 +134,67 @@ describe('auditAdrIndex', () => {
     expect(result.violations.some((v) => v.includes('No ADR files found'))).toBe(true);
   });
 
-  it('fails when an ADR does not cite a SYRS requirement', () => {
-    const noSyrs = [
+  it('fails when an ADR does not cite an SRS requirement', () => {
+    const noSrs = [
       '# ADR-0001: First',
       '',
       '- Status: Accepted',
       '- Date: 2026-07-19',
       '',
       '## Context',
-      'Realized in VHS-REQ-609 only.',
+      'Anchored to VHS-SYS-REQ-016 only, with no software requirement.',
       '## Decision',
       'y',
       '## Consequences',
       '- z',
       ''
     ].join('\n');
-    const root = makeAdrRepo({ 'ADR-0001-first.md': noSyrs }, { index: 'ADR-0001-first.md\n' });
+    const root = makeAdrRepo({ 'ADR-0001-first.md': noSrs }, { index: 'ADR-0001-first.md\n' });
     const result = auditAdrIndex(root);
     expect(result.ok).toBe(false);
-    expect(result.violations.some((v) => v.includes('does not cite a SYRS requirement'))).toBe(true);
+    expect(result.violations.some((v) => v.includes('does not cite an SRS requirement'))).toBe(true);
+  });
+});
+
+describe('auditSyrsCoverage', () => {
+  function makeRepoWithRtm(adrBodies: Record<string, string>, rtm: string): string {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'vihs-adr-syrs-'));
+    tempRoots.push(root);
+    const adrDir = path.join(root, 'docs', 'architecture', 'adr');
+    fs.mkdirSync(adrDir, { recursive: true });
+    for (const [name, body] of Object.entries(adrBodies)) {
+      fs.writeFileSync(path.join(adrDir, name), body);
+    }
+    const reqDir = path.join(root, 'docs', 'requirements');
+    fs.mkdirSync(reqDir, { recursive: true });
+    fs.writeFileSync(path.join(reqDir, 'rtm.csv'), rtm);
+    return root;
+  }
+
+  const rtm = [
+    'ReqID,ParentID,Status,Area',
+    'VHS-REQ-100,VHS-SYS-REQ-001,Active,Core',
+    'VHS-REQ-200,VHS-SYS-REQ-004,Active,Runtime',
+    'VHS-REQ-300,VHS-SYS-REQ-099,Retired,Legacy'
+  ].join('\n');
+
+  it('passes when every SYRS that parents an Active SRS is cited by an ADR', () => {
+    const root = makeRepoWithRtm(
+      { 'ADR-0001-a.md': validAdr('0001', 'A') + '\nVHS-SYS-REQ-001 VHS-SYS-REQ-004\n' },
+      rtm
+    );
+    expect(auditSyrsCoverage(root)).toEqual({ ok: true, violations: [] });
+  });
+
+  it('fails naming the SYRS that parents an Active SRS but is not cited by any ADR', () => {
+    const root = makeRepoWithRtm(
+      { 'ADR-0001-a.md': validAdr('0001', 'A') + '\nVHS-SYS-REQ-001\n' },
+      rtm
+    );
+    const result = auditSyrsCoverage(root);
+    expect(result.ok).toBe(false);
+    expect(result.violations.some((v) => v.includes('VHS-SYS-REQ-004'))).toBe(true);
+    // A SYRS with no Active SRS child (only a Retired row) is never demanded.
+    expect(result.violations.some((v) => v.includes('VHS-SYS-REQ-099'))).toBe(false);
   });
 });

@@ -26,6 +26,7 @@ const INDEX_FILE = 'README.md';
 const TEMPLATE_FILE = 'ADR-template.md';
 const ADR_FILE_PATTERN = /^ADR-(\d{4})-[a-z0-9-]+\.md$/;
 const REQUIRED_SECTIONS = ['## Context', '## Decision', '## Consequences'];
+const RTM_FILE = path.join('docs', 'requirements', 'rtm.csv');
 
 function defaultDeps() {
   return {
@@ -88,13 +89,11 @@ function auditAdrIndex(repoRoot, deps = defaultDeps()) {
       }
     }
 
-    // Requirement linkage: an ADR records a design decision, so it must cite the
-    // requirements it is the design record for — including at least one SYRS
-    // (system requirement) id so the ADR is anchored to the requirement tree,
-    // not only to software requirements.
-    if (!/VHS-SYS-REQ-\d+/.test(body)) {
+    // Requirement linkage: an ADR records a design decision, so it must cite at
+    // least one SRS requirement (VHS-REQ-NNN) it is the design record for.
+    if (!/VHS-REQ-\d+/.test(body)) {
       violations.push(
-        `ADR ${name} does not cite a SYRS requirement (VHS-SYS-REQ-NNN); an ADR must be anchored to at least one system requirement.`
+        `ADR ${name} does not cite an SRS requirement (VHS-REQ-NNN); an ADR must record the decision behind at least one software requirement.`
       );
     }
   }
@@ -124,17 +123,82 @@ function auditAdrIndex(repoRoot, deps = defaultDeps()) {
     violations.push('No ADR files found under docs/architecture/adr/.');
   }
 
+  // Requirement coverage (restrictive): every Active VHS-REQ row in rtm.csv must
+  // be linked into at least one ADR. An unlinked requirement means a shipped
+  // capability whose architecture decision is not recorded, so it fails closed.
+  const rtmPath = path.join(repoRoot, RTM_FILE);
+  if (deps.existsSync(rtmPath)) {
+    const adrCorpus = entries.map((name) => deps.readFileSync(path.join(adrDir, name))).join('\n');
+    const citedReqs = new Set(adrCorpus.match(/VHS-REQ-\d+/g) ?? []);
+    const rtm = deps.readFileSync(rtmPath).split(/\r?\n/);
+    const unlinked = [];
+    for (const line of rtm) {
+      const match = /^(VHS-REQ-\d+),[^,]*,Active,/.exec(line);
+      if (match && !citedReqs.has(match[1])) {
+        unlinked.push(match[1]);
+      }
+    }
+    if (unlinked.length > 0) {
+      violations.push(
+        `Active requirements not linked into any ADR (${unlinked.length}): ${unlinked.join(', ')}`
+      );
+    }
+  }
+
+  return { ok: violations.length === 0, violations };
+}
+
+/**
+ * Dedicated SYRS-coverage audit (separate from the ADR structure/SRS-coverage
+ * gate). Every system requirement (VHS-SYS-REQ-NNN) that parents at least one
+ * Active SRS requirement in rtm.csv must be cited by at least one ADR, so no
+ * shipped capability area exists whose system-level decision is unrecorded.
+ *
+ * The required SYRS set is DERIVED from the RTM's Active-SRS parents rather than
+ * from the full syrs.md declaration, so purely structural system requirements
+ * that have no Active SRS children (for example the requirement-split and
+ * optional-expert-path system requirements) are not spuriously demanded.
+ */
+function auditSyrsCoverage(repoRoot, deps = defaultDeps()) {
+  const violations = [];
+  const adrDir = path.join(repoRoot, ADR_DIR);
+  const rtmPath = path.join(repoRoot, RTM_FILE);
+  if (!deps.existsSync(rtmPath)) {
+    return { ok: true, violations };
+  }
+
+  const requiredSyrs = new Set();
+  for (const line of deps.readFileSync(rtmPath).split(/\r?\n/)) {
+    const match = /^VHS-REQ-\d+,(VHS-SYS-REQ-\d+),Active,/.exec(line);
+    if (match) {
+      requiredSyrs.add(match[1]);
+    }
+  }
+
+  const adrFiles = deps.readdirSync(adrDir).filter((name) => ADR_FILE_PATTERN.test(name));
+  const adrCorpus = adrFiles.map((name) => deps.readFileSync(path.join(adrDir, name))).join('\n');
+  const citedSyrs = new Set(adrCorpus.match(/VHS-SYS-REQ-\d+/g) ?? []);
+
+  const unlinked = [...requiredSyrs].filter((syrs) => !citedSyrs.has(syrs)).sort();
+  if (unlinked.length > 0) {
+    violations.push(
+      `System requirements (SYRS) not cited by any ADR (${unlinked.length}): ${unlinked.join(', ')}`
+    );
+  }
+
   return { ok: violations.length === 0, violations };
 }
 
 function main(repoRoot = process.cwd()) {
-  const result = auditAdrIndex(repoRoot);
-  if (result.ok) {
-    process.stdout.write('[adr-check] ADR index and structure are consistent.\n');
+  const structure = auditAdrIndex(repoRoot);
+  const syrs = auditSyrsCoverage(repoRoot);
+  const violations = [...structure.violations, ...syrs.violations];
+  if (violations.length === 0) {
+    process.stdout.write('[adr-check] ADR index, structure, SRS coverage, and SYRS coverage are consistent.\n');
     return 0;
   }
   process.stderr.write('[adr-check] ADR infrastructure check failed:\n');
-  for (const violation of result.violations) {
+  for (const violation of violations) {
     process.stderr.write(`  - ${violation}\n`);
   }
   return 1;
@@ -144,4 +208,4 @@ if (require.main === module) {
   process.exitCode = main();
 }
 
-module.exports = { auditAdrIndex, ADR_DIR };
+module.exports = { auditAdrIndex, auditSyrsCoverage, ADR_DIR };
