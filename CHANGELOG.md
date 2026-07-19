@@ -6,6 +6,15 @@ This changelog records user-facing release history for `vi-history-suite`.
 
 ### Added
 
+- A preview-cache health/coverage read-model (`npm run preview:cache:health`,
+  VHS-REQ-675) reports how well a cache directory covers a workspace by comparing
+  the current workspace VIs, a prior warm manifest
+  (`vi-history-suite/preview-cache-warm@v1`), and the cache directory's present
+  entries — classifying each VI as cached, stale, or missing, listing orphaned
+  cache files and an overall coverage percentage in a schema-versioned
+  `vi-history-suite/preview-cache-health@v1` packet. `--strict` fails closed when
+  the cache does not fully cover the workspace, so CI can gate on coverage and an
+  agent can drive incremental re-warms. Read-only; never renders.
 - A headless preview-cache worker CLI (`npm run preview:cache:warm`,
   VHS-REQ-671) turns any Docker-capable environment — a GitHub Codespace, a CI
   runner, or a developer box — into a worker that generates and stores VI
