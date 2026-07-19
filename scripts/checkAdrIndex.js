@@ -131,17 +131,37 @@ function auditAdrIndex(repoRoot, deps = defaultDeps()) {
     const adrCorpus = entries.map((name) => deps.readFileSync(path.join(adrDir, name))).join('\n');
     const citedReqs = new Set(adrCorpus.match(/VHS-REQ-\d+/g) ?? []);
     const rtm = deps.readFileSync(rtmPath).split(/\r?\n/);
+    const activeReqs = new Set();
+    const allReqs = new Set();
     const unlinked = [];
     for (const line of rtm) {
-      const match = /^(VHS-REQ-\d+),[^,]*,Active,/.exec(line);
-      if (match && !citedReqs.has(match[1])) {
-        unlinked.push(match[1]);
+      const row = /^(VHS-REQ-\d+),[^,]*,(\w+),/.exec(line);
+      if (!row) {
+        continue;
+      }
+      allReqs.add(row[1]);
+      if (row[2] === 'Active') {
+        activeReqs.add(row[1]);
+        if (!citedReqs.has(row[1])) {
+          unlinked.push(row[1]);
+        }
       }
     }
     if (unlinked.length > 0) {
       violations.push(
         `Active requirements not linked into any ADR (${unlinked.length}): ${unlinked.join(', ')}`
       );
+    }
+    // Reverse validation: an ADR must not cite a requirement id that is not an
+    // Active row in rtm.csv (catches typos and stale/retired citations).
+    const staleCitations = [...citedReqs]
+      .filter((req) => !activeReqs.has(req))
+      .sort();
+    if (staleCitations.length > 0) {
+      staleCitations.forEach((req) => {
+        const reason = allReqs.has(req) ? 'is not Active' : 'does not exist';
+        violations.push(`ADR cites requirement ${req} that ${reason} in rtm.csv.`);
+      });
     }
   }
 
