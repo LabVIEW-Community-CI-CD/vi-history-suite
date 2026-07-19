@@ -312,6 +312,47 @@ function checkPrEvidenceDocs(cwd) {
   };
 }
 
+function checkLocalAgentTemplates(cwd) {
+  // The local agent-workflow templates let background agents draft compliant
+  // proposals/evidence for field-for-field promotion. Guard them against drift
+  // from the enforced issue/PR contracts: if the local templates omit a required
+  // anchor, a background agent's "compliant" output would fail promotion.
+  const proposal = readRepoFile(cwd, 'docs/agent-workflows/templates/local-change-proposal.md');
+  const evidence = readRepoFile(cwd, 'docs/agent-workflows/templates/local-pr-evidence.md');
+
+  // The change proposal must carry a heading for each decision-complete issue
+  // field required by .github/ISSUE_TEMPLATE/requirement_target.yml.
+  const requiredProposalHeadings = [
+    '## Target Requirement ID',
+    '## Files To Inspect',
+    '## Acceptance Criteria',
+    '## Validation Commands',
+    '## Out-Of-Scope Boundaries',
+    '## Requirement And RTM Updates'
+  ];
+  // The evidence draft must carry every anchor the PR template requires.
+  const requiredEvidenceAnchors = [
+    '## Requirement-Targeted PR Evidence (lightweight)',
+    'Linked issue (required)',
+    'Target requirement (required)',
+    'Validation commands (required)',
+    'Traceability / RTM impact (required)',
+    'Out-of-scope (required)',
+    'Closeout readiness (required)'
+  ];
+
+  const missingProposal = requiredProposalHeadings.filter((needle) => !proposal.includes(needle));
+  const missingEvidence = requiredEvidenceAnchors.filter((needle) => !evidence.includes(needle));
+  const passed = missingProposal.length === 0 && missingEvidence.length === 0;
+  return {
+    name: 'local agent-workflow templates',
+    passed,
+    details: passed
+      ? 'local change-proposal and PR-evidence templates mirror the enforced contracts'
+      : `Missing in local-change-proposal: ${missingProposal.join(', ') || 'none'}; missing in local-pr-evidence: ${missingEvidence.join(', ') || 'none'}`
+  };
+}
+
 function checkTraceabilityMapping(cwd) {
   const rtm = parseCsvRows(readRepoFile(cwd, 'docs/requirements/rtm.csv'));
   const inventory = parseCsvRows(readRepoFile(cwd, 'docs/requirements/traceability-inventory.csv'));
@@ -436,6 +477,7 @@ function runDefinitionOfDoneGate(options = {}) {
     checkStandardsProvenance(cwd),
     checkIssueTemplate(cwd),
     checkPrEvidenceDocs(cwd),
+    checkLocalAgentTemplates(cwd),
     checkTraceabilityMapping(cwd),
     checkStaleDodDeferrals(cwd)
   ];
@@ -474,6 +516,7 @@ module.exports = {
   assertOrdered,
   checkIssueTemplate,
   checkPrEvidenceDocs,
+  checkLocalAgentTemplates,
   checkStaleDodDeferrals,
   parseCsvLine,
   parseCsvRows,
