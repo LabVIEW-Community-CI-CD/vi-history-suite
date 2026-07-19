@@ -9,37 +9,43 @@ import {
 describe('computeViPreviewCacheKey', () => {
   it('is a 64-char hex digest that is order-independent', () => {
     const a = computeViPreviewCacheKey('Foo.vi', [
-      { relativePath: 'Foo.vi', sizeBytes: 10, mtimeMs: 100 },
-      { relativePath: 'support/Sub.vi', sizeBytes: 20, mtimeMs: 200 }
+      { relativePath: 'Foo.vi', contentSha256: 'aa' },
+      { relativePath: 'support/Sub.vi', contentSha256: 'bb' }
     ]);
     const b = computeViPreviewCacheKey('Foo.vi', [
-      { relativePath: 'support/Sub.vi', sizeBytes: 20, mtimeMs: 200 },
-      { relativePath: 'Foo.vi', sizeBytes: 10, mtimeMs: 100 }
+      { relativePath: 'support/Sub.vi', contentSha256: 'bb' },
+      { relativePath: 'Foo.vi', contentSha256: 'aa' }
     ]);
     expect(a).toMatch(/^[a-f0-9]{64}$/);
     expect(a).toBe(b);
   });
 
-  it('changes when a file size or mtime changes and normalizes separators', () => {
-    const base = computeViPreviewCacheKey('a/Foo.vi', [{ relativePath: 'a/Foo.vi', sizeBytes: 10, mtimeMs: 100 }]);
-    expect(computeViPreviewCacheKey('a/Foo.vi', [{ relativePath: 'a/Foo.vi', sizeBytes: 11, mtimeMs: 100 }])).not.toBe(base);
-    expect(computeViPreviewCacheKey('a/Foo.vi', [{ relativePath: 'a/Foo.vi', sizeBytes: 10, mtimeMs: 101 }])).not.toBe(base);
+  it('changes when a file content digest changes and normalizes separators', () => {
+    const base = computeViPreviewCacheKey('a/Foo.vi', [{ relativePath: 'a/Foo.vi', contentSha256: 'aa' }]);
+    expect(computeViPreviewCacheKey('a/Foo.vi', [{ relativePath: 'a/Foo.vi', contentSha256: 'bb' }])).not.toBe(base);
     // Backslash and forward slash hash identically (target and entries).
-    expect(computeViPreviewCacheKey('a\\Foo.vi', [{ relativePath: 'a\\Foo.vi', sizeBytes: 10, mtimeMs: 100 }])).toBe(base);
+    expect(computeViPreviewCacheKey('a\\Foo.vi', [{ relativePath: 'a\\Foo.vi', contentSha256: 'aa' }])).toBe(base);
   });
-  it('treats a missing mtimeMs as 0 so it matches an explicit zero mtime', () => {
-    const withUndefined = computeViPreviewCacheKey('a/Foo.vi', [
-      { relativePath: 'a/Foo.vi', sizeBytes: 10 }
+
+  it('is content-addressed: identical content yields the same key regardless of path timestamps (portable)', () => {
+    // Two "checkouts" of the same commit differ only in mtime/size metadata that
+    // is NOT part of the key; the content digest is what matters, so the key is
+    // reusable across machines (VHS-REQ-671 fabric premise).
+    const machineA = computeViPreviewCacheKey('a/Foo.vi', [
+      { relativePath: 'a/Foo.vi', contentSha256: 'deadbeef' },
+      { relativePath: 'a/Dep.ctl', contentSha256: 'cafef00d' }
     ]);
-    const withZero = computeViPreviewCacheKey('a/Foo.vi', [
-      { relativePath: 'a/Foo.vi', sizeBytes: 10, mtimeMs: 0 }
+    const machineB = computeViPreviewCacheKey('a/Foo.vi', [
+      { relativePath: 'a/Dep.ctl', contentSha256: 'cafef00d' },
+      { relativePath: 'a/Foo.vi', contentSha256: 'deadbeef' }
     ]);
-    expect(withUndefined).toBe(withZero);
+    expect(machineA).toBe(machineB);
   });
+
   it('distinguishes different target VIs that share the same staged file set (VHS-REQ-659.11, #646)', () => {
     const entries = [
-      { relativePath: 'left/A.vi', sizeBytes: 10, mtimeMs: 100 },
-      { relativePath: 'left/B.vi', sizeBytes: 20, mtimeMs: 200 }
+      { relativePath: 'left/A.vi', contentSha256: 'aa' },
+      { relativePath: 'left/B.vi', contentSha256: 'bb' }
     ];
     // Same staged tree, different render target -> distinct keys, so selecting a
     // second VI in one project never returns the first VI's cached document.
@@ -109,6 +115,21 @@ describe('createFileViPreviewCache', () => {
     await cache.set(KEY, '<HTML></HTML>');
     expect(fsDeps.removeFile).toHaveBeenCalledTimes(1);
     expect(fsDeps.removeFile).toHaveBeenCalledWith('/c/old.html');
+  });
+
+  it('disables eviction when maxEntries is 0 (whole-workspace warm retains all)', async () => {
+    const fsDeps = makeFsDeps({
+      listFiles: vi.fn().mockResolvedValue(['a.html', 'b.html', 'c.html', 'd.html'])
+    });
+    const cache = createFileViPreviewCache(
+      { cacheDirectory: '/c', maxEntries: 0, joinPath: (d, n) => `${d}/${n}` },
+      fsDeps
+    );
+
+    await cache.set(KEY, '<HTML></HTML>');
+    // No eviction pass: never enumerates or removes even though > 0 files exist.
+    expect(fsDeps.removeFile).not.toHaveBeenCalled();
+    expect(fsDeps.listFiles).not.toHaveBeenCalled();
   });
 
   it('skips the write and never touches the filesystem for a malformed key', async () => {

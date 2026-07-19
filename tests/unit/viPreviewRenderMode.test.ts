@@ -21,6 +21,18 @@ describe('selectViPreviewDocument', () => {
     expect(out.html).toContain("script-src 'none'");
   });
 
+  it('honors an explicit document request even when interactive rendering would be possible (VHS-REQ-659.19)', () => {
+    // A document request supplies a valid nonce AND frames-capable HTML, i.e. the
+    // interactive viewer COULD be built. The `mode !== 'interactive'` guard must
+    // still return the static document; without that guard this would wrongly
+    // emit the interactive viewer.
+    const out = selectViPreviewDocument({ labviewHtml: diagramHtml(), mode: 'document', nonce: NONCE });
+    expect(out.mode).toBe('document');
+    expect(out.html).toContain("script-src 'none'");
+    expect(out.html).not.toContain('id="lvr-frames"');
+    expect(out.html).not.toContain(`nonce-${NONCE}`);
+  });
+
   it('builds the interactive viewer for interactive mode with frames + nonce (VHS-REQ-659.19)', () => {
     const out = selectViPreviewDocument({ labviewHtml: diagramHtml(), mode: 'interactive', nonce: NONCE });
     expect(out.mode).toBe('interactive');

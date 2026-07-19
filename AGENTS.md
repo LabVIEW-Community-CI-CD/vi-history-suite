@@ -28,6 +28,8 @@ This file provides concise, actionable guidance for AI coding agents working in 
 - **Check:** `npm run check`
 - **Package:** `npm run package`
 - **Branch protection audit:** `npm run branch-protection:audit`
+- **ADR infrastructure gate:** `npm run adr:check` (index/structure, SRS + SYRS coverage, supersession forward-linkage; also pre-push)
+- **Agent-delegation gate:** `npm run agent:check` (issue-template agent dropdowns match `.github/agents/`; also pre-push)
 - **Verification health:** `npm run requirements:verify` (single-pane signal; add `:strict` for a local pre-push gate)
 
 ### Priority Area: Testing Automation
@@ -132,6 +134,11 @@ This file provides concise, actionable guidance for AI coding agents working in 
 
 ### Custom Agents (Workspace)
 - `.github/agents/workflow-governor.agent.md`: task execution with branch policy, requirement traceability, test gates, and PR evidence compliance
+- `.github/agents/docs-scribe.agent.md`: documentation-only changes verified against ground truth, no behavior change
+- `.github/agents/requirements-steward.agent.md`: requirement-targeted work keeping SRS/RTM/id-index/inventory coherent
+- `.github/agents/test-engineer.agent.md`: risk-led deterministic tests and coverage-map gap closure
+- `.github/agents/adr-author.agent.md`: architecture decision records and the `npm run adr:check` gate
+- `.github/agents/release-operator.agent.md`: release automation, Marketplace workflow, and dev-tools versioning with fail-closed guards
 
 ### File Instructions (Workspace)
 - `.github/instructions/reporting-orchestration.instructions.md`: guardrails for report orchestration files in `src/reporting/**`

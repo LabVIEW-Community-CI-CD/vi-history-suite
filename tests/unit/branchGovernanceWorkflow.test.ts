@@ -229,7 +229,7 @@ describe('CI branch governance workflow', () => {
     expect(workflow).not.toContain("'copilot/**'");
   });
 
-  it('routes fix branches into feature branches and blocks them from develop or main', () => {
+  it('routes fix branches into feature branches and blocks them from develop or main (VHS-REQ-609.14)', () => {
     const workflow = readWorkflow();
 
     // fix/* PRs are gated by adding feature/** to the pull_request triggers.

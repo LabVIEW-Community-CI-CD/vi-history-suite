@@ -11,7 +11,11 @@ import {
   planViPreviewStagingWithProjectRoot,
   type ViPreviewStagingEntry
 } from './viPreviewStaging';
-import { computeViPreviewCacheKey, type ViPreviewCache } from './viPreviewCache';
+import {
+  computeViPreviewCacheKey,
+  type ViPreviewCache,
+  type ViPreviewCacheKeyEntry
+} from './viPreviewCache';
 
 /**
  * VHS-REQ-659: render an on-disk LabVIEW VI to preview HTML.
@@ -50,8 +54,25 @@ export interface RenderViPreviewForFileResult {
   html?: string;
   /** True when the document was served from the render cache. */
   cached?: boolean;
+  /**
+   * The content-addressed cache key used for this VI (target VI plus staged
+   * file set), when it could be computed. Present for cache hits, cache-only
+   * misses, and completed renders so callers can build a key->VI-path manifest
+   * (VHS-REQ-671); undefined when a staged file was missing from the
+   * enumeration and the render proceeded uncached.
+   */
+  cacheKey?: string;
   failureReason?: ViPreviewFailureReason;
   stderr?: string;
+  /**
+   * Whether the produced document was persisted to the cache. `true` when a
+   * fresh render's `cache.set` succeeded, `false` when it was attempted and
+   * failed (the render still succeeds, but no reusable cache file was stored),
+   * and `undefined` when no write was attempted (no cache, or a cache hit). The
+   * warm worker (VHS-REQ-671) treats a fresh render with `cacheStored === false`
+   * as a failure because its job is to STORE the cache.
+   */
+  cacheStored?: boolean;
 }
 
 export interface RenderViPreviewForFileDeps {
@@ -75,6 +96,14 @@ export interface RenderViPreviewForFileDeps {
   copyFile: (source: string, destination: string) => Promise<void>;
   readFile: (filePath: string) => Promise<string>;
   removeDirectory: (directory: string) => Promise<void>;
+  /**
+   * Computes a SHA-256 hex digest of a file's exact bytes. Required for caching:
+   * the content-addressed cache key (VHS-REQ-659 / VHS-REQ-671) folds in each
+   * staged file's content digest so the key is portable across machines. When
+   * omitted, rendering still works but nothing is cached (the key cannot be
+   * computed).
+   */
+  hashFile?: (filePath: string) => Promise<string>;
   /**
    * Execution dependencies for the default executor. Required unless `execute`
    * is provided (the warm-container session supplies its own `execute`).
@@ -131,18 +160,20 @@ export async function renderViPreviewForFile(
   const stagingRootDirectory = selection.stagingRoot
     ? path.join(stagingBaseDirectory, ...selection.stagingRoot.split('/'))
     : stagingBaseDirectory;
-  const cacheKey = deps.cache
-    ? computeStagedCacheKey(
-        selection.plan.viRelativePath,
-        selection.plan.filesToStage,
-        selection.stagedEntries
-      )
-    : undefined;
+  const cacheKey =
+    deps.cache && deps.hashFile
+      ? await computeStagedCacheKey(
+          selection.plan.viRelativePath,
+          selection.plan.filesToStage,
+          stagingRootDirectory,
+          deps.hashFile
+        )
+      : undefined;
 
   if (deps.cache && cacheKey) {
     const cached = await deps.cache.get(cacheKey).catch(() => undefined);
     if (cached !== undefined) {
-      return { outcome: 'rendered', html: cached, cached: true };
+      return { outcome: 'rendered', html: cached, cached: true, cacheKey };
     }
   }
 
@@ -151,7 +182,7 @@ export async function renderViPreviewForFile(
   // render is Docker-only). When requested and the cache misses, return without
   // staging or executing LabVIEW so the caller can fall back. (VHS-REQ-659.)
   if (options.cacheOnly) {
-    return { outcome: 'failed', failureReason: 'preview-cache-miss' };
+    return { outcome: 'failed', failureReason: 'preview-cache-miss', cacheKey };
   }
 
   const workspaceDirectory = await deps.createWorkspaceDirectory();
@@ -190,21 +221,27 @@ export async function renderViPreviewForFile(
 
     if (result.outcome === 'rendered' && result.reportFilePath) {
       const html = await deps.readFile(result.reportFilePath);
+      let cacheStored: boolean | undefined;
       if (deps.cache && cacheKey) {
-        // Caching is best-effort: a write failure must not fail the render.
+        // Caching is best-effort for the render itself: a write failure must not
+        // fail the render. The outcome is reported via `cacheStored` so callers
+        // whose job is to persist (the warm worker) can treat a non-persisted
+        // render as a failure.
         try {
           await deps.cache.set(cacheKey, html);
+          cacheStored = true;
         } catch {
-          /* ignore cache write failure */
+          cacheStored = false;
         }
       }
-      return { outcome: 'rendered', html, cached: false };
+      return { outcome: 'rendered', html, cached: false, cacheKey, cacheStored };
     }
 
     return {
       outcome: result.outcome,
       failureReason: result.failureReason,
-      stderr: result.stderr
+      stderr: result.stderr,
+      cacheKey
     };
   } finally {
     // Best-effort cleanup: a completed render must not fail because the throwaway
@@ -219,24 +256,29 @@ export async function renderViPreviewForFile(
 }
 
 /**
- * Computes the cache key from the target VI plus the staged files' size/mtime.
- * Returns undefined when a staged file is missing from the enumeration, so the
- * render proceeds uncached rather than keying on incomplete data. The target VI
- * path is included so VIs sharing a staged tree never collide (#646).
+ * Computes the cache key from the target VI plus each staged file's content
+ * digest. Returns undefined when a staged file cannot be hashed (e.g. it is
+ * missing), so the render proceeds uncached rather than keying on incomplete
+ * data. The target VI path is included so VIs sharing a staged tree never
+ * collide (#646); the content digests make the key portable across machines
+ * (VHS-REQ-659 / VHS-REQ-671).
  */
-function computeStagedCacheKey(
+async function computeStagedCacheKey(
   viRelativePath: string,
   filesToStage: string[],
-  entries: ViPreviewStagingEntry[]
-): string | undefined {
-  const index = new Map(entries.map((entry) => [entry.relativePath.replace(/\\/g, '/'), entry]));
-  const keyEntries: ViPreviewStagingEntry[] = [];
+  stagingRootDirectory: string,
+  hashFile: (filePath: string) => Promise<string>
+): Promise<string | undefined> {
+  const keyEntries: ViPreviewCacheKeyEntry[] = [];
   for (const relativePath of filesToStage) {
-    const entry = index.get(relativePath);
-    if (!entry) {
+    const filePath = path.join(stagingRootDirectory, ...relativePath.split('/'));
+    let contentSha256: string;
+    try {
+      contentSha256 = await hashFile(filePath);
+    } catch {
       return undefined;
     }
-    keyEntries.push(entry);
+    keyEntries.push({ relativePath, contentSha256 });
   }
   return computeViPreviewCacheKey(viRelativePath, keyEntries);
 }

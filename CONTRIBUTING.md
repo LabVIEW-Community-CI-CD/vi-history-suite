@@ -15,6 +15,18 @@ npm run package
 
 Then press `F5` in VS Code to launch the extension development host.
 
+### Pre-push hook
+
+This repo ships a pre-push git hook under `.githooks/` that gates on ADR
+infrastructure (`npm run adr:check`) and the repo-standards-review audit
+(`npm run standards:audit`). Enable it once per clone:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+Bypass in an emergency with `git push --no-verify`.
+
 ## Pull Requests
 
 Pull requests are welcome. By opening a pull request, you agree that your

@@ -1,6 +1,7 @@
 import * as fs from 'node:fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
+import { createHash } from 'node:crypto';
 
 import * as vscode from 'vscode';
 
@@ -267,6 +268,8 @@ export function buildViPreviewRenderDeps(cache?: ViPreviewCache): RenderViPrevie
     copyFile: (source, destination) => fs.copyFile(source, destination),
     readFile: (filePath) => fs.readFile(filePath, 'utf8'),
     removeDirectory: (directory) => fs.rm(directory, { recursive: true, force: true }),
+    hashFile: async (filePath) =>
+      createHash('sha256').update(await fs.readFile(filePath)).digest('hex'),
     cache,
     execution: {
       runCommand: runViPreviewCommand,

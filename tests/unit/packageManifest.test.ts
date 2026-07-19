@@ -85,7 +85,7 @@ describe('extension manifest public metadata', () => {
     // VHS-REQ-600.1, VHS-REQ-600.2, VHS-REQ-600.3, VHS-REQ-600.4
     expect(manifest.name).toBe('vi-history-suite');
     expect(manifest.displayName).toBe('VI History Suite');
-    expect(manifest.version).toBe('1.34.2');
+    expect(manifest.version).toBe('1.34.3');
     expect(manifest.publisher).toBe('svelderrainruiz');
     expect(manifest.license).toBe('0BSD');
     expect(manifest.private).toBe(true);
@@ -185,6 +185,51 @@ describe('extension manifest public metadata', () => {
       title: 'Runtime & Report Settings',
       category: 'VI History'
     });
+  });
+
+  it('contributes the dev-tools install, uninstall, and status commands under the VI History category (VHS-REQ-679.2, VHS-REQ-679.4, VHS-REQ-680.1)', () => {
+    const manifest = readManifest();
+    const commands = manifest.contributes?.commands ?? [];
+    const byId = new Map(commands.map((entry) => [entry.command ?? '', entry]));
+
+    expect(byId.get('labviewViHistory.installPinnedDevTools')).toMatchObject({
+      title: 'Install Pinned Dev-Tools Version',
+      category: 'VI History'
+    });
+    expect(byId.get('labviewViHistory.uninstallDevTools')).toMatchObject({
+      title: 'Uninstall Dev-Tools Version',
+      category: 'VI History'
+    });
+    expect(byId.get('labviewViHistory.showDevToolsStatus')).toMatchObject({
+      title: 'Show Dev-Tools Status',
+      category: 'VI History'
+    });
+  });
+
+  it('documents every contributed command ID in the quick reference (docs drift guard)', () => {
+    const manifest = readManifest();
+    const quickReference = readRepoText('docs', 'quick-reference.md');
+    const commandIds = (manifest.contributes?.commands ?? [])
+      .map((entry) => entry.command)
+      .filter((id): id is string => typeof id === 'string');
+
+    expect(commandIds.length).toBeGreaterThan(0);
+    const undocumented = commandIds.filter((id) => !quickReference.includes(id));
+    expect(undocumented, `command IDs missing from docs/quick-reference.md: ${undocumented.join(', ')}`).toEqual(
+      []
+    );
+  });
+
+  it('documents every contributed setting ID in the quick reference (docs drift guard)', () => {
+    const manifest = readManifest();
+    const quickReference = readRepoText('docs', 'quick-reference.md');
+    const settingIds = Object.keys(manifest.contributes?.configuration?.properties ?? {});
+
+    expect(settingIds.length).toBeGreaterThan(0);
+    const undocumented = settingIds.filter((id) => !quickReference.includes(id));
+    expect(undocumented, `setting IDs missing from docs/quick-reference.md: ${undocumented.join(', ')}`).toEqual(
+      []
+    );
   });
 
   it('contributes the visibility gate in explorer and editor title menus (VHS-REQ-004.1, VHS-REQ-004.2, VHS-REQ-004.3, VHS-REQ-013.1)', () => {
@@ -337,6 +382,20 @@ describe('extension manifest public metadata', () => {
     const properties = manifest.contributes?.configuration?.properties ?? {};
 
     expect(properties['viHistorySuite.preview.allowHostNativeRender']).toMatchObject({
+      type: 'boolean',
+      default: false
+    });
+  });
+
+  it('defaults the dev-tools version to the bundled build and update-tracking off (VHS-REQ-677.1)', () => {
+    const manifest = readManifest();
+    const properties = manifest.contributes?.configuration?.properties ?? {};
+
+    expect(properties['viHistorySuite.devTools.version']).toMatchObject({
+      type: 'string',
+      default: 'bundled'
+    });
+    expect(properties['viHistorySuite.devTools.checkForUpdates']).toMatchObject({
       type: 'boolean',
       default: false
     });

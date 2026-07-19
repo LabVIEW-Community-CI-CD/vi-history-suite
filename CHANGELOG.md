@@ -2,7 +2,168 @@
 
 This changelog records user-facing release history for `vi-history-suite`.
 
-## [Unreleased]
+## [1.34.3] - 2026-07-19
+
+### Documentation
+
+- Hardened documentation accuracy: corrected the stated VS Code minimum in
+  README (1.101, matching the manifest), aligned the Vagrant wording in INSTALL
+  and SUPPORT with the mandatory marketplace-release attestation, updated the
+  status-bar description in FIRST-RUN and TROUBLESHOOTING to the Runtime & Report
+  Settings panel, corrected the preview-cache key description (content-addressed
+  by SHA-256, not size/mtime), and fixed the bundled workflow page to use the
+  "Review VI History" command label.
+
+- Documented the full extension surface for users: `docs/quick-reference.md` now
+  indexes every contributed command and setting, `docs/user-guide.md` gains a
+  Commands and Settings section (including VI Preview and dev-tools pinning), and
+  README/FIRST-RUN/INSTALL/FAQ/glossary surface the interactive block-diagram
+  preview, the dev-tools pinning lifecycle, and the Marketplace pre-release
+  channel. TROUBLESHOOTING gains a pinned-dev-tools section. A test now guards
+  the quick-reference index against command/setting drift.
+
+### Fixed
+
+- Corrected the MCP tool count across the docs (the server now ships 13 tools,
+  not eight) and added the five preview-cache tools to the bundled Copilot
+  agent-mode documentation page, which had omitted them.
+
+- Removed a duplicated `if` opener in the dev-tools release workflow's channel
+  decision step that left an unbalanced bash conditional (a shell syntax error);
+  added a regression guard so the channel branch stays balanced.
+
+### Added
+
+- New **VI History: Show Dev-Tools Status** command reports which dev-tools build
+  is active (bundled vs a pinned version), whether a pinned version is installed
+  and verified, and the installed versions — completing the pin lifecycle
+  alongside the install and uninstall commands (VHS-REQ-680). The consumer-facing
+  dev-tools pinning workflow (pin a version, install/uninstall/status, opt-in
+  update check, trust gating) is now documented in the dev-tools release guide.
+
+- The Marketplace release workflow can now publish to the **pre-release
+  channel** (VHS-REQ-678). The channel is selected from the release tag's
+  minor-version parity following the VS Code convention — an **odd** minor
+  (e.g. `v1.35.0`) publishes as a pre-release, an **even** minor (e.g.
+  `v1.34.2`) as stable — and an optional `channel` dispatch input must agree
+  with that parity or the run fails closed. Every existing release guard
+  (protected environment approval, exact-tag, `origin/main` reachability,
+  release-state authority, runtime attestation, supply-chain freshness, and
+  bounded post-publish listing verification) applies unchanged to both channels.
+- The extension can now **install, uninstall, and update-check a pinned
+  dev-tools version** end-to-end (VHS-REQ-679). New commands **VI History:
+  Install Pinned Dev-Tools Version** and **VI History: Uninstall Dev-Tools
+  Version** download a `devtools-vX.Y.Z` release from the official repository
+  over HTTPS, extract it with Node built-ins (no new dependency), integrity-verify
+  it before use, and remove it on request — all gated on workspace trust and
+  fail-closed. When a version is pinned but not installed, an actionable
+  notification offers to install it (the MCP server meanwhile uses the bundled
+  build), and the opt-in `viHistorySuite.devTools.checkForUpdates` check now
+  surfaces a notification when a newer stable version is available.
+
+- The extension can now **pin and runtime-consume an independent dev-tools
+  version** for its MCP server without waiting for a Marketplace update
+  (VHS-REQ-677). Set `viHistorySuite.devTools.version` to a `devtools-vX.Y.Z`
+  tag (from the SemVer 2.0 dev-tools line, VHS-REQ-676) and the extension
+  downloads that release into global storage, verifies its integrity (per-file
+  SHA-256 plus aggregate content digest), and launches it — but only in a
+  trusted workspace, and it fails closed to the bundled build if a pin is
+  missing, unverified, or the workspace is untrusted. `bundled` (default) touches
+  no network. An opt-in `viHistorySuite.devTools.checkForUpdates` notifies when a
+  newer stable dev-tools version is available.
+
+- The dev-tools GitHub Release channel now carries an **independent SemVer 2.0
+  version line** (`devtools-v<version>`, VHS-REQ-676), decoupled from the
+  extension's Marketplace version, sourced from a committed `version` field in
+  `docs/devtools-release.manifest.json` and echoed into the provenance packet.
+  The release tag is `devtools-v<version>` (stable) / `devtools-v<version>-dev.<run-id>`
+  (prerelease); the build fails closed on a missing or non-SemVer version. Adds
+  a dependency-free SemVer 2.0 utility (no new npm dependency).
+
+- A preview-cache generation **fleet** (VHS-REQ-674) — the reusable
+  `preview-cache-fleet-callable.yml` workflow (dispatched via
+  `preview-cache-fleet.yml`) renders a repository's VI previews across a sharded
+  runner matrix, then merges the per-shard portable bundles into one and
+  publishes it to the content-addressed cache exchange. So a whole repository's
+  preview cache is generated in parallel and shared once — the capstone of the
+  preview-cache fabric, composing the worker, bundle, and exchange. The worker
+  CLI gained a `--shard <index>/<count>` flag (round-robin, disjoint slices).
+  Publishing is opt-in; a dry run only uploads shard/merged bundle artifacts.
+
+- A preview-cache **exchange** (`npm run preview:cache:exchange`, VHS-REQ-673)
+  distributes portable bundles between environments over content-addressed GitHub
+  Releases, reusing the dev-tools release-channel transport: `publish` packs a
+  bundle and creates a `preview-cache-<digest>` release (idempotent — identical
+  content is skipped), and `fetch` downloads, verifies, and losslessly merges a
+  published bundle into a target cache. So a cache generated once (e.g. by a
+  Codespace worker) is published once and pulled by teammates, other Codespaces,
+  and CI.
+
+- A preview-cache health/coverage read-model (`npm run preview:cache:health`,
+  VHS-REQ-675) reports how well a cache directory covers a workspace by comparing
+  the current workspace VIs, a prior warm manifest
+  (`vi-history-suite/preview-cache-warm@v1`), and the cache directory's present
+  entries — classifying each VI as cached, stale, or missing, listing orphaned
+  cache files and an overall coverage percentage in a schema-versioned
+  `vi-history-suite/preview-cache-health@v1` packet. `--strict` fails closed when
+  the cache does not fully cover the workspace, so CI can gate on coverage and an
+  agent can drive incremental re-warms. Read-only; never renders.
+- A portable, content-addressed preview-cache **bundle** (`npm run
+  preview:cache:bundle`, VHS-REQ-672) packages a cache directory into a
+  self-describing, verifiable artifact (a `vi-history-suite/preview-cache-bundle@v1`
+  manifest with a per-entry integrity digest and VI paths, plus the `<key>.html`
+  documents) and losslessly merges one back into a target cache — content-addressing
+  makes the merge order-independent and de-duplicating, and a tampered or missing
+  document is rejected rather than written. `bundle` exports; `unbundle` verifies
+  and imports. This lets a cache generated once (e.g. by a Codespace worker) be
+  moved to and reused on any machine.
+- A headless preview-cache worker CLI (`npm run preview:cache:warm`,
+  VHS-REQ-671) turns any Docker-capable environment — a GitHub Codespace, a CI
+  runner, or a developer box — into a worker that generates and stores VI
+  preview caches for an entire workspace without the VS Code UI. It resolves the
+  Docker preview runtime once, enumerates the workspace's VIs, warms them into a
+  file-backed cache at `--cache-dir`, and emits a self-describing
+  `vi-history-suite/preview-cache-warm@v1` summary packet whose per-entry
+  manifest maps each content-addressed cache key to its VI (outcome, bytes,
+  inline-image count). Because preview cache entries are content-addressed and
+  reproducible, a cache generated by the worker is valid on any machine for the
+  same VI content — the producer slice of the preview-cache fabric (see
+  `docs/architecture/preview-cache-fabric.md`).
+- A reusable consumer devcontainer template
+  (`docs/consumer-workflows/codespace-preview-cache.devcontainer.json`) lets you
+  open a GitHub Codespace on any LabVIEW repository as a preview-cache worker —
+  it enables Docker-in-Docker, installs the extension, and turns on the preview
+  feature — then generate the repo's caches with
+  `gh codespace ssh -- 'npm run preview:cache:warm -- --cache-dir …'`
+  (VHS-REQ-671).
+- The single-VI preview render cache key is now **content-addressed** — it folds
+  in a SHA-256 digest of each staged file's bytes instead of file size and mtime
+  — so a cached preview is portable across machines and checkouts and never
+  serves a stale render when bytes change but size/mtime coincide (VHS-REQ-659).
+- The VI semantic MCP server gained five read-only preview-cache tools
+  (`list_preview_cache`, `summarize_preview_cache`, `diagnose_preview_cache`,
+  `search_preview_cache`, `get_preview_cache_entry`) so an agent can inspect a
+  downloaded or local VI-preview render cache — entry health (empty /
+  error-marker / no-rendered-content), inline-image counts, interactive-viewer
+  presence, byte totals, and one-call health diagnostics — without launching
+  LabVIEW. `get_preview_cache_entry` returns metadata plus a file-path pointer by
+  default (raw HTML only on request) and rejects keys with path separators
+  (VHS-REQ-659).
+- The preview verification CLI gained a `--cache-dir` option that wires a
+  file-backed render cache, so rendering a VI twice into the same directory
+  serves the second run from cache (proof `cached: true`, no LabVIEW launch) —
+  the direct way to confirm the preview cache is working in any environment. A
+  new `--diagnostics` mode (`npm run preview:diagnostics`) emits a
+  schema-versioned environment snapshot (resolved runtime, cache-directory
+  statistics, Docker and LabVIEW-image availability) so preview-cache
+  troubleshooting is a single read-only command, including over
+  `gh codespace ssh` (VHS-REQ-659).
+- A release-state read-model (`npm run release:state`, VHS-REQ-670) reports where
+  a version is across its durable release stages (`develop-ready`, `tagged`,
+  `on-main`, `published`, `backsynced`) and its gated publish-authority posture
+  in one schema-versioned packet, so a release can be driven idempotently. The
+  release-readiness verdict now fails closed on incomplete publish authority in a
+  release context, and the Marketplace release workflow guards it before publish.
 
 ## [1.34.2] - 2026-07-18
 

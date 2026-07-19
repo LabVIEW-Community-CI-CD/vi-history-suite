@@ -53,4 +53,38 @@ describe('viFile', () => {
       })
     ).resolves.toBeUndefined();
   });
+
+  it('detects the real signature of a valid VI file on disk (VHS-REQ-010.1)', async () => {
+    const tempRoot = await createTempDirectory();
+    const viFile = path.join(tempRoot, 'real.vi');
+    await fs.writeFile(
+      viFile,
+      Buffer.concat([
+        Buffer.from('RSRC\r\n\x00\x03', 'binary'),
+        Buffer.from('LVIN', 'ascii'),
+        Buffer.from('trailing payload', 'utf8')
+      ])
+    );
+
+    // Asserting the ACTUAL signature (not just "not undefined") is what proves
+    // the read+detect happy path runs end-to-end: an implementation that always
+    // returned undefined would still pass the missing-file test above.
+    const signature = await detectViSignatureFromFsPath(viFile, { strictRsrcHeader: true });
+    expect(signature).toBe('LVIN');
+  });
+
+  it('reads the probe bytes and hands them to detection for a strict RSRC header (VHS-REQ-010.1)', async () => {
+    const tempRoot = await createTempDirectory();
+    const ctlFile = path.join(tempRoot, 'control.ctl');
+    await fs.writeFile(
+      ctlFile,
+      Buffer.concat([
+        Buffer.from('RSRC\r\n\x00\x03', 'binary'),
+        Buffer.from('LVCC', 'ascii')
+      ])
+    );
+
+    const signature = await detectViSignatureFromFsPath(ctlFile, { strictRsrcHeader: true });
+    expect(signature).toBe('LVCC');
+  });
 });

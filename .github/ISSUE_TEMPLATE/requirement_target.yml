@@ -11,6 +11,22 @@ body:
         Issues must be decision-complete before implementation starts: requirement ID, files to inspect, acceptance criteria,
         validation commands, out-of-scope boundaries, and requirement/RTM update expectations.
         Agents should inspect the SRS block and RTM row before editing.
+        Agents can iterate locally first with the compliant templates in
+        `docs/agent-workflows/templates/`, then promote the filled proposal here field-for-field.
+  - type: dropdown
+    id: delegated_agent
+    attributes:
+      label: Delegated Agent
+      description: Which specialized agent should own this work. See .github/agents/ for each agent's mission and constraints.
+      options:
+        - workflow-governor (general implementation with full workflow compliance)
+        - requirements-steward (requirement/RTM/SRS/SYRS traceability changes)
+        - docs-scribe (documentation-only, no behavior change)
+        - test-engineer (tests and coverage-map gaps)
+        - adr-author (architecture decision records and the adr:check gate)
+        - release-operator (release automation, Marketplace, dev-tools versioning)
+    validations:
+      required: true
   - type: input
     id: requirement_id
     attributes:

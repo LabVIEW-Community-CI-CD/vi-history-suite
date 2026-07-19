@@ -149,4 +149,39 @@ describe('planViPreviewStagingWithProjectRoot', () => {
     expect(selection.plan.viRelativePath).toBe('Main.vi');
     expect(selection.plan.filesToStage).toEqual(['Main.vi', 'Helper.vi']);
   });
+
+  it('falls back to the VI directory tree when the project tree trips the SIZE guard (VHS-REQ-659.10)', () => {
+    const selection = planViPreviewStagingWithProjectRoot(
+      'subsys/Main.vi',
+      [
+        { relativePath: 'App.lvproj', sizeBytes: 10 },
+        { relativePath: 'subsys/Main.vi', sizeBytes: 10 },
+        { relativePath: 'subsys/Helper.vi', sizeBytes: 10 },
+        { relativePath: 'other/Huge.vi', sizeBytes: 10_000 }
+      ],
+      { maxFiles: 100, maxTotalBytes: 100 }
+    );
+    // The project tree's total bytes exceed maxTotalBytes (driven by the large
+    // out-of-directory file), so it steps down to the VI's own directory tree
+    // (whose bytes fit) rather than collapsing to single-file. This exercises
+    // the `too-large` reason arm of the guard, distinct from `too-many-files`.
+    expect(selection.stagingRoot).toBe('subsys');
+    expect(selection.rootKind).toBe('directory');
+    expect(selection.plan.strategy).toBe('dependency-tree');
+    expect(selection.plan.filesToStage).toEqual(['Main.vi', 'Helper.vi']);
+  });
+
+  it('keeps the widened project tree when its guard is not tripped even though a project root exists (VHS-REQ-659.10)', () => {
+    const selection = planViPreviewStagingWithProjectRoot('subsys/Main.vi', [
+      { relativePath: 'App.lvproj', sizeBytes: 10 },
+      { relativePath: 'subsys/Main.vi', sizeBytes: 10 },
+      { relativePath: 'shared/Helper.vi', sizeBytes: 10 }
+    ]);
+    // Guard not tripped -> the project-root widening is retained (rootKind
+    // 'project'), proving the fallback only fires when the guard trips.
+    expect(selection.stagingRoot).toBe('');
+    expect(selection.rootKind).toBe('project');
+    expect(selection.plan.strategy).toBe('dependency-tree');
+    expect(selection.plan.filesToStage).toEqual(['subsys/Main.vi', 'App.lvproj', 'shared/Helper.vi']);
+  });
 });

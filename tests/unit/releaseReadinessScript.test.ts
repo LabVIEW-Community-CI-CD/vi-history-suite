@@ -21,6 +21,7 @@ const readinessModule = require('../../scripts/checkReleaseReadiness.js') as {
   describeSupplyChainState: (state: unknown) => string;
   deriveRuntimeAttestationFromLedger: (manifest: unknown, version: string) => any;
   checkReleaseAttestation: (manifest: unknown, version: string) => { name: string; passed: boolean; details: string };
+  checkReleaseAuthority: (authority: unknown) => { name: string; passed: boolean; details: string };
   checkSupplyChainFreshness: (state: unknown) => { name: string; passed: boolean; details: string };
   checkBoxManifestIntegrity: (boxManifest: unknown, version: string) => { name: string; passed: boolean; details: string };
   checkBoxProvenanceBinding: (runtimeManifest: unknown, boxManifest: unknown) => { name: string; passed: boolean; details: string };
@@ -44,6 +45,7 @@ const {
   describeSupplyChainState,
   deriveRuntimeAttestationFromLedger,
   checkReleaseAttestation,
+  checkReleaseAuthority,
   checkSupplyChainFreshness,
   checkBoxManifestIntegrity,
   checkBoxProvenanceBinding,
@@ -463,18 +465,31 @@ describe('checkReleaseAttestation release gate (VHS-REQ-666)', () => {
     expect(advisory.checks).toHaveLength(3);
     expect(advisory.status).toBe('READY');
 
-    // Gated + fresh attestation + valid box manifest: six checks, READY.
+    // Gated + fresh attestation + valid box manifest: six checks (three advisory
+    // + three attestation/box). The release-authority check is NOT added here —
+    // it is gated on --release-context, not requireReleaseAttestation.
     const gatedReady = buildReleaseReadiness(
-      { ...base, requireReleaseAttestation: true, runtimeManifest: GATING_FRESH, boxManifest: BOX_MANIFEST_VALID },
+      {
+        ...base,
+        requireReleaseAttestation: true,
+        runtimeManifest: GATING_FRESH,
+        boxManifest: BOX_MANIFEST_VALID
+      },
       meta
     );
     expect(gatedReady.checks).toHaveLength(6);
     expect(gatedReady.status).toBe('READY');
     expect(gatedReady.checks.map((c: { name: string }) => c.name)).toContain('release-attestation');
+    expect(gatedReady.checks.map((c: { name: string }) => c.name)).not.toContain('release-authority');
 
     // Gated + stale attestation: six checks, ATTENTION (fails closed).
     const gatedStale = buildReleaseReadiness(
-      { ...base, requireReleaseAttestation: true, runtimeManifest: GATING_STALE, boxManifest: BOX_MANIFEST_VALID },
+      {
+        ...base,
+        requireReleaseAttestation: true,
+        runtimeManifest: GATING_STALE,
+        boxManifest: BOX_MANIFEST_VALID
+      },
       meta
     );
     expect(gatedStale.checks).toHaveLength(6);
@@ -687,7 +702,14 @@ describe('checkBoxManifestIntegrity release gate (VHS-REQ-666.5)', () => {
     const advisory = buildReleaseReadiness(base, meta);
     expect(advisory.checks.map((c: { name: string }) => c.name)).not.toContain('box-manifest-integrity');
 
-    const gatedReady = buildReleaseReadiness({ ...base, requireReleaseAttestation: true, boxManifest: VALID }, meta);
+    const gatedReady = buildReleaseReadiness(
+      {
+        ...base,
+        requireReleaseAttestation: true,
+        boxManifest: VALID
+      },
+      meta
+    );
     expect(gatedReady.checks.map((c: { name: string }) => c.name)).toContain('box-manifest-integrity');
     expect(gatedReady.status).toBe('READY');
 
@@ -740,5 +762,60 @@ describe('checkBoxProvenanceBinding (VHS-REQ-666.6)', () => {
     expect(checkBoxProvenanceBinding({ tracks: [gatingTrack({ boxSha256: 'a'.repeat(64) })] }, {}).passed).toBe(
       false
     );
+  });
+});
+
+describe('release-authority gate (VHS-REQ-670)', () => {
+  it('passes when the gated publish-authority posture is complete', () => {
+    const check = checkReleaseAuthority({ complete: true, detail: 'Publish authority intact.' });
+    expect(check.name).toBe('release-authority');
+    expect(check.passed).toBe(true);
+  });
+
+  it('fails closed when authority is definitively incomplete', () => {
+    const check = checkReleaseAuthority({ complete: false, detail: 'Publish authority incomplete.' });
+    expect(check.passed).toBe(false);
+  });
+
+  it('passes with a note when authority is unverified (degrade-not-fail)', () => {
+    const check = checkReleaseAuthority({ complete: null, detail: 'unverified' });
+    expect(check.passed).toBe(true);
+    expect(check.details).toMatch(/unverified|workflow verifies/i);
+  });
+
+  it('fails when the authority posture is entirely absent', () => {
+    expect(checkReleaseAuthority(undefined).passed).toBe(false);
+  });
+
+  it('is NOT evaluated in an advisory (non-release) verdict (VHS-REQ-670.6)', () => {
+    const verdict = buildReleaseReadiness(
+      { releaseAuthority: { complete: false, detail: 'incomplete' } },
+      { version: '1.0.0', commit: 'abc', generatedAt: 'T' }
+    );
+    expect(verdict.checks.some((c: { name: string }) => c.name === 'release-authority')).toBe(false);
+  });
+
+  it('is NOT coupled to the requireReleaseAttestation marker (no publish token in that step) (VHS-REQ-670.6)', () => {
+    const verdict = buildReleaseReadiness(
+      {
+        requireReleaseAttestation: true,
+        runtimeManifest: { tracks: [] },
+        boxManifest: undefined,
+        releaseAuthority: { complete: false, detail: 'incomplete' }
+      },
+      { version: '1.0.0', commit: 'abc', generatedAt: 'T' }
+    );
+    // The attestation workflow step runs without VSCE_PAT, so authority must NOT
+    // be re-evaluated there (that would false-block every verified release).
+    expect(verdict.checks.some((c: { name: string }) => c.name === 'release-authority')).toBe(false);
+  });
+
+  it('is a hard check under an explicit --release-context marker (VHS-REQ-670.6)', () => {
+    const verdict = buildReleaseReadiness(
+      { releaseContext: true, releaseAuthority: { complete: false, detail: 'incomplete' } },
+      { version: '1.0.0', commit: 'abc', generatedAt: 'T' }
+    );
+    expect(verdict.checks.some((c: { name: string }) => c.name === 'release-authority')).toBe(true);
+    expect(verdict.status).toBe('ATTENTION');
   });
 });

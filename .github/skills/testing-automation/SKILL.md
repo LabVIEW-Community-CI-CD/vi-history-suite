@@ -30,6 +30,29 @@ For a single-pane requirement-verification signal across structural integrity, r
 3. Re-run the failing command, then re-run the next gate in sequence.
 4. Confirm docs/traceability gates if requirements or docs changed.
 
+## Mutation-Guided Test Hardening
+When line coverage is already high but you want to prove tests actually *catch*
+regressions, use mutation testing as the signal. It reliably surfaces weak
+assertions that green line coverage hides (for example a helper tested only on
+its error path, so an "always return undefined" mutant survives).
+
+1. Run `npm run test:mutation` for the committed `src/domain` scope, or target
+   any other module ad-hoc without editing the config:
+   `npx stryker run --mutate '<relative-path-to-file>'`.
+2. Triage the report (`reports/mutation/mutation.json`):
+   - **No-coverage mutants** and **non-equivalent survivors** are real gaps —
+     add an assertion that would fail if the mutated behavior shipped.
+   - **Equivalent mutants** (a guard/arithmetic change that cannot alter the
+     observable result, a limit constant that resolves to the same value, a
+     branch unreachable through the public API, an empty `catch`/`finally` that
+     still returns the same value) are expected — do not chase them. A ~100%
+     score is not the goal.
+3. Prefer asserting the *actual* result (the concrete value/side effect), not
+   merely "not undefined"; that is what kills an always-return-undefined mutant.
+4. Mutation runs are advisory (`thresholds.break` is null) — never fail CI on
+   them. Widening the committed `mutate` scope or promoting to a gate is a
+   maintainer decision; keep autonomous work to ad-hoc runs plus test additions.
+
 ## Docs Link Hygiene
 - `npm run docs:links` checks committed Markdown and bundled documentation, not retained run output. If a failure points into generated roots such as `win-validation/`, `.cache/`, `assurance-*-evidence/`, `release-evidence/`, coverage/package output, or Vagrant evidence folders, harden the skip policy and tests instead of editing copied staging docs.
 
