@@ -6,6 +6,15 @@ This changelog records user-facing release history for `vi-history-suite`.
 
 ### Added
 
+- The preview verification CLI gained a `--cache-dir` option that wires a
+  file-backed render cache, so rendering a VI twice into the same directory
+  serves the second run from cache (proof `cached: true`, no LabVIEW launch) —
+  the direct way to confirm the preview cache is working in any environment. A
+  new `--diagnostics` mode (`npm run preview:diagnostics`) emits a
+  schema-versioned environment snapshot (resolved runtime, cache-directory
+  statistics, Docker and LabVIEW-image availability) so preview-cache
+  troubleshooting is a single read-only command, including over
+  `gh codespace ssh` (VHS-REQ-659).
 - A release-state read-model (`npm run release:state`, VHS-REQ-670) reports where
   a version is across its durable release stages (`develop-ready`, `tagged`,
   `on-main`, `published`, `backsynced`) and its gated publish-authority posture

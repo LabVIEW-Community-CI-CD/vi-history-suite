@@ -401,3 +401,88 @@ describe('main (VHS-REQ-659)', () => {
     }
   });
 });
+
+describe('buildNodeViPreviewRenderDeps --cache-dir (VHS-REQ-659)', () => {
+  let cacheRoot: string;
+  beforeEach(async () => {
+    cacheRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-verify-cache-'));
+  });
+  afterEach(async () => {
+    await fs.rm(cacheRoot, { recursive: true, force: true });
+  });
+
+  it('wires a file-backed cache that persists across builder instances (cache HIT)', async () => {
+    const cacheDir = path.join(cacheRoot, 'cache');
+    const html = htmlWith(5);
+    // The cache keys are sha256 hex (64 chars); use valid keys.
+    const keyA = 'a'.repeat(64);
+    const keyMissing = 'b'.repeat(64);
+
+    // First builder writes a document into the on-disk cache.
+    const writer = buildNodeViPreviewRenderDeps({ cacheDirectory: cacheDir });
+    expect(writer.cache).toBeDefined();
+    await writer.cache!.set(keyA, html);
+
+    // A SECOND, independent builder pointed at the same dir reads it back — a
+    // real cross-invocation cache HIT that launches no LabVIEW (proof the
+    // verifier `--cache-dir` serves cached documents, not always re-renders).
+    const reader = buildNodeViPreviewRenderDeps({ cacheDirectory: cacheDir });
+    expect(await reader.cache!.get(keyA)).toBe(html);
+    // A key never written misses.
+    expect(await reader.cache!.get(keyMissing)).toBeUndefined();
+  });
+
+  it('does not attach a cache when no cacheDirectory is given', () => {
+    expect(buildNodeViPreviewRenderDeps().cache).toBeUndefined();
+    expect(buildNodeViPreviewRenderDeps({ cacheDirectory: '/tmp/x' }).cache).toBeDefined();
+  });
+});
+
+describe('parseArgs cache/diagnostics flags (VHS-REQ-659)', () => {
+  it('parses --cache-dir, --cache-max-entries, and --diagnostics', () => {
+    const parsed = parseArgs([
+      '--cache-dir',
+      '/tmp/c',
+      '--cache-max-entries',
+      '50',
+      '--diagnostics'
+    ]);
+    expect(parsed.cacheDirectory).toBe('/tmp/c');
+    expect(parsed.cacheMaxEntries).toBe(50);
+    expect(parsed.diagnostics).toBe(true);
+  });
+
+  it('ignores a non-positive --cache-max-entries', () => {
+    expect(parseArgs(['--cache-max-entries', '0']).cacheMaxEntries).toBeUndefined();
+    expect(parseArgs(['--cache-max-entries', 'nope']).cacheMaxEntries).toBeUndefined();
+  });
+});
+
+describe('main --diagnostics (VHS-REQ-659)', () => {
+  it('emits a diagnostics snapshot and returns 0 without rendering', async () => {
+    const logs: string[] = [];
+    const spy = vi.spyOn(console, 'log').mockImplementation((m?: unknown) => {
+      logs.push(String(m));
+    });
+    const resolve = vi.fn();
+    try {
+      const code = await main(['--diagnostics', '--provider', 'docker', '--cache-dir', '/cache'], {
+        resolve: resolve as never,
+        diagnosticsDeps: {
+          now: () => 0,
+          locateRuntime: fakeLocateRuntime({ provider: 'linux-container' }),
+          readCacheEntries: async () => [{ name: 'x.html', sizeBytes: 10, mtimeMs: 1 }],
+          runDocker: async (args) => (args[0] === 'info' ? 'linux' : 'nationalinstruments/labview:2026q1patch2-linux')
+        }
+      });
+      expect(code).toBe(0);
+      // Diagnostics mode NEVER renders.
+      expect(resolve).not.toHaveBeenCalled();
+      const snapshot = JSON.parse(logs[0]);
+      expect(snapshot.schema).toBe('vi-history-suite/preview-diagnostics@v1');
+      expect(snapshot.cache.entryCount).toBe(1);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+});

@@ -4555,6 +4555,7 @@ Missing numeric IDs are intentional.
   - `src/reporting/viPreview/viPreviewSessionRuntime.ts`
   - `src/reporting/viPreview/viPreviewVerification.ts`
   - `src/tooling/viPreviewVerifyCli.ts`
+  - `src/tooling/viPreviewDiagnostics.ts`
   - `resources/labview-cli-operations/PrintToSingleFileHtml/PrintToSingleFileHtml.lvclass`
 - Verification References:
   - `tests/unit/packageManifest.test.ts`
@@ -4576,6 +4577,7 @@ Missing numeric IDs are intentional.
   - `tests/unit/viPreviewSessionRuntime.test.ts`
   - `tests/unit/viPreviewVerification.test.ts`
   - `tests/unit/viPreviewVerifyCli.test.ts`
+  - `tests/unit/viPreviewDiagnostics.test.ts`
   - `tests/unit/revisionViTree.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
 - Change Guidance:
