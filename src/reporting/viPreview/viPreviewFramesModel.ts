@@ -222,6 +222,44 @@ export function buildFramesModelFromCoordinateJson(
 }
 
 /**
+ * The element id of the inert `application/json` island a position-aware LabVIEW
+ * export embeds in its rendered HTML to carry the coordinate frames payload.
+ * Distinct from the viewer's own output island (`lvr-frames`) so the input data
+ * and the assembled viewer never collide.
+ */
+export const EMBEDDED_COORDINATE_FRAMES_ISLAND_ID = 'lvr-coordinate-frames';
+
+/**
+ * Extracts the raw text of an embedded coordinate-frames island
+ * (`<script type="application/json" id="lvr-coordinate-frames">…</script>`) from
+ * a rendered LabVIEW HTML document, or `undefined` when none is present. The
+ * island is inert JSON (never executed): callers parse it with
+ * {@link buildFramesModelFromCoordinateJson} and re-serialize it into the
+ * viewer's own nonce-guarded island, so the raw island is never injected into a
+ * webview. Because the island rides inside the rendered HTML, it survives the
+ * content-addressed render cache unchanged (cold == warm) with no cache-format
+ * change.
+ */
+export function extractEmbeddedCoordinateFramesJson(html: string): string | undefined {
+  if (typeof html !== 'string' || html.length === 0) {
+    return undefined;
+  }
+  const scriptPattern = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi;
+  let match: RegExpExecArray | null;
+  while ((match = scriptPattern.exec(html)) !== null) {
+    const attributes = match[1];
+    if (
+      new RegExp(`id\\s*=\\s*["']${EMBEDDED_COORDINATE_FRAMES_ISLAND_ID}["']`, 'i').test(attributes) &&
+      /type\s*=\s*["']application\/json["']/i.test(attributes)
+    ) {
+      const body = match[2].trim();
+      return body.length > 0 ? body : undefined;
+    }
+  }
+  return undefined;
+}
+
+/**
  * Groups a frame's child indices into structures: children sharing the same
  * Position rectangle are the cases of one multi-case structure. Preserves the
  * first-seen order of each distinct rectangle. Pure so grouping is testable

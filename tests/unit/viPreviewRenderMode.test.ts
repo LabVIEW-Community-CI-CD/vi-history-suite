@@ -151,4 +151,53 @@ describe('selectViPreviewDocument', () => {
     expect(out.mode).toBe('interactive');
     expect(out.html).toContain('id="lvr-frames"');
   });
+
+  it('uses a coordinate island embedded in the rendered HTML when no explicit payload is given (#2119)', () => {
+    // No extractable flat frames, but the HTML carries an inert coordinate island;
+    // the viewer is rendered from it (this is how a real cached render will work).
+    const frames = JSON.stringify([
+      { Image: 'root', Position: { Left: 0, Top: 0, Width: 100, Height: 80 }, Children: [1] },
+      { Image: 'caseTrue', Position: { Left: 10, Top: 20, Width: 40, Height: 40 }, Label: 'True' }
+    ]);
+    const htmlWithIsland =
+      '<HTML><HEAD></HEAD><BODY><H3>Front Panel</H3>' +
+      `<script type="application/json" id="lvr-coordinate-frames">${frames}</script></BODY></HTML>`;
+    const out = selectViPreviewDocument({ labviewHtml: htmlWithIsland, mode: 'interactive', nonce: NONCE });
+    expect(out.mode).toBe('interactive');
+    expect(out.html).toContain('id="lvr-frames"');
+  });
+
+  it('prefers an explicit coordinate payload over an embedded island (#2119)', () => {
+    // The embedded island has ONE frame; the explicit payload has TWO. The
+    // explicit option wins, so the assembled viewer island carries two frames.
+    const embedded = JSON.stringify([{ Image: 'E', Position: { Left: 0, Top: 0, Width: 1, Height: 1 } }]);
+    const explicit = JSON.stringify([
+      { Image: 'root', Position: { Left: 0, Top: 0, Width: 100, Height: 80 }, Children: [1] },
+      { Image: 'child', Position: { Left: 5, Top: 5, Width: 10, Height: 10 } }
+    ]);
+    const htmlWithIsland =
+      '<HTML><BODY><H3>Front Panel</H3>' +
+      `<script type="application/json" id="lvr-coordinate-frames">${embedded}</script></BODY></HTML>`;
+    const out = selectViPreviewDocument({
+      labviewHtml: htmlWithIsland,
+      mode: 'interactive',
+      nonce: NONCE,
+      coordinateFramesJson: explicit
+    });
+    const island = /<script id="lvr-frames"[^>]*>([\s\S]*?)<\/script>/.exec(out.html);
+    const model = JSON.parse(island![1]) as { frames: unknown[] };
+    expect(model.frames).toHaveLength(2);
+  });
+
+  it('falls back to flat when an embedded island is malformed (#2119)', () => {
+    const htmlWithBadIsland =
+      diagramHtml().replace(
+        '</BODY>',
+        '<script type="application/json" id="lvr-coordinate-frames">{ bad</script></BODY>'
+      );
+    const out = selectViPreviewDocument({ labviewHtml: htmlWithBadIsland, mode: 'interactive', nonce: NONCE });
+    // The flat diagram still renders interactively; the bad island is ignored.
+    expect(out.mode).toBe('interactive');
+    expect(out.html).toContain('id="lvr-frames"');
+  });
 });

@@ -5,6 +5,8 @@ import {
   groupFramesIntoStructures,
   normalizeViPreviewFrames,
   buildFramesModelFromCoordinateJson,
+  extractEmbeddedCoordinateFramesJson,
+  EMBEDDED_COORDINATE_FRAMES_ISLAND_ID,
   type ViPreviewFrame
 } from '../../src/reporting/viPreview/viPreviewFramesModel';
 
@@ -136,6 +138,43 @@ describe('buildFramesModelFromCoordinateJson', () => {
     expect(model.rootIndex).toBe(0);
     expect(model.frames[1].rect).toEqual({ left: 10, top: 20, width: 30, height: 30 });
     expect(model.frames[2].rect).toEqual({ left: 50, top: 20, width: 30, height: 30 });
+  });
+});
+
+describe('extractEmbeddedCoordinateFramesJson', () => {
+  const island = (body: string): string =>
+    `<HTML><BODY><H3>Block Diagram</H3><script type="application/json" id="${EMBEDDED_COORDINATE_FRAMES_ISLAND_ID}">${body}</script></BODY></HTML>`;
+
+  it('extracts the coordinate island body (#2119)', () => {
+    const body = '[{"Image":"A","Position":{"Left":0,"Top":0,"Width":1,"Height":1}}]';
+    expect(extractEmbeddedCoordinateFramesJson(island(body))).toBe(body);
+  });
+
+  it('round-trips through buildFramesModelFromCoordinateJson (#2119)', () => {
+    const body = JSON.stringify([{ Image: 'A', Position: { Left: 2, Top: 3, Width: 4, Height: 5 } }]);
+    const extracted = extractEmbeddedCoordinateFramesJson(island(body));
+    const model = buildFramesModelFromCoordinateJson(extracted);
+    expect(model!.frames[0].rect).toEqual({ left: 2, top: 3, width: 4, height: 5 });
+  });
+
+  it('returns undefined when no island, an empty island, or a wrong type/id is present (#2119)', () => {
+    expect(extractEmbeddedCoordinateFramesJson('<HTML><BODY>x</BODY></HTML>')).toBeUndefined();
+    expect(extractEmbeddedCoordinateFramesJson(island('   '))).toBeUndefined();
+    // Right id but not application/json -> ignored (must not treat arbitrary scripts as data).
+    expect(
+      extractEmbeddedCoordinateFramesJson(
+        `<script id="${EMBEDDED_COORDINATE_FRAMES_ISLAND_ID}">alert(1)</script>`
+      )
+    ).toBeUndefined();
+    // application/json but a different id -> ignored.
+    expect(
+      extractEmbeddedCoordinateFramesJson('<script type="application/json" id="other">[]</script>')
+    ).toBeUndefined();
+  });
+
+  it('returns undefined for non-string or empty input (#2119)', () => {
+    expect(extractEmbeddedCoordinateFramesJson('')).toBeUndefined();
+    expect(extractEmbeddedCoordinateFramesJson(undefined as unknown as string)).toBeUndefined();
   });
 });
 
