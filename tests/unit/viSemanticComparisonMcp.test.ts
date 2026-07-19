@@ -104,6 +104,21 @@ describe('viSemanticComparisonMcp', () => {
     }
   });
 
+  it('annotates every tool as read-only with an open-world hint matching the async-only partition', () => {
+    const asyncOnly = new Set(VI_SEMANTIC_MCP_ASYNC_ONLY_TOOL_NAMES);
+    for (const tool of VI_SEMANTIC_MCP_TOOLS) {
+      const annotations = (tool as { annotations?: Record<string, unknown> }).annotations;
+      expect(annotations, `${tool.name} must declare annotations`).toBeDefined();
+      // Every vi-history-suite tool is non-mutating.
+      expect(annotations).toMatchObject({ readOnlyHint: true, destructiveHint: false });
+      expect(typeof annotations?.title).toBe('string');
+      // openWorldHint is true exactly for the tools that reach an external
+      // system (Git / comparison runtime / preview-cache fs) — i.e. the
+      // async-only partition — and false for the pure, in-process tools.
+      expect(annotations?.openWorldHint).toBe(asyncOnly.has(tool.name));
+    }
+  });
+
   it('summarizes a comparison into a narrative through tools/call', () => {
     const result = successResult(
       handleViSemanticMcpMessage({
