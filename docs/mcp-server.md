@@ -110,6 +110,20 @@ rather than a silently-repointed "latest".
 
 `resources/read` of an unknown URI returns a `-32602` naming the `uri` field.
 
+The server also advertises one **resource template** (via `resources/templates/list`)
+for fs-backed preview-cache entries:
+
+| URI template | Contents | mimeType |
+| --- | --- | --- |
+| `vi-history-suite://preview-cache/{cacheKey}{?cacheDirectory}` | A single rendered VI-preview document (HTML) | `text/html` |
+
+A concrete URI names the cache key in the path and the cache directory in a
+`cacheDirectory` query parameter, e.g.
+`vi-history-suite://preview-cache/<sha256>?cacheDirectory=%2Fpath%2Fto%2Fcache`.
+Reading one requires the async server entrypoint (it reads the cache filesystem
+through the injected inspector). A malformed URI returns `-32602`; a missing
+entry returns `-32602` (`preview-cache resource not found`).
+
 ### Output format
 
 `summarize_vi_comparison`, `get_vi_semantic_comparison`, `compare_vi_revisions`,

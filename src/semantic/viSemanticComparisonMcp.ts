@@ -727,6 +727,34 @@ export const VI_SEMANTIC_MCP_RESOURCES = [
   }
 ] as const;
 
+/**
+ * Prefix for the fs-backed preview-cache resource template. A concrete resource
+ * URI names the cache key in the path and the cache directory in the query, e.g.
+ * `vi-history-suite://preview-cache/<sha256>?cacheDirectory=%2Fpath%2Fto%2Fcache`.
+ * Reading one requires the async server entrypoint (it touches the filesystem
+ * through the injected preview-cache inspector), unlike the pure schema resources.
+ */
+const PREVIEW_CACHE_RESOURCE_PREFIX = 'vi-history-suite://preview-cache/';
+
+/**
+ * MCP resource templates (per the 2025-06-18 spec) — parameterized, fs-backed
+ * resources. The preview-cache template exposes a single rendered VI-preview
+ * document as addressable HTML context so an agent can reference a cached preview
+ * without a `get_preview_cache_entry` tool round-trip (VHS-REQ-659).
+ */
+export const VI_SEMANTIC_MCP_RESOURCE_TEMPLATES = [
+  {
+    uriTemplate: `${PREVIEW_CACHE_RESOURCE_PREFIX}{cacheKey}{?cacheDirectory}`,
+    name: 'preview-cache entry',
+    title: 'VI preview cache entry (HTML)',
+    description:
+      'A single rendered VI-preview document from a cache directory, addressable by its cache key ' +
+      '(a cached document basename; sha256-hex for real keys). Read-only; requires the async server ' +
+      'entrypoint (filesystem).',
+    mimeType: 'text/html'
+  }
+] as const;
+
 interface PromptMessage {
   role: 'user';
   content: { type: 'text'; text: string };
@@ -818,6 +846,34 @@ function resolveResource(uri: string): { uri: string; mimeType: string; text: st
     }
   }
   throwArgumentError('uri', 'a known vi-history-suite:// resource URI', uri);
+}
+
+/**
+ * Parses a concrete preview-cache resource URI into its cache directory and key.
+ * Both are required; a malformed URI raises a ToolArgumentError (mapped to a
+ * structured -32602). The cache key is path-encoded and the directory is a
+ * `cacheDirectory` query parameter (so an absolute path with separators survives
+ * intact).
+ */
+function parsePreviewCacheResourceUri(uri: string): { cacheDirectory: string; key: string } {
+  const rest = uri.slice(PREVIEW_CACHE_RESOURCE_PREFIX.length);
+  const queryIndex = rest.indexOf('?');
+  const keyPart = queryIndex >= 0 ? rest.slice(0, queryIndex) : rest;
+  const query = queryIndex >= 0 ? rest.slice(queryIndex + 1) : '';
+  let key: string;
+  try {
+    key = decodeURIComponent(keyPart);
+  } catch {
+    key = keyPart;
+  }
+  if (key.length === 0) {
+    throwArgumentError('uri', 'a preview-cache URI naming a cache key', uri);
+  }
+  const cacheDirectory = new URLSearchParams(query).get('cacheDirectory') ?? '';
+  if (cacheDirectory.length === 0) {
+    throwArgumentError('cacheDirectory', 'present in the preview-cache resource URI query', uri);
+  }
+  return { cacheDirectory, key };
 }
 
 function success(id: JsonRpcSuccess['id'], result: unknown): JsonRpcSuccess {
@@ -1101,6 +1157,9 @@ export function handleViSemanticMcpMessage(
 
     case 'resources/list':
       return success(id, { resources: VI_SEMANTIC_MCP_RESOURCES });
+
+    case 'resources/templates/list':
+      return success(id, { resourceTemplates: VI_SEMANTIC_MCP_RESOURCE_TEMPLATES });
 
     case 'resources/read': {
       const params = (message.params ?? {}) as { uri?: unknown };
@@ -1437,7 +1496,41 @@ export async function handleViSemanticMcpMessageAsync(
       );
     }
   }
+  if (message.method === 'resources/read') {
+    const params = (message.params ?? {}) as { uri?: unknown };
+    // The fs-backed preview-cache resource template is read through the injected
+    // inspector; schema resources stay on the pure synchronous path below.
+    if (typeof params.uri === 'string' && params.uri.startsWith(PREVIEW_CACHE_RESOURCE_PREFIX)) {
+      return handlePreviewCacheResourceRead(message.id ?? null, params.uri, deps.previewCacheInspector);
+    }
+  }
   return handleViSemanticMcpMessage(message);
+}
+
+async function handlePreviewCacheResourceRead(
+  id: JsonRpcSuccess['id'],
+  uri: string,
+  inspector: ViPreviewCacheInspectorDeps | undefined
+): Promise<JsonRpcResponse> {
+  if (!inspector) {
+    return failure(
+      id,
+      JSON_RPC_INVALID_PARAMS,
+      'preview-cache resource read requires the async MCP server entrypoint (no inspector injected)'
+    );
+  }
+  try {
+    const { cacheDirectory, key } = parsePreviewCacheResourceUri(uri);
+    const entry = await inspector.get(cacheDirectory, key, { includeHtml: true });
+    if (!entry || typeof entry.html !== 'string') {
+      return failure(id, JSON_RPC_INVALID_PARAMS, `preview-cache resource not found: ${uri}`, {
+        issues: [{ field: 'uri', expected: 'an existing preview-cache entry', received: 'missing' }]
+      });
+    }
+    return success(id, { contents: [{ uri, mimeType: 'text/html', text: entry.html }] });
+  } catch (error) {
+    return toArgumentFailure(id, error);
+  }
 }
 
 const RUNTIME_PLATFORM_VALUES = ['win32', 'linux', 'darwin'] as const;
