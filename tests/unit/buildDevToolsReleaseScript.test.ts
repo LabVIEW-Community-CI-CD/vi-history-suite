@@ -261,3 +261,62 @@ describe('collectDevToolsRelease + main (DS1)', () => {
     expect((JSON.parse(outputs.join('')) as Record<string, unknown>).$id).toBe(SCHEMA_ID);
   });
 });
+
+// DS3: the committed dev-tools payload must ship the MCP server's FULL transitive
+// out/ dependency closure. A pinned dev-tools MCP server that ships only out/mcp +
+// the entrypoint fails to start with "Cannot find module '../semantic/...'" (found
+// live in a codespace, #2092). This real-repo guard statically walks the compiled
+// server entrypoint's relative-require graph and fails closed if any transitively
+// required out/** file is absent from the resolved payload.
+describe('dev-tools payload MCP server dependency closure (#2092 regression)', () => {
+  const repoRoot = path.resolve(__dirname, '..', '..');
+  const entrypoint = path.join(repoRoot, 'out', 'cli', 'runViSemanticMcpServer.js');
+
+  function transitiveOutDependencies(startFile: string): Set<string> {
+    const acc = new Set<string>();
+    const visit = (file: string) => {
+      if (acc.has(file)) {
+        return;
+      }
+      acc.add(file);
+      let source: string;
+      try {
+        source = fs.readFileSync(file, 'utf8');
+      } catch {
+        return;
+      }
+      const requireRe = /require\((["'])(\.[^"']+)\1\)/g;
+      let match: RegExpExecArray | null;
+      while ((match = requireRe.exec(source)) !== null) {
+        let resolved = path.resolve(path.dirname(file), match[2]);
+        if (!resolved.endsWith('.js')) {
+          resolved += '.js';
+        }
+        if (fs.existsSync(resolved)) {
+          visit(resolved);
+        }
+      }
+    };
+    visit(startFile);
+    return acc;
+  }
+
+  it('resolves every out/ module the MCP server transitively requires (VHS-REQ-667.1)', () => {
+    if (!fs.existsSync(entrypoint)) {
+      // out/ is only present after `npm run compile`; the release build compiles first.
+      return;
+    }
+    const manifest = loadToolsetManifest(repoRoot, 'docs/devtools-release.manifest.json');
+    const payload = new Set(resolveToolsetFiles(repoRoot, manifest));
+
+    const requiredOutFiles = [...transitiveOutDependencies(entrypoint)]
+      .map((absolute) => path.relative(repoRoot, absolute).split(path.sep).join('/'))
+      .filter((relative) => relative.startsWith('out/'));
+
+    const missing = requiredOutFiles.filter((relative) => !payload.has(relative));
+    expect(missing).toEqual([]);
+    // Sanity: the closure is non-trivial (the entrypoint + at least the semantic module).
+    expect(requiredOutFiles).toContain('out/cli/runViSemanticMcpServer.js');
+    expect(requiredOutFiles.some((relative) => relative.startsWith('out/semantic/'))).toBe(true);
+  });
+});
