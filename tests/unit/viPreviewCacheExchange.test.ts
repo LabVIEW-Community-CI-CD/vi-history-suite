@@ -93,4 +93,31 @@ describe('selectExchangeReleaseToFetch (VHS-REQ-673.2)', () => {
     expect(selectExchangeReleaseToFetch([{ tag: 'v1.0.0' }])).toBeUndefined();
     expect(selectExchangeReleaseToFetch(releases, { tag: 'preview-cache-nope' })).toBeUndefined();
   });
+
+  it('breaks a createdAt tie deterministically by tag (higher tag first)', () => {
+    const tied = [
+      { tag: 'preview-cache-aaaaaaaaaaaa', createdAt: '2026-07-10T00:00:00Z' },
+      { tag: 'preview-cache-cccccccccccc', createdAt: '2026-07-10T00:00:00Z' },
+      { tag: 'preview-cache-bbbbbbbbbbbb', createdAt: '2026-07-10T00:00:00Z' }
+    ];
+    expect(selectExchangeReleaseToFetch(tied)?.tag).toBe('preview-cache-cccccccccccc');
+  });
+
+  it('treats missing createdAt as the oldest and still applies the tag tie-break', () => {
+    const noTimestamps = [
+      { tag: 'preview-cache-111111111111' },
+      { tag: 'preview-cache-333333333333' },
+      { tag: 'preview-cache-222222222222' }
+    ];
+    // All createdAt fall back to '' (equal), so the tag tie-break picks the highest tag.
+    expect(selectExchangeReleaseToFetch(noTimestamps)?.tag).toBe('preview-cache-333333333333');
+  });
+
+  it('ranks a release with a createdAt above one missing createdAt', () => {
+    const mixed = [
+      { tag: 'preview-cache-111111111111' },
+      { tag: 'preview-cache-222222222222', createdAt: '2026-07-05T00:00:00Z' }
+    ];
+    expect(selectExchangeReleaseToFetch(mixed)?.tag).toBe('preview-cache-222222222222');
+  });
 });
