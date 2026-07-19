@@ -378,8 +378,9 @@ describe('devHostLoop', () => {
       const readiness = summary.find((line) => line.startsWith('Release readiness:'));
       expect(readiness).toBeDefined();
       expect(readiness).toContain('npm run release:readiness');
-      // The dev host must not imply it can release; the lever stays maintainer-only.
-      expect(readiness).toContain('maintainer-only');
+      // The dev host must not imply IT can release; the release stays a separate
+      // manual dispatch (advisory), even though an agent is responsible for it.
+      expect(readiness).toContain('separate manual dispatch');
     });
   });
 });

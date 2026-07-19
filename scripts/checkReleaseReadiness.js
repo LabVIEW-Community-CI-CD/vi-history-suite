@@ -7,7 +7,8 @@
  * PASS/ATTENTION verdict bound to version+commit, so a human can read a single
  * "is this candidate safe to release?" signal before deciding. This command
  * grants NO release power: it only measures. The actual marketplace release
- * remains a separate, maintainer-only manual lever.
+ * remains a separate manual dispatch (an authorized agent is responsible for it;
+ * a maintainer may also perform it).
  *
  * Checks (all composed from existing modules — nothing new is measured here):
  *   - risk-ledger: no selectable CRITICAL/HIGH risk (buildRiskLedger +
@@ -640,7 +641,7 @@ function renderSummary(verdict) {
   lines.push(`[release-readiness] Runtime: ${verdict.runtimeAttestation}`);
   lines.push(`[release-readiness] Supply-chain: ${verdict.supplyChain}`);
   lines.push(`[release-readiness] Verdict: ${verdict.status}.`);
-  lines.push('[release-readiness] Advisory; the marketplace release remains a separate maintainer-only manual action.');
+  lines.push('[release-readiness] Advisory; the marketplace release remains a separate manual dispatch (an authorized agent is responsible; a maintainer may also perform it).');
   return lines.join('\n');
 }
 
@@ -662,7 +663,7 @@ function renderMarkdown(verdict) {
   lines.push('');
   lines.push(`_Supply-chain state:_ ${verdict.supplyChain}`);
   lines.push('');
-  lines.push('_The marketplace release remains a separate maintainer-only manual action._');
+  lines.push('_The marketplace release remains a separate manual dispatch (an authorized agent is responsible; a maintainer may also perform it)._');
   lines.push('');
   return lines.join('\n');
 }
