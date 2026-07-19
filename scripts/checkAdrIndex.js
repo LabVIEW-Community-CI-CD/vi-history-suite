@@ -9,6 +9,8 @@
  * docs/architecture/adr/ drifts from its index or required structure. It checks:
  *   - the ADR index (README.md) and the ADR template exist;
  *   - every ADR-NNNN-*.md file appears in the index and vice versa;
+ *   - the index title/status columns agree with each ADR file's heading title
+ *     and header status;
  *   - ADR numbers are sequential from 0001 with no gaps or duplicates;
  *   - every ADR carries the required `# ADR-NNNN:` heading plus `- Status:` and
  *     `- Date:` fields and the Context/Decision/Consequences sections.
@@ -60,6 +62,14 @@ function auditAdrIndex(repoRoot, deps = defaultDeps()) {
 
   const index = deps.readFileSync(indexPath);
 
+  // Parse the index table so each ADR's declared title/status can be checked
+  // against the ADR file itself. Rows look like:
+  //   | [ADR-0001](./ADR-0001-slug.md) | Title | Status |
+  const indexRows = new Map();
+  for (const row of index.matchAll(/^\|\s*\[ADR-(\d{4})\][^|]*\|([^|]*)\|([^|]*)\|/gm)) {
+    indexRows.set(row[1], { title: row[2].trim(), status: row[3].trim() });
+  }
+
   const entries = deps
     .readdirSync(adrDir)
     .filter((name) => ADR_FILE_PATTERN.test(name))
@@ -79,8 +89,19 @@ function auditAdrIndex(repoRoot, deps = defaultDeps()) {
 
     // Structural checks on the ADR body.
     const body = deps.readFileSync(path.join(adrDir, name));
-    if (!new RegExp(`^# ADR-${match[1]}:`, 'm').test(body)) {
+    const headingMatch = new RegExp(`^# ADR-${match[1]}:\\s*(.+)$`, 'm').exec(body);
+    if (!headingMatch) {
       violations.push(`ADR ${name} is missing a "# ADR-${match[1]}: <title>" heading.`);
+    } else {
+      // Index title must match the ADR heading title so the index stays a
+      // faithful table of contents.
+      const indexRow = indexRows.get(match[1]);
+      const headingTitle = headingMatch[1].trim();
+      if (indexRow && indexRow.title && indexRow.title !== headingTitle) {
+        violations.push(
+          `ADR ${name} index title "${indexRow.title}" does not match its heading title "${headingTitle}".`
+        );
+      }
     }
     if (!/^- Status:\s*\S/m.test(body)) {
       violations.push(`ADR ${name} is missing a "- Status:" field.`);
@@ -91,6 +112,13 @@ function auditAdrIndex(repoRoot, deps = defaultDeps()) {
       if (!ALLOWED_STATUSES.includes(status)) {
         violations.push(
           `ADR ${name} has an unknown status "${status}"; expected one of: ${ALLOWED_STATUSES.join(', ')}.`
+        );
+      }
+      // Index status must agree with the ADR file's header status.
+      const indexRow = indexRows.get(match[1]);
+      if (indexRow && indexRow.status && indexRow.status !== status) {
+        violations.push(
+          `ADR ${name} index status "${indexRow.status}" does not match its header status "${status}".`
         );
       }
       // Supersession linkage: a Superseded/Deprecated ADR must link forward to

@@ -234,6 +234,46 @@ describe('auditAdrIndex supersession linkage', () => {
   });
 });
 
+describe('auditAdrIndex index-agreement', () => {
+  function tableIndex(rows: Array<{ file: string; title: string; status: string }>): string {
+    return [
+      '## Index',
+      '| ADR | Title | Status |',
+      '| --- | --- | --- |',
+      ...rows.map((r) => `| [${(/^(ADR-\d{4})/.exec(r.file) ?? [])[1]}](./${r.file}) | ${r.title} | ${r.status} |`),
+      ''
+    ].join('\n');
+  }
+
+  it('passes when the index title and status match the ADR file', () => {
+    const root = makeAdrRepo(
+      { 'ADR-0001-first.md': validAdr('0001', 'First') },
+      { index: tableIndex([{ file: 'ADR-0001-first.md', title: 'First', status: 'Accepted' }]) }
+    );
+    expect(auditAdrIndex(root)).toEqual({ ok: true, violations: [] });
+  });
+
+  it('fails when the index status disagrees with the header status', () => {
+    const root = makeAdrRepo(
+      { 'ADR-0001-first.md': validAdr('0001', 'First') },
+      { index: tableIndex([{ file: 'ADR-0001-first.md', title: 'First', status: 'Active' }]) }
+    );
+    const result = auditAdrIndex(root);
+    expect(result.ok).toBe(false);
+    expect(result.violations.some((v) => v.includes('index status') && v.includes('does not match'))).toBe(true);
+  });
+
+  it('fails when the index title disagrees with the heading title', () => {
+    const root = makeAdrRepo(
+      { 'ADR-0001-first.md': validAdr('0001', 'First') },
+      { index: tableIndex([{ file: 'ADR-0001-first.md', title: 'Different', status: 'Accepted' }]) }
+    );
+    const result = auditAdrIndex(root);
+    expect(result.ok).toBe(false);
+    expect(result.violations.some((v) => v.includes('index title') && v.includes('does not match'))).toBe(true);
+  });
+});
+
 describe('auditSyrsCoverage', () => {
   function makeRepoWithRtm(adrBodies: Record<string, string>, rtm: string): string {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'vihs-adr-syrs-'));
