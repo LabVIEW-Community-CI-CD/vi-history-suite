@@ -9,7 +9,7 @@ cryptographically bound to the requirements state it was cut from
 (VHS-REQ-667).
 
 This channel distributes the **tools**, not the extension. The marketplace
-release (VHS-REQ-609) is a separate, maintainer-only manual lever.
+release (VHS-REQ-609) is a separate manual dispatch that an authorized agent is responsible for (a maintainer may also perform it).
 
 ## What ships
 
