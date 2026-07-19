@@ -167,3 +167,66 @@ export function buildFramesModelFromFlatExport(labviewHtml: string): ViPreviewFr
 
   return { frames, rootIndex: 0 };
 }
+
+/**
+ * Above this many synthesized child frames, the coordinate-less vertical stack no
+ * longer resembles the diagram (the flat export exposes no positions), so the
+ * interactive viewer would present a misleading layout rather than a faithful one.
+ */
+export const MAX_FAITHFUL_STACKED_CHILDREN = 24;
+
+/**
+ * Above this many distinct same-size structure groups, unrelated block-diagram
+ * elements that merely share a pixel size are stacked as if they were peer
+ * structures — the size-grouping heuristic has clearly over-reached.
+ */
+export const MAX_FAITHFUL_STRUCTURE_GROUPS = 8;
+
+/** The verdict of {@link assessFramesModelFidelity}. */
+export interface FramesModelFidelity {
+  /** True when the synthesized layout is a faithful-enough interactive view. */
+  faithful: boolean;
+  /** Number of synthesized child frames stacked below the root diagram. */
+  childCount: number;
+  /** Number of distinct same-size structure groups among the children. */
+  structureGroupCount: number;
+  /** Human-readable reason when not faithful; undefined when faithful. */
+  reason?: string;
+}
+
+/**
+ * Assesses whether a flat-export frames model is faithful enough to present as an
+ * interactive layout. Because `PrintToSingleFileHtml` carries no node coordinates
+ * (see the module header), a complex diagram reconstructs into a large, misleading
+ * vertical stack whose same-size grouping conflates unrelated structures. This
+ * gauges that degradation from two structural signals so the selector can fall
+ * back to the faithful flat `document` view instead. A single genuine structure
+ * (even one with many equal-sized cases) stays faithful: it is one group with a
+ * bounded child count.
+ */
+export function assessFramesModelFidelity(model: ViPreviewFramesModel): FramesModelFidelity {
+  const root = model.frames[model.rootIndex];
+  const childIndices = root ? root.children : [];
+  const childCount = childIndices.length;
+  const groupKeys = new Set<string>();
+  for (const index of childIndices) {
+    const frame = model.frames[index];
+    if (frame) {
+      groupKeys.add(`${frame.rect.width}x${frame.rect.height}`);
+    }
+  }
+  const structureGroupCount = groupKeys.size;
+
+  let reason: string | undefined;
+  if (childCount > MAX_FAITHFUL_STACKED_CHILDREN) {
+    reason =
+      `stacked child frames (${childCount}) exceed ${MAX_FAITHFUL_STACKED_CHILDREN}; ` +
+      'the coordinate-less flat export cannot place them faithfully';
+  } else if (structureGroupCount > MAX_FAITHFUL_STRUCTURE_GROUPS) {
+    reason =
+      `distinct same-size structure groups (${structureGroupCount}) exceed ` +
+      `${MAX_FAITHFUL_STRUCTURE_GROUPS}; size-grouping is conflating unrelated elements`;
+  }
+
+  return { faithful: reason === undefined, childCount, structureGroupCount, reason };
+}

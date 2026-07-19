@@ -15,12 +15,14 @@
  * rendered LabVIEW HTML, the requested mode, and a per-load nonce, it returns
  * the finished webview document plus the mode actually used. The interactive
  * mode falls back to the document mode when the export yields no extractable
- * block-diagram frames (e.g. a control `.ctl` with no diagram), so a viewer
- * request can never produce an empty pane. Keeping selection pure makes the
- * fallback logic unit-testable without a webview host.
+ * block-diagram frames (e.g. a control `.ctl` with no diagram) or when the
+ * reconstructed frames model is too low-fidelity to present faithfully (a
+ * complex, coordinate-less diagram; see {@link assessFramesModelFidelity}), so a
+ * viewer request can never produce an empty or misleading pane. Keeping
+ * selection pure makes the fallback logic unit-testable without a webview host.
  */
 
-import { buildFramesModelFromFlatExport } from './viPreviewFlatFrames';
+import { buildFramesModelFromFlatExport, assessFramesModelFidelity } from './viPreviewFlatFrames';
 import { buildViPreviewFramesViewerHtml } from './viPreviewFramesViewer';
 import { buildViPreviewWebviewHtml } from './viPreviewWebview';
 
@@ -72,6 +74,14 @@ export function selectViPreviewDocument(
 
   const model = buildFramesModelFromFlatExport(options.labviewHtml);
   if (!model) {
+    return documentFallback();
+  }
+
+  // The flat export carries no node coordinates, so a complex diagram
+  // reconstructs into a large, misleading vertical stack. When the model is too
+  // low-fidelity to present faithfully, fall back to the faithful flat document
+  // view rather than an interactive layout that misrepresents the diagram.
+  if (!assessFramesModelFidelity(model).faithful) {
     return documentFallback();
   }
 
