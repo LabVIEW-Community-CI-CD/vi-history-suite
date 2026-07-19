@@ -198,3 +198,47 @@ describe('auditSyrsCoverage', () => {
     expect(result.violations.some((v) => v.includes('VHS-SYS-REQ-099'))).toBe(false);
   });
 });
+
+describe('auditAdrIndex reverse citation validation', () => {
+  function makeRepoWithRtm(adrBody: string, rtm: string): string {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'vihs-adr-rev-'));
+    tempRoots.push(root);
+    const adrDir = path.join(root, 'docs', 'architecture', 'adr');
+    fs.mkdirSync(adrDir, { recursive: true });
+    fs.writeFileSync(path.join(adrDir, 'ADR-0001-a.md'), adrBody);
+    fs.writeFileSync(path.join(adrDir, 'ADR-template.md'), '# ADR-NNNN: T\n');
+    fs.writeFileSync(path.join(adrDir, 'README.md'), 'ADR-0001-a.md\n');
+    const reqDir = path.join(root, 'docs', 'requirements');
+    fs.mkdirSync(reqDir, { recursive: true });
+    fs.writeFileSync(path.join(reqDir, 'rtm.csv'), rtm);
+    return root;
+  }
+
+  const rtm = [
+    'ReqID,ParentID,Status,Area',
+    'VHS-REQ-100,VHS-SYS-REQ-001,Active,Core',
+    'VHS-REQ-300,VHS-SYS-REQ-001,Retired,Legacy'
+  ].join('\n');
+
+  it('fails when an ADR cites a requirement id that does not exist in rtm.csv', () => {
+    const body = validAdr('0001', 'A').replace('VHS-REQ-001', 'VHS-REQ-100') + '\nVHS-REQ-999\n';
+    const result = auditAdrIndex(makeRepoWithRtm(body, rtm));
+    expect(result.ok).toBe(false);
+    expect(result.violations.some((v) => v.includes('VHS-REQ-999') && v.includes('does not exist'))).toBe(true);
+  });
+
+  it('fails when an ADR cites a requirement that is not Active', () => {
+    const body = validAdr('0001', 'A').replace('VHS-REQ-001', 'VHS-REQ-100') + '\nVHS-REQ-300\n';
+    const result = auditAdrIndex(makeRepoWithRtm(body, rtm));
+    expect(result.ok).toBe(false);
+    expect(result.violations.some((v) => v.includes('VHS-REQ-300') && v.includes('is not Active'))).toBe(true);
+  });
+});
+
+describe('the real repository ADR set', () => {
+  it('passes adr:check and the dedicated SYRS-coverage check', () => {
+    const repoRoot = path.resolve(__dirname, '..', '..');
+    expect(auditAdrIndex(repoRoot)).toEqual({ ok: true, violations: [] });
+    expect(auditSyrsCoverage(repoRoot)).toEqual({ ok: true, violations: [] });
+  });
+});
