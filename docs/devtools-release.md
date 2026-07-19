@@ -75,8 +75,13 @@ publishes the artifact. It is **dry-run-first**:
   latest release of the channel and skips when nothing tool-related changed, so
   no-op merges do not churn releases.
 - A real GitHub Release is created only on a non-dry-run when the content digest
-  changed. Tags follow `devtools-YYYYMMDD-<sha7>` (stable) and
-  `devtools-dev-YYYYMMDD-<sha7>` (prerelease, marked as a GitHub pre-release).
+  changed. Tags follow the independent SemVer 2.0 dev-tools version line
+  (VHS-REQ-676): `devtools-v<version>` (stable) and
+  `devtools-v<version>-dev.<run-id>` (prerelease, a valid SemVer 2.0 prerelease,
+  marked as a GitHub pre-release). The `version` is sourced from the committed
+  `docs/devtools-release.manifest.json` and echoed into the provenance packet;
+  the workflow fails closed if the two disagree. Bump the manifest `version`
+  deliberately to publish a new dev-tools version.
 - After a real release, the workflow **prunes superseded releases of that
   channel** beyond a keep-last-N bound (default 5, overridable via the
   repository variable `DEVTOOLS_RELEASE_RETENTION`; `0` disables pruning), so

@@ -692,3 +692,4 @@ VHS-REQ-675,Software,Active,srs.md#vhs-req-675-preview-cache-health-read-model,,
 VHS-REQ-672,Software,Active,srs.md#vhs-req-672-portable-preview-cache-bundle,,,docs/requirements/srs.md
 VHS-REQ-673,Software,Active,srs.md#vhs-req-673-preview-cache-exchange,,,docs/requirements/srs.md
 VHS-REQ-674,Software,Active,srs.md#vhs-req-674-preview-cache-generation-fleet,,,docs/requirements/srs.md
+VHS-REQ-676,Software,Active,srs.md#vhs-req-676-independent-semver-dev-tools-version-line,,,docs/requirements/srs.md

@@ -35,6 +35,7 @@ const {
   schemaEnvelopePropertyNodes
 } = require('./lib/schemaEnvelope.js');
 const { parseSharedOutputArgs } = require('./lib/outputContract.js');
+const { isValidSemVer } = require('./lib/semver.cjs');
 
 const SCHEMA_ID = 'vi-history-suite/devtools-release@v1';
 const SCHEMA_VERSION = 1;
@@ -75,6 +76,14 @@ function loadToolsetManifest(cwd, relativePath, deps = {}) {
   }
   if (!Array.isArray(parsed.categories) || parsed.categories.length === 0) {
     throw new Error('Toolset manifest must declare a non-empty categories array');
+  }
+  // The dev-tools version is an independent SemVer 2.0 line (VHS-REQ-676); fail
+  // closed when it is missing or malformed so a release can never publish an
+  // unversioned or non-semver toolset.
+  if (typeof parsed.version !== 'string' || !isValidSemVer(parsed.version)) {
+    throw new Error(
+      `Toolset manifest must declare a SemVer 2.0 "version" (got: ${JSON.stringify(parsed.version)})`
+    );
   }
   return parsed;
 }
@@ -240,6 +249,7 @@ function buildDevToolsReleaseManifest(inputs = {}, meta = {}) {
   const fileDigests = inputs.fileDigests ?? [];
   return {
     ...schemaEnvelopeFields(SCHEMA_ID, SCHEMA_VERSION),
+    version: meta.version,
     channel: meta.channel ?? 'prerelease',
     generatedAt: meta.generatedAt,
     buildVersion: meta.buildVersion,
@@ -266,6 +276,7 @@ function collectDevToolsRelease(cwd, options = {}, deps = {}) {
     },
     {
       channel: normalizeChannel(options.channel),
+      version: toolset.version,
       generatedAt:
         typeof deps.now === 'function'
           ? new Date(deps.now()).toISOString()
@@ -303,6 +314,7 @@ const DEVTOOLS_RELEASE_JSON_SCHEMA = {
   required: [
     '$schema',
     'schemaVersion',
+    'version',
     'channel',
     'contentDigest',
     'fileCount',
@@ -310,6 +322,7 @@ const DEVTOOLS_RELEASE_JSON_SCHEMA = {
   ],
   properties: {
     ...schemaEnvelopePropertyNodes(SCHEMA_ID, SCHEMA_VERSION),
+    version: { type: 'string' },
     channel: { enum: CHANNELS },
     generatedAt: { type: 'string' },
     buildVersion: { type: 'string' },

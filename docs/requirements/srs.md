@@ -5641,3 +5641,61 @@ Missing numeric IDs are intentional.
     CLIs; add render capacity via the shard matrix, not new render logic. Keep
     the dispatch wrapper delegating to the SHA-pinned reusable workflow, and keep
     publishing opt-in and trusted-ref-guarded.
+
+### VHS-REQ-676: Independent SemVer Dev-Tools Version Line
+
+- Status: Active
+- Parent: VHS-SYS-REQ-013
+- Area: CI And Developer Environment
+- Statement: The dev-tools release channel (VHS-REQ-667) shall carry an
+  independent SemVer 2.0 version line, sourced from a committed field in the
+  toolset manifest and echoed into the provenance packet, so the development
+  toolset (compiled CLI/MCP outputs, scripts, docs, customization) is versioned
+  and released on its own cadence, decoupled from the extension's Marketplace
+  version. This is the foundation for an extension to later pin and consume a
+  specific dev-tools version without a Marketplace republish (VHS-REQ-677).
+- Acceptance Criteria:
+  - A dependency-free SemVer 2.0 utility (`src/support/semver.ts` for the
+    extension, `scripts/lib/semver.cjs` for the release scripts) parses and
+    validates SemVer 2.0 strings (optional leading `v`, prerelease and
+    build-metadata identifiers) and compares them by SemVer 2.0 precedence
+    (numeric vs alphanumeric prerelease rules, a prerelease ranking below its
+    release, build metadata ignored for precedence); it adds no runtime npm
+    dependency and never throws on invalid input (invalid versions sort after
+    valid ones).
+  - `docs/devtools-release.manifest.json` declares a committed `version` field
+    that is the SemVer 2.0 source of truth for the dev-tools line, and
+    `scripts/buildDevToolsRelease.js` fails closed when that `version` is missing
+    or not valid SemVer 2.0, so an unversioned or malformed toolset can never be
+    packaged.
+  - The dev-tools provenance manifest (`vi-history-suite/devtools-release@v1`)
+    emits the `version` field (alongside the existing `channel`, `buildVersion`,
+    `contentDigest`, and requirements binding), and the published JSON Schema and
+    `--schema` output require it.
+  - `.github/workflows/devtools-release.yml` names the release tag from the
+    version — `devtools-v<version>` for the stable channel and
+    `devtools-v<version>-dev.<run-id>` (a valid SemVer 2.0 prerelease) for the
+    prerelease channel — guards that the built packet version equals the
+    committed manifest version (failing closed on drift), and keeps the existing
+    content-digest dedup and keep-last-N pruning scoped by the `devtools-v*`
+    prefix and the prerelease flag.
+- Agent Work Scope:
+  - Keep the SemVer utility dependency-free and spec-correct; bump the manifest
+    `version` deliberately per dev-tools release. Do not couple the dev-tools
+    version to the extension version. Preserve the content-addressed dedup and
+    fail-closed verifier from VHS-REQ-667.
+- Implementation References:
+  - `src/support/semver.ts`
+  - `scripts/lib/semver.cjs`
+  - `docs/devtools-release.manifest.json`
+  - `scripts/buildDevToolsRelease.js`
+  - `.github/workflows/devtools-release.yml`
+- Verification References:
+  - `tests/unit/semver.test.ts`
+  - `tests/unit/buildDevToolsReleaseScript.test.ts`
+  - `tests/unit/devToolsReleaseWorkflow.test.ts`
+- Change Guidance:
+  - Keep the version an independent SemVer 2.0 line; extend the provenance packet
+    additively. If the extension later pins a dev-tools version (VHS-REQ-677),
+    reuse this SemVer utility for comparison rather than adding a semver
+    dependency.

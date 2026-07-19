@@ -48,6 +48,7 @@ function makeFixtureRepo(): string {
     JSON.stringify({
       schema: builder.SCHEMA_ID,
       schemaVersion: 1,
+      version: '1.0.0',
       categories: [{ id: 'scripts', include: ['scripts/*.js'] }],
       exclude: []
     })
