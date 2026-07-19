@@ -53,6 +53,7 @@ describe('buildViSemanticMcpServerDeps', () => {
     const deps = buildViSemanticMcpServerDeps(cache);
     expect(typeof deps.resolveRuntimeHealth).toBe('function');
     expect(typeof deps.collectPreviewDiagnostics).toBe('function');
+    expect(typeof deps.listChangedVis).toBe('function');
   });
 
   it('projects a resolved runtime selection into the runtime-health snapshot', async () => {

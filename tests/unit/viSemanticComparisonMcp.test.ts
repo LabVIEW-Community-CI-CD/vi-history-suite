@@ -97,7 +97,8 @@ describe('viSemanticComparisonMcp', () => {
       'search_preview_cache',
       'get_preview_cache_entry',
       'get_runtime_health',
-      'get_preview_diagnostics'
+      'get_preview_diagnostics',
+      'list_changed_vis'
     ]);
     expect(result.tools).toEqual(VI_SEMANTIC_MCP_TOOLS);
   });
@@ -1044,6 +1045,53 @@ describe('viSemanticComparisonMcp', () => {
     it('reports a wired-up error when no preview-diagnostics collector is injected', async () => {
       const response = successResult(
         await handleViSemanticMcpMessageAsync(toolCall('get_preview_diagnostics', {}))
+      ) as { content: Array<{ text: string }>; isError: boolean };
+      expect(response.isError).toBe(true);
+      expect(response.content[0].text).toContain('not wired');
+    });
+
+    it('lists changed VIs through the injected lister', async () => {
+      const listChangedVis = vi.fn(async () => ({
+        schema: 'vi-history-suite/changed-vis@v1' as const,
+        repositoryRoot: '/repo',
+        baseHash: 'aaaa',
+        selectedHash: 'bbbb',
+        changedVis: ['vis/A.vi', 'vis/B.ctl'],
+        count: 2
+      }));
+      const response = successResult(
+        await handleViSemanticMcpMessageAsync(
+          toolCall('list_changed_vis', { repositoryRoot: '/repo', baseHash: 'aaaa', selectedHash: 'bbbb' }),
+          { listChangedVis }
+        )
+      ) as { content: Array<{ text: string }>; isError?: boolean };
+      expect(listChangedVis).toHaveBeenCalledWith({
+        repositoryRoot: '/repo',
+        baseHash: 'aaaa',
+        selectedHash: 'bbbb'
+      });
+      expect(response.isError ?? false).toBe(false);
+      const parsed = JSON.parse(response.content[0].text) as { schema: string; count: number };
+      expect(parsed.schema).toBe('vi-history-suite/changed-vis@v1');
+      expect(parsed.count).toBe(2);
+    });
+
+    it('rejects list_changed_vis missing a revision as -32602', async () => {
+      const listChangedVis = vi.fn();
+      const response = await handleViSemanticMcpMessageAsync(
+        toolCall('list_changed_vis', { repositoryRoot: '/repo', baseHash: 'aaaa' }),
+        { listChangedVis }
+      );
+      const error = invalidParamsError(response);
+      expect(error.data?.issues?.[0]).toMatchObject({ field: 'selectedHash' });
+      expect(listChangedVis).not.toHaveBeenCalled();
+    });
+
+    it('reports a wired-up error when no changed-VI lister is injected', async () => {
+      const response = successResult(
+        await handleViSemanticMcpMessageAsync(
+          toolCall('list_changed_vis', { repositoryRoot: '/repo', baseHash: 'aaaa', selectedHash: 'bbbb' })
+        )
       ) as { content: Array<{ text: string }>; isError: boolean };
       expect(response.isError).toBe(true);
       expect(response.content[0].text).toContain('not wired');

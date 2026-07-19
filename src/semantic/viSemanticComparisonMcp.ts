@@ -85,6 +85,31 @@ export interface ViRuntimeHealth {
   notes: string[];
 }
 
+/** Schema id for the changed-VI listing the async server emits. */
+export const CHANGED_VIS_SCHEMA = 'vi-history-suite/changed-vis@v1';
+
+/** Arguments accepted by the `list_changed_vis` tool. */
+export interface ChangedVisInput {
+  repositoryRoot: string;
+  baseHash: string;
+  selectedHash: string;
+}
+
+/**
+ * Cheap, Git-only listing of the VI source files changed between two revisions
+ * (no comparison runtime, no rendering). Lets an agent scope a review — deciding
+ * whether to run the minutes-long `build_vi_pr_review` at all, and against how
+ * many VIs — before committing to it.
+ */
+export interface ViChangedVis {
+  schema: typeof CHANGED_VIS_SCHEMA;
+  repositoryRoot: string;
+  baseHash: string;
+  selectedHash: string;
+  changedVis: string[];
+  count: number;
+}
+
 export interface JsonRpcRequest {
   jsonrpc: '2.0';
   id?: string | number | null;
@@ -416,6 +441,25 @@ const PREVIEW_DIAGNOSTICS_INPUT_SCHEMA = {
   }
 } as const;
 
+const CHANGED_VIS_INPUT_SCHEMA = {
+  type: 'object',
+  properties: {
+    repositoryRoot: {
+      type: 'string',
+      description: 'Absolute path to the Git repository.'
+    },
+    baseHash: {
+      type: 'string',
+      description: 'Base (older) revision identifier, e.g. a PR merge base.'
+    },
+    selectedHash: {
+      type: 'string',
+      description: 'Selected (newer) revision identifier, e.g. the PR head.'
+    }
+  },
+  required: ['repositoryRoot', 'baseHash', 'selectedHash']
+} as const;
+
 /**
  * MCP tool annotations (per the 2025-06-18 spec `ToolAnnotations`) declaring
  * behavioral hints so an agent host can reason about a tool before calling it.
@@ -574,6 +618,16 @@ export const VI_SEMANTIC_MCP_TOOLS = [
       'one call. Read-only; never renders.',
     inputSchema: PREVIEW_DIAGNOSTICS_INPUT_SCHEMA,
     annotations: { title: 'Get preview diagnostics', ...READ_ONLY_OPEN_WORLD }
+  },
+  {
+    name: 'list_changed_vis',
+    description:
+      'List the VI source files (.vi/.vit/.vim/.ctl) changed between two Git revisions \u2014 a cheap, ' +
+      `Git-only ${CHANGED_VIS_SCHEMA} listing (no comparison runtime, no rendering) so an agent can ` +
+      'scope a review (whether to run the minutes-long build_vi_pr_review at all, and against how ' +
+      'many VIs) before committing to it. Read-only.',
+    inputSchema: CHANGED_VIS_INPUT_SCHEMA,
+    annotations: { title: 'List changed VIs', ...READ_ONLY_OPEN_WORLD }
   }
 ] as const;
 
@@ -601,7 +655,8 @@ const ASYNC_ONLY_TOOL_NAMES: ReadonlySet<string> = new Set([
   'search_preview_cache',
   'get_preview_cache_entry',
   'get_runtime_health',
-  'get_preview_diagnostics'
+  'get_preview_diagnostics',
+  'list_changed_vis'
 ]);
 
 /** Every tool name published by the registry (the authoritative known set). */
@@ -1020,6 +1075,12 @@ export interface ViSemanticMcpAsyncDeps {
   collectPreviewDiagnostics?: (
     input: CollectViPreviewDiagnosticsOptions
   ) => Promise<ViPreviewDiagnosticsSnapshot>;
+  /**
+   * Read-only changed-VI lister. Lists the VI source files changed between two
+   * Git revisions (pure Git; never renders). Injected by the stdio entrypoint;
+   * when absent, `list_changed_vis` reports a wired-up error.
+   */
+  listChangedVis?: (input: ChangedVisInput) => Promise<ViChangedVis>;
 }
 
 /** Injected read-only preview-cache inspection surface for the MCP tools. */
@@ -1144,6 +1205,15 @@ export async function handleViSemanticMcpMessageAsync(
         (snapshot) => toolTextResult(JSON.stringify(snapshot, null, 2))
       );
     }
+    if (params.name === 'list_changed_vis') {
+      return invokeInjectedTool(
+        id,
+        'list_changed_vis',
+        deps.listChangedVis,
+        () => parseChangedVisArguments(params.arguments),
+        (changed) => toolTextResult(JSON.stringify(changed, null, 2))
+      );
+    }
   }
   return handleViSemanticMcpMessage(message);
 }
@@ -1171,11 +1241,19 @@ function parseRuntimeHealthArguments(rawArguments: unknown): RuntimeHealthInput 
   return input;
 }
 
+function parseChangedVisArguments(rawArguments: unknown): ChangedVisInput {
+  const args = requireArgumentsObject(rawArguments);
+  return {
+    repositoryRoot: requireStringArg(args, 'repositoryRoot'),
+    baseHash: requireStringArg(args, 'baseHash'),
+    selectedHash: requireStringArg(args, 'selectedHash')
+  };
+}
+
 function parsePreviewDiagnosticsArguments(rawArguments: unknown): CollectViPreviewDiagnosticsOptions {
   if (rawArguments === undefined || rawArguments === null) {
     return {};
-  }
-  const args = requireArgumentsObject(rawArguments);
+  }  const args = requireArgumentsObject(rawArguments);
   const options: CollectViPreviewDiagnosticsOptions = {};
   if (args.cacheDirectory !== undefined) {
     options.cacheDirectory = requireStringArg(args, 'cacheDirectory');

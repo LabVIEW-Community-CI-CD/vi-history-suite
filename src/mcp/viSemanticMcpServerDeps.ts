@@ -8,7 +8,11 @@ import {
 } from '../semantic/compareViRevisions';
 import { buildViSemanticHistory } from '../semantic/viSemanticHistory';
 import { buildViRepositoryIndex } from '../semantic/viRepositoryIndex';
-import { buildViSemanticPrReview } from '../semantic/viSemanticPrReview';
+import {
+  buildViSemanticPrReview,
+  createDefaultListChangedPaths,
+  isViSourcePath
+} from '../semantic/viSemanticPrReview';
 import {
   createFileViComparisonModelCache,
   type ViComparisonModelCache
@@ -31,8 +35,11 @@ import {
 } from '../tooling/viPreviewDiagnostics';
 import {
   RUNTIME_HEALTH_SCHEMA,
+  CHANGED_VIS_SCHEMA,
   type RuntimeHealthInput,
-  type ViRuntimeHealth
+  type ViRuntimeHealth,
+  type ChangedVisInput,
+  type ViChangedVis
 } from '../semantic/viSemanticComparisonMcp';
 
 /**
@@ -104,7 +111,28 @@ export function buildViSemanticMcpServerDeps(
     },
     resolveRuntimeHealth: (input) => resolveRuntimeHealth(input),
     collectPreviewDiagnostics: (input: CollectViPreviewDiagnosticsOptions) =>
-      collectViPreviewDiagnostics(input)
+      collectViPreviewDiagnostics(input),
+    listChangedVis: (input) => listChangedVis(input)
+  };
+}
+
+/**
+ * Lists the VI source files changed between two Git revisions (pure Git; never
+ * renders) and projects the `vi-history-suite/changed-vis@v1` listing the
+ * `list_changed_vis` MCP tool returns. Filters `git diff --name-only` to LabVIEW
+ * source paths so an agent can scope a review before running it.
+ */
+async function listChangedVis(input: ChangedVisInput): Promise<ViChangedVis> {
+  const listChangedPaths = createDefaultListChangedPaths();
+  const changed = await listChangedPaths(input.repositoryRoot, input.baseHash, input.selectedHash);
+  const changedVis = changed.filter((relativePath) => isViSourcePath(relativePath)).sort();
+  return {
+    schema: CHANGED_VIS_SCHEMA,
+    repositoryRoot: input.repositoryRoot,
+    baseHash: input.baseHash,
+    selectedHash: input.selectedHash,
+    changedVis,
+    count: changedVis.length
   };
 }
 
