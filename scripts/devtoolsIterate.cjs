@@ -100,8 +100,11 @@ function readManifestVersion() {
 }
 
 function setManifestVersion(version) {
-  // Byte-preserving edit: only the version value changes.
+  // Byte-preserving edit: only the version value changes. Idempotent — when the
+  // manifest already declares the target version (e.g. it was pre-bumped on the
+  // branch before --publish-current-branch), this is a no-op rather than an error.
   const raw = fs.readFileSync(MANIFEST, 'utf8');
+  if (readManifestVersion() === version) return;
   const updated = raw.replace(/("version":\s*")\d+\.\d+\.\d+(")/, `$1${version}$2`);
   if (updated === raw) throw new Error('Failed to locate the manifest version field.');
   fs.writeFileSync(MANIFEST, updated);
