@@ -29,3 +29,14 @@ The index and the required structure are enforced by `npm run adr:check`
 | [ADR-0004](./ADR-0004-version-aware-labview-container-execution.md) | Version-Aware LabVIEW Container Execution | Accepted |
 | [ADR-0005](./ADR-0005-preview-cache-fabric.md) | Preview-Cache Fabric | Accepted |
 | [ADR-0006](./ADR-0006-independent-dev-tools-versioning.md) | Independent Dev-Tools Versioning And Runtime Pinning | Accepted |
+| [ADR-0007](./ADR-0007-selected-file-vi-history-core.md) | Selected-File VI History Core | Accepted |
+| [ADR-0008](./ADR-0008-host-labview-comparison-runtime.md) | Host LabVIEW Comparison Runtime Selection And Gating | Accepted |
+| [ADR-0009](./ADR-0009-fail-closed-runtime-evidence.md) | Fail-Closed Runtime Evidence And Diagnostics | Accepted |
+| [ADR-0010](./ADR-0010-explicit-compare-reports-semantic-surfaces.md) | Explicit Compare Action, Reports, And Semantic Surfaces | Accepted |
+| [ADR-0011](./ADR-0011-github-first-marketplace-identity.md) | GitHub-First Marketplace Identity | Accepted |
+| [ADR-0012](./ADR-0012-lightweight-public-verification-dod.md) | Lightweight Public Verification And Definition Of Done | Accepted |
+| [ADR-0013](./ADR-0013-optional-human-validation-surfaces.md) | Optional Human Validation And Maintainer Surfaces | Accepted |
+| [ADR-0014](./ADR-0014-agent-targetable-requirements.md) | Agent-Targetable Requirements Contract | Accepted |
+| [ADR-0015](./ADR-0015-release-state-read-model.md) | Release State Read-Model And Gated Publish Authority | Accepted |
+| [ADR-0016](./ADR-0016-coverage-led-assurance.md) | Coverage-Led Assurance Operating Model | Accepted |
+| [ADR-0017](./ADR-0017-container-image-version-selection-ux.md) | Container Image Version Selection UX | Accepted |
