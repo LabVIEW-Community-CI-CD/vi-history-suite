@@ -163,6 +163,32 @@ function assertAllowedExecutableCommand(command) {
   }
 }
 
+/**
+ * Windows `cmd.exe /c <command> <args...>` RE-PARSES its command line, so even
+ * with `shell: false` an argument that carries a cmd metacharacter (for example
+ * an env-derived path such as `REPO_STANDARDS_REVIEW_ROOT` or
+ * `VIHS_CLOSEOUT_SNAPSHOT_DIR`) could chain or redirect a second command
+ * (CodeQL js/shell-command-injection-from-environment). This barrier rejects the
+ * metacharacters that enable command chaining, redirection, or escaping before
+ * such tokens can reach the processor.
+ *
+ * The set is deliberately narrow: `&` `|` `<` `>` `^` `"` backtick and CR/LF/NUL
+ * never appear in the git refs, container image names, `gh` API paths, or
+ * filesystem paths this script passes. Parentheses are intentionally NOT rejected
+ * because legitimate Windows paths contain them (e.g. `Program Files (x86)`).
+ */
+const CMD_INJECTION_METACHARACTERS = /[&|<>^"`\r\n\0]/;
+
+function assertShellSafeCommandArgv(argv) {
+  for (const token of argv) {
+    if (typeof token === 'string' && CMD_INJECTION_METACHARACTERS.test(token)) {
+      throw new Error(
+        `Refusing to run a command whose token contains a shell metacharacter: ${JSON.stringify(token)}`
+      );
+    }
+  }
+}
+
 function combinedCommandErrorText(commandResult) {
   return `${commandResult?.stderr || ''}\n${String(commandResult?.error || '')}`.toLowerCase();
 }
@@ -270,6 +296,13 @@ function runCommand(command, args, deps = {}) {
   const spawnSyncImpl = deps.spawnSync || spawnSync;
   const platform = deps.platform || process.platform;
   const useWindowsCommandProcessor = platform === 'win32' && !deps.spawnSync;
+  // The Windows path wraps the invocation in `cmd.exe /c`, which re-parses its
+  // command line; reject any token carrying a cmd metacharacter (e.g. from an
+  // env-derived path) before it can reach the processor. The direct-spawn path
+  // passes argv verbatim (no shell), so it needs no such barrier.
+  if (useWindowsCommandProcessor) {
+    assertShellSafeCommandArgv([command, ...args]);
+  }
   const maxAttempts = Math.max(1, Number(policy.maxAttempts || 1));
   const timeoutMs = Number(policy.timeoutMs || 0);
   const retryOnTransient = policy.retryOnTransient === true;
@@ -1827,6 +1860,7 @@ module.exports = {
   summarizeReleaseProfileResults,
   isAllowedExecutableCommand,
   assertAllowedExecutableCommand,
+  assertShellSafeCommandArgv,
   runCommand,
   evaluateClosureDecision,
   buildMachineReadableCloseoutSummary,
