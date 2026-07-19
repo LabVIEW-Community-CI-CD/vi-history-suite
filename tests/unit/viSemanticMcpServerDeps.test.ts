@@ -11,7 +11,8 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   buildViSemanticMcpServerDeps,
   createDefaultComparisonModelCache,
-  resolveRuntimeHealth
+  resolveRuntimeHealth,
+  listChangedVis
 } from '../../src/mcp/viSemanticMcpServerDeps';
 import type {
   CompareViRevisionsDeps,
@@ -99,6 +100,32 @@ describe('buildViSemanticMcpServerDeps', () => {
     const health = await deps.resolveRuntimeHealth?.({ platform: 'linux' });
     expect(health?.schema).toBe('vi-history-suite/runtime-health@v1');
     expect(typeof health?.blocked).toBe('boolean');
+  });
+
+  it('projects a changed-path diff into the changed-VIs listing (VI-filtered, sorted)', async () => {
+    const changed = await listChangedVis(
+      { repositoryRoot: '/repo', baseHash: 'aaaa', selectedHash: 'bbbb' },
+      async () => ['docs/readme.md', 'vis/B.ctl', 'vis/A.vi', 'src/x.ts']
+    );
+    expect(changed).toMatchObject({
+      schema: 'vi-history-suite/changed-vis@v1',
+      repositoryRoot: '/repo',
+      baseHash: 'aaaa',
+      selectedHash: 'bbbb',
+      changedVis: ['vis/A.vi', 'vis/B.ctl'],
+      count: 2
+    });
+  });
+
+  it('lists changed VIs through the injected deps orchestrator (exercises the wiring)', async () => {
+    const deps = buildViSemanticMcpServerDeps(cache);
+    const changed = await deps.listChangedVis?.({
+      repositoryRoot: process.cwd(),
+      baseHash: 'HEAD',
+      selectedHash: 'HEAD'
+    });
+    expect(changed?.schema).toBe('vi-history-suite/changed-vis@v1');
+    expect(changed?.count).toBe(0);
   });
 
   it('binds compare_vi_revisions to the shared comparison-model cache', async () => {

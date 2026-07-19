@@ -120,10 +120,18 @@ export function buildViSemanticMcpServerDeps(
  * Lists the VI source files changed between two Git revisions (pure Git; never
  * renders) and projects the `vi-history-suite/changed-vis@v1` listing the
  * `list_changed_vis` MCP tool returns. Filters `git diff --name-only` to LabVIEW
- * source paths so an agent can scope a review before running it.
+ * source paths so an agent can scope a review before running it. The path lister
+ * is injectable so the projection (VI filtering, sort, count) is unit-testable
+ * with a fake diff, without a real Git process.
  */
-async function listChangedVis(input: ChangedVisInput): Promise<ViChangedVis> {
-  const listChangedPaths = createDefaultListChangedPaths();
+export async function listChangedVis(
+  input: ChangedVisInput,
+  listChangedPaths: (
+    repositoryRoot: string,
+    baseHash: string,
+    selectedHash: string
+  ) => Promise<string[]> = createDefaultListChangedPaths()
+): Promise<ViChangedVis> {
   const changed = await listChangedPaths(input.repositoryRoot, input.baseHash, input.selectedHash);
   const changedVis = changed.filter((relativePath) => isViSourcePath(relativePath)).sort();
   return {
