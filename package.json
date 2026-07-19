@@ -356,6 +356,7 @@
     "verify:preview": "npm run compile && node out/tooling/viPreviewVerifyCli.js",
     "preview:diagnostics": "npm run compile && node out/tooling/viPreviewVerifyCli.js --diagnostics",
     "preview:cache:warm": "npm run compile 1>&2 && node out/cli/runViPreviewCacheWarmer.js",
+    "preview:cache:health": "npm run compile 1>&2 && node out/cli/runViPreviewCacheHealth.js",
     "docs:links": "node scripts/checkDocsLinks.js",
     "docs:gate": "node scripts/checkDocumentationWorkbench.js",
     "coverage:map": "node scripts/mapCoverageToTraceability.js",

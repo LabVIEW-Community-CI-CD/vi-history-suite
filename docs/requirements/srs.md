@@ -5415,3 +5415,59 @@ Missing numeric IDs are intentional.
     into the cache directory), Docker-only, and pure/injectable. Extend the
     `preview-cache-warm@v1` manifest additively (new fields, not reshaped
     records) so the portable bundle and coverage read-model build on it.
+
+### VHS-REQ-675: Preview-Cache Health Read-Model
+
+- Status: Active
+- Parent: VHS-SYS-REQ-016
+- Area: CI And Developer Environment
+- Statement: The repository shall provide a read-only aggregator that reports the
+  coverage of a preview-cache directory against a workspace's VIs — classifying
+  each VI as cached, stale, or missing by comparing the current workspace VI
+  enumeration, a prior warm manifest (`vi-history-suite/preview-cache-warm@v1`),
+  and the cache directory's present entries — plus orphaned cache files and an
+  overall coverage percentage, so an agent or CI can drive incremental warms and
+  prune superseded entries without re-rendering. This is the observability slice
+  of the preview-cache fabric and never launches LabVIEW or mutates the cache.
+- Acceptance Criteria:
+  - `buildViPreviewCacheHealth` is a pure read-model that classifies each
+    workspace VI as `cached` (the manifest maps it to a cache key whose
+    `<key>.html` file is present), `stale` (the manifest warmed it to a key whose
+    file is now absent), `missing` (the VI is not covered by the manifest), or
+    `failed` (the manifest recorded it as failed/blocked); it emits a
+    `vi-history-suite/preview-cache-health@v1` packet with a top-level `$schema`
+    and `schemaVersion`, aggregate totals (workspace VIs, cached, stale, missing,
+    failed, orphaned cache files, removed VIs, and an integer coverage
+    percentage), and per-VI entries, and reports `healthy` true only when every
+    workspace VI is cached and none failed.
+  - `buildViPreviewCacheHealth` also reports the cache keys present on disk that
+    no manifest entry references (`orphanedCacheKeys`, candidates for pruning) and
+    the manifest VI paths no longer present in the workspace
+    (`removedViPaths`); it normalizes path separators, de-duplicates, and sorts
+    deterministically, treats every workspace VI as `missing` when no manifest is
+    supplied, and never throws.
+  - `node out/cli/runViPreviewCacheHealth.js` (npm run `preview:cache:health`)
+    gathers the three inputs through injected filesystem boundaries (workspace
+    enumeration, cache-directory key listing, optional `--manifest` packet parse),
+    requires an explicit `--cache-dir` and fails closed with a remedy when it is
+    absent, prints a concise summary by default and the raw packet under `--json`,
+    retains the packet through a path-safe `--output`, and fails closed under
+    `--strict` when the cache does not fully cover the workspace.
+- Agent Work Scope:
+  - Keep the aggregator pure and injectable (no filesystem or rendering in the
+    read-model); reuse the worker's `preview-cache-warm@v1` manifest and the
+    workspace enumerator rather than re-deriving them; keep it read-only and
+    degrade gracefully (a missing/unparseable manifest yields an all-missing
+    report, not an error).
+- Implementation References:
+  - `src/cli/runViPreviewCacheHealth.ts`
+  - `src/reporting/viPreview/viPreviewCacheHealth.ts`
+  - `package.json`
+- Verification References:
+  - `tests/unit/viPreviewCacheHealth.test.ts`
+  - `tests/unit/viPreviewCacheHealthCli.test.ts`
+- Change Guidance:
+  - Keep the read-model non-mutating and derived from the three ground-truth
+    inputs (workspace, manifest, cache directory). Detecting per-VI content drift
+    against the current bytes (beyond manifest-key presence) belongs to the
+    portable-bundle verification (VHS-REQ-672), not this coverage model.
