@@ -13,7 +13,8 @@ import {
   VI_SEMANTIC_MCP_ASYNC_ONLY_TOOL_NAMES,
   VI_SEMANTIC_MCP_SYNC_CAPABLE_TOOL_NAMES,
   VI_SEMANTIC_MCP_PROMPTS,
-  VI_SEMANTIC_MCP_RESOURCES
+  VI_SEMANTIC_MCP_RESOURCES,
+  VI_SEMANTIC_MCP_RESOURCE_TEMPLATES
 } from '../../src/semantic/viSemanticComparisonMcp';
 import type { CompareViRevisionsResult } from '../../src/semantic/compareViRevisions';
 import type { ViSemanticHistory } from '../../src/semantic/viSemanticHistory';
@@ -1251,6 +1252,80 @@ describe('viSemanticComparisonMcp', () => {
         expect(result.contents[0].uri).toBe(resource.uri);
         expect(() => JSON.parse(result.contents[0].text)).not.toThrow();
       }
+    });
+  });
+
+  describe('resource templates (fs-backed preview cache)', () => {
+    const call = (method: string, params: unknown, id = 400) => ({
+      jsonrpc: '2.0' as const,
+      id,
+      method,
+      params
+    });
+    const previewCacheUri = (key: string, dir: string) =>
+      `vi-history-suite://preview-cache/${key}?cacheDirectory=${encodeURIComponent(dir)}`;
+
+    it('lists the preview-cache resource template', () => {
+      const result = successResult(handleViSemanticMcpMessage(call('resources/templates/list', {}))) as {
+        resourceTemplates: Array<{ uriTemplate: string; mimeType: string }>;
+      };
+      expect(result.resourceTemplates).toEqual(VI_SEMANTIC_MCP_RESOURCE_TEMPLATES);
+      expect(result.resourceTemplates[0].uriTemplate).toContain('vi-history-suite://preview-cache/');
+      expect(result.resourceTemplates[0].mimeType).toBe('text/html');
+    });
+
+    it('reads a preview-cache entry as HTML through the injected inspector', async () => {
+      const get = vi.fn(async () => ({
+        key: 'a'.repeat(64),
+        filePath: '/cache/x.html',
+        bytes: 20,
+        inlineImageCount: 1,
+        interactive: false,
+        flags: [] as never[],
+        healthy: true,
+        html: '<html>preview</html>'
+      }));
+      const deps = { previewCacheInspector: { list: vi.fn(), summarize: vi.fn(), search: vi.fn(), get } };
+      const uri = previewCacheUri('a'.repeat(64), '/cache');
+      const response = successResult(
+        await handleViSemanticMcpMessageAsync(call('resources/read', { uri }), deps)
+      ) as { contents: Array<{ uri: string; mimeType: string; text: string }> };
+      expect(get).toHaveBeenCalledWith('/cache', 'a'.repeat(64), { includeHtml: true });
+      expect(response.contents[0].mimeType).toBe('text/html');
+      expect(response.contents[0].text).toBe('<html>preview</html>');
+      expect(response.contents[0].uri).toBe(uri);
+    });
+
+    it('returns -32602 for a preview-cache URI missing cacheDirectory', async () => {
+      const deps = { previewCacheInspector: { list: vi.fn(), summarize: vi.fn(), search: vi.fn(), get: vi.fn() } };
+      const error = invalidParamsError(
+        await handleViSemanticMcpMessageAsync(
+          call('resources/read', { uri: 'vi-history-suite://preview-cache/' + 'a'.repeat(64) }),
+          deps
+        )
+      );
+      expect(error.data?.issues?.[0]).toMatchObject({ field: 'cacheDirectory' });
+      expect(deps.previewCacheInspector.get).not.toHaveBeenCalled();
+    });
+
+    it('returns -32602 when the preview-cache entry does not exist', async () => {
+      const deps = {
+        previewCacheInspector: { list: vi.fn(), summarize: vi.fn(), search: vi.fn(), get: vi.fn(async () => undefined) }
+      };
+      const response = await handleViSemanticMcpMessageAsync(
+        call('resources/read', { uri: previewCacheUri('b'.repeat(64), '/cache') }),
+        deps
+      );
+      const error = invalidParamsError(response);
+      expect(error.message).toContain('not found');
+    });
+
+    it('errors when no inspector is injected for a preview-cache resource read', async () => {
+      const response = await handleViSemanticMcpMessageAsync(
+        call('resources/read', { uri: previewCacheUri('c'.repeat(64), '/cache') })
+      );
+      expect(response).toMatchObject({ error: { code: -32602 } });
+      expect((response as { error: { message: string } }).error.message).toContain('async MCP server entrypoint');
     });
   });
 });
