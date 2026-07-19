@@ -21,6 +21,7 @@ const {
   createTrackedWorktreeSnapshot,
   isAllowedExecutableCommand,
   assertAllowedExecutableCommand,
+  assertShellSafeCommandArgv,
   isTransientNetworkFailure,
   generateCloseoutEvidence,
   renderSchema,
@@ -72,6 +73,7 @@ const {
   };
   isAllowedExecutableCommand: (command: string) => boolean;
   assertAllowedExecutableCommand: (command: string) => void;
+  assertShellSafeCommandArgv: (argv: string[]) => void;
   resolveAuditSnapshotBase: (deps?: {
     tmpdir?: () => string;
     homedir?: () => string;
@@ -403,6 +405,32 @@ describe('closeout evidence script', () => {
       "Unsupported executable command '/tmp/evil'"
     );
     expect(spawnSync).not.toHaveBeenCalled();
+  });
+
+  it('assertShellSafeCommandArgv rejects cmd metacharacters that enable injection (#2123 security)', () => {
+    // Tokens that could chain/redirect/escape a second command when re-parsed by
+    // `cmd /c` (e.g. an env-derived path like REPO_STANDARDS_REVIEW_ROOT).
+    for (const bad of ['a&calc', 'x|y', 'in<file', 'out>file', 'a^b', 'say"hi"', 'a`b`', 'line1\nline2', 'a\rb']) {
+      expect(() => assertShellSafeCommandArgv([bad])).toThrow(/shell metacharacter/);
+    }
+    // The metacharacter is caught wherever it sits in the argv.
+    expect(() => assertShellSafeCommandArgv(['docker', 'run', 'img&evil'])).toThrow(/shell metacharacter/);
+  });
+
+  it('assertShellSafeCommandArgv accepts legitimate tokens including Windows paths with spaces and parentheses (#2123 security)', () => {
+    // Parentheses and colons/backslashes/spaces are legitimate in Windows paths
+    // (e.g. Program Files (x86)) and must NOT be rejected.
+    expect(() =>
+      assertShellSafeCommandArgv([
+        'docker',
+        'run',
+        '-v',
+        'C:\\Program Files (x86)\\repo:/repo',
+        'ghcr.io/acme/img:2026q1',
+        'run',
+        'traceability:audit'
+      ])
+    ).not.toThrow();
   });
 
   it('preserves tracked symlink targets in the audit snapshot without following them', () => {
