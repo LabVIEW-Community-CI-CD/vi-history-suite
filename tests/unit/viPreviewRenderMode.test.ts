@@ -83,4 +83,72 @@ describe('selectViPreviewDocument', () => {
     expect(out.fallbackReason).toBeUndefined();
     expect(out.html).not.toContain('interactive block-diagram viewer was skipped');
   });
+
+  it('prefers a coordinate frames payload over the flat reconstruction (#2117)', () => {
+    // The coordinate model renders the interactive viewer even when the labviewHtml
+    // has no extractable block-diagram frames (the flat path would fall back).
+    const noFlatFrames = '<HTML><HEAD></HEAD><BODY><H3>Front Panel</H3></BODY></HTML>';
+    const coordinateFramesJson = JSON.stringify([
+      { Image: 'AAAA', Position: { Left: 0, Top: 0, Width: 100, Height: 80 }, Children: [1] },
+      { Image: 'BBBB', Position: { Left: 10, Top: 20, Width: 40, Height: 40 }, Label: 'True' }
+    ]);
+    const out = selectViPreviewDocument({
+      labviewHtml: noFlatFrames,
+      mode: 'interactive',
+      nonce: NONCE,
+      coordinateFramesJson
+    });
+    expect(out.mode).toBe('interactive');
+    expect(out.html).toContain(`script-src 'nonce-${NONCE}';`);
+    expect(out.html).toContain('id="lvr-frames"');
+    expect(out.fallbackReason).toBeUndefined();
+  });
+
+  it('renders interactively from coordinates even when the flat path would reject as low-fidelity (#2117)', () => {
+    // A complex diagram (many distinct same-size groups) that the flat #2096
+    // fidelity gate rejects — but with real coordinates it is faithful, so the
+    // coordinate model is shown interactively.
+    const complexFlat = (() => {
+      const png = (w: number, h: number): string => {
+        const header = Buffer.alloc(24);
+        header.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], 0);
+        header.writeUInt32BE(13, 8);
+        header.write('IHDR', 12, 'ascii');
+        header.writeUInt32BE(w, 16);
+        header.writeUInt32BE(h, 20);
+        return `data:image/png;base64,${header.toString('base64')}`;
+      };
+      const imgs = Array.from({ length: 10 }, (_v, i) => `<P><IMG src="${png(100 + i, 50 + i)}"></P>`).join('\n');
+      return `<HTML><BODY>\n<H3>Block Diagram</H3>\n${imgs}\n</BODY></HTML>`;
+    })();
+    const coordinateFramesJson = JSON.stringify(
+      Array.from({ length: 11 }, (_v, i) =>
+        i === 0
+          ? { Image: 'root', Position: { Left: 0, Top: 0, Width: 500, Height: 400 }, Children: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] }
+          : { Image: `c${i}`, Position: { Left: i * 40, Top: i * 30, Width: 30, Height: 30 } }
+      )
+    );
+    const out = selectViPreviewDocument({
+      labviewHtml: complexFlat,
+      mode: 'interactive',
+      nonce: NONCE,
+      coordinateFramesJson
+    });
+    expect(out.mode).toBe('interactive');
+    expect(out.html).toContain('id="lvr-frames"');
+  });
+
+  it('falls back to the flat path when the coordinate payload is invalid (#2117)', () => {
+    // An unparseable/empty coordinate payload must not break rendering: it falls
+    // through to the flat-export path, which renders interactively for this
+    // simple diagram.
+    const out = selectViPreviewDocument({
+      labviewHtml: diagramHtml(),
+      mode: 'interactive',
+      nonce: NONCE,
+      coordinateFramesJson: '{ not valid json'
+    });
+    expect(out.mode).toBe('interactive');
+    expect(out.html).toContain('id="lvr-frames"');
+  });
 });
