@@ -26,6 +26,7 @@ const AGENT_FILE_PATTERN = /^([a-z0-9-]+)\.agent\.md$/;
 const ALLOWED_SENTINELS = new Set(['unsure']);
 // Dropdown ids that select an agent.
 const AGENT_DROPDOWN_IDS = new Set(['delegated_agent']);
+const SKILL_REF_PATTERN = /\.github\/skills\/[A-Za-z0-9-]+\/SKILL\.md/g;
 
 function defaultDeps() {
   return {
@@ -113,16 +114,59 @@ function auditAgentDelegation(repoRoot, deps = defaultDeps()) {
   }
 
   const templates = deps.readdirSync(templateDir).filter((name) => name.endsWith('.yml'));
+  const offeredAgents = new Set();
   for (const template of templates) {
     const text = deps.readFileSync(path.join(templateDir, template));
     for (const option of extractAgentDropdownOptions(text)) {
       if (ALLOWED_SENTINELS.has(option)) {
         continue;
       }
+      offeredAgents.add(option);
       if (!slugs.has(option)) {
         violations.push(
           `Issue template ${template} offers agent "${option}" with no .github/agents/${option}.agent.md file.`
         );
+      }
+    }
+  }
+
+  // Orphan detection: an agent file that no issue-template dropdown offers is a
+  // dead route (it can never be delegated through an issue).
+  for (const slug of [...slugs].sort()) {
+    if (!offeredAgents.has(slug)) {
+      violations.push(
+        `Agent .github/agents/${slug}.agent.md is offered by no issue-template dropdown (orphan route).`
+      );
+    }
+  }
+
+  const agentsDir = path.join(repoRoot, AGENTS_DIR);
+  if (deps.existsSync(agentsDir)) {
+    const agentFiles = deps.readdirSync(agentsDir).filter((name) => AGENT_FILE_PATTERN.test(name));
+    const seenTriggers = new Map();
+    for (const file of agentFiles.sort()) {
+      const body = deps.readFileSync(path.join(agentsDir, file));
+
+      // Trigger distinctness: each agent's "Use when ..." description must be
+      // present and unique so routing stays unambiguous.
+      const descMatch = /^description:\s*(.+)$/m.exec(body);
+      const description = descMatch ? descMatch[1].trim().replace(/^["']|["']$/g, '') : '';
+      if (!/^Use when\b/.test(description)) {
+        violations.push(`Agent ${file} description must start with "Use when" for a clear routing trigger.`);
+      } else {
+        const normalized = description.toLowerCase();
+        if (seenTriggers.has(normalized)) {
+          violations.push(`Agent ${file} has the same "Use when" trigger as ${seenTriggers.get(normalized)}.`);
+        } else {
+          seenTriggers.set(normalized, file);
+        }
+      }
+
+      // Skill-link integrity: every referenced skill file must exist.
+      for (const skillRef of body.match(SKILL_REF_PATTERN) ?? []) {
+        if (!deps.existsSync(path.join(repoRoot, skillRef))) {
+          violations.push(`Agent ${file} references ${skillRef}, which does not exist.`);
+        }
       }
     }
   }
@@ -133,7 +177,7 @@ function auditAgentDelegation(repoRoot, deps = defaultDeps()) {
 function main(repoRoot = process.cwd()) {
   const result = auditAgentDelegation(repoRoot);
   if (result.ok) {
-    process.stdout.write('[agent-delegation] Issue-template agent dropdowns match the agent roster.\n');
+    process.stdout.write('[agent-delegation] Agent roster, issue-template dropdowns, triggers, and skill links are consistent.\n');
     return 0;
   }
   process.stderr.write('[agent-delegation] Agent-delegation drift detected:\n');
