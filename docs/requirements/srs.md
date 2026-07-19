@@ -4513,6 +4513,16 @@ Missing numeric IDs are intentional.
     (default off) lets a Docker-less LabVIEW environment — for example the Vagrant
     LabVIEW VM — render previews live on host-native so it can both generate the
     cache and visualize previews for troubleshooting without Docker.
+  - The preview render cache is inspectable read-only without re-rendering:
+    `classifyPreviewCacheDocument` flags a cached document as `empty`,
+    `error-marker`, or `no-rendered-content` and reports its inline-image count
+    and interactive-viewer presence; `listPreviewCacheEntries`,
+    `summarizePreviewCache`, `getPreviewCacheEntry` (metadata plus a file-path
+    pointer by default, raw HTML only on request, rejecting keys with path
+    separators), and `searchPreviewCache` (by `error`/`interactive`/`image`/`empty`
+    marker) operate over an injected filesystem boundary so an agent (over the MCP
+    surface) or an operator can reason about a downloaded/local cache without
+    launching LabVIEW.
 - Agent Work Scope:
   - Keep the command-plan builders pure and dependency-free so they stay
     deterministically unit-testable without a LabVIEW runtime. Reuse the
@@ -4534,6 +4544,7 @@ Missing numeric IDs are intentional.
 - Implementation References:
   - `package.json`
   - `src/reporting/viPreview/viPreviewCommandPlan.ts`
+  - `src/reporting/viPreview/viPreviewCacheInspection.ts`
   - `src/reporting/viPreview/viPreviewExecution.ts`
   - `src/reporting/viPreview/viPreviewFileRender.ts`
   - `src/reporting/viPreview/viPreviewStaging.ts`
@@ -4561,6 +4572,7 @@ Missing numeric IDs are intentional.
   - `tests/unit/packageManifest.test.ts`
   - `tests/unit/viPreviewEditor.test.ts`
   - `tests/unit/viPreviewCommandPlan.test.ts`
+  - `tests/unit/viPreviewCacheInspection.test.ts`
   - `tests/unit/viPreviewExecution.test.ts`
   - `tests/unit/viPreviewFileRender.test.ts`
   - `tests/unit/viPreviewStaging.test.ts`

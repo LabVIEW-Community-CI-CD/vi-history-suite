@@ -6,6 +6,15 @@ This changelog records user-facing release history for `vi-history-suite`.
 
 ### Added
 
+- The VI semantic MCP server gained five read-only preview-cache tools
+  (`list_preview_cache`, `summarize_preview_cache`, `diagnose_preview_cache`,
+  `search_preview_cache`, `get_preview_cache_entry`) so an agent can inspect a
+  downloaded or local VI-preview render cache — entry health (empty /
+  error-marker / no-rendered-content), inline-image counts, interactive-viewer
+  presence, byte totals, and one-call health diagnostics — without launching
+  LabVIEW. `get_preview_cache_entry` returns metadata plus a file-path pointer by
+  default (raw HTML only on request) and rejects keys with path separators
+  (VHS-REQ-659).
 - The preview verification CLI gained a `--cache-dir` option that wires a
   file-backed render cache, so rendering a VI twice into the same directory
   serves the second run from cache (proof `cached: true`, no LabVIEW launch) —

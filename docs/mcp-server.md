@@ -35,6 +35,11 @@ three invoke a real LabVIEW comparison and therefore need a comparison runtime
 | `build_vi_pr_review` | Reviews a pull request: compares every VI changed between two revisions and returns a `vi-history-suite/vi-semantic-pr-review@v1` review (per-VI summary plus an aggregate narrative). The Markdown form is a sticky PR-comment body. | Comparison runtime | `repositoryRoot`, `baseHash`, `selectedHash` |
 | `get_vi_semantic_schema` | Returns the published JSON Schema(s) for the semantic models — the open VI-diff standard. | None | none (`schema` optional) |
 | `validate_vi_semantic_document` | Validates a self-describing document against its published schema; returns `{ valid, errors }`. | None | `document` |
+| `list_preview_cache` | Lists the entries in a VI-preview render cache directory (per-entry cache key, size, inline image count, interactive-viewer flag, and health flags). | None (read-only fs) | `cacheDirectory` |
+| `summarize_preview_cache` | Summarizes a preview cache directory: entry/byte counts, healthy vs flagged, interactive count, and the flagged entries. | None (read-only fs) | `cacheDirectory` |
+| `diagnose_preview_cache` | Returns a `vi-history-suite/preview-cache-diagnostics@v1` snapshot (counts, byte totals, health rollup) so an agent can answer "is the preview cache healthy?" in one call. | None (read-only fs) | `cacheDirectory` |
+| `search_preview_cache` | Finds cache entries by content marker (`error`, `interactive`, `image`, or `empty`); returns metadata only. | None (read-only fs) | `cacheDirectory`, `marker` |
+| `get_preview_cache_entry` | Fetches one cache entry by key; returns metadata plus a file-path pointer by default, or the raw HTML when `includeHtml` is true. | None (read-only fs) | `cacheDirectory`, `key` |
 
 ### Output format
 
