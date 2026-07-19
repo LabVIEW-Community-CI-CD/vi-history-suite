@@ -81,7 +81,9 @@ describe('viSemanticComparisonMcp', () => {
       'summarize_preview_cache',
       'diagnose_preview_cache',
       'search_preview_cache',
-      'get_preview_cache_entry'
+      'get_preview_cache_entry',
+      'get_runtime_health',
+      'get_preview_diagnostics'
     ]);
     expect(result.tools).toEqual(VI_SEMANTIC_MCP_TOOLS);
   });
@@ -922,6 +924,126 @@ describe('viSemanticComparisonMcp', () => {
       ) as { content: Array<{ text: string }>; isError: boolean };
       expect(response.isError).toBe(true);
       expect(response.content[0].text).toContain('cacheDirectory is required');
+    });
+  });
+
+  describe('diagnostics tools', () => {
+    const toolCall = (name: string, args: unknown, id = 90) => ({
+      jsonrpc: '2.0' as const,
+      id,
+      method: 'tools/call' as const,
+      params: { name, arguments: args }
+    });
+
+    it('projects runtime health through the injected resolver', async () => {
+      const resolveRuntimeHealth = vi.fn(async () => ({
+        schema: 'vi-history-suite/runtime-health@v1' as const,
+        platform: 'linux',
+        provider: 'linux-container',
+        engine: 'lvcompare-cli' as unknown as string,
+        bitness: 'x64',
+        containerImage: 'ni/labview:2026q1',
+        blocked: false,
+        blockedReason: null,
+        notes: []
+      }));
+      const response = successResult(
+        await handleViSemanticMcpMessageAsync(
+          toolCall('get_runtime_health', { platform: 'linux' }),
+          { resolveRuntimeHealth }
+        )
+      ) as { content: Array<{ text: string }>; isError?: boolean };
+      expect(resolveRuntimeHealth).toHaveBeenCalledWith({ platform: 'linux' });
+      expect(response.isError ?? false).toBe(false);
+      const parsed = JSON.parse(response.content[0].text) as { schema: string; blocked: boolean };
+      expect(parsed.schema).toBe('vi-history-suite/runtime-health@v1');
+      expect(parsed.blocked).toBe(false);
+    });
+
+    it('surfaces a blocked runtime with its reason', async () => {
+      const resolveRuntimeHealth = vi.fn(async () => ({
+        schema: 'vi-history-suite/runtime-health@v1' as const,
+        platform: 'win32',
+        provider: 'unavailable',
+        engine: null,
+        bitness: 'x64',
+        containerImage: null,
+        blocked: true,
+        blockedReason: 'labview-version-required',
+        notes: ['set viHistorySuite.labviewVersion']
+      }));
+      const response = successResult(
+        await handleViSemanticMcpMessageAsync(
+          toolCall('get_runtime_health', {}),
+          { resolveRuntimeHealth }
+        )
+      ) as { content: Array<{ text: string }> };
+      const parsed = JSON.parse(response.content[0].text) as { blocked: boolean; blockedReason: string };
+      expect(parsed.blocked).toBe(true);
+      expect(parsed.blockedReason).toBe('labview-version-required');
+    });
+
+    it('rejects an invalid platform for get_runtime_health', async () => {
+      const resolveRuntimeHealth = vi.fn();
+      const response = successResult(
+        await handleViSemanticMcpMessageAsync(
+          toolCall('get_runtime_health', { platform: 'solaris' }),
+          { resolveRuntimeHealth }
+        )
+      ) as { content: Array<{ text: string }>; isError: boolean };
+      expect(response.isError).toBe(true);
+      expect(response.content[0].text).toContain('platform must be one of');
+      expect(resolveRuntimeHealth).not.toHaveBeenCalled();
+    });
+
+    it('reports a wired-up error when no runtime-health resolver is injected', async () => {
+      const response = successResult(
+        await handleViSemanticMcpMessageAsync(toolCall('get_runtime_health', {}))
+      ) as { content: Array<{ text: string }>; isError: boolean };
+      expect(response.isError).toBe(true);
+      expect(response.content[0].text).toContain('not wired');
+    });
+
+    it('returns the preview-diagnostics snapshot through the injected collector', async () => {
+      const snapshot = {
+        schema: 'vi-history-suite/preview-diagnostics@v1' as const,
+        generatedAt: '2026-07-19T00:00:00.000Z',
+        runtime: { provider: 'linux-container', outcome: 'ready' as const },
+        cache: { directory: '/cache', present: true, entryCount: 2, totalBytes: 2048, newestModifiedAt: null },
+        docker: { available: true, osType: 'linux', labviewImages: ['ni/labview:2026q1'] }
+      };
+      const collectPreviewDiagnostics = vi.fn(async () => snapshot);
+      const response = successResult(
+        await handleViSemanticMcpMessageAsync(
+          toolCall('get_preview_diagnostics', { cacheDirectory: '/cache' }),
+          { collectPreviewDiagnostics }
+        )
+      ) as { content: Array<{ text: string }>; isError?: boolean };
+      expect(collectPreviewDiagnostics).toHaveBeenCalledWith({ cacheDirectory: '/cache' });
+      expect(response.isError ?? false).toBe(false);
+      const parsed = JSON.parse(response.content[0].text) as { schema: string };
+      expect(parsed.schema).toBe('vi-history-suite/preview-diagnostics@v1');
+    });
+
+    it('rejects an empty cacheDirectory for get_preview_diagnostics', async () => {
+      const collectPreviewDiagnostics = vi.fn();
+      const response = successResult(
+        await handleViSemanticMcpMessageAsync(
+          toolCall('get_preview_diagnostics', { cacheDirectory: '' }),
+          { collectPreviewDiagnostics }
+        )
+      ) as { content: Array<{ text: string }>; isError: boolean };
+      expect(response.isError).toBe(true);
+      expect(response.content[0].text).toContain('cacheDirectory must be a non-empty string');
+      expect(collectPreviewDiagnostics).not.toHaveBeenCalled();
+    });
+
+    it('reports a wired-up error when no preview-diagnostics collector is injected', async () => {
+      const response = successResult(
+        await handleViSemanticMcpMessageAsync(toolCall('get_preview_diagnostics', {}))
+      ) as { content: Array<{ text: string }>; isError: boolean };
+      expect(response.isError).toBe(true);
+      expect(response.content[0].text).toContain('not wired');
     });
   });
 });

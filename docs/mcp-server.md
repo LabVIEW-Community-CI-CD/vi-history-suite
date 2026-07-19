@@ -26,10 +26,10 @@ configure.
 
 ## Tools
 
-The server exposes 13 tools. Ten operate purely on Git, supplied data, or a
-local preview-cache directory; three invoke a real LabVIEW comparison and
-therefore need a comparison runtime (host LabVIEW or a Docker LabVIEW image) and
-may take minutes.
+The server exposes 15 tools. Twelve operate without running a comparison (Git,
+supplied data, a local preview-cache directory, or read-only runtime/environment
+probes); three invoke a real LabVIEW comparison and therefore need a comparison
+runtime (host LabVIEW or a Docker LabVIEW image) and may take minutes.
 
 | Tool | What it does | Runtime | Required input |
 | --- | --- | --- | --- |
@@ -46,6 +46,8 @@ may take minutes.
 | `diagnose_preview_cache` | Returns a `vi-history-suite/preview-cache-diagnostics@v1` snapshot (counts, byte totals, health rollup) so an agent can answer "is the preview cache healthy?" in one call. | None (read-only fs) | `cacheDirectory` |
 | `search_preview_cache` | Finds cache entries by content marker (`error`, `interactive`, `image`, or `empty`); returns metadata only. | None (read-only fs) | `cacheDirectory`, `marker` |
 | `get_preview_cache_entry` | Fetches one cache entry by key; returns metadata plus a file-path pointer by default, or the raw HTML when `includeHtml` is true. | None (read-only fs) | `cacheDirectory`, `key` |
+| `get_runtime_health` | Resolves the comparison runtime **without running a comparison** and returns a `vi-history-suite/runtime-health@v1` snapshot (selected provider/engine/container image, or the `blockedReason` when none is available) so an agent can answer "can I compare here, and if not why?" before spending minutes on a real run. | Runtime resolution (never renders) | none (`platform`, `settings` optional) |
+| `get_preview_diagnostics` | Returns a `vi-history-suite/preview-diagnostics@v1` environment snapshot (resolved preview runtime, Docker availability + OS type + LabVIEW images, optional cache statistics) so an agent can answer "is preview generation possible here, and is the cache populated?" in one call. | Runtime + Docker probe (never renders) | none (`cacheDirectory`, `processPlatform`, `settings` optional) |
 
 ### Tool annotations
 

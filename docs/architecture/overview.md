@@ -50,7 +50,7 @@ interacts with:
 | History command and panel | Orchestrates selected-file eligibility, factual blocked states, retained commit windows, compare actions, review packets, and dashboard actions. | `src/commands/`, `src/ui/` |
 | Reporting runtime | Plans comparison inputs, checks runtime provider facts, stages revision blobs, runs LabVIEW tooling, and retains comparison report packets. | `src/reporting/` |
 | Dashboard and review evidence | Concentrates retained comparison evidence, dashboard archive data, ETA facts, latest-run facts, and decision records. | `src/dashboard/`, `src/scenarios/` |
-| Semantic model and MCP surface | Projects comparison reports and Git history onto versioned VI-diff schemas and serves them to Copilot agent mode through a registered stdio MCP server (13 tools, including preview-cache inspection). | `src/semantic/`, `src/mcp/`, `src/cli/runViSemanticMcpServer.ts` |
+| Semantic model and MCP surface | Projects comparison reports and Git history onto versioned VI-diff schemas and serves them to Copilot agent mode through a registered stdio MCP server (15 tools, including preview-cache inspection and runtime/preview diagnostics). | `src/semantic/`, `src/mcp/`, `src/cli/runViSemanticMcpServer.ts` |
 | Bundled documentation | Loads the packaged documentation manifest and installed HTML pages through the open documentation command. | `src/docs/`, `resources/bundled-docs/` |
 | Tooling and CI | Generates build info, audits package/runtime surfaces, runs traceability checks, builds diagnostic VSIX artifacts, and publishes exact-tag Marketplace releases. | `scripts/`, `.github/workflows/` |
 | Requirements and standards evidence | Stores SyRS, SRS, RTM, ID index, traceability inventory, issue-wave guidance, and closeout runbook evidence. | `docs/requirements/` |
@@ -102,21 +102,32 @@ interacts with:
 
 ## Retained Decision Rationale
 
-The retained architecture decisions are
-[ADR-0001: GitHub-First Release And Traceability Governance](./adr/ADR-0001-github-first-release-and-traceability-governance.md)
-and
-[ADR-0002: Selected-File On-Demand VI History Eligibility](./adr/ADR-0002-selected-file-on-demand-vi-history-eligibility.md).
+The retained architecture decisions are recorded as Architecture Decision
+Records under [docs/architecture/adr/](./adr/README.md), indexed in
+[the ADR index](./adr/README.md#index). The index and each ADR's required
+structure are gated by `npm run adr:check` (also run on pre-push), which
+additionally enforces that every Active software requirement (SRS) is linked
+into an ADR and that every system requirement (SYRS) with an Active software
+requirement is cited by an ADR.
 
-ADR-0001's rationale is to keep GitHub source authority, Marketplace release
-automation, requirements traceability, and standards evidence in a single
-reviewable governance path while preserving the extension's local-first product
-behavior. This decision keeps architecture evidence lightweight and close to
-the repo surfaces agents already inspect, while allowing future ADRs for
-larger design decisions that need their own context and consequences.
+Highlights:
 
-ADR-0002 records why VI History eligibility is evaluated on demand for the
-selected file (VHS-SYS-REQ-018, VHS-REQ-635) instead of through a
-repository-wide index, keeping open cost independent of repository VI count.
+- [ADR-0001: GitHub-First Release And Traceability Governance](./adr/ADR-0001-github-first-release-and-traceability-governance.md)
+  keeps GitHub source authority, Marketplace release automation, requirements
+  traceability, and standards evidence in a single reviewable governance path
+  while preserving the extension's local-first behavior.
+- [ADR-0002: Selected-File On-Demand VI History Eligibility](./adr/ADR-0002-selected-file-on-demand-vi-history-eligibility.md)
+  records why VI History eligibility is evaluated on demand for the selected file
+  (VHS-SYS-REQ-018, VHS-REQ-635) instead of through a repository-wide index.
+- [ADR-0003](./adr/ADR-0003-dynamic-labview-container-image-selection.md) and
+  [ADR-0004](./adr/ADR-0004-version-aware-labview-container-execution.md) cover
+  dynamic and version-aware LabVIEW container execution (VHS-SYS-REQ-019,
+  VHS-REQ-657).
+- [ADR-0005: Preview-Cache Fabric](./adr/ADR-0005-preview-cache-fabric.md)
+  records the content-addressed preview-cache fabric (VHS-REQ-671–675).
+- [ADR-0006: Independent Dev-Tools Versioning And Runtime Pinning](./adr/ADR-0006-independent-dev-tools-versioning.md)
+  records the independent dev-tools version line, runtime pinning, and the
+  Marketplace pre-release channel (VHS-REQ-676–680).
 
 ## Verification Model
 
