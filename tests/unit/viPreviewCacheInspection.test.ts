@@ -137,6 +137,35 @@ describe('classifyPreviewCacheDocument (VHS-REQ-659.21)', () => {
     expect(result.interactiveFallbackReason).toMatch(/structure groups|stacked child frames/);
   });
 
+  it('classifies a document with a valid embedded coordinate island as interactive, even when its flat body is low-fidelity (#2121)', () => {
+    // The display path (selectViPreviewDocument) prefers an embedded coordinate
+    // island over the flat reconstruction, so the cache signal must agree: a
+    // low-fidelity flat body PLUS a valid coordinate island is interactive with
+    // no fidelity fallback reason.
+    const imgs = Array.from({ length: 10 }, (_v, i) => `<img src="${pngDataUri(100 + i, 50 + i)}"/>`).join('');
+    const frames = JSON.stringify([
+      { Image: 'root', Position: { Left: 0, Top: 0, Width: 100, Height: 80 }, Children: [1] },
+      { Image: 'caseTrue', Position: { Left: 10, Top: 20, Width: 40, Height: 40 }, Label: 'True' }
+    ]);
+    const doc =
+      `<html><body><h3>Block Diagram</h3>${imgs}` +
+      `<script type="application/json" id="lvr-coordinate-frames">${frames}</script></body></html>`;
+    const result = classifyPreviewCacheDocument(doc);
+    expect(result.interactive).toBe(true);
+    expect(result.interactiveFallbackReason).toBeUndefined();
+  });
+
+  it('ignores an invalid embedded coordinate island and falls back to the flat classification (#2121)', () => {
+    const imgs = Array.from({ length: 10 }, (_v, i) => `<img src="${pngDataUri(100 + i, 50 + i)}"/>`).join('');
+    const doc =
+      `<html><body><h3>Block Diagram</h3>${imgs}` +
+      '<script type="application/json" id="lvr-coordinate-frames">{ not valid json</script></body></html>';
+    const result = classifyPreviewCacheDocument(doc);
+    // Invalid island -> flat assessment -> low-fidelity -> not interactive, with reason.
+    expect(result.interactive).toBe(false);
+    expect(result.interactiveFallbackReason).toMatch(/structure groups|stacked child frames/);
+  });
+
   it('carries no fallback reason for a plain non-diagram document (not a fidelity fallback) (#2096)', () => {
     // HEALTHY_HTML has no Block Diagram section => no frames model => plain
     // non-diagram doc, which is not a fidelity fallback.

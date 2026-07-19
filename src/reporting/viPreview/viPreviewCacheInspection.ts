@@ -3,6 +3,10 @@ import {
   assessFramesModelFidelity,
   buildFramesModelFromFlatExport
 } from './viPreviewFlatFrames';
+import {
+  buildFramesModelFromCoordinateJson,
+  extractEmbeddedCoordinateFramesJson
+} from './viPreviewFramesModel';
 
 /**
  * VHS-REQ-659: read-only inspection of a VI-preview render cache directory.
@@ -120,16 +124,23 @@ export function classifyPreviewCacheDocument(content: string): {
 } {
   const text = typeof content === 'string' ? content : '';
   const inlineImageCount = (text.match(INLINE_IMAGE_PATTERN) ?? []).length;
-  // The cache stores the flat LabVIEW export, whose interactive viewer is only
-  // built at display time; so derive interactive capability the way the display
-  // path (`selectViPreviewDocument`) does — the flat export yields a block-diagram
-  // frames model that is ALSO faithful enough to present (a complex diagram falls
-  // back to the flat document), while still recognizing an already-assembled
-  // viewer island (`lvr-frames`) for the case a viewer document is inspected.
+  // Derive interactivity exactly the way the display path (`selectViPreviewDocument`)
+  // decides, so the cache signal matches what the UI would show:
+  //   1. an already-assembled viewer island (`lvr-frames`), or
+  //   2. a valid embedded position-aware coordinate island (`lvr-coordinate-frames`,
+  //      preferred by the display path and faithful by construction), or
+  //   3. the flat block-diagram reconstruction, if faithful enough to present.
   const hasViewerIsland = /lvr-frames/i.test(text);
-  const flatInteractivity = hasViewerIsland
-    ? { presentable: true as const, fallbackReason: undefined }
-    : assessFlatExportInteractivity(text);
+  const embeddedCoordinateJson = hasViewerIsland
+    ? undefined
+    : extractEmbeddedCoordinateFramesJson(text);
+  const hasCoordinateModel =
+    embeddedCoordinateJson !== undefined &&
+    buildFramesModelFromCoordinateJson(embeddedCoordinateJson) !== undefined;
+  const flatInteractivity =
+    hasViewerIsland || hasCoordinateModel
+      ? { presentable: true as const, fallbackReason: undefined }
+      : assessFlatExportInteractivity(text);
   const interactive = flatInteractivity.presentable;
   const interactiveFallbackReason = interactive ? undefined : flatInteractivity.fallbackReason;
   const flags: ViPreviewCacheEntryFlag[] = [];
