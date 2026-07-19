@@ -170,8 +170,15 @@ async function main() {
     console.log(`[iterate] --publish-current-branch: using ${cur}`);
     setManifestVersion(version);
     run('git', ['add', 'docs/devtools-release.manifest.json']);
-    run('git', ['commit', '--quiet', '-m', `release(devtools): set dev-tools version ${version}\n\nRefs #${opts.issue}`]);
-    run('git', ['push', '-u', opts.remote, cur, '--force-with-lease']);
+    // Only commit when the manifest bump actually changed something; with a
+    // pre-bumped branch the version is already set and there is nothing to add.
+    const staged = run('git', ['diff', '--cached', '--quiet'], { allowFail: true });
+    if (staged.status !== 0) {
+      run('git', ['commit', '--quiet', '-m', `release(devtools): set dev-tools version ${version}\n\nRefs #${opts.issue}`]);
+      run('git', ['push', '-u', opts.remote, cur, '--force-with-lease']);
+    } else {
+      console.log('[iterate] manifest already at target version; nothing to commit.');
+    }
     opts.branchRef = cur;
   } else {
     run('git', ['fetch', opts.remote, 'develop', '--quiet']);
