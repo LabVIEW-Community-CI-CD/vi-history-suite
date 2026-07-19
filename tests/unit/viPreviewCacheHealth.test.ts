@@ -128,4 +128,56 @@ describe('buildViPreviewCacheHealth (VHS-REQ-675)', () => {
     expect(report.totals.coveragePercent).toBe(100);
     expect(report.healthy).toBe(false);
   });
+
+  it('classifies a blocked manifest outcome as failed (VHS-REQ-675.1)', () => {
+    const report = buildViPreviewCacheHealth({
+      cacheDirectory: '/cache',
+      workspaceViPaths: ['a/Blocked.vi'],
+      presentCacheKeys: [],
+      generatedAt: '2026-07-19T00:00:00.000Z',
+      manifest: manifest([{ relativePath: 'a/Blocked.vi', key: KEY_A, outcome: 'blocked' }])
+    });
+    const entry = report.entries.find((e) => e.relativePath === 'a/Blocked.vi');
+    expect(entry).toMatchObject({ status: 'failed', key: KEY_A });
+    expect(report.totals.failed).toBe(1);
+  });
+
+  it('reports a failed entry whose cache key is still present as cacheFilePresent (VHS-REQ-675.1)', () => {
+    const report = buildViPreviewCacheHealth({
+      cacheDirectory: '/cache',
+      workspaceViPaths: ['a/Failed.vi'],
+      presentCacheKeys: [KEY_A],
+      generatedAt: '2026-07-19T00:00:00.000Z',
+      manifest: manifest([{ relativePath: 'a/Failed.vi', key: KEY_A, outcome: 'failed' }])
+    });
+    const entry = report.entries.find((e) => e.relativePath === 'a/Failed.vi');
+    // The recorded key is still present on disk even though the outcome failed;
+    // the key IS referenced by the manifest, so it must not be reported orphaned.
+    expect(entry).toMatchObject({ status: 'failed', key: KEY_A, cacheFilePresent: true });
+    expect(report.orphanedCacheKeys).toEqual([]);
+  });
+
+  it('deduplicates and sorts duplicate workspace VI paths (VHS-REQ-675.1)', () => {
+    const report = buildViPreviewCacheHealth({
+      cacheDirectory: '/cache',
+      workspaceViPaths: ['b/Two.vi', 'a/One.vi', 'b/Two.vi'],
+      presentCacheKeys: [],
+      generatedAt: '2026-07-19T00:00:00.000Z'
+    });
+    expect(report.entries.map((e) => e.relativePath)).toEqual(['a/One.vi', 'b/Two.vi']);
+    expect(report.totals.workspaceVis).toBe(2);
+  });
+
+  it('treats a rendered manifest entry with no key as an uncovered stale entry (VHS-REQ-675.1)', () => {
+    const report = buildViPreviewCacheHealth({
+      cacheDirectory: '/cache',
+      workspaceViPaths: ['a/NoKey.vi'],
+      presentCacheKeys: [],
+      generatedAt: '2026-07-19T00:00:00.000Z',
+      manifest: manifest([{ relativePath: 'a/NoKey.vi', key: null, outcome: 'rendered' }])
+    });
+    const entry = report.entries.find((e) => e.relativePath === 'a/NoKey.vi');
+    expect(entry).toMatchObject({ status: 'stale', key: null, cacheFilePresent: false });
+    expect(report.totals.stale).toBe(1);
+  });
 });
