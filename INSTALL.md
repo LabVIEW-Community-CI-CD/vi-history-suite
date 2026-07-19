@@ -62,7 +62,10 @@ whether the `Run VI History Suite` launch opened an Extension Development Host.
 
 ## Optional Vagrant
 
-Vagrant is a local human tester, not a release requirement:
+Vagrant is a local human tester for day-to-day development, not wired into hosted
+CI. It is, however, **required for a marketplace release**: publishing needs a
+fresh local Vagrant validation attestation for the exact release version
+(VHS-REQ-666).
 
 ```bash
 npm run vagrant:validate

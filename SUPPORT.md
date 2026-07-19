@@ -19,8 +19,10 @@ onboarding tracker:
 https://github.com/LabVIEW-Community-CI-CD/vi-history-suite/issues/12
 
 For source evaluation, the preferred path is a devcontainer or Codespace.
-Vagrant is optional and only for humans who already have a compatible
-Windows/LabVIEW box.
+Vagrant is optional for source evaluation and only for humans who already have a
+compatible Windows/LabVIEW box; note that a marketplace release separately
+requires a mandatory Vagrant validation attestation (see
+[docs/vagrant.md](./docs/vagrant.md)).
 
 Do not use public issues for security vulnerabilities. See
 [SECURITY.md](./SECURITY.md).
