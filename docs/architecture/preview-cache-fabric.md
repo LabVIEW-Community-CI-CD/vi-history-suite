@@ -15,8 +15,8 @@ Two properties of the cache make it far more valuable than a per-machine
 scratch folder:
 
 - **Content-addressed.** Each entry's key is a SHA-256 over the target VI plus
-  its staged dependency file set (path + size + mtime). The stored document is
-  `<key>.html`.
+  its staged dependency file set (each entry's staged relative path and the
+  SHA-256 of its exact bytes). The stored document is `<key>.html`.
 - **Reproducible and machine-independent.** The same VI content renders to the
   same document regardless of where it was produced.
 

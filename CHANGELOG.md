@@ -6,6 +6,14 @@ This changelog records user-facing release history for `vi-history-suite`.
 
 ### Documentation
 
+- Hardened documentation accuracy: corrected the stated VS Code minimum in
+  README (1.101, matching the manifest), aligned the Vagrant wording in INSTALL
+  and SUPPORT with the mandatory marketplace-release attestation, updated the
+  status-bar description in FIRST-RUN and TROUBLESHOOTING to the Runtime & Report
+  Settings panel, corrected the preview-cache key description (content-addressed
+  by SHA-256, not size/mtime), and fixed the bundled workflow page to use the
+  "Review VI History" command label.
+
 - Documented the full extension surface for users: `docs/quick-reference.md` now
   indexes every contributed command and setting, `docs/user-guide.md` gains a
   Commands and Settings section (including VI Preview and dev-tools pinning), and

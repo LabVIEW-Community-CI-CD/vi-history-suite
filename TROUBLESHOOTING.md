@@ -26,7 +26,8 @@ If a LabVIEW session is already running at a different bitness than the
 extension's selected runtime, compare will be blocked or fail with a
 runtime reason of `windows-host-bitness-conflict` (preflight) or
 `labview-host-bitness-conflict` (post-failure). The warning toast includes
-a `Pick Runtime Provider` action button that opens the runtime quick-pick
+a `Pick Runtime Provider` action button that opens the Runtime & Report Settings
+panel
 so you can change `viHistorySuite.labviewBitness` to match the running
 LabVIEW. Alternatively, close the running LabVIEW session, then rerun
 comparison report generation. The retained doctor summary names both the
@@ -49,8 +50,8 @@ If `vihs --provider …` (or a `settings.json` edit) does not update the label:
    - `selection unsatisfiable on this host; falling back to recommendation`
      means LabVIEW for that year/bitness is not installed and Docker is not
      available; clear or change the persisted keys.
-2. Click the `VI History runtime` status bar item to open
-   `Pick Runtime Provider`. Choosing `(none) — auto-detect` clears the three
+2. Click the `VI History runtime` status bar item to open the Runtime & Report
+   Settings panel. Choosing its Clear option clears the three
    keys and lets detection drive the label.
 3. Confirm the CLI wrote to **User** settings (not Workspace). The extension
    reads from the merged `viHistorySuite` configuration; a workspace override

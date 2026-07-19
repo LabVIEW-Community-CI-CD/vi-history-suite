@@ -9,7 +9,7 @@ visual LabVIEW comparison report you can read and share.
 
 ## Requirements
 
-- Visual Studio Code 1.90 or newer.
+- Visual Studio Code 1.101 or newer.
 - A trusted Git repository containing the tracked `.vi`, `.ctl`, or `.vit` file
   you want to review, with at least two saved versions to compare.
 - A LabVIEW comparison runtime, either:
