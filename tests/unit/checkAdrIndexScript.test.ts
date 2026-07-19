@@ -170,6 +170,70 @@ describe('auditAdrIndex', () => {
   });
 });
 
+describe('auditAdrIndex supersession linkage', () => {
+  it('fails when a Superseded ADR does not link forward to a successor', () => {
+    const superseded = validAdr('0001', 'First').replace('- Status: Accepted', '- Status: Superseded');
+    const root = makeAdrRepo(
+      {
+        'ADR-0001-first.md': superseded,
+        'ADR-0002-second.md': validAdr('0002', 'Second')
+      },
+      { index: 'ADR-0001-first.md\nADR-0002-second.md\n' }
+    );
+    const result = auditAdrIndex(root);
+    expect(result.ok).toBe(false);
+    expect(result.violations.some((v) => v.includes('does not link forward'))).toBe(true);
+  });
+
+  it('passes when a Superseded ADR links forward to an existing successor', () => {
+    const superseded =
+      validAdr('0001', 'First').replace('- Status: Accepted', '- Status: Superseded') +
+      '\nSuperseded by [ADR-0002](./ADR-0002-second.md).\n';
+    const root = makeAdrRepo(
+      {
+        'ADR-0001-first.md': superseded,
+        'ADR-0002-second.md': validAdr('0002', 'Second')
+      },
+      { index: 'ADR-0001-first.md\nADR-0002-second.md\n' }
+    );
+    expect(auditAdrIndex(root)).toEqual({ ok: true, violations: [] });
+  });
+
+  it('fails when a Superseded ADR names a non-existent successor', () => {
+    const superseded =
+      validAdr('0001', 'First').replace('- Status: Accepted', '- Status: Superseded') +
+      '\nSuperseded by ADR-0009.\n';
+    const root = makeAdrRepo({ 'ADR-0001-first.md': superseded }, { index: 'ADR-0001-first.md\n' });
+    const result = auditAdrIndex(root);
+    expect(result.ok).toBe(false);
+    expect(result.violations.some((v) => v.includes('ADR-0009') && v.includes('no such ADR file exists'))).toBe(true);
+  });
+
+  it('fails when a Superseded ADR names itself as its successor', () => {
+    const superseded =
+      validAdr('0001', 'First').replace('- Status: Accepted', '- Status: Superseded') +
+      '\nSuperseded by ADR-0001.\n';
+    const root = makeAdrRepo({ 'ADR-0001-first.md': superseded }, { index: 'ADR-0001-first.md\n' });
+    const result = auditAdrIndex(root);
+    expect(result.ok).toBe(false);
+    expect(result.violations.some((v) => v.includes('names itself'))).toBe(true);
+  });
+
+  it('applies the same linkage rule to a Deprecated ADR', () => {
+    const deprecated = validAdr('0001', 'First').replace('- Status: Accepted', '- Status: Deprecated');
+    const root = makeAdrRepo(
+      {
+        'ADR-0001-first.md': deprecated,
+        'ADR-0002-second.md': validAdr('0002', 'Second')
+      },
+      { index: 'ADR-0001-first.md\nADR-0002-second.md\n' }
+    );
+    const result = auditAdrIndex(root);
+    expect(result.ok).toBe(false);
+    expect(result.violations.some((v) => v.includes('does not link forward'))).toBe(true);
+  });
+});
+
 describe('auditSyrsCoverage', () => {
   function makeRepoWithRtm(adrBodies: Record<string, string>, rtm: string): string {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'vihs-adr-syrs-'));

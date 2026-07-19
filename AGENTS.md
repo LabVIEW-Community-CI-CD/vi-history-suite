@@ -28,7 +28,7 @@ This file provides concise, actionable guidance for AI coding agents working in 
 - **Check:** `npm run check`
 - **Package:** `npm run package`
 - **Branch protection audit:** `npm run branch-protection:audit`
-- **ADR infrastructure gate:** `npm run adr:check` (index/structure, SRS + SYRS coverage; also pre-push)
+- **ADR infrastructure gate:** `npm run adr:check` (index/structure, SRS + SYRS coverage, supersession forward-linkage; also pre-push)
 - **Agent-delegation gate:** `npm run agent:check` (issue-template agent dropdowns match `.github/agents/`; also pre-push)
 - **Verification health:** `npm run requirements:verify` (single-pane signal; add `:strict` for a local pre-push gate)
 

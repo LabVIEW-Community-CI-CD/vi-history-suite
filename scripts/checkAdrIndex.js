@@ -12,6 +12,9 @@
  *   - ADR numbers are sequential from 0001 with no gaps or duplicates;
  *   - every ADR carries the required `# ADR-NNNN:` heading plus `- Status:` and
  *     `- Date:` fields and the Context/Decision/Consequences sections.
+ *   - every Superseded/Deprecated ADR links forward to an existing successor
+ *     ADR (and not to itself), so the decision graph has no dangling
+ *     supersession.
  *
  * Pure over an injected filesystem so it is unit-testable, with a thin CLI that
  * exits non-zero on any violation. Wired to `npm run adr:check` and the
@@ -63,6 +66,7 @@ function auditAdrIndex(repoRoot, deps = defaultDeps()) {
     .sort();
 
   const numbers = [];
+  const supersessionTargets = [];
   for (const name of entries) {
     const match = ADR_FILE_PATTERN.exec(name);
     const number = Number.parseInt(match[1], 10);
@@ -88,6 +92,28 @@ function auditAdrIndex(repoRoot, deps = defaultDeps()) {
         violations.push(
           `ADR ${name} has an unknown status "${status}"; expected one of: ${ALLOWED_STATUSES.join(', ')}.`
         );
+      }
+      // Supersession linkage: a Superseded/Deprecated ADR must link forward to
+      // the ADR that replaces it (the index rule), and that successor must
+      // exist and not be the ADR itself. A dangling supersession leaves the
+      // decision graph broken.
+      if (status === 'Superseded' || status === 'Deprecated') {
+        const successors = [...body.matchAll(/(?:Superseded|Replaced|Deprecated)\s+by\s+\[?ADR-(\d{4})/gi)].map(
+          (m) => m[1]
+        );
+        if (successors.length === 0) {
+          violations.push(
+            `ADR ${name} is ${status} but does not link forward to the ADR that replaces it (expected "Superseded by ADR-NNNN").`
+          );
+        } else {
+          for (const successor of successors) {
+            if (successor === match[1]) {
+              violations.push(`ADR ${name} is ${status} but names itself (ADR-${successor}) as its successor.`);
+            } else {
+              supersessionTargets.push({ source: name, target: successor });
+            }
+          }
+        }
       }
     }
     if (!/^- Date:\s*\S/m.test(body)) {
@@ -131,6 +157,13 @@ function auditAdrIndex(repoRoot, deps = defaultDeps()) {
   }
   if (numbers.length === 0) {
     violations.push('No ADR files found under docs/architecture/adr/.');
+  }
+
+  // Supersession targets must resolve to an existing ADR number.
+  for (const { source, target } of supersessionTargets) {
+    if (!numbers.includes(Number.parseInt(target, 10))) {
+      violations.push(`ADR ${source} names ADR-${target} as its successor, but no such ADR file exists.`);
+    }
   }
 
   // Requirement coverage (restrictive): every Active VHS-REQ row in rtm.csv must
