@@ -32,6 +32,7 @@ const TEMPLATE_FILE = 'ADR-template.md';
 const ADR_FILE_PATTERN = /^ADR-(\d{4})-[a-z0-9-]+\.md$/;
 const REQUIRED_SECTIONS = ['## Context', '## Decision', '## Consequences'];
 const RTM_FILE = path.join('docs', 'requirements', 'rtm.csv');
+const SYRS_FILE = path.join('docs', 'requirements', 'syrs.md');
 const ALLOWED_STATUSES = ['Proposed', 'Accepted', 'Active', 'Superseded', 'Deprecated'];
 
 function defaultDeps() {
@@ -249,6 +250,9 @@ function auditAdrIndex(repoRoot, deps = defaultDeps()) {
  * from the full syrs.md declaration, so purely structural system requirements
  * that have no Active SRS children (for example the requirement-split and
  * optional-expert-path system requirements) are not spuriously demanded.
+ *
+ * It also fails closed when an ADR cites a VHS-SYS-REQ id that is not declared
+ * in syrs.md, catching typos and stale system-requirement citations.
  */
 function auditSyrsCoverage(repoRoot, deps = defaultDeps()) {
   const violations = [];
@@ -275,6 +279,18 @@ function auditSyrsCoverage(repoRoot, deps = defaultDeps()) {
     violations.push(
       `System requirements (SYRS) not cited by any ADR (${unlinked.length}): ${unlinked.join(', ')}`
     );
+  }
+
+  // Reverse validation: an ADR must not cite a VHS-SYS-REQ id that is not
+  // declared in syrs.md (catches typos and stale/retired system-requirement
+  // citations), mirroring the SRS stale-citation check in auditAdrIndex.
+  const syrsPath = path.join(repoRoot, SYRS_FILE);
+  if (deps.existsSync(syrsPath)) {
+    const declaredSyrs = new Set(deps.readFileSync(syrsPath).match(/VHS-SYS-REQ-\d+/g) ?? []);
+    const undeclared = [...citedSyrs].filter((syrs) => !declaredSyrs.has(syrs)).sort();
+    for (const syrs of undeclared) {
+      violations.push(`ADR cites system requirement ${syrs} that does not exist in syrs.md.`);
+    }
   }
 
   return { ok: violations.length === 0, violations };

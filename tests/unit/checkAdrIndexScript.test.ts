@@ -317,6 +317,46 @@ describe('auditSyrsCoverage', () => {
   });
 });
 
+describe('auditSyrsCoverage reverse citation validation', () => {
+  function makeRepo(adrBody: string, rtm: string, syrs: string | null): string {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'vihs-adr-syrs-rev-'));
+    tempRoots.push(root);
+    const adrDir = path.join(root, 'docs', 'architecture', 'adr');
+    fs.mkdirSync(adrDir, { recursive: true });
+    fs.writeFileSync(path.join(adrDir, 'ADR-0001-a.md'), adrBody);
+    const reqDir = path.join(root, 'docs', 'requirements');
+    fs.mkdirSync(reqDir, { recursive: true });
+    fs.writeFileSync(path.join(reqDir, 'rtm.csv'), rtm);
+    if (syrs !== null) {
+      fs.writeFileSync(path.join(reqDir, 'syrs.md'), syrs);
+    }
+    return root;
+  }
+
+  const rtm = ['ReqID,ParentID,Status,Area', 'VHS-REQ-100,VHS-SYS-REQ-001,Active,Core'].join('\n');
+  const syrs = ['### VHS-SYS-REQ-001', 'A declared system requirement.'].join('\n');
+
+  it('passes when every ADR-cited SYRS is declared in syrs.md', () => {
+    const root = makeRepo(validAdr('0001', 'A') + '\nVHS-SYS-REQ-001\n', rtm, syrs);
+    expect(auditSyrsCoverage(root)).toEqual({ ok: true, violations: [] });
+  });
+
+  it('fails when an ADR cites a SYRS that does not exist in syrs.md', () => {
+    const root = makeRepo(validAdr('0001', 'A') + '\nVHS-SYS-REQ-001 VHS-SYS-REQ-099\n', rtm, syrs);
+    const result = auditSyrsCoverage(root);
+    expect(result.ok).toBe(false);
+    expect(
+      result.violations.some((v) => v.includes('VHS-SYS-REQ-099') && v.includes('does not exist in syrs.md'))
+    ).toBe(true);
+  });
+
+  it('skips the reverse check when syrs.md is absent', () => {
+    const root = makeRepo(validAdr('0001', 'A') + '\nVHS-SYS-REQ-001 VHS-SYS-REQ-099\n', rtm, null);
+    const result = auditSyrsCoverage(root);
+    expect(result.violations.some((v) => v.includes('does not exist in syrs.md'))).toBe(false);
+  });
+});
+
 describe('auditAdrIndex reverse citation validation', () => {
   function makeRepoWithRtm(adrBody: string, rtm: string): string {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), 'vihs-adr-rev-'));
