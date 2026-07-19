@@ -112,12 +112,17 @@ export function buildViSemanticMcpServerDeps(
  * Resolves the comparison runtime (never running a comparison) and projects the
  * compact runtime-health snapshot the `get_runtime_health` MCP tool returns. The
  * heavy locator selection is reduced to the fields an agent needs to decide
- * whether — and by which provider — it can compare.
+ * whether — and by which provider — it can compare. The locator is injectable so
+ * the projection (null-coalescing, blocked derivation) is unit-testable with a
+ * fake selection, without a real runtime probe.
  */
-async function resolveRuntimeHealth(input: RuntimeHealthInput): Promise<ViRuntimeHealth> {
+export async function resolveRuntimeHealth(
+  input: RuntimeHealthInput,
+  locateRuntime: typeof locateComparisonRuntime = locateComparisonRuntime
+): Promise<ViRuntimeHealth> {
   const platform: RuntimePlatform =
     input.platform ?? (process.platform === 'win32' ? 'win32' : 'linux');
-  const selection = await locateComparisonRuntime(platform, input.settings ?? {});
+  const selection = await locateRuntime(platform, input.settings ?? {});
   return {
     schema: RUNTIME_HEALTH_SCHEMA,
     platform: selection.platform,
