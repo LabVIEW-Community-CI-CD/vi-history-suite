@@ -442,17 +442,30 @@ describe('viSemanticComparisonMcp', () => {
       await handleViSemanticMcpMessageAsync(
         compareCall({
           ...validArgs,
-          reportType: 'gui',
+          reportType: 'print',
           runtime: { provider: 'linux-container' }
         }),
         { compareViRevisions }
       );
       expect(compareViRevisions).toHaveBeenCalledWith(
         expect.objectContaining({
-          reportType: 'gui',
+          reportType: 'print',
           runtime: { provider: 'linux-container' }
         })
       );
+    });
+
+    it('rejects an invalid reportType as -32602 naming the field (#2105)', async () => {
+      const compareViRevisions = vi.fn();
+      const response = await handleViSemanticMcpMessageAsync(
+        compareCall({ ...validArgs, reportType: 'gui' }),
+        { compareViRevisions }
+      );
+      expect(response).toMatchObject({ error: { code: -32602 } });
+      const error = (response as { error: { data?: { issues?: Array<{ field: string }> } } }).error;
+      expect(error.data?.issues?.[0]?.field).toBe('reportType');
+      // A bad optional enum is caught before the comparison runs.
+      expect(compareViRevisions).not.toHaveBeenCalled();
     });
 
     it('surfaces a blocked comparison through the error envelope', async () => {

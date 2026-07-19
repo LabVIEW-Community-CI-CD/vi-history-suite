@@ -1232,6 +1232,24 @@ function requireEnumArg<T extends string>(
 }
 
 /**
+ * Validates an OPTIONAL enum argument: returns undefined when the field is
+ * absent, and otherwise enforces the allowed set with the same
+ * `ToolArgumentError -> -32602` contract as {@link requireEnumArg}. Using this
+ * (instead of an unchecked cast) makes a bad optional enum a structured
+ * invalid-params error an agent can correct, not a late execution failure.
+ */
+function optionalEnumArg<T extends string>(
+  args: Record<string, unknown>,
+  field: string,
+  allowed: readonly T[]
+): T | undefined {
+  if (args[field] === undefined) {
+    return undefined;
+  }
+  return requireEnumArg(args, field, allowed);
+}
+
+/**
  * Maps a thrown parse error to a response: a {@link ToolArgumentError} becomes a
  * structured JSON-RPC `-32602` (with field-level `data.issues`); any other error
  * stays a tool-execution failure in the result envelope (`isError`).
@@ -1419,8 +1437,9 @@ function parseCompareRevisionsArguments(rawArguments: unknown): CompareViRevisio
     baseHash: requireStringArg(args, 'baseHash'),
     selectedHash: requireStringArg(args, 'selectedHash')
   };
-  if (typeof args.reportType === 'string') {
-    input.reportType = args.reportType as CompareViRevisionsInput['reportType'];
+  const reportType = optionalEnumArg(args, 'reportType', REPORT_TYPE_VALUES);
+  if (reportType !== undefined) {
+    input.reportType = reportType;
   }
   if (typeof args.runtime === 'object' && args.runtime !== null) {
     input.runtime = args.runtime as CompareViRevisionsInput['runtime'];
@@ -1732,6 +1751,7 @@ async function handlePreviewCacheResourceRead(
 }
 
 const RUNTIME_PLATFORM_VALUES = ['win32', 'linux', 'darwin'] as const;
+const REPORT_TYPE_VALUES = ['diff', 'print'] as const;
 const PREVIEW_CACHE_MARKERS: readonly ViPreviewCacheSearchMarker[] = [
   'error',
   'interactive',
