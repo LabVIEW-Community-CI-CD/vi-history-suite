@@ -135,6 +135,25 @@ describe('runViPreviewCacheWarm (VHS-REQ-671.3)', () => {
     expect(packet.entries[0].key).toBe('sha-of-one');
   });
 
+  it('treats a fresh render that was not persisted to the cache as a failed entry (VHS-REQ-671.3)', async () => {
+    const deps: RunViPreviewCacheWarmDeps = {
+      listViFiles: async () => ['/repo/stored.vi', '/repo/notstored.vi'],
+      resolveRuntime: async () => READY,
+      renderOne: async (viFilePath: string) => {
+        if (viFilePath.endsWith('notstored.vi')) {
+          // Rendered fine, but the cache write failed -> no reusable entry stored.
+          return { outcome: 'rendered', html: '<html></html>', cached: false, cacheKey: 'k-x', cacheStored: false };
+        }
+        return { outcome: 'rendered', html: '<html></html>', cached: false, cacheKey: 'k-ok', cacheStored: true };
+      }
+    };
+    const packet = await runViPreviewCacheWarm(baseOptions(), deps);
+    expect(packet.totals.rendered).toBe(1);
+    expect(packet.totals.failed).toBe(1);
+    const notStored = packet.entries.find((entry) => entry.relativePath === 'notstored.vi');
+    expect(notStored).toMatchObject({ outcome: 'failed', failureReason: 'preview-cache-write-failed' });
+  });
+
   it('records a render that throws as a failed entry without stopping the loop', async () => {
     const deps: RunViPreviewCacheWarmDeps = {
       listViFiles: async () => ['/repo/boom.vi', '/repo/ok.vi'],

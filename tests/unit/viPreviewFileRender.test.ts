@@ -1,4 +1,5 @@
 import * as path from 'node:path';
+import { createHash } from 'node:crypto';
 
 import { describe, expect, it, vi } from 'vitest';
 
@@ -18,6 +19,9 @@ function makeDeps(
     copyFile: vi.fn().mockResolvedValue(undefined),
     readFile: vi.fn().mockResolvedValue(html),
     removeDirectory: vi.fn().mockResolvedValue(undefined),
+    // Deterministic content hash derived from the staged file path (the mocked
+    // files do not exist on disk); distinct paths -> distinct keys, stable per path.
+    hashFile: vi.fn(async (filePath: string) => createHash('sha256').update(filePath).digest('hex')),
     execution: {
       runCommand: vi.fn().mockResolvedValue(run),
       pathExists: vi.fn().mockResolvedValue(outputExists)

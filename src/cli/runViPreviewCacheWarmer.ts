@@ -142,7 +142,8 @@ export interface RunViPreviewCacheWarmDeps {
   now?: () => Date;
 }
 
-const INLINE_IMAGE_PATTERN = /data:image\//gi;
+/** Failure reason recorded when a fresh render succeeded but was not persisted. */
+export const CACHE_WRITE_FAILED_REASON = 'preview-cache-write-failed';
 
 function toRepoRelative(repositoryRoot: string, viFilePath: string): string {
   return path.relative(repositoryRoot, viFilePath).split(path.sep).join('/');
@@ -150,7 +151,13 @@ function toRepoRelative(repositoryRoot: string, viFilePath: string): string {
 
 function classifyOutcome(result: RenderViPreviewForFileResult): ViPreviewCacheWarmOutcome {
   if (result.outcome === 'rendered') {
-    return result.cached ? 'cache-hit' : 'rendered';
+    if (result.cached) {
+      return 'cache-hit';
+    }
+    // The worker's job is to STORE the cache: a fresh render whose cache write
+    // was attempted and failed did not produce a reusable entry, so it is a
+    // worker failure even though the render itself succeeded.
+    return result.cacheStored === false ? 'failed' : 'rendered';
   }
   if (result.outcome === 'blocked') {
     return 'blocked';
@@ -176,6 +183,8 @@ function buildManifestEntry(
   }
   if (result.failureReason) {
     entry.failureReason = result.failureReason;
+  } else if (result.outcome === 'rendered' && result.cacheStored === false) {
+    entry.failureReason = CACHE_WRITE_FAILED_REASON;
   }
   return entry;
 }
@@ -341,7 +350,11 @@ function buildNodeRenderOne(
   const operationDirectory = options.operationDirectory ?? defaultOperationDirectory();
   const renderDeps: RenderViPreviewForFileDeps = buildNodeViPreviewRenderDeps({
     cacheDirectory: options.cacheDirectory,
-    cacheMaxEntries: options.cacheMaxEntries
+    // A whole-workspace warm must RETAIN every rendered entry; without an
+    // explicit cap the worker disables eviction (0) rather than falling back to
+    // the on-open cache's default of 200, which would evict earlier VIs as later
+    // ones render and leave the packet claiming entries the cache no longer holds.
+    cacheMaxEntries: options.cacheMaxEntries ?? 0
   });
   return (viFilePath, runtime) => {
     if (!runtime.runtime) {

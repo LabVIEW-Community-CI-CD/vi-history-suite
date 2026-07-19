@@ -14,8 +14,14 @@ import { isSha256HexKey as isValidKey } from '../../support/cacheKey';
 
 export interface ViPreviewCacheKeyEntry {
   relativePath: string;
-  sizeBytes: number;
-  mtimeMs?: number;
+  /**
+   * SHA-256 hex digest of the file's exact bytes. Content-addressing (rather
+   * than size + mtime) makes the key portable: the same VI content yields the
+   * same key on any machine, so a cache generated in one environment (e.g. a
+   * Codespace worker, VHS-REQ-671) is reusable in another, and changed bytes
+   * always produce a different key even when size and mtime coincide.
+   */
+  contentSha256: string;
 }
 
 /**
@@ -24,15 +30,15 @@ export interface ViPreviewCacheKeyEntry {
  * the same staged dependency tree (e.g. two VIs in one project) get DISTINCT
  * keys — otherwise the second VI would incorrectly hit the first VI's cached
  * document (#646). The file-set portion is order-independent (entries are
- * sorted) and a change to any staged file's size or mtime yields a different
- * key, so the cache never returns a stale render for edited inputs.
+ * sorted) and each entry contributes a content digest, so the key is portable
+ * across machines/checkouts and never returns a stale render for edited inputs.
  */
 export function computeViPreviewCacheKey(
   targetViRelativePath: string,
   entries: ViPreviewCacheKeyEntry[]
 ): string {
   const normalized = entries
-    .map((entry) => `${entry.relativePath.replace(/\\/g, '/')}|${entry.sizeBytes}|${entry.mtimeMs ?? 0}`)
+    .map((entry) => `${entry.relativePath.replace(/\\/g, '/')}|${entry.contentSha256}`)
     .sort();
   const target = targetViRelativePath.replace(/\\/g, '/');
   return createHash('sha256')
@@ -56,7 +62,12 @@ export interface FileViPreviewCacheFsDeps {
 
 export interface FileViPreviewCacheOptions {
   cacheDirectory: string;
-  /** Maximum cached documents retained; oldest are evicted first. Default 200. */
+  /**
+   * Maximum cached documents retained; oldest are evicted first. Default 200.
+   * A value of `0` (or negative) disables eviction entirely — used by the
+   * whole-workspace warm worker (VHS-REQ-671), which must retain every rendered
+   * entry rather than evict earlier VIs as later ones render.
+   */
   maxEntries?: number;
   joinPath: (directory: string, name: string) => string;
 }
@@ -80,6 +91,10 @@ export function createFileViPreviewCache(
   }
 
   async function evictExcess(): Promise<void> {
+    // A non-positive limit disables eviction (whole-workspace warm retains all).
+    if (maxEntries <= 0) {
+      return;
+    }
     let names: string[];
     try {
       names = await fsDeps.listFiles(options.cacheDirectory);
