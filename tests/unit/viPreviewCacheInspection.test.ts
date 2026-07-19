@@ -100,6 +100,20 @@ describe('classifyPreviewCacheDocument (VHS-REQ-659.21)', () => {
     expect(classifyPreviewCacheDocument(HEALTHY_HTML).interactive).toBe(false);
   });
 
+  it('does not mark a low-fidelity flat export interactive (matches display fallback) (#2096)', () => {
+    // A complex diagram: 10 differently-sized block-diagram images reconstruct
+    // into too many coordinate-less structure groups, so the display path
+    // (selectViPreviewDocument) falls back to the flat document. The cache's
+    // interactive flag must agree, or search_preview_cache(marker=interactive)
+    // would mislead an agent.
+    const imgs = Array.from({ length: 10 }, (_v, i) => `<img src="${pngDataUri(100 + i, 50 + i)}"/>`).join('');
+    const complexFlat = `<html><body><h3>Block Diagram</h3>${imgs}</body></html>`;
+    const result = classifyPreviewCacheDocument(complexFlat);
+    expect(result.inlineImageCount).toBe(10);
+    expect(result.interactive).toBe(false);
+    expect(result.flags).toEqual([]);
+  });
+
   it('flags an error marker document', () => {
     expect(classifyPreviewCacheDocument(ERROR_HTML).flags).toContain('error-marker');
   });
