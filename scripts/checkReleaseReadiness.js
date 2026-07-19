@@ -445,6 +445,34 @@ function checkSupplyChainFreshness(state) {
   );
 }
 
+// GATING (release context): the two-key publish-authority posture from the
+// release-state read-model (VHS-REQ-670). An authorized agent is the dispatcher
+// (key 1) and a human environment reviewer is the approver (key 2). The gate
+// fails closed only when authority is DEFINITIVELY incomplete (complete ===
+// false); when authority cannot be verified in this environment (complete ===
+// null, e.g. an unauthorized `gh` locally) it degrades to a passing note rather
+// than a false negative — the authoritative check runs in the release workflow.
+function checkReleaseAuthority(authority) {
+  if (!authority || typeof authority !== 'object' || authority.complete === undefined) {
+    return makeCheck(
+      'release-authority',
+      false,
+      'Release authority posture unavailable (run npm run release:state); cannot confirm the two-key publish authority.'
+    );
+  }
+  if (authority.complete === null) {
+    return makeCheck(
+      'release-authority',
+      true,
+      `Release authority unverified in this environment: ${authority.detail} (the release workflow verifies it authoritatively).`
+    );
+  }
+  if (authority.complete === false) {
+    return makeCheck('release-authority', false, authority.detail);
+  }
+  return makeCheck('release-authority', true, authority.detail);
+}
+
 function buildReleaseReadiness(inputs = {}, meta = {}) {
   const checks = [
     checkRiskLedger(inputs.ledger, inputs.hasSelectableHighRisk),
@@ -464,6 +492,17 @@ function buildReleaseReadiness(inputs = {}, meta = {}) {
   // the maintainer opts in, preserving the advisory-default contract.
   if (inputs.requireSupplyChainFresh) {
     checks.push(checkSupplyChainFreshness(inputs.supplyChainState));
+  }
+  // Release-authority gate (VHS-REQ-670): a HARD check evaluated ONLY under an
+  // explicit --release-context marker, NOT piggybacked on requireReleaseAttestation.
+  // Coupling it to the attestation flag would add a failing authority check to the
+  // existing `Verify Release Runtime Attestation` workflow step (which runs
+  // --require-release-attestation without VSCE_PAT, so publishTokenPresent would be
+  // false and block every verified release). The authoritative authority guard is
+  // the dedicated `Guard Release Authority` workflow step (buildReleaseState.js
+  // --strict, with VSCE_PAT). Advisory `npm run release:readiness` stays exit 0.
+  if (inputs.releaseContext === true) {
+    checks.push(checkReleaseAuthority(inputs.releaseAuthority));
   }
   const status = checks.every((check) => check.passed) ? 'READY' : 'ATTENTION';
   return {
@@ -613,6 +652,20 @@ function loadSignals(cwd, deps = {}) {
     supplyChainState = undefined;
   }
 
+  // Two-key publish-authority posture from the release-state read-model
+  // (VHS-REQ-670), consumed by the release-context authority gate. Degrades to
+  // undefined when the read-model is unavailable; the derivation itself degrades
+  // authority.complete to null when it cannot verify the protected environment.
+  let releaseAuthority;
+  try {
+    const releaseStateModule = deps.releaseStateModule ?? require('./buildReleaseState.js');
+    const version = getPackageVersion(cwd);
+    const signals = releaseStateModule.gatherSignals(cwd, version, deps);
+    releaseAuthority = releaseStateModule.deriveReleaseAuthority(signals);
+  } catch {
+    releaseAuthority = undefined;
+  }
+
   return {
     ledger,
     hasSelectableHighRisk: ledgerModule.hasSelectableHighRisk,
@@ -623,6 +676,8 @@ function loadSignals(cwd, deps = {}) {
     boxManifest,
     requireReleaseAttestation: deps.requireReleaseAttestation === true,
     requireSupplyChainFresh: deps.requireSupplyChainFresh === true,
+    releaseContext: deps.releaseContext === true,
+    releaseAuthority,
     runtimeEvidence,
     supplyChainState
   };
@@ -727,12 +782,14 @@ function parseArgs(argv = []) {
       includeProvenance: false,
       requireReleaseAttestation: false,
       requireSupplyChainFresh: false,
+      releaseContext: false,
       outputPath: undefined,
       runtimeEvidencePath: undefined
     },
     boolFlags: {
       '--require-release-attestation': 'requireReleaseAttestation',
-      '--require-supply-chain-fresh': 'requireSupplyChainFresh'
+      '--require-supply-chain-fresh': 'requireSupplyChainFresh',
+      '--release-context': 'releaseContext'
     },
     valueFlags: {
       '--runtime-evidence': 'runtimeEvidencePath'
@@ -768,7 +825,8 @@ function main(argv = process.argv.slice(2), deps = {}) {
     ...deps,
     runtimeEvidencePath: options.runtimeEvidencePath,
     requireReleaseAttestation: options.requireReleaseAttestation,
-    requireSupplyChainFresh: options.requireSupplyChainFresh
+    requireSupplyChainFresh: options.requireSupplyChainFresh,
+    releaseContext: options.releaseContext
   });
   const verdict = buildReleaseReadiness(signals, {
     generatedAt: generatedAtFor(deps),
@@ -813,6 +871,7 @@ module.exports = {
   describeSupplyChainState,
   deriveRuntimeAttestationFromLedger,
   checkReleaseAttestation,
+  checkReleaseAuthority,
   checkSupplyChainFreshness,
   checkBoxManifestIntegrity,
   checkBoxProvenanceBinding,

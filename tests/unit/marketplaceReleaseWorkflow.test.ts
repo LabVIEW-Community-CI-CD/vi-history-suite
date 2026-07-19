@@ -45,6 +45,13 @@ describe('Marketplace release workflow', () => {
     expect(workflow).toContain('Marketplace releases must run from an exact vX.Y.Z tag');
   });
 
+  it('guards the two-key publish-authority posture before publishing (VHS-REQ-670.7)', () => {
+    const workflow = readWorkflow();
+
+    expect(workflow).toContain('Guard Release Authority');
+    expect(workflow).toContain('node scripts/buildReleaseState.js --strict');
+  });
+
   it('verifies package version and main reachability before publishing (VHS-REQ-609.4)', () => {
     const workflow = readWorkflow();
 
