@@ -103,4 +103,83 @@ describe('collectViPreviewDiagnostics (VHS-REQ-659)', () => {
     expect(snapshot.runtime.outcome).toBe('blocked');
     expect(snapshot.runtime.reason).toContain('locator exploded');
   });
+
+  it('reports docker available with no images when the images probe fails', async () => {
+    const snapshot = await collectViPreviewDiagnostics(
+      { processPlatform: 'linux' },
+      {
+        now: FIXED_NOW,
+        locateRuntime: fakeLocate({ provider: 'linux-container' }),
+        runDocker: async (args) => {
+          if (args[0] === 'info') {
+            return 'linux';
+          }
+          throw new Error('docker images failed');
+        }
+      }
+    );
+    // The daemon answered `info`, so it is available even though `images` failed.
+    expect(snapshot.docker.available).toBe(true);
+    expect(snapshot.docker.osType).toBe('linux');
+    expect(snapshot.docker.labviewImages).toEqual([]);
+  });
+
+  it('treats an unreadable cache directory as absent (readCacheEntries rejects)', async () => {
+    const snapshot = await collectViPreviewDiagnostics(
+      { cacheDirectory: '/unreadable', processPlatform: 'linux' },
+      {
+        now: FIXED_NOW,
+        locateRuntime: fakeLocate({ provider: 'linux-container' }),
+        readCacheEntries: async () => {
+          throw new Error('EACCES');
+        },
+        runDocker: async () => 'linux'
+      }
+    );
+    expect(snapshot.cache.present).toBe(false);
+    expect(snapshot.cache.entryCount).toBe(0);
+    expect(snapshot.cache.directory).toBe('/unreadable');
+  });
+
+  it('treats a docker info that returns only whitespace as an undefined osType', async () => {
+    const snapshot = await collectViPreviewDiagnostics(
+      { processPlatform: 'linux' },
+      {
+        now: FIXED_NOW,
+        locateRuntime: fakeLocate({ provider: 'linux-container' }),
+        runDocker: async (args) => (args[0] === 'info' ? '   ' : 'nationalinstruments/labview:2026q1-linux')
+      }
+    );
+    expect(snapshot.docker.available).toBe(true);
+    expect(snapshot.docker.osType).toBeUndefined();
+  });
+
+  it('falls back to the real clock when no now dependency is injected', async () => {
+    const before = Date.now();
+    const snapshot = await collectViPreviewDiagnostics(
+      { processPlatform: 'linux' },
+      {
+        locateRuntime: fakeLocate({ provider: 'linux-container' }),
+        readCacheEntries: async () => [],
+        runDocker: async () => {
+          throw new Error('no docker');
+        }
+      }
+    );
+    const generated = Date.parse(snapshot.generatedAt);
+    expect(Number.isNaN(generated)).toBe(false);
+    // Tolerant window: only assert the timestamp is recent, never a tight bound.
+    expect(Math.abs(generated - before)).toBeLessThanOrEqual(60_000);
+  });
+});
+
+describe('defaultPreviewCacheDirectoryHint', () => {
+  it('points at the remote globalStorage path', async () => {
+    const { defaultPreviewCacheDirectoryHint } = await import(
+      '../../src/tooling/viPreviewDiagnostics'
+    );
+    const hint = defaultPreviewCacheDirectoryHint();
+    expect(hint).toContain('globalStorage');
+    expect(hint).toContain('.vscode-remote');
+  });
 });
