@@ -11,7 +11,9 @@ import {
   VI_SEMANTIC_MCP_SERVER_INFO,
   VI_SEMANTIC_MCP_TOOLS,
   VI_SEMANTIC_MCP_ASYNC_ONLY_TOOL_NAMES,
-  VI_SEMANTIC_MCP_SYNC_CAPABLE_TOOL_NAMES
+  VI_SEMANTIC_MCP_SYNC_CAPABLE_TOOL_NAMES,
+  VI_SEMANTIC_MCP_PROMPTS,
+  VI_SEMANTIC_MCP_RESOURCES
 } from '../../src/semantic/viSemanticComparisonMcp';
 import type { CompareViRevisionsResult } from '../../src/semantic/compareViRevisions';
 import type { ViSemanticHistory } from '../../src/semantic/viSemanticHistory';
@@ -63,7 +65,7 @@ describe('viSemanticComparisonMcp', () => {
     ) as Record<string, unknown>;
     expect(result.protocolVersion).toBe(VI_SEMANTIC_MCP_PROTOCOL_VERSION);
     expect(result.serverInfo).toEqual(VI_SEMANTIC_MCP_SERVER_INFO);
-    expect(result.capabilities).toMatchObject({ tools: {} });
+    expect(result.capabilities).toMatchObject({ tools: {}, prompts: {}, resources: {} });
   });
 
   it('returns no response for notifications', () => {
@@ -225,8 +227,8 @@ describe('viSemanticComparisonMcp', () => {
 
   it('rejects an unknown method with method-not-found', () => {
     expect(
-      handleViSemanticMcpMessage({ jsonrpc: '2.0', id: 9, method: 'resources/list' })
-    ).toMatchObject({ error: { code: -32601, message: 'unknown method: resources/list' } });
+      handleViSemanticMcpMessage({ jsonrpc: '2.0', id: 9, method: 'completion/complete' })
+    ).toMatchObject({ error: { code: -32601, message: 'unknown method: completion/complete' } });
   });
 
   it('returns all published schemas for get_vi_semantic_schema', () => {
@@ -1095,6 +1097,160 @@ describe('viSemanticComparisonMcp', () => {
       ) as { content: Array<{ text: string }>; isError: boolean };
       expect(response.isError).toBe(true);
       expect(response.content[0].text).toContain('not wired');
+    });
+  });
+
+  describe('prompts', () => {
+    const call = (method: string, params: unknown, id = 200) => ({
+      jsonrpc: '2.0' as const,
+      id,
+      method,
+      params
+    });
+
+    it('lists the guided prompts', () => {
+      const result = successResult(handleViSemanticMcpMessage(call('prompts/list', {}))) as {
+        prompts: Array<{ name: string }>;
+      };
+      expect(result.prompts.map((p) => p.name)).toEqual([
+        'review_pull_request',
+        'explain_vi_history',
+        'check_compare_readiness'
+      ]);
+      expect(result.prompts).toEqual(VI_SEMANTIC_MCP_PROMPTS);
+    });
+
+    it('renders review_pull_request naming the tools it chains', () => {
+      const result = successResult(
+        handleViSemanticMcpMessage(
+          call('prompts/get', {
+            name: 'review_pull_request',
+            arguments: { repositoryRoot: '/repo', baseHash: 'aaaa', selectedHash: 'bbbb', maxVis: 25 }
+          })
+        )
+      ) as { messages: Array<{ role: string; content: { text: string } }> };
+      const text = result.messages[0].content.text;
+      expect(text).toContain('list_changed_vis');
+      expect(text).toContain('build_vi_pr_review');
+      expect(text).toContain('maxVis=25');
+      expect(text).toContain('format="markdown"');
+    });
+
+    it('renders check_compare_readiness without a platform', () => {
+      const result = successResult(
+        handleViSemanticMcpMessage(call('prompts/get', { name: 'check_compare_readiness', arguments: {} }))
+      ) as { messages: Array<{ content: { text: string } }> };
+      const text = result.messages[0].content.text;
+      expect(text).toContain('get_runtime_health');
+      expect(text).toContain('get_preview_diagnostics');
+      expect(text).not.toContain('platform=');
+    });
+
+    it('rejects prompts/get for an unknown prompt as invalid params', () => {
+      expect(
+        handleViSemanticMcpMessage(call('prompts/get', { name: 'nope', arguments: {} }))
+      ).toMatchObject({ error: { code: -32602 } });
+    });
+
+    it('rejects a prompt missing a required argument as -32602 with field detail', () => {
+      const error = invalidParamsError(
+        handleViSemanticMcpMessage(
+          call('prompts/get', { name: 'review_pull_request', arguments: { repositoryRoot: '/repo' } })
+        )
+      );
+      expect(error.data?.issues?.[0]).toMatchObject({ field: 'baseHash' });
+    });
+
+    it('every registered prompt renders and enforces its required arguments (design invariant)', () => {
+      const KNOWN_TOOL_REFS = VI_SEMANTIC_MCP_TOOLS.map((tool) => tool.name);
+      for (const prompt of VI_SEMANTIC_MCP_PROMPTS) {
+        const args: Record<string, unknown> = {};
+        for (const arg of prompt.arguments) {
+          if (arg.required) {
+            args[arg.name] = `value-${arg.name}`;
+          }
+        }
+        const rendered = successResult(
+          handleViSemanticMcpMessage(call('prompts/get', { name: prompt.name, arguments: args }))
+        ) as { messages: Array<{ content: { text: string } }> };
+        const text = rendered.messages[0].content.text;
+        // Invariant: each prompt references >=2 distinct tools (a real workflow,
+        // never a 1:1 wrapper over a single tool).
+        const referenced = KNOWN_TOOL_REFS.filter((name) => text.includes(name));
+        expect(new Set(referenced).size).toBeGreaterThanOrEqual(2);
+        // Every declared required argument is enforced: omitting it yields -32602.
+        for (const arg of prompt.arguments) {
+          if (!arg.required) {
+            continue;
+          }
+          const withoutOne = { ...args };
+          delete withoutOne[arg.name];
+          const error = invalidParamsError(
+            handleViSemanticMcpMessage(call('prompts/get', { name: prompt.name, arguments: withoutOne }))
+          );
+          expect(error.data?.issues?.[0]?.field).toBe(arg.name);
+        }
+      }
+    });
+  });
+
+  describe('resources', () => {
+    const call = (method: string, params: unknown, id = 300) => ({
+      jsonrpc: '2.0' as const,
+      id,
+      method,
+      params
+    });
+
+    it('lists the schema resources', () => {
+      const result = successResult(handleViSemanticMcpMessage(call('resources/list', {}))) as {
+        resources: Array<{ uri: string }>;
+      };
+      expect(result.resources.map((r) => r.uri)).toEqual([
+        'vi-history-suite://schema/vi-semantic-comparison@v1',
+        'vi-history-suite://schema/vi-semantic-history@v1',
+        'vi-history-suite://schema/vi-repository-index@v1',
+        'vi-history-suite://schema/index'
+      ]);
+      expect(result.resources).toEqual(VI_SEMANTIC_MCP_RESOURCES);
+    });
+
+    it('reads a single schema resource by URI', () => {
+      const result = successResult(
+        handleViSemanticMcpMessage(
+          call('resources/read', { uri: 'vi-history-suite://schema/vi-semantic-comparison@v1' })
+        )
+      ) as { contents: Array<{ uri: string; mimeType: string; text: string }> };
+      expect(result.contents).toHaveLength(1);
+      expect(result.contents[0].mimeType).toBe('application/schema+json');
+      const schema = JSON.parse(result.contents[0].text) as { $id: string };
+      expect(schema.$id).toBe('vi-history-suite/vi-semantic-comparison@v1');
+    });
+
+    it('reads the aggregate schema index', () => {
+      const result = successResult(
+        handleViSemanticMcpMessage(call('resources/read', { uri: 'vi-history-suite://schema/index' }))
+      ) as { contents: Array<{ mimeType: string; text: string }> };
+      expect(result.contents[0].mimeType).toBe('application/json');
+      const map = JSON.parse(result.contents[0].text) as Record<string, unknown>;
+      expect(Object.keys(map)).toContain('vi-history-suite/vi-repository-index@v1');
+    });
+
+    it('rejects an unknown resource URI as -32602 naming the uri field', () => {
+      const error = invalidParamsError(
+        handleViSemanticMcpMessage(call('resources/read', { uri: 'vi-history-suite://schema/nope@v9' }))
+      );
+      expect(error.data?.issues?.[0]).toMatchObject({ field: 'uri' });
+    });
+
+    it('every registered resource URI is readable (registry/handler coverage)', () => {
+      for (const resource of VI_SEMANTIC_MCP_RESOURCES) {
+        const result = successResult(
+          handleViSemanticMcpMessage(call('resources/read', { uri: resource.uri }))
+        ) as { contents: Array<{ uri: string; text: string }> };
+        expect(result.contents[0].uri).toBe(resource.uri);
+        expect(() => JSON.parse(result.contents[0].text)).not.toThrow();
+      }
     });
   });
 });

@@ -26,10 +26,11 @@ configure.
 
 ## Tools
 
-The server exposes 16 tools. Thirteen operate without running a comparison (Git,
-supplied data, a local preview-cache directory, or read-only runtime/environment
-probes); three invoke a real LabVIEW comparison and therefore need a comparison
-runtime (host LabVIEW or a Docker LabVIEW image) and may take minutes.
+The server exposes 16 tools plus 3 guided prompts and 4 schema resources. Thirteen
+tools operate without running a comparison (Git, supplied data, a local
+preview-cache directory, or read-only runtime/environment probes); three invoke a
+real LabVIEW comparison and therefore need a comparison runtime (host LabVIEW or a
+Docker LabVIEW image) and may take minutes.
 
 | Tool | What it does | Runtime | Required input |
 | --- | --- | --- | --- |
@@ -76,6 +77,38 @@ The server distinguishes two failure classes so an agent can react correctly:
   tool invoked without its injected dependency) stay in the result envelope as
   `{ content: [...], isError: true }` per the MCP spec, so the message reaches the
   model.
+
+### Prompts
+
+The server advertises the `prompts` capability and exposes guided, host-surfaced
+workflows (VS Code shows them alongside slash commands). Each prompt orchestrates
+multiple tools — a prompt is never a 1:1 wrapper over a single tool.
+
+| Prompt | What it drives | Arguments |
+| --- | --- | --- |
+| `review_pull_request` | Scope with `list_changed_vis`, then `build_vi_pr_review` (Markdown), with a `get_runtime_health` fallback. | `repositoryRoot`, `baseHash`, `selectedHash`, `maxVis?` |
+| `explain_vi_history` | Narrate `summarize_vi_history`, with a `get_runtime_health` fallback. | `repositoryRoot`, `relativePath`, `maxRevisions?` |
+| `check_compare_readiness` | Combine `get_runtime_health` + `get_preview_diagnostics` into a readiness verdict. | `platform?` |
+
+`prompts/get` validates required arguments through the same `-32602` contract as
+tools (a missing required argument returns `data.issues` naming the field).
+
+### Resources
+
+The server advertises the `resources` capability and exposes the published
+semantic JSON Schemas — the open, versioned VI-diff standard — as addressable,
+read-only context under the `vi-history-suite://schema/` URI scheme. The `@vN`
+version stays in the URI, so a future schema `v2` is a new, distinct resource
+rather than a silently-repointed "latest".
+
+| Resource URI | Contents | mimeType |
+| --- | --- | --- |
+| `vi-history-suite://schema/vi-semantic-comparison@v1` | Comparison model schema | `application/schema+json` |
+| `vi-history-suite://schema/vi-semantic-history@v1` | History model schema | `application/schema+json` |
+| `vi-history-suite://schema/vi-repository-index@v1` | Repository-index schema | `application/schema+json` |
+| `vi-history-suite://schema/index` | All published schemas | `application/json` |
+
+`resources/read` of an unknown URI returns a `-32602` naming the `uri` field.
 
 ### Output format
 
