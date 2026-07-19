@@ -6,6 +6,15 @@ This changelog records user-facing release history for `vi-history-suite`.
 
 ### Added
 
+- A preview-cache **exchange** (`npm run preview:cache:exchange`, VHS-REQ-673)
+  distributes portable bundles between environments over content-addressed GitHub
+  Releases, reusing the dev-tools release-channel transport: `publish` packs a
+  bundle and creates a `preview-cache-<digest>` release (idempotent — identical
+  content is skipped), and `fetch` downloads, verifies, and losslessly merges a
+  published bundle into a target cache. So a cache generated once (e.g. by a
+  Codespace worker) is published once and pulled by teammates, other Codespaces,
+  and CI.
+
 - A preview-cache health/coverage read-model (`npm run preview:cache:health`,
   VHS-REQ-675) reports how well a cache directory covers a workspace by comparing
   the current workspace VIs, a prior warm manifest
