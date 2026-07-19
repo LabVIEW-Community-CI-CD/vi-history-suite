@@ -1164,6 +1164,19 @@ describe('viSemanticComparisonMcp', () => {
       expect(text).not.toContain('platform=');
     });
 
+    it('threads platform into BOTH readiness calls when given (#2109)', () => {
+      const result = successResult(
+        handleViSemanticMcpMessage(
+          call('prompts/get', { name: 'check_compare_readiness', arguments: { platform: 'darwin' } })
+        )
+      ) as { messages: Array<{ content: { text: string } }> };
+      const text = result.messages[0].content.text;
+      // get_runtime_health carries platform, and get_preview_diagnostics carries
+      // processPlatform for the same target — no mixed-platform verdict.
+      expect(text).toContain('`platform="darwin"`');
+      expect(text).toContain('`processPlatform="darwin"`');
+    });
+
     it('renders survey_repository_vis chaining the index into a history drill-down', () => {
       const result = successResult(
         handleViSemanticMcpMessage(
