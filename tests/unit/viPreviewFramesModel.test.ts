@@ -194,6 +194,20 @@ describe('extractEmbeddedCoordinateFramesJson', () => {
       `<HTML><BODY><script type="application/json" id="${EMBEDDED_COORDINATE_FRAMES_ISLAND_ID}">${body}</script ></BODY></HTML>`;
     expect(extractEmbeddedCoordinateFramesJson(html)).toBe(body);
   });
+
+  it('handles a </script foo> end tag with junk after the tag name, but not </scriptfoo> (#2127)', () => {
+    // Browsers treat `</script foo>` as a valid close, so the extractor must too
+    // (CodeQL bad-tag-filter case `</script\t\n bar>`). But `</scriptfoo>` is NOT
+    // a close and must remain part of the body.
+    const body = '[{"Image":"A"}]';
+    const junkClose =
+      `<HTML><BODY><script type="application/json" id="${EMBEDDED_COORDINATE_FRAMES_ISLAND_ID}">${body}</script\t\n bar></BODY></HTML>`;
+    expect(extractEmbeddedCoordinateFramesJson(junkClose)).toBe(body);
+
+    const notAClose =
+      `<HTML><BODY><script type="application/json" id="${EMBEDDED_COORDINATE_FRAMES_ISLAND_ID}">x</scriptfoo>y</script></BODY></HTML>`;
+    expect(extractEmbeddedCoordinateFramesJson(notAClose)).toBe('x</scriptfoo>y');
+  });
 });
 
 describe('findFramesRoot', () => {
