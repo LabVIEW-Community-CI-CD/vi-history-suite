@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+#
+# vi-history-suite pre-push gate.
+#
+# Fails closed before a push on:
+#   1. ADR infrastructure consistency (issue #2028) — npm run adr:check.
+#   2. The repo-standards-review multi-standards audit — npm run standards:audit.
+#
+# Enable once per clone with:  git config core.hooksPath .githooks
+# Bypass in an emergency with:  git push --no-verify
+set -euo pipefail
+
+repo_root="$(git rev-parse --show-toplevel)"
+cd "$repo_root"
+
+echo "[pre-push] Checking ADR infrastructure (npm run adr:check)…"
+if ! npm run --silent adr:check; then
+  echo "[pre-push] ADR infrastructure check failed. Fix docs/architecture/adr/ or run with --no-verify." >&2
+  exit 1
+fi
+
+echo "[pre-push] Checking agent-delegation drift (npm run agent:check)…"
+if ! npm run --silent agent:check; then
+  echo "[pre-push] Agent-delegation drift detected. Align issue-template dropdowns with .github/agents/, or run with --no-verify." >&2
+  exit 1
+fi
+
+echo "[pre-push] Running repo-standards-review audit (npm run standards:audit)…"
+if ! npm run --silent standards:audit >/dev/null; then
+  echo "[pre-push] repo-standards-review audit failed. Run 'npm run standards:audit' for detail, or push with --no-verify." >&2
+  exit 1
+fi
+
+echo "[pre-push] Pre-push gates passed."

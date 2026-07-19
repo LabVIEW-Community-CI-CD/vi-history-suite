@@ -87,6 +87,25 @@ describe('createViChangeWarmScheduler (VHS-REQ-664.1)', () => {
     timers.runAll();
     expect(settled).toEqual([]);
   });
+
+  it('does not clear a timer on the first note when none is pending (VHS-REQ-664.1)', () => {
+    const timers = createFakeTimers();
+    const clearTimeout = vi.fn(timers.clearTimeout);
+    const scheduler = createViChangeWarmScheduler({
+      debounceMs: 50,
+      onSettled: () => {},
+      setTimeout: timers.setTimeout,
+      clearTimeout
+    });
+
+    // First note for a path: nothing is pending, so the `handle !== undefined`
+    // guard must skip clearTimeout. A second note for the SAME path DOES clear
+    // the prior handle. This proves the guard, not just the debounce coalescing.
+    scheduler.note('/repo/A.vi');
+    expect(clearTimeout).not.toHaveBeenCalled();
+    scheduler.note('/repo/A.vi');
+    expect(clearTimeout).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('resolveViChangeWarmPlan (VHS-REQ-664.2)', () => {
@@ -177,5 +196,32 @@ describe('warmChangedVi (VHS-REQ-664.3)', () => {
 
     expect(warmPreview).toHaveBeenCalledTimes(1);
     expect(warmComparison).not.toHaveBeenCalled();
+  });
+
+  it('warms only the comparison when the plan asks for comparison but not preview', async () => {
+    const warmPreview = vi.fn(async () => {});
+    const warmComparison = vi.fn(async () => {});
+
+    // Mirror of the preview-only case: proves the `if (plan.warmPreview)` guard
+    // actually gates the preview warm (not merely that both run under bothPlan).
+    const result = await warmChangedVi('/repo/A.vi', { warmPreview: false, warmComparison: true }, {
+      warmPreview,
+      warmComparison
+    });
+
+    expect(warmPreview).not.toHaveBeenCalled();
+    expect(warmComparison).toHaveBeenCalledTimes(1);
+    expect(result).toEqual({ previewWarmed: false, comparisonWarmed: true });
+  });
+});
+
+describe('isViChangeWarmPlanEmpty (VHS-REQ-664.2)', () => {
+  it('is empty only when neither warm is requested', () => {
+    expect(isViChangeWarmPlanEmpty({ warmPreview: false, warmComparison: false })).toBe(true);
+    // Mixed plans are NOT empty — proves the predicate uses AND of the negations,
+    // not OR (an OR would wrongly report a preview-only plan as empty).
+    expect(isViChangeWarmPlanEmpty({ warmPreview: true, warmComparison: false })).toBe(false);
+    expect(isViChangeWarmPlanEmpty({ warmPreview: false, warmComparison: true })).toBe(false);
+    expect(isViChangeWarmPlanEmpty({ warmPreview: true, warmComparison: true })).toBe(false);
   });
 });

@@ -9,7 +9,7 @@ visual LabVIEW comparison report you can read and share.
 
 ## Requirements
 
-- Visual Studio Code 1.90 or newer.
+- Visual Studio Code 1.101 or newer.
 - A trusted Git repository containing the tracked `.vi`, `.ctl`, or `.vit` file
   you want to review, with at least two saved versions to compare.
 - A LabVIEW comparison runtime, either:
@@ -71,6 +71,17 @@ between the two versions, with the difference images embedded inline. Use
 
 ![Viewing the comparison report and exporting it to HTML.](https://raw.githubusercontent.com/LabVIEW-Community-CI-CD/vi-history-suite/main/docs/media/report-export.gif)
 
+## Preview a VI
+
+Turn on **VI Preview** (the `viHistorySuite.preview.enabled` setting, on the
+Docker runtime) to render a VI as a read-only picture of its front panel and
+block diagram when you open it. The extension caches the rest of the workspace
+in the background so later previews open instantly. Set
+`viHistorySuite.preview.blockDiagramInteractive` to view the block diagram as an
+interactive, pannable and zoomable diagram — step through each
+Case/Event/Sequence structure's cases in place with the `◀ n/N ▶` selector or
+the arrow keys — instead of a static picture.
+
 ## Runtime safety checks
 
 Before each comparison, VI History checks both selected versions and your
@@ -116,16 +127,22 @@ Ask agent mode to work with your VIs in plain language, for example:
 - "Compare the last two revisions of `Main.vi` and tell me what changed."
 - "Index the LabVIEW VIs in this repository, ranked by recent activity."
 
-The server provides eight tools in total: comparison summaries and the full
-semantic model, on-demand comparison and history across Git revisions, a
-repository VI index, a pull-request VI review, and the published VI-diff schemas
-plus a document validator. The three tools that run comparisons need a
+The server provides tools for comparison summaries and the full semantic model,
+on-demand comparison and history across Git revisions, a repository VI index, a
+pull-request VI review, preview-cache generation, and the published VI-diff
+schemas plus a document validator. The tools that run comparisons need a
 comparison runtime (the same host LabVIEW or Docker image you set up above) and
 may take a few minutes; the rest use Git only.
 
 For the full tool catalog, inputs, and the open VI-diff schemas, see
 [docs/mcp-server.md](./docs/mcp-server.md). Agent mode requires VS Code 1.101 or
 later.
+
+Advanced: the MCP server normally runs the dev-tools build bundled with the
+extension. You can pin an independently released dev-tools version with the
+`viHistorySuite.devTools.version` setting and the **Install Pinned Dev-Tools
+Version** command, without waiting for a Marketplace update — see
+[docs/devtools-release.md](./docs/devtools-release.md#pinning-a-dev-tools-version-in-the-extension).
 
 ## Help and feedback
 

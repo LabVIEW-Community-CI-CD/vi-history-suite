@@ -2,7 +2,7 @@
   "name": "vi-history-suite",
   "displayName": "VI History Suite",
   "description": "VS Code extension for content-detected LabVIEW VI history review in Git repositories.",
-  "version": "1.34.2",
+  "version": "1.34.3",
   "publisher": "svelderrainruiz",
   "license": "0BSD",
   "private": true,
@@ -107,6 +107,21 @@
         "title": "Open VI History",
         "category": "VI History",
         "icon": "$(history)"
+      },
+      {
+        "command": "labviewViHistory.installPinnedDevTools",
+        "title": "Install Pinned Dev-Tools Version",
+        "category": "VI History"
+      },
+      {
+        "command": "labviewViHistory.uninstallDevTools",
+        "title": "Uninstall Dev-Tools Version",
+        "category": "VI History"
+      },
+      {
+        "command": "labviewViHistory.showDevToolsStatus",
+        "title": "Show Dev-Tools Status",
+        "category": "VI History"
       }
     ],
     "menus": {
@@ -254,6 +269,17 @@
           "default": false,
           "description": "Allow the Host (installed LabVIEW) runtime to render VI previews directly, instead of only displaying previews already cached on Docker. Off by default: Docker generates the cache and the Host displays it. Turn this on for a dedicated LabVIEW environment that has no Docker (for example the Vagrant LabVIEW VM) so it can both generate the cache and visualize previews. Requires VI Preview to be on."
         },
+        "viHistorySuite.devTools.version": {
+          "type": "string",
+          "default": "bundled",
+          "pattern": "^(bundled|(devtools-)?v?(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(-[0-9A-Za-z-.]+)?(\\+[0-9A-Za-z-.]+)?)$",
+          "markdownDescription": "Which dev-tools build (the compiled MCP server and companion tooling) the extension runs. `bundled` (default) uses the build shipped with the extension and never touches the network. Pin an independent dev-tools release with a `devtools-vX.Y.Z` tag (SemVer 2.0) to run that version without waiting for a Marketplace update; the extension downloads it once into global storage, verifies its integrity, and launches it only in a trusted workspace. Requires a matching published dev-tools release."
+        },
+        "viHistorySuite.devTools.checkForUpdates": {
+          "type": "boolean",
+          "default": false,
+          "description": "Opt in to a background check that notifies you when a newer stable dev-tools version than the one you have pinned is available. Off by default and never contacts the network unless enabled. Only stable releases are surfaced (prereleases are ignored)."
+        },
         "viHistorySuite.preview.warmOnChange": {
           "type": "boolean",
           "default": true,
@@ -329,6 +355,8 @@
     "test:integration:windows": "node scripts/runWindowsIntegrationHost.js",
     "assurance:state": "node scripts/generateAssuranceState.js",
     "standards:audit": "node scripts/runMultiStandardsAudit.js",
+    "adr:check": "node scripts/checkAdrIndex.js",
+    "agent:check": "node scripts/checkAgentDelegation.js",
     "issue:standards-triage": "node scripts/runIssueStandardsTriage.js",
     "package:audit": "node scripts/auditPackagedRuntimeSurface.js",
     "package": "npm run compile && npm run package:audit && node scripts/runPinnedVsce.js package",
@@ -348,10 +376,17 @@
     "devtools:release": "node scripts/buildDevToolsRelease.js",
     "devtools:release:verify": "node scripts/verifyDevToolsRelease.js",
     "supply-chain:state": "node scripts/buildSupplyChainState.js",
+    "release:state": "node scripts/buildReleaseState.js",
+    "release:state:strict": "node scripts/buildReleaseState.js --strict",
     "release:readiness": "node scripts/checkReleaseReadiness.js",
     "release:readiness:strict": "node scripts/checkReleaseReadiness.js --strict",
     "release:readiness:gate": "node scripts/checkReleaseReadiness.js --strict --require-release-attestation",
     "verify:preview": "npm run compile && node out/tooling/viPreviewVerifyCli.js",
+    "preview:diagnostics": "npm run compile && node out/tooling/viPreviewVerifyCli.js --diagnostics",
+    "preview:cache:warm": "npm run compile 1>&2 && node out/cli/runViPreviewCacheWarmer.js",
+    "preview:cache:health": "npm run compile 1>&2 && node out/cli/runViPreviewCacheHealth.js",
+    "preview:cache:bundle": "npm run compile 1>&2 && node out/cli/runViPreviewCacheBundle.js",
+    "preview:cache:exchange": "npm run compile 1>&2 && node out/cli/runViPreviewCacheExchange.js",
     "docs:links": "node scripts/checkDocsLinks.js",
     "docs:gate": "node scripts/checkDocumentationWorkbench.js",
     "coverage:map": "node scripts/mapCoverageToTraceability.js",

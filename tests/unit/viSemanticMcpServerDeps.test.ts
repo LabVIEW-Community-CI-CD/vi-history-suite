@@ -40,6 +40,14 @@ describe('buildViSemanticMcpServerDeps', () => {
     expect(typeof deps.buildViSemanticPrReview).toBe('function');
   });
 
+  it('wires the read-only preview-cache inspector', () => {
+    const deps = buildViSemanticMcpServerDeps(cache);
+    expect(typeof deps.previewCacheInspector?.list).toBe('function');
+    expect(typeof deps.previewCacheInspector?.summarize).toBe('function');
+    expect(typeof deps.previewCacheInspector?.search).toBe('function');
+    expect(typeof deps.previewCacheInspector?.get).toBe('function');
+  });
+
   it('binds compare_vi_revisions to the shared comparison-model cache', async () => {
     const compareFn = vi.fn(
       async (

@@ -2196,7 +2196,8 @@ Missing numeric IDs are intentional.
 - Area: CI And Developer Environment
 - Statement: Hosted automation shall enforce governed branch promotion and
   publish Marketplace releases only from exact release tags on `main` via a
-  manual maintainer dispatch with no automatic trigger.
+  manual dispatch that an authorized agent is responsible for performing, with
+  no automatic trigger.
 - Acceptance Criteria:
   - Hosted CI admits pull requests to `main` only from `release/vX.Y.Z` or
     `hotfix/vX.Y.Z` branches.
@@ -2232,10 +2233,14 @@ Missing numeric IDs are intentional.
     operations runbook.
   - Release evidence is retained as a workflow artifact.
   - The Marketplace release workflow has no automatic trigger: it runs only
-    from a manual maintainer `workflow_dispatch` on an exact `vX.Y.Z` tag ref
+    from a manual `workflow_dispatch` on an exact `vX.Y.Z` tag ref
     (dispatch on the tag preserves the exact-tag, package-version, and
-    `origin/main` reachability guards), and agents must never dispatch or
-    approve it.
+    `origin/main` reachability guards), and an authorized agent is responsible
+    for dispatching and approving it (a maintainer may also do so).
+  - Hosted CI admits pull requests to a `feature/*` branch only from a `fix/*`
+    branch or a stacked `feature/<issue#>-*` branch, and rejects a `fix/*`
+    branch that targets `develop` or `main` directly, so the branch flow is
+    `fix/* -> feature/<issue#>-* -> develop -> main`.
 - Agent Work Scope:
   - Change branch-governance workflow logic, Marketplace release workflow YAML,
     maintainer operations docs, requirements, and static tests together.
@@ -4414,10 +4419,11 @@ Missing numeric IDs are intentional.
     and then to single-file staging when a tree exceeds the file-count or
     total-size guard.
   - When a render cache is available, `renderViPreviewForFile` serves an
-    unchanged VI (keyed by `computeViPreviewCacheKey` over the target VI plus the
-    staged file set by path/size/mtime, so VIs sharing a staged tree never
-    collide) from the cache without staging or launching LabVIEW, and populates
-    the cache after a fresh render; cache read and write failures are non-fatal.
+    unchanged VI (keyed by `computeViPreviewCacheKey` over the target VI plus a
+    content digest of each staged file, so the key is portable across machines
+    and VIs sharing a staged tree never collide) from the cache without staging
+    or launching LabVIEW, and populates the cache after a fresh render; cache
+    read and write failures are non-fatal.
   - After VI Preview is enabled (or the first successful preview opens), a
     background warmer renders the
     remaining workspace VIs serially through a single warm session, populating
@@ -4508,6 +4514,16 @@ Missing numeric IDs are intentional.
     (default off) lets a Docker-less LabVIEW environment — for example the Vagrant
     LabVIEW VM — render previews live on host-native so it can both generate the
     cache and visualize previews for troubleshooting without Docker.
+  - The preview render cache is inspectable read-only without re-rendering:
+    `classifyPreviewCacheDocument` flags a cached document as `empty`,
+    `error-marker`, or `no-rendered-content` and reports its inline-image count
+    and interactive-viewer presence; `listPreviewCacheEntries`,
+    `summarizePreviewCache`, `getPreviewCacheEntry` (metadata plus a file-path
+    pointer by default, raw HTML only on request, rejecting keys with path
+    separators), and `searchPreviewCache` (by `error`/`interactive`/`image`/`empty`
+    marker) operate over an injected filesystem boundary so an agent (over the MCP
+    surface) or an operator can reason about a downloaded/local cache without
+    launching LabVIEW.
 - Agent Work Scope:
   - Keep the command-plan builders pure and dependency-free so they stay
     deterministically unit-testable without a LabVIEW runtime. Reuse the
@@ -4529,6 +4545,7 @@ Missing numeric IDs are intentional.
 - Implementation References:
   - `package.json`
   - `src/reporting/viPreview/viPreviewCommandPlan.ts`
+  - `src/reporting/viPreview/viPreviewCacheInspection.ts`
   - `src/reporting/viPreview/viPreviewExecution.ts`
   - `src/reporting/viPreview/viPreviewFileRender.ts`
   - `src/reporting/viPreview/viPreviewStaging.ts`
@@ -4550,11 +4567,13 @@ Missing numeric IDs are intentional.
   - `src/reporting/viPreview/viPreviewSessionRuntime.ts`
   - `src/reporting/viPreview/viPreviewVerification.ts`
   - `src/tooling/viPreviewVerifyCli.ts`
+  - `src/tooling/viPreviewDiagnostics.ts`
   - `resources/labview-cli-operations/PrintToSingleFileHtml/PrintToSingleFileHtml.lvclass`
 - Verification References:
   - `tests/unit/packageManifest.test.ts`
   - `tests/unit/viPreviewEditor.test.ts`
   - `tests/unit/viPreviewCommandPlan.test.ts`
+  - `tests/unit/viPreviewCacheInspection.test.ts`
   - `tests/unit/viPreviewExecution.test.ts`
   - `tests/unit/viPreviewFileRender.test.ts`
   - `tests/unit/viPreviewStaging.test.ts`
@@ -4571,6 +4590,7 @@ Missing numeric IDs are intentional.
   - `tests/unit/viPreviewSessionRuntime.test.ts`
   - `tests/unit/viPreviewVerification.test.ts`
   - `tests/unit/viPreviewVerifyCli.test.ts`
+  - `tests/unit/viPreviewDiagnostics.test.ts`
   - `tests/unit/revisionViTree.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
 - Change Guidance:
@@ -5232,3 +5252,657 @@ Missing numeric IDs are intentional.
     the same shared lock; when wiring it, acquire the shared lock with the same
     `localViServerLockKey` derivation so preview and comparison launches share
     one queue per endpoint.
+
+### VHS-REQ-670: Release State Read-Model And Gated Publish Authority
+
+- Status: Active
+- Parent: VHS-SYS-REQ-016
+- Area: CI And Developer Environment
+- Statement: The repository shall provide a read-only aggregator that reports the
+  release-progress state of a version across its durable, ground-truth-derived
+  stages and its gated publish-authority posture in one schema-versioned packet,
+  failing the release-readiness verdict closed on incomplete publish authority in
+  a release context, so an agent (or maintainer) can drive the Marketplace
+  release idempotently and resumably.
+- Acceptance Criteria:
+  - `scripts/buildReleaseState.js` emits a `vi-history-suite/release-state@v1`
+    packet with a top-level `$schema` and `schemaVersion`, and derives each
+    durable stage (`develop-ready`, `tagged`, `on-main`, `published`,
+    `backsynced`) from ground truth, where each stage `reached` is `true`,
+    `false`, or `null` (null when the signal cannot be verified in the current
+    environment).
+  - The packet reports the furthest reached `stage`, any `stageGaps` (a
+    definitively unreached stage before the furthest reached one), and a rollup
+    `status` of `attention` when authority is definitively incomplete or a stage
+    gap exists, otherwise `ready`; `--strict` exits nonzero when the status is
+    not `ready`.
+  - The packet reports a gated single-principal `authority` posture: one
+    authorized principal both dispatches and approves the release, and the
+    safety control is the protected `marketplace-release` environment enforcing
+    an explicit manual-approval step (not an independent second identity);
+    `complete` is `true` only when that manual-approval gate is enforced and a
+    publish token is present, `false` when definitively incomplete, and `null`
+    when it cannot be verified (degrading to unverified rather than a false
+    negative).
+  - All git, `gh`, and `vsce` process boundaries are injected so the aggregator
+    is deterministically unit-testable with no network, checkout, or publisher;
+    the release baseline `main` and `develop` refs are configurable (defaults
+    `origin/main` and `origin/develop`); the `backsynced` stage is derived from
+    the `develop` tip so it does not flip true when the release merely reaches
+    `main`; and a default live-Marketplace reader (pinned `vsce show`) lets the
+    `published` stage resolve outside injected tests.
+  - `node scripts/buildReleaseState.js` renders text by default with `--json`,
+    `--markdown`, and `--schema` output modes plus optional
+    `--include-provenance` and a path-safe `--output`; Markdown table cells
+    escape backslashes before pipes.
+  - The release-readiness verdict adds a `release-authority` check that is
+    evaluated only under an explicit `--release-context` marker (never
+    piggybacked on `--require-release-attestation`, so the attestation workflow
+    step that has no publish token is unaffected), so an advisory
+    `npm run release:readiness` run is unaffected; in a release context the
+    check fails closed when authority is definitively incomplete and passes with
+    a note when authority is unverified.
+  - The Marketplace release workflow runs `node scripts/buildReleaseState.js
+    --strict` as a guard so a publish fails closed when the gated publish
+    authority is provably incomplete, while degrading to a pass when authority
+    cannot be verified.
+- Agent Work Scope:
+  - Keep the aggregator read-only, pure, and injectable with a thin CLI; reuse
+    the shared schema-envelope and output-contract helpers; never mutate a
+    source; keep the authority signal degrade-not-fail so advisory reads never
+    false-block.
+- Implementation References:
+  - `scripts/buildReleaseState.js`
+  - `scripts/checkReleaseReadiness.js`
+  - `.github/workflows/marketplace-release.yml`
+  - `package.json`
+- Verification References:
+  - `tests/unit/releaseStateScript.test.ts`
+  - `tests/unit/releaseReadinessScript.test.ts`
+  - `tests/unit/marketplaceReleaseWorkflow.test.ts`
+- Change Guidance:
+  - Keep the read-model non-mutating and its stages derived from ground truth;
+    add new stages as additional ordered records rather than changing the packet
+    shape. Keep the release-authority gate release-context-guarded so advisory
+    runs stay exit 0.
+
+### VHS-REQ-671: Headless Preview-Cache Worker
+
+- Status: Active
+- Parent: VHS-SYS-REQ-016
+- Area: CI And Developer Environment
+- Statement: The repository shall provide a headless command-line worker that
+  generates and stores single-VI preview render caches for an entire workspace
+  through the Docker preview runtime, without the VS Code UI, so a GitHub
+  Codespace (or a CI runner, or any Docker-capable host) can be used as a worker
+  that pre-renders a repository's VIs into a reusable, content-addressed cache.
+  Because a preview cache entry is content-addressed over its staged file set
+  and reproducible, a cache generated by the worker is valid on any machine for
+  the same VI content; the worker emits a self-describing summary packet whose
+  per-entry manifest maps each content-addressed cache key to its VI so the
+  generated cache can later be inspected, moved, and shared. This is the
+  producer slice of the preview-cache fabric and reuses the existing background
+  warm loop and file-backed render cache (VHS-REQ-659) rather than a new render
+  transport.
+- Acceptance Criteria:
+  - `listWorkspaceViFiles` enumerates a workspace's LabVIEW preview-target files
+    (`.vi`/`.vit`/`.vim`/`.ctl`, case-insensitive) through an injected
+    filesystem, skipping the background warmer's excluded directories
+    (`node_modules`, `.git`, `out`, `dist`, `.vscode-test`) at every level,
+    bounding recursion by a maximum depth, returning deterministically sorted
+    paths, and honoring an optional count limit; it never throws on an
+    unreadable directory (that directory contributes nothing).
+  - `runViPreviewCacheWarm` resolves the Docker preview runtime once for the
+    whole batch and, when the runtime cannot resolve, returns a `blocked` packet
+    (runtime outcome `blocked` with the adapter reason) with an empty manifest
+    and zeroed totals rather than throwing, so the block is emitted as evidence.
+  - `runViPreviewCacheWarm` warms every enumerated VI serially through the shared
+    warm loop with a file-backed render cache attached at the target cache
+    directory, which by default retains every rendered entry (eviction disabled)
+    so a whole-workspace warm never evicts earlier VIs as later ones render,
+    recording each VI as a manifest entry carrying its repository-relative path,
+    its content-addressed cache key (or null when the key could not be computed),
+    an outcome (`rendered`, `cache-hit`, `failed`, or `blocked`), the produced
+    byte count, the inline preview-image count when a document was produced, and
+    a failure reason when not successful; a fresh render that could not be
+    persisted to the cache is recorded as `failed`, and a per-VI render failure
+    is recorded while the loop continues.
+  - `renderViPreviewForFile` returns the content-addressed cache key it used for
+    cache hits, cache-only misses, and completed renders (undefined only when a
+    staged file could not be hashed and the render proceeded uncached) and
+    reports whether a fresh render was persisted to the cache, so the worker can
+    build the key-to-VI-path manifest and detect a non-persisted render without
+    recomputing staging.
+  - The worker emits a `vi-history-suite/preview-cache-warm@v1` packet with a
+    top-level `$schema` and `schemaVersion`, the repository root, the cache
+    directory, the resolved runtime, aggregate totals (total, rendered,
+    cache-hit, failed, blocked, and total bytes), and the per-entry manifest;
+    optional provenance (generation time, working directory, argv) is included
+    only under `--include-provenance`.
+  - `node out/cli/runViPreviewCacheWarmer.js` (npm run `preview:cache:warm`)
+    requires an explicit `--cache-dir` and fails closed with a remedy when it is
+    absent; it prints a concise summary by default, the raw packet under
+    `--json`, retains the packet through a path-safe `--output` (rejecting
+    absolute or parent-escaping paths), and exits nonzero when the runtime is
+    blocked or any VI failed to render.
+  - A reusable consumer devcontainer template
+    (`docs/consumer-workflows/codespace-preview-cache.devcontainer.json`) lets a
+    user open a Codespace on any LabVIEW repository as a preview-cache worker: it
+    enables the Docker-in-Docker feature (a live preview render is Docker-only),
+    installs the VI History Suite extension by its Marketplace id, turns on the
+    Docker-only preview feature with aggressive background warming, and documents
+    the `gh codespace ssh -- 'npm run preview:cache:warm --cache-dir ...'`
+    invocation; the template is kept under `docs/` (out of the packaged VSIX).
+- Agent Work Scope:
+  - Keep the enumerator and the warm orchestration pure and injectable (no VS
+    Code, Docker, or real filesystem required to unit-test); reuse
+    `warmViPreviewCache`, `createFileViPreviewCache`, and `renderViPreviewForFile`
+    rather than a new render path; keep the runtime Docker-only; keep the summary
+    packet self-describing so the later fabric phases (portable bundle, exchange,
+    coverage read-model) extend the manifest additively.
+- Implementation References:
+  - `src/cli/runViPreviewCacheWarmer.ts`
+  - `src/reporting/viPreview/viPreviewWorkspaceScan.ts`
+  - `src/reporting/viPreview/viPreviewFileRender.ts`
+  - `docs/consumer-workflows/codespace-preview-cache.devcontainer.json`
+  - `package.json`
+- Verification References:
+  - `tests/unit/viPreviewWorkspaceScan.test.ts`
+  - `tests/unit/viPreviewCacheWarmerCli.test.ts`
+  - `tests/unit/codespacePreviewCacheTemplate.test.ts`
+- Change Guidance:
+  - Keep the worker read-only against the workspace (it only reads VIs and writes
+    into the cache directory), Docker-only, and pure/injectable. Extend the
+    `preview-cache-warm@v1` manifest additively (new fields, not reshaped
+    records) so the portable bundle and coverage read-model build on it.
+
+### VHS-REQ-675: Preview-Cache Health Read-Model
+
+- Status: Active
+- Parent: VHS-SYS-REQ-016
+- Area: CI And Developer Environment
+- Statement: The repository shall provide a read-only aggregator that reports the
+  coverage of a preview-cache directory against a workspace's VIs — classifying
+  each VI as cached, stale, or missing by comparing the current workspace VI
+  enumeration, a prior warm manifest (`vi-history-suite/preview-cache-warm@v1`),
+  and the cache directory's present entries — plus orphaned cache files and an
+  overall coverage percentage, so an agent or CI can drive incremental warms and
+  prune superseded entries without re-rendering. This is the observability slice
+  of the preview-cache fabric and never launches LabVIEW or mutates the cache.
+- Acceptance Criteria:
+  - `buildViPreviewCacheHealth` is a pure read-model that classifies each
+    workspace VI as `cached` (the manifest maps it to a cache key whose
+    `<key>.html` file is present), `stale` (the manifest warmed it to a key whose
+    file is now absent), `missing` (the VI is not covered by the manifest), or
+    `failed` (the manifest recorded it as failed/blocked); it emits a
+    `vi-history-suite/preview-cache-health@v1` packet with a top-level `$schema`
+    and `schemaVersion`, aggregate totals (workspace VIs, cached, stale, missing,
+    failed, orphaned cache files, removed VIs, and an integer coverage
+    percentage), and per-VI entries, and reports `healthy` true only when every
+    workspace VI is cached and none failed.
+  - `buildViPreviewCacheHealth` also reports the cache keys present on disk that
+    no manifest entry references (`orphanedCacheKeys`, candidates for pruning) and
+    the manifest VI paths no longer present in the workspace
+    (`removedViPaths`); it normalizes path separators, de-duplicates, and sorts
+    deterministically, treats every workspace VI as `missing` when no manifest is
+    supplied, and never throws.
+  - `node out/cli/runViPreviewCacheHealth.js` (npm run `preview:cache:health`)
+    gathers the three inputs through injected filesystem boundaries (workspace
+    enumeration, cache-directory key listing, optional `--manifest` packet parse),
+    requires an explicit `--cache-dir` and fails closed with a remedy when it is
+    absent, prints a concise summary by default and the raw packet under `--json`,
+    retains the packet through a path-safe `--output`, and fails closed under
+    `--strict` when the cache does not fully cover the workspace.
+- Agent Work Scope:
+  - Keep the aggregator pure and injectable (no filesystem or rendering in the
+    read-model); reuse the worker's `preview-cache-warm@v1` manifest and the
+    workspace enumerator rather than re-deriving them; keep it read-only and
+    degrade gracefully (a missing/unparseable manifest yields an all-missing
+    report, not an error).
+- Implementation References:
+  - `src/cli/runViPreviewCacheHealth.ts`
+  - `src/reporting/viPreview/viPreviewCacheHealth.ts`
+  - `package.json`
+- Verification References:
+  - `tests/unit/viPreviewCacheHealth.test.ts`
+  - `tests/unit/viPreviewCacheHealthCli.test.ts`
+- Change Guidance:
+  - Keep the read-model non-mutating and derived from the three ground-truth
+    inputs (workspace, manifest, cache directory). Detecting per-VI content drift
+    against the current bytes (beyond manifest-key presence) belongs to the
+    portable-bundle verification (VHS-REQ-672), not this coverage model.
+### VHS-REQ-672: Portable Preview-Cache Bundle
+
+- Status: Active
+- Parent: VHS-SYS-REQ-008
+- Area: Comparison Reports
+- Statement: The repository shall provide a portable, content-addressed
+  preview-cache bundle format with export, verification, and lossless import, so
+  a preview cache generated in one environment (a Codespace worker or CI fleet,
+  VHS-REQ-671) can be packaged into a self-describing, verifiable artifact and
+  reused in another. Each bundle entry carries an integrity digest of its
+  document bytes and the VI path(s) it renders; because the entries are
+  content-addressed (VHS-REQ-659), a bundle merges into a target cache
+  order-independently and de-duplicating. This is the portability slice of the
+  preview-cache fabric.
+- Acceptance Criteria:
+  - `buildViPreviewCacheBundleManifest` produces a
+    `vi-history-suite/preview-cache-bundle@v1` manifest with a top-level
+    `$schema` and `schemaVersion`, an entry count, total bytes, and a per-entry
+    record carrying the content-addressed key, a SHA-256 integrity digest of the
+    document bytes, the byte length, and the sorted VI path(s); it drops invalid
+    keys, collapses duplicate keys (merging their VI paths), normalizes path
+    separators, sorts entries by key, and records optional provenance.
+  - `verifyViPreviewCacheBundle` reports each entry as `ok`, `integrity-mismatch`,
+    or `missing-document` against the bundle's documents, and is overall `ok`
+    only when every entry verifies, so a tampered or incomplete bundle is
+    detected without throwing.
+  - `planViPreviewCacheBundleImport` plans a lossless merge into a target cache:
+    a key already present is `skip-present`, a document that fails its integrity
+    digest (or is missing) is `reject-integrity-mismatch` (never written), and
+    the rest are `add`; content-addressing makes the merge order-independent and
+    safe.
+  - `node out/cli/runViPreviewCacheBundle.js` (npm run `preview:cache:bundle`)
+    `bundle` exports a cache directory into a portable bundle directory (a
+    `manifest.json` plus `<key>.html` files), optionally naming each entry's VI
+    path(s) from a `preview-cache-warm@v1` manifest and recording a `--source`
+    label; `unbundle` verifies a bundle against its manifest and merges it into a
+    `--into` target cache, failing closed (exit nonzero) on a not-found or
+    integrity-failed bundle and never writing a rejected document.
+- Agent Work Scope:
+  - Keep the bundle model pure and injectable (manifest construction,
+    verification, and merge planning operate on in-memory records; the CLI wires
+    the filesystem); reuse the content-addressed cache key rather than a new
+    identity; keep import lossless and fail-closed on integrity so a shared
+    bundle can never corrupt a consumer's cache.
+- Implementation References:
+  - `src/cli/runViPreviewCacheBundle.ts`
+  - `src/reporting/viPreview/viPreviewCacheBundle.ts`
+  - `package.json`
+- Verification References:
+  - `tests/unit/viPreviewCacheBundle.test.ts`
+  - `tests/unit/viPreviewCacheBundleCli.test.ts`
+- Change Guidance:
+  - Keep the bundle self-describing and content-addressed; extend the manifest
+    additively (new fields, not reshaped records). Distribution (publishing and
+    fetching bundles) belongs to the cache exchange (VHS-REQ-673), not this
+    format.
+
+### VHS-REQ-673: Preview-Cache Exchange
+
+- Status: Active
+- Parent: VHS-SYS-REQ-016
+- Area: CI And Developer Environment
+- Statement: The repository shall provide a preview-cache exchange that publishes
+  a portable cache bundle (VHS-REQ-672) to a content-addressed GitHub Release and
+  fetches a published bundle back, verifying and losslessly merging it into a
+  target cache, so a preview cache generated in one environment (a Codespace
+  worker or CI fleet, VHS-REQ-671) can be distributed to and reused in another.
+  It reuses the dev-tools release-channel transport (VHS-REQ-667): a single
+  tarball asset plus a detached manifest per release, addressed by a content
+  digest so a bundle is published once and de-duplicated on re-publish. This is
+  the distribution slice of the preview-cache fabric.
+- Acceptance Criteria:
+  - `computeBundleContentDigest` derives an order-independent SHA-256 over a
+    bundle manifest's entries (key + integrity digest), and
+    `deriveExchangeReleaseTag` maps it to a stable `preview-cache-<12-hex>`
+    release tag, so identical cache content resolves to the same tag regardless
+    of build order.
+  - `planExchangePublish` decides `publish`, `skip-existing` (the
+    content-addressed tag is already published — idempotent re-publish), or
+    `skip-empty` (no entries), from the manifest and the set of existing tags,
+    purely and without side effects.
+  - `selectExchangeReleaseToFetch` selects the release matching an explicit tag
+    when given, otherwise the most recently created `preview-cache-*` release,
+    ignoring unrelated release tags, and returns undefined when nothing matches.
+  - `node out/cli/runViPreviewCacheExchange.js` (npm run `preview:cache:exchange`)
+    `publish` reads a bundle directory's manifest, and when the plan is to
+    publish, packs the bundle into a tarball and creates the content-addressed
+    release attaching the tarball plus the detached manifest; `fetch` downloads
+    the selected release, extracts it, verifies the bundle against its manifest
+    integrity digests, and losslessly merges it into a `--into` target cache
+    (reusing the bundle verify + content-addressed import), failing closed on a
+    missing release, a missing/corrupt archive, or an integrity failure. All
+    GitHub (`gh`), tar, and filesystem boundaries are injected so the
+    orchestration is unit-testable offline.
+- Agent Work Scope:
+  - Keep the publish/fetch decisions pure (`viPreviewCacheExchange`) and the CLI
+    a thin injected-boundary wiring; reuse the bundle format and its verify +
+    import rather than a new merge path; keep publish idempotent and fetch
+    fail-closed so a shared exchange can never corrupt a consumer's cache. Do not
+    add an auto-publishing workflow here (that is the fleet, VHS-REQ-674).
+- Implementation References:
+  - `src/cli/runViPreviewCacheExchange.ts`
+  - `src/reporting/viPreview/viPreviewCacheExchange.ts`
+  - `package.json`
+- Verification References:
+  - `tests/unit/viPreviewCacheExchange.test.ts`
+  - `tests/unit/viPreviewCacheExchangeCli.test.ts`
+- Change Guidance:
+  - Keep the exchange content-addressed and idempotent; reuse the dev-tools
+    release-channel transport conventions. If bundle sizes outgrow release
+    assets, an OCI/registry transport is the scale-out alternative — add it as a
+    new transport behind the same pure planning layer rather than reshaping it.
+
+### VHS-REQ-674: Preview-Cache Generation Fleet
+
+- Status: Active
+- Parent: VHS-SYS-REQ-016
+- Area: CI And Developer Environment
+- Statement: The repository shall provide a reusable GitHub Actions workflow that
+  renders a target repository's LabVIEW VI previews across a sharded runner
+  matrix, then merges the per-shard portable bundles into one bundle and
+  publishes it to the content-addressed cache exchange (VHS-REQ-673), so a whole
+  repository's preview cache is generated in parallel and shared once. This is
+  the scale slice of the preview-cache fabric, composing the worker
+  (VHS-REQ-671), bundle (VHS-REQ-672), and exchange (VHS-REQ-673); it reuses the
+  reusable-workflow delegation pattern (VHS-REQ-661) with a trusted-ref guard.
+- Acceptance Criteria:
+  - `selectWorkspaceViShard` splits an ordered VI path list into a requested
+    shard by round-robin position (`position % count === index`), so the shards
+    are disjoint and their union is exactly the input; an out-of-range index
+    yields an empty shard and a non-positive count yields the whole list, without
+    throwing. The worker CLI accepts `--shard <index>/<count>` and renders only
+    that shard's slice.
+  - `preview-cache-fleet-callable.yml` is a `workflow_call` reusable workflow
+    whose `plan` job computes a bounded (1..32) shard matrix, whose `render`
+    matrix job warms each shard's disjoint slice into a cache and packages it as
+    a portable bundle artifact, and whose `merge` job (needs `render`) combines
+    the shard bundles into one cache (content-addressed, de-duplicating) and
+    re-bundles the union; the tool checkout is pinned to the reusable workflow's
+    own commit SHA (`job.workflow_sha`), failing closed when unavailable.
+  - The `merge` job publishes the merged bundle to the cache exchange only when
+    the `publish` input is true (default false is a dry run that uploads the
+    shard and merged bundles as workflow artifacts), and publishing requires the
+    `PREVIEW_CACHE_TARGET_TOKEN` secret, failing closed with an actionable
+    message when it is absent.
+  - `preview-cache-fleet.yml` is a maintainer `workflow_dispatch` wrapper that
+    delegates to the reusable workflow with `enforce_trusted_ref: true` and
+    read-only top-level permissions; the reusable workflow's `plan` job fails
+    closed on an untrusted ref when `enforce_trusted_ref` is set, and no fleet
+    workflow references the optional Vagrant helper (VHS-REQ-599).
+- Agent Work Scope:
+  - Keep the shard selection pure and reuse the worker/bundle/exchange CLIs
+    rather than reimplementing render, merge, or publish; keep the reusable
+    workflow trusted-ref-guarded and SHA-pinned like the PR-review reusable
+    workflow; keep publishing opt-in so a dry run never writes a release. Assert
+    the workflow contract by step/job-name ordering, not brittle `run:` snippets.
+- Implementation References:
+  - `.github/workflows/preview-cache-fleet-callable.yml`
+  - `.github/workflows/preview-cache-fleet.yml`
+  - `src/cli/runViPreviewCacheWarmer.ts`
+  - `src/reporting/viPreview/viPreviewWorkspaceScan.ts`
+- Verification References:
+  - `tests/unit/previewCacheFleetWorkflow.test.ts`
+  - `tests/unit/viPreviewWorkspaceScan.test.ts`
+  - `tests/unit/viPreviewCacheWarmerCli.test.ts`
+- Change Guidance:
+  - Keep the fleet a thin composition of the existing worker/bundle/exchange
+    CLIs; add render capacity via the shard matrix, not new render logic. Keep
+    the dispatch wrapper delegating to the SHA-pinned reusable workflow, and keep
+    publishing opt-in and trusted-ref-guarded.
+
+### VHS-REQ-676: Independent SemVer Dev-Tools Version Line
+
+- Status: Active
+- Parent: VHS-SYS-REQ-013
+- Area: CI And Developer Environment
+- Statement: The dev-tools release channel (VHS-REQ-667) shall carry an
+  independent SemVer 2.0 version line, sourced from a committed field in the
+  toolset manifest and echoed into the provenance packet, so the development
+  toolset (compiled CLI/MCP outputs, scripts, docs, customization) is versioned
+  and released on its own cadence, decoupled from the extension's Marketplace
+  version. This is the foundation for an extension to later pin and consume a
+  specific dev-tools version without a Marketplace republish (VHS-REQ-677).
+- Acceptance Criteria:
+  - A dependency-free SemVer 2.0 utility (`src/support/semver.ts` for the
+    extension, `scripts/lib/semver.cjs` for the release scripts) parses and
+    validates SemVer 2.0 strings (optional leading `v`, prerelease and
+    build-metadata identifiers) and compares them by SemVer 2.0 precedence
+    (numeric vs alphanumeric prerelease rules, a prerelease ranking below its
+    release, build metadata ignored for precedence); it adds no runtime npm
+    dependency and never throws on invalid input (invalid versions sort after
+    valid ones).
+  - `docs/devtools-release.manifest.json` declares a committed `version` field
+    that is the SemVer 2.0 source of truth for the dev-tools line, and
+    `scripts/buildDevToolsRelease.js` fails closed when that `version` is missing
+    or not valid SemVer 2.0, so an unversioned or malformed toolset can never be
+    packaged.
+  - The dev-tools provenance manifest (`vi-history-suite/devtools-release@v1`)
+    emits the `version` field (alongside the existing `channel`, `buildVersion`,
+    `contentDigest`, and requirements binding), and the published JSON Schema and
+    `--schema` output require it.
+  - `.github/workflows/devtools-release.yml` names the release tag from the
+    version — `devtools-v<version>` for the stable channel and
+    `devtools-v<version>-dev.<run-id>` (a valid SemVer 2.0 prerelease) for the
+    prerelease channel — guards that the built packet version equals the
+    committed manifest version (failing closed on drift), and keeps the existing
+    content-digest dedup and keep-last-N pruning scoped by the `devtools-v*`
+    prefix and the prerelease flag.
+- Agent Work Scope:
+  - Keep the SemVer utility dependency-free and spec-correct; bump the manifest
+    `version` deliberately per dev-tools release. Do not couple the dev-tools
+    version to the extension version. Preserve the content-addressed dedup and
+    fail-closed verifier from VHS-REQ-667.
+- Implementation References:
+  - `src/support/semver.ts`
+  - `scripts/lib/semver.cjs`
+  - `docs/devtools-release.manifest.json`
+  - `scripts/buildDevToolsRelease.js`
+  - `.github/workflows/devtools-release.yml`
+- Verification References:
+  - `tests/unit/semver.test.ts`
+  - `tests/unit/buildDevToolsReleaseScript.test.ts`
+  - `tests/unit/devToolsReleaseWorkflow.test.ts`
+- Change Guidance:
+  - Keep the version an independent SemVer 2.0 line; extend the provenance packet
+    additively. If the extension later pins a dev-tools version (VHS-REQ-677),
+    reuse this SemVer utility for comparison rather than adding a semver
+    dependency.
+
+### VHS-REQ-677: Runtime Dev-Tools Version Pinning For The MCP Server
+
+- Status: Active
+- Parent: VHS-SYS-REQ-013
+- Area: CI And Developer Environment
+- Statement: The Marketplace-installed extension shall be able to pin and
+  runtime-consume an independent dev-tools version (the SemVer 2.0
+  `devtools-vX.Y.Z` line from VHS-REQ-676) for its MCP server launch, without a
+  Marketplace republish, downloading and integrity-verifying the pinned release
+  into global storage and launching it only in a trusted workspace, with an
+  opt-in check that notifies when a newer stable dev-tools version is available.
+  The scope is the MCP server launch only, so a malformed or unverified pin
+  fails closed to the bundled build rather than silently running mismatched code.
+- Acceptance Criteria:
+  - The `viHistorySuite.devTools.version` setting selects the dev-tools build:
+    `bundled` (default) uses the build shipped with the extension and touches no
+    network, while a `devtools-vX.Y.Z` tag (or bare SemVer 2.0 version) pins that
+    release; normalization fails closed on any other value rather than silently
+    falling back to bundled, and `viHistorySuite.devTools.checkForUpdates`
+    defaults off.
+  - The MCP server launch resolves through `src/tooling/devToolsResolver.ts`:
+    the bundled build always launches from the extension `out/`, while a pinned
+    version launches from `<globalStorage>/devtools/<version>/` only when the
+    workspace is trusted and the install is integrity-verified; otherwise the
+    launch fails closed to the bundled build (never launching unverified pinned
+    code) and reports the reason.
+  - Installing a pinned release is fully fail-closed and IO/network-injected: it
+    selects the exact release tag from the official repo, downloads the archive
+    plus its manifest, verifies every manifest file's SHA-256 and the aggregate
+    content digest (the same deterministic scheme as VHS-REQ-676's builder),
+    marks the install verified only on success, and removes partial installs on
+    any download, manifest-version, or verification failure.
+  - The opt-in update check surfaces only newer STABLE dev-tools versions
+    (prereleases ignored), using the VHS-REQ-676 SemVer comparison, and produces
+    a notification only when a strictly greater stable version than the pinned
+    one exists.
+  - Consumer documentation no longer directs users to install a dev-tools VSIX
+    (the dev-tools channel ships an archive, not a VSIX; the extension itself is
+    Marketplace-only); it directs them to pin `viHistorySuite.devTools.version`
+    instead.
+- Agent Work Scope:
+  - Keep all filesystem and network access dependency-injected in the resolver so
+    the policy stays unit-testable and fail-closed. Do not broaden the scope
+    beyond the MCP server launch. Reuse the VHS-REQ-676 SemVer utility for all
+    version comparisons; add no semver dependency. Gate any download and any
+    pinned launch on workspace trust and integrity verification.
+- Implementation References:
+  - `src/tooling/devToolsResolver.ts`
+  - `src/mcp/viSemanticMcpServerProvider.ts`
+  - `package.json`
+  - `docs/consumer-workflows/codespace-preview-cache.devcontainer.json`
+- Verification References:
+  - `tests/unit/devToolsResolver.test.ts`
+  - `tests/unit/viSemanticMcpServerProvider.test.ts`
+  - `tests/unit/packageManifest.test.ts`
+  - `tests/unit/codespacePreviewCacheTemplate.test.ts`
+- Change Guidance:
+  - Preserve the fail-closed posture: an unverified or untrusted pin must fall
+    back to the bundled build, never to unverified pinned code. Keep IO injected.
+    If the Marketplace pre-release channel lands (VHS-REQ-678), keep dev-tools
+    version pinning independent of the extension version.
+
+### VHS-REQ-678: Marketplace Pre-Release Channel
+
+- Status: Active
+- Parent: VHS-SYS-REQ-016
+- Area: CI And Developer Environment
+- Statement: The Marketplace release workflow (VHS-REQ-609) shall publish to
+  either the stable or the pre-release Marketplace channel selected from the
+  release tag's minor-version parity (an odd minor publishes as a pre-release, an
+  even minor as stable, per the VS Code convention), preserving every existing
+  release guard for both channels, so pre-release builds can be shipped for
+  real-world testing through the same single manual, gated release lever.
+- Acceptance Criteria:
+  - A `Determine Release Channel` step, running after the package-version check
+    and before publication, derives the channel from the tag's minor-version
+    parity (odd minor → pre-release, even minor → stable) and exposes the derived
+    channel and a `pre_release` flag as step outputs.
+  - The `Publish To Marketplace` step passes `--pre-release` to the pinned VSCE
+    publish command only on the pre-release channel and publishes without it on
+    the stable channel, while remaining a single step still gated by the
+    idempotent pre-publish check (skipped when the version is already published).
+  - The workflow exposes an optional `channel` dispatch input (`stable` or
+    `prerelease`, empty by default meaning derive-from-parity) that, when
+    non-empty, must agree with the parity-derived channel or the run fails closed,
+    so a stable tag can never be mis-published to the pre-release channel or vice
+    versa.
+  - Every existing release guard from VHS-REQ-609 and VHS-REQ-670 (protected
+    `marketplace-release` environment approval, exact `vX.Y.Z` tag, package
+    version equals tag, tag reachable from `origin/main`, release-state
+    `--strict` authority guard, runtime attestation, supply-chain freshness, and
+    bounded post-publish listing verification with retained evidence) applies
+    unchanged to both channels, and the workflow keeps its manual
+    `workflow_dispatch`-only trigger with no automatic trigger.
+- Agent Work Scope:
+  - Change the Marketplace release workflow YAML, maintainer operations docs,
+    requirements, and the static workflow-contract test together. Do not add an
+    automatic trigger, do not weaken any existing release guard, and keep the
+    channel derivation and dispatch-input agreement fail-closed.
+- Implementation References:
+  - `.github/workflows/marketplace-release.yml`
+  - `docs/maintainer-operations.md`
+- Verification References:
+  - `tests/unit/marketplaceReleaseWorkflow.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - Keep the channel derived from version parity as the source of truth and the
+    dispatch input only a fail-closed cross-check. If a future change adds a
+    third channel, extend the derivation and the agreement guard together rather
+    than bypassing either.
+
+
+### VHS-REQ-679: Runtime Dev-Tools Install Lifecycle
+
+- Status: Active
+- Parent: VHS-SYS-REQ-013
+- Area: CI And Developer Environment
+- Statement: The extension shall provide the runtime filesystem and network
+  boundary and the user-facing commands that install, uninstall, and check for
+  updates to a pinned dev-tools version (VHS-REQ-677), fetching releases only
+  from the official repository over HTTPS, integrity-verifying every install
+  before use, and gating every effect on workspace trust, so a pinned dev-tools
+  version can be driven end-to-end from the extension without a Marketplace
+  republish.
+- Acceptance Criteria:
+  - A dependency-free install boundary downloads a `devtools-vX.Y.Z` release from
+    the official repository over HTTPS, extracts its deterministic POSIX ustar +
+    gzip tarball with Node built-ins (no tar dependency), refuses any entry that
+    would extract outside the install directory, and folds the aggregate content
+    digest byte-for-byte identically to `scripts/buildDevToolsRelease.js`.
+  - The `labviewViHistory.installPinnedDevTools` command installs the version
+    named by `viHistorySuite.devTools.version` through the VHS-REQ-677
+    orchestrator (integrity-verified, workspace-trust-gated, fail-closed), and
+    reports a clear outcome for bundled, malformed, untrusted, success, and
+    failure cases.
+  - The opt-in activation update check runs only when
+    `viHistorySuite.devTools.checkForUpdates` is on, a version is pinned, and the
+    workspace is trusted; it surfaces only newer stable versions (prereleases
+    ignored) and swallows network errors so activation is never disrupted.
+  - The `labviewViHistory.uninstallDevTools` command lists the verified installed
+    versions, removes the chosen one, and warns when the removed version is still
+    the pinned one (the MCP launch then falls back to the bundled build); listing
+    reports only installs that carry the verified marker.
+  - When a version is pinned but not installed, the extension surfaces an
+    actionable notification offering to run the install command, and the MCP
+    server meanwhile launches from the bundled build (fail-closed).
+- Agent Work Scope:
+  - Keep the install boundary dependency-free and its HTTP/filesystem effects
+    injected so the policy is unit-testable. Never fetch from a non-official
+    source, never launch or mark-verified an install that failed integrity
+    verification, and keep every effect gated on workspace trust.
+- Implementation References:
+  - `src/tooling/devToolsInstaller.ts`
+  - `src/tooling/devToolsRuntime.ts`
+  - `src/extension.ts`
+  - `package.json`
+- Verification References:
+  - `tests/unit/devToolsInstaller.test.ts`
+  - `tests/unit/devToolsRuntime.test.ts`
+  - `tests/unit/packageManifest.test.ts`
+  - `tests/unit/viSemanticMcpServerProvider.test.ts`
+- Change Guidance:
+  - Preserve the fail-closed, official-source-only, trust-gated posture. Reuse the
+    VHS-REQ-677 orchestrator and VHS-REQ-676 SemVer utility rather than
+    duplicating verification or comparison logic, and keep the tar handling
+    dependency-free.
+
+### VHS-REQ-680: Dev-Tools Status Command And Consumer Documentation
+
+- Status: Active
+- Parent: VHS-SYS-REQ-013
+- Area: CI And Developer Environment
+- Statement: The extension shall surface the dev-tools pinning status through a
+  read-only command and accompanying consumer documentation, so a user can see
+  which dev-tools build is active and learn how to pin, install, uninstall, and
+  update-check a version.
+- Acceptance Criteria:
+  - The `labviewViHistory.showDevToolsStatus` command reports the pinned
+    `viHistorySuite.devTools.version` setting, whether that pin is installed and
+    integrity-verified, which build the MCP server launches (bundled vs pinned,
+    where a pin becomes active only once installed), the verified installed
+    versions, and the update-tracking flag; it is read-only and mutates nothing.
+  - The status reporter is a VS Code-free orchestration with its install-listing
+    effect injected, so it is unit-testable, and it degrades a malformed version
+    setting to the bundled status rather than throwing.
+  - Consumer documentation in `docs/devtools-release.md` describes pinning a
+    dev-tools version in the extension, the install/uninstall/status commands,
+    the opt-in update check, workspace-trust gating, and the fail-closed fallback
+    to the bundled build, and `docs/mcp-server.md` notes that the MCP server
+    launches the pinned build when one is installed.
+- Agent Work Scope:
+  - Keep the status command read-only and injectable. Reuse the VHS-REQ-677
+    normalization and the VHS-REQ-679 install-listing rather than duplicating
+    logic. Keep documentation aligned with the shipped setting and command names.
+- Implementation References:
+  - `src/tooling/devToolsRuntime.ts`
+  - `src/extension.ts`
+  - `package.json`
+  - `docs/devtools-release.md`
+  - `docs/mcp-server.md`
+- Verification References:
+  - `tests/unit/devToolsRuntime.test.ts`
+  - `tests/unit/packageManifest.test.ts`
+- Change Guidance:
+  - Keep the status read-only; if new lifecycle state is added, extend the
+    reported status additively rather than changing existing fields.

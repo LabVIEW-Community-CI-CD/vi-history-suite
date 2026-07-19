@@ -77,7 +77,22 @@ describe('Dev-tools release workflow (DS3)', () => {
     expect(decideBlock).toContain('| jq -r');
     expect(decideBlock).toContain('.prerelease == $want_prerelease');
     expect(decideBlock).toContain('startswith(\\"$prefix\\")');
-    expect(decideBlock).toContain('startswith(\\"devtools-dev-\\") | not');
+    // Both channels tag as devtools-v*; the prerelease flag separates them.
+    expect(decideBlock).toContain('prefix="devtools-v"');
+  });
+
+  it('tags the release with the independent SemVer dev-tools version, guarding manifest agreement (VHS-REQ-676.4)', () => {
+    const workflow = readWorkflow();
+    const decideBlock = workflow.slice(
+      workflow.indexOf('name: Decide release vs dedup'),
+      workflow.indexOf('name: Upload dev-tools artifact')
+    );
+    // Stable tag = devtools-v<semver>; prerelease = devtools-v<semver>-dev.<run>.
+    expect(decideBlock).toContain('tag=devtools-v${version}');
+    expect(decideBlock).toContain('tag=devtools-v${version}-dev.${GITHUB_RUN_ID}');
+    // The built packet version must match the committed manifest version.
+    expect(decideBlock).toContain('docs/devtools-release.manifest.json');
+    expect(decideBlock).toContain('dev-tools version mismatch');
   });
 
   it('treats a push as dry-run unless the opt-in publish variable is set (dry-run-first)', () => {
@@ -113,5 +128,17 @@ describe('Dev-tools release workflow (DS3)', () => {
   it('never references the Vagrant helper (VHS-REQ-599 alignment)', () => {
     const workflow = readWorkflow().toLowerCase();
     expect(workflow).not.toContain('vagrant');
+  });
+
+  it('keeps the channel-branch conditional balanced in the decide step (VHS-REQ-676.4)', () => {
+    const workflow = readWorkflow();
+    // Regression guard: the "Decide release vs dedup" step opens the
+    // stable-vs-prerelease conditional exactly once. A duplicated `if` opener
+    // (two `if ... then`, one `fi`) is an unbalanced bash conditional that
+    // breaks the workflow at runtime but is invisible to string-contains checks.
+    const multilineOpeners = workflow
+      .split('\n')
+      .filter((line) => line.trim() === 'if [ "$CHANNEL" = "stable" ]; then');
+    expect(multilineOpeners).toHaveLength(1);
   });
 });

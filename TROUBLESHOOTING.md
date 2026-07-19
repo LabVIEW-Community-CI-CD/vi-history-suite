@@ -26,7 +26,8 @@ If a LabVIEW session is already running at a different bitness than the
 extension's selected runtime, compare will be blocked or fail with a
 runtime reason of `windows-host-bitness-conflict` (preflight) or
 `labview-host-bitness-conflict` (post-failure). The warning toast includes
-a `Pick Runtime Provider` action button that opens the runtime quick-pick
+a `Pick Runtime Provider` action button that opens the Runtime & Report Settings
+panel
 so you can change `viHistorySuite.labviewBitness` to match the running
 LabVIEW. Alternatively, close the running LabVIEW session, then rerun
 comparison report generation. The retained doctor summary names both the
@@ -49,8 +50,8 @@ If `vihs --provider …` (or a `settings.json` edit) does not update the label:
    - `selection unsatisfiable on this host; falling back to recommendation`
      means LabVIEW for that year/bitness is not installed and Docker is not
      available; clear or change the persisted keys.
-2. Click the `VI History runtime` status bar item to open
-   `Pick Runtime Provider`. Choosing `(none) — auto-detect` clears the three
+2. Click the `VI History runtime` status bar item to open the Runtime & Report
+   Settings panel. Choosing its Clear option clears the three
    keys and lets detection drive the label.
 3. Confirm the CLI wrote to **User** settings (not Workspace). The extension
    reads from the merged `viHistorySuite` configuration; a workspace override
@@ -85,6 +86,31 @@ render is Docker-only. Two ways to see a preview on Host:
   so the Host both generates the cache and visualizes previews. Turn on
   `viHistorySuite.preview.blockDiagramInteractive` for the interactive
   pan/zoom/case-stepper view.
+
+## A pinned dev-tools version is not being used
+
+Run **VI History: Show Dev-Tools Status** first — it reports the pinned setting,
+whether that version is installed and verified, and which build the MCP server
+is actually launching. The pinned build is used only when it is **installed and
+integrity-verified in a trusted workspace**; otherwise the extension fails
+closed to the bundled build. Common causes:
+
+- **Pinned but not installed.** Run **VI History: Install Pinned Dev-Tools
+  Version** (the extension also offers this when it detects a missing pin).
+  Reload the window after a successful install so the MCP server relaunches.
+- **Untrusted workspace.** Installing and launching a pinned version requires a
+  trusted workspace. Trust the workspace, then install.
+- **Install failed.** The status message names the reason:
+  - `release-not-found` — no published `devtools-vX.Y.Z` release matches the
+    pinned tag; check the tag against the dev-tools releases.
+  - `download-failed` — network or asset access problem; retry.
+  - a digest/`content-digest-mismatch` — the downloaded release failed integrity
+    verification and was removed; do not use it.
+- **Malformed setting.** `viHistorySuite.devTools.version` must be `bundled` or a
+  `devtools-vX.Y.Z` tag; any other value falls back to bundled.
+
+To return to the shipped build, set `viHistorySuite.devTools.version` back to
+`bundled` (optionally run **Uninstall Dev-Tools Version** to reclaim storage).
 
 ## Windows + Docker (Linux container) compare fails instantly with a bash parse error
 

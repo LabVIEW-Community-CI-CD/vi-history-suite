@@ -1,6 +1,7 @@
 import * as fs from 'node:fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
+import { createHash } from 'node:crypto';
 
 import { serializeJsonArtifact } from '../support/jsonArtifact';
 import { errorMessage } from '../support/errorMessage';
@@ -11,6 +12,7 @@ import {
 } from '../reporting/comparisonRuntimeLocator';
 import { mapComparisonRuntimeSelectionToViPreview } from '../reporting/viPreview/viPreviewRuntimeAdapter';
 import { isLabviewSourceFile, type ViPreviewStagingEntry } from '../reporting/viPreview/viPreviewStaging';
+import { createFileViPreviewCache } from '../reporting/viPreview/viPreviewCache';
 import type { RenderViPreviewForFileDeps } from '../reporting/viPreview/viPreviewFileRender';
 import {
   isViPreviewVerificationPassing,
@@ -18,6 +20,10 @@ import {
   type ViPreviewVerificationProof
 } from '../reporting/viPreview/viPreviewVerification';
 import { runExecFileText } from './execFileText';
+import {
+  collectViPreviewDiagnostics,
+  type CollectViPreviewDiagnosticsDeps
+} from './viPreviewDiagnostics';
 
 /**
  * VHS-REQ-659: proof-emitting CLI preview verification (real verification).
@@ -36,10 +42,29 @@ const VERIFY_MAX_BUFFER_BYTES = 64 * 1024 * 1024;
 
 export const PREVIEW_VERIFICATION_PROOF_SCHEMA = 'vi-history-suite/preview-verification-proof@v1';
 export const PREVIEW_VERIFICATION_PROOF_FILE_NAME = 'vihs-preview-verification-proof.json';
+export const PREVIEW_DIAGNOSTICS_FILE_NAME = 'vihs-preview-diagnostics.json';
+
+/** Options for the Node render-dependency builder. */
+export interface BuildNodeViPreviewRenderDepsOptions {
+  /**
+   * When set, wires a file-backed preview cache rooted at this directory so an
+   * unchanged VI is served from cache (proof `cached: true`) instead of always
+   * re-rendering. Rendering the same sample VI twice into the same `--cache-dir`
+   * makes the second run a byte-identical cache hit that launches no LabVIEW —
+   * the direct way to prove cache-hit behavior in any environment. Prefer a
+   * scratch directory; pointing at a live globalStorage cache writes an entry
+   * (and may evict the oldest) on a miss.
+   */
+  cacheDirectory?: string;
+  /** Maximum cached documents retained under `cacheDirectory` (oldest evicted). */
+  cacheMaxEntries?: number;
+}
 
 /** Node (no VS Code) filesystem/process render dependencies for the verifier. */
-export function buildNodeViPreviewRenderDeps(): RenderViPreviewForFileDeps {
-  return {
+export function buildNodeViPreviewRenderDeps(
+  options: BuildNodeViPreviewRenderDepsOptions = {}
+): RenderViPreviewForFileDeps {
+  const deps: RenderViPreviewForFileDeps = {
     createWorkspaceDirectory: () => fs.mkdtemp(path.join(os.tmpdir(), 'vihs-vi-preview-verify-')),
     listSourceFiles: async (directory) => {
       let names: string[];
@@ -94,6 +119,8 @@ export function buildNodeViPreviewRenderDeps(): RenderViPreviewForFileDeps {
     copyFile: (source, destination) => fs.copyFile(source, destination),
     readFile: (filePath) => fs.readFile(filePath, 'utf8'),
     removeDirectory: (directory) => fs.rm(directory, { recursive: true, force: true }),
+    hashFile: async (filePath) =>
+      createHash('sha256').update(await fs.readFile(filePath)).digest('hex'),
     execution: {
       runCommand: async (plan: ComparisonCommandPlan) => {
         return runExecFileText(plan.executable, plan.args, {
@@ -111,6 +138,31 @@ export function buildNodeViPreviewRenderDeps(): RenderViPreviewForFileDeps {
       }
     }
   };
+  // When a cache directory is supplied, attach a file-backed preview cache so an
+  // unchanged VI is served without staging or launching LabVIEW. This is the
+  // capability that lets an operator (or agent) prove cache-hit behavior: render
+  // the same sample VI twice into the same `--cache-dir` and the second run is a
+  // `cached: true` hit.
+  if (options.cacheDirectory) {
+    deps.cache = createFileViPreviewCache(
+      {
+        cacheDirectory: options.cacheDirectory,
+        maxEntries: options.cacheMaxEntries,
+        joinPath: (directory, name) => path.join(directory, name)
+      },
+      {
+        ensureDirectory: async (directory) => {
+          await fs.mkdir(directory, { recursive: true });
+        },
+        readFile: (filePath) => fs.readFile(filePath, 'utf8'),
+        writeFile: (filePath, data) => fs.writeFile(filePath, data, 'utf8'),
+        listFiles: (directory) => fs.readdir(directory) as Promise<string[]>,
+        fileModifiedMs: async (filePath) => (await fs.stat(filePath)).mtimeMs,
+        removeFile: (filePath) => fs.rm(filePath, { force: true })
+      }
+    );
+  }
+  return deps;
 }
 
 export interface ResolveAndVerifyViPreviewOptions {
@@ -120,6 +172,10 @@ export interface ResolveAndVerifyViPreviewOptions {
   /** Overrides the resolved VI Server port (host-native install's configured port). */
   portNumber?: number;
   settings?: ComparisonRuntimeSettings;
+  /** Wires a file-backed preview cache so an unchanged VI is served from cache. */
+  cacheDirectory?: string;
+  /** Maximum cached documents retained under `cacheDirectory`. */
+  cacheMaxEntries?: number;
 }
 
 export interface ResolveAndVerifyViPreviewDeps {
@@ -171,7 +227,11 @@ export async function resolveAndVerifyViPreview(
       sampleViPath: options.sampleViPath,
       operationDirectory: options.operationDirectory
     },
-    deps.renderDeps ?? buildNodeViPreviewRenderDeps()
+    deps.renderDeps ??
+      buildNodeViPreviewRenderDeps({
+        cacheDirectory: options.cacheDirectory,
+        cacheMaxEntries: options.cacheMaxEntries
+      })
   );
 }
 
@@ -187,6 +247,12 @@ interface ParsedVerifyArgs {
   labviewExePath?: string;
   /** `--labview-version`: host LabVIEW year to select (e.g. `2026`) (host-native). */
   labviewVersion?: string;
+  /** `--cache-dir`: file-backed preview cache directory (enables cache-hit proof). */
+  cacheDirectory?: string;
+  /** `--cache-max-entries`: max cached documents retained under `--cache-dir`. */
+  cacheMaxEntries?: number;
+  /** `--diagnostics`: emit an environment snapshot instead of a render proof. */
+  diagnostics?: boolean;
 }
 
 export function parseArgs(argv: readonly string[]): ParsedVerifyArgs {
@@ -221,6 +287,15 @@ export function parseArgs(argv: readonly string[]): ParsedVerifyArgs {
       if (Number.isInteger(value) && value > 0) {
         parsed.connectTimeoutSeconds = value;
       }
+    } else if (arg === '--cache-dir') {
+      parsed.cacheDirectory = next();
+    } else if (arg === '--cache-max-entries') {
+      const value = Number.parseInt(next(), 10);
+      if (Number.isInteger(value) && value > 0) {
+        parsed.cacheMaxEntries = value;
+      }
+    } else if (arg === '--diagnostics') {
+      parsed.diagnostics = true;
     }
   }
   return parsed;
@@ -239,6 +314,8 @@ export function defaultSampleViPath(operationDirectory: string): string {
 export interface ViPreviewVerifyMainDeps {
   /** Injected verifier (default `resolveAndVerifyViPreview`); overridden in tests. */
   resolve?: typeof resolveAndVerifyViPreview;
+  /** Injected diagnostics collector deps; overridden in tests. */
+  diagnosticsDeps?: CollectViPreviewDiagnosticsDeps;
 }
 
 export async function main(
@@ -269,12 +346,45 @@ export async function main(
     settings.linuxContainerImage = parsed.containerImage;
   }
 
+  // --diagnostics: emit a read-only environment snapshot (never renders). This
+  // is the one-command answer to "is the preview cache activating?" over
+  // `gh codespace ssh`.
+  if (parsed.diagnostics) {
+    const snapshot = await collectViPreviewDiagnostics(
+      {
+        settings,
+        connectTimeoutSeconds: parsed.connectTimeoutSeconds,
+        cacheDirectory: parsed.cacheDirectory
+      },
+      deps.diagnosticsDeps
+    );
+    if (parsed.proofOutDirectoryPath) {
+      const outRoot = path.resolve(process.cwd(), parsed.proofOutDirectoryPath);
+      await fs.mkdir(outRoot, { recursive: true });
+      await fs.writeFile(
+        path.join(outRoot, PREVIEW_DIAGNOSTICS_FILE_NAME),
+        serializeJsonArtifact(snapshot),
+        'utf8'
+      );
+    }
+    // eslint-disable-next-line no-console
+    console.log(JSON.stringify(snapshot));
+    // eslint-disable-next-line no-console
+    console.log(
+      `[preview-verify] diagnostics: runtime=${snapshot.runtime.outcome}/${snapshot.runtime.provider} ` +
+        `cache=${snapshot.cache.entryCount} entries docker=${snapshot.docker.available}`
+    );
+    return 0;
+  }
+
   const proof = await (deps.resolve ?? resolveAndVerifyViPreview)({
     operationDirectory,
     sampleViPath,
     connectTimeoutSeconds: parsed.connectTimeoutSeconds,
     portNumber: parsed.portNumber,
-    settings
+    settings,
+    cacheDirectory: parsed.cacheDirectory,
+    cacheMaxEntries: parsed.cacheMaxEntries
   });
   const passing = isViPreviewVerificationPassing(proof);
   const record = {

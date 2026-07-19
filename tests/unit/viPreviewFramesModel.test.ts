@@ -58,6 +58,38 @@ describe('normalizeViPreviewFrames', () => {
     ]);
     expect(model!.rootIndex).toBe(1);
   });
+
+  it('yields an empty image string when the image field is missing or non-string (VHS-REQ-659.17)', () => {
+    const model = normalizeViPreviewFrames([
+      { Position: { Left: 0, Top: 0, Width: 1, Height: 1 } }, // no image key at all
+      { Image: 12345 }, // non-string image
+      { Image: '' } // explicitly empty
+    ]);
+    expect(model!.frames[0].image).toBe('');
+    expect(model!.frames[1].image).toBe('');
+    expect(model!.frames[2].image).toBe('');
+  });
+
+  it('reads the lowercase image/base64 field-name fallbacks (VHS-REQ-659.17)', () => {
+    const model = normalizeViPreviewFrames([
+      { base64: 'CCCC' },
+      { image: 'data:image/png;base64,DDDD' }
+    ]);
+    // Bare base64 gets the data-URI prefix; an already-prefixed value is kept.
+    expect(model!.frames[0].image).toBe('data:image/png;base64,CCCC');
+    expect(model!.frames[1].image).toBe('data:image/png;base64,DDDD');
+  });
+
+  it('treats a non-array Children field as no children (VHS-REQ-659.11)', () => {
+    // A malformed export could emit Children as a scalar/object; it must yield an
+    // empty child list rather than throw or iterate a non-array.
+    const model = normalizeViPreviewFrames([
+      { Image: 'A', Children: 'not-an-array' as unknown as number[] },
+      { Image: 'B', Children: { bogus: true } as unknown as number[] }
+    ]);
+    expect(model!.frames[0].children).toEqual([]);
+    expect(model!.frames[1].children).toEqual([]);
+  });
 });
 
 describe('findFramesRoot', () => {

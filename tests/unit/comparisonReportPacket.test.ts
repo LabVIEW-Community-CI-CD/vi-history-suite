@@ -10,6 +10,14 @@ import {
   formatComparisonRevisionHashDisplay,
   writeComparisonReportPacketRecord
 } from '../../src/reporting/comparisonReportPacket';
+import { toRevisionMetadata } from '../../src/reporting/comparisonRevisionMetadata';
+import { deriveProviderRequestLabel } from '../../src/reporting/comparisonProviderRequestLabel';
+import { renderCommand } from '../../src/reporting/comparisonReportCommandRendering';
+import {
+  renderRevisionBodyValue,
+  renderRevisionMetadataValue,
+  renderOptionalYesNo
+} from '../../src/reporting/comparisonReportPacketHtmlValues';
 
 /**
  * Creates a minimal ready-for-runtime record with customizable runtime execution.
@@ -1268,5 +1276,79 @@ describe('comparisonReportPacket persistence (VHS-REQ-148)', () => {
       record.artifactPlan.packetFilePath,
       expect.any(String)
     );
+  });
+});
+
+describe('comparison-report packet pure helpers (VHS-REQ-643)', () => {
+  it('toRevisionMetadata returns a hash-only record when the commit is absent', () => {
+    expect(toRevisionMetadata(undefined, 'abc123')).toEqual({ hash: 'abc123' });
+  });
+
+  it('toRevisionMetadata projects the full commit fields when present', () => {
+    expect(
+      toRevisionMetadata(
+        {
+          hash: 'def456',
+          authorDate: '2026-07-19',
+          authorName: 'A. Dev',
+          subject: 'Change',
+          body: 'Body text'
+        },
+        'fallback'
+      )
+    ).toEqual({
+      hash: 'def456',
+      authorDate: '2026-07-19',
+      authorName: 'A. Dev',
+      subject: 'Change',
+      body: 'Body text'
+    });
+  });
+
+  it('deriveProviderRequestLabel prefers an explicit requested provider', () => {
+    expect(
+      deriveProviderRequestLabel({ requestedProvider: 'docker', executionMode: 'host-only' } as never)
+    ).toBe('docker');
+  });
+
+  it('deriveProviderRequestLabel maps host-only and docker-only execution modes', () => {
+    expect(deriveProviderRequestLabel({ executionMode: 'host-only' } as never)).toBe('host');
+    expect(deriveProviderRequestLabel({ executionMode: 'docker-only' } as never)).toBe('docker');
+  });
+
+  it('deriveProviderRequestLabel falls back to the raw execution mode or auto', () => {
+    expect(deriveProviderRequestLabel({ executionMode: 'auto' } as never)).toBe('auto');
+    expect(deriveProviderRequestLabel({} as never)).toBe('auto');
+  });
+
+  it('renderCommand returns none when no executable was recorded', () => {
+    expect(renderCommand({ args: ['--x'] } as never)).toBe('none');
+  });
+
+  it('renderCommand joins the executable and args', () => {
+    expect(renderCommand({ executable: 'LabVIEWCLI', args: ['-a', '-b'] } as never)).toBe('LabVIEWCLI -a -b');
+    expect(renderCommand({ executable: 'tool' } as never)).toBe('tool');
+  });
+
+  it('renderRevisionBodyValue renders muted placeholders for not-retained and empty bodies', () => {
+    expect(renderRevisionBodyValue(undefined)).toContain('not retained');
+    expect(renderRevisionBodyValue('   ')).toContain('No commit body');
+  });
+
+  it('renderRevisionBodyValue escapes HTML and converts newlines to <br />', () => {
+    expect(renderRevisionBodyValue('a <b>\nc')).toBe('a &lt;b&gt;<br />c');
+    expect(renderRevisionBodyValue('x\r\ny')).toBe('x<br />y');
+  });
+
+  it('renderRevisionMetadataValue escapes present values and mutes absent ones', () => {
+    expect(renderRevisionMetadataValue('a<b')).toBe('a&lt;b');
+    expect(renderRevisionMetadataValue('')).toContain('not retained');
+    expect(renderRevisionMetadataValue(undefined)).toContain('not retained');
+  });
+
+  it('renderOptionalYesNo renders a tri-state boolean', () => {
+    expect(renderOptionalYesNo(true)).toBe('yes');
+    expect(renderOptionalYesNo(false)).toBe('no');
+    expect(renderOptionalYesNo(undefined)).toBe('none');
   });
 });

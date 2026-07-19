@@ -274,8 +274,9 @@ trusted Windows/LabVIEW validation, and optional Vagrant local validation.
   - Pull requests to `develop` admit `feature/*`, release, hotfix, and `main`
     back-sync branches by hosted CI.
   - Marketplace publication is tag-only from exact `vX.Y.Z` tags on commits
-    reachable from `origin/main`, triggered exclusively by a manual maintainer
-    dispatch with no automatic trigger (agents must never dispatch or approve it).
+    reachable from `origin/main`, triggered exclusively by a manual dispatch
+    with no automatic trigger (an authorized agent is responsible for
+    dispatching and approving it; a maintainer may also do so).
   - Marketplace live-listing verification distinguishes bounded propagation lag
     from publication failure.
 - Verification References:

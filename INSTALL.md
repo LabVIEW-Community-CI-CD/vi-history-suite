@@ -11,6 +11,11 @@ code --install-extension svelderrainruiz.vi-history-suite
 The Marketplace identity stays stable even though the source repository moved
 to the LabVIEW Community CI/CD GitHub organization.
 
+Releases follow the VS Code channel convention: an **even** minor version (for
+example `1.34.x`) is a stable release, and an **odd** minor version (for example
+`1.35.x`) is a pre-release. Enable **Install Pre-Release Versions** on the
+extension in the Extensions view to receive pre-release builds.
+
 If the Marketplace listing, install command, or source/support links disagree,
 record the mismatch in the first-time onboarding tracker:
 
@@ -57,7 +62,10 @@ whether the `Run VI History Suite` launch opened an Extension Development Host.
 
 ## Optional Vagrant
 
-Vagrant is a local human tester, not a release requirement:
+Vagrant is a local human tester for day-to-day development, not wired into hosted
+CI. It is, however, **required for a marketplace release**: publishing needs a
+fresh local Vagrant validation attestation for the exact release version
+(VHS-REQ-666).
 
 ```bash
 npm run vagrant:validate

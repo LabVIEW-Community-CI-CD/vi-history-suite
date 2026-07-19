@@ -13,13 +13,19 @@
 8. Choose `Review VI History`, select two revisions, review the preflight, and
    choose `Compare`.
 
+Optional next steps:
+
+- Turn on `viHistorySuite.preview.enabled` (Docker runtime) to preview VIs as
+  read-only pictures, and `viHistorySuite.preview.blockDiagramInteractive` for
+  an interactive, pannable block diagram. See [README.md](README.md#preview-a-vi).
+
 If validation reports a blocked runtime, fix that runtime first. The extension
 does not silently switch provider, year, or bitness during compare.
 
-The `VI History runtime` status bar item is clickable. Selecting it opens
-`Pick Runtime Provider`, a quick-pick listing every detected host LabVIEW
-installation plus Docker (when the Docker CLI is detected) and a
-`(none) — auto-detect` option that clears the persisted selection. Choices
+The `VI History runtime` status bar item is clickable. Selecting it opens the
+**Runtime & Report Settings** panel, which lists every detected host LabVIEW
+installation plus Docker (when the Docker CLI is detected) and a Clear option
+that clears the persisted selection. Choices
 are written to your User settings as `viHistorySuite.runtimeProvider`,
 `viHistorySuite.labviewVersion`, and `viHistorySuite.labviewBitness`. The
 status bar label updates immediately when those keys change, whether you

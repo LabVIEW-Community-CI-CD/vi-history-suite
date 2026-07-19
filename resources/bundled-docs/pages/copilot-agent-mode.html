@@ -10,9 +10,10 @@
 <li>Index the LabVIEW VIs in the repository, ranked by recent activity.</li>
 <li>Review the LabVIEW VIs changed in a pull request and post a summary comment.</li>
 <li>Fetch or validate the published VI-diff schemas.</li>
+<li>Inspect the VI preview render cache (list, summarize, diagnose, or search entries).</li>
 </ul>
 <h2>Available Tools</h2>
-<p>The server provides eight tools:</p>
+<p>The server provides 13 tools:</p>
 <table>
 <thead>
 <tr><th>Tool</th><th>What it does</th><th>Runtime</th></tr>
@@ -26,12 +27,17 @@
 <tr><td><code>build_vi_pr_review</code></td><td>Reviews a pull request by comparing every changed VI; the markdown form is a sticky PR comment.</td><td>Comparison runtime</td></tr>
 <tr><td><code>get_vi_semantic_schema</code></td><td>Returns the published VI-diff JSON Schemas.</td><td>None</td></tr>
 <tr><td><code>validate_vi_semantic_document</code></td><td>Validates a self-describing document against its schema.</td><td>None</td></tr>
+<tr><td><code>list_preview_cache</code></td><td>Lists the entries in a VI-preview render cache directory.</td><td>None (read-only files)</td></tr>
+<tr><td><code>summarize_preview_cache</code></td><td>Summarizes a preview cache directory: entry/byte counts, healthy vs flagged, and the flagged entries.</td><td>None (read-only files)</td></tr>
+<tr><td><code>diagnose_preview_cache</code></td><td>Returns a preview-cache diagnostics snapshot so an agent can answer whether the cache is healthy in one call.</td><td>None (read-only files)</td></tr>
+<tr><td><code>search_preview_cache</code></td><td>Finds cache entries by content marker (error, interactive, image, or empty); returns metadata only.</td><td>None (read-only files)</td></tr>
+<tr><td><code>get_preview_cache_entry</code></td><td>Fetches one cache entry by key; returns metadata plus a file pointer, or the raw HTML on request.</td><td>None (read-only files)</td></tr>
 </tbody>
 </table>
 <h2>Runtime Requirements</h2>
 <ul>
 <li><code>compare_vi_revisions</code>, <code>summarize_vi_history</code>, and <code>build_vi_pr_review</code> run a real LabVIEW comparison, so they need a comparison runtime (the same host LabVIEW or Docker image you selected for the interactive compare flow) and may take a few minutes.</li>
-<li>The remaining tools use Git or supplied data only and return immediately.</li>
+<li>The remaining tools use Git, supplied data, or a local preview-cache directory only and return immediately.</li>
 </ul>
 <h2>Open VI-Diff Standard</h2>
 <p>The comparison, history, and repository-index results are published as versioned Draft-07 JSON Schemas so other tools can consume or validate them:</p>
