@@ -356,6 +356,7 @@
     "assurance:state": "node scripts/generateAssuranceState.js",
     "standards:audit": "node scripts/runMultiStandardsAudit.js",
     "adr:check": "node scripts/checkAdrIndex.js",
+    "agent:check": "node scripts/checkAgentDelegation.js",
     "issue:standards-triage": "node scripts/runIssueStandardsTriage.js",
     "package:audit": "node scripts/auditPackagedRuntimeSurface.js",
     "package": "npm run compile && npm run package:audit && node scripts/runPinnedVsce.js package",

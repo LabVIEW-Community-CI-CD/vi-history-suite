@@ -19,6 +19,12 @@ if ! npm run --silent adr:check; then
   exit 1
 fi
 
+echo "[pre-push] Checking agent-delegation drift (npm run agent:check)…"
+if ! npm run --silent agent:check; then
+  echo "[pre-push] Agent-delegation drift detected. Align issue-template dropdowns with .github/agents/, or run with --no-verify." >&2
+  exit 1
+fi
+
 echo "[pre-push] Running repo-standards-review audit (npm run standards:audit)…"
 if ! npm run --silent standards:audit >/dev/null; then
   echo "[pre-push] repo-standards-review audit failed. Run 'npm run standards:audit' for detail, or push with --no-verify." >&2
