@@ -741,6 +741,22 @@ function renderSchema(options = {}) {
 
 // ---- CLI ----
 
+/**
+ * Parses a CLI option value that must be a positive integer. Rejects
+ * non-numeric, fractional, zero, negative, and non-finite values with a clear
+ * error (surfaced by `main()` on stderr with exit 1) so a typo never silently
+ * produces a wrong ledger — an unvalidated `Number(value)` yields `NaN`, which
+ * `?? default` does not catch and which `slice(0, NaN)` treats as `0`, dropping
+ * every coverage-debt row.
+ */
+function parsePositiveIntegerOption(flag, value) {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new Error(`Invalid ${flag} value '${value}'. Use a positive integer.`);
+  }
+  return parsed;
+}
+
 function parseArgs(argv = []) {
   const { options, positionals } = parseSharedOutputArgs(argv, {
     defaults: {
@@ -765,7 +781,7 @@ function parseArgs(argv = []) {
       '--max-coverage-debt-entries': 'maxCoverageDebtEntries'
     },
     transforms: {
-      maxCoverageDebtEntries: (value) => Number(value)
+      maxCoverageDebtEntries: (value) => parsePositiveIntegerOption('--max-coverage-debt-entries', value)
     }
   });
   options.positionals = positionals;

@@ -292,6 +292,20 @@ describe('buildRiskLedger rendering and CLI', () => {
     expect(parseArgs(['--strict', '--max-coverage-debt-entries', '5']).maxCoverageDebtEntries).toBe(5);
   });
 
+  it('parseArgs rejects an invalid --max-coverage-debt-entries instead of yielding NaN (#2115)', () => {
+    // An unvalidated Number(value) would produce NaN, which `?? default` does not
+    // catch and slice(0, NaN) treats as 0 -> every coverage-debt row silently
+    // dropped. These must throw a clear error rather than parse.
+    expect(() => parseArgs(['--max-coverage-debt-entries', 'abc'])).toThrow(
+      /Invalid --max-coverage-debt-entries value 'abc'\. Use a positive integer\./
+    );
+    expect(() => parseArgs(['--max-coverage-debt-entries', '3.5'])).toThrow(/positive integer/);
+    expect(() => parseArgs(['--max-coverage-debt-entries', '0'])).toThrow(/positive integer/);
+    expect(() => parseArgs(['--max-coverage-debt-entries', '-2'])).toThrow(/positive integer/);
+    // A valid positive integer still parses.
+    expect(parseArgs(['--max-coverage-debt-entries', '1']).maxCoverageDebtEntries).toBe(1);
+  });
+
   it('resolveOutputPath rejects empty, absolute, and escaping paths (VHS-REQ-601)', () => {
     const cwd = makeTempDir();
     expect(() => resolveOutputPath(cwd, '')).toThrow(/non-empty/);
