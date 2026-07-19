@@ -79,6 +79,52 @@ describe('buildViSemanticMcpServerDeps', () => {
     });
   });
 
+  it('defaults an absent platform to the host platform, passing darwin through (#2103)', async () => {
+    // Regression: a macOS host was silently coerced to linux, so get_runtime_health
+    // resolved the wrong runtime path. The default must pass darwin through.
+    let resolvedPlatform: string | undefined;
+    await resolveRuntimeHealth(
+      {},
+      (async (platform: string) => {
+        resolvedPlatform = platform;
+        return {
+          platform: 'darwin',
+          bitness: 'x64',
+          provider: 'unavailable',
+          blockedReason: 'labview-macos-unsupported',
+          notes: [],
+          registryQueryPlans: [],
+          candidates: []
+        };
+      }) as never,
+      'darwin'
+    );
+    expect(resolvedPlatform).toBe('darwin');
+  });
+
+  it('defaults win32/linux hosts through and unknown hosts to linux (#2103)', async () => {
+    const seen: Record<string, string> = {};
+    const capture = (key: string) =>
+      (async (platform: string) => {
+        seen[key] = platform;
+        return {
+          platform,
+          bitness: 'x64',
+          provider: 'unavailable',
+          blockedReason: 'x',
+          notes: [],
+          registryQueryPlans: [],
+          candidates: []
+        };
+      }) as never;
+    await resolveRuntimeHealth({}, capture('win'), 'win32');
+    await resolveRuntimeHealth({}, capture('lin'), 'linux');
+    await resolveRuntimeHealth({}, capture('unknown'), 'freebsd' as NodeJS.Platform);
+    expect(seen.win).toBe('win32');
+    expect(seen.lin).toBe('linux');
+    expect(seen.unknown).toBe('linux');
+  });
+
   it('marks the runtime-health snapshot blocked when the locator reports no provider', async () => {
     const health = await resolveRuntimeHealth({}, async () => ({
       platform: 'linux',
