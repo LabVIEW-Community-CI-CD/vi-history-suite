@@ -6,6 +6,14 @@ This changelog records user-facing release history for `vi-history-suite`.
 
 ### Added
 
+- The dev-tools GitHub Release channel now carries an **independent SemVer 2.0
+  version line** (`devtools-v<version>`, VHS-REQ-676), decoupled from the
+  extension's Marketplace version, sourced from a committed `version` field in
+  `docs/devtools-release.manifest.json` and echoed into the provenance packet.
+  The release tag is `devtools-v<version>` (stable) / `devtools-v<version>-dev.<run-id>`
+  (prerelease); the build fails closed on a missing or non-SemVer version. Adds
+  a dependency-free SemVer 2.0 utility (no new npm dependency).
+
 - A preview-cache generation **fleet** (VHS-REQ-674) — the reusable
   `preview-cache-fleet-callable.yml` workflow (dispatched via
   `preview-cache-fleet.yml`) renders a repository's VI previews across a sharded

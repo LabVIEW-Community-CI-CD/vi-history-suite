@@ -77,7 +77,22 @@ describe('Dev-tools release workflow (DS3)', () => {
     expect(decideBlock).toContain('| jq -r');
     expect(decideBlock).toContain('.prerelease == $want_prerelease');
     expect(decideBlock).toContain('startswith(\\"$prefix\\")');
-    expect(decideBlock).toContain('startswith(\\"devtools-dev-\\") | not');
+    // Both channels tag as devtools-v*; the prerelease flag separates them.
+    expect(decideBlock).toContain('prefix="devtools-v"');
+  });
+
+  it('tags the release with the independent SemVer dev-tools version, guarding manifest agreement (VHS-REQ-676.4)', () => {
+    const workflow = readWorkflow();
+    const decideBlock = workflow.slice(
+      workflow.indexOf('name: Decide release vs dedup'),
+      workflow.indexOf('name: Upload dev-tools artifact')
+    );
+    // Stable tag = devtools-v<semver>; prerelease = devtools-v<semver>-dev.<run>.
+    expect(decideBlock).toContain('tag=devtools-v${version}');
+    expect(decideBlock).toContain('tag=devtools-v${version}-dev.${GITHUB_RUN_ID}');
+    // The built packet version must match the committed manifest version.
+    expect(decideBlock).toContain('docs/devtools-release.manifest.json');
+    expect(decideBlock).toContain('dev-tools version mismatch');
   });
 
   it('treats a push as dry-run unless the opt-in publish variable is set (dry-run-first)', () => {

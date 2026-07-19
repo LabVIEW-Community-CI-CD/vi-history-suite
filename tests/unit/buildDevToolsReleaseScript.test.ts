@@ -68,6 +68,7 @@ function makeFixtureRepo(): string {
     JSON.stringify({
       schema: SCHEMA_ID,
       schemaVersion: 1,
+      version: '2.5.0',
       categories: [
         { id: 'scripts', include: ['scripts/*.js'] },
         { id: 'docs', include: ['docs/requirements/*.csv'] }
@@ -95,6 +96,22 @@ describe('buildDevToolsRelease helpers (DS1)', () => {
     expect(() => loadToolsetManifest(dir, 'bad.json')).toThrow(/schema must be/);
     fs.writeFileSync(path.join(dir, 'empty.json'), JSON.stringify({ schema: SCHEMA_ID, categories: [] }), 'utf8');
     expect(() => loadToolsetManifest(dir, 'empty.json')).toThrow(/non-empty categories/);
+  });
+
+  it('loadToolsetManifest fails closed on a missing or non-SemVer version (VHS-REQ-676.2)', () => {
+    const dir = makeFixtureRepo();
+    fs.writeFileSync(
+      path.join(dir, 'no-version.json'),
+      JSON.stringify({ schema: SCHEMA_ID, categories: [{ id: 'x', include: ['scripts/*.js'] }] }),
+      'utf8'
+    );
+    expect(() => loadToolsetManifest(dir, 'no-version.json')).toThrow(/SemVer 2\.0 "version"/);
+    fs.writeFileSync(
+      path.join(dir, 'bad-version.json'),
+      JSON.stringify({ schema: SCHEMA_ID, version: '1.2', categories: [{ id: 'x', include: ['scripts/*.js'] }] }),
+      'utf8'
+    );
+    expect(() => loadToolsetManifest(dir, 'bad-version.json')).toThrow(/SemVer 2\.0 "version"/);
   });
 
   it('resolveToolsetFiles returns a sorted, de-duplicated list honoring excludes (VHS-REQ-667.1)', () => {
@@ -135,9 +152,10 @@ describe('buildDevToolsRelease helpers (DS1)', () => {
     const fileDigests = [{ path: 'scripts/toolA.js', sha256: 'aaa', bytes: 1 }];
     const manifest = buildDevToolsReleaseManifest(
       { fileDigests, requirementsManifestDigest: 'REQDIGEST123', traceabilityAudit: { passed: true, gaps: 0 } },
-      { channel: 'stable', generatedAt: '2026-07-17T00:00:00.000Z', buildVersion: '1.33.2', gitCommit: 'deadbeef' }
+      { channel: 'stable', version: '2.5.0', generatedAt: '2026-07-17T00:00:00.000Z', buildVersion: '1.33.2', gitCommit: 'deadbeef' }
     );
     expect(manifest.$schema).toBe(SCHEMA_ID);
+    expect(manifest.version).toBe('2.5.0'); // VHS-REQ-676.3: provenance emits the dev-tools version
     expect(manifest.channel).toBe('stable');
     expect(manifest.buildVersion).toBe('1.33.2');
     expect(manifest.gitCommit).toBe('deadbeef');
