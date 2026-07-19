@@ -7,8 +7,24 @@ name: Marketplace Release
 # publishes only after the protected `marketplace-release` environment approval.
 # An authorized agent is responsible for dispatching and approving this workflow
 # (a maintainer may also do so).
+#
+# VHS-REQ-678: the workflow publishes to either the STABLE or the PRE-RELEASE
+# Marketplace channel, following the VS Code convention that an odd minor version
+# is a pre-release and an even minor version is stable. The channel is derived
+# from the tag's minor parity; the optional `channel` dispatch input, when set,
+# must AGREE with that parity or the run fails closed.
 on:
   workflow_dispatch:
+    inputs:
+      channel:
+        description: 'Marketplace channel (empty = derive from version minor parity; odd=pre-release, even=stable)'
+        required: false
+        type: choice
+        options:
+          - ''
+          - stable
+          - prerelease
+        default: ''
 
 permissions:
   contents: read
@@ -61,6 +77,35 @@ jobs:
             exit 1
           fi
           echo "Package version matches tag: $package_version" | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Determine Release Channel
+        id: channel
+        env:
+          REQUESTED_CHANNEL: ${{ github.event.inputs.channel }}
+        run: |
+          set -euo pipefail
+          # VHS-REQ-678: derive the Marketplace channel from the tag's minor
+          # version parity (VS Code convention: odd minor = pre-release, even =
+          # stable). The optional `channel` dispatch input, when non-empty, must
+          # AGREE with the derived channel or the run fails closed, so a stable
+          # tag can never be mis-published to the pre-release channel (or vice
+          # versa).
+          tag_version="${{ steps.version.outputs.tag_version }}"
+          minor="$(echo "$tag_version" | cut -d. -f2)"
+          if (( minor % 2 == 1 )); then
+            derived_channel="prerelease"
+            pre_release="true"
+          else
+            derived_channel="stable"
+            pre_release="false"
+          fi
+          if [[ -n "$REQUESTED_CHANNEL" && "$REQUESTED_CHANNEL" != "$derived_channel" ]]; then
+            echo "Dispatched channel $REQUESTED_CHANNEL disagrees with version-parity channel $derived_channel for $tag_version." >&2
+            exit 1
+          fi
+          echo "channel=$derived_channel" >> "$GITHUB_OUTPUT"
+          echo "pre_release=$pre_release" >> "$GITHUB_OUTPUT"
+          echo "Release channel: $derived_channel (pre_release=$pre_release) for $tag_version" | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Verify Tag Is On Main
         run: |
@@ -152,7 +197,16 @@ jobs:
             echo "VSCE_PAT is required from the protected marketplace-release environment." >&2
             exit 1
           fi
-          node scripts/runPinnedVsce.js publish --packagePath "${{ steps.locate-vsix.outputs.vsix_path }}"
+          # VHS-REQ-678: publish to the pre-release channel with --pre-release
+          # when the version-parity channel is pre-release; otherwise publish to
+          # the stable channel.
+          if [[ "${{ steps.channel.outputs.pre_release }}" == "true" ]]; then
+            echo "Publishing to the PRE-RELEASE Marketplace channel." | tee -a "$GITHUB_STEP_SUMMARY"
+            node scripts/runPinnedVsce.js publish --pre-release --packagePath "${{ steps.locate-vsix.outputs.vsix_path }}"
+          else
+            echo "Publishing to the STABLE Marketplace channel." | tee -a "$GITHUB_STEP_SUMMARY"
+            node scripts/runPinnedVsce.js publish --packagePath "${{ steps.locate-vsix.outputs.vsix_path }}"
+          fi
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
 

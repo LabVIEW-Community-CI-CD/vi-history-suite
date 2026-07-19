@@ -124,11 +124,19 @@ It must:
 - run from a manual `workflow_dispatch` on an exact `vX.Y.Z` tag ref, with no automatic push/tag trigger; an authorized agent is responsible for dispatching and approving it (a maintainer may also do so)
 - fail closed unless `package.json` version equals the tag without `v`
 - fail closed unless the tagged commit is reachable from `origin/main`
+- select the Marketplace channel from the tag's minor-version parity
+  (VS Code convention: an **odd** minor is a **pre-release**, an **even** minor
+  is **stable**) — for example `v1.35.0` publishes to the pre-release channel
+  and `v1.34.2` to the stable channel; the optional `channel` dispatch input
+  (`stable` / `prerelease`, empty = derive) must agree with the parity-derived
+  channel or the run fails closed, so a stable tag can never be mis-published to
+  the pre-release channel (or vice versa)
 - run `npm ci`, `npm run check`, `npm test`, and `npm run package`
 - pre-check the live Marketplace listing for the target version and skip
   `Publish To Marketplace` when the version is already published, so reruns
   of a previously failed verifier step never re-attempt publish
 - publish the located VSIX with `node scripts/runPinnedVsce.js publish --packagePath`
+  (adding `--pre-release` on the pre-release channel)
 - verify the live Marketplace listing with bounded `vsce show` retry through
   `node scripts/verifyMarketplaceListing.js` (20 attempts at 30s = 10 minutes)
 - retain release evidence that names required validation surfaces

@@ -162,4 +162,72 @@ describe('Marketplace release workflow', () => {
       /- name: Upload Release Evidence\n\s+if: always\(\)\n\s+uses: actions\/upload-artifact@v7/
     );
   });
+
+  it('derives the Marketplace channel from version minor parity before publish (VHS-REQ-678.1)', () => {
+    const workflow = readWorkflow();
+    const channelIndex = workflow.indexOf('name: Determine Release Channel');
+    const verifyVersionIndex = workflow.indexOf('name: Verify Package Version');
+    const publishIndex = workflow.indexOf('node scripts/runPinnedVsce.js publish --packagePath');
+
+    expect(channelIndex, 'Determine Release Channel step should exist').toBeGreaterThan(-1);
+    expect(channelIndex, 'channel step runs after version verification').toBeGreaterThan(verifyVersionIndex);
+    expect(channelIndex, 'channel step runs before publish').toBeLessThan(publishIndex);
+    // Odd minor = pre-release, even minor = stable.
+    expect(workflow).toContain('minor % 2 == 1');
+    expect(workflow).toContain('derived_channel="prerelease"');
+    expect(workflow).toContain('derived_channel="stable"');
+    expect(workflow).toContain('pre_release="true"');
+    expect(workflow).toContain('pre_release="false"');
+  });
+
+  it('exposes an optional channel dispatch input that must agree with parity (VHS-REQ-678.3)', () => {
+    const workflow = readWorkflow();
+
+    expect(workflow).toContain('inputs:');
+    expect(workflow).toMatch(/channel:\n\s+description:/);
+    expect(workflow).toContain('type: choice');
+    expect(workflow).toContain('- prerelease');
+    expect(workflow).toContain('- stable');
+    expect(workflow).toContain(
+      'Dispatched channel $REQUESTED_CHANNEL disagrees with version-parity channel $derived_channel'
+    );
+  });
+
+  it('passes --pre-release only on the pre-release channel (VHS-REQ-678.2)', () => {
+    const workflow = readWorkflow();
+
+    expect(workflow).toContain(
+      'node scripts/runPinnedVsce.js publish --pre-release --packagePath'
+    );
+    // The stable branch publishes without --pre-release.
+    expect(workflow).toContain('node scripts/runPinnedVsce.js publish --packagePath');
+    expect(workflow).toContain('if [[ "${{ steps.channel.outputs.pre_release }}" == "true" ]]');
+    // The publish step remains guarded by the idempotent pre-publish check and
+    // is still skipped when the version is already published.
+    expect(workflow).toContain(
+      "if: steps.prepublish-check.outputs.already_published != 'true'"
+    );
+  });
+
+  it('keeps every VHS-REQ-609/670 release guard applying to both channels with no auto trigger (VHS-REQ-678.4)', () => {
+    const workflow = readWorkflow();
+    const publishIndex = workflow.indexOf('node scripts/runPinnedVsce.js publish --packagePath');
+
+    // No automatic trigger — still a manual dispatch-only lever.
+    expect(workflow).not.toMatch(/^\s*push:/m);
+    expect(workflow).toContain('on:\n  workflow_dispatch:');
+
+    // The channel-agnostic release guards all precede publication.
+    for (const guard of [
+      'environment:\n      name: marketplace-release',
+      '^refs/tags/v[0-9]+\\.[0-9]+\\.[0-9]+$',
+      'git merge-base --is-ancestor "$GITHUB_SHA" origin/main',
+      'node scripts/buildReleaseState.js --strict',
+      'node scripts/checkReleaseReadiness.js --strict --require-release-attestation',
+      'node scripts/checkReleaseReadiness.js --strict --require-supply-chain-fresh'
+    ]) {
+      expect(workflow, `guard present: ${guard}`).toContain(guard);
+      expect(workflow.indexOf(guard), `guard runs before publish: ${guard}`).toBeLessThan(publishIndex);
+    }
+  });
 });
