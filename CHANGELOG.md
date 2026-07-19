@@ -6,6 +6,16 @@ This changelog records user-facing release history for `vi-history-suite`.
 
 ### Added
 
+- A preview-cache generation **fleet** (VHS-REQ-674) — the reusable
+  `preview-cache-fleet-callable.yml` workflow (dispatched via
+  `preview-cache-fleet.yml`) renders a repository's VI previews across a sharded
+  runner matrix, then merges the per-shard portable bundles into one and
+  publishes it to the content-addressed cache exchange. So a whole repository's
+  preview cache is generated in parallel and shared once — the capstone of the
+  preview-cache fabric, composing the worker, bundle, and exchange. The worker
+  CLI gained a `--shard <index>/<count>` flag (round-robin, disjoint slices).
+  Publishing is opt-in; a dry run only uploads shard/merged bundle artifacts.
+
 - A preview-cache **exchange** (`npm run preview:cache:exchange`, VHS-REQ-673)
   distributes portable bundles between environments over content-addressed GitHub
   Releases, reusing the dev-tools release-channel transport: `publish` packs a

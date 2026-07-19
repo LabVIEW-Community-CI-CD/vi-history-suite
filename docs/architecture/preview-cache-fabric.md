@@ -110,3 +110,49 @@ To open a Codespace on **any** LabVIEW repository as a worker, copy
 into that repository's `.devcontainer/devcontainer.json`: it enables
 Docker-in-Docker, installs the extension, and turns on the preview feature so
 the Codespace is ready to generate and store caches.
+
+## Phase 2 (observability) — the health read-model (VHS-REQ-675)
+
+`npm run preview:cache:health` reports how well a cache directory covers a
+workspace by comparing three ground-truth inputs — the current workspace VI
+enumeration, a prior warm manifest (`preview-cache-warm@v1`), and the cache
+directory's present `<key>.html` files — and classifies each VI as **cached**,
+**stale** (warmed to a key whose file is now gone), or **missing**. It also
+reports orphaned cache files, removed VIs, and an overall coverage percentage in
+a `vi-history-suite/preview-cache-health@v1` packet. `--strict` fails closed
+when the cache does not fully cover the workspace, so CI can gate on coverage.
+Read-only; never renders.
+
+## Phase 2 (portability) — the bundle (VHS-REQ-672)
+
+`npm run preview:cache:bundle` packages a cache directory into a portable,
+content-addressed **bundle** (a `manifest.json` — `vi-history-suite/preview-cache-bundle@v1`,
+with a per-entry integrity digest and the VI path(s) each document renders — plus
+the `<key>.html` documents). `unbundle` verifies a bundle against those digests
+and **losslessly merges** it into a target cache: content-addressing means a key
+already present is skipped, a tampered or missing document is rejected, and the
+rest are added, order-independently. This is what makes a cache generated once
+shareable.
+
+## Phase 3 (distribution) — the exchange (VHS-REQ-673)
+
+`npm run preview:cache:exchange` distributes bundles between environments over
+GitHub Releases, reusing the dev-tools release-channel transport (VHS-REQ-667):
+`publish` packs a bundle and creates a **content-addressed** release (tag
+`preview-cache-<digest>`, identical content published twice is skipped); `fetch`
+downloads the selected release (an explicit `--tag` or the most recent), verifies
+it against its manifest integrity digests, and losslessly merges it into a target
+cache. So a cache generated once is published once and pulled by teammates, other
+Codespaces, and CI.
+
+## Phase 4 (scale) — the fleet (VHS-REQ-674)
+
+The reusable `preview-cache-fleet-callable.yml` workflow ties it all together: a
+`plan` job computes a shard matrix, a `render` matrix job warms each disjoint
+`--shard i/n` slice of the target repository's VIs and bundles it, and a `merge`
+job combines the shard bundles (content-addressed, de-duplicating) and publishes
+the union to the exchange. A maintainer dispatches it via
+`preview-cache-fleet.yml`; publishing is opt-in (a dry run just uploads the shard
+and merged bundles as artifacts). So a whole repository's preview cache is
+generated in parallel across the runner fleet and shared once — the producer to
+bundle to exchange to consumer loop, at scale.

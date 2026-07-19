@@ -1,0 +1,291 @@
+name: Preview Cache Fleet (callable)
+
+# Reusable preview-cache generation fleet (VHS-REQ-674). Renders a repository's
+# LabVIEW VI previews across a sharded runner matrix, then merges the shards into
+# one portable bundle and publishes it to the content-addressed cache exchange
+# (VHS-REQ-673), so a whole repository's preview cache is generated in parallel
+# and shared once. A caller adds a thin workflow:
+#
+#   jobs:
+#     fleet:
+#       uses: LabVIEW-Community-CI-CD/vi-history-suite/.github/workflows/preview-cache-fleet-callable.yml@<ref>
+#       with:
+#         repository: <owner/repo>
+#         shard_count: 4
+#       secrets:
+#         PREVIEW_CACHE_TARGET_TOKEN: ${{ secrets.PREVIEW_CACHE_TARGET_TOKEN }}
+#
+# Each shard job runs on a GitHub-hosted `ubuntu-latest` runner and pulls the NI
+# LabVIEW image itself. Publishing is opt-in (publish=false by default) so a dry
+# run only generates + uploads shard bundles as workflow artifacts.
+
+on:
+  workflow_call:
+    inputs:
+      repository:
+        description: 'Target repository (owner/repo) whose VIs should be pre-rendered.'
+        required: true
+        type: string
+      ref:
+        description: 'Git ref of the target repository to check out and render (default: its default branch).'
+        required: false
+        default: ''
+        type: string
+      shard_count:
+        description: 'Number of parallel render shards (1-32). Each shard renders a disjoint slice of the VI set.'
+        required: false
+        default: 4
+        type: number
+      container_image_version:
+        description: 'NI LabVIEW container image version (e.g. 2026q1). The -linux tag is derived.'
+        required: false
+        default: '2026q1'
+        type: string
+      publish:
+        description: 'Publish the merged bundle to the content-addressed cache exchange. When false (default) the fleet only generates and uploads shard bundles as artifacts (dry run).'
+        required: false
+        default: false
+        type: boolean
+      enforce_trusted_ref:
+        description: 'Fail closed unless the caller ref is a trusted vi-history-suite ref. External consumers pass false and rely on their own protections.'
+        required: false
+        default: true
+        type: boolean
+    secrets:
+      PREVIEW_CACHE_TARGET_TOKEN:
+        description: 'Token with contents: write on the repository hosting the cache-exchange releases (only needed when publish=true). Publishing uses gh with this token.'
+        required: false
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  plan:
+    name: Plan Shards
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      shards: ${{ steps.shards.outputs.shards }}
+    steps:
+      - name: Guard Trusted Ref
+        if: ${{ inputs.enforce_trusted_ref }}
+        env:
+          GITHUB_REF_INPUT: ${{ github.ref }}
+        run: |
+          # The fleet renders target-repo VIs in a privileged LabVIEW container
+          # and can publish with a write token; only run from a trusted
+          # vi-history-suite ref. External consumers set enforce_trusted_ref=false.
+          is_trusted=false
+          case "$GITHUB_REF_INPUT" in
+            refs/heads/main|refs/heads/develop) is_trusted=true ;;
+            refs/heads/release/v*) is_trusted=true ;;
+            refs/tags/v*) is_trusted=true ;;
+          esac
+          echo "Trusted ref decision: $is_trusted (ref=$GITHUB_REF_INPUT)"
+          if [ "$is_trusted" != true ]; then
+            echo "The preview-cache fleet only runs from main, develop, release/v* branches, or v* tags. Ref was: $GITHUB_REF_INPUT" >&2
+            exit 1
+          fi
+
+      - name: Compute Shard Matrix
+        id: shards
+        env:
+          SHARD_COUNT: ${{ inputs.shard_count }}
+        run: |
+          # Clamp the shard count to 1..32 and emit a JSON array of zero-based
+          # shard indices for the render matrix.
+          count="$SHARD_COUNT"
+          if ! printf '%s' "$count" | grep -Eq '^[0-9]+$'; then count=4; fi
+          if [ "$count" -lt 1 ]; then count=1; fi
+          if [ "$count" -gt 32 ]; then count=32; fi
+          shards="$(seq 0 $((count - 1)) | paste -sd, -)"
+          echo "shards=[$shards]" >> "$GITHUB_OUTPUT"
+          echo "Planning $count render shard(s): [$shards]"
+
+  render:
+    name: Render Shard ${{ matrix.shard }}
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJSON(needs.plan.outputs.shards) }}
+    steps:
+      - name: Resolve tool checkout ref
+        id: toolref
+        env:
+          WORKFLOW_SHA: ${{ job.workflow_sha }}
+        run: |
+          if [ -z "$WORKFLOW_SHA" ]; then
+            echo "Could not resolve the reusable-workflow commit SHA (job.workflow_sha was empty); refusing to fall back to the default branch." >&2
+            exit 1
+          fi
+          echo "ref=$WORKFLOW_SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout vi-history-suite
+        uses: actions/checkout@v7
+        with:
+          repository: ${{ job.workflow_repository }}
+          ref: ${{ steps.toolref.outputs.ref }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Validate Runner Prerequisites
+        env:
+          CONTAINER_IMAGE_VERSION: ${{ inputs.container_image_version }}
+        run: |
+          if ! command -v docker >/dev/null 2>&1; then
+            echo "docker is required but was not found on PATH." >&2
+            exit 1
+          fi
+          if ! docker info >/dev/null 2>&1; then
+            echo "docker is installed but the daemon is not reachable." >&2
+            exit 1
+          fi
+          image="nationalinstruments/labview:${CONTAINER_IMAGE_VERSION}-linux"
+          docker image inspect "$image" >/dev/null 2>&1 || docker pull "$image"
+          echo "docker ready and NI LabVIEW image '$image' available."
+
+      - name: Install
+        run: npm ci
+
+      - name: Compile
+        run: npm run compile
+
+      - name: Checkout Target Repository
+        env:
+          GH_TOKEN: ${{ secrets.PREVIEW_CACHE_TARGET_TOKEN != '' && secrets.PREVIEW_CACHE_TARGET_TOKEN || github.token }}
+          TARGET_REPOSITORY: ${{ inputs.repository }}
+          TARGET_REF: ${{ inputs.ref }}
+        run: |
+          rm -rf target-clone
+          if [ -n "$TARGET_REF" ]; then
+            gh repo clone "$TARGET_REPOSITORY" target-clone -- --branch "$TARGET_REF" --single-branch
+          else
+            gh repo clone "$TARGET_REPOSITORY" target-clone -- --depth 1
+          fi
+
+      - name: Warm Shard And Bundle
+        env:
+          CONTAINER_IMAGE_VERSION: ${{ inputs.container_image_version }}
+          SHARD_INDEX: ${{ matrix.shard }}
+          SHARD_COUNT: ${{ inputs.shard_count }}
+        run: |
+          # snap/hosted Docker bind-mount visibility: stage under the runner temp.
+          fleet_tmp="$RUNNER_TEMP/preview-cache-fleet"
+          mkdir -p "$fleet_tmp"
+          export TMPDIR="$fleet_tmp"
+          cache_dir="$fleet_tmp/cache"
+          bundle_dir="fleet-bundle-shard-${SHARD_INDEX}"
+          # Render this shard's disjoint slice of the target repo's VIs into a
+          # cache directory, emitting the warm manifest for VI-path annotation.
+          node out/cli/runViPreviewCacheWarmer.js \
+            --repo-root target-clone \
+            --cache-dir "$cache_dir" \
+            --provider docker --container-image "nationalinstruments/labview:${CONTAINER_IMAGE_VERSION}-linux" \
+            --shard "${SHARD_INDEX}/${SHARD_COUNT}" \
+            --output "$fleet_tmp/warm-shard-${SHARD_INDEX}.json" \
+            --json || echo "shard $SHARD_INDEX had render failures (continuing; the merge is best-effort)"
+          # Package the shard's cache into a portable bundle for the merge job.
+          node out/cli/runViPreviewCacheBundle.js bundle \
+            --cache-dir "$cache_dir" \
+            --bundle-dir "$bundle_dir" \
+            --manifest "$fleet_tmp/warm-shard-${SHARD_INDEX}.json" \
+            --source "fleet:${{ github.run_id }}:shard-${SHARD_INDEX}"
+
+      - name: Upload Shard Bundle
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: fleet-bundle-shard-${{ matrix.shard }}
+          path: fleet-bundle-shard-${{ matrix.shard }}/**
+          if-no-files-found: warn
+          retention-days: 7
+
+  merge:
+    name: Merge And Publish
+    needs: render
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Resolve tool checkout ref
+        id: toolref
+        env:
+          WORKFLOW_SHA: ${{ job.workflow_sha }}
+        run: |
+          if [ -z "$WORKFLOW_SHA" ]; then
+            echo "Could not resolve the reusable-workflow commit SHA (job.workflow_sha was empty); refusing to fall back to the default branch." >&2
+            exit 1
+          fi
+          echo "ref=$WORKFLOW_SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout vi-history-suite
+        uses: actions/checkout@v7
+        with:
+          repository: ${{ job.workflow_repository }}
+          ref: ${{ steps.toolref.outputs.ref }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Install
+        run: npm ci
+
+      - name: Compile
+        run: npm run compile
+
+      - name: Download Shard Bundles
+        uses: actions/download-artifact@v6
+        with:
+          pattern: fleet-bundle-shard-*
+          path: fleet-shards
+
+      - name: Merge Shard Bundles
+        run: |
+          # Merge every shard bundle into one cache directory (content-addressed,
+          # so overlaps de-duplicate and integrity is verified), then re-bundle
+          # the union into a single portable bundle.
+          merged_cache="merged-cache"
+          mkdir -p "$merged_cache"
+          for shard in fleet-shards/fleet-bundle-shard-*; do
+            [ -d "$shard" ] || continue
+            echo "Merging $shard ..."
+            node out/cli/runViPreviewCacheBundle.js unbundle --bundle-dir "$shard" --into "$merged_cache" || \
+              echo "shard $shard failed to import (continuing)"
+          done
+          node out/cli/runViPreviewCacheBundle.js bundle \
+            --cache-dir "$merged_cache" \
+            --bundle-dir merged-bundle \
+            --source "fleet:${{ github.run_id }}:merged"
+
+      - name: Upload Merged Bundle
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: preview-cache-merged-bundle-${{ github.run_id }}
+          path: merged-bundle/**
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Publish To Exchange
+        if: ${{ inputs.publish }}
+        env:
+          GH_TOKEN: ${{ secrets.PREVIEW_CACHE_TARGET_TOKEN }}
+        run: |
+          # Publish the merged bundle to the content-addressed cache exchange.
+          # Idempotent: re-publishing identical content is skipped by the tag.
+          if [ -z "$GH_TOKEN" ]; then
+            echo "publish=true requires the PREVIEW_CACHE_TARGET_TOKEN secret (contents: write)." >&2
+            exit 1
+          fi
+          node out/cli/runViPreviewCacheExchange.js publish --bundle-dir merged-bundle --json

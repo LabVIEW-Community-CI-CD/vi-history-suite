@@ -691,3 +691,4 @@ VHS-REQ-671,Software,Active,srs.md#vhs-req-671-headless-preview-cache-worker,,,d
 VHS-REQ-675,Software,Active,srs.md#vhs-req-675-preview-cache-health-read-model,,,docs/requirements/srs.md
 VHS-REQ-672,Software,Active,srs.md#vhs-req-672-portable-preview-cache-bundle,,,docs/requirements/srs.md
 VHS-REQ-673,Software,Active,srs.md#vhs-req-673-preview-cache-exchange,,,docs/requirements/srs.md
+VHS-REQ-674,Software,Active,srs.md#vhs-req-674-preview-cache-generation-fleet,,,docs/requirements/srs.md

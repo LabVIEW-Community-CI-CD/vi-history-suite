@@ -114,3 +114,35 @@ export async function listWorkspaceViFiles(
   }
   return found;
 }
+
+/** A shard assignment: render the `index`-th slice of `count` total shards. */
+export interface ViPreviewWorkspaceShard {
+  /** Zero-based shard index (0 <= index < count). */
+  index: number;
+  /** Total number of shards (>= 1). */
+  count: number;
+}
+
+/**
+ * Selects the subset of `paths` belonging to a shard, for the cache-generation
+ * fleet (VHS-REQ-674): the workspace VI set is split across a runner matrix so
+ * each shard renders a disjoint slice, and the union of all shards is exactly
+ * the input (no VI rendered twice, none skipped). Assignment is round-robin by
+ * position (`i % count === index`), which balances evenly for any ordering.
+ * An out-of-range or non-positive shard returns [] (index) or the whole list
+ * (count <= 1), never throwing.
+ */
+export function selectWorkspaceViShard(
+  paths: readonly string[],
+  shard: ViPreviewWorkspaceShard
+): string[] {
+  const count = Math.floor(shard.count);
+  const index = Math.floor(shard.index);
+  if (!Number.isFinite(count) || count <= 1) {
+    return index === 0 || !Number.isFinite(index) ? paths.slice() : [];
+  }
+  if (!Number.isFinite(index) || index < 0 || index >= count) {
+    return [];
+  }
+  return paths.filter((_, position) => position % count === index);
+}
