@@ -10,7 +10,8 @@ import { describe, expect, it, vi } from 'vitest';
 
 import {
   buildViSemanticMcpServerDeps,
-  createDefaultComparisonModelCache
+  createDefaultComparisonModelCache,
+  resolveRuntimeHealth
 } from '../../src/mcp/viSemanticMcpServerDeps';
 import type {
   CompareViRevisionsDeps,
@@ -52,6 +53,51 @@ describe('buildViSemanticMcpServerDeps', () => {
     const deps = buildViSemanticMcpServerDeps(cache);
     expect(typeof deps.resolveRuntimeHealth).toBe('function');
     expect(typeof deps.collectPreviewDiagnostics).toBe('function');
+  });
+
+  it('projects a resolved runtime selection into the runtime-health snapshot', async () => {
+    const health = await resolveRuntimeHealth({ platform: 'linux' }, async () => ({
+      platform: 'linux',
+      bitness: 'x64',
+      provider: 'linux-container',
+      engine: 'lvcompare-cli',
+      containerImage: 'ni/labview:2026q1',
+      notes: ['resolved'],
+      registryQueryPlans: [],
+      candidates: []
+    }) as never);
+    expect(health).toMatchObject({
+      schema: 'vi-history-suite/runtime-health@v1',
+      platform: 'linux',
+      provider: 'linux-container',
+      engine: 'lvcompare-cli',
+      containerImage: 'ni/labview:2026q1',
+      blocked: false,
+      blockedReason: null
+    });
+  });
+
+  it('marks the runtime-health snapshot blocked when the locator reports no provider', async () => {
+    const health = await resolveRuntimeHealth({}, async () => ({
+      platform: 'linux',
+      bitness: 'x64',
+      provider: 'unavailable',
+      blockedReason: 'labview-version-required',
+      notes: [],
+      registryQueryPlans: [],
+      candidates: []
+    }) as never);
+    expect(health.blocked).toBe(true);
+    expect(health.blockedReason).toBe('labview-version-required');
+    expect(health.engine).toBeNull();
+    expect(health.containerImage).toBeNull();
+  });
+
+  it('resolves the runtime through the injected deps orchestrator (exercises the wiring)', async () => {
+    const deps = buildViSemanticMcpServerDeps(cache);
+    const health = await deps.resolveRuntimeHealth?.({ platform: 'linux' });
+    expect(health?.schema).toBe('vi-history-suite/runtime-health@v1');
+    expect(typeof health?.blocked).toBe('boolean');
   });
 
   it('binds compare_vi_revisions to the shared comparison-model cache', async () => {
