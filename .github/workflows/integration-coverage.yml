@@ -52,6 +52,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Exercises the host-runner bootstrap script (one of the coverage-excluded
+      # scripts this lane exists to run): installs the native Linux packages the
+      # VS Code integration host needs, including the Xvfb display wrapper. Without
+      # it the extension host has no $DISPLAY and segfaults on a headless runner.
+      - name: Bootstrap Linux VS Code host
+        run: npm run public:host:bootstrap-linux install
+
       - name: Run Linux integration host (coverage evidence)
         run: npm run test:integration:linux
 
