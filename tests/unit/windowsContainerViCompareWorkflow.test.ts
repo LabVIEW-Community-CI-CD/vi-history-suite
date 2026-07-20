@@ -24,12 +24,21 @@ describe('Windows container VI compare (hosted) workflow (VHS-REQ-699.8)', () =>
     expect(workflow).not.toMatch(/^\s*schedule:/m);
   });
 
-  it('runs on a GitHub-HOSTED pinned Windows runner (windows-2025), not latest or self-hosted', () => {
+  it('runs on a GitHub-HOSTED pinned Windows runner (windows-2022), not latest or self-hosted', () => {
     const workflow = readWorkflow();
-    expect(workflow).toContain('runs-on: windows-2025');
+    // windows-2022 (Server 2022 / ltsc2022) matches the NI LabVIEW *-windows
+    // container base image; a newer host breaks Windows process-isolation
+    // base-image compatibility.
+    expect(workflow).toContain('runs-on: windows-2022');
     // Pinned OS image: windows-latest drifts as GitHub rolls the default forward.
     expect(workflow).not.toContain('windows-latest');
     expect(workflow).not.toContain('self-hosted');
+  });
+
+  it('ensures the Docker daemon is running before container use', () => {
+    const workflow = readWorkflow();
+    expect(workflow).toContain('Ensure Docker Daemon Is Running');
+    expect(workflow).toContain('Start-Service docker');
   });
 
   it('declares read-only permissions and refuses Marketplace tokens', () => {
