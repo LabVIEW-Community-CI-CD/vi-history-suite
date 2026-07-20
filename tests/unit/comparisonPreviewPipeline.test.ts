@@ -189,6 +189,67 @@ describe('runComparisonPreviewPipeline (VHS-REQ-699.1)', () => {
     expect(result.unstaging.failureReason).toBe('cleanup boom');
   });
 
+  it('quiesces the runtime once after VALIDATION admits and before COMPARISON runs (VHS-REQ-699.10)', async () => {
+    const order: string[] = [];
+    const renderStagedPreview = vi.fn(async (side: 'left' | 'right') => {
+      order.push(`preview-${side}`);
+      return { rendered: true, html: `<${side}>` };
+    });
+    const quiesceRuntimeBeforeComparison = vi.fn(async (staged: StagedPair) => {
+      order.push('quiesce');
+      expect(staged).toEqual(PAIR);
+    });
+    const runComparison = vi.fn(async () => {
+      order.push('comparison');
+      return { succeeded: true };
+    });
+
+    const result = await runComparisonPreviewPipeline(
+      deps({ renderStagedPreview, quiesceRuntimeBeforeComparison, runComparison })
+    );
+
+    // Quiesce runs exactly once, strictly between the last preview and the compare.
+    expect(order).toEqual(['preview-left', 'preview-right', 'quiesce', 'comparison']);
+    expect(quiesceRuntimeBeforeComparison).toHaveBeenCalledTimes(1);
+    expect(result.comparison.outcome).toBe('compared');
+  });
+
+  it('never quiesces the runtime when VALIDATION rejects and the comparison is skipped (VHS-REQ-699.10)', async () => {
+    const renderStagedPreview = vi.fn(async (side: 'left' | 'right') =>
+      side === 'left'
+        ? { rendered: false, failureReason: 'labview-preview-operation-load-failed' }
+        : { rendered: true, html: '<right>' }
+    );
+    const quiesceRuntimeBeforeComparison = vi.fn(async () => undefined);
+    const runComparison = vi.fn(async () => ({ succeeded: true }));
+
+    const result = await runComparisonPreviewPipeline(
+      deps({ renderStagedPreview, quiesceRuntimeBeforeComparison, runComparison })
+    );
+
+    expect(result.comparison.outcome).toBe('skipped');
+    // No compare => no quiesce; the teardown boundary is compare-scoped.
+    expect(quiesceRuntimeBeforeComparison).not.toHaveBeenCalled();
+    expect(runComparison).not.toHaveBeenCalled();
+  });
+
+  it('lets COMPARISON proceed when the quiesce boundary throws, never masking the compare outcome (VHS-REQ-699.10)', async () => {
+    const quiesceRuntimeBeforeComparison = vi.fn(async () => {
+      throw new Error('taskkill boom');
+    });
+    const runComparison = vi.fn(async () => ({ succeeded: true }));
+
+    const result = await runComparisonPreviewPipeline(
+      deps({ quiesceRuntimeBeforeComparison, runComparison })
+    );
+
+    // A failed teardown is swallowed; the comparison still runs and reports itself.
+    expect(quiesceRuntimeBeforeComparison).toHaveBeenCalledTimes(1);
+    expect(runComparison).toHaveBeenCalledTimes(1);
+    expect(result.comparison.outcome).toBe('compared');
+    expect(result.finalState).toBe('COMPLETE');
+  });
+
   it('meters every executed state with the shared cycle meter, recording inter-state latency (VHS-REQ-699.3)', async () => {
     // Deterministic clock: each state spans 10ms with 5ms gaps between them.
     // staging 0-10, preview-left 15-25, preview-right 30-40, comparison 45-55, unstaging 60-70.

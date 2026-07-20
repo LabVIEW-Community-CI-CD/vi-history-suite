@@ -1684,6 +1684,30 @@ async function runHostNativeExecutionWithContext(
           viFilePath: side === 'left' ? staged.leftPath : staged.rightPath,
           record
         }),
+      // Host-native LabVIEW is single-instance per bitness: the two preview
+      // renders leave a LabVIEW process alive that the COMPARISON cold-launch then
+      // contends with for VI Server port 3363 (-350000 labview-cli-connection-
+      // failed). Container providers are process-isolated per `docker run`, so no
+      // orphan survives and no quiesce is needed — inject the teardown ONLY for a
+      // host-native win32 runtime. Best-effort by construction (the pipeline
+      // swallows a quiesce throw), so a failed teardown never masks the compare.
+      quiesceRuntimeBeforeComparison:
+        record.runtimeSelection.provider === 'host-native' && deps.processPlatform === 'win32'
+          ? async () => {
+              const observation = await deps.observeWindowsProcesses({
+                hostPlatform: deps.processPlatform,
+                runtimePlatform: 'win32',
+                trigger: 'pre-launch-baseline'
+              });
+              const pids = (observation?.observedProcesses ?? [])
+                .filter((proc: RuntimeObservedProcess) => /^LabVIEW\.exe$/i.test(proc.imageName))
+                .map((proc: RuntimeObservedProcess) => proc.pid)
+                .filter((pid: number): pid is number => Number.isInteger(pid));
+              for (const pid of pids) {
+                await terminateWindowsProcessTree(pid, deps.processPlatform);
+              }
+            }
+          : undefined,
       runComparison: async () => {
         comparisonExecution = await executeAttempt(1);
         if (deps.diagnosticsRecorder) {
