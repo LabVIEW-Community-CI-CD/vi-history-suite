@@ -231,6 +231,27 @@ You can also widen the window further (for example to `300` or `600`) and
 re-run; `vi-history-suite` enforces the same value on every compare so the
 new ceiling applies immediately.
 
+### Single-pass pipeline: preview-instance collision (host-native only)
+
+The single-pass comparison-preview pipeline renders a preview of each staged
+VI (`PREVIEW_LEFT`, `PREVIEW_RIGHT`) before the `COMPARISON` cycle. On a
+host-native runtime those preview renders leave a `LabVIEW.exe` process
+running. Because LabVIEW is single-instance per bitness, the `COMPARISON`
+cold-launch then contends with the surviving preview instance for VI Server
+port 3363 and fails `-350000` — even though the previews connected fine
+moments earlier. Tell-tale evidence: the run's
+`diagnostics/attempt-1/pre-launch-baseline.json` shows a `LabVIEW.exe`
+already running *before* the compare launched, and the exit snapshot shows
+two `LabVIEW.exe` processes in session 0.
+
+`vi-history-suite` handles this automatically: between `VALIDATION` admitting
+and `COMPARISON` running, a host-native win32 runtime tears down the lingering
+preview `LabVIEW.exe` so the compare cold-launches into a clean single
+instance (VHS-REQ-699.10). The teardown is best-effort — a failure is
+swallowed so the compare still runs and reports its own outcome. Container
+providers (windows-container, linux-container) are process-isolated per
+`docker run` and never hit this collision, so no teardown is applied there.
+
 ### Restoring NI's defaults
 
 Stop VS Code, then either delete `LabVIEWCLI.ini` (NI recreates it on next
