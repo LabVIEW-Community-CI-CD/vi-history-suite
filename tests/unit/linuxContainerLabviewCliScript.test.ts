@@ -46,10 +46,11 @@ describe('buildLinuxContainerLabviewCliScript connect-window parity (VHS-REQ-148
     expect(script).toContain('|| true');
   });
 
-  it('retries once on the cold-launch VI Server connectivity failure (-350000/-350051)', () => {
+  it('runs the CLI exactly once with no cold-launch retry loop (single-cycle)', () => {
     const script = buildLinuxContainerLabviewCliScript(executable, args, 'cli-headless');
-    expect(script).toContain('max_attempts=2');
-    expect(script).toContain('-350000');
-    expect(script).toContain('-350051');
+    expect(script).not.toContain('max_attempts');
+    expect(script).not.toContain('while [ "$attempt"');
+    expect(script).not.toContain('retry_delay');
+    expect(script).toContain('retryAttempts=1');
   });
 });

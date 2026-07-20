@@ -4,64 +4,40 @@
  * finds both the preview and the Source Control "what changed" hover ready
  * without waiting on a cold LabVIEW run.
  *
- * This module holds the vscode-free, injected-timer core: a per-path debouncer
- * that coalesces the several writes LabVIEW makes per save, a gating decision
- * that encodes the Docker-only + opt-in + trust rules, and a best-effort per-VI
- * warm orchestrator. The `FileSystemWatcher` host binding and the concrete
- * preview/comparison warm implementations live in
- * `src/ui/viChangeWarmerService.ts`.
+ * This module holds the vscode-free, injected core: an immediate per-change
+ * dispatcher (no debounce timer), a gating decision that encodes the Docker-only
+ * + opt-in + trust rules, and a best-effort per-VI warm orchestrator. The
+ * `FileSystemWatcher` host binding and the concrete preview/comparison warm
+ * implementations live in `src/ui/viChangeWarmerService.ts`.
  */
 
-// --- Debounce scheduler -----------------------------------------------------
+// --- Change dispatcher ------------------------------------------------------
 
 export interface ViChangeWarmSchedulerDeps {
-  /** Debounce window (ms) that coalesces rapid writes for the same path. */
-  debounceMs: number;
-  /** Invoked once a path settles (no further change within the window). */
+  /** Invoked for each noted change path. */
   onSettled: (fsPath: string) => void;
-  /** Injected timer scheduler (host `setTimeout`) so debouncing is testable. */
-  setTimeout: (handler: () => void, ms: number) => unknown;
-  /** Injected timer canceller (host `clearTimeout`). */
-  clearTimeout: (handle: unknown) => void;
 }
 
 export interface ViChangeWarmScheduler {
-  /** Notes a change for `fsPath`, (re)arming its debounce timer. */
+  /** Notes a change for `fsPath` and dispatches it immediately (no debounce). */
   note(fsPath: string): void;
-  /** Cancels every pending timer (e.g. on disposal). */
+  /** No-op retained for lifecycle symmetry (there are no pending timers). */
   dispose(): void;
 }
 
 /**
- * Creates a per-path debouncer. Repeated `note` calls for the same path within
- * the window collapse to a single `onSettled`, so the burst of writes LabVIEW
- * makes while saving a VI triggers exactly one warm.
+ * Creates a change dispatcher. Each `note` dispatches `onSettled` immediately —
+ * there is no debounce timer (single-cycle model: no wait). Redundant warms from
+ * an editor's multi-write save are absorbed downstream by the warm orchestrator's
+ * single-flight serialization, not by a timed coalescer.
  */
 export function createViChangeWarmScheduler(deps: ViChangeWarmSchedulerDeps): ViChangeWarmScheduler {
-  const timers = new Map<string, unknown>();
-
-  function clearFor(fsPath: string): void {
-    const handle = timers.get(fsPath);
-    if (handle !== undefined) {
-      deps.clearTimeout(handle);
-      timers.delete(fsPath);
-    }
-  }
-
   return {
     note(fsPath: string): void {
-      clearFor(fsPath);
-      const handle = deps.setTimeout(() => {
-        timers.delete(fsPath);
-        deps.onSettled(fsPath);
-      }, deps.debounceMs);
-      timers.set(fsPath, handle);
+      deps.onSettled(fsPath);
     },
     dispose(): void {
-      for (const handle of timers.values()) {
-        deps.clearTimeout(handle);
-      }
-      timers.clear();
+      /* no pending timers to cancel */
     }
   };
 }

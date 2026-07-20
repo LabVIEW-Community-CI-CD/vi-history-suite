@@ -4,7 +4,6 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 
 import { joinPreservingExplicitPathStyle } from '../support/pathStyle';
-import { errorMessage } from '../support/errorMessage';
 import {
   parseWindowsTasklistCsv,
   isObservedRuntimeProcessName,
@@ -13,13 +12,10 @@ import {
 export { parseWindowsTasklistCsv } from './runtime/windowsTasklistParsing';
 import { isSafeRelativeSubpath } from './runtime/safeRelativeSubpath';
 import { appendCancellationMessage } from './runtime/cancellationMessage';
-import { shouldAttemptWindowsColdLaunchRecovery } from './runtime/windowsColdLaunchRecovery';
 import { subscribeToCancellation } from './runtime/cancellationSubscription';
 import {
-  shouldCaptureLinuxHeadlessDiagnostics,
-  shouldAttemptLinuxHeadlessRecovery
+  shouldCaptureLinuxHeadlessDiagnostics
 } from './runtime/linuxHeadlessPredicates';
-import { shouldAttemptWindowsHeadlessRecovery } from './runtime/windowsHeadlessPredicates';
 import { buildWindowsContainerDirectCommandScript } from './runtime/windowsContainerDirectCommandScript';
 import {
   describeObservedRuntimeProcesses,
@@ -86,12 +82,7 @@ import { parseSubmoduleGitlinks } from './runtime/submoduleGitlinkParsing';
 export { parseSubmoduleGitlinks } from './runtime/submoduleGitlinkParsing';
 import { appendLabviewCliPortNumberArg } from './runtime/labviewCliPortArg';
 export { appendLabviewCliPortNumberArg } from './runtime/labviewCliPortArg';
-import { buildLabviewCliCloseLabviewCommandPlan } from './runtime/closeLabviewCommandPlan';
 import { buildWindowsInteropLayout } from './runtime/windowsInteropLayout';
-import {
-  buildRecoveredExecutionResult,
-  buildColdLaunchRetryExecutionResult
-} from './runtime/recoveryExecutionResults';
 import {
   shouldUseLinuxHostNativeShortPathStaging,
   buildLinuxHostNativeShortPathLayout
@@ -164,6 +155,12 @@ import {
   ComparisonReportRuntimeExecution,
   writeComparisonReportPacketRecord
 } from './comparisonReportPacket';
+import { runComparisonPreviewPipeline } from './comparisonPreviewPipeline';
+import {
+  STAGED_VI_PREVIEW_VALIDATION_FAILED,
+  toPipelineCycleRecords,
+  type StagedViPreviewValidator
+} from './comparisonPreviewPipelineIntegration';
 import { buildComparisonRuntimeDoctorSummary } from './comparisonRuntimeDoctor';
 import { readRevisionBlob } from './comparisonReportPreflight';
 import { isWorktreeRevision } from '../git/gitCli';
@@ -291,6 +288,17 @@ export interface ComparisonReportRuntimeExecutionDeps {
    * everything).
    */
   reportOptions?: ComparisonReportOptions;
+  /**
+   * VHS-REQ-699: staged-VI preview validator that renders a preview of each
+   * staged VI (PREVIEW_LEFT, PREVIEW_RIGHT) before the CreateComparisonReport
+   * cycle so a staged VI that cannot load short-circuits the fragile comparison
+   * with an actionable `staged-vi-preview-validation-failed` signal. Following the
+   * `materializeSelectedRevisionTree` pattern there is no built-in default: when
+   * omitted, the preview-validation pipeline is skipped and the comparison runs
+   * directly. The production action wires the real renderer so the pipeline is
+   * always-on across providers.
+   */
+  renderStagedViPreview?: StagedViPreviewValidator;
 }
 
 export interface ComparisonRuntimeCancellationToken {
@@ -581,7 +589,8 @@ export async function executeComparisonReport(
         observeWindowsTcpListeners: observeWindowsTcpListenersFn,
         commandTimeoutMs: effectiveCommandTimeoutMs,
         diagnosticsRecorder,
-        cliConnectTimeoutSeconds: deps.cliConnectTimeoutSeconds
+        cliConnectTimeoutSeconds: deps.cliConnectTimeoutSeconds,
+        renderStagedViPreview: deps.renderStagedViPreview
       }
     );
   }
@@ -1070,6 +1079,7 @@ async function runHostNativeExecution(
     commandTimeoutMs?: number;
     diagnosticsRecorder?: DiagnosticsRecorder;
     cliConnectTimeoutSeconds?: number;
+    renderStagedViPreview?: StagedViPreviewValidator;
   }
 ): Promise<ComparisonReportRuntimeExecution> {
   await deps.mkdir(record.artifactPlan.reportDirectory, { recursive: true });
@@ -1284,6 +1294,7 @@ async function runHostNativeExecutionWithContext(
     commandTimeoutMs?: number;
     diagnosticsRecorder?: DiagnosticsRecorder;
     cliConnectTimeoutSeconds?: number;
+    renderStagedViPreview?: StagedViPreviewValidator;
   }
 ): Promise<ComparisonReportRuntimeExecution> {
   const windowsLabviewTcpSettings = await resolveWindowsLabviewTcpSettings(
@@ -1627,68 +1638,83 @@ async function runHostNativeExecutionWithContext(
     }
   };
 
+  // VHS-REQ-699: single-pass comparison-preview pipeline. When a staged-VI
+  // preview validator is wired (always-on in production across providers), run
+  // the PREVIEW_LEFT and PREVIEW_RIGHT cycles first to validate each staged VI
+  // loads; a preview-load failure short-circuits (skips) the fragile
+  // CreateComparisonReport cycle and surfaces an actionable
+  // `staged-vi-preview-validation-failed` signal instead of a confusing
+  // comparison failure. When no validator is wired, the comparison runs directly
+  // as before. Either way the comparison itself remains a single attempt (no
+  // retry).
+  if (deps.renderStagedViPreview) {
+    const validator = deps.renderStagedViPreview;
+    let comparisonExecution: ComparisonReportRuntimeExecution | undefined;
+    const pipeline = await runComparisonPreviewPipeline({
+      renderStagedPreview: (side) =>
+        validator({
+          side,
+          viFilePath:
+            side === 'left'
+              ? record.stagedRevisionPlan.leftFilePath
+              : record.stagedRevisionPlan.rightFilePath,
+          record
+        }),
+      runComparison: async () => {
+        comparisonExecution = await executeAttempt(1);
+        if (deps.diagnosticsRecorder) {
+          await deps.diagnosticsRecorder.archiveAttemptArtifacts(record, 1);
+        }
+        const succeeded =
+          comparisonExecution.state === 'succeeded' && comparisonExecution.reportExists;
+        return {
+          succeeded,
+          failureReason: succeeded ? undefined : comparisonExecution.failureReason
+        };
+      }
+    });
+    const pipelineCycles = toPipelineCycleRecords(pipeline);
+    if (comparisonExecution) {
+      // The comparison cycle ran (both previews validated); attach per-cycle
+      // pipeline evidence to the verbatim single-attempt result.
+      comparisonExecution.pipelineCycles = pipelineCycles;
+      return comparisonExecution;
+    }
+    // Validation gate short-circuited the comparison: a staged VI failed to
+    // render a preview, so the comparison was never invoked. Surface the
+    // actionable preview-validation failure carrying the per-cycle evidence.
+    const failedSide = pipeline.previewLeft.outcome === 'failed' ? 'left' : 'right';
+    const failedReason =
+      (failedSide === 'left'
+        ? pipeline.previewLeft.failureReason
+        : pipeline.previewRight.failureReason) ?? 'preview-render-failed';
+    return {
+      state: 'failed',
+      attempted: false,
+      reportExists: false,
+      failureReason: STAGED_VI_PREVIEW_VALIDATION_FAILED,
+      diagnosticNotes: [
+        `Staged ${failedSide} VI failed its preview-load validation before the comparison cycle (${failedReason}); the CreateComparisonReport cycle was skipped.`
+      ],
+      executable: commandPlan.executable,
+      args: commandPlan.args,
+      stdoutFilePath: record.artifactPlan.runtimeStdoutFilePath,
+      stderrFilePath: record.artifactPlan.runtimeStderrFilePath,
+      pipelineCycles
+    };
+  }
+
   const initialResult = await executeAttempt(1);
   if (deps.diagnosticsRecorder) {
     await deps.diagnosticsRecorder.archiveAttemptArtifacts(record, 1);
   }
-  if (shouldAttemptLinuxHeadlessRecovery(record, initialResult)) {
-    const recovery = await attemptLabviewCliHeadlessSessionReset(
-      'Linux',
-      record,
-      deps,
-      effectiveExecutionContext,
-      windowsLabviewTcpSettings.labviewTcpPort
-    );
-    const retriedResult = await executeAttempt(2);
-    if (deps.diagnosticsRecorder) {
-      await deps.diagnosticsRecorder.archiveAttemptArtifacts(record, 2);
-    }
-    return buildRecoveredExecutionResult(
-      initialResult,
-      recovery,
-      retriedResult,
-      LINUX_HEADLESS_RECOVERY_NOTE
-    );
-  }
 
-  if (shouldAttemptWindowsHeadlessRecovery(record, initialResult)) {
-    const recovery = await attemptLabviewCliHeadlessSessionReset(
-      'Windows',
-      record,
-      deps,
-      effectiveExecutionContext,
-      initialResult.labviewTcpPort ?? windowsLabviewTcpSettings.labviewTcpPort
-    );
-    const retriedResult = await executeAttempt(2);
-    if (deps.diagnosticsRecorder) {
-      await deps.diagnosticsRecorder.archiveAttemptArtifacts(record, 2);
-    }
-    return buildRecoveredExecutionResult(
-      initialResult,
-      recovery,
-      retriedResult,
-      WINDOWS_HEADLESS_RECOVERY_NOTE
-    );
-  }
-
-  if (shouldAttemptWindowsColdLaunchRecovery(record, initialResult)) {
-    // VHS-REQ-148 (Windows host-native parity): the first attempt launched a cold
-    // LabVIEW that lost the VI Server connect race (-350000) but left LabVIEW
-    // resident and warming. Retry once against the now-resident instance using the
-    // same derived -PortNumber / -LabVIEWPath; do NOT close LabVIEW first (that
-    // would kill the instance the retry connects to). Mirrors the windows-container
-    // in-script retry and the VI-preview cold-launch retry (both one-shot on -350000).
-    const retriedResult = await executeAttempt(2);
-    if (deps.diagnosticsRecorder) {
-      await deps.diagnosticsRecorder.archiveAttemptArtifacts(record, 2);
-    }
-    return buildColdLaunchRetryExecutionResult(
-      initialResult,
-      retriedResult,
-      WINDOWS_COLD_LAUNCH_RECOVERY_NOTE
-    );
-  }
-
+  // Single-cycle timed loop: the comparison runs exactly one attempt and returns
+  // its result verbatim — there is NO recovery retry (Linux/Windows headless
+  // session reset, Windows cold-launch). A failure (headless init failure, cold
+  // launch -350000, permission error, timeout) is surfaced as a genuine result so
+  // an upstream problem is caught deterministically rather than masked by a
+  // second attempt that changes timing and outcome run-to-run.
   return initialResult;
 }
 
@@ -1803,14 +1829,6 @@ interface CapturedRuntimeDiagnostics {
 // provider's canonical report path only ever contains user-owned files and never
 // collides with a prior container run's root-owned artifacts.
 const LINUX_CONTAINER_OUTPUT_DIRNAME = 'container-out';
-const LINUX_HEADLESS_RECOVERY_NOTE =
-  'Attempted Linux headless session reset via LabVIEWCLI CloseLabVIEW after recursive-load diagnosis, then retried the pair once.';
-const WINDOWS_HEADLESS_RECOVERY_NOTE =
-  'Attempted Windows headless session reset via LabVIEWCLI CloseLabVIEW after call-by-reference diagnosis, then retried the pair once.';
-const WINDOWS_COLD_LAUNCH_RECOVERY_NOTE =
-  'Windows host-native cold-launch retry: the first attempt launched LabVIEW but the VI Server was not ready within the LabVIEW CLI connect window (-350000). Retried once against the now-resident LabVIEW on the same derived VI Server port.';
-const HEADLESS_SESSION_RESET_STDOUT_FILENAME = 'headless-session-reset-stdout.txt';
-const HEADLESS_SESSION_RESET_STDERR_FILENAME = 'headless-session-reset-stderr.txt';
 const DEFAULT_WINDOWS_LABVIEW_TCP_PORT = 3363;
 
 export async function resolveWindowsLabviewTcpSettings(
@@ -2256,125 +2274,6 @@ async function captureRuntimeDiagnostics(
   };
 }
 
-async function attemptLabviewCliHeadlessSessionReset(
-  platformLabel: 'Linux' | 'Windows',
-  record: ComparisonReportPacketRecord,
-  deps: {
-    runCommand: (commandPlan: ComparisonCommandPlan) => Promise<RunCommandResult>;
-    nowMs: () => number;
-    mkdir: typeof fs.mkdir;
-    writeFile: typeof fs.writeFile;
-    cliConnectTimeoutSeconds?: number;
-  },
-  executionContext: PreparedExecutionContext,
-  labviewTcpPort?: number
-): Promise<{
-  notes: string[];
-  durationMs: number;
-  executable: string;
-  args: string[];
-  exitCode?: number;
-  stdoutFilePath: string;
-  stderrFilePath: string;
-}> {
-  const startedMs = deps.nowMs();
-  const baseCloseCommandPlan = buildLabviewCliCloseLabviewCommandPlan(
-    record.runtimeSelection.labviewCli?.path ?? 'LabVIEWCLI',
-    record.runtimeSelection.labviewExe?.path,
-    labviewTcpPort
-  );
-  const windowsContainerImage =
-    record.runtimeSelection.containerImage?.trim() ||
-    record.runtimeSelection.windowsContainerImage?.trim();
-  const linuxContainerImage = record.runtimeSelection.containerImage?.trim();
-  const closeCommandPlan =
-    record.runtimeSelection.provider === 'windows-container' && windowsContainerImage
-      ? buildWindowsContainerCommandPlan(record, baseCloseCommandPlan, {
-          hostReportDirectory:
-            normalizeWindowsInteropPath(path.dirname(executionContext.reportFilePath)) ??
-            path.win32.dirname(executionContext.reportFilePath),
-          hostTempDirectory:
-            normalizeWindowsInteropPath(
-              executionContext.diagnosticPathMapping?.hostRoot ??
-                path.join(path.dirname(executionContext.reportFilePath), 'container-temp')
-            ) ??
-            path.win32.join(path.win32.dirname(executionContext.reportFilePath), 'container-temp'),
-          containerWorkspaceRoot: WINDOWS_CONTAINER_WORKSPACE_ROOT,
-          containerImage: windowsContainerImage,
-          processPlatform: executionContext.reportFilePath.includes('\\') ? 'win32' : 'linux',
-          cliConnectTimeoutSeconds: deps.cliConnectTimeoutSeconds
-        }) ?? baseCloseCommandPlan
-      : record.runtimeSelection.provider === 'linux-container' && linuxContainerImage
-      ? buildLinuxContainerCommandPlan(record, baseCloseCommandPlan, {
-          hostReportDirectory: path.dirname(executionContext.reportFilePath),
-          hostTempDirectory:
-            executionContext.diagnosticPathMapping?.hostRoot ??
-            path.join(path.dirname(executionContext.reportFilePath), 'container-temp'),
-          containerWorkspaceRoot: LINUX_CONTAINER_WORKSPACE_ROOT,
-          containerImage: linuxContainerImage,
-          processPlatform: executionContext.reportFilePath.includes('\\') ? 'win32' : 'linux'
-        }) ?? baseCloseCommandPlan
-      : baseCloseCommandPlan;
-  const stdoutFilePath = path.join(
-    record.artifactPlan.reportDirectory,
-    HEADLESS_SESSION_RESET_STDOUT_FILENAME
-  );
-  const stderrFilePath = path.join(
-    record.artifactPlan.reportDirectory,
-    HEADLESS_SESSION_RESET_STDERR_FILENAME
-  );
-
-  try {
-    const result = await deps.runCommand(closeCommandPlan);
-    const durationMs = Math.max(0, deps.nowMs() - startedMs);
-    await deps.mkdir(record.artifactPlan.reportDirectory, { recursive: true });
-    await deps.writeFile(stdoutFilePath, result.stdout, 'utf8');
-    await deps.writeFile(stderrFilePath, result.stderr, 'utf8');
-    if (result.exitCode === 0) {
-      return {
-        notes: [
-          `${platformLabel} headless session reset via LabVIEWCLI CloseLabVIEW succeeded in ${String(
-            durationMs
-          )}ms before retry.`
-        ],
-        durationMs,
-        executable: closeCommandPlan.executable,
-        args: closeCommandPlan.args,
-        exitCode: result.exitCode,
-        stdoutFilePath,
-        stderrFilePath
-      };
-    }
-
-    return {
-      notes: [
-        `${platformLabel} headless session reset via LabVIEWCLI CloseLabVIEW exited with code ${String(
-          result.exitCode
-        )} before retry.`
-      ],
-      durationMs,
-      executable: closeCommandPlan.executable,
-      args: closeCommandPlan.args,
-      exitCode: result.exitCode,
-      stdoutFilePath,
-      stderrFilePath
-    };
-  } catch (error) {
-    const durationMs = Math.max(0, deps.nowMs() - startedMs);
-    const message = errorMessage(error);
-    return {
-      notes: [
-        `${platformLabel} headless session reset via LabVIEWCLI CloseLabVIEW failed before retry: ${message}.`
-      ],
-      durationMs,
-      executable: closeCommandPlan.executable,
-      args: closeCommandPlan.args,
-      stdoutFilePath,
-      stderrFilePath
-    };
-  }
-}
-
 async function captureLinuxHeadlessDiagnostics(
   record: ComparisonReportPacketRecord,
   deps: {
@@ -2470,7 +2369,7 @@ async function captureLinuxHeadlessDiagnostics(
     if (/Failed to initialize headless LabVIEW\./i.test(diagnosticText)) {
       reason = 'linux-headless-init-failed';
       notes.push(
-        'Retained Linux headless log reported "Failed to initialize headless LabVIEW." Headless mode is unusable on this LabVIEW build; set LV_RTE_LINUX_HEADLESS=0 to opt out, or switch to the Linux container provider.'
+        'Retained Linux headless log reported "Failed to initialize headless LabVIEW." Headless mode is unusable on this LabVIEW build; switch to the Linux container provider, whose bundled LabVIEW image initializes headless mode correctly.'
       );
     } else if (/Recursive load during LEIF load!/i.test(diagnosticText)) {
       reason = reason ?? 'linux-headless-recursive-load';

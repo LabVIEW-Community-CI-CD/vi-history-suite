@@ -65,12 +65,6 @@ export const DEFAULT_VI_PREVIEW_VI_SERVER_PORT = 3363;
 /** Default cold-launch VI Server connect window (seconds) for container runs. */
 export const DEFAULT_VI_PREVIEW_CONNECT_TIMEOUT_SECONDS = 180;
 
-/** One-shot retry budget for the cold-launch `-350000` VI Server connectivity failure. */
-export const VI_PREVIEW_STARTUP_RETRY_COUNT = 2;
-
-/** Delay (seconds) between cold-launch connectivity retries. */
-export const VI_PREVIEW_RETRY_DELAY_SECONDS = 8;
-
 export interface ViPreviewCommandPlanOptions {
   /** Absolute path to the input VI to render. */
   viPath: string;
@@ -262,9 +256,10 @@ export interface BuildLinuxContainerViPreviewScriptOptions {
  * Builds the single bash `-lc` script that runs the preview LabVIEWCLI inside
  * the Linux container. It mirrors the validated comparison-runtime recipe:
  * export the temp roots, harden the per-version LabVIEW `.conf` to enable VI
- * Server with a widened connect window, then run the CLI with a one-shot retry
- * on the cold-launch `-350000` connectivity failure. All `.conf` mutation is
- * fail-soft so an unexpected layout never blocks the render.
+ * Server with a widened connect window, then run the CLI exactly once (a
+ * single-cycle timed loop — no cold-launch `-350000` retry, so a connectivity
+ * failure surfaces as a genuine nonzero exit). All `.conf` mutation is fail-soft
+ * so an unexpected layout never blocks the render.
  */
 export function buildLinuxContainerViPreviewScript(
   executable: string,
@@ -274,7 +269,6 @@ export function buildLinuxContainerViPreviewScript(
   const labviewExecutablePath =
     options?.containerLabviewPath ?? LINUX_CONTAINER_VI_PREVIEW_LABVIEW_EXECUTABLE;
   const connectTimeout = resolveViPreviewConnectTimeoutSeconds(options?.connectTimeoutSeconds);
-  const maxAttempts = Math.max(1, 1 + VI_PREVIEW_STARTUP_RETRY_COUNT);
   const tempRoot = LINUX_CONTAINER_VI_PREVIEW_TEMP_ROOT;
   const errFilePath = `${tempRoot}/vihs-vi-preview-stderr.txt`;
 
@@ -292,8 +286,6 @@ export function buildLinuxContainerViPreviewScript(
     `args=${buildBashArrayLiteral(args)}`,
     `lv_exe=${quoteBashLiteral(labviewExecutablePath)}`,
     `connect_timeout=${String(connectTimeout)}`,
-    `max_attempts=${String(maxAttempts)}`,
-    `retry_delay=${String(VI_PREVIEW_RETRY_DELAY_SECONDS)}`,
     `err_file=${quoteBashLiteral(errFilePath)}`,
     'set_conf_key() {',
     '  conf_file="$1"; conf_key="$2"; conf_value="$3"',
@@ -319,23 +311,15 @@ export function buildLinuxContainerViPreviewScript(
     '  done',
     '}',
     'harden_conf || true',
-    'attempt=0',
-    'rc=1',
-    'while [ "$attempt" -lt "$max_attempts" ]; do',
-    '  attempt=$((attempt + 1))',
-    '  set +e',
-    '  "$cli_path" "${args[@]}" 2>"$err_file"',
-    '  rc=$?',
-    '  set -e',
-    '  cat "$err_file" >&2 2>/dev/null || true',
-    '  if [ "$rc" -eq 0 ]; then break; fi',
-    "  if [ \"$attempt\" -lt \"$max_attempts\" ] && grep -qiE '(-350000|-350051|failed to establish a connection with LabVIEW)' \"$err_file\" 2>/dev/null; then",
-    '    sleep "$retry_delay"',
-    '    continue',
-    '  fi',
-    '  break',
-    'done',
-    "printf '[vi-history-suite-vi-preview-meta]retryAttempts=%s;connectTimeout=%s\\n' \"$attempt\" \"$connect_timeout\"",
+    // Single-cycle timed loop: run the CLI exactly once. A cold-launch
+    // connectivity failure (-350000) is surfaced as a genuine nonzero exit
+    // rather than retried.
+    'set +e',
+    '"$cli_path" "${args[@]}" 2>"$err_file"',
+    'rc=$?',
+    'set -e',
+    'cat "$err_file" >&2 2>/dev/null || true',
+    "printf '[vi-history-suite-vi-preview-meta]retryAttempts=1;connectTimeout=%s\\n' \"$connect_timeout\"",
     'exit $rc'
   ].join('\n');
 }
@@ -511,11 +495,10 @@ function buildLinuxContainerSessionRenderScript(
   args: string[],
   options?: { connectTimeoutSeconds?: number }
 ): string {
-  const maxAttempts = Math.max(1, 1 + VI_PREVIEW_STARTUP_RETRY_COUNT);
   const tempRoot = LINUX_CONTAINER_VI_PREVIEW_TEMP_ROOT;
   const errFilePath = `${tempRoot}/vihs-vi-preview-exec-stderr.txt`;
-  // Connect window is applied once at session start; the exec render only needs
-  // the one-shot retry that covers the first (cold) render's VI Server race.
+  // Connect window is applied once at session start; the exec render runs the
+  // CLI exactly once (single-cycle timed loop, no cold-launch retry).
   void resolveViPreviewConnectTimeoutSeconds(options?.connectTimeoutSeconds);
   return [
     'set -uo pipefail',
@@ -525,25 +508,14 @@ function buildLinuxContainerSessionRenderScript(
     `export TMPDIR=${quoteBashLiteral(tempRoot)}`,
     `cli_path=${quoteBashLiteral(executable)}`,
     `args=${buildBashArrayLiteral(args)}`,
-    `max_attempts=${String(maxAttempts)}`,
-    `retry_delay=${String(VI_PREVIEW_RETRY_DELAY_SECONDS)}`,
     `err_file=${quoteBashLiteral(errFilePath)}`,
-    'attempt=0',
-    'rc=1',
-    'while [ "$attempt" -lt "$max_attempts" ]; do',
-    '  attempt=$((attempt + 1))',
-    '  set +e',
-    '  "$cli_path" "${args[@]}" 2>"$err_file"',
-    '  rc=$?',
-    '  set -e',
-    '  cat "$err_file" >&2 2>/dev/null || true',
-    '  if [ "$rc" -eq 0 ]; then break; fi',
-    "  if [ \"$attempt\" -lt \"$max_attempts\" ] && grep -qiE '(-350000|-350051|failed to establish a connection with LabVIEW)' \"$err_file\" 2>/dev/null; then",
-    '    sleep "$retry_delay"',
-    '    continue',
-    '  fi',
-    '  break',
-    'done',
+    // Single attempt: a cold-launch connectivity failure surfaces as a nonzero
+    // exit rather than being retried.
+    'set +e',
+    '"$cli_path" "${args[@]}" 2>"$err_file"',
+    'rc=$?',
+    'set -e',
+    'cat "$err_file" >&2 2>/dev/null || true',
     'exit $rc'
   ].join('\n');
 }
@@ -774,31 +746,20 @@ export function buildWindowsContainerViPreviewScript(
     "  Start-Process -FilePath $labviewPath -ArgumentList '--headless' -WindowStyle Hidden | Out-Null",
     `  Start-Sleep -Seconds ${WINDOWS_CONTAINER_VI_PREVIEW_PRELAUNCH_WAIT_SECONDS}`,
     '}',
-    '$attempt = 0',
-    `$maxAttempts = [Math]::Max(1, 1 + ${VI_PREVIEW_STARTUP_RETRY_COUNT})`,
+    // Single-cycle timed loop: run the CLI exactly once. A cold-launch
+    // connectivity failure (-350000) surfaces as a genuine nonzero exit rather
+    // than being retried.
     '$lastExit = 1',
-    "$lastOutputText = ''",
-    'while ($attempt -lt $maxAttempts) {',
-    '  $attempt++',
-    '  $previousErrorActionPreference = $ErrorActionPreference',
-    "  $ErrorActionPreference = 'Continue'",
-    '  try {',
-    '    $output = @(& $cliPath @cliArgs 2>&1)',
-    '    $lastExit = [int]$LASTEXITCODE',
-    '  } finally {',
-    '    $ErrorActionPreference = $previousErrorActionPreference',
-    '  }',
-    '  $output | ForEach-Object { if (-not [string]::IsNullOrWhiteSpace([string]$_)) { Write-Output $_ } }',
-    '  $lastOutputText = @($output | ForEach-Object { [string]$_ }) -join [Environment]::NewLine',
-    '  if ($lastExit -eq 0) { break }',
-    "  $isStartupConnectivity = ($lastExit -in @(-350000, -350051) -or $lastOutputText -match '-350000' -or $lastOutputText -match '-350051' -or $lastOutputText -match '(?i)failed to establish a connection with LabVIEW')",
-    '  if ($isStartupConnectivity -and $attempt -lt $maxAttempts) {',
-    `    Start-Sleep -Seconds ${VI_PREVIEW_RETRY_DELAY_SECONDS}`,
-    '    continue',
-    '  }',
-    '  break',
+    '$previousErrorActionPreference = $ErrorActionPreference',
+    "$ErrorActionPreference = 'Continue'",
+    'try {',
+    '  $output = @(& $cliPath @cliArgs 2>&1)',
+    '  $lastExit = [int]$LASTEXITCODE',
+    '} finally {',
+    '  $ErrorActionPreference = $previousErrorActionPreference',
     '}',
-    `Write-Output ('[vi-history-suite-vi-preview-meta]retryAttempts={0};prelaunchAttempted={1};connectTimeout=${connectTimeout}' -f $attempt, ($(if ($prelaunchAttempted) { 1 } else { 0 })))`,
+    '$output | ForEach-Object { if (-not [string]::IsNullOrWhiteSpace([string]$_)) { Write-Output $_ } }',
+    `Write-Output ('[vi-history-suite-vi-preview-meta]retryAttempts=1;prelaunchAttempted={0};connectTimeout=${connectTimeout}' -f ($(if ($prelaunchAttempted) { 1 } else { 0 })))`,
     'exit $lastExit'
   ].join('\n');
 }
@@ -979,11 +940,10 @@ export function buildWindowsContainerSessionHardenCommandPlan(options: {
 /**
  * Inner PowerShell for a warm-session `docker exec` render. No INI hardening
  * (done once at session start) and no pre-launch (LabVIEW is resident after the
- * first render); keeps only the one-shot `-350000`/`-350051` retry covering the
- * first (cold) render's VI Server race.
+ * first render); runs the CLI exactly once (single-cycle timed loop, no
+ * cold-launch retry).
  */
 function buildWindowsContainerSessionRenderScript(executable: string, args: string[]): string {
-  const maxAttempts = Math.max(1, 1 + VI_PREVIEW_STARTUP_RETRY_COUNT);
   return [
     "$ErrorActionPreference = 'Continue'",
     "$ProgressPreference = 'SilentlyContinue'",
@@ -998,31 +958,19 @@ function buildWindowsContainerSessionRenderScript(executable: string, args: stri
     '$env:TMP = $env:TEMP',
     `$cliPath = ${quotePowerShellLiteral(executable)}`,
     `$cliArgs = ${buildWindowsPowerShellArrayLiteral(args)}`,
-    '$attempt = 0',
-    `$maxAttempts = ${maxAttempts}`,
+    // Single attempt: a cold-launch connectivity failure surfaces as a nonzero
+    // exit rather than being retried.
     '$lastExit = 1',
-    "$lastOutputText = ''",
-    'while ($attempt -lt $maxAttempts) {',
-    '  $attempt++',
-    '  $previousErrorActionPreference = $ErrorActionPreference',
-    "  $ErrorActionPreference = 'Continue'",
-    '  try {',
-    '    $output = @(& $cliPath @cliArgs 2>&1)',
-    '    $lastExit = [int]$LASTEXITCODE',
-    '  } finally {',
-    '    $ErrorActionPreference = $previousErrorActionPreference',
-    '  }',
-    '  $output | ForEach-Object { if (-not [string]::IsNullOrWhiteSpace([string]$_)) { Write-Output $_ } }',
-    '  $lastOutputText = @($output | ForEach-Object { [string]$_ }) -join [Environment]::NewLine',
-    '  if ($lastExit -eq 0) { break }',
-    "  $isStartupConnectivity = ($lastExit -in @(-350000, -350051) -or $lastOutputText -match '-350000' -or $lastOutputText -match '-350051' -or $lastOutputText -match '(?i)failed to establish a connection with LabVIEW')",
-    '  if ($isStartupConnectivity -and $attempt -lt $maxAttempts) {',
-    `    Start-Sleep -Seconds ${VI_PREVIEW_RETRY_DELAY_SECONDS}`,
-    '    continue',
-    '  }',
-    '  break',
+    '$previousErrorActionPreference = $ErrorActionPreference',
+    "$ErrorActionPreference = 'Continue'",
+    'try {',
+    '  $output = @(& $cliPath @cliArgs 2>&1)',
+    '  $lastExit = [int]$LASTEXITCODE',
+    '} finally {',
+    '  $ErrorActionPreference = $previousErrorActionPreference',
     '}',
-    "Write-Output ('[vi-history-suite-vi-preview-meta]retryAttempts={0}' -f $attempt)",
+    '$output | ForEach-Object { if (-not [string]::IsNullOrWhiteSpace([string]$_)) { Write-Output $_ } }',
+    "Write-Output '[vi-history-suite-vi-preview-meta]retryAttempts=1'",
     'exit $lastExit'
   ].join('\n');
 }

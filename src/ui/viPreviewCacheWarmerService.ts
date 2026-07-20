@@ -40,8 +40,6 @@ const VI_PREVIEW_WARM_EXCLUDE = '**/{node_modules,.git,out,dist,.vscode-test}/**
  * retains at least this many entries so full-repo warming never self-evicts.
  */
 const MAX_WARM_FILES = 5000;
-/** Delay before warming so the just-opened preview finishes first. */
-const WARM_START_DELAY_MS = 5000;
 /** How long the completed indicator lingers before it is retired. */
 const WARM_DONE_LINGER_MS = 5000;
 /** Longer linger for the all-failed outcome so the warning is not missed. */
@@ -79,7 +77,6 @@ export function createViPreviewCacheWarmerService(
   // Per-cycle cancellation token; `cancelCurrentCycle` flips `cancelled` so an
   // in-flight warm loop stops after the current render.
   let cycleToken: { cancelled: boolean } | undefined;
-  let startTimer: ReturnType<typeof setTimeout> | undefined;
   let doneTimer: ReturnType<typeof setTimeout> | undefined;
   let statusItem: vscode.StatusBarItem | undefined;
 
@@ -164,15 +161,15 @@ export function createViPreviewCacheWarmerService(
     hasRunThisSession = true;
     const token = { cancelled: false };
     cycleToken = token;
-    startTimer = setTimeout(() => {
-      void run(excludeFsPath, token)
-        .catch(() => undefined)
-        .finally(() => {
-          if (cycleToken === token) {
-            cycleToken = undefined;
-          }
-        });
-    }, WARM_START_DELAY_MS);
+    // Warm immediately (no start debounce): kick off the background workspace
+    // warm as soon as a preview opens.
+    void run(excludeFsPath, token)
+      .catch(() => undefined)
+      .finally(() => {
+        if (cycleToken === token) {
+          cycleToken = undefined;
+        }
+      });
   }
 
   function cancelCurrentCycle(): void {
@@ -182,10 +179,6 @@ export function createViPreviewCacheWarmerService(
     }
     // Allow a later restart (e.g. the user re-enables VI preview).
     hasRunThisSession = false;
-    if (startTimer) {
-      clearTimeout(startTimer);
-      startTimer = undefined;
-    }
     if (doneTimer) {
       clearTimeout(doneTimer);
       doneTimer = undefined;

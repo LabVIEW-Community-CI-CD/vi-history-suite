@@ -94,6 +94,28 @@ export interface ComparisonReportRuntimeExecution {
     revisionId: string;
     pathspec: string;
   };
+  /**
+   * VHS-REQ-699: per-cycle record of the single-pass comparison-preview pipeline
+   * that front-loads a preview-load validation of each staged VI (PREVIEW_LEFT,
+   * PREVIEW_RIGHT) before the CreateComparisonReport cycle (COMPARISON). Present
+   * when the pipeline ran; each entry carries the cycle state, its outcome, an
+   * optional failure reason, and single-cycle timing (duration and inter-cycle
+   * latency). A `skipped` COMPARISON entry marks a preview-validation
+   * short-circuit; absent for a pass that did not run the pipeline.
+   */
+  pipelineCycles?: ComparisonPipelineCycleRecord[];
+}
+
+/**
+ * VHS-REQ-699: one cycle-state record of the single-pass comparison-preview
+ * pipeline, retained as runtime evidence.
+ */
+export interface ComparisonPipelineCycleRecord {
+  state: 'PREVIEW_LEFT' | 'PREVIEW_RIGHT' | 'COMPARISON';
+  outcome: 'rendered' | 'compared' | 'failed' | 'skipped';
+  failureReason?: string;
+  durationMs?: number;
+  interCycleGapMs?: number;
 }
 
 export interface ComparisonReportRevisionMetadata {

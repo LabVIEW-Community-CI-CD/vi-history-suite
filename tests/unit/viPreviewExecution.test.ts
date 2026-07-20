@@ -39,7 +39,9 @@ describe('buildViPreviewCommandPlan', () => {
     expect(argValue(result.commandPlan.args, '-OutputPath')).toBe(
       path.join('/host/report', 'preview.html')
     );
-    expect(result.commandPlan.args).not.toContain('-Headless');
+    // LabVIEW preview rendering is always headless everywhere (VHS-REQ-659) —
+    // host-native matches the container providers so it never opens a GUI.
+    expect(result.commandPlan.args).toContain('-Headless');
   });
 
   it('blocks host-native when the LabVIEWCLI path is missing (VHS-REQ-659.6)', () => {
@@ -165,48 +167,41 @@ describe('executeViPreview', () => {
     expect(dependencies.runCommand).not.toHaveBeenCalled();
   });
 
-  it('retries host-native on a cold-launch -350000 and renders on the warm retry (VHS-REQ-659.6)', async () => {
+  it('surfaces a host-native cold-launch -350000 as a genuine failure without retrying (VHS-REQ-659.6)', async () => {
     const runCommand = vi
       .fn()
-      .mockResolvedValueOnce({ exitCode: 1, stdout: '', stderr: 'Error code : -350000' })
-      .mockResolvedValueOnce({ exitCode: 0, stdout: 'ok', stderr: '' });
-    const sleep = vi.fn().mockResolvedValue(undefined);
+      .mockResolvedValueOnce({ exitCode: 1, stdout: '', stderr: 'Error code : -350000' });
     const result = await executeViPreview(baseOptions(), {
       runCommand,
-      pathExists: vi.fn().mockResolvedValue(true),
-      sleep
+      pathExists: vi.fn().mockResolvedValue(true)
     });
 
-    expect(result.outcome).toBe('rendered');
-    expect(runCommand).toHaveBeenCalledTimes(2);
-    expect(sleep).toHaveBeenCalledOnce();
+    expect(result.outcome).toBe('failed');
+    expect(result.failureReason).toBe('labview-cli-connection-failed');
+    expect(runCommand).toHaveBeenCalledOnce();
   });
 
-  it('classifies host-native as labview-cli-connection-failed after exhausting -350000 retries (VHS-REQ-659.6)', async () => {
+  it('classifies host-native -350000 as labview-cli-connection-failed on the single attempt (VHS-REQ-659.6)', async () => {
     const runCommand = vi.fn().mockResolvedValue({
       exitCode: 1,
       stdout: '',
       stderr: 'failed to establish a connection with LabVIEW (-350000)'
     });
-    const sleep = vi.fn().mockResolvedValue(undefined);
     const result = await executeViPreview(baseOptions(), {
       runCommand,
-      pathExists: vi.fn().mockResolvedValue(false),
-      sleep
+      pathExists: vi.fn().mockResolvedValue(false)
     });
 
     expect(result.outcome).toBe('failed');
     expect(result.failureReason).toBe('labview-cli-connection-failed');
-    // 1 initial attempt + VI_PREVIEW_STARTUP_RETRY_COUNT (2) retries = 3 runs.
-    expect(runCommand).toHaveBeenCalledTimes(3);
-    expect(sleep).toHaveBeenCalledTimes(2);
+    // No retry: the connectivity failure is surfaced from the single attempt.
+    expect(runCommand).toHaveBeenCalledOnce();
   });
 
-  it('does not orchestrator-retry a container connectivity failure (retry is in-script) (VHS-REQ-659.6)', async () => {
+  it('does not orchestrator-retry a container connectivity failure (VHS-REQ-659.6)', async () => {
     const runCommand = vi
       .fn()
       .mockResolvedValue({ exitCode: 1, stdout: '', stderr: 'Error code : -350000' });
-    const sleep = vi.fn().mockResolvedValue(undefined);
     const result = await executeViPreview(
       baseOptions({
         runtime: {
@@ -214,30 +209,26 @@ describe('executeViPreview', () => {
           containerImage: 'nationalinstruments/labview:2026q1patch2-linux'
         }
       }),
-      { runCommand, pathExists: vi.fn().mockResolvedValue(false), sleep }
+      { runCommand, pathExists: vi.fn().mockResolvedValue(false) }
     );
 
     expect(result.outcome).toBe('failed');
     expect(result.failureReason).toBe('labview-cli-connection-failed');
     expect(runCommand).toHaveBeenCalledOnce();
-    expect(sleep).not.toHaveBeenCalled();
   });
 
   it('does not retry a host-native non-connectivity failure (VHS-REQ-659.6)', async () => {
     const runCommand = vi
       .fn()
       .mockResolvedValue({ exitCode: 2, stdout: '', stderr: 'some other error' });
-    const sleep = vi.fn().mockResolvedValue(undefined);
     const result = await executeViPreview(baseOptions(), {
       runCommand,
-      pathExists: vi.fn().mockResolvedValue(false),
-      sleep
+      pathExists: vi.fn().mockResolvedValue(false)
     });
 
     expect(result.outcome).toBe('failed');
     expect(result.failureReason).toBe('command-exited-nonzero');
     expect(runCommand).toHaveBeenCalledOnce();
-    expect(sleep).not.toHaveBeenCalled();
   });
 
   it('classifies the operation-class load failure (error 1125) as labview-preview-operation-load-failed and does not retry (VHS-REQ-659.6)', async () => {

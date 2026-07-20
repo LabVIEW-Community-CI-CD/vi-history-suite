@@ -35,11 +35,7 @@ export interface ViPreviewSessionManager {
 export interface CreateViPreviewSessionManagerOptions {
   operationDirectory: string;
   cache?: ViPreviewCache;
-  /** Idle window after which the warm container is disposed. Default 10 minutes. */
-  idleDisposeMs?: number;
 }
-
-const DEFAULT_IDLE_DISPOSE_MS = 10 * 60 * 1000;
 
 /**
  * Selects the next render: interactive requests first (FIFO among them), then
@@ -62,22 +58,12 @@ interface RenderWaiter {
 export function createViPreviewSessionManager(
   options: CreateViPreviewSessionManagerOptions
 ): ViPreviewSessionManager {
-  const idleDisposeMs = options.idleDisposeMs ?? DEFAULT_IDLE_DISPOSE_MS;
-
   let session: ViPreviewSession | undefined;
   let sessionKey: string | undefined;
   let startPromise: Promise<ViPreviewSession> | undefined;
   let disposed = false;
   let running = false;
-  let idleTimer: ReturnType<typeof setTimeout> | undefined;
   const queue: RenderWaiter[] = [];
-
-  function clearIdle(): void {
-    if (idleTimer) {
-      clearTimeout(idleTimer);
-      idleTimer = undefined;
-    }
-  }
 
   async function disposeSessionOnly(): Promise<void> {
     const current = session;
@@ -86,13 +72,6 @@ export function createViPreviewSessionManager(
     if (current) {
       await current.dispose().catch(() => undefined);
     }
-  }
-
-  function armIdle(): void {
-    clearIdle();
-    idleTimer = setTimeout(() => {
-      void disposeSessionOnly();
-    }, idleDisposeMs);
   }
 
   async function ensureSession(runtime: ViPreviewSessionRuntime): Promise<ViPreviewSession> {
@@ -139,7 +118,6 @@ export function createViPreviewSessionManager(
     }
     queue.splice(queue.indexOf(next), 1);
     running = true;
-    clearIdle();
     void (async () => {
       try {
         const activeSession = await ensureSession(next.runtime);
@@ -149,7 +127,6 @@ export function createViPreviewSessionManager(
         next.reject(error);
       } finally {
         running = false;
-        armIdle();
         pump();
       }
     })();
@@ -167,7 +144,6 @@ export function createViPreviewSessionManager(
     },
     async dispose() {
       disposed = true;
-      clearIdle();
       for (const waiter of queue.splice(0)) {
         waiter.reject(new Error('VI preview session manager is disposed'));
       }

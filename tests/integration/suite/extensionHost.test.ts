@@ -1,6 +1,7 @@
 import * as assert from 'node:assert/strict';
 import { execFile as execFileCallback } from 'node:child_process';
 import * as fs from 'node:fs/promises';
+import { watch as fsWatch } from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { promisify } from 'node:util';
@@ -263,26 +264,21 @@ async function testViPreviewInteractiveWebviewHtml(): Promise<void> {
   process.env.VIHS_TEST_CAPTURE_PREVIEW = '1';
   process.env.VIHS_TEST_PREVIEW_OUT = capturePath;
   try {
+    // `vscode.openWith` resolves when the custom editor OPENS, not when its
+    // async `resolveCustomEditor` render finishes — the render (and the
+    // test-only capture write) complete in the background afterward. Watch the
+    // capture directory for the file-creation event so we await the exact
+    // producer done-signal: an event-driven handshake with no polling. The
+    // watcher is armed BEFORE the open so a fast write cannot race ahead of it.
+    const capturedReady = waitForCaptureFile(captureDir, capturePath);
+
     await vscode.commands.executeCommand(
       'vscode.openWith',
       vscode.Uri.file(sampleViPath),
       VI_PREVIEW_VIEW_TYPE
     );
 
-    // The custom editor renders asynchronously (LabVIEW/cache); poll for the
-    // captured HTML before asserting.
-    let captured = '';
-    for (let attempt = 0; attempt < 60; attempt += 1) {
-      try {
-        captured = await fs.readFile(capturePath, 'utf8');
-        if (captured.length > 0) {
-          break;
-        }
-      } catch {
-        /* not written yet */
-      }
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
+    const captured = await capturedReady;
 
     assert.ok(captured.length > 0, 'expected the custom editor to render and capture webview HTML');
     const [mode, ...htmlLines] = captured.split('\n');
@@ -543,12 +539,31 @@ async function testPanelOpenFlow(
   );
   assert.match(reportAction.metadataFilePath ?? '', /report-metadata\.json$/);
   assert.ok(reportAction.reportWebviewUri);
-  assert.ok(reportAction.reportStatus === 'blocked-runtime' || reportAction.reportStatus === 'ready-for-runtime');
+  // This flow is valid across three environments, all accepted:
+  //   - hosted CI (no LabVIEW): runtime is blocked/failed, no report.
+  //   - self-hosted runner, comparison succeeds: a report is generated.
+  //   - self-hosted runner, host-native HEADLESS comparison fails with the known
+  //     GSW recursive-LEIF-load (`linux-headless-recursive-load`): this is
+  //     documented environment technical debt on LabVIEW 26.1.1f1 — host-native
+  //     headless `CreateComparisonReport` loads the Getting Started Window and
+  //     recursion-faults, while the Docker LabVIEW image (the headless happy
+  //     path) and the single-VI preview (which never loads the GSW) both succeed.
+  //     Comparison is mandatory-headless everywhere (matching the Docker image),
+  //     so this host-native failure is expected here and surfaced as a genuine
+  //     `failed` result rather than masked.
+  assert.ok(
+    reportAction.reportStatus === 'blocked-runtime' ||
+      reportAction.reportStatus === 'ready-for-runtime'
+  );
   assert.ok(
     reportAction.runtimeExecutionState === 'not-available' ||
-      reportAction.runtimeExecutionState === 'failed'
+      reportAction.runtimeExecutionState === 'failed' ||
+      reportAction.runtimeExecutionState === 'succeeded'
   );
-  assert.equal(reportAction.generatedReportExists, false);
+  assert.equal(
+    reportAction.generatedReportExists,
+    reportAction.runtimeExecutionState === 'succeeded'
+  );
   assert.ok(await fs.readFile(reportAction.packetFilePath ?? '', 'utf8'));
   const reportMetadata = JSON.parse(await fs.readFile(reportAction.metadataFilePath ?? '', 'utf8')) as {
     reportStatus?: string;
@@ -564,13 +579,20 @@ async function testPanelOpenFlow(
     assert.equal(reportMetadata.runtimeExecutionState, 'not-available');
     assert.equal(reportMetadata.runtimeSelection?.provider, 'unavailable');
     assert.ok(reportMetadata.runtimeSelection?.blockedReason);
+  } else if (reportMetadata.runtimeExecutionState === 'succeeded') {
+    assert.equal(reportMetadata.reportStatus, 'ready-for-runtime');
+    assert.notEqual(reportMetadata.runtimeSelection?.provider, 'unavailable');
+    assert.equal(reportMetadata.runtimeExecution?.reportExists, true);
   } else {
     assert.equal(reportMetadata.reportStatus, 'ready-for-runtime');
     assert.equal(reportMetadata.runtimeExecutionState, 'failed');
     assert.notEqual(reportMetadata.runtimeSelection?.provider, 'unavailable');
     assert.ok(reportMetadata.runtimeExecution?.failureReason);
   }
-  assert.equal(reportMetadata.runtimeExecution?.reportExists, false);
+  assert.equal(
+    reportMetadata.runtimeExecution?.reportExists,
+    reportMetadata.runtimeExecutionState === 'succeeded'
+  );
   assert.equal(api.getPanelActionCount(), 4);
 
   await api.dispatchLastPanelMessage({
@@ -1044,40 +1066,88 @@ async function testProbeRuntimeSettingsLiveSession(): Promise<void> {
   assert.ok(prepared.defaultSettingsFilePath);
 
   const settingsFilePath = prepared.defaultSettingsFilePath!;
+
+  // Isolate the probe history: the probe appends one packet per run under
+  // <globalStorage>/runtime-validation/runtime-provider-live-session-probe, and
+  // this test asserts an exact run count (1 then 2). On a reused runner _work /
+  // dev host where the integration host has run before, that directory is not
+  // empty, so reset it to a known-clean state first. The launcher path lives at
+  // <globalStorage>/local-runtime-settings-cli/<launcher>, so the globalStorage
+  // root is two directories up from it (defaultSettingsFilePath points at the
+  // real VS Code settings.json, which is NOT under globalStorage — use the
+  // launcher path instead).
+  const launcherPath = process.platform === 'win32' ? prepared.windowsLauncherPath : prepared.posixLauncherPath;
+  if (launcherPath) {
+    const globalStorageRoot = path.dirname(path.dirname(launcherPath));
+    const probeRoot = path.join(
+      globalStorageRoot,
+      'runtime-validation',
+      'runtime-provider-live-session-probe'
+    );
+    await fs.rm(probeRoot, { recursive: true, force: true });
+  }
+
   const initialRuntimeSettings = readViHistorySuiteRuntimeSettings();
   const firstBaselineProvider =
     initialRuntimeSettings.runtimeProvider === 'docker' ? 'docker' : 'host';
   const secondBaselineProvider = firstBaselineProvider === 'docker' ? 'host' : 'docker';
 
-  const firstSummary = await runAndAssertRuntimeSettingsLiveSessionProbe(
-    prepared,
-    settingsFilePath,
-    firstBaselineProvider
-  );
-  const secondSummary = await runAndAssertRuntimeSettingsLiveSessionProbe(
-    prepared,
-    settingsFilePath,
-    secondBaselineProvider
-  );
+  // The probe seeds the runtime provider into the real VS Code settings file
+  // (the runtime-settings CLI writes to resolveDefaultVsCodeSettingsPath, which
+  // is NOT under the test host's --user-data-dir). Snapshot the original file so
+  // an interrupted or failed run cannot leave runtime-provider DRIFT behind that
+  // pollutes the developer's settings and skews later preview/runtime tests.
+  let originalSettingsContent: string | undefined;
+  try {
+    originalSettingsContent = await fs.readFile(settingsFilePath, 'utf8');
+  } catch (error) {
+    if (error && typeof error === 'object' && 'code' in error && (error as NodeJS.ErrnoException).code === 'ENOENT') {
+      originalSettingsContent = undefined;
+    } else {
+      throw error;
+    }
+  }
 
-  assert.equal(firstSummary.historyTotalRuns, 1);
-  assert.equal(secondSummary.historyTotalRuns, 2);
-  assert.equal(secondSummary.historyUnknownObservationCount, 0);
-  assert.equal(
-    secondSummary.historyReloadRequiredCount + secondSummary.historyInSessionUpdatedCount,
-    2
-  );
-  assert.equal(
-    secondSummary.historyStance,
-    secondSummary.historyReloadRequiredCount > 0
-      ? 'live-uptake-not-proven'
-      : 'candidate-live-uptake-observed'
-  );
-  assert.equal(
-    secondSummary.historyProofStatus,
-    secondSummary.historyReloadRequiredCount > 0 ? 'not-fully-proven' : 're-evaluation-required'
-  );
-  await maybeWriteRuntimeSettingsLiveSessionProofOutput(secondSummary);
+  try {
+    const firstSummary = await runAndAssertRuntimeSettingsLiveSessionProbe(
+      prepared,
+      settingsFilePath,
+      firstBaselineProvider
+    );
+    const secondSummary = await runAndAssertRuntimeSettingsLiveSessionProbe(
+      prepared,
+      settingsFilePath,
+      secondBaselineProvider
+    );
+
+    assert.equal(firstSummary.historyTotalRuns, 1);
+    assert.equal(secondSummary.historyTotalRuns, 2);
+    assert.equal(secondSummary.historyUnknownObservationCount, 0);
+    assert.equal(
+      secondSummary.historyReloadRequiredCount + secondSummary.historyInSessionUpdatedCount,
+      2
+    );
+    assert.equal(
+      secondSummary.historyStance,
+      secondSummary.historyReloadRequiredCount > 0
+        ? 'live-uptake-not-proven'
+        : 'candidate-live-uptake-observed'
+    );
+    assert.equal(
+      secondSummary.historyProofStatus,
+      secondSummary.historyReloadRequiredCount > 0 ? 'not-fully-proven' : 're-evaluation-required'
+    );
+    await maybeWriteRuntimeSettingsLiveSessionProofOutput(secondSummary);
+  } finally {
+    // Restore the original settings exactly (or remove the file if it did not
+    // exist), so the probe leaves NO runtime-provider drift regardless of how it
+    // exits.
+    if (originalSettingsContent === undefined) {
+      await fs.rm(settingsFilePath, { force: true });
+    } else {
+      await fs.writeFile(settingsFilePath, originalSettingsContent, 'utf8');
+    }
+  }
 }
 
 async function runAndAssertRuntimeSettingsLiveSessionProbe(
@@ -1324,6 +1394,72 @@ async function waitFor(
 
   const suffix = details ? `\n${details()}` : '';
   throw new Error(`Timed out after ${timeoutMs}ms${suffix}`);
+}
+
+/**
+ * Awaits the non-empty creation of `capturePath` via a directory watcher — an
+ * event-driven done-signal for the custom editor's background render→capture
+ * (`vscode.openWith` resolves when the editor opens, before the async render
+ * writes the file). No polling and no in-test timeout: the render either fires
+ * `onPreviewRendered` (writing the capture) and resolves this, or a genuine
+ * render failure leaves it pending so the outer integration-host/CI job boundary
+ * surfaces the hang rather than the test masking it. Arm this BEFORE the open so
+ * a fast write cannot race ahead of the watcher.
+ */
+async function waitForCaptureFile(captureDir: string, capturePath: string): Promise<string> {
+  const readIfReady = async (): Promise<string | undefined> => {
+    try {
+      const content = await fs.readFile(capturePath, 'utf8');
+      return content.length > 0 ? content : undefined;
+    } catch {
+      return undefined;
+    }
+  };
+
+  return new Promise<string>((resolve, reject) => {
+    const targetName = path.basename(capturePath);
+    let settled = false;
+    let watcher: ReturnType<typeof fsWatch> | undefined;
+
+    const finish = (content: string): void => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      watcher?.close();
+      resolve(content);
+    };
+
+    try {
+      watcher = fsWatch(captureDir, (_event, fileName) => {
+        if (fileName !== null && path.basename(String(fileName)) !== targetName) {
+          return;
+        }
+        void readIfReady().then((content) => {
+          if (content !== undefined) {
+            finish(content);
+          }
+        });
+      });
+      watcher.on('error', (error) => {
+        if (!settled) {
+          settled = true;
+          reject(error);
+        }
+      });
+    } catch (error) {
+      reject(error);
+      return;
+    }
+
+    // The write may have completed between arming and the first watch callback;
+    // check once immediately so a fast producer is not missed.
+    void readIfReady().then((content) => {
+      if (content !== undefined) {
+        finish(content);
+      }
+    });
+  });
 }
 
 async function readClipboardBestEffort(): Promise<string> {

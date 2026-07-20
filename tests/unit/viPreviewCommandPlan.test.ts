@@ -152,7 +152,7 @@ describe('rewriteViPreviewArgsForLinuxContainerWorkspace', () => {
 });
 
 describe('buildLinuxContainerViPreviewScript', () => {
-  it('embeds the CLI args, VI Server hardening, and one-shot -350000 retry (VHS-REQ-659.5)', () => {
+  it('embeds the CLI args and VI Server hardening and runs the CLI once (single-cycle) (VHS-REQ-659.5)', () => {
     const script = buildLinuxContainerViPreviewScript(
       'LabVIEWCLI',
       ['-OperationName', VI_PREVIEW_OPERATION_NAME, '-VI', '/workspace/staging/Foo.vi'],
@@ -161,8 +161,10 @@ describe('buildLinuxContainerViPreviewScript', () => {
 
     expect(script).toContain("cli_path='LabVIEWCLI'");
     expect(script).toContain('server.tcp.enabled');
-    expect(script).toContain('-350000');
-    expect(script).toContain('max_attempts=3');
+    // Single-cycle: no cold-launch retry loop.
+    expect(script).not.toContain('max_attempts');
+    expect(script).not.toContain('retry_delay');
+    expect(script).toContain('retryAttempts=1');
     expect(script).toContain('exit $rc');
   });
 
@@ -283,7 +285,8 @@ describe('buildLinuxContainerExecViPreviewCommandPlan', () => {
     expect(script).toContain(`${LINUX_CONTAINER_VI_PREVIEW_WORKSPACE_ROOT}/render-xyz/vi/Foo.vi`);
     expect(script).toContain(`${LINUX_CONTAINER_VI_PREVIEW_WORKSPACE_ROOT}/render-xyz/preview.html`);
     expect(script).toContain(VI_PREVIEW_OPERATION_NAME);
-    expect(script).toContain('-350000');
+    // Single-cycle: no cold-launch retry loop.
+    expect(script).not.toContain('max_attempts');
   });
 });
 
@@ -323,7 +326,7 @@ describe('rewriteViPreviewArgsForWindowsContainerWorkspace', () => {
 });
 
 describe('buildWindowsContainerViPreviewScript', () => {
-  it('hardens the LabVIEWCLI.ini connect timeouts and retries on -350000 (VHS-REQ-659.4)', () => {
+  it('hardens the LabVIEWCLI.ini connect timeouts and runs the CLI once (single-cycle) (VHS-REQ-659.4)', () => {
     const script = buildWindowsContainerViPreviewScript(
       'LabVIEWCLI',
       ['-OperationName', VI_PREVIEW_OPERATION_NAME, '-VI', 'C:\\vi-history-suite\\staging\\Foo.vi'],
@@ -332,7 +335,10 @@ describe('buildWindowsContainerViPreviewScript', () => {
     expect(script).toContain('OpenAppReferenceTimeoutInSecond');
     expect(script).toContain('AfterLaunchOpenAppReferenceTimeoutInSecond');
     expect(script).toContain("-Value '200'");
-    expect(script).toContain('-350000');
+    // Single-cycle: no cold-launch retry loop.
+    expect(script).not.toContain('$maxAttempts');
+    expect(script).not.toContain('$isStartupConnectivity');
+    expect(script).toContain('retryAttempts=1');
     expect(script).toContain('Set-IniToken');
     expect(script).toContain('exit $lastExit');
     // Creates the scratch/temp root before use (Windows does not auto-create TEMP).
@@ -467,8 +473,9 @@ describe('buildWindowsContainerExecViPreviewCommandPlan', () => {
     expect(script).toContain(`${WINDOWS_CONTAINER_VI_PREVIEW_WORKSPACE_ROOT}\\render-xyz\\vi\\Foo.vi`);
     expect(script).toContain(`${WINDOWS_CONTAINER_VI_PREVIEW_WORKSPACE_ROOT}\\render-xyz\\preview.html`);
     expect(script).toContain(VI_PREVIEW_OPERATION_NAME);
-    expect(script).toContain('-350000');
-    expect(script).toContain('retryAttempts');
+    // Single-cycle: no cold-launch retry loop.
+    expect(script).not.toContain('$maxAttempts');
+    expect(script).toContain('retryAttempts=1');
     // Each render recreates the scratch temp root (harden is fail-soft).
     expect(script).toContain('New-Item -ItemType Directory -Force');
     expect(script).toContain(`-Path '${WINDOWS_CONTAINER_VI_PREVIEW_TEMP_ROOT}'`);

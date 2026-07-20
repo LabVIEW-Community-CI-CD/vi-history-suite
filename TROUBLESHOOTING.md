@@ -287,23 +287,19 @@ Two independent issues can cause this on a Linux host running LabVIEW 2026:
    `server.tcp.port` (default `3363`) is passed to LabVIEWCLI as
    `-PortNumber`.
 
-2. Leave the comparison invocation **non-headless** on Linux host-native.
-   `vi-history-suite` keeps Linux host-native runs non-headless by default;
-   the Linux container provider continues to invoke `-Headless` against the
-   container's bundled LabVIEW Professional executable
-   (`/usr/local/natinst/LabVIEW-<year>-64/labviewprofull`), which engages
-   headless mode and completes comparison reports.
-
-3. Only set `LV_RTE_LINUX_HEADLESS=1` (in the VS Code extension host
-   environment, e.g. `~/.profile` or a shell that launches `code`) if your
-   active LabVIEW build's headless manager is known to work.
+2. The comparison invocation runs **headless** on Linux host-native.
+   `vi-history-suite` runs Linux host-native comparisons headless
+   unconditionally (matching the Docker Linux LabVIEW image, which always
+   invokes `-Headless`), so a comparison never opens an interactive LabVIEW
+   GUI window. The Linux container provider likewise invokes `-Headless`
+   against the container's bundled LabVIEW Professional executable
+   (`/usr/local/natinst/LabVIEW-<year>-64/labviewprofull`).
 
 ### Confirming the fix took effect
 
 Open the retained packet for a Linux host-native run and confirm that:
 
-- `runtimeExecution.args` does **not** contain `-Headless` (default), or
-  contains `-Headless` only when you explicitly opted in.
+- `runtimeExecution.args` contains `-Headless`.
 - `runtimeExecution.state` is `succeeded` and `runtimeExecution.reportExists`
   is `true`.
 
@@ -318,14 +314,14 @@ Check the retained `runtimeExecution.diagnosticReason`:
 - `labview-cli-create-report-permission-error`: LabVIEW returned error 8.
   Confirm VI Server TCP/IP is enabled and reachable from the extension host.
 - `linux-headless-init-failed`: Your LabVIEW build cannot initialize
-  headless mode. Unset `LV_RTE_LINUX_HEADLESS` (or set it to anything other
-  than `1`) to drop back to the non-headless path.
+  headless mode. Switch to the Linux container provider, whose bundled
+  LabVIEW image initializes headless mode correctly.
 - `linux-headless-recursive-load`: A recursive GSW LEIF load was observed
   while running in headless mode. LabVIEW logs this line during Getting
   Started Window initialization and usually recovers, so it is only reported
   when the run **also** failed (it is suppressed on a successful run). If the
   run failed, the headless-session-reset retry will attempt one recovery; if
-  that also fails, switch to non-headless or use the Linux container provider.
+  that also fails, use the Linux container provider.
 
 If the failure persists, attach the run's full `diagnostics/` directory and
 the LabVIEW interactive log

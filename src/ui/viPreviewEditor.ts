@@ -67,9 +67,11 @@ export interface RegisterViPreviewCustomEditorOptions {
    * after a preview is displayed. Production never supplies this; the extension
    * wires it only under integration-test intent (VIHS_TEST_CAPTURE_PREVIEW) so
    * an automated test can assert the live custom-editor webview content without
-   * a human opening the file. (VHS-REQ-659.)
+   * a human opening the file. It may return a Promise; `resolveCustomEditor`
+   * awaits it so the capture completes before the open resolves — a deterministic
+   * render→capture handshake with no polling. (VHS-REQ-659.)
    */
-  onPreviewRendered?: (viFsPath: string, html: string, mode: string) => void;
+  onPreviewRendered?: (viFsPath: string, html: string, mode: string) => void | Promise<void>;
   /** Shared warm-session manager; used for the Docker runtime so opens are fast once warm. */
   sessionManager?: ViPreviewSessionManager;
 }
@@ -112,7 +114,11 @@ class ViPreviewEditorProvider implements vscode.CustomReadonlyEditorProvider<ViP
     private readonly context: vscode.ExtensionContext,
     private readonly onPreviewOpened?: (viFsPath: string) => void,
     private readonly sessionManager?: ViPreviewSessionManager,
-    private readonly onPreviewRendered?: (viFsPath: string, html: string, mode: string) => void
+    private readonly onPreviewRendered?: (
+      viFsPath: string,
+      html: string,
+      mode: string
+    ) => void | Promise<void>
   ) {
     this.cache = createViPreviewCache(context);
   }
@@ -130,11 +136,11 @@ class ViPreviewEditorProvider implements vscode.CustomReadonlyEditorProvider<ViP
    * diagram or a malformed export), and that fallback must stay host-level
    * script-disabled like the normal document path. (VHS-REQ-659.)
    */
-  private renderResultToWebview(
+  private async renderResultToWebview(
     webviewPanel: vscode.WebviewPanel,
     labviewHtml: string,
     viFsPath: string
-  ): void {
+  ): Promise<void> {
     const interactive = isBlockDiagramInteractiveEnabled();
     const nonce = interactive ? randomBytes(16).toString('base64') : undefined;
     const selected = selectViPreviewDocument({
@@ -145,8 +151,10 @@ class ViPreviewEditorProvider implements vscode.CustomReadonlyEditorProvider<ViP
     webviewPanel.webview.options = { enableScripts: selected.mode === 'interactive' };
     webviewPanel.webview.html = selected.html;
     // Test-only capture of the exact rendered webview HTML (wired only under
-    // integration-test intent; never in production).
-    this.onPreviewRendered?.(viFsPath, selected.html, selected.mode);
+    // integration-test intent; never in production). Awaited so the render→
+    // capture handshake completes before the open resolves — the test reads the
+    // captured file once, with no polling.
+    await this.onPreviewRendered?.(viFsPath, selected.html, selected.mode);
     // Successful open signals user intent; warm the rest of the workspace.
     this.onPreviewOpened?.(viFsPath);
   }
@@ -229,7 +237,7 @@ class ViPreviewEditorProvider implements vscode.CustomReadonlyEditorProvider<ViP
             buildViPreviewRenderDeps(this.cache)
           );
           if (cachePeek.outcome === 'rendered' && cachePeek.html) {
-            this.renderResultToWebview(webviewPanel, cachePeek.html, document.uri.fsPath);
+            await this.renderResultToWebview(webviewPanel, cachePeek.html, document.uri.fsPath);
             return;
           }
         }
@@ -280,7 +288,7 @@ class ViPreviewEditorProvider implements vscode.CustomReadonlyEditorProvider<ViP
         }
 
         if (result.outcome === 'rendered' && result.html) {
-          this.renderResultToWebview(webviewPanel, result.html, document.uri.fsPath);
+          await this.renderResultToWebview(webviewPanel, result.html, document.uri.fsPath);
           return;
         }
 
