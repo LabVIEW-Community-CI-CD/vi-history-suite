@@ -128,6 +128,14 @@ export interface ComparisonPipelineCycleRecord {
   failureReason?: string;
   durationMs?: number;
   interCycleGapMs?: number;
+  /**
+   * VHS-REQ-699 / VHS-REQ-147: for the UNSTAGING state, the actual staged
+   * artifacts (absolute paths) that were removed and that were retained, stat'd
+   * at unstage time — so retained evidence names the concrete files the cleanup
+   * acted on. Absent for the non-UNSTAGING states.
+   */
+  removedPaths?: string[];
+  retainedPaths?: string[];
 }
 
 export interface ComparisonReportRevisionMetadata {
