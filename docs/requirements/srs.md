@@ -6606,6 +6606,41 @@ Missing numeric IDs are intentional.
     (`thresholds.break` null), updating the structural-shape assertions alongside
     any intentional configuration change.
 
+### VHS-REQ-689: MCP Stdio Entrypoint
+
+- Status: Active
+- Parent: VHS-SYS-REQ-013
+- Area: CI And Developer Environment
+- Statement: The VI semantic MCP server stdio entrypoint shall frame
+  newline-delimited JSON-RPC 2.0 traffic on standard streams — buffering stdin,
+  dispatching each complete line to the unit-tested handler with its injected
+  orchestrator, flushing a trailing unterminated line at stream end, and emitting
+  a JSON-RPC parse-error response for malformed input rather than crashing — so
+  the transport wiring around the covered protocol core is itself verifiable.
+- Acceptance Criteria:
+  - The entrypoint buffers stdin chunks and dispatches each newline-delimited line
+    to the handler, skipping blank lines, and writes each non-null handler
+    response as a newline-terminated JSON object on stdout.
+  - Malformed JSON on a line yields a JSON-RPC parse-error response (code
+    `-32700`, id `null`) on stdout without invoking the handler or crashing the
+    process.
+  - A trailing line that arrives without a closing newline is still dispatched
+    when the stdin stream ends, so the final framed message is not dropped.
+- Agent Work Scope:
+  - When changing the stdio entrypoint, keep all protocol logic in the injected,
+    unit-tested handler and confine the entrypoint to stream framing
+    (buffering, blank-line skipping, end-of-stream flush, and parse-error
+    fail-safe), keeping the substantive orchestration in the covered builder.
+- Implementation References:
+  - `src/cli/runViSemanticMcpServer.ts`
+- Verification References:
+  - `tests/unit/runViSemanticMcpServer.test.ts`
+- Change Guidance:
+  - Keep the entrypoint a thin stream-framing shell over the injected handler:
+    preserve newline framing, blank-line skipping, the end-of-stream flush, and
+    the JSON-RPC parse-error fail-safe, and keep protocol logic in the covered
+    `handleViSemanticMcpMessage` dispatcher.
+
 ### VHS-REQ-698: Control-Plane Loop Drift Radar
 
 - Status: Active
