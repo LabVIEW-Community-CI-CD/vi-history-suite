@@ -75,6 +75,9 @@ function releasePacket(): string {
 function supplyChainPacket(): string {
   return JSON.stringify({ status: 'fresh', artifactCount: 4, attentionCount: 1 });
 }
+function governancePacket(): string {
+  return JSON.stringify({ consistent: true, violationCount: 0, violations: [] });
+}
 
 function happyDeps() {
   return {
@@ -108,6 +111,10 @@ function happyDeps() {
       {
         match: (c, a) => c === 'node' && a.some((x) => x.includes('buildSupplyChainState.js')),
         result: { status: 0, stdout: supplyChainPacket() }
+      },
+      {
+        match: (c, a) => c === 'node' && a.some((x) => x.includes('checkAdrIndex.js')),
+        result: { status: 0, stdout: governancePacket() }
       }
     ])
   };
@@ -170,6 +177,7 @@ describe('readRepoTruth: buildRepoTruthPacket', () => {
     expect(domains.requirementHealth).toMatchObject({ available: true, requirementsNeedingAttention: 4 });
     expect(domains.releaseState).toMatchObject({ available: true, stage: 'published', status: 'fresh', authorityComplete: true });
     expect(domains.supplyChain).toMatchObject({ available: true, status: 'fresh', artifactCount: 4, attentionCount: 1 });
+    expect(domains.adrGovernance).toMatchObject({ available: true, consistent: true, violationCount: 0 });
   });
 
   it('downgrades a sibling domain to available:false when its script yields no JSON (VHS-REQ-692.4)', () => {
