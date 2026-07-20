@@ -34,10 +34,15 @@ jobs:
     steps:
       - name: Branch Governance
         if: ${{ github.event_name == 'pull_request' }}
+        # Pass the PR refs through env, not inline `${{ }}`, so an attacker-
+        # controlled branch name (github.head_ref) cannot inject shell commands.
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          HEAD_REF: ${{ github.head_ref }}
         run: |
           set -euo pipefail
-          base="${{ github.base_ref }}"
-          head="${{ github.head_ref }}"
+          base="$BASE_REF"
+          head="$HEAD_REF"
           decision=blocked
 
           # fix/* branches must merge into a feature/* branch, never directly
