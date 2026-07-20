@@ -12,6 +12,7 @@ const {
   extractMergeQueuePolicy,
   summarizeOpenWork,
   buildRepoTruthPacket,
+  collectRuntimeFidelityDomain,
   run
 } = require('../../scripts/readRepoTruth.js') as {
   REPO_TRUTH_SCHEMA_ID: string;
@@ -22,6 +23,7 @@ const {
   extractMergeQueuePolicy: (rulesets: unknown) => Record<string, unknown>;
   summarizeOpenWork: (prs: unknown) => Record<string, unknown>;
   buildRepoTruthPacket: (options: Record<string, unknown>, deps: Record<string, unknown>) => Record<string, unknown>;
+  collectRuntimeFidelityDomain: (deps?: Record<string, unknown>) => Record<string, unknown>;
   run: (argv: string[], deps?: Record<string, unknown>) => { exitCode: number; stdout?: string; stderr?: string };
 };
 
@@ -165,6 +167,45 @@ describe('readRepoTruth: isAuthFailureText', () => {
   });
 });
 
+describe('readRepoTruth: collectRuntimeFidelityDomain (VHS-REQ-692)', () => {
+  const LEDGER = JSON.stringify({
+    tracks: [
+      { trackId: 'linux-host-native', linuxExecutable: true, lastValidatedVersion: '1.36.1' },
+      { trackId: 'linux-container-2026q1', linuxExecutable: true, lastValidatedVersion: '1.34.2' },
+      { trackId: 'vagrant-release', releaseGating: true, linuxExecutable: false, lastValidatedVersion: '1.0.0' }
+    ]
+  });
+  function fakeRead(pkgVersion: string, ledger?: string) {
+    return (p: string) => {
+      if (String(p).endsWith('package.json')) return JSON.stringify({ version: pkgVersion });
+      if (String(p).endsWith('runtime-validation-ledger.json')) {
+        if (ledger === undefined) throw new Error('ENOENT');
+        return ledger;
+      }
+      throw new Error(`unexpected read ${p}`);
+    };
+  }
+
+  it('reports per-track freshness vs the current build, excluding release-gating tracks', () => {
+    const d = collectRuntimeFidelityDomain({ readFileSync: fakeRead('1.36.1', LEDGER), repoRoot: '/repo' });
+    expect(d).toMatchObject({ available: true, currentVersion: '1.36.1', trackCount: 2, staleTrackCount: 1, allFresh: false });
+    expect(d.staleTracks).toEqual([{ trackId: 'linux-container-2026q1', lastValidatedVersion: '1.34.2' }]);
+  });
+
+  it('is allFresh when every Linux track matches the current build', () => {
+    const fresh = JSON.stringify({
+      tracks: [{ trackId: 'linux-host-native', linuxExecutable: true, lastValidatedVersion: '2.0.0' }]
+    });
+    const d = collectRuntimeFidelityDomain({ readFileSync: fakeRead('2.0.0', fresh), repoRoot: '/repo' });
+    expect(d).toMatchObject({ available: true, allFresh: true, staleTrackCount: 0 });
+  });
+
+  it('degrades to available:false when the ledger is missing', () => {
+    const d = collectRuntimeFidelityDomain({ readFileSync: fakeRead('1.36.1', undefined), repoRoot: '/repo' });
+    expect(d).toMatchObject({ available: false });
+  });
+});
+
 describe('readRepoTruth: buildRepoTruthPacket', () => {
   it('assembles a self-describing packet across the three slice-1 domains (VHS-REQ-691.1, VHS-REQ-692.1)', () => {
     const packet = buildRepoTruthPacket({ repo: 'LabVIEW-Community-CI-CD/vi-history-suite', branch: 'develop' }, happyDeps());
@@ -178,6 +219,9 @@ describe('readRepoTruth: buildRepoTruthPacket', () => {
     expect(domains.releaseState).toMatchObject({ available: true, stage: 'published', status: 'fresh', authorityComplete: true });
     expect(domains.supplyChain).toMatchObject({ available: true, status: 'fresh', artifactCount: 4, attentionCount: 1 });
     expect(domains.adrGovernance).toMatchObject({ available: true, consistent: true, violationCount: 0 });
+    // 8th domain: runtime-fidelity reads local ledger files; with the '/repo' test
+    // root those reads fail and it degrades to available:false (never throws).
+    expect(domains.runtimeFidelity).toMatchObject({ available: false });
   });
 
   it('downgrades a sibling domain to available:false when its script yields no JSON (VHS-REQ-692.4)', () => {

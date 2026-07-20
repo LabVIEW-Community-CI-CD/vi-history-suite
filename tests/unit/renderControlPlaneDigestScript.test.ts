@@ -12,7 +12,8 @@ const {
   deriveOpenWorkFromReadModel,
   deriveDebtFromReadModel,
   deriveReleaseStateFromReadModel,
-  deriveSupplyChainFromReadModel
+  deriveSupplyChainFromReadModel,
+  deriveRuntimeFidelityFromReadModel
 } = require('../../scripts/renderControlPlaneDigest.js') as {
   DIGEST_MARKER: string;
   buildControlPlaneDigest: (
@@ -25,6 +26,7 @@ const {
   deriveDebtFromReadModel: (packet: unknown) => { coverageDebtTitle?: string; requirementAttention?: number } | undefined;
   deriveReleaseStateFromReadModel: (packet: unknown) => { stage: string; status: string; authorityComplete: boolean } | undefined;
   deriveSupplyChainFromReadModel: (packet: unknown) => { status: string; artifactCount: number; attentionCount: number } | undefined;
+  deriveRuntimeFidelityFromReadModel: (packet: unknown) => { currentVersion: string; trackCount: number; staleTrackCount: number; allFresh: boolean; staleTracks: unknown[] } | undefined;
 };
 
 const AT = '2026-07-20T00:00:00.000Z';
@@ -102,6 +104,19 @@ describe('renderControlPlaneDigest: buildControlPlaneDigest (VHS-REQ-698.1)', ()
     expect(markdown).toContain('⚠️ attention: 2 artifact(s), 1 needing attention');
   });
 
+  it('renders the real-runtime fidelity section with stale tracks', () => {
+    const { markdown } = buildControlPlaneDigest(
+      {
+        boardDrift: [],
+        runtimeFidelity: { currentVersion: '1.36.1', trackCount: 5, staleTrackCount: 1, allFresh: false, staleTracks: [{ trackId: 'linux-host-native', lastValidatedVersion: '1.34.2' }] }
+      },
+      { generatedAt: AT }
+    );
+    expect(markdown).toContain('## Real-runtime fidelity');
+    expect(markdown).toContain('1 of 5 Linux runtime track(s) not yet validated at build 1.36.1');
+    expect(markdown).toContain('linux-host-native (last validated 1.34.2)');
+  });
+
   it('tolerates a non-object signals argument', () => {
     const { driftCount, markdown } = buildControlPlaneDigest(null, { generatedAt: AT });
     expect(driftCount).toBe(0);
@@ -173,7 +188,8 @@ const READ_MODEL = {
   coverage: { available: true, mappedBelowThreshold: 0 },
   openWork: { available: true, openPullRequests: 3, byMergeStateStatus: { BLOCKED: 1, CLEAN: 2 } },
   releaseState: { available: true, stage: 'published', status: 'ready', authorityComplete: true },
-  supplyChain: { available: true, status: 'clean', artifactCount: 4, attentionCount: 0 }
+  supplyChain: { available: true, status: 'clean', artifactCount: 4, attentionCount: 0 },
+  runtimeFidelity: { available: true, currentVersion: '1.36.1', trackCount: 5, staleTrackCount: 2, allFresh: false, staleTracks: [{ trackId: 'linux-host-native', lastValidatedVersion: '1.34.2' }] }
 };
 
 describe('renderControlPlaneDigest: read-model section mappers (VHS-REQ-698.1)', () => {
@@ -232,6 +248,16 @@ describe('renderControlPlaneDigest: read-model section mappers (VHS-REQ-698.1)',
       attentionCount: 0
     });
     expect(deriveSupplyChainFromReadModel({ supplyChain: { available: false } })).toBeUndefined();
+  });
+
+  it('derives runtime fidelity, undefined when the domain is unavailable', () => {
+    expect(deriveRuntimeFidelityFromReadModel(READ_MODEL)).toMatchObject({
+      currentVersion: '1.36.1',
+      trackCount: 5,
+      staleTrackCount: 2,
+      allFresh: false
+    });
+    expect(deriveRuntimeFidelityFromReadModel({ runtimeFidelity: { available: false } })).toBeUndefined();
   });
 });
 
