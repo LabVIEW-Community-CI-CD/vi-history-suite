@@ -31,6 +31,14 @@ function reasonFor(
   return decisions.find((d) => d.provider === provider && d.outcome === outcome)?.reason;
 }
 
+function detailFor(
+  decisions: ReturnType<typeof buildProviderDecisions>,
+  provider: string,
+  outcome: 'selected' | 'rejected'
+): string | undefined {
+  return decisions.find((d) => d.provider === provider && d.outcome === outcome)?.detail;
+}
+
 describe('buildProviderDecisions container selection (VHS-REQ-657)', () => {
   it('selects the container and rejects host-native when the docker provider is requested', () => {
     const decisions = buildProviderDecisions(
@@ -279,5 +287,98 @@ describe('buildProviderDecisions container rejection (VHS-REQ-657)', () => {
       baseOptions({ executionMode: 'auto', containerEvaluated: true, dockerCliAvailable: true })
     );
     expect(reasonFor(decisions, 'windows-container', 'rejected')).toBe('docker-container-image-unavailable');
+  });
+});
+
+describe('buildProviderDecisions container rejection edge branches (VHS-REQ-657)', () => {
+  it('derives the linux-container label for a container-relevant linux host-only rejection', () => {
+    const decisions = buildProviderDecisions(
+      baseOptions({
+        platform: 'linux',
+        executionMode: 'host-only',
+        containerEvaluated: true,
+        containerHostMode: 'linux',
+        containerRuntimePlatform: 'linux'
+      })
+    );
+    expect(reasonFor(decisions, 'linux-container', 'rejected')).toBe(
+      'execution-mode-host-only-disallows-docker'
+    );
+  });
+
+  it('rejects auto docker as installed-but-provider-unavailable with a described image', () => {
+    const decisions = buildProviderDecisions(
+      baseOptions({
+        executionMode: 'auto',
+        containerEvaluated: true,
+        dockerCliAvailable: true,
+        blockedReason: 'auto-docker-installed-provider-unavailable',
+        containerImage: 'nationalinstruments/labview:2026q1-windows'
+      })
+    );
+    expect(reasonFor(decisions, 'windows-container', 'rejected')).toBe(
+      'auto-docker-installed-provider-unavailable'
+    );
+    expect(detailFor(decisions, 'windows-container', 'rejected')).toContain('Docker Desktop was detected');
+  });
+
+  it('rejects auto docker required by a host-runtime conflict but reported unavailable', () => {
+    const decisions = buildProviderDecisions(
+      baseOptions({
+        executionMode: 'auto',
+        containerEvaluated: true,
+        dockerCliAvailable: true,
+        blockedReason: 'windows-host-runtime-surface-contaminated',
+        containerImage: 'nationalinstruments/labview:2026q1-windows'
+      })
+    );
+    expect(reasonFor(decisions, 'windows-container', 'rejected')).toBe(
+      'auto-required-docker-because-host-runtime-conflict-but-provider-unavailable'
+    );
+    expect(detailFor(decisions, 'windows-container', 'rejected')).toContain(
+      'Validated Windows host runtime facts required Docker'
+    );
+  });
+
+  it('describes the configured image on a docker-only provider-unavailable rejection', () => {
+    const decisions = buildProviderDecisions(
+      baseOptions({
+        executionMode: 'docker-only',
+        containerEvaluated: true,
+        requestedProvider: 'docker',
+        containerImage: 'nationalinstruments/labview:2026q1-windows'
+      })
+    );
+    expect(reasonFor(decisions, 'windows-container', 'rejected')).toBe('docker-provider-unavailable');
+    expect(detailFor(decisions, 'windows-container', 'rejected')).toContain(
+      'The Docker provider was requested'
+    );
+  });
+
+  it('describes the configured image on an auto image-unavailable fallback', () => {
+    const decisions = buildProviderDecisions(
+      baseOptions({
+        executionMode: 'auto',
+        containerEvaluated: true,
+        dockerCliAvailable: true,
+        containerImage: 'nationalinstruments/labview:2026q1-windows'
+      })
+    );
+    expect(reasonFor(decisions, 'windows-container', 'rejected')).toBe('docker-container-image-unavailable');
+    expect(detailFor(decisions, 'windows-container', 'rejected')).toContain(
+      'nationalinstruments/labview:2026q1-windows'
+    );
+  });
+});
+
+describe('buildProviderDecisions host-native selection detail branches (VHS-REQ-657)', () => {
+  it('notes the x86 host-native preference in the selected detail', () => {
+    const decisions = buildProviderDecisions(
+      baseOptions({ selectedProvider: 'host-native', bitness: 'x86' })
+    );
+    expect(reasonFor(decisions, 'host-native', 'selected')).toBe('host-native-labview-cli-selected');
+    expect(detailFor(decisions, 'host-native', 'selected')).toContain(
+      'Windows x86 lane prefers host-native execution'
+    );
   });
 });
