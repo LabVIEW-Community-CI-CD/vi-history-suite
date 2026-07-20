@@ -107,12 +107,24 @@ export interface ComparisonReportRuntimeExecution {
 }
 
 /**
- * VHS-REQ-699: one cycle-state record of the single-pass comparison-preview
- * pipeline, retained as runtime evidence.
+ * VHS-REQ-699: one state record of the single-pass comparison-preview pipeline,
+ * retained as runtime evidence. Covers every pipeline state (idempotent STAGING,
+ * the two preview cycles, the explicit VALIDATION decision, COMPARISON, and the
+ * always-run idempotent UNSTAGING cleanup) so each state's input and output are
+ * inspectable.
  */
 export interface ComparisonPipelineCycleRecord {
-  state: 'PREVIEW_LEFT' | 'PREVIEW_RIGHT' | 'COMPARISON';
-  outcome: 'rendered' | 'compared' | 'failed' | 'skipped';
+  state: 'STAGING' | 'PREVIEW_LEFT' | 'PREVIEW_RIGHT' | 'VALIDATION' | 'COMPARISON' | 'UNSTAGING';
+  /**
+   * State outcome: STAGING `staged`/`already-staged`/`failed`; previews
+   * `rendered`/`failed`/`skipped`; VALIDATION `admitted`/`rejected`; COMPARISON
+   * `compared`/`failed`/`skipped`; UNSTAGING `removed`/`already-clean`/`partial`/
+   * `failed`.
+   */
+  outcome: string;
+  /** Typed input the state consumed: the staged side for previews, or the
+   * rejected side for a VALIDATION rejection. */
+  input?: 'left' | 'right';
   failureReason?: string;
   durationMs?: number;
   interCycleGapMs?: number;

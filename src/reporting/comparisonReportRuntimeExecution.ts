@@ -1638,26 +1638,46 @@ async function runHostNativeExecutionWithContext(
     }
   };
 
-  // VHS-REQ-699: single-pass comparison-preview pipeline. When a staged-VI
-  // preview validator is wired (always-on in production across providers), run
-  // the PREVIEW_LEFT and PREVIEW_RIGHT cycles first to validate each staged VI
-  // loads; a preview-load failure short-circuits (skips) the fragile
-  // CreateComparisonReport cycle and surfaces an actionable
-  // `staged-vi-preview-validation-failed` signal instead of a confusing
-  // comparison failure. When no validator is wired, the comparison runs directly
-  // as before. Either way the comparison itself remains a single attempt (no
-  // retry).
+  // VHS-REQ-699: single-pass comparison-preview pipeline (state machine). When a
+  // staged-VI preview validator is wired (always-on in production across
+  // providers), run the pass as explicit states so every state's input/output is
+  // inspectable: STAGING (idempotent — verify the pair the outer path already
+  // materialized), PREVIEW_LEFT / PREVIEW_RIGHT (load-validate each staged VI),
+  // VALIDATION (admit only when both rendered), COMPARISON (the single compare
+  // attempt), and UNSTAGING (idempotent, always-run, diagnostic status). A
+  // validation rejection short-circuits (skips) the fragile CreateComparisonReport
+  // and surfaces an actionable `staged-vi-preview-validation-failed` signal. When
+  // no validator is wired, the comparison runs directly as before. Either way the
+  // comparison itself remains a single attempt (no retry).
   if (deps.renderStagedViPreview) {
     const validator = deps.renderStagedViPreview;
+    const stagedPair = {
+      leftPath: record.stagedRevisionPlan.leftFilePath,
+      rightPath: record.stagedRevisionPlan.rightFilePath
+    };
     let comparisonExecution: ComparisonReportRuntimeExecution | undefined;
     const pipeline = await runComparisonPreviewPipeline({
-      renderStagedPreview: (side) =>
+      // STAGING is idempotent: the left/right VIs were already materialized on
+      // disk before this seam, so verify their presence and report already-staged
+      // (a fresh materialize would be a `staged` outcome). A missing staged input
+      // fails closed before any LabVIEW launch.
+      stageInputs: async () => {
+        const [leftOk, rightOk] = await Promise.all([
+          deps.pathExists(stagedPair.leftPath),
+          deps.pathExists(stagedPair.rightPath)
+        ]);
+        if (leftOk && rightOk) {
+          return { outcome: 'already-staged', staged: stagedPair };
+        }
+        return {
+          outcome: 'failed',
+          failureReason: !leftOk ? 'left-staged-input-missing' : 'right-staged-input-missing'
+        };
+      },
+      renderStagedPreview: (side, staged) =>
         validator({
           side,
-          viFilePath:
-            side === 'left'
-              ? record.stagedRevisionPlan.leftFilePath
-              : record.stagedRevisionPlan.rightFilePath,
+          viFilePath: side === 'left' ? staged.leftPath : staged.rightPath,
           record
         }),
       runComparison: async () => {
@@ -1671,31 +1691,44 @@ async function runHostNativeExecutionWithContext(
           succeeded,
           failureReason: succeeded ? undefined : comparisonExecution.failureReason
         };
-      }
+      },
+      // UNSTAGING is idempotent and diagnostic-only here: the transient per-preview
+      // workspaces are removed by the preview renderer itself, and the staged pair
+      // is intentionally retained for the comparison + retained evidence (the outer
+      // execution path prunes/cleans it). Report already-clean with the retained
+      // pair so the diagnostic status names what was deliberately kept.
+      unstageInputs: async () => ({
+        status: 'already-clean',
+        retainedPaths: [stagedPair.leftPath, stagedPair.rightPath]
+      })
     });
     const pipelineCycles = toPipelineCycleRecords(pipeline);
     if (comparisonExecution) {
-      // The comparison cycle ran (both previews validated); attach per-cycle
+      // The comparison cycle ran (both previews validated); attach per-state
       // pipeline evidence to the verbatim single-attempt result.
       comparisonExecution.pipelineCycles = pipelineCycles;
       return comparisonExecution;
     }
-    // Validation gate short-circuited the comparison: a staged VI failed to
-    // render a preview, so the comparison was never invoked. Surface the
-    // actionable preview-validation failure carrying the per-cycle evidence.
-    const failedSide = pipeline.previewLeft.outcome === 'failed' ? 'left' : 'right';
+    // VALIDATION rejected the comparison: a staged VI failed to render a preview
+    // (or a staged input was missing), so the comparison was never invoked.
+    // Surface the actionable failure carrying the per-state evidence.
+    const rejectedSide = pipeline.validation.rejectedSide;
+    const rejectionReason = pipeline.failureReason ?? STAGED_VI_PREVIEW_VALIDATION_FAILED;
     const failedReason =
-      (failedSide === 'left'
+      rejectedSide === 'left'
         ? pipeline.previewLeft.failureReason
-        : pipeline.previewRight.failureReason) ?? 'preview-render-failed';
+        : rejectedSide === 'right'
+          ? pipeline.previewRight.failureReason
+          : pipeline.staging.failureReason;
+    const diagnosticNote = rejectedSide
+      ? `Staged ${rejectedSide} VI failed its preview-load validation before the comparison cycle (${failedReason ?? 'preview-render-failed'}); the CreateComparisonReport cycle was skipped.`
+      : `Staged comparison inputs were not available before the comparison cycle (${failedReason ?? rejectionReason}); the CreateComparisonReport cycle was skipped.`;
     return {
       state: 'failed',
       attempted: false,
       reportExists: false,
-      failureReason: STAGED_VI_PREVIEW_VALIDATION_FAILED,
-      diagnosticNotes: [
-        `Staged ${failedSide} VI failed its preview-load validation before the comparison cycle (${failedReason}); the CreateComparisonReport cycle was skipped.`
-      ],
+      failureReason: rejectionReason,
+      diagnosticNotes: [diagnosticNote],
       executable: commandPlan.executable,
       args: commandPlan.args,
       stdoutFilePath: record.artifactPlan.runtimeStdoutFilePath,

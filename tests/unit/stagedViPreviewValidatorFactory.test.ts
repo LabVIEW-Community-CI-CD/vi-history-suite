@@ -9,7 +9,7 @@ import type { StagedViPreviewValidatorInput } from '../../src/reporting/comparis
 import type { ComparisonReportPacketRecord } from '../../src/reporting/comparisonReportPacket';
 
 /**
- * VHS-REQ-699.5: the staged-VI preview validator factory (always-on live-
+ * VHS-REQ-699.7: the staged-VI preview validator factory (always-on live-
  * comparison wiring) maps a preview render outcome onto the pipeline's load-
  * validation gate and never blocks a comparison when the preview runtime is
  * merely unavailable.
