@@ -1,6 +1,7 @@
 import * as fs from 'node:fs/promises';
 import * as fsSync from 'node:fs';
 import { execFileSync, spawn } from 'node:child_process';
+import * as os from 'node:os';
 import * as path from 'node:path';
 
 import { downloadAndUnzipVSCode, runTests } from '@vscode/test-electron';
@@ -92,6 +93,15 @@ async function main(): Promise<void> {
     } else {
       vscodeExecutablePath = await downloadAndUnzipVSCode('stable');
       assertLinuxVsCodeRuntimeReady(vscodeExecutablePath);
+      // VS Code's IPC handle is a Unix domain socket, whose path is capped at
+      // ~107 chars. The default user-data-dir lives under the (potentially very
+      // deep) `.vscode-test` tree, which on a self-hosted runner's nested
+      // `_work/<repo>/<repo>` path overflows the limit and fails with
+      // `listen EINVAL`. Pin a short user-data-dir under the temp dir so the
+      // integration host works regardless of how deep the checkout lives.
+      const shortUserDataDir = path.join(os.tmpdir(), 'vihs-ih');
+      await fs.mkdir(shortUserDataDir, { recursive: true });
+      launchArgs.push(`--user-data-dir=${shortUserDataDir}`);
       await writeRuntimeConfig(
         path.join(repoRoot, 'out-tests', 'tests', 'integration', 'test-runtime.json'),
         {
