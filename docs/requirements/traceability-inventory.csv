@@ -134,9 +134,9 @@ src/tooling/localRuntimeSettingsShellEscaping.ts,supporting,No,"Shell/path escap
 src/tooling/localRuntimeSettingsRuntimeStatus.ts,supporting,No,"Runtime settings value normalizers + status mappers (normalizeLabviewBitness, normalizeProvider, isSupportedInstalledLabviewVersion, formatPersistedFact, resolveCliRuntimePlatform, deriveRuntimeValidationErrorCode/ProofStatus/ImplementationStatus) extracted verbatim from localRuntimeSettingsCli and the public ones re-exported to preserve the public API while separating pure normalization/status mapping from CLI orchestration; supporting VHS-REQ-623."
 src/tooling/localRuntimeSettingsFileText.ts,supporting,No,"Settings-file text/JSONC transforms (normalizeSettingsJsoncText, stripUtf8ByteOrderMark, applySettingsJsoncEdit, detectSettingsEndOfLine, ensureTerminalNewline, assertSupportedSettingsTarget, isMissingFileError, readTrimmedSettingsProperty) extracted verbatim from localRuntimeSettingsCli to separate pure settings-file text handling from CLI orchestration; supporting VHS-REQ-612."
 src/tooling/localRuntimeSettingsEnvironmentReport.ts,supporting,No,"Environment redaction helpers (buildReportableEnvironment, isSecretLikeEnvironmentKey) extracted verbatim from localRuntimeSettingsCli and re-exported to preserve the public API while separating pure secret-like env redaction from CLI orchestration; supporting VHS-REQ-612."
-src/tooling/runtimeSettingsLiveSessionProbe.ts,dev-only,No,Live-session probe command is not contributed in package.json; maintainer diagnostics only and not installed command surface.
-src/tooling/runtimeSettingsLiveSessionProbePacket.ts,dev-only,No,Probe packet persistence supports maintainer-only live-session diagnostics for the non-contributed probe command that is not contributed in package.json.
-src/tooling/runtimeSettingsLiveSessionSafeRestore.ts,dev-only,No,Safe restore supports maintainer-only live-session probing for the non-contributed probe command that is not contributed in package.json.
+src/tooling/runtimeSettingsLiveSessionProbe.ts,mapped,Yes,"Live-session probe: pure buildRuntimeSettingsLiveSessionProbeSummary drift/receipt computation (no fs/command/vscode); command registered in code but NOT contributed in package.json; maintainer diagnostics only; mapped to VHS-REQ-687."
+src/tooling/runtimeSettingsLiveSessionProbePacket.ts,mapped,Yes,"Live-session probe packet persistence: persistRuntimeSettingsLiveSessionProbePacket reads retained history + writes run-scoped/latest packet through an injected fs boundary; supports the maintainer-only non-contributed probe command; mapped to VHS-REQ-687."
+src/tooling/runtimeSettingsLiveSessionSafeRestore.ts,mapped,Yes,"Live-session safe restore: fail-closed snapshot/capture/restore/verify guardrail (runWithRuntimeSettingsSafeRestore, injected fs) so a probe mutation never leaves the runtime-settings file mutated; supports the maintainer-only non-contributed probe command; mapped to VHS-REQ-687."
 src/ui/historyPanel.ts,mapped,Yes,History panel UI; mapped through RTM.
 src/ui/historyPanelTracker.ts,mapped,Yes,History panel tracker; mapped through RTM.
 scripts/auditPackagedRuntimeSurface.js,mapped,Yes,Package audit script; mapped through RTM.
@@ -334,9 +334,9 @@ tests/unit/customizationGovernanceAuditScript.test.ts,mapped,Yes,Customization g
 tests/unit/multiStandardsAuditScript.test.ts,mapped,Yes,Multi-standard local audit helper unit tests for tracked-snapshot standards evidence; mapped to VHS-REQ-615.
 tests/unit/vscodeTestHarness.ts,mapped,Yes,Reusable VS Code orchestration unit-test harness; mapped to VHS-REQ-614.
 tests/unit/vscodeTestHarness.test.ts,mapped,Yes,VS Code orchestration harness proof tests; mapped to VHS-REQ-614.
-tests/unit/runtimeSettingsLiveSessionProbe.test.ts,dev-only,No,Runtime settings probe tests; contributor validation tooling.
-tests/unit/runtimeSettingsLiveSessionProbePacket.test.ts,dev-only,No,Runtime settings probe packet tests; contributor tooling.
-tests/unit/runtimeSettingsLiveSessionSafeRestore.test.ts,dev-only,No,Runtime settings safe restore tests; contributor tooling.
+tests/unit/runtimeSettingsLiveSessionProbe.test.ts,mapped,Yes,"Runtime settings live-session probe tests (drift/receipt classification of the pure summary); mapped to VHS-REQ-687."
+tests/unit/runtimeSettingsLiveSessionProbePacket.test.ts,mapped,Yes,"Runtime settings live-session probe packet tests (retained-history counts + run-scoped/latest persistence via injected fs); mapped to VHS-REQ-687."
+tests/unit/runtimeSettingsLiveSessionSafeRestore.test.ts,mapped,Yes,"Runtime settings live-session safe-restore tests (snapshot/capture/restore/verify guardrail incl. missing-file baseline and combined operation+restore failures); mapped to VHS-REQ-687."
 tests/unit/securityMaintenanceWorkflows.test.ts,mapped,Yes,Security maintenance workflows tests; mapped through RTM.
 tests/unit/viFile.test.ts,mapped,Yes,VI file tests; mapped through RTM.
 tests/unit/viHistoryModel.test.ts,mapped,Yes,VI history model direct eligibility/window tests; mapped to VHS-REQ-006 VHS-REQ-008 and VHS-REQ-017.

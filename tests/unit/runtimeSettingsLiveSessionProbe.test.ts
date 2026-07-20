@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { buildRuntimeSettingsLiveSessionProbeSummary } from '../../src/tooling/runtimeSettingsLiveSessionProbe';
 
-describe('runtimeSettingsLiveSessionProbe', () => {
+describe('runtimeSettingsLiveSessionProbe (VHS-REQ-687.1)', () => {
   it('marks drift when persisted and live provider facts diverge', () => {
     const summary = buildRuntimeSettingsLiveSessionProbeSummary({
       settingsFilePath: '/tmp/settings.json',

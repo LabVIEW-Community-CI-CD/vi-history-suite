@@ -6519,6 +6519,50 @@ Missing numeric IDs are intentional.
     keep their parse/validate/arg boundaries pure so they stay unit-verifiable
     without a Vagrant or VirtualBox host.
 
+### VHS-REQ-687: Live-Session Runtime-Settings Diagnostics
+
+- Status: Active
+- Parent: VHS-SYS-REQ-013
+- Area: CI And Developer Environment
+- Statement: The maintainer-only live-session runtime-settings probe — a command
+  registered in code but never contributed to the extension command surface —
+  shall compute its drift summary, persist its evidence packet, and mutate the
+  runtime-settings file only under a fail-closed snapshot/restore guardrail, with
+  its computation, persistence, and restore boundaries pure or
+  dependency-injected so they are unit-verifiable without a live VS Code session.
+- Acceptance Criteria:
+  - The probe drift summary is computed by a pure function that normalizes the
+    provider/version/bitness facts and classifies the persisted-vs-live drift and
+    mutation-alignment receipts without touching the filesystem, a command, or the
+    VS Code API.
+  - The probe evidence packet is persisted through an injected filesystem boundary
+    that reads the retained historical probe files to compute aggregate
+    counts/stance and writes the run-scoped and latest packet pointers.
+  - The runtime-settings mutation runs only under a fail-closed
+    snapshot/restore guardrail: a snapshot of the settings file (or missing-file
+    baseline) is captured through an injected filesystem boundary, the derived
+    provider-toggle mutation runs, and the snapshot is always restored and
+    verified — combining any operation and restore failures rather than masking
+    them.
+- Agent Work Scope:
+  - When changing the live-session probe, keep its drift computation pure, its
+    packet persistence and snapshot/restore on injected filesystem boundaries, and
+    keep the probe command uncontributed (maintainer-only, not an installed
+    command surface).
+- Implementation References:
+  - `src/tooling/runtimeSettingsLiveSessionProbe.ts`
+  - `src/tooling/runtimeSettingsLiveSessionProbePacket.ts`
+  - `src/tooling/runtimeSettingsLiveSessionSafeRestore.ts`
+- Verification References:
+  - `tests/unit/runtimeSettingsLiveSessionProbe.test.ts`
+  - `tests/unit/runtimeSettingsLiveSessionProbePacket.test.ts`
+  - `tests/unit/runtimeSettingsLiveSessionSafeRestore.test.ts`
+- Change Guidance:
+  - Keep the probe command uncontributed and its drift/persist/restore boundaries
+    pure or injected, and keep the mutation under the fail-closed
+    snapshot/restore guardrail so a probe never leaves the runtime-settings file
+    in a mutated state.
+
 ### VHS-REQ-698: Control-Plane Loop Drift Radar
 
 - Status: Active

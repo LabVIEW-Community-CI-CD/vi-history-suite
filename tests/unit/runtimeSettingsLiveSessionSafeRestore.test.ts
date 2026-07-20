@@ -12,7 +12,7 @@ import {
   verifyRuntimeSettingsFileSnapshot
 } from '../../src/tooling/runtimeSettingsLiveSessionSafeRestore';
 
-describe('runtimeSettingsLiveSessionSafeRestore', () => {
+describe('runtimeSettingsLiveSessionSafeRestore (VHS-REQ-687.3)', () => {
   const temporaryDirectories: string[] = [];
 
   afterEach(async () => {
