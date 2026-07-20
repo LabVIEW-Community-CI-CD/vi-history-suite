@@ -4,9 +4,10 @@ import * as path from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-const { auditAdrIndex, auditSyrsCoverage } = require('../../scripts/checkAdrIndex.js') as {
+const { auditAdrIndex, auditSyrsCoverage, buildGovernanceState } = require('../../scripts/checkAdrIndex.js') as {
   auditAdrIndex: (repoRoot: string) => { ok: boolean; violations: string[] };
   auditSyrsCoverage: (repoRoot: string) => { ok: boolean; violations: string[] };
+  buildGovernanceState: (repoRoot: string) => { consistent: boolean; violationCount: number; violations: string[] };
 };
 
 const tempRoots: string[] = [];
@@ -398,5 +399,20 @@ describe('the real repository ADR set', () => {
     const repoRoot = path.resolve(__dirname, '..', '..');
     expect(auditAdrIndex(repoRoot)).toEqual({ ok: true, violations: [] });
     expect(auditSyrsCoverage(repoRoot)).toEqual({ ok: true, violations: [] });
+  });
+});
+
+describe('buildGovernanceState (VHS-REQ-692 ADR/governance domain source)', () => {
+  it('reports the real repository as consistent with zero violations', () => {
+    const repoRoot = path.resolve(__dirname, '..', '..');
+    expect(buildGovernanceState(repoRoot)).toEqual({ consistent: true, violationCount: 0, violations: [] });
+  });
+
+  it('reports inconsistent with a violation count when the ADR set is broken', () => {
+    const broken = makeAdrRepo({ 'ADR-0001-first.md': validAdr('0001', 'First') }, { index: null });
+    const state = buildGovernanceState(broken);
+    expect(state.consistent).toBe(false);
+    expect(state.violationCount).toBeGreaterThan(0);
+    expect(state.violationCount).toBe(state.violations.length);
   });
 });
