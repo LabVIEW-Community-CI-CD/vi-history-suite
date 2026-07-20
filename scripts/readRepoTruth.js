@@ -224,10 +224,34 @@ function collectRequirementHealthDomain(deps = {}) {
   };
 }
 
+// Pure: summarize open PRs into counts by mergeable state, so an agent sees the
+// in-flight work and what is ready vs blocked without re-deriving it.
+function summarizeOpenWork(pullRequests) {
+  const list = Array.isArray(pullRequests) ? pullRequests : [];
+  const byState = {};
+  for (const pr of list) {
+    const state = (pr && typeof pr.mergeStateStatus === 'string' && pr.mergeStateStatus) || 'UNKNOWN';
+    byState[state] = (byState[state] || 0) + 1;
+  }
+  return { openPullRequests: list.length, byMergeStateStatus: byState };
+}
+
+// Fetch open PRs via gh (fail-closed on auth, like the merge-queue domain) and
+// summarize them. Part of the live GitHub precondition, not a local artifact.
+function collectOpenWorkDomain(options, deps = {}) {
+  const repo = options.repo || DEFAULT_REPO;
+  const pulls = runGhJson(
+    ['pr', 'list', '--repo', repo, '--state', 'open', '--limit', '100', '--json', 'number,mergeStateStatus'],
+    deps
+  );
+  return { available: true, ...summarizeOpenWork(pulls) };
+}
+
 // Build the full read-model packet. Fail-closed on auth propagates as a thrown
-// RepoTruthAuthError from the merge-queue domain.
+// RepoTruthAuthError from the gh-backed domains (merge-queue, open-work).
 function buildRepoTruthPacket(options = {}, deps = {}) {
   const mergeQueue = collectMergeQueueDomain(options, deps);
+  const openWork = collectOpenWorkDomain(options, deps);
   const coverage = collectCoverageDomain(deps);
   const requirementHealth = collectRequirementHealthDomain(deps);
   return {
@@ -237,6 +261,7 @@ function buildRepoTruthPacket(options = {}, deps = {}) {
     branch: options.branch || DEFAULT_BRANCH,
     domains: {
       mergeQueue,
+      openWork,
       coverage,
       requirementHealth
     }
@@ -257,9 +282,10 @@ const REPO_TRUTH_JSON_SCHEMA = Object.freeze({
     branch: { type: 'string' },
     domains: {
       type: 'object',
-      required: ['mergeQueue', 'coverage', 'requirementHealth'],
+      required: ['mergeQueue', 'openWork', 'coverage', 'requirementHealth'],
       properties: {
         mergeQueue: { type: 'object' },
+        openWork: { type: 'object' },
         coverage: { type: 'object' },
         requirementHealth: { type: 'object' }
       }
@@ -279,6 +305,12 @@ function renderTextReport(packet) {
   } else {
     lines.push('Merge queue: no merge_queue rule configured on this branch.');
   }
+  const ow = packet.domains.openWork;
+  lines.push(
+    ow.available
+      ? `Open work: ${ow.openPullRequests} open PR(s); byState=${JSON.stringify(ow.byMergeStateStatus)}.`
+      : `Open work: unavailable (${ow.reason}).`
+  );
   const cov = packet.domains.coverage;
   lines.push(
     cov.available
@@ -300,6 +332,7 @@ function renderMarkdownReport(packet) {
     `| Domain | Fact |`,
     `| --- | --- |`,
     `| Merge queue | ${mq.present ? `min-to-merge ${mq.minEntriesToMerge}, wait ${mq.minEntriesToMergeWaitMinutes}min, grouping ${mq.groupingStrategy}, method ${mq.mergeMethod}` : 'no merge_queue rule'} |`,
+    `| Open work | ${packet.domains.openWork.available ? `${packet.domains.openWork.openPullRequests} open PR(s)` : `unavailable (${packet.domains.openWork.reason})`} |`,
     `| Coverage | ${packet.domains.coverage.available ? `threshold ${packet.domains.coverage.riskThreshold}, below ${packet.domains.coverage.mappedBelowThreshold}` : `unavailable (${packet.domains.coverage.reason})`} |`,
     `| Requirement health | ${packet.domains.requirementHealth.available ? `${packet.domains.requirementHealth.requirementsNeedingAttention} need attention (status ${packet.domains.requirementHealth.status})` : `unavailable (${packet.domains.requirementHealth.reason})`} |`
   ];
@@ -384,6 +417,8 @@ module.exports = {
   isAuthFailureText,
   extractMergeQueuePolicy,
   collectMergeQueueDomain,
+  summarizeOpenWork,
+  collectOpenWorkDomain,
   collectCoverageDomain,
   collectRequirementHealthDomain,
   buildRepoTruthPacket,
