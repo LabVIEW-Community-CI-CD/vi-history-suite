@@ -73,3 +73,15 @@ jobs:
           name: control-plane-digest
           path: control-plane-digest.md
           if-no-files-found: error
+
+      # Tier-1 board APPLY (VHS-REQ-698 slice 2). Fail-closed on two independent
+      # controls: it runs only when the maintainer-provisioned Projects-scoped
+      # secret is present, and the governed write path itself refuses unless the
+      # committed control-plane-write.json flag is enabled. The ambient
+      # GITHUB_TOKEN cannot edit Project #4, so without the secret this step is a
+      # no-op by construction.
+      - name: Apply Tier-1 board updates (verified truth only)
+        if: ${{ secrets.CONTROL_PLANE_PROJECT_TOKEN != '' }}
+        env:
+          GH_TOKEN: ${{ secrets.CONTROL_PLANE_PROJECT_TOKEN }}
+        run: node scripts/controlPlaneApply.js

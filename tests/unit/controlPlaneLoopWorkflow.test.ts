@@ -17,15 +17,28 @@ function readWorkflow(): string {
 }
 
 describe('Control-plane loop workflow (VHS-REQ-698)', () => {
-  it('is board-read-only with least-privilege permissions (VHS-REQ-698.2)', () => {
+  it('is board-read-only in its own token scope with least-privilege permissions (VHS-REQ-698.2)', () => {
     const workflow = readWorkflow();
     expect(workflow).toContain('name: Control-Plane Loop');
-    // Only contents:read + issues:write (for the sticky issue). No board/project write.
+    // The workflow's own GITHUB_TOKEN stays read-only + issues:write (for the
+    // sticky issue). Any board write comes via the injected Projects secret, not
+    // the workflow token's permissions.
     expect(workflow).toContain('contents: read');
     expect(workflow).toContain('issues: write');
     expect(workflow).not.toMatch(/contents:\s*write/);
-    // No Projects-write secret is referenced in the radar slice.
-    expect(workflow).not.toContain('CONTROL_PLANE_PROJECT_TOKEN');
+  });
+
+  it('gates the Tier-1 apply step on the provisioned Projects secret (VHS-REQ-698.3)', () => {
+    const workflow = readWorkflow();
+    // The apply step runs only when the maintainer-provisioned secret is present;
+    // without it the step is a no-op (the ambient token cannot edit Project #4).
+    expect(workflow).toContain('Apply Tier-1 board updates');
+    expect(workflow).toContain("secrets.CONTROL_PLANE_PROJECT_TOKEN != ''");
+    expect(workflow).toContain('node scripts/controlPlaneApply.js');
+    // Apply happens after the read-only digest render/upsert.
+    const upsertIndex = workflow.indexOf('Upsert sticky drift-radar issue');
+    const applyIndex = workflow.indexOf('Apply Tier-1 board updates');
+    expect(applyIndex).toBeGreaterThan(upsertIndex);
   });
 
   it('runs on manual dispatch only, never on push or schedule (VHS-REQ-698.2)', () => {

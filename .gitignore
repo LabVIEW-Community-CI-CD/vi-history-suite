@@ -26,3 +26,4 @@ vagrant/.vagrant-ci/
 # Offline installer ISOs (never commit)
 *.iso
 
+control-plane-write-log.jsonl

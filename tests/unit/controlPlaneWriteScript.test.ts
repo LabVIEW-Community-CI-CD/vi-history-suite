@@ -43,9 +43,14 @@ describe('controlPlaneWrite: loadWriteConfig (VHS-REQ-696.1)', () => {
     expect(c.reason).toBe('config-malformed');
   });
 
-  it('the real committed config ships DISABLED', () => {
+  it('the real committed config has Tier-1 board-sync enabled and higher tiers disabled', () => {
     const c = loadWriteConfig(require('node:path').resolve(__dirname, '..', '..'), {});
-    expect(c.enabled).toBe(false);
+    // Maintainer-approved 2026-07-20: Tier-1 board-sync is enabled; higher tiers stay off.
+    expect(c.enabled).toBe(true);
+    expect(c.tiers.boardSync).toBe(true);
+    expect(c.tiers.annotate).toBe(false);
+    expect(c.tiers.mergeQueue).toBe(false);
+    expect(c.tiers.createWork).toBe(false);
   });
 
   it('exposes the config filename', () => {
