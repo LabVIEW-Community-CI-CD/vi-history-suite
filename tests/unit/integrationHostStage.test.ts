@@ -10,7 +10,7 @@ import {
   stageExtensionForWindowsHost
 } from '../../src/tooling/integrationHostStage';
 
-describe('integrationHostStage', () => {
+describe('integrationHostStage (VHS-REQ-685.1)', () => {
   const tempRoots: string[] = [];
 
   async function makeTempDir(prefix: string): Promise<string> {

@@ -7,6 +7,13 @@ import * as path from 'node:path';
 import { promisify } from 'node:util';
 import * as vscode from 'vscode';
 
+// VHS-REQ-685: this extension-host integration suite is the harness verification.
+// It runs against the real-VI workspace fixture prepared by prepareTestWorkspace
+// (VHS-REQ-685.2), is launched by the integration runner that selects the host
+// strategy and builds the control env (VHS-REQ-685.3), and executes from the
+// dedicated tsconfig.integration.json out-tests build via test:integration rather
+// than the unit gate (VHS-REQ-685.4).
+
 import type { ViHistorySuiteApi } from '../../../src/extension';
 import { createFileViPreviewCache } from '../../../src/reporting/viPreview/viPreviewCache';
 import { renderViPreviewForFile } from '../../../src/reporting/viPreview/viPreviewFileRender';
