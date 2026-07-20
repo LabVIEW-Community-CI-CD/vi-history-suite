@@ -22,8 +22,6 @@ import {
 
 /** Glob matching the LabVIEW source files whose changes trigger warming. */
 const VI_CHANGE_GLOB = '**/*.{vi,vit,vim,ctl}';
-/** Debounce window: LabVIEW writes a VI several times while saving it. */
-const VI_CHANGE_DEBOUNCE_MS = 1500;
 
 export interface ViChangeWarmerServiceDeps {
   /**
@@ -32,8 +30,6 @@ export interface ViChangeWarmerServiceDeps {
    * extension over the tested scheduler/gating/orchestrator core.
    */
   onSettledChange: (viFsPath: string) => Promise<void>;
-  /** Debounce window override (tuning/tests). Defaults to VI_CHANGE_DEBOUNCE_MS. */
-  debounceMs?: number;
 }
 
 export interface ViChangeWarmerService {
@@ -50,9 +46,6 @@ export function createViChangeWarmerService(
   let chain: Promise<void> = Promise.resolve();
 
   const scheduler: ViChangeWarmScheduler = createViChangeWarmScheduler({
-    debounceMs: deps.debounceMs ?? VI_CHANGE_DEBOUNCE_MS,
-    setTimeout: (handler, ms) => setTimeout(handler, ms),
-    clearTimeout: (handle) => clearTimeout(handle as ReturnType<typeof setTimeout>),
     onSettled: (fsPath) => {
       if (disposed) {
         return;

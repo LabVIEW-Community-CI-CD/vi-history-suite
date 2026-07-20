@@ -18,8 +18,6 @@ import type { LinuxContainerHeadlessMode } from '../../tooling/containerImageCat
  */
 
 const LINUX_CONTAINER_OPEN_APP_TIMEOUT_SECONDS = 180;
-const LINUX_CONTAINER_STARTUP_RETRY_COUNT = 1;
-const LINUX_CONTAINER_RETRY_DELAY_SECONDS = 8;
 
 function buildLinuxContainerScriptPrelude(headlessMode: LinuxContainerHeadlessMode): string[] {
   const prelude = [
@@ -55,17 +53,17 @@ export function buildLinuxContainerLabviewCliScript(
     connectTimeoutSeconds?: number;
   }
 ): string {
-  // VHS-REQ-148 (Linux container parity): widen the connect window and retry once
-  // on the cold-launch VI Server connectivity failure (-350000). The launched
-  // headless LabVIEW reads its per-version `.conf` (e.g.
+  // VHS-REQ-148 (Linux container parity): widen the connect window, then run the
+  // CLI exactly once (single-cycle timed loop, no cold-launch retry). The
+  // launched headless LabVIEW reads its per-version `.conf` (e.g.
   // `$HOME/natinst/.config/LabVIEW-<year>/labviewprofull.conf`), which already
   // carries `server.tcp.enabled=True`; the same file is the Linux analog of the
   // Windows `LabVIEWCLI.ini` connect-window keys. All `.conf` mutation is
   // fail-soft (`|| true`) so a read-only or unexpected layout never blocks the
-  // compare; the deterministic guarantee is the one-shot retry on -350000.
+  // compare; a cold-launch -350000 connectivity failure surfaces as a genuine
+  // nonzero exit rather than being retried.
   const openAppTimeout = resolveLinuxContainerConnectTimeoutSeconds(options?.connectTimeoutSeconds);
   const afterLaunchTimeout = openAppTimeout;
-  const maxAttempts = Math.max(1, 1 + LINUX_CONTAINER_STARTUP_RETRY_COUNT);
   const labviewExecutablePath = options?.labviewExecutablePath ?? LINUX_CONTAINER_LABVIEW_EXECUTABLE;
   const errFilePath = `${LINUX_CONTAINER_TEMP_ROOT}/vihs-cli-stderr.txt`;
 
@@ -76,8 +74,6 @@ export function buildLinuxContainerLabviewCliScript(
     `lv_exe=${quoteBashLiteral(labviewExecutablePath)}`,
     `open_app_timeout=${String(openAppTimeout)}`,
     `after_launch_timeout=${String(afterLaunchTimeout)}`,
-    `max_attempts=${String(maxAttempts)}`,
-    `retry_delay=${String(LINUX_CONTAINER_RETRY_DELAY_SECONDS)}`,
     `err_file=${quoteBashLiteral(errFilePath)}`,
     'set_conf_key() {',
     '  conf_file="$1"; conf_key="$2"; conf_value="$3"',
@@ -103,23 +99,14 @@ export function buildLinuxContainerLabviewCliScript(
     '  done',
     '}',
     'harden_conf || true',
-    'attempt=0',
-    'rc=1',
-    'while [ "$attempt" -lt "$max_attempts" ]; do',
-    '  attempt=$((attempt + 1))',
-    '  set +e',
-    '  "$cli_path" "${args[@]}" 2>"$err_file"',
-    '  rc=$?',
-    '  set -e',
-    '  cat "$err_file" >&2 2>/dev/null || true',
-    '  if [ "$rc" -eq 0 ]; then break; fi',
-    "  if [ \"$attempt\" -lt \"$max_attempts\" ] && grep -qiE '(-350000|-350051|failed to establish a connection with LabVIEW)' \"$err_file\" 2>/dev/null; then",
-    '    sleep "$retry_delay"',
-    '    continue',
-    '  fi',
-    '  break',
-    'done',
-    "printf '[vi-history-suite-container-meta]retryAttempts=%s;openTimeout=%s;afterLaunchTimeout=%s\\n' \"$attempt\" \"$open_app_timeout\" \"$after_launch_timeout\"",
+    // Single attempt: a cold-launch connectivity failure surfaces as a nonzero
+    // exit rather than being retried.
+    'set +e',
+    '"$cli_path" "${args[@]}" 2>"$err_file"',
+    'rc=$?',
+    'set -e',
+    'cat "$err_file" >&2 2>/dev/null || true',
+    "printf '[vi-history-suite-container-meta]retryAttempts=1;openTimeout=%s;afterLaunchTimeout=%s\\n' \"$open_app_timeout\" \"$after_launch_timeout\"",
     'exit $rc'
   ].join('\n');
 }

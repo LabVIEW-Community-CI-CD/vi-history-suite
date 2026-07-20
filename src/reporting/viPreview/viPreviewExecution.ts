@@ -4,14 +4,17 @@ import { ComparisonCommandPlan } from '../comparisonReportPlan';
 import {
   buildLabviewCliPrintToSingleFileHtmlPlan,
   buildLinuxContainerViPreviewCommandPlan,
-  buildWindowsContainerViPreviewCommandPlan,
-  VI_PREVIEW_RETRY_DELAY_SECONDS,
-  VI_PREVIEW_STARTUP_RETRY_COUNT
+  buildWindowsContainerViPreviewCommandPlan
 } from './viPreviewCommandPlan';
 import {
   localViServerLockKey,
   sharedLocalViServerAcquisitionLock
 } from '../runtime/localViServerAcquisitionLock';
+import {
+  createCycleMeter,
+  CycleMeasurement,
+  CycleMeter
+} from '../runtime/cycleMeter';
 
 /**
  * VHS-REQ-659: single-VI preview execution orchestration.
@@ -88,6 +91,11 @@ export interface ViPreviewExecutionResult {
   exitCode?: number;
   stdout?: string;
   stderr?: string;
+  /**
+   * VHS-REQ-669: timing of the single render cycle when the LabVIEWCLI command
+   * was actually run. Absent for `blocked` results (no cycle executed).
+   */
+  cycle?: CycleMeasurement;
 }
 
 export interface RunViPreviewCommandResult {
@@ -100,11 +108,6 @@ export interface ViPreviewExecutionDeps {
   runCommand: (plan: ComparisonCommandPlan) => Promise<RunViPreviewCommandResult>;
   pathExists: (filePath: string) => Promise<boolean>;
   /**
-   * Optional delay between host-native cold-launch retries (milliseconds).
-   * Injected in tests so retries do not actually wait; defaults to a real timer.
-   */
-  sleep?: (milliseconds: number) => Promise<void>;
-  /**
    * VHS-REQ-669: acquires a serialization slot for a local VI Server endpoint
    * before a host-native LabVIEWCLI launch and returns a release function, so
    * concurrent host-native launches against the same local VI Server take turns
@@ -112,15 +115,23 @@ export interface ViPreviewExecutionDeps {
    * to the process-wide shared lock; injected in tests.
    */
   acquireLocalViServerSlot?: (key: string) => Promise<() => void>;
+  /**
+   * VHS-REQ-669: optional cycle meter used to measure this render cycle's
+   * duration, index, and inter-cycle latency. When omitted a per-call meter is
+   * used so the result still carries the single cycle's duration/outcome
+   * (cycleIndex 1, no inter-cycle gap). Inject a shared meter across renders to
+   * measure back-to-back cycle latency.
+   */
+  cycleMeter?: CycleMeter;
 }
 
 /**
  * Cold-launch VI Server connectivity failure signature, shared with the
- * container retry scripts (`buildLinuxContainerViPreviewScript` /
- * `buildWindowsContainerViPreviewScript`) and the comparison-runtime classifier:
- * LabVIEWCLI exits nonzero because it could not connect to the just-launched
- * headless LabVIEW's VI Server (`-350000`/`-350051`). An immediate warm retry
- * usually succeeds once LabVIEW finishes coming up.
+ * comparison-runtime classifier: LabVIEWCLI exits nonzero because it could not
+ * connect to the just-launched headless LabVIEW's VI Server
+ * (`-350000`/`-350051`). It is surfaced directly as a classified failure rather
+ * than retried, so an upstream connectivity problem is caught genuinely instead
+ * of being masked by a warm retry.
  */
 const VI_PREVIEW_CONNECTIVITY_FAILURE_PATTERN =
   /-350000|-350051|failed to establish a connection with LabVIEW/i;
@@ -173,11 +184,6 @@ function classifyViPreviewFailureReason(run: RunViPreviewCommandResult): ViPrevi
   return 'command-exited-nonzero';
 }
 
-const defaultViPreviewSleep = (milliseconds: number): Promise<void> =>
-  new Promise((resolve) => {
-    setTimeout(resolve, milliseconds);
-  });
-
 function blocked(
   failureReason: ViPreviewFailureReason,
   commandPlan?: ComparisonCommandPlan
@@ -207,7 +213,13 @@ export function buildViPreviewCommandPlan(
       additionalOperationDirectory: options.operationDirectory,
       labviewPath: runtime.labviewExePath,
       portNumber: runtime.portNumber,
-      headless: runtime.headless ?? false
+      // LabVIEW preview rendering is ALWAYS headless, everywhere: the Docker/
+      // container providers already force `-Headless`, and host-native must match
+      // so the render never opens a LabVIEW GUI window (which orphans a process,
+      // blocks a webview custom-editor capture, and diverges from how the
+      // container image renders). Headless is mandatory for preview, not a
+      // per-invocation choice. (VHS-REQ-659.)
+      headless: true
     });
 
     return {
@@ -267,16 +279,16 @@ export function buildViPreviewCommandPlan(
 }
 
 /**
- * Executes a single-VI preview render and classifies the outcome. For the
- * host-native provider a cold-launch VI Server connectivity failure
- * (`-350000`/`-350051`) is retried up to `VI_PREVIEW_STARTUP_RETRY_COUNT` times
- * (the container providers retry in-script). A nonzero exit that still carries
- * the connectivity signature is `failed` with `labview-cli-connection-failed`;
- * a nonzero exit carrying the operation-class load signature (LabVIEW error
- * 1125) is `labview-preview-operation-load-failed` (the selected LabVIEW is
- * likely too old); any other nonzero exit is `command-exited-nonzero`; a zero
- * exit that leaves no output document is `preview-output-not-produced`;
- * otherwise the produced HTML path is returned as `rendered`.
+ * Executes a single-VI preview render and classifies the outcome. The render is
+ * a single-cycle timed loop: the command runs exactly once (host-native and
+ * container providers alike) with no cold-launch retry. A nonzero exit carrying
+ * the VI Server connectivity signature (`-350000`/`-350051`) is `failed` with
+ * `labview-cli-connection-failed`; a nonzero exit carrying the operation-class
+ * load signature (LabVIEW error 1125) is `labview-preview-operation-load-failed`
+ * (the selected LabVIEW is likely too old); any other nonzero exit is
+ * `command-exited-nonzero`; a zero exit that leaves no output document is
+ * `preview-output-not-produced`; otherwise the produced HTML path is returned as
+ * `rendered`.
  */
 export async function executeViPreview(
   options: ExecuteViPreviewOptions,
@@ -290,15 +302,11 @@ export async function executeViPreview(
   const { commandPlan } = planResult;
   const reportFilePath = path.join(options.workspaceDirectory, options.outputFilename);
 
-  // The container providers retry the cold-launch `-350000` VI Server race
-  // inside their bash/PowerShell scripts, so a single `runCommand` already
-  // covers them. Host-native runs LabVIEWCLI directly with no shell wrapper, so
-  // the orchestrator applies the same retry budget here: rerun on the
-  // connectivity signature until the just-launched LabVIEW's VI Server is
-  // reachable (a warm retry after a slow cold launch).
+  // The render runs the LabVIEWCLI command exactly once and surfaces its result
+  // verbatim — there is no cold-launch retry. A VI Server connectivity failure
+  // (`-350000`) is classified and returned as a genuine failure so an upstream
+  // launch/connectivity problem is caught rather than masked by a warm retry.
   const isHostNative = options.runtime.provider === 'host-native';
-  const maxAttempts = isHostNative ? Math.max(1, 1 + VI_PREVIEW_STARTUP_RETRY_COUNT) : 1;
-  const sleep = deps.sleep ?? defaultViPreviewSleep;
 
   // VHS-REQ-669: serialize concurrent host-native launches that would contend
   // on the same local VI Server endpoint. Container/docker runs never acquire a
@@ -316,22 +324,23 @@ export async function executeViPreview(
     );
   }
 
+  // VHS-REQ-669: measure this render as a single cycle (one attempt). The cycle
+  // spans the LabVIEWCLI invocation itself (start → process close); the injected
+  // meter (or a per-call meter) records its duration, index, and inter-cycle
+  // latency.
+  const cycleMeter = deps.cycleMeter ?? createCycleMeter();
+  const cycleHandle = cycleMeter.startCycle();
+
   let run: RunViPreviewCommandResult = { exitCode: 0, stdout: '', stderr: '' };
+  let cycle: CycleMeasurement;
   try {
-    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-      run = await deps.runCommand(commandPlan);
-      if (run.exitCode === 0) {
-        break;
-      }
-      if (attempt < maxAttempts && isViPreviewConnectivityFailure(run)) {
-        await sleep(VI_PREVIEW_RETRY_DELAY_SECONDS * 1000);
-        continue;
-      }
-      break;
-    }
+    run = await deps.runCommand(commandPlan);
   } finally {
     releaseLocalViServerSlot?.();
   }
+  const commandOutcome =
+    run.exitCode === 0 ? 'command-succeeded' : classifyViPreviewFailureReason(run);
+  cycle = cycleHandle.complete(commandOutcome);
 
   if (run.exitCode !== 0) {
     return {
@@ -340,7 +349,8 @@ export async function executeViPreview(
       commandPlan,
       exitCode: run.exitCode,
       stdout: run.stdout,
-      stderr: run.stderr
+      stderr: run.stderr,
+      cycle
     };
   }
 
@@ -351,7 +361,8 @@ export async function executeViPreview(
       commandPlan,
       exitCode: run.exitCode,
       stdout: run.stdout,
-      stderr: run.stderr
+      stderr: run.stderr,
+      cycle
     };
   }
 
@@ -361,6 +372,7 @@ export async function executeViPreview(
     commandPlan,
     exitCode: run.exitCode,
     stdout: run.stdout,
-    stderr: run.stderr
+    stderr: run.stderr,
+    cycle
   };
 }

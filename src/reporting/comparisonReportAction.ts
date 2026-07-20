@@ -49,6 +49,8 @@ import { buildRetainedComparisonReportEvidenceResult } from './retainedCompariso
 import { canArchiveComparisonReport } from './canArchiveComparisonReport';
 import { applyWindowsContainerAcquisitionResult } from './windowsContainerAcquisitionResult';
 import { executeComparisonReport, materializeSelectedRevisionTreeWithGit } from './comparisonReportRuntimeExecution';
+import type { StagedViPreviewValidator } from './comparisonPreviewPipelineIntegration';
+import { buildStagedViPreviewValidator } from './viPreview/stagedViPreviewValidatorFactory';
 import { ComparisonReportExportRegistry } from './comparisonReportExport';
 import { ComparisonReportOptions } from './comparisonReportPlan';
 import { renderComparisonReportPanelContextMarkup } from './comparisonReportContextMarkup';
@@ -183,6 +185,13 @@ export interface ComparisonReportActionDeps {
   getWorktreeSnapshotRetentionLimit?: () => number;
   archiveComparisonReportSource?: typeof archiveComparisonReportSource;
   exportRegistry?: ComparisonReportExportRegistry;
+  /**
+   * VHS-REQ-699: staged-VI preview validator wired always-on in production so the
+   * single-pass comparison-preview pipeline validates each staged VI loads before
+   * the CreateComparisonReport cycle. When omitted, the pipeline is skipped and
+   * the comparison runs directly (used by tests that do not exercise the gate).
+   */
+  renderStagedViPreview?: StagedViPreviewValidator;
 }
 
 export {
@@ -218,6 +227,24 @@ export function createComparisonReportAction(
   context: vscode.ExtensionContext,
   deps: ComparisonReportActionDeps = {}
 ): (request: ComparisonReportActionRequest) => Promise<ComparisonReportActionResult> {
+  // VHS-REQ-699: wire the always-on staged-VI preview validator so the
+  // single-pass comparison-preview pipeline validates each staged VI loads
+  // before the CreateComparisonReport cycle. Tests may inject their own; when
+  // neither the caller nor a test provides one, build the default from the
+  // vendored operation directory.
+  const resolvedDeps: ComparisonReportActionDeps = {
+    ...deps,
+    renderStagedViPreview:
+      deps.renderStagedViPreview ??
+      buildStagedViPreviewValidator({
+        operationDirectory: vscode.Uri.joinPath(
+          context.extensionUri,
+          'resources',
+          'labview-cli-operations'
+        ).fsPath
+      })
+  };
+  deps = resolvedDeps;
   return async (request: ComparisonReportActionRequest): Promise<ComparisonReportActionResult> => {
     const ensured = await ensureComparisonReportEvidence(context, request, deps);
     if (!('packet' in ensured)) {
@@ -631,7 +658,8 @@ async function ensureComparisonReportEvidence(
     }, {
       cliConnectTimeoutSeconds: (deps.getCliConnectTimeoutSeconds ?? readCliConnectTimeoutSeconds)(),
       materializeSelectedRevisionTree: materializeSelectedRevisionTreeWithGit,
-      reportOptions: (deps.getReportOptions ?? readComparisonReportOptions)()
+      reportOptions: (deps.getReportOptions ?? readComparisonReportOptions)(),
+      renderStagedViPreview: deps.renderStagedViPreview
     });
     if (request.cancellationToken?.isCancellationRequested) {
       return buildCancelledComparisonReportResult('after-runtime-execution', packet);

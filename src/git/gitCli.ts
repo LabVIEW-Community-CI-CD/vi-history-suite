@@ -17,14 +17,8 @@ export interface GitTrackedFileEntry {
   relativePath: string;
 }
 
-export interface RunGitOptions {
-  timeoutMs?: number;
-}
-
 const HISTORY_RECORD_SEPARATOR = '\x1e';
 const HISTORY_FIELD_SEPARATOR = '\x1f';
-const DEFAULT_GIT_TIMEOUT_MS = 300000;
-const GIT_TIMEOUT_ENVIRONMENT_KEY = 'VI_HISTORY_SUITE_GIT_TIMEOUT_MS';
 
 /**
  * VHS-REQ-641: reserved pseudo-revision id representing the uncommitted
@@ -42,10 +36,11 @@ export function isWorktreeRevision(revisionId: string | undefined): boolean {
 export async function runGit(
   args: string[],
   cwd: string,
-  encoding: BufferEncoding | 'buffer' = 'utf8',
-  options: RunGitOptions = {}
+  encoding: BufferEncoding | 'buffer' = 'utf8'
 ): Promise<string | Buffer> {
-  const timeoutMs = options.timeoutMs ?? resolveGitTimeoutMs();
+  // Git subprocesses are not time-bounded: the command runs to completion and
+  // its result is surfaced verbatim (a genuine failure is reported, never a
+  // synthetic timeout).
   return new Promise((resolve, reject) => {
     execFile(
       resolveGitExecutable(),
@@ -53,12 +48,11 @@ export async function runGit(
       {
         cwd,
         encoding,
-        maxBuffer: 16 * 1024 * 1024,
-        timeout: timeoutMs
+        maxBuffer: 16 * 1024 * 1024
       },
       (error, stdout) => {
         if (error) {
-          reject(describeGitSubprocessError(error, args, timeoutMs));
+          reject(error);
           return;
         }
 
@@ -68,39 +62,27 @@ export async function runGit(
   });
 }
 
-export async function runGitLines(
-  args: string[],
-  cwd: string,
-  options: RunGitOptions = {}
-): Promise<string[]> {
+export async function runGitLines(args: string[], cwd: string): Promise<string[]> {
   const lines: string[] = [];
   await streamGitLines(args, cwd, (line) => {
     lines.push(line);
-  }, options);
+  });
   return lines;
 }
 
 async function streamGitLines(
   args: string[],
   cwd: string,
-  onLine: (line: string) => boolean | void,
-  options: RunGitOptions = {}
+  onLine: (line: string) => boolean | void
 ): Promise<void> {
-  const timeoutMs = options.timeoutMs ?? resolveGitTimeoutMs();
   return new Promise((resolve, reject) => {
     let bufferedStdout = '';
     let bufferedStderr = '';
-    let timedOut = false;
     let stopRequested = false;
     const child = spawn(resolveGitExecutable(), args, {
       cwd,
       stdio: ['ignore', 'pipe', 'pipe']
     });
-
-    const timeoutHandle = setTimeout(() => {
-      timedOut = true;
-      child.kill('SIGTERM');
-    }, timeoutMs);
 
     child.stdout.setEncoding('utf8');
     child.stdout.on('data', (chunk: string) => {
@@ -122,27 +104,17 @@ async function streamGitLines(
     });
 
     child.on('error', (error) => {
-      clearTimeout(timeoutHandle);
       reject(error);
     });
 
     child.on('close', (code, signal) => {
-      clearTimeout(timeoutHandle);
       if (stopRequested) {
         resolve();
         return;
       }
-      if (timedOut || signal === 'SIGTERM') {
-        reject(
-          new Error(
-            `Git command timed out after ${timeoutMs} ms: git ${args.join(' ')}. ` +
-              `Set ${GIT_TIMEOUT_ENVIRONMENT_KEY} to a larger value for slow networks.`
-          )
-        );
-        return;
-      }
-
-      if (code !== 0) {
+      // An early-stop SIGTERM is expected; any other nonzero exit is a genuine
+      // failure surfaced from git's own stderr.
+      if (code !== 0 && signal !== 'SIGTERM') {
         const stderr = bufferedStderr.trim();
         reject(
           new Error(
@@ -173,22 +145,6 @@ function handleGitLine(
   }
 
   return onLine(trimmedLine) === true;
-}
-
-export function resolveGitTimeoutMs(environment: NodeJS.ProcessEnv = process.env): number {
-  const rawTimeout = environment[GIT_TIMEOUT_ENVIRONMENT_KEY]?.trim();
-  if (!rawTimeout) {
-    return DEFAULT_GIT_TIMEOUT_MS;
-  }
-
-  const timeoutMs = Number(rawTimeout);
-  if (!Number.isInteger(timeoutMs) || timeoutMs <= 0) {
-    throw new Error(
-      `Unsupported ${GIT_TIMEOUT_ENVIRONMENT_KEY} value '${rawTimeout}'. Use a positive integer timeout in milliseconds.`
-    );
-  }
-
-  return timeoutMs;
 }
 
 export function resolveGitExecutable(
@@ -230,23 +186,6 @@ export function getWindowsGitExecutableCandidates(
   }
 
   return [...candidates];
-}
-
-function describeGitSubprocessError(error: Error, args: string[], timeoutMs: number): Error {
-  const maybeTimedOut = error as Error & {
-    killed?: boolean;
-    signal?: NodeJS.Signals | null;
-  };
-
-  if (maybeTimedOut.killed || maybeTimedOut.signal === 'SIGTERM') {
-    return new Error(
-      `Git command timed out after ${timeoutMs} ms: git ${args.join(' ')}. ` +
-        `Set ${GIT_TIMEOUT_ENVIRONMENT_KEY} to a larger value for slow networks.`,
-      { cause: error }
-    );
-  }
-
-  return error;
 }
 
 export function normalizeRelativeGitPath(input: string): string {

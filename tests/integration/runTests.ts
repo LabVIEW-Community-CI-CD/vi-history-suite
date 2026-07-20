@@ -4,7 +4,7 @@ import { execFileSync, spawn } from 'node:child_process';
 import * as os from 'node:os';
 import * as path from 'node:path';
 
-import { downloadAndUnzipVSCode, runTests } from '@vscode/test-electron';
+import { downloadAndUnzipVSCode } from '@vscode/test-electron';
 
 import {
   assertLinuxVsCodeRuntimeReady,
@@ -121,7 +121,7 @@ async function main(): Promise<void> {
         extensionTestsEnv: testEnv
       });
     } else {
-      await runTests({
+      await runNativeLinuxVsCodeTests({
         vscodeExecutablePath,
         extensionDevelopmentPath,
         extensionTestsPath,
@@ -191,6 +191,64 @@ async function runNativeWindowsVsCodeTests(options: {
       }
 
       reject(new Error(`Windows integration host failed with code ${String(code ?? 'unknown')}.`));
+    });
+  });
+}
+
+/**
+ * Launches the downloaded VS Code to run the extension tests on Linux by
+ * spawning the executable directly (mirroring the native Windows path), rather
+ * than going through `@vscode/test-electron`'s `runTests`. `runTests` hard-codes
+ * a deprecated `--no-cached-data` flag that current Electron rejects with a
+ * "'cached-data' is not in the list of known options" warning; controlling the
+ * argument list here drops that flag for good while keeping the same launch
+ * behavior. An isolated `--extensions-dir` matches `runTests`'s profile
+ * isolation (the `--user-data-dir` is already supplied in `launchArgs`).
+ */
+async function runNativeLinuxVsCodeTests(options: {
+  vscodeExecutablePath: string;
+  extensionDevelopmentPath: string;
+  extensionTestsPath: string;
+  launchArgs: string[];
+  extensionTestsEnv: Record<string, string>;
+}): Promise<void> {
+  const userDataDirArg = options.launchArgs.find((arg) => arg.startsWith('--user-data-dir='));
+  const userDataDir = userDataDirArg
+    ? userDataDirArg.slice('--user-data-dir='.length)
+    : path.join(os.tmpdir(), 'vihs-ih');
+  const extensionsDir = path.join(path.dirname(userDataDir), 'vihs-ih-extensions');
+  await fs.mkdir(extensionsDir, { recursive: true });
+
+  const args = [
+    ...options.launchArgs,
+    // Same set as the native Windows launcher, WITHOUT the deprecated
+    // --no-cached-data flag that Electron warns about.
+    '--no-sandbox',
+    '--disable-gpu-sandbox',
+    '--disable-updates',
+    '--skip-welcome',
+    '--skip-release-notes',
+    '--disable-workspace-trust',
+    `--extensions-dir=${extensionsDir}`,
+    `--extensionTestsPath=${options.extensionTestsPath}`,
+    `--extensionDevelopmentPath=${options.extensionDevelopmentPath}`
+  ];
+
+  await new Promise<void>((resolve, reject) => {
+    const child = spawn(options.vscodeExecutablePath, args, {
+      env: { ...process.env, ...options.extensionTestsEnv },
+      shell: false,
+      stdio: ['ignore', 'pipe', 'pipe']
+    });
+    child.stdout.on('data', (chunk) => process.stdout.write(chunk));
+    child.stderr.on('data', (chunk) => process.stderr.write(chunk));
+    child.on('error', reject);
+    child.on('close', (code) => {
+      if (code === 0) {
+        resolve();
+        return;
+      }
+      reject(new Error(`Linux integration host failed with code ${String(code ?? 'unknown')}.`));
     });
   });
 }

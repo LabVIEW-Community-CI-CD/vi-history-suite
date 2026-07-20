@@ -26,21 +26,16 @@ import { WINDOWS_CONTAINER_TEMP_ROOT } from './containerLaunchConstants';
 const WINDOWS_CONTAINER_OPEN_APP_TIMEOUT_SECONDS = 180;
 const WINDOWS_CONTAINER_AFTER_LAUNCH_TIMEOUT_SECONDS = 180;
 const WINDOWS_CONTAINER_PRELAUNCH_WAIT_SECONDS = 8;
-const WINDOWS_CONTAINER_STARTUP_RETRY_COUNT = 1;
-const WINDOWS_CONTAINER_RETRY_DELAY_SECONDS = 8;
 
 // VHS-REQ-665: win32 host-native headless (opt-in, LabVIEW 2026 x86 parity lane).
 // Mirrors the windows-container headless launch technique (prelaunch LabVIEW
-// `--headless`, tune the LabVIEWCLI.ini connect window, run the CLI, retry once
-// on the cold-launch VI Server connect race -350000/-350051) but runs against a
-// locally installed LabVIEW.exe instead of inside a container. This is the only
-// path that exercises 32-bit LabVIEW 2026, which the x64-only windows-container
+// `--headless`, tune the LabVIEWCLI.ini connect window, run the CLI once) but runs
+// against a locally installed LabVIEW.exe instead of inside a container. This is the
+// only path that exercises 32-bit LabVIEW 2026, which the x64-only windows-container
 // authoritative provider cannot cover. Opt-in via `LV_RTE_WIN_HOSTNATIVE_HEADLESS=1`.
 const WINDOWS_HOST_NATIVE_HEADLESS_OPEN_APP_TIMEOUT_SECONDS = 120;
 const WINDOWS_HOST_NATIVE_HEADLESS_AFTER_LAUNCH_TIMEOUT_SECONDS = 120;
 const WINDOWS_HOST_NATIVE_HEADLESS_PRELAUNCH_WAIT_SECONDS = 25;
-const WINDOWS_HOST_NATIVE_HEADLESS_STARTUP_RETRY_COUNT = 1;
-const WINDOWS_HOST_NATIVE_HEADLESS_RETRY_DELAY_SECONDS = 8;
 
 export function buildWindowsContainerLabviewCliScript(
   executable: string,
@@ -53,8 +48,6 @@ export function buildWindowsContainerLabviewCliScript(
     defaultOpenAppTimeoutSeconds: WINDOWS_CONTAINER_OPEN_APP_TIMEOUT_SECONDS,
     defaultAfterLaunchTimeoutSeconds: WINDOWS_CONTAINER_AFTER_LAUNCH_TIMEOUT_SECONDS,
     prelaunchWaitSeconds: WINDOWS_CONTAINER_PRELAUNCH_WAIT_SECONDS,
-    startupRetryCount: WINDOWS_CONTAINER_STARTUP_RETRY_COUNT,
-    retryDelaySeconds: WINDOWS_CONTAINER_RETRY_DELAY_SECONDS,
     tempRoot: WINDOWS_CONTAINER_TEMP_ROOT
   });
 }
@@ -66,8 +59,6 @@ interface HeadlessLabviewCliLaunchScriptOptions {
   defaultOpenAppTimeoutSeconds: number;
   defaultAfterLaunchTimeoutSeconds: number;
   prelaunchWaitSeconds: number;
-  startupRetryCount: number;
-  retryDelaySeconds: number;
   /**
    * When set, the script pins `$env:TEMP`/`$env:TMP` to this root (windows-container
    * behavior). Omit for host-native, which uses the ambient temp directory.
@@ -78,11 +69,9 @@ interface HeadlessLabviewCliLaunchScriptOptions {
 /**
  * VHS-REQ-665: shared headless LabVIEWCLI launch script. Prelaunches LabVIEW
  * `--headless` (so the VI Server binds without an interactive desktop), tunes the
- * LabVIEWCLI.ini connect window, runs the CLI, and retries once on the cold-launch
- * VI Server connect race (-350000/-350051). Used by both the windows-container
- * provider (x64 authoritative) and the win32 host-native headless opt-in path
- * (x86 parity). The container-specific defaults keep byte-identical output for the
- * pre-existing container path.
+ * LabVIEWCLI.ini connect window, and runs the CLI exactly once (single-cycle
+ * timed loop, no cold-launch retry). Used by both the windows-container provider
+ * (x64 authoritative) and the win32 host-native headless opt-in path (x86 parity).
  */
 function buildHeadlessLabviewCliLaunchScript(
   executable: string,
@@ -142,35 +131,26 @@ function buildHeadlessLabviewCliLaunchScript(
     "  Start-Process -FilePath $labviewPath -ArgumentList '--headless' -WindowStyle Hidden | Out-Null",
     `  Start-Sleep -Seconds ${options.prelaunchWaitSeconds}`,
     '}',
-    '$attempt = 0',
-    '$maxAttempts = [Math]::Max(1, 1 + ' + options.startupRetryCount + ')',
+    // Single-cycle timed loop: run the CLI exactly once. A cold-launch VI Server
+    // connect race (-350000/-350051) surfaces as a genuine nonzero exit rather
+    // than being retried.
     '$lastExit = 1',
     "$lastOutputText = ''",
-    'while ($attempt -lt $maxAttempts) {',
-    '  $attempt++',
-    "  $previousErrorActionPreference = $ErrorActionPreference",
-    "  $ErrorActionPreference = 'Continue'",
-    '  try {',
-    '    $output = @(& $cliPath @args 2>&1)',
-    '    $lastExit = [int]$LASTEXITCODE',
-    '  } finally {',
-    '    $ErrorActionPreference = $previousErrorActionPreference',
-    '  }',
-    '  $output | ForEach-Object { if (-not [string]::IsNullOrWhiteSpace([string]$_)) { Write-Output $_ } }',
-    "  $lastOutputText = @($output | ForEach-Object { [string]$_ }) -join [Environment]::NewLine",
-    '  if ($lastExit -eq 0) { break }',
-    "  $isStartupConnectivity = ($lastExit -in @(-350000, -350051) -or $lastOutputText -match '-350000' -or $lastOutputText -match '-350051' -or $lastOutputText -match '(?i)failed to establish a connection with LabVIEW')",
-    '  if ($isStartupConnectivity -and $attempt -lt $maxAttempts) {',
-    `    Start-Sleep -Seconds ${options.retryDelaySeconds}`,
-    '    continue',
-    '  }',
-    '  break',
+    '$previousErrorActionPreference = $ErrorActionPreference',
+    "$ErrorActionPreference = 'Continue'",
+    'try {',
+    '  $output = @(& $cliPath @args 2>&1)',
+    '  $lastExit = [int]$LASTEXITCODE',
+    '} finally {',
+    '  $ErrorActionPreference = $previousErrorActionPreference',
     '}',
+    '$output | ForEach-Object { if (-not [string]::IsNullOrWhiteSpace([string]$_)) { Write-Output $_ } }',
+    '$lastOutputText = @($output | ForEach-Object { [string]$_ }) -join [Environment]::NewLine',
     "$connectedPort = ''",
     "if ($lastOutputText -match 'Connection established with LabVIEW at port number ([0-9]+)\\.') {",
     '  $connectedPort = $Matches[1]',
     '}',
-    `Write-Output ('[${options.metaTag}]retryAttempts={0};prelaunchAttempted={1};iniPath={2};connectedPort={3};openTimeout=${options.defaultOpenAppTimeoutSeconds};afterLaunchTimeout=${options.defaultAfterLaunchTimeoutSeconds}' -f $attempt, ($(if ($prelaunchAttempted) { 1 } else { 0 })), $cliIni, $connectedPort)`,
+    `Write-Output ('[${options.metaTag}]retryAttempts=1;prelaunchAttempted={0};iniPath={1};connectedPort={2};openTimeout=${options.defaultOpenAppTimeoutSeconds};afterLaunchTimeout=${options.defaultAfterLaunchTimeoutSeconds}' -f ($(if ($prelaunchAttempted) { 1 } else { 0 })), $cliIni, $connectedPort)`,
     'exit $lastExit'
   ].join('\n');
 }
@@ -209,9 +189,7 @@ export function buildWindowsHostNativeHeadlessCommandPlan(
       metaTag: 'vi-history-suite-hostnative-meta',
       defaultOpenAppTimeoutSeconds: WINDOWS_HOST_NATIVE_HEADLESS_OPEN_APP_TIMEOUT_SECONDS,
       defaultAfterLaunchTimeoutSeconds: WINDOWS_HOST_NATIVE_HEADLESS_AFTER_LAUNCH_TIMEOUT_SECONDS,
-      prelaunchWaitSeconds: WINDOWS_HOST_NATIVE_HEADLESS_PRELAUNCH_WAIT_SECONDS,
-      startupRetryCount: WINDOWS_HOST_NATIVE_HEADLESS_STARTUP_RETRY_COUNT,
-      retryDelaySeconds: WINDOWS_HOST_NATIVE_HEADLESS_RETRY_DELAY_SECONDS
+      prelaunchWaitSeconds: WINDOWS_HOST_NATIVE_HEADLESS_PRELAUNCH_WAIT_SECONDS
     }
   );
 

@@ -4,6 +4,25 @@ import * as path from 'node:path';
 
 import { runGit } from '../../src/git/gitCli';
 
+// Real, compiled LabVIEW VIs shipped in the repository. The integration
+// fixtures MUST be genuine VIs: synthetic `RSRC`/`LVIN` stubs pass the byte
+// signature preflight but real LabVIEW rejects them at compare/render time with
+// `0x423 Unexpected file type`, so host-native comparison and preview runs on a
+// real LabVIEW runner fail. Each eligible revision maps to a distinct real VI so
+// consecutive revisions genuinely differ and produce a meaningful diff.
+// Anchored to the repo root (integration tests run from the repository root) so
+// it resolves the same whether this module runs from source or the compiled
+// out-tests tree (whose __dirname has no sibling resources/).
+const REAL_VI_SOURCE_DIR = path.resolve(
+  process.cwd(),
+  'resources/labview-cli-operations/PrintToSingleFileHtml'
+);
+const ELIGIBLE_REVISION_SOURCE_VIS = [
+  'Make path absolute.vi',
+  'Open VI.vi',
+  'Parse inputs.vi'
+] as const;
+
 export interface IntegrationWorkspaceMetadata {
   workspacePath: string;
   eligibleRelativePath: string;
@@ -26,14 +45,23 @@ export async function prepareIntegrationWorkspace(
     workspacePath
   );
 
-  await writeViFixture(path.join(workspacePath, eligibleRelativePath), 'eligible-1');
-  await writeViFixture(path.join(workspacePath, ineligibleRelativePath), 'ineligible-only');
+  await copyRealViFixture(
+    path.join(workspacePath, eligibleRelativePath),
+    ELIGIBLE_REVISION_SOURCE_VIS[0]
+  );
+  await writeIneligibleFixture(path.join(workspacePath, ineligibleRelativePath));
   await commitAll(workspacePath, 'Add initial integration fixtures');
 
-  await writeViFixture(path.join(workspacePath, eligibleRelativePath), 'eligible-2');
+  await copyRealViFixture(
+    path.join(workspacePath, eligibleRelativePath),
+    ELIGIBLE_REVISION_SOURCE_VIS[1]
+  );
   await commitAll(workspacePath, 'Update eligible fixture');
 
-  await writeViFixture(path.join(workspacePath, eligibleRelativePath), 'eligible-3');
+  await copyRealViFixture(
+    path.join(workspacePath, eligibleRelativePath),
+    ELIGIBLE_REVISION_SOURCE_VIS[2]
+  );
   await commitAll(workspacePath, 'Add third eligible fixture revision');
 
   const metadata: IntegrationWorkspaceMetadata = {
@@ -61,15 +89,19 @@ export async function prepareIntegrationWorkspace(
   return metadata;
 }
 
-async function writeViFixture(fsPath: string, payload: string): Promise<void> {
-  const content = Buffer.concat([
-    Buffer.from('RSRC\r\n\x00\x03', 'binary'),
-    Buffer.from('LVIN', 'ascii'),
-    Buffer.from(payload, 'utf8')
-  ]);
-
+// Stages a real, compiled VI at the fixture path so host-native LabVIEW compare
+// and preview operations run against a genuine VI (never a synthetic stub).
+async function copyRealViFixture(fsPath: string, sourceViName: string): Promise<void> {
   await fs.mkdir(path.dirname(fsPath), { recursive: true });
-  await fs.writeFile(fsPath, content);
+  await fs.copyFile(path.join(REAL_VI_SOURCE_DIR, sourceViName), fsPath);
+}
+
+// The ineligible fixture is intentionally NOT a VI: it exercises the
+// content-detection path that rejects non-VI binaries, so a raw byte payload is
+// the correct fixture here.
+async function writeIneligibleFixture(fsPath: string): Promise<void> {
+  await fs.mkdir(path.dirname(fsPath), { recursive: true });
+  await fs.writeFile(fsPath, Buffer.from('ineligible-only', 'utf8'));
 }
 
 async function commitAll(repoRoot: string, message: string): Promise<void> {

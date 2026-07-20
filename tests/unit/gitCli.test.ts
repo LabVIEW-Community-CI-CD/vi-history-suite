@@ -26,7 +26,6 @@ import {
   parseStatusPorcelainHasChange,
   runGit,
   resolveGitExecutable,
-  resolveGitTimeoutMs,
   WORKTREE_REVISION_SENTINEL
 } from '../../src/git/gitCli';
 
@@ -216,14 +215,6 @@ describe('gitCli parsing', () => {
       'C:\\Program Files (x86)\\Git\\cmd\\git.exe',
       'C:\\Program Files (x86)\\Git\\bin\\git.exe'
     ]);
-  });
-
-  it('uses a bounded Git subprocess timeout with an operator override', () => {
-    expect(resolveGitTimeoutMs({})).toBe(300000);
-    expect(resolveGitTimeoutMs({ VI_HISTORY_SUITE_GIT_TIMEOUT_MS: '450000' })).toBe(450000);
-    expect(() =>
-      resolveGitTimeoutMs({ VI_HISTORY_SUITE_GIT_TIMEOUT_MS: 'not-a-number' })
-    ).toThrow(/Unsupported VI_HISTORY_SUITE_GIT_TIMEOUT_MS value/);
   });
 
   it('returns trimmed HEAD, repository root, and tracked files from a real temporary Git repo', async () => {
@@ -430,28 +421,6 @@ describe('gitCli parsing', () => {
 
     await expect(runGit(['definitely-not-a-real-subcommand'], workingDirectory, 'utf8')).rejects.toThrow();
   });
-
-  it.skipIf(process.platform === 'win32')(
-    'fails closed when a Git subprocess exceeds its timeout',
-    async () => {
-      const repoRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-git-timeout-'));
-      tempDirectories.push(repoRoot);
-      const previousGitExe = process.env.VI_HISTORY_SUITE_GIT_EXE;
-      process.env.VI_HISTORY_SUITE_GIT_EXE = '/bin/sleep';
-
-      try {
-        await expect(runGit(['1'], repoRoot, 'utf8', { timeoutMs: 1 })).rejects.toThrow(
-          /Git command timed out after 1 ms/
-        );
-      } finally {
-        if (previousGitExe === undefined) {
-          delete process.env.VI_HISTORY_SUITE_GIT_EXE;
-        } else {
-          process.env.VI_HISTORY_SUITE_GIT_EXE = previousGitExe;
-        }
-      }
-    }
-  );
 });
 
 describe('gitCli eligibility edge cases (VHS-REQ-006, VHS-REQ-007)', () => {

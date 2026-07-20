@@ -8,103 +8,44 @@ import {
   type ViChangeWarmPlan
 } from '../../src/reporting/viPreview/viChangeWarmScheduler';
 
-/** Deterministic fake timers so the debounce is testable without real time. */
-function createFakeTimers() {
-  let nextId = 1;
-  const handlers = new Map<number, () => void>();
-  return {
-    setTimeout: (handler: () => void): unknown => {
-      const id = nextId++;
-      handlers.set(id, handler);
-      return id;
-    },
-    clearTimeout: (handle: unknown): void => {
-      handlers.delete(handle as number);
-    },
-    pending: (): number => handlers.size,
-    runAll: (): void => {
-      const fns = [...handlers.values()];
-      handlers.clear();
-      for (const fn of fns) {
-        fn();
-      }
-    }
-  };
-}
-
 describe('createViChangeWarmScheduler (VHS-REQ-664.1)', () => {
-  it('coalesces repeated changes for the same path into a single settled warm', () => {
-    const timers = createFakeTimers();
+  it('dispatches each noted change immediately (no debounce)', () => {
     const settled: string[] = [];
     const scheduler = createViChangeWarmScheduler({
-      debounceMs: 50,
-      onSettled: (fsPath) => settled.push(fsPath),
-      setTimeout: timers.setTimeout,
-      clearTimeout: timers.clearTimeout
+      onSettled: (fsPath) => settled.push(fsPath)
     });
 
     scheduler.note('/repo/A.vi');
     scheduler.note('/repo/A.vi');
     scheduler.note('/repo/A.vi');
 
-    expect(timers.pending()).toBe(1);
-    timers.runAll();
-    expect(settled).toEqual(['/repo/A.vi']);
+    // Immediate dispatch: every note fires onSettled synchronously.
+    expect(settled).toEqual(['/repo/A.vi', '/repo/A.vi', '/repo/A.vi']);
   });
 
-  it('debounces distinct paths independently', () => {
-    const timers = createFakeTimers();
+  it('dispatches distinct paths independently', () => {
     const settled: string[] = [];
     const scheduler = createViChangeWarmScheduler({
-      debounceMs: 50,
-      onSettled: (fsPath) => settled.push(fsPath),
-      setTimeout: timers.setTimeout,
-      clearTimeout: timers.clearTimeout
+      onSettled: (fsPath) => settled.push(fsPath)
     });
 
     scheduler.note('/repo/A.vi');
     scheduler.note('/repo/B.vi');
 
-    expect(timers.pending()).toBe(2);
-    timers.runAll();
     expect([...settled].sort()).toEqual(['/repo/A.vi', '/repo/B.vi']);
   });
 
-  it('cancels pending timers on dispose so no warm fires afterwards', () => {
-    const timers = createFakeTimers();
+  it('dispose is a no-op that leaves prior dispatches intact', () => {
     const settled: string[] = [];
     const scheduler = createViChangeWarmScheduler({
-      debounceMs: 50,
-      onSettled: (fsPath) => settled.push(fsPath),
-      setTimeout: timers.setTimeout,
-      clearTimeout: timers.clearTimeout
+      onSettled: (fsPath) => settled.push(fsPath)
     });
 
     scheduler.note('/repo/A.vi');
     scheduler.dispose();
 
-    expect(timers.pending()).toBe(0);
-    timers.runAll();
-    expect(settled).toEqual([]);
-  });
-
-  it('does not clear a timer on the first note when none is pending (VHS-REQ-664.1)', () => {
-    const timers = createFakeTimers();
-    const clearTimeout = vi.fn(timers.clearTimeout);
-    const scheduler = createViChangeWarmScheduler({
-      debounceMs: 50,
-      onSettled: () => {},
-      setTimeout: timers.setTimeout,
-      clearTimeout
-    });
-
-    // First note for a path: nothing is pending, so the `handle !== undefined`
-    // guard must skip clearTimeout. A second note for the SAME path DOES clear
-    // the prior handle. This proves the guard, not just the debounce coalescing.
-    scheduler.note('/repo/A.vi');
-    expect(clearTimeout).not.toHaveBeenCalled();
-    scheduler.note('/repo/A.vi');
-    expect(clearTimeout).toHaveBeenCalledTimes(1);
+    // The change already dispatched; dispose has no pending timers to cancel.
+    expect(settled).toEqual(['/repo/A.vi']);
   });
 });
 

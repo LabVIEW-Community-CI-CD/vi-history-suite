@@ -24,8 +24,7 @@ import {
  *
  * The value is well above the 180s (`DEFAULT_CLI_CONNECT_TIMEOUT_SECONDS`)
  * app-reference connect window so a legitimately slow-but-working headless run on
- * a healthy build is never killed prematurely; it matches the existing
- * `DEFAULT_GIT_TIMEOUT_MS` convention. The safe non-headless default (no
+ * a healthy build is never killed prematurely. The safe non-headless default (no
  * `-Headless`) and the working Linux container provider stay unbounded.
  */
 export const LINUX_HOST_NATIVE_HEADLESS_OPT_IN_DEFAULT_TIMEOUT_MS = 300000;

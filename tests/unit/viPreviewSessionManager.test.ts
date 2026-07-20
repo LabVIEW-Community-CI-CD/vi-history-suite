@@ -82,8 +82,7 @@ describe('createViPreviewSessionManager (VHS-REQ-659.14)', () => {
     };
     startViPreviewSessionMock.mockResolvedValue(session);
     const manager = createViPreviewSessionManager({
-      operationDirectory: '/ops',
-      idleDisposeMs: 60_000
+      operationDirectory: '/ops'
     });
 
     const firstWarmRender = manager.renderVi(runtime, '/repo/warm-1.vi', 'warm');
@@ -107,46 +106,32 @@ describe('createViPreviewSessionManager (VHS-REQ-659.14)', () => {
     await manager.dispose();
   });
 
-  it('reuses one session until idle disposal and recreates lazily on the next render', async () => {
-    vi.useFakeTimers();
-    try {
-      const firstSession = {
-        renderVi: vi.fn().mockResolvedValue(rendered('first-session')),
-        dispose: vi.fn().mockResolvedValue(undefined)
-      };
-      const secondSession = {
-        renderVi: vi.fn().mockResolvedValue(rendered('second-session')),
-        dispose: vi.fn().mockResolvedValue(undefined)
-      };
-      startViPreviewSessionMock
-        .mockResolvedValueOnce(firstSession)
-        .mockResolvedValueOnce(secondSession);
-      const manager = createViPreviewSessionManager({
-        operationDirectory: '/ops',
-        idleDisposeMs: 10
-      });
+  it('reuses one session indefinitely (no idle teardown) and disposes only on dispose()', async () => {
+    const firstSession = {
+      renderVi: vi.fn().mockResolvedValue(rendered('first-session')),
+      dispose: vi.fn().mockResolvedValue(undefined)
+    };
+    startViPreviewSessionMock.mockResolvedValueOnce(firstSession);
+    const manager = createViPreviewSessionManager({
+      operationDirectory: '/ops'
+    });
 
-      await expect(manager.renderVi(runtime, '/repo/a.vi')).resolves.toEqual(
-        rendered('first-session')
-      );
-      await expect(manager.renderVi(runtime, '/repo/b.vi')).resolves.toEqual(
-        rendered('first-session')
-      );
-      expect(startViPreviewSessionMock).toHaveBeenCalledTimes(1);
-      expect(firstSession.renderVi).toHaveBeenCalledTimes(2);
+    await expect(manager.renderVi(runtime, '/repo/a.vi')).resolves.toEqual(
+      rendered('first-session')
+    );
+    await expect(manager.renderVi(runtime, '/repo/b.vi')).resolves.toEqual(
+      rendered('first-session')
+    );
+    await expect(manager.renderVi(runtime, '/repo/c.vi')).resolves.toEqual(
+      rendered('first-session')
+    );
+    // The warm session is reused for every render; it is never torn down for
+    // idleness (single-cycle model: no timers), only on explicit dispose().
+    expect(startViPreviewSessionMock).toHaveBeenCalledTimes(1);
+    expect(firstSession.renderVi).toHaveBeenCalledTimes(3);
+    expect(firstSession.dispose).not.toHaveBeenCalled();
 
-      vi.advanceTimersByTime(10);
-      await flushAsyncWork();
-      expect(firstSession.dispose).toHaveBeenCalledTimes(1);
-
-      await expect(manager.renderVi(runtime, '/repo/c.vi')).resolves.toEqual(
-        rendered('second-session')
-      );
-      expect(startViPreviewSessionMock).toHaveBeenCalledTimes(2);
-      expect(secondSession.renderVi).toHaveBeenCalledWith('/repo/c.vi');
-      await manager.dispose();
-    } finally {
-      vi.useRealTimers();
-    }
+    await manager.dispose();
+    expect(firstSession.dispose).toHaveBeenCalledTimes(1);
   });
 });

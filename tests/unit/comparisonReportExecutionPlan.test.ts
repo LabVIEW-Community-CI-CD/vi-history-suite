@@ -263,7 +263,7 @@ describe('buildComparisonReportExecutionPlan', () => {
     }
   });
 
-  it('keeps linux host-native LabVIEWCLI invocations non-headless by default (VHS-REQ-156.1)', () => {
+  it('runs linux host-native LabVIEWCLI invocations headless by default (VHS-REQ-156.1)', () => {
     const originalHeadless = process.env.LV_RTE_HEADLESS;
     const originalLinuxHeadless = process.env.LV_RTE_LINUX_HEADLESS;
     delete process.env.LV_RTE_HEADLESS;
@@ -279,7 +279,7 @@ describe('buildComparisonReportExecutionPlan', () => {
         })
       );
       expect(linuxHostNativePlan.outcome).toBe('ready');
-      expect(linuxHostNativePlan.commandPlan?.args).not.toContain('-Headless');
+      expect(linuxHostNativePlan.commandPlan?.args).toContain('-Headless');
     } finally {
       if (originalHeadless === undefined) {
         delete process.env.LV_RTE_HEADLESS;
@@ -294,9 +294,9 @@ describe('buildComparisonReportExecutionPlan', () => {
     }
   });
 
-  it('lets LV_RTE_LINUX_HEADLESS=1 opt in to headless on linux host-native (VHS-REQ-156.1)', () => {
+  it('keeps linux host-native headless even with LV_RTE_LINUX_HEADLESS=0 (no opt-out) (VHS-REQ-156.1)', () => {
     const originalLinuxHeadless = process.env.LV_RTE_LINUX_HEADLESS;
-    process.env.LV_RTE_LINUX_HEADLESS = '1';
+    process.env.LV_RTE_LINUX_HEADLESS = '0';
     try {
       const plan = buildComparisonReportExecutionPlan(
         createBaseRecord({
@@ -308,6 +308,8 @@ describe('buildComparisonReportExecutionPlan', () => {
         })
       );
       expect(plan.outcome).toBe('ready');
+      // Headless is unconditional on Linux host-native (matches the Docker
+      // image); the old LV_RTE_LINUX_HEADLESS opt-out is gone.
       expect(plan.commandPlan?.args).toContain('-Headless');
     } finally {
       if (originalLinuxHeadless === undefined) {

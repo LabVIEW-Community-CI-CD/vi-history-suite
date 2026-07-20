@@ -1551,12 +1551,13 @@ Missing numeric IDs are intentional.
   - The compact summary includes outcome, failure/blocked reason, exit code,
     duration, report existence, artifact paths, and doctor summary lines.
   - HTML rendering escapes all user-controlled or path-derived values.
-  - Windows host-native `labview-cli` comparisons retry exactly once when the
-    first attempt fails with the cold-launch `labview-cli-connection-failed`
-    (`-350000`) VI Server connect race, reusing the port derived from the
-    selected install's `LabVIEW.ini` (`-PortNumber`) against the now-resident
-    LabVIEW without closing it first. The windows-container (in-script) and
-    Linux retry paths keep their existing behavior.
+  - Comparison execution runs the LabVIEWCLI command exactly once as a single
+    attempt (a single-cycle timed loop) and surfaces its result verbatim; there
+    is no cold-launch (`-350000`) or headless-session-reset retry on any
+    provider — host-native or container — so a VI Server connect race or
+    headless-init failure is reported as a genuine failure rather than masked by a
+    second attempt. The container in-script launch runs the CLI once as well (no
+    in-script `-350000` retry loop).
 - Agent Work Scope:
   - Change execution result shape, packet rendering, and runtime tests together.
 - Implementation References:
@@ -1586,18 +1587,18 @@ Missing numeric IDs are intentional.
 - Parent: VHS-SYS-REQ-007
 - Area: Comparison Reports
 - Statement: When the active runtime selection is host-native LabVIEW CLI on
-  Linux, the comparison execution path shall provide opt-in headless invocation
-  and actionable headless-failure classification by keeping the invocation
-  non-headless by default, passing `-Headless` only when the operator explicitly
-  opts in via `LV_RTE_LINUX_HEADLESS=1`, and recognizing a broken
-  `HeadlessManager` (LabVIEW logs `Failed to initialize headless LabVIEW.`) plus
-  the `(Hex 0x8) File permission error.` + `CreateComparisonReport operation
-  failed.` stderr signature instead of allowing an unbounded stall.
+  Linux, the comparison execution path shall invoke LabVIEW headless
+  unconditionally (matching the Docker Linux LabVIEW image, which always forces
+  `-Headless`) so a comparison never opens an interactive LabVIEW GUI window and
+  a broken `HeadlessManager` (LabVIEW logs `Failed to initialize headless
+  LabVIEW.`) or the `(Hex 0x8) File permission error.` +
+  `CreateComparisonReport operation failed.` stderr signature is classified into
+  an actionable failure reason instead of an unbounded stall.
 - Acceptance Criteria:
-  - Linux host-native LabVIEWCLI args do not include `-Headless` unless
-    `LV_RTE_LINUX_HEADLESS=1` is set in the extension host environment.
+  - Linux host-native LabVIEWCLI args always include `-Headless`; there is no
+    opt-out environment variable.
   - The Linux container provider continues to invoke LabVIEWCLI with
-    `-Headless` regardless of the env var.
+    `-Headless`.
   - Windows host-native invocations remain unchanged unless
     `LV_RTE_HEADLESS=1` or an explicit headless request is present.
   - Headless-log scanning emits `linux-headless-init-failed` when
@@ -1607,9 +1608,10 @@ Missing numeric IDs are intentional.
     `labview-cli-create-report-permission-error`.
   - Either Linux headless reason (`linux-headless-init-failed` or
     `linux-headless-recursive-load`) wins over more general stderr or
-    LabVIEW CLI diagnostic-log reasons; only `linux-headless-recursive-load`
-    triggers the headless-session-reset retry, so init-failed runs do not
-    waste a second attempt.
+    LabVIEW CLI diagnostic-log reasons. The comparison runs a single attempt
+    (single-cycle timed loop) with no headless-session-reset retry, so a
+    classified headless failure is surfaced as a genuine result rather than
+    retried.
   - Before launching LabVIEWCLI, Linux host-native `labview-cli` runs read
     the active `labview.conf` (searched under
     `~/natinst/.config/LabVIEW-<version>/`,
@@ -3333,10 +3335,10 @@ Missing numeric IDs are intentional.
     NI's ni/labview-for-containers guidance).
   - An unparseable or absent image reference falls back to the prior LabVIEW 2026
     `labviewprofull` + `-Headless` behavior so existing selections are unaffected.
-  - The Linux headless recursive-load recovery (LabVIEWCLI `CloseLabVIEW` reset
-    and single retry) runs only for images that use the `-Headless` mechanism; an
-    image using the environment toggle never issued `-Headless`, so the reset is
-    skipped instead of failing.
+  - The container comparison runs a single attempt (single-cycle timed loop): the
+    resolved headless mechanism (`-Headless` for 2026 Q1+, the
+    `EnableCICDFeaturesForLabVIEW=TRUE` env toggle for 2025 Q3 and earlier) is
+    applied as selected, with no orchestrator-level headless-session-reset retry.
   - The comparison runtime locator no longer rejects a non-2026 Docker request
     with `docker-provider-labview-version-not-implemented`; the resolved image
     governs the version and the supported-floor check
@@ -4356,16 +4358,17 @@ Missing numeric IDs are intentional.
     `docker run ... powershell -EncodedCommand <inner>`, bind-mounting the host
     workspace and the vendored operation directory at the Windows container
     roots. The inner PowerShell hardens the `LabVIEWCLI.ini` connect timeouts,
-    optionally pre-launches LabVIEW, and retries once on the cold-launch
-    `-350000`/`-350051` VI Server failure, mirroring the Windows-container
-    comparison recipe. `mapComparisonRuntimeSelectionToViPreview` resolves the
+    optionally pre-launches LabVIEW, and runs the CLI exactly once (single-cycle
+    timed loop, no cold-launch `-350000`/`-350051` retry), mirroring the
+    Windows-container comparison recipe. `mapComparisonRuntimeSelectionToViPreview`
+    resolves the
     Windows runtime (image, in-container LabVIEW path, and host PowerShell from
     the injected process platform), and `executeViPreview` blocks with
     `windows-powershell-host-unavailable` when no host PowerShell resolves.
   - The container script enables VI Server in the per-version LabVIEW config
-    with a widened connect window and retries once on the cold-launch `-350000`
-    VI Server connectivity failure, with fail-soft config mutation, matching the
-    comparison runtime recipe (VHS-REQ-148 / VHS-REQ-156 / VHS-REQ-657).
+    with a widened connect window and runs the CLI exactly once (single-cycle
+    timed loop, no in-script `-350000` retry), with fail-soft config mutation,
+    matching the comparison runtime recipe (VHS-REQ-148 / VHS-REQ-156 / VHS-REQ-657).
   - `executeViPreview` selects the host-native or Linux-container plan from the
     resolved runtime selection (blocking with `labview-cli-selection-incomplete`
     or `container-image-unavailable` when the selection is incomplete), runs it
@@ -4450,9 +4453,9 @@ Missing numeric IDs are intentional.
   - A single shared session manager (`createViPreviewSessionManager`) owns one
     warm session used by both the interactive editor and the background warmer:
     renders are serialized (one resident LabVIEW), interactive renders are
-    prioritized over background warm renders (`selectNextRender`), and the
-    session is disposed after an idle window (and re-created lazily on the next
-    render).
+    prioritized over background warm renders (`selectNextRender`), and the warm
+    session is reused for the lifetime of the manager and disposed only on
+    explicit `dispose()` (no idle-teardown timer).
   - The history panel exposes a per-revision **Preview** button (shown when the
     comparison/runtime surface is available) whose `previewRevision` message
     materializes that revision's VI together with its project source tree
@@ -4600,11 +4603,13 @@ Missing numeric IDs are intentional.
     blocks the alternative gpreview renderer. Keep the vendored operation folder
     intact and pointed at by `-AdditionalOperationDirectory` (the parent of the
     `PrintToSingleFileHtml/` class folder). Keep the container `-VI` /
-    `-OutputPath` rewriting and the `-350000` retry in lockstep with the
-    comparison runtime so the two share cold-launch behavior.
+    `-OutputPath` rewriting and the single-attempt (single-cycle, no cold-launch
+    retry) run in lockstep with the comparison runtime so the two share launch
+    behavior.
   - The Windows-container transport mirrors the comparison Windows recipe
     (host PowerShell -> `docker run ... powershell -EncodedCommand`, INI connect-
-    timeout hardening, optional LabVIEW pre-launch, one-shot `-350000` retry).
+    timeout hardening, optional LabVIEW pre-launch, single-attempt run with no
+    cold-launch retry).
     Keep `buildWindowsContainerViPreviewCommandPlan` aligned with
     `buildWindowsContainerLabviewCliScript`/`buildWindowsContainerCommandPlan`
     so both Windows paths share cold-launch behavior; the Windows LabVIEW
@@ -4909,9 +4914,10 @@ Missing numeric IDs are intentional.
   warm the caches for a LabVIEW VI as soon as it changes on disk so a reviewer
   finds both its preview and its Source Control change hover ready without
   waiting on a cold LabVIEW run. A `FileSystemWatcher` observes
-  `.vi`/`.vit`/`.vim`/`.ctl` create and change events, debounces the burst of
-  writes LabVIEW makes per save, and processes settled changes one at a time so
-  overlapping background LabVIEW runs never start. For a settled change it warms
+  `.vi`/`.vit`/`.vim`/`.ctl` create and change events, dispatches each change
+  immediately (single-cycle model, no debounce timer), and processes changes one
+  at a time so overlapping background LabVIEW runs never start. For a settled
+  change it warms
   the VI's preview render through the shared warm session (VHS-REQ-659) and runs
   a background HEAD-versus-working-tree comparison whose produced report records
   the semantic narrative (VHS-REQ-660), so the hover updates from its pending
@@ -4922,10 +4928,10 @@ Missing numeric IDs are intentional.
   a trusted workspace because it launches LabVIEW. Warming is best-effort and
   never surfaces an error.
 - Acceptance Criteria:
-  - `createViChangeWarmScheduler` debounces change notifications per path so the
-    several writes LabVIEW makes while saving one VI coalesce into a single
-    settled warm, and `dispose` cancels every pending timer so no warm fires
-    after disposal.
+  - `createViChangeWarmScheduler` dispatches each change notification
+    immediately (no debounce timer); redundant warms from an editor's multi-write
+    save are absorbed downstream by the warm orchestrator's single-flight
+    serialization, and `dispose` is a no-op with no pending timers to cancel.
   - `resolveViChangeWarmPlan` warms nothing unless the runtime is Docker and
     `viHistorySuite.preview.warmOnChange` is on; when it warms, the preview
     render warm additionally requires `viHistorySuite.preview.enabled` and the
@@ -4935,7 +4941,7 @@ Missing numeric IDs are intentional.
     failure is swallowed, and neither throws to the caller so a background warm
     never surfaces an error.
 - Agent Work Scope:
-  - Keep the debounce scheduler, the gating decision, and the warm orchestrator
+  - Keep the change dispatcher, the gating decision, and the warm orchestrator
     pure and dependency-injected in
     `src/reporting/viPreview/viChangeWarmScheduler.ts` so they are unit-testable
     without VS Code or a runtime, and keep the `FileSystemWatcher` registration
@@ -4957,8 +4963,8 @@ Missing numeric IDs are intentional.
 - Change Guidance:
   - Warming must stay Docker-only, opt-in, and best-effort: never launch host
     LabVIEW on change, never let a warm failure surface to the user, and keep
-    the per-path debounce and single-flight serialization so a burst of LabVIEW
-    saves cannot start overlapping background runs.
+    the single-flight serialization so a burst of LabVIEW saves cannot start
+    overlapping background runs.
 
 ### VHS-REQ-665: Win32 Host-Native Headless Comparison For 32-bit LabVIEW Parity
 
@@ -4966,12 +4972,12 @@ Missing numeric IDs are intentional.
 - Parent: VHS-SYS-REQ-007
 - Area: Comparison Reports
 - Statement: When the extension runs natively on Windows against a host-native
-  LabVIEWCLI comparison and the opt-in `LV_RTE_WIN_HOSTNATIVE_HEADLESS=1`
+  LABVIEWCLI comparison and the opt-in `LV_RTE_WIN_HOSTNATIVE_HEADLESS=1`
   environment toggle is set, the runtime shall prelaunch the selected LabVIEW
   with `--headless` (binding the VI Server without an interactive desktop),
-  tune the LabVIEWCLI.ini connect window, run the CLI, and retry once on the
-  cold-launch VI Server connect race (`-350000`/`-350051`), reusing the same
-  launch technique as the authoritative windows-container provider so a
+  tune the LabVIEWCLI.ini connect window, and run the CLI exactly once (a
+  single-cycle timed loop, no cold-launch retry), reusing the same launch
+  technique as the authoritative windows-container provider so a
   non-interactive session (for example a Vagrant WinRM session) can drive a
   real comparison against a locally installed 32-bit LabVIEW 2026 — the bitness
   the x64-only windows-container provider cannot exercise. The default
@@ -4986,8 +4992,8 @@ Missing numeric IDs are intentional.
     hidden, sets the `OpenAppReferenceTimeoutInSecond` and
     `AfterLaunchOpenAppReferenceTimeoutInSecond` LabVIEWCLI.ini tokens (to the
     explicit `cliConnectTimeoutSeconds` when supplied, else the host-native
-    default), runs the original CLI executable and arguments verbatim, retries
-    once on `-350000`/`-350051`/"failed to establish a connection", and emits a
+    default), runs the original CLI executable and arguments verbatim exactly
+    once (single-cycle, no cold-launch retry), and emits a
     `[vi-history-suite-hostnative-meta]` provenance line distinct from the
     container `[vi-history-suite-container-meta]` line; it does not pin
     `$env:TEMP` (it uses the ambient temp directory, unlike the container path).
@@ -5012,10 +5018,10 @@ Missing numeric IDs are intentional.
   - `manual:vagrant-hostnative-x86-headless`
 - Change Guidance:
   - Keep the headless launch technique aligned with the windows-container
-    provider (prelaunch, ini connect-window tuning, single cold-launch retry);
-    when the container defaults change, review the host-native defaults for
-    parity. Never make the toggle default-on and never wire the Vagrant lane
-    into `.github/workflows` (VHS-REQ-599).
+    provider (prelaunch, ini connect-window tuning, single-attempt run with no
+    cold-launch retry); when the container defaults change, review the
+    host-native defaults for parity. Never make the toggle default-on and never
+    wire the Vagrant lane into `.github/workflows` (VHS-REQ-599).
 
 ### VHS-REQ-666: Mandatory Local Vagrant Release Attestation
 
@@ -5227,13 +5233,20 @@ Missing numeric IDs are intentional.
     resolve to the same endpoint share a key and serialize while launches
     against different ports get different keys and run concurrently.
   - The host-native branch of `executeViPreview` acquires the slot for its
-    derived local VI Server endpoint before launching LabVIEWCLI and holds it
-    across the cold-launch retry loop; a container or docker preview run never
-    acquires a slot.
+    derived local VI Server endpoint before launching LabVIEWCLI as a single
+    attempt (no retry loop) and releases it afterward; a container or docker
+    preview run never acquires a slot.
   - The acquired slot is released after the launch completes for every outcome
     (rendered, failed, or thrown) via a `finally`, and the release function is
     idempotent so a double release never double-frees or hands a phantom slot to
     the next acquirer.
+  - Each external LabVIEW invocation is treated as one cycle of a single-cycle
+    timed loop (exactly one attempt, no retry). `createCycleMeter` measures each
+    cycle's duration (start to process close), a monotonic cycle count, and the
+    inter-cycle latency gap between back-to-back cycles, with a caller-supplied
+    outcome tag; the clock is an injectable monotonic source for deterministic
+    tests. `executeViPreview` measures its render cycle and attaches the
+    measurement to the result.
 - Agent Work Scope:
   - Keep the lock a small, pure, injectable in-process primitive with no
     external I/O; inject the acquire seam into execution deps for deterministic
@@ -5241,9 +5254,11 @@ Missing numeric IDs are intentional.
     endpoints against each other.
 - Implementation References:
   - `src/reporting/runtime/localViServerAcquisitionLock.ts`
+  - `src/reporting/runtime/cycleMeter.ts`
   - `src/reporting/viPreview/viPreviewExecution.ts`
 - Verification References:
   - `tests/unit/localViServerAcquisitionLock.test.ts`
+  - `tests/unit/cycleMeter.test.ts`
   - `tests/unit/viPreviewExecution.test.ts`
 - Change Guidance:
   - Keep the lock keyed by the local VI Server endpoint and container/docker
@@ -5252,6 +5267,71 @@ Missing numeric IDs are intentional.
     the same shared lock; when wiring it, acquire the shared lock with the same
     `localViServerLockKey` derivation so preview and comparison launches share
     one queue per endpoint.
+
+### VHS-REQ-699: Single-Pass Comparison Preview Pipeline
+
+- Status: Active
+- Parent: VHS-SYS-REQ-008
+- Area: Comparison Reports
+- Statement: A comparison of two staged VI revisions shall be produced as a
+  single pass modeled as a linear state machine over one staged left/right pair,
+  with three single-cycle timed-loop cycle states in order — `PREVIEW_LEFT`
+  (render a VI preview of the staged left VI), `PREVIEW_RIGHT` (render a VI
+  preview of the staged right VI), and `COMPARISON` (CreateComparisonReport) —
+  where a validation gate folded into the `PREVIEW_RIGHT` → `COMPARISON`
+  transition admits the comparison cycle only when both preview cycles loaded
+  their staged VI, so a preview cycle that fails to render short-circuits (skips)
+  the comparison and the pass reaches the `FAILED` terminal with the load failure
+  as the actionable signal rather than a confusing comparison failure.
+- Acceptance Criteria:
+  - `runComparisonPreviewPipeline` runs the cycle states in the fixed order
+    `PREVIEW_LEFT`, `PREVIEW_RIGHT`, then `COMPARISON`, tags each result with its
+    `state`, and reports each cycle's outcome independently; when both previews
+    render and the comparison runs successfully, the pass reaches the `COMPLETE`
+    terminal.
+  - The validation gate is folded into the `PREVIEW_RIGHT` → `COMPARISON`
+    transition: when either preview cycle fails to render the staged VI, the
+    comparison cycle is skipped (`outcome` `skipped`, `failureReason`
+    `staged-vi-preview-validation-failed`), the injected comparison runner is
+    never invoked, and the pass reaches the `FAILED` terminal carrying that
+    reason.
+  - A single shared `CycleMeter` measures each executed cycle state for per-cycle
+    duration, monotonic cycle index, and inter-cycle latency gap, and a skipped
+    comparison cycle is left unmetered.
+  - Every boundary (the per-side preview renderer, the comparison runner, the
+    cycle meter, and the `StagedPreviewCache`) is injected so the orchestrator is
+    pure and unit-testable without a LabVIEW runtime, and the `StagedPreviewCache`
+    interface is defined for a later cache-loading slice and is not read in this
+    pass.
+  - The pipeline is wired into the live comparison runtime execution across
+    providers (always-on): each staged VI is preview-validated before the
+    comparison cycle, the per-cycle evidence is retained on the runtime-execution
+    record as `pipelineCycles`, and a preview-validation short-circuit surfaces
+    the `staged-vi-preview-validation-failed` failure reason without invoking the
+    comparison. A preview whose runtime is merely unavailable (blocked) passes the
+    gate rather than failing it, so an unavailable validator never blocks a
+    comparison that would otherwise run.
+- Agent Work Scope:
+  - Keep the pipeline a pure, dependency-injected orchestrator in
+    `src/reporting/comparisonPreviewPipeline.ts` that composes the existing
+    single-cycle preview and comparison execution paths through injected
+    boundaries; do not add a LabVIEW or Docker dependency to the orchestrator,
+    and do not perform preview cache lookups in this pass.
+- Implementation References:
+  - `src/reporting/comparisonPreviewPipeline.ts`
+  - `src/reporting/runtime/cycleMeter.ts`
+  - `src/reporting/comparisonPreviewPipelineIntegration.ts`
+  - `src/reporting/viPreview/stagedViPreviewValidatorFactory.ts`
+- Verification References:
+  - `tests/unit/comparisonPreviewPipeline.test.ts`
+  - `tests/unit/comparisonPreviewPipelineIntegration.test.ts`
+  - `tests/unit/stagedViPreviewValidatorFactory.test.ts`
+- Change Guidance:
+  - Keep each iteration a single-cycle timed loop (exactly one LabVIEW
+    invocation, no retry) and keep the short-circuit so a staged VI that fails
+    its preview validation never reaches the CreateComparisonReport iteration.
+    When wiring the deferred cache-loading slice, read the `StagedPreviewCache`
+    before rendering so a cached preview replaces a live render iteration.
 
 ### VHS-REQ-670: Release State Read-Model And Gated Publish Authority
 

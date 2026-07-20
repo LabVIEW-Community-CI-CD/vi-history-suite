@@ -1408,78 +1408,6 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(result.record.runtimeExecution.failureReason).toBe('command-exited-nonzero');
   });
 
-  it('does not attach stale Linux headless diagnostics to a non-headless host success', async () => {
-    const record = createReadyRecord();
-    record.runtimeSelection.platform = 'linux';
-    record.runtimeSelection.bitness = 'x64';
-    record.runtimeSelection.provider = 'host-native';
-    record.runtimeSelection.executionMode = 'host-only';
-    record.runtimeSelection.requestedProvider = 'host';
-    record.runtimeSelection.requestedLabviewVersion = '2026';
-    record.runtimeSelection.labviewExe = {
-      kind: 'labview-exe',
-      path: '/usr/local/natinst/LabVIEW-2026-64/labview',
-      source: 'configured',
-      exists: true,
-      bitness: 'x64'
-    };
-    record.runtimeSelection.labviewCli = {
-      kind: 'labview-cli',
-      path: '/usr/local/bin/LabVIEWCLI',
-      source: 'configured',
-      exists: true,
-      bitness: 'x64'
-    };
-    const readdir = vi.fn().mockResolvedValue([
-      'LVStatus.txt',
-      'lvrt_26.1.1f1_headless_sergio_cur.txt'
-    ]);
-
-    const result = await executeComparisonReport(
-      {
-        record,
-        repositoryRoot: '/workspace/repo'
-      },
-      {
-        readRevisionBlob: vi
-          .fn()
-          .mockResolvedValueOnce(Buffer.from('left'))
-          .mockResolvedValueOnce(Buffer.from('right')),
-        mkdir: vi.fn().mockResolvedValue(undefined),
-        writeFile: vi.fn().mockResolvedValue(undefined) as never,
-        copyFile: vi.fn().mockResolvedValue(undefined) as never,
-        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
-        removePath: vi.fn().mockResolvedValue(undefined) as never,
-        unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
-        readdir: readdir as never,
-        readFile: vi.fn(async (filePath: string) => {
-          if (typeof filePath === 'string' && filePath.endsWith('labview.conf')) {
-            return 'server.tcp.enabled=True\nserver.tcp.port=3363\n';
-          }
-          return 'Recursive load during LEIF load!';
-        }) as never,
-        pathExists: vi.fn(async (filePath: string) =>
-          typeof filePath === 'string' && filePath.endsWith(record.artifactPlan.reportFilename)
-        ),
-        runCommand: vi.fn().mockResolvedValue({
-          exitCode: 0,
-          stdout: 'CreateComparisonReport operation succeeded.',
-          stderr: ''
-        }),
-        nowIso: vi.fn().mockReturnValue('2026-05-16T18:00:00.000Z'),
-        nowMs: vi.fn().mockReturnValue(1000),
-        writePacketRecord: vi.fn().mockResolvedValue(undefined),
-        processPlatform: 'linux'
-      }
-    );
-
-    expect(result.record.runtimeExecution.state).toBe('succeeded');
-    expect(result.record.runtimeExecution.args).not.toContain('-Headless');
-    expect(result.record.runtimeExecution.diagnosticReason).toBeUndefined();
-    expect(result.record.runtimeExecution.headlessDiagnosticArtifactPaths).toEqual([]);
-    expect(readdir).not.toHaveBeenCalled();
-  });
-
   it('suppresses the benign recursive-load diagnosticReason when a headless Linux run still succeeds', async () => {
     const record = createReadyRecord();
     record.runtimeSelection.platform = 'linux';
@@ -1792,11 +1720,11 @@ describe('comparisonReportRuntimeExecution', () => {
       ])
     );
     expect(result.record.runtimeExecution.diagnosticNotes?.join('\n')).toContain(
-      'LV_RTE_LINUX_HEADLESS=0'
+      'switch to the Linux container provider'
     );
   });
 
-  it('retries Linux recursive-load headless failures through CloseLabVIEW once (VHS-REQ-156.6)', async () => {
+  it('surfaces a Linux recursive-load headless failure on the single attempt without a CloseLabVIEW retry (VHS-REQ-156.6)', async () => {
     const record = createReadyRecord();
     record.runtimeSelection.platform = 'linux';
     record.runtimeSelection.bitness = 'x64';
@@ -1832,36 +1760,17 @@ describe('comparisonReportRuntimeExecution', () => {
       }
       return '';
     });
-    let reportAvailable = false;
-    const pathExists = vi.fn(async (filePath: string) => {
-      if (filePath === headlessLog) {
-        return true;
-      }
-      return typeof filePath === 'string' &&
-        filePath.endsWith(record.artifactPlan.reportFilename)
-        ? reportAvailable
-        : false;
+    const pathExists = vi.fn(async (filePath: string) => filePath === headlessLog);
+    // Single-cycle: one attempt, no CloseLabVIEW session-reset, no retry.
+    const runCommand = vi.fn().mockResolvedValue({
+      exitCode: 1,
+      stdout: 'LabVIEWCLI operation failed with error.',
+      stderr: [
+        'Using LabVIEW: "/usr/local/natinst/LabVIEW-2026-64/labview"',
+        'LabVIEW: (Hex 0x8) File permission error.',
+        'CreateComparisonReport operation failed.'
+      ].join('\n')
     });
-    const runCommand = vi
-      .fn()
-      .mockResolvedValueOnce({
-        exitCode: 1,
-        stdout: 'LabVIEWCLI operation failed with error.',
-        stderr: [
-          'Using LabVIEW: "/usr/local/natinst/LabVIEW-2026-64/labview"',
-          'LabVIEW: (Hex 0x8) File permission error.',
-          'CreateComparisonReport operation failed.'
-        ].join('\n')
-      })
-      .mockResolvedValueOnce({ exitCode: 0, stdout: 'close ok', stderr: '' })
-      .mockImplementationOnce(async () => {
-        reportAvailable = true;
-        return {
-          exitCode: 0,
-          stdout: 'CreateComparisonReport operation succeeded.',
-          stderr: ''
-        };
-      });
 
     const result = await executeComparisonReport(
       {
@@ -1890,19 +1799,16 @@ describe('comparisonReportRuntimeExecution', () => {
       }
     );
 
-    expect(runCommand).toHaveBeenCalledTimes(3);
-    expect(runCommand.mock.calls[1]?.[0]).toMatchObject({
-      executable: '/usr/local/bin/LabVIEWCLI',
-      args: expect.arrayContaining(['-OperationName', 'CloseLabVIEW'])
-    });
-    expect(result.record.runtimeExecution.state).toBe('succeeded');
-    expect(result.record.runtimeExecution.headlessSessionResetExecutable).toBe(
-      '/usr/local/bin/LabVIEWCLI'
-    );
-    expect(result.record.runtimeExecution.headlessSessionResetExitCode).toBe(0);
-    expect(result.record.runtimeExecution.diagnosticNotes).toContain(
-      'Attempted Linux headless session reset via LabVIEWCLI CloseLabVIEW after recursive-load diagnosis, then retried the pair once.'
-    );
+    // Only the single CreateComparisonReport attempt runs — no CloseLabVIEW reset.
+    expect(runCommand).toHaveBeenCalledTimes(1);
+    expect(
+      runCommand.mock.calls.every(
+        (call) => !(call[0]?.args ?? []).includes('CloseLabVIEW')
+      )
+    ).toBe(true);
+    expect(result.record.runtimeExecution.state).toBe('failed');
+    expect(result.record.runtimeExecution.headlessSessionResetExecutable).toBeUndefined();
+    expect(result.record.runtimeExecution.headlessSessionResetExitCode).toBeUndefined();
   });
 
   it('bounds the host-native headless opt-in so an indefinite init-failure hang is classified deterministically (issue #269)', async () => {
@@ -2000,7 +1906,7 @@ describe('comparisonReportRuntimeExecution', () => {
       ])
     );
     expect(result.record.runtimeExecution.diagnosticNotes?.join('\n')).toContain(
-      'LV_RTE_LINUX_HEADLESS=0'
+      'switch to the Linux container provider'
     );
   });
 
@@ -2149,7 +2055,7 @@ describe('comparisonReportRuntimeExecution', () => {
     );
   });
 
-  it('retries windows-container call-by-reference failures through containerized CloseLabVIEW and retains the normalized failure reason', async () => {
+  it('surfaces a windows-container call-by-reference failure on the single attempt without a containerized CloseLabVIEW retry', async () => {
     const record = createWindowsContainerReadyRecord();
     const diagnosticLogPath =
       'C:\\workspace\\.storage\\reports\\repoid123456\\fileid123456\\container-temp\\lvtemporary_123.log';
@@ -2168,27 +2074,14 @@ describe('comparisonReportRuntimeExecution', () => {
       'Connection established with LabVIEW at port number 3363.',
       '[vi-history-suite-container-meta]retryAttempts=1;prelaunchAttempted=1;iniPath=C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.ini;connectedPort=3363;openTimeout=180;afterLaunchTimeout=180.'
     ].join('\n');
-    const runCommand = vi
-      .fn()
-      .mockResolvedValueOnce({
-        exitCode: 130,
-        signal: 'SIGKILL',
-        stdout: runtimeStdout,
-        stderr: 'comparison-command cancelled by user\n',
-        cancelled: true
-      })
-      .mockResolvedValueOnce({
-        exitCode: 0,
-        stdout: 'close ok',
-        stderr: ''
-      })
-      .mockResolvedValueOnce({
-        exitCode: 130,
-        signal: 'SIGKILL',
-        stdout: runtimeStdout,
-        stderr: 'comparison-command cancelled by user\n',
-        cancelled: true
-      });
+    // Single-cycle: one attempt, no containerized CloseLabVIEW reset, no retry.
+    const runCommand = vi.fn().mockResolvedValue({
+      exitCode: 130,
+      signal: 'SIGKILL',
+      stdout: runtimeStdout,
+      stderr: 'comparison-command cancelled by user\n',
+      cancelled: true
+    });
     const pathExists = vi.fn(async (filePath: string) => matchesDiagnosticLogPath(filePath));
     const readFile = vi.fn(async (filePath: string) => {
       if (matchesDiagnosticLogPath(filePath)) {
@@ -2224,60 +2117,34 @@ describe('comparisonReportRuntimeExecution', () => {
       }
     );
 
-    expect(runCommand).toHaveBeenCalledTimes(3);
-    expect(runCommand.mock.calls[1]?.[0]).toMatchObject({
-      executable: 'powershell.exe'
-    });
-    expect(result.record.runtimeExecution.failureReason).toBe('command-exited-nonzero');
+    expect(runCommand).toHaveBeenCalledTimes(1);
     expect(result.record.runtimeExecution.diagnosticReason).toBe('labview-cli-call-by-reference');
-    expect(result.record.runtimeExecution.headlessSessionResetExecutable).toBe('powershell.exe');
-    expect(result.record.runtimeExecution.headlessSessionResetExitCode).toBe(0);
-    expect(result.record.runtimeExecution.diagnosticNotes).toContain(
-      'Attempted Windows headless session reset via LabVIEWCLI CloseLabVIEW after call-by-reference diagnosis, then retried the pair once.'
-    );
-    expect(result.record.runtimeExecution.diagnosticNotes).toContain(
-      'Comparison-report runtime retained a LabVIEW CLI Error 66 / Call By Reference failure before a cancellation-shaped transport exit was observed.'
-    );
+    expect(result.record.runtimeExecution.headlessSessionResetExecutable).toBeUndefined();
+    expect(result.record.runtimeExecution.headlessSessionResetExitCode).toBeUndefined();
   });
 
-  it('retries a Windows host-native cold-launch -350000 VI Server connect race once against the resident LabVIEW (VHS-REQ-148.7)', async () => {
+  it('surfaces a Windows host-native cold-launch -350000 VI Server connect race on the single attempt (VHS-REQ-148.7)', async () => {
     // createReadyRecord() is already win32 / host-native / labview-cli.
     const record = createReadyRecord();
-    let reportAvailable = false;
     const readFile = vi.fn(async (filePath: string) => {
       if (typeof filePath === 'string' && filePath.endsWith('LabVIEW.ini')) {
         return 'server.tcp.enabled=True\r\nserver.tcp.port=3364\r\n';
       }
       return '';
     });
-    const pathExists = vi.fn(async (filePath: string) =>
-      typeof filePath === 'string' && filePath.endsWith(record.artifactPlan.reportFilename)
-        ? reportAvailable
-        : false
-    );
-    // Attempt 1 launches a cold LabVIEW that loses the VI Server connect race
-    // (-350000); attempt 2 connects to the now-resident LabVIEW and succeeds. There
-    // is deliberately NO CloseLabVIEW between the two attempts.
-    const runCommand = vi
-      .fn()
-      .mockResolvedValueOnce({
-        exitCode: 1,
-        stdout:
-          'LabVIEWCLI started logging in file:  C:\\Temp\\lv.log\nLabVIEW launched successfully.',
-        stderr: [
-          'Error code : -350000',
-          'Error message : LabVIEW CLI: (Hex 0xFFFAA8D0) The CLI for LabVIEW failed to establish a connection with LabVIEW.',
-          'An error occurred while running the LabVIEW CLI.'
-        ].join('\r\n')
-      })
-      .mockImplementationOnce(async () => {
-        reportAvailable = true;
-        return {
-          exitCode: 0,
-          stdout: 'CreateComparisonReport operation succeeded.',
-          stderr: ''
-        };
-      });
+    const pathExists = vi.fn(async () => false);
+    // Single-cycle: one attempt. The cold-launch -350000 connect race is surfaced
+    // as a genuine failure — there is NO retry against a now-resident LabVIEW.
+    const runCommand = vi.fn().mockResolvedValue({
+      exitCode: 1,
+      stdout:
+        'LabVIEWCLI started logging in file:  C:\\Temp\\lv.log\nLabVIEW launched successfully.',
+      stderr: [
+        'Error code : -350000',
+        'Error message : LabVIEW CLI: (Hex 0xFFFAA8D0) The CLI for LabVIEW failed to establish a connection with LabVIEW.',
+        'An error occurred while running the LabVIEW CLI.'
+      ].join('\r\n')
+    });
 
     const result = await executeComparisonReport(
       { record, repositoryRoot: 'C:\\workspace\\repo' },
@@ -2303,27 +2170,24 @@ describe('comparisonReportRuntimeExecution', () => {
         processPlatform: 'win32',
         // Deterministic regardless of host: bypass the Windows host-surface
         // preflight (which observes real processes/TCP on a win32 dev host) so the
-        // test exercises only the cold-launch retry logic downstream of it.
+        // test exercises only the single-attempt classification downstream of it.
         enforceWindowsHostPreflight: false
       }
     );
 
-    // Exactly two compare attempts, and no CloseLabVIEW between them.
-    expect(runCommand).toHaveBeenCalledTimes(2);
-    for (const call of runCommand.mock.calls) {
-      const plan = call[0] as { executable: string; args: string[] };
-      expect(plan.executable).toBe(record.runtimeSelection.labviewCli?.path);
-      expect(plan.args).toEqual(
-        expect.arrayContaining(['-OperationName', 'CreateComparisonReport'])
-      );
-      // The VI Server port stays derived from the selected install's LabVIEW.ini on
-      // both attempts (no hardcoded fallback) — the retry only changes timing.
-      expect(plan.args).toEqual(expect.arrayContaining(['-PortNumber', '3364']));
-    }
-    expect(result.record.runtimeExecution.state).toBe('succeeded');
-    expect(result.record.runtimeExecution.reportExists).toBe(true);
+    // Exactly one compare attempt, and no CloseLabVIEW.
+    expect(runCommand).toHaveBeenCalledTimes(1);
+    const plan = runCommand.mock.calls[0]?.[0] as { executable: string; args: string[] };
+    expect(plan.executable).toBe(record.runtimeSelection.labviewCli?.path);
+    expect(plan.args).toEqual(
+      expect.arrayContaining(['-OperationName', 'CreateComparisonReport'])
+    );
+    // The VI Server port stays derived from the selected install's LabVIEW.ini.
+    expect(plan.args).toEqual(expect.arrayContaining(['-PortNumber', '3364']));
+    expect(result.record.runtimeExecution.state).toBe('failed');
+    expect(result.record.runtimeExecution.reportExists).toBe(false);
     expect(result.record.runtimeExecution.headlessSessionResetExecutable).toBeUndefined();
-    expect(result.record.runtimeExecution.diagnosticNotes).toContain(
+    expect(result.record.runtimeExecution.diagnosticNotes ?? []).not.toContain(
       'Windows host-native cold-launch retry: the first attempt launched LabVIEW but the VI Server was not ready within the LabVIEW CLI connect window (-350000). Retried once against the now-resident LabVIEW on the same derived VI Server port.'
     );
   });
@@ -2377,7 +2241,7 @@ describe('comparisonReportRuntimeExecution', () => {
     );
   });
 
-  it('retains the retried failure as authoritative when the cold-launch retry also fails (VHS-REQ-148.7)', async () => {
+  it('classifies a Windows host-native -350000 as the connection failure on the single attempt (VHS-REQ-148.7)', async () => {
     // createReadyRecord() is already win32 / host-native / labview-cli.
     const record = createReadyRecord();
     const readFile = vi.fn(async (filePath: string) => {
@@ -2387,25 +2251,17 @@ describe('comparisonReportRuntimeExecution', () => {
       return '';
     });
     const pathExists = vi.fn(async () => false);
-    // Attempt 1 loses the VI Server connect race (-350000) so the cold-launch
-    // retry fires; attempt 2 fails with a generic nonzero error (the resident
-    // LabVIEW did not recover). The retried result must be authoritative.
-    const runCommand = vi
-      .fn()
-      .mockResolvedValueOnce({
-        exitCode: 1,
-        stdout: 'LabVIEWCLI started logging in file:  C:\\Temp\\lv.log\nLabVIEW launched successfully.',
-        stderr: [
-          'Error code : -350000',
-          'Error message : LabVIEW CLI: (Hex 0xFFFAA8D0) The CLI for LabVIEW failed to establish a connection with LabVIEW.',
-          'An error occurred while running the LabVIEW CLI.'
-        ].join('\r\n')
-      })
-      .mockResolvedValueOnce({
-        exitCode: 55,
-        stdout: '',
-        stderr: 'Error code : 1055\r\nError message : Object reference is invalid.\r\n'
-      });
+    // Single-cycle: one attempt with the -350000 connect race. Its result is
+    // authoritative — no second attempt against a resident LabVIEW.
+    const runCommand = vi.fn().mockResolvedValue({
+      exitCode: 1,
+      stdout: 'LabVIEWCLI started logging in file:  C:\\Temp\\lv.log\nLabVIEW launched successfully.',
+      stderr: [
+        'Error code : -350000',
+        'Error message : LabVIEW CLI: (Hex 0xFFFAA8D0) The CLI for LabVIEW failed to establish a connection with LabVIEW.',
+        'An error occurred while running the LabVIEW CLI.'
+      ].join('\r\n')
+    });
 
     const result = await executeComparisonReport(
       { record, repositoryRoot: 'C:\\workspace\\repo' },
@@ -2426,33 +2282,19 @@ describe('comparisonReportRuntimeExecution', () => {
         pathExists: pathExists as never,
         runCommand,
         nowIso: vi.fn().mockReturnValue('2026-07-15T09:00:00.000Z'),
-        // Sequenced clock: attempt 1 spans 1000->2000 (1000ms), attempt 2 spans
-        // 2000->5000 (3000ms); the combined duration must be their sum (4000ms).
-        nowMs: vi
-          .fn()
-          .mockReturnValueOnce(1000)
-          .mockReturnValueOnce(2000)
-          .mockReturnValueOnce(2000)
-          .mockReturnValueOnce(5000),
+        nowMs: vi.fn().mockReturnValueOnce(1000).mockReturnValueOnce(2000),
         writePacketRecord: vi.fn().mockResolvedValue(undefined),
         processPlatform: 'win32',
         enforceWindowsHostPreflight: false
       }
     );
 
-    // The cold-launch retry still fired (2 attempts), but the second attempt is
-    // authoritative: the final failure is attempt 2's generic classification, not
-    // the first attempt's connection-failed reason.
-    expect(runCommand).toHaveBeenCalledTimes(2);
+    // A single attempt; the -350000 result is authoritative.
+    expect(runCommand).toHaveBeenCalledTimes(1);
     expect(result.record.runtimeExecution.state).toBe('failed');
     expect(result.record.runtimeExecution.reportExists).toBe(false);
-    expect(result.record.runtimeExecution.exitCode).toBe(55);
-    expect(result.record.runtimeExecution.failureReason).toBe('command-exited-nonzero');
-    // Duration accumulates across both attempts.
-    expect(result.record.runtimeExecution.durationMs).toBe(4000);
-    // The cold-launch recovery note is retained even though the retry failed, so
-    // the evidence records that a one-shot retry was attempted.
-    expect(result.record.runtimeExecution.diagnosticNotes).toContain(
+    expect(result.record.runtimeExecution.durationMs).toBe(1000);
+    expect(result.record.runtimeExecution.diagnosticNotes ?? []).not.toContain(
       'Windows host-native cold-launch retry: the first attempt launched LabVIEW but the VI Server was not ready within the LabVIEW CLI connect window (-350000). Retried once against the now-resident LabVIEW on the same derived VI Server port.'
     );
   });
@@ -3784,7 +3626,7 @@ describe('Linux host-native short-path staging (VHS-REQ-156)', () => {
     expect(script).not.toContain('EnableCICDFeaturesForLabVIEW');
   });
 
-  it('buildLinuxContainerCommandPlan retries once on -350000 and hardens the LabVIEW .conf (VHS-REQ-148)', () => {
+  it('buildLinuxContainerCommandPlan runs the CLI once (single-cycle) and hardens the LabVIEW .conf (VHS-REQ-148)', () => {
     const record = createReadyRecord();
     record.runtimeSelection = {
       ...record.runtimeSelection,
@@ -3822,10 +3664,10 @@ describe('Linux host-native short-path staging (VHS-REQ-156)', () => {
 
     expect(plan).toBeDefined();
     const script = plan?.args[plan.args.length - 1] ?? '';
-    // Retry loop guards against the cold-launch VI Server connect failure.
-    expect(script).toContain('max_attempts=2');
-    expect(script).toContain('-350000');
-    expect(script).toContain('failed to establish a connection with LabVIEW');
+    // Single-cycle: the CLI runs exactly once, no cold-launch retry loop.
+    expect(script).not.toContain('max_attempts');
+    expect(script).not.toContain('retry_delay');
+    expect(script).toContain('retryAttempts=1');
     expect(script).toContain('"$cli_path" "${args[@]}" 2>"$err_file"');
     // Connect-window hardening targets the per-version LabVIEW .conf the launched
     // headless LabVIEW reads.
@@ -7261,9 +7103,10 @@ describe('buildWindowsHostNativeHeadlessCommandPlan (VHS-REQ-665)', () => {
     expect(script).toContain(
       "Set-IniToken -Path $cliIni -Key 'AfterLaunchOpenAppReferenceTimeoutInSecond' -Value '60'"
     );
-    // Retries once on the cold-launch VI Server connect race.
-    expect(script).toContain('-350000');
-    expect(script).toContain('-350051');
+    // Single-cycle: the CLI runs exactly once, no cold-launch retry loop.
+    expect(script).not.toContain('$maxAttempts');
+    expect(script).not.toContain('$isStartupConnectivity');
+    expect(script).toContain('retryAttempts=1');
     // Carries a host-native provenance meta tag distinct from the container one.
     expect(script).toContain('[vi-history-suite-hostnative-meta]');
     expect(script).not.toContain('[vi-history-suite-container-meta]');
@@ -7487,7 +7330,7 @@ describe('coupled-extraction builder characterization (byte-identical)', () => {
         "args": [
           "-NoProfile",
           "-EncodedCommand",
-          "JABFAHIAcgBvAHIAQQBjAHQAaQBvAG4AUAByAGUAZgBlAHIAZQBuAGMAZQAgAD0AIAAnAFMAdABvAHAAJwAKACQAUAByAG8AZwByAGUAcwBzAFAAcgBlAGYAZQByAGUAbgBjAGUAIAA9ACAAJwBTAGkAbABlAG4AdABsAHkAQwBvAG4AdABpAG4AdQBlACcACgBmAHUAbgBjAHQAaQBvAG4AIABTAGUAdAAtAEkAbgBpAFQAbwBrAGUAbgAgAHsACgAgACAAcABhAHIAYQBtACgAWwBzAHQAcgBpAG4AZwBdACQAUABhAHQAaAAsACAAWwBzAHQAcgBpAG4AZwBdACQASwBlAHkALAAgAFsAcwB0AHIAaQBuAGcAXQAkAFYAYQBsAHUAZQApAAoAIAAgAGkAZgAgACgALQBuAG8AdAAgACgAVABlAHMAdAAtAFAAYQB0AGgAIAAtAEwAaQB0AGUAcgBhAGwAUABhAHQAaAAgACQAUABhAHQAaAAgAC0AUABhAHQAaABUAHkAcABlACAATABlAGEAZgApACkAIAB7ACAAcgBlAHQAdQByAG4AIAB9AAoAIAAgACQAYwBvAG4AdABlAG4AdAAgAD0AIABHAGUAdAAtAEMAbwBuAHQAZQBuAHQAIAAtAEwAaQB0AGUAcgBhAGwAUABhAHQAaAAgACQAUABhAHQAaAAgAC0AUgBhAHcAIAAtAEUAcgByAG8AcgBBAGMAdABpAG8AbgAgAFMAaQBsAGUAbgB0AGwAeQBDAG8AbgB0AGkAbgB1AGUACgAgACAAaQBmACAAKAAkAG4AdQBsAGwAIAAtAGUAcQAgACQAYwBvAG4AdABlAG4AdAApACAAewAgACQAYwBvAG4AdABlAG4AdAAgAD0AIAAnACcAIAB9AAoAIAAgAGkAZgAgACgAJABjAG8AbgB0AGUAbgB0ACAALQBtAGEAdABjAGgAIAAoACIAKAA/AG0AKQBeAFwAcwAqAHsAMAB9AFwAcwAqAD0AIgAgAC0AZgAgAFsAcgBlAGcAZQB4AF0AOgA6AEUAcwBjAGEAcABlACgAJABLAGUAeQApACkAKQAgAHsACgAgACAAIAAgACQAdQBwAGQAYQB0AGUAZAAgAD0AIABbAHIAZQBnAGUAeABdADoAOgBSAGUAcABsAGEAYwBlACgAJABjAG8AbgB0AGUAbgB0ACwAIAAoACIAKAA/AG0AKQBeAFwAcwAqAHsAMAB9AFwAcwAqAD0ALgAqACQAIgAgAC0AZgAgAFsAcgBlAGcAZQB4AF0AOgA6AEUAcwBjAGEAcABlACgAJABLAGUAeQApACkALAAgACgAIgB7ADAAfQA9AHsAMQB9ACIAIAAtAGYAIAAkAEsAZQB5ACwAIAAkAFYAYQBsAHUAZQApACkACgAgACAAfQAgAGUAbABzAGUAIAB7AAoAIAAgACAAIAAkAHUAcABkAGEAdABlAGQAIAA9ACAAKAAkAGMAbwBuAHQAZQBuAHQALgBUAHIAaQBtAEUAbgBkACgAKQAgACsAIABbAEUAbgB2AGkAcgBvAG4AbQBlAG4AdABdADoAOgBOAGUAdwBMAGkAbgBlACAAKwAgACgAIgB7ADAAfQA9AHsAMQB9ACIAIAAtAGYAIAAkAEsAZQB5ACwAIAAkAFYAYQBsAHUAZQApACAAKwAgAFsARQBuAHYAaQByAG8AbgBtAGUAbgB0AF0AOgA6AE4AZQB3AEwAaQBuAGUAKQAKACAAIAB9AAoAIAAgAFMAZQB0AC0AQwBvAG4AdABlAG4AdAAgAC0ATABpAHQAZQByAGEAbABQAGEAdABoACAAJABQAGEAdABoACAALQBWAGEAbAB1AGUAIAAkAHUAcABkAGEAdABlAGQAIAAtAEUAbgBjAG8AZABpAG4AZwAgAHUAdABmADgACgB9AAoAJABjAGwAaQBQAGEAdABoACAAPQAgACcAQwA6AFwATgBJAFwATABhAGIAVgBJAEUAVwBDAEwASQAuAGUAeABlACcACgAkAGwAYQBiAHYAaQBlAHcAUABhAHQAaAAgAD0AIAAnAEMAOgBcAFAAcgBvAGcAcgBhAG0AIABGAGkAbABlAHMAIAAoAHgAOAA2ACkAXABOAGEAdABpAG8AbgBhAGwAIABJAG4AcwB0AHIAdQBtAGUAbgB0AHMAXABMAGEAYgBWAEkARQBXACAAMgAwADIANgAgAFEAMQBcAEwAYQBiAFYASQBFAFcALgBlAHgAZQAnAAoAJABhAHIAZwBzACAAPQAgAEAAKAAnAC0ATwBwAGUAcgBhAHQAaQBvAG4ATgBhAG0AZQAnACwAIAAnAEMAcgBlAGEAdABlAEMAbwBtAHAAYQByAGkAcwBvAG4AUgBlAHAAbwByAHQAJwAsACAAJwAtAFYASQAxACcALAAgACcALwBoAG8AcwB0AC8AcwB0AGEAZwBpAG4AZwAvAGwAZQBmAHQALQBmAG8AbwAuAHYAaQAnACwAIAAnAC0AVgBJADIAJwAsACAAJwAvAGgAbwBzAHQALwBzAHQAYQBnAGkAbgBnAC8AcgBpAGcAaAB0AC0AZgBvAG8ALgB2AGkAJwAsACAAJwAtAFIAZQBwAG8AcgB0AFAAYQB0AGgAJwAsACAAJwAvAGgAbwBzAHQALwBkAGkAZgBmAC0AcgBlAHAAbwByAHQALQBmAG8AbwAuAHYAaQAuAGgAdABtAGwAJwAsACAAJwAtAEwAYQBiAFYASQBFAFcAUABhAHQAaAAnACwAIAAnAEMAOgBcAFAAcgBvAGcAcgBhAG0AIABGAGkAbABlAHMAXABOAGEAdABpAG8AbgBhAGwAIABJAG4AcwB0AHIAdQBtAGUAbgB0AHMAXABMAGEAYgBWAEkARQBXACAAMgAwADIANgBcAEwAYQBiAFYASQBFAFcALgBlAHgAZQAnACkACgAkAGMAbABpAEkAbgBpAEMAYQBuAGQAaQBkAGEAdABlAHMAIAA9ACAAQAAoACcAQwA6AFwAUAByAG8AZwByAGEAbQBEAGEAdABhAFwATgBhAHQAaQBvAG4AYQBsACAASQBuAHMAdAByAHUAbQBlAG4AdABzAFwATABhAGIAVgBJAEUAVwAgAEMATABJAFwATABhAGIAVgBJAEUAVwBDAEwASQAuAGkAbgBpACcALAAgACcAQwA6AFwAUAByAG8AZwByAGEAbQBEAGEAdABhAFwATgBhAHQAaQBvAG4AYQBsACAASQBuAHMAdAByAHUAbQBlAG4AdABzAFwATABhAGIAVgBJAEUAVwBDAEwASQBcAEwAYQBiAFYASQBFAFcAQwBMAEkALgBpAG4AaQAnACwAIAAnAEMAOgBcAFAAcgBvAGcAcgBhAG0AIABGAGkAbABlAHMAXABOAGEAdABpAG8AbgBhAGwAIABJAG4AcwB0AHIAdQBtAGUAbgB0AHMAXABTAGgAYQByAGUAZABcAEwAYQBiAFYASQBFAFcAIABDAEwASQBcAEwAYQBiAFYASQBFAFcAQwBMAEkALgBpAG4AaQAnACwAIAAnAEMAOgBcAFAAcgBvAGcAcgBhAG0AIABGAGkAbABlAHMAIAAoAHgAOAA2ACkAXABOAGEAdABpAG8AbgBhAGwAIABJAG4AcwB0AHIAdQBtAGUAbgB0AHMAXABTAGgAYQByAGUAZABcAEwAYQBiAFYASQBFAFcAIABDAEwASQBcAEwAYQBiAFYASQBFAFcAQwBMAEkALgBpAG4AaQAnACkACgAkAGMAbABpAEkAbgBpACAAPQAgACQAYwBsAGkASQBuAGkAQwBhAG4AZABpAGQAYQB0AGUAcwAgAHwAIABXAGgAZQByAGUALQBPAGIAagBlAGMAdAAgAHsAIABUAGUAcwB0AC0AUABhAHQAaAAgAC0ATABpAHQAZQByAGEAbABQAGEAdABoACAAJABfACAAfQAgAHwAIABTAGUAbABlAGMAdAAtAE8AYgBqAGUAYwB0ACAALQBGAGkAcgBzAHQAIAAxAAoAaQBmACAAKAAkAGMAbABpAEkAbgBpACkAIAB7AAoAIAAgAFMAZQB0AC0ASQBuAGkAVABvAGsAZQBuACAALQBQAGEAdABoACAAJABjAGwAaQBJAG4AaQAgAC0ASwBlAHkAIAAnAE8AcABlAG4AQQBwAHAAUgBlAGYAZQByAGUAbgBjAGUAVABpAG0AZQBvAHUAdABJAG4AUwBlAGMAbwBuAGQAJwAgAC0AVgBhAGwAdQBlACAAJwA2ADAAJwAKACAAIABTAGUAdAAtAEkAbgBpAFQAbwBrAGUAbgAgAC0AUABhAHQAaAAgACQAYwBsAGkASQBuAGkAIAAtAEsAZQB5ACAAJwBBAGYAdABlAHIATABhAHUAbgBjAGgATwBwAGUAbgBBAHAAcABSAGUAZgBlAHIAZQBuAGMAZQBUAGkAbQBlAG8AdQB0AEkAbgBTAGUAYwBvAG4AZAAnACAALQBWAGEAbAB1AGUAIAAnADYAMAAnAAoAfQAKACQAcAByAGUAbABhAHUAbgBjAGgAQQB0AHQAZQBtAHAAdABlAGQAIAA9ACAAJABmAGEAbABzAGUACgBpAGYAIAAoAC0AbgBvAHQAIABbAHMAdAByAGkAbgBnAF0AOgA6AEkAcwBOAHUAbABsAE8AcgBXAGgAaQB0AGUAUwBwAGEAYwBlACgAWwBzAHQAcgBpAG4AZwBdACQAbABhAGIAdgBpAGUAdwBQAGEAdABoACkAIAAtAGEAbgBkACAAKABUAGUAcwB0AC0AUABhAHQAaAAgAC0ATABpAHQAZQByAGEAbABQAGEAdABoACAAJABsAGEAYgB2AGkAZQB3AFAAYQB0AGgAKQApACAAewAKACAAIAAkAHAAcgBlAGwAYQB1AG4AYwBoAEEAdAB0AGUAbQBwAHQAZQBkACAAPQAgACQAdAByAHUAZQAKACAAIABTAHQAYQByAHQALQBQAHIAbwBjAGUAcwBzACAALQBGAGkAbABlAFAAYQB0AGgAIAAkAGwAYQBiAHYAaQBlAHcAUABhAHQAaAAgAC0AQQByAGcAdQBtAGUAbgB0AEwAaQBzAHQAIAAnAC0ALQBoAGUAYQBkAGwAZQBzAHMAJwAgAC0AVwBpAG4AZABvAHcAUwB0AHkAbABlACAASABpAGQAZABlAG4AIAB8ACAATwB1AHQALQBOAHUAbABsAAoAIAAgAFMAdABhAHIAdAAtAFMAbABlAGUAcAAgAC0AUwBlAGMAbwBuAGQAcwAgADIANQAKAH0ACgAkAGEAdAB0AGUAbQBwAHQAIAA9ACAAMAAKACQAbQBhAHgAQQB0AHQAZQBtAHAAdABzACAAPQAgAFsATQBhAHQAaABdADoAOgBNAGEAeAAoADEALAAgADEAIAArACAAMQApAAoAJABsAGEAcwB0AEUAeABpAHQAIAA9ACAAMQAKACQAbABhAHMAdABPAHUAdABwAHUAdABUAGUAeAB0ACAAPQAgACcAJwAKAHcAaABpAGwAZQAgACgAJABhAHQAdABlAG0AcAB0ACAALQBsAHQAIAAkAG0AYQB4AEEAdAB0AGUAbQBwAHQAcwApACAAewAKACAAIAAkAGEAdAB0AGUAbQBwAHQAKwArAAoAIAAgACQAcAByAGUAdgBpAG8AdQBzAEUAcgByAG8AcgBBAGMAdABpAG8AbgBQAHIAZQBmAGUAcgBlAG4AYwBlACAAPQAgACQARQByAHIAbwByAEEAYwB0AGkAbwBuAFAAcgBlAGYAZQByAGUAbgBjAGUACgAgACAAJABFAHIAcgBvAHIAQQBjAHQAaQBvAG4AUAByAGUAZgBlAHIAZQBuAGMAZQAgAD0AIAAnAEMAbwBuAHQAaQBuAHUAZQAnAAoAIAAgAHQAcgB5ACAAewAKACAAIAAgACAAJABvAHUAdABwAHUAdAAgAD0AIABAACgAJgAgACQAYwBsAGkAUABhAHQAaAAgAEAAYQByAGcAcwAgADIAPgAmADEAKQAKACAAIAAgACAAJABsAGEAcwB0AEUAeABpAHQAIAA9ACAAWwBpAG4AdABdACQATABBAFMAVABFAFgASQBUAEMATwBEAEUACgAgACAAfQAgAGYAaQBuAGEAbABsAHkAIAB7AAoAIAAgACAAIAAkAEUAcgByAG8AcgBBAGMAdABpAG8AbgBQAHIAZQBmAGUAcgBlAG4AYwBlACAAPQAgACQAcAByAGUAdgBpAG8AdQBzAEUAcgByAG8AcgBBAGMAdABpAG8AbgBQAHIAZQBmAGUAcgBlAG4AYwBlAAoAIAAgAH0ACgAgACAAJABvAHUAdABwAHUAdAAgAHwAIABGAG8AcgBFAGEAYwBoAC0ATwBiAGoAZQBjAHQAIAB7ACAAaQBmACAAKAAtAG4AbwB0ACAAWwBzAHQAcgBpAG4AZwBdADoAOgBJAHMATgB1AGwAbABPAHIAVwBoAGkAdABlAFMAcABhAGMAZQAoAFsAcwB0AHIAaQBuAGcAXQAkAF8AKQApACAAewAgAFcAcgBpAHQAZQAtAE8AdQB0AHAAdQB0ACAAJABfACAAfQAgAH0ACgAgACAAJABsAGEAcwB0AE8AdQB0AHAAdQB0AFQAZQB4AHQAIAA9ACAAQAAoACQAbwB1AHQAcAB1AHQAIAB8ACAARgBvAHIARQBhAGMAaAAtAE8AYgBqAGUAYwB0ACAAewAgAFsAcwB0AHIAaQBuAGcAXQAkAF8AIAB9ACkAIAAtAGoAbwBpAG4AIABbAEUAbgB2AGkAcgBvAG4AbQBlAG4AdABdADoAOgBOAGUAdwBMAGkAbgBlAAoAIAAgAGkAZgAgACgAJABsAGEAcwB0AEUAeABpAHQAIAAtAGUAcQAgADAAKQAgAHsAIABiAHIAZQBhAGsAIAB9AAoAIAAgACQAaQBzAFMAdABhAHIAdAB1AHAAQwBvAG4AbgBlAGMAdABpAHYAaQB0AHkAIAA9ACAAKAAkAGwAYQBzAHQARQB4AGkAdAAgAC0AaQBuACAAQAAoAC0AMwA1ADAAMAAwADAALAAgAC0AMwA1ADAAMAA1ADEAKQAgAC0AbwByACAAJABsAGEAcwB0AE8AdQB0AHAAdQB0AFQAZQB4AHQAIAAtAG0AYQB0AGMAaAAgACcALQAzADUAMAAwADAAMAAnACAALQBvAHIAIAAkAGwAYQBzAHQATwB1AHQAcAB1AHQAVABlAHgAdAAgAC0AbQBhAHQAYwBoACAAJwAtADMANQAwADAANQAxACcAIAAtAG8AcgAgACQAbABhAHMAdABPAHUAdABwAHUAdABUAGUAeAB0ACAALQBtAGEAdABjAGgAIAAnACgAPwBpACkAZgBhAGkAbABlAGQAIAB0AG8AIABlAHMAdABhAGIAbABpAHMAaAAgAGEAIABjAG8AbgBuAGUAYwB0AGkAbwBuACAAdwBpAHQAaAAgAEwAYQBiAFYASQBFAFcAJwApAAoAIAAgAGkAZgAgACgAJABpAHMAUwB0AGEAcgB0AHUAcABDAG8AbgBuAGUAYwB0AGkAdgBpAHQAeQAgAC0AYQBuAGQAIAAkAGEAdAB0AGUAbQBwAHQAIAAtAGwAdAAgACQAbQBhAHgAQQB0AHQAZQBtAHAAdABzACkAIAB7AAoAIAAgACAAIABTAHQAYQByAHQALQBTAGwAZQBlAHAAIAAtAFMAZQBjAG8AbgBkAHMAIAA4AAoAIAAgACAAIABjAG8AbgB0AGkAbgB1AGUACgAgACAAfQAKACAAIABiAHIAZQBhAGsACgB9AAoAJABjAG8AbgBuAGUAYwB0AGUAZABQAG8AcgB0ACAAPQAgACcAJwAKAGkAZgAgACgAJABsAGEAcwB0AE8AdQB0AHAAdQB0AFQAZQB4AHQAIAAtAG0AYQB0AGMAaAAgACcAQwBvAG4AbgBlAGMAdABpAG8AbgAgAGUAcwB0AGEAYgBsAGkAcwBoAGUAZAAgAHcAaQB0AGgAIABMAGEAYgBWAEkARQBXACAAYQB0ACAAcABvAHIAdAAgAG4AdQBtAGIAZQByACAAKABbADAALQA5AF0AKwApAFwALgAnACkAIAB7AAoAIAAgACQAYwBvAG4AbgBlAGMAdABlAGQAUABvAHIAdAAgAD0AIAAkAE0AYQB0AGMAaABlAHMAWwAxAF0ACgB9AAoAVwByAGkAdABlAC0ATwB1AHQAcAB1AHQAIAAoACcAWwB2AGkALQBoAGkAcwB0AG8AcgB5AC0AcwB1AGkAdABlAC0AaABvAHMAdABuAGEAdABpAHYAZQAtAG0AZQB0AGEAXQByAGUAdAByAHkAQQB0AHQAZQBtAHAAdABzAD0AewAwAH0AOwBwAHIAZQBsAGEAdQBuAGMAaABBAHQAdABlAG0AcAB0AGUAZAA9AHsAMQB9ADsAaQBuAGkAUABhAHQAaAA9AHsAMgB9ADsAYwBvAG4AbgBlAGMAdABlAGQAUABvAHIAdAA9AHsAMwB9ADsAbwBwAGUAbgBUAGkAbQBlAG8AdQB0AD0AMQAyADAAOwBhAGYAdABlAHIATABhAHUAbgBjAGgAVABpAG0AZQBvAHUAdAA9ADEAMgAwACcAIAAtAGYAIAAkAGEAdAB0AGUAbQBwAHQALAAgACgAJAAoAGkAZgAgACgAJABwAHIAZQBsAGEAdQBuAGMAaABBAHQAdABlAG0AcAB0AGUAZAApACAAewAgADEAIAB9ACAAZQBsAHMAZQAgAHsAIAAwACAAfQApACkALAAgACQAYwBsAGkASQBuAGkALAAgACQAYwBvAG4AbgBlAGMAdABlAGQAUABvAHIAdAApAAoAZQB4AGkAdAAgACQAbABhAHMAdABFAHgAaQB0AA==",
+          "JABFAHIAcgBvAHIAQQBjAHQAaQBvAG4AUAByAGUAZgBlAHIAZQBuAGMAZQAgAD0AIAAnAFMAdABvAHAAJwAKACQAUAByAG8AZwByAGUAcwBzAFAAcgBlAGYAZQByAGUAbgBjAGUAIAA9ACAAJwBTAGkAbABlAG4AdABsAHkAQwBvAG4AdABpAG4AdQBlACcACgBmAHUAbgBjAHQAaQBvAG4AIABTAGUAdAAtAEkAbgBpAFQAbwBrAGUAbgAgAHsACgAgACAAcABhAHIAYQBtACgAWwBzAHQAcgBpAG4AZwBdACQAUABhAHQAaAAsACAAWwBzAHQAcgBpAG4AZwBdACQASwBlAHkALAAgAFsAcwB0AHIAaQBuAGcAXQAkAFYAYQBsAHUAZQApAAoAIAAgAGkAZgAgACgALQBuAG8AdAAgACgAVABlAHMAdAAtAFAAYQB0AGgAIAAtAEwAaQB0AGUAcgBhAGwAUABhAHQAaAAgACQAUABhAHQAaAAgAC0AUABhAHQAaABUAHkAcABlACAATABlAGEAZgApACkAIAB7ACAAcgBlAHQAdQByAG4AIAB9AAoAIAAgACQAYwBvAG4AdABlAG4AdAAgAD0AIABHAGUAdAAtAEMAbwBuAHQAZQBuAHQAIAAtAEwAaQB0AGUAcgBhAGwAUABhAHQAaAAgACQAUABhAHQAaAAgAC0AUgBhAHcAIAAtAEUAcgByAG8AcgBBAGMAdABpAG8AbgAgAFMAaQBsAGUAbgB0AGwAeQBDAG8AbgB0AGkAbgB1AGUACgAgACAAaQBmACAAKAAkAG4AdQBsAGwAIAAtAGUAcQAgACQAYwBvAG4AdABlAG4AdAApACAAewAgACQAYwBvAG4AdABlAG4AdAAgAD0AIAAnACcAIAB9AAoAIAAgAGkAZgAgACgAJABjAG8AbgB0AGUAbgB0ACAALQBtAGEAdABjAGgAIAAoACIAKAA/AG0AKQBeAFwAcwAqAHsAMAB9AFwAcwAqAD0AIgAgAC0AZgAgAFsAcgBlAGcAZQB4AF0AOgA6AEUAcwBjAGEAcABlACgAJABLAGUAeQApACkAKQAgAHsACgAgACAAIAAgACQAdQBwAGQAYQB0AGUAZAAgAD0AIABbAHIAZQBnAGUAeABdADoAOgBSAGUAcABsAGEAYwBlACgAJABjAG8AbgB0AGUAbgB0ACwAIAAoACIAKAA/AG0AKQBeAFwAcwAqAHsAMAB9AFwAcwAqAD0ALgAqACQAIgAgAC0AZgAgAFsAcgBlAGcAZQB4AF0AOgA6AEUAcwBjAGEAcABlACgAJABLAGUAeQApACkALAAgACgAIgB7ADAAfQA9AHsAMQB9ACIAIAAtAGYAIAAkAEsAZQB5ACwAIAAkAFYAYQBsAHUAZQApACkACgAgACAAfQAgAGUAbABzAGUAIAB7AAoAIAAgACAAIAAkAHUAcABkAGEAdABlAGQAIAA9ACAAKAAkAGMAbwBuAHQAZQBuAHQALgBUAHIAaQBtAEUAbgBkACgAKQAgACsAIABbAEUAbgB2AGkAcgBvAG4AbQBlAG4AdABdADoAOgBOAGUAdwBMAGkAbgBlACAAKwAgACgAIgB7ADAAfQA9AHsAMQB9ACIAIAAtAGYAIAAkAEsAZQB5ACwAIAAkAFYAYQBsAHUAZQApACAAKwAgAFsARQBuAHYAaQByAG8AbgBtAGUAbgB0AF0AOgA6AE4AZQB3AEwAaQBuAGUAKQAKACAAIAB9AAoAIAAgAFMAZQB0AC0AQwBvAG4AdABlAG4AdAAgAC0ATABpAHQAZQByAGEAbABQAGEAdABoACAAJABQAGEAdABoACAALQBWAGEAbAB1AGUAIAAkAHUAcABkAGEAdABlAGQAIAAtAEUAbgBjAG8AZABpAG4AZwAgAHUAdABmADgACgB9AAoAJABjAGwAaQBQAGEAdABoACAAPQAgACcAQwA6AFwATgBJAFwATABhAGIAVgBJAEUAVwBDAEwASQAuAGUAeABlACcACgAkAGwAYQBiAHYAaQBlAHcAUABhAHQAaAAgAD0AIAAnAEMAOgBcAFAAcgBvAGcAcgBhAG0AIABGAGkAbABlAHMAIAAoAHgAOAA2ACkAXABOAGEAdABpAG8AbgBhAGwAIABJAG4AcwB0AHIAdQBtAGUAbgB0AHMAXABMAGEAYgBWAEkARQBXACAAMgAwADIANgAgAFEAMQBcAEwAYQBiAFYASQBFAFcALgBlAHgAZQAnAAoAJABhAHIAZwBzACAAPQAgAEAAKAAnAC0ATwBwAGUAcgBhAHQAaQBvAG4ATgBhAG0AZQAnACwAIAAnAEMAcgBlAGEAdABlAEMAbwBtAHAAYQByAGkAcwBvAG4AUgBlAHAAbwByAHQAJwAsACAAJwAtAFYASQAxACcALAAgACcALwBoAG8AcwB0AC8AcwB0AGEAZwBpAG4AZwAvAGwAZQBmAHQALQBmAG8AbwAuAHYAaQAnACwAIAAnAC0AVgBJADIAJwAsACAAJwAvAGgAbwBzAHQALwBzAHQAYQBnAGkAbgBnAC8AcgBpAGcAaAB0AC0AZgBvAG8ALgB2AGkAJwAsACAAJwAtAFIAZQBwAG8AcgB0AFAAYQB0AGgAJwAsACAAJwAvAGgAbwBzAHQALwBkAGkAZgBmAC0AcgBlAHAAbwByAHQALQBmAG8AbwAuAHYAaQAuAGgAdABtAGwAJwAsACAAJwAtAEwAYQBiAFYASQBFAFcAUABhAHQAaAAnACwAIAAnAEMAOgBcAFAAcgBvAGcAcgBhAG0AIABGAGkAbABlAHMAXABOAGEAdABpAG8AbgBhAGwAIABJAG4AcwB0AHIAdQBtAGUAbgB0AHMAXABMAGEAYgBWAEkARQBXACAAMgAwADIANgBcAEwAYQBiAFYASQBFAFcALgBlAHgAZQAnACkACgAkAGMAbABpAEkAbgBpAEMAYQBuAGQAaQBkAGEAdABlAHMAIAA9ACAAQAAoACcAQwA6AFwAUAByAG8AZwByAGEAbQBEAGEAdABhAFwATgBhAHQAaQBvAG4AYQBsACAASQBuAHMAdAByAHUAbQBlAG4AdABzAFwATABhAGIAVgBJAEUAVwAgAEMATABJAFwATABhAGIAVgBJAEUAVwBDAEwASQAuAGkAbgBpACcALAAgACcAQwA6AFwAUAByAG8AZwByAGEAbQBEAGEAdABhAFwATgBhAHQAaQBvAG4AYQBsACAASQBuAHMAdAByAHUAbQBlAG4AdABzAFwATABhAGIAVgBJAEUAVwBDAEwASQBcAEwAYQBiAFYASQBFAFcAQwBMAEkALgBpAG4AaQAnACwAIAAnAEMAOgBcAFAAcgBvAGcAcgBhAG0AIABGAGkAbABlAHMAXABOAGEAdABpAG8AbgBhAGwAIABJAG4AcwB0AHIAdQBtAGUAbgB0AHMAXABTAGgAYQByAGUAZABcAEwAYQBiAFYASQBFAFcAIABDAEwASQBcAEwAYQBiAFYASQBFAFcAQwBMAEkALgBpAG4AaQAnACwAIAAnAEMAOgBcAFAAcgBvAGcAcgBhAG0AIABGAGkAbABlAHMAIAAoAHgAOAA2ACkAXABOAGEAdABpAG8AbgBhAGwAIABJAG4AcwB0AHIAdQBtAGUAbgB0AHMAXABTAGgAYQByAGUAZABcAEwAYQBiAFYASQBFAFcAIABDAEwASQBcAEwAYQBiAFYASQBFAFcAQwBMAEkALgBpAG4AaQAnACkACgAkAGMAbABpAEkAbgBpACAAPQAgACQAYwBsAGkASQBuAGkAQwBhAG4AZABpAGQAYQB0AGUAcwAgAHwAIABXAGgAZQByAGUALQBPAGIAagBlAGMAdAAgAHsAIABUAGUAcwB0AC0AUABhAHQAaAAgAC0ATABpAHQAZQByAGEAbABQAGEAdABoACAAJABfACAAfQAgAHwAIABTAGUAbABlAGMAdAAtAE8AYgBqAGUAYwB0ACAALQBGAGkAcgBzAHQAIAAxAAoAaQBmACAAKAAkAGMAbABpAEkAbgBpACkAIAB7AAoAIAAgAFMAZQB0AC0ASQBuAGkAVABvAGsAZQBuACAALQBQAGEAdABoACAAJABjAGwAaQBJAG4AaQAgAC0ASwBlAHkAIAAnAE8AcABlAG4AQQBwAHAAUgBlAGYAZQByAGUAbgBjAGUAVABpAG0AZQBvAHUAdABJAG4AUwBlAGMAbwBuAGQAJwAgAC0AVgBhAGwAdQBlACAAJwA2ADAAJwAKACAAIABTAGUAdAAtAEkAbgBpAFQAbwBrAGUAbgAgAC0AUABhAHQAaAAgACQAYwBsAGkASQBuAGkAIAAtAEsAZQB5ACAAJwBBAGYAdABlAHIATABhAHUAbgBjAGgATwBwAGUAbgBBAHAAcABSAGUAZgBlAHIAZQBuAGMAZQBUAGkAbQBlAG8AdQB0AEkAbgBTAGUAYwBvAG4AZAAnACAALQBWAGEAbAB1AGUAIAAnADYAMAAnAAoAfQAKACQAcAByAGUAbABhAHUAbgBjAGgAQQB0AHQAZQBtAHAAdABlAGQAIAA9ACAAJABmAGEAbABzAGUACgBpAGYAIAAoAC0AbgBvAHQAIABbAHMAdAByAGkAbgBnAF0AOgA6AEkAcwBOAHUAbABsAE8AcgBXAGgAaQB0AGUAUwBwAGEAYwBlACgAWwBzAHQAcgBpAG4AZwBdACQAbABhAGIAdgBpAGUAdwBQAGEAdABoACkAIAAtAGEAbgBkACAAKABUAGUAcwB0AC0AUABhAHQAaAAgAC0ATABpAHQAZQByAGEAbABQAGEAdABoACAAJABsAGEAYgB2AGkAZQB3AFAAYQB0AGgAKQApACAAewAKACAAIAAkAHAAcgBlAGwAYQB1AG4AYwBoAEEAdAB0AGUAbQBwAHQAZQBkACAAPQAgACQAdAByAHUAZQAKACAAIABTAHQAYQByAHQALQBQAHIAbwBjAGUAcwBzACAALQBGAGkAbABlAFAAYQB0AGgAIAAkAGwAYQBiAHYAaQBlAHcAUABhAHQAaAAgAC0AQQByAGcAdQBtAGUAbgB0AEwAaQBzAHQAIAAnAC0ALQBoAGUAYQBkAGwAZQBzAHMAJwAgAC0AVwBpAG4AZABvAHcAUwB0AHkAbABlACAASABpAGQAZABlAG4AIAB8ACAATwB1AHQALQBOAHUAbABsAAoAIAAgAFMAdABhAHIAdAAtAFMAbABlAGUAcAAgAC0AUwBlAGMAbwBuAGQAcwAgADIANQAKAH0ACgAkAGwAYQBzAHQARQB4AGkAdAAgAD0AIAAxAAoAJABsAGEAcwB0AE8AdQB0AHAAdQB0AFQAZQB4AHQAIAA9ACAAJwAnAAoAJABwAHIAZQB2AGkAbwB1AHMARQByAHIAbwByAEEAYwB0AGkAbwBuAFAAcgBlAGYAZQByAGUAbgBjAGUAIAA9ACAAJABFAHIAcgBvAHIAQQBjAHQAaQBvAG4AUAByAGUAZgBlAHIAZQBuAGMAZQAKACQARQByAHIAbwByAEEAYwB0AGkAbwBuAFAAcgBlAGYAZQByAGUAbgBjAGUAIAA9ACAAJwBDAG8AbgB0AGkAbgB1AGUAJwAKAHQAcgB5ACAAewAKACAAIAAkAG8AdQB0AHAAdQB0ACAAPQAgAEAAKAAmACAAJABjAGwAaQBQAGEAdABoACAAQABhAHIAZwBzACAAMgA+ACYAMQApAAoAIAAgACQAbABhAHMAdABFAHgAaQB0ACAAPQAgAFsAaQBuAHQAXQAkAEwAQQBTAFQARQBYAEkAVABDAE8ARABFAAoAfQAgAGYAaQBuAGEAbABsAHkAIAB7AAoAIAAgACQARQByAHIAbwByAEEAYwB0AGkAbwBuAFAAcgBlAGYAZQByAGUAbgBjAGUAIAA9ACAAJABwAHIAZQB2AGkAbwB1AHMARQByAHIAbwByAEEAYwB0AGkAbwBuAFAAcgBlAGYAZQByAGUAbgBjAGUACgB9AAoAJABvAHUAdABwAHUAdAAgAHwAIABGAG8AcgBFAGEAYwBoAC0ATwBiAGoAZQBjAHQAIAB7ACAAaQBmACAAKAAtAG4AbwB0ACAAWwBzAHQAcgBpAG4AZwBdADoAOgBJAHMATgB1AGwAbABPAHIAVwBoAGkAdABlAFMAcABhAGMAZQAoAFsAcwB0AHIAaQBuAGcAXQAkAF8AKQApACAAewAgAFcAcgBpAHQAZQAtAE8AdQB0AHAAdQB0ACAAJABfACAAfQAgAH0ACgAkAGwAYQBzAHQATwB1AHQAcAB1AHQAVABlAHgAdAAgAD0AIABAACgAJABvAHUAdABwAHUAdAAgAHwAIABGAG8AcgBFAGEAYwBoAC0ATwBiAGoAZQBjAHQAIAB7ACAAWwBzAHQAcgBpAG4AZwBdACQAXwAgAH0AKQAgAC0AagBvAGkAbgAgAFsARQBuAHYAaQByAG8AbgBtAGUAbgB0AF0AOgA6AE4AZQB3AEwAaQBuAGUACgAkAGMAbwBuAG4AZQBjAHQAZQBkAFAAbwByAHQAIAA9ACAAJwAnAAoAaQBmACAAKAAkAGwAYQBzAHQATwB1AHQAcAB1AHQAVABlAHgAdAAgAC0AbQBhAHQAYwBoACAAJwBDAG8AbgBuAGUAYwB0AGkAbwBuACAAZQBzAHQAYQBiAGwAaQBzAGgAZQBkACAAdwBpAHQAaAAgAEwAYQBiAFYASQBFAFcAIABhAHQAIABwAG8AcgB0ACAAbgB1AG0AYgBlAHIAIAAoAFsAMAAtADkAXQArACkAXAAuACcAKQAgAHsACgAgACAAJABjAG8AbgBuAGUAYwB0AGUAZABQAG8AcgB0ACAAPQAgACQATQBhAHQAYwBoAGUAcwBbADEAXQAKAH0ACgBXAHIAaQB0AGUALQBPAHUAdABwAHUAdAAgACgAJwBbAHYAaQAtAGgAaQBzAHQAbwByAHkALQBzAHUAaQB0AGUALQBoAG8AcwB0AG4AYQB0AGkAdgBlAC0AbQBlAHQAYQBdAHIAZQB0AHIAeQBBAHQAdABlAG0AcAB0AHMAPQAxADsAcAByAGUAbABhAHUAbgBjAGgAQQB0AHQAZQBtAHAAdABlAGQAPQB7ADAAfQA7AGkAbgBpAFAAYQB0AGgAPQB7ADEAfQA7AGMAbwBuAG4AZQBjAHQAZQBkAFAAbwByAHQAPQB7ADIAfQA7AG8AcABlAG4AVABpAG0AZQBvAHUAdAA9ADEAMgAwADsAYQBmAHQAZQByAEwAYQB1AG4AYwBoAFQAaQBtAGUAbwB1AHQAPQAxADIAMAAnACAALQBmACAAKAAkACgAaQBmACAAKAAkAHAAcgBlAGwAYQB1AG4AYwBoAEEAdAB0AGUAbQBwAHQAZQBkACkAIAB7ACAAMQAgAH0AIABlAGwAcwBlACAAewAgADAAIAB9ACkAKQAsACAAJABjAGwAaQBJAG4AaQAsACAAJABjAG8AbgBuAGUAYwB0AGUAZABQAG8AcgB0ACkACgBlAHgAaQB0ACAAJABsAGEAcwB0AEUAeABpAHQA",
         ],
         "executable": "powershell.exe",
       }
@@ -7534,35 +7377,23 @@ describe('coupled-extraction builder characterization (byte-identical)', () => {
         Start-Process -FilePath $labviewPath -ArgumentList '--headless' -WindowStyle Hidden | Out-Null
         Start-Sleep -Seconds 8
       }
-      $attempt = 0
-      $maxAttempts = [Math]::Max(1, 1 + 1)
       $lastExit = 1
       $lastOutputText = ''
-      while ($attempt -lt $maxAttempts) {
-        $attempt++
-        $previousErrorActionPreference = $ErrorActionPreference
-        $ErrorActionPreference = 'Continue'
-        try {
-          $output = @(& $cliPath @args 2>&1)
-          $lastExit = [int]$LASTEXITCODE
-        } finally {
-          $ErrorActionPreference = $previousErrorActionPreference
-        }
-        $output | ForEach-Object { if (-not [string]::IsNullOrWhiteSpace([string]$_)) { Write-Output $_ } }
-        $lastOutputText = @($output | ForEach-Object { [string]$_ }) -join [Environment]::NewLine
-        if ($lastExit -eq 0) { break }
-        $isStartupConnectivity = ($lastExit -in @(-350000, -350051) -or $lastOutputText -match '-350000' -or $lastOutputText -match '-350051' -or $lastOutputText -match '(?i)failed to establish a connection with LabVIEW')
-        if ($isStartupConnectivity -and $attempt -lt $maxAttempts) {
-          Start-Sleep -Seconds 8
-          continue
-        }
-        break
+      $previousErrorActionPreference = $ErrorActionPreference
+      $ErrorActionPreference = 'Continue'
+      try {
+        $output = @(& $cliPath @args 2>&1)
+        $lastExit = [int]$LASTEXITCODE
+      } finally {
+        $ErrorActionPreference = $previousErrorActionPreference
       }
+      $output | ForEach-Object { if (-not [string]::IsNullOrWhiteSpace([string]$_)) { Write-Output $_ } }
+      $lastOutputText = @($output | ForEach-Object { [string]$_ }) -join [Environment]::NewLine
       $connectedPort = ''
       if ($lastOutputText -match 'Connection established with LabVIEW at port number ([0-9]+)\\.') {
         $connectedPort = $Matches[1]
       }
-      Write-Output ('[vi-history-suite-container-meta]retryAttempts={0};prelaunchAttempted={1};iniPath={2};connectedPort={3};openTimeout=180;afterLaunchTimeout=180' -f $attempt, ($(if ($prelaunchAttempted) { 1 } else { 0 })), $cliIni, $connectedPort)
+      Write-Output ('[vi-history-suite-container-meta]retryAttempts=1;prelaunchAttempted={0};iniPath={1};connectedPort={2};openTimeout=180;afterLaunchTimeout=180' -f ($(if ($prelaunchAttempted) { 1 } else { 0 })), $cliIni, $connectedPort)
       exit $lastExit"
     `);
   });
@@ -7590,8 +7421,6 @@ describe('coupled-extraction builder characterization (byte-identical)', () => {
       lv_exe='/usr/local/natinst/LabVIEW-2026-64/labview'
       open_app_timeout=120
       after_launch_timeout=120
-      max_attempts=2
-      retry_delay=8
       err_file='/workspace/container-temp/vihs-cli-stderr.txt'
       set_conf_key() {
         conf_file="$1"; conf_key="$2"; conf_value="$3"
@@ -7617,23 +7446,12 @@ describe('coupled-extraction builder characterization (byte-identical)', () => {
         done
       }
       harden_conf || true
-      attempt=0
-      rc=1
-      while [ "$attempt" -lt "$max_attempts" ]; do
-        attempt=$((attempt + 1))
-        set +e
-        "$cli_path" "\${args[@]}" 2>"$err_file"
-        rc=$?
-        set -e
-        cat "$err_file" >&2 2>/dev/null || true
-        if [ "$rc" -eq 0 ]; then break; fi
-        if [ "$attempt" -lt "$max_attempts" ] && grep -qiE '(-350000|-350051|failed to establish a connection with LabVIEW)' "$err_file" 2>/dev/null; then
-          sleep "$retry_delay"
-          continue
-        fi
-        break
-      done
-      printf '[vi-history-suite-container-meta]retryAttempts=%s;openTimeout=%s;afterLaunchTimeout=%s\\n' "$attempt" "$open_app_timeout" "$after_launch_timeout"
+      set +e
+      "$cli_path" "\${args[@]}" 2>"$err_file"
+      rc=$?
+      set -e
+      cat "$err_file" >&2 2>/dev/null || true
+      printf '[vi-history-suite-container-meta]retryAttempts=1;openTimeout=%s;afterLaunchTimeout=%s\\n' "$open_app_timeout" "$after_launch_timeout"
       exit $rc"
     `);
   });

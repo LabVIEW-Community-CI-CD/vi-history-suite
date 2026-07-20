@@ -449,7 +449,7 @@ export async function activate(
     // HTML so an automated test can assert the live content. The env is checked
     // at render time (not activation) so a test can toggle it in-process before
     // opening a VI. Never active in production (env unset). (VHS-REQ-659.)
-    onPreviewRendered: (viFsPath, html, mode) => {
+    onPreviewRendered: async (viFsPath, html, mode) => {
       if (process.env.VIHS_TEST_CAPTURE_PREVIEW !== '1') {
         return;
       }
@@ -457,7 +457,9 @@ export async function activate(
       if (!outPath) {
         return;
       }
-      void fs.writeFile(outPath, `${mode}\n${html}`, 'utf8').catch(() => {
+      // Awaited by the custom editor so the capture is flushed before the open
+      // resolves — the test reads the file once, no polling.
+      await fs.writeFile(outPath, `${mode}\n${html}`, 'utf8').catch(() => {
         /* test-only capture; ignore write failures */
       });
     }
