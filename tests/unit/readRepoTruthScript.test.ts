@@ -10,6 +10,7 @@ const {
   RepoTruthAuthError,
   isAuthFailureText,
   extractMergeQueuePolicy,
+  summarizeOpenWork,
   buildRepoTruthPacket,
   run
 } = require('../../scripts/readRepoTruth.js') as {
@@ -19,6 +20,7 @@ const {
   RepoTruthAuthError: new (message: string) => Error;
   isAuthFailureText: (text: string) => boolean;
   extractMergeQueuePolicy: (rulesets: unknown) => Record<string, unknown>;
+  summarizeOpenWork: (prs: unknown) => Record<string, unknown>;
   buildRepoTruthPacket: (options: Record<string, unknown>, deps: Record<string, unknown>) => Record<string, unknown>;
   run: (argv: string[], deps?: Record<string, unknown>) => { exitCode: number; stdout?: string; stderr?: string };
 };
@@ -82,6 +84,10 @@ function happyDeps() {
         result: { status: 0, stdout: JSON.stringify(MERGE_QUEUE_RULESET) }
       },
       {
+        match: (c, a) => c === 'gh' && a.includes('pr') && a.includes('list'),
+        result: { status: 0, stdout: JSON.stringify([{ number: 1, mergeStateStatus: 'CLEAN' }, { number: 2, mergeStateStatus: 'BEHIND' }]) }
+      },
+      {
         match: (c, a) => c === 'node' && a.some((x) => x.includes('mapCoverageToTraceability.js')),
         result: { status: 0, stdout: coveragePacket() }
       },
@@ -112,7 +118,23 @@ describe('readRepoTruth: extractMergeQueuePolicy', () => {
     expect(extractMergeQueuePolicy(undefined)).toEqual({ present: false });
   });
 });
+describe('readRepoTruth: summarizeOpenWork (VHS-REQ-692.1)', () => {
+  it('counts open PRs by mergeable state', () => {
+    const s = summarizeOpenWork([
+      { number: 1, mergeStateStatus: 'CLEAN' },
+      { number: 2, mergeStateStatus: 'CLEAN' },
+      { number: 3, mergeStateStatus: 'BEHIND' }
+    ]) as { openPullRequests: number; byMergeStateStatus: Record<string, number> };
+    expect(s.openPullRequests).toBe(3);
+    expect(s.byMergeStateStatus).toEqual({ CLEAN: 2, BEHIND: 1 });
+  });
 
+  it('handles no open PRs and missing state', () => {
+    expect(summarizeOpenWork([])).toMatchObject({ openPullRequests: 0, byMergeStateStatus: {} });
+    const s = summarizeOpenWork([{ number: 9 }]) as { byMergeStateStatus: Record<string, number> };
+    expect(s.byMergeStateStatus).toEqual({ UNKNOWN: 1 });
+  });
+});
 describe('readRepoTruth: isAuthFailureText', () => {
   it('recognizes auth/authorization failure signatures', () => {
     expect(isAuthFailureText('HTTP 401: Bad credentials')).toBe(true);
@@ -129,6 +151,7 @@ describe('readRepoTruth: buildRepoTruthPacket', () => {
     expect(packet.schemaVersion).toBe(REPO_TRUTH_SCHEMA_VERSION);
     const domains = packet.domains as Record<string, Record<string, unknown>>;
     expect((domains.mergeQueue.policy as Record<string, unknown>).minEntriesToMerge).toBe(3);
+    expect(domains.openWork).toMatchObject({ available: true, openPullRequests: 2 });
     expect(domains.coverage).toMatchObject({ available: true, riskThreshold: 50 });
     expect(domains.requirementHealth).toMatchObject({ available: true, requirementsNeedingAttention: 4 });
   });
@@ -138,6 +161,7 @@ describe('readRepoTruth: buildRepoTruthPacket', () => {
     (deps as { spawnSync: unknown }).spawnSync = fakeSpawn([
       { match: (c, a) => c === 'gh' && a.includes('repos/LabVIEW-Community-CI-CD/vi-history-suite/rulesets'), result: { status: 0, stdout: JSON.stringify([{ id: 42 }]) } },
       { match: (c, a) => c === 'gh' && a.some((x) => x.includes('/rulesets/42')), result: { status: 0, stdout: JSON.stringify(MERGE_QUEUE_RULESET) } },
+      { match: (c, a) => c === 'gh' && a.includes('pr') && a.includes('list'), result: { status: 0, stdout: JSON.stringify([{ number: 1, mergeStateStatus: 'CLEAN' }]) } },
       { match: (c, a) => c === 'node' && a.some((x) => x.includes('mapCoverageToTraceability.js')), result: { status: 1, stdout: '' } },
       { match: (c, a) => c === 'node' && a.some((x) => x.includes('verifyRequirementsHealth.js')), result: { status: 0, stdout: healthPacket() } }
     ]);
