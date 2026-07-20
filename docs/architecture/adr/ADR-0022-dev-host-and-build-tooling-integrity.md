@@ -61,4 +61,4 @@ security posture and ADR.
 
 ## Requirements recorded
 
-VHS-SYS-REQ-013; VHS-REQ-683, VHS-REQ-688.
+VHS-SYS-REQ-013; VHS-REQ-683, VHS-REQ-688, VHS-REQ-689.
