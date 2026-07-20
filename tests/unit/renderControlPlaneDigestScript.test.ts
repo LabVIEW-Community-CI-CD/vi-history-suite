@@ -133,10 +133,32 @@ describe('renderControlPlaneDigest: collectControlPlaneSignals (VHS-REQ-698.1)',
     expect('openWork' in minimal).toBe(false);
     expect('debt' in minimal).toBe(false);
   });
+  it('degrades the board section on a board-read failure but keeps the other sections', () => {
+    const signals = collectControlPlaneSignals({
+      collectBoardSyncPlan: () => {
+        throw new Error('gh auth login required');
+      },
+      readModelPacket: { coverage: { available: true, mappedBelowThreshold: 0 } }
+    });
+    expect(signals.boardDrift).toEqual([]);
+    expect(signals.boardUnavailable).toMatch(/auth login required/);
+    // The read-model-derived sections still populate.
+    expect(signals.debt).toBeDefined();
+  });
 
-  it('propagates a fail-closed board-read error from the plan collector', () => {
+  it('renders a clear board-unavailable line rather than a false in-sync claim', () => {
+    const { markdown } = buildControlPlaneDigest(
+      { boardDrift: [], boardUnavailable: 'gh auth login required' },
+      { generatedAt: AT }
+    );
+    expect(markdown).toContain('Board read unavailable (gh auth login required)');
+    expect(markdown).not.toContain('Board is in sync');
+  });
+
+  it('still fails closed on the board read when explicitly requested', () => {
     expect(() =>
       collectControlPlaneSignals({
+        failClosedOnBoard: true,
         collectBoardSyncPlan: () => {
           throw new Error('gh auth login required');
         }
