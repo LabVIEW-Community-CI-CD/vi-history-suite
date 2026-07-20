@@ -8,13 +8,23 @@ const {
   BoardSyncAuthError,
   buildBoardSyncItems,
   renderShadowPlan,
-  collectBoardSyncPlan
+  collectBoardSyncPlan,
+  runGh,
+  defaultReadProjectItems,
+  defaultReadVerifiedClosures
 } = require('../../scripts/controlPlaneBoardSync.js') as {
   BoardSyncAuthError: new (m: string) => Error;
   buildBoardSyncItems: (items: unknown, closures: unknown) => Array<Record<string, unknown>>;
   renderShadowPlan: (updates: unknown, options?: Record<string, unknown>) => string;
   collectBoardSyncPlan: (deps: Record<string, unknown>) => { items: unknown[]; updates: Array<Record<string, unknown>> };
+  runGh: (args: string[], deps?: Record<string, unknown>) => string;
+  defaultReadProjectItems: (deps?: Record<string, unknown>) => Array<Record<string, unknown>>;
+  defaultReadVerifiedClosures: (numbers: number[], deps?: Record<string, unknown>) => Map<number, boolean>;
 };
+
+function fakeSpawn(result: Record<string, unknown>) {
+  return () => ({ status: 0, stdout: '', stderr: '', ...result });
+}
 
 const PROJECT_ITEMS = [
   { itemId: 'A', number: 1, status: 'In Progress', evidence: 'Ready' },
@@ -100,5 +110,61 @@ describe('controlPlaneBoardSync: fail-closed on auth (VHS-REQ-695.3)', () => {
         }
       })
     ).toThrow(/auth login required/);
+  });
+});
+
+describe('controlPlaneBoardSync: live gh boundaries (VHS-REQ-695.3)', () => {
+  it('runGh returns stdout on success', () => {
+    expect(runGh(['x'], { spawnSync: fakeSpawn({ stdout: 'ok' }) })).toBe('ok');
+  });
+
+  it('runGh throws BoardSyncAuthError on a spawn error', () => {
+    expect(() => runGh(['x'], { spawnSync: () => ({ error: new Error('ENOENT gh') }) })).toThrow(BoardSyncAuthError);
+  });
+
+  it('runGh throws BoardSyncAuthError with stderr on a nonzero exit', () => {
+    expect(() => runGh(['x'], { spawnSync: () => ({ status: 1, stderr: 'gh auth login required' }) })).toThrow(
+      /gh auth login required/
+    );
+  });
+
+  it('defaultReadProjectItems parses only issue/PR content items', () => {
+    const items = defaultReadProjectItems({
+      runGh: () =>
+        JSON.stringify({
+          items: [
+            { id: 'A', status: 'Todo', 'evidence State': 'None', content: { number: 1 } },
+            { id: 'B', content: {} },
+            { id: 'C', content: { number: 2 } }
+          ]
+        })
+    });
+    expect(items).toEqual([
+      { itemId: 'A', number: 1, status: 'Todo', evidence: 'None' },
+      { itemId: 'C', number: 2, status: '', evidence: '' }
+    ]);
+  });
+
+  it('defaultReadProjectItems throws BoardSyncAuthError on unparseable JSON', () => {
+    expect(() => defaultReadProjectItems({ runGh: () => 'not json' })).toThrow(BoardSyncAuthError);
+  });
+
+  it('defaultReadVerifiedClosures marks only CLOSED+COMPLETED numbers', () => {
+    const closures = defaultReadVerifiedClosures([1, 2, 3], {
+      runGh: (args: string[]) => {
+        const n = args[2];
+        if (n === '1') return JSON.stringify({ state: 'CLOSED', stateReason: 'COMPLETED' });
+        if (n === '2') return JSON.stringify({ state: 'CLOSED', stateReason: 'NOT_PLANNED' });
+        return JSON.stringify({ state: 'OPEN', stateReason: null });
+      }
+    });
+    expect(closures.get(1)).toBe(true);
+    expect(closures.has(2)).toBe(false);
+    expect(closures.has(3)).toBe(false);
+  });
+
+  it('defaultReadVerifiedClosures skips a number whose JSON is unparseable', () => {
+    const closures = defaultReadVerifiedClosures([9], { runGh: () => 'broken' });
+    expect(closures.size).toBe(0);
   });
 });
