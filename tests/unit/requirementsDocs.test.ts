@@ -1972,9 +1972,11 @@ describe('requirements documentation coherence', () => {
       'src/tooling/runtimeSettingsLiveSessionSafeRestore.ts'
     ]) {
       const row = inventoryByPath.get(filePath);
-      expect(row?.Classification).toBe('dev-only');
-      expect(row?.RtmCoverage).toBe('No');
-      expect(row?.Notes).toContain('not contributed in package.json');
+      // Dev-only sweep (epic #2159): mapped to VHS-REQ-687 while the probe
+      // command stays uncontributed (maintainer-only).
+      expect(row?.Classification).toBe('mapped');
+      expect(row?.RtmCoverage).toBe('Yes');
+      expect(row?.Notes).toContain('VHS-REQ-687');
     }
 
     for (const filePath of [

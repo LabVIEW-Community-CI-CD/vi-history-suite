@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { persistRuntimeSettingsLiveSessionProbePacket } from '../../src/tooling/runtimeSettingsLiveSessionProbePacket';
 
-describe('runtimeSettingsLiveSessionProbePacket', () => {
+describe('runtimeSettingsLiveSessionProbePacket (VHS-REQ-687.2)', () => {
   const temporaryDirectories: string[] = [];
 
   afterEach(async () => {
