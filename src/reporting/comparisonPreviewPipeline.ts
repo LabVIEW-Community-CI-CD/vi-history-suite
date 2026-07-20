@@ -167,6 +167,17 @@ export interface ComparisonPreviewPipelineDeps {
    */
   runComparison: (staged: StagedPair) => Promise<ComparisonRunResult>;
   /**
+   * Optional runtime-quiesce boundary invoked once, after VALIDATION admits and
+   * before COMPARISON runs. It exists because the two preview renders can leave a
+   * runtime instance alive that the COMPARISON cold-launch then contends with
+   * (host-native LabVIEW is single-instance per bitness, so a surviving preview
+   * instance blocks the compare from owning VI Server port 3363 -> -350000).
+   * Injected and OPTIONAL: container runtimes are process-isolated per invocation
+   * and inject nothing (no-op); only the host-native runtime injects a real
+   * teardown. Never invoked when the comparison is skipped.
+   */
+  quiesceRuntimeBeforeComparison?: (staged: StagedPair) => Promise<void>;
+  /**
    * Cleans up the staged inputs. Idempotent and ALWAYS invoked (finally-style),
    * carrying a diagnostic status. Injected.
    */
@@ -391,6 +402,13 @@ export async function runComparisonPreviewPipeline(
     let comparison: PipelineCycleResult;
     if (validation.outcome === 'admitted' && staged) {
       const pair = staged;
+      // Quiesce the runtime before the compare cold-launches (host-native only;
+      // container runtimes inject nothing). Guarded so a teardown throw never
+      // masks or aborts the comparison — a failed quiesce simply lets COMPARISON
+      // proceed and surface its own genuine outcome.
+      if (deps.quiesceRuntimeBeforeComparison) {
+        await deps.quiesceRuntimeBeforeComparison(pair).catch(() => undefined);
+      }
       comparison = await measureCycle(
         meter,
         'COMPARISON',

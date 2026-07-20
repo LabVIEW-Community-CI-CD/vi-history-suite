@@ -5352,6 +5352,16 @@ Missing numeric IDs are intentional.
     linux-container provider that a local Linux Docker run uses, so the hosted
     signal and the local docker-container run are directly comparable; it uploads
     a schema-tagged evidence artifact and stays green by default.
+  - Between `VALIDATION` admitting and the `COMPARISON` cycle running, the
+    pipeline invokes an optional injected runtime-quiesce boundary exactly once
+    (never when the comparison is skipped), so a host-native runtime can tear down
+    the LabVIEW instance the two preview renders left alive before the comparison
+    cold-launches — host-native LabVIEW is single-instance per bitness, so a
+    surviving preview instance otherwise blocks the comparison from owning the VI
+    Server port (`-350000` `labview-cli-connection-failed`). The boundary is
+    injected only for the host-native win32 runtime (process-isolated container
+    providers inject nothing and are unaffected), and a quiesce throw is swallowed
+    so the comparison still runs and reports its own genuine outcome.
 - Agent Work Scope:
   - Keep the pipeline a pure, dependency-injected orchestrator in
     `src/reporting/comparisonPreviewPipeline.ts` that composes the existing
