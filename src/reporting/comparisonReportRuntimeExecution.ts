@@ -138,11 +138,13 @@ import {
 } from './runtime/containerLaunchConstants';
 import {
   buildWindowsHostNativeHeadlessCommandPlan,
-  buildWindowsContainerLabviewCliScript
+  buildWindowsContainerLabviewCliScript,
+  shouldWrapWindowsHostNativeHeadless
 } from './runtime/headlessLaunchScriptBuilders';
 export {
   buildWindowsHostNativeHeadlessCommandPlan,
-  buildWindowsContainerLabviewCliScript
+  buildWindowsContainerLabviewCliScript,
+  shouldWrapWindowsHostNativeHeadless
 } from './runtime/headlessLaunchScriptBuilders';
 import {
   buildLinuxContainerLabviewCliScript,
@@ -2546,9 +2548,11 @@ async function prepareExecutionContext(
     // Vagrant WinRM session 0) then fails with the -350000 VI Server connect error.
     // The opt-in wraps the CLI in the shared headless prelaunch script.
     const headlessCommandPlan =
-      deps.processPlatform === 'win32' &&
-      resolveEffectiveRuntimePlatform(record.runtimeSelection) === 'win32' &&
-      process.env.LV_RTE_WIN_HOSTNATIVE_HEADLESS === '1'
+      shouldWrapWindowsHostNativeHeadless(
+        deps.processPlatform,
+        resolveEffectiveRuntimePlatform(record.runtimeSelection),
+        process.env.LV_RTE_WIN_HOSTNATIVE_HEADLESS
+      )
         ? buildWindowsHostNativeHeadlessCommandPlan(
             record,
             commandPlan,

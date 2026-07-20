@@ -38,6 +38,7 @@ import {
   buildWindowsInteropCommandPlan,
   buildWindowsHostNativeHeadlessCommandPlan,
   buildWindowsContainerLabviewCliScript,
+  shouldWrapWindowsHostNativeHeadless,
   buildLinuxContainerLabviewCliScript,
   rewriteLvcompareArgsForContainerWorkspace,
   rewriteLvcompareArgsForLinuxContainerWorkspace,
@@ -7349,6 +7350,28 @@ describe('buildWindowsHostNativeHeadlessCommandPlan (VHS-REQ-665)', () => {
   });
 });
 
+describe('shouldWrapWindowsHostNativeHeadless gate (VHS-REQ-665.3)', () => {
+  it('wraps only when processPlatform=win32, effective platform=win32, and the toggle is 1', () => {
+    expect(shouldWrapWindowsHostNativeHeadless('win32', 'win32', '1')).toBe(true);
+  });
+
+  it('does not wrap when processPlatform is not win32', () => {
+    expect(shouldWrapWindowsHostNativeHeadless('linux', 'win32', '1')).toBe(false);
+    expect(shouldWrapWindowsHostNativeHeadless('darwin', 'win32', '1')).toBe(false);
+  });
+
+  it('does not wrap when the effective runtime platform is not win32', () => {
+    expect(shouldWrapWindowsHostNativeHeadless('win32', 'linux', '1')).toBe(false);
+    expect(shouldWrapWindowsHostNativeHeadless('win32', 'darwin', '1')).toBe(false);
+  });
+
+  it('does not wrap when the opt-in toggle is absent or not exactly "1"', () => {
+    expect(shouldWrapWindowsHostNativeHeadless('win32', 'win32', undefined)).toBe(false);
+    expect(shouldWrapWindowsHostNativeHeadless('win32', 'win32', '')).toBe(false);
+    expect(shouldWrapWindowsHostNativeHeadless('win32', 'win32', '0')).toBe(false);
+    expect(shouldWrapWindowsHostNativeHeadless('win32', 'win32', 'true')).toBe(false);
+  });
+});
 // -----------------------------------------------------------------------------
 // Coupled-extraction characterization (VHS-REQ-624 / VHS-REQ-156 / VHS-REQ-665):
 // byte-identical locks on the command-plan and launch-script builders that are
