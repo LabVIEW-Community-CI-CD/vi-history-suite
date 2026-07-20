@@ -74,12 +74,16 @@ jobs:
         run: npm run compile
 
       - name: Capture Docker Environment
+        continue-on-error: true
         run: |
           mkdir -p lin-validation
           summary=lin-validation/docker-env.txt
           echo "Runner OS: $RUNNER_OS" | tee "$summary"
-          docker version | tee -a "$summary" || echo "docker version failed" | tee -a "$summary"
-          docker info --format '{{.OSType}} {{.OperatingSystem}}' | tee -a "$summary" || echo "docker info failed" | tee -a "$summary"
+          # Diagnostic only: a docker non-zero exit must not fail the step (GitHub
+          # bash steps run with `set -e`), so guard each and always exit 0.
+          docker version 2>&1 | tee -a "$summary" || echo "docker version failed" | tee -a "$summary"
+          docker info --format '{{.OSType}} {{.OperatingSystem}}' 2>&1 | tee -a "$summary" || echo "docker info failed" | tee -a "$summary"
+          exit 0
 
       - name: Clone Fixture Repository
         run: |

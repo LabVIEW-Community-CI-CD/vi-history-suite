@@ -75,12 +75,17 @@ jobs:
         run: npm.cmd run compile
 
       - name: Capture Docker Environment
+        continue-on-error: true
         run: |
           New-Item -ItemType Directory -Force -Path win-validation | Out-Null
           $summary = Join-Path 'win-validation' 'docker-env.txt'
           "Runner OS: $env:RUNNER_OS" | Tee-Object -LiteralPath $summary
-          try { docker version | Tee-Object -Append -LiteralPath $summary } catch { "docker version failed: $_" | Tee-Object -Append -LiteralPath $summary }
-          try { docker info --format '{{.OSType}} {{.OperatingSystem}}' | Tee-Object -Append -LiteralPath $summary } catch { "docker info failed: $_" | Tee-Object -Append -LiteralPath $summary }
+          # Diagnostic only: a native docker non-zero exit must not fail the step
+          # (its exit code would otherwise become the step's), so reset it after.
+          try { docker version 2>&1 | Tee-Object -Append -LiteralPath $summary } catch { "docker version failed: $_" | Tee-Object -Append -LiteralPath $summary }
+          try { docker info --format '{{.OSType}} {{.OperatingSystem}}' 2>&1 | Tee-Object -Append -LiteralPath $summary } catch { "docker info failed: $_" | Tee-Object -Append -LiteralPath $summary }
+          $global:LASTEXITCODE = 0
+          exit 0
 
       - name: Clone Fixture Repository
         run: |
