@@ -344,6 +344,7 @@
     "control-plane:board-sync": "node scripts/controlPlaneBoardSync.js",
     "control-plane:digest": "node scripts/renderControlPlaneDigest.js",
     "control-plane:apply": "node scripts/controlPlaneApply.js",
+    "integration:coverage:check": "node scripts/checkIntegrationCoverageLane.js",
     "governance:gates": "node scripts/checkGovernanceGates.js",
     "build-info:check": "node scripts/checkBuildInfoIntegrity.js",
     "customization:audit": "node scripts/auditCustomizationGovernance.js",
