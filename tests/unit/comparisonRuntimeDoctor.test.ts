@@ -746,3 +746,153 @@ describe('comparisonRuntimeDoctor next-action taxonomy and fact surfaces', () =>
     );
   });
 });
+
+describe('comparisonRuntimeDoctor container-provider label and recovery branches', () => {
+  function dockerBlockedSummary(
+    selectionOverrides: Partial<ComparisonRuntimeSelection> = {},
+    blockedReason = 'docker-only-provider-unavailable'
+  ): string[] {
+    const runtimeSelection: ComparisonRuntimeSelection = {
+      platform: 'win32',
+      executionMode: 'docker-only',
+      requestedProvider: 'docker',
+      requestedLabviewVersion: '2026',
+      bitness: 'x64',
+      provider: 'unavailable',
+      blockedReason,
+      providerDecisions: [],
+      notes: [],
+      registryQueryPlans: [],
+      candidates: [],
+      ...selectionOverrides
+    };
+    return buildComparisonRuntimeDoctorSummaryFromFacts({
+      reportStatus: 'blocked-runtime',
+      runtimeSelection,
+      runtimeExecution: {
+        state: 'not-available',
+        attempted: false,
+        reportExists: false,
+        blockedReason
+      }
+    });
+  }
+
+  it('falls back to the requested LabVIEW version when a container image is unparseable', () => {
+    const summary = dockerBlockedSummary({
+      provider: 'linux-container',
+      requestedLabviewVersion: '2025',
+      containerImage: 'not-a-valid-labview-image-reference'
+    });
+    expect(summary).toContain('Requested runtime: provider=docker; LabVIEW=2025; bitness=x64.');
+  });
+
+  it('reports LabVIEW=unset when a container provider has neither a parseable image nor a requested version', () => {
+    const summary = dockerBlockedSummary({
+      provider: 'linux-container',
+      requestedLabviewVersion: undefined,
+      containerImage: 'not-a-valid-labview-image-reference'
+    });
+    expect(summary).toContain('Requested runtime: provider=docker; LabVIEW=unset; bitness=x64.');
+  });
+
+  it('normalizes docker-only blocked-reason aliases in the summary blocked-reason line', () => {
+    const unavailable = dockerBlockedSummary({}, 'docker-only-provider-unavailable');
+    expect(unavailable).toContain('Runtime blocked reason: docker-provider-unavailable.');
+
+    const autoDocker = dockerBlockedSummary({}, 'auto-docker-installed-provider-unavailable');
+    expect(autoDocker).toContain('Runtime blocked reason: docker-provider-unavailable.');
+
+    const notSupported = dockerBlockedSummary({}, 'docker-only-provider-not-supported-on-platform');
+    expect(notSupported).toContain(
+      'Runtime blocked reason: docker-provider-not-supported-on-platform.'
+    );
+
+    const requiresX64 = dockerBlockedSummary({}, 'docker-only-requires-windows-x64-provider');
+    expect(requiresX64).toContain('Runtime blocked reason: docker-provider-requires-windows-x64.');
+  });
+
+  it('guides a missing Docker CLI toward a native Docker install on Linux', () => {
+    const summary = dockerBlockedSummary({
+      platform: 'linux',
+      dockerCliAvailable: false
+    });
+    expect(summary.at(-1)).toContain(
+      'install Docker, start the Docker daemon, and confirm `docker info` succeeds'
+    );
+  });
+
+  it('guides an unreachable Docker daemon toward Docker Desktop on Windows', () => {
+    const summary = dockerBlockedSummary({
+      platform: 'win32',
+      dockerCliAvailable: true,
+      dockerDaemonReachable: false
+    });
+    expect(summary.at(-1)).toContain('start Docker Desktop and confirm `docker info` succeeds');
+  });
+
+  it('guides an unreachable Docker daemon toward the daemon on Linux', () => {
+    const summary = dockerBlockedSummary({
+      platform: 'linux',
+      dockerCliAvailable: true,
+      dockerDaemonReachable: false
+    });
+    expect(summary.at(-1)).toContain(
+      'start or reconnect the Docker daemon and confirm `docker info` succeeds'
+    );
+  });
+
+  it('guides an unsupported container engine toward switching engines', () => {
+    const summary = dockerBlockedSummary({
+      dockerCliAvailable: true,
+      dockerDaemonReachable: true,
+      containerCapabilityAvailable: false
+    });
+    expect(summary.at(-1)).toContain(
+      'switch Docker to a supported Linux or Windows container engine'
+    );
+  });
+
+  it('guides a missing but non-failed container image toward a plain pull with the image label', () => {
+    const summary = dockerBlockedSummary({
+      dockerCliAvailable: true,
+      dockerDaemonReachable: true,
+      containerCapabilityAvailable: true,
+      containerHostMode: 'linux',
+      containerImageAvailable: false,
+      containerAcquisitionState: 'pending',
+      containerImage: 'nationalinstruments/labview:2026q1-linux'
+    });
+    expect(summary.at(-1)).toContain(
+      'pull the Linux container image nationalinstruments/labview:2026q1-linux'
+    );
+    expect(summary.at(-1)).not.toContain('repair Docker connectivity');
+  });
+
+  it('falls back to the generic engine guidance when all container facts are healthy', () => {
+    const summary = dockerBlockedSummary({
+      dockerCliAvailable: true,
+      dockerDaemonReachable: true,
+      containerCapabilityAvailable: true,
+      containerImageAvailable: true
+    });
+    expect(summary.at(-1)).toContain(
+      'install, enable, or switch Docker to a supported container engine'
+    );
+  });
+
+  it('reads windows-container fallback fact fields when the primary fields are absent', () => {
+    const summary = dockerBlockedSummary({
+      windowsContainerDockerCliAvailable: true,
+      windowsContainerDaemonReachable: true,
+      windowsContainerCapabilityAvailable: true,
+      windowsContainerHostMode: 'windows',
+      windowsContainerImageAvailable: false,
+      windowsContainerAcquisitionState: 'failed',
+      containerImage: 'nationalinstruments/labview:2026q1-windows'
+    });
+    expect(summary.at(-1)).toContain(
+      'repair Docker connectivity or image registry access, then pull the Windows container image nationalinstruments/labview:2026q1-windows'
+    );
+  });
+});
