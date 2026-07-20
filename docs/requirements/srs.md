@@ -6563,6 +6563,49 @@ Missing numeric IDs are intentional.
     snapshot/restore guardrail so a probe never leaves the runtime-settings file
     in a mutated state.
 
+### VHS-REQ-688: Developer-Environment Configuration
+
+- Status: Active
+- Parent: VHS-SYS-REQ-013
+- Area: CI And Developer Environment
+- Statement: The repository's developer-environment configuration files — the
+  TypeScript build config, the VS Code workspace configuration (recommended
+  extensions, debug launch configurations, and task definitions), and the
+  advisory Stryker mutation-testing config — shall hold, under structural-shape
+  assertions, the shape the build, debug, and mutation-analysis workflows depend
+  on so a silent edit that breaks the compile target, the extension-host launch,
+  or the advisory (never fail-closed) mutation posture is caught by the unit gate.
+- Acceptance Criteria:
+  - The TypeScript build config compiles only `src/**/*.ts` into the `out`
+    directory under strict Node16 module resolution, so the packaged extension
+    build stays scoped to product source and off the test tree.
+  - The VS Code workspace configuration keeps the extension-host launch
+    configurations (their `extensionDevelopmentPath`, integration
+    `extensionTestsPath`, and pre-launch compile tasks) and the task/recommended-
+    extension definitions structurally intact so the debug and build workflows
+    resolve.
+  - The Stryker mutation-testing config stays advisory — scoped to the
+    `src/domain` detection core with `thresholds.break` null — so mutation
+    analysis reports an assertion-quality signal without ever failing the build.
+- Agent Work Scope:
+  - When changing developer-environment configuration, preserve the build config's
+    src-scoped strict compile, the workspace launch/task structure, and the
+    advisory (break-null) Stryker posture, and keep the structural-shape
+    assertions in step with the configs they guard.
+- Implementation References:
+  - `tsconfig.json`
+  - `.vscode/launch.json`
+  - `.vscode/tasks.json`
+  - `.vscode/extensions.json`
+  - `stryker.config.mjs`
+- Verification References:
+  - `tests/unit/developerEnvironmentConfig.test.ts`
+- Change Guidance:
+  - Keep the build config scoped to `src/**/*.ts` → `out`, the workspace launch
+    configurations and tasks structurally intact, and the Stryker config advisory
+    (`thresholds.break` null), updating the structural-shape assertions alongside
+    any intentional configuration change.
+
 ### VHS-REQ-698: Control-Plane Loop Drift Radar
 
 - Status: Active
