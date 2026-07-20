@@ -72,6 +72,9 @@ function healthPacket(): string {
 function releasePacket(): string {
   return JSON.stringify({ stage: 'published', status: 'fresh', authority: { complete: true } });
 }
+function supplyChainPacket(): string {
+  return JSON.stringify({ status: 'fresh', artifactCount: 4, attentionCount: 1 });
+}
 
 function happyDeps() {
   return {
@@ -101,6 +104,10 @@ function happyDeps() {
       {
         match: (c, a) => c === 'node' && a.some((x) => x.includes('buildReleaseState.js')),
         result: { status: 0, stdout: releasePacket() }
+      },
+      {
+        match: (c, a) => c === 'node' && a.some((x) => x.includes('buildSupplyChainState.js')),
+        result: { status: 0, stdout: supplyChainPacket() }
       }
     ])
   };
@@ -162,6 +169,7 @@ describe('readRepoTruth: buildRepoTruthPacket', () => {
     expect(domains.coverage).toMatchObject({ available: true, riskThreshold: 50 });
     expect(domains.requirementHealth).toMatchObject({ available: true, requirementsNeedingAttention: 4 });
     expect(domains.releaseState).toMatchObject({ available: true, stage: 'published', status: 'fresh', authorityComplete: true });
+    expect(domains.supplyChain).toMatchObject({ available: true, status: 'fresh', artifactCount: 4, attentionCount: 1 });
   });
 
   it('downgrades a sibling domain to available:false when its script yields no JSON (VHS-REQ-692.4)', () => {
