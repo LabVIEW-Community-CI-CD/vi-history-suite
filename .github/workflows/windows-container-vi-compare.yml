@@ -3,10 +3,13 @@ name: Windows Container VI Compare (Hosted)
 # VHS-REQ-699 — Manual-dispatch HOSTED-CI signal that exercises the single-pass
 # comparison-preview pipeline against 64-bit LabVIEW on Windows via the
 # windows-container provider on a GitHub-HOSTED, PINNED Windows runner
-# (`windows-2025`; a pinned image is used so the OS does not drift, and it runs
+# (`windows-2022`; a pinned image is used so the OS does not drift, and it runs
 # on GitHub-managed infrastructure, not a maintainer-managed runner). This covers
 # the x64 Windows bitness/OS combination the 32-bit local VM helper cannot, and
-# publishes a signal + evidence artifact.
+# publishes a signal + evidence artifact. windows-2022 (Server 2022 / ltsc2022)
+# is used because the NI LabVIEW `*-windows` container images are built on the
+# ltsc2022 base and require a matching host for Windows process isolation; a
+# newer host (e.g. Server 2025) breaks that base-image compatibility.
 #
 # Best-effort: pulling and running the multi-GB NI LabVIEW Windows image on a
 # hosted runner may fail (image OS-base mismatch, licensing, size). The job
@@ -50,7 +53,7 @@ concurrency:
 jobs:
   windows-container-vi-compare:
     name: Windows Container VI Compare (Hosted)
-    runs-on: windows-2025
+    runs-on: windows-2022
     timeout-minutes: 120
 
     steps:
@@ -84,6 +87,17 @@ jobs:
           # (its exit code would otherwise become the step's), so reset it after.
           try { docker version 2>&1 | Tee-Object -Append -LiteralPath $summary } catch { "docker version failed: $_" | Tee-Object -Append -LiteralPath $summary }
           try { docker info --format '{{.OSType}} {{.OperatingSystem}}' 2>&1 | Tee-Object -Append -LiteralPath $summary } catch { "docker info failed: $_" | Tee-Object -Append -LiteralPath $summary }
+          $global:LASTEXITCODE = 0
+          exit 0
+
+      - name: Ensure Docker Daemon Is Running
+        continue-on-error: true
+        run: |
+          # Windows containers need the Docker service up before any docker use.
+          $svc = Get-Service -Name docker -ErrorAction SilentlyContinue
+          if ($null -eq $svc) { Write-Host 'Docker service not found on this runner.'; exit 0 }
+          if ($svc.Status -ne 'Running') { Start-Service docker }
+          docker version 2>&1 | Write-Host
           $global:LASTEXITCODE = 0
           exit 0
 
