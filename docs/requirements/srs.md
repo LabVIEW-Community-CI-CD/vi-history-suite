@@ -5981,3 +5981,51 @@ Missing numeric IDs are intentional.
 - Change Guidance:
   - Keep the packet schema-versioned and non-gating; add new ground-truth domains
     as additional domain records rather than changing the existing record shape.
+
+### VHS-REQ-697: Agent Environment Consistency Gate
+
+- Status: Active
+- Parent: VHS-SYS-REQ-013
+- Area: CI And Developer Environment
+- Statement: The repository shall provide git hooks that keep a local working
+  environment consistent after merges and checkouts, detecting a stale
+  environment (node_modules out of sync with the lockfile, missing or stale
+  compiled output, changed requirements) and blocking a commit when the stale
+  condition would break the toolchain, so agents and humans do not proceed
+  against an inconsistent environment. Detection is content-based (a recorded
+  lockfile hash), not mtime-based, so ordinary git operations do not produce
+  false positives.
+- Acceptance Criteria:
+  - `scripts/checkEnvSync.js` evaluates environment-sync facts into a problem list
+    and a hard-stale verdict where only a node_modules-vs-lockfile mismatch is
+    hard (breaks the toolchain); missing or stale compiled output and changed
+    requirements are advisory and never hard.
+  - node_modules staleness is determined by comparing the current
+    `sha256(package-lock.json)` against a git-ignored install marker recorded
+    under `node_modules/` at install time, so it is immune to the mtime churn that
+    `git checkout`/`git reset` cause; a missing marker is treated as stale.
+  - The `pre-commit` hook fails closed (nonzero exit) on a hard-stale environment
+    with an actionable remedy, while the `post-merge` and `post-checkout` hooks
+    report synchronously and always exit zero because git ignores their exit code.
+  - `scripts/installGitHooks.js`, wired as the npm `prepare` lifecycle, idempotently
+    points `core.hooksPath` at `.githooks` and no-ops safely outside a git work
+    tree; `prepare` also records the install lockfile hash marker.
+- Agent Work Scope:
+  - Keep the evaluation pure/injectable with a thin CLI and thin bash hooks; keep
+    post-merge/post-checkout advisory (exit zero) and confine commit-blocking to
+    pre-commit on the hard-stale condition only.
+- Implementation References:
+  - `scripts/checkEnvSync.js`
+  - `scripts/installGitHooks.js`
+  - `.githooks/pre-commit`
+  - `.githooks/post-merge`
+  - `.githooks/post-checkout`
+  - `package.json`
+- Verification References:
+  - `tests/unit/checkEnvSyncScript.test.ts`
+  - `tests/unit/installGitHooksScript.test.ts`
+- Change Guidance:
+  - Keep the hard-stale set minimal (toolchain-breaking only); add new advisory
+    signals rather than promoting advisory conditions to commit-blocking. The
+    `--no-verify` git bypass cannot be prevented at the hook level; rely on
+    repository policy, not a technical guarantee, to forbid it.
