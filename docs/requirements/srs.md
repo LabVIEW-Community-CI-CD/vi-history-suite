@@ -6198,3 +6198,39 @@ Missing numeric IDs are intentional.
 - Change Guidance:
   - Keep the manifest the single source of truth for governance gate wiring; do
     not remove a gate from the manifest to make the check pass — fix the wiring.
+
+### VHS-REQ-683: Dev-Host And Build Tooling Integrity
+
+- Status: Active
+- Parent: VHS-SYS-REQ-013
+- Area: CI And Developer Environment
+- Statement: The repository shall enforce that the build-info generator's output
+  satisfies the runtime consumer contract, so the dev-host and build tooling
+  cannot silently emit a build-info record that the extension degrades on. The
+  generator (`scripts/generateBuildInfo.js`) writes `extensionVersion` and
+  `extensionCommit`, which the shipped consumer (`src/tooling/buildInfo.ts`)
+  reads to compose the extension build reference; a gate runs the real generator
+  and fails closed when its record does not satisfy that contract.
+- Acceptance Criteria:
+  - A pure validator checks a build-info record against the consumer contract:
+    it is an object with a non-empty `extensionVersion` (matching the package
+    version when provided) and an `extensionCommit` that is a hex sha or the
+    `<unknown>` sentinel; missing keys, invalid version/commit, version mismatch,
+    and malformed commit all fail closed.
+  - The gate runs the real generator with an in-memory (read-only) write boundary
+    and validates its emitted record, and is exposed as the `build-info:check`
+    npm script.
+- Agent Work Scope:
+  - When changing the build-info generator or consumer, keep their key set and
+    value shapes in agreement and re-run `build-info:check`.
+- Implementation References:
+  - `scripts/checkBuildInfoIntegrity.js`
+  - `scripts/generateBuildInfo.js`
+  - `src/tooling/buildInfo.ts`
+  - `src/tooling/devHostLoop.ts`
+  - `src/cli/runDevHost.ts`
+- Verification References:
+  - `tests/unit/checkBuildInfoIntegrityScript.test.ts`
+- Change Guidance:
+  - Keep the gate driving the real generator (not a fixture) so it proves the
+    shipped generator's output, and keep the validator pure/injectable.
