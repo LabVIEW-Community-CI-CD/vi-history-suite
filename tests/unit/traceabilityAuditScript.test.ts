@@ -12,6 +12,7 @@ const auditScript = require('../../scripts/auditTraceabilitySteward.js');
 
 const {
   VALID_CLASSIFICATIONS,
+  RETIRED_CLASSIFICATIONS,
   IMPLEMENTATION_GLOBS,
   TEST_GLOBS,
   TRACEABILITY_SURFACE_GLOBS,
@@ -364,6 +365,40 @@ describe('traceability audit execution', () => {
     expect(result.findings.gapCount).toBe(1);
     expect(result.findings.gapEntriesPresentInRtm.length).toBe(0);
     expect(capturedStdout).toContain('Gap entries pending classification');
+  });
+
+  it('fails closed when an inventory row still carries the retired dev-only classification (VHS-REQ-701.1)', () => {
+    const fixtureRoot = createAuditFixture({
+      files: ['scripts/helper.js'],
+      inventoryRows: [
+        { Path: 'scripts/helper.js', Classification: 'dev-only', RtmCoverage: 'No', Notes: 'unmapped maintainer helper' },
+        { Path: 'docs/requirements/traceability-inventory.csv', Classification: 'supporting', RtmCoverage: 'No', Notes: 'fixture inventory' },
+        { Path: 'docs/requirements/rtm.csv', Classification: 'supporting', RtmCoverage: 'No', Notes: 'fixture rtm' }
+      ],
+      rtmRows: []
+    });
+    fixtureRoots.push(fixtureRoot);
+
+    const result = auditTraceability({
+      cwd: fixtureRoot,
+      stdout: mockStdout,
+      stderr: mockStderr
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.findings.retiredClassifications).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ path: 'scripts/helper.js', classification: 'dev-only' })
+      ])
+    );
+    expect(capturedStderr).toContain('Retired classifications (fail closed)');
+  });
+
+  it('exposes dev-only as retired so it fails closed while staying parseable (VHS-REQ-701.2)', () => {
+    expect([...RETIRED_CLASSIFICATIONS]).toContain('dev-only');
+    // Retired classifications remain in the known set so an accidental use is
+    // reported precisely rather than as an opaque invalid classification.
+    expect(VALID_CLASSIFICATIONS).toContain('dev-only');
   });
 
   it('flags missing inventory entries across expanded traceability surface (VHS-REQ-601.20, VHS-REQ-601.22)', () => {

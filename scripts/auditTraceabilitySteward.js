@@ -30,6 +30,14 @@ const VALID_CLASSIFICATIONS = [
   'gap'
 ];
 
+// Retired classifications remain parseable (so an accidental use is reported
+// with a precise message rather than as an opaque "invalid classification"), but
+// any inventory row that still carries one fails the audit closed. The dev-only
+// sweep (epic #2159) mapped every previously dev-only surface to a requirement,
+// so a new dev-only row would silently re-open the traceability hole the sweep
+// closed. Nothing is excluded from traceability.
+const RETIRED_CLASSIFICATIONS = new Set(['dev-only']);
+
 const IMPLEMENTATION_GLOBS = [
   'src/**/*.ts',
   'scripts/*.js'
@@ -232,6 +240,7 @@ function auditTraceability(deps = {}) {
     missingInventoryFile: false,
     missingRtmFile: false,
     invalidClassifications: [],
+    retiredClassifications: [],
     unmappedImplementationCandidates: [],
     unmappedTestCandidates: [],
     missingInventoryEntries: [],
@@ -269,6 +278,13 @@ function auditTraceability(deps = {}) {
 
     if (!VALID_CLASSIFICATIONS.includes(row.Classification)) {
       findings.invalidClassifications.push({
+        path: row.Path,
+        classification: row.Classification
+      });
+    }
+
+    if (RETIRED_CLASSIFICATIONS.has(row.Classification)) {
+      findings.retiredClassifications.push({
         path: row.Path,
         classification: row.Classification
       });
@@ -340,6 +356,13 @@ function auditTraceability(deps = {}) {
     }
   }
 
+  if (findings.retiredClassifications.length > 0) {
+    stderr.write(`[traceability-audit] Retired classifications (fail closed): ${findings.retiredClassifications.length}\n`);
+    for (const { path: filePath, classification } of findings.retiredClassifications) {
+      stderr.write(`  - ${filePath}: classification '${classification}' is retired; map the file to a requirement instead\n`);
+    }
+  }
+
   if (findings.missingInventoryEntries.length > 0) {
     stderr.write(`[traceability-audit] Missing inventory entries: ${findings.missingInventoryEntries.length}\n`);
     for (const filePath of findings.missingInventoryEntries) {
@@ -385,6 +408,7 @@ function auditTraceability(deps = {}) {
   // Non-punitive baseline: report but do not fail for gap entries
   const hasBlockingIssues =
     findings.invalidClassifications.length > 0 ||
+    findings.retiredClassifications.length > 0 ||
     findings.missingInventoryEntries.length > 0 ||
     findings.missingRtmReferences.length > 0 ||
     findings.rtmCoverageMismatches.length > 0 ||
@@ -418,6 +442,7 @@ if (require.main === module) {
 
 module.exports = {
   VALID_CLASSIFICATIONS,
+  RETIRED_CLASSIFICATIONS,
   IMPLEMENTATION_GLOBS,
   TEST_GLOBS,
   TRACEABILITY_SURFACE_GLOBS,
