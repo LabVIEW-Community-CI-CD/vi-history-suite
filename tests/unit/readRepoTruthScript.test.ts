@@ -94,7 +94,7 @@ function happyDeps() {
 }
 
 describe('readRepoTruth: extractMergeQueuePolicy', () => {
-  it('extracts the normalized merge-queue policy from a ruleset detail', () => {
+  it('extracts the normalized merge-queue policy from a ruleset detail (VHS-REQ-692.2)', () => {
     const policy = extractMergeQueuePolicy([MERGE_QUEUE_RULESET]);
     expect(policy).toMatchObject({
       present: true,
@@ -106,7 +106,7 @@ describe('readRepoTruth: extractMergeQueuePolicy', () => {
     });
   });
 
-  it('returns { present: false } when no merge_queue rule exists', () => {
+  it('returns { present: false } when no merge_queue rule exists (VHS-REQ-692.2)', () => {
     expect(extractMergeQueuePolicy([{ rules: [{ type: 'deletion' }] }])).toEqual({ present: false });
     expect(extractMergeQueuePolicy([])).toEqual({ present: false });
     expect(extractMergeQueuePolicy(undefined)).toEqual({ present: false });
@@ -123,7 +123,7 @@ describe('readRepoTruth: isAuthFailureText', () => {
 });
 
 describe('readRepoTruth: buildRepoTruthPacket', () => {
-  it('assembles a self-describing packet across the three slice-1 domains', () => {
+  it('assembles a self-describing packet across the three slice-1 domains (VHS-REQ-691.1, VHS-REQ-692.1)', () => {
     const packet = buildRepoTruthPacket({ repo: 'LabVIEW-Community-CI-CD/vi-history-suite', branch: 'develop' }, happyDeps());
     expect(packet.$schema).toBe(REPO_TRUTH_SCHEMA_ID);
     expect(packet.schemaVersion).toBe(REPO_TRUTH_SCHEMA_VERSION);
@@ -133,7 +133,7 @@ describe('readRepoTruth: buildRepoTruthPacket', () => {
     expect(domains.requirementHealth).toMatchObject({ available: true, requirementsNeedingAttention: 4 });
   });
 
-  it('downgrades a sibling domain to available:false when its script yields no JSON', () => {
+  it('downgrades a sibling domain to available:false when its script yields no JSON (VHS-REQ-692.4)', () => {
     const deps = happyDeps();
     (deps as { spawnSync: unknown }).spawnSync = fakeSpawn([
       { match: (c, a) => c === 'gh' && a.includes('repos/LabVIEW-Community-CI-CD/vi-history-suite/rulesets'), result: { status: 0, stdout: JSON.stringify([{ id: 42 }]) } },
@@ -147,14 +147,14 @@ describe('readRepoTruth: buildRepoTruthPacket', () => {
     expect(domains.requirementHealth.available).toBe(true);
   });
 
-  it('fails closed (throws RepoTruthAuthError) when the gh ruleset call is unauthenticated', () => {
+  it('fails closed (throws RepoTruthAuthError) when the gh ruleset call is unauthenticated (VHS-REQ-692.3)', () => {
     const deps = { ...happyDeps(), spawnSync: fakeSpawn([
       { match: (c) => c === 'gh', result: { status: 1, stdout: '', stderr: 'HTTP 401: Bad credentials' } }
     ]) };
     expect(() => buildRepoTruthPacket({}, deps)).toThrow(RepoTruthAuthError);
   });
 
-  it('fails closed when gh is not installed (ENOENT)', () => {
+  it('fails closed when gh is not installed (ENOENT) (VHS-REQ-692.3)', () => {
     const enoent = Object.assign(new Error('spawn gh ENOENT'), { code: 'ENOENT' });
     const deps = { ...happyDeps(), spawnSync: fakeSpawn([{ match: (c) => c === 'gh', result: { error: enoent } }]) };
     expect(() => buildRepoTruthPacket({}, deps)).toThrow(RepoTruthAuthError);
@@ -162,7 +162,7 @@ describe('readRepoTruth: buildRepoTruthPacket', () => {
 });
 
 describe('readRepoTruth: run', () => {
-  it('emits a schema-valid JSON packet in --json mode', () => {
+  it('emits a schema-valid JSON packet in --json mode (VHS-REQ-692.1)', () => {
     const out = run(['--json'], happyDeps());
     expect(out.exitCode).toBe(0);
     const packet = JSON.parse(out.stdout as string);
@@ -171,7 +171,7 @@ describe('readRepoTruth: run', () => {
     }
   });
 
-  it('emits the JSON Schema without any gh call in --schema mode', () => {
+  it('emits the JSON Schema without any gh call in --schema mode (VHS-REQ-692.5)', () => {
     let spawnCalls = 0;
     const out = run(['--schema'], { spawnSync: () => { spawnCalls += 1; return { status: 0, stdout: '[]' }; } });
     expect(out.exitCode).toBe(0);
@@ -180,7 +180,7 @@ describe('readRepoTruth: run', () => {
     expect(schema.$id).toBe(REPO_TRUTH_SCHEMA_ID);
   });
 
-  it('exits 2 with an actionable message when it fails closed on auth', () => {
+  it('exits 2 with an actionable message when it fails closed on auth (VHS-REQ-691.2, VHS-REQ-692.3)', () => {
     const deps = { spawnSync: fakeSpawn([{ match: (c) => c === 'gh', result: { status: 1, stdout: '', stderr: 'HTTP 403: Resource not accessible by integration' } }]) };
     const out = run(['--json'], deps);
     expect(out.exitCode).toBe(2);
@@ -189,7 +189,7 @@ describe('readRepoTruth: run', () => {
     expect(out.stdout).toBeUndefined();
   });
 
-  it('renders a text summary by default', () => {
+  it('renders a text summary by default (VHS-REQ-692.5)', () => {
     const out = run([], happyDeps());
     expect(out.exitCode).toBe(0);
     expect(out.stdout).toContain('Merge queue: min-to-merge=3');

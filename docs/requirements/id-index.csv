@@ -697,3 +697,5 @@ VHS-REQ-677,Software,Active,srs.md#vhs-req-677-runtime-dev-tools-version-pinning
 VHS-REQ-678,Software,Active,srs.md#vhs-req-678-marketplace-pre-release-channel,,,docs/requirements/srs.md
 VHS-REQ-679,Software,Active,srs.md#vhs-req-679-runtime-dev-tools-install-lifecycle,,,docs/requirements/srs.md
 VHS-REQ-680,Software,Active,srs.md#vhs-req-680-dev-tools-status-command-and-consumer-documentation,,,docs/requirements/srs.md
+VHS-REQ-691,Software,Active,srs.md#vhs-req-691-agent-operating-control-plane-capability,,,docs/requirements/srs.md
+VHS-REQ-692,Software,Active,srs.md#vhs-req-692-repo-truth-read-model,,,docs/requirements/srs.md

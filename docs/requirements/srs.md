@@ -5906,3 +5906,78 @@ Missing numeric IDs are intentional.
 - Change Guidance:
   - Keep the status read-only; if new lifecycle state is added, extend the
     reported status additively rather than changing existing fields.
+
+### VHS-REQ-691: Agent Operating Control-Plane Capability
+
+- Status: Active
+- Parent: VHS-SYS-REQ-013
+- Area: CI And Developer Environment
+- Statement: The repository shall provide an agent operating control-plane that
+  exposes live repository ground-truth to agents through read-only,
+  schema-versioned read-models, so an agent's behavior is driven by verifiable
+  current state rather than potentially stale documentation. The control-plane's
+  read surfaces require live GitHub authorization and fail closed when it is
+  absent rather than degrading to assumed defaults; any acting (write) surface is
+  governed and default-disabled, tracked separately under its own requirement.
+- Acceptance Criteria:
+  - The control-plane exposes repository ground-truth as a self-describing,
+    read-only packet carrying a top-level `$schema` and `schemaVersion`, so a
+    consumer can identify and validate the contract without out-of-band
+    knowledge.
+  - Control-plane read surfaces fail closed when live GitHub authorization is
+    missing — exiting nonzero with an actionable message and emitting no packet —
+    rather than falling back to documented defaults.
+- Agent Work Scope:
+  - Grow the control-plane read-first: add read-model domains and surfaces behind
+    the stable schema before designing any acting surface; keep all write actions
+    under the governed, default-disabled write-path requirement.
+- Implementation References:
+  - `scripts/readRepoTruth.js`
+  - `package.json`
+- Verification References:
+  - `tests/unit/readRepoTruthScript.test.ts`
+- Change Guidance:
+  - Keep read surfaces read-only and fail-closed-on-auth; introduce acting
+    surfaces only under VHS-REQ-696 and never enable them by default.
+
+### VHS-REQ-692: Repo-Truth Read-Model
+
+- Status: Active
+- Parent: VHS-SYS-REQ-013
+- Area: CI And Developer Environment
+- Statement: The repository shall provide a read-only aggregator that reports
+  live repository ground-truth in one schema-versioned packet spanning multiple
+  governance domains, so agents and maintainers read current truth (starting with
+  merge-queue policy, coverage, and requirement health) instead of stale prose.
+  It reads live GitHub and existing read-model scripts only, mutates no source,
+  and gates nothing.
+- Acceptance Criteria:
+  - `scripts/readRepoTruth.js` emits one self-describing
+    `vi-history-suite/repo-truth-read-model@v1` packet aggregating the
+    merge-queue policy, coverage, and requirement-health domains under a stable
+    schema that new domains extend additively.
+  - The merge-queue domain extracts the branch's merge-queue policy
+    (min-entries-to-merge, wait minutes, grouping strategy, merge method) from the
+    `merge_queue` ruleset rule, reporting `present: false` when no such rule
+    exists.
+  - The read-model fails closed on GitHub authorization failure: a missing or
+    unauthenticated `gh` exits nonzero with an actionable token-required message
+    and emits no packet, never degrading to documented defaults.
+  - Sibling read-model domains (coverage, requirement health) degrade to
+    `available: false` with a reason on local failure without failing the whole
+    read-model closed; only the GitHub authorization precondition fails closed.
+  - `npm run repo:truth` renders text by default with `--json`, `--markdown`, and
+    `--schema` output modes; `--schema` publishes the JSON Schema without any
+    GitHub call.
+- Agent Work Scope:
+  - Keep the aggregator read-only and pure/injectable with a thin CLI; reuse the
+    shared schema-envelope and output-contract libraries and the existing
+    read-model scripts rather than reimplementing them; never mutate a source.
+- Implementation References:
+  - `scripts/readRepoTruth.js`
+  - `package.json`
+- Verification References:
+  - `tests/unit/readRepoTruthScript.test.ts`
+- Change Guidance:
+  - Keep the packet schema-versioned and non-gating; add new ground-truth domains
+    as additional domain records rather than changing the existing record shape.
