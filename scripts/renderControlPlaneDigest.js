@@ -91,6 +91,32 @@ function deriveDebtFromReadModel(packet) {
   return Object.keys(debt).length > 0 ? debt : undefined;
 }
 
+function deriveReleaseStateFromReadModel(packet) {
+  const d = resolveDomains(packet);
+  const rs = d.releaseState;
+  if (!rs || !rs.available) {
+    return undefined;
+  }
+  return {
+    stage: typeof rs.stage === 'string' ? rs.stage : 'unknown',
+    status: typeof rs.status === 'string' ? rs.status : 'unknown',
+    authorityComplete: rs.authorityComplete === true
+  };
+}
+
+function deriveSupplyChainFromReadModel(packet) {
+  const d = resolveDomains(packet);
+  const sc = d.supplyChain;
+  if (!sc || !sc.available) {
+    return undefined;
+  }
+  return {
+    status: typeof sc.status === 'string' ? sc.status : 'unknown',
+    artifactCount: Number(sc.artifactCount) || 0,
+    attentionCount: Number(sc.attentionCount) || 0
+  };
+}
+
 // Pure: render the digest markdown from an already-collected signals object. Every
 // section is optional; absent sections are simply omitted. Returns
 // { marker, markdown, driftCount }.
@@ -145,6 +171,24 @@ function buildControlPlaneDigest(signals, options = {}) {
     lines.push('');
   }
 
+  // Release state.
+  if (s.releaseState && typeof s.releaseState === 'object') {
+    const rs = s.releaseState;
+    lines.push('## Release state', '');
+    lines.push(`- Furthest stage: ${rs.stage} (${rs.status})`);
+    lines.push(`- Publish authority: ${rs.authorityComplete ? 'complete' : 'incomplete'}`);
+    lines.push('');
+  }
+
+  // Supply-chain state.
+  if (s.supplyChain && typeof s.supplyChain === 'object') {
+    const sc = s.supplyChain;
+    const icon = sc.attentionCount > 0 ? '⚠️' : '✅';
+    lines.push('## Supply chain', '');
+    lines.push(`- ${icon} ${sc.status}: ${sc.artifactCount} artifact(s), ${sc.attentionCount} needing attention`);
+    lines.push('');
+  }
+
   return { marker: DIGEST_MARKER, markdown: lines.join('\n').trimEnd() + '\n', driftCount: boardDrift.length };
 }
 
@@ -186,9 +230,19 @@ function collectControlPlaneSignals(deps = {}) {
   } else if (packet) {
     signals.debt = deriveDebtFromReadModel(packet);
   }
+  if (typeof deps.collectReleaseState === 'function') {
+    signals.releaseState = deps.collectReleaseState();
+  } else if (packet) {
+    signals.releaseState = deriveReleaseStateFromReadModel(packet);
+  }
+  if (typeof deps.collectSupplyChain === 'function') {
+    signals.supplyChain = deps.collectSupplyChain();
+  } else if (packet) {
+    signals.supplyChain = deriveSupplyChainFromReadModel(packet);
+  }
 
   // Drop any section a mapper returned as undefined so the renderer omits it.
-  for (const key of ['gateHealth', 'openWork', 'debt']) {
+  for (const key of ['gateHealth', 'openWork', 'debt', 'releaseState', 'supplyChain']) {
     if (signals[key] === undefined) {
       delete signals[key];
     }
@@ -202,7 +256,9 @@ module.exports = {
   collectControlPlaneSignals,
   deriveGateHealthFromReadModel,
   deriveOpenWorkFromReadModel,
-  deriveDebtFromReadModel
+  deriveDebtFromReadModel,
+  deriveReleaseStateFromReadModel,
+  deriveSupplyChainFromReadModel
 };
 
 if (require.main === module) {

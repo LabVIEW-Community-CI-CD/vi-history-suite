@@ -10,7 +10,9 @@ const {
   collectControlPlaneSignals,
   deriveGateHealthFromReadModel,
   deriveOpenWorkFromReadModel,
-  deriveDebtFromReadModel
+  deriveDebtFromReadModel,
+  deriveReleaseStateFromReadModel,
+  deriveSupplyChainFromReadModel
 } = require('../../scripts/renderControlPlaneDigest.js') as {
   DIGEST_MARKER: string;
   buildControlPlaneDigest: (
@@ -21,6 +23,8 @@ const {
   deriveGateHealthFromReadModel: (packet: unknown) => Array<{ id: string; ok: boolean; detail: string }> | undefined;
   deriveOpenWorkFromReadModel: (packet: unknown) => { openPrs: number; blocked: number } | undefined;
   deriveDebtFromReadModel: (packet: unknown) => { coverageDebtTitle?: string; requirementAttention?: number } | undefined;
+  deriveReleaseStateFromReadModel: (packet: unknown) => { stage: string; status: string; authorityComplete: boolean } | undefined;
+  deriveSupplyChainFromReadModel: (packet: unknown) => { status: string; artifactCount: number; attentionCount: number } | undefined;
 };
 
 const AT = '2026-07-20T00:00:00.000Z';
@@ -78,6 +82,24 @@ describe('renderControlPlaneDigest: buildControlPlaneDigest (VHS-REQ-698.1)', ()
     expect(markdown).not.toContain('## Governance gate health');
     expect(markdown).not.toContain('## Open work');
     expect(markdown).not.toContain('## Coverage & requirement debt');
+    expect(markdown).not.toContain('## Release state');
+    expect(markdown).not.toContain('## Supply chain');
+  });
+
+  it('renders release-state and supply-chain sections when present', () => {
+    const { markdown } = buildControlPlaneDigest(
+      {
+        boardDrift: [],
+        releaseState: { stage: 'published', status: 'ready', authorityComplete: true },
+        supplyChain: { status: 'attention', artifactCount: 2, attentionCount: 1 }
+      },
+      { generatedAt: AT }
+    );
+    expect(markdown).toContain('## Release state');
+    expect(markdown).toContain('Furthest stage: published (ready)');
+    expect(markdown).toContain('Publish authority: complete');
+    expect(markdown).toContain('## Supply chain');
+    expect(markdown).toContain('⚠️ attention: 2 artifact(s), 1 needing attention');
   });
 
   it('tolerates a non-object signals argument', () => {
@@ -127,7 +149,9 @@ const READ_MODEL = {
   adrGovernance: { available: true, consistent: true },
   requirementHealth: { available: true, healthy: true, status: 'healthy', requirementsNeedingAttention: 0 },
   coverage: { available: true, mappedBelowThreshold: 0 },
-  openWork: { available: true, openPullRequests: 3, byMergeStateStatus: { BLOCKED: 1, CLEAN: 2 } }
+  openWork: { available: true, openPullRequests: 3, byMergeStateStatus: { BLOCKED: 1, CLEAN: 2 } },
+  releaseState: { available: true, stage: 'published', status: 'ready', authorityComplete: true },
+  supplyChain: { available: true, status: 'clean', artifactCount: 4, attentionCount: 0 }
 };
 
 describe('renderControlPlaneDigest: read-model section mappers (VHS-REQ-698.1)', () => {
@@ -168,6 +192,25 @@ describe('renderControlPlaneDigest: read-model section mappers (VHS-REQ-698.1)',
     });
     expect(deriveDebtFromReadModel({})).toBeUndefined();
   });
+
+  it('derives release state, undefined when the domain is unavailable', () => {
+    expect(deriveReleaseStateFromReadModel(READ_MODEL)).toEqual({
+      stage: 'published',
+      status: 'ready',
+      authorityComplete: true
+    });
+    expect(deriveReleaseStateFromReadModel({ releaseState: { available: false } })).toBeUndefined();
+    expect(deriveReleaseStateFromReadModel({})).toBeUndefined();
+  });
+
+  it('derives supply chain, undefined when the domain is unavailable', () => {
+    expect(deriveSupplyChainFromReadModel(READ_MODEL)).toEqual({
+      status: 'clean',
+      artifactCount: 4,
+      attentionCount: 0
+    });
+    expect(deriveSupplyChainFromReadModel({ supplyChain: { available: false } })).toBeUndefined();
+  });
 });
 
 describe('renderControlPlaneDigest: read-model-driven collector (VHS-REQ-698.1)', () => {
@@ -179,6 +222,8 @@ describe('renderControlPlaneDigest: read-model-driven collector (VHS-REQ-698.1)'
     expect(Array.isArray(signals.gateHealth)).toBe(true);
     expect(signals.openWork).toEqual({ openPrs: 3, blocked: 1 });
     expect(signals.debt).toMatchObject({ requirementAttention: 0 });
+    expect(signals.releaseState).toEqual({ stage: 'published', status: 'ready', authorityComplete: true });
+    expect(signals.supplyChain).toEqual({ status: 'clean', artifactCount: 4, attentionCount: 0 });
   });
 
   it('builds the packet via an injected builder and degrades on a builder error', () => {
