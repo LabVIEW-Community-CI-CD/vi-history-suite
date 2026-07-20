@@ -1,0 +1,55 @@
+name: Repo-Truth Read-Model
+
+# VHS-REQ-694 (Agent Operating Control-Plane, epic #2144): publish the repo-truth
+# read-model (VHS-REQ-692) as a downloadable CI artifact so agents and maintainers
+# can consume live repository ground-truth from a workflow run. Read-only and
+# non-gating; it never mutates the repository. The read-model fails closed on a
+# missing GitHub token, so the job uses the workflow's own GITHUB_TOKEN.
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to read merge-queue policy for (defaults to develop).'
+        required: false
+        default: 'develop'
+  schedule:
+    # Daily read-model snapshot (advisory; publishes an artifact only).
+    - cron: '17 6 * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  publish-repo-truth:
+    name: Publish Repo-Truth Read-Model
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate repo-truth read-model (JSON)
+        env:
+          # The read-model's gh-backed domains fail closed without a live token.
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/readRepoTruth.js --json --branch "${{ github.event.inputs.branch || 'develop' }}" > repo-truth-read-model.json
+
+      - name: Upload repo-truth artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: repo-truth-read-model
+          path: repo-truth-read-model.json
+          if-no-files-found: error
