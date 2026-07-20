@@ -19,6 +19,7 @@
 // through injectable deps; the CLI is a thin entrypoint.
 
 const { spawnSync } = require('node:child_process');
+const fs = require('node:fs');
 const path = require('node:path');
 
 const {
@@ -288,6 +289,47 @@ function collectAdrGovernanceDomain(deps = {}) {
   };
 }
 
+// Runtime-fidelity domain: read the committed runtime-validation ledger
+// (docs/requirements/runtime-validation-ledger.json) and report, per
+// Linux-executable comparison-runtime track, whether it was last validated on
+// real hardware at the current build version. This surfaces "the product is
+// proven working on real LabVIEW at build X" as continuous control-plane truth,
+// not just a manually-consulted ledger. A local artifact, so it degrades to
+// available:false rather than failing closed.
+function collectRuntimeFidelityDomain(deps = {}) {
+  const readFileSync = deps.readFileSync || fs.readFileSync;
+  const repoRoot = deps.repoRoot || process.cwd();
+  let currentVersion;
+  try {
+    currentVersion = JSON.parse(readFileSync(path.join(repoRoot, 'package.json'), 'utf8')).version;
+  } catch {
+    currentVersion = undefined;
+  }
+  let manifest;
+  try {
+    manifest = JSON.parse(
+      readFileSync(path.join(repoRoot, 'docs', 'requirements', 'runtime-validation-ledger.json'), 'utf8')
+    );
+  } catch {
+    return { available: false, reason: 'runtime-validation-ledger unavailable' };
+  }
+  const tracks = Array.isArray(manifest && manifest.tracks) ? manifest.tracks : [];
+  const linuxTracks = tracks.filter(
+    (t) => t && typeof t === 'object' && t.linuxExecutable !== false && t.releaseGating !== true
+  );
+  const staleTracks = linuxTracks
+    .filter((t) => t.lastValidatedVersion !== currentVersion)
+    .map((t) => ({ trackId: t.trackId, lastValidatedVersion: t.lastValidatedVersion || null }));
+  return {
+    available: true,
+    currentVersion: currentVersion || null,
+    trackCount: linuxTracks.length,
+    staleTrackCount: staleTracks.length,
+    allFresh: staleTracks.length === 0,
+    staleTracks
+  };
+}
+
 // Fetch open PRs via gh (fail-closed on auth, like the merge-queue domain) and
 // summarize them. Part of the live GitHub precondition, not a local artifact.
 function collectOpenWorkDomain(options, deps = {}) {
@@ -309,6 +351,7 @@ function buildRepoTruthPacket(options = {}, deps = {}) {
   const releaseState = collectReleaseStateDomain(deps);
   const supplyChain = collectSupplyChainDomain(deps);
   const adrGovernance = collectAdrGovernanceDomain(deps);
+  const runtimeFidelity = collectRuntimeFidelityDomain(deps);
   return {
     ...schemaEnvelopeFields(REPO_TRUTH_SCHEMA_ID, REPO_TRUTH_SCHEMA_VERSION),
     generatedAt: generatedAt(deps),
@@ -321,7 +364,8 @@ function buildRepoTruthPacket(options = {}, deps = {}) {
       requirementHealth,
       releaseState,
       supplyChain,
-      adrGovernance
+      adrGovernance,
+      runtimeFidelity
     }
   };
 }
@@ -340,7 +384,7 @@ const REPO_TRUTH_JSON_SCHEMA = Object.freeze({
     branch: { type: 'string' },
     domains: {
       type: 'object',
-      required: ['mergeQueue', 'openWork', 'coverage', 'requirementHealth', 'releaseState', 'supplyChain', 'adrGovernance'],
+      required: ['mergeQueue', 'openWork', 'coverage', 'requirementHealth', 'releaseState', 'supplyChain', 'adrGovernance', 'runtimeFidelity'],
       properties: {
         mergeQueue: { type: 'object' },
         openWork: { type: 'object' },
@@ -348,7 +392,8 @@ const REPO_TRUTH_JSON_SCHEMA = Object.freeze({
         requirementHealth: { type: 'object' },
         releaseState: { type: 'object' },
         supplyChain: { type: 'object' },
-        adrGovernance: { type: 'object' }
+        adrGovernance: { type: 'object' },
+        runtimeFidelity: { type: 'object' }
       }
     }
   }
@@ -506,6 +551,7 @@ module.exports = {
   collectReleaseStateDomain,
   collectSupplyChainDomain,
   collectAdrGovernanceDomain,
+  collectRuntimeFidelityDomain,
   buildRepoTruthPacket,
   run
 };

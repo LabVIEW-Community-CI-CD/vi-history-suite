@@ -117,6 +117,21 @@ function deriveSupplyChainFromReadModel(packet) {
   };
 }
 
+function deriveRuntimeFidelityFromReadModel(packet) {
+  const d = resolveDomains(packet);
+  const rf = d.runtimeFidelity;
+  if (!rf || !rf.available) {
+    return undefined;
+  }
+  return {
+    currentVersion: typeof rf.currentVersion === 'string' ? rf.currentVersion : 'unknown',
+    trackCount: Number(rf.trackCount) || 0,
+    staleTrackCount: Number(rf.staleTrackCount) || 0,
+    allFresh: rf.allFresh === true,
+    staleTracks: Array.isArray(rf.staleTracks) ? rf.staleTracks : []
+  };
+}
+
 // Pure: render the digest markdown from an already-collected signals object. Every
 // section is optional; absent sections are simply omitted. Returns
 // { marker, markdown, driftCount }.
@@ -191,6 +206,22 @@ function buildControlPlaneDigest(signals, options = {}) {
     lines.push('');
   }
 
+  // Real-runtime fidelity (product proven on real LabVIEW hardware at this build).
+  if (s.runtimeFidelity && typeof s.runtimeFidelity === 'object') {
+    const rf = s.runtimeFidelity;
+    const icon = rf.allFresh ? '✅' : '⚠️';
+    lines.push('## Real-runtime fidelity', '');
+    if (rf.allFresh) {
+      lines.push(`- ${icon} All ${rf.trackCount} Linux runtime track(s) validated on real hardware at build ${rf.currentVersion}.`);
+    } else {
+      lines.push(`- ${icon} ${rf.staleTrackCount} of ${rf.trackCount} Linux runtime track(s) not yet validated at build ${rf.currentVersion}:`);
+      for (const t of rf.staleTracks) {
+        lines.push(`  - ${t.trackId} (last validated ${t.lastValidatedVersion || '<never>'})`);
+      }
+    }
+    lines.push('');
+  }
+
   return { marker: DIGEST_MARKER, markdown: lines.join('\n').trimEnd() + '\n', driftCount: boardDrift.length };
 }
 
@@ -258,9 +289,14 @@ function collectControlPlaneSignals(deps = {}) {
   } else if (packet) {
     signals.supplyChain = deriveSupplyChainFromReadModel(packet);
   }
+  if (typeof deps.collectRuntimeFidelity === 'function') {
+    signals.runtimeFidelity = deps.collectRuntimeFidelity();
+  } else if (packet) {
+    signals.runtimeFidelity = deriveRuntimeFidelityFromReadModel(packet);
+  }
 
   // Drop any section a mapper returned as undefined so the renderer omits it.
-  for (const key of ['gateHealth', 'openWork', 'debt', 'releaseState', 'supplyChain']) {
+  for (const key of ['gateHealth', 'openWork', 'debt', 'releaseState', 'supplyChain', 'runtimeFidelity']) {
     if (signals[key] === undefined) {
       delete signals[key];
     }
@@ -276,7 +312,8 @@ module.exports = {
   deriveOpenWorkFromReadModel,
   deriveDebtFromReadModel,
   deriveReleaseStateFromReadModel,
-  deriveSupplyChainFromReadModel
+  deriveSupplyChainFromReadModel,
+  deriveRuntimeFidelityFromReadModel
 };
 
 if (require.main === module) {
