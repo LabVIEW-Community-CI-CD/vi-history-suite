@@ -6371,6 +6371,59 @@ Missing numeric IDs are intentional.
   - Keep the gate driving the real generator (not a fixture) so it proves the
     shipped generator's output, and keep the validator pure/injectable.
 
+### VHS-REQ-684: Public-Repo And CI Integration-Host Infrastructure
+
+- Status: Active
+- Parent: VHS-SYS-REQ-013
+- Area: CI And Developer Environment
+- Statement: The repository's public-repo clone and CI integration-host
+  infrastructure scripts shall expose their parsing, validation, and
+  command-plan preparation as pure or dependency-injected functions that are
+  unit-verifiable without a network, an apt host, or a display, so the Linux VS
+  Code host bootstrap, the public-repo clone/fixture preparation, and the
+  Linux/Windows integration-host launchers remain deterministic maintainer/CI
+  tooling with their command boundaries injectable.
+- Acceptance Criteria:
+  - The Linux VS Code host bootstrap parses `/etc/os-release`, classifies the
+    package family, and prepares an apt install plan through pure functions, and
+    executes it through an injected command boundary, exposed as the
+    `public:host:bootstrap-linux` npm script.
+  - The public-repo clone core and its wrapper validate a supported public
+    GitHub/GitLab URL, resolve the remote head branch, and prepare the effective
+    repo/branch/target options through pure functions, and clone/refresh through
+    injected command boundaries, exposed as the `public:repo:clone` npm script.
+  - The public test-fixture wrapper prepares the canonical
+    `ni/labview-icon-editor` fixture clone from its default repo/branch/target
+    settings through pure functions over the clone core, exposed as the
+    `public:fixture:icon-editor` npm script.
+  - The Linux and Windows integration-host launchers build their command/env
+    plan — Linux selecting `xvfb-run` vs a direct run by display/command
+    availability, Windows launching through `cmd.exe` — with the host-marker env
+    and an injected command boundary, exposed as the `test:integration:linux` and
+    `test:integration:windows` npm scripts.
+- Agent Work Scope:
+  - When changing a public-repo or integration-host infrastructure script, keep
+    its parse/validate/command-plan boundary pure or injectable and its unit test
+    citing the criterion, so it stays verifiable without a network, apt, or
+    display.
+- Implementation References:
+  - `scripts/bootstrapLinuxVsCodeHost.js`
+  - `scripts/preparePublicRepoClone.js`
+  - `scripts/publicRepoCloneCore.js`
+  - `scripts/preparePublicTestFixture.js`
+  - `scripts/runLinuxIntegrationHost.js`
+  - `scripts/runWindowsIntegrationHost.js`
+- Verification References:
+  - `tests/unit/bootstrapLinuxVsCodeHost.test.ts`
+  - `tests/unit/preparePublicRepoCloneScript.test.ts`
+  - `tests/unit/preparePublicTestFixtureScript.test.ts`
+  - `tests/unit/runLinuxIntegrationHost.test.ts`
+  - `tests/unit/runWindowsIntegrationHost.test.ts`
+- Change Guidance:
+  - Keep the command boundaries injectable so these scripts stay unit-verifiable
+    without a network, an apt host, or a display, and keep them maintainer/CI
+    tooling driven only through their npm aliases.
+
 ### VHS-REQ-686: Vagrant Maintainer Lane Helpers
 
 - Status: Active

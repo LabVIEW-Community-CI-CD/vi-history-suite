@@ -18,7 +18,7 @@ const script = require(scriptPath) as {
   };
 };
 
-describe('prepare public test fixture script', () => {
+describe('prepare public test fixture script (VHS-REQ-684.3)', () => {
   it('defaults to the upstream develop branch and a visible sibling target path', () => {
     const parsed = script.parseArgs([]);
     const usage = script.getUsage();

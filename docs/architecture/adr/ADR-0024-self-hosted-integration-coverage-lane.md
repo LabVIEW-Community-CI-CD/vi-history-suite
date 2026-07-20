@@ -15,7 +15,10 @@ Six host-runner scripts — `bootstrapLinuxVsCodeHost.js`, the Linux/Windows
 integration-host runners, and the public-repo clone/fixture helpers — are excluded
 from unit coverage because they require a real VS Code host, integration host, or
 git remote to exercise. They were the remainder of the dev-only sweep: the pure
-tooling was mapped (VHS-REQ-681/683), but these cannot be honestly unit-covered.
+tooling was mapped (VHS-REQ-681/683), and these scripts' pure/injectable
+parse/validate/command-plan boundaries are now mapped as a requirement surface
+(VHS-REQ-684) and unit-tested, but the scripts' full real execution cannot be
+honestly unit-covered.
 
 Running them for real requires a **self-hosted runner**, which introduces a
 security posture that must not be decided unilaterally: who can trigger it, what
@@ -61,4 +64,4 @@ code.
 
 ## Requirements recorded
 
-VHS-SYS-REQ-013; VHS-REQ-690.
+VHS-SYS-REQ-013; VHS-REQ-684, VHS-REQ-690.
