@@ -5338,6 +5338,13 @@ Missing numeric IDs are intentional.
     comparison. A preview whose runtime is merely unavailable (blocked) passes the
     gate rather than failing it, so an unavailable validator never blocks a
     comparison that would otherwise run.
+  - A manual-dispatch hosted-CI workflow (`windows-container-vi-compare.yml`)
+    exercises the pipeline against 64-bit LabVIEW on Windows via the
+    windows-container provider on a GitHub-hosted, pinned Windows runner (not
+    `windows-latest`, not self-hosted) — the x64 Windows combination the 32-bit
+    Vagrant VM cannot cover — and always uploads a schema-tagged evidence
+    artifact; the runtime step captures its outcome as evidence and stays green by
+    default unless the dispatcher opts into failing on a runtime failure.
 - Agent Work Scope:
   - Keep the pipeline a pure, dependency-injected orchestrator in
     `src/reporting/comparisonPreviewPipeline.ts` that composes the existing
@@ -5349,10 +5356,12 @@ Missing numeric IDs are intentional.
   - `src/reporting/runtime/cycleMeter.ts`
   - `src/reporting/comparisonPreviewPipelineIntegration.ts`
   - `src/reporting/viPreview/stagedViPreviewValidatorFactory.ts`
+  - `.github/workflows/windows-container-vi-compare.yml`
 - Verification References:
   - `tests/unit/comparisonPreviewPipeline.test.ts`
   - `tests/unit/comparisonPreviewPipelineIntegration.test.ts`
   - `tests/unit/stagedViPreviewValidatorFactory.test.ts`
+  - `tests/unit/windowsContainerViCompareWorkflow.test.ts`
 - Change Guidance:
   - Keep each iteration a single-cycle timed loop (exactly one LabVIEW
     invocation, no retry) and keep the short-circuit so a staged VI that fails

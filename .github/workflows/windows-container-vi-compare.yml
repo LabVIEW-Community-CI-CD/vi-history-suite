@@ -1,0 +1,137 @@
+name: Windows Container VI Compare (Hosted)
+
+# VHS-REQ-699 — Manual-dispatch HOSTED-CI signal that exercises the single-pass
+# comparison-preview pipeline against 64-bit LabVIEW on Windows via the
+# windows-container provider on a GitHub-HOSTED, PINNED Windows runner
+# (`windows-2025`; a pinned image is used so the OS does not drift, and it runs
+# on GitHub-managed infrastructure, not a maintainer-managed runner). This covers
+# the x64 Windows bitness/OS combination the 32-bit local VM helper cannot, and
+# publishes a signal + evidence artifact.
+#
+# Best-effort: pulling and running the multi-GB NI LabVIEW Windows image on a
+# hosted runner may fail (image OS-base mismatch, licensing, size). The job
+# captures the outcome as EVIDENCE and stays green by default so the dispatch
+# always yields a readable signal; set fail_on_runtime_failure=true to make a
+# runtime failure fail the job.
+
+on:
+  workflow_dispatch:
+    inputs:
+      container_image:
+        description: 'Windows LabVIEW container image'
+        required: false
+        default: 'nationalinstruments/labview:2026q1-windows'
+        type: string
+      labview_version:
+        description: 'LabVIEW major version (default 2026)'
+        required: false
+        default: '2026'
+        type: string
+      fail_on_runtime_failure:
+        description: 'Fail the job when the comparison runtime does not succeed'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+defaults:
+  run:
+    shell: pwsh
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  windows-container-vi-compare:
+    name: Windows Container VI Compare (Hosted)
+    runs-on: windows-2025
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      - name: Refuse Marketplace Tokens
+        run: |
+          if ($env:VSCE_PAT -or $env:AZURE_DEVOPS_EXT_PAT -or $env:OVSX_PAT) {
+            throw "Marketplace publishing tokens must not be present on this hosted validation runner."
+          }
+
+      - name: Install
+        run: npm.cmd ci
+
+      - name: Compile
+        run: npm.cmd run compile
+
+      - name: Capture Docker Environment
+        run: |
+          New-Item -ItemType Directory -Force -Path win-validation | Out-Null
+          $summary = Join-Path 'win-validation' 'docker-env.txt'
+          "Runner OS: $env:RUNNER_OS" | Tee-Object -LiteralPath $summary
+          try { docker version | Tee-Object -Append -LiteralPath $summary } catch { "docker version failed: $_" | Tee-Object -Append -LiteralPath $summary }
+          try { docker info --format '{{.OSType}} {{.OperatingSystem}}' | Tee-Object -Append -LiteralPath $summary } catch { "docker info failed: $_" | Tee-Object -Append -LiteralPath $summary }
+
+      - name: Clone Fixture Repository
+        run: |
+          $fixtureDir = 'C:\repos\labview-icon-editor'
+          if (-not (Test-Path (Join-Path $fixtureDir '.git'))) {
+            New-Item -ItemType Directory -Force -Path (Split-Path -Parent $fixtureDir) | Out-Null
+            git clone https://github.com/ni/labview-icon-editor.git $fixtureDir
+          }
+          Push-Location $fixtureDir
+          try {
+            if ((git rev-parse --is-shallow-repository) -eq 'true') { git fetch --unshallow }
+            foreach ($sha in @('537683398d8c5cb73533603b5c06b6eef62a6ac8','fc09736ae5e38c2016de081a9c8686256c9f2f9c')) {
+              git rev-parse --verify --quiet "$sha^{commit}" > $null 2>&1
+              if ($LASTEXITCODE -ne 0) { git fetch origin $sha }
+            }
+          } finally { Pop-Location }
+
+      - name: Pull Windows LabVIEW Image (best-effort)
+        continue-on-error: true
+        run: |
+          $image = '${{ inputs.container_image }}'
+          if (-not $image) { $image = 'nationalinstruments/labview:2026q1-windows' }
+          Write-Host "Pulling $image (this may fail on a hosted runner; captured as evidence)"
+          docker pull $image
+
+      - name: Run VHS-REQ-699 Windows-Container Pipeline
+        continue-on-error: ${{ !inputs.fail_on_runtime_failure }}
+        env:
+          WIN_CONTAINER_IMAGE: ${{ inputs.container_image }}
+          WIN_LV_VERSION: ${{ inputs.labview_version }}
+          VIHS_OUT: win-validation/req699-windows-container-evidence.json
+          VIHS_FAIL_ON_RUNTIME_FAILURE: ${{ inputs.fail_on_runtime_failure && '1' || '0' }}
+        run: |
+          node scripts/req699-windows-container-driver.cjs
+
+      - name: Summarize Evidence
+        if: always()
+        run: |
+          $evidence = 'win-validation/req699-windows-container-evidence.json'
+          if (Test-Path $evidence) {
+            Get-Content -Raw $evidence | Write-Host
+          } else {
+            Write-Host "No evidence JSON produced."
+          }
+
+      - name: Upload Windows Container Evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: req699-windows-container-evidence
+          path: |
+            win-validation/**
+          retention-days: 90
+          if-no-files-found: warn
