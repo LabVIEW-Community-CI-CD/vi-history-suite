@@ -5273,41 +5273,58 @@ Missing numeric IDs are intentional.
 - Status: Active
 - Parent: VHS-SYS-REQ-008
 - Area: Comparison Reports
-- Statement: A comparison of two staged VI revisions shall be produced as a
-  single pass modeled as a linear state machine over one staged left/right pair,
-  with three single-cycle timed-loop cycle states in order — `PREVIEW_LEFT`
-  (render a VI preview of the staged left VI), `PREVIEW_RIGHT` (render a VI
-  preview of the staged right VI), and `COMPARISON` (CreateComparisonReport) —
-  where a validation gate folded into the `PREVIEW_RIGHT` → `COMPARISON`
-  transition admits the comparison cycle only when both preview cycles loaded
-  their staged VI, so a preview cycle that fails to render short-circuits (skips)
-  the comparison and the pass reaches the `FAILED` terminal with the load failure
-  as the actionable signal rather than a confusing comparison failure.
+- Statement: When a VI change is compared, a comparison of the two staged VI
+  revisions shall be produced as a single pass modeled as a linear state machine
+  over one staged left/right pair, with explicit typed states in order —
+  `STAGING` (idempotently materialize the left/right pair), `PREVIEW_LEFT` and
+  `PREVIEW_RIGHT` (single-cycle preview load-validation of each staged VI),
+  `VALIDATION` (admit or reject the comparison from the two preview outcomes),
+  `COMPARISON` (CreateComparisonReport), and `UNSTAGING` (idempotently clean up
+  the staged inputs) — where `VALIDATION` admits the `COMPARISON` cycle only when
+  both preview cycles loaded their staged VI, so a preview cycle that fails to
+  render (or a `STAGING` failure) rejects the comparison, skips it, and the pass
+  reaches the `FAILED` terminal with the load failure as the actionable signal
+  rather than a confusing comparison failure; `UNSTAGING` always runs
+  (finally-style) carrying a diagnostic status.
 - Acceptance Criteria:
-  - `runComparisonPreviewPipeline` runs the cycle states in the fixed order
-    `PREVIEW_LEFT`, `PREVIEW_RIGHT`, then `COMPARISON`, tags each result with its
-    `state`, and reports each cycle's outcome independently; when both previews
-    render and the comparison runs successfully, the pass reaches the `COMPLETE`
-    terminal.
-  - The validation gate is folded into the `PREVIEW_RIGHT` → `COMPARISON`
-    transition: when either preview cycle fails to render the staged VI, the
-    comparison cycle is skipped (`outcome` `skipped`, `failureReason`
+  - `runComparisonPreviewPipeline` runs the states in the fixed order `STAGING`,
+    `PREVIEW_LEFT`, `PREVIEW_RIGHT`, `VALIDATION`, `COMPARISON`, `UNSTAGING`, tags
+    each result with its `state`, threads the staged pair `STAGING` produced as
+    the typed input to the preview and comparison states, and reports each
+    state's outcome independently; when staging succeeds, both previews render,
+    `VALIDATION` admits, and the comparison runs successfully, the pass reaches
+    the `COMPLETE` terminal.
+  - `VALIDATION` is an explicit state that admits the comparison only when both
+    preview cycles rendered; when either preview cycle fails to render the staged
+    VI, `VALIDATION` rejects (naming the failing side), the `COMPARISON` cycle is
+    skipped (`outcome` `skipped`, `failureReason`
     `staged-vi-preview-validation-failed`), the injected comparison runner is
     never invoked, and the pass reaches the `FAILED` terminal carrying that
     reason.
-  - A single shared `CycleMeter` measures each executed cycle state for per-cycle
-    duration, monotonic cycle index, and inter-cycle latency gap, and a skipped
+  - A single shared `CycleMeter` measures each executed state for per-state
+    duration, monotonic cycle index, and inter-state latency gap, and a skipped
     comparison cycle is left unmetered.
-  - Every boundary (the per-side preview renderer, the comparison runner, the
-    cycle meter, and the `StagedPreviewCache`) is injected so the orchestrator is
-    pure and unit-testable without a LabVIEW runtime, and the `StagedPreviewCache`
-    interface is defined for a later cache-loading slice and is not read in this
-    pass.
+  - Every boundary (the idempotent stage/unstage boundaries, the per-side preview
+    renderer, the comparison runner, the cycle meter, and the
+    `StagedPreviewCache`) is injected so the orchestrator is pure and
+    unit-testable without a LabVIEW runtime or a filesystem, and the
+    `StagedPreviewCache` interface is defined for a later cache-loading slice and
+    is not read in this pass.
+  - `STAGING` is idempotent: a re-run with the same inputs reports
+    `already-staged` (never a double-stage error), and a `STAGING` failure skips
+    the preview and comparison states, rejects at `VALIDATION`, and reaches the
+    `FAILED` terminal carrying the staging failure reason.
+  - `UNSTAGING` is idempotent and always runs (finally-style) even when staging,
+    a preview, or the comparison failed; it receives how the pass ended and
+    carries a diagnostic status (`removed` / `already-clean` / `partial` /
+    `failed`), a cleanup throw is converted to a `failed` status without masking
+    the comparison result, and the `UNSTAGING` status never changes the pass
+    terminal.
   - The pipeline is wired into the live comparison runtime execution across
     providers (always-on): each staged VI is preview-validated before the
-    comparison cycle, the per-cycle evidence is retained on the runtime-execution
-    record as `pipelineCycles`, and a preview-validation short-circuit surfaces
-    the `staged-vi-preview-validation-failed` failure reason without invoking the
+    comparison cycle, the per-state evidence is retained on the runtime-execution
+    record as `pipelineCycles`, and a preview-validation rejection surfaces the
+    `staged-vi-preview-validation-failed` failure reason without invoking the
     comparison. A preview whose runtime is merely unavailable (blocked) passes the
     gate rather than failing it, so an unavailable validator never blocks a
     comparison that would otherwise run.

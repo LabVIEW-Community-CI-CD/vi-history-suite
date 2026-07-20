@@ -19,7 +19,10 @@ import {
   ComparisonPreviewPipelineResult,
   PipelineCycleResult,
   StagedPreviewRenderResult,
-  StagedSide
+  StagedSide,
+  StagingStateResult,
+  UnstagingStateResult,
+  ValidationStateResult
 } from './comparisonPreviewPipeline';
 import type { ComparisonReportPacketRecord } from './comparisonReportPacket';
 
@@ -44,10 +47,31 @@ export type StagedViPreviewValidator = (
   input: StagedViPreviewValidatorInput
 ) => Promise<StagedPreviewRenderResult>;
 
-/** Maps one pipeline cycle result to its retained runtime-evidence record. */
+/** Maps one LabVIEW cycle result to its retained runtime-evidence record. */
 export function toPipelineCycleRecord(result: PipelineCycleResult): ComparisonPipelineCycleRecord {
   const record: ComparisonPipelineCycleRecord = {
     state: result.state,
+    outcome: result.outcome
+  };
+  if (result.input !== undefined) {
+    record.input = result.input;
+  }
+  if (result.failureReason !== undefined) {
+    record.failureReason = result.failureReason;
+  }
+  if (result.cycle) {
+    record.durationMs = result.cycle.durationMs;
+    if (result.cycle.interCycleGapMs !== undefined) {
+      record.interCycleGapMs = result.cycle.interCycleGapMs;
+    }
+  }
+  return record;
+}
+
+/** Maps the STAGING state to its retained runtime-evidence record. */
+export function toStagingRecord(result: StagingStateResult): ComparisonPipelineCycleRecord {
+  const record: ComparisonPipelineCycleRecord = {
+    state: 'STAGING',
     outcome: result.outcome
   };
   if (result.failureReason !== undefined) {
@@ -62,28 +86,67 @@ export function toPipelineCycleRecord(result: PipelineCycleResult): ComparisonPi
   return record;
 }
 
+/** Maps the VALIDATION decision state to its retained runtime-evidence record. */
+export function toValidationRecord(result: ValidationStateResult): ComparisonPipelineCycleRecord {
+  const record: ComparisonPipelineCycleRecord = {
+    state: 'VALIDATION',
+    outcome: result.outcome
+  };
+  if (result.rejectedSide !== undefined) {
+    record.input = result.rejectedSide;
+  }
+  if (result.failureReason !== undefined) {
+    record.failureReason = result.failureReason;
+  }
+  return record;
+}
+
+/** Maps the UNSTAGING state (its diagnostic status) to a runtime-evidence record. */
+export function toUnstagingRecord(result: UnstagingStateResult): ComparisonPipelineCycleRecord {
+  const record: ComparisonPipelineCycleRecord = {
+    state: 'UNSTAGING',
+    outcome: result.status
+  };
+  if (result.failureReason !== undefined) {
+    record.failureReason = result.failureReason;
+  }
+  if (result.cycle) {
+    record.durationMs = result.cycle.durationMs;
+    if (result.cycle.interCycleGapMs !== undefined) {
+      record.interCycleGapMs = result.cycle.interCycleGapMs;
+    }
+  }
+  return record;
+}
+
 /**
- * Maps a full pipeline pass to its ordered per-cycle evidence records
- * (PREVIEW_LEFT, PREVIEW_RIGHT, COMPARISON).
+ * Maps a full pipeline pass to its ordered per-state evidence records:
+ * STAGING, PREVIEW_LEFT, PREVIEW_RIGHT, VALIDATION, COMPARISON, UNSTAGING.
  */
 export function toPipelineCycleRecords(
   pipeline: ComparisonPreviewPipelineResult
 ): ComparisonPipelineCycleRecord[] {
   return [
+    toStagingRecord(pipeline.staging),
     toPipelineCycleRecord(pipeline.previewLeft),
     toPipelineCycleRecord(pipeline.previewRight),
-    toPipelineCycleRecord(pipeline.comparison)
+    toValidationRecord(pipeline.validation),
+    toPipelineCycleRecord(pipeline.comparison),
+    toUnstagingRecord(pipeline.unstaging)
   ];
 }
 
 /**
- * True when the pipeline short-circuited the comparison because a staged VI
- * failed its preview-load validation gate (i.e. FAILED before the comparison
- * cycle ran, with the comparison recorded as `skipped`).
+ * True when the pipeline rejected the comparison because a staged VI failed its
+ * preview-load validation (VALIDATION rejected a rendered pair, naming the failing
+ * side; the comparison was recorded as `skipped`) — as opposed to a staging
+ * failure or a genuine comparison failure.
  */
 export function isPreviewValidationFailure(pipeline: ComparisonPreviewPipelineResult): boolean {
   return (
     pipeline.finalState === 'FAILED' &&
+    pipeline.validation.outcome === 'rejected' &&
+    pipeline.validation.rejectedSide !== undefined &&
     pipeline.comparison.outcome === 'skipped' &&
     pipeline.failureReason === STAGED_VI_PREVIEW_VALIDATION_FAILED
   );

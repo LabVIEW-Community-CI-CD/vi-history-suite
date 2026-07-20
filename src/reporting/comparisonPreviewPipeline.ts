@@ -1,64 +1,96 @@
 /**
  * VHS-REQ-699: single-pass comparison-preview pipeline (state machine).
  *
- * A comparison of two staged VI revisions is produced as a single pass over one
- * staged left/right pair, modeled as a linear state machine. The three cycle
- * states are each a single-cycle timed loop (exactly one LabVIEW invocation, no
- * retry) that pipeline together:
+ * When a VI changes in the VS Code Source Control view, a comparison of the two
+ * revisions is produced as a single pass over one staged left/right pair, modeled
+ * as a linear state machine. Each state has a typed input and a typed output so
+ * the pass is fully inspectable (better diagnostics around what each state
+ * received and produced):
  *
+ *   STAGING        — materialize the left/right VIs into the workspace.
+ *                    IDEMPOTENT: re-running with the same inputs is a no-op that
+ *                    reports `already-staged` (never a double-stage error).
  *   PREVIEW_LEFT   — render a VI preview of the staged LEFT VI.
  *   PREVIEW_RIGHT  — render a VI preview of the staged RIGHT VI.
- *   COMPARISON     — run CreateComparisonReport on the pair.
+ *   VALIDATION     — admit or reject the comparison based on the two preview
+ *                    load results (explicit state, not a folded guard).
+ *   COMPARISON     — run CreateComparisonReport on the pair (only when admitted).
+ *   UNSTAGING      — clean up the staged inputs. IDEMPOTENT and ALWAYS runs
+ *                    (finally-style), carrying a diagnostic status
+ *                    (`removed` / `already-clean` / `partial` / `failed`) so a
+ *                    cleanup problem is surfaced without masking the pass result.
  *
- * The two preview cycle states double as a load-validation gate: the preview
- * operation (`PrintToSingleFileHtml`) loads a VI headless far more reliably than
- * the fragile `CreateComparisonReport` path, so a staged VI that cannot load is
- * caught as a clear per-side preview failure BEFORE the compare. The gate is
- * folded into the `PREVIEW_RIGHT` → `COMPARISON` transition (a guard, not a
- * state): when either preview cycle fails to render, the comparison cycle is
- * short-circuited (skipped) and the pass reaches the `FAILED` terminal — turning
- * a confusing compare failure into an actionable "this staged VI failed to load"
- * signal. A clean pass reaches the `COMPLETE` terminal. (`STAGING` is the
- * caller's filesystem setup and is not driven by this orchestrator.)
+ * The two preview states load each VI with the reliable `PrintToSingleFileHtml`
+ * operation before the fragile `CreateComparisonReport` path, so a staged VI that
+ * cannot load is caught as a clear per-side preview failure. VALIDATION turns
+ * that into a first-class decision: it admits the comparison only when both
+ * previews rendered, otherwise it rejects (naming the failing side) and the
+ * comparison is skipped — the actionable "this staged VI failed to load" signal.
  *
- * Every boundary (the per-side preview renderer, the comparison runner, the
+ *   STAGING ─ok→ PREVIEW_LEFT → PREVIEW_RIGHT → VALIDATION ─admit→ COMPARISON ┐
+ *      │                                            │                          │
+ *      └─fail→ (previews skipped) ──────────────────┴─reject→ (compare skipped)│
+ *                                                                              ▼
+ *                             UNSTAGING (always) → COMPLETE (compared) / FAILED
+ *
+ * Every boundary (stage, per-side preview render, comparison run, unstage, the
  * clock/cycle meter, and the preview cache) is injected so the orchestrator stays
- * pure and deterministically unit-testable without a LabVIEW runtime. A single
- * shared `CycleMeter` measures each cycle state so the pass records per-cycle
- * duration and inter-cycle latency (pipeline timing). The `previewCache`
- * interface is defined here for a later slice to load previews from cache; this
- * pass does not yet perform cache lookups.
+ * pure and deterministically unit-testable without a LabVIEW runtime or a
+ * filesystem. A single shared `CycleMeter` measures each executed state so the
+ * pass records per-state duration and inter-state latency (pipeline timing).
+ * Injected boundaries are expected to classify their own failures into outcomes
+ * rather than throw; UNSTAGING is additionally guarded so a cleanup throw can
+ * never mask the comparison result. The `previewCache` interface is defined here
+ * for a later slice to load previews from cache; this pass does not yet perform
+ * cache lookups.
  */
 
 import { CycleMeasurement, CycleMeter, createCycleMeter } from './runtime/cycleMeter';
 
 /**
  * Pipeline states. The pass is a linear state machine over one staged left/right
- * pair; each cycle state is a single LabVIEW invocation (single-cycle timed loop,
- * no retry). `STAGING` is filesystem setup (not a LabVIEW cycle). The validation
- * gate is folded into the `PREVIEW_RIGHT` → `COMPARISON` transition (a guard, not
- * a state): `COMPARISON` is entered only when both preview cycles loaded their
- * staged VI. Two terminals — `COMPLETE` and `FAILED` — carry the failure kind in
- * a reason field.
- *
- *   STAGING → PREVIEW_LEFT → PREVIEW_RIGHT ─[both loaded]→ COMPARISON → COMPLETE
- *      │           │              │         └─[either failed]────────────┐
- *      └─(stage fail)─────────────┴───────────────────────────────────→ FAILED
+ * pair. STAGING and UNSTAGING are idempotent filesystem states; PREVIEW_LEFT,
+ * PREVIEW_RIGHT and COMPARISON are single LabVIEW invocations (single-cycle timed
+ * loops, no retry); VALIDATION is a pure decision state. Two terminals —
+ * `COMPLETE` and `FAILED` — carry the failure kind in a reason field.
  */
 export type PipelineState =
   | 'STAGING'
   | 'PREVIEW_LEFT'
   | 'PREVIEW_RIGHT'
+  | 'VALIDATION'
   | 'COMPARISON'
+  | 'UNSTAGING'
   | 'COMPLETE'
   | 'FAILED';
 
-/** The cycle states (one LabVIEW invocation each). */
+/** The LabVIEW cycle states (one external invocation each). */
 export type PipelineCycleState = 'PREVIEW_LEFT' | 'PREVIEW_RIGHT' | 'COMPARISON';
 
 /** The staged side a preview iteration renders. */
 export type StagedSide = 'left' | 'right';
 
+/** The typed output of STAGING: the on-disk staged VI pair the pass operates on. */
+export interface StagedPair {
+  /** Absolute path to the staged LEFT (base) VI. */
+  leftPath: string;
+  /** Absolute path to the staged RIGHT (selected) VI. */
+  rightPath: string;
+}
+
+/**
+ * Outcome of the idempotent STAGING boundary.
+ * - `staged`         the pair was freshly materialized.
+ * - `already-staged` the pair already existed byte-identical (idempotent re-run).
+ * - `failed`         the pair could not be materialized.
+ */
+export interface StageInputsResult {
+  outcome: 'staged' | 'already-staged' | 'failed';
+  /** The staged pair (present on `staged` / `already-staged`). */
+  staged?: StagedPair;
+  /** Classified failure reason when `outcome` is `failed`. */
+  failureReason?: string;
+}
 
 /** Outcome of a single preview render iteration. */
 export interface StagedPreviewRenderResult {
@@ -79,6 +111,36 @@ export interface ComparisonRunResult {
 }
 
 /**
+ * Context handed to the idempotent UNSTAGING boundary so cleanup can be informed
+ * by how the pass ended (for diagnostics and conditional retention).
+ */
+export interface UnstageContext {
+  /** The staged pair, when STAGING produced one (undefined if staging failed). */
+  staged?: StagedPair;
+  /** The terminal the pass reached before cleanup. */
+  finalState: 'COMPLETE' | 'FAILED';
+  /** The pass failure reason, when `finalState` is `FAILED`. */
+  failureReason?: string;
+}
+
+/**
+ * Diagnostic outcome of the idempotent UNSTAGING boundary.
+ * - `removed`       staged inputs were cleaned up.
+ * - `already-clean` nothing to remove (idempotent re-run / caller-owned cleanup).
+ * - `partial`       some inputs were removed, some retained.
+ * - `failed`        cleanup could not complete.
+ */
+export interface UnstageInputsResult {
+  status: 'removed' | 'already-clean' | 'partial' | 'failed';
+  /** Paths that were removed (diagnostics). */
+  removedPaths?: string[];
+  /** Paths intentionally or unavoidably retained (diagnostics). */
+  retainedPaths?: string[];
+  /** Classified failure reason when `status` is `partial` / `failed`. */
+  failureReason?: string;
+}
+
+/**
  * Content-addressed preview cache. Defined for a later slice that loads previews
  * from cache instead of re-rendering; this pass does not call it yet.
  */
@@ -89,19 +151,30 @@ export interface StagedPreviewCache {
 
 export interface ComparisonPreviewPipelineDeps {
   /**
-   * Renders a VI preview of one staged side. Single-cycle: exactly one LabVIEW
-   * invocation, no retry. Injected so the pipeline is testable without LabVIEW.
+   * Materializes the left/right staged pair. Idempotent: a repeated call with the
+   * same inputs reports `already-staged` instead of failing. Injected so the
+   * pipeline is testable without a filesystem.
    */
-  renderStagedPreview: (side: StagedSide) => Promise<StagedPreviewRenderResult>;
+  stageInputs: () => Promise<StageInputsResult>;
+  /**
+   * Renders a VI preview of one staged side, given the staged pair STAGING
+   * produced. Single-cycle: exactly one LabVIEW invocation, no retry. Injected.
+   */
+  renderStagedPreview: (side: StagedSide, staged: StagedPair) => Promise<StagedPreviewRenderResult>;
   /**
    * Runs the CreateComparisonReport comparison for the staged pair. Single-cycle;
-   * only invoked when both preview iterations rendered. Injected.
+   * only invoked when VALIDATION admitted the comparison. Injected.
    */
-  runComparison: () => Promise<ComparisonRunResult>;
+  runComparison: (staged: StagedPair) => Promise<ComparisonRunResult>;
   /**
-   * Optional shared cycle meter measuring all three iterations (duration, index,
+   * Cleans up the staged inputs. Idempotent and ALWAYS invoked (finally-style),
+   * carrying a diagnostic status. Injected.
+   */
+  unstageInputs: (context: UnstageContext) => Promise<UnstageInputsResult>;
+  /**
+   * Optional shared cycle meter measuring every executed state (duration, index,
    * inter-cycle latency). Defaults to a per-pass meter so each result still
-   * carries its own cycle duration.
+   * carries its own duration.
    */
   cycleMeter?: CycleMeter;
   /**
@@ -110,38 +183,105 @@ export interface ComparisonPreviewPipelineDeps {
   previewCache?: StagedPreviewCache;
 }
 
-/** Result of one pipeline cycle state. */
+/** Result of the idempotent STAGING state. */
+export interface StagingStateResult {
+  state: 'STAGING';
+  outcome: 'staged' | 'already-staged' | 'failed';
+  /** The staged pair this state produced (present unless `failed`). */
+  staged?: StagedPair;
+  failureReason?: string;
+  /** Timing of the staging state. */
+  cycle?: CycleMeasurement;
+}
+
+/** Per-side preview / comparison outcome shared by the three cycle states. */
+export type PipelineCycleOutcome = 'rendered' | 'compared' | 'failed' | 'skipped';
+
+/** Result of one LabVIEW cycle state (PREVIEW_LEFT / PREVIEW_RIGHT / COMPARISON). */
 export interface PipelineCycleResult {
   /** The cycle state this result belongs to. */
   state: PipelineCycleState;
+  /** The staged side a preview cycle rendered (its input); absent for COMPARISON. */
+  input?: StagedSide;
   /**
    * `rendered` / `compared` on success, `failed` on a genuine failure, `skipped`
-   * when the folded validation gate short-circuited the comparison.
+   * when an earlier state (staging failure or a validation rejection) meant this
+   * cycle never ran.
    */
-  outcome: 'rendered' | 'compared' | 'failed' | 'skipped';
-  /** Classified failure reason when the cycle failed. */
+  outcome: PipelineCycleOutcome;
+  /** Classified failure reason when the cycle failed or was skipped. */
   failureReason?: string;
   /** Timing of this cycle (absent for a skipped cycle). */
   cycle?: CycleMeasurement;
 }
 
-export interface ComparisonPreviewPipelineResult {
-  previewLeft: PipelineCycleResult;
-  previewRight: PipelineCycleResult;
-  comparison: PipelineCycleResult;
-  /**
-   * The terminal state reached: `COMPLETE` when both previews rendered and the
-   * comparison cycle ran; `FAILED` when a preview failed to load (validation gate
-   * short-circuited the comparison) or the comparison cycle failed.
-   */
-  finalState: 'COMPLETE' | 'FAILED';
-  /** Failure kind when `finalState` is `FAILED`. */
+/** Result of the explicit VALIDATION state. */
+export interface ValidationStateResult {
+  state: 'VALIDATION';
+  /** `admitted` when both previews rendered; `rejected` otherwise. */
+  outcome: 'admitted' | 'rejected';
+  /** The LEFT preview outcome this decision consumed (its input). */
+  leftOutcome: 'rendered' | 'failed' | 'skipped';
+  /** The RIGHT preview outcome this decision consumed (its input). */
+  rightOutcome: 'rendered' | 'failed' | 'skipped';
+  /** The side whose preview load failed, when a preview caused the rejection. */
+  rejectedSide?: StagedSide;
+  /** Classified rejection reason when `outcome` is `rejected`. */
   failureReason?: string;
 }
 
+/** Result of the idempotent, always-run UNSTAGING state. */
+export interface UnstagingStateResult {
+  state: 'UNSTAGING';
+  status: 'removed' | 'already-clean' | 'partial' | 'failed';
+  removedPaths?: string[];
+  retainedPaths?: string[];
+  failureReason?: string;
+  /** Timing of the unstaging state. */
+  cycle?: CycleMeasurement;
+}
+
+export interface ComparisonPreviewPipelineResult {
+  staging: StagingStateResult;
+  previewLeft: PipelineCycleResult;
+  previewRight: PipelineCycleResult;
+  validation: ValidationStateResult;
+  comparison: PipelineCycleResult;
+  /** Always present: UNSTAGING runs finally-style on every path. */
+  unstaging: UnstagingStateResult;
+  /**
+   * The terminal state reached: `COMPLETE` when staging succeeded, both previews
+   * rendered, VALIDATION admitted, and the comparison compared; `FAILED`
+   * otherwise. UNSTAGING status does NOT change the terminal (cleanup is
+   * diagnostic-only).
+   */
+  finalState: 'COMPLETE' | 'FAILED';
+  /** Failure kind when `finalState` is `FAILED` (first failing state's reason). */
+  failureReason?: string;
+}
+
+/** Stable reason surfaced when a staged VI fails its preview-load validation. */
+const STAGED_VI_PREVIEW_VALIDATION_FAILED = 'staged-vi-preview-validation-failed';
+/** Stable reason surfaced when STAGING did not produce a usable pair. */
+const STAGING_FAILED = 'staging-failed';
+
+/** Measures a boundary call, tagging the meter cycle with a caller-chosen label. */
+async function measureState<T>(
+  meter: CycleMeter,
+  run: () => Promise<T>,
+  tagOf: (value: T) => string
+): Promise<{ value: T; cycle: CycleMeasurement }> {
+  const handle = meter.startCycle();
+  const value = await run();
+  const cycle = handle.complete(tagOf(value));
+  return { value, cycle };
+}
+
+/** Measures one LabVIEW cycle state and classifies its outcome. */
 async function measureCycle<T>(
   meter: CycleMeter,
   state: PipelineCycleState,
+  input: StagedSide | undefined,
   run: () => Promise<T>,
   classify: (value: T) => { outcome: 'rendered' | 'compared' | 'failed'; failureReason?: string }
 ): Promise<PipelineCycleResult> {
@@ -149,76 +289,173 @@ async function measureCycle<T>(
   const value = await run();
   const { outcome, failureReason } = classify(value);
   const cycle = handle.complete(outcome === 'failed' ? (failureReason ?? 'failed') : outcome);
-  return { state, outcome, failureReason, cycle };
+  return { state, input, outcome, failureReason, cycle };
 }
 
 /**
- * Runs the single-pass comparison-preview pipeline as a linear state machine:
- * PREVIEW_LEFT → PREVIEW_RIGHT ─[both loaded]→ COMPARISON → COMPLETE, folding the
- * validation gate into the PREVIEW_RIGHT → COMPARISON transition so a staged VI
- * that fails its preview load short-circuits (skips) the fragile
- * CreateComparisonReport cycle and the pass ends in FAILED. Each cycle state is a
- * single-cycle timed loop measured by the shared cycle meter. (STAGING is the
- * caller's filesystem setup and is not driven here.)
+ * Runs the single-pass comparison-preview pipeline as a linear state machine
+ * over one staged left/right pair:
+ *
+ *   STAGING → PREVIEW_LEFT → PREVIEW_RIGHT → VALIDATION → COMPARISON → UNSTAGING
+ *
+ * STAGING and UNSTAGING are idempotent; UNSTAGING always runs (finally-style) and
+ * carries a diagnostic status. VALIDATION is an explicit state that admits the
+ * comparison only when both previews rendered, otherwise rejects it (naming the
+ * failing side) and the COMPARISON cycle is skipped. Each executed state is timed
+ * by the shared cycle meter so inputs and outputs of every state are inspectable.
  */
 export async function runComparisonPreviewPipeline(
   deps: ComparisonPreviewPipelineDeps
 ): Promise<ComparisonPreviewPipelineResult> {
   const meter = deps.cycleMeter ?? createCycleMeter();
+  let staged: StagedPair | undefined;
 
-  const previewLeft = await measureCycle(
-    meter,
-    'PREVIEW_LEFT',
-    () => deps.renderStagedPreview('left'),
-    (result) =>
-      result.rendered
-        ? { outcome: 'rendered' }
-        : { outcome: 'failed', failureReason: result.failureReason ?? 'preview-render-failed' }
-  );
+  try {
+    // STAGING (idempotent): materialize the pair the whole pass operates on.
+    const stagingMeasured = await measureState(
+      meter,
+      () => deps.stageInputs(),
+      (result) => (result.outcome === 'failed' ? (result.failureReason ?? STAGING_FAILED) : result.outcome)
+    );
+    const stageResult = stagingMeasured.value;
+    staged = stageResult.staged;
+    const stagingOk = stageResult.outcome !== 'failed' && staged !== undefined;
+    const staging: StagingStateResult = {
+      state: 'STAGING',
+      outcome: stageResult.outcome,
+      staged,
+      failureReason: stagingOk ? undefined : (stageResult.failureReason ?? STAGING_FAILED),
+      cycle: stagingMeasured.cycle
+    };
 
-  const previewRight = await measureCycle(
-    meter,
-    'PREVIEW_RIGHT',
-    () => deps.renderStagedPreview('right'),
-    (result) =>
-      result.rendered
-        ? { outcome: 'rendered' }
-        : { outcome: 'failed', failureReason: result.failureReason ?? 'preview-render-failed' }
-  );
+    // PREVIEW_LEFT / PREVIEW_RIGHT: load-validate each staged VI (skipped when
+    // staging did not produce a pair).
+    let previewLeft: PipelineCycleResult;
+    let previewRight: PipelineCycleResult;
+    if (stagingOk && staged) {
+      const pair = staged;
+      previewLeft = await measureCycle(
+        meter,
+        'PREVIEW_LEFT',
+        'left',
+        () => deps.renderStagedPreview('left', pair),
+        (result) =>
+          result.rendered
+            ? { outcome: 'rendered' }
+            : { outcome: 'failed', failureReason: result.failureReason ?? 'preview-render-failed' }
+      );
+      previewRight = await measureCycle(
+        meter,
+        'PREVIEW_RIGHT',
+        'right',
+        () => deps.renderStagedPreview('right', pair),
+        (result) =>
+          result.rendered
+            ? { outcome: 'rendered' }
+            : { outcome: 'failed', failureReason: result.failureReason ?? 'preview-render-failed' }
+      );
+    } else {
+      previewLeft = { state: 'PREVIEW_LEFT', input: 'left', outcome: 'skipped', failureReason: STAGING_FAILED };
+      previewRight = { state: 'PREVIEW_RIGHT', input: 'right', outcome: 'skipped', failureReason: STAGING_FAILED };
+    }
 
-  // Validation gate (folded into the PREVIEW_RIGHT → COMPARISON transition): a
-  // staged VI that could not render a preview will not compare either, so skip
-  // the fragile CreateComparisonReport cycle and end in FAILED with the load
-  // failure as the actionable signal.
-  if (previewLeft.outcome === 'failed' || previewRight.outcome === 'failed') {
+    // VALIDATION (explicit state): admit the comparison only when both previews
+    // rendered; otherwise reject, naming the failing side.
+    const leftOutcome = previewLeft.outcome as 'rendered' | 'failed' | 'skipped';
+    const rightOutcome = previewRight.outcome as 'rendered' | 'failed' | 'skipped';
+    let validation: ValidationStateResult;
+    if (!stagingOk) {
+      validation = {
+        state: 'VALIDATION',
+        outcome: 'rejected',
+        leftOutcome,
+        rightOutcome,
+        failureReason: staging.failureReason ?? STAGING_FAILED
+      };
+    } else if (leftOutcome === 'rendered' && rightOutcome === 'rendered') {
+      validation = { state: 'VALIDATION', outcome: 'admitted', leftOutcome, rightOutcome };
+    } else {
+      const rejectedSide: StagedSide = leftOutcome === 'failed' ? 'left' : 'right';
+      validation = {
+        state: 'VALIDATION',
+        outcome: 'rejected',
+        leftOutcome,
+        rightOutcome,
+        rejectedSide,
+        failureReason: STAGED_VI_PREVIEW_VALIDATION_FAILED
+      };
+    }
+
+    // COMPARISON: only when VALIDATION admitted; otherwise skipped with the
+    // rejection reason as the actionable signal.
+    let comparison: PipelineCycleResult;
+    if (validation.outcome === 'admitted' && staged) {
+      const pair = staged;
+      comparison = await measureCycle(
+        meter,
+        'COMPARISON',
+        undefined,
+        () => deps.runComparison(pair),
+        (result) =>
+          result.succeeded
+            ? { outcome: 'compared' }
+            : { outcome: 'failed', failureReason: result.failureReason ?? 'comparison-failed' }
+      );
+    } else {
+      comparison = { state: 'COMPARISON', outcome: 'skipped', failureReason: validation.failureReason };
+    }
+
+    const finalState: 'COMPLETE' | 'FAILED' = comparison.outcome === 'compared' ? 'COMPLETE' : 'FAILED';
+    const failureReason =
+      finalState === 'COMPLETE'
+        ? undefined
+        : !stagingOk
+          ? staging.failureReason
+          : validation.outcome === 'rejected'
+            ? validation.failureReason
+            : comparison.failureReason;
+
+    // UNSTAGING (finally-style, idempotent): always runs; guarded so a cleanup
+    // throw becomes a `failed` status rather than masking the comparison result.
+    const unstaging = await runUnstaging(meter, deps, { staged, finalState, failureReason });
+
+    return { staging, previewLeft, previewRight, validation, comparison, unstaging, finalState, failureReason };
+  } catch (error) {
+    // Safety net: a boundary threw instead of returning an outcome. Still attempt
+    // idempotent cleanup (its result is discarded) before rethrowing so staged
+    // inputs are not leaked.
+    await deps
+      .unstageInputs({ staged, finalState: 'FAILED', failureReason: 'pipeline-error' })
+      .catch(() => undefined);
+    throw error;
+  }
+}
+
+/** Runs the idempotent UNSTAGING state, converting a cleanup throw to `failed`. */
+async function runUnstaging(
+  meter: CycleMeter,
+  deps: ComparisonPreviewPipelineDeps,
+  context: UnstageContext
+): Promise<UnstagingStateResult> {
+  const handle = meter.startCycle();
+  try {
+    const result = await deps.unstageInputs(context);
+    const cycle = handle.complete(result.status);
     return {
-      previewLeft,
-      previewRight,
-      comparison: {
-        state: 'COMPARISON',
-        outcome: 'skipped',
-        failureReason: 'staged-vi-preview-validation-failed'
-      },
-      finalState: 'FAILED',
-      failureReason: 'staged-vi-preview-validation-failed'
+      state: 'UNSTAGING',
+      status: result.status,
+      removedPaths: result.removedPaths,
+      retainedPaths: result.retainedPaths,
+      failureReason: result.failureReason,
+      cycle
+    };
+  } catch (error) {
+    const cycle = handle.complete('failed');
+    return {
+      state: 'UNSTAGING',
+      status: 'failed',
+      failureReason: error instanceof Error ? error.message : String(error),
+      cycle
     };
   }
-
-  const comparison = await measureCycle(
-    meter,
-    'COMPARISON',
-    () => deps.runComparison(),
-    (result) =>
-      result.succeeded
-        ? { outcome: 'compared' }
-        : { outcome: 'failed', failureReason: result.failureReason ?? 'comparison-failed' }
-  );
-
-  return {
-    previewLeft,
-    previewRight,
-    comparison,
-    finalState: comparison.outcome === 'compared' ? 'COMPLETE' : 'FAILED',
-    failureReason: comparison.outcome === 'compared' ? undefined : comparison.failureReason
-  };
 }
