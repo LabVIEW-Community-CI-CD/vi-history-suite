@@ -4,7 +4,7 @@
 <ul>
 <li>VS Code Marketplace listing under <code>svelderrainruiz.vi-history-suite</code></li>
 <li><code>code --install-extension svelderrainruiz.vi-history-suite</code></li>
-<li>exact released VSIX from the matching GitHub release</li>
+<li>VSIX attached to a diagnostic prerelease when a maintainer publishes one for a specific investigation (exceptional path, not the normal release)</li>
 <li>packaged bundled docs through <code>VI History: Open Documentation</code> or the history-panel <code>Open docs</code> action</li>
 </ul>
 <p>Current runtime contract for this build:</p>
@@ -26,10 +26,10 @@
 <p>First-time Marketplace, first-run, and source-evaluation feedback is collected in the public onboarding tracker: <a href="https://github.com/LabVIEW-Community-CI-CD/vi-history-suite/issues/12">issue #12</a>.</p>
 <p>Useful feedback includes the install surface, extension version, VS Code version, first command or action attempted, and the first stale link, unexpected prompt, or blocked step.</p>
 <h2>Release Procedure Summary</h2>
-<p>Use the Marketplace listing for everyday installs or the exact released VSIX when you need the retained tagged build.</p>
+<p>Normal releases publish to the VS Code Marketplace; use the Marketplace listing for everyday installs. A diagnostic prerelease VSIX is published only occasionally for a specific investigation and is not the normal install surface.</p>
 <p>Quick verification flow:</p>
 <ol>
-<li>install the extension from the Marketplace, with <code>code --install-extension</code>, or from the exact released VSIX</li>
+<li>install the extension from the Marketplace or with <code>code --install-extension</code></li>
 <li>open or restart VS Code once after installation</li>
 <li>run <code>VI History: Set Up Comparison Runtime</code> from the Command Palette</li>
 <li>open an integrated terminal and run <code>vihs</code></li>
