@@ -6241,32 +6241,44 @@ Missing numeric IDs are intentional.
 - Parent: VHS-SYS-REQ-013
 - Area: CI And Developer Environment
 - Statement: The repository shall provide a continuous, human-visible drift radar
-  that closes the observe side of the control-plane's read → shadow → apply loop.
-  It composes directly-verifiable ground truth — how far the project board is
-  behind verified reality (via the shadow board-sync planner), plus governance
-  gate health, open-work state, and coverage/requirement debt — into a single
-  digest, rendered for a sticky tracking issue. The radar is read-only with
-  respect to the project board: it never edits the board. The Tier-1 apply that
-  acts on the detected board drift is the separate, enable-flag-gated governed
-  write path (VHS-REQ-696), which remains disabled until a committed flag flip.
+  that closes the observe side of the control-plane's read → shadow → apply loop,
+  and a Tier-1 board apply that acts on the detected drift through the governed
+  write path (VHS-REQ-696). The radar composes directly-verifiable ground truth —
+  how far the project board is behind verified reality (via the shadow board-sync
+  planner), plus governance gate health, open-work state, and coverage/requirement
+  debt — into a single digest rendered for a sticky tracking issue; it never edits
+  the board. The Tier-1 apply mirrors only directly-verified closures (Status Done
+  + Evidence Proven) and runs only when the committed enable flag is set; in CI it
+  additionally requires a maintainer-provisioned Projects-scoped secret, so it is
+  fail-closed without it.
 - Acceptance Criteria:
   - A pure renderer composes the collected signals into a marker-stamped digest:
     it always reports board-vs-verified-truth drift and omits any optional section
     (gate health, open work, debt) that is absent; the collector's live board read
     is injectable and fails closed on GitHub auth.
-  - The loop runs as a manual-dispatch-only GitHub Actions workflow that is
-    board-read-only (least-privilege `contents: read` + `issues: write`), renders
-    the digest with a live token, and upserts a single sticky tracking issue via
-    its marker rather than posting duplicates.
+  - The loop runs as a manual-dispatch-only GitHub Actions workflow whose own
+    token stays board-read-only (least-privilege `contents: read` + `issues:
+    write`), renders the digest with a live token, and upserts a single sticky
+    tracking issue via its marker rather than posting duplicates.
+  - The Tier-1 apply resolves only the two allowed board targets (Status Done,
+    Evidence Proven) through a pure field-map — refusing any other field/value —
+    and applies verified drift through the governed write path, which does nothing
+    unless the committed enable flag is set; the CI apply step is gated on the
+    provisioned Projects secret so it is a no-op without it.
 - Agent Work Scope:
-  - Keep the radar board-read-only; any board write must go through the governed
-    write path (VHS-REQ-696), never this workflow.
+  - Keep the radar board-read-only and the apply Tier-1-only; any change beyond
+    Status Done / Evidence Proven must go through a higher, approver-gated tier of
+    the governed write path, never this loop.
 - Implementation References:
   - `scripts/renderControlPlaneDigest.js`
+  - `scripts/controlPlaneApply.js`
+  - `control-plane-write.json`
   - `.github/workflows/control-plane-loop.yml`
 - Verification References:
   - `tests/unit/renderControlPlaneDigestScript.test.ts`
   - `tests/unit/controlPlaneLoopWorkflow.test.ts`
+  - `tests/unit/controlPlaneApplyScript.test.ts`
 - Change Guidance:
-  - This workflow must never write to Project #4. Keep the renderer pure and the
-    board read fail-closed so the radar cannot report a falsely in-sync board.
+  - The radar workflow token must never gain Project #4 write scope; board writes
+    come only via the injected Projects secret through the Tier-1 apply. Keep the
+    apply's field-map closed so it can only ever set Status Done / Evidence Proven.
