@@ -9,7 +9,7 @@ const bootstrap = require('../../scripts/bootstrapLinuxVsCodeHost.js') as {
   parseOsRelease: (text: string) => Record<string, string>;
 };
 
-describe('bootstrapLinuxVsCodeHost', () => {
+describe('bootstrapLinuxVsCodeHost (VHS-REQ-684.1)', () => {
   it('detects Debian and Ubuntu package families from /etc/os-release content', () => {
     expect(
       bootstrap.parseOsRelease('ID=debian\nVERSION_CODENAME=bookworm\n')

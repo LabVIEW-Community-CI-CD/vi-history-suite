@@ -140,20 +140,21 @@ src/tooling/runtimeSettingsLiveSessionSafeRestore.ts,dev-only,No,Safe restore su
 src/ui/historyPanel.ts,mapped,Yes,History panel UI; mapped through RTM.
 src/ui/historyPanelTracker.ts,mapped,Yes,History panel tracker; mapped through RTM.
 scripts/auditPackagedRuntimeSurface.js,mapped,Yes,Package audit script; mapped through RTM.
-scripts/bootstrapLinuxVsCodeHost.js,dev-only,No,Linux VS Code host bootstrap; CI/dev infrastructure.
+scripts/bootstrapLinuxVsCodeHost.js,mapped,Yes,"Linux VS Code host bootstrap (os-release parse + apt install plan; injected command boundary); CI/dev infrastructure; mapped to VHS-REQ-684."
 scripts/generateBuildInfo.js,mapped,Yes,Build info generator (writes out/buildInfo.json with extensionVersion/extensionCommit); mapped under VHS-REQ-683.
 scripts/checkBuildInfoIntegrity.js,mapped,Yes,"Build-info contract integrity gate (VHS-REQ-683, dev-only sweep epic #2159): runs the real generateBuildInfo read-only and fails closed when its record does not satisfy the runtime consumer contract (missing key, invalid/mismatched version, malformed commit); pure validateBuildInfoRecord; npm build-info:check. Mapped to VHS-REQ-683."
 scripts/checkDevDependencies.js,mapped,Yes,Contributor dev-loop dependency preflight; precompile/precheck hook that fails closed with npm ci remediation when node_modules or the local typescript toolchain is missing before tsc runs; development tooling.
 scripts/checkEnvSync.js,mapped,Yes,"Agent environment-consistency core (VHS-REQ-697): content-based (lockfile-hash marker) staleness evaluation reused by the git hooks + env:sync:check; only node_modules-vs-lock is hard, out/requirements advisory; injectable fs. Mapped to VHS-REQ-697."
 scripts/installGitHooks.js,mapped,Yes,"Idempotent git-hook enabler (VHS-REQ-697): npm prepare lifecycle points core.hooksPath at .githooks and no-ops outside a git work-tree; injected spawnSync. Mapped to VHS-REQ-697."
-scripts/preparePublicRepoClone.js,dev-only,No,Public repo clone preparation; CI infrastructure.
-scripts/preparePublicTestFixture.js,dev-only,No,Public test fixture preparation; testing infrastructure.
-scripts/publicRepoCloneCore.js,dev-only,No,Public repo clone core; CI infrastructure.
-scripts/runLinuxIntegrationHost.js,dev-only,No,Linux integration host runner; CI infrastructure.
+scripts/preparePublicRepoClone.js,mapped,Yes,"Public repo clone preparation CLI wrapper delegating supported-URL validation + branch resolution to the clone core; CI infrastructure; mapped to VHS-REQ-684."
+scripts/preparePublicTestFixture.js,mapped,Yes,"Public test fixture preparation wrapper (canonical ni/labview-icon-editor defaults over the clone core); testing infrastructure; mapped to VHS-REQ-684."
+scripts/publicRepoCloneCore.js,mapped,Yes,"Public repo clone/refresh core (URL validation, remote-head-branch resolution, clone normalization, effective options); exercised via preparePublicRepoCloneScript.test.ts; CI infrastructure; mapped to VHS-REQ-684."
+scripts/runLinuxIntegrationHost.js,mapped,Yes,"Linux integration host runner (xvfb-run vs direct selection by display/command availability; injected command boundary); CI infrastructure; mapped to VHS-REQ-684."
 scripts/runPinnedVsce.js,supporting,No,Pinned VSCE runner; packaging support.
 scripts/verifyMarketplaceListing.js,mapped,Yes,Marketplace listing verification retry helper with retained bounded attempt evidence report; mapped to VHS-REQ-609 and VHS-REQ-615.
 scripts/checkReleaseReadiness.js,mapped,Yes,Release-readiness verdict aggregator; composes risk ledger requirements-manifest digest and version/CHANGELOG coherence into one advisory READY/ATTENTION status with a display-only human-attested runtime line; mapped to VHS-REQ-615.
-scripts/runWindowsIntegrationHost.js,dev-only,No,Windows integration host runner; CI infrastructure.
+scripts/runWindowsIntegrationHost.js,mapped,Yes,"Windows integration host runner (cmd.exe command plan + windows host-marker env; injected command boundary); CI infrastructure; mapped to VHS-REQ-684."
+tests/unit/runWindowsIntegrationHost.test.ts,mapped,Yes,"Windows integration host tests covering the cmd.exe command/env plan, --help usage, exit-status propagation, and spawn-error fail-closed; CI infrastructure; mapped to VHS-REQ-684."
 scripts/vagrantLanePreflight.js,mapped,Yes,"Optional Vagrant lane preflight and status reporter; injected command/fs boundaries; local maintainer helper only and never a CI gate; mapped to VHS-REQ-686."
 scripts/verifyVagrantBox.cjs,mapped,Yes,"Optional Vagrant golden-box manifest verifier (pure validateManifestShape + parseArgs; --generate/--verify/--print); streams sha256 and fails closed on shape/size/hash drift before hashing a multi-GB box; local maintainer tooling; mapped to VHS-REQ-686."
 scripts/vagrantReleaseValidate.cjs,mapped,Yes,"Optional Vagrant release-lane driver building the pure in-guest x86 host-native headless env command contract (VHS-REQ-665) for a real icon-editor comparison; local maintainer tooling; mapped to VHS-REQ-686."
@@ -162,7 +163,7 @@ scripts/lib/vagrantBoxProvenance.cjs,mapped,Yes,"Optional Vagrant golden-box pro
 scripts/lib/vagrantDriverArgs.cjs,mapped,Yes,"Optional Vagrant driver CLI argument parser (pure parseDriverArgs for --skip-up/--evidence with missing-value and unknown-argument errors); local maintainer tooling; mapped to VHS-REQ-686."
 scripts/buildDevToolsRelease.js,mapped,Yes,"Dev-tools GitHub Release content-digest and provenance builder; resolves the committed toolset manifest into a deterministic content digest binding shipped tools to their requirements state; mapped to VHS-REQ-667."
 scripts/verifyDevToolsRelease.js,mapped,Yes,"Dev-tools GitHub Release fail-closed verifier; confirms an extracted or in-tree toolset matches a provenance manifest's per-file sha256 and aggregate content digest; mapped to VHS-REQ-667."
-tests/unit/bootstrapLinuxVsCodeHost.test.ts,dev-only,No,Tests for Linux VS Code host bootstrap.
+tests/unit/bootstrapLinuxVsCodeHost.test.ts,mapped,Yes,"Tests for Linux VS Code host bootstrap (os-release parse, package-family classify, apt install plan); mapped to VHS-REQ-684."
 tests/unit/branchGovernanceWorkflow.test.ts,mapped,Yes,Branch governance workflow tests; mapped through RTM.
 tests/unit/branchProtectionSettingsAuditScript.test.ts,dev-only,No,Tests for the maintainer branch protection settings audit command with mocked GitHub CLI execution and drift rendering.
 tests/unit/readRepoTruthScript.test.ts,mapped,Yes,"Tests for the control-plane repo-truth read-model aggregator (epic #2144) covering merge-queue policy extraction, fail-closed-on-auth, sibling read-model wrapping, and schema/text/json output with an injected spawnSync; mapped to VHS-REQ-691 and VHS-REQ-692."
@@ -254,8 +255,8 @@ tests/unit/comparisonRuntimeStatusPrimitives.test.ts,supporting,No,"Comparison-r
 tests/unit/packageManifest.test.ts,mapped,Yes,Package manifest tests; mapped through RTM including VHS-REQ-626 export command contribution VHS-REQ-645 settings contribution checks VHS-REQ-651 Command Palette exclusion and VHS-REQ-659 VI Preview custom editor contribution.
 tests/unit/packageRuntimeSurfaceAudit.test.ts,mapped,Yes,Package runtime surface audit tests; mapped through RTM.
 tests/unit/packageTestVsixWorkflow.test.ts,mapped,Yes,Package test VSIX workflow tests; mapped through RTM.
-tests/unit/preparePublicRepoCloneScript.test.ts,dev-only,No,Public repo clone script tests; CI infrastructure.
-tests/unit/preparePublicTestFixtureScript.test.ts,dev-only,No,Public test fixture script tests; testing infrastructure.
+tests/unit/preparePublicRepoCloneScript.test.ts,mapped,Yes,"Public repo clone script tests covering supported-URL validation, remote-head-branch parse, and effective-option resolution over the clone core; CI infrastructure; mapped to VHS-REQ-684."
+tests/unit/preparePublicTestFixtureScript.test.ts,mapped,Yes,"Public test fixture script tests covering the canonical icon-editor default repo/branch/target preparation; testing infrastructure; mapped to VHS-REQ-684."
 tests/unit/publicDevcontainerSurface.test.ts,mapped,Yes,Public devcontainer surface tests; mapped through RTM.
 tests/unit/publicDocSourceLinks.test.ts,mapped,Yes,Public doc source links tests; mapped through RTM.
 tests/unit/requirementsDocs.test.ts,mapped,Yes,Requirements documentation tests; mapped through RTM.
@@ -305,7 +306,7 @@ tests/unit/comparisonReportConflictMessaging.test.ts,supporting,No,"Comparison r
 tests/unit/comparisonReportCliConnectTimeout.test.ts,supporting,No,"Comparison report CLI connect-timeout unit tests (window constants, in-window passthrough, fractional rounding, min/max clamping, non-finite/non-number fallback to default); supporting VHS-REQ-148."
 tests/unit/comparisonReportSettingsReaders.test.ts,supporting,No,"Comparison report settings readers unit tests (readComparisonRuntimeSettings host/docker mapping and trimmed overrides, readComparisonReportOptions suppression-flag defaults and strict-true, readCliConnectTimeoutSeconds/readWorktreeSnapshotRetentionLimit validation and fallback); supporting VHS-REQ-148, VHS-REQ-633, VHS-REQ-641, VHS-REQ-645, VHS-REQ-650."
 tests/unit/reviewScenarioSupportPolicy.test.ts,mapped,Yes,Review scenario and repository support policy tests; mapped to VHS-REQ-610.
-tests/unit/runLinuxIntegrationHost.test.ts,dev-only,No,Linux integration host tests; CI infrastructure.
+tests/unit/runLinuxIntegrationHost.test.ts,mapped,Yes,"Linux integration host tests covering xvfb-run selection, direct-run fallback, and the linux host-marker env; CI infrastructure; mapped to VHS-REQ-684."
 tests/unit/vagrantLanePreflight.test.ts,mapped,Yes,"Optional Vagrant lane preflight/status tests covering banner and box-list parsing readiness checks and CLI exit behavior; local maintainer tooling; mapped to VHS-REQ-686."
 tests/unit/verifyVagrantBox.test.ts,mapped,Yes,"Optional Vagrant golden-box manifest shape-validation tests covering schema/schemaVersion/sha256/sizeBytes checks that fail fast before hashing a multi-GB box; local maintainer tooling; mapped to VHS-REQ-686."
 tests/unit/vagrantReleaseValidate.test.ts,mapped,Yes,"Optional Vagrant release-lane guest-script tests asserting the VHS-REQ-665 x86 host-native headless env contract (WIN_PROVIDER=host, WIN_LV_BITNESS=x86, LV_RTE_WIN_HOSTNATIVE_HEADLESS=1) and path injection; local maintainer tooling; mapped to VHS-REQ-686."

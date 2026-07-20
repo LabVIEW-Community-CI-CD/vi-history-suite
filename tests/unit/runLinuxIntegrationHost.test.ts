@@ -9,7 +9,7 @@ const integrationHost = require('../../scripts/runLinuxIntegrationHost.js') as {
   hasDisplay: (env?: Record<string, string | undefined>) => boolean;
 };
 
-describe('runLinuxIntegrationHost', () => {
+describe('runLinuxIntegrationHost (VHS-REQ-684.4)', () => {
   it('uses xvfb-run for Linux integration tests when no display is present and xvfb-run exists', () => {
     const command = integrationHost.buildLinuxIntegrationCommand(
       {},

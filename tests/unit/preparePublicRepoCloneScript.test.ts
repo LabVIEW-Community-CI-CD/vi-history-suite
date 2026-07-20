@@ -46,7 +46,7 @@ const script = require(scriptPath) as {
   };
 };
 
-describe('prepare public repo clone script', () => {
+describe('prepare public repo clone script (VHS-REQ-684.2)', () => {
   it('requires an explicit public repo URL and explains the supported hosts', () => {
     const usage = script.getUsage();
 
