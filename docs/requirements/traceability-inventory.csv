@@ -21,6 +21,7 @@ scripts/buildSupplyChainState.js,mapped,Yes,"Read-only supply-chain state aggreg
 scripts/buildReleaseState.js,mapped,Yes,"Read-only release-state aggregator emitting a vi-history-suite/release-state@v1 packet: durable ground-truth stages (develop-ready, tagged, on-main, published, backsynced), furthest stage, stage gaps, and a two-key publish-authority posture; all git/gh/vsce boundaries injected; mapped to VHS-REQ-670."
 scripts/runMultiStandardsAudit.js,mapped,Yes,Local multi-standard audit helper for direct 29148/26514 checks and standards-review profile evidence; mapped to VHS-REQ-615.
 scripts/runIssueStandardsTriage.js,dev-only,No,Local maintainer issue-triage helper that captures GitHub issue metadata and runs repo-standards-review quick-triage standards evidence against a Docker-visible tracked-worktree snapshot; advisory only.
+scripts/readRepoTruth.js,dev-only,No,"Agent Operating Control-Plane repo-truth read-model aggregator (epic #2144, slice 1): schema'd JSON packet over the merge-queue policy, coverage, and requirement-health domains; gh + sibling-read-model boundaries injected; FAIL-CLOSED on auth. Pending VHS-REQ-692 authoring to become mapped."
 scripts/mapCoverageToTraceability.js,mapped,Yes,Coverage traceability map command; mapped to VHS-REQ-613.
 src/cli/runDevHost.ts,dev-only,No,Development host CLI for local debugging and testing.
 src/commands/openViHistoryCommand.ts,mapped,Yes,Main command implementation; mapped through RTM.
@@ -151,6 +152,7 @@ scripts/verifyDevToolsRelease.js,mapped,Yes,"Dev-tools GitHub Release fail-close
 tests/unit/bootstrapLinuxVsCodeHost.test.ts,dev-only,No,Tests for Linux VS Code host bootstrap.
 tests/unit/branchGovernanceWorkflow.test.ts,mapped,Yes,Branch governance workflow tests; mapped through RTM.
 tests/unit/branchProtectionSettingsAuditScript.test.ts,dev-only,No,Tests for the maintainer branch protection settings audit command with mocked GitHub CLI execution and drift rendering.
+tests/unit/readRepoTruthScript.test.ts,dev-only,No,"Tests for the control-plane repo-truth read-model aggregator (epic #2144) covering merge-queue policy extraction, fail-closed-on-auth, sibling read-model wrapping, and schema/text/json output with an injected spawnSync."
 tests/unit/checkAdrIndexScript.test.ts,dev-only,No,"Tests for the ADR infrastructure gate (checkAdrIndex.js) covering index/template presence, missing file/index agreement, numbering gaps, required field/section checks, header status validation, supersession forward-linkage, index title/status agreement, SYRS coverage, and reverse SRS/SYRS citation validation over synthetic ADR fixtures."
 tests/unit/checkAgentDelegationScript.test.ts,dev-only,No,"Tests for the agent-delegation drift gate (checkAgentDelegation.js) covering dropdown option extraction, non-agent dropdown skipping, unknown-agent failure, orphan-route detection, 'Use when' trigger presence/distinctness, skill-link integrity, and the real issue templates."
 tests/unit/buildInfo.test.ts,dev-only,No,Build info tests; development tooling.

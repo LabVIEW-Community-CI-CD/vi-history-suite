@@ -335,6 +335,7 @@
     "check": "tsc -p . --noEmit",
     "quality:local": "npm run check && npm test && npm run traceability:audit && npm run customization:audit && npm run docs:links && npm run coverage:map && npm run requirements:verify",
     "branch-protection:audit": "node scripts/auditBranchProtectionSettings.js",
+    "repo:truth": "node scripts/readRepoTruth.js",
     "customization:audit": "node scripts/auditCustomizationGovernance.js",
     "dev:watch": "tsc -p . --watch --preserveWatchOutput",
     "dev:workspace": "npm run compile && node out/cli/runDevHost.js --prepare-workspace-only",
