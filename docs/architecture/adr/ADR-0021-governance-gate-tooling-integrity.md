@@ -57,4 +57,4 @@ are covered by the coverage-risk and traceability gates like any mapped surface.
 
 ## Requirements recorded
 
-VHS-SYS-REQ-013; VHS-REQ-681.
+VHS-SYS-REQ-013; VHS-REQ-681, VHS-REQ-700.

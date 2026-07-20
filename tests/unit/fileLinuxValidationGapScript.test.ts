@@ -129,7 +129,7 @@ function manifest(entries: Array<{ kind: string; filename: string }>) {
   });
 }
 
-describe('fileLinuxValidationGap parseArgs', () => {
+describe('fileLinuxValidationGap parseArgs (VHS-REQ-700.1)', () => {
   it('parses a full argument set', () => {
     const options = parseArgs([
       '--run-dir',

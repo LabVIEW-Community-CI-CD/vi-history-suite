@@ -88,7 +88,7 @@ afterEach(() => {
   }
 });
 
-describe('issue standards triage script', () => {
+describe('issue standards triage script (VHS-REQ-700.2)', () => {
   it('parses defaults and accepts the issue as a positional argument', () => {
     const options = parseArgs(['1040']);
 

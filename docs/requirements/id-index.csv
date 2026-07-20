@@ -713,5 +713,6 @@ VHS-REQ-688,Software,Active,srs.md#vhs-req-688-developer-environment-configurati
 VHS-REQ-689,Software,Active,srs.md#vhs-req-689-mcp-stdio-entrypoint,,,docs/requirements/srs.md
 VHS-REQ-698,Software,Active,srs.md#vhs-req-698-control-plane-loop-drift-radar,,,docs/requirements/srs.md
 VHS-REQ-690,Software,Active,srs.md#vhs-req-690-self-hosted-integration-coverage-lane,,,docs/requirements/srs.md
+VHS-REQ-700,Software,Active,srs.md#vhs-req-700-maintainer-governance-automation-helpers,,,docs/requirements/srs.md
 VHS-REQ-697,Software,Active,srs.md#vhs-req-697-agent-environment-consistency-gate,,,docs/requirements/srs.md
 VHS-REQ-699,Software,Active,srs.md#vhs-req-699-single-pass-comparison-preview-pipeline,,,docs/requirements/srs.md

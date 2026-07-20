@@ -6331,6 +6331,11 @@ Missing numeric IDs are intentional.
   - `scripts/checkDocumentationWorkbench.js`
 - Verification References:
   - `tests/unit/checkGovernanceGatesScript.test.ts`
+  - `tests/unit/checkAdrIndexScript.test.ts`
+  - `tests/unit/checkAgentDelegationScript.test.ts`
+  - `tests/unit/branchProtectionSettingsAuditScript.test.ts`
+  - `tests/unit/checkDevDependencies.test.ts`
+  - `tests/unit/documentationWorkbenchGate.test.ts`
 - Change Guidance:
   - Keep the manifest the single source of truth for governance gate wiring; do
     not remove a gate from the manifest to make the check pass — fix the wiring.
@@ -6367,6 +6372,10 @@ Missing numeric IDs are intentional.
   - `src/cli/runDevHost.ts`
 - Verification References:
   - `tests/unit/checkBuildInfoIntegrityScript.test.ts`
+  - `tests/unit/buildInfo.test.ts`
+  - `tests/unit/generateBuildInfo.test.ts`
+  - `tests/unit/devHostLoop.test.ts`
+  - `tests/unit/runDevHostCli.test.ts`
 - Change Guidance:
   - Keep the gate driving the real generator (not a fixture) so it proves the
     shipped generator's output, and keep the validator pure/injectable.
@@ -6723,3 +6732,39 @@ Missing numeric IDs are intentional.
   - Never give the lane a write token or a push/PR trigger; untrusted code must
     never run on the self-hosted runner. Keep the evaluator pure so its own logic
     is deterministically tested.
+
+### VHS-REQ-700: Maintainer Governance-Automation Helpers
+
+- Status: Active
+- Parent: VHS-SYS-REQ-013
+- Area: CI And Developer Environment
+- Statement: The maintainer governance-automation helper scripts — the
+  Linux-validation gap auto-filer and the issue-standards triage helper — shall
+  parse their inputs, classify their evidence, and compose their outputs through
+  pure functions and injected filesystem/spawn boundaries while confining every
+  external process invocation to an explicit `gh`/Docker allow-list, so the
+  maintainer automation is unit-verifiable and cannot be steered into running an
+  unapproved command.
+- Acceptance Criteria:
+  - The Linux-validation gap auto-filer parses its arguments (rejecting an invalid
+    repository slug and unknown flags), reads run evidence and classifies the
+    validation gap, and composes the issue content through pure functions, filing
+    through an injected `gh`-only boundary that refuses any non-`gh` executable.
+  - The issue-standards triage helper parses its arguments, publishes its
+    triage-summary JSON Schema without fetching or spawning, and builds its issue
+    and Docker standards commands (failing fast when the standards image is
+    unavailable) through injected spawn/filesystem boundaries.
+- Agent Work Scope:
+  - When changing a maintainer governance-automation helper, keep its parse/detect/
+    compose logic pure, its filesystem and process invocations behind injected
+    boundaries, and its executable allow-list restricted to `gh`/Docker.
+- Implementation References:
+  - `scripts/fileLinuxValidationGap.js`
+  - `scripts/runIssueStandardsTriage.js`
+- Verification References:
+  - `tests/unit/fileLinuxValidationGapScript.test.ts`
+  - `tests/unit/issueStandardsTriageScript.test.ts`
+- Change Guidance:
+  - Keep the helpers' parse/detect/compose functions pure and their fs/spawn
+    boundaries injected, and never widen the executable allow-list beyond the
+    `gh`/Docker commands the maintainer automation requires.
