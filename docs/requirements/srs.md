@@ -6029,3 +6029,36 @@ Missing numeric IDs are intentional.
     signals rather than promoting advisory conditions to commit-blocking. The
     `--no-verify` git bypass cannot be prevented at the hook level; rely on
     repository policy, not a technical guarantee, to forbid it.
+
+### VHS-REQ-693: Repo-Governance MCP Server
+
+- Status: Active
+- Parent: VHS-SYS-REQ-013
+- Area: CI And Developer Environment
+- Statement: The repository shall provide a dependency-free JSON-RPC 2.0 stdio MCP
+  server, separate from the VI semantic-comparison MCP server, that exposes the
+  repo-truth read-model to MCP clients as a read-only tool, so an agent reads live
+  repository ground-truth through the Model Context Protocol. It carries no write
+  or acting surface and imports nothing that pulls in the VS Code extension host.
+- Acceptance Criteria:
+  - `scripts/repoGovernanceMcp.js` handles the JSON-RPC 2.0 lifecycle
+    (`initialize`, `tools/list`, `ping`, notifications) and publishes a single
+    read-only `get_repo_truth` tool that returns the repo-truth read-model packet
+    as text content.
+  - The server is dependency-free and vscode-free: it reuses the repo-truth
+    read-model in process and the read-model's fail-closed-on-auth posture
+    propagates as a JSON-RPC error (not a fabricated packet) when a live GitHub
+    token is unavailable.
+- Agent Work Scope:
+  - Keep the handler pure/injectable with a thin stdio loop; add read-only tools
+    that wrap read-model surfaces rather than introducing any write action, which
+    remains governed and default-disabled under VHS-REQ-696.
+- Implementation References:
+  - `scripts/repoGovernanceMcp.js`
+  - `scripts/readRepoTruth.js`
+  - `package.json`
+- Verification References:
+  - `tests/unit/repoGovernanceMcpScript.test.ts`
+- Change Guidance:
+  - Keep the server read-only and dependency-free; expose new ground-truth as
+    additional read-only tools rather than changing the existing tool contract.
