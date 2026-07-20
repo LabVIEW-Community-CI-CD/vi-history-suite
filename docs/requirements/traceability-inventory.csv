@@ -337,6 +337,7 @@ tests/unit/vscodeTestHarness.test.ts,mapped,Yes,VS Code orchestration harness pr
 tests/unit/runtimeSettingsLiveSessionProbe.test.ts,mapped,Yes,"Runtime settings live-session probe tests (drift/receipt classification of the pure summary); mapped to VHS-REQ-687."
 tests/unit/runtimeSettingsLiveSessionProbePacket.test.ts,mapped,Yes,"Runtime settings live-session probe packet tests (retained-history counts + run-scoped/latest persistence via injected fs); mapped to VHS-REQ-687."
 tests/unit/runtimeSettingsLiveSessionSafeRestore.test.ts,mapped,Yes,"Runtime settings live-session safe-restore tests (snapshot/capture/restore/verify guardrail incl. missing-file baseline and combined operation+restore failures); mapped to VHS-REQ-687."
+tests/unit/developerEnvironmentConfig.test.ts,mapped,Yes,"Developer-environment configuration structural-shape tests (tsconfig src-scoped strict compile, workspace launch/tasks/extensions shape, advisory Stryker posture); mapped to VHS-REQ-688."
 tests/unit/securityMaintenanceWorkflows.test.ts,mapped,Yes,Security maintenance workflows tests; mapped through RTM.
 tests/unit/viFile.test.ts,mapped,Yes,VI file tests; mapped through RTM.
 tests/unit/viHistoryModel.test.ts,mapped,Yes,VI history model direct eligibility/window tests; mapped to VHS-REQ-006 VHS-REQ-008 and VHS-REQ-017.
@@ -372,8 +373,8 @@ tests/integration/prepareTestWorkspace.ts,mapped,Yes,"Integration test workspace
 .github/ISSUE_TEMPLATE/requirement_target.yml,asset-doc,Yes,Requirement target template; mapped through RTM.
 .github/pull_request_template.md,mapped,Yes,Lightweight requirement-targeted PR evidence contract template; mapped to VHS-REQ-615.
 vitest.config.ts,mapped,Yes,Vitest coverage reporter and evidence-backed threshold configuration; mapped to VHS-REQ-597 and VHS-REQ-613.
-stryker.config.mjs,dev-only,No,Stryker mutation-testing configuration scoped to src/domain; advisory assertion-quality signal (thresholds.break null); requires a local run.
-tsconfig.json,dev-only,No,TypeScript configuration; development tooling.
+stryker.config.mjs,mapped,Yes,"Stryker mutation-testing configuration scoped to src/domain; advisory assertion-quality signal (thresholds.break null); guarded by structural-shape assertions; mapped to VHS-REQ-688."
+tsconfig.json,mapped,Yes,"TypeScript build configuration: compiles src/**/*.ts into out under strict Node16; guarded by structural-shape assertions; mapped to VHS-REQ-688."
 tsconfig.integration.json,mapped,Yes,"TypeScript integration config: compiles src + tests/integration to a separate out-tests tree for the test:integration runner, keeping the harness off the unit-coverage gate; testing infrastructure; mapped to VHS-REQ-685."
 package.json,mapped,Yes,Package manifest; mapped through RTM including VHS-REQ-626 export command contribution VHS-REQ-651 Command Palette exclusion and VHS-REQ-659 VI Preview custom editor contribution.
 package-lock.json,supporting,No,Package lock file; dependency support.
@@ -469,9 +470,9 @@ vagrant/provision/install-playwright-preview.ps1,supporting,No,"Idempotent guest
 vagrant/verify-docker-cache-benchmark.cjs,supporting,No,"Maintainer preview-cache benchmark driver rendering VIs cold then warm (provider/platform configurable) and asserting byte-identical warm hits; not a hosted-CI gate; mapped to VHS-REQ-659."
 vagrant/verify-docker-host-cache.cjs,supporting,No,"Maintainer driver proving the Docker-generates/Host-displays preview-cache model (cacheOnly peek is a byte-identical hit with no LabVIEW launch); not a hosted-CI gate; mapped to VHS-REQ-659."
 .devcontainer/devcontainer.json,supporting,Yes,Devcontainer configuration; mapped through RTM.
-.vscode/extensions.json,dev-only,No,VS Code recommended extensions; workspace configuration.
-.vscode/launch.json,dev-only,No,VS Code debug launch configurations; workspace configuration.
-.vscode/tasks.json,dev-only,No,VS Code task definitions; workspace configuration.
+.vscode/extensions.json,mapped,Yes,"VS Code recommended extensions; workspace configuration guarded by structural-shape assertions; mapped to VHS-REQ-688."
+.vscode/launch.json,mapped,Yes,"VS Code debug launch configurations (extension-host launch + integration test path); guarded by structural-shape assertions; mapped to VHS-REQ-688."
+.vscode/tasks.json,mapped,Yes,"VS Code task definitions (compile/watch/test); guarded by structural-shape assertions; mapped to VHS-REQ-688."
 src/tooling/labviewInstallCatalog.ts,mapped,Yes,Shared host LabVIEW install-candidate catalog and single source of truth for activation detection and the comparison locator mapped to VHS-REQ-632.
 src/tooling/containerImageCatalog.ts,mapped,Yes,LabVIEW container image tag model and registry/local discovery and selection resolution mapped to VHS-REQ-646 VHS-REQ-647 VHS-REQ-648 and VHS-REQ-650.
 src/tooling/runtimeAutoDetect.ts,mapped,Yes,Filesystem-only host and Docker runtime detector mapped to VHS-REQ-616.
