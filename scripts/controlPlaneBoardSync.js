@@ -100,7 +100,8 @@ function runGh(args, deps = {}) {
 }
 
 function defaultReadProjectItems(deps = {}) {
-  const out = runGh(
+  const runGhImpl = deps.runGh || runGh;
+  const out = runGhImpl(
     ['project', 'item-list', String(PROJECT_NUMBER), '--owner', PROJECT_OWNER, '--format', 'json', '--limit', '400'],
     deps
   );
@@ -125,9 +126,10 @@ function defaultReadProjectItems(deps = {}) {
 // its PR is MERGED. We read state per number; anything not confirmed closed is
 // treated as not-closed (never inferred).
 function defaultReadVerifiedClosures(numbers, deps = {}) {
+  const runGhImpl = deps.runGh || runGh;
   const closures = new Map();
   for (const number of numbers) {
-    const out = runGh(
+    const out = runGhImpl(
       [
         'issue',
         'view',
@@ -158,7 +160,10 @@ module.exports = {
   BoardSyncAuthError,
   buildBoardSyncItems,
   renderShadowPlan,
-  collectBoardSyncPlan
+  collectBoardSyncPlan,
+  runGh,
+  defaultReadProjectItems,
+  defaultReadVerifiedClosures
 };
 
 if (require.main === module) {
