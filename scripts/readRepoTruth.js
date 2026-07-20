@@ -254,6 +254,23 @@ function collectReleaseStateDomain(deps = {}) {
   };
 }
 
+// Supply-chain domain: read the schema'd supply-chain-state read-model
+// (VHS-REQ-668) and surface the rollup status plus artifact/attention counts. A
+// local read-model, so it degrades to available:false rather than failing closed.
+function collectSupplyChainDomain(deps = {}) {
+  const outcome = runSiblingReadModel('scripts/buildSupplyChainState.js', ['--json'], deps);
+  if (!outcome.available) {
+    return outcome;
+  }
+  const packet = outcome.packet || {};
+  return {
+    available: true,
+    status: packet.status,
+    artifactCount: packet.artifactCount,
+    attentionCount: packet.attentionCount
+  };
+}
+
 // Fetch open PRs via gh (fail-closed on auth, like the merge-queue domain) and
 // summarize them. Part of the live GitHub precondition, not a local artifact.
 function collectOpenWorkDomain(options, deps = {}) {
@@ -273,6 +290,7 @@ function buildRepoTruthPacket(options = {}, deps = {}) {
   const coverage = collectCoverageDomain(deps);
   const requirementHealth = collectRequirementHealthDomain(deps);
   const releaseState = collectReleaseStateDomain(deps);
+  const supplyChain = collectSupplyChainDomain(deps);
   return {
     ...schemaEnvelopeFields(REPO_TRUTH_SCHEMA_ID, REPO_TRUTH_SCHEMA_VERSION),
     generatedAt: generatedAt(deps),
@@ -283,7 +301,8 @@ function buildRepoTruthPacket(options = {}, deps = {}) {
       openWork,
       coverage,
       requirementHealth,
-      releaseState
+      releaseState,
+      supplyChain
     }
   };
 }
@@ -302,13 +321,14 @@ const REPO_TRUTH_JSON_SCHEMA = Object.freeze({
     branch: { type: 'string' },
     domains: {
       type: 'object',
-      required: ['mergeQueue', 'openWork', 'coverage', 'requirementHealth', 'releaseState'],
+      required: ['mergeQueue', 'openWork', 'coverage', 'requirementHealth', 'releaseState', 'supplyChain'],
       properties: {
         mergeQueue: { type: 'object' },
         openWork: { type: 'object' },
         coverage: { type: 'object' },
         requirementHealth: { type: 'object' },
-        releaseState: { type: 'object' }
+        releaseState: { type: 'object' },
+        supplyChain: { type: 'object' }
       }
     }
   }
@@ -350,6 +370,12 @@ function renderTextReport(packet) {
       ? `Release state: stage=${rs.stage}; status=${rs.status}; authorityComplete=${rs.authorityComplete}.`
       : `Release state: unavailable (${rs.reason}).`
   );
+  const sc = packet.domains.supplyChain;
+  lines.push(
+    sc.available
+      ? `Supply chain: status=${sc.status}; artifacts=${sc.artifactCount}; attention=${sc.attentionCount}.`
+      : `Supply chain: unavailable (${sc.reason}).`
+  );
   return lines;
 }
 
@@ -362,7 +388,8 @@ function renderMarkdownReport(packet) {
     `| Open work | ${packet.domains.openWork.available ? `${packet.domains.openWork.openPullRequests} open PR(s)` : `unavailable (${packet.domains.openWork.reason})`} |`,
     `| Coverage | ${packet.domains.coverage.available ? `threshold ${packet.domains.coverage.riskThreshold}, below ${packet.domains.coverage.mappedBelowThreshold}` : `unavailable (${packet.domains.coverage.reason})`} |`,
     `| Requirement health | ${packet.domains.requirementHealth.available ? `${packet.domains.requirementHealth.requirementsNeedingAttention} need attention (status ${packet.domains.requirementHealth.status})` : `unavailable (${packet.domains.requirementHealth.reason})`} |`,
-    `| Release state | ${packet.domains.releaseState.available ? `stage ${packet.domains.releaseState.stage}, status ${packet.domains.releaseState.status}` : `unavailable (${packet.domains.releaseState.reason})`} |`
+    `| Release state | ${packet.domains.releaseState.available ? `stage ${packet.domains.releaseState.stage}, status ${packet.domains.releaseState.status}` : `unavailable (${packet.domains.releaseState.reason})`} |`,
+    `| Supply chain | ${packet.domains.supplyChain.available ? `status ${packet.domains.supplyChain.status}, ${packet.domains.supplyChain.attentionCount} of ${packet.domains.supplyChain.artifactCount} need attention` : `unavailable (${packet.domains.supplyChain.reason})`} |`
   ];
   return [`# Repo-truth read-model: ${packet.repo} @ ${packet.branch}`, '', ...rows];
 }
@@ -450,6 +477,7 @@ module.exports = {
   collectCoverageDomain,
   collectRequirementHealthDomain,
   collectReleaseStateDomain,
+  collectSupplyChainDomain,
   buildRepoTruthPacket,
   run
 };
