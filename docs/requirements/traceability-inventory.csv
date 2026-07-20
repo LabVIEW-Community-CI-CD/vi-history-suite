@@ -138,6 +138,8 @@ scripts/auditPackagedRuntimeSurface.js,mapped,Yes,Package audit script; mapped t
 scripts/bootstrapLinuxVsCodeHost.js,dev-only,No,Linux VS Code host bootstrap; CI/dev infrastructure.
 scripts/generateBuildInfo.js,dev-only,No,Build info generator; development tooling.
 scripts/checkDevDependencies.js,dev-only,No,Contributor dev-loop dependency preflight; precompile/precheck hook that fails closed with npm ci remediation when node_modules or the local typescript toolchain is missing before tsc runs; development tooling.
+scripts/checkEnvSync.js,mapped,Yes,"Agent environment-consistency core (VHS-REQ-697): content-based (lockfile-hash marker) staleness evaluation reused by the git hooks + env:sync:check; only node_modules-vs-lock is hard, out/requirements advisory; injectable fs. Mapped to VHS-REQ-697."
+scripts/installGitHooks.js,mapped,Yes,"Idempotent git-hook enabler (VHS-REQ-697): npm prepare lifecycle points core.hooksPath at .githooks and no-ops outside a git work-tree; injected spawnSync. Mapped to VHS-REQ-697."
 scripts/preparePublicRepoClone.js,dev-only,No,Public repo clone preparation; CI infrastructure.
 scripts/preparePublicTestFixture.js,dev-only,No,Public test fixture preparation; testing infrastructure.
 scripts/publicRepoCloneCore.js,dev-only,No,Public repo clone core; CI infrastructure.
@@ -153,6 +155,8 @@ tests/unit/bootstrapLinuxVsCodeHost.test.ts,dev-only,No,Tests for Linux VS Code 
 tests/unit/branchGovernanceWorkflow.test.ts,mapped,Yes,Branch governance workflow tests; mapped through RTM.
 tests/unit/branchProtectionSettingsAuditScript.test.ts,dev-only,No,Tests for the maintainer branch protection settings audit command with mocked GitHub CLI execution and drift rendering.
 tests/unit/readRepoTruthScript.test.ts,mapped,Yes,"Tests for the control-plane repo-truth read-model aggregator (epic #2144) covering merge-queue policy extraction, fail-closed-on-auth, sibling read-model wrapping, and schema/text/json output with an injected spawnSync; mapped to VHS-REQ-691 and VHS-REQ-692."
+tests/unit/checkEnvSyncScript.test.ts,mapped,Yes,"Tests for the agent environment-consistency core (VHS-REQ-697) covering the hard/advisory verdict, the lockfile-hash marker record/compare roundtrip, and enforce/report/record exit codes with injected fs; mapped to VHS-REQ-697."
+tests/unit/installGitHooksScript.test.ts,mapped,Yes,"Tests for the idempotent git-hook enabler (VHS-REQ-697) covering set/already-set/skip-outside-work-tree/failure with injected spawnSync; mapped to VHS-REQ-697."
 tests/unit/checkAdrIndexScript.test.ts,dev-only,No,"Tests for the ADR infrastructure gate (checkAdrIndex.js) covering index/template presence, missing file/index agreement, numbering gaps, required field/section checks, header status validation, supersession forward-linkage, index title/status agreement, SYRS coverage, and reverse SRS/SYRS citation validation over synthetic ADR fixtures."
 tests/unit/checkAgentDelegationScript.test.ts,dev-only,No,"Tests for the agent-delegation drift gate (checkAgentDelegation.js) covering dropdown option extraction, non-agent dropdown skipping, unknown-agent failure, orphan-route detection, 'Use when' trigger presence/distinctness, skill-link integrity, and the real issue templates."
 tests/unit/buildInfo.test.ts,dev-only,No,Build info tests; development tooling.
@@ -390,6 +394,7 @@ docs/architecture/adr/ADR-0015-release-state-read-model.md,asset-doc,No,Architec
 docs/architecture/adr/ADR-0016-coverage-led-assurance.md,asset-doc,No,Architecture decision record for the coverage-led assurance operating model (VHS-SYS-REQ-017 design of record); not directly mapped in RTM.
 docs/architecture/adr/ADR-0017-container-image-version-selection-ux.md,asset-doc,No,Architecture decision record for the container image version selection and pull-progress experience (VHS-SYS-REQ-019 design of record); not directly mapped in RTM.
 docs/architecture/adr/ADR-0018-agent-operating-control-plane.md,asset-doc,No,Architecture decision record for the agent operating control-plane and repo-truth read-model (VHS-REQ-691/VHS-REQ-692 design of record); not directly mapped in RTM.
+docs/architecture/adr/ADR-0019-agent-environment-consistency-gate.md,asset-doc,No,Architecture decision record for the agent environment consistency gate git hooks (VHS-REQ-697 design of record); not directly mapped in RTM.
 docs/architecture/adr/README.md,asset-doc,No,Architecture decision record index and how ADRs are leveraged by documentation; enforced by scripts/checkAdrIndex.js; not directly mapped in RTM.
 docs/architecture/adr/ADR-template.md,asset-doc,No,Architecture decision record template for new ADRs; not directly mapped in RTM.
 docs/architecture/diagnostics-bundle.md,asset-doc,No,Comparison runtime diagnostics bundle schema and analyzer guide; reference documentation supporting VHS-REQ-148 retained runtime evidence; not directly mapped in RTM.

@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+#
+# vi-history-suite post-merge hook (VHS-REQ-697).
+#
+# Runs SYNCHRONOUSLY after a successful merge (e.g. `git pull`) and loudly REPORTS
+# a stale local environment so an agent/human fixes it before wasting a turn.
+# git ignores this hook's exit code, so its value is the synchronous report — it
+# ALWAYS exits 0. The actual commit-time BLOCK lives in the pre-commit hook.
+set -uo pipefail
+
+repo_root="$(git rev-parse --show-toplevel 2>/dev/null)" || exit 0
+cd "$repo_root" || exit 0
+
+# Did requirements or sources change in this merge? ORIG_HEAD is the pre-merge tip.
+requirements_flag=""
+sources_flag=""
+if git rev-parse --verify -q ORIG_HEAD >/dev/null 2>&1; then
+  if ! git diff --quiet ORIG_HEAD HEAD -- docs/requirements 2>/dev/null; then
+    requirements_flag="--requirements-changed"
+  fi
+  if ! git diff --quiet ORIG_HEAD HEAD -- src tsconfig.json 2>/dev/null; then
+    sources_flag="--sources-changed"
+  fi
+fi
+
+node scripts/checkEnvSync.js --report --label post-merge ${requirements_flag} ${sources_flag} || true
+
+# Best-effort agent orientation: the live board is authoritative for "what's next".
+echo "[post-merge] Board is authoritative for next work: gh project view 4 --owner LabVIEW-Community-CI-CD (or npm run repo:truth)."
+
+exit 0

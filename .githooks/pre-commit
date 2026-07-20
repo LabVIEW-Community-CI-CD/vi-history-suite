@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+#
+# vi-history-suite pre-commit hook (VHS-REQ-697).
+#
+# This is the ENFORCING gate. git honors this hook's exit code, so a nonzero exit
+# aborts the commit. It fails closed ONLY on a hard-stale condition (node_modules
+# out of sync with package-lock.json), which genuinely breaks tsc/vitest — a
+# doc-only commit with merely a stale out/ is NOT blocked (out/ staleness is
+# advisory in checkEnvSync).
+#
+# Honest limitation: `git commit --no-verify` bypasses all client-side hooks; git
+# provides no way to prevent that at the hook level. Per repository policy
+# (AGENTS.md) agents MUST NOT use --no-verify as a shortcut.
+set -uo pipefail
+
+repo_root="$(git rev-parse --show-toplevel 2>/dev/null)" || exit 0
+cd "$repo_root" || exit 0
+
+if ! node scripts/checkEnvSync.js --enforce --label pre-commit; then
+  echo "[pre-commit] Blocking: your local environment is out of sync. Run the remedy above (e.g. 'npm ci'), then commit again." >&2
+  exit 1
+fi
+
+exit 0

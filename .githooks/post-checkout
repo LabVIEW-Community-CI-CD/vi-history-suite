@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+#
+# vi-history-suite post-checkout hook (VHS-REQ-697).
+#
+# Args: $1 = previous HEAD, $2 = new HEAD, $3 = branch-checkout flag (1 for a
+# branch checkout, 0 for a file checkout). Runs SYNCHRONOUSLY and REPORTS a stale
+# local environment after a checkout. git ignores its exit code, so it ALWAYS
+# exits 0; the commit-time BLOCK lives in the pre-commit hook.
+#
+# Naturally no-ops for file checkouts and no-op HEAD moves (prev == new), so a
+# `git checkout <file>` never triggers a heavy report.
+set -uo pipefail
+
+prev_head="${1:-}"
+new_head="${2:-}"
+branch_flag="${3:-0}"
+
+# File checkout, or HEAD did not move: nothing to report.
+if [ "$branch_flag" != "1" ] || [ "$prev_head" = "$new_head" ]; then
+  exit 0
+fi
+
+repo_root="$(git rev-parse --show-toplevel 2>/dev/null)" || exit 0
+cd "$repo_root" || exit 0
+
+requirements_flag=""
+sources_flag=""
+if [ -n "$prev_head" ] && [ -n "$new_head" ]; then
+  if ! git diff --quiet "$prev_head" "$new_head" -- docs/requirements 2>/dev/null; then
+    requirements_flag="--requirements-changed"
+  fi
+  if ! git diff --quiet "$prev_head" "$new_head" -- src tsconfig.json 2>/dev/null; then
+    sources_flag="--sources-changed"
+  fi
+fi
+
+node scripts/checkEnvSync.js --report --label post-checkout ${requirements_flag} ${sources_flag} || true
+
+exit 0

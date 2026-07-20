@@ -328,6 +328,9 @@
   },
   "scripts": {
     "clean": "rimraf out out-tests coverage",
+    "prepare": "node scripts/installGitHooks.js && node scripts/checkEnvSync.js --record-lock-hash",
+    "hooks:install": "node scripts/installGitHooks.js",
+    "env:sync:check": "node scripts/checkEnvSync.js --report --label env",
     "deps:check": "node scripts/checkDevDependencies.js",
     "precompile": "node scripts/checkDevDependencies.js",
     "compile": "tsc -p . && node scripts/generateBuildInfo.js && node scripts/exportRequirementsManifest.js",
