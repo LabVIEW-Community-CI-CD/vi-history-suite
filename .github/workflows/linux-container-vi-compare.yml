@@ -1,0 +1,132 @@
+name: Linux Container VI Compare (Hosted)
+
+# VHS-REQ-699 — Manual-dispatch HOSTED-CI signal that exercises the single-pass
+# comparison-preview pipeline against 64-bit LabVIEW on Linux via the
+# linux-container provider on a GitHub-HOSTED, PINNED Ubuntu runner
+# (`ubuntu-24.04`; a pinned image is used so the OS does not drift, and it runs
+# on GitHub-managed infrastructure, not a maintainer-managed runner).
+#
+# PARITY: this drives the SAME scripts/req699-linux-container-driver.cjs, the
+# SAME NI LabVIEW Linux image, and the SAME linux-container provider that a LOCAL
+# Linux Docker run uses — so the hosted signal is directly comparable to the
+# local docker-container run.
+#
+# Best-effort: pulling and running the multi-GB NI LabVIEW Linux image on a
+# hosted runner may fail (size, licensing). The job captures the outcome as
+# EVIDENCE and stays green by default so the dispatch always yields a readable
+# signal; set fail_on_runtime_failure=true to make a runtime failure fail the job.
+
+on:
+  workflow_dispatch:
+    inputs:
+      container_image:
+        description: 'Linux LabVIEW container image'
+        required: false
+        default: 'nationalinstruments/labview:2026q1-linux'
+        type: string
+      labview_version:
+        description: 'LabVIEW major version (default 2026)'
+        required: false
+        default: '2026'
+        type: string
+      fail_on_runtime_failure:
+        description: 'Fail the job when the comparison runtime does not succeed'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  linux-container-vi-compare:
+    name: Linux Container VI Compare (Hosted)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      - name: Refuse Marketplace Tokens
+        run: |
+          if [ -n "$VSCE_PAT" ] || [ -n "$AZURE_DEVOPS_EXT_PAT" ] || [ -n "$OVSX_PAT" ]; then
+            echo "Marketplace publishing tokens must not be present on this hosted validation runner." >&2
+            exit 1
+          fi
+
+      - name: Install
+        run: npm ci
+
+      - name: Compile
+        run: npm run compile
+
+      - name: Capture Docker Environment
+        run: |
+          mkdir -p lin-validation
+          summary=lin-validation/docker-env.txt
+          echo "Runner OS: $RUNNER_OS" | tee "$summary"
+          docker version | tee -a "$summary" || echo "docker version failed" | tee -a "$summary"
+          docker info --format '{{.OSType}} {{.OperatingSystem}}' | tee -a "$summary" || echo "docker info failed" | tee -a "$summary"
+
+      - name: Clone Fixture Repository
+        run: |
+          fixture="$HOME/labview-icon-editor"
+          if [ ! -d "$fixture/.git" ]; then
+            git clone https://github.com/ni/labview-icon-editor.git "$fixture"
+          fi
+          cd "$fixture"
+          if [ "$(git rev-parse --is-shallow-repository)" = "true" ]; then git fetch --unshallow; fi
+          for sha in 537683398d8c5cb73533603b5c06b6eef62a6ac8 fc09736ae5e38c2016de081a9c8686256c9f2f9c; do
+            git rev-parse --verify --quiet "$sha^{commit}" > /dev/null 2>&1 || git fetch origin "$sha"
+          done
+
+      - name: Pull Linux LabVIEW Image (best-effort)
+        continue-on-error: true
+        run: |
+          image='${{ inputs.container_image }}'
+          [ -n "$image" ] || image='nationalinstruments/labview:2026q1-linux'
+          echo "Pulling $image (this may fail on a hosted runner; captured as evidence)"
+          docker pull "$image"
+
+      - name: Run VHS-REQ-699 Linux-Container Pipeline
+        continue-on-error: ${{ !inputs.fail_on_runtime_failure }}
+        env:
+          LIN_CONTAINER_IMAGE: ${{ inputs.container_image }}
+          LIN_LV_VERSION: ${{ inputs.labview_version }}
+          LIN_REPO_ROOT: ${{ github.workspace }}/../labview-icon-editor
+          VIHS_OUT: lin-validation/req699-linux-container-evidence.json
+          VIHS_FAIL_ON_RUNTIME_FAILURE: ${{ inputs.fail_on_runtime_failure && '1' || '0' }}
+        run: |
+          export LIN_REPO_ROOT="$HOME/labview-icon-editor"
+          export TMPDIR="$HOME/.cache/vihs-runtime-tmp"
+          mkdir -p "$TMPDIR"
+          node scripts/req699-linux-container-driver.cjs
+
+      - name: Summarize Evidence
+        if: always()
+        run: |
+          evidence=lin-validation/req699-linux-container-evidence.json
+          if [ -f "$evidence" ]; then cat "$evidence"; else echo "No evidence JSON produced."; fi
+
+      - name: Upload Linux Container Evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: req699-linux-container-evidence
+          path: |
+            lin-validation/**
+          retention-days: 90
+          if-no-files-found: warn

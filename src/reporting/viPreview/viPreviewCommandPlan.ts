@@ -315,7 +315,7 @@ export function buildLinuxContainerViPreviewScript(
     // connectivity failure (-350000) is surfaced as a genuine nonzero exit
     // rather than retried.
     'set +e',
-    '"$cli_path" "${args[@]}" 2>"$err_file"',
+    `"$cli_path" "\${args[@]}" 2>"$err_file"`,
     'rc=$?',
     'set -e',
     'cat "$err_file" >&2 2>/dev/null || true',
@@ -512,7 +512,7 @@ function buildLinuxContainerSessionRenderScript(
     // Single attempt: a cold-launch connectivity failure surfaces as a nonzero
     // exit rather than being retried.
     'set +e',
-    '"$cli_path" "${args[@]}" 2>"$err_file"',
+    `"$cli_path" "\${args[@]}" 2>"$err_file"`,
     'rc=$?',
     'set -e',
     'cat "$err_file" >&2 2>/dev/null || true',

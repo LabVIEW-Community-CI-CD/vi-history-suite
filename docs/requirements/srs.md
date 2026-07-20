@@ -5345,6 +5345,13 @@ Missing numeric IDs are intentional.
     Vagrant VM cannot cover — and always uploads a schema-tagged evidence
     artifact; the runtime step captures its outcome as evidence and stays green by
     default unless the dispatcher opts into failing on a runtime failure.
+  - A parity hosted-CI workflow (`linux-container-vi-compare.yml`) exercises the
+    pipeline against 64-bit LabVIEW on Linux via the linux-container provider on a
+    GitHub-hosted, pinned Ubuntu runner, driving the same
+    `scripts/req699-linux-container-driver.cjs`, NI LabVIEW Linux image, and
+    linux-container provider that a local Linux Docker run uses, so the hosted
+    signal and the local docker-container run are directly comparable; it uploads
+    a schema-tagged evidence artifact and stays green by default.
 - Agent Work Scope:
   - Keep the pipeline a pure, dependency-injected orchestrator in
     `src/reporting/comparisonPreviewPipeline.ts` that composes the existing
@@ -5357,11 +5364,14 @@ Missing numeric IDs are intentional.
   - `src/reporting/comparisonPreviewPipelineIntegration.ts`
   - `src/reporting/viPreview/stagedViPreviewValidatorFactory.ts`
   - `.github/workflows/windows-container-vi-compare.yml`
+  - `.github/workflows/linux-container-vi-compare.yml`
+  - `scripts/req699-linux-container-driver.cjs`
 - Verification References:
   - `tests/unit/comparisonPreviewPipeline.test.ts`
   - `tests/unit/comparisonPreviewPipelineIntegration.test.ts`
   - `tests/unit/stagedViPreviewValidatorFactory.test.ts`
   - `tests/unit/windowsContainerViCompareWorkflow.test.ts`
+  - `tests/unit/linuxContainerViCompareWorkflow.test.ts`
 - Change Guidance:
   - Keep each iteration a single-cycle timed loop (exactly one LabVIEW
     invocation, no retry) and keep the short-circuit so a staged VI that fails
