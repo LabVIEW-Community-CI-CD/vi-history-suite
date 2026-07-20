@@ -6091,3 +6091,41 @@ Missing numeric IDs are intentional.
 - Change Guidance:
   - Keep permissions least-privilege (`contents: read`) and the workflow
     non-gating; publish new read-model surfaces additively.
+
+### VHS-REQ-696: Governed Control-Plane Write Path
+
+- Status: Active
+- Parent: VHS-SYS-REQ-013
+- Area: CI And Developer Environment
+- Statement: The repository shall provide the control-plane's single acting
+  surface as a fail-closed, default-disabled governed write path, so the agent can
+  mirror verified repository truth (and, in future tiers, take approved actions)
+  only under an explicit committed enablement and per-tier authorization. No write
+  is possible unless a human has committed the enablement flag; every applied
+  write is recorded for auditability.
+- Acceptance Criteria:
+  - A committed `control-plane-write.json` governs the write path; the write path
+    is disabled unless it declares `enabled: true`, and a missing or malformed
+    config fails closed to disabled rather than enabled.
+  - `authorizeWrite` refuses every write when the path is disabled or the action's
+    tier is not enabled; Tier 1 board-sync (mirroring directly-verified read-model
+    truth onto the project board) requires the enablement flag but no per-action
+    approval, while all other tiers additionally require a server-verified approver
+    from the committed allowlist.
+  - The Tier 1 planner proposes only board updates it can directly verify (a linked
+    pull request is merged implies the item is Done and Proven) and never infers
+    state; the executor applies updates and records each to an append-only write
+    log only when the gate authorizes, and does nothing when disabled.
+- Agent Work Scope:
+  - Keep the gate fail-closed and the planner pure/injectable; add higher action
+    tiers only behind the committed enablement and server-verified per-action
+    approval, never as an always-on capability.
+- Implementation References:
+  - `scripts/controlPlaneWrite.js`
+  - `control-plane-write.json`
+- Verification References:
+  - `tests/unit/controlPlaneWriteScript.test.ts`
+- Change Guidance:
+  - Never enable a tier by default; enablement is a committed, reviewed change.
+    Keep Tier 1 limited to directly-verified truth and require server-verified
+    approval for any tier that acts beyond mirroring.

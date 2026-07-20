@@ -701,4 +701,5 @@ VHS-REQ-691,Software,Active,srs.md#vhs-req-691-agent-operating-control-plane-cap
 VHS-REQ-692,Software,Active,srs.md#vhs-req-692-repo-truth-read-model,,,docs/requirements/srs.md
 VHS-REQ-693,Software,Active,srs.md#vhs-req-693-repo-governance-mcp-server,,,docs/requirements/srs.md
 VHS-REQ-694,Software,Active,srs.md#vhs-req-694-control-plane-read-model-publishing-workflow,,,docs/requirements/srs.md
+VHS-REQ-696,Software,Active,srs.md#vhs-req-696-governed-control-plane-write-path,,,docs/requirements/srs.md
 VHS-REQ-697,Software,Active,srs.md#vhs-req-697-agent-environment-consistency-gate,,,docs/requirements/srs.md
