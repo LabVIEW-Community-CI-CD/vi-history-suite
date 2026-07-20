@@ -6062,3 +6062,32 @@ Missing numeric IDs are intentional.
 - Change Guidance:
   - Keep the server read-only and dependency-free; expose new ground-truth as
     additional read-only tools rather than changing the existing tool contract.
+
+### VHS-REQ-694: Control-Plane Read-Model Publishing Workflow
+
+- Status: Active
+- Parent: VHS-SYS-REQ-013
+- Area: CI And Developer Environment
+- Statement: The repository shall provide a read-only GitHub Actions workflow that
+  generates the repo-truth read-model and publishes it as a downloadable
+  artifact, so agents and maintainers can consume live repository ground-truth
+  from a workflow run. The workflow mutates nothing, gates nothing, and holds
+  least-privilege permissions.
+- Acceptance Criteria:
+  - `.github/workflows/repo-truth-read-model.yml` runs on manual dispatch and a
+    schedule (never on push), declares `contents: read` with no write scope, and
+    neither mutates the repository nor gates any other check.
+  - The workflow generates the read-model JSON with a live GitHub token supplied
+    to the read-model (so its fail-closed-on-auth domains resolve) and uploads it
+    as a `repo-truth-read-model` artifact, failing when no file is produced.
+- Agent Work Scope:
+  - Keep the workflow read-only and least-privilege; add published surfaces as
+    additional artifacts rather than introducing any repository mutation or gate.
+- Implementation References:
+  - `.github/workflows/repo-truth-read-model.yml`
+  - `scripts/readRepoTruth.js`
+- Verification References:
+  - `tests/unit/repoTruthReadModelWorkflow.test.ts`
+- Change Guidance:
+  - Keep permissions least-privilege (`contents: read`) and the workflow
+    non-gating; publish new read-model surfaces additively.
