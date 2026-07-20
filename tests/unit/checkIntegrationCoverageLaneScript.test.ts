@@ -97,11 +97,23 @@ describe('checkIntegrationCoverageLane: render (VHS-REQ-690.1)', () => {
 });
 
 describe('checkIntegrationCoverageLane: real repo lane (VHS-REQ-690.2)', () => {
+  const repoRoot = path.resolve(__dirname, '..', '..');
+
   it('the shipped integration-coverage lane satisfies its own security contract', () => {
-    const repoRoot = path.resolve(__dirname, '..', '..');
     const workflow = loadLaneWorkflow(repoRoot, { readFileSync: fs.readFileSync });
     const result = evaluateIntegrationCoverageLane(workflow);
     expect(result.problems).toEqual([]);
     expect(result.ok).toBe(true);
+  });
+
+  it('bootstraps the VS Code host (installs Xvfb) before running the integration host', () => {
+    const workflow = loadLaneWorkflow(repoRoot, { readFileSync: fs.readFileSync }).replace(/\r\n/g, '\n');
+    // The extension host is headless-hostile without a display; the bootstrap
+    // step (a coverage-excluded host-runner script) installs Xvfb first.
+    expect(workflow).toContain('public:host:bootstrap-linux install');
+    const bootstrapIndex = workflow.indexOf('Bootstrap Linux VS Code host');
+    const runIndex = workflow.indexOf('Run Linux integration host');
+    expect(bootstrapIndex).toBeGreaterThan(-1);
+    expect(runIndex).toBeGreaterThan(bootstrapIndex);
   });
 });

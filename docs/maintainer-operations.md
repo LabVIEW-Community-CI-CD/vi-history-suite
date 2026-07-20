@@ -456,6 +456,28 @@ Stop it after validation by closing the runner terminal or pressing `Ctrl+C`.
 The run records the same evidence shape as the Windows runner in
 `runner-evidence/linux-labview-maintainer-summary.txt`.
 
+### Durable runner + lifecycle helper (local agent iteration)
+
+For a persistent runner that survives reboots and terminal sessions — so a local
+agent can dispatch the trusted-ref-gated integration-coverage lane
+(`.github/workflows/integration-coverage.yml`, VHS-REQ-690) on demand — install
+the runner as a **systemd service** and manage it with the lifecycle helper:
+
+```bash
+node scripts/selfHostedRunnerLifecycle.cjs status       # dir / config / service / repo registration
+node scripts/selfHostedRunnerLifecycle.cjs up           # configure (if needed) + install + start the service
+node scripts/selfHostedRunnerLifecycle.cjs reconfigure  # clear a stale/deleted registration and re-register
+node scripts/selfHostedRunnerLifecycle.cjs start|stop|restart
+```
+
+The helper mints the registration token via `gh` (needs a repo-scoped token) and
+pipes it straight into `config.sh`, so the token is never printed. It targets the
+`vihs-linux-labview-maintainer` runner in `~/actions-runners/vi-history-suite`
+(overridable via `VIHS_RUNNER_*` env vars). The integration-coverage lane runs
+`bootstrapLinuxVsCodeHost.js` (which `apt-get install`s `xvfb`) before the
+integration host, so a headless service still gets a display — without it the
+extension host segfaults with `Missing X server or $DISPLAY`.
+
 ## VI Semantic PR Review Runner (docker)
 
 `.github/workflows/vi-semantic-pr-review.yml` (VHS-REQ-661) is a
