@@ -7293,6 +7293,14 @@ describe('buildWindowsHostNativeHeadlessCommandPlan (VHS-REQ-665)', () => {
     ).toBeUndefined();
   });
 
+  it('returns undefined when no PowerShell host resolves for the platform (VHS-REQ-665.1)', () => {
+    // darwin has no PowerShell host executable, so the builder leaves the caller's
+    // bare command plan unchanged instead of producing a headless wrap.
+    expect(
+      buildWindowsHostNativeHeadlessCommandPlan(createReadyRecord(), bareCli, 'darwin')
+    ).toBeUndefined();
+  });
+
   it('omits the prelaunch path expression when the record has no LabVIEW exe (VHS-REQ-665.2)', () => {
     const record = createReadyRecord();
     const noExeRecord = {
