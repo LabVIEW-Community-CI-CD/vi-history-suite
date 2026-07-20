@@ -22,7 +22,7 @@ function asGuestStdout(packet) {
   );
 }
 
-describe('vagrantValidationProofDriver.parseValidationProofPacket', () => {
+describe('vagrantValidationProofDriver.parseValidationProofPacket (VHS-REQ-686.3)', () => {
   it('accepts a ready packet emitted with vagrant line prefixes', () => {
     const result = parseValidationProofPacket(asGuestStdout(readyPacket()), PROOF_SCHEMA);
     expect(result.ok).toBe(true);

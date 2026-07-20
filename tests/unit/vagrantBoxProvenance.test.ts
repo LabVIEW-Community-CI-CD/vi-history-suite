@@ -17,7 +17,7 @@ function readerFor(content, throwOn = false) {
   };
 }
 
-describe('vagrantBoxProvenance.isBoxOverride', () => {
+describe('vagrantBoxProvenance.isBoxOverride (VHS-REQ-686.4)', () => {
   it('is false when VIHS_VAGRANT_BOX is unset or empty', () => {
     expect(isBoxOverride({})).toBe(false);
     expect(isBoxOverride({ VIHS_VAGRANT_BOX: '' })).toBe(false);

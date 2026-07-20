@@ -6371,6 +6371,56 @@ Missing numeric IDs are intentional.
   - Keep the gate driving the real generator (not a fixture) so it proves the
     shipped generator's output, and keep the validator pure/injectable.
 
+### VHS-REQ-686: Vagrant Maintainer Lane Helpers
+
+- Status: Active
+- Parent: VHS-SYS-REQ-013
+- Area: CI And Developer Environment
+- Statement: The repository's optional Vagrant maintainer-lane helpers shall
+  expose their parsing, validation, and argument-handling boundaries as pure,
+  dependency-injected functions that are unit-verifiable without a running
+  Vagrant or VirtualBox host and are never wired into hosted CI, so a maintainer
+  can preflight the lane, verify golden-box integrity, and parse guest evidence
+  deterministically while the helpers remain local-only tooling.
+- Acceptance Criteria:
+  - The lane preflight/status reporter parses `vagrant --version`, `vagrant box
+    list`, and `vagrant status` output through pure functions and computes the
+    preflight checks/failures and best-effort VM state through injected
+    `existsSync`/`runCommand`/`env`/`cwd` boundaries, exposed as the
+    `vagrant:preflight` and `vagrant:status` npm scripts.
+  - The golden-box manifest verifier validates a manifest's
+    `schema`/`schemaVersion`/`sha256`/`sizeBytes` shape through a pure validator
+    that fails closed before hashing a multi-GB box, and parses its
+    `--generate`/`--verify`/`--print` argument contract.
+  - The release-lane and validation-proof guest helpers build the in-guest env
+    command contract and parse Vagrant-prefixed guest stdout into a schema-checked
+    proof packet (validating `runtime.validationOutcome`) through pure functions.
+  - The box-provenance and driver-argument helpers parse the `VIHS_VAGRANT_BOX`
+    override semantics with committed-manifest sha256 binding and the
+    `--skip-up`/`--evidence` argument contract through pure or injected functions.
+- Agent Work Scope:
+  - When changing a Vagrant maintainer helper, keep its parsing/validation/
+    argument boundary pure and injectable and its unit test citing the criterion,
+    and never add a `vagrant` reference to a hosted-CI workflow (VHS-REQ-599).
+- Implementation References:
+  - `scripts/vagrantLanePreflight.js`
+  - `scripts/verifyVagrantBox.cjs`
+  - `scripts/vagrantReleaseValidate.cjs`
+  - `scripts/vagrantValidationProofDriver.cjs`
+  - `scripts/lib/vagrantBoxProvenance.cjs`
+  - `scripts/lib/vagrantDriverArgs.cjs`
+- Verification References:
+  - `tests/unit/vagrantLanePreflight.test.ts`
+  - `tests/unit/verifyVagrantBox.test.ts`
+  - `tests/unit/vagrantReleaseValidate.test.ts`
+  - `tests/unit/vagrantValidationProofDriver.test.ts`
+  - `tests/unit/vagrantBoxProvenance.test.ts`
+  - `tests/unit/vagrantDriverArgs.test.ts`
+- Change Guidance:
+  - Keep the helpers local-only maintainer tooling (never a hosted-CI gate) and
+    keep their parse/validate/arg boundaries pure so they stay unit-verifiable
+    without a Vagrant or VirtualBox host.
+
 ### VHS-REQ-698: Control-Plane Loop Drift Radar
 
 - Status: Active

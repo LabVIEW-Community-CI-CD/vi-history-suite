@@ -12,7 +12,7 @@ const PATHS = {
   selected: 'fc09736'
 };
 
-describe('vagrantReleaseValidate.buildReleaseComparisonGuestScript', () => {
+describe('vagrantReleaseValidate.buildReleaseComparisonGuestScript (VHS-REQ-686.3)', () => {
   const script = buildReleaseComparisonGuestScript(PATHS);
 
   it('enforces the VHS-REQ-665 x86 host-native headless env contract', () => {

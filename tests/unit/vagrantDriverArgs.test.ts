@@ -5,7 +5,7 @@ const driverArgs = require('../../scripts/lib/vagrantDriverArgs.cjs');
 
 const { parseDriverArgs } = driverArgs;
 
-describe('vagrantDriverArgs.parseDriverArgs', () => {
+describe('vagrantDriverArgs.parseDriverArgs (VHS-REQ-686.4)', () => {
   it('defaults to no skip-up and no evidence', () => {
     const { options, error } = parseDriverArgs([]);
     expect(error).toBeNull();
