@@ -628,4 +628,119 @@ describe('diagnosticsRecorder', () => {
       await expect(recorder.flushManifest(record)).resolves.toBeUndefined();
     });
   });
+
+  describe('environment fingerprint edge branches', () => {
+    it('omits toolchain fingerprints when no tool or ini paths are present', async () => {
+      const harness = createHarness();
+      const record = createRecord({
+        runtimeSelection: {
+          platform: 'win32',
+          bitness: 'x64',
+          provider: 'host-native',
+          engine: 'labview-cli',
+          notes: [],
+          registryQueryPlans: [],
+          candidates: []
+        },
+        runtimeExecution: { state: 'not-run', attempted: false, reportExists: false }
+      } as Partial<ComparisonReportPacketRecord>);
+      await harness.recorder.recordEnvironmentFingerprint(record);
+      const parsed = JSON.parse(
+        harness.writes.find((w) => w.filePath.includes(ENVIRONMENT_FINGERPRINT_FILENAME))!.contents
+      );
+      expect(parsed.toolchain.labviewExecutablePath).toBeUndefined();
+      expect(parsed.toolchain.labviewIniSha256).toBeUndefined();
+      expect(parsed.toolchain.labviewIniStartupKeys).toBeUndefined();
+    });
+
+    it('defaults runtimeExecution to an empty object when the record omits it', async () => {
+      const harness = createHarness();
+      const record = createRecord({ runtimeExecution: undefined } as Partial<ComparisonReportPacketRecord>);
+      await expect(harness.recorder.recordEnvironmentFingerprint(record)).resolves.toBeUndefined();
+      // Falls back to the selection ini path (server.tcp.* keys) rather than throwing.
+      const parsed = JSON.parse(
+        harness.writes.find((w) => w.filePath.includes(ENVIRONMENT_FINGERPRINT_FILENAME))!.contents
+      );
+      expect(parsed.toolchain.labviewIniStartupKeys).toMatchObject({ 'server.tcp.enabled': 'True' });
+    });
+
+    it('decodes a Buffer-returning ini readFile before hashing and key extraction', async () => {
+      const harness = createHarness({
+        readFile: (async () =>
+          Buffer.from(
+            'server.tcp.enabled=True\n;comment line\n=leadingEquals\nserver.tcp.port=\n[section]\n',
+            'utf8'
+          )) as never
+      });
+      const record = createRecord();
+      await harness.recorder.recordEnvironmentFingerprint(record);
+      const parsed = JSON.parse(
+        harness.writes.find((w) => w.filePath.includes(ENVIRONMENT_FINGERPRINT_FILENAME))!.contents
+      );
+      expect(parsed.toolchain.labviewIniSha256).toMatch(/^[0-9a-f]{64}$/);
+      // Comment (;), section ([), and leading-= lines are skipped; a blank value becomes undefined.
+      expect(parsed.toolchain.labviewIniStartupKeys['server.tcp.enabled']).toBe('True');
+      expect(parsed.toolchain.labviewIniStartupKeys['server.tcp.port']).toBeUndefined();
+    });
+  });
+
+  describe('failure fragment Buffer decoding', () => {
+    it('decodes a Buffer-returning artifact readFile when extracting the fragment', async () => {
+      const harness = createHarness({
+        readFile: (async () =>
+          Buffer.from('prefix Error code : -350000 VI Server suffix', 'utf8')) as never
+      });
+      const record = createRecord();
+      await harness.recorder.recordFailureClassification(record, 1, {
+        failureReason: 'labview-cli-connection-failed',
+        artifactPaths: { stderr: `${record.artifactPlan.reportDirectory}/runtime-stderr.txt` }
+      });
+      const parsed = JSON.parse(
+        harness.writes.find((w) => w.filePath.includes(FAILURE_CLASSIFICATION_FILENAME))!.contents
+      );
+      expect(parsed.matchedFragmentSource).toBe('stderr');
+      expect(parsed.matchedFragment).toContain('-350000');
+    });
+  });
+
+  describe('additional archive and baseline branches', () => {
+    it('copies a Buffer-returning artifact readFile into attempt-N', async () => {
+      const harness = createHarness({
+        readFile: (async (filePath: string) =>
+          String(filePath).replace(/\\/g, '/').endsWith('runtime-stdout.txt')
+            ? Buffer.from('BUFFER-STDOUT', 'utf8')
+            : Promise.reject(new Error('ENOENT'))) as never
+      });
+      const record = createRecord();
+      await harness.recorder.archiveAttemptArtifacts(record, 3);
+      const archived = harness.writes.find((w) =>
+        w.filePath.replace(/\\/g, '/').endsWith('attempt-3/runtime-stdout.txt')
+      );
+      expect(archived).toBeDefined();
+      expect(archived!.contents).toBe('BUFFER-STDOUT');
+    });
+
+    it('leaves observedListenerOnRequestedPort undefined when no port is requested', async () => {
+      const harness = createHarness({
+        observeWindowsProcesses: async () => ({
+          capturedAt: '2026-06-02T08:30:00.000Z',
+          hostPlatform: 'win32',
+          runtimePlatform: 'win32',
+          trigger: 'pre-launch-baseline',
+          observedProcesses: [],
+          observedProcessNames: [],
+          labviewProcessObserved: false,
+          labviewCliProcessObserved: false,
+          lvcompareProcessObserved: false
+        }),
+        observeWindowsTcpListeners: async () => []
+      });
+      await harness.recorder.recordPreLaunchBaseline(createRecord(), 1, {});
+      const parsed = JSON.parse(
+        harness.writes.find((w) => w.filePath.includes(PRE_LAUNCH_BASELINE_FILENAME))!.contents
+      );
+      expect(parsed.applicable).toBe(true);
+      expect(parsed.observedListenerOnRequestedPort).toBeUndefined();
+    });
+  });
 });
