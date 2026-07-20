@@ -48,7 +48,7 @@ const NOT_FOUND: CommandResult = {
   error: new Error('ENOENT')
 };
 
-describe('vagrantLanePreflight parsers', () => {
+describe('vagrantLanePreflight parsers (VHS-REQ-686.1)', () => {
   it('parses the vagrant version banner', () => {
     expect(parseVagrantVersion('Vagrant 2.4.9')).toBe('2.4.9');
     expect(parseVagrantVersion('nonsense')).toBeNull();

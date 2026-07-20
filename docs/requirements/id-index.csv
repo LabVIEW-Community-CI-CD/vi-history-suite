@@ -705,6 +705,7 @@ VHS-REQ-694,Software,Active,srs.md#vhs-req-694-control-plane-read-model-publishi
 VHS-REQ-696,Software,Active,srs.md#vhs-req-696-governed-control-plane-write-path,,,docs/requirements/srs.md
 VHS-REQ-695,Software,Active,srs.md#vhs-req-695-control-plane-board-sync-shadow-mode,,,docs/requirements/srs.md
 VHS-REQ-683,Software,Active,srs.md#vhs-req-683-dev-host-and-build-tooling-integrity,,,docs/requirements/srs.md
+VHS-REQ-686,Software,Active,srs.md#vhs-req-686-vagrant-maintainer-lane-helpers,,,docs/requirements/srs.md
 VHS-REQ-698,Software,Active,srs.md#vhs-req-698-control-plane-loop-drift-radar,,,docs/requirements/srs.md
 VHS-REQ-690,Software,Active,srs.md#vhs-req-690-self-hosted-integration-coverage-lane,,,docs/requirements/srs.md
 VHS-REQ-697,Software,Active,srs.md#vhs-req-697-agent-environment-consistency-gate,,,docs/requirements/srs.md

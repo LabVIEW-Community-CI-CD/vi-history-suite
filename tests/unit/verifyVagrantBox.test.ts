@@ -17,7 +17,7 @@ function validManifest() {
   };
 }
 
-describe('verifyVagrantBox.validateManifestShape', () => {
+describe('verifyVagrantBox.validateManifestShape (VHS-REQ-686.2)', () => {
   it('accepts a well-formed manifest', () => {
     expect(validateManifestShape(validManifest())).toEqual([]);
   });
