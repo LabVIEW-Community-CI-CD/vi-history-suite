@@ -6282,3 +6282,38 @@ Missing numeric IDs are intentional.
   - The radar workflow token must never gain Project #4 write scope; board writes
     come only via the injected Projects secret through the Tier-1 apply. Keep the
     apply's field-map closed so it can only ever set Status Done / Evidence Proven.
+
+### VHS-REQ-690: Self-Hosted Integration-Coverage Lane
+
+- Status: Active
+- Parent: VHS-SYS-REQ-013
+- Area: CI And Developer Environment
+- Statement: The repository shall provide a self-hosted integration-coverage lane
+  that runs the host-runner scripts (which require a real VS Code / integration
+  host and are therefore excluded from unit coverage) to produce coverage
+  evidence for them, and a fail-closed gate that protects the lane's security
+  contract. Because the lane runs on a self-hosted machine, its posture is
+  load-bearing: it is manual-dispatch-only (no untrusted-PR code runs on the
+  box), least-privilege read-only, trusted-ref gated, and advisory (it gates no
+  merges). The six host-runner scripts remain coverage-excluded; the lane
+  exercises them separately for evidence rather than forcing them through the
+  unit-coverage risk gate.
+- Acceptance Criteria:
+  - A pure evaluator checks the lane workflow against the ratified security
+    contract and fails closed on any drift: a push/pull_request/schedule trigger,
+    a write token scope, unset permissions, a non-self-hosted runner, or a missing
+    trusted-ref guard.
+  - The shipped lane workflow satisfies its own contract, and the gate is exposed
+    as the `integration:coverage:check` npm script.
+- Agent Work Scope:
+  - Keep the lane dispatch-only, read-only, trusted-ref-gated, and advisory; any
+    change to those must update both the workflow and the gate together.
+- Implementation References:
+  - `scripts/checkIntegrationCoverageLane.js`
+  - `.github/workflows/integration-coverage.yml`
+- Verification References:
+  - `tests/unit/checkIntegrationCoverageLaneScript.test.ts`
+- Change Guidance:
+  - Never give the lane a write token or a push/PR trigger; untrusted code must
+    never run on the self-hosted runner. Keep the evaluator pure so its own logic
+    is deterministically tested.

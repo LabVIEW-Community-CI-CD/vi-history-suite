@@ -1,0 +1,65 @@
+name: Integration Coverage Lane
+
+# VHS-REQ-690 (dev-only sweep, epic #2159): a self-hosted lane that runs the
+# host-runner scripts (which need a real VS Code / integration host and so are
+# excluded from unit coverage) to produce coverage evidence for them. Because it
+# runs on a self-hosted machine, its security posture is load-bearing and is
+# enforced by scripts/checkIntegrationCoverageLane.js:
+#   - Manual dispatch ONLY. No push / pull_request / schedule trigger, so no
+#     untrusted-PR code ever runs on the self-hosted box.
+#   - Least-privilege, READ-ONLY token (contents: read). It never writes.
+#   - Trusted-ref gated: only runs from a trusted ref (main / develop / release).
+#   - Advisory: this is not a required merge check and gates nothing.
+#
+# Linux first (the Windows/LabVIEW lane is a separate, heavier validation).
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  integration-coverage:
+    name: Integration Coverage (Linux, self-hosted)
+    runs-on: [self-hosted, Linux, X64, vihs-linux-labview-maintainer]
+    steps:
+      - name: Guard Trusted Ref
+        run: |
+          set -euo pipefail
+          REF='${{ github.ref }}'
+          case "$REF" in
+            refs/heads/develop|refs/heads/main|refs/tags/v*|refs/heads/release/v*)
+              echo "Trusted ref: $REF" ;;
+            *)
+              echo "Refusing to run the self-hosted integration-coverage lane from untrusted ref: $REF" >&2
+              exit 1 ;;
+          esac
+
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Linux integration host (coverage evidence)
+        run: npm run test:integration:linux
+
+      - name: Upload integration-coverage artifact
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: integration-coverage
+          path: |
+            coverage/
+          if-no-files-found: warn

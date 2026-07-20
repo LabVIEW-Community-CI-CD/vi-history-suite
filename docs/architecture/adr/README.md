@@ -46,3 +46,4 @@ The index and the required structure are enforced by `npm run adr:check`
 | [ADR-0021](./ADR-0021-governance-gate-tooling-integrity.md) | Governance Gate-Tooling Integrity | Accepted |
 | [ADR-0022](./ADR-0022-dev-host-and-build-tooling-integrity.md) | Dev-Host And Build Tooling Integrity | Accepted |
 | [ADR-0023](./ADR-0023-control-plane-loop.md) | Control-Plane Loop | Accepted |
+| [ADR-0024](./ADR-0024-self-hosted-integration-coverage-lane.md) | Self-Hosted Integration-Coverage Lane | Accepted |
