@@ -43,3 +43,4 @@ The index and the required structure are enforced by `npm run adr:check`
 | [ADR-0018](./ADR-0018-agent-operating-control-plane.md) | Agent Operating Control-Plane And Repo-Truth Read-Model | Accepted |
 | [ADR-0019](./ADR-0019-agent-environment-consistency-gate.md) | Agent Environment Consistency Gate | Accepted |
 | [ADR-0020](./ADR-0020-governed-control-plane-write-path.md) | Governed Control-Plane Write Path | Accepted |
+| [ADR-0021](./ADR-0021-governance-gate-tooling-integrity.md) | Governance Gate-Tooling Integrity | Accepted |
