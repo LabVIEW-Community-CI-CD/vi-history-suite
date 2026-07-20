@@ -40,3 +40,4 @@ The index and the required structure are enforced by `npm run adr:check`
 | [ADR-0015](./ADR-0015-release-state-read-model.md) | Release State Read-Model And Gated Publish Authority | Accepted |
 | [ADR-0016](./ADR-0016-coverage-led-assurance.md) | Coverage-Led Assurance Operating Model | Accepted |
 | [ADR-0017](./ADR-0017-container-image-version-selection-ux.md) | Container Image Version Selection UX | Accepted |
+| [ADR-0018](./ADR-0018-agent-operating-control-plane.md) | Agent Operating Control-Plane And Repo-Truth Read-Model | Accepted |
