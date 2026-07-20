@@ -6,6 +6,14 @@ This file provides concise, actionable guidance for AI coding agents working in 
 
 ## Quick Reference
 
+### Authoritative Progress Board (MANDATORY)
+GitHub Project #4 "vihs" (`LabVIEW-Community-CI-CD`, node `PVT_kwDODQiayc4Bd5Rq`) is the **authoritative "what is next to do"** and a **live human progress interface**. Every agent MUST proactively keep it in sync with reality in real time, without being asked:
+- Pick the next task by reading the board (`Status=Todo`, earliest `Phase` in the Policy→Signals→Shadow Mode→Helper Workflow→Apply Mode→Sustain flow) — do NOT invent work.
+- Starting an item → set `Status=In Progress`. Item's PR merged / issue closed → `Status=Done`, `Evidence State=Proven`.
+- Code shipped+verified but its requirement/spec not yet authored → `In Progress` / `Evidence State=Partial` (never leave it Todo/None — that understates reality). Evidence ladder: `None→Partial→Ready→Proven` (`Ready`=validated & queued/awaiting-merge; `Proven`=landed).
+- Creating NEW planned work → create the issue AND add it to the board (`gh project item-add 4 --owner LabVIEW-Community-CI-CD --url <issue-url>`) with `Program`/`Phase`/`Portfolio Track`/`Status` set, as part of starting it. No untracked planned work.
+- Requires a `gh` token with the `project` scope (`gh auth refresh -s project`). Edit fields with `gh project item-edit --id <ITEM_ID> --project-id PVT_kwDODQiayc4Bd5Rq --field-id <F> --single-select-option-id <O>`. Field/option ids are recorded in repo memory (`/memories/repo/vi-history-suite.md`).
+
 ### Customization Entry Path
 - Use skills for repeatable multi-step workflows tied to repository contracts.
 - Use prompts for one-shot output generation with fixed field labels.
