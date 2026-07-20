@@ -1,0 +1,12 @@
+{
+  "$comment": "VHS-REQ-696 control-plane governed write path. The write path is DISABLED until a human commits enabled:true (a reviewed PR). Approvers are server-verified for tiers requiring per-action approval. Tier 1 (boardSync) mirrors only directly-verified read-model truth and needs the enabled flag but not per-action approval.",
+  "enabled": false,
+  "approvers": ["svelderrainruiz"],
+  "tokenSource": "local-agent-session",
+  "tiers": {
+    "boardSync": true,
+    "annotate": false,
+    "mergeQueue": false,
+    "createWork": false
+  }
+}
