@@ -311,8 +311,27 @@ function main(repoRoot = process.cwd()) {
   return 1;
 }
 
-if (require.main === module) {
-  process.exitCode = main();
+// Build a structured governance-state summary (consumed by the repo-truth
+// read-model's ADR/governance domain, VHS-REQ-692). Pure over the existing
+// audits; reports consistency plus the violation count without stdout-parsing.
+function buildGovernanceState(repoRoot = process.cwd()) {
+  const structure = auditAdrIndex(repoRoot);
+  const syrs = auditSyrsCoverage(repoRoot);
+  const violations = [...structure.violations, ...syrs.violations];
+  return {
+    consistent: violations.length === 0,
+    violationCount: violations.length,
+    violations
+  };
 }
 
-module.exports = { auditAdrIndex, auditSyrsCoverage, ADR_DIR };
+if (require.main === module) {
+  if (process.argv.slice(2).includes('--json')) {
+    process.stdout.write(`${JSON.stringify(buildGovernanceState(), null, 2)}\n`);
+    process.exitCode = 0;
+  } else {
+    process.exitCode = main();
+  }
+}
+
+module.exports = { auditAdrIndex, auditSyrsCoverage, buildGovernanceState, ADR_DIR };
