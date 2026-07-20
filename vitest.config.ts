@@ -14,7 +14,6 @@ export default defineConfig({
       include: ['src/**/*.ts', 'scripts/*.js'],
       exclude: [
         'src/extension.ts',
-        'src/benchmark/hostLinuxBenchmarkRunner.ts',
         // The VI semantic MCP server stdio entrypoint is thin stream wiring over
         // the covered, unit-tested handleViSemanticMcpMessage dispatcher;
         // exercising it requires driving process stdin/stdout, so it is excluded
