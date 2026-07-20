@@ -6768,3 +6768,32 @@ Missing numeric IDs are intentional.
   - Keep the helpers' parse/detect/compose functions pure and their fs/spawn
     boundaries injected, and never widen the executable allow-list beyond the
     `gh`/Docker commands the maintainer automation requires.
+
+### VHS-REQ-701: Traceability Gate Fail-Closed On Retired Classifications
+
+- Status: Active
+- Parent: VHS-SYS-REQ-013
+- Area: CI And Developer Environment
+- Statement: The traceability steward audit shall fail closed when any
+  traceability-inventory row carries a retired classification, so that the
+  `dev-only` classification retired by the dev-only sweep (epic #2159) cannot be
+  reintroduced to silently exclude a file from requirement traceability.
+- Acceptance Criteria:
+  - The audit records a retired-classification finding for every inventory row
+    whose classification is in the retired set (`dev-only`) and fails closed when
+    any such finding is present.
+  - A retired classification stays in the known/parseable classification set so an
+    accidental use is reported with a precise retired-classification message
+    rather than as an opaque invalid classification.
+- Agent Work Scope:
+  - When a classification is retired, add it to the audit's retired set rather than
+    removing it from the known set, and never reclassify a file as `dev-only` to
+    avoid mapping it to a requirement.
+- Implementation References:
+  - `scripts/auditTraceabilitySteward.js`
+- Verification References:
+  - `tests/unit/traceabilityAuditScript.test.ts`
+- Change Guidance:
+  - Keep `dev-only` in the retired set so the traceability gate stays fail-closed;
+    map any new surface to a requirement instead of reintroducing a retired
+    classification.
