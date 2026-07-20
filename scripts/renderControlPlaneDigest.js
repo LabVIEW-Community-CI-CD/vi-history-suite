@@ -18,9 +18,78 @@
 
 const { collectBoardSyncPlan } = require('./controlPlaneBoardSync.js');
 
+let buildRepoTruthPacket;
+try {
+  // Reused to derive the richer digest sections from live ground truth. Loaded
+  // defensively so the pure renderer/mappers stay usable even if the read-model
+  // module changes shape.
+  ({ buildRepoTruthPacket } = require('./readRepoTruth.js'));
+} catch {
+  buildRepoTruthPacket = undefined;
+}
+
 // Stable marker so the workflow can upsert one sticky issue instead of posting a
 // new comment every run.
 const DIGEST_MARKER = '<!-- vi-history-suite:control-plane-drift-radar -->';
+
+// --- pure read-model -> digest-section mappers ------------------------------
+// Each maps an already-collected repo-truth packet to a digest section, or
+// returns undefined when the underlying domain is unavailable (so a failed or
+// absent domain simply omits its section rather than reporting a false signal).
+// Accepts either a full read-model packet (domains nested under `.domains`) or a
+// flat domains object.
+
+function resolveDomains(packet) {
+  const p = packet && typeof packet === 'object' ? packet : {};
+  return p.domains && typeof p.domains === 'object' ? p.domains : p;
+}
+
+function deriveGateHealthFromReadModel(packet) {
+  const d = resolveDomains(packet);
+  const gates = [];
+  const adr = d.adrGovernance;
+  if (adr && adr.available) {
+    gates.push({ id: 'adr:governance', ok: adr.consistent === true, detail: adr.consistent === true ? '' : `${adr.violationCount ?? '?'} violation(s)` });
+  }
+  const req = d.requirementHealth;
+  if (req && req.available) {
+    gates.push({ id: 'requirements:health', ok: req.healthy === true, detail: req.healthy === true ? '' : String(req.status || 'attention') });
+  }
+  const cov = d.coverage;
+  if (cov && cov.available) {
+    const below = Number(cov.mappedBelowThreshold) || 0;
+    gates.push({ id: 'coverage:risk', ok: below === 0, detail: below === 0 ? '' : `${below} mapped file(s) below threshold` });
+  }
+  return gates.length > 0 ? gates : undefined;
+}
+
+function deriveOpenWorkFromReadModel(packet) {
+  const d = resolveDomains(packet);
+  const ow = d.openWork;
+  if (!ow || !ow.available) {
+    return undefined;
+  }
+  const byState = ow.byMergeStateStatus && typeof ow.byMergeStateStatus === 'object' ? ow.byMergeStateStatus : {};
+  return {
+    openPrs: Number(ow.openPullRequests) || 0,
+    blocked: Number(byState.BLOCKED) || 0
+  };
+}
+
+function deriveDebtFromReadModel(packet) {
+  const d = resolveDomains(packet);
+  const cov = d.coverage;
+  const req = d.requirementHealth;
+  const debt = {};
+  if (cov && cov.available) {
+    const below = Number(cov.mappedBelowThreshold) || 0;
+    debt.coverageDebtTitle = below === 0 ? 'No mapped files below the coverage risk threshold' : `${below} mapped file(s) below the coverage risk threshold`;
+  }
+  if (req && req.available && req.requirementsNeedingAttention != null) {
+    debt.requirementAttention = Number(req.requirementsNeedingAttention) || 0;
+  }
+  return Object.keys(debt).length > 0 ? debt : undefined;
+}
 
 // Pure: render the digest markdown from an already-collected signals object. Every
 // section is optional; absent sections are simply omitted. Returns
@@ -87,14 +156,42 @@ function collectControlPlaneSignals(deps = {}) {
   const collectPlan = deps.collectBoardSyncPlan || collectBoardSyncPlan;
   const { updates } = collectPlan(deps.boardSyncDeps || {});
   const signals = { boardDrift: updates };
+
+  // The richer sections derive from a repo-truth read-model packet. It is
+  // supplied explicitly (injected packet, or a builder) so this stays
+  // deterministic and side-effect-free; the CLI wires the real builder. If no
+  // packet is available the board-drift radar still stands on its own.
+  let packet = deps.readModelPacket;
+  if (packet === undefined && typeof deps.buildReadModel === 'function') {
+    try {
+      packet = deps.buildReadModel();
+    } catch {
+      packet = undefined;
+    }
+  }
+
+  // Explicit collectors win; otherwise derive from the read-model packet.
   if (typeof deps.collectGateHealth === 'function') {
     signals.gateHealth = deps.collectGateHealth();
+  } else if (packet) {
+    signals.gateHealth = deriveGateHealthFromReadModel(packet);
   }
   if (typeof deps.collectOpenWork === 'function') {
     signals.openWork = deps.collectOpenWork();
+  } else if (packet) {
+    signals.openWork = deriveOpenWorkFromReadModel(packet);
   }
   if (typeof deps.collectDebt === 'function') {
     signals.debt = deps.collectDebt();
+  } else if (packet) {
+    signals.debt = deriveDebtFromReadModel(packet);
+  }
+
+  // Drop any section a mapper returned as undefined so the renderer omits it.
+  for (const key of ['gateHealth', 'openWork', 'debt']) {
+    if (signals[key] === undefined) {
+      delete signals[key];
+    }
   }
   return signals;
 }
@@ -102,12 +199,22 @@ function collectControlPlaneSignals(deps = {}) {
 module.exports = {
   DIGEST_MARKER,
   buildControlPlaneDigest,
-  collectControlPlaneSignals
+  collectControlPlaneSignals,
+  deriveGateHealthFromReadModel,
+  deriveOpenWorkFromReadModel,
+  deriveDebtFromReadModel
 };
 
 if (require.main === module) {
   try {
-    const signals = collectControlPlaneSignals();
+    // Wire the real read-model builder so the CLI (and the workflow) get the
+    // richer gate-health / open-work / debt sections. A read-model failure
+    // degrades to the board-drift-only radar rather than failing the digest.
+    const buildReadModel =
+      typeof buildRepoTruthPacket === 'function'
+        ? () => buildRepoTruthPacket({}, {})
+        : undefined;
+    const signals = collectControlPlaneSignals({ buildReadModel });
     const { markdown, driftCount } = buildControlPlaneDigest(signals);
     process.stdout.write(markdown);
     process.stderr.write(`[control-plane-loop] board drift: ${driftCount} update(s). Read-only radar; nothing written.\n`);
