@@ -180,4 +180,43 @@ describe('buildViPreviewCacheHealth (VHS-REQ-675)', () => {
     expect(entry).toMatchObject({ status: 'stale', key: null, cacheFilePresent: false });
     expect(report.totals.stale).toBe(1);
   });
+
+  it('sorts multiple orphaned cache keys and removed VI paths deterministically (VHS-REQ-675.2)', () => {
+    // Three reverse-ordered elements exercise both the < and > sides of each sort comparator.
+    const ORPHAN_F = 'f'.repeat(64);
+    const ORPHAN_G = 'g'.repeat(64);
+    const ORPHAN_H = 'h'.repeat(64);
+    const report = buildViPreviewCacheHealth({
+      cacheDirectory: '/cache',
+      // Manifest references three VIs no longer in the workspace, listed out of order.
+      workspaceViPaths: [],
+      manifest: manifest([
+        { relativePath: 'z/Removed.vi', key: KEY_A, outcome: 'rendered' },
+        { relativePath: 'm/Removed.vi', key: KEY_B, outcome: 'rendered' },
+        { relativePath: 'a/Removed.vi', key: KEY_C, outcome: 'rendered' }
+      ]),
+      // Present keys not referenced by the manifest, provided in reverse order.
+      presentCacheKeys: [ORPHAN_H, ORPHAN_G, ORPHAN_F],
+      generatedAt: '2026-07-19T00:00:00.000Z'
+    });
+
+    expect(report.orphanedCacheKeys).toEqual([ORPHAN_F, ORPHAN_G, ORPHAN_H]);
+    expect(report.removedViPaths).toEqual(['a/Removed.vi', 'm/Removed.vi', 'z/Removed.vi']);
+    expect(report.totals.orphanedCacheFiles).toBe(3);
+    expect(report.totals.removedVis).toBe(3);
+  });
+
+  it('sorts reverse-ordered workspace paths into ascending order (VHS-REQ-675.1)', () => {
+    const report = buildViPreviewCacheHealth({
+      cacheDirectory: '/cache',
+      workspaceViPaths: ['z/Last.vi', 'a/First.vi', 'm/Mid.vi'],
+      presentCacheKeys: [],
+      generatedAt: '2026-07-19T00:00:00.000Z'
+    });
+    expect(report.entries.map((e) => e.relativePath)).toEqual([
+      'a/First.vi',
+      'm/Mid.vi',
+      'z/Last.vi'
+    ]);
+  });
 });
