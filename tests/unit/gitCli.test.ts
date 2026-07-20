@@ -412,15 +412,21 @@ describe('gitCli parsing', () => {
     expect(resolveGitExecutable({}, 'win32', () => false)).toBe('git');
   });
 
-  it('rejects Git subprocess failures', async () => {
-    // A non-existent subcommand rejects regardless of repo state, so use a plain
-    // temp dir (no `git init`) — this keeps the assertion off the slow
-    // createTempGitRepo() path that intermittently timed out on Windows CI (#1960).
-    const workingDirectory = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-git-reject-'));
-    tempDirectories.push(workingDirectory);
+  it(
+    'rejects Git subprocess failures',
+    async () => {
+      // A non-existent subcommand rejects regardless of repo state, so use a plain
+      // temp dir (no `git init`) — this keeps the assertion off the slow
+      // createTempGitRepo() path that intermittently timed out on Windows CI (#1960).
+      const workingDirectory = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-git-reject-'));
+      tempDirectories.push(workingDirectory);
 
-    await expect(runGit(['definitely-not-a-real-subcommand'], workingDirectory, 'utf8')).rejects.toThrow();
-  });
+      await expect(runGit(['definitely-not-a-real-subcommand'], workingDirectory, 'utf8')).rejects.toThrow();
+    },
+    // A single real `git` subprocess spawn can exceed the 15s default under load
+    // on the Windows runner; give it explicit headroom to stop the flake (#1960).
+    30000
+  );
 });
 
 describe('gitCli eligibility edge cases (VHS-REQ-006, VHS-REQ-007)', () => {
