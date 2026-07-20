@@ -42,4 +42,53 @@ describe('parseWindowsContainerRuntimeFacts', () => {
     expect(facts.labviewTcpPort).toBeUndefined();
     expect(facts.notes).toEqual([]);
   });
+
+  it('maps prelaunchAttempted=0 to "no" in the hardening note', () => {
+    const stdout = '[vi-history-suite-container-meta]prelaunchAttempted=0';
+    const note = parseWindowsContainerRuntimeFacts(stdout).notes.find((n) =>
+      n.includes('startup hardening')
+    );
+    expect(note).toContain('prelaunchAttempted=no');
+  });
+
+  it('omits an unknown prelaunchAttempted value from the hardening note', () => {
+    const stdout = '[vi-history-suite-container-meta]retryAttempts=2;prelaunchAttempted=maybe';
+    const note = parseWindowsContainerRuntimeFacts(stdout).notes.find((n) =>
+      n.includes('startup hardening')
+    );
+    expect(note).toContain('retryAttempts=2');
+    expect(note).not.toContain('prelaunchAttempted');
+  });
+
+  it('records only the retryAttempts hardening fact when it is the sole hardening key', () => {
+    const stdout = '[vi-history-suite-container-meta]retryAttempts=4';
+    const note = parseWindowsContainerRuntimeFacts(stdout).notes.find((n) =>
+      n.includes('startup hardening')
+    );
+    expect(note).toContain('retryAttempts=4');
+    expect(note).not.toContain('prelaunchAttempted');
+    expect(note).not.toContain('OpenAppReferenceTimeoutInSecond');
+    expect(note).not.toContain('AfterLaunchOpenAppReferenceTimeoutInSecond');
+  });
+
+  it('records only the afterLaunchTimeout hardening fact when it is the sole hardening key', () => {
+    const stdout = '[vi-history-suite-container-meta]afterLaunchTimeout=90';
+    const note = parseWindowsContainerRuntimeFacts(stdout).notes.find((n) =>
+      n.includes('startup hardening')
+    );
+    expect(note).toContain('AfterLaunchOpenAppReferenceTimeoutInSecond=90');
+    expect(note).not.toContain('retryAttempts');
+  });
+
+  it('skips metadata segments without an = separator and with empty keys', () => {
+    const stdout = '[vi-history-suite-container-meta]bareToken; =orphanValue;iniPath=C:\\NI\\labview.ini';
+    const facts = parseWindowsContainerRuntimeFacts(stdout);
+    expect(facts.labviewIniPath).toBe('C:\\NI\\labview.ini');
+  });
+
+  it('ignores a non-positive connected port value in the metadata', () => {
+    const stdout = '[vi-history-suite-container-meta]iniPath=C:\\NI\\labview.ini;connectedPort=0';
+    const facts = parseWindowsContainerRuntimeFacts(stdout);
+    expect(facts.labviewTcpPort).toBeUndefined();
+  });
 });
