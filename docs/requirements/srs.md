@@ -6162,3 +6162,39 @@ Missing numeric IDs are intentional.
 - Change Guidance:
   - This command must never write to the board. Keep it a read-only mirror of the
     write path's planner so the shadow and applied plans cannot diverge.
+
+### VHS-REQ-681: Governance Gate-Tooling Integrity
+
+- Status: Active
+- Parent: VHS-SYS-REQ-013
+- Area: CI And Developer Environment
+- Statement: The repository shall declare its governance/CI gate tools as a
+  manifest and provide a gate that fails closed when a declared gate script is
+  missing on disk, its committed npm alias is absent, or the alias no longer
+  invokes the declared script. This converts the previously unmapped governance
+  gate scripts (ADR index, agent-delegation, branch-protection, dev-dependency
+  preflight, documentation workbench) into a requirement-mapped surface that
+  cannot be silently deleted, renamed, or unwired.
+- Acceptance Criteria:
+  - A manifest declares each governance gate tool by id, repo-relative script
+    path, and committed npm alias; the evaluation is pure and injectable.
+  - The gate fails closed on any missing gate script, missing npm alias, or an
+    alias that does not invoke its declared script (and on a malformed or
+    duplicate manifest entry).
+  - The shipped manifest passes against the real repository, and the gate is
+    exposed as the `governance:gates` npm script.
+- Agent Work Scope:
+  - When adding a governance/CI gate script with an npm alias, add it to the
+    `GOVERNANCE_GATES` manifest so it cannot be silently unwired.
+- Implementation References:
+  - `scripts/checkGovernanceGates.js`
+  - `scripts/checkAdrIndex.js`
+  - `scripts/checkAgentDelegation.js`
+  - `scripts/auditBranchProtectionSettings.js`
+  - `scripts/checkDevDependencies.js`
+  - `scripts/checkDocumentationWorkbench.js`
+- Verification References:
+  - `tests/unit/checkGovernanceGatesScript.test.ts`
+- Change Guidance:
+  - Keep the manifest the single source of truth for governance gate wiring; do
+    not remove a gate from the manifest to make the check pass — fix the wiring.

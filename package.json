@@ -342,6 +342,7 @@
     "repo:governance:mcp": "node scripts/repoGovernanceMcp.js",
     "control-plane:write": "node scripts/controlPlaneWrite.js",
     "control-plane:board-sync": "node scripts/controlPlaneBoardSync.js",
+    "governance:gates": "node scripts/checkGovernanceGates.js",
     "customization:audit": "node scripts/auditCustomizationGovernance.js",
     "dev:watch": "tsc -p . --watch --preserveWatchOutput",
     "dev:workspace": "npm run compile && node out/cli/runDevHost.js --prepare-workspace-only",
