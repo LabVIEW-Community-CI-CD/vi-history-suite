@@ -220,3 +220,23 @@ export function buildWindowsHostNativeHeadlessCommandPlan(
     args: ['-NoProfile', '-EncodedCommand', encodeWindowsPowerShellScript(script)]
   };
 }
+
+/**
+ * VHS-REQ-665: decide whether the opt-in win32 host-native headless wrap applies.
+ * The wrap is used only when the extension both runs natively on Windows
+ * (`processPlatform === 'win32'`) and targets a win32 effective runtime, and the
+ * opt-in `LV_RTE_WIN_HOSTNATIVE_HEADLESS=1` toggle is set. Extracted as a pure
+ * predicate so the gate is directly unit-testable without exporting orchestration
+ * internals; `prepareExecutionContext` delegates to it with no behavior change.
+ */
+export function shouldWrapWindowsHostNativeHeadless(
+  processPlatform: NodeJS.Platform,
+  effectiveRuntimePlatform: string,
+  hostNativeHeadlessToggle: string | undefined
+): boolean {
+  return (
+    processPlatform === 'win32' &&
+    effectiveRuntimePlatform === 'win32' &&
+    hostNativeHeadlessToggle === '1'
+  );
+}
