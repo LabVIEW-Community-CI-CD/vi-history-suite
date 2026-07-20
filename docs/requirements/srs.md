@@ -6424,6 +6424,51 @@ Missing numeric IDs are intentional.
     without a network, an apt host, or a display, and keep them maintainer/CI
     tooling driven only through their npm aliases.
 
+### VHS-REQ-685: Integration-Test Harness
+
+- Status: Active
+- Parent: VHS-SYS-REQ-013
+- Area: CI And Developer Environment
+- Statement: The repository's VS Code extension-host integration-test harness
+  shall stage the extension payload, prepare a real-VI workspace fixture, and
+  launch the extension-host suite through a dedicated integration compilation so
+  it stays a deterministic maintainer/CI surface — its extension-payload staging
+  is a pure, unit-verifiable function, its workspace fixture uses only real
+  repository VIs (never synthetic stubs), and the harness compiles to a separate
+  output tree and runs through its own runner rather than the unit test gate.
+- Acceptance Criteria:
+  - The extension-host payload staging resolves the fixed staged roots plus the
+    runtime dependencies parsed from `package.json` and copies them into a fresh
+    temporary stage root, through pure/unit-verifiable functions
+    (`resolveIntegrationHostStageEntries`, `stageExtensionForWindowsHost`).
+  - The integration workspace fixture is prepared from real repository VI
+    revisions (never synthetic byte-stub VIs) so the extension-host suite
+    exercises the shipped comparison/preview path against genuine compiled VIs.
+  - The integration runner selects the host strategy and builds the
+    extension-host control environment, then launches the extension-host suite
+    against the staged payload and prepared workspace.
+  - The harness compiles through its own `tsconfig.integration.json` to a
+    separate output tree and runs only through the `test:integration` runner, so
+    it is never part of the unit-test coverage gate.
+- Agent Work Scope:
+  - When changing the integration harness, keep the payload-staging boundary pure
+    and unit-tested, keep the workspace fixture on real repository VIs, and keep
+    the harness on its dedicated integration compilation/runner rather than the
+    unit gate.
+- Implementation References:
+  - `src/tooling/integrationHostStage.ts`
+  - `tests/integration/runTests.ts`
+  - `tests/integration/prepareTestWorkspace.ts`
+  - `tests/integration/suite/index.ts`
+  - `tsconfig.integration.json`
+- Verification References:
+  - `tests/unit/integrationHostStage.test.ts`
+  - `tests/integration/suite/extensionHost.test.ts`
+- Change Guidance:
+  - Keep the payload-staging functions pure so they stay unit-verifiable, and
+    never seed synthetic stub VIs into the workspace fixture — the extension-host
+    suite must run against real repository VIs to prove the shipped path.
+
 ### VHS-REQ-686: Vagrant Maintainer Lane Helpers
 
 - Status: Active

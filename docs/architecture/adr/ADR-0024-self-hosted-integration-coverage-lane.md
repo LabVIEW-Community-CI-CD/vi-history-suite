@@ -64,4 +64,4 @@ code.
 
 ## Requirements recorded
 
-VHS-SYS-REQ-013; VHS-REQ-684, VHS-REQ-690.
+VHS-SYS-REQ-013; VHS-REQ-684, VHS-REQ-685, VHS-REQ-690.

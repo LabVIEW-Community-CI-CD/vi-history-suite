@@ -128,7 +128,7 @@ src/support/repositorySupportPolicy.ts,supporting,No,Repository support tier cla
 src/tooling/buildInfo.ts,mapped,Yes,Build info runtime consumer (reads extensionVersion/extensionCommit to compose the extension build ref); mapped under VHS-REQ-683.
 src/tooling/devHostLoop.ts,mapped,Yes,Development host loop; dev-host tooling mapped under VHS-REQ-683.
 src/tooling/integrationHostRuntime.ts,mapped,Yes,Integration host runtime incl. Windows VS Code readiness guard; mapped to VHS-REQ-598.
-src/tooling/integrationHostStage.ts,dev-only,No,Integration host stage; testing infrastructure.
+src/tooling/integrationHostStage.ts,mapped,Yes,"Integration host stage: pure resolveIntegrationHostStageEntries (package.json runtime-dep parse + fixed roots) + stageExtensionForWindowsHost (temp stage-root copy), unit-covered; testing infrastructure; mapped to VHS-REQ-685."
 src/tooling/localRuntimeSettingsCli.ts,mapped,Yes,Installed runtime settings CLI preparation surface mapped to VHS-REQ-612 through the contributed labviewViHistory.prepareLocalRuntimeSettingsCli command.
 src/tooling/localRuntimeSettingsShellEscaping.ts,supporting,No,"Shell/path escaping helpers (escapeWindowsBatchEcho, escapeSingleQuotedShellString, quoteLauncherPathForShell, buildPathPrependValue, resolveCurrentPlatformLauncherPath) extracted verbatim from localRuntimeSettingsCli and re-exported to preserve the public API while separating pure shell-quoting from CLI orchestration; supporting VHS-REQ-623."
 src/tooling/localRuntimeSettingsRuntimeStatus.ts,supporting,No,"Runtime settings value normalizers + status mappers (normalizeLabviewBitness, normalizeProvider, isSupportedInstalledLabviewVersion, formatPersistedFact, resolveCliRuntimePlatform, deriveRuntimeValidationErrorCode/ProofStatus/ImplementationStatus) extracted verbatim from localRuntimeSettingsCli and the public ones re-exported to preserve the public API while separating pure normalization/status mapping from CLI orchestration; supporting VHS-REQ-623."
@@ -228,7 +228,7 @@ tests/unit/historyPanelRendering.test.ts,mapped,Yes,History panel rendering test
 tests/unit/historyPanelTracker.test.ts,mapped,Yes,History panel tracker tests; mapped through RTM.
 tests/unit/historyReviewPacket.test.ts,mapped,Yes,History review packet tests; mapped through RTM.
 tests/unit/integrationHostRuntime.test.ts,mapped,Yes,Integration host runtime tests incl. Windows VS Code readiness guard; mapped to VHS-REQ-598.
-tests/unit/integrationHostStage.test.ts,dev-only,No,Integration host stage tests; testing infrastructure.
+tests/unit/integrationHostStage.test.ts,mapped,Yes,"Integration host stage tests covering runtime-dependency stage-entry expansion, no-dependency fallback, and recursive file+directory staging copy; testing infrastructure; mapped to VHS-REQ-685."
 tests/unit/localRuntimeSettingsCli.test.ts,mapped,Yes,Installed runtime settings CLI direct tests; mapped to VHS-REQ-612.
 tests/unit/localRuntimeSettingsShellEscaping.test.ts,supporting,No,"Shell/path escaping unit tests (platform launcher selection, PATH prepend separator, win32/posix launcher quoting with embedded-quote escaping, batch-echo and single-quote escaping); supporting VHS-REQ-623."
 tests/unit/localRuntimeSettingsRuntimeStatus.test.ts,supporting,No,"Runtime settings value normalizer + status mapper unit tests (bitness/provider normalization + rejection, supported-year predicate, persisted-fact formatting, platform resolution + rejection, blocked-reason error-code/proof-status/implementation-status mapping); supporting VHS-REQ-623."
@@ -346,9 +346,9 @@ tests/unit/viMagicWrapper.test.ts,mapped,Yes,VI magic wrapper tests; mapped thro
 tests/unit/linuxLabviewMaintainerWorkflow.test.ts,mapped,Yes,Linux LabVIEW maintainer workflow tests; mapped through RTM.
 tests/unit/windowsLabviewMaintainerWorkflow.test.ts,mapped,Yes,Windows LabVIEW maintainer workflow tests; mapped through RTM.
 tests/integration/suite/extensionHost.test.ts,mapped,Yes,Extension host integration tests; mapped through RTM.
-tests/integration/suite/index.ts,dev-only,No,Integration test suite index; testing infrastructure.
-tests/integration/runTests.ts,dev-only,No,Integration test runner; testing infrastructure.
-tests/integration/prepareTestWorkspace.ts,dev-only,No,Integration test workspace preparation; testing infrastructure.
+tests/integration/suite/index.ts,mapped,Yes,"Integration test suite entry adapter delegating to runIntegrationSuite; testing infrastructure; mapped to VHS-REQ-685."
+tests/integration/runTests.ts,mapped,Yes,"Integration test runner: selects the host strategy, builds the extension-host control env, and launches the extension-host suite against the staged payload; testing infrastructure; mapped to VHS-REQ-685."
+tests/integration/prepareTestWorkspace.ts,mapped,Yes,"Integration test workspace preparation: builds a temporary git workspace fixture from REAL repository VI revisions (never synthetic stubs) so the extension-host suite exercises the shipped path; testing infrastructure; mapped to VHS-REQ-685."
 .github/workflows/ci.yml,release-ci,Yes,CI workflow with hosted DoD Gate / dod; mapped through RTM including VHS-REQ-597 and VHS-REQ-615.
 .github/workflows/codeql.yml,mapped,Yes,CodeQL analysis workflow; mapped to VHS-REQ-602.
 .github/workflows/repo-truth-read-model.yml,mapped,Yes,Read-only Actions workflow publishing the repo-truth read-model JSON as an artifact (control-plane #2144); mapped to VHS-REQ-694.
@@ -374,7 +374,7 @@ tests/integration/prepareTestWorkspace.ts,dev-only,No,Integration test workspace
 vitest.config.ts,mapped,Yes,Vitest coverage reporter and evidence-backed threshold configuration; mapped to VHS-REQ-597 and VHS-REQ-613.
 stryker.config.mjs,dev-only,No,Stryker mutation-testing configuration scoped to src/domain; advisory assertion-quality signal (thresholds.break null); requires a local run.
 tsconfig.json,dev-only,No,TypeScript configuration; development tooling.
-tsconfig.integration.json,dev-only,No,TypeScript integration config; testing infrastructure.
+tsconfig.integration.json,mapped,Yes,"TypeScript integration config: compiles src + tests/integration to a separate out-tests tree for the test:integration runner, keeping the harness off the unit-coverage gate; testing infrastructure; mapped to VHS-REQ-685."
 package.json,mapped,Yes,Package manifest; mapped through RTM including VHS-REQ-626 export command contribution VHS-REQ-651 Command Palette exclusion and VHS-REQ-659 VI Preview custom editor contribution.
 package-lock.json,supporting,No,Package lock file; dependency support.
 control-plane-write.json,mapped,Yes,"Committed enablement flag for the governed control-plane write path (VHS-REQ-696, epic #2144); ships enabled:false so the write path is fail-closed disabled, declares the approver allowlist, token source (local-agent-session), and per-tier switches (Tier 1 boardSync only). Mapped to VHS-REQ-696."
