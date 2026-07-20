@@ -128,7 +128,9 @@ function buildControlPlaneDigest(signals, options = {}) {
 
   // Board-vs-truth drift.
   lines.push('## Board vs. verified truth', '');
-  if (boardDrift.length === 0) {
+  if (typeof s.boardUnavailable === 'string') {
+    lines.push(`- ⚠️ Board read unavailable (${s.boardUnavailable}); other sections are still current.`);
+  } else if (boardDrift.length === 0) {
     lines.push('- ✅ Board is in sync with directly-verified truth (0 updates).');
   } else {
     lines.push(`- ⚠️ ${boardDrift.length} board field(s) behind verified reality:`);
@@ -198,8 +200,24 @@ function buildControlPlaneDigest(signals, options = {}) {
 // small; the workflow can pass a read-model packet for the richer sections.
 function collectControlPlaneSignals(deps = {}) {
   const collectPlan = deps.collectBoardSyncPlan || collectBoardSyncPlan;
-  const { updates } = collectPlan(deps.boardSyncDeps || {});
-  const signals = { boardDrift: updates };
+  // The board read (project + verified closures) is fail-closed on GitHub auth.
+  // But it is only ONE of the digest's sections: gate health, open work, debt,
+  // release, and supply-chain all come from the read-model and need no board
+  // access. So a board-read failure DEGRADES the board section (marking it
+  // unavailable) rather than failing the whole digest — the radar still reports
+  // every other truth it can reach. Set deps.failClosedOnBoard to restore the
+  // strict "board required" behavior.
+  const signals = {};
+  try {
+    const { updates } = collectPlan(deps.boardSyncDeps || {});
+    signals.boardDrift = updates;
+  } catch (err) {
+    if (deps.failClosedOnBoard === true) {
+      throw err;
+    }
+    signals.boardDrift = [];
+    signals.boardUnavailable = err && err.message ? err.message : 'board read failed';
+  }
 
   // The richer sections derive from a repo-truth read-model packet. It is
   // supplied explicitly (injected packet, or a builder) so this stays
