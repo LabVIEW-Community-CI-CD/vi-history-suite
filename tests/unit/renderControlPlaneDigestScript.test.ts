@@ -7,7 +7,10 @@ import { describe, expect, it } from 'vitest';
 const {
   DIGEST_MARKER,
   buildControlPlaneDigest,
-  collectControlPlaneSignals
+  collectControlPlaneSignals,
+  deriveGateHealthFromReadModel,
+  deriveOpenWorkFromReadModel,
+  deriveDebtFromReadModel
 } = require('../../scripts/renderControlPlaneDigest.js') as {
   DIGEST_MARKER: string;
   buildControlPlaneDigest: (
@@ -15,6 +18,9 @@ const {
     options?: { generatedAt?: string }
   ) => { marker: string; markdown: string; driftCount: number };
   collectControlPlaneSignals: (deps: Record<string, unknown>) => Record<string, unknown>;
+  deriveGateHealthFromReadModel: (packet: unknown) => Array<{ id: string; ok: boolean; detail: string }> | undefined;
+  deriveOpenWorkFromReadModel: (packet: unknown) => { openPrs: number; blocked: number } | undefined;
+  deriveDebtFromReadModel: (packet: unknown) => { coverageDebtTitle?: string; requirementAttention?: number } | undefined;
 };
 
 const AT = '2026-07-20T00:00:00.000Z';
@@ -116,3 +122,91 @@ describe('renderControlPlaneDigest: collectControlPlaneSignals (VHS-REQ-698.1)',
     ).toThrow(/auth login required/);
   });
 });
+
+const READ_MODEL = {
+  adrGovernance: { available: true, consistent: true },
+  requirementHealth: { available: true, healthy: true, status: 'healthy', requirementsNeedingAttention: 0 },
+  coverage: { available: true, mappedBelowThreshold: 0 },
+  openWork: { available: true, openPullRequests: 3, byMergeStateStatus: { BLOCKED: 1, CLEAN: 2 } }
+};
+
+describe('renderControlPlaneDigest: read-model section mappers (VHS-REQ-698.1)', () => {
+  it('derives gate health from ADR/requirement/coverage domains', () => {
+    expect(deriveGateHealthFromReadModel(READ_MODEL)).toEqual([
+      { id: 'adr:governance', ok: true, detail: '' },
+      { id: 'requirements:health', ok: true, detail: '' },
+      { id: 'coverage:risk', ok: true, detail: '' }
+    ]);
+  });
+
+  it('marks a gate failing with detail when a domain is unhealthy', () => {
+    const gates = deriveGateHealthFromReadModel({
+      adrGovernance: { available: true, consistent: false, violationCount: 2 },
+      coverage: { available: true, mappedBelowThreshold: 3 }
+    });
+    expect(gates).toContainEqual({ id: 'adr:governance', ok: false, detail: '2 violation(s)' });
+    expect(gates).toContainEqual({ id: 'coverage:risk', ok: false, detail: '3 mapped file(s) below threshold' });
+  });
+
+  it('omits gate health entirely when no domain is available', () => {
+    expect(deriveGateHealthFromReadModel({ adrGovernance: { available: false } })).toBeUndefined();
+    expect(deriveGateHealthFromReadModel(null)).toBeUndefined();
+  });
+
+  it('derives open work with the blocked count, undefined when the domain is unavailable', () => {
+    expect(deriveOpenWorkFromReadModel(READ_MODEL)).toEqual({ openPrs: 3, blocked: 1 });
+    expect(deriveOpenWorkFromReadModel({ openWork: { available: false } })).toBeUndefined();
+  });
+
+  it('derives debt from coverage + requirement attention, undefined when neither present', () => {
+    expect(deriveDebtFromReadModel(READ_MODEL)).toEqual({
+      coverageDebtTitle: 'No mapped files below the coverage risk threshold',
+      requirementAttention: 0
+    });
+    expect(deriveDebtFromReadModel({ coverage: { available: true, mappedBelowThreshold: 5 } })).toEqual({
+      coverageDebtTitle: '5 mapped file(s) below the coverage risk threshold'
+    });
+    expect(deriveDebtFromReadModel({})).toBeUndefined();
+  });
+});
+
+describe('renderControlPlaneDigest: read-model-driven collector (VHS-REQ-698.1)', () => {
+  it('populates all rich sections from an injected read-model packet', () => {
+    const signals = collectControlPlaneSignals({
+      collectBoardSyncPlan: () => ({ items: [], updates: [] }),
+      readModelPacket: READ_MODEL
+    });
+    expect(Array.isArray(signals.gateHealth)).toBe(true);
+    expect(signals.openWork).toEqual({ openPrs: 3, blocked: 1 });
+    expect(signals.debt).toMatchObject({ requirementAttention: 0 });
+  });
+
+  it('builds the packet via an injected builder and degrades on a builder error', () => {
+    const ok = collectControlPlaneSignals({
+      collectBoardSyncPlan: () => ({ items: [], updates: [] }),
+      buildReadModel: () => READ_MODEL
+    });
+    expect(ok.openWork).toEqual({ openPrs: 3, blocked: 1 });
+
+    const degraded = collectControlPlaneSignals({
+      collectBoardSyncPlan: () => ({ items: [], updates: [] }),
+      buildReadModel: () => {
+        throw new Error('read-model unavailable');
+      }
+    });
+    // Board drift still stands; rich sections are simply omitted.
+    expect(degraded.boardDrift).toEqual([]);
+    expect('openWork' in degraded).toBe(false);
+    expect('gateHealth' in degraded).toBe(false);
+  });
+
+  it('an explicit collector overrides the read-model-derived section', () => {
+    const signals = collectControlPlaneSignals({
+      collectBoardSyncPlan: () => ({ items: [], updates: [] }),
+      readModelPacket: READ_MODEL,
+      collectOpenWork: () => ({ openPrs: 99 })
+    });
+    expect(signals.openWork).toEqual({ openPrs: 99 });
+  });
+});
+
