@@ -14,6 +14,9 @@ GitHub Project #4 "vihs" (`LabVIEW-Community-CI-CD`, node `PVT_kwDODQiayc4Bd5Rq`
 - Creating NEW planned work → create the issue AND add it to the board (`gh project item-add 4 --owner LabVIEW-Community-CI-CD --url <issue-url>`) with `Program`/`Phase`/`Portfolio Track`/`Status` set, as part of starting it. No untracked planned work.
 - Requires a `gh` token with the `project` scope (`gh auth refresh -s project`). Edit fields with `gh project item-edit --id <ITEM_ID> --project-id PVT_kwDODQiayc4Bd5Rq --field-id <F> --single-select-option-id <O>`. Field/option ids are recorded in repo memory (`/memories/repo/vi-history-suite.md`).
 
+### Live Repo-Truth Read-Model (read truth, not stale prose)
+Run `npm run repo:truth` (or `node scripts/readRepoTruth.js --json`) to read live repository ground-truth from GitHub instead of trusting potentially-stale docs (VHS-REQ-691/692, Agent Operating Control-Plane). It emits one schema-versioned `repo-truth-read-model@v1` packet spanning the merge-queue policy (min-entries-to-merge, wait, grouping, method), open work (open PRs by mergeable state), coverage, requirement health, and release state. `--json`/`--markdown`/`--schema` output modes; the merge-queue and open-work domains **fail closed on GitHub auth** (require a live `gh` token; no degrade to defaults). Prefer this over hard-coding cadence facts from this file — the read-model is authoritative for live state.
+
 ### Customization Entry Path
 - Use skills for repeatable multi-step workflows tied to repository contracts.
 - Use prompts for one-shot output generation with fixed field labels.
