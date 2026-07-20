@@ -1534,6 +1534,12 @@ Missing numeric IDs are intentional.
   - `tests/unit/comparisonReportRuntimeExecution.test.ts`
 - Change Guidance:
   - Keep external tool invocations decoupled from Git blob access.
+  - When the single-pass comparison-preview pipeline is wired (VHS-REQ-699), its
+    `UNSTAGING` state owns cleanup of the staged inputs after the comparison —
+    removing the staged left/right VI files and the materialized dependency tree,
+    and enumerating the actual removed/retained artifacts — so the legacy
+    retained-tree prune is skipped for that path (the staged pair is no longer
+    kept as retained evidence; the retained report and metadata are).
 
 ### VHS-REQ-148: Retained Runtime Execution Evidence
 
@@ -5317,9 +5323,13 @@ Missing numeric IDs are intentional.
   - `UNSTAGING` is idempotent and always runs (finally-style) even when staging,
     a preview, or the comparison failed; it receives how the pass ended and
     carries a diagnostic status (`removed` / `already-clean` / `partial` /
-    `failed`), a cleanup throw is converted to a `failed` status without masking
-    the comparison result, and the `UNSTAGING` status never changes the pass
-    terminal.
+    `failed`). When wired into the live comparison it OWNS cleanup of the staged
+    inputs: it removes the staged left/right VI files (and clears the materialized
+    dependency tree) and enumerates the actual `removedPaths` and `retainedPaths`
+    (the retained report and metadata) stat-verified at unstage time, so the
+    evidence names the concrete artifacts. A cleanup throw is converted to a
+    `failed` status without masking the comparison result, and the `UNSTAGING`
+    status never changes the pass terminal.
   - The pipeline is wired into the live comparison runtime execution across
     providers (always-on): each staged VI is preview-validated before the
     comparison cycle, the per-state evidence is retained on the runtime-execution

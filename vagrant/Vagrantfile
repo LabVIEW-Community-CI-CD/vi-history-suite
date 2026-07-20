@@ -89,4 +89,14 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     privileged: false,
     path: "provision/install-playwright-preview.ps1",
     run: "never"
+
+  # Ensure the LabVIEW comparison fixture repo (ni/labview-icon-editor) is present
+  # so a CLEAN VM can run the VHS-REQ-699 pipeline drivers with no manual guest
+  # setup. Idempotent; opt-in (enable once when baking a golden box, or on demand):
+  #   vagrant provision --provision-with ensure-fixtures
+  config.vm.provision "ensure-fixtures",
+    type: "shell",
+    privileged: false,
+    path: "provision/ensure-fixtures.ps1",
+    run: "never"
 end

@@ -1258,7 +1258,11 @@ async function runHostNativeExecution(
     // VHS-REQ-624: when the tree was materialized into the retained staging
     // directory (win32 host-native / Linux opt-out), prune it back to the two
     // staged VIs so retained storage does not grow by the repository size per run.
-    if (materializedTree) {
+    // VHS-REQ-699: when the single-pass pipeline is wired (validator present), its
+    // UNSTAGING state OWNS this cleanup — it removes the whole staging directory
+    // (pair + tree) and enumerates the real artifacts — so skip the legacy prune
+    // (which would re-write the pair back and undo UNSTAGING).
+    if (materializedTree && !deps.renderStagedViPreview) {
       await pruneRetainedMaterializedTree(record, deps, leftBlob, rightBlob);
     }
   }
@@ -1692,15 +1696,78 @@ async function runHostNativeExecutionWithContext(
           failureReason: succeeded ? undefined : comparisonExecution.failureReason
         };
       },
-      // UNSTAGING is idempotent and diagnostic-only here: the transient per-preview
-      // workspaces are removed by the preview renderer itself, and the staged pair
-      // is intentionally retained for the comparison + retained evidence (the outer
-      // execution path prunes/cleans it). Report already-clean with the retained
-      // pair so the diagnostic status names what was deliberately kept.
-      unstageInputs: async () => ({
-        status: 'already-clean',
-        retainedPaths: [stagedPair.leftPath, stagedPair.rightPath]
-      })
+      // UNSTAGING (idempotent, diagnostic, and now the cleanup OWNER): remove the
+      // staged inputs the pass operated on and enumerate the real artifacts. The
+      // reported artifacts are the concrete staged VI FILES (left/right) — the
+      // meaningful, stable evidence: once removed they stay gone. The `staging/`
+      // directory (treeRoot) is ALSO removed to clear the materialized dependency
+      // tree (VHS-REQ-624 storage bloat), but the directory itself is NOT reported
+      // as a removed artifact because report finalization may re-create it empty;
+      // reporting a path that reappears would be misleading. The generated report
+      // and its metadata are siblings under the report directory and are always
+      // retained. The transient per-preview workspaces are removed by the preview
+      // renderer itself. (When the validator is wired the outer finally defers its
+      // retained-tree prune to this state.)
+      unstageInputs: async () => {
+        const stagingDir = record.stagedRevisionPlan.treeRoot ?? record.artifactPlan.stagingDirectory;
+        // The staged VI files are the reported artifacts; stat each so removedPaths
+        // reflects files that actually existed at unstage time.
+        const stagedFiles = [stagedPair.leftPath, stagedPair.rightPath].filter(
+          (value): value is string => typeof value === 'string' && value.length > 0
+        );
+        const existingFiles: string[] = [];
+        for (const file of stagedFiles) {
+          if (await deps.pathExists(file)) {
+            existingFiles.push(file);
+          }
+        }
+        const removed: string[] = [];
+        const failed: string[] = [];
+        for (const file of existingFiles) {
+          try {
+            await deps.removePath(file, { recursive: true, force: true });
+            removed.push(file);
+          } catch {
+            failed.push(file);
+          }
+        }
+        // Clear the staging directory (materialized dependency tree) for cleanup;
+        // best-effort, not reported (it may be re-created empty by finalization).
+        if (typeof stagingDir === 'string' && stagingDir.length > 0) {
+          try {
+            await deps.removePath(stagingDir, { recursive: true, force: true });
+          } catch {
+            // Non-fatal: file-level removal above is the reported cleanup.
+          }
+        }
+        // Retained artifacts: only report the report/metadata that actually exist
+        // on disk. On a FAILED comparison no report is produced, so the report
+        // path must not be claimed as retained (Windows verification caught this).
+        const retainedCandidates = [
+          record.artifactPlan.reportFilePath,
+          record.artifactPlan.metadataFilePath
+        ].filter((value): value is string => typeof value === 'string' && value.length > 0);
+        const retainedPaths: string[] = [];
+        for (const candidate of retainedCandidates) {
+          if (await deps.pathExists(candidate)) {
+            retainedPaths.push(candidate);
+          }
+        }
+        const status =
+          existingFiles.length === 0
+            ? ('already-clean' as const)
+            : failed.length === 0
+              ? ('removed' as const)
+              : removed.length > 0
+                ? ('partial' as const)
+                : ('failed' as const);
+        return {
+          status,
+          removedPaths: removed,
+          retainedPaths,
+          failureReason: failed.length > 0 ? `unstage-remove-failed: ${failed.join(', ')}` : undefined
+        };
+      }
     });
     const pipelineCycles = toPipelineCycleRecords(pipeline);
     if (comparisonExecution) {

@@ -110,6 +110,14 @@ export function toUnstagingRecord(result: UnstagingStateResult): ComparisonPipel
   if (result.failureReason !== undefined) {
     record.failureReason = result.failureReason;
   }
+  // Retain the concrete staged artifacts UNSTAGING acted on so the evidence names
+  // the actual files removed vs kept (VHS-REQ-699 / VHS-REQ-147).
+  if (result.removedPaths && result.removedPaths.length > 0) {
+    record.removedPaths = result.removedPaths;
+  }
+  if (result.retainedPaths && result.retainedPaths.length > 0) {
+    record.retainedPaths = result.retainedPaths;
+  }
   if (result.cycle) {
     record.durationMs = result.cycle.durationMs;
     if (result.cycle.interCycleGapMs !== undefined) {

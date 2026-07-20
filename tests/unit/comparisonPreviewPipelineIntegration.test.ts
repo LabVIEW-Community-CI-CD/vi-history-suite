@@ -142,6 +142,40 @@ describe('comparisonPreviewPipelineIntegration', () => {
     expect(unstaging?.failureReason).toBe('right-retained');
   });
 
+  it('carries the actual removed/retained staged artifacts into the UNSTAGING record', async () => {
+    const pipeline = await buildPipeline(
+      { left: { rendered: true }, right: { rendered: true } },
+      { succeeded: true },
+      {
+        unstage: {
+          status: 'removed',
+          removedPaths: ['/staging/left.vi', '/staging/right.vi'],
+          retainedPaths: ['/report/diff.html', '/report/metadata.json']
+        }
+      }
+    );
+
+    const records = toPipelineCycleRecords(pipeline);
+    const unstaging = records.find((r) => r.state === 'UNSTAGING');
+    expect(unstaging?.outcome).toBe('removed');
+    expect(unstaging?.removedPaths).toEqual(['/staging/left.vi', '/staging/right.vi']);
+    expect(unstaging?.retainedPaths).toEqual(['/report/diff.html', '/report/metadata.json']);
+  });
+
+  it('omits empty removed/retained arrays from the UNSTAGING record', async () => {
+    const pipeline = await buildPipeline(
+      { left: { rendered: true }, right: { rendered: true } },
+      { succeeded: true },
+      { unstage: { status: 'already-clean', removedPaths: [], retainedPaths: [] } }
+    );
+
+    const records = toPipelineCycleRecords(pipeline);
+    const unstaging = records.find((r) => r.state === 'UNSTAGING');
+    expect(unstaging?.outcome).toBe('already-clean');
+    expect(unstaging?.removedPaths).toBeUndefined();
+    expect(unstaging?.retainedPaths).toBeUndefined();
+  });
+
   it('omits interCycleGapMs from the first (staging) state record', async () => {
     const pipeline = await buildPipeline(
       { left: { rendered: true }, right: { rendered: true } },
