@@ -53,4 +53,4 @@ GitHub precondition is load-bearing.
 
 ## Requirements recorded
 
-VHS-SYS-REQ-013; VHS-REQ-691; VHS-REQ-692.
+VHS-SYS-REQ-013; VHS-REQ-691; VHS-REQ-692; VHS-REQ-693.

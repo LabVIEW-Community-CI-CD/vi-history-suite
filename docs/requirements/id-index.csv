@@ -699,4 +699,5 @@ VHS-REQ-679,Software,Active,srs.md#vhs-req-679-runtime-dev-tools-install-lifecyc
 VHS-REQ-680,Software,Active,srs.md#vhs-req-680-dev-tools-status-command-and-consumer-documentation,,,docs/requirements/srs.md
 VHS-REQ-691,Software,Active,srs.md#vhs-req-691-agent-operating-control-plane-capability,,,docs/requirements/srs.md
 VHS-REQ-692,Software,Active,srs.md#vhs-req-692-repo-truth-read-model,,,docs/requirements/srs.md
+VHS-REQ-693,Software,Active,srs.md#vhs-req-693-repo-governance-mcp-server,,,docs/requirements/srs.md
 VHS-REQ-697,Software,Active,srs.md#vhs-req-697-agent-environment-consistency-gate,,,docs/requirements/srs.md
