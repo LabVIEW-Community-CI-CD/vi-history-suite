@@ -6129,3 +6129,36 @@ Missing numeric IDs are intentional.
   - Never enable a tier by default; enablement is a committed, reviewed change.
     Keep Tier 1 limited to directly-verified truth and require server-verified
     approval for any tier that acts beyond mirroring.
+
+### VHS-REQ-695: Control-Plane Board-Sync Shadow Mode
+
+- Status: Active
+- Parent: VHS-SYS-REQ-013
+- Area: CI And Developer Environment
+- Statement: The repository shall provide a shadow-mode board-sync that reads
+  live, directly-verifiable ground truth (the project board's current field
+  values and which tracked items are actually closed or merged) and computes,
+  via the same pure planner the governed write path uses, the board updates that
+  would mirror that truth — reporting the plan without writing anything,
+  regardless of the write-path enablement flag. This is the observability
+  precursor to the acting surface, so a human can see how far the board is behind
+  reality before any write capability is enabled.
+- Acceptance Criteria:
+  - Board items are joined with verified closures into the planner's input shape,
+    treating an unconfirmed item as not-closed and never inferring closure.
+  - The shadow plan mirrors only directly-verified truth and is always
+    report-only: it computes and renders the would-apply updates and applies
+    nothing, even when the write path is disabled.
+  - Live board and closure reads are fail-closed on GitHub auth: a read failure
+    propagates rather than degrading to a falsely in-sync result.
+- Agent Work Scope:
+  - Keep the join and renderer pure/injectable and the command report-only; any
+    application of the plan must go through the governed write path (VHS-REQ-696),
+    not this shadow command.
+- Implementation References:
+  - `scripts/controlPlaneBoardSync.js`
+- Verification References:
+  - `tests/unit/controlPlaneBoardSyncScript.test.ts`
+- Change Guidance:
+  - This command must never write to the board. Keep it a read-only mirror of the
+    write path's planner so the shadow and applied plans cannot diverge.

@@ -59,4 +59,4 @@ enablement plus server-verified per-action approval.
 
 ## Requirements recorded
 
-VHS-SYS-REQ-013; VHS-REQ-696.
+VHS-SYS-REQ-013; VHS-REQ-696; VHS-REQ-695.
