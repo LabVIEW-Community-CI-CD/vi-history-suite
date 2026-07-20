@@ -69,6 +69,9 @@ function coveragePacket(): string {
 function healthPacket(): string {
   return JSON.stringify({ summary: { status: 'healthy', healthy: true, attentionCount: 4 } });
 }
+function releasePacket(): string {
+  return JSON.stringify({ stage: 'published', status: 'fresh', authority: { complete: true } });
+}
 
 function happyDeps() {
   return {
@@ -94,6 +97,10 @@ function happyDeps() {
       {
         match: (c, a) => c === 'node' && a.some((x) => x.includes('verifyRequirementsHealth.js')),
         result: { status: 0, stdout: healthPacket() }
+      },
+      {
+        match: (c, a) => c === 'node' && a.some((x) => x.includes('buildReleaseState.js')),
+        result: { status: 0, stdout: releasePacket() }
       }
     ])
   };
@@ -154,6 +161,7 @@ describe('readRepoTruth: buildRepoTruthPacket', () => {
     expect(domains.openWork).toMatchObject({ available: true, openPullRequests: 2 });
     expect(domains.coverage).toMatchObject({ available: true, riskThreshold: 50 });
     expect(domains.requirementHealth).toMatchObject({ available: true, requirementsNeedingAttention: 4 });
+    expect(domains.releaseState).toMatchObject({ available: true, stage: 'published', status: 'fresh', authorityComplete: true });
   });
 
   it('downgrades a sibling domain to available:false when its script yields no JSON (VHS-REQ-692.4)', () => {

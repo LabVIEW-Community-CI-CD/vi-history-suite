@@ -236,6 +236,24 @@ function summarizeOpenWork(pullRequests) {
   return { openPullRequests: list.length, byMergeStateStatus: byState };
 }
 
+// Release-state domain: read the schema'd release-state read-model (VHS-REQ-670)
+// and surface the furthest durable stage, publish-authority posture, and rollup
+// status. A local read-model, so it degrades to available:false rather than
+// failing the whole read closed.
+function collectReleaseStateDomain(deps = {}) {
+  const outcome = runSiblingReadModel('scripts/buildReleaseState.js', ['--json'], deps);
+  if (!outcome.available) {
+    return outcome;
+  }
+  const packet = outcome.packet || {};
+  return {
+    available: true,
+    stage: packet.stage,
+    status: packet.status,
+    authorityComplete: packet.authority && typeof packet.authority === 'object' ? packet.authority.complete : undefined
+  };
+}
+
 // Fetch open PRs via gh (fail-closed on auth, like the merge-queue domain) and
 // summarize them. Part of the live GitHub precondition, not a local artifact.
 function collectOpenWorkDomain(options, deps = {}) {
@@ -254,6 +272,7 @@ function buildRepoTruthPacket(options = {}, deps = {}) {
   const openWork = collectOpenWorkDomain(options, deps);
   const coverage = collectCoverageDomain(deps);
   const requirementHealth = collectRequirementHealthDomain(deps);
+  const releaseState = collectReleaseStateDomain(deps);
   return {
     ...schemaEnvelopeFields(REPO_TRUTH_SCHEMA_ID, REPO_TRUTH_SCHEMA_VERSION),
     generatedAt: generatedAt(deps),
@@ -263,7 +282,8 @@ function buildRepoTruthPacket(options = {}, deps = {}) {
       mergeQueue,
       openWork,
       coverage,
-      requirementHealth
+      requirementHealth,
+      releaseState
     }
   };
 }
@@ -282,12 +302,13 @@ const REPO_TRUTH_JSON_SCHEMA = Object.freeze({
     branch: { type: 'string' },
     domains: {
       type: 'object',
-      required: ['mergeQueue', 'openWork', 'coverage', 'requirementHealth'],
+      required: ['mergeQueue', 'openWork', 'coverage', 'requirementHealth', 'releaseState'],
       properties: {
         mergeQueue: { type: 'object' },
         openWork: { type: 'object' },
         coverage: { type: 'object' },
-        requirementHealth: { type: 'object' }
+        requirementHealth: { type: 'object' },
+        releaseState: { type: 'object' }
       }
     }
   }
@@ -323,6 +344,12 @@ function renderTextReport(packet) {
       ? `Requirement health: status=${rh.status}; healthy=${rh.healthy}; needingAttention=${rh.requirementsNeedingAttention}.`
       : `Requirement health: unavailable (${rh.reason}).`
   );
+  const rs = packet.domains.releaseState;
+  lines.push(
+    rs.available
+      ? `Release state: stage=${rs.stage}; status=${rs.status}; authorityComplete=${rs.authorityComplete}.`
+      : `Release state: unavailable (${rs.reason}).`
+  );
   return lines;
 }
 
@@ -334,7 +361,8 @@ function renderMarkdownReport(packet) {
     `| Merge queue | ${mq.present ? `min-to-merge ${mq.minEntriesToMerge}, wait ${mq.minEntriesToMergeWaitMinutes}min, grouping ${mq.groupingStrategy}, method ${mq.mergeMethod}` : 'no merge_queue rule'} |`,
     `| Open work | ${packet.domains.openWork.available ? `${packet.domains.openWork.openPullRequests} open PR(s)` : `unavailable (${packet.domains.openWork.reason})`} |`,
     `| Coverage | ${packet.domains.coverage.available ? `threshold ${packet.domains.coverage.riskThreshold}, below ${packet.domains.coverage.mappedBelowThreshold}` : `unavailable (${packet.domains.coverage.reason})`} |`,
-    `| Requirement health | ${packet.domains.requirementHealth.available ? `${packet.domains.requirementHealth.requirementsNeedingAttention} need attention (status ${packet.domains.requirementHealth.status})` : `unavailable (${packet.domains.requirementHealth.reason})`} |`
+    `| Requirement health | ${packet.domains.requirementHealth.available ? `${packet.domains.requirementHealth.requirementsNeedingAttention} need attention (status ${packet.domains.requirementHealth.status})` : `unavailable (${packet.domains.requirementHealth.reason})`} |`,
+    `| Release state | ${packet.domains.releaseState.available ? `stage ${packet.domains.releaseState.stage}, status ${packet.domains.releaseState.status}` : `unavailable (${packet.domains.releaseState.reason})`} |`
   ];
   return [`# Repo-truth read-model: ${packet.repo} @ ${packet.branch}`, '', ...rows];
 }
@@ -421,6 +449,7 @@ module.exports = {
   collectOpenWorkDomain,
   collectCoverageDomain,
   collectRequirementHealthDomain,
+  collectReleaseStateDomain,
   buildRepoTruthPacket,
   run
 };
