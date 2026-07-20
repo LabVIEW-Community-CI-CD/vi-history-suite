@@ -32,8 +32,12 @@ describe('Control-plane loop workflow (VHS-REQ-698)', () => {
     const workflow = readWorkflow();
     // The apply step runs only when the maintainer-provisioned secret is present;
     // without it the step is a no-op (the ambient token cannot edit Project #4).
+    // The secret is hoisted to a job env because the `secrets` context is not
+    // allowed in a step `if:` condition (only `env` is).
     expect(workflow).toContain('Apply Tier-1 board updates');
-    expect(workflow).toContain("secrets.CONTROL_PLANE_PROJECT_TOKEN != ''");
+    expect(workflow).toContain('CONTROL_PLANE_PROJECT_TOKEN: ${{ secrets.CONTROL_PLANE_PROJECT_TOKEN }}');
+    expect(workflow).toContain("env.CONTROL_PLANE_PROJECT_TOKEN != ''");
+    expect(workflow).not.toContain("secrets.CONTROL_PLANE_PROJECT_TOKEN != ''");
     expect(workflow).toContain('node scripts/controlPlaneApply.js');
     // Apply happens after the read-only digest render/upsert.
     const upsertIndex = workflow.indexOf('Upsert sticky drift-radar issue');

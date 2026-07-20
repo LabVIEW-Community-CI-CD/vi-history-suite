@@ -401,6 +401,7 @@
     "preview:cache:exchange": "npm run compile 1>&2 && node out/cli/runViPreviewCacheExchange.js",
     "docs:links": "node scripts/checkDocsLinks.js",
     "docs:gate": "node scripts/checkDocumentationWorkbench.js",
+    "workflows:lint": "actionlint",
     "coverage:map": "node scripts/mapCoverageToTraceability.js",
     "coverage:map:enforce": "node scripts/mapCoverageToTraceability.js --enforce",
     "test:mutation": "stryker run",

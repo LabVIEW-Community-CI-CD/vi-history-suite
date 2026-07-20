@@ -1,0 +1,9 @@
+# actionlint configuration for vi-history-suite.
+# Declares the repository's custom self-hosted runner labels so actionlint does
+# not flag them as unknown. Keep in sync with the runner registrations
+# (see docs/maintainer-operations.md).
+self-hosted-runner:
+  labels:
+    - vihs-linux-labview-maintainer
+    - vihs-linux-labview-docker
+    - vihs-windows-labview-maintainer

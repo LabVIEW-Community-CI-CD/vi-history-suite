@@ -63,6 +63,19 @@ describe('CI branch governance workflow', () => {
     expect(workflow).toContain('Branch governance decision:');
   });
 
+  it('passes the untrusted PR refs through env to avoid script injection', () => {
+    const workflow = readWorkflow();
+
+    // github.head_ref is attacker-controlled (a branch name); it must reach the
+    // shell via an env var, never interpolated inline into the run: script.
+    expect(workflow).toContain('BASE_REF: ${{ github.base_ref }}');
+    expect(workflow).toContain('HEAD_REF: ${{ github.head_ref }}');
+    expect(workflow).toContain('base="$BASE_REF"');
+    expect(workflow).toContain('head="$HEAD_REF"');
+    expect(workflow).not.toContain('head="${{ github.head_ref }}"');
+    expect(workflow).not.toContain('base="${{ github.base_ref }}"');
+  });
+
   it('allows the dependabot/* head family to target develop (matches dependabot.yml)', () => {
     const workflow = readWorkflow();
 
