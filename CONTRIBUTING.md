@@ -15,17 +15,33 @@ npm run package
 
 Then press `F5` in VS Code to launch the extension development host.
 
-### Pre-push hook
+### Git hooks
 
-This repo ships a pre-push git hook under `.githooks/` that gates on ADR
-infrastructure (`npm run adr:check`) and the repo-standards-review audit
-(`npm run standards:audit`). Enable it once per clone:
+This repo ships git hooks under `.githooks/`. They are **auto-enabled** by the npm
+`prepare` lifecycle (a plain `npm install`/`npm ci` points `core.hooksPath` at
+`.githooks`), so a fresh clone needs no manual step. To enable or re-enable
+explicitly:
 
 ```bash
-git config core.hooksPath .githooks
+npm run hooks:install   # or: git config core.hooksPath .githooks
 ```
 
-Bypass in an emergency with `git push --no-verify`.
+Hooks:
+
+- **pre-push** — gates on ADR infrastructure (`npm run adr:check`) and the
+  repo-standards-review audit (`npm run standards:audit`).
+- **pre-commit** — the environment-consistency gate (VHS-REQ-697). Fails closed
+  when `node_modules` is out of sync with `package-lock.json` (which breaks the
+  toolchain); run `npm ci` and commit again. Stale compiled `out/` and changed
+  requirements are advisory, not blocking.
+- **post-merge / post-checkout** — report a stale environment synchronously after
+  a pull/checkout (advisory; they always exit 0) and point at the authoritative
+  project board for next work. Check the environment any time with
+  `npm run env:sync:check`.
+
+Bypass in an emergency with `git push --no-verify` / `git commit --no-verify`.
+Note that git cannot prevent `--no-verify` at the hook level; per repository
+policy, agents must not use it as a shortcut.
 
 ## Pull Requests
 
