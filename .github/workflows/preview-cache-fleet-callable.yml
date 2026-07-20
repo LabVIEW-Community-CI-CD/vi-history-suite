@@ -245,7 +245,7 @@ jobs:
         run: npm run compile
 
       - name: Download Shard Bundles
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           pattern: fleet-bundle-shard-*
           path: fleet-shards
