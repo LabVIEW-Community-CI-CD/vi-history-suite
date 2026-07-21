@@ -331,6 +331,9 @@ describe('renderViSemanticPrReviewMarkdown', () => {
     const markdown = renderViSemanticPrReviewMarkdown(review);
     expect(markdown).toContain('- **Preview correlation:**');
     expect(markdown).toContain('cross-reference the base and head previews');
+    // VHS-REQ-703.8: the side-by-side surface table renders under the narrative.
+    expect(markdown).toContain('| Surface | Change kinds | Changes | Base preview | Head preview |');
+    expect(markdown).toContain('| block diagram | behavioral | 1 | ✓ available | ✓ available |');
   });
 
   it('omits the preview correlation entirely when no provider is wired (VHS-REQ-703.3)', async () => {
