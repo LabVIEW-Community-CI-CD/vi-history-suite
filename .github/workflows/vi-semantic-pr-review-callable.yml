@@ -64,6 +64,11 @@ on:
         required: false
         default: false
         type: boolean
+      base_tree_dir:
+        description: 'Already-materialized base-revision tree root (e.g. a git worktree of the base) whose previews are present in preview_cache_dir, enabling base-side correlation for the external-cache path (VHS-REQ-703.7). Only used when correlate_previews is true; the auto-warm path materializes its own base tree and does not need this.'
+        required: false
+        default: ''
+        type: string
     secrets:
       VI_REVIEW_TARGET_TOKEN:
         description: 'Token with pull-requests: write on the target repository. Posted cross-repo, so the workflow GITHUB_TOKEN is insufficient.'
@@ -289,6 +294,7 @@ jobs:
           CREATE_COMMIT_STATUS: ${{ inputs.create_commit_status }}
           CORRELATE_PREVIEWS: ${{ inputs.correlate_previews }}
           PREVIEW_CACHE_DIR: ${{ inputs.preview_cache_dir }}
+          BASE_TREE_DIR: ${{ inputs.base_tree_dir }}
         run: |
           # The docker comparison bind-mounts its staging directory into the
           # LabVIEW container. snap-packaged Docker runs in a private mount
@@ -342,12 +348,14 @@ jobs:
               # not affect it. (Idempotent when the warm step already did it.)
               git -C target-clone checkout --detach "$REVIEW_HEAD_SHA"
               args+=(--correlate-previews --preview-cache-dir "$effective_cache_dir")
-              # Base-side correlation: when a base tree was materialized (the
-              # auto-warm step's git worktree), point the review at it so the
-              # base preview can also hit the cache (VHS-REQ-703.7). Without it
-              # the base side stays honestly unavailable (head-only correlation).
-              if [ -n "${AUTO_BASE_TREE_DIR:-}" ]; then
-                args+=(--base-tree-dir "$AUTO_BASE_TREE_DIR")
+              # Base-side correlation: use the explicit base_tree_dir input (for
+              # the external-cache path) when set, else the base tree the
+              # auto-warm step's git worktree produced (VHS-REQ-703.7). Without
+              # either, the base side stays honestly unavailable (head-only).
+              effective_base_tree="$BASE_TREE_DIR"
+              if [ -z "$effective_base_tree" ]; then effective_base_tree="${AUTO_BASE_TREE_DIR:-}"; fi
+              if [ -n "$effective_base_tree" ]; then
+                args+=(--base-tree-dir "$effective_base_tree")
               fi
             fi
           fi

@@ -37,6 +37,10 @@ on:
         required: false
         default: false
         type: boolean
+      base_tree_dir:
+        description: 'Already-materialized base-revision tree root whose previews are present in preview_cache_dir, enabling base-side correlation on the external-cache path (VHS-REQ-703.7). The auto-warm path materializes its own base tree and does not need this.'
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -62,5 +66,6 @@ jobs:
       correlate_previews: ${{ inputs.correlate_previews }}
       preview_cache_dir: ${{ inputs.preview_cache_dir }}
       auto_warm_changed_previews: ${{ inputs.auto_warm_changed_previews }}
+      base_tree_dir: ${{ inputs.base_tree_dir }}
     secrets:
       VI_REVIEW_TARGET_TOKEN: ${{ secrets.VI_REVIEW_TARGET_TOKEN }}

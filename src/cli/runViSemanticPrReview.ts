@@ -208,6 +208,13 @@ export function parseArgs(argv: string[]): ParsedArgs {
       throw new Error('--correlate-previews cannot be combined with --from-file');
     }
   }
+  if (baseTreeDir !== undefined && !correlatePreviews) {
+    // A base tree is only consumed by the correlation provider; requiring
+    // --correlate-previews fails fast on a misconfiguration (e.g. a caller
+    // expects base-side correlation but forgot to enable it) instead of
+    // silently ignoring the base tree.
+    throw new Error('--base-tree-dir requires --correlate-previews');
+  }
 
   return {
     repositoryRoot,
