@@ -137,13 +137,91 @@ function defaultAppendLog(repoRoot, deps = {}) {
   };
 }
 
+// Pure Tier 2 (annotate) planner: normalize proposed annotate actions
+// (comment/label on an issue or PR) into a validated apply-list, dropping any
+// malformed entry. Unlike Tier 1 this does NOT derive actions from truth — the
+// actions are supplied by an approved proposer — so the planner only validates
+// shape; the gate (server-verified approver) is what authorizes acting on them.
+//
+// actions: [{ kind: 'comment'|'label', target: 'issue'|'pr', number, body?, label? }]
+function planAnnotate(actions) {
+  const list = Array.isArray(actions) ? actions : [];
+  const planned = [];
+  for (const action of list) {
+    if (!action || typeof action !== 'object') {
+      continue;
+    }
+    const { kind, target, number } = action;
+    if (target !== 'issue' && target !== 'pr') {
+      continue;
+    }
+    if (!Number.isInteger(number) || number <= 0) {
+      continue;
+    }
+    if (kind === 'comment') {
+      if (typeof action.body !== 'string' || action.body.trim().length === 0) {
+        continue;
+      }
+      planned.push({ kind: 'comment', target, number, body: action.body });
+    } else if (kind === 'label') {
+      if (typeof action.label !== 'string' || action.label.trim().length === 0) {
+        continue;
+      }
+      planned.push({ kind: 'label', target, number, label: action.label });
+    }
+  }
+  return planned;
+}
+
+// Execute planned Tier 2 annotate actions ONLY when the gate authorizes. Unlike
+// Tier 1, annotate additionally requires a server-verified allowlisted approver
+// (context.approver + context.approverVerified) because it acts beyond mirroring
+// directly-verified truth. Every applied annotation is appended to the write log.
+// The annotation applier and log-appender are injected; nothing runs when the
+// gate refuses, and the outcome records the refusal reason.
+function runAnnotate(options = {}, deps = {}) {
+  const repoRoot = deps.repoRoot || process.cwd();
+  const config = deps.config || loadWriteConfig(repoRoot, deps);
+  const auth = authorizeWrite(config, 'annotate', {
+    approver: options.approver,
+    approverVerified: options.approverVerified
+  });
+  if (!auth.authorized) {
+    return { executed: false, reason: auth.reason, plannedCount: 0, appliedCount: 0 };
+  }
+  const planned = planAnnotate(options.actions || []);
+  const applyAnnotation = deps.applyAnnotation;
+  const appendLog = deps.appendLog || defaultAppendLog(repoRoot, deps);
+  if (typeof applyAnnotation !== 'function') {
+    return { executed: false, reason: 'no-executor', plannedCount: planned.length, appliedCount: 0 };
+  }
+  let applied = 0;
+  for (const action of planned) {
+    applyAnnotation(action);
+    appendLog({
+      action: 'annotate',
+      tier: 'annotate',
+      kind: action.kind,
+      target: action.target,
+      number: action.number,
+      value: action.kind === 'comment' ? action.body : action.label,
+      approver: options.approver,
+      timestamp: (deps.now ? deps.now() : new Date()).toISOString()
+    });
+    applied += 1;
+  }
+  return { executed: true, plannedCount: planned.length, appliedCount: applied };
+}
+
 module.exports = {
   WRITE_CONFIG_FILENAME,
   WRITE_LOG_FILENAME,
   loadWriteConfig,
   authorizeWrite,
   planBoardSync,
-  runBoardSync
+  runBoardSync,
+  planAnnotate,
+  runAnnotate
 };
 
 if (require.main === module) {

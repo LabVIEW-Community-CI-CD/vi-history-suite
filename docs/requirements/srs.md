@@ -6252,6 +6252,11 @@ Missing numeric IDs are intentional.
     pull request is merged implies the item is Done and Proven) and never infers
     state; the executor applies updates and records each to an append-only write
     log only when the gate authorizes, and does nothing when disabled.
+  - The Tier 2 annotate path (open/label/comment on an issue or pull request) is
+    default-disabled and, when its tier is enabled, additionally requires a
+    server-verified allowlisted approver: its pure planner validates and normalizes
+    the proposed actions (dropping malformed entries), and its executor applies and
+    append-logs each action only when the gate authorizes, doing nothing otherwise.
 - Agent Work Scope:
   - Keep the gate fail-closed and the planner pure/injectable; add higher action
     tiers only behind the committed enablement and server-verified per-action
