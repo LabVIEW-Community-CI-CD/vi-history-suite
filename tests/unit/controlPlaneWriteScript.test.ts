@@ -18,6 +18,12 @@ const {
   runBoardSync: (options: Record<string, unknown>, deps: Record<string, unknown>) => { executed: boolean; reason?: string; plannedCount: number; appliedCount: number };
 };
 
+const write = require('../../scripts/controlPlaneWrite.js') as {
+  planAnnotate: (actions: unknown) => Array<Record<string, unknown>>;
+  runAnnotate: (options: Record<string, unknown>, deps: Record<string, unknown>) => { executed: boolean; reason?: string; plannedCount: number; appliedCount: number };
+};
+const { planAnnotate, runAnnotate } = write;
+
 const ENABLED_CONFIG = { enabled: true, approvers: ['svelderrainruiz'], tiers: { boardSync: true, annotate: true } };
 const DISABLED_CONFIG = { enabled: false, approvers: ['svelderrainruiz'], tiers: { boardSync: true } };
 
@@ -133,5 +139,92 @@ describe('controlPlaneWrite: runBoardSync (VHS-REQ-696.3)', () => {
       { config: ENABLED_CONFIG }
     );
     expect(out).toMatchObject({ executed: false, reason: 'no-executor' });
+  });
+});
+
+describe('controlPlaneWrite: planAnnotate (VHS-REQ-696.4)', () => {
+  it('normalizes valid comment/label actions and drops malformed entries', () => {
+    const planned = planAnnotate([
+      { kind: 'comment', target: 'issue', number: 1, body: 'hello' },
+      { kind: 'label', target: 'pr', number: 2, label: 'needs-review' },
+      { kind: 'comment', target: 'issue', number: 3, body: '   ' }, // empty body -> dropped
+      { kind: 'label', target: 'pr', number: 4 }, // missing label -> dropped
+      { kind: 'comment', target: 'wiki', number: 5, body: 'x' }, // bad target -> dropped
+      { kind: 'comment', target: 'issue', number: 0, body: 'x' }, // bad number -> dropped
+      { kind: 'react', target: 'issue', number: 6, body: 'x' }, // unknown kind -> dropped
+      null
+    ]);
+    expect(planned).toEqual([
+      { kind: 'comment', target: 'issue', number: 1, body: 'hello' },
+      { kind: 'label', target: 'pr', number: 2, label: 'needs-review' }
+    ]);
+    expect(planAnnotate([])).toEqual([]);
+    expect(planAnnotate(undefined)).toEqual([]);
+  });
+});
+
+describe('controlPlaneWrite: runAnnotate (VHS-REQ-696.4)', () => {
+  const ANNOTATE_CONFIG = { enabled: true, approvers: ['svelderrainruiz'], tiers: { boardSync: true, annotate: true } };
+  const action = { kind: 'comment', target: 'issue', number: 1, body: 'hi' };
+
+  it('does NOTHING when the write path is disabled', () => {
+    const calls: unknown[] = [];
+    const out = runAnnotate(
+      { actions: [action], approver: 'svelderrainruiz', approverVerified: true },
+      { config: DISABLED_CONFIG, applyAnnotation: (a: unknown) => calls.push(a), appendLog: () => {} }
+    );
+    expect(out).toMatchObject({ executed: false, reason: 'write-path-disabled', appliedCount: 0 });
+    expect(calls).toHaveLength(0);
+  });
+
+  it('refuses when the annotate tier is disabled even if the path is enabled', () => {
+    const out = runAnnotate(
+      { actions: [action], approver: 'svelderrainruiz', approverVerified: true },
+      { config: { enabled: true, approvers: ['svelderrainruiz'], tiers: { boardSync: true, annotate: false } }, applyAnnotation: () => {} }
+    );
+    expect(out).toMatchObject({ executed: false, reason: 'tier-disabled:annotate' });
+  });
+
+  it('refuses without a server-verified allowlisted approver', () => {
+    const unverified = runAnnotate(
+      { actions: [action], approver: 'svelderrainruiz', approverVerified: false },
+      { config: ANNOTATE_CONFIG, applyAnnotation: () => {} }
+    );
+    expect(unverified).toMatchObject({ executed: false, reason: 'approver-not-server-verified' });
+    const stranger = runAnnotate(
+      { actions: [action], approver: 'someone-else', approverVerified: true },
+      { config: ANNOTATE_CONFIG, applyAnnotation: () => {} }
+    );
+    expect(stranger).toMatchObject({ executed: false, reason: 'approver-not-authorized' });
+  });
+
+  it('refuses to execute without an injected applier even when authorized', () => {
+    const out = runAnnotate(
+      { actions: [action], approver: 'svelderrainruiz', approverVerified: true },
+      { config: ANNOTATE_CONFIG }
+    );
+    expect(out).toMatchObject({ executed: false, reason: 'no-executor' });
+  });
+
+  it('applies and append-logs each action when the gate authorizes', () => {
+    const applied: unknown[] = [];
+    const logged: Array<Record<string, unknown>> = [];
+    const out = runAnnotate(
+      {
+        actions: [action, { kind: 'label', target: 'pr', number: 2, label: 'ready' }],
+        approver: 'svelderrainruiz',
+        approverVerified: true
+      },
+      {
+        config: ANNOTATE_CONFIG,
+        applyAnnotation: (a: unknown) => applied.push(a),
+        appendLog: (e: Record<string, unknown>) => logged.push(e),
+        now: () => new Date('2026-07-20T00:00:00.000Z')
+      }
+    );
+    expect(out).toMatchObject({ executed: true, plannedCount: 2, appliedCount: 2 });
+    expect(applied).toHaveLength(2);
+    expect(logged).toHaveLength(2);
+    expect(logged[0]).toMatchObject({ action: 'annotate', tier: 'annotate', kind: 'comment', number: 1, approver: 'svelderrainruiz' });
   });
 });
