@@ -69,9 +69,10 @@ export type ViSemanticPrReviewEntry =
       reportFilePath?: string;
       /**
        * Preview ⇄ comparison correlation for this VI (VHS-REQ-703, epic #2262):
-       * links each changed surface to the base/head preview references the
-       * injected provider supplied. Optional/additive — absent when no provider
-       * is wired, so a legacy or `--from-file` review is unaffected.
+       * links each changed surface to the base/head preview references a wired
+       * provider supplied. Optional/additive — present only when a
+       * `resolvePreviewPair` provider is injected, so the default path, a legacy
+       * artifact, or a `--from-file` review omits it and renders as before.
        */
       correlation?: ViPreviewComparisonCorrelation;
     }
@@ -109,10 +110,11 @@ export interface ViSemanticPrReviewDeps {
   compareVi?: typeof compareViRevisions;
   /**
    * Resolves the base/head preview references for a changed VI (VHS-REQ-703,
-   * epic #2262). Injected so the correlation stays runtime-free: the default
-   * reports both preview sides unavailable (an honest "no preview to correlate"),
-   * and a supplied provider (cached previews or a future Docker-generates render)
-   * reports real availability. Only invoked for a completed comparison.
+   * epic #2262). Optional and injected so the correlation stays runtime-free:
+   * when omitted, no correlation is attached and the review renders exactly as
+   * before; when supplied, a provider reports real preview availability (cached
+   * previews or a future Docker-generated render). Only invoked for a completed
+   * comparison.
    */
   resolvePreviewPair?: (input: {
     repositoryRoot: string;
@@ -184,13 +186,6 @@ export function createDefaultListChangedPaths(
 }
 
 const defaultListChangedPaths = createDefaultListChangedPaths();
-
-// Default preview-pair provider: reports both sides unavailable. This keeps the
-// review runtime-free by default (no render, no cache access); a caller wires a
-// real provider to obtain cached or freshly rendered preview references.
-function defaultResolvePreviewPair(): ViPreviewPair {
-  return { base: { available: false }, head: { available: false } };
-}
 
 function toEntry(
   relativePath: string,
@@ -284,7 +279,7 @@ export async function buildViSemanticPrReview(
 
   const listChangedPaths = deps.listChangedPaths ?? defaultListChangedPaths;
   const compareVi = deps.compareVi ?? compareViRevisions;
-  const resolvePreviewPair = deps.resolvePreviewPair ?? defaultResolvePreviewPair;
+  const resolvePreviewPair = deps.resolvePreviewPair;
 
   const changed = await listChangedPaths(repositoryRoot, baseHash, selectedHash);
   const viPaths = Array.from(new Set(changed.filter(isViSourcePath))).sort((a, b) =>
@@ -303,7 +298,7 @@ export async function buildViSemanticPrReview(
       runtime: input.runtime
     });
     let correlation: ViPreviewComparisonCorrelation | undefined;
-    if (result.status === 'completed') {
+    if (result.status === 'completed' && resolvePreviewPair) {
       const previews = await resolvePreviewPair({
         repositoryRoot,
         relativePath,
