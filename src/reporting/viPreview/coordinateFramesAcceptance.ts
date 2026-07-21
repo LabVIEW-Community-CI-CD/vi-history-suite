@@ -85,6 +85,26 @@ function gradeModel(model: ViPreviewFramesModel): {
   return { framesWithGeometry, framesWithImages };
 }
 
+/** True when a coordinate-frames island *tag* exists at all, even with an empty body. */
+function coordinateFramesIslandTagPresent(html: string): boolean {
+  // Mirror the extractor's tolerant script-tag scan, but only decide presence:
+  // an island element with an empty/whitespace body still counts as present (the
+  // extractor returns undefined for it), so acceptance diagnostics can report
+  // present-but-unparseable rather than absent.
+  const scriptPattern = /<script\b((?:[^>"']|"[^"]*"|'[^']*')*)>([\s\S]*?)<\/script(?:\s[^>]*)?>/gi;
+  let match: RegExpExecArray | null;
+  while ((match = scriptPattern.exec(html)) !== null) {
+    const attributes = match[1];
+    if (
+      new RegExp(`id\\s*=\\s*["']${COORDINATE_FRAMES_ISLAND_ID}["']`, 'i').test(attributes) &&
+      /type\s*=\s*["']application\/json["']/i.test(attributes)
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
 /**
  * Grades a rendered LabVIEW HTML document against the coordinate-frames export
  * contract. `accepted` is true only when the island is present, parses into a
@@ -96,14 +116,19 @@ function gradeModel(model: ViPreviewFramesModel): {
 export function assessCoordinateFramesIsland(html: string): CoordinateFramesAssessment {
   const raw = typeof html === 'string' ? extractEmbeddedCoordinateFramesJson(html) : undefined;
   if (raw === undefined) {
+    // The extractor returns undefined for both a truly-absent island AND an
+    // island tag with an empty/whitespace body. Distinguish them so a harness
+    // sees present-but-unparseable (actionable: the export emitted the tag but
+    // no payload) versus genuinely absent.
+    const tagPresent = typeof html === 'string' && coordinateFramesIslandTagPresent(html);
     return {
       accepted: false,
-      islandPresent: false,
+      islandPresent: tagPresent,
       frameCount: 0,
       framesWithGeometry: 0,
       framesWithImages: 0,
       rootIndex: null,
-      issues: ['island-absent']
+      issues: [tagPresent ? 'island-unparseable' : 'island-absent']
     };
   }
 

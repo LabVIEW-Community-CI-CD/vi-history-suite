@@ -86,6 +86,16 @@ describe('assessCoordinateFramesIsland (VHS-REQ-703.9)', () => {
     expect(a.issues).toContain('no-frame-images');
   });
 
+  it('reports an empty-body island tag as present-but-unparseable, not absent', () => {
+    // The island element exists but carries no payload. The extractor returns
+    // undefined for it, but the acceptance gate distinguishes this from a truly
+    // absent island so the diagnostic is actionable.
+    const a = assessCoordinateFramesIsland(withIsland('   '));
+    expect(a.islandPresent).toBe(true);
+    expect(a.accepted).toBe(false);
+    expect(a.issues).toContain('island-unparseable');
+  });
+
   it('accepts a valid island with geometry and images', () => {
     const json = JSON.stringify([
       { Image: IMG, Position: { Left: 0, Top: 0, Width: 200, Height: 150 }, Children: [1] },
