@@ -372,7 +372,23 @@ export const VI_PREVIEW_COMPARISON_CORRELATION_JSON_SCHEMA = {
           sampleChanges: STRING_ARRAY,
           basePreviewAvailable: { type: 'boolean' },
           headPreviewAvailable: { type: 'boolean' },
-          correlated: { type: 'boolean' }
+          correlated: { type: 'boolean' },
+          coordinateChanges: {
+            type: 'array',
+            maxItems: 25,
+            items: {
+              type: 'object',
+              required: ['text', 'changeType'],
+              properties: {
+                text: { type: 'string' },
+                changeType: { type: 'string', enum: DETAIL_CHANGE_TYPE_ENUM },
+                objectKind: { type: 'string' },
+                objectName: { type: 'string' },
+                coordinate: DIAGRAM_POINT_SCHEMA,
+                fromCoordinate: DIAGRAM_POINT_SCHEMA
+              }
+            }
+          }
         }
       }
     },

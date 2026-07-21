@@ -141,10 +141,15 @@ describe('renderCorrelationSurfaceTable (VHS-REQ-703.8)', () => {
     });
     const table = renderCorrelationSurfaceTable(correlation);
 
-    expect(table).toContain('| Surface | Change kinds | Changes | Base preview | Head preview |');
-    expect(table).toContain('| --- | --- | --- | --- | --- |');
-    // block-diagram row: label, kinds, count 2, both previews available.
-    expect(table).toMatch(/\| block diagram \| dependency, behavioral \| 2 \| ✓ available \| ✓ available \|/);
+    expect(table).toContain(
+      '| Surface | Change kinds | Changes | Base preview | Head preview | Diagram coordinates |'
+    );
+    expect(table).toContain('| --- | --- | --- | --- | --- | --- |');
+    // block-diagram row: label, kinds, count 2, both previews available, and the
+    // deleted subVI's diagram coordinate surfaced (VHS-REQ-703.11).
+    expect(table).toMatch(
+      /\| block diagram \| dependency, behavioral \| 2 \| ✓ available \| ✓ available \| X\.vi \(1,2\) \|/
+    );
     expect(table).toContain('1 of 1 changed surface(s) have both base and head previews available');
   });
 
@@ -200,7 +205,71 @@ describe('renderCorrelationSurfaceTable (VHS-REQ-703.8)', () => {
       totals: { changedSurfaceCount: 1, correlatedSurfaceCount: 0, uncorrelatedSurfaceCount: 1 }
     });
     // Backslash is escaped first (\\), then the pipe (\|), keeping a well-formed
-    // 5-column row with no incomplete escaping.
-    expect(table).toContain('| other VI content | a\\\\b\\|c | 1 | ✓ available | — unavailable |');
+    // row with no incomplete escaping. The coordinate cell is an em dash (none).
+    expect(table).toContain('| other VI content | a\\\\b\\|c | 1 | ✓ available | — unavailable | — |');
+  });
+
+  it('surfaces per-object diagram coordinates honestly, bounded and labeled (VHS-REQ-703.11)', () => {
+    const model = bdModel();
+    const correlation = buildViPreviewComparisonCorrelation(model, {
+      base: { available: true, revision: 'aaaa' },
+      head: { available: true, revision: 'bbbb' }
+    });
+    const bd = correlation.surfaces[0];
+    // Only the coordinate-bearing item is surfaced (the wiring change is not).
+    expect(bd.coordinateChanges).toEqual([
+      {
+        text: 'SubVI "X.vi" - deleted at (1,2)',
+        changeType: 'deleted',
+        objectKind: 'SubVI',
+        objectName: 'X.vi',
+        coordinate: { x: 1, y: 2 }
+      }
+    ]);
+    // The correlation with coordinate data still validates against @v1.
+    expect(validateViSemanticDocument(correlation)).toEqual({ valid: true, errors: [] });
+  });
+
+  it('omits coordinateChanges when no detail item carries a coordinate (VHS-REQ-703.11)', () => {
+    const model = buildViSemanticComparisonModelFromHtml(
+      `<h1 class="report-title">R</h1>
+       <h2 class="section-header">Detailed Information</h2>
+       <details><summary class="difference-heading">3. Block Diagram objects</summary>
+         <ol><li class="diff-detail">wiring changes</li></ol></details>`,
+      {}
+    );
+    const correlation = buildViPreviewComparisonCorrelation(model, {});
+    expect(correlation.surfaces[0].coordinateChanges).toBeUndefined();
+    // The surface table shows an em dash in the Diagram coordinates cell. Assert
+    // the block-diagram row's LAST cell specifically (a loose `.* | — |` could
+    // match the Change kinds em dash instead of the Diagram coordinates cell).
+    const bdRow = renderCorrelationSurfaceTable(correlation)
+      .split('\n')
+      .find((line) => line.startsWith('| block diagram |'));
+    expect(bdRow).toBeDefined();
+    const cells = (bdRow as string).split('|').map((cell) => cell.trim());
+    // cells[0] and the trailing cell are empty (leading/trailing pipes); the
+    // last content cell is the Diagram coordinates column.
+    expect(cells[cells.length - 2]).toBe('—');
+  });
+
+  it('renders both endpoints of a moved object as from→to (VHS-REQ-703.11)', () => {
+    const model = buildViSemanticComparisonModelFromHtml(
+      `<h1 class="report-title">R</h1>
+       <h2 class="section-header">Detailed Information</h2>
+       <details><summary class="difference-heading">3. Block Diagram objects</summary>
+         <ol><li class="diff-detail">SubVI "Y.vi" - moved from (10,20) to (30,40)</li></ol></details>`,
+      {}
+    );
+    const correlation = buildViPreviewComparisonCorrelation(model, {
+      base: { available: true },
+      head: { available: true }
+    });
+    const change = correlation.surfaces[0].coordinateChanges?.[0];
+    expect(change?.changeType).toBe('moved');
+    expect(change?.fromCoordinate).toEqual({ x: 10, y: 20 });
+    expect(change?.coordinate).toEqual({ x: 30, y: 40 });
+    // The table cell keeps BOTH endpoints, not just the destination.
+    expect(renderCorrelationSurfaceTable(correlation)).toContain('Y.vi (10,20)→(30,40)');
   });
 });
