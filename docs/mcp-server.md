@@ -26,7 +26,7 @@ configure.
 
 ## Tools
 
-The server exposes 16 tools plus 3 guided prompts and 4 schema resources. Thirteen
+The server exposes 17 tools plus 3 guided prompts and 4 schema resources. Fourteen
 tools operate without running a comparison (Git, supplied data, a local
 preview-cache directory, or read-only runtime/environment probes); three invoke a
 real LabVIEW comparison and therefore need a comparison runtime (host LabVIEW or a
@@ -36,6 +36,7 @@ Docker LabVIEW image) and may take minutes.
 | --- | --- | --- | --- |
 | `summarize_vi_comparison` | Concise "what changed" narrative for a comparison report. | None | `reportHtml` |
 | `get_vi_semantic_comparison` | Full `vi-history-suite/vi-semantic-comparison@v1` model (changed surfaces, attributes, detail sections, totals, narrative). | None | `reportHtml` |
+| `get_vi_preview_comparison_correlation` | `vi-history-suite/vi-preview-comparison-correlation@v1` model correlating a comparison report with its base/head previews (per-surface change kinds, coordinate-bearing per-object changes in diagram space, preview availability, narrative). Caller may supply optional `previews`. | None | `reportHtml` |
 | `compare_vi_revisions` | Runs a LabVIEW comparison between two Git revisions and returns the comparison model. | Comparison runtime | `repositoryRoot`, `relativePath`, `baseHash`, `selectedHash` |
 | `summarize_vi_history` | Walks a VI's recent revisions, compares adjacent pairs, and returns a `vi-history-suite/vi-semantic-history@v1` evolution timeline. | Comparison runtime | `repositoryRoot`, `relativePath` |
 | `index_repository_vis` | Surveys tracked VIs and returns a `vi-history-suite/vi-repository-index@v1` index (revision count and latest change, activity-ranked). | None (pure Git) | `repositoryRoot` |

@@ -88,6 +88,7 @@ describe('viSemanticComparisonMcp', () => {
     expect(result.tools.map((tool) => tool.name)).toEqual([
       'summarize_vi_comparison',
       'get_vi_semantic_comparison',
+      'get_vi_preview_comparison_correlation',
       'compare_vi_revisions',
       'summarize_vi_history',
       'index_repository_vis',
@@ -189,6 +190,155 @@ describe('viSemanticComparisonMcp', () => {
     expect(result.isError).toBe(false);
     expect(result.content[0].text).toContain('### VI comparison:');
     expect(result.content[0].text).toContain('The block diagram differs.');
+  });
+
+  it('returns the preview-comparison correlation model as JSON with caller-supplied previews (VHS-REQ-703.12)', () => {
+    const reportHtml = `<h1 class="report-title">R</h1>
+      <h2 class="section-header">Detailed Information</h2>
+      <details><summary class="difference-heading">3. Block Diagram objects</summary>
+        <ol><li class="diff-detail">SubVI "X.vi" - added at (1570,358)</li></ol></details>`;
+    const result = successResult(
+      handleViSemanticMcpMessage({
+        jsonrpc: '2.0',
+        id: 21,
+        method: 'tools/call',
+        params: {
+          name: 'get_vi_preview_comparison_correlation',
+          arguments: {
+            reportHtml,
+            previews: {
+              base: { available: true, revision: 'aaaa', inlineImageCount: 3 },
+              head: { available: true, revision: 'bbbb' }
+            }
+          }
+        }
+      })
+    ) as { content: Array<{ text: string }> };
+    const correlation = JSON.parse(result.content[0].text) as Record<string, unknown>;
+    expect(correlation.schema).toBe('vi-history-suite/vi-preview-comparison-correlation@v1');
+    const surfaces = correlation.surfaces as Array<Record<string, unknown>>;
+    const bd = surfaces.find((s) => s.surface === 'block-diagram');
+    expect(bd?.correlated).toBe(true);
+    expect(bd?.coordinateChanges).toEqual([
+      {
+        text: 'SubVI "X.vi" - added at (1570,358)',
+        changeType: 'added',
+        objectKind: 'SubVI',
+        objectName: 'X.vi',
+        coordinate: { x: 1570, y: 358 }
+      }
+    ]);
+    expect((correlation.previews as { base: { inlineImageCount: number } }).base.inlineImageCount).toBe(3);
+  });
+
+  it('renders the correlation as markdown (narrative + surface table) and defaults previews to unavailable', () => {
+    const reportHtml = `<h1 class="report-title">R</h1>
+      <h2 class="section-header">Detailed Information</h2>
+      <details><summary class="difference-heading">3. Block Diagram objects</summary>
+        <ol><li class="diff-detail">SubVI "X.vi" - added at (1570,358)</li></ol></details>`;
+    const result = successResult(
+      handleViSemanticMcpMessage({
+        jsonrpc: '2.0',
+        id: 22,
+        method: 'tools/call',
+        params: {
+          name: 'get_vi_preview_comparison_correlation',
+          arguments: { reportHtml, format: 'markdown' }
+        }
+      })
+    ) as { content: Array<{ text: string }>; isError: boolean };
+    expect(result.isError).toBe(false);
+    // No previews supplied -> both sides unavailable, table still renders the row.
+    expect(result.content[0].text).toContain('| Surface | Change kinds | Changes | Base preview | Head preview | Diagram coordinates |');
+    expect(result.content[0].text).toContain('X.vi (1570,358)');
+    expect(result.content[0].text).toContain('— unavailable');
+  });
+
+  it('rejects a correlation call with an empty reportHtml as -32602', () => {
+    const error = invalidParamsError(
+      handleViSemanticMcpMessage({
+        jsonrpc: '2.0',
+        id: 23,
+        method: 'tools/call',
+        params: { name: 'get_vi_preview_comparison_correlation', arguments: { reportHtml: '' } }
+      })
+    );
+    expect(error.message).toContain('reportHtml');
+  });
+
+  it('rejects a supplied preview side without a boolean available as -32602 naming the nested field', () => {
+    const error = invalidParamsError(
+      handleViSemanticMcpMessage({
+        jsonrpc: '2.0',
+        id: 24,
+        method: 'tools/call',
+        params: {
+          name: 'get_vi_preview_comparison_correlation',
+          arguments: {
+            reportHtml: '<h1 class="report-title">R</h1>',
+            previews: { base: { revision: 'aaaa' } }
+          }
+        }
+      })
+    );
+    expect(error.message).toContain('previews.base.available');
+    expect(error.data?.issues?.[0]).toMatchObject({
+      field: 'previews.base.available',
+      expected: 'a boolean'
+    });
+  });
+
+  it('rejects an array preview side with a structured -32602 (VHS-REQ-703.12)', () => {
+    // An array is typeof 'object' but is not a valid preview reference.
+    const arrayError = invalidParamsError(
+      handleViSemanticMcpMessage({
+        jsonrpc: '2.0',
+        id: 25,
+        method: 'tools/call',
+        params: {
+          name: 'get_vi_preview_comparison_correlation',
+          arguments: { reportHtml: '<h1 class="report-title">R</h1>', previews: { head: [] } }
+        }
+      })
+    );
+    expect(arrayError.message).toContain('previews.head');
+  });
+
+  it('rejects an array previews value with a structured -32602 (VHS-REQ-703.12)', () => {
+    const arrayError = invalidParamsError(
+      handleViSemanticMcpMessage({
+        jsonrpc: '2.0',
+        id: 27,
+        method: 'tools/call',
+        params: {
+          name: 'get_vi_preview_comparison_correlation',
+          arguments: { reportHtml: '<h1 class="report-title">R</h1>', previews: [] }
+        }
+      })
+    );
+    expect(arrayError.message).toContain('previews');
+  });
+
+  it('drops a negative inlineImageCount rather than trusting it (VHS-REQ-703.12)', () => {
+    const result = successResult(
+      handleViSemanticMcpMessage({
+        jsonrpc: '2.0',
+        id: 26,
+        method: 'tools/call',
+        params: {
+          name: 'get_vi_preview_comparison_correlation',
+          arguments: {
+            reportHtml: '<h1 class="report-title">R</h1>',
+            previews: { base: { available: true, inlineImageCount: -3 } }
+          }
+        }
+      })
+    ) as { content: Array<{ text: string }> };
+    const correlation = JSON.parse(result.content[0].text) as {
+      previews: { base: Record<string, unknown> };
+    };
+    expect(correlation.previews.base.available).toBe(true);
+    expect(correlation.previews.base.inlineImageCount).toBeUndefined();
   });
 
   it('rejects invalid arguments with a structured -32602 naming the field', () => {

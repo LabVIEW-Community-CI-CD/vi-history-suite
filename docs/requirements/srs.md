@@ -5083,6 +5083,14 @@ Missing numeric IDs are intentional.
     coordinate-bearing change renders an em dash in that cell, and a
     correlation built without the field stays valid against the published
     `@v1` schema.
+  - VHS-REQ-703.12: The VI semantic MCP surface exposes a pure, read-only tool
+    that projects a comparison report onto the preview-comparison correlation
+    model and returns it to an agent; the caller may supply the base/head
+    preview references it already resolved, and omitting them yields a
+    surfaces-only correlation with both preview sides marked unavailable; the
+    tool renders JSON by default or a narrative-plus-surface-table Markdown on
+    request, runs without a comparison runtime or filesystem access, and is
+    registered so the tools/list and known-tool guards stay in agreement.
 - Agent Work Scope:
   - Keep the correlation builder pure, deterministic, and dependency-injected so
     it stays unit-testable without VS Code, a network, or a LabVIEW runtime; do
@@ -5101,6 +5109,7 @@ Missing numeric IDs are intentional.
   - `src/cli/runViPreviewCacheWarmer.ts`
   - `src/reporting/viPreview/coordinateFramesAcceptance.ts`
   - `src/dashboard/comparisonDetailItemGeometry.ts`
+  - `src/semantic/viSemanticComparisonMcp.ts`
 - Verification References:
   - `tests/unit/viPreviewComparisonCorrelation.test.ts`
   - `tests/unit/viSemanticPrReview.test.ts`
@@ -5109,6 +5118,7 @@ Missing numeric IDs are intentional.
   - `tests/unit/viPreviewCacheWarmerCli.test.ts`
   - `tests/unit/coordinateFramesAcceptance.test.ts`
   - `tests/unit/comparisonDetailItemGeometry.test.ts`
+  - `tests/unit/viSemanticComparisonMcp.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
 - Change Guidance:
   - Keep the correlation surface-level and deterministic until the
