@@ -5055,6 +5055,15 @@ Missing numeric IDs are intentional.
     correlation is present; the table is empty when there are no changed
     surfaces and stays surface-level (no pixel-region overlays), so a review
     without correlation is unchanged.
+  - VHS-REQ-703.9: A pure acceptance predicate grades a rendered LabVIEW HTML
+    document against the coordinate-frames export contract — composing the
+    shipped island extraction and frames-model build, then requiring the
+    `lvr-coordinate-frames` island to be present, parse into a non-empty frames
+    model, carry at least one frame with positive width and height, and carry at
+    least one frame image — and reports every failure mode with a stable issue
+    id; this is the deterministic gate a harness uses to accept the
+    still-to-be-authored coordinate-frames emitter that unblocks pixel-precise
+    region overlays.
 - Agent Work Scope:
   - Keep the correlation builder pure, deterministic, and dependency-injected so
     it stays unit-testable without VS Code, a network, or a LabVIEW runtime; do
@@ -5071,12 +5080,14 @@ Missing numeric IDs are intentional.
   - `.github/workflows/vi-semantic-pr-review.yml`
   - `.github/workflows/vi-semantic-pr-review-callable.yml`
   - `src/cli/runViPreviewCacheWarmer.ts`
+  - `src/reporting/viPreview/coordinateFramesAcceptance.ts`
 - Verification References:
   - `tests/unit/viPreviewComparisonCorrelation.test.ts`
   - `tests/unit/viSemanticPrReview.test.ts`
   - `tests/unit/viPreviewPairProvider.test.ts`
   - `tests/unit/viSemanticPrReviewWorkflow.test.ts`
   - `tests/unit/viPreviewCacheWarmerCli.test.ts`
+  - `tests/unit/coordinateFramesAcceptance.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
 - Change Guidance:
   - Keep the correlation surface-level and deterministic until the
