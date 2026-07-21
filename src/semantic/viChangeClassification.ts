@@ -169,7 +169,19 @@ function deriveRisk(kinds: ReadonlySet<ViChangeKind>): {
   if (kinds.has('structural')) {
     return { riskLevel: 'medium', riskRationale: 'medium: structural change(s)' };
   }
-  if (kinds.size > 0) {
+  // Only low-severity kinds remain (cosmetic and/or unknown). Name them
+  // accurately: `unknown` must never be reported as "cosmetic only" because that
+  // would imply a certainty the classifier explicitly avoids. Confidence is
+  // already `low` when unknown items are present, so the two signals agree.
+  const hasCosmetic = kinds.has('cosmetic');
+  const hasUnknown = kinds.has('unknown');
+  if (hasCosmetic && hasUnknown) {
+    return { riskLevel: 'low', riskRationale: 'low: cosmetic and unclassified change(s)' };
+  }
+  if (hasUnknown) {
+    return { riskLevel: 'low', riskRationale: 'low: unclassified change(s) only' };
+  }
+  if (hasCosmetic) {
     return { riskLevel: 'low', riskRationale: 'low: cosmetic change(s) only' };
   }
   return { riskLevel: 'low', riskRationale: 'low: no classified changes' };

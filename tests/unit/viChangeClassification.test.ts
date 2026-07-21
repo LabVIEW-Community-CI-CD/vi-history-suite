@@ -105,6 +105,26 @@ describe('deriveChangeClassification: risk aggregation (VHS-REQ-702.2)', () => {
     expect(result.classification).toEqual([]);
     expect(result.changeKinds).toEqual([]);
   });
+
+  it('does not report unknown items as "cosmetic only" (honesty rationale)', () => {
+    // unknown-only: rationale must not imply cosmetic certainty
+    const unknownOnly = deriveChangeClassification(
+      [{ surface: 'other', items: ['something entirely unexpected'] }],
+      []
+    );
+    expect(unknownOnly.riskLevel).toBe('low');
+    expect(unknownOnly.riskRationale).toBe('low: unclassified change(s) only');
+    expect(unknownOnly.classificationConfidence).toBe('low');
+
+    // cosmetic + unknown: rationale names both, never "cosmetic only"
+    const mixed = deriveChangeClassification(
+      [{ surface: 'front-panel', items: ['Label moved', 'mystery item'] }],
+      ['Front Panel Position/Size']
+    );
+    expect(mixed.riskLevel).toBe('low');
+    expect(mixed.riskRationale).toBe('low: cosmetic and unclassified change(s)');
+    expect(mixed.riskRationale).not.toBe('low: cosmetic change(s) only');
+  });
 });
 
 describe('deriveChangeClassification: confidence (VHS-REQ-702.3)', () => {
