@@ -6263,6 +6263,11 @@ Missing numeric IDs are intentional.
     de-duplicates the proposed actions (dropping malformed entries), and its
     executor applies and append-logs each action only when the gate authorizes,
     doing nothing otherwise.
+  - The Tier 4 create-work path (open a new tracking issue) is default-disabled
+    and, when its tier is enabled, additionally requires a server-verified
+    allowlisted approver: its pure planner validates and de-duplicates the proposed
+    work items by title (dropping malformed entries), and its executor creates and
+    append-logs each item only when the gate authorizes, doing nothing otherwise.
 - Agent Work Scope:
   - Keep the gate fail-closed and the planner pure/injectable; add higher action
     tiers only behind the committed enablement and server-verified per-action
