@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { buildViSemanticComparisonModelFromHtml } from '../../src/semantic/viSemanticModel';
 import {
   buildViPreviewComparisonCorrelation,
+  renderCorrelationSurfaceTable,
   VI_PREVIEW_COMPARISON_CORRELATION_SCHEMA
 } from '../../src/semantic/viPreviewComparisonCorrelation';
 import { validateViSemanticDocument } from '../../src/semantic/viSemanticSchemas';
@@ -127,5 +128,74 @@ describe('buildViPreviewComparisonCorrelation (VHS-REQ-703.1)', () => {
     expect(bd.sampleChanges.length).toBeGreaterThan(0);
     expect(correlation.narrative).not.toContain('classified change');
     expect(correlation.narrative).toContain('2 changes');
+  });
+});
+
+describe('renderCorrelationSurfaceTable (VHS-REQ-703.8)', () => {
+  it('renders a per-surface table with change kinds, counts, and both preview sides', () => {
+    const model = bdModel();
+    const correlation = buildViPreviewComparisonCorrelation(model, {
+      base: { available: true, revision: 'aaaa' },
+      head: { available: true, revision: 'bbbb' }
+    });
+    const table = renderCorrelationSurfaceTable(correlation);
+
+    expect(table).toContain('| Surface | Change kinds | Changes | Base preview | Head preview |');
+    expect(table).toContain('| --- | --- | --- | --- | --- |');
+    // block-diagram row: label, kinds, count 2, both previews available.
+    expect(table).toMatch(/\| block diagram \| dependency, behavioral \| 2 \| ✓ available \| ✓ available \|/);
+    expect(table).toContain('1 of 1 changed surface(s) have both base and head previews available');
+  });
+
+  it('honestly marks an unavailable preview side with an em dash', () => {
+    const model = bdModel();
+    const correlation = buildViPreviewComparisonCorrelation(model, {
+      head: { available: true, revision: 'bbbb' }
+    });
+    const table = renderCorrelationSurfaceTable(correlation);
+    // base unavailable, head available — partial, not fabricated.
+    expect(table).toContain('— unavailable | ✓ available |');
+    expect(table).toContain('0 of 1 changed surface(s) have both base and head previews available');
+  });
+
+  it('shows an em dash for a surface with no classified change kinds', () => {
+    const model = { ...bdModel(), classification: [], changeKinds: [] };
+    const correlation = buildViPreviewComparisonCorrelation(model, {
+      base: { available: true },
+      head: { available: true }
+    });
+    const table = renderCorrelationSurfaceTable(correlation);
+    // kinds column is em dash, count still reflects detail items.
+    expect(table).toMatch(/\| block diagram \| — \| 2 \|/);
+  });
+
+  it('returns an empty string when there are no differences', () => {
+    const model = buildViSemanticComparisonModelFromHtml('<h1 class="report-title">R</h1>');
+    const correlation = buildViPreviewComparisonCorrelation(model, {
+      base: { available: true },
+      head: { available: true }
+    });
+    expect(renderCorrelationSurfaceTable(correlation)).toBe('');
+  });
+
+  it('escapes pipe characters that could break the table', () => {
+    const table = renderCorrelationSurfaceTable({
+      hasDifferences: true,
+      surfaces: [
+        {
+          surface: 'other',
+          changeKinds: [],
+          changeCount: 1,
+          sampleChanges: [],
+          basePreviewAvailable: true,
+          headPreviewAvailable: false,
+          correlated: false
+        }
+      ],
+      totals: { changedSurfaceCount: 1, correlatedSurfaceCount: 0, uncorrelatedSurfaceCount: 1 }
+    });
+    // The fixed labels contain no pipes, but the renderer must still emit a
+    // well-formed 5-column row.
+    expect(table).toContain('| other VI content | — | 1 | ✓ available | — unavailable |');
   });
 });

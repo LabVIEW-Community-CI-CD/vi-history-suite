@@ -1,11 +1,14 @@
 import type { ViChangeSurface, ViSemanticComparisonModel } from './viSemanticModel';
 import type { ViSemanticHistory } from './viSemanticHistory';
 import type { ViSemanticPrReview } from './viSemanticPrReview';
+import { renderCorrelationSurfaceTable } from './viPreviewComparisonCorrelation';
 
 /**
  * Pure renderers that turn the semantic comparison / history / PR-review models
  * into review-ready Markdown blocks (for PR comments, CI job summaries, or SCM
- * surfaces). Type-only imports keep this a dependency-free leaf module.
+ * surfaces). The only value import is the pure, dependency-free correlation
+ * surface-table renderer; everything else is type-only, keeping this a
+ * dependency-free leaf module.
  */
 
 /**
@@ -194,6 +197,13 @@ export function renderViSemanticPrReviewMarkdown(
       // `--from-file`) has no correlation and renders exactly as before.
       if (entry.correlation) {
         lines.push(`- **Preview correlation:** ${escapeCell(entry.correlation.narrative)}`, '');
+        // VHS-REQ-703.8 (epic #2262 iter 3): a deterministic side-by-side surface
+        // table (surface | kinds | changes | base/head preview availability). It
+        // is empty when there are no changed surfaces, so appending is safe.
+        const surfaceTable = renderCorrelationSurfaceTable(entry.correlation);
+        if (surfaceTable.length > 0) {
+          lines.push(surfaceTable, '');
+        }
       }
       const images = options.imagesByVi?.get(entry.relativePath) ?? [];
       if (images.length > 0) {

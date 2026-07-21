@@ -5047,6 +5047,14 @@ Missing numeric IDs are intentional.
     cross-referenced against the base and head previews; when no base tree is
     provided the base side stays honestly unavailable (head-only correlation),
     and the base warm is bounded, non-fatal, and off by default.
+  - VHS-REQ-703.8: A pure renderer produces a deterministic side-by-side surface
+    table from the correlation — one row per changed surface with its change
+    kinds, change count, and whether the base and head previews are available to
+    view it (an unavailable side marked honestly, never fabricated) — and the
+    review Markdown renders that table under the correlation narrative when a
+    correlation is present; the table is empty when there are no changed
+    surfaces and stays surface-level (no pixel-region overlays), so a review
+    without correlation is unchanged.
 - Agent Work Scope:
   - Keep the correlation builder pure, deterministic, and dependency-injected so
     it stays unit-testable without VS Code, a network, or a LabVIEW runtime; do

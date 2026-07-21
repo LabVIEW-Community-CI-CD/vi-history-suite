@@ -222,3 +222,51 @@ export function renderCorrelationNarrative(
 
   return sentences.join(' ');
 }
+
+/** Escapes a value for a single Markdown table cell (pipes and newlines). */
+function escapeTableCell(value: string): string {
+  return value.replace(/\|/g, '\\|').replace(/\r?\n/g, ' ');
+}
+
+/**
+ * Renders a deterministic side-by-side surface table for a correlation
+ * (VHS-REQ-703.8, epic #2262 iteration 3): one row per changed surface showing
+ * the change kinds, the change count, and whether the base and head previews are
+ * available to view that surface. It is honest and availability-based — a `—`
+ * marks an unavailable preview side, never a fabricated one — and stays
+ * surface-level (no pixel-region overlays; that needs the coordinate-frames
+ * export). Returns an empty string when there are no differences or no changed
+ * surfaces, so a caller can append it unconditionally.
+ */
+export function renderCorrelationSurfaceTable(
+  correlation: Pick<
+    ViPreviewComparisonCorrelation,
+    'hasDifferences' | 'surfaces' | 'totals'
+  >
+): string {
+  if (!correlation.hasDifferences || correlation.surfaces.length === 0) {
+    return '';
+  }
+
+  const availability = (present: boolean): string => (present ? '✓ available' : '— unavailable');
+  const lines: string[] = [
+    '| Surface | Change kinds | Changes | Base preview | Head preview |',
+    '| --- | --- | --- | --- | --- |'
+  ];
+  for (const surface of correlation.surfaces) {
+    const label = SURFACE_LABELS[surface.surface];
+    const kinds = surface.changeKinds.length > 0 ? surface.changeKinds.join(', ') : '—';
+    lines.push(
+      `| ${escapeTableCell(label)} | ${escapeTableCell(kinds)} | ${surface.changeCount} | ` +
+        `${availability(surface.basePreviewAvailable)} | ${availability(surface.headPreviewAvailable)} |`
+    );
+  }
+
+  const { correlatedSurfaceCount, changedSurfaceCount } = correlation.totals;
+  lines.push(
+    '',
+    `_${correlatedSurfaceCount} of ${changedSurfaceCount} changed surface(s) have both base and head previews available for side-by-side review._`
+  );
+
+  return lines.join('\n');
+}
