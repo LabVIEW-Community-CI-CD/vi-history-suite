@@ -233,16 +233,24 @@ jobs:
           # Optionally publish inline diff images (needs a contents:write token)
           # and/or post a gateable commit status (needs a statuses:write token);
           # both off by default so they do not force a token-scope change.
-          publish_flag=""
-          if [ "$PUBLISH_IMAGES" = "true" ]; then publish_flag="--publish-images"; fi
-          status_flag=""
-          if [ "$CREATE_COMMIT_STATUS" = "true" ]; then status_flag="--commit-status"; fi
+          # Build the CLI argument list as an array so every value (including a
+          # preview_cache_dir that contains spaces or starts with a dash) stays
+          # a single intact argument when expanded as "${args[@]}".
+          args=(
+            --repository-root target-clone
+            --base "$REVIEW_MERGE_BASE" --head "$REVIEW_HEAD_SHA"
+            --runtime-provider docker --container-image-version "${CONTAINER_IMAGE_VERSION}-linux"
+            --out review-out
+            --announce-start
+            --post-comment --pr "$TARGET_PR_NUMBER" --repo "$TARGET_REPOSITORY"
+          )
+          if [ "$PUBLISH_IMAGES" = "true" ]; then args+=(--publish-images); fi
+          if [ "$CREATE_COMMIT_STATUS" = "true" ]; then args+=(--commit-status); fi
           # Optionally attach the deterministic preview⇄comparison correlation
           # (VHS-REQ-703) by peeking the preview cache. The peek is cache-only
           # (launches no runtime) and honest: a miss reports the preview as
           # unavailable rather than fabricating one. Only enabled when a cache
           # directory is supplied, so it is a no-op unless a cache is present.
-          correlate_flags=""
           if [ "$CORRELATE_PREVIEWS" = "true" ]; then
             if [ -z "$PREVIEW_CACHE_DIR" ]; then
               echo "correlate_previews is true but preview_cache_dir is empty; skipping correlation (nothing to peek)." >&2
@@ -254,17 +262,10 @@ jobs:
               # materializes base/head from git objects, so this checkout does
               # not affect it.
               git -C target-clone checkout --detach "$REVIEW_HEAD_SHA"
-              correlate_flags="--correlate-previews --preview-cache-dir $PREVIEW_CACHE_DIR"
+              args+=(--correlate-previews --preview-cache-dir "$PREVIEW_CACHE_DIR")
             fi
           fi
-          node out/cli/runViSemanticPrReview.js \
-            --repository-root target-clone \
-            --base "$REVIEW_MERGE_BASE" --head "$REVIEW_HEAD_SHA" \
-            --runtime-provider docker --container-image-version "${CONTAINER_IMAGE_VERSION}-linux" \
-            --out review-out \
-            --announce-start \
-            --post-comment --pr "$TARGET_PR_NUMBER" --repo "$TARGET_REPOSITORY" \
-            $publish_flag $status_flag $correlate_flags
+          node out/cli/runViSemanticPrReview.js "${args[@]}"
 
       - name: Upload Review Artifact
         if: always()
