@@ -29,7 +29,7 @@ on:
         default: false
         type: boolean
       preview_cache_dir:
-        description: 'Path (in the runner workspace) to a content-addressed preview cache to peek for correlation (VHS-REQ-703.4). Used only when correlate_previews is true and this path is non-empty; empty falls back to auto-warm (if enabled) or skips.'
+        description: 'Filesystem path readable by the review job (e.g. under the runner workspace or $RUNNER_TEMP) to a content-addressed preview cache to peek for correlation (VHS-REQ-703.4). Used only when correlate_previews is true and this path is non-empty; empty falls back to auto-warm (if enabled) or skips.'
         required: false
         default: ''
       auto_warm_changed_previews:
