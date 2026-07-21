@@ -60,6 +60,18 @@ const {
   defaultVerifyApprover,
   runAnnotateCli
 } = write;
+const {
+  resolveMergeQueueArmCommand,
+  defaultApplyMergeQueueAction,
+  runMergeQueueCli
+} = require('../../scripts/controlPlaneWrite.js') as {
+  resolveMergeQueueArmCommand: (action: unknown) => string[];
+  defaultApplyMergeQueueAction: (deps?: Record<string, unknown>) => (action: unknown) => void;
+  runMergeQueueCli: (
+    argv: string[],
+    deps: Record<string, unknown>
+  ) => { authorized: boolean; reason?: string; applied: boolean; dryRun: boolean; plannedCount: number; appliedCount: number; lines: string[] };
+};
 
 const ENABLED_CONFIG = { enabled: true, approvers: ['svelderrainruiz'], tiers: { boardSync: true, annotate: true } };
 const DISABLED_CONFIG = { enabled: false, approvers: ['svelderrainruiz'], tiers: { boardSync: true } };
@@ -713,5 +725,150 @@ describe('controlPlaneWrite: runAnnotateCli (VHS-REQ-696.8)', () => {
         verifyApprover: alwaysVerified
       })
     ).toThrow(ControlPlaneWriteError);
+  });
+});
+
+describe('controlPlaneWrite: resolveMergeQueueArmCommand (VHS-REQ-696.9)', () => {
+  it('resolves an arm action into gh pr merge --auto --rebase argv', () => {
+    expect(resolveMergeQueueArmCommand({ op: 'arm', number: 42 })).toEqual([
+      'pr',
+      'merge',
+      '42',
+      '--repo',
+      REPOSITORY,
+      '--auto',
+      '--rebase'
+    ]);
+  });
+
+  it('fails closed (throws) on a bad number or a non-arm op', () => {
+    expect(() => resolveMergeQueueArmCommand({ op: 'arm', number: 0 })).toThrow(/positive integer/);
+    expect(() => resolveMergeQueueArmCommand({ op: 'dequeue', number: 1 })).toThrow(/only resolves 'arm'/);
+    expect(() => resolveMergeQueueArmCommand(null)).toThrow(/must be an object/);
+  });
+});
+
+describe('controlPlaneWrite: defaultApplyMergeQueueAction (VHS-REQ-696.9)', () => {
+  it('arms auto-merge with a single gh pr merge call', () => {
+    const calls: Array<{ cmd: string; args: string[] }> = [];
+    const applier = defaultApplyMergeQueueAction({
+      spawnSync: (cmd: string, args: string[]) => {
+        calls.push({ cmd, args });
+        return { status: 0, stdout: '', stderr: '' };
+      }
+    });
+    applier({ op: 'arm', number: 42 });
+    expect(calls).toHaveLength(1);
+    expect(calls[0].args).toEqual(expect.arrayContaining(['pr', 'merge', '42', '--auto', '--rebase']));
+  });
+
+  it('dequeues via node-id resolution then the dequeuePullRequest mutation', () => {
+    const calls: string[][] = [];
+    const applier = defaultApplyMergeQueueAction({
+      spawnSync: (_cmd: string, args: string[]) => {
+        calls.push(args);
+        // First call resolves the node id; second runs the mutation.
+        if (args.some((a) => a.includes('pullRequest(number:'))) {
+          return { status: 0, stdout: 'PR_nodeid_123\n', stderr: '' };
+        }
+        return { status: 0, stdout: '', stderr: '' };
+      }
+    });
+    applier({ op: 'dequeue', number: 7 });
+    expect(calls).toHaveLength(2);
+    expect(calls[0].join(' ')).toContain('pullRequest(number:7)');
+    expect(calls[1].join(' ')).toContain('dequeuePullRequest(input:{id:"PR_nodeid_123"})');
+  });
+
+  it('fails closed (throws) when gh errors, exits nonzero, or the node id is empty', () => {
+    const ghError = defaultApplyMergeQueueAction({ spawnSync: () => ({ error: new Error('gh missing') }) });
+    expect(() => ghError({ op: 'arm', number: 1 })).toThrow(/gh invocation failed/);
+    const nonZero = defaultApplyMergeQueueAction({ spawnSync: () => ({ status: 1, stderr: 'no perms' }) });
+    expect(() => nonZero({ op: 'arm', number: 1 })).toThrow(/gh exited 1: no perms/);
+    const emptyId = defaultApplyMergeQueueAction({ spawnSync: () => ({ status: 0, stdout: '   \n' }) });
+    expect(() => emptyId({ op: 'dequeue', number: 9 })).toThrow(/could not resolve PR node id/);
+  });
+});
+
+describe('controlPlaneWrite: runMergeQueueCli (VHS-REQ-696.9)', () => {
+  const MQ_ENABLED = { enabled: true, approvers: ['svelderrainruiz'], tiers: { boardSync: true, mergeQueue: true } };
+  const actions = [{ op: 'arm', number: 42 }];
+  const alwaysVerified = () => true;
+
+  it('refuses (and never verifies) when the write path is disabled', () => {
+    let verifyCalls = 0;
+    const out = runMergeQueueCli(['--approver', 'svelderrainruiz'], {
+      config: DISABLED_CONFIG,
+      actions,
+      verifyApprover: () => {
+        verifyCalls += 1;
+        return true;
+      },
+      applyMergeQueueAction: () => {}
+    });
+    expect(out).toMatchObject({ authorized: false, reason: 'write-path-disabled', applied: false });
+    expect(verifyCalls).toBe(0);
+  });
+
+  it('refuses when the mergeQueue tier is off, without verifying', () => {
+    let verifyCalls = 0;
+    const out = runMergeQueueCli(['--approver', 'svelderrainruiz'], {
+      config: { enabled: true, approvers: ['svelderrainruiz'], tiers: { boardSync: true, mergeQueue: false } },
+      actions,
+      verifyApprover: () => {
+        verifyCalls += 1;
+        return true;
+      },
+      applyMergeQueueAction: () => {}
+    });
+    expect(out).toMatchObject({ authorized: false, reason: 'tier-disabled:mergeQueue' });
+    expect(verifyCalls).toBe(0);
+  });
+
+  it('refuses an unverified or non-allowlisted approver', () => {
+    const unverified = runMergeQueueCli(['--approver', 'svelderrainruiz'], {
+      config: MQ_ENABLED,
+      actions,
+      verifyApprover: () => false,
+      applyMergeQueueAction: () => {}
+    });
+    expect(unverified).toMatchObject({ authorized: false, reason: 'approver-not-server-verified' });
+    const stranger = runMergeQueueCli(['--approver', 'someone-else'], {
+      config: MQ_ENABLED,
+      actions,
+      verifyApprover: alwaysVerified,
+      applyMergeQueueAction: () => {}
+    });
+    expect(stranger).toMatchObject({ authorized: false, reason: 'approver-not-authorized' });
+  });
+
+  it('dry-runs by default: reports well-formed action count and writes nothing', () => {
+    const applied: unknown[] = [];
+    const out = runMergeQueueCli(['--approver', 'svelderrainruiz'], {
+      config: MQ_ENABLED,
+      actions,
+      verifyApprover: alwaysVerified,
+      applyMergeQueueAction: (a: unknown) => applied.push(a)
+    });
+    expect(out).toMatchObject({ authorized: true, applied: false, dryRun: true, plannedCount: 1, appliedCount: 0 });
+    expect(applied).toHaveLength(0);
+    expect(out.lines.join('\n')).toContain('Dry run');
+  });
+
+  it('applies and append-logs each action with --apply when fully authorized', () => {
+    const applied: unknown[] = [];
+    const logged: unknown[] = [];
+    const out = runMergeQueueCli(['--approver', 'svelderrainruiz', '--apply'], {
+      config: MQ_ENABLED,
+      actions: [...actions, { op: 'dequeue', number: 7 }],
+      verifyApprover: alwaysVerified,
+      applyMergeQueueAction: (a: unknown) => applied.push(a),
+      appendLog: (e: unknown) => logged.push(e),
+      now: () => new Date('2026-07-20T00:00:00.000Z')
+    });
+    expect(out).toMatchObject({ authorized: true, applied: true, dryRun: false, plannedCount: 2, appliedCount: 2 });
+    expect(applied).toHaveLength(2);
+    expect(logged).toHaveLength(2);
+    expect(out.lines.join('\n')).toContain('applied 2 of 2');
   });
 });

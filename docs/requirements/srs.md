@@ -6286,6 +6286,16 @@ Missing numeric IDs are intentional.
     well-formed actions that would be applied without writing, and only applies
     (and append-logs) them when explicitly invoked with `--apply`, failing closed
     on a live verification/write error.
+  - The command-line runner for Tier 3 merge-queue wires the proposed-action
+    loader, the same live server-verification boundary, the governed write path,
+    and the live `gh` merge-queue executor behind the gate: the enablement and
+    tier are checked before any live approver verification; when authorized for a
+    server-verified allowlisted approver it defaults to a dry run that reports the
+    number of well-formed actions that would be applied without writing, and only
+    acts when explicitly invoked with `--apply` — arming auto-merge via
+    `gh pr merge --auto --rebase` or dequeuing via a PR node-id lookup then the
+    `dequeuePullRequest` GraphQL mutation, append-logging each action and failing
+    closed on a live verification/write error.
 - Agent Work Scope:
   - Keep the gate fail-closed and the planner pure/injectable; add higher action
     tiers only behind the committed enablement and server-verified per-action

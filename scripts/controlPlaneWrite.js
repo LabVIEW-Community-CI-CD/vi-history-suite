@@ -593,6 +593,118 @@ function runAnnotateCli(argv = [], deps = {}) {
   return { authorized: true, applied: true, dryRun: false, plannedCount: result.plannedCount, appliedCount: result.appliedCount, lines };
 }
 
+// Pure: resolve a planned Tier 3 `arm` merge-queue action into the `gh pr merge`
+// argv that arms auto-merge (rebase; the queue owns the strategy, so no
+// --delete-branch). Fails closed (throws) on anything but a well-formed arm.
+// `dequeue` is not a single static argv (it needs the PR node id then a GraphQL
+// mutation) and is handled directly by the executor, so this resolver rejects it.
+function resolveMergeQueueArmCommand(action) {
+  if (!action || typeof action !== 'object') {
+    throw new ControlPlaneWriteError('merge-queue action must be an object');
+  }
+  const { op, number } = action;
+  if (!Number.isInteger(number) || number <= 0) {
+    throw new ControlPlaneWriteError(`merge-queue action requires a positive integer number, got: ${number}`);
+  }
+  if (op !== 'arm') {
+    throw new ControlPlaneWriteError(`resolveMergeQueueArmCommand only resolves 'arm', got: ${op}`);
+  }
+  return ['pr', 'merge', String(number), '--repo', REPOSITORY, '--auto', '--rebase'];
+}
+
+// Live Tier 3 executor boundary: apply a merge-queue action through `gh`. `arm`
+// runs `gh pr merge --auto --rebase`; `dequeue` first resolves the PR node id
+// then runs the `dequeuePullRequest` GraphQL mutation (there is no gh flag for
+// it). Same fail-closed posture — a gh auth/exec error throws
+// ControlPlaneWriteError so a failed queue action never silently no-ops.
+// `spawnSync` is injectable for testing without a real gh.
+function defaultApplyMergeQueueAction(deps = {}) {
+  const spawn = deps.spawnSync || spawnSync;
+  const runGh = (args) => {
+    const res = spawn('gh', args, { encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 });
+    if (res.error) {
+      throw new ControlPlaneWriteError(`gh invocation failed: ${res.error.message}`);
+    }
+    if (res.status !== 0) {
+      const stderr = (res.stderr || '').toString();
+      throw new ControlPlaneWriteError(`gh exited ${res.status}: ${stderr.trim() || 'unknown error'}`);
+    }
+    return (res.stdout || '').toString();
+  };
+  const [owner, name] = REPOSITORY.split('/');
+  return (action) => {
+    if (action && action.op === 'dequeue') {
+      if (!Number.isInteger(action.number) || action.number <= 0) {
+        throw new ControlPlaneWriteError(`merge-queue action requires a positive integer number, got: ${action.number}`);
+      }
+      const idJson = runGh([
+        'api',
+        'graphql',
+        '-f',
+        `query={repository(owner:"${owner}",name:"${name}"){pullRequest(number:${action.number}){id}}}`,
+        '--jq',
+        '.data.repository.pullRequest.id'
+      ]);
+      const nodeId = idJson.trim();
+      if (!nodeId) {
+        throw new ControlPlaneWriteError(`could not resolve PR node id for #${action.number}`);
+      }
+      runGh([
+        'api',
+        'graphql',
+        '-f',
+        `query=mutation{dequeuePullRequest(input:{id:"${nodeId}"}){mergeQueueEntry{position}}}`
+      ]);
+      return;
+    }
+    runGh(resolveMergeQueueArmCommand(action));
+  };
+}
+
+// Thin, testable CLI runner for the Tier 3 merge-queue surface. Same gated shape
+// as the Tier 2 annotate CLI: enablement/tier are checked before any live
+// approver verification; when authorized for a server-verified allowlisted
+// approver it defaults to a dry run reporting the well-formed action count, and
+// only acts (arm/dequeue via the live executor, append-logged) with `--apply`.
+function runMergeQueueCli(argv = [], deps = {}) {
+  const args = Array.isArray(argv) ? argv : [];
+  const repoRoot = deps.repoRoot || process.cwd();
+  const apply = args.includes('--apply');
+  const approverIndex = args.indexOf('--approver');
+  const approver = approverIndex !== -1 ? args[approverIndex + 1] : undefined;
+  const loadConfig = deps.loadWriteConfig || loadWriteConfig;
+  const config = deps.config || loadConfig(repoRoot, deps);
+
+  const lines = [];
+  const pre = authorizeWrite(config, 'mergeQueue');
+  if (!pre.authorized && (pre.reason === 'write-path-disabled' || pre.reason.startsWith('tier-disabled'))) {
+    lines.push(`[control-plane-write] enabled=${config.enabled === true}; mergeQueue refused (${pre.reason}).`);
+    return { authorized: false, reason: pre.reason, applied: false, dryRun: !apply, plannedCount: 0, appliedCount: 0, lines };
+  }
+
+  const actions = deps.actions || loadAnnotateActions(args, deps);
+  const planned = planMergeQueue(actions);
+
+  const verifyApprover = deps.verifyApprover || defaultVerifyApprover(deps);
+  const approverVerified = verifyApprover(approver);
+  const auth = authorizeWrite(config, 'mergeQueue', { approver, approverVerified });
+  if (!auth.authorized) {
+    lines.push(`[control-plane-write] enabled=${config.enabled === true}; mergeQueue refused (${auth.reason}).`);
+    return { authorized: false, reason: auth.reason, applied: false, dryRun: !apply, plannedCount: 0, appliedCount: 0, lines };
+  }
+
+  lines.push(`[control-plane-write] mergeQueue AUTHORIZED for verified approver ${approver}; ${planned.length} well-formed action(s).`);
+  if (!apply) {
+    lines.push('[control-plane-write] Dry run (no --apply); nothing written. Re-run with --apply to act on the merge queue.');
+    return { authorized: true, applied: false, dryRun: true, plannedCount: planned.length, appliedCount: 0, lines };
+  }
+
+  const applyMergeQueueAction = deps.applyMergeQueueAction || defaultApplyMergeQueueAction(deps);
+  const result = runMergeQueue({ actions, approver, approverVerified }, { ...deps, repoRoot, config, applyMergeQueueAction });
+  lines.push(`[control-plane-write] applied ${result.appliedCount} of ${result.plannedCount} merge-queue action(s).`);
+  return { authorized: true, applied: true, dryRun: false, plannedCount: result.plannedCount, appliedCount: result.appliedCount, lines };
+}
+
 
 // governed write path and the live `gh project item-edit` executor, but only
 // acts when BOTH the committed gate authorizes boardSync AND `--apply` is
@@ -660,17 +772,23 @@ module.exports = {
   defaultApplyAnnotation,
   defaultVerifyApprover,
   loadAnnotateActions,
-  runAnnotateCli
+  runAnnotateCli,
+  resolveMergeQueueArmCommand,
+  defaultApplyMergeQueueAction,
+  runMergeQueueCli
 };
 
 if (require.main === module) {
   try {
     const argv = process.argv.slice(2);
-    // Subcommand dispatch: `annotate` drives the Tier 2 CLI; anything else runs
-    // the Tier 1 board-sync CLI (backward compatible with the bare invocation).
+    // Subcommand dispatch: `annotate` -> Tier 2 CLI, `merge-queue` -> Tier 3
+    // CLI; anything else runs the Tier 1 board-sync CLI (backward compatible
+    // with the bare invocation).
     const outcome = argv[0] === 'annotate'
       ? runAnnotateCli(argv.slice(1))
-      : runBoardSyncCli(argv);
+      : argv[0] === 'merge-queue'
+        ? runMergeQueueCli(argv.slice(1))
+        : runBoardSyncCli(argv);
     process.stdout.write(`${outcome.lines.join('\n')}\n`);
     process.exit(0);
   } catch (err) {
