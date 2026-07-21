@@ -241,6 +241,37 @@ describe('viSemanticModel', () => {
     ]);
   });
 
+  it('populates additive per-item detail geometry from the comparison text (VHS-REQ-703.10)', () => {
+    const report = parseNiComparisonReportHtml(
+      `<h1 class="report-title">R</h1>
+       <ul><li class="checked">Block Diagram Functional</li></ul>
+       <h2 class="section-header">Detailed Information</h2>
+       <details><summary class="difference-heading">3. Block Diagram objects</summary>
+         <ol>
+           <li class="diff-detail">SubVI "VisibleTextMarker.vi" - added at (1570,358)</li>
+           <li class="diff-detail">wiring changes</li>
+         </ol>
+       </details>`,
+      'report.html'
+    );
+    const model = buildViSemanticComparisonModel({ report });
+    const section = model.detailSections[0];
+
+    // itemGeometry is additive and index-aligned with items. Default to []
+    // (the field is optional at the type level) so the assertion stays strict.
+    const itemGeometry = section.itemGeometry ?? [];
+    expect(itemGeometry).toHaveLength(section.items.length);
+    expect(itemGeometry[0]).toEqual({
+      text: 'SubVI "VisibleTextMarker.vi" - added at (1570,358)',
+      changeType: 'added',
+      objectKind: 'SubVI',
+      objectName: 'VisibleTextMarker.vi',
+      coordinate: { x: 1570, y: 358 }
+    });
+    // A wiring line carries no coordinate/kind — recorded honestly, text retained.
+    expect(itemGeometry[1]).toEqual({ text: 'wiring changes', changeType: 'other' });
+  });
+
   it('omits classification detail but stays low-risk when there are no differences (VHS-REQ-702.4)', () => {
     const model = buildViSemanticComparisonModelFromHtml(emptyReportHtml());
     expect(model.classification).toEqual([]);

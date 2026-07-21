@@ -56,6 +56,42 @@ const PREVIEW_REFERENCE_SCHEMA = {
 
 const STRING_ARRAY = { type: 'array', items: { type: 'string' } } as const;
 
+// Per-item detail geometry (VHS-REQ-703.10). Additive/optional to @v1. Inlined
+// (not $ref) because the offline subset validator does not resolve $ref/$defs.
+const DETAIL_CHANGE_TYPE_ENUM = [
+  'added',
+  'deleted',
+  'moved',
+  'changed',
+  'resized',
+  'other'
+];
+
+const DIAGRAM_POINT_SCHEMA = {
+  type: 'object',
+  required: ['x', 'y'],
+  properties: {
+    x: { type: 'integer' },
+    y: { type: 'integer' }
+  }
+} as const;
+
+const DETAIL_ITEM_GEOMETRY_SCHEMA = {
+  type: 'array',
+  items: {
+    type: 'object',
+    required: ['text', 'changeType'],
+    properties: {
+      text: { type: 'string' },
+      changeType: { type: 'string', enum: DETAIL_CHANGE_TYPE_ENUM },
+      objectKind: { type: 'string' },
+      objectName: { type: 'string' },
+      coordinate: DIAGRAM_POINT_SCHEMA,
+      fromCoordinate: DIAGRAM_POINT_SCHEMA
+    }
+  }
+} as const;
+
 export const VI_SEMANTIC_COMPARISON_JSON_SCHEMA = {
   $schema: DRAFT_07,
   $id: VI_SEMANTIC_COMPARISON_SCHEMA_ID,
@@ -125,7 +161,8 @@ export const VI_SEMANTIC_COMPARISON_JSON_SCHEMA = {
           surface: { type: 'string', enum: CHANGE_SURFACE_ENUM },
           heading: { type: 'string' },
           items: STRING_ARRAY,
-          itemCount: { type: 'integer' }
+          itemCount: { type: 'integer' },
+          itemGeometry: DETAIL_ITEM_GEOMETRY_SCHEMA
         }
       }
     },

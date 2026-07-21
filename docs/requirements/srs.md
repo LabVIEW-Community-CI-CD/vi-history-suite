@@ -5064,6 +5064,15 @@ Missing numeric IDs are intentional.
     id; this is the deterministic gate a harness uses to accept the
     still-to-be-authored coordinate-frames emitter that unblocks pixel-precise
     region overlays.
+  - VHS-REQ-703.10: A pure extractor parses each NI comparison-report detail item
+    into a structured record — change type, object kind and quoted name, and the
+    diagram coordinate(s) when the item carries them (e.g. `SubVI "X.vi" - added
+    at (1570,358)`) — and the semantic comparison model surfaces these as an
+    additive, index-aligned `itemGeometry` on each detail section; coordinates
+    are recorded in VI diagram coordinate space (never fabricated preview pixels),
+    the raw text is always retained, and unrecognized items yield a safe
+    `other`-typed record, so a review or model built without the field is
+    unchanged.
 - Agent Work Scope:
   - Keep the correlation builder pure, deterministic, and dependency-injected so
     it stays unit-testable without VS Code, a network, or a LabVIEW runtime; do
@@ -5081,6 +5090,7 @@ Missing numeric IDs are intentional.
   - `.github/workflows/vi-semantic-pr-review-callable.yml`
   - `src/cli/runViPreviewCacheWarmer.ts`
   - `src/reporting/viPreview/coordinateFramesAcceptance.ts`
+  - `src/dashboard/comparisonDetailItemGeometry.ts`
 - Verification References:
   - `tests/unit/viPreviewComparisonCorrelation.test.ts`
   - `tests/unit/viSemanticPrReview.test.ts`
@@ -5088,6 +5098,7 @@ Missing numeric IDs are intentional.
   - `tests/unit/viSemanticPrReviewWorkflow.test.ts`
   - `tests/unit/viPreviewCacheWarmerCli.test.ts`
   - `tests/unit/coordinateFramesAcceptance.test.ts`
+  - `tests/unit/comparisonDetailItemGeometry.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
 - Change Guidance:
   - Keep the correlation surface-level and deterministic until the
