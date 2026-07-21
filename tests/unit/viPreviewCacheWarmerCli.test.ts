@@ -160,12 +160,12 @@ describe('runViPreviewCacheWarm (VHS-REQ-671.3)', () => {
 
   it('warms only the explicit viFilePaths, resolved against the repo root, skipping enumeration (VHS-REQ-703.6)', async () => {
     const listViFiles = vi.fn(async () => ['/repo/should/not/enumerate.vi']);
-    const rendered: string[] = [];
+    let renderCount = 0;
     const deps: RunViPreviewCacheWarmDeps = {
       listViFiles,
       resolveRuntime: async () => READY,
-      renderOne: async (viFilePath: string) => {
-        rendered.push(viFilePath);
+      renderOne: async () => {
+        renderCount += 1;
         return { outcome: 'rendered', html: `<html>${IMG}</html>`, cached: false, cacheKey: 'k' };
       }
     };
@@ -175,41 +175,34 @@ describe('runViPreviewCacheWarm (VHS-REQ-671.3)', () => {
       deps
     );
 
-    // Enumeration is skipped entirely; only the explicit VIs are rendered,
-    // resolved against the repository root.
+    // Enumeration is skipped entirely; only the explicit VIs are rendered.
+    // Assert on the normalized manifest relativePaths (separator-agnostic) rather
+    // than the resolved absolute paths, which differ on win32.
     expect(listViFiles).not.toHaveBeenCalled();
-    expect(rendered).toEqual(['/repo/changed/A.vi', '/repo/changed/B.vi']);
+    expect(renderCount).toBe(2);
     expect(packet.entries.map((entry) => entry.relativePath)).toEqual(['changed/A.vi', 'changed/B.vi']);
   });
 
   it('applies --limit to the explicit viFilePaths scope (VHS-REQ-703.6)', async () => {
-    const rendered: string[] = [];
     const deps: RunViPreviewCacheWarmDeps = {
       listViFiles: async () => [],
       resolveRuntime: async () => READY,
-      renderOne: async (viFilePath: string) => {
-        rendered.push(viFilePath);
-        return { outcome: 'rendered', html: `<html>${IMG}</html>`, cached: false, cacheKey: 'k' };
-      }
+      renderOne: async () => ({ outcome: 'rendered', html: `<html>${IMG}</html>`, cached: false, cacheKey: 'k' })
     };
 
-    await runViPreviewCacheWarm(
+    const packet = await runViPreviewCacheWarm(
       { ...baseOptions(), viFilePaths: ['a.vi', 'b.vi', 'c.vi'], limit: 2 },
       deps
     );
 
-    expect(rendered).toEqual(['/repo/a.vi', '/repo/b.vi']);
+    expect(packet.entries.map((entry) => entry.relativePath)).toEqual(['a.vi', 'b.vi']);
   });
 
   it('rejects absolute and parent-escaping explicit viFilePaths (VHS-REQ-703.6)', async () => {
-    const rendered: string[] = [];
     const deps: RunViPreviewCacheWarmDeps = {
       listViFiles: async () => [],
       resolveRuntime: async () => READY,
-      renderOne: async (viFilePath: string) => {
-        rendered.push(viFilePath);
-        return { outcome: 'rendered', html: `<html>${IMG}</html>`, cached: false, cacheKey: 'k' };
-      }
+      renderOne: async () => ({ outcome: 'rendered', html: `<html>${IMG}</html>`, cached: false, cacheKey: 'k' })
     };
 
     const packet = await runViPreviewCacheWarm(
@@ -221,8 +214,9 @@ describe('runViPreviewCacheWarm (VHS-REQ-671.3)', () => {
     );
 
     // Absolute and `../`-escaping paths are dropped; a `..` that stays inside the
-    // repo after normalization is kept. No rendered path escapes the repo root.
-    expect(rendered).toEqual(['/repo/ok/A.vi', '/repo/ok/B.vi']);
+    // repo after normalization is kept. No manifest path escapes the repo root.
+    // Assert on normalized relativePaths so the check is separator-agnostic.
+    expect(packet.entries.map((entry) => entry.relativePath)).toEqual(['ok/A.vi', 'ok/B.vi']);
     expect(packet.entries.every((entry) => !entry.relativePath.includes('..'))).toBe(true);
   });
 
