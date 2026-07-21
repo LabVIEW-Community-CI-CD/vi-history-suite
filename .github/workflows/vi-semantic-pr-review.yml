@@ -24,12 +24,12 @@ on:
         default: false
         type: boolean
       correlate_previews:
-        description: 'Attach the deterministic preview⇄comparison correlation (VHS-REQ-703) by peeking a preview cache. Requires preview_cache_dir; cache-only peek adds no runtime cost and reports a miss honestly. Off by default.'
+        description: 'Attach the deterministic preview⇄comparison correlation (VHS-REQ-703) by peeking a preview cache. Correlation is attempted only when preview_cache_dir is also non-empty; an empty preview_cache_dir warns and skips correlation (non-fatal). Cache-only peek adds no runtime cost and reports a miss honestly. Off by default.'
         required: false
         default: false
         type: boolean
       preview_cache_dir:
-        description: 'Path (in the runner workspace) to a content-addressed preview cache to peek for correlation (VHS-REQ-703.4). Only used when correlate_previews is true.'
+        description: 'Path (in the runner workspace) to a content-addressed preview cache to peek for correlation (VHS-REQ-703.4). Used only when correlate_previews is true and this path is non-empty; empty skips correlation.'
         required: false
         default: ''
 
