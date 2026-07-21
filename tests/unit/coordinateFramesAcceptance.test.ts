@@ -33,10 +33,12 @@ describe('assessCoordinateFramesIsland (VHS-REQ-703.9)', () => {
 
   it('rejects an island whose JSON does not parse', () => {
     const a = assessCoordinateFramesIsland(withIsland('{not json'));
-    // An unparseable body is treated as no island by the extractor's consumer,
-    // so it reports island-absent rather than a partial parse.
+    // The island tag is present, so the extractor returns its raw body; the
+    // frames-model builder then fails to parse it and yields no model, reported
+    // as island-unparseable (present-but-unusable), not island-absent.
     expect(a.accepted).toBe(false);
-    expect(a.issues.length).toBeGreaterThan(0);
+    expect(a.islandPresent).toBe(true);
+    expect(a.issues).toContain('island-unparseable');
   });
 
   it('rejects an island that parses but has an empty frames array', () => {

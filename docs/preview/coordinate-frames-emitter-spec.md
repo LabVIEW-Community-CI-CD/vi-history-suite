@@ -90,7 +90,8 @@ A render is **accepted** by `assessCoordinateFramesIsland(html)` when ALL hold:
 4. ≥1 frame carries a non-empty image.
 
 Otherwise it is **rejected** with a stable issue id: `island-absent`,
-`island-unparseable`, `frames-empty`, `no-frame-geometry`, or `no-frame-images`.
+`island-unparseable` (present but unparseable, not a frames array, or an empty
+frames array), `no-frame-geometry`, or `no-frame-images`.
 
 ### Verifying a real render
 
