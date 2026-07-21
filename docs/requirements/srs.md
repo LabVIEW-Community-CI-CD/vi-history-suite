@@ -4911,6 +4911,68 @@ Missing numeric IDs are intentional.
     versioned so external consumers of the open VI-diff standard are not
     broken.
 
+### VHS-REQ-702: VI Semantic Change Classification
+
+- Status: Active
+- Parent: VHS-SYS-REQ-008
+- Area: Review Workflow
+- Statement: The suite shall classify each itemized change in a produced LabVIEW
+  VI comparison into a reviewer-grade change kind and derive an aggregate risk
+  level for the VI, exposing the result as additive optional fields on the same
+  versioned `vi-history-suite/vi-semantic-comparison@v1` model so existing
+  consumers and previously cached documents stay valid. The classification is a
+  pure, deterministic heuristic over the comparison report's detail-item text
+  and NI's own included-attribute flags — not a binary or abstract-syntax
+  analysis — so every result carries an explicit confidence signal and
+  unrecognized items are classified as unknown rather than force-fit.
+- Acceptance Criteria:
+  - VHS-REQ-702.1: `classifyDetailItem` maps a single NI comparison detail-item
+    line to one of the change kinds `dependency`, `behavioral`, `interface`,
+    `cosmetic`, `structural`, or `unknown` using an ordered, case-insensitive
+    keyword map that checks dependency, behavioral, and interface kinds before
+    the generic structural add/delete rule, and returns `unknown` for empty or
+    unrecognized text rather than force-fitting a kind.
+  - VHS-REQ-702.2: `deriveChangeClassification` aggregates the classified items
+    into a monotone risk level — `high` when any dependency, behavioral, or
+    interface change is present, `medium` when only structural changes are
+    present, and `low` for cosmetic-only or no classified changes — with a
+    rationale string naming the drivers, and lists the distinct change kinds in
+    a stable order.
+  - VHS-REQ-702.3: `deriveChangeClassification` reports a `high` classification
+    confidence only when every item is recognized and a block-diagram
+    behavioral or structural claim is corroborated by NI's `Block Diagram
+    Functional` included attribute; it reports `low` confidence when any item is
+    unknown, when there is nothing to classify, or when the attribute flags do
+    not corroborate the claim.
+  - VHS-REQ-702.4: `buildViSemanticComparisonModel` populates the additive
+    optional `classification`, `changeKinds`, `riskLevel`, `riskRationale`, and
+    `classificationConfidence` fields on the comparison model, and the published
+    Draft-07 schema declares them as optional (absent from `required`) so a
+    document without them still validates against
+    `vi-history-suite/vi-semantic-comparison@v1`.
+- Agent Work Scope:
+  - Keep the classifier pure, deterministic, and dependency-injected so it stays
+    unit-testable without VS Code, a network, or a LabVIEW runtime. Do not bump
+    the `@v1` schema id for this additive enrichment; a breaking change (removal,
+    rename, or required-promotion of a field) must instead introduce `@v2` under
+    a superseding ADR. Never present a heuristic classification as certainty;
+    preserve the confidence signal and the `unknown` escape hatch.
+- Implementation References:
+  - `src/semantic/viChangeClassification.ts`
+  - `src/semantic/viSemanticModel.ts`
+  - `src/semantic/viSemanticSchemas.ts`
+- Verification References:
+  - `tests/unit/viChangeClassification.test.ts`
+  - `tests/unit/viSemanticModel.test.ts`
+  - `tests/unit/viSemanticSchemas.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - Extend the keyword map from real NI comparison reports, not synthetic guesses,
+    and keep `unknown` as the explicit fallback. Keep the classification fields
+    additive and optional on `@v1`; reserve a schema version bump for a breaking
+    change and record it in a superseding ADR. Keep the risk model monotone so
+    adding a higher-severity kind never lowers the reported risk.
+
 ### VHS-REQ-664: Preview And Comparison Cache Warming On VI Change
 
 - Status: Active

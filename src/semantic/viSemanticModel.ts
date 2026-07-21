@@ -2,6 +2,21 @@ import {
   ParsedNiComparisonReport,
   parseNiComparisonReportHtml
 } from '../dashboard/niComparisonReportParser';
+import {
+  deriveChangeClassification,
+  ViChangeClassification,
+  ViChangeKind,
+  ViChangeRiskLevel,
+  ViClassificationConfidence,
+  ViClassifiedChange
+} from './viChangeClassification';
+
+export type {
+  ViChangeKind,
+  ViChangeRiskLevel,
+  ViClassificationConfidence,
+  ViClassifiedChange
+} from './viChangeClassification';
 
 /**
  * Stable, versioned identifier for the VI semantic comparison model. Consumers
@@ -74,6 +89,16 @@ export interface ViSemanticComparisonModel {
     includedAttributeCount: number;
     excludedAttributeCount: number;
   };
+  // Semantic Diff Intelligence (VHS-REQ-702): reviewer-grade change
+  // classification. Additive and OPTIONAL under the same @v1 schema id — absent
+  // fields mean a consumer sees the legacy surface/count view. Heuristic over
+  // NI's detail-item text + attribute flags, never binary/AST truth; the
+  // confidence signal qualifies it.
+  classification?: ViClassifiedChange[];
+  changeKinds?: ViChangeKind[];
+  riskLevel?: ViChangeRiskLevel;
+  riskRationale?: string;
+  classificationConfidence?: ViClassificationConfidence;
   narrative: string;
 }
 
@@ -187,6 +212,11 @@ export function buildViSemanticComparisonModel(
 
   const hasDifferences = overviewSections.length > 0 || detailSections.length > 0;
 
+  const classificationResult: ViChangeClassification = deriveChangeClassification(
+    detailSections.map((section) => ({ surface: section.surface, items: section.items })),
+    included
+  );
+
   const model: Omit<ViSemanticComparisonModel, 'narrative'> = {
     schema: VI_SEMANTIC_COMPARISON_SCHEMA,
     vi: {
@@ -208,7 +238,12 @@ export function buildViSemanticComparisonModel(
       detailItemCount,
       includedAttributeCount: included.length,
       excludedAttributeCount: excluded.length
-    }
+    },
+    classification: classificationResult.classification,
+    changeKinds: classificationResult.changeKinds,
+    riskLevel: classificationResult.riskLevel,
+    riskRationale: classificationResult.riskRationale,
+    classificationConfidence: classificationResult.classificationConfidence
   };
 
   return { ...model, narrative: renderViSemanticNarrative(model) };
