@@ -5017,6 +5017,13 @@ Missing numeric IDs are intentional.
     per changed VI; the correlation is optional and additive, so a review built
     without a preview provider attaches no correlation and renders exactly as
     before.
+  - VHS-REQ-703.4: A cache-peek preview-pair provider resolves each compared VI's
+    base/head preview references from the content-addressed preview cache without
+    launching a runtime (a cache-only peek), reporting a preview available only on
+    a genuine cache hit and unavailable (never fabricated) on a miss or peek
+    error; the base and head sides are resolved independently so one side's miss
+    or error never suppresses the other side's hit, and the PR-review CLI wires
+    this provider only when preview correlation is explicitly requested.
 - Agent Work Scope:
   - Keep the correlation builder pure, deterministic, and dependency-injected so
     it stays unit-testable without VS Code, a network, or a LabVIEW runtime; do
@@ -5029,9 +5036,11 @@ Missing numeric IDs are intentional.
   - `src/semantic/viSemanticSchemas.ts`
   - `src/semantic/viSemanticPrReview.ts`
   - `src/semantic/viSemanticReviewMarkdown.ts`
+  - `src/semantic/viPreviewPairProvider.ts`
 - Verification References:
   - `tests/unit/viPreviewComparisonCorrelation.test.ts`
   - `tests/unit/viSemanticPrReview.test.ts`
+  - `tests/unit/viPreviewPairProvider.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
 - Change Guidance:
   - Keep the correlation surface-level and deterministic until the
