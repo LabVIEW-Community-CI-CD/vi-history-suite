@@ -6257,6 +6257,12 @@ Missing numeric IDs are intentional.
     server-verified allowlisted approver: its pure planner validates and normalizes
     the proposed actions (dropping malformed entries), and its executor applies and
     append-logs each action only when the gate authorizes, doing nothing otherwise.
+  - The Tier 3 merge-queue path (arm auto-merge on, or dequeue, a pull request) is
+    default-disabled and, when its tier is enabled, additionally requires a
+    server-verified allowlisted approver: its pure planner validates and
+    de-duplicates the proposed actions (dropping malformed entries), and its
+    executor applies and append-logs each action only when the gate authorizes,
+    doing nothing otherwise.
 - Agent Work Scope:
   - Keep the gate fail-closed and the planner pure/injectable; add higher action
     tiers only behind the committed enablement and server-verified per-action
