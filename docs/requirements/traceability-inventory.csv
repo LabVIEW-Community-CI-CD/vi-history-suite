@@ -379,7 +379,7 @@ tsconfig.json,mapped,Yes,"TypeScript build configuration: compiles src/**/*.ts i
 tsconfig.integration.json,mapped,Yes,"TypeScript integration config: compiles src + tests/integration to a separate out-tests tree for the test:integration runner, keeping the harness off the unit-coverage gate; testing infrastructure; mapped to VHS-REQ-685."
 package.json,mapped,Yes,Package manifest; mapped through RTM including VHS-REQ-626 export command contribution VHS-REQ-651 Command Palette exclusion and VHS-REQ-659 VI Preview custom editor contribution.
 package-lock.json,supporting,No,Package lock file; dependency support.
-control-plane-write.json,mapped,Yes,"Committed enablement flag for the governed control-plane write path (VHS-REQ-696, epic #2144); declares the approver allowlist, token source (local-agent-session), and per-tier switches. Maintainer-approved 2026-07-20: Tiers 1-3 enabled (boardSync mirrors verified truth with no per-action approval; annotate + mergeQueue additionally require a server-verified allowlisted approver), Tier 4 createWork disabled. Mapped to VHS-REQ-696."
+control-plane-write.json,mapped,Yes,"Committed enablement flag for the governed control-plane write path (VHS-REQ-696, epic #2144); declares the approver allowlist, token source (local-agent-session), and per-tier switches. Maintainer-approved 2026-07-20: all four tiers enabled (boardSync mirrors verified truth with no per-action approval; annotate + mergeQueue + createWork additionally require a server-verified allowlisted approver). Mapped to VHS-REQ-696."
 README.md,asset-doc,Yes,Repository README; mapped through RTM.
 INSTALL.md,asset-doc,Yes,Installation documentation; mapped through RTM.
 FIRST-RUN.md,asset-doc,Yes,First-run documentation; mapped through RTM.
