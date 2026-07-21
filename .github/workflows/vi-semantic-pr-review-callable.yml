@@ -50,12 +50,12 @@ on:
         default: false
         type: boolean
       correlate_previews:
-        description: 'Attach the deterministic preview⇄comparison correlation (VHS-REQ-703) to the review by peeking the preview cache at preview_cache_dir. Requires preview_cache_dir; a cache-only peek launches no runtime, and a cache miss is reported honestly as an unavailable preview. Off by default.'
+        description: 'Attach the deterministic preview⇄comparison correlation (VHS-REQ-703) to the review by peeking the preview cache at preview_cache_dir. Correlation is attempted only when preview_cache_dir is also non-empty; an empty preview_cache_dir warns and skips correlation (non-fatal). A cache-only peek launches no runtime, and a cache miss is reported honestly as an unavailable preview. Off by default.'
         required: false
         default: false
         type: boolean
       preview_cache_dir:
-        description: 'Path (in the runner workspace) to a content-addressed preview cache to peek for correlation (VHS-REQ-703.4), e.g. the output of the preview-cache warm fabric (VHS-REQ-671). Only used when correlate_previews is true.'
+        description: 'Path (in the runner workspace) to a content-addressed preview cache to peek for correlation (VHS-REQ-703.4), e.g. the output of the preview-cache warm fabric (VHS-REQ-671). Used only when correlate_previews is true and this path is non-empty; empty skips correlation.'
         required: false
         default: ''
         type: string
@@ -253,7 +253,7 @@ jobs:
           # directory is supplied, so it is a no-op unless a cache is present.
           if [ "$CORRELATE_PREVIEWS" = "true" ]; then
             if [ -z "$PREVIEW_CACHE_DIR" ]; then
-              echo "correlate_previews is true but preview_cache_dir is empty; skipping correlation (nothing to peek)." >&2
+              echo "::warning::correlate_previews is true but preview_cache_dir is empty; skipping preview correlation (nothing to peek)."
             else
               # The preview peek reads the on-disk working tree (its content-
               # addressed key must match the head render in the cache), but the
