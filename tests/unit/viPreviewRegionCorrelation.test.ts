@@ -486,6 +486,11 @@ describe('review-fold hardening (VHS-REQ-703.14)', () => {
     expect(infinite.totals.locatedRegionCount).toBe(0);
     const over1 = buildViPreviewRegionCorrelation(src, (_s, side) => ({ side, left: 0, top: 0, width: 3, height: 4, confidence: 2 }));
     expect(over1.totals.locatedRegionCount).toBe(0);
+    // A negative origin violates the schema's left/top minimum 0 and would render off-canvas.
+    const negativeLeft = buildViPreviewRegionCorrelation(src, (_s, side) => ({ side, left: -1, top: 0, width: 3, height: 4, confidence: 0.5 }));
+    expect(negativeLeft.totals.locatedRegionCount).toBe(0);
+    const negativeTop = buildViPreviewRegionCorrelation(src, (_s, side) => ({ side, left: 0, top: -2, width: 3, height: 4, confidence: 0.5 }));
+    expect(negativeTop.totals.locatedRegionCount).toBe(0);
     // A valid integer rect with confidence in (0,1] is kept.
     const ok = buildViPreviewRegionCorrelation(src, (_s, side) => ({ side, left: 0, top: 0, width: 3, height: 4, confidence: 1 }));
     expect(ok.totals.locatedRegionCount).toBe(1);

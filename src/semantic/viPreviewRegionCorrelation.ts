@@ -256,12 +256,15 @@ function isUsableRegion(
     Number.isFinite(region.confidence) &&
     region.confidence > 0 &&
     region.confidence <= 1 &&
-    // Geometry must be finite integers with positive area, matching the
-    // published schema's integer contract (Infinity passes `> 0`, so guard it).
+    // Geometry must be a non-negative-origin rectangle of finite integers with
+    // positive area, matching the published schema (left/top minimum 0,
+    // width/height minimum 1; Infinity passes `> 0`, so guard integrality).
     Number.isInteger(region.left) &&
     Number.isInteger(region.top) &&
     Number.isInteger(region.width) &&
     Number.isInteger(region.height) &&
+    region.left >= 0 &&
+    region.top >= 0 &&
     region.width > 0 &&
     region.height > 0
   );
