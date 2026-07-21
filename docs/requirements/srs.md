@@ -5039,6 +5039,14 @@ Missing numeric IDs are intentional.
     changed in the pull request into a temporary cache before the review, so the
     head-side correlation can hit without a pre-existing cache; the warm is
     bounded to the changed VIs, non-fatal on failure, and off by default.
+  - VHS-REQ-703.7: The review resolves the base-side preview from an
+    already-materialized base-revision tree root (the CLI `--base-tree-dir`),
+    and the reusable workflow materializes that tree as a detached `git`
+    worktree of the base revision and warms the base-present changed VIs into
+    the same cache, so BOTH preview sides can hit and a changed surface can be
+    cross-referenced against the base and head previews; when no base tree is
+    provided the base side stays honestly unavailable (head-only correlation),
+    and the base warm is bounded, non-fatal, and off by default.
 - Agent Work Scope:
   - Keep the correlation builder pure, deterministic, and dependency-injected so
     it stays unit-testable without VS Code, a network, or a LabVIEW runtime; do

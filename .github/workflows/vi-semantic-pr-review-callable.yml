@@ -246,6 +246,39 @@ jobs:
             || echo "::warning::preview warm reported failures; correlation will use whatever was cached."
           echo "AUTO_PREVIEW_CACHE_DIR=$cache_dir" >> "$GITHUB_ENV"
 
+          # VHS-REQ-703.7: also materialize the base revision as a detached git
+          # worktree and warm the base-present changed VIs into the SAME cache,
+          # so the base-side peek can hit too (full base+head correlation). The
+          # worktree is a full checkout of the base, so a base render's
+          # content-addressed key matches a base peek from the same tree. The
+          # job teardown reclaims the worktree; a failure here is non-fatal (the
+          # review still runs with head-only correlation).
+          base_tree="$RUNNER_TEMP/vihs-base-tree"
+          rm -rf "$base_tree"
+          if git -C target-clone worktree add --detach "$base_tree" "$REVIEW_MERGE_BASE"; then
+            # Only warm changed VIs that actually exist in the base tree (a pure
+            # addition has no base side); keep the same sorted, capped order.
+            base_vis=()
+            for vi in "${changed_vis[@]}"; do
+              if [ -f "$base_tree/$vi" ]; then base_vis+=("$vi"); fi
+            done
+            if [ "${#base_vis[@]}" -gt 0 ]; then
+              base_warm_args=(
+                --repo-root "$base_tree"
+                --cache-dir "$cache_dir"
+                --container-image "nationalinstruments/labview:${CONTAINER_IMAGE_VERSION}-linux"
+              )
+              for vi in "${base_vis[@]}"; do base_warm_args+=(--vi "$vi"); done
+              node out/cli/runViPreviewCacheWarmer.js "${base_warm_args[@]}" \
+                || echo "::warning::base preview warm reported failures; base-side correlation will use whatever was cached."
+              echo "AUTO_BASE_TREE_DIR=$base_tree" >> "$GITHUB_ENV"
+            else
+              echo "No base-present changed VIs to warm; base-side correlation will be unavailable."
+            fi
+          else
+            echo "::warning::could not create a base worktree; base-side correlation will be unavailable."
+          fi
+
       - name: Run VI Semantic PR Review And Post Sticky Comment
         env:
           GH_TOKEN: ${{ secrets.VI_REVIEW_TARGET_TOKEN }}
@@ -309,6 +342,13 @@ jobs:
               # not affect it. (Idempotent when the warm step already did it.)
               git -C target-clone checkout --detach "$REVIEW_HEAD_SHA"
               args+=(--correlate-previews --preview-cache-dir "$effective_cache_dir")
+              # Base-side correlation: when a base tree was materialized (the
+              # auto-warm step's git worktree), point the review at it so the
+              # base preview can also hit the cache (VHS-REQ-703.7). Without it
+              # the base side stays honestly unavailable (head-only correlation).
+              if [ -n "${AUTO_BASE_TREE_DIR:-}" ]; then
+                args+=(--base-tree-dir "$AUTO_BASE_TREE_DIR")
+              fi
             fi
           fi
           node out/cli/runViSemanticPrReview.js "${args[@]}"
