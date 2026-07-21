@@ -64,7 +64,12 @@ async function resolveSide(
       ...(typeof result.cacheKey === 'string' && result.cacheKey.length > 0
         ? { cacheKey: result.cacheKey }
         : {}),
-      ...(typeof result.inlineImageCount === 'number'
+      // The schema types inlineImageCount as a non-negative integer, so gate it:
+      // a float/NaN/negative from an injected peek must not produce a
+      // schema-invalid reference. Drop the field rather than emit a bad value.
+      ...(typeof result.inlineImageCount === 'number' &&
+      Number.isInteger(result.inlineImageCount) &&
+      result.inlineImageCount >= 0
         ? { inlineImageCount: result.inlineImageCount }
         : {})
     };

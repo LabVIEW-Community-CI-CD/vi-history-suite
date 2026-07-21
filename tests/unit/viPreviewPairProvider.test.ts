@@ -90,6 +90,22 @@ describe('createCachePeekPreviewPairProvider (VHS-REQ-703.4)', () => {
     expect(pair.base && 'inlineImageCount' in pair.base).toBe(false);
   });
 
+  it('drops a non-integer or negative inlineImageCount (schema requires integer)', async () => {
+    const resolve = createCachePeekPreviewPairProvider({
+      peekRevisionPreview: async (i) => ({
+        available: true,
+        inlineImageCount: i.side === 'base' ? 2.5 : -1
+      })
+    });
+    const pair = await resolve(input);
+    // A float (base) and a negative (head) are both dropped rather than emitted
+    // as a schema-invalid non-negative integer.
+    expect(pair.base && 'inlineImageCount' in pair.base).toBe(false);
+    expect(pair.head && 'inlineImageCount' in pair.head).toBe(false);
+    expect(pair.base?.available).toBe(true);
+    expect(pair.head?.available).toBe(true);
+  });
+
   it('passes the repository root, relative path, and per-side revision to the peek', async () => {
     const seen: PeekRevisionPreviewInput[] = [];
     const resolve = createCachePeekPreviewPairProvider({
