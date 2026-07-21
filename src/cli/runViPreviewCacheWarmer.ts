@@ -472,7 +472,9 @@ export function parseArgs(argv: readonly string[]): ParsedWarmArgs {
         }
       }
     } else if (arg === '--provider') {
-      // Docker-only worker: accept and ignore an explicit `docker`; reject others.
+      // Docker-only worker: it consumes the provider value and ignores it (the
+      // runtime is always resolved as docker), so any value is accepted as a
+      // no-op rather than validated or recorded.
       next();
     } else if (arg === '--vi') {
       // Repeatable: scope the warm to specific repository-relative VI paths
