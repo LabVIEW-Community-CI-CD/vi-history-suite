@@ -364,6 +364,43 @@ describe('renderViSemanticPrReviewMarkdown', () => {
     expect(markdown).not.toContain('- **Preview correlation:**');
   });
 
+  it('does not abort the review when the preview provider throws (VHS-REQ-703.3)', async () => {
+    const review = await buildViSemanticPrReview(
+      { repositoryRoot: '/repo', baseHash: 'a', selectedHash: 'b' },
+      {
+        listChangedPaths: async () => ['src/A.vi'],
+        compareVi: async () =>
+          completed(
+            makeModel({
+              vi: { title: 'A.vi' },
+              hasDifferences: true,
+              changedSurfaces: ['block-diagram'],
+              narrative: 'The block diagram differs.',
+              classification: [{ surface: 'block-diagram', kind: 'behavioral', text: 'wiring changes' }],
+              changeKinds: ['behavioral'],
+              riskLevel: 'high',
+              riskRationale: 'high: behavioral change(s)',
+              classificationConfidence: 'high'
+            })
+          ),
+        resolvePreviewPair: async () => {
+          throw new Error('preview resolution failed');
+        }
+      }
+    );
+    // The comparison succeeded, so the entry is still completed — only the
+    // optional correlation is dropped when the provider fails.
+    const entry = review.entries[0];
+    expect(entry.status).toBe('completed');
+    if (entry.status === 'completed') {
+      expect(entry.correlation).toBeUndefined();
+      expect(entry.hasDifferences).toBe(true);
+    }
+    const markdown = renderViSemanticPrReviewMarkdown(review);
+    expect(markdown).not.toContain('- **Preview correlation:**');
+  });
+
+
   it('embeds a collapsed visual-diff gallery for a changed VI when images are supplied (VHS-REQ-661.11)', async () => {
     const review = await buildViSemanticPrReview(
       { repositoryRoot: '/repo', baseHash: 'a', selectedHash: 'b' },
