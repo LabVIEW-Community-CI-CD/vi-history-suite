@@ -24,7 +24,6 @@ import {
 export type CoordinateFramesIssueId =
   | 'island-absent'
   | 'island-unparseable'
-  | 'frames-empty'
   | 'no-frame-geometry'
   | 'no-frame-images';
 
@@ -90,7 +89,9 @@ export function assessCoordinateFramesIsland(html: string): CoordinateFramesAsse
 
   const model = buildFramesModelFromCoordinateJson(raw);
   if (model === undefined) {
-    // The island tag is present but its JSON is unparseable or not a frames array.
+    // The island tag is present but its JSON is unparseable, not a frames array,
+    // or an empty frames array (the shipped builder collapses all three to
+    // `undefined`), so there is no usable model to grade.
     return {
       accepted: false,
       islandPresent: true,
@@ -103,18 +104,6 @@ export function assessCoordinateFramesIsland(html: string): CoordinateFramesAsse
   }
 
   const frameCount = model.frames.length;
-  if (frameCount === 0) {
-    return {
-      accepted: false,
-      islandPresent: true,
-      frameCount: 0,
-      framesWithGeometry: 0,
-      framesWithImages: 0,
-      rootIndex: model.rootIndex,
-      issues: ['frames-empty']
-    };
-  }
-
   const { framesWithGeometry, framesWithImages } = gradeModel(model);
   const issues: CoordinateFramesIssueId[] = [];
   if (framesWithGeometry === 0) {
