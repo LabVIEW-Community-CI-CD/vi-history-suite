@@ -26,7 +26,7 @@ configure.
 
 ## Tools
 
-The server exposes 18 tools plus 3 guided prompts and 8 schema resources. Fifteen
+The server exposes 18 tools plus 7 guided prompts and 8 schema resources. Fifteen
 tools operate without running a comparison (Git, supplied data, a local
 preview-cache directory, or read-only runtime/environment probes); three invoke a
 real LabVIEW comparison and therefore need a comparison runtime (host LabVIEW or a

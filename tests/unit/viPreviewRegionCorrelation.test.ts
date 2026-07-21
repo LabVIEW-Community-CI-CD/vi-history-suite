@@ -48,7 +48,7 @@ describe('readPngDimensions (VHS-REQ-703.14)', () => {
     expect(readPngDimensions(pngDataUri(1570, 358))).toEqual({ width: 1570, height: 358 });
   });
 
-  it('tolerates the space NI writes after base64,', () => {
+  it('tolerates the space NI writes after base64', () => {
     const uri = `data:image/png;base64, ${Buffer.from(pngHeader(42, 99)).toString('base64')}`;
     expect(readPngDimensions(uri)).toEqual({ width: 42, height: 99 });
   });
