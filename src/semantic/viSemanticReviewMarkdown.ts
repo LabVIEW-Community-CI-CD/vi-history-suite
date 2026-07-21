@@ -7,8 +7,9 @@ import { renderCorrelationSurfaceTable } from './viPreviewComparisonCorrelation'
  * Pure renderers that turn the semantic comparison / history / PR-review models
  * into review-ready Markdown blocks (for PR comments, CI job summaries, or SCM
  * surfaces). The only value import is the pure, dependency-free correlation
- * surface-table renderer; everything else is type-only, keeping this a
- * dependency-free leaf module.
+ * surface-table renderer (a sibling semantic module); everything else is
+ * type-only, so this module pulls in no VS Code, network, or runtime
+ * dependencies.
  */
 
 /**
