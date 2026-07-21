@@ -73,6 +73,19 @@ describe('assessCoordinateFramesIsland (VHS-REQ-703.9)', () => {
     expect(a.issues).toContain('no-frame-images');
   });
 
+  it('rejects frames whose only image is an empty base64 payload (prefix-only data URI)', () => {
+    // A `data:image/png;base64,` with no payload after the marker is not a
+    // usable image, so a frame carrying only that must not count as an image.
+    const json = JSON.stringify([
+      { Image: 'data:image/png;base64,', Position: { Left: 0, Top: 0, Width: 40, Height: 30 } }
+    ]);
+    const a = assessCoordinateFramesIsland(withIsland(json));
+    expect(a.framesWithGeometry).toBe(1);
+    expect(a.framesWithImages).toBe(0);
+    expect(a.accepted).toBe(false);
+    expect(a.issues).toContain('no-frame-images');
+  });
+
   it('accepts a valid island with geometry and images', () => {
     const json = JSON.stringify([
       { Image: IMG, Position: { Left: 0, Top: 0, Width: 200, Height: 150 }, Children: [1] },

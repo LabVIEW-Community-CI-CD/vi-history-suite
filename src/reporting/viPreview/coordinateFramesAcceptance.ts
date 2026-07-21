@@ -48,6 +48,26 @@ export interface CoordinateFramesAssessment {
 /** The island element id the LabVIEW export must use (re-exported for harness use). */
 export const COORDINATE_FRAMES_ISLAND_ID = EMBEDDED_COORDINATE_FRAMES_ISLAND_ID;
 
+/** True when a frame image string carries real (non-empty) base64 payload. */
+function hasRealImagePayload(image: unknown): boolean {
+  if (typeof image !== 'string') {
+    return false;
+  }
+  const trimmed = image.trim();
+  if (trimmed.length === 0) {
+    return false;
+  }
+  // A `data:` URI must carry payload after the `base64,` marker — a prefix-only
+  // value like `data:image/png;base64,` is an empty/unusable image, not a hit.
+  const markerIndex = trimmed.toLowerCase().indexOf('base64,');
+  if (markerIndex >= 0) {
+    return trimmed.slice(markerIndex + 'base64,'.length).trim().length > 0;
+  }
+  // A bare (non-data-URI) base64 string is accepted as-is (the frames model
+  // auto-prefixes it), so any non-empty value counts.
+  return true;
+}
+
 function gradeModel(model: ViPreviewFramesModel): {
   framesWithGeometry: number;
   framesWithImages: number;
@@ -58,7 +78,7 @@ function gradeModel(model: ViPreviewFramesModel): {
     if (frame.rect.width > 0 && frame.rect.height > 0) {
       framesWithGeometry += 1;
     }
-    if (typeof frame.image === 'string' && frame.image.length > 0) {
+    if (hasRealImagePayload(frame.image)) {
       framesWithImages += 1;
     }
   }
