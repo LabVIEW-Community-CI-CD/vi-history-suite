@@ -26,7 +26,7 @@ configure.
 
 ## Tools
 
-The server exposes 18 tools plus 3 guided prompts and 4 schema resources. Fifteen
+The server exposes 18 tools plus 3 guided prompts and 8 schema resources. Fifteen
 tools operate without running a comparison (Git, supplied data, a local
 preview-cache directory, or read-only runtime/environment probes); three invoke a
 real LabVIEW comparison and therefore need a comparison runtime (host LabVIEW or a
@@ -108,6 +108,10 @@ rather than a silently-repointed "latest".
 | `vi-history-suite://schema/vi-semantic-comparison@v1` | Comparison model schema | `application/schema+json` |
 | `vi-history-suite://schema/vi-semantic-history@v1` | History model schema | `application/schema+json` |
 | `vi-history-suite://schema/vi-repository-index@v1` | Repository-index schema | `application/schema+json` |
+| `vi-history-suite://schema/vi-preview-comparison-correlation@v1` | Preview⇄comparison correlation schema | `application/schema+json` |
+| `vi-history-suite://schema/vi-preview-comparison-correlations@v1` | Preview⇄comparison correlations bundle schema | `application/schema+json` |
+| `vi-history-suite://schema/vi-preview-region-correlation@v1` | Preview pixel-region correlation schema | `application/schema+json` |
+| `vi-history-suite://schema/vi-preview-region-correlations@v1` | Preview pixel-region correlations bundle schema | `application/schema+json` |
 | `vi-history-suite://schema/index` | All published schemas | `application/json` |
 
 `resources/read` of an unknown URI returns a `-32602` naming the `uri` field.
