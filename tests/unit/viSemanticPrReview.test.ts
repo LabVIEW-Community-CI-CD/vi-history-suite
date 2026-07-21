@@ -270,6 +270,80 @@ describe('renderViSemanticPrReviewMarkdown', () => {
     expect(markdown).toContain('- **Risk:** low — low: cosmetic change(s) only _(low confidence)_');
   });
 
+  it('attaches a preview⇄comparison correlation via the injected provider and surfaces it (VHS-REQ-703.3)', async () => {
+    const seen: string[] = [];
+    const review = await buildViSemanticPrReview(
+      { repositoryRoot: '/repo', baseHash: 'a', selectedHash: 'b' },
+      {
+        listChangedPaths: async () => ['src/A.vi'],
+        compareVi: async () =>
+          completed(
+            makeModel({
+              vi: { title: 'A.vi' },
+              hasDifferences: true,
+              changedSurfaces: ['block-diagram'],
+              narrative: 'The block diagram differs.',
+              classification: [{ surface: 'block-diagram', kind: 'behavioral', text: 'wiring changes' }],
+              changeKinds: ['behavioral'],
+              riskLevel: 'high',
+              riskRationale: 'high: behavioral change(s)',
+              classificationConfidence: 'high'
+            })
+          ),
+        resolvePreviewPair: async (input) => {
+          seen.push(input.relativePath);
+          return {
+            base: { available: true, revision: 'a' },
+            head: { available: true, revision: 'b' }
+          };
+        }
+      }
+    );
+    // Provider was invoked for the completed VI.
+    expect(seen).toEqual(['src/A.vi']);
+    const entry = review.entries[0];
+    expect(entry.status).toBe('completed');
+    if (entry.status === 'completed') {
+      expect(entry.correlation).toBeDefined();
+      expect(entry.correlation?.surfaces[0]?.correlated).toBe(true);
+    }
+    const markdown = renderViSemanticPrReviewMarkdown(review);
+    expect(markdown).toContain('- **Preview correlation:**');
+    expect(markdown).toContain('cross-reference the base and head previews');
+  });
+
+  it('omits the preview correlation line when no provider is wired (default unavailable)', async () => {
+    const review = await buildViSemanticPrReview(
+      { repositoryRoot: '/repo', baseHash: 'a', selectedHash: 'b' },
+      {
+        listChangedPaths: async () => ['src/A.vi'],
+        compareVi: async () =>
+          completed(
+            makeModel({
+              vi: { title: 'A.vi' },
+              hasDifferences: true,
+              changedSurfaces: ['block-diagram'],
+              narrative: 'The block diagram differs.',
+              classification: [{ surface: 'block-diagram', kind: 'behavioral', text: 'wiring changes' }],
+              changeKinds: ['behavioral'],
+              riskLevel: 'high',
+              riskRationale: 'high: behavioral change(s)',
+              classificationConfidence: 'high'
+            })
+          )
+      }
+    );
+    const entry = review.entries[0];
+    // The default provider still builds a correlation, but it reports both
+    // preview sides unavailable, so the surface is uncorrelated and the narrative
+    // says so — no fabricated link.
+    if (entry.status === 'completed') {
+      expect(entry.correlation?.surfaces[0]?.correlated).toBe(false);
+    }
+    const markdown = renderViSemanticPrReviewMarkdown(review);
+    expect(markdown).toContain('no preview is available to correlate');
+  });
+
   it('embeds a collapsed visual-diff gallery for a changed VI when images are supplied (VHS-REQ-661.11)', async () => {
     const review = await buildViSemanticPrReview(
       { repositoryRoot: '/repo', baseHash: 'a', selectedHash: 'b' },

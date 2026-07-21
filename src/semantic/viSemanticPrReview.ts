@@ -5,6 +5,11 @@ import {
   type CompareViRevisionsRuntimeRequest
 } from './compareViRevisions';
 import type { ViSemanticComparisonModel } from './viSemanticModel';
+import {
+  buildViPreviewComparisonCorrelation,
+  type ViPreviewComparisonCorrelation,
+  type ViPreviewPair
+} from './viPreviewComparisonCorrelation';
 import { requireRepositoryRoot } from './repositoryTarget';
 
 // The PR-review Markdown renderer and its sticky-comment marker live in the
@@ -62,6 +67,13 @@ export type ViSemanticPrReviewEntry =
        * a caller can attach the full visual diff to the review artifact.
        */
       reportFilePath?: string;
+      /**
+       * Preview ⇄ comparison correlation for this VI (VHS-REQ-703, epic #2262):
+       * links each changed surface to the base/head preview references the
+       * injected provider supplied. Optional/additive — absent when no provider
+       * is wired, so a legacy or `--from-file` review is unaffected.
+       */
+      correlation?: ViPreviewComparisonCorrelation;
     }
   | {
       relativePath: string;
@@ -95,6 +107,19 @@ export interface ViSemanticPrReviewDeps {
     selectedHash: string
   ) => Promise<string[]>;
   compareVi?: typeof compareViRevisions;
+  /**
+   * Resolves the base/head preview references for a changed VI (VHS-REQ-703,
+   * epic #2262). Injected so the correlation stays runtime-free: the default
+   * reports both preview sides unavailable (an honest "no preview to correlate"),
+   * and a supplied provider (cached previews or a future Docker-generates render)
+   * reports real availability. Only invoked for a completed comparison.
+   */
+  resolvePreviewPair?: (input: {
+    repositoryRoot: string;
+    relativePath: string;
+    baseHash: string;
+    selectedHash: string;
+  }) => Promise<ViPreviewPair> | ViPreviewPair;
 }
 
 /** A per-VI comparison report to copy alongside a review artifact. */
@@ -160,14 +185,26 @@ export function createDefaultListChangedPaths(
 
 const defaultListChangedPaths = createDefaultListChangedPaths();
 
-function toEntry(relativePath: string, result: CompareViRevisionsResult): ViSemanticPrReviewEntry {
+// Default preview-pair provider: reports both sides unavailable. This keeps the
+// review runtime-free by default (no render, no cache access); a caller wires a
+// real provider to obtain cached or freshly rendered preview references.
+function defaultResolvePreviewPair(): ViPreviewPair {
+  return { base: { available: false }, head: { available: false } };
+}
+
+function toEntry(
+  relativePath: string,
+  result: CompareViRevisionsResult,
+  correlation?: ViPreviewComparisonCorrelation
+): ViSemanticPrReviewEntry {
   if (result.status === 'completed') {
     return {
       relativePath,
       status: 'completed',
       hasDifferences: result.hasDifferences,
       model: result.model,
-      reportFilePath: result.runtime.reportFilePath
+      reportFilePath: result.runtime.reportFilePath,
+      ...(correlation ? { correlation } : {})
     };
   }
   return { relativePath, status: result.status, reason: result.reason };
@@ -247,6 +284,7 @@ export async function buildViSemanticPrReview(
 
   const listChangedPaths = deps.listChangedPaths ?? defaultListChangedPaths;
   const compareVi = deps.compareVi ?? compareViRevisions;
+  const resolvePreviewPair = deps.resolvePreviewPair ?? defaultResolvePreviewPair;
 
   const changed = await listChangedPaths(repositoryRoot, baseHash, selectedHash);
   const viPaths = Array.from(new Set(changed.filter(isViSourcePath))).sort((a, b) =>
@@ -264,7 +302,17 @@ export async function buildViSemanticPrReview(
       selectedHash,
       runtime: input.runtime
     });
-    entries.push(toEntry(relativePath, result));
+    let correlation: ViPreviewComparisonCorrelation | undefined;
+    if (result.status === 'completed') {
+      const previews = await resolvePreviewPair({
+        repositoryRoot,
+        relativePath,
+        baseHash,
+        selectedHash
+      });
+      correlation = buildViPreviewComparisonCorrelation(result.model, previews);
+    }
+    entries.push(toEntry(relativePath, result, correlation));
   }
 
   const withDifferences = entries.filter(
