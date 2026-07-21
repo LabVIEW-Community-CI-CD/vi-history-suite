@@ -72,6 +72,18 @@ const {
     deps: Record<string, unknown>
   ) => { authorized: boolean; reason?: string; applied: boolean; dryRun: boolean; plannedCount: number; appliedCount: number; lines: string[] };
 };
+const {
+  resolveCreateWorkCommand,
+  defaultApplyCreateWork,
+  runCreateWorkCli
+} = require('../../scripts/controlPlaneWrite.js') as {
+  resolveCreateWorkCommand: (item: unknown) => string[];
+  defaultApplyCreateWork: (deps?: Record<string, unknown>) => (item: unknown) => void;
+  runCreateWorkCli: (
+    argv: string[],
+    deps: Record<string, unknown>
+  ) => { authorized: boolean; reason?: string; applied: boolean; dryRun: boolean; plannedCount: number; appliedCount: number; lines: string[] };
+};
 
 const ENABLED_CONFIG = { enabled: true, approvers: ['svelderrainruiz'], tiers: { boardSync: true, annotate: true } };
 const DISABLED_CONFIG = { enabled: false, approvers: ['svelderrainruiz'], tiers: { boardSync: true } };
@@ -870,5 +882,152 @@ describe('controlPlaneWrite: runMergeQueueCli (VHS-REQ-696.9)', () => {
     expect(applied).toHaveLength(2);
     expect(logged).toHaveLength(2);
     expect(out.lines.join('\n')).toContain('applied 2 of 2');
+  });
+});
+
+describe('controlPlaneWrite: resolveCreateWorkCommand (VHS-REQ-696.10)', () => {
+  it('resolves a work item into gh issue create argv with repeated --label flags', () => {
+    expect(resolveCreateWorkCommand({ title: 'New work', body: 'details', labels: ['infra', 'copilot-target'] })).toEqual([
+      'issue',
+      'create',
+      '--repo',
+      REPOSITORY,
+      '--title',
+      'New work',
+      '--body',
+      'details',
+      '--label',
+      'infra',
+      '--label',
+      'copilot-target'
+    ]);
+  });
+
+  it('defaults body to empty and drops blank labels', () => {
+    expect(resolveCreateWorkCommand({ title: 'Bare' })).toEqual(['issue', 'create', '--repo', REPOSITORY, '--title', 'Bare', '--body', '']);
+    expect(resolveCreateWorkCommand({ title: 'Filtered', labels: ['ok', '  ', 3] })).toEqual([
+      'issue',
+      'create',
+      '--repo',
+      REPOSITORY,
+      '--title',
+      'Filtered',
+      '--body',
+      '',
+      '--label',
+      'ok'
+    ]);
+  });
+
+  it('fails closed (throws) on a missing/empty title or non-object', () => {
+    expect(() => resolveCreateWorkCommand({ body: 'no title' })).toThrow(/non-empty title/);
+    expect(() => resolveCreateWorkCommand({ title: '   ' })).toThrow(/non-empty title/);
+    expect(() => resolveCreateWorkCommand(null)).toThrow(/must be an object/);
+  });
+});
+
+describe('controlPlaneWrite: defaultApplyCreateWork (VHS-REQ-696.10)', () => {
+  it('invokes gh issue create for a valid item', () => {
+    const calls: Array<{ cmd: string; args: string[] }> = [];
+    const applier = defaultApplyCreateWork({
+      spawnSync: (cmd: string, args: string[]) => {
+        calls.push({ cmd, args });
+        return { status: 0, stdout: '', stderr: '' };
+      }
+    });
+    applier({ title: 'New work', body: 'b', labels: [] });
+    expect(calls).toHaveLength(1);
+    expect(calls[0].cmd).toBe('gh');
+    expect(calls[0].args).toEqual(expect.arrayContaining(['issue', 'create', '--title', 'New work']));
+  });
+
+  it('fails closed (throws) when gh errors or exits nonzero', () => {
+    const ghError = defaultApplyCreateWork({ spawnSync: () => ({ error: new Error('gh missing') }) });
+    expect(() => ghError({ title: 'x' })).toThrow(/gh invocation failed/);
+    const nonZero = defaultApplyCreateWork({ spawnSync: () => ({ status: 1, stderr: 'no perms' }) });
+    expect(() => nonZero({ title: 'x' })).toThrow(/gh exited 1: no perms/);
+  });
+});
+
+describe('controlPlaneWrite: runCreateWorkCli (VHS-REQ-696.10)', () => {
+  const CW_ENABLED = { enabled: true, approvers: ['svelderrainruiz'], tiers: { boardSync: true, createWork: true } };
+  const actions = [{ title: 'New tracked work' }];
+  const alwaysVerified = () => true;
+
+  it('refuses (and never verifies) when the write path is disabled', () => {
+    let verifyCalls = 0;
+    const out = runCreateWorkCli(['--approver', 'svelderrainruiz'], {
+      config: DISABLED_CONFIG,
+      actions,
+      verifyApprover: () => {
+        verifyCalls += 1;
+        return true;
+      },
+      applyCreateWork: () => {}
+    });
+    expect(out).toMatchObject({ authorized: false, reason: 'write-path-disabled', applied: false });
+    expect(verifyCalls).toBe(0);
+  });
+
+  it('refuses when the createWork tier is off, without verifying', () => {
+    let verifyCalls = 0;
+    const out = runCreateWorkCli(['--approver', 'svelderrainruiz'], {
+      config: { enabled: true, approvers: ['svelderrainruiz'], tiers: { boardSync: true, createWork: false } },
+      actions,
+      verifyApprover: () => {
+        verifyCalls += 1;
+        return true;
+      },
+      applyCreateWork: () => {}
+    });
+    expect(out).toMatchObject({ authorized: false, reason: 'tier-disabled:createWork' });
+    expect(verifyCalls).toBe(0);
+  });
+
+  it('refuses an unverified or non-allowlisted approver', () => {
+    const unverified = runCreateWorkCli(['--approver', 'svelderrainruiz'], {
+      config: CW_ENABLED,
+      actions,
+      verifyApprover: () => false,
+      applyCreateWork: () => {}
+    });
+    expect(unverified).toMatchObject({ authorized: false, reason: 'approver-not-server-verified' });
+    const stranger = runCreateWorkCli(['--approver', 'someone-else'], {
+      config: CW_ENABLED,
+      actions,
+      verifyApprover: alwaysVerified,
+      applyCreateWork: () => {}
+    });
+    expect(stranger).toMatchObject({ authorized: false, reason: 'approver-not-authorized' });
+  });
+
+  it('dry-runs by default: reports well-formed item count and writes nothing', () => {
+    const applied: unknown[] = [];
+    const out = runCreateWorkCli(['--approver', 'svelderrainruiz'], {
+      config: CW_ENABLED,
+      actions,
+      verifyApprover: alwaysVerified,
+      applyCreateWork: (a: unknown) => applied.push(a)
+    });
+    expect(out).toMatchObject({ authorized: true, applied: false, dryRun: true, plannedCount: 1, appliedCount: 0 });
+    expect(applied).toHaveLength(0);
+    expect(out.lines.join('\n')).toContain('Dry run');
+  });
+
+  it('creates and append-logs each item with --apply when fully authorized', () => {
+    const applied: unknown[] = [];
+    const logged: unknown[] = [];
+    const out = runCreateWorkCli(['--approver', 'svelderrainruiz', '--apply'], {
+      config: CW_ENABLED,
+      actions: [...actions, { title: 'Second item', labels: ['infra'] }],
+      verifyApprover: alwaysVerified,
+      applyCreateWork: (a: unknown) => applied.push(a),
+      appendLog: (e: unknown) => logged.push(e),
+      now: () => new Date('2026-07-20T00:00:00.000Z')
+    });
+    expect(out).toMatchObject({ authorized: true, applied: true, dryRun: false, plannedCount: 2, appliedCount: 2 });
+    expect(applied).toHaveLength(2);
+    expect(logged).toHaveLength(2);
+    expect(out.lines.join('\n')).toContain('created 2 of 2');
   });
 });
