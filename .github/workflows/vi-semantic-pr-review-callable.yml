@@ -49,6 +49,16 @@ on:
         required: false
         default: false
         type: boolean
+      correlate_previews:
+        description: 'Attach the deterministic preview⇄comparison correlation (VHS-REQ-703) to the review by peeking the preview cache at preview_cache_dir. Requires preview_cache_dir; a cache-only peek launches no runtime, and a cache miss is reported honestly as an unavailable preview. Off by default.'
+        required: false
+        default: false
+        type: boolean
+      preview_cache_dir:
+        description: 'Path (in the runner workspace) to a content-addressed preview cache to peek for correlation (VHS-REQ-703.4), e.g. the output of the preview-cache warm fabric (VHS-REQ-671). Only used when correlate_previews is true.'
+        required: false
+        default: ''
+        type: string
     secrets:
       VI_REVIEW_TARGET_TOKEN:
         description: 'Token with pull-requests: write on the target repository. Posted cross-repo, so the workflow GITHUB_TOKEN is insufficient.'
@@ -201,6 +211,8 @@ jobs:
           CONTAINER_IMAGE_VERSION: ${{ inputs.container_image_version }}
           PUBLISH_IMAGES: ${{ inputs.publish_images }}
           CREATE_COMMIT_STATUS: ${{ inputs.create_commit_status }}
+          CORRELATE_PREVIEWS: ${{ inputs.correlate_previews }}
+          PREVIEW_CACHE_DIR: ${{ inputs.preview_cache_dir }}
         run: |
           # The docker comparison bind-mounts its staging directory into the
           # LabVIEW container. snap-packaged Docker runs in a private mount
@@ -225,6 +237,26 @@ jobs:
           if [ "$PUBLISH_IMAGES" = "true" ]; then publish_flag="--publish-images"; fi
           status_flag=""
           if [ "$CREATE_COMMIT_STATUS" = "true" ]; then status_flag="--commit-status"; fi
+          # Optionally attach the deterministic preview⇄comparison correlation
+          # (VHS-REQ-703) by peeking the preview cache. The peek is cache-only
+          # (launches no runtime) and honest: a miss reports the preview as
+          # unavailable rather than fabricating one. Only enabled when a cache
+          # directory is supplied, so it is a no-op unless a cache is present.
+          correlate_flags=""
+          if [ "$CORRELATE_PREVIEWS" = "true" ]; then
+            if [ -z "$PREVIEW_CACHE_DIR" ]; then
+              echo "correlate_previews is true but preview_cache_dir is empty; skipping correlation (nothing to peek)." >&2
+            else
+              # The preview peek reads the on-disk working tree (its content-
+              # addressed key must match the head render in the cache), but the
+              # clone's working tree is the default branch. Check out the PR head
+              # (detached) so the head-side peek can match. The comparison itself
+              # materializes base/head from git objects, so this checkout does
+              # not affect it.
+              git -C target-clone checkout --detach "$REVIEW_HEAD_SHA"
+              correlate_flags="--correlate-previews --preview-cache-dir $PREVIEW_CACHE_DIR"
+            fi
+          fi
           node out/cli/runViSemanticPrReview.js \
             --repository-root target-clone \
             --base "$REVIEW_MERGE_BASE" --head "$REVIEW_HEAD_SHA" \
@@ -232,7 +264,7 @@ jobs:
             --out review-out \
             --announce-start \
             --post-comment --pr "$TARGET_PR_NUMBER" --repo "$TARGET_REPOSITORY" \
-            $publish_flag $status_flag
+            $publish_flag $status_flag $correlate_flags
 
       - name: Upload Review Artifact
         if: always()

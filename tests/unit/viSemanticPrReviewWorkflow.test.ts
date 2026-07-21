@@ -55,6 +55,15 @@ describe('VI semantic PR review dispatch workflow (VHS-REQ-661)', () => {
     expect(workflow).toContain('create_commit_status: ${{ inputs.create_commit_status }}');
   });
 
+  it('forwards the preview-correlation inputs to the reusable workflow (VHS-REQ-703.5)', () => {
+    const workflow = readDispatch();
+
+    expect(workflow).toMatch(/^\s{6}correlate_previews:/m);
+    expect(workflow).toMatch(/^\s{6}preview_cache_dir:/m);
+    expect(workflow).toContain('correlate_previews: ${{ inputs.correlate_previews }}');
+    expect(workflow).toContain('preview_cache_dir: ${{ inputs.preview_cache_dir }}');
+  });
+
   it('never references vagrant (VHS-REQ-661.6)', () => {
     expect(readDispatch().toLowerCase()).not.toContain('vagrant');
   });
@@ -144,6 +153,19 @@ describe('VI semantic PR review reusable workflow (VHS-REQ-661)', () => {
     expect(workflow).toMatch(/^\s{6}create_commit_status:/m);
     expect(workflow).toContain('CREATE_COMMIT_STATUS: ${{ inputs.create_commit_status }}');
     expect(workflow).toContain('--commit-status');
+  });
+
+  it('supports opt-in preview correlation gated on a cache directory (VHS-REQ-703.5)', () => {
+    const workflow = readCallable();
+
+    expect(workflow).toMatch(/^\s{6}correlate_previews:/m);
+    expect(workflow).toMatch(/^\s{6}preview_cache_dir:/m);
+    expect(workflow).toContain('CORRELATE_PREVIEWS: ${{ inputs.correlate_previews }}');
+    expect(workflow).toContain('PREVIEW_CACHE_DIR: ${{ inputs.preview_cache_dir }}');
+    // Only passes the flags when a cache dir is present, and checks out the PR
+    // head so the working-tree preview peek can match the head render.
+    expect(workflow).toContain('--correlate-previews --preview-cache-dir $PREVIEW_CACHE_DIR');
+    expect(workflow).toContain('git -C target-clone checkout --detach "$REVIEW_HEAD_SHA"');
   });
 
   it('pins the tool checkout to the reusable workflow own SHA via the job context (VHS-REQ-661.7)', () => {
