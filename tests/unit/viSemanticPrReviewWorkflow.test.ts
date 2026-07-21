@@ -64,6 +64,13 @@ describe('VI semantic PR review dispatch workflow (VHS-REQ-661)', () => {
     expect(workflow).toContain('preview_cache_dir: ${{ inputs.preview_cache_dir }}');
   });
 
+  it('forwards the auto-warm-changed-previews input to the reusable workflow (VHS-REQ-703.6)', () => {
+    const workflow = readDispatch();
+
+    expect(workflow).toMatch(/^\s{6}auto_warm_changed_previews:/m);
+    expect(workflow).toContain('auto_warm_changed_previews: ${{ inputs.auto_warm_changed_previews }}');
+  });
+
   it('never references vagrant (VHS-REQ-661.6)', () => {
     expect(readDispatch().toLowerCase()).not.toContain('vagrant');
   });
@@ -162,13 +169,29 @@ describe('VI semantic PR review reusable workflow (VHS-REQ-661)', () => {
     expect(workflow).toMatch(/^\s{6}preview_cache_dir:/m);
     expect(workflow).toContain('CORRELATE_PREVIEWS: ${{ inputs.correlate_previews }}');
     expect(workflow).toContain('PREVIEW_CACHE_DIR: ${{ inputs.preview_cache_dir }}');
-    // Only passes the flags when a cache dir is present, and checks out the PR
-    // head so the working-tree preview peek can match the head render. Flags are
-    // added to an args=() array and the dir is quoted so a path with spaces or a
-    // leading dash stays one intact argument.
-    expect(workflow).toContain('args+=(--correlate-previews --preview-cache-dir "$PREVIEW_CACHE_DIR")');
+    // Resolves the effective cache dir (explicit input or auto-warmed), checks
+    // out the PR head so the working-tree preview peek can match the head
+    // render, and passes the flags via an args=() array with the dir quoted so a
+    // path with spaces or a leading dash stays one intact argument.
+    expect(workflow).toContain('args+=(--correlate-previews --preview-cache-dir "$effective_cache_dir")');
     expect(workflow).toContain('git -C target-clone checkout --detach "$REVIEW_HEAD_SHA"');
     expect(workflow).toContain('node out/cli/runViSemanticPrReview.js "${args[@]}"');
+  });
+
+  it('auto-warms the changed VIs into a temp cache when correlation has no explicit cache dir (VHS-REQ-703.6)', () => {
+    const workflow = readCallable();
+
+    expect(workflow).toMatch(/^\s{6}auto_warm_changed_previews:/m);
+    expect(workflow).toContain('- name: Warm Changed-VI Previews For Correlation');
+    expect(workflow).toContain(
+      "if: ${{ inputs.correlate_previews && inputs.preview_cache_dir == '' && inputs.auto_warm_changed_previews }}"
+    );
+    // Scopes the warm to the changed VIs and pipes each as a repeatable --vi.
+    expect(workflow).toContain("git -C target-clone diff --name-only \"$REVIEW_MERGE_BASE\" \"$REVIEW_HEAD_SHA\"");
+    expect(workflow).toContain('warm_args+=(--vi "$vi")');
+    expect(workflow).toContain('node out/cli/runViPreviewCacheWarmer.js "${warm_args[@]}"');
+    // Publishes the temp cache dir for the review step to consume.
+    expect(workflow).toContain('echo "AUTO_PREVIEW_CACHE_DIR=$cache_dir" >> "$GITHUB_ENV"');
   });
 
   it('pins the tool checkout to the reusable workflow own SHA via the job context (VHS-REQ-661.7)', () => {

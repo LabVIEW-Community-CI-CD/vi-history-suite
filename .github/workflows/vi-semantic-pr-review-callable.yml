@@ -59,6 +59,11 @@ on:
         required: false
         default: ''
         type: string
+      auto_warm_changed_previews:
+        description: 'When correlate_previews is true and preview_cache_dir is empty, render the previews of the VIs changed in the PR into a temporary cache first so the correlation gets a head-side hit (VHS-REQ-703.6). Adds a bounded LabVIEW render per changed VI (proportional to the comparison the review already runs). Off by default.'
+        required: false
+        default: false
+        type: boolean
     secrets:
       VI_REVIEW_TARGET_TOKEN:
         description: 'Token with pull-requests: write on the target repository. Posted cross-repo, so the workflow GITHUB_TOKEN is insufficient.'
@@ -203,6 +208,38 @@ jobs:
           echo "REVIEW_HEAD_SHA=$head_sha" >> "$GITHUB_ENV"
           echo "REVIEW_MERGE_BASE=$merge_base" >> "$GITHUB_ENV"
 
+      - name: Warm Changed-VI Previews For Correlation
+        if: ${{ inputs.correlate_previews && inputs.preview_cache_dir == '' && inputs.auto_warm_changed_previews }}
+        env:
+          CONTAINER_IMAGE_VERSION: ${{ inputs.container_image_version }}
+        run: |
+          # VHS-REQ-703.6: when correlation is requested without an external
+          # cache, render the previews of the VIs changed in this PR into a temp
+          # cache so the head-side peek can hit. The preview peek reads the
+          # on-disk working tree, so check out the PR head first (the comparison
+          # materializes base/head from git objects and is unaffected). Bounded:
+          # only the changed VIs are rendered, and a warm failure is non-fatal
+          # (the review still runs; correlation just reports fewer hits).
+          warm_tmp="$RUNNER_TEMP/vi-semantic-pr-review-staging"
+          mkdir -p "$warm_tmp"
+          export TMPDIR="$warm_tmp"
+          git -C target-clone checkout --detach "$REVIEW_HEAD_SHA"
+          mapfile -t changed_vis < <(git -C target-clone diff --name-only "$REVIEW_MERGE_BASE" "$REVIEW_HEAD_SHA" | grep -iE '\.(vi|vit|vim|ctl)$' || true)
+          if [ "${#changed_vis[@]}" -eq 0 ]; then
+            echo "No changed VIs to warm; correlation will report previews unavailable."
+            exit 0
+          fi
+          cache_dir="$RUNNER_TEMP/vihs-preview-correlation-cache"
+          warm_args=(
+            --repo-root target-clone
+            --cache-dir "$cache_dir"
+            --container-image "nationalinstruments/labview:${CONTAINER_IMAGE_VERSION}-linux"
+          )
+          for vi in "${changed_vis[@]}"; do warm_args+=(--vi "$vi"); done
+          node out/cli/runViPreviewCacheWarmer.js "${warm_args[@]}" \
+            || echo "::warning::preview warm reported failures; correlation will use whatever was cached."
+          echo "AUTO_PREVIEW_CACHE_DIR=$cache_dir" >> "$GITHUB_ENV"
+
       - name: Run VI Semantic PR Review And Post Sticky Comment
         env:
           GH_TOKEN: ${{ secrets.VI_REVIEW_TARGET_TOKEN }}
@@ -249,20 +286,23 @@ jobs:
           # Optionally attach the deterministic preview⇄comparison correlation
           # (VHS-REQ-703) by peeking the preview cache. The peek is cache-only
           # (launches no runtime) and honest: a miss reports the preview as
-          # unavailable rather than fabricating one. Only enabled when a cache
-          # directory is supplied, so it is a no-op unless a cache is present.
+          # unavailable rather than fabricating one. The effective cache is the
+          # explicit preview_cache_dir input, or the temp cache the auto-warm
+          # step produced (AUTO_PREVIEW_CACHE_DIR), if any.
           if [ "$CORRELATE_PREVIEWS" = "true" ]; then
-            if [ -z "$PREVIEW_CACHE_DIR" ]; then
-              echo "::warning::correlate_previews is true but preview_cache_dir is empty; skipping preview correlation (nothing to peek)."
+            effective_cache_dir="$PREVIEW_CACHE_DIR"
+            if [ -z "$effective_cache_dir" ]; then effective_cache_dir="${AUTO_PREVIEW_CACHE_DIR:-}"; fi
+            if [ -z "$effective_cache_dir" ]; then
+              echo "::warning::correlate_previews is true but no preview cache is available (preview_cache_dir empty and auto-warm off/empty); skipping preview correlation."
             else
               # The preview peek reads the on-disk working tree (its content-
               # addressed key must match the head render in the cache), but the
               # clone's working tree is the default branch. Check out the PR head
               # (detached) so the head-side peek can match. The comparison itself
               # materializes base/head from git objects, so this checkout does
-              # not affect it.
+              # not affect it. (Idempotent when the warm step already did it.)
               git -C target-clone checkout --detach "$REVIEW_HEAD_SHA"
-              args+=(--correlate-previews --preview-cache-dir "$PREVIEW_CACHE_DIR")
+              args+=(--correlate-previews --preview-cache-dir "$effective_cache_dir")
             fi
           fi
           node out/cli/runViSemanticPrReview.js "${args[@]}"

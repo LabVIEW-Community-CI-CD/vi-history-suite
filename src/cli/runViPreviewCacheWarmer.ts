@@ -125,6 +125,14 @@ export interface RunViPreviewCacheWarmOptions {
   operationDirectory?: string;
   limit?: number;
   /**
+   * When set, warm ONLY these VIs (repository-relative paths) instead of
+   * enumerating the whole workspace. Used to scope the warm to the VIs changed
+   * in a pull request (VHS-REQ-703.6) so the preview⇄comparison correlation can
+   * get a head-side cache hit at review time without rendering every VI. Paths
+   * are resolved against `repositoryRoot`; `limit` and `shard` still apply.
+   */
+  viFilePaths?: readonly string[];
+  /**
    * When set, render only this shard of the workspace VI set (round-robin by
    * position). Used by the cache-generation fleet (VHS-REQ-674) to split the
    * work across a runner matrix; the union of all shards is the whole set.
@@ -268,12 +276,25 @@ export async function runViPreviewCacheWarm(
     };
   }
 
-  const enumerated = await listViFiles(options.repositoryRoot, options.limit);
-  // A fleet shard renders a disjoint slice of the workspace; without a shard the
-  // whole enumerated set is warmed.
+  // Explicit scope (e.g. the VIs changed in a PR, VHS-REQ-703.6) skips the
+  // workspace enumeration and warms exactly the listed VIs; otherwise enumerate
+  // the whole workspace. Either way, an optional `limit`/`shard` still applies.
+  let candidateViPaths: string[];
+  if (options.viFilePaths && options.viFilePaths.length > 0) {
+    const resolved = options.viFilePaths.map((relativePath) =>
+      path.resolve(options.repositoryRoot, relativePath)
+    );
+    candidateViPaths =
+      typeof options.limit === 'number' && options.limit > 0
+        ? resolved.slice(0, options.limit)
+        : resolved;
+  } else {
+    candidateViPaths = await listViFiles(options.repositoryRoot, options.limit);
+  }
+  // A fleet shard renders a disjoint slice; without a shard the whole set is warmed.
   const viFilePaths = options.shard
-    ? selectWorkspaceViShard(enumerated, options.shard)
-    : enumerated;
+    ? selectWorkspaceViShard(candidateViPaths, options.shard)
+    : candidateViPaths;
   const entries: ViPreviewCacheWarmManifestEntry[] = [];
 
   await warmViPreviewCache(viFilePaths, {
@@ -390,6 +411,7 @@ interface ParsedWarmArgs {
   operationDirectory?: string;
   limit?: number;
   shard?: ViPreviewWorkspaceShard;
+  viFilePaths?: string[];
   json?: boolean;
   includeProvenance?: boolean;
   outputPath?: string;
@@ -439,6 +461,13 @@ export function parseArgs(argv: readonly string[]): ParsedWarmArgs {
     } else if (arg === '--provider') {
       // Docker-only worker: accept and ignore an explicit `docker`; reject others.
       next();
+    } else if (arg === '--vi') {
+      // Repeatable: scope the warm to specific repository-relative VI paths
+      // (e.g. the VIs changed in a PR, VHS-REQ-703.6). Empty values are ignored.
+      const value = next();
+      if (value.length > 0) {
+        (parsed.viFilePaths ??= []).push(value);
+      }
     } else if (arg === '--json') {
       parsed.json = true;
     } else if (arg === '--include-provenance') {
@@ -496,6 +525,7 @@ export async function main(
     operationDirectory: parsed.operationDirectory,
     limit: parsed.limit,
     shard: parsed.shard,
+    viFilePaths: parsed.viFilePaths,
     includeProvenance: parsed.includeProvenance,
     argv
   });

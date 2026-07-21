@@ -5031,6 +5031,14 @@ Missing numeric IDs are intentional.
     `--correlate-previews --preview-cache-dir` to the review CLI; correlation is
     off by default and adds no LabVIEW render cost (a cache-only peek), so the
     default review is unchanged.
+  - VHS-REQ-703.6: The preview-cache warmer accepts an explicit repeatable
+    scope (`--vi` / `viFilePaths`) that warms only the listed
+    repository-relative VIs instead of enumerating the whole workspace, and the
+    reusable review workflow uses it — behind an opt-in
+    `auto_warm_changed_previews` input — to render the previews of only the VIs
+    changed in the pull request into a temporary cache before the review, so the
+    head-side correlation can hit without a pre-existing cache; the warm is
+    bounded to the changed VIs, non-fatal on failure, and off by default.
 - Agent Work Scope:
   - Keep the correlation builder pure, deterministic, and dependency-injected so
     it stays unit-testable without VS Code, a network, or a LabVIEW runtime; do
@@ -5046,11 +5054,13 @@ Missing numeric IDs are intentional.
   - `src/semantic/viPreviewPairProvider.ts`
   - `.github/workflows/vi-semantic-pr-review.yml`
   - `.github/workflows/vi-semantic-pr-review-callable.yml`
+  - `src/cli/runViPreviewCacheWarmer.ts`
 - Verification References:
   - `tests/unit/viPreviewComparisonCorrelation.test.ts`
   - `tests/unit/viSemanticPrReview.test.ts`
   - `tests/unit/viPreviewPairProvider.test.ts`
   - `tests/unit/viSemanticPrReviewWorkflow.test.ts`
+  - `tests/unit/viPreviewCacheWarmerCli.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
 - Change Guidance:
   - Keep the correlation surface-level and deterministic until the
