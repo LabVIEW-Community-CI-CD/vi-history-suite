@@ -13,6 +13,8 @@
 export const VI_SEMANTIC_COMPARISON_SCHEMA_ID = 'vi-history-suite/vi-semantic-comparison@v1';
 export const VI_SEMANTIC_HISTORY_SCHEMA_ID = 'vi-history-suite/vi-semantic-history@v1';
 export const VI_REPOSITORY_INDEX_SCHEMA_ID = 'vi-history-suite/vi-repository-index@v1';
+export const VI_PREVIEW_COMPARISON_CORRELATION_SCHEMA_ID =
+  'vi-history-suite/vi-preview-comparison-correlation@v1';
 
 const DRAFT_07 = 'http://json-schema.org/draft-07/schema#';
 
@@ -37,6 +39,20 @@ const CHANGE_KIND_ENUM = [
 const RISK_LEVEL_ENUM = ['low', 'medium', 'high'];
 
 const CLASSIFICATION_CONFIDENCE_ENUM = ['high', 'low'];
+
+// Preview render reference (VHS-REQ-703 correlation). Inlined (not $ref) because
+// the offline subset validator does not resolve $ref/$defs.
+const PREVIEW_REFERENCE_SCHEMA = {
+  type: 'object',
+  required: ['available'],
+  properties: {
+    available: { type: 'boolean' },
+    relativePath: { type: 'string' },
+    revision: { type: 'string' },
+    cacheKey: { type: 'string' },
+    inlineImageCount: { type: 'integer' }
+  }
+} as const;
 
 const STRING_ARRAY = { type: 'array', items: { type: 'string' } } as const;
 
@@ -273,11 +289,75 @@ export const VI_REPOSITORY_INDEX_JSON_SCHEMA = {
   }
 } as const;
 
+export const VI_PREVIEW_COMPARISON_CORRELATION_JSON_SCHEMA = {
+  $schema: DRAFT_07,
+  $id: VI_PREVIEW_COMPARISON_CORRELATION_SCHEMA_ID,
+  title: 'VI preview-comparison correlation',
+  description:
+    'Deterministic surface-level correlation between a VI semantic comparison and its base/head preview renders.',
+  type: 'object',
+  required: ['schema', 'vi', 'hasDifferences', 'previews', 'surfaces', 'totals', 'narrative'],
+  properties: {
+    schema: { const: VI_PREVIEW_COMPARISON_CORRELATION_SCHEMA_ID },
+    vi: {
+      type: 'object',
+      required: ['title'],
+      properties: { title: { type: 'string' }, relativePath: { type: 'string' } }
+    },
+    hasDifferences: { type: 'boolean' },
+    riskLevel: { type: 'string', enum: RISK_LEVEL_ENUM },
+    classificationConfidence: { type: 'string', enum: CLASSIFICATION_CONFIDENCE_ENUM },
+    previews: {
+      type: 'object',
+      required: ['base', 'head'],
+      properties: {
+        base: PREVIEW_REFERENCE_SCHEMA,
+        head: PREVIEW_REFERENCE_SCHEMA
+      }
+    },
+    surfaces: {
+      type: 'array',
+      items: {
+        type: 'object',
+        required: [
+          'surface',
+          'changeKinds',
+          'changeCount',
+          'sampleChanges',
+          'basePreviewAvailable',
+          'headPreviewAvailable',
+          'correlated'
+        ],
+        properties: {
+          surface: { type: 'string', enum: CHANGE_SURFACE_ENUM },
+          changeKinds: { type: 'array', items: { type: 'string', enum: CHANGE_KIND_ENUM } },
+          changeCount: { type: 'integer' },
+          sampleChanges: STRING_ARRAY,
+          basePreviewAvailable: { type: 'boolean' },
+          headPreviewAvailable: { type: 'boolean' },
+          correlated: { type: 'boolean' }
+        }
+      }
+    },
+    totals: {
+      type: 'object',
+      required: ['changedSurfaceCount', 'correlatedSurfaceCount', 'uncorrelatedSurfaceCount'],
+      properties: {
+        changedSurfaceCount: { type: 'integer' },
+        correlatedSurfaceCount: { type: 'integer' },
+        uncorrelatedSurfaceCount: { type: 'integer' }
+      }
+    },
+    narrative: { type: 'string' }
+  }
+} as const;
+
 /** Registry of every published schema, keyed by its `$id`. */
 export const VI_SEMANTIC_SCHEMAS: Record<string, unknown> = {
   [VI_SEMANTIC_COMPARISON_SCHEMA_ID]: VI_SEMANTIC_COMPARISON_JSON_SCHEMA,
   [VI_SEMANTIC_HISTORY_SCHEMA_ID]: VI_SEMANTIC_HISTORY_JSON_SCHEMA,
-  [VI_REPOSITORY_INDEX_SCHEMA_ID]: VI_REPOSITORY_INDEX_JSON_SCHEMA
+  [VI_REPOSITORY_INDEX_SCHEMA_ID]: VI_REPOSITORY_INDEX_JSON_SCHEMA,
+  [VI_PREVIEW_COMPARISON_CORRELATION_SCHEMA_ID]: VI_PREVIEW_COMPARISON_CORRELATION_JSON_SCHEMA
 };
 
 export interface SchemaValidationResult {

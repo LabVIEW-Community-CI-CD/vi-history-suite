@@ -4981,6 +4981,55 @@ Missing numeric IDs are intentional.
     change and record it in a superseding ADR. Keep the risk model monotone so
     adding a higher-severity kind never lowers the reported risk.
 
+### VHS-REQ-703: VI Preview And Comparison Correlation
+
+- Status: Active
+- Parent: VHS-SYS-REQ-008
+- Area: Review Workflow
+- Statement: The suite shall correlate a VI semantic comparison with the base and
+  head preview renders of the same VI into a versioned, dependency-free
+  correlation model, so a reviewer or agent can cross-reference which changed
+  surface each preview covers and what changed there. The correlation is a pure,
+  deterministic, surface-level projection over the comparison model
+  (VHS-REQ-702) and injected preview references — it performs no rendering, no
+  runtime work, and no machine-learning inference, and it asserts a correlation
+  only where one can be established, reporting a changed surface with no available
+  preview as uncorrelated rather than fabricating a link.
+- Acceptance Criteria:
+  - VHS-REQ-703.1: `buildViPreviewComparisonCorrelation` groups the comparison
+    model's classified changes by changed surface and, for each surface, records
+    the distinct change kinds, the change count, bounded sample change texts, and
+    whether the injected base and head preview references are available, marking a
+    surface `correlated` only when both a base and a head preview are available;
+    the result is a pure deterministic function of the model and preview
+    references.
+  - VHS-REQ-703.2: The correlation is published as the versioned dependency-free
+    `vi-history-suite/vi-preview-comparison-correlation@v1` model and its Draft-07
+    JSON Schema, validated by the offline `validateViSemanticDocument` subset
+    validator, and `renderCorrelationNarrative` produces a cross-referenced
+    narrative that cites both the comparison classification and the preview
+    availability, honestly naming any changed surface that could not be
+    correlated to a base+head preview pair.
+- Agent Work Scope:
+  - Keep the correlation builder pure, deterministic, and dependency-injected so
+    it stays unit-testable without VS Code, a network, or a LabVIEW runtime; do
+    not render or read previews in this surface (that is a later iteration). Keep
+    pixel-precise region mapping out until the coordinate-frames preview export
+    exists. Never present a correlation as established when only one or neither
+    preview side is available.
+- Implementation References:
+  - `src/semantic/viPreviewComparisonCorrelation.ts`
+  - `src/semantic/viSemanticSchemas.ts`
+- Verification References:
+  - `tests/unit/viPreviewComparisonCorrelation.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - Keep the correlation surface-level and deterministic until the coordinate
+    -frames preview export (epic #2262 blocker iteration) unlocks pixel-precise
+    regions. Keep the model additive and versioned like the comparison model, and
+    keep any future ML correlation advisory and confidence-labeled, never the
+    source of truth.
+
 ### VHS-REQ-664: Preview And Comparison Cache Warming On VI Change
 
 - Status: Active
