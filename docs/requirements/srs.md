@@ -4786,6 +4786,20 @@ Missing numeric IDs are intentional.
     and the aggregate narrative appends a risk roll-up counting the changed VIs
     by risk level. The classification fields are optional (additive on `@v1`), so
     a review whose models carry no classification renders exactly as before.
+  - VHS-REQ-661.14: The review detects and calls out the VIs that appear changed
+    in Git but whose completed comparison itemized no differences — typically a
+    file re-saved/recompiled with different bytes but an identical front panel
+    and block diagram. The signal is a completed comparison whose semantic model
+    reports an overview-level difference yet zero itemized detail items
+    (`detailItemCount === 0`); such VIs are labeled "No itemized changes" in the
+    summary table and named in a callout so a reviewer can discount Git
+    false-positives at a glance. Because the model deliberately treats the
+    always-present overview snapshots as a difference (a detail-less difference
+    can still be a genuine overview-only visual change), the callout is a hint,
+    not a claim of semantic equality: the per-VI evidence (narrative and visual
+    diff gallery) is preserved, never suppressed, so a real overview-only change
+    stays reviewable. Attribute-only changes render as detail items and are
+    therefore not flagged.
 - Agent Work Scope:
   - Change the workflow YAML and its static contract test together. Keep the
     workflow thin CI plumbing around the already-shipped
@@ -4800,12 +4814,14 @@ Missing numeric IDs are intentional.
   - `src/semantic/viSemanticPrReview.ts`
   - `src/semantic/stickyPrComment.ts`
   - `src/semantic/viSemanticReviewMarkdown.ts`
+  - `src/semantic/viSemanticNoChangeDetection.ts`
   - `src/semantic/viComparisonReportImages.ts`
   - `src/semantic/viReviewCommitStatus.ts`
 - Verification References:
   - `tests/unit/viSemanticPrReviewWorkflow.test.ts`
   - `tests/unit/viSemanticReviewOnPrTemplate.test.ts`
   - `tests/unit/viSemanticReviewMarkdown.test.ts`
+  - `tests/unit/viSemanticNoChangeDetection.test.ts`
   - `tests/unit/viComparisonReportImages.test.ts`
   - `tests/unit/viReviewCommitStatus.test.ts`
   - `tests/unit/viSemanticPrReview.test.ts`

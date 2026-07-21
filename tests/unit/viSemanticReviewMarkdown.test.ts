@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { ViSemanticHistory } from '../../src/semantic/viSemanticHistory';
 import { buildViSemanticComparisonModelFromHtml } from '../../src/semantic/viSemanticModel';
 import {
+  codeSpan,
   renderViSemanticComparisonMarkdown,
   renderViSemanticHistoryMarkdown
 } from '../../src/semantic/viSemanticReviewMarkdown';
@@ -105,5 +106,21 @@ describe('renderViSemanticHistoryMarkdown', () => {
     const md = renderViSemanticHistoryMarkdown(history);
     // Backslash is doubled first, then the pipe is escaped.
     expect(md).toContain('path C:\\\\a \\| b');
+  });
+});
+
+describe('codeSpan', () => {
+  it('wraps plain text in a single-backtick span', () => {
+    expect(codeSpan('src/A.vi')).toBe('`src/A.vi`');
+  });
+
+  it('uses a longer fence than any backtick run in the content', () => {
+    expect(codeSpan('a`b')).toBe('``a`b``');
+    expect(codeSpan('a``b')).toBe('```a``b```');
+  });
+
+  it('pads with a space when the content starts or ends with a backtick', () => {
+    expect(codeSpan('`x')).toBe('`` `x ``');
+    expect(codeSpan('x`')).toBe('`` x` ``');
   });
 });

@@ -6,6 +6,10 @@ import {
   buildViPreviewRegionCorrelationFromModel,
   renderRegionCorrelationTable
 } from './viPreviewRegionCorrelation';
+import {
+  detectNoItemizedChangeVis,
+  viHasNoItemizedChanges
+} from './viSemanticNoChangeDetection';
 
 /**
  * Pure renderers that turn the semantic comparison / history / PR-review models
@@ -68,6 +72,24 @@ export function escapeCell(text: string): string {
     .replace(/\|/g, '\\|')
     .replace(/\r?\n/g, ' ')
     .trim();
+}
+
+/**
+ * Wraps text in a Markdown code span that survives arbitrary content, including
+ * backticks. CommonMark lets a code span use a backtick fence longer than any
+ * run of backticks inside it; when the content itself starts or ends with a
+ * backtick, a single space of padding is added (and stripped by the renderer).
+ * Git paths are not guaranteed backtick-free, so a naive single-backtick span
+ * could otherwise corrupt a shared review comment.
+ */
+export function codeSpan(text: string): string {
+  const longestBacktickRun = (text.match(/`+/g) ?? []).reduce(
+    (max, run) => Math.max(max, run.length),
+    0
+  );
+  const fence = '`'.repeat(longestBacktickRun + 1);
+  const pad = text.startsWith('`') || text.endsWith('`') ? ' ' : '';
+  return `${fence}${pad}${text}${pad}${fence}`;
 }
 
 /**
@@ -181,8 +203,22 @@ export function renderViSemanticPrReviewMarkdown(
   lines.push('| VI | Result | Risk | Changed surfaces |', '| --- | --- | --- | --- |');
   for (const entry of review.entries) {
     if (entry.status === 'completed') {
-      const result = entry.hasDifferences ? 'Changed' : 'No differences';
-      const risk = entry.hasDifferences ? riskCellLabel(entry.model) : '—';
+      // A completed comparison that itemizes no differences is a likely Git
+      // false-positive: the file changed on disk but LabVIEW itemized no
+      // difference (typically a re-save/recompile). Flag it distinctly from a
+      // real change, but keep the surfaces column so a genuine overview-only
+      // difference is still visible and the evidence below is never hidden.
+      const noItemized = viHasNoItemizedChanges(entry.model);
+      const result = !entry.hasDifferences
+        ? 'No differences'
+        : noItemized
+          ? 'No itemized changes'
+          : 'Changed';
+      // The risk signal is derived from itemized detail items; a no-itemized
+      // row has none, so its computed risk collapses to a misleading "low".
+      // Show a dash there (as for a genuine no-difference) rather than implying
+      // a graded risk for a likely false-positive.
+      const risk = entry.hasDifferences && !noItemized ? riskCellLabel(entry.model) : '—';
       const surfaces =
         entry.hasDifferences && entry.model.changedSurfaces.length > 0
           ? surfaceList(entry.model.changedSurfaces)
@@ -199,6 +235,23 @@ export function renderViSemanticPrReviewMarkdown(
     }
   }
   lines.push('');
+
+  // Call out the likely Git false-positives (VHS-REQ-661): VIs that appear
+  // changed but whose comparison itemized no differences, so a reviewer can
+  // discount them at a glance. This is a hint, not a claim of equality — NI can
+  // surface a real difference through the overview snapshots alone, so the
+  // per-VI evidence below (narrative + visual gallery) is preserved to confirm.
+  const noItemizedChangeVis = detectNoItemizedChangeVis(review);
+  if (noItemizedChangeVis.length > 0) {
+    const count = noItemizedChangeVis.length;
+    const plural = count === 1 ? '' : 's';
+    lines.push(
+      `> **${count} VI${plural} changed in Git but with no itemized difference${plural}** ` +
+        '(likely a re-save/recompile; confirm via the evidence below):',
+      ...noItemizedChangeVis.map((vi) => `> - ${codeSpan(vi.relativePath)}`),
+      ''
+    );
+  }
 
   for (const entry of review.entries) {
     if (entry.status === 'completed' && entry.hasDifferences) {

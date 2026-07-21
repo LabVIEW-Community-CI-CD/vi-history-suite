@@ -27,25 +27,50 @@ import {
 } from '../../src/semantic/viSemanticPrReview';
 
 function makeModel(overrides: Partial<ViSemanticComparisonModel> = {}): ViSemanticComparisonModel {
-  return {
+  const base: ViSemanticComparisonModel = {
     schema: VI_SEMANTIC_COMPARISON_SCHEMA,
     vi: { title: 'Widget.vi' },
     hasDifferences: true,
     changedSurfaces: ['block-diagram'],
     attributes: { included: [], excluded: [] },
     overviewSections: [],
-    detailSections: [],
+    detailSections: [
+      { surface: 'block-diagram', heading: 'Block Diagram objects', items: ['Wire rerouted'], itemCount: 1 }
+    ],
     totals: {
       changedSurfaceCount: 1,
       overviewImageCount: 0,
-      detailSectionCount: 0,
-      detailItemCount: 0,
+      detailSectionCount: 1,
+      detailItemCount: 1,
       includedAttributeCount: 0,
       excludedAttributeCount: 0
     },
-    narrative: 'The block diagram differs.',
-    ...overrides
+    narrative: 'The block diagram differs.'
   };
+  const model = { ...base, ...overrides };
+  // Keep the fixture internally consistent: a no-difference model must carry no
+  // changed surfaces, no detail sections/counts, and the canonical no-diff
+  // narrative, so overriding only `hasDifferences: false` does not leave stale
+  // "changed" data behind (which would misrepresent the model). Explicit
+  // overrides for any of these fields still win.
+  if (model.hasDifferences === false) {
+    if (overrides.changedSurfaces === undefined) {
+      model.changedSurfaces = [];
+    }
+    if (overrides.detailSections === undefined) {
+      model.detailSections = [];
+    }
+    if (overrides.narrative === undefined) {
+      model.narrative = 'No LabVIEW differences were detected between the two revisions.';
+    }
+    model.totals = {
+      ...model.totals,
+      changedSurfaceCount: model.changedSurfaces.length,
+      detailSectionCount: model.detailSections.length,
+      detailItemCount: model.detailSections.reduce((sum, section) => sum + section.itemCount, 0)
+    };
+  }
+  return model;
 }
 
 function completed(model: ViSemanticComparisonModel): CompareViRevisionsResult {
@@ -241,6 +266,78 @@ describe('renderViSemanticPrReviewMarkdown', () => {
     expect(markdown).toContain('#### src/A.vi');
     expect(markdown).toContain('The block diagram differs.');
     expect(markdown).not.toContain('#### src/B.vi');
+  });
+
+  it('calls out VIs that appear changed in Git but itemize no differences, preserving their evidence (VHS-REQ-661.14)', async () => {
+    const noItemized = makeModel({
+      vi: { title: 'B.vi' },
+      hasDifferences: true,
+      changedSurfaces: ['front-panel', 'block-diagram'],
+      detailSections: [],
+      totals: {
+        changedSurfaceCount: 2,
+        overviewImageCount: 2,
+        detailSectionCount: 0,
+        detailItemCount: 0,
+        includedAttributeCount: 0,
+        excludedAttributeCount: 0
+      },
+      narrative: 'The front panel and block diagram differ.'
+    });
+    const review = await buildViSemanticPrReview(
+      { repositoryRoot: '/repo', baseHash: 'a', selectedHash: 'b' },
+      {
+        listChangedPaths: async () => ['src/A.vi', 'src/B.vi'],
+        compareVi: async (input) =>
+          input.relativePath === 'src/A.vi'
+            ? completed(makeModel({ vi: { title: 'A.vi' } }))
+            : completed(noItemized)
+      }
+    );
+
+    const markdown = renderViSemanticPrReviewMarkdown(review);
+    // The likely false-positive VI is labeled distinctly and named in the
+    // callout — but its per-VI evidence is PRESERVED (a genuine overview-only
+    // difference must stay reviewable), so the detail block is not suppressed.
+    expect(markdown).toContain('| src/B.vi | No itemized changes | — | front panel, block diagram |');
+    expect(markdown).toContain('1 VI changed in Git but with no itemized difference');
+    expect(markdown).toContain('> - `src/B.vi`');
+    expect(markdown).toContain('#### src/B.vi');
+    // A real change is unaffected.
+    expect(markdown).toContain('| src/A.vi | Changed | — | block diagram |');
+    expect(markdown).toContain('#### src/A.vi');
+  });
+
+  it('pluralizes the no-itemized-difference callout for multiple flagged VIs (VHS-REQ-661.14)', async () => {
+    const noItemized = (title: string): ViSemanticComparisonModel =>
+      makeModel({
+        vi: { title },
+        hasDifferences: true,
+        changedSurfaces: ['front-panel'],
+        detailSections: [],
+        totals: {
+          changedSurfaceCount: 1,
+          overviewImageCount: 1,
+          detailSectionCount: 0,
+          detailItemCount: 0,
+          includedAttributeCount: 0,
+          excludedAttributeCount: 0
+        },
+        narrative: 'The front panel differs.'
+      });
+    const review = await buildViSemanticPrReview(
+      { repositoryRoot: '/repo', baseHash: 'a', selectedHash: 'b' },
+      {
+        listChangedPaths: async () => ['src/B.vi', 'src/C.vi'],
+        compareVi: async (input) => completed(noItemized(input.relativePath))
+      }
+    );
+
+    const markdown = renderViSemanticPrReviewMarkdown(review);
+    expect(markdown).toContain('2 VIs changed in Git but with no itemized differences');
+    // Wording is runtime-neutral (no visual gallery on the MCP path).
+    expect(markdown).toContain('confirm via the evidence below');
+    expect(markdown).not.toContain('visual diff below');
   });
 
   it('surfaces change kind + risk in the table, narrative roll-up, and detail (VHS-REQ-661.13, VHS-REQ-702.4)', async () => {
