@@ -50,12 +50,12 @@ on:
         default: false
         type: boolean
       correlate_previews:
-        description: 'Attach the deterministic preview⇄comparison correlation (VHS-REQ-703) to the review by peeking the preview cache at preview_cache_dir. Correlation is attempted only when preview_cache_dir is also non-empty; an empty preview_cache_dir warns and skips correlation (non-fatal). A cache-only peek launches no runtime, and a cache miss is reported honestly as an unavailable preview. Off by default.'
+        description: 'Attach the deterministic preview⇄comparison correlation (VHS-REQ-703) to the review by peeking the preview cache. Uses preview_cache_dir when non-empty; otherwise, when auto_warm_changed_previews is true, the changed VIs are warmed into a temporary cache first. With neither, correlation warns and skips (non-fatal). A cache-only peek launches no runtime, and a cache miss is reported honestly as an unavailable preview. Off by default.'
         required: false
         default: false
         type: boolean
       preview_cache_dir:
-        description: 'Path (in the runner workspace) to a content-addressed preview cache to peek for correlation (VHS-REQ-703.4), e.g. the output of the preview-cache warm fabric (VHS-REQ-671). Used only when correlate_previews is true and this path is non-empty; empty skips correlation.'
+        description: 'Path (in the runner workspace) to a content-addressed preview cache to peek for correlation (VHS-REQ-703.4), e.g. the output of the preview-cache warm fabric (VHS-REQ-671). Used when correlate_previews is true and this path is non-empty; when empty, correlation falls back to auto_warm_changed_previews (if enabled) or skips.'
         required: false
         default: ''
         type: string
