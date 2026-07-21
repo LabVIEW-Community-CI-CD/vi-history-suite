@@ -281,9 +281,22 @@ export async function runViPreviewCacheWarm(
   // the whole workspace. Either way, an optional `limit`/`shard` still applies.
   let candidateViPaths: string[];
   if (options.viFilePaths && options.viFilePaths.length > 0) {
-    const resolved = options.viFilePaths.map((relativePath) =>
-      path.resolve(options.repositoryRoot, relativePath)
-    );
+    // Explicit paths must be repository-relative and stay inside the repository:
+    // reject absolute paths and `../` escapes so a caller can never warm/stage a
+    // file outside the repo (which would also yield a `..`-laden manifest path).
+    const repoRoot = path.resolve(options.repositoryRoot);
+    const withinRepo = `${repoRoot}${path.sep}`;
+    const resolved: string[] = [];
+    for (const relativePath of options.viFilePaths) {
+      if (path.isAbsolute(relativePath)) {
+        continue;
+      }
+      const abs = path.resolve(repoRoot, relativePath);
+      if (abs === repoRoot || !abs.startsWith(withinRepo)) {
+        continue;
+      }
+      resolved.push(abs);
+    }
     candidateViPaths =
       typeof options.limit === 'number' && options.limit > 0
         ? resolved.slice(0, options.limit)

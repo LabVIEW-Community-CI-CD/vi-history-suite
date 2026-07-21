@@ -201,6 +201,31 @@ describe('runViPreviewCacheWarm (VHS-REQ-671.3)', () => {
     expect(rendered).toEqual(['/repo/a.vi', '/repo/b.vi']);
   });
 
+  it('rejects absolute and parent-escaping explicit viFilePaths (VHS-REQ-703.6)', async () => {
+    const rendered: string[] = [];
+    const deps: RunViPreviewCacheWarmDeps = {
+      listViFiles: async () => [],
+      resolveRuntime: async () => READY,
+      renderOne: async (viFilePath: string) => {
+        rendered.push(viFilePath);
+        return { outcome: 'rendered', html: `<html>${IMG}</html>`, cached: false, cacheKey: 'k' };
+      }
+    };
+
+    const packet = await runViPreviewCacheWarm(
+      {
+        ...baseOptions(),
+        viFilePaths: ['ok/A.vi', '/etc/passwd.vi', '../escape.vi', 'nested/../ok/B.vi']
+      },
+      deps
+    );
+
+    // Absolute and `../`-escaping paths are dropped; a `..` that stays inside the
+    // repo after normalization is kept. No rendered path escapes the repo root.
+    expect(rendered).toEqual(['/repo/ok/A.vi', '/repo/ok/B.vi']);
+    expect(packet.entries.every((entry) => !entry.relativePath.includes('..'))).toBe(true);
+  });
+
   it('maps the content-addressed cache key from the render result into the manifest (VHS-REQ-671.4)', async () => {
     const deps: RunViPreviewCacheWarmDeps = {
       listViFiles: async () => ['/repo/x/One.vi'],

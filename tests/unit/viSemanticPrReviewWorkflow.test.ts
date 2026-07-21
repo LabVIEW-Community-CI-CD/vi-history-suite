@@ -190,6 +190,10 @@ describe('VI semantic PR review reusable workflow (VHS-REQ-661)', () => {
     expect(workflow).toContain("git -C target-clone diff --name-only \"$REVIEW_MERGE_BASE\" \"$REVIEW_HEAD_SHA\"");
     expect(workflow).toContain('warm_args+=(--vi "$vi")');
     expect(workflow).toContain('node out/cli/runViPreviewCacheWarmer.js "${warm_args[@]}"');
+    // Warms in the review's selection order (sorted) and capped at maxVis so the
+    // warmed VIs are exactly the ones the review compares/correlates.
+    expect(workflow).toContain('LC_ALL=C sort | head -n "$REVIEW_MAX_VIS"');
+    expect(workflow).toContain('REVIEW_MAX_VIS=50');
     // Publishes the temp cache dir for the review step to consume.
     expect(workflow).toContain('echo "AUTO_PREVIEW_CACHE_DIR=$cache_dir" >> "$GITHUB_ENV"');
   });
