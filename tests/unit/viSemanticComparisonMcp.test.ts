@@ -89,6 +89,7 @@ describe('viSemanticComparisonMcp', () => {
       'summarize_vi_comparison',
       'get_vi_semantic_comparison',
       'get_vi_preview_comparison_correlation',
+      'get_vi_preview_region_correlation',
       'compare_vi_revisions',
       'summarize_vi_history',
       'index_repository_vis',
@@ -264,6 +265,47 @@ describe('viSemanticComparisonMcp', () => {
       })
     );
     expect(error.message).toContain('reportHtml');
+  });
+
+  it('returns the preview-region correlation as JSON (diagram-space-only, VHS-REQ-703.15)', () => {
+    const reportHtml = `<h1 class="report-title">R</h1>
+      <h2 class="section-header">Detailed Information</h2>
+      <details><summary class="difference-heading">3. Block Diagram objects</summary>
+        <ol><li class="diff-detail">SubVI "X.vi" - added at (1570,358)</li></ol></details>`;
+    const result = successResult(
+      handleViSemanticMcpMessage({
+        jsonrpc: '2.0',
+        id: 41,
+        method: 'tools/call',
+        params: { name: 'get_vi_preview_region_correlation', arguments: { reportHtml } }
+      })
+    ) as { content: Array<{ text: string }> };
+    const region = JSON.parse(result.content[0].text) as {
+      schema: string;
+      entries: Array<{ id: string; coordinate: { x: number; y: number }; located: boolean }>;
+      totals: { regionCount: number; locatedRegionCount: number };
+    };
+    expect(region.schema).toBe('vi-history-suite/vi-preview-region-correlation@v1');
+    expect(region.entries[0]).toMatchObject({ id: 'X.vi', coordinate: { x: 1570, y: 358 }, located: false });
+    expect(region.totals).toMatchObject({ regionCount: 1, locatedRegionCount: 0 });
+  });
+
+  it('renders the preview-region correlation as markdown when requested (VHS-REQ-703.15)', () => {
+    const reportHtml = `<h1 class="report-title">R</h1>
+      <h2 class="section-header">Detailed Information</h2>
+      <details><summary class="difference-heading">3. Block Diagram objects</summary>
+        <ol><li class="diff-detail">SubVI "X.vi" - added at (1570,358)</li></ol></details>`;
+    const result = successResult(
+      handleViSemanticMcpMessage({
+        jsonrpc: '2.0',
+        id: 42,
+        method: 'tools/call',
+        params: { name: 'get_vi_preview_region_correlation', arguments: { reportHtml, format: 'markdown' } }
+      })
+    ) as { content: Array<{ text: string }>; isError: boolean };
+    expect(result.isError).toBe(false);
+    expect(result.content[0].text).toContain('| Object | Change | Diagram (x,y) | Base region (px) | Head region (px) |');
+    expect(result.content[0].text).toContain('| X.vi | added | (1570,358) | — | — |');
   });
 
   it('rejects a supplied preview side without a boolean available as -32602 naming the nested field', () => {
@@ -1498,6 +1540,8 @@ describe('viSemanticComparisonMcp', () => {
         'vi-history-suite://schema/vi-repository-index@v1',
         'vi-history-suite://schema/vi-preview-comparison-correlation@v1',
         'vi-history-suite://schema/vi-preview-comparison-correlations@v1',
+        'vi-history-suite://schema/vi-preview-region-correlation@v1',
+        'vi-history-suite://schema/vi-preview-region-correlations@v1',
         'vi-history-suite://schema/index'
       ]);
       expect(result.resources).toEqual(VI_SEMANTIC_MCP_RESOURCES);

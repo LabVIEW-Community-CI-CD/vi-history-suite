@@ -8,6 +8,7 @@ import { serializeJsonArtifact } from '../support/jsonArtifact';
 import {
   buildViSemanticPrReview,
   buildViPreviewComparisonCorrelationsArtifact,
+  buildViPreviewRegionCorrelationsArtifact,
   planReviewReportCopies,
   renderViSemanticPrReviewMarkdown,
   renderViSemanticPrReviewPendingMarkdown,
@@ -900,6 +901,17 @@ export async function runViSemanticPrReviewCli(argv: string[]): Promise<number> 
       await fs.writeFile(correlationsPath, serializeJsonArtifact(correlationsArtifact), 'utf8');
     } else {
       await fs.rm(correlationsPath, { force: true });
+    }
+    // The per-VI pixel-region correlations artifact (VHS-REQ-703.14): diagram-space
+    // region models derived from each VI's comparison report. Written only when at
+    // least one VI carries a coordinate-bearing region; a stale one is removed when
+    // this run has none, mirroring the comparison-correlations artifact contract.
+    const regionArtifact = buildViPreviewRegionCorrelationsArtifact(review);
+    const regionPath = path.join(args.outDir, 'vi-preview-region-correlations.json');
+    if (regionArtifact) {
+      await fs.writeFile(regionPath, serializeJsonArtifact(regionArtifact), 'utf8');
+    } else {
+      await fs.rm(regionPath, { force: true });
     }
     // Copy the per-VI self-contained comparison reports (which embed the
     // rendered block-diagram/front-panel difference images) into reports/ so

@@ -6,12 +6,14 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { CompareViRevisionsResult } from '../../src/semantic/compareViRevisions';
 import {
+  buildViSemanticComparisonModelFromHtml,
   VI_SEMANTIC_COMPARISON_SCHEMA,
   type ViSemanticComparisonModel
 } from '../../src/semantic/viSemanticModel';
 import {
   buildViSemanticPrReview,
   buildViPreviewComparisonCorrelationsArtifact,
+  buildViPreviewRegionCorrelationsArtifact,
   createDefaultListChangedPaths,
   isViSourcePath,
   planReviewReportCopies,
@@ -372,6 +374,33 @@ describe('renderViSemanticPrReviewMarkdown', () => {
     expect(markdown).not.toContain('- **Preview correlation:**');
   });
 
+  it('surfaces a per-object diagram-coordinate region table from the model (VHS-REQ-703.14)', async () => {
+    const model = buildViSemanticComparisonModelFromHtml(
+      `<h1 class="report-title">R</h1>
+       <h2 class="section-header">Detailed Information</h2>
+       <details><summary class="difference-heading">3. Block Diagram objects</summary>
+         <ol><li class="diff-detail">SubVI "X.vi" - added at (1570,358)</li></ol></details>`,
+      {}
+    );
+    const review = await buildViSemanticPrReview(
+      { repositoryRoot: '/repo', baseHash: 'a', selectedHash: 'b' },
+      {
+        listChangedPaths: async () => ['src/A.vi'],
+        compareVi: async () => ({
+          status: 'completed',
+          hasDifferences: true,
+          model,
+          runtime: { provider: 'linux-container', state: 'succeeded' }
+        })
+      }
+    );
+    const markdown = renderViSemanticPrReviewMarkdown(review);
+    // The deterministic pixel-region table (diagram-space only, no locator) is
+    // derived straight from the model's detail-item geometry.
+    expect(markdown).toContain('| Object | Change | Diagram (x,y) | Base region (px) | Head region (px) |');
+    expect(markdown).toContain('| X.vi | added | (1570,358) | — | — |');
+  });
+
   it('does not abort the review when the preview provider throws (VHS-REQ-703.3)', async () => {
     const review = await buildViSemanticPrReview(
       { repositoryRoot: '/repo', baseHash: 'a', selectedHash: 'b' },
@@ -556,5 +585,43 @@ describe('buildViPreviewComparisonCorrelationsArtifact (VHS-REQ-703.13)', () => 
       deps(['src/A.vi'], { 'src/A.vi': completed(makeModel({ vi: { title: 'A.vi' } })) })
     );
     expect(buildViPreviewComparisonCorrelationsArtifact(review)).toBeUndefined();
+  });
+});
+
+describe('buildViPreviewRegionCorrelationsArtifact (VHS-REQ-703.14)', () => {
+  it('collects per-VI region correlations derived from each model', async () => {
+    const model = buildViSemanticComparisonModelFromHtml(
+      `<h1 class="report-title">R</h1>
+       <h2 class="section-header">Detailed Information</h2>
+       <details><summary class="difference-heading">3. Block Diagram objects</summary>
+         <ol><li class="diff-detail">SubVI "X.vi" - added at (1570,358)</li></ol></details>`,
+      {}
+    );
+    const review = await buildViSemanticPrReview(
+      { repositoryRoot: '/repo', baseHash: 'a', selectedHash: 'b' },
+      {
+        listChangedPaths: async () => ['src/A.vi'],
+        compareVi: async () => ({
+          status: 'completed',
+          hasDifferences: true,
+          model,
+          runtime: { provider: 'linux-container', state: 'succeeded' }
+        })
+      }
+    );
+    const artifact = buildViPreviewRegionCorrelationsArtifact(review);
+    expect(artifact).toBeDefined();
+    expect(artifact?.schema).toBe('vi-history-suite/vi-preview-region-correlations@v1');
+    expect(artifact?.correlatedViCount).toBe(1);
+    expect(artifact?.entries[0].relativePath).toBe('src/A.vi');
+    expect(artifact?.entries[0].regionCorrelation.entries[0].id).toBe('X.vi');
+  });
+
+  it('returns undefined when no VI carries a coordinate-bearing region', async () => {
+    const review = await buildViSemanticPrReview(
+      { repositoryRoot: '/repo', baseHash: 'a', selectedHash: 'b' },
+      deps(['src/A.vi'], { 'src/A.vi': completed(makeModel({ vi: { title: 'A.vi' } })) })
+    );
+    expect(buildViPreviewRegionCorrelationsArtifact(review)).toBeUndefined();
   });
 });
