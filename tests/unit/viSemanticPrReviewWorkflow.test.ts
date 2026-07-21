@@ -163,9 +163,12 @@ describe('VI semantic PR review reusable workflow (VHS-REQ-661)', () => {
     expect(workflow).toContain('CORRELATE_PREVIEWS: ${{ inputs.correlate_previews }}');
     expect(workflow).toContain('PREVIEW_CACHE_DIR: ${{ inputs.preview_cache_dir }}');
     // Only passes the flags when a cache dir is present, and checks out the PR
-    // head so the working-tree preview peek can match the head render.
-    expect(workflow).toContain('--correlate-previews --preview-cache-dir $PREVIEW_CACHE_DIR');
+    // head so the working-tree preview peek can match the head render. Flags are
+    // added to an args=() array and the dir is quoted so a path with spaces or a
+    // leading dash stays one intact argument.
+    expect(workflow).toContain('args+=(--correlate-previews --preview-cache-dir "$PREVIEW_CACHE_DIR")');
     expect(workflow).toContain('git -C target-clone checkout --detach "$REVIEW_HEAD_SHA"');
+    expect(workflow).toContain('node out/cli/runViSemanticPrReview.js "${args[@]}"');
   });
 
   it('pins the tool checkout to the reusable workflow own SHA via the job context (VHS-REQ-661.7)', () => {
