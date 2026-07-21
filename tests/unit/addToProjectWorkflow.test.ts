@@ -23,7 +23,7 @@ describe('Add To Project Board workflow (VHS-REQ-704)', () => {
     // pull_request_target (not pull_request) so a fork PR run gets the base
     // repo's secret; safe because no PR code is executed.
     expect(workflow).toMatch(/^\s{2}pull_request_target:\n\s{4}types:\s*\[opened\]/m);
-    expect(workflow).not.toMatch(/^\s{2}pull_request:/m);
+    expect(workflow).not.toMatch(/^\s*pull_request:/m);
     expect(workflow).toContain('workflow_dispatch:');
   });
 
