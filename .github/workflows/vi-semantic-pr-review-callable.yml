@@ -256,8 +256,9 @@ jobs:
           # so the base-side peek can hit too (full base+head correlation). The
           # worktree is a full checkout of the base, so a base render's
           # content-addressed key matches a base peek from the same tree. The
-          # job teardown reclaims the worktree; a failure here is non-fatal (the
-          # review still runs with head-only correlation).
+          # worktree lives under $RUNNER_TEMP and is discarded with the ephemeral
+          # runner (no explicit git worktree remove); a failure here is non-fatal
+          # (the review still runs with head-only correlation).
           base_tree="$RUNNER_TEMP/vihs-base-tree"
           rm -rf "$base_tree"
           if git -C target-clone worktree add --detach "$base_tree" "$REVIEW_MERGE_BASE"; then
