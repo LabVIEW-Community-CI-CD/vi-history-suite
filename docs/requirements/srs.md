@@ -6268,6 +6268,24 @@ Missing numeric IDs are intentional.
     allowlisted approver: its pure planner validates and de-duplicates the proposed
     work items by title (dropping malformed entries), and its executor creates and
     append-logs each item only when the gate authorizes, doing nothing otherwise.
+  - The command-line runner for Tier 1 board-sync wires the live board-sync
+    collector, the governed write path, and the live `gh project item-edit`
+    executor behind the gate: it reports the gate posture and, when the gate
+    refuses, applies nothing and does not read the live board; when authorized it
+    defaults to a dry run that reports the number of updates that would mirror
+    directly-verified truth without writing, and only applies (and append-logs)
+    those updates when explicitly invoked with `--apply`, failing closed on a live
+    read/write error.
+  - The command-line runner for Tier 2 annotate wires the proposed-action loader,
+    a live server-verification boundary (a write-permission repository
+    collaborator is verified; anyone else or a gh error verifies nobody), the
+    governed write path, and the live `gh` annotate executor behind the gate: the
+    enablement and tier are checked before any live approver verification, so a
+    disabled path reaches out to no one; when authorized for a server-verified
+    allowlisted approver it defaults to a dry run that reports the number of
+    well-formed actions that would be applied without writing, and only applies
+    (and append-logs) them when explicitly invoked with `--apply`, failing closed
+    on a live verification/write error.
 - Agent Work Scope:
   - Keep the gate fail-closed and the planner pure/injectable; add higher action
     tiers only behind the committed enablement and server-verified per-action

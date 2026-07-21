@@ -25,8 +25,41 @@ const write = require('../../scripts/controlPlaneWrite.js') as {
   runMergeQueue: (options: Record<string, unknown>, deps: Record<string, unknown>) => { executed: boolean; reason?: string; plannedCount: number; appliedCount: number };
   planCreateWork: (actions: unknown) => Array<Record<string, unknown>>;
   runCreateWork: (options: Record<string, unknown>, deps: Record<string, unknown>) => { executed: boolean; reason?: string; plannedCount: number; appliedCount: number };
+  resolveBoardFieldEdit: (update: unknown) => string[];
+  defaultApplyFieldUpdate: (deps?: Record<string, unknown>) => (update: unknown) => void;
+  ControlPlaneWriteError: new (message: string) => Error;
+  PROJECT_ID: string;
+  runBoardSyncCli: (
+    argv: string[],
+    deps: Record<string, unknown>
+  ) => { authorized: boolean; reason?: string; applied: boolean; dryRun: boolean; plannedCount: number; appliedCount: number; lines: string[] };
+  REPOSITORY: string;
+  resolveAnnotateCommand: (action: unknown) => string[];
+  defaultApplyAnnotation: (deps?: Record<string, unknown>) => (action: unknown) => void;
+  defaultVerifyApprover: (deps?: Record<string, unknown>) => (approver: unknown) => boolean;
+  runAnnotateCli: (
+    argv: string[],
+    deps: Record<string, unknown>
+  ) => { authorized: boolean; reason?: string; applied: boolean; dryRun: boolean; plannedCount: number; appliedCount: number; lines: string[] };
 };
-const { planAnnotate, runAnnotate, planMergeQueue, runMergeQueue, planCreateWork, runCreateWork } = write;
+const {
+  planAnnotate,
+  runAnnotate,
+  planMergeQueue,
+  runMergeQueue,
+  planCreateWork,
+  runCreateWork,
+  resolveBoardFieldEdit,
+  defaultApplyFieldUpdate,
+  ControlPlaneWriteError,
+  PROJECT_ID,
+  runBoardSyncCli,
+  REPOSITORY,
+  resolveAnnotateCommand,
+  defaultApplyAnnotation,
+  defaultVerifyApprover,
+  runAnnotateCli
+} = write;
 
 const ENABLED_CONFIG = { enabled: true, approvers: ['svelderrainruiz'], tiers: { boardSync: true, annotate: true } };
 const DISABLED_CONFIG = { enabled: false, approvers: ['svelderrainruiz'], tiers: { boardSync: true } };
@@ -401,5 +434,284 @@ describe('controlPlaneWrite: runCreateWork (VHS-REQ-696.6)', () => {
     expect(applied).toHaveLength(2);
     expect(logged).toHaveLength(2);
     expect(logged[0]).toMatchObject({ action: 'create-work', tier: 'createWork', title: 'New tracked work', approver: 'svelderrainruiz' });
+  });
+});
+
+describe('controlPlaneWrite: resolveBoardFieldEdit (VHS-REQ-696.3)', () => {
+  it('resolves the Tier-1 fields into a gh project item-edit argv', () => {
+    expect(resolveBoardFieldEdit({ itemId: 'PVTI_x', field: 'Status', value: 'Done' })).toEqual([
+      'project',
+      'item-edit',
+      '--id',
+      'PVTI_x',
+      '--project-id',
+      PROJECT_ID,
+      '--field-id',
+      'PVTSSF_lADODQiayc4Bd5RqzhYXb_U',
+      '--single-select-option-id',
+      '98236657'
+    ]);
+    expect(resolveBoardFieldEdit({ itemId: 'PVTI_x', field: 'Evidence State', value: 'Proven' })).toContain('0c635d9f');
+  });
+
+  it('fails closed (throws) on a missing itemId or an unknown field/value', () => {
+    expect(() => resolveBoardFieldEdit({ field: 'Status', value: 'Done' })).toThrow(ControlPlaneWriteError);
+    expect(() => resolveBoardFieldEdit({ itemId: 'X', field: 'Program', value: 'Done' })).toThrow(/unknown board field/);
+    expect(() => resolveBoardFieldEdit({ itemId: 'X', field: 'Status', value: 'Todo' })).toThrow(/unknown value/);
+  });
+});
+
+describe('controlPlaneWrite: defaultApplyFieldUpdate (VHS-REQ-696.3)', () => {
+  it('invokes gh project item-edit for a resolved update', () => {
+    const calls: Array<{ cmd: string; args: string[] }> = [];
+    const applier = defaultApplyFieldUpdate({
+      spawnSync: (cmd: string, args: string[]) => {
+        calls.push({ cmd, args });
+        return { status: 0, stdout: '', stderr: '' };
+      }
+    });
+    applier({ itemId: 'PVTI_x', field: 'Status', value: 'Done' });
+    expect(calls).toHaveLength(1);
+    expect(calls[0].cmd).toBe('gh');
+    expect(calls[0].args).toContain('item-edit');
+  });
+
+  it('fails closed (throws) when gh errors or exits nonzero', () => {
+    const spawnErr = defaultApplyFieldUpdate({ spawnSync: () => ({ error: new Error('gh missing') }) });
+    expect(() => spawnErr({ itemId: 'X', field: 'Status', value: 'Done' })).toThrow(/gh invocation failed/);
+    const spawnNonZero = defaultApplyFieldUpdate({ spawnSync: () => ({ status: 1, stderr: 'no project scope' }) });
+    expect(() => spawnNonZero({ itemId: 'X', field: 'Status', value: 'Done' })).toThrow(/gh exited 1: no project scope/);
+  });
+});
+
+describe('controlPlaneWrite: runBoardSyncCli (VHS-REQ-696.7)', () => {
+  const items = [{ itemId: 'A', number: 1, status: 'In Progress', evidence: 'Ready', linkedPrMerged: true }];
+  const plan = () => ({ items, updates: planBoardSync(items) });
+
+  it('reports refusal and applies nothing when the write path is disabled', () => {
+    const applied: unknown[] = [];
+    const out = runBoardSyncCli([], {
+      config: DISABLED_CONFIG,
+      collectBoardSyncPlan: plan,
+      applyFieldUpdate: (u: unknown) => applied.push(u)
+    });
+    expect(out).toMatchObject({ authorized: false, reason: 'write-path-disabled', applied: false, appliedCount: 0 });
+    expect(applied).toHaveLength(0);
+    expect(out.lines.join('\n')).toContain('refused (write-path-disabled)');
+  });
+
+  it('is a dry run without --apply: reports drift but writes nothing when authorized', () => {
+    const applied: unknown[] = [];
+    const out = runBoardSyncCli([], {
+      config: ENABLED_CONFIG,
+      collectBoardSyncPlan: plan,
+      applyFieldUpdate: (u: unknown) => applied.push(u)
+    });
+    expect(out).toMatchObject({ authorized: true, applied: false, dryRun: true, plannedCount: 2, appliedCount: 0 });
+    expect(applied).toHaveLength(0);
+    expect(out.lines.join('\n')).toContain('Dry run');
+  });
+
+  it('applies the live plan through the executor with --apply when authorized', () => {
+    const applied: unknown[] = [];
+    const logged: unknown[] = [];
+    const out = runBoardSyncCli(['--apply'], {
+      config: ENABLED_CONFIG,
+      collectBoardSyncPlan: plan,
+      applyFieldUpdate: (u: unknown) => applied.push(u),
+      appendLog: (e: unknown) => logged.push(e),
+      now: () => new Date('2026-07-20T00:00:00.000Z')
+    });
+    expect(out).toMatchObject({ authorized: true, applied: true, dryRun: false, plannedCount: 2, appliedCount: 2 });
+    expect(applied).toHaveLength(2);
+    expect(logged).toHaveLength(2);
+    expect(out.lines.join('\n')).toContain('applied 2 of 2');
+  });
+
+  it('does not even read the live board plan when the gate refuses', () => {
+    let collected = 0;
+    const out = runBoardSyncCli(['--apply'], {
+      config: DISABLED_CONFIG,
+      collectBoardSyncPlan: () => {
+        collected += 1;
+        return plan();
+      },
+      applyFieldUpdate: () => {}
+    });
+    expect(collected).toBe(0);
+    expect(out.applied).toBe(false);
+  });
+});
+
+describe('controlPlaneWrite: resolveAnnotateCommand (VHS-REQ-696.8)', () => {
+  it('resolves comment/label actions into gh argv for issue and pull request', () => {
+    expect(resolveAnnotateCommand({ kind: 'comment', target: 'issue', number: 7, body: 'hello' })).toEqual([
+      'issue',
+      'comment',
+      '7',
+      '--repo',
+      REPOSITORY,
+      '--body',
+      'hello'
+    ]);
+    expect(resolveAnnotateCommand({ kind: 'label', target: 'pr', number: 9, label: 'needs-review' })).toEqual([
+      'pr',
+      'edit',
+      '9',
+      '--repo',
+      REPOSITORY,
+      '--add-label',
+      'needs-review'
+    ]);
+  });
+
+  it('fails closed (throws) on bad target/kind/number or empty body/label', () => {
+    expect(() => resolveAnnotateCommand({ kind: 'comment', target: 'wiki', number: 1, body: 'x' })).toThrow(/unknown annotate target/);
+    expect(() => resolveAnnotateCommand({ kind: 'react', target: 'issue', number: 1, body: 'x' })).toThrow(/unknown annotate kind/);
+    expect(() => resolveAnnotateCommand({ kind: 'comment', target: 'issue', number: 0, body: 'x' })).toThrow(/positive integer/);
+    expect(() => resolveAnnotateCommand({ kind: 'comment', target: 'issue', number: 1, body: '   ' })).toThrow(/non-empty body/);
+    expect(() => resolveAnnotateCommand({ kind: 'label', target: 'pr', number: 1, label: '' })).toThrow(/non-empty label/);
+  });
+});
+
+describe('controlPlaneWrite: defaultApplyAnnotation (VHS-REQ-696.8)', () => {
+  it('invokes gh with the resolved argv for a valid action', () => {
+    const calls: Array<{ cmd: string; args: string[] }> = [];
+    const applier = defaultApplyAnnotation({
+      spawnSync: (cmd: string, args: string[]) => {
+        calls.push({ cmd, args });
+        return { status: 0, stdout: '', stderr: '' };
+      }
+    });
+    applier({ kind: 'comment', target: 'issue', number: 7, body: 'hi' });
+    expect(calls).toHaveLength(1);
+    expect(calls[0].cmd).toBe('gh');
+    expect(calls[0].args).toContain('comment');
+  });
+
+  it('fails closed (throws) when gh errors or exits nonzero', () => {
+    const errApplier = defaultApplyAnnotation({ spawnSync: () => ({ error: new Error('gh missing') }) });
+    expect(() => errApplier({ kind: 'comment', target: 'issue', number: 1, body: 'x' })).toThrow(/gh invocation failed/);
+    const nonZero = defaultApplyAnnotation({ spawnSync: () => ({ status: 1, stderr: 'no perms' }) });
+    expect(() => nonZero({ kind: 'comment', target: 'issue', number: 1, body: 'x' })).toThrow(/gh exited 1: no perms/);
+  });
+});
+
+describe('controlPlaneWrite: defaultVerifyApprover (VHS-REQ-696.8)', () => {
+  it('verifies only write-permission collaborators', () => {
+    for (const permission of ['admin', 'write', 'maintain']) {
+      const verify = defaultVerifyApprover({ spawnSync: () => ({ status: 0, stdout: `${permission}\n` }) });
+      expect(verify('svelderrainruiz')).toBe(true);
+    }
+    const readOnly = defaultVerifyApprover({ spawnSync: () => ({ status: 0, stdout: 'read\n' }) });
+    expect(readOnly('someone')).toBe(false);
+  });
+
+  it('fails closed (verifies nobody) on empty approver or gh error', () => {
+    const verify = defaultVerifyApprover({ spawnSync: () => ({ status: 0, stdout: 'admin' }) });
+    expect(verify('')).toBe(false);
+    expect(verify(undefined)).toBe(false);
+    const ghError = defaultVerifyApprover({ spawnSync: () => ({ error: new Error('boom') }) });
+    expect(ghError('svelderrainruiz')).toBe(false);
+    const nonZero = defaultVerifyApprover({ spawnSync: () => ({ status: 1, stderr: 'not found' }) });
+    expect(nonZero('svelderrainruiz')).toBe(false);
+  });
+});
+
+describe('controlPlaneWrite: runAnnotateCli (VHS-REQ-696.8)', () => {
+  const ANNOTATE_ENABLED = { enabled: true, approvers: ['svelderrainruiz'], tiers: { boardSync: true, annotate: true } };
+  const actions = [{ kind: 'comment', target: 'issue', number: 7, body: 'hi' }];
+  const alwaysVerified = () => true;
+
+  it('refuses (and never verifies an approver) when the write path is disabled', () => {
+    let verifyCalls = 0;
+    const out = runAnnotateCli(['--approver', 'svelderrainruiz'], {
+      config: DISABLED_CONFIG,
+      actions,
+      verifyApprover: () => {
+        verifyCalls += 1;
+        return true;
+      },
+      applyAnnotation: () => {}
+    });
+    expect(out).toMatchObject({ authorized: false, reason: 'write-path-disabled', applied: false });
+    expect(verifyCalls).toBe(0);
+  });
+
+  it('refuses when the annotate tier is off, without verifying', () => {
+    let verifyCalls = 0;
+    const out = runAnnotateCli(['--approver', 'svelderrainruiz'], {
+      config: { enabled: true, approvers: ['svelderrainruiz'], tiers: { boardSync: true, annotate: false } },
+      actions,
+      verifyApprover: () => {
+        verifyCalls += 1;
+        return true;
+      },
+      applyAnnotation: () => {}
+    });
+    expect(out).toMatchObject({ authorized: false, reason: 'tier-disabled:annotate' });
+    expect(verifyCalls).toBe(0);
+  });
+
+  it('refuses an unverified or non-allowlisted approver', () => {
+    const unverified = runAnnotateCli(['--approver', 'svelderrainruiz'], {
+      config: ANNOTATE_ENABLED,
+      actions,
+      verifyApprover: () => false,
+      applyAnnotation: () => {}
+    });
+    expect(unverified).toMatchObject({ authorized: false, reason: 'approver-not-server-verified' });
+    const stranger = runAnnotateCli(['--approver', 'someone-else'], {
+      config: ANNOTATE_ENABLED,
+      actions,
+      verifyApprover: alwaysVerified,
+      applyAnnotation: () => {}
+    });
+    expect(stranger).toMatchObject({ authorized: false, reason: 'approver-not-authorized' });
+  });
+
+  it('dry-runs by default: reports well-formed action count and writes nothing', () => {
+    const applied: unknown[] = [];
+    const out = runAnnotateCli(['--approver', 'svelderrainruiz'], {
+      config: ANNOTATE_ENABLED,
+      actions,
+      verifyApprover: alwaysVerified,
+      applyAnnotation: (a: unknown) => applied.push(a)
+    });
+    expect(out).toMatchObject({ authorized: true, applied: false, dryRun: true, plannedCount: 1, appliedCount: 0 });
+    expect(applied).toHaveLength(0);
+    expect(out.lines.join('\n')).toContain('Dry run');
+  });
+
+  it('applies and append-logs each action with --apply when fully authorized', () => {
+    const applied: unknown[] = [];
+    const logged: unknown[] = [];
+    const out = runAnnotateCli(['--approver', 'svelderrainruiz', '--apply'], {
+      config: ANNOTATE_ENABLED,
+      actions: [...actions, { kind: 'label', target: 'pr', number: 9, label: 'ready' }],
+      verifyApprover: alwaysVerified,
+      applyAnnotation: (a: unknown) => applied.push(a),
+      appendLog: (e: unknown) => logged.push(e),
+      now: () => new Date('2026-07-20T00:00:00.000Z')
+    });
+    expect(out).toMatchObject({ authorized: true, applied: true, dryRun: false, plannedCount: 2, appliedCount: 2 });
+    expect(applied).toHaveLength(2);
+    expect(logged).toHaveLength(2);
+    expect(out.lines.join('\n')).toContain('applied 2 of 2');
+  });
+
+  it('loads inline --actions JSON and fails closed on malformed input', () => {
+    const out = runAnnotateCli(['--approver', 'svelderrainruiz', '--actions', JSON.stringify(actions)], {
+      config: ANNOTATE_ENABLED,
+      verifyApprover: alwaysVerified,
+      applyAnnotation: () => {}
+    });
+    expect(out).toMatchObject({ authorized: true, dryRun: true, plannedCount: 1 });
+    expect(() =>
+      runAnnotateCli(['--approver', 'svelderrainruiz', '--actions', '{not json'], {
+        config: ANNOTATE_ENABLED,
+        verifyApprover: alwaysVerified
+      })
+    ).toThrow(ControlPlaneWriteError);
   });
 });
