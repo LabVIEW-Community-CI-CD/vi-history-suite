@@ -303,13 +303,20 @@ export async function buildViSemanticPrReview(
     });
     let correlation: ViPreviewComparisonCorrelation | undefined;
     if (result.status === 'completed' && resolvePreviewPair) {
-      const previews = await resolvePreviewPair({
-        repositoryRoot,
-        relativePath,
-        baseHash,
-        selectedHash
-      });
-      correlation = buildViPreviewComparisonCorrelation(result.model, previews);
+      // Correlation is an optional enhancement: a failure resolving the preview
+      // pair must never abort the core review (the comparison already succeeded).
+      // On error, proceed without correlation for this VI.
+      try {
+        const previews = await resolvePreviewPair({
+          repositoryRoot,
+          relativePath,
+          baseHash,
+          selectedHash
+        });
+        correlation = buildViPreviewComparisonCorrelation(result.model, previews);
+      } catch {
+        correlation = undefined;
+      }
     }
     entries.push(toEntry(relativePath, result, correlation));
   }
