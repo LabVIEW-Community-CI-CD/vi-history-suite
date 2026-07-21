@@ -5024,6 +5024,13 @@ Missing numeric IDs are intentional.
     error; the base and head sides are resolved independently so one side's miss
     or error never suppresses the other side's hit, and the PR-review CLI wires
     this provider only when preview correlation is explicitly requested.
+  - VHS-REQ-703.5: The VI semantic PR-review workflow (dispatch and reusable)
+    exposes an opt-in `correlate_previews` input paired with a `preview_cache_dir`
+    input and, when correlation is requested with a cache directory, checks out
+    the PR head so the working-tree preview peek can match and passes
+    `--correlate-previews --preview-cache-dir` to the review CLI; correlation is
+    off by default and adds no LabVIEW render cost (a cache-only peek), so the
+    default review is unchanged.
 - Agent Work Scope:
   - Keep the correlation builder pure, deterministic, and dependency-injected so
     it stays unit-testable without VS Code, a network, or a LabVIEW runtime; do
@@ -5037,10 +5044,13 @@ Missing numeric IDs are intentional.
   - `src/semantic/viSemanticPrReview.ts`
   - `src/semantic/viSemanticReviewMarkdown.ts`
   - `src/semantic/viPreviewPairProvider.ts`
+  - `.github/workflows/vi-semantic-pr-review.yml`
+  - `.github/workflows/vi-semantic-pr-review-callable.yml`
 - Verification References:
   - `tests/unit/viPreviewComparisonCorrelation.test.ts`
   - `tests/unit/viSemanticPrReview.test.ts`
   - `tests/unit/viPreviewPairProvider.test.ts`
+  - `tests/unit/viSemanticPrReviewWorkflow.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
 - Change Guidance:
   - Keep the correlation surface-level and deterministic until the

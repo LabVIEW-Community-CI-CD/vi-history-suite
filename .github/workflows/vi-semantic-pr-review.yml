@@ -23,6 +23,15 @@ on:
         required: false
         default: false
         type: boolean
+      correlate_previews:
+        description: 'Attach the deterministic preview⇄comparison correlation (VHS-REQ-703) by peeking a preview cache. Requires preview_cache_dir; cache-only peek adds no runtime cost and reports a miss honestly. Off by default.'
+        required: false
+        default: false
+        type: boolean
+      preview_cache_dir:
+        description: 'Path (in the runner workspace) to a content-addressed preview cache to peek for correlation (VHS-REQ-703.4). Only used when correlate_previews is true.'
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -45,5 +54,7 @@ jobs:
       enforce_trusted_ref: true
       publish_images: ${{ inputs.publish_images }}
       create_commit_status: ${{ inputs.create_commit_status }}
+      correlate_previews: ${{ inputs.correlate_previews }}
+      preview_cache_dir: ${{ inputs.preview_cache_dir }}
     secrets:
       VI_REVIEW_TARGET_TOKEN: ${{ secrets.VI_REVIEW_TARGET_TOKEN }}
