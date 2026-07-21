@@ -49,6 +49,7 @@ src/dashboard/multiReportDashboardSourceRecord.ts,supporting,No,"Dashboard archi
 src/dashboard/multiReportDashboardSummary.ts,supporting,No,"Dashboard summary aggregation (buildDashboardSummary) extracted verbatim from multiReportDashboard to separate pure entry-to-summary aggregation (counts, provider/path/overview/attribute/detail/evidence summaries with pair ordinals) from dashboard orchestration; supporting VHS-REQ-610."
 src/dashboard/multiReportDashboardAction.ts,mapped,Yes,Multi-report dashboard action; mapped to VHS-REQ-610.
 src/dashboard/niComparisonReportParser.ts,mapped,Yes,NI comparison report parser; mapped to VHS-REQ-610.
+src/dashboard/comparisonDetailItemGeometry.ts,mapped,Yes,"Pure extractor of structured geometry (change type, object kind/name, diagram (x,y)) from NI comparison-report diff-detail item text (VHS-REQ-703.10); diagram-space coordinates, not preview pixels; mapped to VHS-REQ-703."
 src/dashboard/retainedDashboardEvidence.ts,mapped,Yes,Retained dashboard evidence; mapped to VHS-REQ-610.
 src/dashboard/worktreeSnapshotIndex.ts,mapped,Yes,Working-tree snapshot retention index data model and garbage collection; mapped to VHS-REQ-641.
 src/docs/bundledDocumentation.ts,mapped,Yes,Bundled documentation manifest/page loading and rendering behavior; mapped to VHS-REQ-611.
@@ -248,6 +249,7 @@ tests/unit/multiReportDashboardSourceRecord.test.ts,supporting,No,"Dashboard arc
 tests/unit/multiReportDashboardSummary.test.ts,supporting,No,"Dashboard summary aggregation unit tests (complete/incomplete window, missing/failed/blocked pair id lists, provider summaries, overview/attribute/detail/evidence summaries with pair ordinals); supporting VHS-REQ-610."
 tests/unit/multiReportDashboardAction.test.ts,mapped,Yes,Multi-report dashboard action routing tests; mapped to VHS-REQ-610.
 tests/unit/niComparisonReportParser.test.ts,mapped,Yes,NI comparison report parser tests; mapped to VHS-REQ-610.
+tests/unit/comparisonDetailItemGeometry.test.ts,mapped,Yes,Unit tests for the comparison detail-item geometry extractor (change type + object kind/name + diagram coordinate); mapped to VHS-REQ-703.
 tests/unit/openViHistoryCommand.test.ts,mapped,Yes,Open VI history command tests; mapped through RTM.
 tests/unit/comparisonRuntimeDoctorSummaryParsing.test.ts,supporting,No,"Runtime-doctor-summary parser unit tests (next-action line, selected-provider, provider-request/legacy-execution-mode, container-acquisition-state, rejected-provider summary, legacy execution-mode mapping); supporting VHS-REQ-620."
 tests/unit/openViHistoryCommandMessages.test.ts,supporting,No,"User-facing command message unit tests (untrusted-workspace warning, Program Files lv_icon.vi detection, git-resolution-failure predicate, history-load failure guidance, ineligibility message combinations); supporting VHS-REQ-620."

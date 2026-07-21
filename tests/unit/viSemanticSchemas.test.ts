@@ -130,6 +130,29 @@ describe('validateViSemanticDocument', () => {
     expect(validateViSemanticDocument(legacy).valid).toBe(true);
   });
 
+  it('documents the additive per-item detail geometry field on the schema (VHS-REQ-703.10)', () => {
+    // The schema must describe itemGeometry (so consumers can discover it) but
+    // must NOT require it on a detail section (additive/optional to @v1).
+    const detailSection = (
+      VI_SEMANTIC_COMPARISON_JSON_SCHEMA as {
+        properties: { detailSections: { items: { required: string[]; properties: Record<string, unknown> } } };
+      }
+    ).properties.detailSections.items;
+    expect(detailSection.required).not.toContain('itemGeometry');
+    expect(detailSection.properties.itemGeometry).toBeDefined();
+
+    // A model whose detail geometry carries a diagram coordinate still validates.
+    const model = buildViSemanticComparisonModelFromHtml(
+      `<h1 class="report-title">R</h1>
+       <h2 class="section-header">Detailed Information</h2>
+       <details><summary class="difference-heading">3. Block Diagram objects</summary>
+         <ol><li class="diff-detail">SubVI "X.vi" - added at (1570,358)</li></ol></details>`,
+      {}
+    );
+    expect(model.detailSections[0].itemGeometry?.[0].coordinate).toEqual({ x: 1570, y: 358 });
+    expect(validateViSemanticDocument(model)).toEqual({ valid: true, errors: [] });
+  });
+
   it('validates a history document', () => {
     const history = {
       schema: VI_SEMANTIC_HISTORY_SCHEMA_ID,

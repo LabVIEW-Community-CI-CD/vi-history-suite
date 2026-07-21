@@ -2,6 +2,10 @@ import {
   ParsedNiComparisonReport,
   parseNiComparisonReportHtml
 } from '../dashboard/niComparisonReportParser';
+import {
+  parseComparisonDetailItemsGeometry,
+  type ComparisonDetailItemGeometry
+} from '../dashboard/comparisonDetailItemGeometry';
 import { deriveChangeClassification } from './viChangeClassification';
 import type {
   ViChangeClassification,
@@ -62,6 +66,16 @@ export interface ViSemanticDetailSection {
   heading: string;
   items: string[];
   itemCount: number;
+  /**
+   * Per-item structured geometry parsed from the NI comparison detail text
+   * (VHS-REQ-703.10): change type, object kind/name, and diagram (x,y) when the
+   * item carries them (e.g. `SubVI "X.vi" - added at (1570,358)`). Additive and
+   * index-aligned with `items`; coordinates are in VI diagram space, NOT preview
+   * pixels, so a consumer must treat them as labeled diagram data, never a
+   * fabricated pixel overlay. Optional so a model built or cached before this
+   * field existed stays valid; the builder always populates it.
+   */
+  itemGeometry?: ComparisonDetailItemGeometry[];
 }
 
 export interface ViSemanticComparisonModel {
@@ -173,7 +187,8 @@ export function buildViSemanticComparisonModel(
     surface: deriveViChangeSurface(section.heading),
     heading: section.heading,
     items: section.items,
-    itemCount: section.items.length
+    itemCount: section.items.length,
+    itemGeometry: parseComparisonDetailItemsGeometry(section.items)
   }));
 
   const included = report.includedAttributes
