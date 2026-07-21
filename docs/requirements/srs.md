@@ -4778,6 +4778,14 @@ Missing numeric IDs are intentional.
     a GitHub App can create) works with a plain token that has `statuses: write`,
     matching the PAT-based token model; a status failure is best-effort and
     never blocks the textual review.
+  - VHS-REQ-661.13: The rendered review surfaces the VHS-REQ-702 change
+    classification for each compared VI: the per-VI result table includes a Risk
+    column showing the risk level and change kinds (with an explicit
+    low-confidence marker when the classification confidence is low), the per-VI
+    detail block lists the change kinds and the risk level with its rationale,
+    and the aggregate narrative appends a risk roll-up counting the changed VIs
+    by risk level. The classification fields are optional (additive on `@v1`), so
+    a review whose models carry no classification renders exactly as before.
 - Agent Work Scope:
   - Change the workflow YAML and its static contract test together. Keep the
     workflow thin CI plumbing around the already-shipped

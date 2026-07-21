@@ -28,6 +28,23 @@ export function surfaceList(surfaces: readonly ViChangeSurface[]): string {
   return surfaces.map((surface) => SURFACE_LABELS[surface]).join(', ');
 }
 
+/**
+ * Renders the VHS-REQ-702 change-classification risk of a comparison model as a
+ * compact table-cell label, honestly marking a low-confidence heuristic. Returns
+ * `—` when the (optional, additive on @v1) classification fields are absent, so a
+ * legacy or `--from-file` model renders exactly as before.
+ */
+export function riskCellLabel(model: ViSemanticComparisonModel): string {
+  if (!model.riskLevel) {
+    return '—';
+  }
+  const kinds = model.changeKinds && model.changeKinds.length > 0
+    ? ` (${model.changeKinds.join(', ')})`
+    : '';
+  const lowConfidence = model.classificationConfidence === 'low' ? ' — low confidence' : '';
+  return `${model.riskLevel}${kinds}${lowConfidence}`;
+}
+
 export function escapeCell(text: string): string {
   // Escape backslashes first, then table-breaking pipes, so a literal backslash
   // in the input cannot corrupt the pipe escaping (js/incomplete-sanitization).
@@ -49,6 +66,17 @@ export function renderViSemanticComparisonMarkdown(model: ViSemanticComparisonMo
   const facts: string[] = [];
   if (model.changedSurfaces.length > 0) {
     facts.push(`- **Changed surfaces:** ${surfaceList(model.changedSurfaces)}`);
+  }
+  // VHS-REQ-702: reviewer-grade change kind + risk. Guarded on the optional
+  // fields so a legacy or `--from-file` @v1 model renders exactly as before.
+  if (model.changeKinds && model.changeKinds.length > 0) {
+    facts.push(`- **Change kinds:** ${model.changeKinds.join(', ')}`);
+  }
+  if (model.riskLevel) {
+    const confidenceNote =
+      model.classificationConfidence === 'low' ? ' _(low confidence)_' : '';
+    const rationale = model.riskRationale ? ` — ${model.riskRationale}` : '';
+    facts.push(`- **Risk:** ${model.riskLevel}${rationale}${confidenceNote}`);
   }
   if (model.attributes.included.length > 0) {
     facts.push(`- **Compared attributes:** ${model.attributes.included.join(', ')}`);
@@ -135,21 +163,24 @@ export function renderViSemanticPrReviewMarkdown(
     return `${lines.join('\n').trimEnd()}\n`;
   }
 
-  lines.push('| VI | Result | Changed surfaces |', '| --- | --- | --- |');
+  lines.push('| VI | Result | Risk | Changed surfaces |', '| --- | --- | --- | --- |');
   for (const entry of review.entries) {
     if (entry.status === 'completed') {
       const result = entry.hasDifferences ? 'Changed' : 'No differences';
+      const risk = entry.hasDifferences ? riskCellLabel(entry.model) : '—';
       const surfaces =
         entry.hasDifferences && entry.model.changedSurfaces.length > 0
           ? surfaceList(entry.model.changedSurfaces)
           : '—';
-      lines.push(`| ${escapeCell(entry.relativePath)} | ${result} | ${escapeCell(surfaces)} |`);
+      lines.push(
+        `| ${escapeCell(entry.relativePath)} | ${result} | ${escapeCell(risk)} | ${escapeCell(surfaces)} |`
+      );
     } else {
       // Surface *why* a VI was not compared so a reviewer has an actionable
       // signal in the comment itself, rather than an opaque "failed". The
       // reason is carried on the model for every non-completed entry.
       const result = `${entry.status} (${entry.reason})`;
-      lines.push(`| ${escapeCell(entry.relativePath)} | ${escapeCell(result)} | — |`);
+      lines.push(`| ${escapeCell(entry.relativePath)} | ${escapeCell(result)} | — | — |`);
     }
   }
   lines.push('');

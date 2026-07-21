@@ -208,12 +208,66 @@ describe('renderViSemanticPrReviewMarkdown', () => {
     const markdown = renderViSemanticPrReviewMarkdown(review);
     expect(markdown.startsWith(VI_SEMANTIC_PR_REVIEW_COMMENT_MARKER)).toBe(true);
     expect(markdown).toContain('## VI semantic review');
-    expect(markdown).toContain('| VI | Result | Changed surfaces |');
-    expect(markdown).toContain('| src/A.vi | Changed | block diagram |');
-    expect(markdown).toContain('| src/B.vi | No differences | — |');
+    expect(markdown).toContain('| VI | Result | Risk | Changed surfaces |');
+    // makeModel carries no classification fields, so the Risk cell renders the
+    // legacy dash — proving the additive fields are optional in the renderer.
+    expect(markdown).toContain('| src/A.vi | Changed | — | block diagram |');
+    expect(markdown).toContain('| src/B.vi | No differences | — | — |');
     expect(markdown).toContain('#### src/A.vi');
     expect(markdown).toContain('The block diagram differs.');
     expect(markdown).not.toContain('#### src/B.vi');
+  });
+
+  it('surfaces change kind + risk in the table, narrative roll-up, and detail (VHS-REQ-661.13, VHS-REQ-702.4)', async () => {
+    const review = await buildViSemanticPrReview(
+      { repositoryRoot: '/repo', baseHash: 'a', selectedHash: 'b' },
+      {
+        listChangedPaths: async () => ['src/High.vi', 'src/Low.vi'],
+        compareVi: async (input) =>
+          input.relativePath === 'src/High.vi'
+            ? completed(
+                makeModel({
+                  vi: { title: 'High.vi' },
+                  hasDifferences: true,
+                  changedSurfaces: ['block-diagram'],
+                  narrative: 'The block diagram differs.',
+                  classification: [
+                    { surface: 'block-diagram', kind: 'dependency', text: 'SubVI "X.vi" - deleted at (1,2)' }
+                  ],
+                  changeKinds: ['dependency'],
+                  riskLevel: 'high',
+                  riskRationale: 'high: dependency change(s)',
+                  classificationConfidence: 'high'
+                })
+              )
+            : completed(
+                makeModel({
+                  vi: { title: 'Low.vi' },
+                  hasDifferences: true,
+                  changedSurfaces: ['front-panel'],
+                  narrative: 'The front panel differs.',
+                  classification: [
+                    { surface: 'front-panel', kind: 'cosmetic', text: 'Label moved' }
+                  ],
+                  changeKinds: ['cosmetic'],
+                  riskLevel: 'low',
+                  riskRationale: 'low: cosmetic change(s) only',
+                  classificationConfidence: 'low'
+                })
+              )
+      }
+    );
+
+    const markdown = renderViSemanticPrReviewMarkdown(review);
+    // Risk column populated per VI; low-confidence explicitly marked.
+    expect(markdown).toContain('| src/High.vi | Changed | high (dependency) | block diagram |');
+    expect(markdown).toContain('| src/Low.vi | Changed | low (cosmetic) — low confidence | front panel |');
+    // Aggregate risk roll-up appended to the shared narrative.
+    expect(review.narrative).toContain('Risk: 1 high-risk, 1 low-risk.');
+    // Per-VI detail carries the kind + risk lines.
+    expect(markdown).toContain('- **Change kinds:** dependency');
+    expect(markdown).toContain('- **Risk:** high — high: dependency change(s)');
+    expect(markdown).toContain('- **Risk:** low — low: cosmetic change(s) only _(low confidence)_');
   });
 
   it('embeds a collapsed visual-diff gallery for a changed VI when images are supplied (VHS-REQ-661.11)', async () => {
@@ -279,7 +333,7 @@ describe('renderViSemanticPrReviewMarkdown', () => {
     const markdown = renderViSemanticPrReviewMarkdown(review);
     // The reason must appear in the summary table cell, not just an opaque
     // "failed", so a reviewer has an actionable signal in the comment itself.
-    expect(markdown).toContain('| src/Broken.vi | failed (command-exited-nonzero) | — |');
+    expect(markdown).toContain('| src/Broken.vi | failed (command-exited-nonzero) | — | — |');
     // ...and in a per-VI detail block.
     expect(markdown).toContain('Not compared (failed): command-exited-nonzero');
   });
