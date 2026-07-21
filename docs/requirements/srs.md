@@ -6850,6 +6850,45 @@ Missing numeric IDs are intentional.
     the JSON-RPC parse-error fail-safe, and keep protocol logic in the covered
     `handleViSemanticMcpMessage` dispatcher.
 
+### VHS-REQ-704: Authoritative Project Board Auto-Population
+
+- Status: Active
+- Parent: VHS-SYS-REQ-013
+- Area: CI And Developer Environment
+- Statement: The repository shall automatically add every newly opened issue and
+  pull request to the authoritative progress board (org Project #4 "vihs") so the
+  board's visibility never depends on a human or agent remembering to add an item.
+  The board write requires the maintainer-provisioned Projects-scoped secret (the
+  ambient GITHUB_TOKEN cannot edit an org Project), so the add is fail-closed and
+  a safe no-op without it; the workflow executes no pull-request code even under
+  `pull_request_target`.
+- Acceptance Criteria:
+  - VHS-REQ-704.1: The workflow triggers on newly opened issues and pull requests
+    (using `pull_request_target` so a fork PR run uses the base repo's secret) and
+    exposes a manual `workflow_dispatch` backfill for an explicit content URL; it
+    never triggers on `pull_request`.
+  - VHS-REQ-704.2: The workflow keeps least-privilege permissions
+    (`contents: read`), performs the board write only through the injected
+    Projects-scoped secret (never the ambient token), and gates the add step on
+    that secret so it is a no-op when the secret is absent.
+  - VHS-REQ-704.3: The add resolves the content URL from the triggering event (or
+    the dispatch input for a backfill) and adds it to Project #4 idempotently, so
+    a race with the org's built-in automation cannot create duplicates.
+- Agent Work Scope:
+  - Keep the workflow free of any pull-request code execution under
+    `pull_request_target`; it must only call the `gh` CLI with the event's
+    issue/PR URL. The board-writing token must always be the injected Projects
+    secret, never the ambient GITHUB_TOKEN.
+- Implementation References:
+  - `.github/workflows/add-to-project.yml`
+- Verification References:
+  - `tests/unit/addToProjectWorkflow.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - Project #4 (`vihs`) is authoritative; do not point this at the duplicate
+    Project #3 (`VIHS`). Keep the add idempotent and the secret gate intact so the
+    workflow is inert without the provisioned Projects token.
+
 ### VHS-REQ-698: Control-Plane Loop Drift Radar
 
 - Status: Active

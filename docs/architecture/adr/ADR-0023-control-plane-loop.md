@@ -63,4 +63,4 @@ label/comment signal.
 
 ## Requirements recorded
 
-VHS-SYS-REQ-013; VHS-REQ-698.
+VHS-SYS-REQ-013; VHS-REQ-698; VHS-REQ-704.
