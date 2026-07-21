@@ -224,7 +224,13 @@ jobs:
           mkdir -p "$warm_tmp"
           export TMPDIR="$warm_tmp"
           git -C target-clone checkout --detach "$REVIEW_HEAD_SHA"
-          mapfile -t changed_vis < <(git -C target-clone diff --name-only "$REVIEW_MERGE_BASE" "$REVIEW_HEAD_SHA" | grep -iE '\.(vi|vit|vim|ctl)$' || true)
+          # Sort the changed VIs the same way the review selects them (localeCompare
+          # order, then the first maxVis are compared). Warming in that same sorted,
+          # capped order means the VIs we render are exactly the ones the review
+          # will compare/correlate — not a different diff-order slice. Keep this cap
+          # in sync with the CLI's DEFAULT_MAX_VIS (50).
+          REVIEW_MAX_VIS=50
+          mapfile -t changed_vis < <(git -C target-clone diff --name-only "$REVIEW_MERGE_BASE" "$REVIEW_HEAD_SHA" | grep -iE '\.(vi|vit|vim|ctl)$' | LC_ALL=C sort | head -n "$REVIEW_MAX_VIS" || true)
           if [ "${#changed_vis[@]}" -eq 0 ]; then
             echo "No changed VIs to warm; correlation will report previews unavailable."
             exit 0
