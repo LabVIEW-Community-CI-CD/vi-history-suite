@@ -66,6 +66,29 @@ describe('classifyDetailItem: taxonomy coverage (VHS-REQ-702.1)', () => {
   });
 });
 
+describe('classifyDetailItem: Phase 5 real-report corpus gaps (VHS-REQ-702.1, #2259/#2260)', () => {
+  // These are the exact NI detail-item strings that classified as `unknown`
+  // during the Phase 5 real-runtime validation (#2259). Each is now covered.
+  it('classifies node-reconfiguration changes as behavioral', () => {
+    expect(classifyDetailItem('Compound Arithmetic Terminal - terminal inversion')).toBe('behavioral');
+    expect(classifyDetailItem('Unbundle By Name - number of elements : changed from " 12 " to " 11 "')).toBe('behavioral');
+    expect(classifyDetailItem('Unbundle By Name - number of elements : changed from " 4 " to " 5 "')).toBe('behavioral');
+  });
+
+  it('classifies a data-type-name change as interface (matches NI "data type name : changed from" phrasing)', () => {
+    expect(
+      classifyDetailItem('Front Panel Terminal "error in" - data type name : changed from " error in (no error) " to " error in "')
+    ).toBe('interface');
+    expect(
+      classifyDetailItem('Cluster "error in" - data type name : changed from " error in (no error) " to " error in "')
+    ).toBe('interface');
+  });
+
+  it('classifies a control-style change as cosmetic', () => {
+    expect(classifyDetailItem('default control style')).toBe('cosmetic');
+  });
+});
+
 describe('deriveChangeClassification: risk aggregation (VHS-REQ-702.2)', () => {
   const bdFunctional = ['Block Diagram Functional'];
 

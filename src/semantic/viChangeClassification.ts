@@ -101,7 +101,10 @@ export function classifyDetailItem(text: string): ViChangeKind {
     return 'dependency';
   }
 
-  // 2. Behavioral: wiring / dataflow / execution-structure changes.
+  // 2. Behavioral: wiring / dataflow / execution-structure changes, and node
+  //    reconfiguration that changes what data flows (e.g. Compound Arithmetic
+  //    terminal inversion, an Unbundle/Bundle By Name element-count change).
+  //    (Node-reconfig phrases added from Phase 5 real-report evidence, #2259.)
   if (
     /wir(e|ed|ing)/.test(value) ||
     /rewire/.test(value) ||
@@ -109,26 +112,32 @@ export function classifyDetailItem(text: string): ViChangeKind {
     /sequence structure/.test(value) ||
     /case structure/.test(value) ||
     /event structure/.test(value) ||
-    /\bexecution\b|reentran|\bclump\b/.test(value)
+    /\bexecution\b|reentran|\bclump\b/.test(value) ||
+    /terminal inversion/.test(value) ||
+    /compound arithmetic/.test(value) ||
+    /number of elements/.test(value)
   ) {
     return 'behavioral';
   }
 
   // 3. Interface: connector pane / terminal pattern, or control/indicator
-  //    add/remove/retype that changes the VI's public signature.
+  //    add/remove/retype that changes the VI's public signature, or a data-type
+  //    change on a terminal/cluster. The datatype rule matches NI's real
+  //    phrasing `data type name : changed from ...` (the `name :` interposes),
+  //    not just a bare `data type changed` (Phase 5 evidence, #2259).
   if (
     /connector pane|connector-pane|terminal pattern/.test(value) ||
     /(control|indicator)\b[\s\S]*(added|deleted|removed|retyped|data ?type)/.test(value) ||
-    /data ?type changed/.test(value)
+    /data ?type\b[\s\S]*chang/.test(value)
   ) {
     return 'interface';
   }
 
-  // 4. Cosmetic: position/size/color/label/font/decoration only.
+  // 4. Cosmetic: position/size/color/label/font/decoration/style only.
   if (
     /position|moved|resiz|\bsize\b/.test(value) ||
     /colou?r/.test(value) ||
-    /\blabel\b|caption|font|decoration|free label|cosmetic/.test(value)
+    /\blabel\b|caption|font|decoration|free label|cosmetic|\bstyle\b/.test(value)
   ) {
     return 'cosmetic';
   }
