@@ -2,8 +2,8 @@ import {
   ParsedNiComparisonReport,
   parseNiComparisonReportHtml
 } from '../dashboard/niComparisonReportParser';
-import {
-  deriveChangeClassification,
+import { deriveChangeClassification } from './viChangeClassification';
+import type {
   ViChangeClassification,
   ViChangeKind,
   ViChangeRiskLevel,
