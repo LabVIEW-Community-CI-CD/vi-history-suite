@@ -147,6 +147,30 @@ describe('runViSemanticPrReview parseArgs', () => {
       '--repository-root, --base, and --head are required (or use --from-file)'
     );
   });
+
+  it('defaults preview correlation off (VHS-REQ-703.4)', () => {
+    const args = parseArgs([...BASE]);
+    expect(args.correlatePreviews).toBe(false);
+    expect(args.previewCacheDir).toBeUndefined();
+  });
+
+  it('accepts --correlate-previews with --preview-cache-dir (VHS-REQ-703.4)', () => {
+    const args = parseArgs([...BASE, '--correlate-previews', '--preview-cache-dir', '/tmp/cache']);
+    expect(args.correlatePreviews).toBe(true);
+    expect(args.previewCacheDir).toBe('/tmp/cache');
+  });
+
+  it('rejects --correlate-previews without --preview-cache-dir (VHS-REQ-703.4)', () => {
+    expect(() => parseArgs([...BASE, '--correlate-previews'])).toThrow(
+      '--correlate-previews requires --preview-cache-dir <dir>'
+    );
+  });
+
+  it('rejects --correlate-previews combined with --from-file (VHS-REQ-703.4)', () => {
+    expect(() =>
+      parseArgs(['--from-file', 'r.json', '--correlate-previews', '--preview-cache-dir', '/tmp/cache'])
+    ).toThrow('--correlate-previews cannot be combined with --from-file');
+  });
 });
 
 describe('runViSemanticPrReview loadReviewFromFile', () => {
