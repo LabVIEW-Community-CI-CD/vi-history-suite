@@ -45,10 +45,7 @@ import type {
 } from '../tooling/viPreviewDiagnostics';
 import {
   validateViSemanticDocument,
-  VI_SEMANTIC_SCHEMAS,
-  VI_SEMANTIC_COMPARISON_SCHEMA_ID,
-  VI_SEMANTIC_HISTORY_SCHEMA_ID,
-  VI_REPOSITORY_INDEX_SCHEMA_ID
+  VI_SEMANTIC_SCHEMAS
 } from './viSemanticSchemas';
 
 /**
@@ -371,11 +368,9 @@ const SCHEMA_DISCOVERY_INPUT_SCHEMA = {
   properties: {
     schema: {
       type: 'string',
-      enum: [
-        VI_SEMANTIC_COMPARISON_SCHEMA_ID,
-        VI_SEMANTIC_HISTORY_SCHEMA_ID,
-        VI_REPOSITORY_INDEX_SCHEMA_ID
-      ],
+      // Derived from the registry so a newly published schema is discoverable
+      // automatically and this enum can never drift from VI_SEMANTIC_SCHEMAS.
+      enum: Object.keys(VI_SEMANTIC_SCHEMAS),
       description: 'Optional schema id to fetch; omit to receive all published schemas.'
     }
   }
@@ -821,6 +816,20 @@ export const VI_SEMANTIC_MCP_RESOURCES = [
     name: 'vi-repository-index@v1 schema',
     title: 'VI repository index schema',
     description: 'JSON Schema for the vi-history-suite/vi-repository-index@v1 model.',
+    mimeType: 'application/schema+json'
+  },
+  {
+    uri: `${RESOURCE_URI_PREFIX}vi-preview-comparison-correlation@v1`,
+    name: 'vi-preview-comparison-correlation@v1 schema',
+    title: 'VI preview-comparison correlation schema',
+    description: 'JSON Schema for the vi-history-suite/vi-preview-comparison-correlation@v1 model.',
+    mimeType: 'application/schema+json'
+  },
+  {
+    uri: `${RESOURCE_URI_PREFIX}vi-preview-comparison-correlations@v1`,
+    name: 'vi-preview-comparison-correlations@v1 schema',
+    title: 'VI preview-comparison correlations bundle schema',
+    description: 'JSON Schema for the vi-history-suite/vi-preview-comparison-correlations@v1 review artifact.',
     mimeType: 'application/schema+json'
   },
   {

@@ -11,12 +11,14 @@ import {
 } from '../../src/semantic/viSemanticModel';
 import {
   buildViSemanticPrReview,
+  buildViPreviewComparisonCorrelationsArtifact,
   createDefaultListChangedPaths,
   isViSourcePath,
   planReviewReportCopies,
   renderViSemanticPrReviewMarkdown,
   renderViSemanticPrReviewPendingMarkdown,
   reviewReportFileName,
+  VI_PREVIEW_COMPARISON_CORRELATIONS_SCHEMA,
   VI_SEMANTIC_PR_REVIEW_COMMENT_MARKER,
   VI_SEMANTIC_PR_REVIEW_SCHEMA,
   type ViSemanticPrReviewDeps
@@ -513,5 +515,46 @@ describe('createDefaultListChangedPaths', () => {
     const listChangedPaths = createDefaultListChangedPaths(runGit as never);
 
     expect(await listChangedPaths('/repo', 'base', 'sel')).toEqual([]);
+  });
+});
+
+describe('buildViPreviewComparisonCorrelationsArtifact (VHS-REQ-703.13)', () => {
+  const previewProvider: ViSemanticPrReviewDeps['resolvePreviewPair'] = () => ({
+    base: { available: true, revision: 'base1' },
+    head: { available: true, revision: 'sel1' }
+  });
+
+  it('collects per-VI correlations into a versioned first-class bundle', async () => {
+    const review = await buildViSemanticPrReview(
+      { repositoryRoot: '/repo', baseHash: 'base1', selectedHash: 'sel1' },
+      {
+        ...deps(['src/A.vi', 'src/B.vi'], {
+          'src/A.vi': completed(makeModel({ vi: { title: 'A.vi' }, hasDifferences: true })),
+          'src/B.vi': completed(makeModel({ vi: { title: 'B.vi' }, hasDifferences: true }))
+        }),
+        resolvePreviewPair: previewProvider
+      }
+    );
+
+    const artifact = buildViPreviewComparisonCorrelationsArtifact(review);
+    expect(artifact).toBeDefined();
+    expect(artifact?.schema).toBe(VI_PREVIEW_COMPARISON_CORRELATIONS_SCHEMA);
+    expect(artifact?.repositoryRoot).toBe('/repo');
+    expect(artifact?.baseHash).toBe('base1');
+    expect(artifact?.selectedHash).toBe('sel1');
+    expect(artifact?.correlatedViCount).toBe(2);
+    expect(artifact?.entries.map((e) => e.relativePath)).toEqual(['src/A.vi', 'src/B.vi']);
+    // Each entry carries a real correlation model with its schema.
+    expect(artifact?.entries[0].correlation.schema).toBe(
+      'vi-history-suite/vi-preview-comparison-correlation@v1'
+    );
+  });
+
+  it('returns undefined when no reviewed VI carries a correlation (no provider wired)', async () => {
+    const review = await buildViSemanticPrReview(
+      { repositoryRoot: '/repo', baseHash: 'a', selectedHash: 'b' },
+      deps(['src/A.vi'], { 'src/A.vi': completed(makeModel({ vi: { title: 'A.vi' } })) })
+    );
+    expect(buildViPreviewComparisonCorrelationsArtifact(review)).toBeUndefined();
   });
 });

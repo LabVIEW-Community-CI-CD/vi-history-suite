@@ -35,6 +35,60 @@ export {
  */
 export const VI_SEMANTIC_PR_REVIEW_SCHEMA = 'vi-history-suite/vi-semantic-pr-review@v1';
 
+/**
+ * Schema id for the dedicated, first-class preview⇄comparison correlations
+ * artifact (VHS-REQ-703, epic #2262). Re-exported from the schema registry (the
+ * single source of truth) so artifact emission here and the registered JSON
+ * Schema / validator can never drift.
+ */
+export { VI_PREVIEW_COMPARISON_CORRELATIONS_SCHEMA_ID as VI_PREVIEW_COMPARISON_CORRELATIONS_SCHEMA } from './viSemanticSchemas';
+import { VI_PREVIEW_COMPARISON_CORRELATIONS_SCHEMA_ID } from './viSemanticSchemas';
+
+/** One VI's correlation within the correlations artifact. */
+export interface ViPreviewComparisonCorrelationEntry {
+  relativePath: string;
+  correlation: ViPreviewComparisonCorrelation;
+}
+
+/** The versioned bundle of per-VI preview⇄comparison correlations for a review. */
+export interface ViPreviewComparisonCorrelationsArtifact {
+  schema: typeof VI_PREVIEW_COMPARISON_CORRELATIONS_SCHEMA_ID;
+  repositoryRoot: string;
+  baseHash: string;
+  selectedHash: string;
+  /** Number of VIs in this bundle (each carries a correlation). */
+  correlatedViCount: number;
+  entries: ViPreviewComparisonCorrelationEntry[];
+}
+
+/**
+ * Collects the per-VI preview⇄comparison correlations from a completed review
+ * into a versioned, first-class artifact. Pure and deterministic. Returns
+ * `undefined` when no reviewed VI carries a correlation (e.g. no preview
+ * provider was wired), so a caller writes the artifact only when it has content.
+ */
+export function buildViPreviewComparisonCorrelationsArtifact(
+  review: ViSemanticPrReview
+): ViPreviewComparisonCorrelationsArtifact | undefined {
+  const entries: ViPreviewComparisonCorrelationEntry[] = [];
+  for (const entry of review.entries) {
+    if (entry.status === 'completed' && entry.correlation) {
+      entries.push({ relativePath: entry.relativePath, correlation: entry.correlation });
+    }
+  }
+  if (entries.length === 0) {
+    return undefined;
+  }
+  return {
+    schema: VI_PREVIEW_COMPARISON_CORRELATIONS_SCHEMA_ID,
+    repositoryRoot: review.repositoryRoot,
+    baseHash: review.baseHash,
+    selectedHash: review.selectedHash,
+    correlatedViCount: entries.length,
+    entries
+  };
+}
+
 const VI_SOURCE_EXTENSIONS = ['.vi', '.vit', '.vim', '.ctl'];
 
 /** Whether a repository-relative path is a LabVIEW source file the review covers. */

@@ -15,6 +15,8 @@ export const VI_SEMANTIC_HISTORY_SCHEMA_ID = 'vi-history-suite/vi-semantic-histo
 export const VI_REPOSITORY_INDEX_SCHEMA_ID = 'vi-history-suite/vi-repository-index@v1';
 export const VI_PREVIEW_COMPARISON_CORRELATION_SCHEMA_ID =
   'vi-history-suite/vi-preview-comparison-correlation@v1';
+export const VI_PREVIEW_COMPARISON_CORRELATIONS_SCHEMA_ID =
+  'vi-history-suite/vi-preview-comparison-correlations@v1';
 
 const DRAFT_07 = 'http://json-schema.org/draft-07/schema#';
 
@@ -405,12 +407,69 @@ export const VI_PREVIEW_COMPARISON_CORRELATION_JSON_SCHEMA = {
   }
 } as const;
 
+// The first-class bundle of per-VI preview-comparison correlations a PR review
+// emits (VHS-REQ-703.13). Each entry's `correlation` is itself a
+// vi-preview-comparison-correlation@v1 document; it is typed as an object here
+// (not inlined/`$ref`ed) because the offline subset validator does not resolve
+// `$ref` — an agent can validate each correlation separately against its schema.
+export const VI_PREVIEW_COMPARISON_CORRELATIONS_JSON_SCHEMA = {
+  $schema: DRAFT_07,
+  $id: VI_PREVIEW_COMPARISON_CORRELATIONS_SCHEMA_ID,
+  title: 'VI preview-comparison correlations',
+  description:
+    'First-class bundle of per-VI preview-comparison correlations produced by a VI semantic PR review.',
+  type: 'object',
+  required: [
+    'schema',
+    'repositoryRoot',
+    'baseHash',
+    'selectedHash',
+    'correlatedViCount',
+    'entries'
+  ],
+  properties: {
+    schema: { const: VI_PREVIEW_COMPARISON_CORRELATIONS_SCHEMA_ID },
+    repositoryRoot: { type: 'string' },
+    baseHash: { type: 'string' },
+    selectedHash: { type: 'string' },
+    // The bundle is only emitted when at least one VI carries a correlation
+    // (buildViPreviewComparisonCorrelationsArtifact returns undefined otherwise),
+    // so the published contract requires a non-empty bundle. The offline subset
+    // validator ignores minItems/minimum (like maxItems above); external
+    // Draft-07 consumers honor them.
+    correlatedViCount: { type: 'integer', minimum: 1 },
+    entries: {
+      type: 'array',
+      minItems: 1,
+      items: {
+        type: 'object',
+        required: ['relativePath', 'correlation'],
+        properties: {
+          relativePath: { type: 'string' },
+          correlation: {
+            type: 'object',
+            required: ['schema'],
+            properties: {
+              // Lock the embedded document type to the correlation schema so a
+              // non-correlation payload cannot validate; the rest stays open for
+              // forward compatibility (validate a correlation fully against its
+              // own schema separately).
+              schema: { const: VI_PREVIEW_COMPARISON_CORRELATION_SCHEMA_ID }
+            }
+          }
+        }
+      }
+    }
+  }
+} as const;
+
 /** Registry of every published schema, keyed by its `$id`. */
 export const VI_SEMANTIC_SCHEMAS: Record<string, unknown> = {
   [VI_SEMANTIC_COMPARISON_SCHEMA_ID]: VI_SEMANTIC_COMPARISON_JSON_SCHEMA,
   [VI_SEMANTIC_HISTORY_SCHEMA_ID]: VI_SEMANTIC_HISTORY_JSON_SCHEMA,
   [VI_REPOSITORY_INDEX_SCHEMA_ID]: VI_REPOSITORY_INDEX_JSON_SCHEMA,
-  [VI_PREVIEW_COMPARISON_CORRELATION_SCHEMA_ID]: VI_PREVIEW_COMPARISON_CORRELATION_JSON_SCHEMA
+  [VI_PREVIEW_COMPARISON_CORRELATION_SCHEMA_ID]: VI_PREVIEW_COMPARISON_CORRELATION_JSON_SCHEMA,
+  [VI_PREVIEW_COMPARISON_CORRELATIONS_SCHEMA_ID]: VI_PREVIEW_COMPARISON_CORRELATIONS_JSON_SCHEMA
 };
 
 export interface SchemaValidationResult {
