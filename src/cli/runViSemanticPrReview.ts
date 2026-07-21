@@ -20,7 +20,10 @@ import { planStickyPrComment, type ExistingPrComment } from '../semantic/stickyP
 import { collectOverviewImageUploads } from '../semantic/viComparisonReportImages';
 import { planReviewCommitStatus } from '../semantic/viReviewCommitStatus';
 import { parseNiComparisonReportFile } from '../dashboard/niComparisonReportParser';
-import { createCachePeekPreviewPairProvider } from '../semantic/viPreviewPairProvider';
+import {
+  createCachePeekPreviewPairProvider,
+  type PeekRevisionPreviewResult
+} from '../semantic/viPreviewPairProvider';
 import type { ViPreviewPair } from '../semantic/viPreviewComparisonCorrelation';
 import { renderViPreviewForFile } from '../reporting/viPreview/viPreviewFileRender';
 import { countInlinePreviewImages } from '../reporting/viPreview/viPreviewVerification';
@@ -79,6 +82,13 @@ export interface ParsedArgs {
   correlatePreviews: boolean;
   /** Directory of the content-addressed preview cache to peek (VHS-REQ-703.4). */
   previewCacheDir?: string;
+  /**
+   * Already-materialized base-revision tree root (e.g. a `git worktree` of the
+   * base). When set, the correlation resolves the base-side preview from this
+   * tree so BOTH preview sides can hit the cache (VHS-REQ-703.7); when unset the
+   * base side stays honestly unavailable (only the head/working-tree side hits).
+   */
+  baseTreeDir?: string;
 }
 
 function parseRepo(value: string): { owner: string; repo: string } {
@@ -184,6 +194,9 @@ export function parseArgs(argv: string[]): ParsedArgs {
     previewCacheDirRaw !== undefined && previewCacheDirRaw !== 'true'
       ? previewCacheDirRaw
       : undefined;
+  const baseTreeDirRaw = values.get('base-tree-dir');
+  const baseTreeDir =
+    baseTreeDirRaw !== undefined && baseTreeDirRaw !== 'true' ? baseTreeDirRaw : undefined;
   if (correlatePreviews) {
     // Correlation reads the content-addressed preview cache; without a cache
     // directory there is nothing to peek, so fail fast rather than silently
@@ -213,7 +226,8 @@ export function parseArgs(argv: string[]): ParsedArgs {
     assetsRef,
     commitStatus,
     correlatePreviews,
-    previewCacheDir
+    previewCacheDir,
+    baseTreeDir
   };
 }
 
@@ -696,6 +710,7 @@ async function buildPreviewPairProvider(
   const renderDeps = buildNodeViPreviewRenderDeps({ cacheDirectory: args.previewCacheDir });
   // A cache-only peek never launches a runtime, so a minimal selection suffices.
   const runtime = { provider: 'host-native' as const };
+  const baseTreeDir = args.baseTreeDir;
 
   // The revision that is actually checked out on disk (its VI content matches a
   // warmed cache entry keyed on that tree). Resolved once; a failure leaves it
@@ -722,8 +737,43 @@ async function buildPreviewPairProvider(
     }
   };
 
+  // A cache-only peek of a VI at `treeRoot`/`relativePath`. `treeRoot` is a full
+  // checkout of the target revision (the working tree for head, or a
+  // git-worktree of the base for base), so its content-addressed key matches a
+  // warm render produced from the same tree.
+  const peekAt = async (
+    treeRoot: string,
+    relativePath: string
+  ): Promise<PeekRevisionPreviewResult> => {
+    const viFilePath = path.join(treeRoot, relativePath);
+    const peek = await renderViPreviewForFile(
+      { runtime, viFilePath, operationDirectory, cacheOnly: true },
+      renderDeps
+    );
+    if (peek.outcome === 'rendered' && peek.html) {
+      return {
+        available: true,
+        cacheKey: peek.cacheKey,
+        inlineImageCount: countInlinePreviewImages(peek.html)
+      };
+    }
+    return { available: false, cacheKey: peek.cacheKey };
+  };
+
   return createCachePeekPreviewPairProvider({
     peekRevisionPreview: async (input) => {
+      // Base side: peek the caller-materialized base tree when one was provided
+      // (VHS-REQ-703.7), else honestly unavailable. The base tree is asserted by
+      // the caller to be the base revision, so no SHA match is needed.
+      if (input.side === 'base') {
+        if (baseTreeDir === undefined) {
+          return { available: false };
+        }
+        return peekAt(baseTreeDir, input.relativePath);
+      }
+      // Head side: peek the on-disk working tree, but only when its resolved SHA
+      // matches the requested revision (so a stale working tree never yields a
+      // false hit).
       const revisionSha = await resolveCommitSha(input.revision);
       if (
         workingTreeSha === undefined ||
@@ -732,19 +782,7 @@ async function buildPreviewPairProvider(
       ) {
         return { available: false };
       }
-      const viFilePath = path.join(input.repositoryRoot, input.relativePath);
-      const peek = await renderViPreviewForFile(
-        { runtime, viFilePath, operationDirectory, cacheOnly: true },
-        renderDeps
-      );
-      if (peek.outcome === 'rendered' && peek.html) {
-        return {
-          available: true,
-          cacheKey: peek.cacheKey,
-          inlineImageCount: countInlinePreviewImages(peek.html)
-        };
-      }
-      return { available: false, cacheKey: peek.cacheKey };
+      return peekAt(repositoryRoot, input.relativePath);
     }
   });
 }

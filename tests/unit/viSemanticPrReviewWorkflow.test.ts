@@ -200,6 +200,19 @@ describe('VI semantic PR review reusable workflow (VHS-REQ-661)', () => {
     expect(workflow).toContain('echo "AUTO_PREVIEW_CACHE_DIR=$cache_dir" >> "$GITHUB_ENV"');
   });
 
+  it('materializes the base revision and warms its previews for base-side correlation (VHS-REQ-703.7)', () => {
+    const workflow = readCallable();
+
+    // Creates a detached base worktree, warms only base-present changed VIs into
+    // the same cache, and publishes the base tree dir for the review step.
+    expect(workflow).toContain('git -C target-clone worktree add --detach "$base_tree" "$REVIEW_MERGE_BASE"');
+    expect(workflow).toContain('if [ -f "$base_tree/$vi" ]; then base_vis+=("$vi"); fi');
+    expect(workflow).toContain('node out/cli/runViPreviewCacheWarmer.js "${base_warm_args[@]}"');
+    expect(workflow).toContain('echo "AUTO_BASE_TREE_DIR=$base_tree" >> "$GITHUB_ENV"');
+    // The review passes the base tree dir so the base side can hit the cache.
+    expect(workflow).toContain('args+=(--base-tree-dir "$AUTO_BASE_TREE_DIR")');
+  });
+
   it('pins the tool checkout to the reusable workflow own SHA via the job context (VHS-REQ-661.7)', () => {
     const workflow = readCallable();
 

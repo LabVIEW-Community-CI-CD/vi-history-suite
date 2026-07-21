@@ -171,6 +171,23 @@ describe('runViSemanticPrReview parseArgs', () => {
       parseArgs(['--from-file', 'r.json', '--correlate-previews', '--preview-cache-dir', '/tmp/cache'])
     ).toThrow('--correlate-previews cannot be combined with --from-file');
   });
+
+  it('parses --base-tree-dir for base-side correlation (VHS-REQ-703.7)', () => {
+    const args = parseArgs([
+      ...BASE,
+      '--correlate-previews',
+      '--preview-cache-dir',
+      '/tmp/cache',
+      '--base-tree-dir',
+      '/tmp/base-wt'
+    ]);
+    expect(args.baseTreeDir).toBe('/tmp/base-wt');
+  });
+
+  it('leaves --base-tree-dir undefined when not provided (VHS-REQ-703.7)', () => {
+    const args = parseArgs([...BASE, '--correlate-previews', '--preview-cache-dir', '/tmp/cache']);
+    expect(args.baseTreeDir).toBeUndefined();
+  });
 });
 
 describe('runViSemanticPrReview loadReviewFromFile', () => {
