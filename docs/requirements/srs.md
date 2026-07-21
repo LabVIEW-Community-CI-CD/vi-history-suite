@@ -5011,12 +5011,12 @@ Missing numeric IDs are intentional.
     availability, honestly naming any changed surface that could not be
     correlated to a base+head preview pair.
   - VHS-REQ-703.3: The VI semantic PR-review flow resolves the base/head preview
-    references for each completed comparison through an injected provider
-    (defaulting to both preview sides unavailable so the review stays
-    runtime-free), attaches the resulting correlation to the completed review
-    entry, and the review Markdown surfaces the correlation narrative per changed
-    VI; the correlation is optional and additive, so a review built without a
-    preview provider renders exactly as before.
+    references for each completed comparison through an optional injected
+    provider and, when a provider is wired, attaches the resulting correlation to
+    the completed review entry and surfaces its narrative in the review Markdown
+    per changed VI; the correlation is optional and additive, so a review built
+    without a preview provider attaches no correlation and renders exactly as
+    before.
 - Agent Work Scope:
   - Keep the correlation builder pure, deterministic, and dependency-injected so
     it stays unit-testable without VS Code, a network, or a LabVIEW runtime; do

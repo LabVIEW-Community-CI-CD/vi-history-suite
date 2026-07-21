@@ -189,7 +189,9 @@ export function renderViSemanticPrReviewMarkdown(
     if (entry.status === 'completed' && entry.hasDifferences) {
       lines.push(`#### ${escapeCell(entry.relativePath)}`, '', renderViSemanticComparisonMarkdown(entry.model), '');
       // VHS-REQ-703 (epic #2262): cite the base/head preview correlation when
-      // present. Guarded so a review without a preview provider renders as before.
+      // present. The field is populated only when a preview provider is wired,
+      // so a review built without one (the default path, a legacy artifact, or
+      // `--from-file`) has no correlation and renders exactly as before.
       if (entry.correlation) {
         lines.push(`- **Preview correlation:** ${escapeCell(entry.correlation.narrative)}`, '');
       }

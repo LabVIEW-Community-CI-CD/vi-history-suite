@@ -312,7 +312,7 @@ describe('renderViSemanticPrReviewMarkdown', () => {
     expect(markdown).toContain('cross-reference the base and head previews');
   });
 
-  it('omits the preview correlation line when no provider is wired (default unavailable)', async () => {
+  it('omits the preview correlation entirely when no provider is wired (VHS-REQ-703.3)', async () => {
     const review = await buildViSemanticPrReview(
       { repositoryRoot: '/repo', baseHash: 'a', selectedHash: 'b' },
       {
@@ -334,14 +334,13 @@ describe('renderViSemanticPrReviewMarkdown', () => {
       }
     );
     const entry = review.entries[0];
-    // The default provider still builds a correlation, but it reports both
-    // preview sides unavailable, so the surface is uncorrelated and the narrative
-    // says so — no fabricated link.
+    // No provider injected => no correlation is attached at all, so the review
+    // renders exactly as before (additive/optional).
     if (entry.status === 'completed') {
-      expect(entry.correlation?.surfaces[0]?.correlated).toBe(false);
+      expect(entry.correlation).toBeUndefined();
     }
     const markdown = renderViSemanticPrReviewMarkdown(review);
-    expect(markdown).toContain('no preview is available to correlate');
+    expect(markdown).not.toContain('- **Preview correlation:**');
   });
 
   it('embeds a collapsed visual-diff gallery for a changed VI when images are supplied (VHS-REQ-661.11)', async () => {
