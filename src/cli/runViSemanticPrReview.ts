@@ -745,7 +745,18 @@ async function buildPreviewPairProvider(
     treeRoot: string,
     relativePath: string
   ): Promise<PeekRevisionPreviewResult> => {
-    const viFilePath = path.join(treeRoot, relativePath);
+    // Defense-in-depth: the relativePath comes from the comparison model (git
+    // diff paths, always repo-relative), but never let an absolute or
+    // parent-escaping path resolve outside the checkout/worktree — report it
+    // unavailable rather than peeking an arbitrary file.
+    if (path.isAbsolute(relativePath)) {
+      return { available: false };
+    }
+    const viFilePath = path.resolve(treeRoot, relativePath);
+    const rel = path.relative(treeRoot, viFilePath);
+    if (rel === '' || rel === '..' || rel.startsWith(`..${path.sep}`) || path.isAbsolute(rel)) {
+      return { available: false };
+    }
     const peek = await renderViPreviewForFile(
       { runtime, viFilePath, operationDirectory, cacheOnly: true },
       renderDeps
