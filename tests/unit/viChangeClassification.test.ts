@@ -87,6 +87,16 @@ describe('classifyDetailItem: Phase 5 real-report corpus gaps (VHS-REQ-702.1, #2
   it('classifies a control-style change as cosmetic', () => {
     expect(classifyDetailItem('default control style')).toBe('cosmetic');
   });
+
+  it('does not match "unchanged" as a datatype interface change (#2264)', () => {
+    // The change verb requires a word boundary + inflection, so a line stating
+    // the data type is UNCHANGED must not be force-fit to interface.
+    expect(classifyDetailItem('Cluster "error out" - data type name : unchanged')).not.toBe('interface');
+    // ...while a genuine datatype change still classifies as interface.
+    expect(
+      classifyDetailItem('Cluster "error in" - data type name : changed from " a " to " b "')
+    ).toBe('interface');
+  });
 });
 
 describe('deriveChangeClassification: risk aggregation (VHS-REQ-702.2)', () => {

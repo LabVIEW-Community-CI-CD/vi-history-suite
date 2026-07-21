@@ -124,11 +124,14 @@ export function classifyDetailItem(text: string): ViChangeKind {
   //    add/remove/retype that changes the VI's public signature, or a data-type
   //    change on a terminal/cluster. The datatype rule matches NI's real
   //    phrasing `data type name : changed from ...` (the `name :` interposes),
-  //    not just a bare `data type changed` (Phase 5 evidence, #2259).
+  //    not just a bare `data type changed` (Phase 5 evidence, #2259). The
+  //    change verb requires a word boundary + an explicit inflection so it does
+  //    NOT match `unchanged` (which contains the substring `chang`) — a line
+  //    stating the data type is unchanged must not classify as interface (#2264).
   if (
     /connector pane|connector-pane|terminal pattern/.test(value) ||
     /(control|indicator)\b[\s\S]*(added|deleted|removed|retyped|data ?type)/.test(value) ||
-    /data ?type\b[\s\S]*chang/.test(value)
+    /data ?type\b[\s\S]*\bchang(e|ed|es|ing)\b/.test(value)
   ) {
     return 'interface';
   }
