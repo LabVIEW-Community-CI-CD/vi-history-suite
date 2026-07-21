@@ -284,15 +284,18 @@ export async function runViPreviewCacheWarm(
     // Explicit paths must be repository-relative and stay inside the repository:
     // reject absolute paths and `../` escapes so a caller can never warm/stage a
     // file outside the repo (which would also yield a `..`-laden manifest path).
+    // Using path.relative for containment handles a filesystem-root repo (`/`,
+    // `C:\`) without a double-separator edge case, and rejects cross-drive paths
+    // on Windows (where relative returns an absolute path).
     const repoRoot = path.resolve(options.repositoryRoot);
-    const withinRepo = `${repoRoot}${path.sep}`;
     const resolved: string[] = [];
     for (const relativePath of options.viFilePaths) {
       if (path.isAbsolute(relativePath)) {
         continue;
       }
       const abs = path.resolve(repoRoot, relativePath);
-      if (abs === repoRoot || !abs.startsWith(withinRepo)) {
+      const rel = path.relative(repoRoot, abs);
+      if (rel === '' || rel === '..' || rel.startsWith(`..${path.sep}`) || path.isAbsolute(rel)) {
         continue;
       }
       resolved.push(abs);
