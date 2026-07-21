@@ -256,6 +256,14 @@ describe('renderRegionCorrelationTable (VHS-REQ-703.14)', () => {
   it('returns an empty string for no entries', () => {
     expect(renderRegionCorrelationTable(buildViPreviewRegionCorrelation([]))).toBe('');
   });
+
+  it('falls back to fromCoordinate for a move-only entry lacking a head coordinate', () => {
+    const moveOnly: DiffRegionSource[] = [
+      { id: 'M', changeType: 'moved', fromCoordinate: { x: 7, y: 8 } }
+    ];
+    const table = renderRegionCorrelationTable(buildViPreviewRegionCorrelation(moveOnly));
+    expect(table).toContain('| M | moved | (7,8) | — | — |');
+  });
 });
 
 describe('buildViPreviewRegionCorrelationFromModel (VHS-REQ-703.14)', () => {
