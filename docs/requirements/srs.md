@@ -6296,6 +6296,14 @@ Missing numeric IDs are intentional.
     `gh pr merge --auto --rebase` or dequeuing via a PR node-id lookup then the
     `dequeuePullRequest` GraphQL mutation, append-logging each action and failing
     closed on a live verification/write error.
+  - The command-line runner for Tier 4 create-work wires the proposed-action
+    loader, the same live server-verification boundary, the governed write path,
+    and the live `gh issue create` executor behind the gate: the enablement and
+    tier are checked before any live approver verification; when authorized for a
+    server-verified allowlisted approver it defaults to a dry run that reports the
+    number of well-formed work items that would be created without writing, and
+    only creates them (append-logging each) when explicitly invoked with
+    `--apply`, failing closed on a live verification/write error.
 - Agent Work Scope:
   - Keep the gate fail-closed and the planner pure/injectable; add higher action
     tiers only behind the committed enablement and server-verified per-action

@@ -705,6 +705,88 @@ function runMergeQueueCli(argv = [], deps = {}) {
   return { authorized: true, applied: true, dryRun: false, plannedCount: result.plannedCount, appliedCount: result.appliedCount, lines };
 }
 
+// Pure: resolve a planned Tier 4 create-work item ({ title, body, labels }) into
+// the `gh issue create` argv that opens a tracking issue. Fails closed (throws)
+// on a missing/empty title so a live create is never issued blind. planCreateWork
+// only ever produces a non-empty title with a string body and string[] labels.
+function resolveCreateWorkCommand(item) {
+  if (!item || typeof item !== 'object') {
+    throw new ControlPlaneWriteError('create-work item must be an object');
+  }
+  if (typeof item.title !== 'string' || item.title.trim().length === 0) {
+    throw new ControlPlaneWriteError('create-work item requires a non-empty title');
+  }
+  const args = ['issue', 'create', '--repo', REPOSITORY, '--title', item.title, '--body', typeof item.body === 'string' ? item.body : ''];
+  const labels = Array.isArray(item.labels) ? item.labels.filter((l) => typeof l === 'string' && l.trim().length > 0) : [];
+  for (const label of labels) {
+    args.push('--label', label);
+  }
+  return args;
+}
+
+// Live Tier 4 executor boundary: create a tracking issue through `gh issue
+// create`. Same fail-closed posture as the other tiers — a gh auth/exec error
+// throws ControlPlaneWriteError so a failed create never silently no-ops.
+// `spawnSync` is injectable for testing without a real gh.
+function defaultApplyCreateWork(deps = {}) {
+  const spawn = deps.spawnSync || spawnSync;
+  return (item) => {
+    const args = resolveCreateWorkCommand(item);
+    const res = spawn('gh', args, { encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 });
+    if (res.error) {
+      throw new ControlPlaneWriteError(`gh invocation failed: ${res.error.message}`);
+    }
+    if (res.status !== 0) {
+      const stderr = (res.stderr || '').toString();
+      throw new ControlPlaneWriteError(`gh exited ${res.status}: ${stderr.trim() || 'unknown error'}`);
+    }
+  };
+}
+
+// Thin, testable CLI runner for the Tier 4 create-work surface. Same gated shape
+// as the Tier 2/Tier 3 CLIs: enablement/tier are checked before any live approver
+// verification; when authorized for a server-verified allowlisted approver it
+// defaults to a dry run reporting the well-formed item count, and only creates
+// (via the live executor, append-logged) with `--apply`.
+function runCreateWorkCli(argv = [], deps = {}) {
+  const args = Array.isArray(argv) ? argv : [];
+  const repoRoot = deps.repoRoot || process.cwd();
+  const apply = args.includes('--apply');
+  const approverIndex = args.indexOf('--approver');
+  const approver = approverIndex !== -1 ? args[approverIndex + 1] : undefined;
+  const loadConfig = deps.loadWriteConfig || loadWriteConfig;
+  const config = deps.config || loadConfig(repoRoot, deps);
+
+  const lines = [];
+  const pre = authorizeWrite(config, 'createWork');
+  if (!pre.authorized && (pre.reason === 'write-path-disabled' || pre.reason.startsWith('tier-disabled'))) {
+    lines.push(`[control-plane-write] enabled=${config.enabled === true}; createWork refused (${pre.reason}).`);
+    return { authorized: false, reason: pre.reason, applied: false, dryRun: !apply, plannedCount: 0, appliedCount: 0, lines };
+  }
+
+  const actions = deps.actions || loadAnnotateActions(args, deps);
+  const planned = planCreateWork(actions);
+
+  const verifyApprover = deps.verifyApprover || defaultVerifyApprover(deps);
+  const approverVerified = verifyApprover(approver);
+  const auth = authorizeWrite(config, 'createWork', { approver, approverVerified });
+  if (!auth.authorized) {
+    lines.push(`[control-plane-write] enabled=${config.enabled === true}; createWork refused (${auth.reason}).`);
+    return { authorized: false, reason: auth.reason, applied: false, dryRun: !apply, plannedCount: 0, appliedCount: 0, lines };
+  }
+
+  lines.push(`[control-plane-write] createWork AUTHORIZED for verified approver ${approver}; ${planned.length} well-formed item(s).`);
+  if (!apply) {
+    lines.push('[control-plane-write] Dry run (no --apply); nothing written. Re-run with --apply to create tracking work.');
+    return { authorized: true, applied: false, dryRun: true, plannedCount: planned.length, appliedCount: 0, lines };
+  }
+
+  const applyCreateWork = deps.applyCreateWork || defaultApplyCreateWork(deps);
+  const result = runCreateWork({ actions, approver, approverVerified }, { ...deps, repoRoot, config, applyCreateWork });
+  lines.push(`[control-plane-write] created ${result.appliedCount} of ${result.plannedCount} tracking work item(s).`);
+  return { authorized: true, applied: true, dryRun: false, plannedCount: result.plannedCount, appliedCount: result.appliedCount, lines };
+}
+
 
 // governed write path and the live `gh project item-edit` executor, but only
 // acts when BOTH the committed gate authorizes boardSync AND `--apply` is
@@ -775,20 +857,25 @@ module.exports = {
   runAnnotateCli,
   resolveMergeQueueArmCommand,
   defaultApplyMergeQueueAction,
-  runMergeQueueCli
+  runMergeQueueCli,
+  resolveCreateWorkCommand,
+  defaultApplyCreateWork,
+  runCreateWorkCli
 };
 
 if (require.main === module) {
   try {
     const argv = process.argv.slice(2);
     // Subcommand dispatch: `annotate` -> Tier 2 CLI, `merge-queue` -> Tier 3
-    // CLI; anything else runs the Tier 1 board-sync CLI (backward compatible
-    // with the bare invocation).
+    // CLI, `create-work` -> Tier 4 CLI; anything else runs the Tier 1 board-sync
+    // CLI (backward compatible with the bare invocation).
     const outcome = argv[0] === 'annotate'
       ? runAnnotateCli(argv.slice(1))
       : argv[0] === 'merge-queue'
         ? runMergeQueueCli(argv.slice(1))
-        : runBoardSyncCli(argv);
+        : argv[0] === 'create-work'
+          ? runCreateWorkCli(argv.slice(1))
+          : runBoardSyncCli(argv);
     process.stdout.write(`${outcome.lines.join('\n')}\n`);
     process.exit(0);
   } catch (err) {
