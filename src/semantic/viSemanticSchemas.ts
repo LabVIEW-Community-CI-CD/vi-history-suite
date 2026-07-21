@@ -489,10 +489,16 @@ export const VI_PREVIEW_REGION_CORRELATION_JSON_SCHEMA = {
           id: { type: 'string' },
           changeType: { type: 'string', enum: DETAIL_CHANGE_TYPE_ENUM },
           coordinate: DIAGRAM_POINT_SCHEMA,
+          // pixelSize mirrors intrinsic PNG dimensions, so width/height are
+          // positive integers (the offline validator ignores minimum; external
+          // Draft-07 validators use it to reject zero/negative rasters).
           pixelSize: {
             type: 'object',
             required: ['width', 'height'],
-            properties: { width: { type: 'integer' }, height: { type: 'integer' } }
+            properties: {
+              width: { type: 'integer', minimum: 1 },
+              height: { type: 'integer', minimum: 1 }
+            }
           },
           located: { type: 'boolean' },
           regions: {
@@ -500,13 +506,16 @@ export const VI_PREVIEW_REGION_CORRELATION_JSON_SCHEMA = {
             items: {
               type: 'object',
               required: ['side', 'left', 'top', 'width', 'height', 'confidence'],
+              // Geometry is a non-negative-origin rectangle with positive area
+              // and confidence in (0, 1]; matches isUsableRegion's runtime
+              // contract so external validators reject nonsensical overlays.
               properties: {
                 side: { type: 'string', enum: ['base', 'head'] },
-                left: { type: 'integer' },
-                top: { type: 'integer' },
-                width: { type: 'integer' },
-                height: { type: 'integer' },
-                confidence: { type: 'number' }
+                left: { type: 'integer', minimum: 0 },
+                top: { type: 'integer', minimum: 0 },
+                width: { type: 'integer', minimum: 1 },
+                height: { type: 'integer', minimum: 1 },
+                confidence: { type: 'number', exclusiveMinimum: 0, maximum: 1 }
               }
             }
           }
@@ -517,9 +526,9 @@ export const VI_PREVIEW_REGION_CORRELATION_JSON_SCHEMA = {
       type: 'object',
       required: ['regionCount', 'locatedRegionCount', 'diagramOnlyRegionCount'],
       properties: {
-        regionCount: { type: 'integer' },
-        locatedRegionCount: { type: 'integer' },
-        diagramOnlyRegionCount: { type: 'integer' }
+        regionCount: { type: 'integer', minimum: 0 },
+        locatedRegionCount: { type: 'integer', minimum: 0 },
+        diagramOnlyRegionCount: { type: 'integer', minimum: 0 }
       }
     }
   }
