@@ -187,7 +187,9 @@ describe('VI semantic PR review reusable workflow (VHS-REQ-661)', () => {
       "if: ${{ inputs.correlate_previews && inputs.preview_cache_dir == '' && inputs.auto_warm_changed_previews }}"
     );
     // Scopes the warm to the changed VIs and pipes each as a repeatable --vi.
-    expect(workflow).toContain("git -C target-clone diff --name-only \"$REVIEW_MERGE_BASE\" \"$REVIEW_HEAD_SHA\"");
+    // Excludes deletions (--diff-filter=d) so the warmer never tries to render a
+    // path absent from the head tree.
+    expect(workflow).toContain("git -C target-clone diff --name-only --diff-filter=d \"$REVIEW_MERGE_BASE\" \"$REVIEW_HEAD_SHA\"");
     expect(workflow).toContain('warm_args+=(--vi "$vi")');
     expect(workflow).toContain('node out/cli/runViPreviewCacheWarmer.js "${warm_args[@]}"');
     // Warms in the review's selection order (sorted) and capped at maxVis so the
