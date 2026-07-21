@@ -489,6 +489,9 @@ export const VI_PREVIEW_REGION_CORRELATION_JSON_SCHEMA = {
           id: { type: 'string' },
           changeType: { type: 'string', enum: DETAIL_CHANGE_TYPE_ENUM },
           coordinate: DIAGRAM_POINT_SCHEMA,
+          // Present only for moved objects: the base-side (source) diagram
+          // coordinate, kept distinct from `coordinate` (the head-side point).
+          fromCoordinate: DIAGRAM_POINT_SCHEMA,
           // pixelSize mirrors intrinsic PNG dimensions, so width/height are
           // positive integers (the offline validator ignores minimum; external
           // Draft-07 validators use it to reject zero/negative rasters).

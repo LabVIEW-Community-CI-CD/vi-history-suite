@@ -411,7 +411,7 @@ export function renderRegionCorrelationTable(
     const base = entry.regions.find((r) => r.side === 'base');
     const head = entry.regions.find((r) => r.side === 'head');
     lines.push(
-      `| ${escapeRegionCell(entry.id)} | ${entry.changeType} | ${formatPoint(entry.coordinate)} | ` +
+      `| ${escapeRegionCell(entry.id)} | ${entry.changeType} | ${formatPoint(entry.coordinate ?? entry.fromCoordinate)} | ` +
         `${formatRegionCell(base)} | ${formatRegionCell(head)} |`
     );
   }
