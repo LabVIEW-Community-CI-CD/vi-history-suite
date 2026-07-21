@@ -27,3 +27,6 @@ vagrant/.vagrant-ci/
 *.iso
 
 control-plane-write-log.jsonl
+
+# Local comparison-report runtime output (never committed)
+/storage/

@@ -2,6 +2,10 @@ import type { ViChangeSurface, ViSemanticComparisonModel } from './viSemanticMod
 import type { ViSemanticHistory } from './viSemanticHistory';
 import type { ViSemanticPrReview } from './viSemanticPrReview';
 import { renderCorrelationSurfaceTable } from './viPreviewComparisonCorrelation';
+import {
+  buildViPreviewRegionCorrelationFromModel,
+  renderRegionCorrelationTable
+} from './viPreviewRegionCorrelation';
 
 /**
  * Pure renderers that turn the semantic comparison / history / PR-review models
@@ -11,6 +15,13 @@ import { renderCorrelationSurfaceTable } from './viPreviewComparisonCorrelation'
  * type-only, so this module pulls in no VS Code, network, or runtime
  * dependencies.
  */
+
+/**
+ * Cap on per-VI pixel-region rows rendered into the sticky PR comment, so a VI
+ * with very many coordinate-bearing changes cannot grow the comment past
+ * GitHub's body limit; the full data stays in the machine-readable artifact.
+ */
+const MAX_REGION_ROWS_PER_VI = 25;
 
 /**
  * Hidden HTML-comment marker prepended to a rendered PR review so any poster can
@@ -205,6 +216,17 @@ export function renderViSemanticPrReviewMarkdown(
         if (surfaceTable.length > 0) {
           lines.push(surfaceTable, '');
         }
+      }
+      // VHS-REQ-703.14 (epic #2262 iter 8): a deterministic per-object pixel-region
+      // table derived purely from the comparison report's detail-item geometry
+      // (diagram coordinates; diagram-space only in the review, no locator wired,
+      // so no fabricated pixel origin). Empty when no change carries a coordinate.
+      const regionTable = renderRegionCorrelationTable(
+        buildViPreviewRegionCorrelationFromModel(entry.model),
+        MAX_REGION_ROWS_PER_VI
+      );
+      if (regionTable.length > 0) {
+        lines.push(regionTable, '');
       }
       const images = options.imagesByVi?.get(entry.relativePath) ?? [];
       if (images.length > 0) {

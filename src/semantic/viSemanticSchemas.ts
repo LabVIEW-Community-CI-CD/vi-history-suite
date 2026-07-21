@@ -17,6 +17,10 @@ export const VI_PREVIEW_COMPARISON_CORRELATION_SCHEMA_ID =
   'vi-history-suite/vi-preview-comparison-correlation@v1';
 export const VI_PREVIEW_COMPARISON_CORRELATIONS_SCHEMA_ID =
   'vi-history-suite/vi-preview-comparison-correlations@v1';
+export const VI_PREVIEW_REGION_CORRELATION_SCHEMA_ID =
+  'vi-history-suite/vi-preview-region-correlation@v1';
+export const VI_PREVIEW_REGION_CORRELATIONS_SCHEMA_ID =
+  'vi-history-suite/vi-preview-region-correlations@v1';
 
 const DRAFT_07 = 'http://json-schema.org/draft-07/schema#';
 
@@ -463,13 +467,110 @@ export const VI_PREVIEW_COMPARISON_CORRELATIONS_JSON_SCHEMA = {
   }
 } as const;
 
+// The pixel-region correlation (VHS-REQ-703.14): each changed object placed as a
+// pixel region on the base/head preview rasters (or diagram-space-only). Inlined
+// (the offline validator does not resolve $ref).
+export const VI_PREVIEW_REGION_CORRELATION_JSON_SCHEMA = {
+  $schema: DRAFT_07,
+  $id: VI_PREVIEW_REGION_CORRELATION_SCHEMA_ID,
+  title: 'VI preview-region correlation',
+  description:
+    'Places each changed object from a LabVIEW comparison report as a pixel region on the base/head preview rasters, or diagram-space-only when not located.',
+  type: 'object',
+  required: ['schema', 'entries', 'totals'],
+  properties: {
+    schema: { const: VI_PREVIEW_REGION_CORRELATION_SCHEMA_ID },
+    entries: {
+      type: 'array',
+      items: {
+        type: 'object',
+        required: ['id', 'changeType', 'regions', 'located'],
+        properties: {
+          id: { type: 'string' },
+          changeType: { type: 'string', enum: DETAIL_CHANGE_TYPE_ENUM },
+          coordinate: DIAGRAM_POINT_SCHEMA,
+          pixelSize: {
+            type: 'object',
+            required: ['width', 'height'],
+            properties: { width: { type: 'integer' }, height: { type: 'integer' } }
+          },
+          located: { type: 'boolean' },
+          regions: {
+            type: 'array',
+            items: {
+              type: 'object',
+              required: ['side', 'left', 'top', 'width', 'height', 'confidence'],
+              properties: {
+                side: { type: 'string', enum: ['base', 'head'] },
+                left: { type: 'integer' },
+                top: { type: 'integer' },
+                width: { type: 'integer' },
+                height: { type: 'integer' },
+                confidence: { type: 'number' }
+              }
+            }
+          }
+        }
+      }
+    },
+    totals: {
+      type: 'object',
+      required: ['regionCount', 'locatedRegionCount', 'diagramOnlyRegionCount'],
+      properties: {
+        regionCount: { type: 'integer' },
+        locatedRegionCount: { type: 'integer' },
+        diagramOnlyRegionCount: { type: 'integer' }
+      }
+    }
+  }
+} as const;
+
+// The first-class bundle of per-VI pixel-region correlations a PR review emits
+// (VHS-REQ-703.14). Each entry's `regionCorrelation` is itself a
+// vi-preview-region-correlation@v1 document; typed as an object here (the offline
+// validator does not resolve $ref).
+export const VI_PREVIEW_REGION_CORRELATIONS_JSON_SCHEMA = {
+  $schema: DRAFT_07,
+  $id: VI_PREVIEW_REGION_CORRELATIONS_SCHEMA_ID,
+  title: 'VI preview-region correlations',
+  description:
+    'First-class bundle of per-VI pixel-region correlations produced by a VI semantic PR review.',
+  type: 'object',
+  required: ['schema', 'repositoryRoot', 'baseHash', 'selectedHash', 'correlatedViCount', 'entries'],
+  properties: {
+    schema: { const: VI_PREVIEW_REGION_CORRELATIONS_SCHEMA_ID },
+    repositoryRoot: { type: 'string' },
+    baseHash: { type: 'string' },
+    selectedHash: { type: 'string' },
+    correlatedViCount: { type: 'integer', minimum: 1 },
+    entries: {
+      type: 'array',
+      minItems: 1,
+      items: {
+        type: 'object',
+        required: ['relativePath', 'regionCorrelation'],
+        properties: {
+          relativePath: { type: 'string' },
+          regionCorrelation: {
+            type: 'object',
+            required: ['schema'],
+            properties: { schema: { const: VI_PREVIEW_REGION_CORRELATION_SCHEMA_ID } }
+          }
+        }
+      }
+    }
+  }
+} as const;
+
 /** Registry of every published schema, keyed by its `$id`. */
 export const VI_SEMANTIC_SCHEMAS: Record<string, unknown> = {
   [VI_SEMANTIC_COMPARISON_SCHEMA_ID]: VI_SEMANTIC_COMPARISON_JSON_SCHEMA,
   [VI_SEMANTIC_HISTORY_SCHEMA_ID]: VI_SEMANTIC_HISTORY_JSON_SCHEMA,
   [VI_REPOSITORY_INDEX_SCHEMA_ID]: VI_REPOSITORY_INDEX_JSON_SCHEMA,
   [VI_PREVIEW_COMPARISON_CORRELATION_SCHEMA_ID]: VI_PREVIEW_COMPARISON_CORRELATION_JSON_SCHEMA,
-  [VI_PREVIEW_COMPARISON_CORRELATIONS_SCHEMA_ID]: VI_PREVIEW_COMPARISON_CORRELATIONS_JSON_SCHEMA
+  [VI_PREVIEW_COMPARISON_CORRELATIONS_SCHEMA_ID]: VI_PREVIEW_COMPARISON_CORRELATIONS_JSON_SCHEMA,
+  [VI_PREVIEW_REGION_CORRELATION_SCHEMA_ID]: VI_PREVIEW_REGION_CORRELATION_JSON_SCHEMA,
+  [VI_PREVIEW_REGION_CORRELATIONS_SCHEMA_ID]: VI_PREVIEW_REGION_CORRELATIONS_JSON_SCHEMA
 };
 
 export interface SchemaValidationResult {

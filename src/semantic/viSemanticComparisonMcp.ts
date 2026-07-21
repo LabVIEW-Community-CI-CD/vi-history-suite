@@ -11,6 +11,11 @@ import {
   type ViPreviewPair,
   type ViPreviewReference
 } from './viPreviewComparisonCorrelation';
+import {
+  buildViPreviewRegionCorrelationFromModel,
+  renderRegionCorrelationTable,
+  VI_PREVIEW_REGION_CORRELATION_SCHEMA
+} from './viPreviewRegionCorrelation';
 import { errorMessage } from '../support/errorMessage';
 // Type-only import: the async handler runs the orchestrator through an injected
 // dependency, so this module stays runtime-pure and free of reporting imports.
@@ -552,6 +557,17 @@ export const VI_SEMANTIC_MCP_TOOLS = [
     annotations: { title: 'Get VI preview-comparison correlation', ...READ_ONLY_CLOSED_WORLD }
   },
   {
+    name: 'get_vi_preview_region_correlation',
+    description:
+      `Return the ${VI_PREVIEW_REGION_CORRELATION_SCHEMA} model placing each changed object ` +
+      'from a LabVIEW comparison report as a pixel region on the base/head preview rasters, ' +
+      'derived only from the report (per-object change type + diagram (x,y)). Without an ' +
+      'injected preview-raster locator every change is returned diagram-space-only (never a ' +
+      'fabricated pixel overlay). Pure over the supplied report HTML.',
+    inputSchema: COMPARISON_INPUT_SCHEMA,
+    annotations: { title: 'Get VI preview-region correlation', ...READ_ONLY_CLOSED_WORLD }
+  },
+  {
     name: 'compare_vi_revisions',
     description:
       'Invoke a LabVIEW comparison between two Git revisions of a VI and return the full ' +
@@ -830,6 +846,20 @@ export const VI_SEMANTIC_MCP_RESOURCES = [
     name: 'vi-preview-comparison-correlations@v1 schema',
     title: 'VI preview-comparison correlations bundle schema',
     description: 'JSON Schema for the vi-history-suite/vi-preview-comparison-correlations@v1 review artifact.',
+    mimeType: 'application/schema+json'
+  },
+  {
+    uri: `${RESOURCE_URI_PREFIX}vi-preview-region-correlation@v1`,
+    name: 'vi-preview-region-correlation@v1 schema',
+    title: 'VI preview-region correlation schema',
+    description: 'JSON Schema for the vi-history-suite/vi-preview-region-correlation@v1 model.',
+    mimeType: 'application/schema+json'
+  },
+  {
+    uri: `${RESOURCE_URI_PREFIX}vi-preview-region-correlations@v1`,
+    name: 'vi-preview-region-correlations@v1 schema',
+    title: 'VI preview-region correlations bundle schema',
+    description: 'JSON Schema for the vi-history-suite/vi-preview-region-correlations@v1 review artifact.',
     mimeType: 'application/schema+json'
   },
   {
@@ -1387,6 +1417,14 @@ function callTool(name: string, rawArguments: unknown): unknown {
       return toolTextResult(markdown);
     }
     return toolTextResult(JSON.stringify(correlation, null, 2));
+  }
+
+  if (name === 'get_vi_preview_region_correlation') {
+    const regionCorrelation = buildViPreviewRegionCorrelationFromModel(model);
+    if (args.format === 'markdown') {
+      return toolTextResult(renderRegionCorrelationTable(regionCorrelation));
+    }
+    return toolTextResult(JSON.stringify(regionCorrelation, null, 2));
   }
 
   if (name === 'summarize_vi_comparison') {

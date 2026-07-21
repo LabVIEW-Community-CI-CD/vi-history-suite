@@ -5102,13 +5102,36 @@ Missing numeric IDs are intentional.
     and its schema is published in the semantic-schema registry — with each
     embedded correlation locked to the correlation schema id — so the offline
     validator accepts a real bundle and rejects a non-correlation payload.
+  - VHS-REQ-703.14: A pure, dependency-free foundation places a changed object as
+    a pixel region on the flat base/head preview rasters using ONLY the three
+    existing artifacts (base preview HTML, head preview HTML, and the LabVIEW
+    comparison report) with no VI authoring: a PNG-header reader recovers a
+    rendered `difference-image`'s intrinsic pixel size without decoding it, and a
+    region-correlation model pairs each change's diagram coordinate and pixel
+    size with the pixel regions returned by an injected preview-raster locator;
+    a change with no located region is retained as diagram-space-only and a
+    non-positive-confidence or zero-area placement is dropped, so no pixel
+    overlay is ever fabricated. A VI semantic PR review also emits the per-VI
+    region correlations as a dedicated, schema-registered
+    `vi-history-suite/vi-preview-region-correlations@v1` artifact, written only
+    when at least one reviewed VI carries a coordinate-bearing region and removed
+    from a reused output directory when this run has none.
+  - VHS-REQ-703.15: The VI semantic MCP surface exposes a pure, read-only tool
+    that projects a comparison report onto the pixel-region correlation model and
+    returns it to an agent (JSON by default or a Markdown table on request);
+    without an injected preview-raster locator every change is returned
+    diagram-space-only, the model's schema is published in the semantic-schema
+    registry and advertised as an MCP resource, and the tool is registered so the
+    tools/list and known-tool guards stay in agreement.
 - Agent Work Scope:
   - Keep the correlation builder pure, deterministic, and dependency-injected so
     it stays unit-testable without VS Code, a network, or a LabVIEW runtime; do
-    not render or read previews in this surface (that is a later iteration). Keep
-    pixel-precise region mapping out until the coordinate-frames preview export
-    exists. Never present a correlation as established when only one or neither
-    preview side is available.
+    not render or read previews in this surface (that is a later iteration).
+    Derive pixel-region placement only from the three existing artifacts (base
+    preview HTML, head preview HTML, and the comparison report) — do not author a
+    coordinate-frames export — and keep the pixel locator an injected boundary.
+    Never present a correlation as established when only one or neither preview
+    side is available, and never fabricate a pixel region that was not located.
 - Implementation References:
   - `src/semantic/viPreviewComparisonCorrelation.ts`
   - `src/semantic/viSemanticSchemas.ts`
@@ -5122,6 +5145,7 @@ Missing numeric IDs are intentional.
   - `src/dashboard/comparisonDetailItemGeometry.ts`
   - `src/semantic/viSemanticComparisonMcp.ts`
   - `src/cli/runViSemanticPrReview.ts`
+  - `src/semantic/viPreviewRegionCorrelation.ts`
 - Verification References:
   - `tests/unit/viPreviewComparisonCorrelation.test.ts`
   - `tests/unit/viSemanticPrReview.test.ts`
@@ -5130,6 +5154,7 @@ Missing numeric IDs are intentional.
   - `tests/unit/viPreviewCacheWarmerCli.test.ts`
   - `tests/unit/coordinateFramesAcceptance.test.ts`
   - `tests/unit/comparisonDetailItemGeometry.test.ts`
+  - `tests/unit/viPreviewRegionCorrelation.test.ts`
   - `tests/unit/viSemanticComparisonMcp.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
 - Change Guidance:

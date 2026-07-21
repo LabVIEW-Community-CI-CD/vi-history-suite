@@ -43,6 +43,11 @@ export const VI_SEMANTIC_PR_REVIEW_SCHEMA = 'vi-history-suite/vi-semantic-pr-rev
  */
 export { VI_PREVIEW_COMPARISON_CORRELATIONS_SCHEMA_ID as VI_PREVIEW_COMPARISON_CORRELATIONS_SCHEMA } from './viSemanticSchemas';
 import { VI_PREVIEW_COMPARISON_CORRELATIONS_SCHEMA_ID } from './viSemanticSchemas';
+import { VI_PREVIEW_REGION_CORRELATIONS_SCHEMA_ID } from './viSemanticSchemas';
+import {
+  buildViPreviewRegionCorrelationFromModel,
+  type ViPreviewRegionCorrelation
+} from './viPreviewRegionCorrelation';
 
 /** One VI's correlation within the correlations artifact. */
 export interface ViPreviewComparisonCorrelationEntry {
@@ -81,6 +86,58 @@ export function buildViPreviewComparisonCorrelationsArtifact(
   }
   return {
     schema: VI_PREVIEW_COMPARISON_CORRELATIONS_SCHEMA_ID,
+    repositoryRoot: review.repositoryRoot,
+    baseHash: review.baseHash,
+    selectedHash: review.selectedHash,
+    correlatedViCount: entries.length,
+    entries
+  };
+}
+
+/** One VI's pixel-region correlation within the region-correlations artifact. */
+export interface ViPreviewRegionCorrelationArtifactEntry {
+  relativePath: string;
+  regionCorrelation: ViPreviewRegionCorrelation;
+}
+
+/** The versioned bundle of per-VI pixel-region correlations for a review. */
+export interface ViPreviewRegionCorrelationsArtifact {
+  schema: typeof VI_PREVIEW_REGION_CORRELATIONS_SCHEMA_ID;
+  repositoryRoot: string;
+  baseHash: string;
+  selectedHash: string;
+  /** Number of VIs in this bundle (each carries a region correlation with entries). */
+  correlatedViCount: number;
+  entries: ViPreviewRegionCorrelationArtifactEntry[];
+}
+
+/**
+ * Collects the per-VI pixel-region correlations (VHS-REQ-703.14) from a completed
+ * review into a versioned, first-class artifact, deriving each VI's region
+ * correlation straight from its comparison model's detail-item geometry (diagram
+ * space; no locator, no fabricated pixel origin). Pure and deterministic. Only
+ * VIs whose model yields at least one coordinate-bearing region are included, and
+ * the artifact is `undefined` when none do — so a caller writes it only when it
+ * has content.
+ */
+export function buildViPreviewRegionCorrelationsArtifact(
+  review: ViSemanticPrReview
+): ViPreviewRegionCorrelationsArtifact | undefined {
+  const entries: ViPreviewRegionCorrelationArtifactEntry[] = [];
+  for (const entry of review.entries) {
+    if (entry.status !== 'completed') {
+      continue;
+    }
+    const regionCorrelation = buildViPreviewRegionCorrelationFromModel(entry.model);
+    if (regionCorrelation.entries.length > 0) {
+      entries.push({ relativePath: entry.relativePath, regionCorrelation });
+    }
+  }
+  if (entries.length === 0) {
+    return undefined;
+  }
+  return {
+    schema: VI_PREVIEW_REGION_CORRELATIONS_SCHEMA_ID,
     repositoryRoot: review.repositoryRoot,
     baseHash: review.baseHash,
     selectedHash: review.selectedHash,

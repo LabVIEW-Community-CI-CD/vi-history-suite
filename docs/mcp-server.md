@@ -26,7 +26,7 @@ configure.
 
 ## Tools
 
-The server exposes 17 tools plus 3 guided prompts and 4 schema resources. Fourteen
+The server exposes 18 tools plus 3 guided prompts and 4 schema resources. Fifteen
 tools operate without running a comparison (Git, supplied data, a local
 preview-cache directory, or read-only runtime/environment probes); three invoke a
 real LabVIEW comparison and therefore need a comparison runtime (host LabVIEW or a
@@ -37,6 +37,7 @@ Docker LabVIEW image) and may take minutes.
 | `summarize_vi_comparison` | Concise "what changed" narrative for a comparison report. | None | `reportHtml` |
 | `get_vi_semantic_comparison` | Full `vi-history-suite/vi-semantic-comparison@v1` model (changed surfaces, attributes, detail sections, totals, narrative). | None | `reportHtml` |
 | `get_vi_preview_comparison_correlation` | `vi-history-suite/vi-preview-comparison-correlation@v1` model correlating a comparison report with its base/head previews (per-surface change kinds, coordinate-bearing per-object changes in diagram space, preview availability, narrative). Caller may supply optional `previews`. | None | `reportHtml` |
+| `get_vi_preview_region_correlation` | `vi-history-suite/vi-preview-region-correlation@v1` model placing each changed object as a pixel region on the base/head preview rasters from the comparison report (diagram-space-only without an injected locator; never a fabricated overlay). | None | `reportHtml` |
 | `compare_vi_revisions` | Runs a LabVIEW comparison between two Git revisions and returns the comparison model. | Comparison runtime | `repositoryRoot`, `relativePath`, `baseHash`, `selectedHash` |
 | `summarize_vi_history` | Walks a VI's recent revisions, compares adjacent pairs, and returns a `vi-history-suite/vi-semantic-history@v1` evolution timeline. | Comparison runtime | `repositoryRoot`, `relativePath` |
 | `index_repository_vis` | Surveys tracked VIs and returns a `vi-history-suite/vi-repository-index@v1` index (revision count and latest change, activity-ranked). | None (pure Git) | `repositoryRoot` |
@@ -195,6 +196,12 @@ this artifact (or call the `get_vi_preview_comparison_correlation` tool) to
 cross-reference *what changed* (the comparison) with *where/how it looks* (the
 previews) without parsing the whole review. The bundle is omitted when no VI
 carries a correlation (e.g. no preview provider was wired).
+
+`--out <dir>` likewise writes a `vi-preview-region-correlations.json`
+(`vi-history-suite/vi-preview-region-correlations@v1`) — the per-VI pixel-region
+correlations derived from each VI's comparison report (diagram-space object
+coordinates; no fabricated pixel origin) — when at least one changed VI carries a
+coordinate-bearing object, and removes a stale one when this run has none.
 
 When a changed VI cannot be compared, the review surfaces the reason (e.g.
 `failed (command-exited-nonzero)`) in the summary table and a per-VI detail
