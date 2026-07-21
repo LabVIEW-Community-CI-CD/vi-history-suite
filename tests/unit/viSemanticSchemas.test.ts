@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 import { VI_REPOSITORY_INDEX_SCHEMA } from '../../src/semantic/viRepositoryIndex';
 import { VI_SEMANTIC_HISTORY_SCHEMA } from '../../src/semantic/viSemanticHistory';
+import { VI_PREVIEW_COMPARISON_CORRELATION_SCHEMA } from '../../src/semantic/viPreviewComparisonCorrelation';
 import {
   buildViSemanticComparisonModelFromHtml,
   VI_SEMANTIC_COMPARISON_SCHEMA
@@ -12,6 +13,7 @@ import {
 import {
   validateAgainstJsonSchema,
   validateViSemanticDocument,
+  VI_PREVIEW_COMPARISON_CORRELATION_SCHEMA_ID,
   VI_REPOSITORY_INDEX_SCHEMA_ID,
   VI_SEMANTIC_COMPARISON_JSON_SCHEMA,
   VI_SEMANTIC_COMPARISON_SCHEMA_ID,
@@ -24,11 +26,13 @@ describe('viSemanticSchemas registry', () => {
     expect(VI_SEMANTIC_COMPARISON_SCHEMA_ID).toBe(VI_SEMANTIC_COMPARISON_SCHEMA);
     expect(VI_SEMANTIC_HISTORY_SCHEMA_ID).toBe(VI_SEMANTIC_HISTORY_SCHEMA);
     expect(VI_REPOSITORY_INDEX_SCHEMA_ID).toBe(VI_REPOSITORY_INDEX_SCHEMA);
+    expect(VI_PREVIEW_COMPARISON_CORRELATION_SCHEMA_ID).toBe(VI_PREVIEW_COMPARISON_CORRELATION_SCHEMA);
     expect(Object.keys(VI_SEMANTIC_SCHEMAS).sort()).toEqual(
       [
         VI_SEMANTIC_COMPARISON_SCHEMA_ID,
         VI_SEMANTIC_HISTORY_SCHEMA_ID,
-        VI_REPOSITORY_INDEX_SCHEMA_ID
+        VI_REPOSITORY_INDEX_SCHEMA_ID,
+        VI_PREVIEW_COMPARISON_CORRELATION_SCHEMA_ID
       ].sort()
     );
   });
