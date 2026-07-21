@@ -717,5 +717,6 @@ VHS-REQ-700,Software,Active,srs.md#vhs-req-700-maintainer-governance-automation-
 VHS-REQ-701,Software,Active,srs.md#vhs-req-701-traceability-gate-fail-closed-on-retired-classifications,,,docs/requirements/srs.md
 VHS-REQ-702,Software,Active,srs.md#vhs-req-702-vi-semantic-change-classification,,,docs/requirements/srs.md
 VHS-REQ-703,Software,Active,srs.md#vhs-req-703-vi-preview-and-comparison-correlation,,,docs/requirements/srs.md
+VHS-REQ-704,Software,Active,srs.md#vhs-req-704-authoritative-project-board-auto-population,,,docs/requirements/srs.md
 VHS-REQ-697,Software,Active,srs.md#vhs-req-697-agent-environment-consistency-gate,,,docs/requirements/srs.md
 VHS-REQ-699,Software,Active,srs.md#vhs-req-699-single-pass-comparison-preview-pipeline,,,docs/requirements/srs.md

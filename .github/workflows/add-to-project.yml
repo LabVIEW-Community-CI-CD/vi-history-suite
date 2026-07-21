@@ -1,0 +1,65 @@
+name: Add To Project Board
+
+# VHS-REQ-704: keep the authoritative progress board (org Project #4 "vihs")
+# automatically populated. Every newly opened issue and pull request is added to
+# Project #4 so nothing depends on a human/agent remembering to add it. The
+# duplicate org Project #3 "VIHS" has its own built-in auto-add; this workflow
+# guarantees the AUTHORITATIVE board (#4) is populated regardless.
+#
+# Board writes require a maintainer-provisioned Projects-scoped secret
+# (CONTROL_PLANE_PROJECT_TOKEN) — the same secret the control-plane loop uses for
+# Project #4 writes — because the ambient GITHUB_TOKEN cannot edit an org Project.
+# The add step is gated on that secret via a job `env` (the `secrets` context is
+# not available in step `if:`), so it is a safe no-op when the secret is unset.
+#
+# pull_request_target (not pull_request) is required so the run uses the base
+# repo's secret even for fork PRs; this workflow runs NO PR code (it only calls
+# the gh CLI with the event's issue/PR URL), so it does not expose the secret to
+# untrusted code.
+
+on:
+  issues:
+    types: [opened]
+  pull_request_target:
+    types: [opened]
+  workflow_dispatch:
+    inputs:
+      content_url:
+        description: 'Issue or PR URL to add to Project #4 (backfill).'
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.issue.number || github.event.pull_request.number || github.event.inputs.content_url }}
+  cancel-in-progress: false
+
+jobs:
+  add-to-project:
+    name: Add to Project #4 (vihs)
+    runs-on: ubuntu-latest
+    # Hoist the Projects-scoped secret into env so the add step can gate on it:
+    # the `secrets` context is unavailable in step `if:` conditions, but `env`
+    # is. When the secret is unset this is empty and the add step is skipped.
+    env:
+      CONTROL_PLANE_PROJECT_TOKEN: ${{ secrets.CONTROL_PLANE_PROJECT_TOKEN }}
+    steps:
+      - name: Add opened issue or PR to Project #4
+        if: ${{ env.CONTROL_PLANE_PROJECT_TOKEN != '' }}
+        env:
+          GH_TOKEN: ${{ env.CONTROL_PLANE_PROJECT_TOKEN }}
+          # The content URL comes from the triggering event, or the dispatch
+          # input for a manual backfill. Only one is ever set.
+          CONTENT_URL: ${{ github.event.issue.html_url || github.event.pull_request.html_url || github.event.inputs.content_url }}
+        run: |
+          set -euo pipefail
+          if [ -z "${CONTENT_URL:-}" ]; then
+            echo "::warning::No issue/PR URL resolved from the event; nothing to add."
+            exit 0
+          fi
+          # Project #4 "vihs" under the LabVIEW-Community-CI-CD org. item-add is
+          # idempotent: re-adding an already-present item is a no-op, so a race
+          # with the org's built-in automation cannot create duplicates.
+          echo "Adding $CONTENT_URL to Project #4 (vihs)"
+          gh project item-add 4 --owner LabVIEW-Community-CI-CD --url "$CONTENT_URL"
