@@ -707,9 +707,29 @@ async function buildPreviewPairProvider(
     workingTreeSha = undefined;
   }
 
+  // The peek is only valid for the revision physically checked out on disk, but
+  // --base/--head are refs (a branch, a tag, "HEAD", or a short/long SHA), so a
+  // raw string compare to the working-tree SHA would miss for e.g. "--head HEAD"
+  // or a branch name. Resolve each side's ref to its canonical commit SHA first,
+  // then compare SHA-to-SHA. Resolution failures fall back to unavailable.
+  const resolveCommitSha = async (revision: string): Promise<string | undefined> => {
+    try {
+      return String(
+        await runGit(['rev-parse', '--verify', `${revision}^{commit}`], repositoryRoot, 'utf8')
+      ).trim();
+    } catch {
+      return undefined;
+    }
+  };
+
   return createCachePeekPreviewPairProvider({
     peekRevisionPreview: async (input) => {
-      if (workingTreeSha === undefined || input.revision !== workingTreeSha) {
+      const revisionSha = await resolveCommitSha(input.revision);
+      if (
+        workingTreeSha === undefined ||
+        revisionSha === undefined ||
+        revisionSha !== workingTreeSha
+      ) {
         return { available: false };
       }
       const viFilePath = path.join(input.repositoryRoot, input.relativePath);
