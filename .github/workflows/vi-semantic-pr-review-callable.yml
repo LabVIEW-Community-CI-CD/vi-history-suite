@@ -230,7 +230,7 @@ jobs:
           # will compare/correlate — not a different diff-order slice. Keep this cap
           # in sync with the CLI's DEFAULT_MAX_VIS (50).
           REVIEW_MAX_VIS=50
-          mapfile -t changed_vis < <(git -C target-clone diff --name-only "$REVIEW_MERGE_BASE" "$REVIEW_HEAD_SHA" | grep -iE '\.(vi|vit|vim|ctl)$' | LC_ALL=C sort | head -n "$REVIEW_MAX_VIS" || true)
+          mapfile -t changed_vis < <(git -C target-clone diff --name-only --diff-filter=d "$REVIEW_MERGE_BASE" "$REVIEW_HEAD_SHA" | grep -iE '\.(vi|vit|vim|ctl)$' | LC_ALL=C sort | head -n "$REVIEW_MAX_VIS" || true)
           if [ "${#changed_vis[@]}" -eq 0 ]; then
             echo "No changed VIs to warm; correlation will report previews unavailable."
             exit 0
