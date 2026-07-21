@@ -24,14 +24,19 @@ on:
         default: false
         type: boolean
       correlate_previews:
-        description: 'Attach the deterministic preview⇄comparison correlation (VHS-REQ-703) by peeking a preview cache. Correlation is attempted only when preview_cache_dir is also non-empty; an empty preview_cache_dir warns and skips correlation (non-fatal). Cache-only peek adds no runtime cost and reports a miss honestly. Off by default.'
+        description: 'Attach the deterministic preview⇄comparison correlation (VHS-REQ-703) by peeking a preview cache. Uses preview_cache_dir when non-empty; otherwise, if auto_warm_changed_previews is on, the changed VIs are warmed into a temp cache first. With neither, correlation warns and skips (non-fatal). Off by default.'
         required: false
         default: false
         type: boolean
       preview_cache_dir:
-        description: 'Path (in the runner workspace) to a content-addressed preview cache to peek for correlation (VHS-REQ-703.4). Used only when correlate_previews is true and this path is non-empty; empty skips correlation.'
+        description: 'Path (in the runner workspace) to a content-addressed preview cache to peek for correlation (VHS-REQ-703.4). Used only when correlate_previews is true and this path is non-empty; empty falls back to auto-warm (if enabled) or skips.'
         required: false
         default: ''
+      auto_warm_changed_previews:
+        description: 'When correlate_previews is true and preview_cache_dir is empty, render the changed VIs'' previews into a temp cache first so correlation gets a head-side hit (VHS-REQ-703.6). Adds a bounded LabVIEW render per changed VI. Off by default.'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -56,5 +61,6 @@ jobs:
       create_commit_status: ${{ inputs.create_commit_status }}
       correlate_previews: ${{ inputs.correlate_previews }}
       preview_cache_dir: ${{ inputs.preview_cache_dir }}
+      auto_warm_changed_previews: ${{ inputs.auto_warm_changed_previews }}
     secrets:
       VI_REVIEW_TARGET_TOKEN: ${{ secrets.VI_REVIEW_TARGET_TOKEN }}

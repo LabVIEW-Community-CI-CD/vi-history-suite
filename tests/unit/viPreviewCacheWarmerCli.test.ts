@@ -84,6 +84,15 @@ describe('parseArgs (VHS-REQ-671.6)', () => {
     expect(parsed.cacheDirectory).toBe('/c');
     expect('provider' in parsed).toBe(false);
   });
+
+  it('collects repeatable --vi paths into viFilePaths and ignores empty values (VHS-REQ-703.6)', () => {
+    const parsed = parseArgs(['--vi', 'a/One.vi', '--vi', 'b/Two.vi', '--vi', '']);
+    expect(parsed.viFilePaths).toEqual(['a/One.vi', 'b/Two.vi']);
+  });
+
+  it('leaves viFilePaths undefined when no --vi is given (VHS-REQ-703.6)', () => {
+    expect(parseArgs(['--cache-dir', '/c']).viFilePaths).toBeUndefined();
+  });
 });
 
 describe('runViPreviewCacheWarm (VHS-REQ-671.3)', () => {
@@ -147,6 +156,49 @@ describe('runViPreviewCacheWarm (VHS-REQ-671.3)', () => {
         failureReason: 'command-exited-nonzero'
       }
     ]);
+  });
+
+  it('warms only the explicit viFilePaths, resolved against the repo root, skipping enumeration (VHS-REQ-703.6)', async () => {
+    const listViFiles = vi.fn(async () => ['/repo/should/not/enumerate.vi']);
+    const rendered: string[] = [];
+    const deps: RunViPreviewCacheWarmDeps = {
+      listViFiles,
+      resolveRuntime: async () => READY,
+      renderOne: async (viFilePath: string) => {
+        rendered.push(viFilePath);
+        return { outcome: 'rendered', html: `<html>${IMG}</html>`, cached: false, cacheKey: 'k' };
+      }
+    };
+
+    const packet = await runViPreviewCacheWarm(
+      { ...baseOptions(), viFilePaths: ['changed/A.vi', 'changed/B.vi'] },
+      deps
+    );
+
+    // Enumeration is skipped entirely; only the explicit VIs are rendered,
+    // resolved against the repository root.
+    expect(listViFiles).not.toHaveBeenCalled();
+    expect(rendered).toEqual(['/repo/changed/A.vi', '/repo/changed/B.vi']);
+    expect(packet.entries.map((entry) => entry.relativePath)).toEqual(['changed/A.vi', 'changed/B.vi']);
+  });
+
+  it('applies --limit to the explicit viFilePaths scope (VHS-REQ-703.6)', async () => {
+    const rendered: string[] = [];
+    const deps: RunViPreviewCacheWarmDeps = {
+      listViFiles: async () => [],
+      resolveRuntime: async () => READY,
+      renderOne: async (viFilePath: string) => {
+        rendered.push(viFilePath);
+        return { outcome: 'rendered', html: `<html>${IMG}</html>`, cached: false, cacheKey: 'k' };
+      }
+    };
+
+    await runViPreviewCacheWarm(
+      { ...baseOptions(), viFilePaths: ['a.vi', 'b.vi', 'c.vi'], limit: 2 },
+      deps
+    );
+
+    expect(rendered).toEqual(['/repo/a.vi', '/repo/b.vi']);
   });
 
   it('maps the content-addressed cache key from the render result into the manifest (VHS-REQ-671.4)', async () => {
