@@ -194,6 +194,12 @@ describe('runViSemanticPrReview parseArgs', () => {
       '--base-tree-dir requires --correlate-previews'
     );
   });
+
+  it('rejects a valueless --base-tree-dir (VHS-REQ-703.7)', () => {
+    expect(() =>
+      parseArgs([...BASE, '--correlate-previews', '--preview-cache-dir', '/tmp/cache', '--base-tree-dir'])
+    ).toThrow('--base-tree-dir requires a directory path');
+  });
 });
 
 describe('runViSemanticPrReview loadReviewFromFile', () => {

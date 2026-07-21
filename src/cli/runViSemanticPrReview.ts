@@ -195,8 +195,12 @@ export function parseArgs(argv: string[]): ParsedArgs {
       ? previewCacheDirRaw
       : undefined;
   const baseTreeDirRaw = values.get('base-tree-dir');
-  const baseTreeDir =
-    baseTreeDirRaw !== undefined && baseTreeDirRaw !== 'true' ? baseTreeDirRaw : undefined;
+  if (baseTreeDirRaw === 'true') {
+    // A bare --base-tree-dir with no value would otherwise be silently treated as
+    // unset; fail fast so a caller who forgot the path sees the misconfiguration.
+    throw new Error('--base-tree-dir requires a directory path');
+  }
+  const baseTreeDir = baseTreeDirRaw !== undefined ? baseTreeDirRaw : undefined;
   if (correlatePreviews) {
     // Correlation reads the content-addressed preview cache; without a cache
     // directory there is nothing to peek, so fail fast rather than silently
