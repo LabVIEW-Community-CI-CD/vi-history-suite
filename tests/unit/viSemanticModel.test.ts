@@ -213,6 +213,42 @@ describe('viSemanticModel', () => {
     expect(model.narrative).toContain('1 detailed change across 1 section');
   });
 
+  it('populates additive change-classification fields (VHS-REQ-702.4)', () => {
+    const report = parseNiComparisonReportHtml(
+      `<h1 class="report-title">R</h1>
+       <ul><li class="checked">Block Diagram Functional</li></ul>
+       <h2 class="section-header">Detailed Information</h2>
+       <details><summary class="difference-heading">3. Block Diagram objects</summary>
+         <ol>
+           <li class="diff-detail">SubVI "VisibleTextMarker.vi" - added at (1570,358)</li>
+           <li class="diff-detail">wiring changes</li>
+           <li class="diff-detail">Boolean Constant "Visible" - added at (1538,393)</li>
+         </ol>
+       </details>`,
+      'report.html'
+    );
+    const model = buildViSemanticComparisonModel({ report });
+
+    expect(model.schema).toBe(VI_SEMANTIC_COMPARISON_SCHEMA);
+    expect(model.riskLevel).toBe('high');
+    expect(model.riskRationale).toContain('dependency');
+    expect(model.changeKinds).toEqual(['dependency', 'behavioral', 'structural']);
+    expect(model.classificationConfidence).toBe('high');
+    expect(model.classification).toEqual([
+      { surface: 'block-diagram', kind: 'dependency', text: 'SubVI "VisibleTextMarker.vi" - added at (1570,358)' },
+      { surface: 'block-diagram', kind: 'behavioral', text: 'wiring changes' },
+      { surface: 'block-diagram', kind: 'structural', text: 'Boolean Constant "Visible" - added at (1538,393)' }
+    ]);
+  });
+
+  it('omits classification detail but stays low-risk when there are no differences (VHS-REQ-702.4)', () => {
+    const model = buildViSemanticComparisonModelFromHtml(emptyReportHtml());
+    expect(model.classification).toEqual([]);
+    expect(model.changeKinds).toEqual([]);
+    expect(model.riskLevel).toBe('low');
+    expect(model.classificationConfidence).toBe('low');
+  });
+
   it('derives changed surfaces from detail headings across multiple surfaces', () => {
     const report = parseNiComparisonReportHtml(
       `<h1 class="report-title">R</h1>

@@ -13,6 +13,7 @@ import {
   validateAgainstJsonSchema,
   validateViSemanticDocument,
   VI_REPOSITORY_INDEX_SCHEMA_ID,
+  VI_SEMANTIC_COMPARISON_JSON_SCHEMA,
   VI_SEMANTIC_COMPARISON_SCHEMA_ID,
   VI_SEMANTIC_HISTORY_SCHEMA_ID,
   VI_SEMANTIC_SCHEMAS
@@ -95,6 +96,34 @@ describe('validateViSemanticDocument', () => {
       { revisions: { baseHash: 'a', selectedHash: 'b' } }
     );
     expect(validateViSemanticDocument(model)).toEqual({ valid: true, errors: [] });
+  });
+
+  it('keeps VHS-REQ-702 classification fields additive/optional on @v1', () => {
+    // The comparison schema must NOT require the new fields, so pre-enrichment
+    // documents (and @v1 consumers) stay valid.
+    const required = (VI_SEMANTIC_COMPARISON_JSON_SCHEMA as { required: string[] }).required;
+    for (const field of ['classification', 'changeKinds', 'riskLevel', 'riskRationale', 'classificationConfidence']) {
+      expect(required).not.toContain(field);
+    }
+    // A model carrying the classification fields still validates...
+    const enriched = buildViSemanticComparisonModelFromHtml(
+      `<h1 class="report-title">R</h1>
+       <ul><li class="checked">Block Diagram Functional</li></ul>
+       <h2 class="section-header">Detailed Information</h2>
+       <details><summary class="difference-heading">3. Block Diagram objects</summary>
+         <ol><li class="diff-detail">wiring changes</li></ol></details>`,
+      {}
+    );
+    expect(enriched.riskLevel).toBe('high');
+    expect(validateViSemanticDocument(enriched)).toEqual({ valid: true, errors: [] });
+    // ...and a legacy document WITHOUT them is still valid.
+    const legacy = { ...enriched } as Record<string, unknown>;
+    delete legacy.classification;
+    delete legacy.changeKinds;
+    delete legacy.riskLevel;
+    delete legacy.riskRationale;
+    delete legacy.classificationConfidence;
+    expect(validateViSemanticDocument(legacy).valid).toBe(true);
   });
 
   it('validates a history document', () => {

@@ -24,6 +24,20 @@ const CHANGE_SURFACE_ENUM = [
   'other'
 ];
 
+// Semantic Diff Intelligence (VHS-REQ-702) enums. Additive to @v1.
+const CHANGE_KIND_ENUM = [
+  'structural',
+  'behavioral',
+  'interface',
+  'dependency',
+  'cosmetic',
+  'unknown'
+];
+
+const RISK_LEVEL_ENUM = ['low', 'medium', 'high'];
+
+const CLASSIFICATION_CONFIDENCE_ENUM = ['high', 'low'];
+
 const STRING_ARRAY = { type: 'array', items: { type: 'string' } } as const;
 
 export const VI_SEMANTIC_COMPARISON_JSON_SCHEMA = {
@@ -118,6 +132,25 @@ export const VI_SEMANTIC_COMPARISON_JSON_SCHEMA = {
         excludedAttributeCount: { type: 'integer' }
       }
     },
+    // Semantic Diff Intelligence (VHS-REQ-702): additive OPTIONAL classification
+    // fields. Not in `required` so @v1 consumers and cached documents predating
+    // the enrichment stay valid. Heuristic over NI detail text + attribute flags.
+    classification: {
+      type: 'array',
+      items: {
+        type: 'object',
+        required: ['surface', 'kind', 'text'],
+        properties: {
+          surface: { type: 'string', enum: CHANGE_SURFACE_ENUM },
+          kind: { type: 'string', enum: CHANGE_KIND_ENUM },
+          text: { type: 'string' }
+        }
+      }
+    },
+    changeKinds: { type: 'array', items: { type: 'string', enum: CHANGE_KIND_ENUM } },
+    riskLevel: { type: 'string', enum: RISK_LEVEL_ENUM },
+    riskRationale: { type: 'string' },
+    classificationConfidence: { type: 'string', enum: CLASSIFICATION_CONFIDENCE_ENUM },
     narrative: { type: 'string' }
   }
 } as const;
