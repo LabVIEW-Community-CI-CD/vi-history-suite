@@ -188,6 +188,11 @@ export function renderViSemanticPrReviewMarkdown(
   for (const entry of review.entries) {
     if (entry.status === 'completed' && entry.hasDifferences) {
       lines.push(`#### ${escapeCell(entry.relativePath)}`, '', renderViSemanticComparisonMarkdown(entry.model), '');
+      // VHS-REQ-703 (epic #2262): cite the base/head preview correlation when
+      // present. Guarded so a review without a preview provider renders as before.
+      if (entry.correlation) {
+        lines.push(`- **Preview correlation:** ${escapeCell(entry.correlation.narrative)}`, '');
+      }
       const images = options.imagesByVi?.get(entry.relativePath) ?? [];
       if (images.length > 0) {
         lines.push(

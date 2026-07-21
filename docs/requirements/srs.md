@@ -5010,6 +5010,13 @@ Missing numeric IDs are intentional.
     narrative that cites both the comparison classification and the preview
     availability, honestly naming any changed surface that could not be
     correlated to a base+head preview pair.
+  - VHS-REQ-703.3: The VI semantic PR-review flow resolves the base/head preview
+    references for each completed comparison through an injected provider
+    (defaulting to both preview sides unavailable so the review stays
+    runtime-free), attaches the resulting correlation to the completed review
+    entry, and the review Markdown surfaces the correlation narrative per changed
+    VI; the correlation is optional and additive, so a review built without a
+    preview provider renders exactly as before.
 - Agent Work Scope:
   - Keep the correlation builder pure, deterministic, and dependency-injected so
     it stays unit-testable without VS Code, a network, or a LabVIEW runtime; do
@@ -5020,8 +5027,11 @@ Missing numeric IDs are intentional.
 - Implementation References:
   - `src/semantic/viPreviewComparisonCorrelation.ts`
   - `src/semantic/viSemanticSchemas.ts`
+  - `src/semantic/viSemanticPrReview.ts`
+  - `src/semantic/viSemanticReviewMarkdown.ts`
 - Verification References:
   - `tests/unit/viPreviewComparisonCorrelation.test.ts`
+  - `tests/unit/viSemanticPrReview.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
 - Change Guidance:
   - Keep the correlation surface-level and deterministic until the
