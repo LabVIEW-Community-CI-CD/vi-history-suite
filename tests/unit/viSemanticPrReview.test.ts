@@ -87,6 +87,27 @@ describe('review report artifacts (VHS-REQ-661.10)', () => {
     }
   });
 
+  it('omits reportFilePath when the runtime path is empty (e.g. a cache hit) (VHS-REQ-661.10)', async () => {
+    const cacheHit: CompareViRevisionsResult = {
+      status: 'completed',
+      hasDifferences: true,
+      model: makeModel({ vi: { title: 'A.vi' }, hasDifferences: true }),
+      runtime: { provider: 'linux-container', state: 'succeeded', reportFilePath: '' }
+    };
+    const review = await buildViSemanticPrReview(
+      { repositoryRoot: '/repo', baseHash: 'a', selectedHash: 'b' },
+      deps(['src/A.vi'], { 'src/A.vi': cacheHit })
+    );
+    const [entry] = review.entries;
+    expect(entry.status).toBe('completed');
+    if (entry.status === 'completed') {
+      // Documented as "when available" — an empty path must not masquerade as
+      // present, so downstream report-copy/image publishing skips it cleanly.
+      expect(entry.reportFilePath).toBeUndefined();
+    }
+    expect(planReviewReportCopies(review)).toEqual([]);
+  });
+
   it('plans report copies only for completed entries with a report, with safe names', async () => {
     const review = await buildViSemanticPrReview(
       { repositoryRoot: '/repo', baseHash: 'a', selectedHash: 'b' },

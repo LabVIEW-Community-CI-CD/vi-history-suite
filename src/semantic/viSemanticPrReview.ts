@@ -193,12 +193,16 @@ function toEntry(
   correlation?: ViPreviewComparisonCorrelation
 ): ViSemanticPrReviewEntry {
   if (result.status === 'completed') {
+    const reportFilePath =
+      typeof result.runtime.reportFilePath === 'string' && result.runtime.reportFilePath.length > 0
+        ? result.runtime.reportFilePath
+        : undefined;
     return {
       relativePath,
       status: 'completed',
       hasDifferences: result.hasDifferences,
       model: result.model,
-      reportFilePath: result.runtime.reportFilePath,
+      ...(reportFilePath ? { reportFilePath } : {}),
       ...(correlation ? { correlation } : {})
     };
   }
