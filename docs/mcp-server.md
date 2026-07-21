@@ -91,6 +91,10 @@ multiple tools — a prompt is never a 1:1 wrapper over a single tool.
 | `review_pull_request` | Scope with `list_changed_vis`, then `build_vi_pr_review` (Markdown), with a `get_runtime_health` fallback. | `repositoryRoot`, `baseHash`, `selectedHash`, `maxVis?` |
 | `explain_vi_history` | Narrate `summarize_vi_history`, with a `get_runtime_health` fallback. | `repositoryRoot`, `relativePath`, `maxRevisions?` |
 | `check_compare_readiness` | Combine `get_runtime_health` + `get_preview_diagnostics` into a readiness verdict. | `platform?` |
+| `survey_repository_vis` | Map tracked VIs by activity, then narrate the most-active (or chosen) VI's history (chains `index_repository_vis` + `summarize_vi_history`). | `repositoryRoot`, `maxVis?`, `relativePath?` |
+| `inspect_vi_change` | Deep-dive one VI's change between two revisions: gate on runtime health, then run and narrate the full semantic comparison (chains `get_runtime_health` + `compare_vi_revisions`). | `repositoryRoot`, `relativePath`, `baseHash`, `selectedHash` |
+| `audit_preview_cache` | Health-check a VI-preview render cache directory and surface flagged entries (chains `diagnose_preview_cache` + `search_preview_cache`, correlated with `get_preview_diagnostics`). | `cacheDirectory`, `platform?` |
+| `diagnose_runtime_cache` | Diagnose whether the active preview runtime is populating a healthy render cache — distinguishing a cold cache from a broken runtime or an error-poisoned cache (chains `get_preview_diagnostics` + `get_runtime_health` + `diagnose_preview_cache` + `search_preview_cache`). | `cacheDirectory`, `platform?` |
 
 `prompts/get` validates required arguments through the same `-32602` contract as
 tools (a missing required argument returns `data.issues` naming the field).
