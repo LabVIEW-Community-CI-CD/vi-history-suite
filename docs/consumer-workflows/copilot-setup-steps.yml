@@ -1,0 +1,135 @@
+# Copilot cloud-agent setup steps — consumer template
+#
+# Copy this file into your LabVIEW repository at
+# `.github/workflows/copilot-setup-steps.yml` so a GitHub Copilot cloud
+# (coding) agent working issues/PRs in that repo can launch the shipped
+# vi-history-suite VI semantic-comparison MCP server and use its LIVE tools
+# (`compare_vi_revisions`, `build_vi_pr_review`) against a real NI LabVIEW
+# comparison runtime (VHS-REQ-705).
+#
+# Why a setup-steps workflow:
+#   * The Copilot coding agent runs behind an integrated firewall, so all
+#     network-heavy preparation — cloning vi-history-suite, `npm ci` to build
+#     `out/`, and `docker pull` of the multi-GB NI LabVIEW image — MUST happen
+#     here, in `copilot-setup-steps`, which runs BEFORE the agent starts and
+#     before the firewall is applied. Anything not prepared here is unreachable
+#     once the agent phase begins.
+#   * GitHub requires this file to define exactly ONE job named
+#     `copilot-setup-steps` (any other job name is ignored). The job must run on
+#     an Ubuntu x64 runner and finish within 59 minutes.
+#
+# What the agent still needs (NOT in this file — configured once in repo
+# Settings -> Copilot -> coding agent -> MCP servers, see the runbook
+# `docs/consumer-workflows/copilot-cloud-agent-mcp-runbook.md`):
+#   * The `mcpServers` JSON that launches
+#     `node <VIHS_HOME>/out/cli/runViSemanticMcpServer.js` over stdio and
+#     allowlists the tools. The cloud agent supports MCP *tools* only (not
+#     resources or prompts).
+#   * Any secrets the tools need must be repository Copilot "Agents" secrets
+#     prefixed `COPILOT_MCP_` to be exposed to the MCP process.
+#
+# Hard requirement (VHS-REQ-705): this setup FAILS LOUDLY if Docker or the NI
+# LabVIEW image cannot be made available. There is no silent read-only degrade —
+# a consumer that cannot run a real comparison must see the setup fail here
+# rather than discover it mid-task when a tool call errors.
+
+name: Copilot Setup Steps
+
+# Lets you exercise the exact preparation the coding agent will run, from the
+# Actions tab, without assigning an issue to the agent.
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  # GitHub only honors a job with this exact id for the Copilot coding agent.
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+    # Bounded well under the 59-minute cap; the NI image pull dominates.
+    timeout-minutes: 59
+    env:
+      # Pin the vi-history-suite ref the agent's MCP server is built from, so a
+      # consumer gets a reproducible, reviewed toolset instead of a moving
+      # `develop`. Bump deliberately when adopting a new release.
+      VIHS_REF: develop
+      # The canonical <version>-linux NI LabVIEW image the comparison runtime
+      # uses. Keep in lockstep with vi-history-suite's DEFAULT_LINUX_CONTAINER_IMAGE.
+      CONTAINER_IMAGE_VERSION: 2026q1
+      # A stable absolute path the repo-settings MCP JSON points at
+      # (`node $VIHS_HOME/out/cli/runViSemanticMcpServer.js`). Under $HOME so it
+      # persists into the agent work phase and is writable by snap/native Docker.
+      VIHS_HOME: ${{ github.workspace }}/.vi-history-suite
+
+    steps:
+      - name: Clone vi-history-suite (pinned)
+        uses: actions/checkout@v7
+        with:
+          repository: LabVIEW-Community-CI-CD/vi-history-suite
+          ref: ${{ env.VIHS_REF }}
+          path: .vi-history-suite
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      - name: Build the MCP server (out/)
+        working-directory: .vi-history-suite
+        run: |
+          # Build the shipped MCP server the repo-settings JSON launches. `npm
+          # ci` + `npm run compile` is the same path CI uses, so `out/` matches
+          # a reviewed build. This runs BEFORE the firewall, so the registry is
+          # reachable here and not during the agent phase.
+          npm ci
+          npm run compile
+          # Fail loudly now if the entrypoint the MCP JSON references is missing,
+          # rather than letting the agent fail to launch the server later.
+          if [ ! -f out/cli/runViSemanticMcpServer.js ]; then
+            echo "Expected MCP entrypoint out/cli/runViSemanticMcpServer.js was not produced by the build." >&2
+            exit 1
+          fi
+          echo "MCP entrypoint present: $VIHS_HOME/out/cli/runViSemanticMcpServer.js"
+
+      - name: Validate Docker and pre-pull the NI LabVIEW image (fail loud)
+        run: |
+          # HARD REQUIREMENT (VHS-REQ-705): the live comparison tools need a real
+          # NI LabVIEW runtime. Pull the image HERE (network-heavy work must
+          # precede the firewall) and fail the setup loudly if Docker or the
+          # image is unavailable — no silent read-only degrade.
+          if ! command -v docker >/dev/null 2>&1; then
+            echo "docker is required for the live VI comparison tools but was not found on PATH." >&2
+            exit 1
+          fi
+          if ! docker info >/dev/null 2>&1; then
+            echo "docker is installed but the daemon is not reachable; the live comparison tools cannot run." >&2
+            exit 1
+          fi
+          image="nationalinstruments/labview:${CONTAINER_IMAGE_VERSION}-linux"
+          if docker image inspect "$image" >/dev/null 2>&1; then
+            echo "NI LabVIEW image '$image' already present."
+          else
+            echo "Pulling NI LabVIEW image '$image' (multi-GB; this dominates setup time) ..."
+            docker pull "$image"
+          fi
+          echo "docker ready and NI LabVIEW image '$image' available for the agent phase."
+
+      - name: Prepare a container-visible temp root
+        run: |
+          # The comparison bind-mounts its staging directory into the LabVIEW
+          # container. snap-packaged Docker runs in a private mount namespace
+          # with its own /tmp, so staging under the default /tmp is invisible in
+          # the container and the compare fails with "VI path invalid or does
+          # not exist". Point TMPDIR at a directory under $HOME, which both snap
+          # and native Docker can bind-mount, and persist it for the agent phase.
+          runtime_tmp="$HOME/.cache/vi-history-suite-runtime-tmp"
+          mkdir -p "$runtime_tmp"
+          echo "TMPDIR=$runtime_tmp" >> "$GITHUB_ENV"
+          echo "Prepared container-visible TMPDIR at $runtime_tmp"
+
+      - name: Summarize agent readiness
+        run: |
+          echo "vi-history-suite MCP server built at: $VIHS_HOME/out/cli/runViSemanticMcpServer.js"
+          echo "Configure repo Settings -> Copilot -> coding agent -> MCP servers per"
+          echo "docs/consumer-workflows/copilot-cloud-agent-mcp-runbook.md, then assign an issue to the agent."

@@ -7010,6 +7010,64 @@ Missing numeric IDs are intentional.
     Project #3 (`VIHS`). Keep the add idempotent and the secret gate intact so the
     workflow is inert without the provisioned Projects token.
 
+### VHS-REQ-705: Consumer Copilot Cloud-Agent MCP Enablement
+
+- Status: Active
+- Parent: VHS-SYS-REQ-013
+- Area: CI And Developer Environment
+- Statement: The repository shall ship consumer-facing artifacts that let a
+  consumer LabVIEW repository's GitHub Copilot cloud (coding) agent launch the
+  shipped VI semantic-comparison MCP server and use its live comparison tools
+  (`compare_vi_revisions`, `build_vi_pr_review`) while working issues and pull
+  requests autonomously. The artifacts are a copy-in `copilot-setup-steps.yml`
+  template that performs all firewall-sensitive preparation before the agent
+  starts, and a runbook documenting the repo-settings MCP registration JSON and
+  secret conventions. The live comparison tools require a real NI LabVIEW
+  runtime, so the setup fails loudly when Docker or the NI image cannot be made
+  available rather than degrading silently to a read-only subset.
+- Acceptance Criteria:
+  - VHS-REQ-705.1: The setup-steps template defines exactly one job named
+    `copilot-setup-steps` (the only id GitHub honors for the coding agent),
+    running on an Ubuntu x64 runner within the 59-minute cap, exposes a manual
+    `workflow_dispatch`, keeps least-privilege `contents: read`, and never
+    auto-triggers on `push` or `pull_request` (the heavy preparation runs only
+    for the agent or an explicit dispatch).
+  - VHS-REQ-705.2: The template clones vi-history-suite at a pinned ref and
+    builds `out/` (`npm ci` + `npm run compile`) so the MCP entrypoint
+    `out/cli/runViSemanticMcpServer.js` exists at a stable absolute path, and it
+    fails loudly if that entrypoint is not produced.
+  - VHS-REQ-705.3: The template performs the network-heavy preparation before
+    the agent firewall applies — validating Docker and pre-pulling the canonical
+    `nationalinstruments/labview:<version>-linux` image (kept in lockstep with
+    the runtime default) and failing loudly (non-zero exit) when Docker, the
+    daemon, or the image is unavailable, with no silent read-only degrade — and
+    prepares a container-visible `TMPDIR` under `$HOME` that persists into the
+    agent phase.
+  - VHS-REQ-705.4: The runbook documents the repo-settings `mcpServers` JSON that
+    launches the built entrypoint as a `local`/stdio server, allowlists the live
+    comparison tools, states that the cloud agent supports MCP tools only (not
+    resources or prompts), and requires any tool secret to use the
+    `COPILOT_MCP_` prefix.
+- Agent Work Scope:
+  - Keep the setup-steps job id exactly `copilot-setup-steps` and keep all
+    network-heavy preparation (clone, build, docker pull) in it, since the agent
+    firewall blocks that work afterward. Preserve the fail-loud posture: never
+    add a silent read-only fallback when the comparison runtime is unavailable.
+    Keep the documented image tag in lockstep with `DEFAULT_LINUX_CONTAINER_IMAGE`.
+- Implementation References:
+  - `docs/consumer-workflows/copilot-setup-steps.yml`
+  - `docs/consumer-workflows/copilot-cloud-agent-mcp-runbook.md`
+- Verification References:
+  - `tests/unit/copilotSetupStepsTemplate.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - The setup-steps template and the repo-settings MCP JSON in the runbook must
+    stay consistent: the `args` path in the JSON is exactly
+    `<VIHS_HOME>/out/cli/runViSemanticMcpServer.js`, and `VIHS_HOME` is defined
+    in the template. Applying the template to a specific consumer repo (P-B) and
+    capturing a live cloud-agent run (P-C) are tracked on issue #2258 and are out
+    of this repository's scope.
+
 ### VHS-REQ-698: Control-Plane Loop Drift Radar
 
 - Status: Active
