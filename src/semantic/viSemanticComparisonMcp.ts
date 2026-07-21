@@ -4,6 +4,13 @@ import {
   ViSemanticRuntimeFacts,
   VI_SEMANTIC_COMPARISON_SCHEMA
 } from './viSemanticModel';
+import {
+  buildViPreviewComparisonCorrelation,
+  renderCorrelationSurfaceTable,
+  VI_PREVIEW_COMPARISON_CORRELATION_SCHEMA,
+  type ViPreviewPair,
+  type ViPreviewReference
+} from './viPreviewComparisonCorrelation';
 import { errorMessage } from '../support/errorMessage';
 // Type-only import: the async handler runs the orchestrator through an injected
 // dependency, so this module stays runtime-pure and free of reporting imports.
@@ -187,6 +194,44 @@ const COMPARISON_INPUT_SCHEMA = {
         engine: { type: 'string' },
         labviewVersion: { type: 'string' },
         bitness: { type: 'string' }
+      }
+    },
+    format: OUTPUT_FORMAT_SCHEMA
+  },
+  required: ['reportHtml']
+} as const;
+
+// A single preview render reference the caller already holds (the cloud agent
+// resolves previews itself and passes them here). `available` is required (a
+// caller either states a side is available or omits that side entirely); the
+// remaining fields are optional context.
+const PREVIEW_REFERENCE_INPUT_SCHEMA = {
+  type: 'object',
+  properties: {
+    available: { type: 'boolean' },
+    relativePath: { type: 'string' },
+    revision: { type: 'string' },
+    cacheKey: { type: 'string' },
+    inlineImageCount: { type: 'integer' }
+  },
+  required: ['available']
+} as const;
+
+const CORRELATION_INPUT_SCHEMA = {
+  type: 'object',
+  properties: {
+    reportHtml: COMPARISON_INPUT_SCHEMA.properties.reportHtml,
+    reportFilePath: COMPARISON_INPUT_SCHEMA.properties.reportFilePath,
+    revisions: COMPARISON_INPUT_SCHEMA.properties.revisions,
+    runtime: COMPARISON_INPUT_SCHEMA.properties.runtime,
+    previews: {
+      type: 'object',
+      description:
+        'Optional base/head preview render references (as the caller already resolved them). ' +
+        'Omit to get a surfaces-only correlation with both preview sides marked unavailable.',
+      properties: {
+        base: PREVIEW_REFERENCE_INPUT_SCHEMA,
+        head: PREVIEW_REFERENCE_INPUT_SCHEMA
       }
     },
     format: OUTPUT_FORMAT_SCHEMA
@@ -499,6 +544,17 @@ export const VI_SEMANTIC_MCP_TOOLS = [
     description: `Return the full ${VI_SEMANTIC_COMPARISON_SCHEMA} semantic model (changed surfaces, attributes, detail sections, totals, and narrative) for a LabVIEW VI comparison report.`,
     inputSchema: COMPARISON_INPUT_SCHEMA,
     annotations: { title: 'Get VI semantic comparison', ...READ_ONLY_CLOSED_WORLD }
+  },
+  {
+    name: 'get_vi_preview_comparison_correlation',
+    description:
+      `Return the ${VI_PREVIEW_COMPARISON_CORRELATION_SCHEMA} model correlating a LabVIEW VI ` +
+      'comparison report with its base/head preview renders: per changed surface, the change ' +
+      'kinds, the coordinate-bearing per-object changes (diagram-space, not preview pixels), ' +
+      'and whether each preview side is available for side-by-side review, plus a narrative. ' +
+      'Pure over the supplied report HTML and optional caller-provided preview references.',
+    inputSchema: CORRELATION_INPUT_SCHEMA,
+    annotations: { title: 'Get VI preview-comparison correlation', ...READ_ONLY_CLOSED_WORLD }
   },
   {
     name: 'compare_vi_revisions',
@@ -1313,6 +1369,17 @@ function callTool(name: string, rawArguments: unknown): unknown {
     runtime: args.runtime
   });
 
+  if (name === 'get_vi_preview_comparison_correlation') {
+    const previews = parsePreviewPairArgument(rawArguments);
+    const correlation = buildViPreviewComparisonCorrelation(model, previews);
+    if (args.format === 'markdown') {
+      const table = renderCorrelationSurfaceTable(correlation);
+      const markdown = table ? `${correlation.narrative}\n\n${table}` : correlation.narrative;
+      return toolTextResult(markdown);
+    }
+    return toolTextResult(JSON.stringify(correlation, null, 2));
+  }
+
   if (name === 'summarize_vi_comparison') {
     return toolTextResult(model.narrative);
   }
@@ -1320,6 +1387,74 @@ function callTool(name: string, rawArguments: unknown): unknown {
     return toolTextResult(renderViSemanticComparisonMarkdown(model));
   }
   return toolTextResult(JSON.stringify(model, null, 2));
+}
+
+/**
+ * Reads the optional `previews.base`/`previews.head` references for the
+ * correlation tool. An absent `previews` (undefined/null) yields an empty pair
+ * (surfaces-only correlation, both sides unavailable). When `previews` IS present
+ * it must be a plain object (not an array), and each supplied side must be an
+ * object with a boolean `available` (per the published input schema); any
+ * violation raises a structured -32602 naming the offending field, rather than
+ * silently degrading to unavailable.
+ */
+function parsePreviewPairArgument(rawArguments: unknown): ViPreviewPair {
+  if (typeof rawArguments !== 'object' || rawArguments === null) {
+    return {};
+  }
+  const previews = (rawArguments as Record<string, unknown>).previews;
+  if (previews === undefined || previews === null) {
+    return {};
+  }
+  if (typeof previews !== 'object' || Array.isArray(previews)) {
+    throwArgumentError('previews', 'an object', previews);
+  }
+  const pair: ViPreviewPair = {};
+  const base = toPreviewReference((previews as Record<string, unknown>).base, 'previews.base');
+  const head = toPreviewReference((previews as Record<string, unknown>).head, 'previews.head');
+  if (base) {
+    pair.base = base;
+  }
+  if (head) {
+    pair.head = head;
+  }
+  return pair;
+}
+
+/**
+ * Normalizes one caller-supplied preview reference. Returns undefined when the
+ * side is absent (undefined/null); when present it must be an object with a
+ * boolean `available`, else a structured -32602 names the offending field.
+ */
+function toPreviewReference(raw: unknown, field: string): ViPreviewReference | undefined {
+  if (raw === undefined || raw === null) {
+    return undefined;
+  }
+  if (typeof raw !== 'object' || Array.isArray(raw)) {
+    throwArgumentError(field, 'an object', raw);
+  }
+  const record = raw as Record<string, unknown>;
+  if (typeof record.available !== 'boolean') {
+    throwArgumentError(`${field}.available`, 'a boolean', record.available);
+  }
+  const ref: ViPreviewReference = { available: record.available };
+  if (typeof record.relativePath === 'string') {
+    ref.relativePath = record.relativePath;
+  }
+  if (typeof record.revision === 'string') {
+    ref.revision = record.revision;
+  }
+  if (typeof record.cacheKey === 'string') {
+    ref.cacheKey = record.cacheKey;
+  }
+  if (
+    typeof record.inlineImageCount === 'number' &&
+    Number.isInteger(record.inlineImageCount) &&
+    record.inlineImageCount >= 0
+  ) {
+    ref.inlineImageCount = record.inlineImageCount;
+  }
+  return ref;
 }
 
 /**
