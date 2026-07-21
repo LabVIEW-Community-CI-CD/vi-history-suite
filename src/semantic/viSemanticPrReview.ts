@@ -183,10 +183,44 @@ function renderPrReviewNarrative(review: Omit<ViSemanticPrReview, 'narrative'>):
       : '';
   const notCompared =
     review.totals.blockedOrFailed > 0 ? `, ${review.totals.blockedOrFailed} not compared` : '';
+  const riskRollup = renderRiskRollup(review.entries);
   return (
     `${review.changedViCount} changed VI${review.changedViCount === 1 ? '' : 's'}${scope}. ` +
-    `${review.totals.withDifferences} with differences, ${review.totals.withoutDifferences} unchanged${notCompared}.`
+    `${review.totals.withDifferences} with differences, ${review.totals.withoutDifferences} unchanged${notCompared}.` +
+    riskRollup
   );
+}
+
+/**
+ * VHS-REQ-702 risk roll-up appended to the shared PR-review narrative. Counts the
+ * completed, differing entries by their (optional, additive on @v1) risk level.
+ * Returns an empty string when no entry carries a classification, so a legacy or
+ * `--from-file` review reads exactly as before. High-risk VIs are named first so
+ * the most consequential changes lead.
+ */
+function renderRiskRollup(entries: ViSemanticPrReview['entries']): string {
+  const counts: Record<'high' | 'medium' | 'low', number> = { high: 0, medium: 0, low: 0 };
+  let classified = 0;
+  for (const entry of entries) {
+    if (entry.status === 'completed' && entry.hasDifferences && entry.model.riskLevel) {
+      counts[entry.model.riskLevel] += 1;
+      classified += 1;
+    }
+  }
+  if (classified === 0) {
+    return '';
+  }
+  const parts: string[] = [];
+  if (counts.high > 0) {
+    parts.push(`${counts.high} high-risk`);
+  }
+  if (counts.medium > 0) {
+    parts.push(`${counts.medium} medium-risk`);
+  }
+  if (counts.low > 0) {
+    parts.push(`${counts.low} low-risk`);
+  }
+  return ` Risk: ${parts.join(', ')}.`;
 }
 
 /**
