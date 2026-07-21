@@ -351,3 +351,99 @@ describe('runViSemanticPrReview --fail-on-incomplete', () => {
     );
   });
 });
+
+describe('runViSemanticPrReviewCli correlations artifact (VHS-REQ-703.13)', () => {
+  const CORRELATION = {
+    schema: 'vi-history-suite/vi-preview-comparison-correlation@v1',
+    vi: { title: 'A.vi' },
+    hasDifferences: true,
+    previews: { base: { available: false }, head: { available: false } },
+    surfaces: [],
+    totals: { changedSurfaceCount: 0, correlatedSurfaceCount: 0, uncorrelatedSurfaceCount: 0 },
+    narrative: 'No changed surfaces.'
+  };
+
+  function reviewWith(correlated: boolean): unknown {
+    const model = {
+      schema: 'vi-history-suite/vi-semantic-comparison@v1',
+      vi: { title: 'A.vi' },
+      hasDifferences: true,
+      changedSurfaces: ['block-diagram'],
+      attributes: { included: [], excluded: [] },
+      overviewSections: [],
+      detailSections: [],
+      totals: {
+        changedSurfaceCount: 1,
+        overviewImageCount: 0,
+        detailSectionCount: 0,
+        detailItemCount: 0,
+        includedAttributeCount: 0,
+        excludedAttributeCount: 0
+      },
+      narrative: 'The block diagram differs.'
+    };
+    return {
+      schema: VI_SEMANTIC_PR_REVIEW_SCHEMA,
+      repositoryRoot: '/repo',
+      baseHash: 'a',
+      selectedHash: 'b',
+      changedViCount: 1,
+      reviewedCount: 1,
+      entries: [
+        {
+          relativePath: 'src/A.vi',
+          status: 'completed',
+          hasDifferences: true,
+          model,
+          ...(correlated ? { correlation: CORRELATION } : {})
+        }
+      ],
+      totals: { withDifferences: 1, withoutDifferences: 0, blockedOrFailed: 0 },
+      narrative: 'One VI changed.'
+    };
+  }
+
+  async function withOutDir(run: (dir: string, writeReview: (r: unknown) => Promise<string>) => Promise<void>) {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-corr-out-'));
+    const writeReview = async (r: unknown): Promise<string> => {
+      const p = path.join(dir, 'review.json');
+      await fs.writeFile(p, JSON.stringify(r), 'utf8');
+      return p;
+    };
+    try {
+      await run(dir, writeReview);
+    } finally {
+      await fs.rm(dir, { recursive: true, force: true });
+    }
+  }
+
+  it('writes the correlations bundle when the loaded review has correlated entries', async () => {
+    await withOutDir(async (dir, writeReview) => {
+      const reviewPath = await writeReview(reviewWith(true));
+      const outDir = path.join(dir, 'out');
+      await runViSemanticPrReviewCli(['--from-file', reviewPath, '--out', outDir]);
+      const bundlePath = path.join(outDir, 'vi-preview-comparison-correlations.json');
+      const bundle = JSON.parse(await fs.readFile(bundlePath, 'utf8')) as {
+        schema: string;
+        correlatedViCount: number;
+        entries: Array<{ relativePath: string }>;
+      };
+      expect(bundle.schema).toBe('vi-history-suite/vi-preview-comparison-correlations@v1');
+      expect(bundle.correlatedViCount).toBe(1);
+      expect(bundle.entries[0].relativePath).toBe('src/A.vi');
+    });
+  });
+
+  it('removes a stale correlations bundle when the loaded review carries none', async () => {
+    await withOutDir(async (dir, writeReview) => {
+      const outDir = path.join(dir, 'out');
+      await fs.mkdir(outDir, { recursive: true });
+      const bundlePath = path.join(outDir, 'vi-preview-comparison-correlations.json');
+      // Seed a stale bundle from a hypothetical earlier correlated run.
+      await fs.writeFile(bundlePath, '{"schema":"stale"}', 'utf8');
+      const reviewPath = await writeReview(reviewWith(false));
+      await runViSemanticPrReviewCli(['--from-file', reviewPath, '--out', outDir]);
+      await expect(fs.access(bundlePath)).rejects.toBeTruthy();
+    });
+  });
+});

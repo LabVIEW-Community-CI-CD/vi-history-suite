@@ -14,6 +14,7 @@ import {
   validateAgainstJsonSchema,
   validateViSemanticDocument,
   VI_PREVIEW_COMPARISON_CORRELATION_SCHEMA_ID,
+  VI_PREVIEW_COMPARISON_CORRELATIONS_SCHEMA_ID,
   VI_REPOSITORY_INDEX_SCHEMA_ID,
   VI_SEMANTIC_COMPARISON_JSON_SCHEMA,
   VI_SEMANTIC_COMPARISON_SCHEMA_ID,
@@ -32,9 +33,36 @@ describe('viSemanticSchemas registry', () => {
         VI_SEMANTIC_COMPARISON_SCHEMA_ID,
         VI_SEMANTIC_HISTORY_SCHEMA_ID,
         VI_REPOSITORY_INDEX_SCHEMA_ID,
-        VI_PREVIEW_COMPARISON_CORRELATION_SCHEMA_ID
+        VI_PREVIEW_COMPARISON_CORRELATION_SCHEMA_ID,
+        VI_PREVIEW_COMPARISON_CORRELATIONS_SCHEMA_ID
       ].sort()
     );
+  });
+
+  it('validates a preview-comparison correlations bundle against its published schema (VHS-REQ-703.13)', () => {
+    const bundle = {
+      schema: VI_PREVIEW_COMPARISON_CORRELATIONS_SCHEMA_ID,
+      repositoryRoot: '/repo',
+      baseHash: 'a',
+      selectedHash: 'b',
+      correlatedViCount: 1,
+      entries: [
+        { relativePath: 'src/A.vi', correlation: { schema: VI_PREVIEW_COMPARISON_CORRELATION_SCHEMA } }
+      ]
+    };
+    expect(validateViSemanticDocument(bundle)).toEqual({ valid: true, errors: [] });
+  });
+
+  it('rejects a correlations bundle whose entry is not a correlation document (VHS-REQ-703.13)', () => {
+    const bundle = {
+      schema: VI_PREVIEW_COMPARISON_CORRELATIONS_SCHEMA_ID,
+      repositoryRoot: '/repo',
+      baseHash: 'a',
+      selectedHash: 'b',
+      correlatedViCount: 1,
+      entries: [{ relativePath: 'src/A.vi', correlation: { schema: 'not-a-correlation@v1' } }]
+    };
+    expect(validateViSemanticDocument(bundle).valid).toBe(false);
   });
 });
 

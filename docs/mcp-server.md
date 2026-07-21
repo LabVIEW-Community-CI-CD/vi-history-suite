@@ -186,6 +186,16 @@ Posting needs a GitHub token in `GH_TOKEN` (or `GITHUB_TOKEN`) with permission t
 comment on the pull request. Omit `--post-comment` to print the review or write
 it to `--out <dir>` (as `vi-semantic-pr-review.md` and `.json`).
 
+When preview correlation is enabled (see below) and at least one reviewed VI
+carries a correlation, `--out <dir>` also writes a dedicated, first-class
+`vi-preview-comparison-correlations.json` — a
+`vi-history-suite/vi-preview-comparison-correlations@v1` bundle collecting just
+the per-VI preview⇄comparison correlation models. A Copilot cloud agent can load
+this artifact (or call the `get_vi_preview_comparison_correlation` tool) to
+cross-reference *what changed* (the comparison) with *where/how it looks* (the
+previews) without parsing the whole review. The bundle is omitted when no VI
+carries a correlation (e.g. no preview provider was wired).
+
 When a changed VI cannot be compared, the review surfaces the reason (e.g.
 `failed (command-exited-nonzero)`) in the summary table and a per-VI detail
 block, so a reviewer sees an actionable signal in the comment itself. Add

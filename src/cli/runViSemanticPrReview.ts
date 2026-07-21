@@ -7,6 +7,7 @@ import { errorMessage } from '../support/errorMessage';
 import { serializeJsonArtifact } from '../support/jsonArtifact';
 import {
   buildViSemanticPrReview,
+  buildViPreviewComparisonCorrelationsArtifact,
   planReviewReportCopies,
   renderViSemanticPrReviewMarkdown,
   renderViSemanticPrReviewPendingMarkdown,
@@ -886,6 +887,20 @@ export async function runViSemanticPrReviewCli(argv: string[]): Promise<number> 
       serializeJsonArtifact(review),
       'utf8'
     );
+    // Emit the deterministic preview⇄comparison correlations as a dedicated,
+    // first-class artifact (VHS-REQ-703.13, epic #2262) when any reviewed VI
+    // carries a correlation, so a cloud agent can consume the correlation models
+    // directly without parsing the whole review. When this run produced no
+    // correlation, remove any stale bundle a PRIOR run left in a reused output
+    // directory, so a consumer never ingests correlations from an earlier review
+    // (the documented contract is that the bundle is absent in that case).
+    const correlationsArtifact = buildViPreviewComparisonCorrelationsArtifact(review);
+    const correlationsPath = path.join(args.outDir, 'vi-preview-comparison-correlations.json');
+    if (correlationsArtifact) {
+      await fs.writeFile(correlationsPath, serializeJsonArtifact(correlationsArtifact), 'utf8');
+    } else {
+      await fs.rm(correlationsPath, { force: true });
+    }
     // Copy the per-VI self-contained comparison reports (which embed the
     // rendered block-diagram/front-panel difference images) into reports/ so
     // the uploaded review artifact carries the full visual diff, not just the

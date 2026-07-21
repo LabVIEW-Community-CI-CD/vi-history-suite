@@ -5091,6 +5091,17 @@ Missing numeric IDs are intentional.
     tool renders JSON by default or a narrative-plus-surface-table Markdown on
     request, runs without a comparison runtime or filesystem access, and is
     registered so the tools/list and known-tool guards stay in agreement.
+  - VHS-REQ-703.13: A VI semantic PR review emits the per-VI preview-comparison
+    correlations as a dedicated, first-class, versioned artifact (a
+    `vi-history-suite/vi-preview-comparison-correlations@v1` bundle collecting
+    each completed VI's correlation model) so a cloud agent can consume the
+    correlations directly without parsing the whole review; the artifact is a
+    pure, deterministic projection written alongside the review only when at
+    least one reviewed VI carries a correlation (and any stale bundle from a
+    prior run in a reused output directory is removed when this run has none),
+    and its schema is published in the semantic-schema registry — with each
+    embedded correlation locked to the correlation schema id — so the offline
+    validator accepts a real bundle and rejects a non-correlation payload.
 - Agent Work Scope:
   - Keep the correlation builder pure, deterministic, and dependency-injected so
     it stays unit-testable without VS Code, a network, or a LabVIEW runtime; do
@@ -5110,6 +5121,7 @@ Missing numeric IDs are intentional.
   - `src/reporting/viPreview/coordinateFramesAcceptance.ts`
   - `src/dashboard/comparisonDetailItemGeometry.ts`
   - `src/semantic/viSemanticComparisonMcp.ts`
+  - `src/cli/runViSemanticPrReview.ts`
 - Verification References:
   - `tests/unit/viPreviewComparisonCorrelation.test.ts`
   - `tests/unit/viSemanticPrReview.test.ts`

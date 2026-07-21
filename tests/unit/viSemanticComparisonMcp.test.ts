@@ -1496,6 +1496,8 @@ describe('viSemanticComparisonMcp', () => {
         'vi-history-suite://schema/vi-semantic-comparison@v1',
         'vi-history-suite://schema/vi-semantic-history@v1',
         'vi-history-suite://schema/vi-repository-index@v1',
+        'vi-history-suite://schema/vi-preview-comparison-correlation@v1',
+        'vi-history-suite://schema/vi-preview-comparison-correlations@v1',
         'vi-history-suite://schema/index'
       ]);
       expect(result.resources).toEqual(VI_SEMANTIC_MCP_RESOURCES);
