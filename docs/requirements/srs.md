@@ -5024,11 +5024,11 @@ Missing numeric IDs are intentional.
   - `tests/unit/viPreviewComparisonCorrelation.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
 - Change Guidance:
-  - Keep the correlation surface-level and deterministic until the coordinate
-    -frames preview export (epic #2262 blocker iteration) unlocks pixel-precise
-    regions. Keep the model additive and versioned like the comparison model, and
-    keep any future ML correlation advisory and confidence-labeled, never the
-    source of truth.
+  - Keep the correlation surface-level and deterministic until the
+    coordinate-frames preview export (epic #2262 blocker iteration) unlocks
+    pixel-precise regions. Keep the model additive and versioned like the
+    comparison model, and keep any future ML correlation advisory and
+    confidence-labeled, never the source of truth.
 
 ### VHS-REQ-664: Preview And Comparison Cache Warming On VI Change
 

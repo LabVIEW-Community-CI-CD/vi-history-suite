@@ -118,6 +118,7 @@ export function buildViPreviewComparisonCorrelation(
 
   // Group the classified changes by surface (in the model's stable surface order).
   const classification = Array.isArray(model.classification) ? model.classification : [];
+  const detailSections = Array.isArray(model.detailSections) ? model.detailSections : [];
   const surfaces: ViSurfaceCorrelation[] = model.changedSurfaces.map((surface) => {
     const onSurface = classification.filter((change) => change.surface === surface);
     const changeKinds: ViChangeKind[] = [];
@@ -125,6 +126,23 @@ export function buildViPreviewComparisonCorrelation(
       if (!changeKinds.includes(change.kind)) {
         changeKinds.push(change.kind);
       }
+    }
+    // Fall back to the raw detail sections when no per-surface classification
+    // entries exist, so a changed surface never reports 0 changes / empty
+    // samples merely because the optional VHS-REQ-702 classification is absent.
+    if (onSurface.length === 0) {
+      const detailItems = detailSections
+        .filter((section) => section.surface === surface)
+        .flatMap((section) => section.items);
+      return {
+        surface,
+        changeKinds,
+        changeCount: detailItems.length,
+        sampleChanges: detailItems.slice(0, MAX_SAMPLE_CHANGES),
+        basePreviewAvailable: base.available,
+        headPreviewAvailable: head.available,
+        correlated: base.available && head.available
+      };
     }
     return {
       surface,
@@ -185,13 +203,14 @@ export function renderCorrelationNarrative(
   for (const surface of correlation.surfaces) {
     const label = SURFACE_LABELS[surface.surface];
     const kinds = surface.changeKinds.length > 0 ? ` (${surface.changeKinds.join(', ')})` : '';
+    const changeWord = surface.changeKinds.length > 0 ? 'classified change' : 'change';
     const previewNote = surface.correlated
       ? 'cross-reference the base and head previews for this surface'
       : surface.headPreviewAvailable || surface.basePreviewAvailable
         ? 'only one preview side is available; correlation is partial'
         : 'no preview is available to correlate this surface';
     sentences.push(
-      `The ${label} has ${surface.changeCount} classified change${surface.changeCount === 1 ? '' : 's'}${kinds} — ${previewNote}.`
+      `The ${label} has ${surface.changeCount} ${changeWord}${surface.changeCount === 1 ? '' : 's'}${kinds} — ${previewNote}.`
     );
   }
 

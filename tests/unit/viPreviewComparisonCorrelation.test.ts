@@ -114,4 +114,18 @@ describe('buildViPreviewComparisonCorrelation (VHS-REQ-703.1)', () => {
     });
     expect(validateViSemanticDocument(correlation)).toEqual({ valid: true, errors: [] });
   });
+
+  it('falls back to detail sections for counts/samples when classification is absent (VHS-REQ-703.2)', () => {
+    // A surface that changed but has no VHS-REQ-702 classification entries must
+    // still report its real change count/sample text from the detail sections,
+    // and the narrative must not call them "classified" changes.
+    const model = { ...bdModel(), classification: [], changeKinds: [] };
+    const correlation = buildViPreviewComparisonCorrelation(model, {});
+    const bd = correlation.surfaces[0];
+    expect(bd.changeKinds).toEqual([]);
+    expect(bd.changeCount).toBe(2);
+    expect(bd.sampleChanges.length).toBeGreaterThan(0);
+    expect(correlation.narrative).not.toContain('classified change');
+    expect(correlation.narrative).toContain('2 changes');
+  });
 });
