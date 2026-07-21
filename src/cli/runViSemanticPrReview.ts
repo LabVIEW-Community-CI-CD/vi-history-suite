@@ -20,6 +20,12 @@ import { planStickyPrComment, type ExistingPrComment } from '../semantic/stickyP
 import { collectOverviewImageUploads } from '../semantic/viComparisonReportImages';
 import { planReviewCommitStatus } from '../semantic/viReviewCommitStatus';
 import { parseNiComparisonReportFile } from '../dashboard/niComparisonReportParser';
+import { createCachePeekPreviewPairProvider } from '../semantic/viPreviewPairProvider';
+import type { ViPreviewPair } from '../semantic/viPreviewComparisonCorrelation';
+import { renderViPreviewForFile } from '../reporting/viPreview/viPreviewFileRender';
+import { countInlinePreviewImages } from '../reporting/viPreview/viPreviewVerification';
+import { buildNodeViPreviewRenderDeps, defaultOperationDirectory } from '../tooling/viPreviewVerifyCli';
+import { runGit } from '../git/gitCli';
 
 /**
  * Headless CLI for the VI semantic PR review: compares the VIs changed between
@@ -64,6 +70,15 @@ export interface ParsedArgs {
   publishImages: boolean;
   assetsRef: string;
   commitStatus: boolean;
+  /**
+   * When true, resolve each compared VI's base/head preview from the preview
+   * cache and attach the deterministic preview⇄comparison correlation
+   * (VHS-REQ-703). Requires --preview-cache-dir. A cache-only peek launches no
+   * runtime; a miss is reported honestly as an unavailable preview.
+   */
+  correlatePreviews: boolean;
+  /** Directory of the content-addressed preview cache to peek (VHS-REQ-703.4). */
+  previewCacheDir?: string;
 }
 
 function parseRepo(value: string): { owner: string; repo: string } {
@@ -163,6 +178,24 @@ export function parseArgs(argv: string[]): ParsedArgs {
     throw new Error('--commit-status requires --repo <owner/repo>');
   }
 
+  const correlatePreviews = values.get('correlate-previews') === 'true';
+  const previewCacheDirRaw = values.get('preview-cache-dir');
+  const previewCacheDir =
+    previewCacheDirRaw !== undefined && previewCacheDirRaw !== 'true'
+      ? previewCacheDirRaw
+      : undefined;
+  if (correlatePreviews) {
+    // Correlation reads the content-addressed preview cache; without a cache
+    // directory there is nothing to peek, so fail fast rather than silently
+    // producing an all-unavailable correlation.
+    if (previewCacheDir === undefined) {
+      throw new Error('--correlate-previews requires --preview-cache-dir <dir>');
+    }
+    if (fromFile !== undefined) {
+      throw new Error('--correlate-previews cannot be combined with --from-file');
+    }
+  }
+
   return {
     repositoryRoot,
     base,
@@ -178,7 +211,9 @@ export function parseArgs(argv: string[]): ParsedArgs {
     announceStart,
     publishImages,
     assetsRef,
-    commitStatus
+    commitStatus,
+    correlatePreviews,
+    previewCacheDir
   };
 }
 
@@ -632,9 +667,70 @@ export async function loadReviewFromFile(filePath: string): Promise<ViSemanticPr
   return parsed as ViSemanticPrReview;
 }
 
+/**
+ * Builds a cache-peek `resolvePreviewPair` provider for the review, or undefined
+ * when preview correlation is not requested. It peeks the content-addressed
+ * preview cache (a `cacheOnly` render that launches nothing) using the SAME node
+ * render dependencies the preview-cache warm worker uses (VHS-REQ-671), so a
+ * peek's key matches a warmed entry. Only the checked-out working-tree revision
+ * is peeked on disk — its content-addressed key matches a Docker/warm render of
+ * the same tree; other revisions need materialization (a later iteration) and
+ * are honestly reported as unavailable. (VHS-REQ-703.4.)
+ */
+async function buildPreviewPairProvider(
+  args: ParsedArgs
+): Promise<
+  | ((input: {
+      repositoryRoot: string;
+      relativePath: string;
+      baseHash: string;
+      selectedHash: string;
+    }) => Promise<ViPreviewPair>)
+  | undefined
+> {
+  if (!args.correlatePreviews || args.previewCacheDir === undefined) {
+    return undefined;
+  }
+  const repositoryRoot = args.repositoryRoot as string;
+  const operationDirectory = defaultOperationDirectory();
+  const renderDeps = buildNodeViPreviewRenderDeps({ cacheDirectory: args.previewCacheDir });
+  // A cache-only peek never launches a runtime, so a minimal selection suffices.
+  const runtime = { provider: 'host-native' as const };
+
+  // The revision that is actually checked out on disk (its VI content matches a
+  // warmed cache entry keyed on that tree). Resolved once; a failure leaves it
+  // undefined so every side is reported unavailable rather than throwing.
+  let workingTreeSha: string | undefined;
+  try {
+    workingTreeSha = String(await runGit(['rev-parse', 'HEAD'], repositoryRoot, 'utf8')).trim();
+  } catch {
+    workingTreeSha = undefined;
+  }
+
+  return createCachePeekPreviewPairProvider({
+    peekRevisionPreview: async (input) => {
+      if (workingTreeSha === undefined || input.revision !== workingTreeSha) {
+        return { available: false };
+      }
+      const viFilePath = path.join(input.repositoryRoot, input.relativePath);
+      const peek = await renderViPreviewForFile(
+        { runtime, viFilePath, operationDirectory, cacheOnly: true },
+        renderDeps
+      );
+      if (peek.outcome === 'rendered' && peek.html) {
+        return {
+          available: true,
+          cacheKey: peek.cacheKey,
+          inlineImageCount: countInlinePreviewImages(peek.html)
+        };
+      }
+      return { available: false, cacheKey: peek.cacheKey };
+    }
+  });
+}
+
 export async function runViSemanticPrReviewCli(argv: string[]): Promise<number> {
   const args = parseArgs(argv);
-
   // Post a "review in progress" sticky comment before the (multi-minute,
   // container-backed) comparison so a reviewer sees the review was triggered.
   // The final review upserts over it by the shared marker (one comment); if the
@@ -649,14 +745,17 @@ export async function runViSemanticPrReviewCli(argv: string[]): Promise<number> 
 
   const review = args.fromFile !== undefined
     ? await loadReviewFromFile(args.fromFile)
-    : await buildViSemanticPrReview({
-        repositoryRoot: args.repositoryRoot as string,
-        baseHash: args.base as string,
-        selectedHash: args.head as string,
-        runtime: args.provider
-          ? { provider: args.provider, containerImageVersion: args.containerImageVersion }
-          : undefined
-      });
+    : await buildViSemanticPrReview(
+        {
+          repositoryRoot: args.repositoryRoot as string,
+          baseHash: args.base as string,
+          selectedHash: args.head as string,
+          runtime: args.provider
+            ? { provider: args.provider, containerImageVersion: args.containerImageVersion }
+            : undefined
+        },
+        { resolvePreviewPair: await buildPreviewPairProvider(args) }
+      );
   let imagesByVi: Map<string, ReviewImageRef[]> | undefined;
   if (args.publishImages && args.fromFile === undefined) {
     imagesByVi = await publishReviewImages(args, review);
