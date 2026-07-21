@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { buildViSemanticComparisonModelFromHtml } from '../../src/semantic/viSemanticModel';
+import type { ViChangeKind } from '../../src/semantic/viSemanticModel';
 import {
   buildViPreviewComparisonCorrelation,
   renderCorrelationSurfaceTable,
@@ -178,13 +179,17 @@ describe('renderCorrelationSurfaceTable (VHS-REQ-703.8)', () => {
     expect(renderCorrelationSurfaceTable(correlation)).toBe('');
   });
 
-  it('escapes pipe characters that could break the table', () => {
+  it('escapes pipe and backslash characters that could break the table', () => {
     const table = renderCorrelationSurfaceTable({
       hasDifferences: true,
       surfaces: [
         {
           surface: 'other',
-          changeKinds: [],
+          // Inject a backslash and a pipe into a change kind (via a cast) to
+          // prove both are escaped; real enum kinds contain neither, but the
+          // renderer must not let any cell value break the table or leave an
+          // incompletely escaped backslash.
+          changeKinds: ['a\\b|c' as unknown as ViChangeKind],
           changeCount: 1,
           sampleChanges: [],
           basePreviewAvailable: true,
@@ -194,8 +199,8 @@ describe('renderCorrelationSurfaceTable (VHS-REQ-703.8)', () => {
       ],
       totals: { changedSurfaceCount: 1, correlatedSurfaceCount: 0, uncorrelatedSurfaceCount: 1 }
     });
-    // The fixed labels contain no pipes, but the renderer must still emit a
-    // well-formed 5-column row.
-    expect(table).toContain('| other VI content | — | 1 | ✓ available | — unavailable |');
+    // Backslash is escaped first (\\), then the pipe (\|), keeping a well-formed
+    // 5-column row with no incomplete escaping.
+    expect(table).toContain('| other VI content | a\\\\b\\|c | 1 | ✓ available | — unavailable |');
   });
 });

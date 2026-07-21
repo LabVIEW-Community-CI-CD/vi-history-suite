@@ -223,9 +223,16 @@ export function renderCorrelationNarrative(
   return sentences.join(' ');
 }
 
-/** Escapes a value for a single Markdown table cell (pipes and newlines). */
+/** Escapes a value for a single Markdown table cell (backslashes, pipes, newlines). */
 function escapeTableCell(value: string): string {
-  return value.replace(/\|/g, '\\|').replace(/\r?\n/g, ' ');
+  // Escape the escape character FIRST so a literal backslash cannot combine with
+  // the pipe escape we add next (otherwise `\` + `|` would produce `\\|` where
+  // the backslash escapes our escape — incomplete escaping). Then escape pipes
+  // (the cell delimiter) and flatten newlines that would break the row.
+  return value
+    .replace(/\\/g, '\\\\')
+    .replace(/\|/g, '\\|')
+    .replace(/\r?\n/g, ' ');
 }
 
 /**
