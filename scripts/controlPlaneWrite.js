@@ -283,6 +283,77 @@ function runMergeQueue(options = {}, deps = {}) {
   return { executed: true, plannedCount: planned.length, appliedCount: applied };
 }
 
+// Pure Tier 4 (createWork) planner: normalize proposed work-creation actions
+// (open a new tracking issue) into a validated apply-list, dropping any malformed
+// entry. Like Tiers 2/3 the actions are supplied by an approved proposer, not
+// derived from truth, so the planner only validates shape (a non-empty title;
+// optional string body defaulting to empty; optional string label list); the
+// gate (server-verified approver) authorizes acting on them. Identical titles are
+// de-duplicated so the same work item is not opened twice in one run.
+//
+// actions: [{ title, body?, labels? }]
+function planCreateWork(actions) {
+  const list = Array.isArray(actions) ? actions : [];
+  const planned = [];
+  const seen = new Set();
+  for (const action of list) {
+    if (!action || typeof action !== 'object') {
+      continue;
+    }
+    if (typeof action.title !== 'string' || action.title.trim().length === 0) {
+      continue;
+    }
+    const title = action.title.trim();
+    if (seen.has(title)) {
+      continue;
+    }
+    const body = typeof action.body === 'string' ? action.body : '';
+    const labels = Array.isArray(action.labels)
+      ? action.labels.filter((l) => typeof l === 'string' && l.trim().length > 0)
+      : [];
+    seen.add(title);
+    planned.push({ title, body, labels });
+  }
+  return planned;
+}
+
+// Execute planned Tier 4 createWork actions ONLY when the gate authorizes. Like
+// Tiers 2/3, createWork is default-disabled and requires a server-verified
+// allowlisted approver because it acts beyond mirroring directly-verified truth.
+// Every created work item is appended to the write log. The issue creator and
+// log-appender are injected; nothing runs when the gate refuses.
+function runCreateWork(options = {}, deps = {}) {
+  const repoRoot = deps.repoRoot || process.cwd();
+  const config = deps.config || loadWriteConfig(repoRoot, deps);
+  const auth = authorizeWrite(config, 'createWork', {
+    approver: options.approver,
+    approverVerified: options.approverVerified
+  });
+  if (!auth.authorized) {
+    return { executed: false, reason: auth.reason, plannedCount: 0, appliedCount: 0 };
+  }
+  const planned = planCreateWork(options.actions || []);
+  const applyCreateWork = deps.applyCreateWork;
+  const appendLog = deps.appendLog || defaultAppendLog(repoRoot, deps);
+  if (typeof applyCreateWork !== 'function') {
+    return { executed: false, reason: 'no-executor', plannedCount: planned.length, appliedCount: 0 };
+  }
+  let applied = 0;
+  for (const action of planned) {
+    applyCreateWork(action);
+    appendLog({
+      action: 'create-work',
+      tier: 'createWork',
+      title: action.title,
+      labels: action.labels,
+      approver: options.approver,
+      timestamp: (deps.now ? deps.now() : new Date()).toISOString()
+    });
+    applied += 1;
+  }
+  return { executed: true, plannedCount: planned.length, appliedCount: applied };
+}
+
 module.exports = {
   WRITE_CONFIG_FILENAME,
   WRITE_LOG_FILENAME,
@@ -293,7 +364,9 @@ module.exports = {
   planAnnotate,
   runAnnotate,
   planMergeQueue,
-  runMergeQueue
+  runMergeQueue,
+  planCreateWork,
+  runCreateWork
 };
 
 if (require.main === module) {

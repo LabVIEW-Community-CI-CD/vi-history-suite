@@ -23,8 +23,10 @@ const write = require('../../scripts/controlPlaneWrite.js') as {
   runAnnotate: (options: Record<string, unknown>, deps: Record<string, unknown>) => { executed: boolean; reason?: string; plannedCount: number; appliedCount: number };
   planMergeQueue: (actions: unknown) => Array<Record<string, unknown>>;
   runMergeQueue: (options: Record<string, unknown>, deps: Record<string, unknown>) => { executed: boolean; reason?: string; plannedCount: number; appliedCount: number };
+  planCreateWork: (actions: unknown) => Array<Record<string, unknown>>;
+  runCreateWork: (options: Record<string, unknown>, deps: Record<string, unknown>) => { executed: boolean; reason?: string; plannedCount: number; appliedCount: number };
 };
-const { planAnnotate, runAnnotate, planMergeQueue, runMergeQueue } = write;
+const { planAnnotate, runAnnotate, planMergeQueue, runMergeQueue, planCreateWork, runCreateWork } = write;
 
 const ENABLED_CONFIG = { enabled: true, approvers: ['svelderrainruiz'], tiers: { boardSync: true, annotate: true } };
 const DISABLED_CONFIG = { enabled: false, approvers: ['svelderrainruiz'], tiers: { boardSync: true } };
@@ -314,5 +316,90 @@ describe('controlPlaneWrite: runMergeQueue (VHS-REQ-696.5)', () => {
     expect(applied).toHaveLength(2);
     expect(logged).toHaveLength(2);
     expect(logged[0]).toMatchObject({ action: 'merge-queue', tier: 'mergeQueue', op: 'arm', number: 1, approver: 'svelderrainruiz' });
+  });
+});
+
+describe('controlPlaneWrite: planCreateWork (VHS-REQ-696.6)', () => {
+  it('normalizes valid work items, defaults body/labels, de-duplicates by title, and drops malformed entries', () => {
+    const planned = planCreateWork([
+      { title: 'First', body: 'b', labels: ['a', '  ', 3] },
+      { title: 'Second' }, // body/labels default
+      { title: 'First', body: 'dup' }, // duplicate title -> dropped
+      { title: '   ' }, // empty title -> dropped
+      { body: 'no title' }, // missing title -> dropped
+      null
+    ]);
+    expect(planned).toEqual([
+      { title: 'First', body: 'b', labels: ['a'] },
+      { title: 'Second', body: '', labels: [] }
+    ]);
+    expect(planCreateWork([])).toEqual([]);
+    expect(planCreateWork(undefined)).toEqual([]);
+  });
+});
+
+describe('controlPlaneWrite: runCreateWork (VHS-REQ-696.6)', () => {
+  const CW_CONFIG = { enabled: true, approvers: ['svelderrainruiz'], tiers: { boardSync: true, createWork: true } };
+  const cwAction = { title: 'New tracked work' };
+
+  it('does NOTHING when the write path is disabled', () => {
+    const calls: unknown[] = [];
+    const out = runCreateWork(
+      { actions: [cwAction], approver: 'svelderrainruiz', approverVerified: true },
+      { config: DISABLED_CONFIG, applyCreateWork: (a: unknown) => calls.push(a), appendLog: () => {} }
+    );
+    expect(out).toMatchObject({ executed: false, reason: 'write-path-disabled', appliedCount: 0 });
+    expect(calls).toHaveLength(0);
+  });
+
+  it('refuses when the createWork tier is disabled even if the path is enabled', () => {
+    const out = runCreateWork(
+      { actions: [cwAction], approver: 'svelderrainruiz', approverVerified: true },
+      { config: { enabled: true, approvers: ['svelderrainruiz'], tiers: { boardSync: true, createWork: false } }, applyCreateWork: () => {} }
+    );
+    expect(out).toMatchObject({ executed: false, reason: 'tier-disabled:createWork' });
+  });
+
+  it('refuses without a server-verified allowlisted approver', () => {
+    const unverified = runCreateWork(
+      { actions: [cwAction], approver: 'svelderrainruiz', approverVerified: false },
+      { config: CW_CONFIG, applyCreateWork: () => {} }
+    );
+    expect(unverified).toMatchObject({ executed: false, reason: 'approver-not-server-verified' });
+    const stranger = runCreateWork(
+      { actions: [cwAction], approver: 'someone-else', approverVerified: true },
+      { config: CW_CONFIG, applyCreateWork: () => {} }
+    );
+    expect(stranger).toMatchObject({ executed: false, reason: 'approver-not-authorized' });
+  });
+
+  it('refuses to execute without an injected creator even when authorized', () => {
+    const out = runCreateWork(
+      { actions: [cwAction], approver: 'svelderrainruiz', approverVerified: true },
+      { config: CW_CONFIG }
+    );
+    expect(out).toMatchObject({ executed: false, reason: 'no-executor' });
+  });
+
+  it('creates and append-logs each work item when the gate authorizes', () => {
+    const applied: unknown[] = [];
+    const logged: Array<Record<string, unknown>> = [];
+    const out = runCreateWork(
+      {
+        actions: [cwAction, { title: 'Second item', labels: ['infra'] }],
+        approver: 'svelderrainruiz',
+        approverVerified: true
+      },
+      {
+        config: CW_CONFIG,
+        applyCreateWork: (a: unknown) => applied.push(a),
+        appendLog: (e: Record<string, unknown>) => logged.push(e),
+        now: () => new Date('2026-07-20T00:00:00.000Z')
+      }
+    );
+    expect(out).toMatchObject({ executed: true, plannedCount: 2, appliedCount: 2 });
+    expect(applied).toHaveLength(2);
+    expect(logged).toHaveLength(2);
+    expect(logged[0]).toMatchObject({ action: 'create-work', tier: 'createWork', title: 'New tracked work', approver: 'svelderrainruiz' });
   });
 });
