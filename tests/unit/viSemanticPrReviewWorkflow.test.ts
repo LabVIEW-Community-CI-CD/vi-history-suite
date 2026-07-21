@@ -71,6 +71,13 @@ describe('VI semantic PR review dispatch workflow (VHS-REQ-661)', () => {
     expect(workflow).toContain('auto_warm_changed_previews: ${{ inputs.auto_warm_changed_previews }}');
   });
 
+  it('forwards the base_tree_dir input to the reusable workflow (VHS-REQ-703.7)', () => {
+    const workflow = readDispatch();
+
+    expect(workflow).toMatch(/^\s{6}base_tree_dir:/m);
+    expect(workflow).toContain('base_tree_dir: ${{ inputs.base_tree_dir }}');
+  });
+
   it('never references vagrant (VHS-REQ-661.6)', () => {
     expect(readDispatch().toLowerCase()).not.toContain('vagrant');
   });
@@ -209,8 +216,11 @@ describe('VI semantic PR review reusable workflow (VHS-REQ-661)', () => {
     expect(workflow).toContain('if [ -f "$base_tree/$vi" ]; then base_vis+=("$vi"); fi');
     expect(workflow).toContain('node out/cli/runViPreviewCacheWarmer.js "${base_warm_args[@]}"');
     expect(workflow).toContain('echo "AUTO_BASE_TREE_DIR=$base_tree" >> "$GITHUB_ENV"');
-    // The review passes the base tree dir so the base side can hit the cache.
-    expect(workflow).toContain('args+=(--base-tree-dir "$AUTO_BASE_TREE_DIR")');
+    // The review passes the effective base tree (explicit base_tree_dir input or
+    // the auto-warmed worktree) so the base side can hit the cache.
+    expect(workflow).toMatch(/^\s{6}base_tree_dir:/m);
+    expect(workflow).toContain('BASE_TREE_DIR: ${{ inputs.base_tree_dir }}');
+    expect(workflow).toContain('args+=(--base-tree-dir "$effective_base_tree")');
   });
 
   it('pins the tool checkout to the reusable workflow own SHA via the job context (VHS-REQ-661.7)', () => {
