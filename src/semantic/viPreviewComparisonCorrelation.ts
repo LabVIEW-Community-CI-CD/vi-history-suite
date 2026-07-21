@@ -5,6 +5,11 @@ import type {
   ViClassificationConfidence,
   ViSemanticComparisonModel
 } from './viSemanticModel';
+import {
+  hasDiagramCoordinate,
+  type ComparisonDetailChangeType,
+  type DiagramPoint
+} from '../dashboard/comparisonDetailItemGeometry';
 
 /**
  * Preview ⇄ Comparison Correlation — iteration 1 (VHS-REQ-703, epic #2262).
@@ -48,6 +53,28 @@ export interface ViPreviewPair {
   head?: ViPreviewReference;
 }
 
+/**
+ * A single per-object change with its VI diagram coordinate, surfaced from the
+ * comparison report's detail-item geometry (VHS-REQ-703.10). Only items that
+ * actually carry a coordinate are included. Coordinates are in VI DIAGRAM space
+ * (the report's own space), never preview-image pixels — a consumer must treat
+ * them as labeled diagram data, never a fabricated pixel overlay.
+ */
+export interface ViSurfaceCoordinateChange {
+  /** The raw detail-item text (retained verbatim). */
+  text: string;
+  /** The change action the item describes. */
+  changeType: ComparisonDetailChangeType;
+  /** The changed object's kind (e.g. `SubVI`), when the item names one. */
+  objectKind?: string;
+  /** The changed object's quoted name, when the item names one. */
+  objectName?: string;
+  /** The diagram coordinate (the `at`/`to` point for a placement or move). */
+  coordinate?: DiagramPoint;
+  /** The source coordinate of a move (`from (x,y) to (x,y)`), when present. */
+  fromCoordinate?: DiagramPoint;
+}
+
 /** Per-changed-surface correlation between the comparison and the previews. */
 export interface ViSurfaceCorrelation {
   surface: ViChangeSurface;
@@ -67,6 +94,13 @@ export interface ViSurfaceCorrelation {
    * this is availability-based, not pixel-precise.
    */
   correlated: boolean;
+  /**
+   * Per-object changes on this surface that carry a VI diagram coordinate
+   * (VHS-REQ-703.11), bounded for context. Additive and optional; absent/empty
+   * when the comparison report supplied no coordinate-bearing detail items for
+   * this surface. Diagram-space coordinates, NOT preview pixels.
+   */
+  coordinateChanges?: ViSurfaceCoordinateChange[];
 }
 
 export interface ViPreviewComparisonCorrelation {
@@ -89,6 +123,53 @@ export interface ViPreviewComparisonCorrelation {
 }
 
 const MAX_SAMPLE_CHANGES = 5;
+
+/** Upper bound on per-surface coordinate-bearing changes retained for context. */
+const MAX_COORDINATE_CHANGES = 25;
+
+/**
+ * Collects the coordinate-bearing per-object changes for one surface from the
+ * comparison model's additive detail-item geometry (VHS-REQ-703.10/.11). Only
+ * items that actually carry a diagram coordinate are kept; the result is bounded
+ * and undefined when there are none, so it stays additive/optional.
+ */
+function collectCoordinateChanges(
+  detailSections: ViSemanticComparisonModel['detailSections'],
+  surface: ViChangeSurface
+): ViSurfaceCoordinateChange[] | undefined {
+  const changes: ViSurfaceCoordinateChange[] = [];
+  for (const section of detailSections) {
+    if (section.surface !== surface) {
+      continue;
+    }
+    for (const geometry of section.itemGeometry ?? []) {
+      if (!hasDiagramCoordinate(geometry)) {
+        continue;
+      }
+      const change: ViSurfaceCoordinateChange = {
+        text: geometry.text,
+        changeType: geometry.changeType
+      };
+      if (geometry.objectKind !== undefined) {
+        change.objectKind = geometry.objectKind;
+      }
+      if (geometry.objectName !== undefined) {
+        change.objectName = geometry.objectName;
+      }
+      if (geometry.coordinate !== undefined) {
+        change.coordinate = geometry.coordinate;
+      }
+      if (geometry.fromCoordinate !== undefined) {
+        change.fromCoordinate = geometry.fromCoordinate;
+      }
+      changes.push(change);
+      if (changes.length >= MAX_COORDINATE_CHANGES) {
+        return changes;
+      }
+    }
+  }
+  return changes.length > 0 ? changes : undefined;
+}
 
 function normalizePreview(ref: ViPreviewReference | undefined): ViPreviewReference {
   if (!ref || ref.available !== true) {
@@ -127,6 +208,7 @@ export function buildViPreviewComparisonCorrelation(
         changeKinds.push(change.kind);
       }
     }
+    const coordinateChanges = collectCoordinateChanges(detailSections, surface);
     // Fall back to the raw detail sections when no per-surface classification
     // entries exist, so a changed surface never reports 0 changes / empty
     // samples merely because the optional VHS-REQ-702 classification is absent.
@@ -141,7 +223,8 @@ export function buildViPreviewComparisonCorrelation(
         sampleChanges: detailItems.slice(0, MAX_SAMPLE_CHANGES),
         basePreviewAvailable: base.available,
         headPreviewAvailable: head.available,
-        correlated: base.available && head.available
+        correlated: base.available && head.available,
+        ...(coordinateChanges ? { coordinateChanges } : {})
       };
     }
     return {
@@ -151,7 +234,8 @@ export function buildViPreviewComparisonCorrelation(
       sampleChanges: onSurface.slice(0, MAX_SAMPLE_CHANGES).map((change) => change.text),
       basePreviewAvailable: base.available,
       headPreviewAvailable: head.available,
-      correlated: base.available && head.available
+      correlated: base.available && head.available,
+      ...(coordinateChanges ? { coordinateChanges } : {})
     };
   });
 
@@ -238,12 +322,15 @@ function escapeTableCell(value: string): string {
 /**
  * Renders a deterministic side-by-side surface table for a correlation
  * (VHS-REQ-703.8, epic #2262 iteration 3): one row per changed surface showing
- * the change kinds, the change count, and whether the base and head previews are
- * available to view that surface. It is honest and availability-based — a `—`
- * marks an unavailable preview side, never a fabricated one — and stays
- * surface-level (no pixel-region overlays; that needs the coordinate-frames
- * export). Returns an empty string when there are no differences or no changed
- * surfaces, so a caller can append it unconditionally.
+ * the change kinds, the change count, whether the base and head previews are
+ * available to view that surface, and (VHS-REQ-703.11) a compact list of the
+ * per-object changes carrying a VI diagram coordinate. It is honest and
+ * availability-based — a `—` marks an unavailable preview side or a surface with
+ * no coordinate-bearing change, never a fabricated one — and stays surface-level:
+ * the coordinates are labeled DIAGRAM-space references, NOT preview-pixel
+ * overlays (that needs the coordinate-frames export). Returns an empty string
+ * when there are no differences or no changed surfaces, so a caller can append it
+ * unconditionally.
  */
 export function renderCorrelationSurfaceTable(
   correlation: Pick<
@@ -257,15 +344,16 @@ export function renderCorrelationSurfaceTable(
 
   const availability = (present: boolean): string => (present ? '✓ available' : '— unavailable');
   const lines: string[] = [
-    '| Surface | Change kinds | Changes | Base preview | Head preview |',
-    '| --- | --- | --- | --- | --- |'
+    '| Surface | Change kinds | Changes | Base preview | Head preview | Diagram coordinates |',
+    '| --- | --- | --- | --- | --- | --- |'
   ];
   for (const surface of correlation.surfaces) {
     const label = SURFACE_LABELS[surface.surface];
     const kinds = surface.changeKinds.length > 0 ? surface.changeKinds.join(', ') : '—';
     lines.push(
       `| ${escapeTableCell(label)} | ${escapeTableCell(kinds)} | ${surface.changeCount} | ` +
-        `${availability(surface.basePreviewAvailable)} | ${availability(surface.headPreviewAvailable)} |`
+        `${availability(surface.basePreviewAvailable)} | ${availability(surface.headPreviewAvailable)} | ` +
+        `${escapeTableCell(renderCoordinateCell(surface.coordinateChanges))} |`
     );
   }
 
@@ -276,4 +364,41 @@ export function renderCorrelationSurfaceTable(
   );
 
   return lines.join('\n');
+}
+
+/** Formats a single diagram point as `(x,y)`. */
+function formatPoint(point: DiagramPoint): string {
+  return `(${point.x},${point.y})`;
+}
+
+/**
+ * Renders the compact "Diagram coordinates" table cell for a surface: a bounded,
+ * labeled list of the object changes that carry a diagram coordinate. These are
+ * VI DIAGRAM coordinates, never preview pixels, so the cell is explicitly a
+ * diagram-space reference and never implies a pixel overlay. Returns `—` when
+ * the surface has no coordinate-bearing changes.
+ */
+function renderCoordinateCell(changes: ViSurfaceCoordinateChange[] | undefined): string {
+  if (!changes || changes.length === 0) {
+    return '—';
+  }
+  const MAX_CELL_ENTRIES = 3;
+  const shown = changes.slice(0, MAX_CELL_ENTRIES).map((change) => {
+    const name = change.objectName ?? change.objectKind ?? change.changeType;
+    // Show both endpoints of a move (`from -> to`) when both are known, so the
+    // cell does not silently drop the source coordinate; otherwise show the
+    // single available point.
+    let point = '';
+    if (change.fromCoordinate !== undefined && change.coordinate !== undefined) {
+      point = `${formatPoint(change.fromCoordinate)}→${formatPoint(change.coordinate)}`;
+    } else if (change.coordinate !== undefined) {
+      point = formatPoint(change.coordinate);
+    } else if (change.fromCoordinate !== undefined) {
+      point = formatPoint(change.fromCoordinate);
+    }
+    return point ? `${name} ${point}` : name;
+  });
+  const remainder = changes.length - shown.length;
+  const suffix = remainder > 0 ? `, +${remainder} more` : '';
+  return `${shown.join('; ')}${suffix}`;
 }

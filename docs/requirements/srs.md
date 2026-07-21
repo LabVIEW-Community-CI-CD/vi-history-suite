@@ -5073,6 +5073,16 @@ Missing numeric IDs are intentional.
     the raw text is always retained, and unrecognized items yield a safe
     `other`-typed record, so a review or model built without the field is
     unchanged.
+  - VHS-REQ-703.11: The preview-comparison correlation surfaces each changed
+    surface's coordinate-bearing per-object changes — change type, object
+    kind/name, and diagram coordinate(s) — as an additive, optional,
+    bounded `coordinateChanges` list built from the comparison model's detail
+    geometry, and the deterministic surface table renders them as a labeled
+    diagram-coordinate cell; coordinates are presented as VI diagram-space
+    references (never fabricated preview pixels), a surface with no
+    coordinate-bearing change renders an em dash in that cell, and a
+    correlation built without the field stays valid against the published
+    `@v1` schema.
 - Agent Work Scope:
   - Keep the correlation builder pure, deterministic, and dependency-injected so
     it stays unit-testable without VS Code, a network, or a LabVIEW runtime; do
