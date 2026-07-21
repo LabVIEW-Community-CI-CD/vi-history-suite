@@ -21,8 +21,10 @@ const {
 const write = require('../../scripts/controlPlaneWrite.js') as {
   planAnnotate: (actions: unknown) => Array<Record<string, unknown>>;
   runAnnotate: (options: Record<string, unknown>, deps: Record<string, unknown>) => { executed: boolean; reason?: string; plannedCount: number; appliedCount: number };
+  planMergeQueue: (actions: unknown) => Array<Record<string, unknown>>;
+  runMergeQueue: (options: Record<string, unknown>, deps: Record<string, unknown>) => { executed: boolean; reason?: string; plannedCount: number; appliedCount: number };
 };
-const { planAnnotate, runAnnotate } = write;
+const { planAnnotate, runAnnotate, planMergeQueue, runMergeQueue } = write;
 
 const ENABLED_CONFIG = { enabled: true, approvers: ['svelderrainruiz'], tiers: { boardSync: true, annotate: true } };
 const DISABLED_CONFIG = { enabled: false, approvers: ['svelderrainruiz'], tiers: { boardSync: true } };
@@ -226,5 +228,91 @@ describe('controlPlaneWrite: runAnnotate (VHS-REQ-696.4)', () => {
     expect(applied).toHaveLength(2);
     expect(logged).toHaveLength(2);
     expect(logged[0]).toMatchObject({ action: 'annotate', tier: 'annotate', kind: 'comment', number: 1, approver: 'svelderrainruiz' });
+  });
+});
+
+describe('controlPlaneWrite: planMergeQueue (VHS-REQ-696.5)', () => {
+  it('normalizes valid arm/dequeue actions, de-duplicates, and drops malformed entries', () => {
+    const planned = planMergeQueue([
+      { op: 'arm', number: 1 },
+      { op: 'dequeue', number: 2 },
+      { op: 'arm', number: 1 }, // duplicate -> dropped
+      { op: 'squash', number: 3 }, // bad op -> dropped
+      { op: 'arm', number: 0 }, // bad number -> dropped
+      { op: 'dequeue' }, // missing number -> dropped
+      null
+    ]);
+    expect(planned).toEqual([
+      { op: 'arm', number: 1 },
+      { op: 'dequeue', number: 2 }
+    ]);
+    expect(planMergeQueue([])).toEqual([]);
+    expect(planMergeQueue(undefined)).toEqual([]);
+  });
+});
+
+describe('controlPlaneWrite: runMergeQueue (VHS-REQ-696.5)', () => {
+  const MQ_CONFIG = { enabled: true, approvers: ['svelderrainruiz'], tiers: { boardSync: true, mergeQueue: true } };
+  const mqAction = { op: 'arm', number: 1 };
+
+  it('does NOTHING when the write path is disabled', () => {
+    const calls: unknown[] = [];
+    const out = runMergeQueue(
+      { actions: [mqAction], approver: 'svelderrainruiz', approverVerified: true },
+      { config: DISABLED_CONFIG, applyMergeQueueAction: (a: unknown) => calls.push(a), appendLog: () => {} }
+    );
+    expect(out).toMatchObject({ executed: false, reason: 'write-path-disabled', appliedCount: 0 });
+    expect(calls).toHaveLength(0);
+  });
+
+  it('refuses when the mergeQueue tier is disabled even if the path is enabled', () => {
+    const out = runMergeQueue(
+      { actions: [mqAction], approver: 'svelderrainruiz', approverVerified: true },
+      { config: { enabled: true, approvers: ['svelderrainruiz'], tiers: { boardSync: true, mergeQueue: false } }, applyMergeQueueAction: () => {} }
+    );
+    expect(out).toMatchObject({ executed: false, reason: 'tier-disabled:mergeQueue' });
+  });
+
+  it('refuses without a server-verified allowlisted approver', () => {
+    const unverified = runMergeQueue(
+      { actions: [mqAction], approver: 'svelderrainruiz', approverVerified: false },
+      { config: MQ_CONFIG, applyMergeQueueAction: () => {} }
+    );
+    expect(unverified).toMatchObject({ executed: false, reason: 'approver-not-server-verified' });
+    const stranger = runMergeQueue(
+      { actions: [mqAction], approver: 'someone-else', approverVerified: true },
+      { config: MQ_CONFIG, applyMergeQueueAction: () => {} }
+    );
+    expect(stranger).toMatchObject({ executed: false, reason: 'approver-not-authorized' });
+  });
+
+  it('refuses to execute without an injected actor even when authorized', () => {
+    const out = runMergeQueue(
+      { actions: [mqAction], approver: 'svelderrainruiz', approverVerified: true },
+      { config: MQ_CONFIG }
+    );
+    expect(out).toMatchObject({ executed: false, reason: 'no-executor' });
+  });
+
+  it('applies and append-logs each action when the gate authorizes', () => {
+    const applied: unknown[] = [];
+    const logged: Array<Record<string, unknown>> = [];
+    const out = runMergeQueue(
+      {
+        actions: [mqAction, { op: 'dequeue', number: 2 }],
+        approver: 'svelderrainruiz',
+        approverVerified: true
+      },
+      {
+        config: MQ_CONFIG,
+        applyMergeQueueAction: (a: unknown) => applied.push(a),
+        appendLog: (e: Record<string, unknown>) => logged.push(e),
+        now: () => new Date('2026-07-20T00:00:00.000Z')
+      }
+    );
+    expect(out).toMatchObject({ executed: true, plannedCount: 2, appliedCount: 2 });
+    expect(applied).toHaveLength(2);
+    expect(logged).toHaveLength(2);
+    expect(logged[0]).toMatchObject({ action: 'merge-queue', tier: 'mergeQueue', op: 'arm', number: 1, approver: 'svelderrainruiz' });
   });
 });

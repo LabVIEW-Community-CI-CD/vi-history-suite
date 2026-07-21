@@ -213,6 +213,76 @@ function runAnnotate(options = {}, deps = {}) {
   return { executed: true, plannedCount: planned.length, appliedCount: applied };
 }
 
+// Pure Tier 3 (mergeQueue) planner: normalize proposed merge-queue actions
+// (arm auto-merge on, or dequeue, a pull request) into a validated apply-list,
+// dropping any malformed entry. Like Tier 2 the actions are supplied by an
+// approved proposer, not derived from truth, so the planner only validates shape;
+// the gate (server-verified approver) authorizes acting on them. A duplicate
+// (op, number) pair is de-duplicated so the queue is not double-armed.
+//
+// actions: [{ op: 'arm'|'dequeue', number }]
+function planMergeQueue(actions) {
+  const list = Array.isArray(actions) ? actions : [];
+  const planned = [];
+  const seen = new Set();
+  for (const action of list) {
+    if (!action || typeof action !== 'object') {
+      continue;
+    }
+    const { op, number } = action;
+    if (op !== 'arm' && op !== 'dequeue') {
+      continue;
+    }
+    if (!Number.isInteger(number) || number <= 0) {
+      continue;
+    }
+    const key = `${op}:${number}`;
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    planned.push({ op, number });
+  }
+  return planned;
+}
+
+// Execute planned Tier 3 merge-queue actions ONLY when the gate authorizes. Like
+// Tier 2, mergeQueue is default-disabled and requires a server-verified
+// allowlisted approver because it acts beyond mirroring directly-verified truth.
+// Every applied action is appended to the write log. The queue actor and
+// log-appender are injected; nothing runs when the gate refuses.
+function runMergeQueue(options = {}, deps = {}) {
+  const repoRoot = deps.repoRoot || process.cwd();
+  const config = deps.config || loadWriteConfig(repoRoot, deps);
+  const auth = authorizeWrite(config, 'mergeQueue', {
+    approver: options.approver,
+    approverVerified: options.approverVerified
+  });
+  if (!auth.authorized) {
+    return { executed: false, reason: auth.reason, plannedCount: 0, appliedCount: 0 };
+  }
+  const planned = planMergeQueue(options.actions || []);
+  const applyMergeQueueAction = deps.applyMergeQueueAction;
+  const appendLog = deps.appendLog || defaultAppendLog(repoRoot, deps);
+  if (typeof applyMergeQueueAction !== 'function') {
+    return { executed: false, reason: 'no-executor', plannedCount: planned.length, appliedCount: 0 };
+  }
+  let applied = 0;
+  for (const action of planned) {
+    applyMergeQueueAction(action);
+    appendLog({
+      action: 'merge-queue',
+      tier: 'mergeQueue',
+      op: action.op,
+      number: action.number,
+      approver: options.approver,
+      timestamp: (deps.now ? deps.now() : new Date()).toISOString()
+    });
+    applied += 1;
+  }
+  return { executed: true, plannedCount: planned.length, appliedCount: applied };
+}
+
 module.exports = {
   WRITE_CONFIG_FILENAME,
   WRITE_LOG_FILENAME,
@@ -221,7 +291,9 @@ module.exports = {
   planBoardSync,
   runBoardSync,
   planAnnotate,
-  runAnnotate
+  runAnnotate,
+  planMergeQueue,
+  runMergeQueue
 };
 
 if (require.main === module) {
