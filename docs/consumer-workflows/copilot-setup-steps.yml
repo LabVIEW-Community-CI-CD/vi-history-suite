@@ -50,10 +50,13 @@ jobs:
     # Bounded well under the 59-minute cap; the NI image pull dominates.
     timeout-minutes: 59
     env:
-      # Pin the vi-history-suite ref the agent's MCP server is built from, so a
-      # consumer gets a reproducible, reviewed toolset instead of a moving
-      # `develop`. Bump deliberately when adopting a new release.
-      VIHS_REF: develop
+      # Pin the vi-history-suite ref the agent's MCP server is built from to an
+      # IMMUTABLE release tag, so a consumer gets a reproducible, reviewed
+      # toolset instead of a moving branch head that could build and execute
+      # changes they never deliberately adopted (a supply-chain risk for an
+      # autonomous agent). Bump this deliberately to adopt a newer release; do
+      # NOT set it to a floating branch like `develop`.
+      VIHS_REF: v1.36.1
       # The canonical <version>-linux NI LabVIEW image the comparison runtime
       # uses. Keep in lockstep with vi-history-suite's DEFAULT_LINUX_CONTAINER_IMAGE.
       CONTAINER_IMAGE_VERSION: 2026q1
