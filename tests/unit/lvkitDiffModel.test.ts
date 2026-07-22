@@ -92,6 +92,31 @@ describe('parseLvkitDiffDocument (VHS-REQ-712.1)', () => {
     expect('path' in node).toBe(false);
   });
 
+  it('rejects non-finite polyline/path coordinates (fail-closed geometry)', () => {
+    const [node] = parseLvkitDiffDocument({
+      changes: [
+        {
+          kind: 'node',
+          change: 'added',
+          // A NaN in `path` and an Infinity in `chain_paths` must both be dropped
+          // rather than propagated as invalid geometry downstream.
+          path: [
+            [1, 2],
+            [Number.NaN, 4]
+          ],
+          chain_paths: [
+            [
+              [1, 2],
+              [3, Number.POSITIVE_INFINITY]
+            ]
+          ]
+        }
+      ]
+    }).changes;
+    expect('path' in node).toBe(false);
+    expect('chainPaths' in node).toBe(false);
+  });
+
   it('treats an empty change map as no differences with zero common nodes', () => {
     const doc = parseLvkitDiffDocument({ changes: [], common_nodes: 0 });
     expect(doc.changes).toHaveLength(0);
