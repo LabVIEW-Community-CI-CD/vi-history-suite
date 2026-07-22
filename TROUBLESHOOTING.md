@@ -293,10 +293,11 @@ Two independent issues can cause this on a Linux host running LabVIEW 2026:
 ### Fix
 
 1. Enable VI Server TCP/IP in LabVIEW (Tools → Options → VI Server) and
-   confirm port `3363` (or your configured port) is listening:
+   confirm the `server.tcp.port` you configured in `labview.conf` is
+   listening (substitute your port for `<PORT>`):
 
    ```bash
-   ss -lnt | grep 3363
+   ss -lnt | grep "<PORT>"
    ```
 
    `vi-history-suite` reads the active `labview.conf` before launching
