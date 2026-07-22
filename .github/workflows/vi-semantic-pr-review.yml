@@ -41,6 +41,11 @@ on:
         description: 'Already-materialized base-revision tree root whose previews are present in preview_cache_dir, enabling base-side correlation on the external-cache path (VHS-REQ-703.7). The auto-warm path materializes its own base tree and does not need this.'
         required: false
         default: ''
+      emit_corpus_samples:
+        description: 'Emit the deterministic per-VI corpus-samples artifact (vi-latent-corpus-samples@v1, VHS-REQ-703.17) into the uploaded review artifact — the closed-corpus data record for the gated ML research track (ADR-0027). Deterministic post-processing with no added render cost. Off by default.'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -67,5 +72,6 @@ jobs:
       preview_cache_dir: ${{ inputs.preview_cache_dir }}
       auto_warm_changed_previews: ${{ inputs.auto_warm_changed_previews }}
       base_tree_dir: ${{ inputs.base_tree_dir }}
+      emit_corpus_samples: ${{ inputs.emit_corpus_samples }}
     secrets:
       VI_REVIEW_TARGET_TOKEN: ${{ secrets.VI_REVIEW_TARGET_TOKEN }}
