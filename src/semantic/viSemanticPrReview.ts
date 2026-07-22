@@ -183,15 +183,42 @@ export type ViLatentCorpusRuntimeFacts = ViLatentCorpusProvenance['runtime'];
  * deterministic. Every COMPLETED VI yields a sample — including a no-difference VI
  * (a valuable true-negative label) — so the bundle is `undefined` only when the
  * review has no completed VI, and a caller writes it only when it has content.
+ *
+ * Runtime provenance is taken PER ENTRY from the actual completed comparison
+ * (`entry.model.runtime` — the runtime that really produced that VI's report,
+ * including anything auto-detected), so it never drops the reproducibility key
+ * when the CLI's optional runtime flags were omitted. `runtimeFallback` only
+ * fills fields the model did not record.
  */
 export function buildViLatentCorpusSamplesArtifact(
   review: Pick<ViSemanticPrReview, 'repositoryRoot' | 'baseHash' | 'selectedHash' | 'entries'>,
-  runtime: ViLatentCorpusRuntimeFacts = {}
+  runtimeFallback: ViLatentCorpusRuntimeFacts = {}
 ): ViLatentCorpusSamplesArtifact | undefined {
   const entries: ViLatentCorpusSampleArtifactEntry[] = [];
   for (const entry of review.entries) {
     if (entry.status !== 'completed') {
       continue;
+    }
+    // Prefer the runtime the comparison actually ran on (model.runtime); fall
+    // back to the requested CLI settings only for fields the model omitted, so a
+    // sample never loses runtime evidence and never claims a runtime it did not use.
+    const observed = entry.model.runtime;
+    const runtime: ViLatentCorpusRuntimeFacts = {};
+    const provider = observed?.provider ?? runtimeFallback.provider;
+    const engine = observed?.engine ?? runtimeFallback.engine;
+    const bitness = observed?.bitness ?? runtimeFallback.bitness;
+    const version = observed?.labviewVersion ?? runtimeFallback.version;
+    if (provider !== undefined) {
+      runtime.provider = provider;
+    }
+    if (engine !== undefined) {
+      runtime.engine = engine;
+    }
+    if (bitness !== undefined) {
+      runtime.bitness = bitness;
+    }
+    if (version !== undefined) {
+      runtime.version = version;
     }
     const sample = buildViLatentCorpusSample({
       provenance: {

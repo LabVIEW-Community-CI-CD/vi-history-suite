@@ -102,22 +102,30 @@ export function buildViLatentCorpusSample(
   });
 
   const availability = input.previewAvailability;
-  // Provider metadata is the source of truth for preview availability when
-  // supplied (it reflects a real render/cache peek, even when raw bytes were not
-  // threaded). Otherwise fall back to what the bundle counted from any supplied
-  // preview images. Never fabricated: an absent/false provider entry stays false.
-  const basePreviewAvailable = availability
-    ? availability.base?.available === true
-    : bundle.previewImageCounts.base > 0;
-  const headPreviewAvailable = availability
-    ? availability.head?.available === true
-    : bundle.previewImageCounts.head > 0;
-  const previewImageCounts = availability
-    ? {
-        base: availability.base?.inlineImageCount ?? 0,
-        head: availability.head?.inlineImageCount ?? 0
-      }
-    : bundle.previewImageCounts;
+  // Provider metadata is the source of truth for a side when it is supplied (it
+  // reflects a real render/cache peek, even when raw bytes were not threaded).
+  // Each side falls back INDEPENDENTLY to what the bundle counted from any
+  // supplied preview images, so partial metadata (only one side present) does
+  // not force the other side to false. Never fabricated: an explicit false/0
+  // provider entry stays false/0.
+  const basePreviewAvailable =
+    availability?.base !== undefined
+      ? availability.base.available === true
+      : bundle.previewImageCounts.base > 0;
+  const headPreviewAvailable =
+    availability?.head !== undefined
+      ? availability.head.available === true
+      : bundle.previewImageCounts.head > 0;
+  const previewImageCounts = {
+    base:
+      availability?.base !== undefined
+        ? availability.base.inlineImageCount ?? 0
+        : bundle.previewImageCounts.base,
+    head:
+      availability?.head !== undefined
+        ? availability.head.inlineImageCount ?? 0
+        : bundle.previewImageCounts.head
+  };
 
   return {
     schema: VI_LATENT_CORPUS_SAMPLE_SCHEMA_ID,

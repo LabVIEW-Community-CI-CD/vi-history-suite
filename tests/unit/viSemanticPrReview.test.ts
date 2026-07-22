@@ -760,6 +760,26 @@ describe('buildViLatentCorpusSamplesArtifact (VHS-REQ-703.17)', () => {
     expect(first?.sample.artifacts.headPreviewAvailable).toBe(false);
   });
 
+  it("prefers the completed comparison's actual runtime over the CLI fallback (VHS-REQ-703.17)", async () => {
+    const modelWithRuntime = makeModel({
+      vi: { title: 'A.vi' },
+      runtime: { provider: 'linux-container', engine: 'labview-cli', labviewVersion: '2026q3', bitness: 'x64' }
+    });
+    const review = await buildViSemanticPrReview(
+      { repositoryRoot: '/repo', baseHash: 'aaa', selectedHash: 'bbb' },
+      deps(['src/A.vi'], { 'src/A.vi': completed(modelWithRuntime) })
+    );
+    // CLI fallback names a DIFFERENT provider/version; the observed runtime wins,
+    // and the model's version maps onto the sample's `version` key.
+    const artifact = buildViLatentCorpusSamplesArtifact(review, { provider: 'docker', version: 'ignored' });
+    expect(artifact?.entries[0].sample.provenance.runtime).toEqual({
+      provider: 'linux-container',
+      engine: 'labview-cli',
+      bitness: 'x64',
+      version: '2026q3'
+    });
+  });
+
   it('returns undefined when the review has no completed VI', async () => {
     const review = await buildViSemanticPrReview(
       { repositoryRoot: '/repo', baseHash: 'a', selectedHash: 'b' },
