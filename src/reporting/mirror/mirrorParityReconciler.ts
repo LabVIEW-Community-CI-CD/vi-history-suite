@@ -83,6 +83,10 @@ export interface ReconcileResult {
 
 const SHA256_HEX = /^[0-9a-f]{64}$/;
 
+/** The ledger envelope this reconciler consumes (Phase 1 writer contract). */
+const MIRROR_BENCHMARK_SCHEMA_ID = 'vi-history-suite/mirror-benchmark@v1';
+const MIRROR_BENCHMARK_SCHEMA_VERSION = 1;
+
 function assertLedger(ledger: unknown): asserts ledger is MirrorLedger {
   if (
     !ledger ||
@@ -93,6 +97,20 @@ function assertLedger(ledger: unknown): asserts ledger is MirrorLedger {
     !Array.isArray((ledger as MirrorLedger).runs)
   ) {
     throw new Error('Mirror ledger must have an object `actors` and an array `runs`.');
+  }
+  // When the ledger carries the self-describing envelope, it MUST match the
+  // Phase 1 contract (same fail-closed posture as the writer / ML projection) so
+  // a drifted/wrong file cannot satisfy the required gate.
+  const envelope = ledger as { $schema?: unknown; schemaVersion?: unknown };
+  const hasEnvelope = envelope.$schema !== undefined || envelope.schemaVersion !== undefined;
+  if (
+    hasEnvelope &&
+    (envelope.$schema !== MIRROR_BENCHMARK_SCHEMA_ID || envelope.schemaVersion !== MIRROR_BENCHMARK_SCHEMA_VERSION)
+  ) {
+    throw new Error(
+      `Mirror ledger has an unexpected envelope ($schema=${JSON.stringify(envelope.$schema)}, ` +
+        `schemaVersion=${JSON.stringify(envelope.schemaVersion)}); expected ${MIRROR_BENCHMARK_SCHEMA_ID} v${MIRROR_BENCHMARK_SCHEMA_VERSION}.`
+    );
   }
 }
 
@@ -117,11 +135,18 @@ export function reconcileMirrorParity(ledger: MirrorLedger, options: ReconcileOp
   const requiredLeftRole = options.requiredLeftRole ?? 'tangled-left';
   const rightRole = options.rightRole ?? 'tangled-right';
 
-  // Group `ok` runs at the queued revision by parityKey.
+  // Group `ok` runs at the queued revision by parityKey. A malformed reportSha256
+  // is rejected fail-closed (corrupted/hand-edited evidence must never satisfy the
+  // gate by "agreeing" on garbage).
   const groups = new Map<string, MirrorRunRow[]>();
   for (const run of ledger.runs) {
     if (run.outcome !== 'ok') continue;
     if (run.sourceRevision !== queuedRevision) continue;
+    if (!isReportDigest(run.reportSha256)) {
+      throw new Error(
+        `Mirror ledger run (parityKey ${String(run.parityKey).slice(0, 12)}…) has a malformed reportSha256; refusing to reconcile.`
+      );
+    }
     const list = groups.get(run.parityKey) ?? [];
     list.push(run);
     groups.set(run.parityKey, list);
@@ -168,6 +193,18 @@ export function reconcileMirrorParity(ledger: MirrorLedger, options: ReconcileOp
   }
 
   const failures = verdicts.filter((v) => v.gate === 'fail').map((v) => v.parityKey);
+  // Fresh left-channel evidence for the queued revision is a HARD precondition:
+  // an empty verdict set (left run failed / wrong revision / empty ledger) must
+  // NOT pass. Surface it as an explicit synthetic failure so the CLI exits nonzero.
+  const anyLeftEvidence = verdicts.some((v) => v.leftChannelFresh);
+  if (verdicts.length === 0 || !anyLeftEvidence) {
+    return {
+      queuedRevision,
+      verdicts,
+      gate: 'fail',
+      failures: failures.length > 0 ? failures : ['<no-left-evidence-for-revision>']
+    };
+  }
   const overall: ParityGate = failures.length > 0
     ? 'fail'
     : verdicts.some((v) => v.gate === 'advisory')
