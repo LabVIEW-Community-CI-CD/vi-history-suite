@@ -81,15 +81,14 @@ export function buildViLatentCorpusSample(
     locate: input.locate
   });
 
-  const baseImages = input.previewImages?.base ?? [];
-  const headImages = input.previewImages?.head ?? [];
-
   return {
     schema: VI_LATENT_CORPUS_SAMPLE_SCHEMA_ID,
     provenance: normalizeProvenance(input.provenance),
     artifacts: {
-      basePreviewAvailable: baseImages.length > 0,
-      headPreviewAvailable: headImages.length > 0,
+      // Availability and counts are derived from the bundle's own image counts so
+      // they cannot drift from how the bundle interpreted the supplied previews.
+      basePreviewAvailable: bundle.previewImageCounts.base > 0,
+      headPreviewAvailable: bundle.previewImageCounts.head > 0,
       comparisonReportAvailable: true
     },
     correlation: bundle.correlation,

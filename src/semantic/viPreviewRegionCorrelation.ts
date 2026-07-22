@@ -108,6 +108,16 @@ function readUint32BE(bytes: Uint8Array, offset: number): number {
 export interface DiffRegionSource {
   /** Stable id for this region (e.g. the detail-item text or object name). */
   id: string;
+  /**
+   * Stable ordinal of this source among all emitted diff-region sources (its
+   * position in the model's section/item order). Because `id` can collide when a
+   * diagram has multiple instances of the same object name, this index is the
+   * unique occurrence key a consumer joins a correlation entry and image
+   * association back to. Set by {@link buildDiffRegionSourcesFromModel}; when a
+   * caller constructs sources directly, the correlation/association builders fall
+   * back to the source's position in the supplied array.
+   */
+  sourceIndex?: number;
   changeType: ComparisonDetailChangeType;
   /**
    * Diagram coordinate from the comparison report (diagram space, not pixels).
@@ -167,6 +177,12 @@ export type PreviewRegionLocator = (
 /** Per-object region correlation: the report context plus any located regions. */
 export interface ViRegionCorrelationEntry {
   id: string;
+  /**
+   * Stable occurrence key (the source's ordinal) so a consumer can uniquely tie
+   * this entry to an image association even when `id` collides across multiple
+   * instances of the same object name.
+   */
+  sourceIndex: number;
   changeType: ComparisonDetailChangeType;
   coordinate?: DiagramPoint;
   /** The move source (base-side) diagram coordinate, when the change is a move. */
@@ -205,7 +221,7 @@ export function buildViPreviewRegionCorrelation(
   sources: readonly DiffRegionSource[],
   locate?: PreviewRegionLocator
 ): ViPreviewRegionCorrelation {
-  const entries: ViRegionCorrelationEntry[] = sources.map((source) => {
+  const entries: ViRegionCorrelationEntry[] = sources.map((source, index) => {
     const regions: LocatedPreviewRegion[] = [];
     if (locate) {
       for (const side of PREVIEW_SIDES) {
@@ -217,6 +233,7 @@ export function buildViPreviewRegionCorrelation(
     }
     const entry: ViRegionCorrelationEntry = {
       id: source.id,
+      sourceIndex: source.sourceIndex ?? index,
       changeType: source.changeType,
       regions,
       located: regions.length > 0
@@ -299,6 +316,7 @@ export function buildDiffRegionSourcesFromModel(
       }
       const source: DiffRegionSource = {
         id: geometry.objectName ?? geometry.text,
+        sourceIndex: sources.length,
         changeType: geometry.changeType
       };
       if (geometry.coordinate !== undefined) {
@@ -484,6 +502,12 @@ export function buildPreviewImageInventory(
 /** An exact content association between a change and a preview image. */
 export interface DiffRegionImageAssociation {
   id: string;
+  /**
+   * Stable occurrence key (the source's ordinal) matching the correlation
+   * entry's `sourceIndex`, so an association is tied to a unique source even when
+   * `id` collides across same-named object instances.
+   */
+  sourceIndex: number;
   side: PreviewSide;
   previewImageIndex: number;
   contentKey: string;
@@ -512,7 +536,7 @@ export function associateDiffRegionsToPreviewImages(
     byContent.set(entry.contentKey, list);
   }
   const associations: DiffRegionImageAssociation[] = [];
-  for (const source of sources) {
+  for (const [index, source] of sources.entries()) {
     const image = resolveDifferenceImage(source);
     if (image === undefined) {
       continue;
@@ -525,6 +549,7 @@ export function associateDiffRegionsToPreviewImages(
     const preferred = matches.find((m) => m.side === 'head') ?? matches[0];
     const association: DiffRegionImageAssociation = {
       id: source.id,
+      sourceIndex: source.sourceIndex ?? index,
       side: preferred.side,
       previewImageIndex: preferred.index,
       contentKey: preferred.contentKey

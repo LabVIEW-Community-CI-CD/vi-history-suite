@@ -173,8 +173,8 @@ describe('buildDiffRegionSourcesFromModel (VHS-REQ-703.14)', () => {
     // Only the two coordinate-bearing items become sources (wiring is skipped);
     // a moved object carries BOTH endpoints (from = base, to = head).
     expect(sources).toEqual([
-      { id: 'X.vi', changeType: 'added', coordinate: { x: 1570, y: 358 } },
-      { id: 'N', changeType: 'moved', coordinate: { x: 30, y: 40 }, fromCoordinate: { x: 10, y: 20 } }
+      { id: 'X.vi', sourceIndex: 0, changeType: 'added', coordinate: { x: 1570, y: 358 } },
+      { id: 'N', sourceIndex: 1, changeType: 'moved', coordinate: { x: 30, y: 40 }, fromCoordinate: { x: 10, y: 20 } }
     ]);
   });
 

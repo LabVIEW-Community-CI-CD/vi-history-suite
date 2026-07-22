@@ -486,9 +486,12 @@ export const VI_PREVIEW_REGION_CORRELATION_JSON_SCHEMA = {
       type: 'array',
       items: {
         type: 'object',
-        required: ['id', 'changeType', 'regions', 'located'],
+        required: ['id', 'sourceIndex', 'changeType', 'regions', 'located'],
         properties: {
           id: { type: 'string' },
+          // Stable occurrence key so same-named object instances stay uniquely
+          // joinable to their image associations (report section/item order).
+          sourceIndex: { type: 'integer', minimum: 0 },
           changeType: { type: 'string', enum: DETAIL_CHANGE_TYPE_ENUM },
           coordinate: DIAGRAM_POINT_SCHEMA,
           // Present only for moved objects: the base-side (source) diagram
@@ -628,9 +631,11 @@ export const VI_LATENT_CORPUS_SAMPLE_JSON_SCHEMA = {
       type: 'array',
       items: {
         type: 'object',
-        required: ['id', 'side', 'previewImageIndex', 'contentKey'],
+        required: ['id', 'sourceIndex', 'side', 'previewImageIndex', 'contentKey'],
         properties: {
           id: { type: 'string' },
+          // Occurrence key matching the correlation entry's sourceIndex.
+          sourceIndex: { type: 'integer', minimum: 0 },
           side: { type: 'string', enum: ['base', 'head'] },
           previewImageIndex: { type: 'integer', minimum: 0 },
           contentKey: { type: 'string' },

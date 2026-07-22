@@ -11,13 +11,23 @@ import {
   validateViSemanticDocument
 } from '../../src/semantic/viSemanticSchemas';
 
-/** Minimal 1x1-ish PNG data URI whose payload is stable for byte-exact matching. */
+/** A real minimal PNG header (signature + IHDR width/height) so `readPngDimensions`
+ * resolves the fixture's pixel size and byte-exact content matching still works. */
+function pngHeader(width: number, height: number): Uint8Array {
+  const bytes = new Uint8Array(24);
+  bytes.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], 0);
+  bytes.set([0x00, 0x00, 0x00, 0x0d], 8); // IHDR length (13)
+  bytes.set([0x49, 0x48, 0x44, 0x52], 12); // "IHDR"
+  bytes.set([(width >>> 24) & 0xff, (width >>> 16) & 0xff, (width >>> 8) & 0xff, width & 0xff], 16);
+  bytes.set(
+    [(height >>> 24) & 0xff, (height >>> 16) & 0xff, (height >>> 8) & 0xff, height & 0xff],
+    20
+  );
+  return bytes;
+}
+
 function pngDataUri(width: number, height: number): string {
-  const ihdr = Buffer.alloc(13);
-  ihdr.writeUInt32BE(width, 0);
-  ihdr.writeUInt32BE(height, 4);
-  const payload = Buffer.concat([Buffer.from('IHDR-'), ihdr]).toString('base64');
-  return `data:image/png;base64,${payload}`;
+  return `data:image/png;base64,${Buffer.from(pngHeader(width, height)).toString('base64')}`;
 }
 
 const CHANGED_MODEL = buildViSemanticComparisonModelFromHtml(
@@ -78,9 +88,14 @@ describe('buildViLatentCorpusSample (VHS-REQ-703.16)', () => {
     const result = validateViSemanticDocument(sample);
     expect(result.valid).toBe(true);
     expect(result.errors).toEqual([]);
-    // The byte-exact association was serialized into the sample.
+    // The byte-exact association was serialized into the sample, with the pixel
+    // size resolved from the real PNG header.
     expect(sample.imageAssociations).toHaveLength(1);
-    expect(sample.imageAssociations[0]).toMatchObject({ id: 'X.vi', side: 'head' });
+    expect(sample.imageAssociations[0]).toMatchObject({
+      id: 'X.vi',
+      side: 'head',
+      pixelSize: { width: 40, height: 30 }
+    });
   });
 
   it('yields an empty-but-valid sample for a no-difference model', () => {
@@ -98,6 +113,37 @@ describe('buildViLatentCorpusSample (VHS-REQ-703.16)', () => {
       expect(entry.located).toBe(false);
       expect(entry.regions).toEqual([]);
     }
+  });
+
+  it('keeps same-name object occurrences uniquely joinable via sourceIndex', () => {
+    // Two calls to the same-named SubVI collide on id; sourceIndex disambiguates.
+    const twoOfSameName = buildViSemanticComparisonModelFromHtml(
+      `<h1 class="report-title">R</h1>
+       <h2 class="section-header">Detailed Information</h2>
+       <details><summary class="difference-heading">3. Block Diagram objects</summary>
+         <ol>
+           <li class="diff-detail">SubVI "X.vi" - added at (10,20)</li>
+           <li class="diff-detail">SubVI "X.vi" - added at (30,40)</li>
+         </ol></details>`,
+      {}
+    );
+    const sample = buildViLatentCorpusSample({ provenance: PROVENANCE, model: twoOfSameName });
+    expect(sample.correlation.entries.map((e) => e.id)).toEqual(['X.vi', 'X.vi']);
+    // Same id, but distinct stable occurrence keys in report order.
+    expect(sample.correlation.entries.map((e) => e.sourceIndex)).toEqual([0, 1]);
+    expect(validateViSemanticDocument(sample).valid).toBe(true);
+  });
+
+  it('carries the association occurrence key matching its correlation entry', () => {
+    const sample = buildViLatentCorpusSample({
+      provenance: PROVENANCE,
+      model: CHANGED_MODEL,
+      previewImages: { head: [pngDataUri(40, 30)] },
+      resolveDifferenceImage: (s) => (s.id === 'X.vi' ? pngDataUri(40, 30) : undefined)
+    });
+    const assoc = sample.imageAssociations[0];
+    const matchingEntry = sample.correlation.entries.find((e) => e.sourceIndex === assoc.sourceIndex);
+    expect(matchingEntry?.id).toBe(assoc.id);
   });
 
   it('omits unobserved runtime facts rather than serializing undefined', () => {
