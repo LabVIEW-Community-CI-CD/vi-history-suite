@@ -107,10 +107,31 @@ describe('reconcileMirrorParity (VHS-REQ-707.11)', () => {
     expect(result.verdicts).toHaveLength(2);
   });
 
-  it('empty ledger for the revision yields a pass (nothing to gate)', () => {
+  it('fails (not passes) when the queued revision has no left evidence', () => {
+    // Empty verdict set: no ok run at the queued revision -> hard precondition
+    // (fresh left evidence) absent -> gate fail, not a spurious pass.
     const result = reconcileMirrorParity(ledger([]), { queuedRevision: REV });
-    expect(result.gate).toBe('pass');
+    expect(result.gate).toBe('fail');
     expect(result.verdicts).toEqual([]);
+    expect(result.failures).toEqual(['<no-left-evidence-for-revision>']);
+  });
+
+  it('fails when only a right-channel run exists for the revision (no left evidence)', () => {
+    const result = reconcileMirrorParity(ledger([run(RIGHT)]), { queuedRevision: REV });
+    expect(result.gate).toBe('fail');
+  });
+
+  it('rejects a malformed reportSha256 fail-closed (garbage cannot agree)', () => {
+    expect(() =>
+      reconcileMirrorParity(ledger([run(LEFT, { reportSha256: 'garbage' }), run(RIGHT, { reportSha256: 'garbage' })]), {
+        queuedRevision: REV
+      })
+    ).toThrow(/malformed reportSha256/);
+  });
+
+  it('rejects a mismatched ledger envelope', () => {
+    const enveloped = { $schema: 'other@v1', schemaVersion: 1, ...ledger([run(LEFT), run(RIGHT)]) };
+    expect(() => reconcileMirrorParity(enveloped as never, { queuedRevision: REV })).toThrow(/envelope/);
   });
 
   it('fails closed on a malformed ledger and empty queuedRevision', () => {
