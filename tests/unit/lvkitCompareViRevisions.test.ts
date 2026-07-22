@@ -120,8 +120,11 @@ describe('createLvkitCompareViRevisions provider (VHS-REQ-712.5)', () => {
     await compare(INPUT);
     const [command, args] = execFileAsync.mock.calls[0];
     expect(command).toBe('lvkit');
+    // The search path is the validated (resolved) repository root, so assert the
+    // resolved form rather than a hard-coded POSIX string (win32 resolves
+    // `/repo` to `C:\repo`).
     expect(args).toEqual(
-      expect.arrayContaining(['diff', '--format', 'json', '--search-path', '/repo'])
+      expect.arrayContaining(['diff', '--format', 'json', '--search-path', path.resolve(INPUT.repositoryRoot)])
     );
   });
 
