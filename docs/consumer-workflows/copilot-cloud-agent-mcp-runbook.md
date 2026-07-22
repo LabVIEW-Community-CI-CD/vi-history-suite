@@ -48,7 +48,7 @@ Paste:
       "type": "local",
       "command": "node",
       "args": [
-        "/home/runner/work/<OWNER>/<REPO>/.vi-history-suite/out/cli/runViSemanticMcpServer.js"
+        "/home/runner/work/<REPO>/<REPO>/.vi-history-suite/out/cli/runViSemanticMcpServer.js"
       ],
       "tools": [
         "get_vi_semantic_comparison",
@@ -70,10 +70,11 @@ Notes:
   repo Settings, not a workflow file, so GitHub Actions expressions like
   `${{ github.workspace }}` are NOT interpolated and would be passed to `node`
   literally. On a GitHub-hosted runner `$GITHUB_WORKSPACE` is
-  `/home/runner/work/<OWNER>/<REPO>` (repeat your repo name), so `$VIHS_HOME`
-  from the setup-steps template resolves to
-  `/home/runner/work/<OWNER>/<REPO>/.vi-history-suite`. Substitute your repo's
-  owner and name above; if you changed `VIHS_HOME` in the template, match it here.
+  `/home/runner/work/<REPO>/<REPO>` — the repository **name repeated** (no owner
+  segment) — so `$VIHS_HOME` from the setup-steps template resolves to
+  `/home/runner/work/<REPO>/<REPO>/.vi-history-suite`. Substitute your repository
+  name (both `<REPO>` occurrences) above; if you changed `VIHS_HOME` in the
+  template, match it here.
 - `type` is `local` (a.k.a. stdio): the agent launches the process and speaks
   newline-delimited JSON-RPC 2.0 over stdin/stdout. The server writes a ready
   banner and all diagnostics to stderr.

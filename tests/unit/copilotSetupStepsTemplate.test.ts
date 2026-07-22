@@ -112,10 +112,14 @@ describe('Copilot cloud-agent setup-steps consumer template (VHS-REQ-705)', () =
 
   it('does not auto-trigger on push/PR and reads least-privilege permissions (VHS-REQ-705.1)', () => {
     const template = readTemplate();
+    const code = readTemplateCode();
     // Setup steps are for the agent / manual dispatch only — never a push or
     // pull_request trigger that would run the heavy prep on every event.
-    expect(template).not.toMatch(/^\s*push:/m);
-    expect(template).not.toMatch(/^on:\s*\n\s*pull_request:/m);
+    expect(code).not.toMatch(/^\s*push:/m);
+    // Reject a `pull_request:` trigger key anywhere under `on:` (2-space
+    // indented), not just when it is the first key — so adding it alongside
+    // workflow_dispatch still fails.
+    expect(code).not.toMatch(/^\s{2}pull_request(_target)?:/m);
     expect(template).toContain('workflow_dispatch:');
     expect(template).toContain('permissions:\n  contents: read');
     expect(template.toLowerCase()).not.toContain('vagrant');
