@@ -117,14 +117,8 @@ export function buildViLatentCorpusSample(
       ? availability.head.available === true
       : bundle.previewImageCounts.head > 0;
   const previewImageCounts = {
-    base:
-      availability?.base !== undefined
-        ? availability.base.inlineImageCount ?? 0
-        : bundle.previewImageCounts.base,
-    head:
-      availability?.head !== undefined
-        ? availability.head.inlineImageCount ?? 0
-        : bundle.previewImageCounts.head
+    base: resolvePreviewImageCount(availability?.base, basePreviewAvailable, bundle.previewImageCounts.base),
+    head: resolvePreviewImageCount(availability?.head, headPreviewAvailable, bundle.previewImageCounts.head)
   };
 
   return {
@@ -139,6 +133,33 @@ export function buildViLatentCorpusSample(
     imageAssociations: bundle.imageAssociations,
     previewImageCounts
   };
+}
+
+/**
+ * Returns a preview side's inline-image count that stays internally consistent
+ * with its resolved availability: `0` when the side is unavailable, the provider
+ * count when it is a valid non-negative integer, otherwise the bundle-derived
+ * count (so an `available: true` side without a provider count is not recorded as
+ * `0`). Never fabricated — an available side with no evidence at all reports `0`.
+ */
+function resolvePreviewImageCount(
+  entry: { available: boolean; inlineImageCount?: number } | undefined,
+  available: boolean,
+  bundleCount: number
+): number {
+  if (!available) {
+    return 0;
+  }
+  if (entry !== undefined) {
+    const count = entry.inlineImageCount;
+    if (typeof count === 'number' && Number.isInteger(count) && count >= 0) {
+      return count;
+    }
+    // Available side but the provider omitted/invalidated the count: fall back to
+    // whatever the bundle counted from supplied preview images (often 0).
+    return bundleCount;
+  }
+  return bundleCount;
 }
 
 /**
