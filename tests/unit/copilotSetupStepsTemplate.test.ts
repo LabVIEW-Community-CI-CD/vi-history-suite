@@ -44,12 +44,30 @@ describe('Copilot cloud-agent setup-steps consumer template (VHS-REQ-705)', () =
     const code = readTemplateCode();
     // GitHub only runs a job named exactly `copilot-setup-steps`.
     expect(code).toMatch(/^\s{2}copilot-setup-steps:\s*$/m);
-    // Exactly one job is defined under `jobs:`.
+    // Exactly one job is defined under `jobs:` — collect every 2-space-indented
+    // job id and assert the set is exactly the honored one, so adding any other
+    // job (which GitHub would ignore) fails the test.
+    const jobsIndex = code.indexOf('\njobs:');
     const jobIds = code
+      .slice(jobsIndex)
       .split('\n')
-      .filter((line) => /^\s{2}[a-z0-9-]+:\s*$/.test(line))
-      .filter((line) => /copilot-setup-steps/.test(line));
-    expect(jobIds).toHaveLength(1);
+      .map((line) => line.match(/^\s{2}([a-z0-9][a-z0-9-]*):\s*$/))
+      .filter((m): m is RegExpMatchArray => m !== null)
+      .map((m) => m[1]);
+    expect(jobIds).toEqual(['copilot-setup-steps']);
+  });
+
+  it('pins the vi-history-suite ref to an immutable release tag, not a floating branch (VHS-REQ-705.2)', () => {
+    const code = readTemplateCode();
+    const refMatch = code.match(/VIHS_REF:\s*(\S+)/);
+    expect(refMatch).not.toBeNull();
+    const ref = refMatch![1];
+    // A reproducible, reviewed toolset requires an immutable ref (release tag
+    // vX.Y.Z or a 40-char commit SHA) — never a floating branch head that could
+    // build changes the consumer never adopted (supply-chain risk).
+    expect(ref).not.toBe('develop');
+    expect(ref).not.toBe('main');
+    expect(ref).toMatch(/^(v\d+\.\d+\.\d+|[0-9a-f]{40})$/);
   });
 
   it('runs on an Ubuntu x64 runner within the 59-minute cap (VHS-REQ-705.1)', () => {
