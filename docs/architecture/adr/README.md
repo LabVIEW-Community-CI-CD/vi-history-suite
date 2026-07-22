@@ -49,3 +49,4 @@ The index and the required structure are enforced by `npm run adr:check`
 | [ADR-0024](./ADR-0024-self-hosted-integration-coverage-lane.md) | Self-Hosted Integration-Coverage Lane | Accepted |
 | [ADR-0025](./ADR-0025-additive-semantic-comparison-schema-evolution.md) | Additive Semantic-Comparison Schema Evolution For Change Classification | Accepted |
 | [ADR-0026](./ADR-0026-consumer-copilot-cloud-agent-mcp-enablement.md) | Consumer Copilot Cloud-Agent MCP Enablement | Accepted |
+| [ADR-0027](./ADR-0027-ml-latent-structure-research-rails.md) | ML Latent-Structure Research Data, Evaluation, And Honesty Rails | Proposed |
