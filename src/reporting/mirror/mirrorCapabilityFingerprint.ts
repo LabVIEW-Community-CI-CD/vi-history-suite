@@ -131,12 +131,18 @@ export function captureLocalCapabilityInputs(overrides: {
   const totalmem = (overrides.osDeps?.totalmem ?? os.totalmem)();
   const platform = (overrides.osDeps?.platform ?? os.platform)();
   const release = (overrides.osDeps?.release ?? os.release)();
+  // Fail closed when CPUs cannot be read: emitting cpuLogical=0 here would be
+  // rejected by buildCapabilityFingerprint (requires a positive integer), so the
+  // two APIs must agree rather than produce an inconsistent 0.
+  if (!Array.isArray(cpus) || cpus.length === 0) {
+    throw new Error('captureLocalCapabilityInputs could not read any CPUs from os.cpus().');
+  }
   return {
     actor: overrides.actor,
     role: overrides.role,
     capturedFrom: overrides.capturedFrom,
     os: `${platform} ${release}`,
-    cpuModel: cpus.length > 0 ? cpus[0].model.trim() : 'unknown',
+    cpuModel: cpus[0].model.trim() || 'unknown',
     cpuLogical: cpus.length,
     ramTotalBytes: totalmem,
     diskFreeBytes: overrides.diskFreeBytes,

@@ -38,7 +38,7 @@ describe('Vagrant left-channel producer composition (VHS-REQ-707.10)', () => {
       version: '2026',
       fixtureSha,
       viPath: 'resource/plugins/lv_icon.vi',
-      recipe: 'host:createComparisonReport'
+      recipe: 'createComparisonReport'
     });
     const reportSha256 = deriveReportSha256('<html>report</html>\r\n');
 
@@ -48,7 +48,7 @@ describe('Vagrant left-channel producer composition (VHS-REQ-707.10)', () => {
       sourceRevision: 'deadbeef',
       viPath: 'resource/plugins/lv_icon.vi',
       fixtureSha,
-      recipe: 'host:createComparisonReport',
+      recipe: 'createComparisonReport',
       mode: 'cold',
       outcome: 'ok',
       reportSha256,
@@ -80,7 +80,7 @@ describe('Vagrant left-channel producer composition (VHS-REQ-707.10)', () => {
       sourceRevision: 'deadbeef',
       viPath: 'a.vi',
       fixtureSha: 'c'.repeat(64),
-      recipe: 'host:createComparisonReport',
+      recipe: 'createComparisonReport',
       outcome: 'ok',
       reportSha256: 'd'.repeat(64),
       previewImageCount: 50,

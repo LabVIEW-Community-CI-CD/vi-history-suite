@@ -2,36 +2,47 @@
  * Mirror-Mode Phase 2 (VHS-REQ-707.9/.10) maintainer driver: the Vagrant
  * LEFT-CHANNEL benchmark PRODUCER.
  *
- * Runs a real LabVIEW VI comparison through the shipped compiled `out/`
- * primitives, captures a FROM-WITHIN capability fingerprint, computes the
- * cross-actor parity digests (Phase 1 helper), and records an idempotent row in
- * the `vi-history-suite/mirror-benchmark@v1` ledger (Phase 1 writer). This is the
- * left channel and the sole human-authored VI surface; it only RUNS comparisons
- * on already-authored VIs and never authors `.vi` binaries.
+ * Runs a REAL LabVIEW VI comparison through the shipped compiled `out/`
+ * primitives (locateComparisonRuntime -> preflight -> persist ->
+ * executeComparisonReport), captures a FROM-WITHIN capability fingerprint,
+ * computes the cross-actor parity digests (Phase 1 helper), and records an
+ * idempotent row in the `vi-history-suite/mirror-benchmark@v1` ledger (Phase 1
+ * writer). This is the left channel and the sole human-authored VI surface; it
+ * only RUNS comparisons on already-authored VIs and never authors `.vi` binaries.
+ *
+ * Fail-closed: it records a ledger row ONLY when a real comparison actually
+ * produced a report; there is no placeholder/trusted-file path (a stale or
+ * unrelated file must never be recorded as parity evidence).
+ *
+ * The parity `recipe` is the ACTOR-NEUTRAL logical operation
+ * (`createComparisonReport`) — provider (host/docker) and bitness are actor
+ * fingerprint / run metadata, NOT part of the cross-actor parity key, so the
+ * x86-Vagrant(host) and x64-Docker mirrors of the same sample group together.
  *
  * Maintainer-only `.cjs` under vagrant/, inventory-exempt, NOT shipped and NOT in
  * `npm test`. Requires `npm run compile`. Intended to run in the Vagrant guest
- * (LabVIEW Community 2026 x86), but the digest/ledger path is host-runnable too.
+ * (LabVIEW Community 2026 x86).
  *
- * The from-within fingerprint MUST be captured inside the actor (the guest
- * self-reports its allotted vCPU/RAM/disk). This driver reads a fingerprint JSON
- * that the caller produced from within the guest (e.g. via Get-CimInstance /
- * Get-PSDrive), or falls back to captureLocalCapabilityInputs for a host-native
- * run. It never trusts the VirtualBox host's view for a guest actor.
+ * The from-within fingerprint MUST be captured inside the actor. This driver
+ * reads a fingerprint-inputs JSON produced from within the guest (e.g. via
+ * Get-CimInstance / Get-PSDrive) when VIHS_L_FINGERPRINT is set; when that env
+ * var is set but the file is missing/unreadable it FAILS CLOSED (it never
+ * silently falls back to a host capture that would violate the from-within rule).
+ * Only when VIHS_L_FINGERPRINT is unset does it capture the local host actor.
  *
  * Env:
- *   VIHS_L_REPO          fixture repo (default C:\repos\labview-icon-editor)
+ *   VIHS_L_REPO          fixture repo (default C:\repos\labview-icon-editor on win32)
  *   VIHS_L_VI            VI under test, repo-relative (default resource/plugins/lv_icon.vi)
  *   VIHS_L_BASE          base git rev (default HEAD~1)
  *   VIHS_L_SELECTED      selected git rev (default HEAD)
- *   VIHS_L_PROVIDER      host | docker (default host)
+ *   VIHS_L_PROVIDER      host | docker (default host) — run metadata, not in parityKey
  *   VIHS_L_VERSION       LabVIEW year (default 2026)
- *   VIHS_L_BITNESS       x86 | x64 (default x86 in guest)
- *   VIHS_L_FINGERPRINT   path to a from-within fingerprint-inputs JSON (optional;
- *                        when absent, a host-native fallback is captured)
- *   VIHS_L_ACTOR         actor id (default vagrant-x86)
- *   VIHS_L_ROLE          tangled-left | tangled-right | decoupled (default tangled-left)
+ *   VIHS_L_BITNESS       x86 | x64 (default x86 in guest) — fingerprint metadata
+ *   VIHS_L_FINGERPRINT   path to a from-within fingerprint-inputs JSON (fail-closed if set+missing)
+ *   VIHS_L_ACTOR / VIHS_L_ROLE / VIHS_L_BUILD
  *   VIHS_L_LEDGER        ledger path, repo-relative (default docs/requirements/mirror-benchmark-ledger.json)
+ *   VIHS_L_STORAGE       runtime storage root (default a temp dir)
+ *   VIHS_L_MODE          cold | warm (default cold)
  *   VIHS_L_OUT           optional JSON evidence path
  */
 'use strict';
@@ -39,6 +50,7 @@
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
+const crypto = require('node:crypto');
 const { execFileSync } = require('node:child_process');
 
 const repoRoot = path.resolve(__dirname, '..');
@@ -53,7 +65,8 @@ function need(rel) {
 }
 
 const env = process.env;
-const fixtureRepo = env.VIHS_L_REPO || (process.platform === 'win32' ? 'C\\:\\repos\\labview-icon-editor' : path.join(os.homedir(), 'repos', 'labview-icon-editor'));
+const fixtureRepo =
+  env.VIHS_L_REPO || (process.platform === 'win32' ? 'C:\\repos\\labview-icon-editor' : path.join(os.homedir(), 'repos', 'labview-icon-editor'));
 const viPath = env.VIHS_L_VI || 'resource/plugins/lv_icon.vi';
 const baseRev = env.VIHS_L_BASE || 'HEAD~1';
 const selectedRev = env.VIHS_L_SELECTED || 'HEAD';
@@ -63,19 +76,31 @@ const bitness = env.VIHS_L_BITNESS || (process.platform === 'win32' ? 'x86' : 'x
 const actor = env.VIHS_L_ACTOR || (process.platform === 'win32' ? 'vagrant-x86' : 'linux-host-native-x64');
 const role = env.VIHS_L_ROLE || (process.platform === 'win32' ? 'tangled-left' : 'decoupled');
 const ledgerRel = env.VIHS_L_LEDGER || 'docs/requirements/mirror-benchmark-ledger.json';
+const mode = env.VIHS_L_MODE || 'cold';
+// Actor-neutral logical recipe — provider/bitness are metadata, NOT in parityKey.
+const RECIPE = 'createComparisonReport';
 
 const digest = need('out/reporting/mirror/mirrorParityDigest.js');
 const capability = need('out/reporting/mirror/mirrorCapabilityFingerprint.js');
+const { locateComparisonRuntime } = need('out/reporting/comparisonRuntimeLocator.js');
+const { preflightComparisonReportRevisions } = need('out/reporting/comparisonReportPreflight.js');
+const { persistComparisonReportPacket } = need('out/reporting/comparisonReportPacket.js');
+const { executeComparisonReport, materializeSelectedRevisionTreeWithGit } = need('out/reporting/comparisonReportRuntimeExecution.js');
 
 // --- capability fingerprint (from-within) -------------------------------------
 function loadFingerprint() {
-  if (env.VIHS_L_FINGERPRINT && fs.existsSync(env.VIHS_L_FINGERPRINT)) {
+  if (env.VIHS_L_FINGERPRINT !== undefined) {
+    // Env var present => the caller intends a specific from-within capture. Fail
+    // closed if it is missing/unreadable rather than silently using a host capture.
+    if (!fs.existsSync(env.VIHS_L_FINGERPRINT)) {
+      throw new Error(`VIHS_L_FINGERPRINT set to "${env.VIHS_L_FINGERPRINT}" but the file does not exist (refusing host fallback).`);
+    }
     const inputs = JSON.parse(fs.readFileSync(env.VIHS_L_FINGERPRINT, 'utf8'));
     return capability.buildCapabilityFingerprint(inputs);
   }
-  // Host-native fallback: capture from this host's own os.* (the "from-within"
+  // Host-native fallback: capture from this host's own os.* (the from-within
   // context for the decoupled Linux actor). diskFreeBytes probed via statfs.
-  let diskFreeBytes = 1;
+  let diskFreeBytes;
   try {
     const st = fs.statfsSync(repoRoot);
     diskFreeBytes = st.bavail * st.bsize;
@@ -93,50 +118,70 @@ function loadFingerprint() {
   return capability.buildCapabilityFingerprint(inputs);
 }
 
-// --- git blob sha for the selected VI (fixture identity) ----------------------
+// git blob id for the selected VI, hashed to a 64-hex sha256 fixture identity.
 function fixtureShaFor(rev, rel) {
-  const out = execFileSync('git', ['-C', fixtureRepo, 'rev-parse', `${rev}:${rel}`], {
-    encoding: 'utf8'
-  }).trim();
-  // git object id is sha1 (40 hex). Widen to 64-hex sha256 identity by hashing it,
-  // so it satisfies the parity-digest fixtureSha contract deterministically.
-  return require('node:crypto').createHash('sha256').update(out, 'utf8').digest('hex');
+  const blob = execFileSync('git', ['-C', fixtureRepo, 'rev-parse', `${rev}:${rel}`], { encoding: 'utf8' }).trim();
+  return crypto.createHash('sha256').update(blob, 'utf8').digest('hex');
 }
 
 async function main() {
   const fingerprint = loadFingerprint();
   const actorRef = digest.deriveActorFingerprintId(fingerprint);
-  const recipe = `${provider}:createComparisonReport`;
   const fixtureSha = fixtureShaFor(selectedRev, viPath);
-  const parityKey = digest.deriveParityKey({ version, fixtureSha, viPath, recipe });
+  const parityKey = digest.deriveParityKey({ version, fixtureSha, viPath, recipe: RECIPE });
 
   console.log(`[left] actor=${actor} actorRef=${actorRef.slice(0, 12)}… parityKey=${parityKey.slice(0, 12)}…`);
-  console.log(`[left] fixture ${viPath} @ ${selectedRev} (fixtureSha ${fixtureSha.slice(0, 12)}…)`);
+  console.log(`[left] fixture ${viPath} ${baseRev}..${selectedRev} (fixtureSha ${fixtureSha.slice(0, 12)}…) provider=${provider}`);
 
-  // NOTE: the real comparison run through the shipped reporting primitives
-  // (locateComparisonRuntime -> preflight -> persist -> executeComparisonReport)
-  // is wired exactly like the #259 lvicon drivers; a real run produces the
-  // report whose deriveReportSha256 becomes the parity value. That step needs a
-  // live LabVIEW runtime and is exercised on the box. For the deterministic
-  // digest+ledger path (unit-covered), the report bytes are read from the
-  // produced report file when VIHS_L_REPORT is set.
-  let reportSha256;
-  let previewImageCount = 0;
-  let wallMs = 0;
-  let outcome = 'ok';
+  const storageRoot = env.VIHS_L_STORAGE || fs.mkdtempSync(path.join(os.tmpdir(), 'mirror-left-'));
+
+  // --- real comparison run through the shipped primitives ---------------------
+  const runtimeSelection = await locateComparisonRuntime(process.platform, {
+    requestedProvider: provider,
+    labviewVersion: version,
+    bitness,
+    requireVersionAndBitness: process.platform === 'win32'
+  });
+  const preflight = await preflightComparisonReportRevisions({
+    repoRoot: fixtureRepo,
+    relativePath: viPath,
+    leftRevisionId: baseRev,
+    rightRevisionId: selectedRev
+  });
+  const packet = await persistComparisonReportPacket({
+    storageRoot,
+    repositoryRoot: fixtureRepo,
+    relativePath: viPath,
+    reportType: 'diff',
+    selectedHash: selectedRev,
+    baseHash: baseRev,
+    preflight,
+    runtimeSelection
+  });
+
+  let record = packet.record;
   const started = Date.now();
-  if (env.VIHS_L_REPORT && fs.existsSync(env.VIHS_L_REPORT)) {
-    const html = fs.readFileSync(env.VIHS_L_REPORT, 'utf8');
-    reportSha256 = digest.deriveReportSha256(html);
-    previewImageCount = (html.match(/data:image\/png;base64/g) || []).length;
-  } else {
-    console.error('[left] VIHS_L_REPORT not set; wire locateComparisonRuntime->executeComparisonReport here for a live run.');
-    outcome = 'blocked';
-    reportSha256 = digest.deriveReportSha256('');
+  if (record.reportStatus === 'ready-for-runtime') {
+    const result = await executeComparisonReport(
+      { record, repositoryRoot: fixtureRepo },
+      { materializeSelectedRevisionTree: materializeSelectedRevisionTreeWithGit, cliConnectTimeoutSeconds: 60 }
+    );
+    record = result.record;
   }
-  wallMs = Date.now() - started;
+  const wallMs = Date.now() - started;
 
-  // Persist fingerprint JSON for the writer, then record the ledger row.
+  const rt = record.runtimeExecution || {};
+  const reportPath = rt.reportPath || (rt.reportExists ? rt.reportFilePath : undefined);
+  if (!rt.reportExists || !reportPath || !fs.existsSync(reportPath)) {
+    console.error(`[left] no real report produced (runtimeState=${rt.state}, blocked=${record.blockedReason || rt.failureReason || 'n/a'}); refusing to record a placeholder ledger row.`);
+    process.exit(1);
+  }
+
+  const html = fs.readFileSync(reportPath, 'utf8');
+  const reportSha256 = digest.deriveReportSha256(html);
+  const previewImageCount = (html.match(/data:image\/png;base64/g) || []).length;
+
+  // Persist the fingerprint JSON for the writer, then record the ledger row.
   const fpFile = path.join(os.tmpdir(), `mirror-fp-${actorRef.slice(0, 8)}.json`);
   fs.writeFileSync(fpFile, JSON.stringify(fingerprint, null, 2));
 
@@ -148,9 +193,9 @@ async function main() {
     '--source-revision', sourceRevision,
     '--vi-path', viPath,
     '--fixture-sha', fixtureSha,
-    '--recipe', recipe,
-    '--mode', env.VIHS_L_MODE || 'cold',
-    '--outcome', outcome,
+    '--recipe', RECIPE,
+    '--mode', mode,
+    '--outcome', 'ok',
     '--report-sha256', reportSha256,
     '--preview-image-count', String(previewImageCount),
     '--wall-ms', String(wallMs),
@@ -159,7 +204,7 @@ async function main() {
   ];
   execFileSync('node', args, { cwd: repoRoot, stdio: 'inherit' });
 
-  const evidence = { actor, actorRef, parityKey, fixtureSha, sourceRevision, reportSha256, previewImageCount, wallMs, outcome, ledger: ledgerRel };
+  const evidence = { actor, actorRef, parityKey, fixtureSha, sourceRevision, provider, reportSha256, previewImageCount, wallMs, mode, ledger: ledgerRel };
   if (env.VIHS_L_OUT) {
     fs.writeFileSync(env.VIHS_L_OUT, JSON.stringify(evidence, null, 2));
   }
