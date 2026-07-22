@@ -31,6 +31,7 @@ const {
 const DEFAULT_LEDGER_PATH = 'docs/requirements/mirror-benchmark-ledger.json';
 const SCHEMA_ID = 'vi-history-suite/mirror-parity-reconciliation@v1';
 const SCHEMA_VERSION = 1;
+const SHA256_HEX_PATTERN = '^[0-9a-f]{64}$';
 
 function resolveLedgerPath(cwd, relativePath) {
   const target = relativePath || DEFAULT_LEDGER_PATH;
@@ -75,9 +76,9 @@ function buildSchema() {
             'reason'
           ],
           properties: {
-            parityKey: { type: 'string' },
-            actorsPresent: { type: 'array', items: { type: 'string' } },
-            reportDigests: { type: 'array', items: { type: 'string' } },
+            parityKey: { type: 'string', pattern: SHA256_HEX_PATTERN },
+            actorsPresent: { type: 'array', items: { type: 'string', pattern: SHA256_HEX_PATTERN } },
+            reportDigests: { type: 'array', items: { type: 'string', pattern: SHA256_HEX_PATTERN } },
             reportSha256Agree: { type: 'boolean' },
             leftChannelFresh: { type: 'boolean' },
             rightChannelFresh: { type: 'boolean' },

@@ -9,16 +9,18 @@ import {
 // gate). Asserts correctness-parity, the left-precondition, and the freshness/
 // advisory outage-immunity policy from VHS-REQ-707.6.
 
-const LEFT = 'l'.repeat(64);
-const RIGHT = 'r'.repeat(64);
-const DECOUPLED = 'd'.repeat(64);
-const PK = 'p'.repeat(64);
+const LEFT = '1'.repeat(64);
+const RIGHT = '2'.repeat(64);
+const DECOUPLED = '3'.repeat(64);
+const PK = '4'.repeat(64);
 const SHA_A = 'a'.repeat(64);
 const SHA_B = 'b'.repeat(64);
 const REV = 'queued-rev';
 
 function ledger(runs: MirrorLedger['runs']): MirrorLedger {
   return {
+    $schema: 'vi-history-suite/mirror-benchmark@v1',
+    schemaVersion: 1,
     actors: {
       [LEFT]: { role: 'tangled-left' },
       [RIGHT]: { role: 'tangled-right' },
@@ -92,7 +94,7 @@ describe('reconcileMirrorParity (VHS-REQ-707.11)', () => {
   });
 
   it('overall gate is the worst across parityKeys', () => {
-    const PK2 = 'q'.repeat(64);
+    const PK2 = '5'.repeat(64);
     const result = reconcileMirrorParity(
       ledger([
         run(LEFT),
@@ -130,13 +132,20 @@ describe('reconcileMirrorParity (VHS-REQ-707.11)', () => {
   });
 
   it('rejects a mismatched ledger envelope', () => {
-    const enveloped = { $schema: 'other@v1', schemaVersion: 1, ...ledger([run(LEFT), run(RIGHT)]) };
+    const enveloped = { ...ledger([run(LEFT), run(RIGHT)]), $schema: 'other@v1' };
     expect(() => reconcileMirrorParity(enveloped as never, { queuedRevision: REV })).toThrow(/envelope/);
   });
 
-  it('fails closed on a malformed ledger and empty queuedRevision', () => {
-    // @ts-expect-error deliberate bad ledger
-    expect(() => reconcileMirrorParity({ actors: [], runs: [] }, { queuedRevision: REV })).toThrow(/actors/);
+  it('fails closed on a missing envelope, malformed shape, and empty queuedRevision', () => {
+    // Well-shaped container but no envelope -> mandatory Phase 1 envelope missing.
+    expect(() => reconcileMirrorParity({ actors: {}, runs: [] } as never, { queuedRevision: REV })).toThrow(/envelope/);
+    // Malformed container shape (actors is an array) even with a valid envelope.
+    expect(() =>
+      reconcileMirrorParity(
+        { $schema: 'vi-history-suite/mirror-benchmark@v1', schemaVersion: 1, actors: [], runs: [] } as never,
+        { queuedRevision: REV }
+      )
+    ).toThrow(/actors/);
     expect(() => reconcileMirrorParity(ledger([]), { queuedRevision: '' })).toThrow(/queuedRevision/);
   });
 });
