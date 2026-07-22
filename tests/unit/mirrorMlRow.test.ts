@@ -216,6 +216,9 @@ describe('projectMirrorMlRows PII guard (VHS-REQ-708.2)', () => {
     expect(() => projectMirrorMlRows(abs('../home/alice/sample.vi'))).toThrow(/not repository-relative/);
     expect(() => projectMirrorMlRows(abs('./src/file.vi'))).toThrow(/not repository-relative/);
     expect(() => projectMirrorMlRows(abs('src/../../etc/x.vi'))).toThrow(/not repository-relative/);
+    // empty / whitespace-only viPath is rejected (unusable join key)
+    expect(() => projectMirrorMlRows(abs(''))).toThrow(/non-empty/);
+    expect(() => projectMirrorMlRows(abs('   '))).toThrow(/non-empty/);
     // a normal repo-relative path is accepted
     expect(projectMirrorMlRows(abs('resource/plugins/lv_icon.vi'))).toHaveLength(1);
     // a legit repo-relative path with a mid-path dir named 'home'/'Users' is accepted
