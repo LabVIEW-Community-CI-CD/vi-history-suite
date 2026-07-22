@@ -5476,6 +5476,16 @@ Missing numeric IDs are intentional.
     table bound to a source revision, and the writer upserts a run row by
     (parityKey, actorRef, mode, sourceRevision) so re-recording the same run is a
     no-op and never a live image pull.
+  - A per-actor capability fingerprint is captured from within the actor's own
+    runtime context: a virtual-machine guest self-reports its allotted vCPU, RAM,
+    and disk (not the virtualization host's totals), so benchmark timings
+    normalize against the resources the actor actually sees. The capture is a pure
+    transform from raw readings into the interned fingerprint, rounded so trivial
+    reading jitter does not change the derived actor id.
+  - The Vagrant left channel provides a benchmark producer that runs a real
+    comparison on an already-authored VI through the shipped runtime, computes the
+    parity digests, and records an idempotent ledger row with its from-within
+    fingerprint; it never authors `.vi` binaries and performs no live image pull.
 - Agent Work Scope:
   - Change the ADR, this requirement, and the governance contract test together;
     keep the required gate deterministic and never make a live image pull the
@@ -5484,10 +5494,13 @@ Missing numeric IDs are intentional.
 - Implementation References:
   - `docs/architecture/adr/ADR-0028-mirror-mode-dual-real-runtime-validation.md`
   - `src/reporting/mirror/mirrorParityDigest.ts`
+  - `src/reporting/mirror/mirrorCapabilityFingerprint.ts`
   - `scripts/recordMirrorBenchmark.js`
 - Verification References:
   - `tests/unit/mirrorModeGovernance.test.ts`
   - `tests/unit/mirrorParityDigest.test.ts`
+  - `tests/unit/mirrorCapabilityFingerprint.test.ts`
+  - `tests/unit/mirrorLeftProducer.test.ts`
   - `tests/unit/recordMirrorBenchmarkScript.test.ts`
 - Change Guidance:
   - This is a governance-foundation requirement: keep the documented invariants
