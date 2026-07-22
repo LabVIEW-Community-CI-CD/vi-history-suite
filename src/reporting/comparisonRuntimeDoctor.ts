@@ -321,7 +321,7 @@ function deriveRuntimeDoctorNextAction(options: {
     }
 
     if (blockedReason === 'linux-vi-server-tcp-port-unknown') {
-      return 'Next action: declare an explicit server.tcp.port in the selected LabVIEW labview.conf (VI Server TCP/IP is enabled but no port is set, so LabVIEWCLI cannot attach to a known port), then restart LabVIEW and rerun comparison report generation.';
+      return 'Next action: declare an explicit server.tcp.port in the selected LabVIEW labview.conf (VI Server TCP/IP is enabled but no port is set, so vi-history-suite blocks execution rather than assume a port and cannot deterministically supply -PortNumber), then restart LabVIEW and rerun comparison report generation.';
     }
 
     if (
