@@ -723,3 +723,4 @@ VHS-REQ-706,Software,Active,srs.md#vhs-req-706-host-native-empty-swap-comparison
 VHS-REQ-697,Software,Active,srs.md#vhs-req-697-agent-environment-consistency-gate,,,docs/requirements/srs.md
 VHS-REQ-699,Software,Active,srs.md#vhs-req-699-single-pass-comparison-preview-pipeline,,,docs/requirements/srs.md
 VHS-REQ-707,Software,Active,srs.md#vhs-req-707-mirror-mode-dual-real-runtime-labview-validation,,,docs/requirements/srs.md
+VHS-REQ-708,Software,Active,srs.md#vhs-req-708-mirror-mode-ml-consumable-parity-corpus,,,docs/requirements/srs.md
