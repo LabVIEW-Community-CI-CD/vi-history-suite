@@ -63,6 +63,17 @@ function requirePositive(name: string, value: unknown): number {
   return n;
 }
 
+// Free disk may legitimately be 0 (a full disk), and the ledger schema allows
+// diskFreeGb=0, so this stays non-negative rather than strictly positive to keep
+// the builder no stricter than the ledger consumer.
+function requireNonNegative(name: string, value: unknown): number {
+  const n = typeof value === 'number' ? value : NaN;
+  if (!Number.isFinite(n) || n < 0) {
+    throw new Error(`Capability ${name} must be a non-negative number.`);
+  }
+  return n;
+}
+
 const ROLES: ReadonlySet<MirrorActorRole> = new Set(['tangled-left', 'tangled-right', 'decoupled']);
 const CAPTURED: ReadonlySet<MirrorCapturedFrom> = new Set(['in-guest', 'in-container', 'host']);
 
@@ -101,7 +112,7 @@ export function buildCapabilityFingerprint(inputs: CapabilityInputs): ActorCapab
     cpuModel: requireText('cpuModel', inputs.cpuModel),
     cpuLogical,
     ramTotalMb: Math.round(requirePositive('ramTotalBytes', inputs.ramTotalBytes) / BYTES_PER_MB),
-    diskFreeGb: Number((requirePositive('diskFreeBytes', inputs.diskFreeBytes) / BYTES_PER_GB).toFixed(1)),
+    diskFreeGb: Number((requireNonNegative('diskFreeBytes', inputs.diskFreeBytes) / BYTES_PER_GB).toFixed(1)),
     labviewBuild: requireText('labviewBuild', inputs.labviewBuild),
     labviewBitness: bitness
   };
