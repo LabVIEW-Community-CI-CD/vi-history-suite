@@ -5453,6 +5453,15 @@ Missing numeric IDs are intentional.
     ledger-read / parity check that ingests both channels' committed or published
     outputs, never a live multi-GB image pull, so a registry outage cannot block
     the merge queue; the heavy pull/run is a best-effort evidence producer.
+  - Freshness is bound to a source revision: every channel record carries the
+    source revision (and run id) it validated. The Vagrant left channel is the
+    hard merge precondition. Right-channel parity is enforced only when a fresh
+    right-channel record bound to the queued revision exists; when fresh
+    right-channel evidence for the queued revision is absent (for example a
+    registry outage produced no output), right-channel parity is advisory so the
+    outage cannot block the queue. This keeps both parity (when fresh evidence
+    exists) and outage immunity, and prevents an older published record from
+    silently passing a different revision.
 - Agent Work Scope:
   - Change the ADR, this requirement, and the governance contract test together;
     keep the required gate deterministic and never make a live image pull the

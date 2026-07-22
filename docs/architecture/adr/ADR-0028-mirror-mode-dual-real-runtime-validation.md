@@ -79,6 +79,19 @@ This ADR is the Phase 0 governance foundation. Producers, the shared
 comparison-report digest helper, the ledger mirror tracks, and the reconciler
 gate are delivered in later phases under VHS-REQ-707's child requirements.
 
+### Relationship to the existing VHS-REQ-699 hosted x64 lane
+
+The repository already contains `.github/workflows/windows-container-vi-compare.yml`
+(mapped under VHS-REQ-699): a manual-dispatch, best-effort hosted-CI workflow
+that runs the Windows-container provider with 64-bit LabVIEW and publishes an
+evidence artifact. Mirror Mode's Docker right channel **reuses and hardens that
+existing lane rather than replacing it** — that workflow is the seed of the
+right channel. It counts as the *current* best-effort x64 evidence origin;
+Mirror Mode adds, around it, (a) a `merge_group` trigger, (b) an idempotent
+ledger track, and (c) the reconciler that unifies it with the Vagrant left
+channel. Later phases therefore extend the VHS-REQ-699 workflow; they must not
+introduce a second, duplicate Windows-container producer.
+
 ## Consequences
 
 - Two independent real-runtime signals (Vagrant x86 + Docker x64) corroborate

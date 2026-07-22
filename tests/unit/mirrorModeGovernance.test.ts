@@ -40,13 +40,17 @@ describe('Mirror-Mode dual real-runtime validation governance (VHS-REQ-707)', ()
     expect(adr).toContain('## Decision');
     expect(adr).toContain('## Consequences');
     expect(adr).toContain('VHS-REQ-707');
-    expect(adr).toContain('ADR-0012');
+    // The ADR must explicitly state the amends-ADR-0012 relationship, not just
+    // mention the string, so the governance contract cannot silently weaken.
+    expect(adr).toMatch(/amends ADR-0012/);
     // Indexed in the ADR README table.
     expect(adrReadme).toContain(
       '[ADR-0028](./ADR-0028-mirror-mode-dual-real-runtime-validation.md)'
     );
-    // The requirement points back at the ADR as its implementation reference.
+    // The requirement points back at the ADR and explicitly links the amendment
+    // to ADR-0012 in its own text.
     expect(req707).toContain('ADR-0028');
+    expect(req707).toMatch(/amends[\s\S]*ADR-0012/);
   });
 
   it('documents human-only, Vagrant-only VI authorship with automation as consumers only (VHS-REQ-707.2)', () => {
@@ -70,5 +74,12 @@ describe('Mirror-Mode dual real-runtime validation governance (VHS-REQ-707)', ()
     expect(req707).toMatch(/deterministic\s+ledger-read \/ parity check/i);
     expect(req707).toMatch(/never a live multi-GB image pull/i);
     expect(req707).toMatch(/best-effort evidence\s+producer/i);
+  });
+
+  it('binds freshness to a source revision and makes right-channel parity advisory on absent fresh evidence (VHS-REQ-707.6)', () => {
+    expect(req707).toMatch(/bound to a source revision/i);
+    expect(req707).toMatch(/Vagrant left channel is the\s+hard merge precondition/i);
+    expect(req707).toMatch(/right-channel parity is advisory/i);
+    expect(req707).toMatch(/outage cannot block the queue/i);
   });
 });
