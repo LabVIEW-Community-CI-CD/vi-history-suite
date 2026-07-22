@@ -870,6 +870,20 @@ export const VI_SEMANTIC_MCP_RESOURCES = [
     mimeType: 'application/schema+json'
   },
   {
+    uri: `${RESOURCE_URI_PREFIX}vi-preview-region-correlation@v1`,
+    name: 'vi-preview-region-correlation@v1 schema (legacy)',
+    title: 'VI preview-region correlation schema (v1, legacy)',
+    description: 'Legacy JSON Schema for vi-history-suite/vi-preview-region-correlation@v1 (pre-sourceIndex); retained for validating previously-emitted documents.',
+    mimeType: 'application/schema+json'
+  },
+  {
+    uri: `${RESOURCE_URI_PREFIX}vi-preview-region-correlations@v1`,
+    name: 'vi-preview-region-correlations@v1 schema (legacy)',
+    title: 'VI preview-region correlations bundle schema (v1, legacy)',
+    description: 'Legacy JSON Schema for vi-history-suite/vi-preview-region-correlations@v1; retained for validating previously-emitted documents.',
+    mimeType: 'application/schema+json'
+  },
+  {
     uri: SCHEMA_INDEX_URI,
     name: 'vi-diff schema index',
     title: 'Open VI-diff standard (all schemas)',

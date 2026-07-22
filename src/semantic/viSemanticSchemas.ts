@@ -21,6 +21,13 @@ export const VI_PREVIEW_REGION_CORRELATION_SCHEMA_ID =
   'vi-history-suite/vi-preview-region-correlation@v2';
 export const VI_PREVIEW_REGION_CORRELATIONS_SCHEMA_ID =
   'vi-history-suite/vi-preview-region-correlations@v2';
+// Legacy @v1 ids retained (registered + advertised) so validateViSemanticDocument
+// still validates documents emitted before the sourceIndex occurrence key was
+// added. Current producers emit @v2; @v1 is read-only back-compat.
+export const VI_PREVIEW_REGION_CORRELATION_V1_SCHEMA_ID =
+  'vi-history-suite/vi-preview-region-correlation@v1';
+export const VI_PREVIEW_REGION_CORRELATIONS_V1_SCHEMA_ID =
+  'vi-history-suite/vi-preview-region-correlations@v1';
 export const VI_LATENT_CORPUS_SAMPLE_SCHEMA_ID =
   'vi-history-suite/vi-latent-corpus-sample@v1';
 
@@ -661,6 +668,103 @@ export const VI_LATENT_CORPUS_SAMPLE_JSON_SCHEMA = {
   }
 } as const;
 
+// Legacy @v1 region-correlation schema (pre-sourceIndex): retained read-only so
+// validateViSemanticDocument still validates documents emitted before the
+// occurrence key was added. Identical to @v2 except the entry does not carry (or
+// require) `sourceIndex`.
+export const VI_PREVIEW_REGION_CORRELATION_V1_JSON_SCHEMA = {
+  $schema: DRAFT_07,
+  $id: VI_PREVIEW_REGION_CORRELATION_V1_SCHEMA_ID,
+  title: 'VI preview-region correlation (v1, legacy)',
+  description:
+    'Legacy v1 of the preview-region correlation model (before the sourceIndex occurrence key). Retained for validating previously-emitted documents; new output uses @v2.',
+  type: 'object',
+  required: ['schema', 'entries', 'totals'],
+  properties: {
+    schema: { const: VI_PREVIEW_REGION_CORRELATION_V1_SCHEMA_ID },
+    entries: {
+      type: 'array',
+      items: {
+        type: 'object',
+        required: ['id', 'changeType', 'regions', 'located'],
+        properties: {
+          id: { type: 'string' },
+          changeType: { type: 'string', enum: DETAIL_CHANGE_TYPE_ENUM },
+          coordinate: DIAGRAM_POINT_SCHEMA,
+          fromCoordinate: DIAGRAM_POINT_SCHEMA,
+          pixelSize: {
+            type: 'object',
+            required: ['width', 'height'],
+            properties: {
+              width: { type: 'integer', minimum: 1 },
+              height: { type: 'integer', minimum: 1 }
+            }
+          },
+          located: { type: 'boolean' },
+          regions: {
+            type: 'array',
+            items: {
+              type: 'object',
+              required: ['side', 'left', 'top', 'width', 'height', 'confidence'],
+              properties: {
+                side: { type: 'string', enum: ['base', 'head'] },
+                left: { type: 'integer', minimum: 0 },
+                top: { type: 'integer', minimum: 0 },
+                width: { type: 'integer', minimum: 1 },
+                height: { type: 'integer', minimum: 1 },
+                confidence: { type: 'number', exclusiveMinimum: 0, maximum: 1 }
+              }
+            }
+          }
+        }
+      }
+    },
+    totals: {
+      type: 'object',
+      required: ['regionCount', 'locatedRegionCount', 'diagramOnlyRegionCount'],
+      properties: {
+        regionCount: { type: 'integer', minimum: 0 },
+        locatedRegionCount: { type: 'integer', minimum: 0 },
+        diagramOnlyRegionCount: { type: 'integer', minimum: 0 }
+      }
+    }
+  }
+} as const;
+
+// Legacy @v1 region-correlations bundle: retained read-only; embeds the @v1 entry.
+export const VI_PREVIEW_REGION_CORRELATIONS_V1_JSON_SCHEMA = {
+  $schema: DRAFT_07,
+  $id: VI_PREVIEW_REGION_CORRELATIONS_V1_SCHEMA_ID,
+  title: 'VI preview-region correlations (v1, legacy)',
+  description:
+    'Legacy v1 bundle of per-VI pixel-region correlations. Retained for validating previously-emitted documents; new output uses @v2.',
+  type: 'object',
+  required: ['schema', 'repositoryRoot', 'baseHash', 'selectedHash', 'correlatedViCount', 'entries'],
+  properties: {
+    schema: { const: VI_PREVIEW_REGION_CORRELATIONS_V1_SCHEMA_ID },
+    repositoryRoot: { type: 'string' },
+    baseHash: { type: 'string' },
+    selectedHash: { type: 'string' },
+    correlatedViCount: { type: 'integer', minimum: 1 },
+    entries: {
+      type: 'array',
+      minItems: 1,
+      items: {
+        type: 'object',
+        required: ['relativePath', 'regionCorrelation'],
+        properties: {
+          relativePath: { type: 'string' },
+          regionCorrelation: {
+            type: 'object',
+            required: ['schema'],
+            properties: { schema: { const: VI_PREVIEW_REGION_CORRELATION_V1_SCHEMA_ID } }
+          }
+        }
+      }
+    }
+  }
+} as const;
+
 /** Registry of every published schema, keyed by its `$id`. */
 export const VI_SEMANTIC_SCHEMAS: Record<string, unknown> = {
   [VI_SEMANTIC_COMPARISON_SCHEMA_ID]: VI_SEMANTIC_COMPARISON_JSON_SCHEMA,
@@ -670,6 +774,8 @@ export const VI_SEMANTIC_SCHEMAS: Record<string, unknown> = {
   [VI_PREVIEW_COMPARISON_CORRELATIONS_SCHEMA_ID]: VI_PREVIEW_COMPARISON_CORRELATIONS_JSON_SCHEMA,
   [VI_PREVIEW_REGION_CORRELATION_SCHEMA_ID]: VI_PREVIEW_REGION_CORRELATION_JSON_SCHEMA,
   [VI_PREVIEW_REGION_CORRELATIONS_SCHEMA_ID]: VI_PREVIEW_REGION_CORRELATIONS_JSON_SCHEMA,
+  [VI_PREVIEW_REGION_CORRELATION_V1_SCHEMA_ID]: VI_PREVIEW_REGION_CORRELATION_V1_JSON_SCHEMA,
+  [VI_PREVIEW_REGION_CORRELATIONS_V1_SCHEMA_ID]: VI_PREVIEW_REGION_CORRELATIONS_V1_JSON_SCHEMA,
   [VI_LATENT_CORPUS_SAMPLE_SCHEMA_ID]: VI_LATENT_CORPUS_SAMPLE_JSON_SCHEMA
 };
 
