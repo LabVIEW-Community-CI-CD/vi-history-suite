@@ -940,19 +940,21 @@ export async function runViSemanticPrReviewCli(argv: string[]): Promise<number> 
     // closed-corpus data record for the gated ML research track (ADR-0027).
     // Opt-in via --emit-corpus-samples; each completed VI (including a
     // no-difference true-negative) yields a reproducible sample. Written only
-    // when requested AND the review has at least one completed VI; a stale one is
-    // removed when this run has none, mirroring the other artifacts' contract.
-    if (args.emitCorpusSamples) {
-      const corpusArtifact = buildViLatentCorpusSamplesArtifact(review, {
-        provider: args.provider,
-        version: args.containerImageVersion
-      });
-      const corpusPath = path.join(args.outDir, 'vi-latent-corpus-samples.json');
-      if (corpusArtifact) {
-        await fs.writeFile(corpusPath, serializeJsonArtifact(corpusArtifact), 'utf8');
-      } else {
-        await fs.rm(corpusPath, { force: true });
-      }
+    // when requested AND the review has at least one completed VI. A stale bundle
+    // is ALWAYS removed when this run does not write one (emission disabled, or no
+    // completed VI), so a reused output directory never serves corpus samples
+    // from an earlier revision pair — mirroring the other artifacts' contract.
+    const corpusPath = path.join(args.outDir, 'vi-latent-corpus-samples.json');
+    const corpusArtifact = args.emitCorpusSamples
+      ? buildViLatentCorpusSamplesArtifact(review, {
+          provider: args.provider,
+          version: args.containerImageVersion
+        })
+      : undefined;
+    if (corpusArtifact) {
+      await fs.writeFile(corpusPath, serializeJsonArtifact(corpusArtifact), 'utf8');
+    } else {
+      await fs.rm(corpusPath, { force: true });
     }
     // Copy the per-VI self-contained comparison reports (which embed the
     // rendered block-diagram/front-panel difference images) into reports/ so
