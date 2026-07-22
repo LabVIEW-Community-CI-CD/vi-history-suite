@@ -1633,7 +1633,10 @@ Missing numeric IDs are intentional.
     can still locate the config. The `lvcompare` engine is exempt from this
     preflight because it does not connect to LabVIEW VI Server. When TCP is
     enabled, the resolved `server.tcp.port` is passed to LabVIEWCLI as
-    `-PortNumber`; there is no fabricated default port.
+    `-PortNumber`; there is no fabricated default port. When VI Server TCP is
+    enabled but no explicit `server.tcp.port` is declared, execution is
+    blocked with `blockedReason: 'linux-vi-server-tcp-port-unknown'` rather
+    than assuming a port (see the dedicated fail-closed criterion below).
   - Linux host-native runs mirror the staged VI inputs and report output
     under a short tmpdir (default `${os.tmpdir()}/vi-history-suite-runtime`,
     overridable via `LVIE_LINUX_RUNTIME_TMPDIR`, opt-out via
@@ -1685,10 +1688,11 @@ Missing numeric IDs are intentional.
   - `tests/unit/comparisonReportRuntimeExecution.test.ts`
 - Change Guidance:
   - Keep the headless decision inside the plan so runtime evidence reflects
-    the actual args used. Do not silently force `-Headless` on Linux
-    host-native; LabVIEW 2026 26.1.1f1 hangs in headless mode, while the
-    non-headless path succeeds when VI Server TCP/IP is enabled and an explicit
-    `server.tcp.port` is declared in `labview.conf` (no default is assumed).
+    the actual args used. Linux host-native runs are unconditionally headless
+    (criterion above; no opt-out). Host-native comparison requires VI Server
+    TCP/IP enabled with an explicit `server.tcp.port` in `labview.conf`; when
+    the port is not declared the runtime fails closed
+    (`linux-vi-server-tcp-port-unknown`) rather than assuming a default.
 
 ### VHS-REQ-596: Devcontainer Source Evaluation
 
