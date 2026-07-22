@@ -10,9 +10,11 @@ import { createHash } from 'node:crypto';
  * without any host-specific noise. This module is that shared, pure foundation:
  *
  *  - `deriveParityKey` — the cross-actor group key
- *    `sha256(version, bitness, fixtureSha, viPath, recipe)`. Two actor runs share
- *    a parityKey iff they exercised the same sample VI at the same revision under
+ *    `sha256(version, fixtureSha, viPath, recipe)`. Two actor runs share a
+ *    parityKey iff they exercised the same sample VI at the same revision under
  *    the same runtime recipe, so the reconciler can group them and assert parity.
+ *    Bitness is deliberately excluded (see the function note) so the x86 and x64
+ *    mirrors of the same sample group together.
  *  - `deriveReportSha256` — the canonical digest of a comparison/preview report
  *    artifact, over its NORMALIZED content so incidental per-host differences
  *    (line endings, trailing whitespace, a trailing newline) never fabricate a
