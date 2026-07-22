@@ -257,4 +257,54 @@ describe('bundledDocumentationAction', () => {
     expect(createWebviewPanelMock).toHaveBeenCalledTimes(2);
     expect(tracker.getDocumentationOpenCount()).toBe(3);
   });
+
+  it('renders with an unknown version fallback and ignores commandless / hrefless panel messages', async () => {
+    const panel = createMockPanel('VI History Docs: Overview');
+    createWebviewPanelMock.mockReturnValue(panel);
+    loadBundledDocumentationPageMock.mockResolvedValue({
+      manifest: { defaultPageId: 'overview', pages: [] },
+      page: {
+        id: 'overview',
+        title: 'Overview',
+        wikiPath: 'home',
+        wikiFileName: 'home.md',
+        htmlFileName: 'overview.html',
+        publishedDate: '2026-04-03',
+        wikiCommit: 'abc1234'
+      },
+      manifestFilePath: '/workspace/ext/resources/bundled-docs/manifest.json',
+      pageFilePath: '/workspace/ext/resources/bundled-docs/pages/overview.html',
+      pageBodyHtml: '<h1>Overview</h1>'
+    });
+
+    // No panelTracker and a packageJSON without a version exercises both the
+    // `panelTracker?.` short-circuit and the `packageJSON.version ?? 'unknown'`
+    // fallback (VHS-REQ-611.2).
+    const action = createBundledDocumentationAction(
+      {
+        extensionUri: { fsPath: '/workspace/ext' },
+        extension: {
+          packageJSON: {}
+        }
+      } as never
+    );
+
+    await expect(action({ pageId: 'overview' })).resolves.toMatchObject({
+      outcome: 'opened-documentation',
+      pageId: 'overview'
+    });
+
+    expect(renderBundledDocumentationPanelHtmlMock).toHaveBeenCalledWith(
+      expect.objectContaining({ extensionVersion: 'unknown' })
+    );
+
+    // A panel message with no `command` falls back to '' and is a no-op.
+    await panel.__dispatchMessage({ pageId: 'overview' });
+    // An `openExternal` message with no `href` short-circuits before openExternal.
+    await panel.__dispatchMessage({ command: 'openExternal' });
+
+    expect(openExternalMock).not.toHaveBeenCalled();
+    // Only the initial open created a panel; the no-op messages did not reopen it.
+    expect(createWebviewPanelMock).toHaveBeenCalledTimes(1);
+  });
 });

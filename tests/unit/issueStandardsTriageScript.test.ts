@@ -100,6 +100,56 @@ describe('issue standards triage script (VHS-REQ-700.2)', () => {
     expect(options.skipIssueFetch).toBe(false);
   });
 
+  it('parses every value flag plus help and boolean toggles', () => {
+    const options = parseArgs([
+      '--issue',
+      '99',
+      '--repo',
+      'owner/name',
+      '--image',
+      'registry/custom:tag',
+      '--profile',
+      'release-gate',
+      '--requirements-spec-scope',
+      'component',
+      '--save-dir',
+      'evidence-out',
+      '--skip-issue-fetch',
+      '--keep-snapshot'
+    ]);
+    expect(options).toMatchObject({
+      issue: '99',
+      repo: 'owner/name',
+      image: 'registry/custom:tag',
+      profile: 'release-gate',
+      requirementsSpecScope: 'component',
+      saveDir: 'evidence-out',
+      skipIssueFetch: true,
+      keepSnapshot: true,
+      help: false
+    });
+
+    expect(parseArgs(['--help']).help).toBe(true);
+    expect(parseArgs(['-h']).help).toBe(true);
+  });
+
+  it('rejects malformed argument combinations', () => {
+    expect(() => parseArgs(['--repo'])).toThrow(/--repo requires a value/);
+    expect(() => parseArgs(['--profile', '--keep-snapshot'])).toThrow(/--profile requires a value/);
+    expect(() => parseArgs(['--bogus'])).toThrow(/Unknown argument: --bogus/);
+    expect(() => parseArgs([])).toThrow(/--issue <number> is required/);
+    expect(() => parseArgs(['123', '456'])).toThrow(/Unknown argument: 456/);
+  });
+
+  it('returns usage text for --help without spawning or fetching', () => {
+    const spawnSync = vi.fn();
+    const result = runIssueStandardsTriage(['--help'], { spawnSync });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.markdown).toContain('Usage: node scripts/runIssueStandardsTriage.js');
+    expect(spawnSync).not.toHaveBeenCalled();
+  });
+
   it('publishes the triage-summary JSON Schema via --schema without fetching or spawning (VHS-REQ-601)', () => {
     const schema = JSON.parse(renderSchema()) as {
       $id: string;
@@ -457,5 +507,156 @@ describe('issue standards triage script (VHS-REQ-700.2)', () => {
     expect(spawnSync.mock.calls.filter(([command, args]) => command === 'docker' && args[0] === 'pull')).toHaveLength(0);
     expect(spawnSync.mock.calls.filter(([command, args]) => command === 'docker' && args[0] === 'run')).toHaveLength(0);
     expect(fs.readFileSync(path.join(root, 'evidence', 'issue-1040', 'docker-image-inspect.stderr.txt'), 'utf8')).toContain('No such image');
+  });
+
+  it('tolerates non-JSON gh output and retains the issue-view stderr', () => {
+    const root = makeTempRoot();
+    const snapshotPath = path.join(root, 'snapshot');
+    const spawnSync = vi.fn((command: string, args: string[]) => {
+      if (command === 'gh') {
+        return { status: 1, stdout: '<<not json>>', stderr: 'gh: issue not found' };
+      }
+      if (command === 'docker' && args[0] === 'image') {
+        return { status: 0, stdout: '[{"Id":"img"}]' };
+      }
+      if (args.includes('scripts/requirements_quality_check.py')) {
+        return { status: 0, stdout: '{ not valid json' };
+      }
+      if (args.includes('scripts/repo_evidence_scan.py')) {
+        return { status: 0, stdout: 'also not json' };
+      }
+      if (args.includes('scripts/run_assurance.py')) {
+        return { status: 0, stdout: 'REQ: PASS\n' };
+      }
+      return { status: 99, stderr: `unexpected ${command} ${args.join(' ')}` };
+    });
+
+    const result = runIssueStandardsTriage(['--issue', '7', '--save-dir', path.join(root, 'evidence')], {
+      cwd: repoRoot,
+      spawnSync,
+      createTrackedWorktreeSnapshot: () => ({
+        mode: 'tracked-worktree-snapshot',
+        path: snapshotPath,
+        trackedFileCount: 1,
+        symlinkFiles: [],
+        missingFiles: [],
+        generatedRootsExcluded: []
+      }),
+      removeTrackedWorktreeSnapshot: vi.fn()
+    });
+
+    // gh status 1 -> success false; unparseable stdout -> no issue.json retained,
+    // but the captured stderr is still written for triage.
+    expect(result.exitCode).toBe(1);
+    expect(fs.existsSync(path.join(root, 'evidence', 'issue-7', 'issue-view.stderr.txt'))).toBe(true);
+    expect(fs.existsSync(path.join(root, 'evidence', 'issue-7', 'issue.json'))).toBe(false);
+  });
+
+  it('reports pull-failed when the default standards image pull fails', () => {
+    const root = makeTempRoot();
+    const snapshotPath = path.join(root, 'snapshot');
+    const spawnSync = vi.fn((command: string, args: string[]) => {
+      if (command === 'docker' && args[0] === 'image') {
+        return { status: 1, stderr: 'No such image' };
+      }
+      if (command === 'docker' && args[0] === 'pull') {
+        return { status: 1, stderr: 'pull access denied' };
+      }
+      return { status: 99, stderr: 'docker run should not execute' };
+    });
+
+    const result = runIssueStandardsTriage(['--issue', '8', '--skip-issue-fetch', '--save-dir', path.join(root, 'evidence')], {
+      cwd: repoRoot,
+      spawnSync,
+      createTrackedWorktreeSnapshot: () => ({
+        mode: 'tracked-worktree-snapshot',
+        path: snapshotPath,
+        trackedFileCount: 1,
+        symlinkFiles: [],
+        missingFiles: [],
+        generatedRootsExcluded: []
+      }),
+      removeTrackedWorktreeSnapshot: vi.fn()
+    });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.context.imageAccess).toBe('pull-failed');
+    expect(result.context.standards).toEqual([]);
+  });
+
+  it('reports pull-unverified when the post-pull inspect still fails', () => {
+    const root = makeTempRoot();
+    const snapshotPath = path.join(root, 'snapshot');
+    const spawnSync = vi.fn((command: string, args: string[]) => {
+      if (command === 'docker' && args[0] === 'image') {
+        return { status: 1, stderr: 'No such image' };
+      }
+      if (command === 'docker' && args[0] === 'pull') {
+        return { status: 0, stdout: 'Downloaded newer image' };
+      }
+      return { status: 99, stderr: 'docker run should not execute' };
+    });
+
+    const result = runIssueStandardsTriage(['--issue', '9', '--skip-issue-fetch', '--save-dir', path.join(root, 'evidence')], {
+      cwd: repoRoot,
+      spawnSync,
+      createTrackedWorktreeSnapshot: () => ({
+        mode: 'tracked-worktree-snapshot',
+        path: snapshotPath,
+        trackedFileCount: 1,
+        symlinkFiles: [],
+        missingFiles: [],
+        generatedRootsExcluded: []
+      }),
+      removeTrackedWorktreeSnapshot: vi.fn()
+    });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.context.imageAccess).toBe('pull-unverified');
+    expect(result.context.standards).toEqual([]);
+  });
+
+  it('retains the snapshot and marks success false when a standards step fails', () => {
+    const root = makeTempRoot();
+    const snapshotPath = path.join(root, 'snapshot');
+    const removeSnapshot = vi.fn();
+    const spawnSync = vi.fn((command: string, args: string[]) => {
+      if (command === 'docker' && args[0] === 'image') {
+        return { status: 0, stdout: '[{"Id":"img"}]' };
+      }
+      if (args.includes('scripts/requirements_quality_check.py')) {
+        return { status: 0, stdout: JSON.stringify({ ok: true, findings: [] }) };
+      }
+      if (args.includes('scripts/repo_evidence_scan.py')) {
+        return { status: 0, stdout: JSON.stringify({ inventory: { file_count: 1 }, areas: {} }) };
+      }
+      if (args.includes('scripts/run_assurance.py')) {
+        return { status: 2, stderr: 'scorecard failed' };
+      }
+      return { status: 99, stderr: `unexpected ${command} ${args.join(' ')}` };
+    });
+
+    const result = runIssueStandardsTriage(
+      ['--issue', '10', '--skip-issue-fetch', '--keep-snapshot', '--save-dir', path.join(root, 'evidence')],
+      {
+        cwd: repoRoot,
+        spawnSync,
+        createTrackedWorktreeSnapshot: () => ({
+          mode: 'tracked-worktree-snapshot',
+          path: snapshotPath,
+          trackedFileCount: 1,
+          symlinkFiles: [],
+          missingFiles: [],
+          generatedRootsExcluded: []
+        }),
+        removeTrackedWorktreeSnapshot: removeSnapshot
+      }
+    );
+
+    // A failing standards step flips standards.every(...) to false, and --keep-snapshot
+    // both renders the retained-snapshot line and skips snapshot removal.
+    expect(result.exitCode).toBe(1);
+    expect(result.markdown).toContain('Snapshot retained');
+    expect(removeSnapshot).not.toHaveBeenCalled();
   });
 });

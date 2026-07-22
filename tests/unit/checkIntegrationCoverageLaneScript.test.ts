@@ -117,3 +117,65 @@ describe('checkIntegrationCoverageLane: real repo lane (VHS-REQ-690.2)', () => {
     expect(runIndex).toBeGreaterThan(bootstrapIndex);
   });
 });
+
+describe('checkIntegrationCoverageLane: default factories and edge branches (VHS-REQ-690.3)', () => {
+  it('flags a lane that lacks the workflow_dispatch trigger', () => {
+    const noDispatch = COMPLIANT.replace('  workflow_dispatch:', '  workflow_call:');
+    expect(evaluateIntegrationCoverageLane(noDispatch).problems).toContainEqual({
+      reason: 'not-dispatch-only',
+      detail: 'missing workflow_dispatch trigger'
+    });
+  });
+
+  it('treats a non-string workflow as a missing workflow', () => {
+    const result = evaluateIntegrationCoverageLane(undefined);
+    expect(result.ok).toBe(false);
+    expect(result.problems).toContainEqual({ reason: 'workflow-missing', detail: LANE_WORKFLOW_PATH });
+  });
+
+  it('honors a custom self-hosted runner label supplied via options', () => {
+    const customLabel = 'custom-maintainer-runner';
+    const withCustom = COMPLIANT.replace(SELF_HOSTED_LABEL, customLabel);
+    expect(evaluateIntegrationCoverageLane(withCustom, { selfHostedLabel: customLabel })).toEqual({
+      ok: true,
+      problems: []
+    });
+    // With the default label absent the default-label evaluation flags it.
+    expect(
+      evaluateIntegrationCoverageLane(withCustom).problems.some((p) => p.reason === 'not-self-hosted')
+    ).toBe(true);
+  });
+
+  it('renders OK when the result carries no problems array', () => {
+    expect(renderIntegrationCoverageLane(null)).toContain('OK:');
+    expect(renderIntegrationCoverageLane({})).toContain('OK:');
+  });
+
+  it('loadLaneWorkflow returns an empty string when the read throws', () => {
+    const workflow = loadLaneWorkflow('/repo', {
+      readFileSync: () => {
+        throw new Error('boom');
+      }
+    });
+    expect(workflow).toBe('');
+  });
+
+  it('loadLaneWorkflow uses the real fs by default against the shipped lane', () => {
+    const repoRoot = path.resolve(__dirname, '..', '..');
+    // No deps -> the default fs.readFileSync reads the committed lane workflow.
+    expect(loadLaneWorkflow(repoRoot)).toContain('workflow_dispatch');
+  });
+
+  it('loadLaneWorkflow falls back to process.cwd() when no repoRoot is given', () => {
+    const seen: string[] = [];
+    const workflow = loadLaneWorkflow(undefined, {
+      readFileSync: (target: string) => {
+        seen.push(String(target));
+        return 'stub-workflow';
+      }
+    });
+    expect(workflow).toBe('stub-workflow');
+    // The resolved path is anchored under the process cwd, not "undefined".
+    expect(seen[0].replace(/\\/g, '/')).toContain('.github/workflows/integration-coverage.yml');
+  });
+});

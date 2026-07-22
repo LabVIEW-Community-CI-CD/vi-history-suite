@@ -3,7 +3,7 @@ import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   DEVTOOLS_MANIFEST_ASSET,
@@ -11,6 +11,8 @@ import {
   DEVTOOLS_VERIFIED_MARKER,
   OFFICIAL_DEVTOOLS_REPO,
   createDevToolsInstallDeps,
+  defaultDevToolsHttpClient,
+  defaultDevToolsInstallFsClient,
   extractDevToolsTarball,
   foldContentDigest,
   parseDevToolsReleaseManifest,
@@ -267,5 +269,126 @@ describe('install management: list + uninstall (VHS-REQ-679.4)', () => {
     expect(fs.existsSync(path.join(base, '1.2.3'))).toBe(false);
     // Removing an absent version reports false.
     expect(await deps.uninstallVersion(base, '1.2.3')).toBe(false);
+  });
+});
+
+describe('defaultDevToolsInstallFsClient over a real temp dir (VHS-REQ-679)', () => {
+  it('writes, hashes, lists, checks existence, and removes on the real filesystem', async () => {
+    const base = makeTempRoot();
+    const client = defaultDevToolsInstallFsClient;
+
+    // writeExtractedFile creates parent directories and writes the bytes.
+    const nested = path.join(base, 'out', 'cli', 'tool.js');
+    await client.writeExtractedFile(nested, Buffer.from('// tool\n'));
+    expect(fs.readFileSync(nested, 'utf8')).toBe('// tool\n');
+
+    // hashFile matches a direct SHA-256; a missing file resolves to undefined.
+    expect(await client.hashFile(nested)).toBe(sha256Hex(Buffer.from('// tool\n')));
+    expect(await client.hashFile(path.join(base, 'nope.js'))).toBeUndefined();
+
+    // writeMarker writes a UTF-8 marker file.
+    const marker = path.join(base, DEVTOOLS_VERIFIED_MARKER);
+    await client.writeMarker(marker, '{"ok":true}');
+    expect(fs.readFileSync(marker, 'utf8')).toBe('{"ok":true}');
+
+    // pathExists reports true for a present path and false for an absent one.
+    expect(await client.pathExists(marker)).toBe(true);
+    expect(await client.pathExists(path.join(base, 'absent'))).toBe(false);
+
+    // listSubdirectories returns only directory names; a missing dir yields [].
+    fs.mkdirSync(path.join(base, 'v1'));
+    fs.mkdirSync(path.join(base, 'v2'));
+    expect((await client.listSubdirectories(base)).slice().sort()).toEqual(['out', 'v1', 'v2']);
+    expect(await client.listSubdirectories(path.join(base, 'missing'))).toEqual([]);
+
+    // removeDir removes a tree recursively.
+    await client.removeDir(path.join(base, 'out'));
+    expect(fs.existsSync(path.join(base, 'out'))).toBe(false);
+  });
+});
+
+describe('defaultDevToolsHttpClient over a stubbed fetch (VHS-REQ-679)', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('getJson returns parsed JSON on ok and throws on a non-ok status', async () => {
+    const payload = [{ tag_name: 'devtools-v1.0.0' }];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({ ok: true, status: 200, json: async () => payload }))
+    );
+    expect(await defaultDevToolsHttpClient.getJson('https://example/releases')).toEqual(payload);
+
+    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, status: 503, json: async () => ({}) })));
+    await expect(defaultDevToolsHttpClient.getJson('https://example/releases')).rejects.toThrow(/503/);
+  });
+
+  it('getBuffer returns a Buffer on ok and throws on a non-ok status', async () => {
+    const bytes = Buffer.from('tarball-bytes');
+    const ab = new ArrayBuffer(bytes.length);
+    new Uint8Array(ab).set(bytes);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({ ok: true, status: 200, arrayBuffer: async () => ab }))
+    );
+    const buf = await defaultDevToolsHttpClient.getBuffer('https://example/asset');
+    expect(Buffer.isBuffer(buf)).toBe(true);
+    expect(buf.toString('utf8')).toBe('tarball-bytes');
+
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({ ok: false, status: 404, arrayBuffer: async () => new ArrayBuffer(0) }))
+    );
+    await expect(defaultDevToolsHttpClient.getBuffer('https://example/asset')).rejects.toThrow(/404/);
+  });
+});
+
+describe('createDevToolsInstallDeps marker + fail-closed asset branches (VHS-REQ-679)', () => {
+  it('markVerified writes a marker JSON naming the version and official source repo', async () => {
+    const dir = makeTempRoot();
+    const deps = createDevToolsInstallDeps();
+    await deps.markVerified(dir, '3.4.5');
+    const parsed = JSON.parse(fs.readFileSync(path.join(dir, DEVTOOLS_VERIFIED_MARKER), 'utf8'));
+    expect(parsed.version).toBe('3.4.5');
+    expect(parsed.source).toBe(OFFICIAL_DEVTOOLS_REPO);
+    expect(typeof parsed.verifiedAt).toBe('string');
+  });
+
+  it('returns undefined when the matched release carries no assets (fail-closed)', async () => {
+    const tag = 'devtools-v2.0.0';
+    const http: DevToolsHttpClient = {
+      getJson: () => Promise.resolve([{ tag_name: tag }]),
+      getBuffer: () => Promise.reject(new Error('should not download'))
+    };
+    const deps = createDevToolsInstallDeps({ http });
+    expect(await deps.downloadRelease(tag, makeTempRoot())).toBeUndefined();
+  });
+
+  it('returns undefined when the manifest asset is missing (fail-closed)', async () => {
+    const tag = 'devtools-v2.1.0';
+    const http: DevToolsHttpClient = {
+      getJson: () =>
+        Promise.resolve([
+          { tag_name: tag, assets: [{ name: DEVTOOLS_TARBALL_ASSET, browser_download_url: 'https://example/t' }] }
+        ]),
+      getBuffer: () => Promise.reject(new Error('should not download'))
+    };
+    const deps = createDevToolsInstallDeps({ http });
+    expect(await deps.downloadRelease(tag, makeTempRoot())).toBeUndefined();
+  });
+});
+
+describe('parseUstarTar tolerates an empty numeric size field (VHS-REQ-679.1)', () => {
+  it('treats an all-NUL size field as zero-length content', () => {
+    const header = Buffer.alloc(512, 0);
+    header.write('empty.txt', 0, 'ascii'); // name field
+    header.write('0', 156, 'ascii'); // typeflag '0' (regular file)
+    // The size field (offset 124, length 12) is intentionally left as NUL bytes.
+    const tar = Buffer.concat([header, Buffer.alloc(1024, 0)]); // + end-of-archive blocks
+    const entries = parseUstarTar(tar);
+    expect(entries).toHaveLength(1);
+    expect(entries[0].path).toBe('empty.txt');
+    expect(entries[0].content).toHaveLength(0);
   });
 });

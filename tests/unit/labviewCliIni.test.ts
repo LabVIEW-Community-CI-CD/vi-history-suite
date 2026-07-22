@@ -1,4 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
 
 import {
   applyLabVIEWCliIniHardening,
@@ -360,5 +363,42 @@ describe('parseLabVIEWCliIniValue and setLabVIEWCliIniValue edge cases', () => {
 
   it('setLabVIEWCliIniValue trims trailing whitespace before appending', () => {
     expect(setLabVIEWCliIniValue('A=1\n\n  \n', 'Key', 'val')).toBe('A=1\nKey=val\n');
+  });
+
+  it('hardens a real ini file end-to-end using the default fs and token injectables', async () => {
+    const dir = await mkdtemp(path.join(os.tmpdir(), 'vihs-cliini-'));
+    const iniPath = path.join(dir, 'LabVIEWCLI.ini');
+    try {
+      await writeFile(iniPath, 'A=1\n', 'utf8');
+      // No deps: exercises defaultPathExists (real fs.stat) + defaultRandomToken
+      // (real randomBytes) + the real readFile/writeFile/rename path.
+      const result = await applyLabVIEWCliIniHardening({
+        candidatePaths: [iniPath],
+        requestedValueSeconds: 180
+      });
+      expect(result.applied).toBe(true);
+      expect(result.iniPath).toBe(iniPath);
+      const written = await readFile(iniPath, 'utf8');
+      expect(parseLabVIEWCliIniValue(written, LABVIEW_CLI_INI_OPEN_APP_KEY)).toBe('180');
+      expect(parseLabVIEWCliIniValue(written, LABVIEW_CLI_INI_AFTER_LAUNCH_KEY)).toBe('180');
+      const backup = await readFile(`${iniPath}${LABVIEW_CLI_INI_BACKUP_SUFFIX}`, 'utf8');
+      expect(backup).toBe('A=1\n');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('returns no-candidate via the real defaultPathExists when no file exists', async () => {
+    const dir = await mkdtemp(path.join(os.tmpdir(), 'vihs-cliini-'));
+    try {
+      const result = await applyLabVIEWCliIniHardening({
+        candidatePaths: [path.join(dir, 'does-not-exist.ini')],
+        requestedValueSeconds: 180
+      });
+      expect(result.applied).toBe(false);
+      expect(result.reason).toBe('no-candidate');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
   });
 });

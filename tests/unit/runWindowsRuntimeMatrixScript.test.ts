@@ -900,3 +900,184 @@ describe('runWindowsRuntimeMatrix.runRuntimeMatrix', () => {
     ).toThrow(/requires Windows/);
   });
 });
+
+describe('runWindowsRuntimeMatrix.parseArgs help + flag-value guards', () => {
+  it('returns immediately for --help / -h without validating the scenario', () => {
+    expect(harness.parseArgs(['--help']).help).toBe(true);
+    expect(harness.parseArgs(['-h']).help).toBe(true);
+    // --help short-circuits before scenario validation, so a bogus scenario is tolerated.
+    expect(harness.parseArgs(['--scenario', 'race-A', '--help']).help).toBe(true);
+  });
+
+  it('rejects a flag whose value looks like another flag', () => {
+    expect(() => harness.parseArgs(['--scenario', '--out'])).toThrow(/requires a value/);
+  });
+});
+
+describe('runWindowsRuntimeMatrix.runRuntimeMatrix edge branches', () => {
+  const sep = require('node:path').sep as string;
+  const steadyLogPath = `assurance-closeout-evidence${sep}runtime-matrix-proofs${sep}steady-A.scenario.json`;
+  const passingSteadyLog = {
+    pass: true,
+    durationMs: 5,
+    observed: {
+      runtimeBlockedReason: 'windows-host-bitness-conflict',
+      hostBitness: 'x64',
+      selectedBitness: 'x86'
+    }
+  };
+
+  it('prints usage and exits 0 for --help without touching the runtime', () => {
+    const spawnSync = vi.fn();
+    const out: string[] = [];
+    const result = harness.runRuntimeMatrix(['--help'], {
+      spawnSync,
+      fs: { existsSync: () => false, readFileSync: () => '', writeFileSync: () => undefined, mkdirSync: () => undefined },
+      stdout: { write: (s: string) => out.push(s) },
+      stderr: { write: () => undefined }
+    });
+    expect(result.exitCode).toBe(0);
+    expect(result.evidence).toBeUndefined();
+    expect(result.evidencePath).toBeUndefined();
+    expect(spawnSync).not.toHaveBeenCalled();
+    expect(out.join('')).toMatch(/Usage: node scripts\/runWindowsRuntimeMatrix\.js/);
+  });
+
+  it('falls back to the default env and clock when neither is injected', () => {
+    const spawnSync = vi.fn().mockReturnValue({ status: 0, error: undefined });
+    const fakeFs = {
+      existsSync: (t: string) => t === steadyLogPath,
+      readFileSync: (t: string) => {
+        if (t !== steadyLogPath) throw new Error(`unexpected read ${t}`);
+        return JSON.stringify(passingSteadyLog);
+      },
+      writeFileSync: () => undefined,
+      mkdirSync: () => undefined
+    };
+    const result = harness.runRuntimeMatrix(['--scenario', 'steady-A'], {
+      spawnSync,
+      fs: fakeFs,
+      // platform 'win32' passes the guard without needing an injected env.
+      platform: 'win32',
+      hostname: () => 'fake-runner',
+      cwd: () => '.',
+      stdout: { write: () => undefined },
+      stderr: { write: () => undefined }
+    });
+    expect(result.exitCode).toBe(0);
+    // The default clock (() => new Date()) produced a valid ISO runId.
+    expect(typeof result.evidence?.runId).toBe('string');
+  });
+
+  it('treats a missing scenario log as no observations (readScenarioLog undefined path)', () => {
+    const spawnSync = vi.fn().mockReturnValue({ status: 0, error: undefined });
+    const fakeFs = {
+      existsSync: () => false, // the scenario log never exists
+      readFileSync: () => {
+        throw new Error('should not read a missing log');
+      },
+      writeFileSync: () => undefined,
+      mkdirSync: () => undefined
+    };
+    const result = harness.runRuntimeMatrix(['--scenario', 'steady-A'], {
+      spawnSync,
+      fs: fakeFs,
+      now: () => new Date('2026-05-31T00:00:00Z'),
+      hostname: () => 'fake-runner',
+      platform: 'win32',
+      env: { VIHS_FAKE_WINDOWS: '1' },
+      cwd: () => '.',
+      stdout: { write: () => undefined },
+      stderr: { write: () => undefined }
+    });
+    expect(result.exitCode).toBe(1);
+    expect(result.evidence?.summary.failed).toBe(1);
+  });
+
+  it('records a read error when a scenario log is not valid JSON (readScenarioLog catch path)', () => {
+    const spawnSync = vi.fn().mockReturnValue({ status: 0, error: undefined });
+    const fakeFs = {
+      existsSync: (t: string) => t === steadyLogPath,
+      readFileSync: (t: string) => (t === steadyLogPath ? 'not-json{' : ''),
+      writeFileSync: () => undefined,
+      mkdirSync: () => undefined
+    };
+    const result = harness.runRuntimeMatrix(['--scenario', 'steady-A'], {
+      spawnSync,
+      fs: fakeFs,
+      now: () => new Date('2026-05-31T00:00:00Z'),
+      hostname: () => 'fake-runner',
+      platform: 'win32',
+      env: { VIHS_FAKE_WINDOWS: '1' },
+      cwd: () => '.',
+      stdout: { write: () => undefined },
+      stderr: { write: () => undefined }
+    });
+    expect(result.exitCode).toBe(1);
+    expect(result.evidence?.summary.failed).toBe(1);
+  });
+});
+
+describe('runWindowsRuntimeMatrix.main', () => {
+  const mainFn = (harness as unknown as {
+    main: (argv: string[], deps: Record<string, unknown>) => void;
+  }).main;
+  const sep = require('node:path').sep as string;
+  const steadyLogPath = `assurance-closeout-evidence${sep}runtime-matrix-proofs${sep}steady-A.scenario.json`;
+
+  it('sets process.exitCode from a successful runRuntimeMatrix run', () => {
+    const previous = process.exitCode;
+    try {
+      const spawnSync = vi.fn().mockReturnValue({ status: 0, error: undefined });
+      const fakeFs = {
+        existsSync: (t: string) => t === steadyLogPath,
+        readFileSync: () =>
+          JSON.stringify({
+            pass: true,
+            durationMs: 5,
+            observed: {
+              runtimeBlockedReason: 'windows-host-bitness-conflict',
+              hostBitness: 'x64',
+              selectedBitness: 'x86'
+            }
+          }),
+        writeFileSync: () => undefined,
+        mkdirSync: () => undefined
+      };
+      mainFn(['--scenario', 'steady-A'], {
+        spawnSync,
+        fs: fakeFs,
+        now: () => new Date('2026-05-31T00:00:00Z'),
+        hostname: () => 'fake-runner',
+        platform: 'win32',
+        env: { VIHS_FAKE_WINDOWS: '1' },
+        cwd: () => '.',
+        stdout: { write: () => undefined },
+        stderr: { write: () => undefined }
+      });
+      expect(process.exitCode).toBe(0);
+    } finally {
+      process.exitCode = previous;
+    }
+  });
+
+  it('writes to stderr and sets exitCode 1 when runRuntimeMatrix throws', () => {
+    const previous = process.exitCode;
+    const errs: string[] = [];
+    try {
+      mainFn([], {
+        spawnSync: vi.fn(),
+        fs: { existsSync: () => false, readFileSync: () => '', writeFileSync: () => undefined, mkdirSync: () => undefined },
+        platform: 'linux',
+        env: {},
+        cwd: () => '.',
+        stdout: { write: () => undefined },
+        stderr: { write: (s: string) => errs.push(s) }
+      });
+      expect(process.exitCode).toBe(1);
+      expect(errs.join('')).toMatch(/requires Windows/);
+    } finally {
+      process.exitCode = previous;
+    }
+  });
+});

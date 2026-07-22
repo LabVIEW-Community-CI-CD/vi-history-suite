@@ -15,7 +15,7 @@ vi.mock('../../src/semantic/viSemanticComparisonMcp', () => ({
 }));
 
 vi.mock('../../src/mcp/viSemanticMcpServerDeps', () => ({
-  buildViSemanticMcpServerDeps: () => ({ __deps: true }),
+  buildViSemanticMcpServerDepsForEnv: () => ({ __deps: true }),
   createDefaultComparisonModelCache: () => ({ __cache: true }),
 }));
 

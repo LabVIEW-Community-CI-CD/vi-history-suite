@@ -320,3 +320,136 @@ describe('dev-tools payload MCP server dependency closure (#2092 regression)', (
     expect(requiredOutFiles.some((relative) => relative.startsWith('out/semantic/'))).toBe(true);
   });
 });
+
+// Additional branch coverage: the real (uninjected) git/package resolvers, the
+// long-path ustar header split + rejection, the block-aligned padToBlock path,
+// and main's --pack + summary-to-stdout output branches.
+describe('buildDevToolsRelease internal git/package + tar edge branches (DS1)', () => {
+  const tarExports = builder as unknown as {
+    buildUstarHeader: (rel: string, size: number) => Buffer;
+    buildToolsetTar: (cwd: string, paths: string[], deps?: Record<string, unknown>) => Buffer;
+  };
+
+  const manifestJson = JSON.stringify({
+    schema: SCHEMA_ID,
+    schemaVersion: 1,
+    version: '2.5.0',
+    categories: [{ id: 'scripts', include: ['scripts/*.js'] }]
+  });
+
+  it('collectDevToolsRelease uses the real git/package resolvers when they are not injected (success paths)', () => {
+    const readFile = (p: string) => {
+      const norm = String(p).replace(/\\/g, '/');
+      if (norm.endsWith('devtools-release.manifest.json')) return manifestJson;
+      if (norm.endsWith('package.json')) return JSON.stringify({ version: '7.7.7' });
+      throw new Error(`no file ${norm}`); // requirements manifest is absent -> digest null
+    };
+    const manifest = collectDevToolsRelease('/repo', { channel: 'stable' }, {
+      cwd: '/repo',
+      now: () => new Date('2026-07-17T00:00:00.000Z'),
+      readFile,
+      readFileBuffer: () => Buffer.from('module.exports=1;\n'),
+      globSync: () => ['scripts/toolA.js'],
+      execSync: () => 'commitsha123\n'
+    });
+    expect(manifest.version).toBe('2.5.0');
+    expect(manifest.buildVersion).toBe('7.7.7'); // getPackageVersion success path
+    expect(manifest.gitCommit).toBe('commitsha123'); // getGitCommit success path (trimmed)
+    expect(manifest.requirementsManifestDigest).toBeNull();
+  });
+
+  it('collectDevToolsRelease falls back to defaults when the git/package reads fail', () => {
+    const readFile = (p: string) => {
+      const norm = String(p).replace(/\\/g, '/');
+      if (norm.endsWith('devtools-release.manifest.json')) return manifestJson;
+      throw new Error(`no file ${norm}`); // package.json + requirements manifest both throw
+    };
+    const manifest = collectDevToolsRelease('/repo', {}, {
+      cwd: '/repo',
+      now: () => new Date('2026-07-17T00:00:00.000Z'),
+      readFile,
+      readFileBuffer: () => Buffer.from('x'),
+      globSync: () => ['scripts/toolA.js'],
+      execSync: () => {
+        throw new Error('git missing');
+      }
+    });
+    expect(manifest.buildVersion).toBe('0.0.0'); // getPackageVersion catch -> default
+    expect(manifest.gitCommit).toBe('<unknown>'); // getGitCommit catch -> UNKNOWN_COMMIT
+  });
+
+  it('buildUstarHeader splits long paths on a slash and rejects unsplittable ones', () => {
+    const longDir = 'a'.repeat(120);
+    const header = tarExports.buildUstarHeader(`${longDir}/tool.js`, 10);
+    expect(header.length).toBe(512);
+    expect(header.toString('utf8', 0, 7)).toBe('tool.js');
+    expect(header.toString('utf8', 345, 345 + longDir.length)).toBe(longDir);
+    // A >100-byte single segment with no usable slash cannot be split -> throws.
+    expect(() => tarExports.buildUstarHeader('b'.repeat(140), 5)).toThrow(/Path too long/);
+    // A final segment that alone exceeds 100 bytes -> throws after the split.
+    expect(() => tarExports.buildUstarHeader(`${'c'.repeat(10)}/${'d'.repeat(120)}`, 5)).toThrow(/Path too long/);
+  });
+
+  it('buildToolsetTar leaves block-aligned content unpadded (padToBlock 512-multiple)', () => {
+    const dir = makeFixtureRepo();
+    fs.writeFileSync(path.join(dir, 'scripts', 'aligned.bin'), Buffer.alloc(512, 65));
+    const tar = tarExports.buildToolsetTar(dir, ['scripts/aligned.bin']);
+    // header(512) + content(512, already block-aligned) + 2 zero terminator blocks(1024).
+    expect(tar.length).toBe(512 + 512 + 1024);
+  });
+});
+
+describe('buildDevToolsRelease main pack + summary output branches (DS1)', () => {
+  const deterministicDeps = (cwd: string) => ({
+    cwd,
+    now: () => new Date('2026-07-17T00:00:00.000Z'),
+    getGitCommit: () => 'deadbeefcafe',
+    getPackageVersion: () => '1.33.2'
+  });
+
+  it('main --pack writes a deterministic tarball and records archive provenance', () => {
+    const dir = makeFixtureRepo();
+    const out: string[] = [];
+    const code = main(['--pack', 'out/tools.tgz', '--json'], {
+      ...deterministicDeps(dir),
+      stdout: { write: (s: string) => out.push(s) },
+      stderr: { write: () => undefined }
+    });
+    expect(code).toBe(0);
+    expect(fs.existsSync(path.join(dir, 'out', 'tools.tgz'))).toBe(true);
+    expect(out.join('')).toMatch(/Packed out\/tools\.tgz/);
+    const printed = JSON.parse(out.filter((s) => s.trim().startsWith('{')).join('')) as {
+      archive: { path: string; sha256: string; bytes: number };
+    };
+    expect(printed.archive.path).toBe('out/tools.tgz');
+    expect(printed.archive.sha256).toMatch(/^[0-9a-f]{64}$/);
+  });
+
+  it('main --pack returns 1 when writing the tarball fails', () => {
+    const dir = makeFixtureRepo();
+    const errs: string[] = [];
+    const code = main(['--pack', 'out/tools.tgz'], {
+      ...deterministicDeps(dir),
+      writeFile: () => {
+        throw new Error('disk full');
+      },
+      stdout: { write: () => undefined },
+      stderr: { write: (s: string) => errs.push(s) }
+    });
+    expect(code).toBe(1);
+    expect(errs.join('')).toMatch(/disk full/);
+  });
+
+  it('main renders the summary to stdout and returns 0 without --output', () => {
+    const dir = makeFixtureRepo();
+    const out: string[] = [];
+    const code = main([], {
+      ...deterministicDeps(dir),
+      stdout: { write: (s: string) => out.push(s) },
+      stderr: { write: () => undefined }
+    });
+    expect(code).toBe(0);
+    expect(out.join('')).toMatch(/Development-tools release provenance/);
+    expect(out.join('')).toMatch(/Content digest:/);
+  });
+});

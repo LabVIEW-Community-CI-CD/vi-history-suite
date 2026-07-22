@@ -106,26 +106,41 @@ function runControlPlaneApply(deps = {}) {
   return runBoardSync({ items }, { ...deps, repoRoot, config, applyFieldUpdate });
 }
 
+// Thin CLI: run the apply and emit a one-line status. Extracted from the
+// require.main block so its reporting/exit branches are unit-testable with an
+// injected runner/streams/exit (no real gh). Behavior is unchanged.
+function main(deps = {}) {
+  const run = deps.runControlPlaneApply || runControlPlaneApply;
+  const out = deps.stdout || process.stdout;
+  const err = deps.stderr || process.stderr;
+  const exit = deps.exit || process.exit;
+  try {
+    const result = run(deps);
+    if (!result.executed) {
+      out.write(`[control-plane-apply] no writes (${result.reason}). plannedCount=${result.plannedCount}\n`);
+      // Disabled/no-op is a clean exit; the loop is fail-closed by design.
+      exit(0);
+      return result;
+    }
+    out.write(`[control-plane-apply] applied ${result.appliedCount} of ${result.plannedCount} verified board update(s).\n`);
+    exit(0);
+    return result;
+  } catch (err2) {
+    err.write(`[control-plane-apply] ${err2.message}\n`);
+    exit(1);
+    return { error: err2 };
+  }
+}
+
 module.exports = {
   PROJECT_ID,
   FIELD_MAP,
   resolveFieldTarget,
   createGhFieldUpdater,
-  runControlPlaneApply
+  runControlPlaneApply,
+  main
 };
 
 if (require.main === module) {
-  try {
-    const result = runControlPlaneApply();
-    if (!result.executed) {
-      process.stdout.write(`[control-plane-apply] no writes (${result.reason}). plannedCount=${result.plannedCount}\n`);
-      // Disabled/no-op is a clean exit; the loop is fail-closed by design.
-      process.exit(0);
-    }
-    process.stdout.write(`[control-plane-apply] applied ${result.appliedCount} of ${result.plannedCount} verified board update(s).\n`);
-    process.exit(0);
-  } catch (err) {
-    process.stderr.write(`[control-plane-apply] ${err.message}\n`);
-    process.exit(1);
-  }
+  main();
 }

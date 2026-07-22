@@ -1,3 +1,5 @@
+import * as fs from 'node:fs';
+import * as os from 'node:os';
 import * as path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
@@ -100,5 +102,37 @@ describe('checkDevDependencies dev-loop preflight', () => {
 
     expect(code).toBe(1);
     expect(writes.join('')).toContain('npm ci');
+  });
+});
+
+describe('checkDevDependencies default collaborators', () => {
+  it('defaults cwd to the repo root and stderr to process.stderr when they are omitted', () => {
+    // No cwd and no stderr: exercises the `deps.cwd ?? repoRoot` and
+    // `deps.stderr ?? process.stderr` fallbacks. The injected existsSync keeps it
+    // deterministic and satisfied so nothing is written to the real process.stderr.
+    const code = main({ existsSync: () => true });
+    expect(code).toBe(0);
+  });
+
+  it('uses the real fs.existsSync when no existsSync is injected', () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'vihs-devdeps-'));
+    try {
+      const inspection = inspectDevDependencies({ cwd: tmpDir });
+      // A bare temp dir has no node_modules, so the real fs reports both missing.
+      expect(inspection.satisfied).toBe(false);
+      expect(inspection.missing.map((item: { id: string }) => item.id)).toContain('node_modules');
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it('falls back to the raw target path when a missing check path equals the cwd', () => {
+    const same = path.join(path.sep, 'x');
+    // path.relative(same, same) === '' so the `|| item.targetPath` fallback renders.
+    const message = formatRemediationMessage({
+      cwd: same,
+      missing: [{ id: 'node_modules', label: 'node_modules directory', targetPath: same }]
+    });
+    expect(message).toContain(same);
   });
 });

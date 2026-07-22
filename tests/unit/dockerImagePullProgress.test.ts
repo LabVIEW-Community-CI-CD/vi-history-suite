@@ -8,6 +8,9 @@
  * Linux without a real Docker daemon.
  */
 
+import { EventEmitter } from 'node:events';
+import * as http from 'node:http';
+
 import { describe, expect, it, vi } from 'vitest';
 
 import {
@@ -21,6 +24,19 @@ import {
   streamDockerImagePull,
   type DockerPullStreamRequest
 } from '../../src/tooling/dockerImagePullProgress';
+import { resolveImageDownloadSize } from '../../src/tooling/dockerImageDownloadSize';
+
+// Mock the two DEFAULT boundaries so the no-inject path of `streamDockerImagePull`
+// (its `defaultRequestStream` daemon-socket reader and its default
+// `resolveImageDownloadSize` size resolver) can run deterministically without a
+// real Docker daemon or registry. Every existing test injects both, so these
+// mocks are inert for them.
+vi.mock('node:http', () => ({
+  request: vi.fn()
+}));
+vi.mock('../../src/tooling/dockerImageDownloadSize', () => ({
+  resolveImageDownloadSize: vi.fn()
+}));
 
 const GB = 1024 * 1024 * 1024;
 
@@ -568,5 +584,113 @@ describe('streamDockerImagePull', () => {
     expect(messages.some((m) => /^Extracting container image: .* — \d+% \(\d+\/2 layers\)$/.test(m))).toBe(true);
     // ...and the toast finalized instead of freezing at 99%.
     expect(messages.at(-1)).toBe(`Finalizing container image: ${image}`);
+  });
+});
+
+describe('parseDockerPullProgressLine fall-through (VHS-REQ-654.6)', () => {
+  it('returns undefined for a parsed object with no status, id, or error', () => {
+    expect(parseDockerPullProgressLine(JSON.stringify({}))).toBeUndefined();
+    // A progressDetail-only line carries no status/id we can act on.
+    expect(
+      parseDockerPullProgressLine(JSON.stringify({ progressDetail: { current: 1, total: 2 } }))
+    ).toBeUndefined();
+  });
+});
+
+describe('DockerPullProgressAggregator additional event handling (VHS-REQ-656.4)', () => {
+  it('applies a byte-detail-free layer-extracting event and reports the extracting phase', () => {
+    const agg = new DockerPullProgressAggregator();
+    agg.apply({ kind: 'layer-seen', layerId: 'a' });
+    const snap = agg.apply({ kind: 'layer-extracting', layerId: 'a' });
+    // The only enumerated layer has its bytes in and is unpacking -> extracting.
+    expect(snap.phase).toBe('extracting');
+    expect(snap.totalLayers).toBe(1);
+    expect(snap.completedLayers).toBe(0);
+  });
+
+  it('ignores a status/error event applied directly (the switch default) without mutating state', () => {
+    const agg = new DockerPullProgressAggregator();
+    const snap = agg.apply({ kind: 'status', status: 'Pulling from repo/img' });
+    expect(snap.totalLayers).toBe(0);
+    expect(snap.phase).toBe('preparing');
+    const afterError = agg.apply({ kind: 'error', message: 'boom' });
+    expect(afterError.totalLayers).toBe(0);
+  });
+});
+
+describe('formatBytes guard (VHS-REQ-655)', () => {
+  it('renders 0 B for negative, NaN, or non-finite inputs', () => {
+    expect(formatBytes(-1)).toBe('0 B');
+    expect(formatBytes(Number.NaN)).toBe('0 B');
+    expect(formatBytes(Number.POSITIVE_INFINITY)).toBe('0 B');
+  });
+});
+
+describe('streamDockerImagePull default boundaries (VHS-REQ-654.6, VHS-REQ-655)', () => {
+  it('degrades to layer-weighted progress when the injected size resolver rejects (and skips blank lines)', async () => {
+    const requestStream: DockerPullStreamRequest = async (_params, handlers) => {
+      // A blank line must be dropped by onLine before any event dispatch.
+      handlers.onLine('');
+      handlers.onLine(JSON.stringify({ status: 'Pulling fs layer', id: 'a' }));
+      handlers.onLine(JSON.stringify({ status: 'Pull complete', id: 'a' }));
+      return { statusCode: 200 };
+    };
+    const result = await streamDockerImagePull({
+      image: 'repo/img:tag',
+      hostPlatform: 'linux',
+      requestStream,
+      // Rejecting resolver exercises the try/catch that downgrades to undefined.
+      resolveDownloadSize: async () => {
+        throw new Error('registry unreachable');
+      }
+    });
+    expect(result).toMatchObject({ attempted: true, succeeded: true });
+    expect(result.statusLines).toEqual([]);
+  });
+
+  it('drives the default daemon-socket request stream and default size resolver when neither is injected', async () => {
+    vi.mocked(resolveImageDownloadSize).mockReset();
+    vi.mocked(resolveImageDownloadSize).mockResolvedValue(undefined);
+
+    const request = new EventEmitter() as EventEmitter & { end: () => void };
+    request.end = () => {};
+    vi.mocked(http.request).mockReset();
+    vi.mocked(http.request).mockImplementation(((_options: unknown, responseCb: (res: unknown) => void) => {
+      const response = new EventEmitter() as EventEmitter & {
+        setEncoding: () => void;
+        statusCode: number;
+      };
+      response.setEncoding = () => {};
+      response.statusCode = 200;
+      // Deliver the response after the caller has attached its handlers and
+      // called request.end(), mirroring a real socket round-trip.
+      setImmediate(() => {
+        responseCb(response);
+        response.emit(
+          'data',
+          `${JSON.stringify({ status: 'Pulling from repo/img', id: 'tag' })}\n` +
+            `${JSON.stringify({ status: 'Downloading', id: 'a', progressDetail: { current: 5, total: 10 } })}\n`
+        );
+        // A trailing partial line (no newline) exercises the end-of-stream flush.
+        response.emit('data', JSON.stringify({ status: 'Pull complete', id: 'a' }));
+        response.emit('end');
+      });
+      return request;
+    }) as never);
+
+    const progress: number[] = [];
+    const result = await streamDockerImagePull({
+      image: 'repo/img:tag',
+      hostPlatform: 'linux',
+      onProgress: (snapshot) => {
+        progress.push(snapshot.totalLayers);
+      }
+    });
+
+    expect(result).toMatchObject({ attempted: true, succeeded: true });
+    expect(progress.length).toBeGreaterThan(0);
+    expect(vi.mocked(http.request)).toHaveBeenCalledTimes(1);
+    // The default size resolver was consulted (no injected resolveDownloadSize).
+    expect(vi.mocked(resolveImageDownloadSize)).toHaveBeenCalledWith({ image: 'repo/img:tag' });
   });
 });

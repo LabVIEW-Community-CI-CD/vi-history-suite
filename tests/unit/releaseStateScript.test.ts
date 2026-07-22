@@ -187,3 +187,184 @@ describe('collectReleaseState + CLI (VHS-REQ-670)', () => {
     expect(schema.required).toContain('authority');
   });
 });
+
+describe('collectReleaseState default boundary readers (VHS-REQ-670.4, VHS-REQ-670.6)', () => {
+  const PKG = JSON.stringify({ version: VERSION, publisher: 'svelderrainruiz', name: 'vi-history-suite' });
+  const ENV_JSON = JSON.stringify({
+    protection_rules: [{ type: 'required_reviewers', reviewers: [{ type: 'User' }] }]
+  });
+  const VSCE_JSON = JSON.stringify({ versions: [{ version: VERSION }] });
+
+  function lowLevelDeps(overrides: Record<string, unknown> = {}) {
+    return {
+      readFile: (p: string) => (String(p).endsWith('CHANGELOG.md') ? '## [Unreleased]\n' : PKG),
+      runGit: (args: string[]) => {
+        const a = args.join(' ');
+        if (a.includes('rev-parse HEAD')) return 'deadbeefcommit\n';
+        if (a.includes('rev-parse --verify')) return ''; // tag exists (no throw)
+        if (a.startsWith('show') && a.includes(`v${VERSION}:package.json`)) return PKG; // tag tree
+        if (a.startsWith('merge-base')) return ''; // reachable from main (no throw)
+        if (a.startsWith('show') && a.includes('origin/develop:package.json')) return PKG; // develop tip
+        return '';
+      },
+      runGh: () => ENV_JSON,
+      pinnedVsceModule: {
+        buildPinnedVsceInvocation: (args: string[]) => ({ command: 'vsce', args })
+      },
+      runVsce: () => VSCE_JSON,
+      env: { GITHUB_REPOSITORY: 'owner/repo', VSCE_PAT: 'token' },
+      now: () => 0,
+      ...overrides
+    };
+  }
+
+  it('derives a fully-reached ready packet from injected low-level git/gh/vsce readers', () => {
+    const state = rs.collectReleaseState('/repo', {}, lowLevelDeps());
+    expect(state.version).toBe(VERSION);
+    expect(state.commit).toBe('deadbeefcommit');
+    expect(state.stage).toBe('backsynced');
+    expect(state.status).toBe('ready');
+    expect(state.authority.manualApprovalEnforced).toBe(true);
+    expect(state.authority.publishTokenPresent).toBe(true);
+    expect(state.authority.complete).toBe(true);
+  });
+
+  it('marks the tag stages not reached when git rev-parse for the tag throws', () => {
+    const state = rs.collectReleaseState(
+      '/repo',
+      {},
+      lowLevelDeps({
+        runGit: (args: string[]) => {
+          const a = args.join(' ');
+          if (a.includes('rev-parse HEAD')) return 'commit1\n';
+          if (a.includes('rev-parse --verify')) throw new Error('no such tag'); // tagExists false
+          if (a.startsWith('show') && a.includes('origin/develop:package.json')) return PKG;
+          return '';
+        }
+      })
+    );
+    expect(state.stages.find((s) => s.id === 'tagged').reached).toBe(false);
+    // tagExists false -> reachability is unverified (null), not a definitive gap.
+    expect(state.stages.find((s) => s.id === 'on-main').reached).toBeNull();
+  });
+
+  it('marks on-main not reached when the tag is not an ancestor of main', () => {
+    const state = rs.collectReleaseState(
+      '/repo',
+      {},
+      lowLevelDeps({
+        runGit: (args: string[]) => {
+          const a = args.join(' ');
+          if (a.includes('rev-parse HEAD')) return 'c\n';
+          if (a.includes('rev-parse --verify')) return ''; // tag exists
+          if (a.startsWith('show') && a.includes(`v${VERSION}:package.json`)) return PKG;
+          if (a.startsWith('merge-base')) throw new Error('not an ancestor'); // reachable false
+          if (a.startsWith('show') && a.includes('origin/develop:package.json')) return PKG;
+          return '';
+        }
+      })
+    );
+    expect(state.stages.find((s) => s.id === 'on-main').reached).toBe(false);
+  });
+
+  it('degrades authority and published to unverified when repo slug and extension id are absent', () => {
+    const state = rs.collectReleaseState(
+      '/repo',
+      {},
+      lowLevelDeps({
+        // package.json without publisher/name -> no resolvable extension id.
+        readFile: (p: string) =>
+          String(p).endsWith('CHANGELOG.md') ? '## [Unreleased]\n' : JSON.stringify({ version: VERSION }),
+        env: {} // no GITHUB_REPOSITORY, no VSCE_PAT
+      })
+    );
+    expect(state.authority.manualApprovalEnforced).toBeNull();
+    expect(state.authority.complete).toBeNull();
+    expect(state.authority.publishTokenPresent).toBe(false);
+    expect(state.stages.find((s) => s.id === 'published').reached).toBeNull();
+  });
+
+  it('captures dispatcher actions-write when a reader is injected', () => {
+    const state = rs.collectReleaseState('/repo', {}, lowLevelDeps({ queryDispatcherActionsWrite: () => true }));
+    expect(state.authority.dispatcherActionsWrite).toBe(true);
+  });
+});
+
+describe('release-state rendering (VHS-REQ-670.5)', () => {
+  function renderDeps(signals: Record<string, unknown>, extra: Record<string, unknown> = {}) {
+    return {
+      getPackageVersion: () => VERSION,
+      getGitCommit: () => 'deadbeef',
+      gatherSignals: () => signals,
+      now: () => 0,
+      cwd: '/repo',
+      ...extra
+    };
+  }
+
+  it('renders a text summary with provenance and stage gaps', () => {
+    const chunks: string[] = [];
+    const code = rs.main(['--include-provenance'], {
+      ...renderDeps(fullSignals({ tagReachableFromMain: false, marketplaceVersion: VERSION })),
+      stdout: { write: (s: string) => chunks.push(s) }
+    });
+    const out = chunks.join('');
+    expect(code).toBe(0);
+    expect(out).toContain('[release-state] Stage gaps: on-main');
+    expect(out).toContain('[release-state] provenance generatedAt: 0');
+    expect(out).toContain('[release-state] provenance argv:');
+  });
+
+  it('names incomplete and unverified authority in the text summary', () => {
+    const incomplete: string[] = [];
+    rs.main([], {
+      ...renderDeps(fullSignals({ manualApprovalEnforced: true, publishTokenPresent: false })),
+      stdout: { write: (s: string) => incomplete.push(s) }
+    });
+    expect(incomplete.join('')).toContain('[release-state] Authority: INCOMPLETE');
+
+    const unverified: string[] = [];
+    rs.main([], {
+      ...renderDeps(fullSignals({ manualApprovalEnforced: null })),
+      stdout: { write: (s: string) => unverified.push(s) }
+    });
+    expect(unverified.join('')).toContain('[release-state] Authority: unverified');
+  });
+
+  it('renders markdown without a provenance section', () => {
+    const chunks: string[] = [];
+    const code = rs.main(['--markdown'], {
+      ...renderDeps(fullSignals()),
+      stdout: { write: (s: string) => chunks.push(s) }
+    });
+    const out = chunks.join('');
+    expect(code).toBe(0);
+    expect(out).toContain('# Release State');
+    expect(out).toContain('| Stage | Reached | Evidence |');
+    expect(out).toContain('## Authority');
+    expect(out).not.toContain('## Provenance');
+  });
+
+  it('renders markdown with a provenance section', () => {
+    const chunks: string[] = [];
+    const code = rs.main(['--markdown', '--include-provenance'], {
+      ...renderDeps(fullSignals()),
+      stdout: { write: (s: string) => chunks.push(s) }
+    });
+    const out = chunks.join('');
+    expect(code).toBe(0);
+    expect(out).toContain('# Release State');
+    expect(out).toContain('## Provenance');
+    expect(out).toContain('- Argv:');
+  });
+
+  it('returns 1 and writes to stderr when the arguments cannot be parsed', () => {
+    const errs: string[] = [];
+    const code = rs.main(['--totally-unknown-flag'], {
+      stderr: { write: (s: string) => errs.push(s) },
+      stdout: { write: () => undefined }
+    });
+    expect(code).toBe(1);
+    expect(errs.join('')).toContain('Unknown argument');
+  });
+});

@@ -527,3 +527,63 @@ describe('viHistoryService blocked and empty state handling (VHS-REQ-016)', () =
     expect(result.commits.length).toBe(2);
   });
 });
+
+describe('viHistoryService repository-root normalization branches (VHS-REQ-006, VHS-REQ-061)', () => {
+  beforeEach(() => {
+    workspaceGetMock.mockReset();
+    getRepoRootMock.mockReset();
+    loadViHistoryViewModelFromFsPathMock.mockReset();
+    workspaceGetMock.mockImplementation((key: string, fallback: unknown) => {
+      if (key === 'strictRsrcHeader') return true;
+      if (key === 'historyWindowMode') return 'auto';
+      if (key === 'maxHistoryEntries') return 25;
+      return fallback;
+    });
+  });
+
+  it('matches a filesystem-root repository whose path normalizes to "/"', () => {
+    // Both the URI and the repository root collapse to "/" after trailing-slash
+    // stripping, exercising the empty-after-normalization ("/") fallback branch.
+    expect(
+      selectMostSpecificGitRepositoryRoot('/', [{ rootUri: { fsPath: '/' } }] as never)
+    ).toBe('/');
+  });
+
+  it('compares repository roots case-insensitively on a win32 host', () => {
+    // On win32 the comparison lowercases both sides; mock the platform so the
+    // Windows-only branch is exercised on a Linux CI host.
+    const originalPlatform = process.platform;
+    Object.defineProperty(process, 'platform', { value: 'win32', configurable: true });
+    try {
+      expect(
+        selectMostSpecificGitRepositoryRoot('C:\\Workspace\\Repo\\Nested\\Sample.vi', [
+          { rootUri: { fsPath: 'C:\\workspace\\repo' } }
+        ] as never)
+      ).toBe('C:\\workspace\\repo');
+    } finally {
+      Object.defineProperty(process, 'platform', {
+        value: originalPlatform,
+        configurable: true
+      });
+    }
+  });
+
+  it('resolves the repository root through the Git CLI when no Git API is present', async () => {
+    // A ViHistoryService constructed without a Git API skips the API branch and
+    // falls straight to the injected CLI resolver.
+    getRepoRootMock.mockResolvedValue('/workspace/no-api-root');
+    loadViHistoryViewModelFromFsPathMock.mockResolvedValue({
+      repositoryName: 'no-api-root',
+      repositoryRoot: '/workspace/no-api-root',
+      relativePath: 'sample.vi',
+      signature: 'LVIN',
+      eligible: true,
+      commits: []
+    });
+
+    const service = new ViHistoryService(undefined);
+    await service.load({ fsPath: '/workspace/no-api-root/child/sample.vi' } as never);
+
+    expect(getRepoRootMock).toHaveBeenCalledWith('/workspace/no-api-root/child');
+  });
+});

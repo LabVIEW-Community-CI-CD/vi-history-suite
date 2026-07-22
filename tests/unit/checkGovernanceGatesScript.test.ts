@@ -109,3 +109,50 @@ describe('checkGovernanceGates: real repo manifest (VHS-REQ-681.3)', () => {
     expect(ids).toEqual(expect.arrayContaining(['adr-index', 'agent-delegation', 'branch-protection', 'dev-dependencies']));
   });
 });
+
+describe('checkGovernanceGates: default injected collaborators (VHS-REQ-681.1)', () => {
+  it('uses a fail-closed default existsSync and empty package scripts when deps are omitted', () => {
+    // No deps: existsSync defaults to () => false and packageScripts defaults to {},
+    // so every declared gate reports both a missing script and a missing alias.
+    const r = evaluateGovernanceGates(OK_MANIFEST);
+    expect(r.ok).toBe(false);
+    expect(r.problems).toContainEqual({ gateId: 'a', reason: 'script-missing', detail: 'scripts/a.js' });
+    expect(r.problems).toContainEqual({ gateId: 'a', reason: 'alias-missing', detail: 'a:check' });
+    expect(r.problems).toContainEqual({ gateId: 'b', reason: 'script-missing', detail: 'scripts/b.js' });
+  });
+});
+
+describe('checkGovernanceGates: loadPackageScripts (VHS-REQ-681.3)', () => {
+  it('returns the parsed scripts map from an injected reader', () => {
+    const scripts = loadPackageScripts('/repo', {
+      readFileSync: () => JSON.stringify({ scripts: { 'a:check': 'node scripts/a.js' } })
+    });
+    expect(scripts).toEqual({ 'a:check': 'node scripts/a.js' });
+  });
+
+  it('returns an empty map when package.json declares no scripts object', () => {
+    const scripts = loadPackageScripts('/repo', { readFileSync: () => JSON.stringify({ name: 'x' }) });
+    expect(scripts).toEqual({});
+  });
+
+  it('fails closed to an empty map when package.json cannot be read or parsed', () => {
+    const scripts = loadPackageScripts('/repo', {
+      readFileSync: () => {
+        throw new Error('ENOENT: no such file');
+      }
+    });
+    expect(scripts).toEqual({});
+  });
+
+  it('falls back to process.cwd() when the repoRoot argument is empty', () => {
+    let seenPath = '';
+    const scripts = loadPackageScripts('', {
+      readFileSync: (candidate: string) => {
+        seenPath = candidate;
+        return JSON.stringify({ scripts: {} });
+      }
+    });
+    expect(scripts).toEqual({});
+    expect(seenPath.replace(/\\/g, '/')).toContain('/package.json');
+  });
+});

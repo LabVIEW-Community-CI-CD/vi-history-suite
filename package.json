@@ -215,6 +215,15 @@
           ],
           "description": "Where comparisons run: Host uses the LabVIEW installed on your machine (default); Docker uses an NI LabVIEW container image. Most people leave this on Host."
         },
+        "viHistorySuite.semantics.provider": {
+          "type": "string",
+          "enum": [
+            "labview",
+            "lvkit"
+          ],
+          "default": "labview",
+          "description": "Which backend produces the VI semantic comparison the agent MCP tools return: LabVIEW (default) runs a real LabVIEW comparison and needs LabVIEW or Docker; lvkit uses the LabVIEW-free lvkit VI parser (install with 'uv tool install lvkit') to produce a block-diagram semantic diff with no LabVIEW runtime. The VI preview and comparison report always use LabVIEW/Docker. When set to lvkit, the extension launches the semantic MCP server with VIHS_SEMANTICS_PROVIDER=lvkit."
+        },
         "viHistorySuite.labviewVersion": {
           "type": "string",
           "description": "Which LabVIEW year to use for comparisons (for example 2025 or 2026). LabVIEW 2025 and newer can open older VIs without converting them first."
@@ -369,6 +378,7 @@
     "standards:audit": "node scripts/runMultiStandardsAudit.js",
     "adr:check": "node scripts/checkAdrIndex.js",
     "agent:check": "node scripts/checkAgentDelegation.js",
+    "diagnostics:labview-container": "node scripts/diagnoseLabviewContainer.js",
     "issue:standards-triage": "node scripts/runIssueStandardsTriage.js",
     "package:audit": "node scripts/auditPackagedRuntimeSurface.js",
     "package": "npm run compile && npm run package:audit && node scripts/runPinnedVsce.js package",
@@ -412,6 +422,7 @@
     "validation:file-gap": "node scripts/fileLinuxValidationGap.js"
   },
   "devDependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@stryker-mutator/core": "^9.6.1",
     "@stryker-mutator/vitest-runner": "^9.6.1",
     "@types/node": "^24.13.3",

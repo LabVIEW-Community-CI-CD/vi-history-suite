@@ -59,7 +59,10 @@ import {
   buildWorktreeSnapshotProvenanceNote,
   deriveComparedWorktreeSnapshotId,
   extractCommandOptionValue,
-  LINUX_HOST_NATIVE_HEADLESS_OPT_IN_DEFAULT_TIMEOUT_MS
+  LINUX_HOST_NATIVE_HEADLESS_OPT_IN_DEFAULT_TIMEOUT_MS,
+  pathExistsForReport,
+  defaultNowIso,
+  defaultNowMs
 } from '../../src/reporting/comparisonReportRuntimeExecution';
 import { ComparisonReportPacketRecord } from '../../src/reporting/comparisonReportPacket';
 
@@ -7520,5 +7523,424 @@ describe('coupled-extraction builder characterization (byte-identical)', () => {
       printf '[vi-history-suite-container-meta]retryAttempts=1;openTimeout=%s;afterLaunchTimeout=%s\\n' "$open_app_timeout" "$after_launch_timeout"
       exit $rc"
     `);
+  });
+});
+
+describe('staged-VI preview pipeline in host-native execution (VHS-REQ-699)', () => {
+  function baseStagedPreviewDeps(
+    record: ComparisonReportPacketRecord,
+    overrides: Record<string, unknown> = {}
+  ) {
+    return {
+      readRevisionBlob: vi.fn().mockResolvedValue(Buffer.from('content')),
+      materializeSelectedRevisionTree: vi.fn().mockResolvedValue(undefined),
+      mkdir: vi.fn().mockResolvedValue(undefined),
+      writeFile: vi.fn().mockResolvedValue(undefined) as never,
+      copyFile: vi.fn().mockResolvedValue(undefined) as never,
+      copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+      removePath: vi.fn().mockResolvedValue(undefined) as never,
+      unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
+      chmod: vi.fn().mockResolvedValue(undefined) as never,
+      readdir: vi.fn().mockResolvedValue([]) as never,
+      readFile: vi.fn().mockResolvedValue('') as never,
+      runCommand: vi.fn().mockResolvedValue({
+        exitCode: 0,
+        stdout: 'CreateComparisonReport operation succeeded.\n',
+        stderr: ''
+      }),
+      nowIso: vi.fn().mockReturnValue('2026-04-02T01:00:00.000Z'),
+      nowMs: vi.fn().mockReturnValue(1000),
+      writePacketRecord: vi.fn().mockResolvedValue(undefined),
+      observeWindowsProcesses: vi.fn().mockResolvedValue(undefined),
+      observeWindowsTcpListeners: vi.fn().mockResolvedValue([]),
+      enforceWindowsHostPreflight: false,
+      disableDiagnostics: true,
+      processPlatform: 'win32' as NodeJS.Platform,
+      ...overrides
+    };
+  }
+
+  it('runs the comparison after both staged previews validate, attaching pipeline cycles', async () => {
+    const record = createReadyRecord();
+    const staged = record.stagedRevisionPlan;
+    // Both staged inputs present -> STAGING reports already-staged and both
+    // previews render, so VALIDATION admits and the COMPARISON cycle runs.
+    // metadata present but report absent -> a failed comparison whose unstage
+    // still removes the staged files and retains the metadata.
+    const pathExists = vi.fn(async (filePath: string) =>
+      filePath === staged.leftFilePath ||
+      filePath === staged.rightFilePath ||
+      filePath === record.artifactPlan.metadataFilePath
+    );
+    const renderStagedViPreview = vi.fn(async () => ({ rendered: true, html: '<html>ok</html>' }));
+
+    const result = await executeComparisonReport(
+      { record, repositoryRoot: '/workspace/repo' },
+      baseStagedPreviewDeps(record, { pathExists, renderStagedViPreview })
+    );
+
+    expect(renderStagedViPreview).toHaveBeenCalledTimes(2);
+    expect(result.record.runtimeExecution.attempted).toBe(true);
+    expect(Array.isArray(result.record.runtimeExecution.pipelineCycles)).toBe(true);
+  });
+
+  it('short-circuits the comparison when the left staged preview fails validation', async () => {
+    const record = createReadyRecord();
+    const staged = record.stagedRevisionPlan;
+    const pathExists = vi.fn(
+      async (filePath: string) =>
+        filePath === staged.leftFilePath || filePath === staged.rightFilePath
+    );
+    const renderStagedViPreview = vi.fn(async ({ side }: { side: 'left' | 'right' }) =>
+      side === 'left'
+        ? { rendered: false, failureReason: 'left-preview-load-failed' }
+        : { rendered: true }
+    );
+    const runCommand = vi.fn().mockResolvedValue({ exitCode: 0, stdout: '', stderr: '' });
+
+    const result = await executeComparisonReport(
+      { record, repositoryRoot: '/workspace/repo' },
+      baseStagedPreviewDeps(record, { pathExists, renderStagedViPreview, runCommand })
+    );
+
+    expect(runCommand).not.toHaveBeenCalled();
+    expect(result.record.runtimeExecution.state).toBe('failed');
+    expect(result.record.runtimeExecution.attempted).toBe(false);
+    expect(result.record.runtimeExecution.failureReason).toBe('staged-vi-preview-validation-failed');
+    expect(result.record.runtimeExecution.diagnosticNotes?.[0]).toContain('left');
+    expect(Array.isArray(result.record.runtimeExecution.pipelineCycles)).toBe(true);
+  });
+
+  it('short-circuits the comparison when the right staged preview fails validation', async () => {
+    const record = createReadyRecord();
+    const staged = record.stagedRevisionPlan;
+    const pathExists = vi.fn(
+      async (filePath: string) =>
+        filePath === staged.leftFilePath || filePath === staged.rightFilePath
+    );
+    const renderStagedViPreview = vi.fn(async ({ side }: { side: 'left' | 'right' }) =>
+      side === 'right'
+        ? { rendered: false, failureReason: 'right-preview-load-failed' }
+        : { rendered: true }
+    );
+    const runCommand = vi.fn().mockResolvedValue({ exitCode: 0, stdout: '', stderr: '' });
+
+    const result = await executeComparisonReport(
+      { record, repositoryRoot: '/workspace/repo' },
+      baseStagedPreviewDeps(record, { pathExists, renderStagedViPreview, runCommand })
+    );
+
+    expect(runCommand).not.toHaveBeenCalled();
+    expect(result.record.runtimeExecution.state).toBe('failed');
+    expect(result.record.runtimeExecution.diagnosticNotes?.[0]).toContain('right');
+  });
+
+  it('fails closed before any preview when a staged input is missing', async () => {
+    const record = createReadyRecord();
+    const staged = record.stagedRevisionPlan;
+    // Left staged input absent at pipeline STAGING -> previews skipped, comparison rejected.
+    const pathExists = vi.fn(async (filePath: string) => filePath === staged.rightFilePath);
+    const renderStagedViPreview = vi.fn(async () => ({ rendered: true }));
+
+    const result = await executeComparisonReport(
+      { record, repositoryRoot: '/workspace/repo' },
+      baseStagedPreviewDeps(record, { pathExists, renderStagedViPreview })
+    );
+
+    expect(renderStagedViPreview).not.toHaveBeenCalled();
+    expect(result.record.runtimeExecution.state).toBe('failed');
+    expect(result.record.runtimeExecution.attempted).toBe(false);
+    expect(result.record.runtimeExecution.diagnosticNotes?.[0]).toContain('not available');
+  });
+
+  it('fails closed when the right staged input is missing at pipeline staging', async () => {
+    const record = createReadyRecord();
+    const staged = record.stagedRevisionPlan;
+    // Only the left staged input is present -> STAGING reports the right side missing.
+    const pathExists = vi.fn(async (filePath: string) => filePath === staged.leftFilePath);
+    const renderStagedViPreview = vi.fn(async () => ({ rendered: true }));
+
+    const result = await executeComparisonReport(
+      { record, repositoryRoot: '/workspace/repo' },
+      baseStagedPreviewDeps(record, { pathExists, renderStagedViPreview })
+    );
+
+    expect(renderStagedViPreview).not.toHaveBeenCalled();
+    expect(result.record.runtimeExecution.state).toBe('failed');
+    expect(result.record.runtimeExecution.attempted).toBe(false);
+  });
+
+  it('completes and retains the report when both previews validate and the report is generated', async () => {
+    const record = createReadyRecord();
+    const staged = record.stagedRevisionPlan;
+    // Everything present: staged pair, generated report, and metadata -> the
+    // comparison succeeds (exit 0, report exists) and unstaging removes the staged
+    // files while retaining the report + metadata.
+    const pathExists = vi.fn(async () => true);
+    const renderStagedViPreview = vi.fn(async () => ({ rendered: true, html: '<html>ok</html>' }));
+    const removePath = vi.fn().mockResolvedValue(undefined);
+
+    const result = await executeComparisonReport(
+      { record, repositoryRoot: '/workspace/repo' },
+      baseStagedPreviewDeps(record, { pathExists, renderStagedViPreview, removePath })
+    );
+
+    expect(result.record.runtimeExecution.state).toBe('succeeded');
+    expect(result.record.runtimeExecution.reportExists).toBe(true);
+    expect(Array.isArray(result.record.runtimeExecution.pipelineCycles)).toBe(true);
+    expect(removePath).toHaveBeenCalledWith(staged.leftFilePath, { recursive: true, force: true });
+  });
+
+  it('quiesces stray runtime processes before the comparison, ignoring non-integer pids', async () => {
+    const record = createReadyRecord();
+    // A LabVIEW.exe with a non-integer pid is filtered out before termination, and
+    // a non-LabVIEW process is filtered out by name; neither triggers a kill, so no
+    // real process tree is touched.
+    const observeWindowsProcesses = vi.fn().mockResolvedValue({
+      observedProcesses: [
+        { imageName: 'LabVIEW.exe', pid: Number.NaN },
+        { imageName: 'chrome.exe', pid: 5 }
+      ]
+    });
+    const pathExists = vi.fn(async () => true);
+    const renderStagedViPreview = vi.fn(async () => ({ rendered: true }));
+
+    const result = await executeComparisonReport(
+      { record, repositoryRoot: '/workspace/repo' },
+      baseStagedPreviewDeps(record, { pathExists, renderStagedViPreview, observeWindowsProcesses })
+    );
+
+    expect(observeWindowsProcesses).toHaveBeenCalled();
+    expect(result.record.runtimeExecution.state).toBe('succeeded');
+  });
+
+  it('records a partial unstage when removing a staged input fails', async () => {
+    const record = createReadyRecord();
+    const staged = record.stagedRevisionPlan;
+    const pathExists = vi.fn(async () => true);
+    const renderStagedViPreview = vi.fn(async () => ({ rendered: true }));
+    // Removing the left staged file fails while the right succeeds -> the unstage
+    // boundary records a partial cleanup without failing the succeeded comparison.
+    const removePath = vi.fn(async (target: string) => {
+      if (target === staged.leftFilePath) {
+        throw Object.assign(new Error('EACCES: permission denied'), { code: 'EACCES' });
+      }
+      return undefined;
+    });
+
+    const result = await executeComparisonReport(
+      { record, repositoryRoot: '/workspace/repo' },
+      baseStagedPreviewDeps(record, { pathExists, renderStagedViPreview, removePath })
+    );
+
+    expect(result.record.runtimeExecution.state).toBe('succeeded');
+    expect(removePath).toHaveBeenCalledWith(staged.leftFilePath, { recursive: true, force: true });
+  });
+});
+
+describe('runComparisonCommandPlan / clock / fs primitives (VHS-REQ-621)', () => {
+  function makeCancellationToken() {
+    const listeners: Array<() => void> = [];
+    const token = {
+      isCancellationRequested: false,
+      onCancellationRequested: (listener: () => void) => {
+        listeners.push(listener);
+        return { dispose: vi.fn() };
+      }
+    };
+    return { token, fire: () => listeners.forEach((listener) => listener()) };
+  }
+
+  it('resolves exit code 130 when cancelled and the callback later reports an error', async () => {
+    let capturedCallback:
+      | ((error: unknown, stdout: string, stderr: string) => void)
+      | undefined;
+    const execFileImpl = vi.fn((_exe, _args, _opts, cb) => {
+      capturedCallback = cb;
+      return { pid: 9, kill: vi.fn() };
+    });
+    const { token, fire } = makeCancellationToken();
+    const resultPromise = runComparisonCommandPlan(
+      { executable: 'LVCompare', args: [] },
+      { execFileImpl: execFileImpl as never, cancellationToken: token as never, hostPlatform: 'linux' }
+    );
+    fire();
+    capturedCallback?.(
+      Object.assign(new Error('killed after cancel'), { code: 'ESRCH', signal: 'SIGTERM' }),
+      'out',
+      'err'
+    );
+    const result = await resultPromise;
+    expect(result.cancelled).toBe(true);
+    expect(result.exitCode).toBe(130);
+    expect(result.signal).toBe('SIGTERM');
+  });
+
+  it('maps a timeout carrying a numeric code and signal to the reported exit code', async () => {
+    const execError = Object.assign(new Error('Command failed'), {
+      killed: true,
+      signal: 'SIGKILL',
+      code: 137
+    });
+    const execFileImpl = vi.fn((_exe, _args, _opts, cb) => {
+      cb(execError, 'o', 'e');
+      return { pid: 1, kill: vi.fn() };
+    });
+    const result = await runComparisonCommandPlan(
+      { executable: 'LVCompare', args: [] },
+      { execFileImpl: execFileImpl as never, timeoutMs: 500 }
+    );
+    expect(result.timedOut).toBe(true);
+    expect(result.exitCode).toBe(137);
+    expect(result.signal).toBe('SIGKILL');
+  });
+
+  it('treats a killed process whose message says "timed out" (non-SIGKILL) as a timeout', async () => {
+    const execError = Object.assign(new Error('Command failed: timed out after 500ms'), {
+      killed: true,
+      signal: 'SIGTERM'
+    });
+    const execFileImpl = vi.fn((_exe, _args, _opts, cb) => {
+      cb(execError, '', '');
+      return { pid: 1, kill: vi.fn() };
+    });
+    const result = await runComparisonCommandPlan(
+      { executable: 'LVCompare', args: [] },
+      { execFileImpl: execFileImpl as never, timeoutMs: 500 }
+    );
+    expect(result.timedOut).toBe(true);
+  });
+
+  it('reports filesystem presence for real paths (pathExistsForReport)', async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-path-exists-'));
+    const file = path.join(dir, 'present.txt');
+    try {
+      await fs.writeFile(file, 'x', 'utf8');
+      expect(await pathExistsForReport(file)).toBe(true);
+      expect(await pathExistsForReport(path.join(dir, 'absent.txt'))).toBe(false);
+    } finally {
+      await fs.rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('exposes default clock primitives (defaultNowMs / defaultNowIso)', () => {
+    expect(typeof defaultNowMs()).toBe('number');
+    expect(defaultNowMs()).toBeGreaterThan(0);
+    expect(typeof defaultNowIso()).toBe('string');
+    expect(defaultNowIso()).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+  });
+});
+
+describe('linux-container CLI arg rewrite direct branches (VHS-REQ-624, VHS-REQ-657)', () => {
+  it('rewrites lowercase flags, drops -LabVIEWPath/-c, consumes a -Headless value, and honors a non-headless profile', () => {
+    const rewritten = rewriteLabviewCliArgsForLinuxContainerWorkspace(
+      [
+        '-vi1',
+        'orig-left.vi',
+        '-vi2',
+        'orig-right.vi',
+        '-reportPath',
+        'orig.html',
+        '-LabVIEWPath',
+        'C:/orig/LabVIEW',
+        '-Headless',
+        'true',
+        '-c',
+        '-Keep'
+      ],
+      {
+        containerWorkspaceRoot: '/workspace',
+        leftFilename: 'L.vi',
+        rightFilename: 'R.vi',
+        reportFilename: 'report.html',
+        containerLabviewPath: '/opt/labview/labviewprofull',
+        headlessMode: 'enable-cicd-env'
+      }
+    );
+    expect(rewritten).toContain('/workspace/staging/L.vi');
+    expect(rewritten).toContain('/workspace/staging/R.vi');
+    expect(rewritten).toContain('/workspace/report.html');
+    expect(rewritten).toContain('-Keep');
+    // The passed -LabVIEWPath value is dropped in favor of the container path.
+    expect(rewritten).toContain('/opt/labview/labviewprofull');
+    expect(rewritten).not.toContain('C:/orig/LabVIEW');
+    // The -Headless value 'true' is consumed (not re-emitted).
+    expect(rewritten).not.toContain('true');
+    // The enable-cicd-env profile does NOT append -Headless.
+    expect(rewritten).not.toContain('-Headless');
+  });
+
+  it('leaves a dash flag after -Headless unconsumed, defaults the container LabVIEW path, and appends -Headless for cli-headless', () => {
+    const rewritten = rewriteLabviewCliArgsForLinuxContainerWorkspace(
+      ['-VI1', 'orig-left.vi', '-Headless', '-VI2', 'orig-right.vi'],
+      {
+        containerWorkspaceRoot: '/workspace',
+        leftFilename: 'L.vi',
+        rightFilename: 'R.vi',
+        reportFilename: 'report.html'
+      }
+    );
+    // -Headless followed by the '-VI2' flag: the flag is still processed as a VI arg.
+    expect(rewritten).toContain('/workspace/staging/R.vi');
+    // The default container LabVIEW executable is appended when no override is supplied.
+    expect(rewritten).toContain('-LabVIEWPath');
+    // The default (cli-headless) profile appends -Headless.
+    expect(rewritten).toContain('-Headless');
+  });
+});
+
+describe('windows-container command plan relative-directory staging (VHS-REQ-624)', () => {
+  it('prefixes staged VI filenames with the materialized relative directory', () => {
+    const record = createWindowsContainerReadyRecord();
+    record.runtimeSelection.engine = 'lvcompare';
+    const plan = buildWindowsContainerCommandPlan(
+      record,
+      { executable: 'LVCompare.exe', args: ['left.vi', 'right.vi', '-nobdcosm'] },
+      {
+        hostReportDirectory: 'C:\\host\\reports\\r\\f',
+        hostTempDirectory: 'C:\\host\\reports\\r\\f\\container-temp',
+        containerWorkspaceRoot: 'C:\\workspace',
+        containerImage: 'nationalinstruments/labview:2026q1-windows',
+        processPlatform: 'win32',
+        relativeDirectory: '/Source/SubVIs/'
+      }
+    );
+    expect(plan?.executable).toBe('powershell.exe');
+    expect(plan?.args).toContain('-EncodedCommand');
+  });
+});
+
+describe('runComparisonCommandPlanWithObservation cli-log-banner trigger (VHS-REQ-621)', () => {
+  it('starts a cli-log-banner observation when the LabVIEWCLI diagnostic banner appears on stdout', async () => {
+    const stdout = Object.assign(new EventEmitter(), { setEncoding: vi.fn(), destroy: vi.fn() });
+    const stderr = Object.assign(new EventEmitter(), { setEncoding: vi.fn(), destroy: vi.fn() });
+    const child = Object.assign(new EventEmitter(), { stdout, stderr, pid: 8080, kill: vi.fn() });
+    const bannerObservation = { observedProcessNames: ['LabVIEW.exe'], trigger: 'cli-log-banner' };
+    const exitObservation = { observedProcessNames: [], trigger: 'process-exit' };
+    const observeWindowsProcesses = vi
+      .fn()
+      .mockResolvedValueOnce(bannerObservation)
+      .mockResolvedValueOnce(exitObservation);
+
+    const resultPromise = runComparisonCommandPlanWithObservation(
+      { executable: 'LabVIEWCLI', args: ['-OperationName', 'CreateComparisonReport'] },
+      {
+        spawnImpl: (() => child) as never,
+        hostPlatform: 'win32',
+        runtimePlatform: 'win32',
+        // labview-cli does NOT observe on spawn; the banner on stdout is what starts it.
+        engine: 'labview-cli',
+        observeWindowsProcesses: observeWindowsProcesses as never
+      }
+    );
+
+    child.emit('spawn');
+    stdout.emit('data', 'LabVIEWCLI started logging in file: C:\\Temp\\LabVIEWCLI.log\r\n');
+    child.emit('exit', 0, null);
+
+    const result = await resultPromise;
+    expect(observeWindowsProcesses.mock.calls[0][0].trigger).toBe('cli-log-banner');
+    expect(result.processObservation).toBe(bannerObservation);
+    expect(result.exitProcessObservation).toBe(exitObservation);
   });
 });

@@ -724,3 +724,6 @@ VHS-REQ-697,Software,Active,srs.md#vhs-req-697-agent-environment-consistency-gat
 VHS-REQ-699,Software,Active,srs.md#vhs-req-699-single-pass-comparison-preview-pipeline,,,docs/requirements/srs.md
 VHS-REQ-707,Software,Active,srs.md#vhs-req-707-mirror-mode-dual-real-runtime-labview-validation,,,docs/requirements/srs.md
 VHS-REQ-708,Software,Active,srs.md#vhs-req-708-mirror-mode-ml-consumable-parity-corpus,,,docs/requirements/srs.md
+VHS-REQ-710,Software,Active,srs.md#vhs-req-710-ni-labview-linux-container-setup-diagnostics,,,docs/requirements/srs.md
+VHS-REQ-711,Software,Active,srs.md#vhs-req-711-cross-host-empty-swap-comparison-validation,,,docs/requirements/srs.md
+VHS-REQ-712,Software,Active,srs.md#vhs-req-712-labview-free-lvkit-semantic-comparison-backend,,,docs/requirements/srs.md

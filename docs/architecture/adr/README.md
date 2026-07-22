@@ -51,3 +51,6 @@ The index and the required structure are enforced by `npm run adr:check`
 | [ADR-0026](./ADR-0026-consumer-copilot-cloud-agent-mcp-enablement.md) | Consumer Copilot Cloud-Agent MCP Enablement | Accepted |
 | [ADR-0027](./ADR-0027-ml-latent-structure-research-rails.md) | ML Latent-Structure Research Data, Evaluation, And Honesty Rails | Proposed |
 | [ADR-0028](./ADR-0028-mirror-mode-dual-real-runtime-validation.md) | Mirror-Mode Dual Real-Runtime LabVIEW Validation | Accepted |
+| [ADR-0029](./ADR-0029-agent-facing-runtime-and-container-diagnostics.md) | Agent-Facing Runtime And Container Diagnostics | Accepted |
+| [ADR-0030](./ADR-0030-cross-host-empty-swap-comparison-validation.md) | Cross-Host Empty-Swap Comparison Validation | Accepted |
+| [ADR-0031](./ADR-0031-labview-free-lvkit-semantic-backend.md) | LabVIEW-Free lvkit Semantic Backend | Accepted |

@@ -722,3 +722,182 @@ describe('generateAssuranceState script', () => {
     expect((JSON.parse(schemaRun.markdown) as Record<string, unknown>).$id).toBe(ASSURANCE_STATE_SCHEMA_ID);
   });
 });
+
+// Additional branch coverage for helper classifiers, provenance builders, run-id
+// derivation, audit-summary resolution edge paths, and the CLI entrypoints.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const gen = require('../../scripts/generateAssuranceState.js') as Record<string, any>;
+
+describe('generateAssuranceState helper branches', () => {
+  it('parseArgs rejects positional arguments', () => {
+    expect(() => parseArgs(['stray-positional'])).toThrow(/Unknown argument/);
+  });
+
+  it('parseReviewFinding rejects non-object JSON', () => {
+    expect(() => parseReviewFinding('123')).toThrow('--review-finding must be a JSON object');
+    expect(() => parseReviewFinding('[]')).toThrow('--review-finding must be a JSON object');
+  });
+
+  it('parseReviewFinding defaults the source and leaves basis undefined when omitted', () => {
+    const finding = parseReviewFinding(JSON.stringify({ state: 'candidate', url: 'https://x', title: 'T' }));
+    expect(finding.source).toBe('post-merge-review');
+    expect(finding.basis).toBeUndefined();
+  });
+
+  it('metadataFromOptions de-duplicates strings and skips non-object / duplicate review findings', () => {
+    const findingA = { state: 'green', url: 'https://x', title: 'T', source: 'S' };
+    const metadata = gen.metadataFromOptions({
+      issueLinks: ['https://i', 'https://i'],
+      prLinks: [],
+      mergeShas: [],
+      requirements: [],
+      reviewFindings: [null, findingA, { ...findingA }]
+    });
+    expect(metadata.issueLinks).toEqual(['https://i']);
+    expect(metadata.reviewFindings).toEqual([findingA]);
+  });
+
+  it('commandProvenance skips non-object steps', () => {
+    const commands = gen.commandProvenance({
+      imagePreparation: [null, { name: 'inspect', status: 0 }],
+      directChecks: [],
+      profiles: []
+    });
+    expect(commands).toEqual([
+      { stage: 'image', name: 'inspect', status: 0, file: undefined, command: undefined, scoreFile: undefined }
+    ]);
+  });
+
+  it('classifyDirectCheck honors an explicit state and classifies status/finding rows', () => {
+    expect(gen.classifyDirectCheck({ state: 'known' })).toBe('known');
+    expect(gen.classifyDirectCheck({ status: 1 })).toBe('candidate');
+    expect(gen.classifyDirectCheck({ status: 0, requirementsQuality: { ok: true, findingCount: 0 } })).toBe('green');
+    expect(gen.classifyDirectCheck({ status: 0, externalUserInformation: { ok: false, findingCount: 2 } })).toBe('candidate');
+  });
+
+  it('classifyGateBasis honors explicit state, pass+High, non-pass, and pass-without-High', () => {
+    expect(gen.classifyGateBasis({ state: 'resolved' })).toBe('resolved');
+    expect(gen.classifyGateBasis({ status: 'PASS', confidence: 'High' })).toBe('green');
+    expect(gen.classifyGateBasis({ status: 'FAIL' })).toBe('candidate');
+    expect(gen.classifyGateBasis({ status: 'PASS', confidence: 'Med' })).toBe('needs-review');
+  });
+
+  it('classifyGateDetail honors explicit state, missing proof, pass+High, and pass-without-High', () => {
+    expect(gen.classifyGateDetail({ state: 'green' })).toBe('green');
+    expect(gen.classifyGateDetail({ status: 'PASS', missingProof: ['coverage/summary.json'] })).toBe('candidate');
+    expect(gen.classifyGateDetail({ status: 'PASS', confidence: 'High', missingProof: [] })).toBe('green');
+    expect(gen.classifyGateDetail({ status: 'PASS', confidence: 'Med', missingProof: [] })).toBe('needs-review');
+  });
+
+  it('classifyEvidenceRow honors explicit state and requires provenance plus evidence for green', () => {
+    expect(gen.classifyEvidenceRow({ state: 'known' })).toBe('known');
+    expect(
+      gen.classifyEvidenceRow({
+        profiles: ['quick-triage'],
+        scoreFiles: ['quick-triage/target/score.json'],
+        evidencePaths: ['docs/requirements/rtm.csv']
+      })
+    ).toBe('green');
+    expect(gen.classifyEvidenceRow({ profiles: [], scoreFiles: [], evidencePaths: [] })).toBe('needs-review');
+  });
+
+  it('buildRunId compacts an ISO timestamp into a filesystem-safe run id', () => {
+    expect(gen.buildRunId(new Date('2026-07-14T12:34:56.000Z'))).toBe('20260714T123456Z');
+  });
+
+  it('buildAssuranceState defaults metadata and generatedAt when they are omitted', () => {
+    const cwd = makeTempRoot();
+    const auditPath = path.join(cwd, 'assurance-multi-standards-evidence', 'audit-green', 'audit-summary.json');
+    const state = gen.buildAssuranceState(fixtureAuditSummary(), { cwd, auditSummaryPath: auditPath, runId: 'state-green' });
+    expect(typeof state.generatedAt).toBe('string');
+    expect(state.issueLinks).toEqual([]);
+    expect(state.prLinks).toEqual([]);
+  });
+});
+
+describe('generateAssuranceState resolveAuditSummaryPath edge paths', () => {
+  it('honors an explicit --audit-summary path', () => {
+    const cwd = makeTempRoot();
+    const resolved = resolveAuditSummaryPath(parseArgs(['--audit-summary', 'sub/audit-summary.json']), cwd);
+    expect(resolved.replace(/\\/g, '/')).toBe(path.join(cwd, 'sub', 'audit-summary.json').replace(/\\/g, '/'));
+  });
+
+  it('throws when the standards audit directory does not exist', () => {
+    const cwd = makeTempRoot();
+    expect(() => resolveAuditSummaryPath(parseArgs([]), cwd)).toThrow(/No audit summary found/);
+  });
+
+  it('throws when no retained audit summaries are present', () => {
+    const cwd = makeTempRoot();
+    // A subdirectory without an audit-summary.json yields no candidates.
+    fs.mkdirSync(path.join(cwd, 'assurance-multi-standards-evidence', 'empty-run'), { recursive: true });
+    expect(() => resolveAuditSummaryPath(parseArgs([]), cwd)).toThrow(/No audit summary found/);
+  });
+});
+
+describe('generateAssuranceState runAssuranceState + main entrypoints', () => {
+  it('returns usage for --help without reading a summary', () => {
+    const result = runAssuranceState(['--help'], {});
+    expect(result.exitCode).toBe(0);
+    expect(result.markdown).toContain('Usage: node scripts/generateAssuranceState.js');
+  });
+
+  it('derives the run id from the audit summary when --run-id is omitted', () => {
+    const cwd = makeTempRoot();
+    const auditPath = path.join(cwd, 'assurance-multi-standards-evidence', 'audit-green', 'audit-summary.json');
+    writeJson(auditPath, fixtureAuditSummary());
+    const result = runAssuranceState(['--audit-run-id', 'audit-green'], {
+      cwd,
+      now: () => new Date('2026-07-14T00:00:00.000Z')
+    });
+    expect(result.context.state.runId).toBe('audit-green');
+  });
+
+  it('falls back to a generated run id when neither --run-id nor the summary carries one', () => {
+    const cwd = makeTempRoot();
+    const summary = fixtureAuditSummary();
+    delete (summary as { options?: unknown }).options;
+    const auditPath = path.join(cwd, 'assurance-multi-standards-evidence', 'audit-x', 'audit-summary.json');
+    writeJson(auditPath, summary);
+    const result = runAssuranceState(['--audit-run-id', 'audit-x'], {
+      cwd,
+      now: () => new Date('2026-07-14T12:34:56.000Z')
+    });
+    expect(result.context.state.runId).toBe('20260714T123456Z');
+  });
+
+  it('surfaces a helpful error when the audit summary is not valid JSON', () => {
+    const cwd = makeTempRoot();
+    const auditPath = path.join(cwd, 'assurance-multi-standards-evidence', 'audit-bad', 'audit-summary.json');
+    fs.mkdirSync(path.dirname(auditPath), { recursive: true });
+    fs.writeFileSync(auditPath, 'not-json{', 'utf8');
+    expect(() => runAssuranceState(['--audit-run-id', 'audit-bad'], { cwd })).toThrow(/Unable to read JSON from/);
+  });
+
+  it('main writes markdown to stdout and returns 0 on success', () => {
+    const cwd = makeTempRoot();
+    const auditPath = path.join(cwd, 'assurance-multi-standards-evidence', 'audit-green', 'audit-summary.json');
+    writeJson(auditPath, fixtureAuditSummary());
+    const out: string[] = [];
+    const code = gen.main(['--audit-run-id', 'audit-green', '--run-id', 'state-green'], {
+      cwd,
+      now: () => new Date('2026-07-14T00:00:00.000Z'),
+      stdout: { write: (s: string) => out.push(s) },
+      stderr: { write: () => undefined }
+    });
+    expect(code).toBe(0);
+    expect(out.join('')).toContain('# Assurance State');
+  });
+
+  it('main writes the error and usage to stderr and returns 1 on failure', () => {
+    const cwd = makeTempRoot();
+    const errs: string[] = [];
+    const code = gen.main(['--audit-run-id', 'missing-run'], {
+      cwd,
+      stdout: { write: () => undefined },
+      stderr: { write: (s: string) => errs.push(s) }
+    });
+    expect(code).toBe(1);
+    expect(errs.join('')).toContain('Usage: node scripts/generateAssuranceState.js');
+  });
+});

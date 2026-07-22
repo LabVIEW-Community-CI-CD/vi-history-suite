@@ -37,6 +37,7 @@ const {
   renderSchema,
   toMachineReadableReport,
   CUSTOMIZATION_AUDIT_SCHEMA_ID,
+  validateCommandReferences,
   validateFrontmatterSchemas,
   validateInstructionApplyTo,
   validateLocalMarkdownLinks
@@ -93,6 +94,10 @@ const {
     cwd: string,
     markdownFiles: string[]
   ) => AuditFindings['linkIssues'];
+  validateCommandReferences: (
+    cwd: string,
+    packageScripts: Record<string, string>
+  ) => AuditFindings['commandIssues'];
 };
 
 const fixtureRoots: string[] = [];
@@ -1126,6 +1131,47 @@ Instruction body.
     expect(Date.parse(defaultNowReport.generatedAt)).not.toBeNaN();
   });
 
+  it('merges provenance into JSON and schema output under --include-provenance', () => {
+    const fixtureRoot = createFixture(baseFixtureFiles());
+
+    // --json + --include-provenance exercises the `provenance ? { ...report, provenance } : report`
+    // merge and the 'json' outputMode branch that the provenance-less JSON tests skip.
+    let jsonOutput = '';
+    const jsonExit = main(['--json', '--include-provenance', fixtureRoot], {
+      now: new Date('2026-07-16T00:00:00.000Z'),
+      stdout: {
+        write: (text: string) => {
+          jsonOutput += text;
+        }
+      }
+    });
+    expect(jsonExit).toBe(0);
+    const jsonReport = JSON.parse(jsonOutput) as {
+      provenance?: { outputMode?: string; generatedAt?: string; argv?: string[] };
+    };
+    expect(jsonReport.provenance).toMatchObject({
+      outputMode: 'json',
+      generatedAt: '2026-07-16T00:00:00.000Z'
+    });
+    expect(jsonReport.provenance?.argv).toEqual(['--json', '--include-provenance', fixtureRoot]);
+
+    // --schema + --include-provenance exercises the schema-with-provenance main path
+    // and the 'schema' outputMode branch.
+    let schemaOutput = '';
+    const schemaExit = main(['--schema', '--include-provenance'], {
+      now: new Date('2026-07-16T00:00:00.000Z'),
+      stdout: {
+        write: (text: string) => {
+          schemaOutput += text;
+        }
+      },
+      stderr: { write: () => undefined }
+    });
+    expect(schemaExit).toBe(0);
+    const schema = JSON.parse(schemaOutput) as Record<string, unknown>;
+    expect((schema['x-vi-history-suite-provenance'] as { outputMode?: string }).outputMode).toBe('schema');
+  });
+
   it('writes text summaries to stdout on success and stderr on failure', () => {
     const successRoot = createFixture(baseFixtureFiles());
     let successStdout = '';
@@ -1274,5 +1320,177 @@ Instruction body.
     });
     expect(out).toContain('[customization-audit] provenance generatedAt: 2026-07-15T00:00:00.000Z');
     expect(out).toContain('provenance outputMode: text');
+  });
+
+  // Additional branch coverage for the governance validators and CLI: these
+  // target the previously-uncovered branch sides (glob `**` expansion, block-array
+  // frontmatter continuation, cross-source/same-line comparator ordering, and the
+  // process-stream output fallbacks) with deterministic fixtures and direct calls.
+  it('expands `**` at a segment end / mid-token without a trailing slash in globToRegex', () => {
+    // `**/` collapses to an optional directory prefix (covered elsewhere); `**`
+    // that is NOT followed by `/` collapses to `.*` across path separators.
+    const endGlob = globToRegex('docs/**');
+    expect(endGlob.test('docs/readme.md')).toBe(true);
+    expect(endGlob.test('docs/a/b/c.md')).toBe(true);
+    expect(endGlob.test('other/readme.md')).toBe(false);
+
+    const midGlob = globToRegex('src/**bar.ts');
+    expect(midGlob.test('src/foobar.ts')).toBe(true);
+    expect(midGlob.test('src/a/b/xbar.ts')).toBe(true);
+    expect(midGlob.test('src/foo.ts')).toBe(false);
+  });
+
+  it('continues past blank lines inside a block-array frontmatter value', () => {
+    const parsed = parseFrontmatter(
+      [
+        '---',
+        'applyTo:',
+        '  - "src/**/*.ts"',
+        '',
+        '  - "tests/**/*.test.ts"',
+        'name: demo',
+        '---',
+        '',
+        'Body',
+        ''
+      ].join('\n')
+    );
+
+    expect(parsed.applyTo).toEqual(['src/**/*.ts', 'tests/**/*.test.ts']);
+    expect(parsed.name).toBe('demo');
+  });
+
+  it('orders link issues across different sources and same-line targets deterministically', () => {
+    // a.md carries two broken links on the SAME line (different targets); b.md
+    // contributes a third from a DIFFERENT source. This exercises the link-issue
+    // comparator's cross-source and same-source/same-line/different-target arms.
+    const root = createFixture({
+      'a.md': '[x](missing-a.md) and [y](missing-b.md)\n',
+      'b.md': '[z](missing-c.md)\n'
+    });
+
+    const issues = validateLocalMarkdownLinks(root, ['b.md', 'a.md']);
+
+    expect(issues.map((issue) => `${issue.source}:${issue.line}:${issue.target}`)).toEqual([
+      'a.md:1:missing-a.md',
+      'a.md:1:missing-b.md',
+      'b.md:1:missing-c.md'
+    ]);
+  });
+
+  it('orders applyTo issues across different instruction files', () => {
+    const root = createFixture({
+      '.github/instructions/alpha.instructions.md': `---
+name: Alpha
+description: "Use when testing alpha instructions."
+applyTo:
+  - "no-such-alpha/**/*.ts"
+---
+
+Body.
+`,
+      '.github/instructions/beta.instructions.md': `---
+name: Beta
+description: "Use when testing beta instructions."
+applyTo:
+  - "no-such-beta/**/*.ts"
+---
+
+Body.
+`
+    });
+
+    const instructionPaths = [
+      '.github/instructions/beta.instructions.md',
+      '.github/instructions/alpha.instructions.md'
+    ];
+    // Neither glob matches the (markdown-only) repository file list, so both files
+    // produce a "does not match" issue, forcing a cross-path comparator sort.
+    const issues = validateInstructionApplyTo(root, instructionPaths, instructionPaths);
+
+    expect(issues.map((issue) => issue.path)).toEqual([
+      '.github/instructions/alpha.instructions.md',
+      '.github/instructions/beta.instructions.md'
+    ]);
+    expect(issues.every((issue) => issue.issue === 'applyTo pattern does not match any tracked repository file')).toBe(
+      true
+    );
+  });
+
+  it('orders command issues across sources and by script name', () => {
+    // AGENTS.md references two missing scripts (no `npm test`, exercising the
+    // extract-references non-test branch); onboarding references a third. The
+    // comparator must order cross-source and same-source/different-script arms.
+    const root = createFixture({
+      'AGENTS.md': '# Agents\n\nnpm run zeta-missing\nnpm run alpha-missing\n',
+      '.github/skills/onboarding/SKILL.md': '# Onboarding\n\nnpm run beta-missing\n'
+    });
+
+    const issues = validateCommandReferences(root, { check: 'echo check' });
+
+    expect(issues).toHaveLength(3);
+    const agentsScripts = issues
+      .filter((issue) => issue.source === 'AGENTS.md')
+      .map((issue) => issue.script);
+    expect(agentsScripts).toEqual(['alpha-missing', 'zeta-missing']);
+    expect(
+      issues.some(
+        (issue) =>
+          issue.source === '.github/skills/onboarding/SKILL.md' && issue.script === 'beta-missing'
+      )
+    ).toBe(true);
+  });
+
+  it('falls back to process streams for schema, json, and failing text output', () => {
+    // --schema without an injected stdout -> process.stdout fallback.
+    const schemaCapture = captureWrite(process.stdout);
+    try {
+      expect(main(['--schema'])).toBe(0);
+      expect((JSON.parse(schemaCapture.read()) as { $id: string }).$id).toBe(CUSTOMIZATION_AUDIT_SCHEMA_ID);
+    } finally {
+      schemaCapture.restore();
+    }
+
+    // --json success without an injected stdout -> process.stdout fallback and the
+    // default `new Date()` timestamp path.
+    const okRoot = createFixture(baseFixtureFiles());
+    const jsonCapture = captureWrite(process.stdout);
+    try {
+      expect(main(['--json', okRoot])).toBe(0);
+      expect((JSON.parse(jsonCapture.read()) as { success: boolean }).success).toBe(true);
+    } finally {
+      jsonCapture.restore();
+    }
+
+    // Failing text audit without an injected stderr -> process.stderr fallback.
+    const failingFiles = baseFixtureFiles();
+    failingFiles['AGENTS.md'] += '\n- npm run definitely-missing-script\n';
+    const failingRoot = createFixture(failingFiles);
+    const stderrCapture = captureWrite(process.stderr);
+    try {
+      expect(main([failingRoot])).toBe(1);
+      expect(stderrCapture.read()).toContain('[customization-audit] Audit failed.');
+    } finally {
+      stderrCapture.restore();
+    }
+  });
+
+  it('skips links whose angle-bracket target normalizes to empty', () => {
+    // `<>` (and whitespace-only variants) normalize to an empty target, so the
+    // extractor drops them instead of emitting a zero-length link — the
+    // `target.length > 0` guard's false arm that non-empty links never take.
+    expect(extractMarkdownLinks('see [x](<>) here\n')).toEqual([]);
+    expect(extractMarkdownLinks('see [x](<   >) here\n')).toEqual([]);
+  });
+
+  it('flags a link that resolves to exactly the repository parent directory', () => {
+    // A bare `..` from a root-level source resolves to exactly the parent of the
+    // repo root, exercising the `relativeTarget === '..'` equality arm (distinct
+    // from the `'../'`-prefixed arm the existing `../../outside.md` case covers).
+    const root = createFixture({ 'a.md': '[x](..)\n' });
+    const issues = validateLocalMarkdownLinks(root, ['a.md']);
+    expect(issues).toEqual([
+      expect.objectContaining({ target: '..', issue: 'link resolves outside the repository root' })
+    ]);
   });
 });

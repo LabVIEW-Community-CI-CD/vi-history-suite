@@ -2,6 +2,7 @@ import { promises as fsp } from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 
+import { createLvkitCompareViRevisions } from '../semantic/lvkit/lvkitCompareViRevisions';
 import {
   compareViRevisions,
   type CompareViRevisionsInput
@@ -115,6 +116,38 @@ export function buildViSemanticMcpServerDeps(
       collectViPreviewDiagnostics(input),
     listChangedVis: (input) => listChangedVis(input)
   };
+}
+
+/** The semantic-comparison backend the MCP server uses. */
+export type SemanticCompareProvider = 'labview' | 'lvkit';
+
+/**
+ * VHS-REQ-712.4: resolve the semantic-comparison backend from the environment.
+ * `VIHS_SEMANTICS_PROVIDER=lvkit` (case-insensitive) selects the LabVIEW-free
+ * lvkit backend; anything else keeps the default LabVIEW comparison. The MCP
+ * server is a standalone process (no VS Code settings), so the per-repo opt-in is
+ * expressed as an environment variable the launcher sets.
+ */
+export function resolveSemanticCompareProvider(
+  env: NodeJS.ProcessEnv = process.env
+): SemanticCompareProvider {
+  return (env.VIHS_SEMANTICS_PROVIDER ?? '').trim().toLowerCase() === 'lvkit' ? 'lvkit' : 'labview';
+}
+
+/**
+ * VHS-REQ-712.4: build the MCP dependency set with the environment-selected
+ * semantic backend. When lvkit is selected, `compare_vi_revisions` is bound to
+ * the LabVIEW-free lvkit provider; otherwise the default LabVIEW comparison is
+ * used. Every other tool is unchanged.
+ */
+export function buildViSemanticMcpServerDepsForEnv(
+  comparisonModelCache: ViComparisonModelCache,
+  env: NodeJS.ProcessEnv = process.env
+): ViSemanticMcpAsyncDeps {
+  if (resolveSemanticCompareProvider(env) === 'lvkit') {
+    return buildViSemanticMcpServerDeps(comparisonModelCache, createLvkitCompareViRevisions({ env }));
+  }
+  return buildViSemanticMcpServerDeps(comparisonModelCache);
 }
 
 /**
