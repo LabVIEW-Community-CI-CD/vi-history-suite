@@ -152,7 +152,21 @@ function main(argv = process.argv.slice(2), deps = {}) {
 
   const cwd = deps.cwd || process.cwd();
   const readFile = deps.readFile ?? ((p) => fs.readFileSync(p, 'utf8'));
-  const reconcile = deps.reconcile ?? require(path.resolve(cwd, 'out/reporting/mirror/mirrorParityReconciler.js')).reconcileMirrorParity;
+  let reconcile = deps.reconcile;
+  if (!reconcile) {
+    // Resolving the compiled reconciler can throw (repo not compiled / out
+    // missing). Catch it and fail closed with a clear remedy instead of crashing
+    // with a stack trace that bypasses the exit-code contract.
+    try {
+      reconcile = require(path.resolve(cwd, 'out/reporting/mirror/mirrorParityReconciler.js')).reconcileMirrorParity;
+    } catch (error) {
+      stderr.write(
+        `Failed to load the compiled reconciler (out/reporting/mirror/mirrorParityReconciler.js); ` +
+          `run \`npm run compile\` first: ${error instanceof Error ? error.message : String(error)}\n`
+      );
+      return 2;
+    }
+  }
 
   let ledger;
   try {
