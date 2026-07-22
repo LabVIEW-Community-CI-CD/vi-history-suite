@@ -136,6 +136,23 @@ describe('reconcileMirrorParity (VHS-REQ-707.11)', () => {
     expect(() => reconcileMirrorParity(enveloped as never, { queuedRevision: REV })).toThrow(/envelope/);
   });
 
+  it('rejects a run referencing an actorRef not interned in actors (referential integrity)', () => {
+    const ORPHAN = '9'.repeat(64);
+    expect(() =>
+      reconcileMirrorParity(ledger([run(LEFT), run(ORPHAN)]), { queuedRevision: REV })
+    ).toThrow(/not interned/);
+  });
+
+  it('rejects an actor entry with an unusable role', () => {
+    const bad = {
+      $schema: 'vi-history-suite/mirror-benchmark@v1',
+      schemaVersion: 1,
+      actors: { [LEFT]: { role: 'sideways' } },
+      runs: []
+    };
+    expect(() => reconcileMirrorParity(bad as never, { queuedRevision: REV })).toThrow(/role of/);
+  });
+
   it('fails closed on a missing envelope, malformed shape, and empty queuedRevision', () => {
     // Well-shaped container but no envelope -> mandatory Phase 1 envelope missing.
     expect(() => reconcileMirrorParity({ actors: {}, runs: [] } as never, { queuedRevision: REV })).toThrow(/envelope/);

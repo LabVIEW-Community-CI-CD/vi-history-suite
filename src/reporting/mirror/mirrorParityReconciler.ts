@@ -93,6 +93,9 @@ const SHA256_HEX = /^[0-9a-f]{64}$/;
 const MIRROR_BENCHMARK_SCHEMA_ID = 'vi-history-suite/mirror-benchmark@v1';
 const MIRROR_BENCHMARK_SCHEMA_VERSION = 1;
 
+/** The interned actor roles the gate understands. */
+const VALID_ROLES: ReadonlySet<MirrorActorRole> = new Set(['tangled-left', 'tangled-right', 'decoupled']);
+
 function assertLedger(ledger: unknown): asserts ledger is MirrorLedger {
   if (
     !ledger ||
@@ -120,7 +123,26 @@ function assertLedger(ledger: unknown): asserts ledger is MirrorLedger {
   // Validate every run row's identity fields fail-closed so a malformed row cannot
   // be silently skipped (which could otherwise mask a channel and yield a spurious
   // pass). The report digest of `ok` rows is additionally verified at use.
-  (ledger as MirrorLedger).runs.forEach((row, index) => assertRunRow(row, index));
+  const actors = (ledger as MirrorLedger).actors as Readonly<Record<string, MirrorActorEntry>>;
+  // Every interned actor must declare a usable role.
+  for (const [actorRef, entry] of Object.entries(actors)) {
+    if (!entry || typeof entry !== 'object' || !VALID_ROLES.has((entry as MirrorActorEntry).role)) {
+      throw new Error(
+        `Mirror ledger actor ${String(actorRef).slice(0, 12)}… must declare a role of ${[...VALID_ROLES].join(' | ')}.`
+      );
+    }
+  }
+  // Every run must reference an interned actor (referential integrity) so an
+  // unjoinable / hand-edited run row cannot silently contribute to a pass while
+  // being counted as neither the left precondition nor the right channel.
+  (ledger as MirrorLedger).runs.forEach((row, index) => {
+    assertRunRow(row, index);
+    if (!Object.prototype.hasOwnProperty.call(actors, row.actorRef)) {
+      throw new Error(
+        `Mirror ledger run[${index}] references actorRef ${row.actorRef.slice(0, 12)}… that is not interned in \`actors\`.`
+      );
+    }
+  });
 }
 
 /** Fail-closed validation of a single run row's structural + identity fields. */
