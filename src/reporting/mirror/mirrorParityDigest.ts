@@ -178,7 +178,11 @@ export function deriveActorFingerprintId(fingerprint: ActorCapabilityFingerprint
     if (value === undefined || value === null) {
       throw new Error(`Mirror actor fingerprint field "${String(key)}" is required.`);
     }
-    return value;
+    // Canonicalize identically to the ledger writer (scripts/recordMirrorBenchmark.js):
+    // trim string fields, pass numbers through. This keeps the interned-registry
+    // contract (actorRef = fingerprint sha256) stable even if a caller supplies
+    // untrimmed strings, so both sides always derive the same id.
+    return typeof value === 'number' ? value : String(value).trim();
   });
   return createHash('sha256').update(JSON.stringify(canonical), 'utf8').digest('hex');
 }

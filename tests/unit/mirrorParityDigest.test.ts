@@ -132,6 +132,15 @@ describe('deriveActorFingerprintId (VHS-REQ-707.7)', () => {
     delete bad.cpuModel;
     expect(() => deriveActorFingerprintId(bad as unknown as ActorCapabilityFingerprint)).toThrow(/cpuModel/);
   });
+
+  it('trims string fields so an untrimmed fingerprint hashes to the same id', () => {
+    const padded: ActorCapabilityFingerprint = {
+      ...fingerprint,
+      actor: '  docker-x64  ',
+      os: ' Windows Server 2022 '
+    };
+    expect(deriveActorFingerprintId(padded)).toBe(deriveActorFingerprintId(fingerprint));
+  });
 });
 
 describe('isParityDigest (VHS-REQ-707.7)', () => {
