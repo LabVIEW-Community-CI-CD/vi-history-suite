@@ -118,6 +118,20 @@ describe('projectMirrorMlRows (VHS-REQ-708.1, VHS-REQ-708.2)', () => {
     };
     expect(() => projectMirrorMlRows(bad)).toThrow(/mode/);
   });
+
+  it('fails closed on a mismatched ledger envelope, accepts a matching one', () => {
+    const l = ledger();
+    // Envelope-less object is accepted (unit-test convenience).
+    expect(projectMirrorMlRows(l)).toHaveLength(2);
+    // Matching envelope accepted.
+    const good = { $schema: 'vi-history-suite/mirror-benchmark@v1', schemaVersion: 1, ...l };
+    expect(projectMirrorMlRows(good as MirrorMlLedger)).toHaveLength(2);
+    // Mismatched envelope fails closed.
+    const wrongId = { $schema: 'other@v1', schemaVersion: 1, ...l };
+    expect(() => projectMirrorMlRows(wrongId as MirrorMlLedger)).toThrow(/envelope/);
+    const wrongVer = { $schema: 'vi-history-suite/mirror-benchmark@v1', schemaVersion: 2, ...l };
+    expect(() => projectMirrorMlRows(wrongVer as MirrorMlLedger)).toThrow(/envelope/);
+  });
 });
 
 describe('computePerfParityVerdicts (VHS-REQ-708.3)', () => {

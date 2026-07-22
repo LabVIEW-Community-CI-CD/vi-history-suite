@@ -65,7 +65,7 @@ export interface MirrorMlRow {
   readonly featCpuLogical: number;
   readonly featRamTotalMb: number;
   readonly featDiskFreeGb: number;
-  readonly featLabviewBitness: string;
+  readonly featLabviewBitness: MirrorBitness;
   readonly featLabviewBuild: string;
   readonly featModeCold: 0 | 1;
   // targets (observations)
@@ -79,6 +79,10 @@ export interface MirrorMlRow {
 
 export const MIRROR_MLROW_SCHEMA_ID = 'vi-history-suite/mirror-benchmark-mlrow@v1';
 
+/** The ledger envelope this projection consumes (Phase 1 writer contract). */
+const MIRROR_BENCHMARK_SCHEMA_ID = 'vi-history-suite/mirror-benchmark@v1';
+const MIRROR_BENCHMARK_SCHEMA_VERSION = 1;
+
 function assertLedger(ledger: unknown): asserts ledger is MirrorMlLedger {
   if (
     !ledger ||
@@ -89,6 +93,21 @@ function assertLedger(ledger: unknown): asserts ledger is MirrorMlLedger {
     !Array.isArray((ledger as MirrorMlLedger).runs)
   ) {
     throw new Error('Mirror ML ledger must have an object `actors` and an array `runs`.');
+  }
+  // When the ledger carries the self-describing envelope, it MUST match the
+  // Phase 1 mirror-benchmark contract (same fail-closed posture as the writer /
+  // reconciler) so a drifted/wrong file cannot project the wrong shape into the
+  // ML corpus. An envelope-less {actors,runs} object stays accepted for tests.
+  const envelope = ledger as { $schema?: unknown; schemaVersion?: unknown };
+  const hasEnvelope = envelope.$schema !== undefined || envelope.schemaVersion !== undefined;
+  if (
+    hasEnvelope &&
+    (envelope.$schema !== MIRROR_BENCHMARK_SCHEMA_ID || envelope.schemaVersion !== MIRROR_BENCHMARK_SCHEMA_VERSION)
+  ) {
+    throw new Error(
+      `Mirror ML ledger has an unexpected envelope ($schema=${JSON.stringify(envelope.$schema)}, ` +
+        `schemaVersion=${JSON.stringify(envelope.schemaVersion)}); expected ${MIRROR_BENCHMARK_SCHEMA_ID} v${MIRROR_BENCHMARK_SCHEMA_VERSION}.`
+    );
   }
 }
 
