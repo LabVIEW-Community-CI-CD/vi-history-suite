@@ -171,7 +171,9 @@ async function main() {
   const wallMs = Date.now() - started;
 
   const rt = record.runtimeExecution || {};
-  const reportPath = rt.reportPath || (rt.reportExists ? rt.reportFilePath : undefined);
+  // The canonical report path is record.artifactPlan.reportFilePath (also
+  // packet.reportFilePath); ComparisonReportRuntimeExecution carries no path.
+  const reportPath = (record.artifactPlan || {}).reportFilePath;
   if (!rt.reportExists || !reportPath || !fs.existsSync(reportPath)) {
     console.error(`[left] no real report produced (runtimeState=${rt.state}, blocked=${record.blockedReason || rt.failureReason || 'n/a'}); refusing to record a placeholder ledger row.`);
     process.exit(1);
