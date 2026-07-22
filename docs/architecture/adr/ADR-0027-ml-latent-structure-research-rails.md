@@ -56,9 +56,12 @@ all of the following. Until this ADR is accepted, no model code ships.
   LabVIEW datasets**.
 - Corpus samples are produced through the shipped runtime path (real NI LabVIEW
   container), captured as retained evidence, and are reproducible from a named
-  base/head revision pair. The git-swap harness (two byte-different but
-  semantically identical revisions of one tracked path) is the reference way to
-  generate labeled true-negative (no-change) samples.
+  base/head revision pair. The reference way to generate a labeled true-negative
+  (no-change) sample is the **git-swap procedure** — committing two
+  byte-different but semantically identical revisions of one already-tracked path
+  and comparing them. This is a manual convention validated during the #2295
+  experiment, not a shipped script; a spike that automates it would add the
+  tooling under its own change.
 - Known blocker on record: the empty→rich enumeration path trips a LabVIEW
   headless `Error 66` recursive-load in the Linux container, so a full labeled
   corpus via empty-swap needs a non-headless/host runtime or a workaround; the
@@ -76,9 +79,11 @@ all of the following. Until this ADR is accepted, no model code ships.
   already-deterministic subset. Evaluating those targets therefore **requires an
   independent, reproducible held-out ground-truth annotation source** — for
   example runtime-derived labels (a LabVIEW/VI-server enumeration of the true
-  per-object placement and ownership) or a committed human-annotated fixture set —
-  named and versioned alongside the corpus. No latent-structure metric may be
-  claimed without such labels.
+  per-object placement and ownership) or a human-annotated label set layered over
+  the **existing** corpus samples (annotating artifacts already generated from
+  real comparisons — never authoring new VIs, consistent with the closed-corpus
+  rule above) — named and versioned alongside the corpus. No latent-structure
+  metric may be claimed without such labels.
 - Every evaluation reports precision/recall (or an equivalent) against a held-out
   set of reproducible samples, with the exact corpus revision pairs and the
   ground-truth label source named, so a result is auditable and re-runnable, not
