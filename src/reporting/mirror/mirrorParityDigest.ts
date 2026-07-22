@@ -32,9 +32,7 @@ export type MirrorBitness = 'x86' | 'x64';
 export interface ParityKeyInput {
   /** LabVIEW major version line, e.g. `2026`. */
   readonly version: string;
-  /** Actor bitness. */
-  readonly bitness: MirrorBitness;
-  /** Content SHA of the sample fixture (git blob / file sha), lower-case hex. */
+  /** Content SHA of the sample fixture (git blob / file sha), 64-char hex. */
   readonly fixtureSha: string;
   /** Repo-relative path of the sample VI (separators normalized to `/`). */
   readonly viPath: string;
@@ -57,31 +55,41 @@ function requireField(name: string, value: unknown): string {
   return value.trim();
 }
 
+/** Require and normalize a 64-char sha256 hex digest (fail-closed). */
+function requireSha256Field(name: string, value: unknown): string {
+  const normalized = typeof value === 'string' ? value.trim().toLowerCase() : '';
+  if (!SHA256_HEX.test(normalized)) {
+    throw new Error(`Mirror parity ${name} must be a 64-character hex sha256 digest.`);
+  }
+  return normalized;
+}
+
 /** Normalize a repo-relative path for hashing (backslashes -> `/`, trimmed). */
 function normalizeViPath(value: unknown): string {
   return requireField('viPath', value).replace(/\\/g, '/');
 }
 
 /**
- * Compute the cross-actor parity key `sha256(version|bitness|fixtureSha|viPath|recipe)`.
+ * Compute the cross-actor parity key
+ * `sha256([version, fixtureSha, viPath, recipe])`.
  *
- * The fields are joined with a delimiter that cannot appear in a normalized field
- * (a newline) so the concatenation is unambiguous. The result is a lower-case
- * 64-char hex digest, identical on every actor for the same logical sample.
+ * NOTE: `bitness` is deliberately NOT part of this key. The two tangled mirrors
+ * (Vagrant x86 and hosted Docker x64) differ only in bitness and must be GROUPED
+ * TOGETHER by the reconciler to compare their report digests (ADR-0028); putting
+ * bitness in the group key would give them distinct parityKeys and make them
+ * ungroupable. Bitness stays as run/fingerprint metadata (labviewBitness) and a
+ * labeled ML dimension instead.
+ *
+ * The fields are canonicalized as a JSON array (collision-free: field boundaries
+ * survive even when a value contains a delimiter, so shifting a substring between
+ * fields produces distinct keys). fixtureSha is validated as a sha256 digest
+ * because it is an identity dimension. The result is a lower-case 64-char hex
+ * digest, identical on every actor for the same logical sample.
  */
 export function deriveParityKey(input: ParityKeyInput): string {
-  const bitness = input.bitness;
-  if (bitness !== 'x86' && bitness !== 'x64') {
-    throw new Error(`Mirror parity bitness must be "x86" or "x64"; received "${String(bitness)}".`);
-  }
-  const fixtureSha = requireField('fixtureSha', input.fixtureSha).toLowerCase();
-  // JSON-array canonicalization is collision-free: field boundaries survive even
-  // when a value contains the delimiter, so shifting a substring between fields
-  // (e.g. "a\nb"|"c" vs "a"|"b\nc") produces distinct keys.
   const canonical = JSON.stringify([
     requireField('version', input.version),
-    bitness,
-    fixtureSha,
+    requireSha256Field('fixtureSha', input.fixtureSha),
     normalizeViPath(input.viPath),
     requireField('recipe', input.recipe)
   ]);

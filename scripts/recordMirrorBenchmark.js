@@ -38,9 +38,13 @@
  *     --report-sha256 <sha256> --preview-image-count <n> --wall-ms <n> \
  *     --fingerprint-file <path.json> \
  *     [--ledger <relative-path>] [--json]
- *   node scripts/recordMirrorBenchmark.js --schema [--json]
+ *   node scripts/recordMirrorBenchmark.js --schema
+ *
+ * (--json and --schema are mutually exclusive; --actor-ref is optional and, when
+ * supplied, must equal the fingerprint's derived id or the record is rejected.)
  */
 
+const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
 const {
@@ -140,6 +144,14 @@ function normalizeFingerprint(fingerprint) {
   };
 }
 
+// Derive the interned-registry key for a normalized fingerprint. MUST match
+// src/reporting/mirror/mirrorParityDigest.ts deriveActorFingerprintId exactly:
+// sha256 over the field VALUES in FINGERPRINT_FIELDS order, JSON-array encoded.
+function deriveActorFingerprintId(normalizedFingerprint) {
+  const values = FINGERPRINT_FIELDS.map((field) => normalizedFingerprint[field]);
+  return crypto.createHash('sha256').update(JSON.stringify(values), 'utf8').digest('hex');
+}
+
 // Return an empty, schema-tagged ledger (used when the file does not yet exist).
 function emptyLedger() {
   return { ...schemaEnvelopeFields(SCHEMA_ID, SCHEMA_VERSION), actors: {}, runs: [] };
@@ -149,11 +161,28 @@ function emptyLedger() {
 // the run row upserted by identity (parityKey, actorRef, mode, sourceRevision).
 // Returns { ledger, changed } — changed=false when the row was already present
 // byte-identical (a true no-op), so callers can skip the write.
+//
+// Fail-closed: a non-null ledger that lacks an object `actors` field or an array
+// `runs` field is rejected (never silently reset), so a truncated/schema-drifted
+// file can never be overwritten and lose prior evidence. Pass emptyLedger() (or
+// null/undefined) only for the explicit no-file path.
 function applyMirrorBenchmarkRecord(ledger, record) {
-  const base =
-    ledger && typeof ledger === 'object' && ledger.actors && Array.isArray(ledger.runs)
-      ? ledger
-      : emptyLedger();
+  let base;
+  if (ledger === null || ledger === undefined) {
+    base = emptyLedger();
+  } else if (
+    typeof ledger === 'object' &&
+    ledger.actors &&
+    typeof ledger.actors === 'object' &&
+    !Array.isArray(ledger.actors) &&
+    Array.isArray(ledger.runs)
+  ) {
+    base = ledger;
+  } else {
+    throw new Error(
+      'Existing mirror-benchmark ledger is malformed (missing object "actors" or array "runs"); refusing to overwrite.'
+    );
+  }
 
   const parityKey = requireSha256('parity-key', record.parityKey);
   const actorRef = requireSha256('actor-ref', record.actorRef);
@@ -168,6 +197,16 @@ function applyMirrorBenchmarkRecord(ledger, record) {
     throw new Error(`--outcome must be one of: ${[...VALID_OUTCOMES].join(', ')}.`);
   }
   const fingerprint = normalizeFingerprint(record.fingerprint);
+
+  // Integrity: actorRef MUST be the derived id of the supplied fingerprint, so a
+  // stale/mistyped ref can never overwrite the registry or retro-alter earlier
+  // rows that share the ref.
+  const derivedActorRef = deriveActorFingerprintId(fingerprint);
+  if (actorRef !== derivedActorRef) {
+    throw new Error(
+      `--actor-ref ${actorRef} does not match the fingerprint's derived id ${derivedActorRef}.`
+    );
+  }
 
   const row = {
     parityKey,
@@ -186,7 +225,10 @@ function applyMirrorBenchmarkRecord(ledger, record) {
   };
 
   // Intern the actor fingerprint under its actorRef (stable content key).
-  const actors = { ...base.actors, [actorRef]: fingerprint };
+  // Clone-then-assign so an overwrite preserves the existing key position
+  // (byte-stable serialization when only a run row changes).
+  const actors = { ...base.actors };
+  actors[actorRef] = fingerprint;
 
   const identity = (candidate) =>
     candidate.parityKey === row.parityKey &&
@@ -461,6 +503,7 @@ module.exports = {
   SCHEMA_PROVENANCE_KEY,
   applyMirrorBenchmarkRecord,
   normalizeFingerprint,
+  deriveActorFingerprintId,
   emptyLedger,
   serializeLedger,
   resolveLedgerPath,
