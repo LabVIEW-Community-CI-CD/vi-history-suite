@@ -7,7 +7,6 @@ import {
   main,
   SCHEMA_ID,
   SCHEMA_VERSION
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
 } from '../../scripts/reconcileMirrorParity.js';
 import { reconcileMirrorParity } from '../../src/reporting/mirror/mirrorParityReconciler';
 
