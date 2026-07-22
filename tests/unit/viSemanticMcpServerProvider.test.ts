@@ -128,14 +128,15 @@ describe('buildViSemanticMcpServerDefinitionFields', () => {
     expect(fields.env).toEqual({ VIHS_SEMANTICS_PROVIDER: 'lvkit' });
   });
 
-  it('uses an empty env for the default labview provider', () => {
+  it('sets VIHS_SEMANTICS_PROVIDER=labview explicitly for the default provider', () => {
     const fields = buildViSemanticMcpServerDefinitionFields({
       extensionPath: '/opt/ext',
       execPath: '/usr/bin/node',
       semanticsProvider: 'labview'
     });
 
-    expect(fields.env).toEqual({});
+    // Explicit (not empty) so an inherited VIHS_SEMANTICS_PROVIDER=lvkit cannot leak through.
+    expect(fields.env).toEqual({ VIHS_SEMANTICS_PROVIDER: 'labview' });
   });
 });
 
@@ -146,10 +147,11 @@ describe('buildViSemanticMcpServerEnv', () => {
     expect(buildViSemanticMcpServerEnv('  lvkit  ')).toEqual({ VIHS_SEMANTICS_PROVIDER: 'lvkit' });
   });
 
-  it('yields an empty env for labview, unset, or unknown values', () => {
-    expect(buildViSemanticMcpServerEnv('labview')).toEqual({});
-    expect(buildViSemanticMcpServerEnv(undefined)).toEqual({});
-    expect(buildViSemanticMcpServerEnv('something-else')).toEqual({});
+  it('sets the provider to labview explicitly for labview, unset, or unknown values', () => {
+    // Deterministic override: the setting always wins over an inherited env var.
+    expect(buildViSemanticMcpServerEnv('labview')).toEqual({ VIHS_SEMANTICS_PROVIDER: 'labview' });
+    expect(buildViSemanticMcpServerEnv(undefined)).toEqual({ VIHS_SEMANTICS_PROVIDER: 'labview' });
+    expect(buildViSemanticMcpServerEnv('something-else')).toEqual({ VIHS_SEMANTICS_PROVIDER: 'labview' });
   });
 });
 

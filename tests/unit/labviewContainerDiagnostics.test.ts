@@ -187,6 +187,28 @@ describe('evaluateLabviewContainerDiagnostics optional smoke checks (VHS-REQ-710
     expect(smoke?.detail).toMatch(/VI Server unreachable/);
     expect(r.failures).toContain('cli-launch');
     expect(r.failures).toContain('comparison-smoke');
+    // An attempted smoke probe that failed proves the runtime is unusable.
+    expect(r.readyToCompare).toBe(false);
+  });
+
+  it('blocks readiness when an attempted smoke probe fails even though every critical check passes (VHS-REQ-710.2)', () => {
+    // All critical checks pass (default probes), but the requested cli-launch smoke
+    // probe actually ran and failed -> the runtime is proven unusable, so readiness
+    // must be false and the failed probe's remediation becomes the next action.
+    const r = evaluateLabviewContainerDiagnostics(
+      probes({ cliLaunch: { ok: false, version: null, exitCode: 1 } })
+    );
+    expect(r.checks.find((c) => c.checkId === 'labviewcli-present')?.status).toBe('pass');
+    expect(r.checks.find((c) => c.checkId === 'cli-launch')?.status).toBe('fail');
+    expect(r.readyToCompare).toBe(false);
+    expect(r.nextAction).toMatch(/headless/);
+  });
+
+  it('keeps readiness true when smoke probes were not attempted (skip does not block)', () => {
+    // Default probes leave cliLaunch/comparisonSmoke null (not attempted) -> skip.
+    const r = evaluateLabviewContainerDiagnostics(probes());
+    expect(r.checks.find((c) => c.checkId === 'cli-launch')?.status).toBe('skip');
+    expect(r.readyToCompare).toBe(true);
   });
 
   it('skips cli-launch and comparison-smoke when a probe was attempted but tooling is absent', () => {
@@ -217,5 +239,67 @@ describe('evaluateLabviewContainerDiagnostics probe validation (VHS-REQ-710.1)',
       /dockerCliAvailable must be a boolean/
     );
     expect(() => evaluateLabviewContainerDiagnostics(probes({ imagePresent: 1 as never }))).toThrow(/imagePresent must be a boolean/);
+  });
+
+  it('throws when a nullable string field is a non-null non-string (a truthy non-string must not read as present)', () => {
+    expect(() => evaluateLabviewContainerDiagnostics(probes({ labviewCliPath: 5 as never }))).toThrow(
+      /labviewCliPath must be a string or null/
+    );
+    expect(() => evaluateLabviewContainerDiagnostics(probes({ labviewEnginePath: {} as never }))).toThrow(
+      /labviewEnginePath must be a string or null/
+    );
+    expect(() => evaluateLabviewContainerDiagnostics(probes({ dockerServerVersion: true as never }))).toThrow(
+      /dockerServerVersion must be a string or null/
+    );
+  });
+
+  it('throws when imageSizeBytes is a non-null non-finite number', () => {
+    expect(() => evaluateLabviewContainerDiagnostics(probes({ imageSizeBytes: 'big' as never }))).toThrow(
+      /imageSizeBytes must be a finite number or null/
+    );
+    expect(() => evaluateLabviewContainerDiagnostics(probes({ imageSizeBytes: Number.NaN }))).toThrow(
+      /imageSizeBytes must be a finite number or null/
+    );
+  });
+
+  it('throws when a nested smoke probe record is malformed rather than evaluating it', () => {
+    expect(() => evaluateLabviewContainerDiagnostics(probes({ cliLaunch: { ok: 'yes' } as never }))).toThrow(
+      /cliLaunch\.ok must be a boolean/
+    );
+    expect(() =>
+      evaluateLabviewContainerDiagnostics(probes({ comparisonSmoke: { ok: true, reportExists: 1 } as never }))
+    ).toThrow(/comparisonSmoke\.reportExists must be a boolean/);
+  });
+
+  it('throws when an optional variant label is a non-string', () => {
+    expect(() => evaluateLabviewContainerDiagnostics(probes({ variant: 7 as never }))).toThrow(
+      /variant must be a string when present/
+    );
+  });
+
+  it('throws on every malformed cliLaunch sub-field (object/version/exitCode)', () => {
+    expect(() => evaluateLabviewContainerDiagnostics(probes({ cliLaunch: 5 as never }))).toThrow(
+      /cliLaunch must be an object or null/
+    );
+    expect(() =>
+      evaluateLabviewContainerDiagnostics(probes({ cliLaunch: { ok: true, version: 1, exitCode: 0 } as never }))
+    ).toThrow(/cliLaunch\.version must be a string or null/);
+    expect(() =>
+      evaluateLabviewContainerDiagnostics(probes({ cliLaunch: { ok: true, version: null, exitCode: Number.NaN } as never }))
+    ).toThrow(/cliLaunch\.exitCode must be a finite number or null/);
+  });
+
+  it('throws on every malformed comparisonSmoke sub-field (object/ok/failureReason)', () => {
+    expect(() => evaluateLabviewContainerDiagnostics(probes({ comparisonSmoke: 'x' as never }))).toThrow(
+      /comparisonSmoke must be an object or null/
+    );
+    expect(() =>
+      evaluateLabviewContainerDiagnostics(probes({ comparisonSmoke: { ok: 'no', reportExists: false, failureReason: null } as never }))
+    ).toThrow(/comparisonSmoke\.ok must be a boolean/);
+    expect(() =>
+      evaluateLabviewContainerDiagnostics(
+        probes({ comparisonSmoke: { ok: true, reportExists: true, failureReason: 5 } as never })
+      )
+    ).toThrow(/comparisonSmoke\.failureReason must be a string or null/);
   });
 });

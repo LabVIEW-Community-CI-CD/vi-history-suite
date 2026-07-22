@@ -100,6 +100,14 @@ export interface LabviewContainerDiagnostics {
 const LABVIEW_CRITICAL_CHECKS: readonly CheckId[] = ['labviewcli-present', 'labview-engine-present', 'lvcompare-present'];
 
 /**
+ * Optional smoke probes: they are not required to run (a skipped, not-attempted
+ * probe never blocks readiness), but a probe that was actually attempted and
+ * FAILED proves the runtime cannot compare, so it blocks readiness (VHS-REQ-710.2)
+ * even though smoke checks are not part of the critical set.
+ */
+const SMOKE_CHECK_IDS: readonly CheckId[] = ['cli-launch', 'comparison-smoke'];
+
+/**
  * Checks that must PASS for readiness (advisory warnings do not block). The
  * container variant additionally requires the docker + image checks; host-native
  * carries readiness on the LabVIEW tooling checks alone.
@@ -289,7 +297,16 @@ export function evaluateLabviewContainerDiagnostics(probes: LabviewContainerProb
   const overall = checks.reduce<CheckStatus>((acc, c) => worstOf(acc, c.status), 'pass');
   const failures = checks.filter((c) => c.status === 'fail').map((c) => c.checkId);
   const criticalChecks = criticalChecksFor(probes.variant ?? 'linux-container');
-  const readyToCompare = [...criticalChecks].every((id) => checks.find((c) => c.checkId === id)?.status === 'pass');
+  const criticalPass = [...criticalChecks].every((id) => checks.find((c) => c.checkId === id)?.status === 'pass');
+  // A requested smoke probe (LabVIEWCLI launch / comparison smoke) that actually ran
+  // and FAILED proves the runtime is unusable, so it blocks readiness even though
+  // smoke checks are not critical; a skipped (not-attempted) probe never blocks.
+  // Without this, a requested --smoke that fails would still report readyToCompare
+  // and the pre-commit gate would accept a runtime the launch probe just disproved.
+  const attemptedSmokeFailed = SMOKE_CHECK_IDS.some(
+    (id) => checks.find((c) => c.checkId === id)?.status === 'fail'
+  );
+  const readyToCompare = criticalPass && !attemptedSmokeFailed;
   const firstActionable = checks.find((c) => (c.status === 'fail' || c.status === 'warn') && c.remediation);
   const nextAction = readyToCompare ? null : firstActionable?.remediation ?? null;
 
@@ -319,9 +336,69 @@ function assertProbes(probes: unknown): asserts probes is LabviewContainerProbes
       throw new Error(`LabviewContainerProbes.${flag} must be a boolean.`);
     }
   }
+  // Optional variant label.
+  if (p.variant !== undefined && typeof p.variant !== 'string') {
+    throw new Error('LabviewContainerProbes.variant must be a string when present.');
+  }
+  // Nullable string fields: a non-null, non-string must be rejected rather than
+  // treated as a present path/version — a truthy non-string would overstate
+  // readiness (e.g. `!!labviewCliPath` on a number reads as "present").
+  for (const field of ['dockerServerVersion', 'labviewCliPath', 'labviewEnginePath', 'labviewYear'] as const) {
+    if (p[field] !== null && typeof p[field] !== 'string') {
+      throw new Error(`LabviewContainerProbes.${field} must be a string or null.`);
+    }
+  }
+  // Nullable numeric field.
+  if (p.imageSizeBytes !== null && (typeof p.imageSizeBytes !== 'number' || !Number.isFinite(p.imageSizeBytes))) {
+    throw new Error('LabviewContainerProbes.imageSizeBytes must be a finite number or null.');
+  }
   const licensing = p.licensing;
   if (licensing !== 'activated' && licensing !== 'evaluation' && licensing !== 'unlicensed' && licensing !== 'unknown') {
     throw new Error('LabviewContainerProbes.licensing must be activated|evaluation|unlicensed|unknown.');
+  }
+  // Nested optional probe records: null = not attempted; otherwise the full shape
+  // must be well-formed so a malformed record cannot be evaluated as a result.
+  assertCliLaunchProbe(p.cliLaunch);
+  assertComparisonSmokeProbe(p.comparisonSmoke);
+}
+
+/** Fail closed on a malformed optional LabVIEWCLI-launch probe (null = not attempted). */
+function assertCliLaunchProbe(value: unknown): void {
+  if (value === null) {
+    return;
+  }
+  if (!value || typeof value !== 'object') {
+    throw new Error('LabviewContainerProbes.cliLaunch must be an object or null.');
+  }
+  const c = value as Record<string, unknown>;
+  if (typeof c.ok !== 'boolean') {
+    throw new Error('LabviewContainerProbes.cliLaunch.ok must be a boolean.');
+  }
+  if (c.version !== null && typeof c.version !== 'string') {
+    throw new Error('LabviewContainerProbes.cliLaunch.version must be a string or null.');
+  }
+  if (c.exitCode !== null && (typeof c.exitCode !== 'number' || !Number.isFinite(c.exitCode))) {
+    throw new Error('LabviewContainerProbes.cliLaunch.exitCode must be a finite number or null.');
+  }
+}
+
+/** Fail closed on a malformed optional comparison-smoke probe (null = not attempted). */
+function assertComparisonSmokeProbe(value: unknown): void {
+  if (value === null) {
+    return;
+  }
+  if (!value || typeof value !== 'object') {
+    throw new Error('LabviewContainerProbes.comparisonSmoke must be an object or null.');
+  }
+  const s = value as Record<string, unknown>;
+  if (typeof s.ok !== 'boolean') {
+    throw new Error('LabviewContainerProbes.comparisonSmoke.ok must be a boolean.');
+  }
+  if (typeof s.reportExists !== 'boolean') {
+    throw new Error('LabviewContainerProbes.comparisonSmoke.reportExists must be a boolean.');
+  }
+  if (s.failureReason !== null && typeof s.failureReason !== 'string') {
+    throw new Error('LabviewContainerProbes.comparisonSmoke.failureReason must be a string or null.');
   }
 }
 
