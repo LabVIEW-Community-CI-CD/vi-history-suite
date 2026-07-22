@@ -305,8 +305,10 @@ Two independent issues can cause this on a Linux host running LabVIEW 2026:
    `/etc/natinst/LabVIEW-<version>/`) and blocks the run with
    `runtimeExecution.blockedReason = 'linux-vi-server-tcp-disabled'` when
    `server.tcp.enabled` is `False` or absent. When enabled, the resolved
-   `server.tcp.port` (default `3363`) is passed to LabVIEWCLI as
-   `-PortNumber`.
+   `server.tcp.port` is passed to LabVIEWCLI as `-PortNumber`. If VI Server
+   TCP is enabled but no explicit `server.tcp.port` is declared, the run is
+   blocked with `linux-vi-server-tcp-port-unknown` (the runtime never assumes
+   a port); set an explicit `server.tcp.port` in `labview.conf`.
 
 2. The comparison invocation runs **headless** on Linux host-native.
    `vi-history-suite` runs Linux host-native comparisons headless
@@ -332,6 +334,11 @@ Check the retained `runtimeExecution.diagnosticReason`:
   (or the file is missing). Enable VI Server in LabVIEW Tools → Options →
   VI Server. The blocked run records the inspected `labviewIniPath` so you
   can see which config file was read.
+- `linux-vi-server-tcp-port-unknown`: VI Server TCP/IP is enabled in
+  `labview.conf` but no explicit `server.tcp.port` is declared. The runtime
+  fails closed rather than assume a port, so it can deterministically supply
+  `-PortNumber`. Add an explicit `server.tcp.port` line to `labview.conf`
+  (the blocked run records the inspected `labviewIniPath`).
 - `labview-cli-create-report-permission-error`: LabVIEW returned error 8.
   Confirm VI Server TCP/IP is enabled and reachable from the extension host.
 - `linux-headless-init-failed`: Your LabVIEW build cannot initialize
