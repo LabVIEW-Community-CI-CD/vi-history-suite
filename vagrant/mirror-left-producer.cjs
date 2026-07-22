@@ -139,8 +139,11 @@ function loadFingerprint() {
 }
 
 // git blob id for the selected VI, hashed to a 64-hex sha256 fixture identity.
+// git rev-parse <rev>:<path> requires a repo-relative path with forward slashes,
+// so normalize backslashes before the call (deriveParityKey normalizes too).
 function fixtureShaFor(rev, rel) {
-  const blob = execFileSync('git', ['-C', fixtureRepo, 'rev-parse', `${rev}:${rel}`], { encoding: 'utf8' }).trim();
+  const gitRel = rel.replace(/\\/g, '/');
+  const blob = execFileSync('git', ['-C', fixtureRepo, 'rev-parse', `${rev}:${gitRel}`], { encoding: 'utf8' }).trim();
   return crypto.createHash('sha256').update(blob, 'utf8').digest('hex');
 }
 
@@ -204,7 +207,11 @@ async function main() {
   const previewImageCount = (html.match(/data:image\/png;base64/g) || []).length;
 
   // Persist the fingerprint JSON for the writer, then record the ledger row.
-  const fpFile = path.join(os.tmpdir(), `mirror-fp-${actorRef.slice(0, 8)}.json`);
+  // recordMirrorBenchmark.js resolves --fingerprint-file within cwd and rejects
+  // an absolute path, so write under repoRoot and pass a repo-relative path.
+  const fpRel = path.join('.mirror-fp', `mirror-fp-${actorRef.slice(0, 8)}.json`);
+  const fpFile = path.join(repoRoot, fpRel);
+  fs.mkdirSync(path.dirname(fpFile), { recursive: true });
   fs.writeFileSync(fpFile, JSON.stringify(fingerprint, null, 2));
 
   const sourceRevision = execFileSync('git', ['-C', repoRoot, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
@@ -221,10 +228,12 @@ async function main() {
     '--report-sha256', reportSha256,
     '--preview-image-count', String(previewImageCount),
     '--wall-ms', String(wallMs),
-    '--fingerprint-file', fpFile,
+    '--fingerprint-file', fpRel,
     '--ledger', ledgerRel
   ];
   execFileSync('node', args, { cwd: repoRoot, stdio: 'inherit' });
+  // The fingerprint JSON is a transient input to the writer; remove it after.
+  fs.rmSync(fpFile, { force: true });
 
   const evidence = { actor, actorRef, parityKey, fixtureSha, sourceRevision, provider, reportSha256, previewImageCount, wallMs, mode, ledger: ledgerRel };
   if (env.VIHS_L_OUT) {

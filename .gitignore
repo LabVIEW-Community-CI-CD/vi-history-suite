@@ -30,3 +30,6 @@ control-plane-write-log.jsonl
 
 # Local comparison-report runtime output (never committed)
 /storage/
+
+# Mirror Mode transient fingerprint inputs (left-channel producer)
+.mirror-fp/
