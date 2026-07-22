@@ -189,7 +189,9 @@ function gatherHostNativeProbes(options, deps = {}) {
   const lvcompare = runHost('[ -d /usr/local/natinst/lvcompare ] && echo true || echo false').stdout.trim() === 'true';
   let cliLaunch = null;
   if (options.smoke && cli) {
-    const run = runHost('LabVIEWCLI -Version 2>&1 | head -5; exit ${PIPESTATUS[0]}');
+    // Capture LabVIEWCLI's own exit code BEFORE the `| head` pipe: `${PIPESTATUS[0]}`
+    // is Bash-only and breaks under a dash `/bin/sh`. This form is POSIX-portable.
+    const run = runHost('out=$(LabVIEWCLI -Version 2>&1); rc=$?; printf "%s\\n" "$out" | head -5; exit $rc');
     const versionLine = (run.stdout || '').split(/\r?\n/).find((l) => /\d+\.\d+/.test(l)) || null;
     cliLaunch = { ok: run.ok, version: versionLine ? versionLine.trim() : null, exitCode: run.code };
   }

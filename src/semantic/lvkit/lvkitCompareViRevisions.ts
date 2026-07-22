@@ -21,6 +21,7 @@ import { promisify } from 'node:util';
 
 import type { CompareViRevisionsInput, CompareViRevisionsResult } from '../compareViRevisions';
 import { isWorktreeRevision, normalizeRelativeGitPath } from '../../git/gitCli';
+import { validateRepositoryTarget } from '../repositoryTarget';
 import { runExecFileText, type ExecFileTextRunner } from '../../tooling/execFileText';
 import { parseLvkitDiffJson } from './lvkitDiffModel';
 import { buildViSemanticModelFromLvkitDiff } from './lvkitSemanticAdapter';
@@ -96,6 +97,22 @@ export function createLvkitCompareViRevisions(
   return async function lvkitCompareViRevisions(
     input: CompareViRevisionsInput
   ): Promise<CompareViRevisionsResult> {
+    // Enforce the same repository-boundary guard as the LabVIEW-backed provider
+    // so an escaping relativePath (e.g. `../outside.vi`, notably with the WORKTREE
+    // sentinel that reads from disk) cannot read outside the repository root.
+    let target: { repositoryRoot: string; relativePath: string };
+    try {
+      target = validateRepositoryTarget({
+        repositoryRoot: input.repositoryRoot,
+        relativePath: input.relativePath
+      });
+    } catch (error) {
+      return {
+        status: 'blocked-preflight',
+        reason: `invalid-repository-target: ${error instanceof Error ? error.message : String(error)}`
+      };
+    }
+
     const location = locate({ env });
     if (!location.available) {
       return { status: 'blocked-runtime', reason: location.reason };
@@ -106,10 +123,10 @@ export function createLvkitCompareViRevisions(
       let baseBytes: Buffer;
       let selectedBytes: Buffer;
       try {
-        baseBytes = await readRevisionBlob(input.repositoryRoot, input.relativePath, input.baseHash);
+        baseBytes = await readRevisionBlob(target.repositoryRoot, target.relativePath, input.baseHash);
         selectedBytes = await readRevisionBlob(
-          input.repositoryRoot,
-          input.relativePath,
+          target.repositoryRoot,
+          target.relativePath,
           input.selectedHash
         );
       } catch (error) {
@@ -120,8 +137,12 @@ export function createLvkitCompareViRevisions(
       }
 
       tempDir = await makeTempDir();
-      const basePath = path.join(tempDir, `base-${input.baseHash}.vi`);
-      const selectedPath = path.join(tempDir, `selected-${input.selectedHash}.vi`);
+      // Fixed temp filenames (NOT the revision names): a ref such as
+      // `refs/heads/main` or `feature/x` contains `/`, which would create missing
+      // subdirectories under the temp dir and fail the write. Each call has its
+      // own mkdtemp dir, so `base.vi`/`selected.vi` cannot collide.
+      const basePath = path.join(tempDir, 'base.vi');
+      const selectedPath = path.join(tempDir, 'selected.vi');
       await fs.writeFile(basePath, baseBytes);
       await fs.writeFile(selectedPath, selectedBytes);
 
@@ -133,7 +154,7 @@ export function createLvkitCompareViRevisions(
         '--format',
         'json',
         '--search-path',
-        input.repositoryRoot
+        target.repositoryRoot
       ];
       const execResult = await runExecFileText(location.invocation.command, args, {
         timeoutMs,
@@ -158,7 +179,7 @@ export function createLvkitCompareViRevisions(
       }
 
       const model = buildViSemanticModelFromLvkitDiff(diff, {
-        title: path.basename(input.relativePath),
+        title: path.basename(target.relativePath),
         firstViPath: basePath,
         secondViPath: selectedPath,
         revisions: { baseHash: input.baseHash, selectedHash: input.selectedHash }

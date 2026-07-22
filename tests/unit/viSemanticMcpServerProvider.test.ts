@@ -18,6 +18,7 @@ import {
   VI_SEMANTIC_MCP_PROVIDER_ID,
   VI_SEMANTIC_MCP_SERVER_LABEL,
   buildViSemanticMcpServerDefinitionFields,
+  buildViSemanticMcpServerEnv,
   registerViSemanticMcpServerProvider,
   resolveViSemanticMcpLaunch,
   resolveViSemanticMcpServerScriptPath
@@ -116,6 +117,40 @@ describe('buildViSemanticMcpServerDefinitionFields', () => {
 
     expect(fields.version).toBeUndefined();
   });
+
+  it('forwards VIHS_SEMANTICS_PROVIDER=lvkit in the env when the lvkit provider is selected', () => {
+    const fields = buildViSemanticMcpServerDefinitionFields({
+      extensionPath: '/opt/ext',
+      execPath: '/usr/bin/node',
+      semanticsProvider: 'lvkit'
+    });
+
+    expect(fields.env).toEqual({ VIHS_SEMANTICS_PROVIDER: 'lvkit' });
+  });
+
+  it('uses an empty env for the default labview provider', () => {
+    const fields = buildViSemanticMcpServerDefinitionFields({
+      extensionPath: '/opt/ext',
+      execPath: '/usr/bin/node',
+      semanticsProvider: 'labview'
+    });
+
+    expect(fields.env).toEqual({});
+  });
+});
+
+describe('buildViSemanticMcpServerEnv', () => {
+  it('forwards only the opt-in lvkit provider (case-insensitive, trimmed)', () => {
+    expect(buildViSemanticMcpServerEnv('lvkit')).toEqual({ VIHS_SEMANTICS_PROVIDER: 'lvkit' });
+    expect(buildViSemanticMcpServerEnv('LVKIT')).toEqual({ VIHS_SEMANTICS_PROVIDER: 'lvkit' });
+    expect(buildViSemanticMcpServerEnv('  lvkit  ')).toEqual({ VIHS_SEMANTICS_PROVIDER: 'lvkit' });
+  });
+
+  it('yields an empty env for labview, unset, or unknown values', () => {
+    expect(buildViSemanticMcpServerEnv('labview')).toEqual({});
+    expect(buildViSemanticMcpServerEnv(undefined)).toEqual({});
+    expect(buildViSemanticMcpServerEnv('something-else')).toEqual({});
+  });
 });
 
 describe('registerViSemanticMcpServerProvider', () => {
@@ -152,6 +187,36 @@ describe('registerViSemanticMcpServerProvider', () => {
       '/workspace/vi-history-suite/out/cli/runViSemanticMcpServer.js'
     ]);
     expect(definitions[0]!.version).toBe('0.0.0-test');
+  });
+
+  it('forwards the lvkit provider setting into the launched server env', () => {
+    const context = defaultVsCodeTestHarness.createContext();
+    const getConfiguration = vscode.workspace.getConfiguration as unknown as ReturnType<typeof vi.fn>;
+    const original = getConfiguration.getMockImplementation();
+    // The registration reads `viHistorySuite.semantics.provider`; forward lvkit.
+    getConfiguration.mockImplementation(() => ({
+      get: (key: string, def?: unknown) => (key === 'semantics.provider' ? 'lvkit' : def),
+      update: vi.fn()
+    }));
+
+    try {
+      registerViSemanticMcpServerProvider(context as unknown as vscode.ExtensionContext);
+      const provider = defaultVsCodeTestHarness.registeredMcpProviders.get(
+        VI_SEMANTIC_MCP_PROVIDER_ID
+      ) as vscode.McpServerDefinitionProvider;
+      const definitions = provider.provideMcpServerDefinitions({
+        isCancellationRequested: false,
+        onCancellationRequested: vi.fn()
+      } as unknown as vscode.CancellationToken) as unknown as Array<
+        vscode.McpStdioServerDefinition & { env: Record<string, string> }
+      >;
+
+      expect(definitions[0]!.env).toEqual({ VIHS_SEMANTICS_PROVIDER: 'lvkit' });
+    } finally {
+      if (original) {
+        getConfiguration.mockImplementation(original);
+      }
+    }
   });
 
   it('is a no-op on hosts without the stable MCP provider API', () => {

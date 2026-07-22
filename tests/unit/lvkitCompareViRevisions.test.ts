@@ -124,6 +124,32 @@ describe('createLvkitCompareViRevisions provider (VHS-REQ-712.5)', () => {
       expect.arrayContaining(['diff', '--format', 'json', '--search-path', '/repo'])
     );
   });
+
+  it('blocks a repository-escaping relativePath before any read (path traversal)', async () => {
+    const readRevisionBlob = vi.fn(async () => Buffer.from('vi-bytes'));
+    const compare = createLvkitCompareViRevisions(baseDeps({ readRevisionBlob }) as never);
+    const result = await compare({ ...INPUT, relativePath: '../outside.vi' });
+    expect(result.status).toBe('blocked-preflight');
+    if (result.status === 'blocked-preflight') {
+      expect(result.reason).toContain('invalid-repository-target');
+    }
+    // The guard runs before locate + reads, so no revision bytes are touched.
+    expect(readRevisionBlob).not.toHaveBeenCalled();
+  });
+
+  it('materializes to fixed temp filenames so ref names containing "/" still write', async () => {
+    const removeDir = vi.fn(async () => undefined);
+    const compare = createLvkitCompareViRevisions(baseDeps({ removeDir }) as never);
+    // `refs/heads/main` / `feature/...` contain `/`; interpolating them into the
+    // temp filename would need missing subdirectories and fail the write.
+    const result = await compare({
+      ...INPUT,
+      baseHash: 'refs/heads/main',
+      selectedHash: 'feature/2330-lvkit'
+    });
+    expect(result.status).toBe('completed');
+    expect(removeDir).toHaveBeenCalled();
+  });
 });
 
 describe('resolveSemanticCompareProvider + env wiring (VHS-REQ-712.4)', () => {

@@ -91,13 +91,16 @@ describe('defaultResolveExecutable PATH scan (VHS-REQ-712.4)', () => {
     }
   });
 
-  it('resolves an absolute path only when it exists', async () => {
+  it('resolves an absolute path only when it is an existing regular file', async () => {
     const dir = await mkdtemp(path.join(os.tmpdir(), 'vihs-lvkit-abs-'));
     try {
       const exe = path.join(dir, 'lvkit');
       await writeFile(exe, 'x');
       expect(defaultResolveExecutable(exe, {})).toBe(exe);
       expect(defaultResolveExecutable(path.join(dir, 'nope'), {})).toBeUndefined();
+      // A directory (or other non-regular-file) override must not resolve, or the
+      // later spawn fails opaquely.
+      expect(defaultResolveExecutable(dir, {})).toBeUndefined();
     } finally {
       await rm(dir, { recursive: true, force: true });
     }

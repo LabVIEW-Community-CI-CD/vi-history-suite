@@ -46,7 +46,13 @@ export function defaultResolveExecutable(
   env: NodeJS.ProcessEnv = process.env
 ): string | undefined {
   if (path.isAbsolute(command)) {
-    return fs.existsSync(command) ? command : undefined;
+    // An explicit override must resolve to a regular file (not a directory or a
+    // dangling path), or the later spawn fails with an opaque error.
+    try {
+      return fs.statSync(command).isFile() ? command : undefined;
+    } catch {
+      return undefined;
+    }
   }
   const pathValue = env.PATH ?? env.Path ?? '';
   const dirs = pathValue.split(path.delimiter).filter((dir) => dir.length > 0);

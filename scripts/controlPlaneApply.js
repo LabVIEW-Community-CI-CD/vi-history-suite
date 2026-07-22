@@ -126,7 +126,7 @@ function main(deps = {}) {
     exit(0);
     return result;
   } catch (err2) {
-    err.write(`[control-plane-apply] ${err2.message}\n`);
+    err.write(`[control-plane-apply] ${err2 instanceof Error ? err2.message : String(err2)}\n`);
     exit(1);
     return { error: err2 };
   }
