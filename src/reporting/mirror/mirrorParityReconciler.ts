@@ -20,7 +20,10 @@
  * the committed file and applies the gate.
  */
 
-export type MirrorActorRole = 'tangled-left' | 'tangled-right' | 'decoupled';
+// The actor-role union is owned by the capability-fingerprint module (Phase 2);
+// re-export it here so the reconciler and the fingerprint writer cannot drift.
+import type { MirrorActorRole } from './mirrorCapabilityFingerprint';
+export type { MirrorActorRole };
 
 /** A run row as stored in the mirror-benchmark ledger (subset used by the gate). */
 export interface MirrorRunRow {
