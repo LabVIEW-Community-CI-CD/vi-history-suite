@@ -9,6 +9,7 @@ import {
   buildViSemanticPrReview,
   buildViPreviewComparisonCorrelationsArtifact,
   buildViPreviewRegionCorrelationsArtifact,
+  buildViLatentCorpusSamplesArtifact,
   planReviewReportCopies,
   renderViSemanticPrReviewMarkdown,
   renderViSemanticPrReviewPendingMarkdown,
@@ -91,6 +92,14 @@ export interface ParsedArgs {
    * base side stays honestly unavailable (only the head/working-tree side hits).
    */
   baseTreeDir?: string;
+  /**
+   * When true, emit the per-VI corpus-samples artifact (vi-latent-corpus-samples
+   * @v1, VHS-REQ-703.17) to --out — the closed-corpus data record for the gated
+   * ML research track (ADR-0027). Deterministic and offline: it serializes each
+   * completed VI's region-correlation body plus provenance and honest preview
+   * availability. Requires --out; ships no model and fabricates no geometry.
+   */
+  emitCorpusSamples: boolean;
 }
 
 function parseRepo(value: string): { owner: string; repo: string } {
@@ -222,6 +231,19 @@ export function parseArgs(argv: string[]): ParsedArgs {
     throw new Error('--base-tree-dir requires --correlate-previews');
   }
 
+  const emitCorpusSamples = values.get('emit-corpus-samples') === 'true';
+  if (emitCorpusSamples) {
+    // The corpus-samples artifact is written to the output directory; without
+    // --out there is nowhere to persist it, and a --from-file post has no live
+    // models to sample. Fail fast on either misconfiguration.
+    if (!values.has('out') || values.get('out') === 'true') {
+      throw new Error('--emit-corpus-samples requires --out <dir>');
+    }
+    if (fromFile !== undefined) {
+      throw new Error('--emit-corpus-samples cannot be combined with --from-file');
+    }
+  }
+
   return {
     repositoryRoot,
     base,
@@ -240,7 +262,8 @@ export function parseArgs(argv: string[]): ParsedArgs {
     commitStatus,
     correlatePreviews,
     previewCacheDir,
-    baseTreeDir
+    baseTreeDir,
+    emitCorpusSamples
   };
 }
 
@@ -912,6 +935,24 @@ export async function runViSemanticPrReviewCli(argv: string[]): Promise<number> 
       await fs.writeFile(regionPath, serializeJsonArtifact(regionArtifact), 'utf8');
     } else {
       await fs.rm(regionPath, { force: true });
+    }
+    // The per-VI corpus-samples artifact (VHS-REQ-703.17, epic #2262): the
+    // closed-corpus data record for the gated ML research track (ADR-0027).
+    // Opt-in via --emit-corpus-samples; each completed VI (including a
+    // no-difference true-negative) yields a reproducible sample. Written only
+    // when requested AND the review has at least one completed VI; a stale one is
+    // removed when this run has none, mirroring the other artifacts' contract.
+    if (args.emitCorpusSamples) {
+      const corpusArtifact = buildViLatentCorpusSamplesArtifact(review, {
+        provider: args.provider,
+        version: args.containerImageVersion
+      });
+      const corpusPath = path.join(args.outDir, 'vi-latent-corpus-samples.json');
+      if (corpusArtifact) {
+        await fs.writeFile(corpusPath, serializeJsonArtifact(corpusArtifact), 'utf8');
+      } else {
+        await fs.rm(corpusPath, { force: true });
+      }
     }
     // Copy the per-VI self-contained comparison reports (which embed the
     // rendered block-diagram/front-panel difference images) into reports/ so

@@ -30,6 +30,8 @@ export const VI_PREVIEW_REGION_CORRELATIONS_V1_SCHEMA_ID =
   'vi-history-suite/vi-preview-region-correlations@v1';
 export const VI_LATENT_CORPUS_SAMPLE_SCHEMA_ID =
   'vi-history-suite/vi-latent-corpus-sample@v1';
+export const VI_LATENT_CORPUS_SAMPLES_SCHEMA_ID =
+  'vi-history-suite/vi-latent-corpus-samples@v1';
 
 const DRAFT_07 = 'http://json-schema.org/draft-07/schema#';
 
@@ -668,6 +670,42 @@ export const VI_LATENT_CORPUS_SAMPLE_JSON_SCHEMA = {
   }
 } as const;
 
+// The first-class bundle of per-VI corpus samples a PR review emits
+// (VHS-REQ-703.17): each entry's `sample` is a vi-latent-corpus-sample@v1
+// document; typed as an object here (the offline validator does not resolve $ref).
+export const VI_LATENT_CORPUS_SAMPLES_JSON_SCHEMA = {
+  $schema: DRAFT_07,
+  $id: VI_LATENT_CORPUS_SAMPLES_SCHEMA_ID,
+  title: 'VI latent-structure corpus samples',
+  description:
+    'First-class bundle of per-VI reproducible corpus samples produced by a VI semantic PR review, for the gated ML latent-structure research track (ADR-0027). Ships no model.',
+  type: 'object',
+  required: ['schema', 'repositoryRoot', 'baseHash', 'selectedHash', 'sampleViCount', 'entries'],
+  properties: {
+    schema: { const: VI_LATENT_CORPUS_SAMPLES_SCHEMA_ID },
+    repositoryRoot: { type: 'string' },
+    baseHash: { type: 'string' },
+    selectedHash: { type: 'string' },
+    sampleViCount: { type: 'integer', minimum: 1 },
+    entries: {
+      type: 'array',
+      minItems: 1,
+      items: {
+        type: 'object',
+        required: ['relativePath', 'sample'],
+        properties: {
+          relativePath: { type: 'string' },
+          sample: {
+            type: 'object',
+            required: ['schema'],
+            properties: { schema: { const: VI_LATENT_CORPUS_SAMPLE_SCHEMA_ID } }
+          }
+        }
+      }
+    }
+  }
+} as const;
+
 // Legacy @v1 region-correlation schema (pre-sourceIndex): retained read-only so
 // validateViSemanticDocument still validates documents emitted before the
 // occurrence key was added. Identical to @v2 except the entry does not carry (or
@@ -776,7 +814,8 @@ export const VI_SEMANTIC_SCHEMAS: Record<string, unknown> = {
   [VI_PREVIEW_REGION_CORRELATIONS_SCHEMA_ID]: VI_PREVIEW_REGION_CORRELATIONS_JSON_SCHEMA,
   [VI_PREVIEW_REGION_CORRELATION_V1_SCHEMA_ID]: VI_PREVIEW_REGION_CORRELATION_V1_JSON_SCHEMA,
   [VI_PREVIEW_REGION_CORRELATIONS_V1_SCHEMA_ID]: VI_PREVIEW_REGION_CORRELATIONS_V1_JSON_SCHEMA,
-  [VI_LATENT_CORPUS_SAMPLE_SCHEMA_ID]: VI_LATENT_CORPUS_SAMPLE_JSON_SCHEMA
+  [VI_LATENT_CORPUS_SAMPLE_SCHEMA_ID]: VI_LATENT_CORPUS_SAMPLE_JSON_SCHEMA,
+  [VI_LATENT_CORPUS_SAMPLES_SCHEMA_ID]: VI_LATENT_CORPUS_SAMPLES_JSON_SCHEMA
 };
 
 export interface SchemaValidationResult {

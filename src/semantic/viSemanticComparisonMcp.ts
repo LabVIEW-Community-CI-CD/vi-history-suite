@@ -870,6 +870,13 @@ export const VI_SEMANTIC_MCP_RESOURCES = [
     mimeType: 'application/schema+json'
   },
   {
+    uri: `${RESOURCE_URI_PREFIX}vi-latent-corpus-samples@v1`,
+    name: 'vi-latent-corpus-samples@v1 schema',
+    title: 'VI latent-structure corpus samples bundle schema',
+    description: 'JSON Schema for the vi-history-suite/vi-latent-corpus-samples@v1 review artifact (per-VI corpus samples).',
+    mimeType: 'application/schema+json'
+  },
+  {
     uri: `${RESOURCE_URI_PREFIX}vi-preview-region-correlation@v1`,
     name: 'vi-preview-region-correlation@v1 schema (legacy)',
     title: 'VI preview-region correlation schema (v1, legacy)',

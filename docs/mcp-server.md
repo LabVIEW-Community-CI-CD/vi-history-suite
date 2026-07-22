@@ -26,7 +26,7 @@ configure.
 
 ## Tools
 
-The server exposes 18 tools plus 7 guided prompts and 11 schema resources. Fifteen
+The server exposes 18 tools plus 7 guided prompts and 12 schema resources. Fifteen
 tools operate without running a comparison (Git, supplied data, a local
 preview-cache directory, or read-only runtime/environment probes); three invoke a
 real LabVIEW comparison and therefore need a comparison runtime (host LabVIEW or a
@@ -117,6 +117,7 @@ rather than a silently-repointed "latest".
 | `vi-history-suite://schema/vi-preview-region-correlation@v2` | Preview pixel-region correlation schema | `application/schema+json` |
 | `vi-history-suite://schema/vi-preview-region-correlations@v2` | Preview pixel-region correlations bundle schema | `application/schema+json` |
 | `vi-history-suite://schema/vi-latent-corpus-sample@v1` | Latent-structure research corpus sample schema | `application/schema+json` |
+| `vi-history-suite://schema/vi-latent-corpus-samples@v1` | Latent-structure research corpus samples bundle schema | `application/schema+json` |
 | `vi-history-suite://schema/vi-preview-region-correlation@v1` | Preview pixel-region correlation schema (v1, legacy) | `application/schema+json` |
 | `vi-history-suite://schema/vi-preview-region-correlations@v1` | Preview pixel-region correlations bundle schema (v1, legacy) | `application/schema+json` |
 | `vi-history-suite://schema/index` | All published schemas | `application/json` |

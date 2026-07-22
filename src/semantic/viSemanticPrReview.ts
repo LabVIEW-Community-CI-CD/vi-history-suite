@@ -44,10 +44,16 @@ export const VI_SEMANTIC_PR_REVIEW_SCHEMA = 'vi-history-suite/vi-semantic-pr-rev
 export { VI_PREVIEW_COMPARISON_CORRELATIONS_SCHEMA_ID as VI_PREVIEW_COMPARISON_CORRELATIONS_SCHEMA } from './viSemanticSchemas';
 import { VI_PREVIEW_COMPARISON_CORRELATIONS_SCHEMA_ID } from './viSemanticSchemas';
 import { VI_PREVIEW_REGION_CORRELATIONS_SCHEMA_ID } from './viSemanticSchemas';
+import { VI_LATENT_CORPUS_SAMPLES_SCHEMA_ID } from './viSemanticSchemas';
 import {
   buildViPreviewRegionCorrelationFromModel,
   type ViPreviewRegionCorrelation
 } from './viPreviewRegionCorrelation';
+import {
+  buildViLatentCorpusSample,
+  type ViLatentCorpusProvenance,
+  type ViLatentCorpusSample
+} from './viLatentCorpusSample';
 
 /** One VI's correlation within the correlations artifact. */
 export interface ViPreviewComparisonCorrelationEntry {
@@ -142,6 +148,83 @@ export function buildViPreviewRegionCorrelationsArtifact(
     baseHash: review.baseHash,
     selectedHash: review.selectedHash,
     correlatedViCount: entries.length,
+    entries
+  };
+}
+
+/** One VI's corpus sample within the corpus-samples artifact. */
+export interface ViLatentCorpusSampleArtifactEntry {
+  relativePath: string;
+  sample: ViLatentCorpusSample;
+}
+
+/** The versioned bundle of per-VI corpus samples for a review (VHS-REQ-703.17). */
+export interface ViLatentCorpusSamplesArtifact {
+  schema: typeof VI_LATENT_CORPUS_SAMPLES_SCHEMA_ID;
+  repositoryRoot: string;
+  baseHash: string;
+  selectedHash: string;
+  /** Number of VIs with a corpus sample in this bundle. */
+  sampleViCount: number;
+  entries: ViLatentCorpusSampleArtifactEntry[];
+}
+
+/** Runtime facts recorded into each sample's provenance (as observed). */
+export type ViLatentCorpusRuntimeFacts = ViLatentCorpusProvenance['runtime'];
+
+/**
+ * Collects a reproducible corpus sample for every completed VI in a review into a
+ * versioned, first-class artifact (VHS-REQ-703.17, epic #2262) — the production
+ * surface for the Iter-10 `buildViLatentCorpusSample` builder. Each sample carries
+ * the deterministic region-correlation body plus provenance (VI path, the review's
+ * base/head revision pair, and the observed runtime facts) and honest preview
+ * availability taken from the wired preview-pair provider (`entry.correlation`);
+ * no preview bytes are threaded and no geometry is fabricated. Pure and
+ * deterministic. Every COMPLETED VI yields a sample — including a no-difference VI
+ * (a valuable true-negative label) — so the bundle is `undefined` only when the
+ * review has no completed VI, and a caller writes it only when it has content.
+ */
+export function buildViLatentCorpusSamplesArtifact(
+  review: Pick<ViSemanticPrReview, 'repositoryRoot' | 'baseHash' | 'selectedHash' | 'entries'>,
+  runtime: ViLatentCorpusRuntimeFacts = {}
+): ViLatentCorpusSamplesArtifact | undefined {
+  const entries: ViLatentCorpusSampleArtifactEntry[] = [];
+  for (const entry of review.entries) {
+    if (entry.status !== 'completed') {
+      continue;
+    }
+    const sample = buildViLatentCorpusSample({
+      provenance: {
+        viPath: entry.relativePath,
+        baseRevision: review.baseHash,
+        headRevision: review.selectedHash,
+        runtime
+      },
+      model: entry.model,
+      previewAvailability: entry.correlation
+        ? {
+            base: {
+              available: entry.correlation.previews.base.available,
+              inlineImageCount: entry.correlation.previews.base.inlineImageCount
+            },
+            head: {
+              available: entry.correlation.previews.head.available,
+              inlineImageCount: entry.correlation.previews.head.inlineImageCount
+            }
+          }
+        : undefined
+    });
+    entries.push({ relativePath: entry.relativePath, sample });
+  }
+  if (entries.length === 0) {
+    return undefined;
+  }
+  return {
+    schema: VI_LATENT_CORPUS_SAMPLES_SCHEMA_ID,
+    repositoryRoot: review.repositoryRoot,
+    baseHash: review.baseHash,
+    selectedHash: review.selectedHash,
+    sampleViCount: entries.length,
     entries
   };
 }
