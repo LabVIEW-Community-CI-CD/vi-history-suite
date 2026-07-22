@@ -200,6 +200,27 @@ describe('runViSemanticPrReview parseArgs', () => {
       parseArgs([...BASE, '--correlate-previews', '--preview-cache-dir', '/tmp/cache', '--base-tree-dir'])
     ).toThrow('--base-tree-dir requires a directory path');
   });
+
+  it('defaults corpus-sample emission off (VHS-REQ-703.17)', () => {
+    expect(parseArgs([...BASE, '--out', '/tmp/out']).emitCorpusSamples).toBe(false);
+  });
+
+  it('accepts --emit-corpus-samples with --out (VHS-REQ-703.17)', () => {
+    const args = parseArgs([...BASE, '--out', '/tmp/out', '--emit-corpus-samples']);
+    expect(args.emitCorpusSamples).toBe(true);
+  });
+
+  it('rejects --emit-corpus-samples without --out (VHS-REQ-703.17)', () => {
+    expect(() => parseArgs([...BASE, '--emit-corpus-samples'])).toThrow(
+      '--emit-corpus-samples requires --out <dir>'
+    );
+  });
+
+  it('rejects --emit-corpus-samples combined with --from-file (VHS-REQ-703.17)', () => {
+    expect(() =>
+      parseArgs(['--from-file', 'r.json', '--out', '/tmp/out', '--emit-corpus-samples'])
+    ).toThrow('--emit-corpus-samples cannot be combined with --from-file');
+  });
 });
 
 describe('runViSemanticPrReview loadReviewFromFile', () => {

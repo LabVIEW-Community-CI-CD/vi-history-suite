@@ -20,6 +20,7 @@ import {
   VI_PREVIEW_REGION_CORRELATION_V1_SCHEMA_ID,
   VI_PREVIEW_REGION_CORRELATIONS_V1_SCHEMA_ID,
   VI_LATENT_CORPUS_SAMPLE_SCHEMA_ID,
+  VI_LATENT_CORPUS_SAMPLES_SCHEMA_ID,
   VI_REPOSITORY_INDEX_SCHEMA_ID,
   VI_SEMANTIC_COMPARISON_JSON_SCHEMA,
   VI_SEMANTIC_COMPARISON_SCHEMA_ID,
@@ -44,7 +45,8 @@ describe('viSemanticSchemas registry', () => {
         VI_PREVIEW_REGION_CORRELATIONS_SCHEMA_ID,
         VI_PREVIEW_REGION_CORRELATION_V1_SCHEMA_ID,
         VI_PREVIEW_REGION_CORRELATIONS_V1_SCHEMA_ID,
-        VI_LATENT_CORPUS_SAMPLE_SCHEMA_ID
+        VI_LATENT_CORPUS_SAMPLE_SCHEMA_ID,
+        VI_LATENT_CORPUS_SAMPLES_SCHEMA_ID
       ].sort()
     );
   });
@@ -58,6 +60,18 @@ describe('viSemanticSchemas registry', () => {
     const result = validateViSemanticDocument(legacy);
     expect(result.valid).toBe(true);
     expect(result.errors).toEqual([]);
+  });
+
+  it('validates a vi-latent-corpus-samples@v1 bundle against its published schema (VHS-REQ-703.17)', () => {
+    const bundle = {
+      schema: VI_LATENT_CORPUS_SAMPLES_SCHEMA_ID,
+      repositoryRoot: '/repo',
+      baseHash: 'a',
+      selectedHash: 'b',
+      sampleViCount: 1,
+      entries: [{ relativePath: 'src/A.vi', sample: { schema: VI_LATENT_CORPUS_SAMPLE_SCHEMA_ID } }]
+    };
+    expect(validateViSemanticDocument(bundle)).toEqual({ valid: true, errors: [] });
   });
 
   it('validates a preview-comparison correlations bundle against its published schema (VHS-REQ-703.13)', () => {

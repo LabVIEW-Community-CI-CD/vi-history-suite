@@ -5155,6 +5155,19 @@ Missing numeric IDs are intentional.
     (`sourceIndex`, its ordinal in report order); adding that required key bumps
     the pixel-region correlation and correlations-bundle schemas to
     `@v2`.
+  - VHS-REQ-703.17: The VI semantic PR review emits, opt-in, a first-class
+    per-VI corpus-samples artifact — the production surface for the
+    corpus-sample builder — assembling a reproducible corpus sample for every
+    completed VI (including a no-difference true-negative) into the versioned
+    dependency-free vi-history-suite/vi-latent-corpus-samples@v1 bundle
+    (Draft-07 schema in the registry, advertised as an MCP resource). Each
+    sample records provenance (VI path, the review's base/head revision pair,
+    and observed runtime facts) and honest preview availability taken from the
+    wired preview-pair provider; the CLI writes it to the output directory only
+    when requested and the review has a completed VI, removing a stale bundle
+    otherwise. It threads no preview bytes, fabricates no geometry, adds no
+    inferred label, and ships no model — the closed-corpus data record the gated
+    ML research track (ADR-0027) depends on.
 - Agent Work Scope:
   - Keep the correlation builder pure, deterministic, and dependency-injected so
     it stays unit-testable without VS Code, a network, or a LabVIEW runtime; do
@@ -5190,6 +5203,8 @@ Missing numeric IDs are intentional.
   - `tests/unit/viPreviewRegionCorrelation.test.ts`
   - `tests/unit/viLatentCorpusSample.test.ts`
   - `tests/unit/viSemanticComparisonMcp.test.ts`
+  - `tests/unit/runViSemanticPrReview.test.ts`
+  - `tests/unit/viSemanticSchemas.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
 - Change Guidance:
   - Keep the correlation surface-level and deterministic until the

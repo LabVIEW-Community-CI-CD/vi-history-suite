@@ -1543,6 +1543,7 @@ describe('viSemanticComparisonMcp', () => {
         'vi-history-suite://schema/vi-preview-region-correlation@v2',
         'vi-history-suite://schema/vi-preview-region-correlations@v2',
         'vi-history-suite://schema/vi-latent-corpus-sample@v1',
+        'vi-history-suite://schema/vi-latent-corpus-samples@v1',
         'vi-history-suite://schema/vi-preview-region-correlation@v1',
         'vi-history-suite://schema/vi-preview-region-correlations@v1',
         'vi-history-suite://schema/index'

@@ -146,6 +146,22 @@ describe('buildViLatentCorpusSample (VHS-REQ-703.16)', () => {
     expect(matchingEntry?.id).toBe(assoc.id);
   });
 
+  it('takes preview availability from provider metadata when supplied (VHS-REQ-703.17)', () => {
+    const sample = buildViLatentCorpusSample({
+      provenance: PROVENANCE,
+      model: CHANGED_MODEL,
+      previewAvailability: {
+        base: { available: false },
+        head: { available: true, inlineImageCount: 3 }
+      }
+    });
+    // Provider metadata is the source of truth (no raw bytes threaded).
+    expect(sample.artifacts.basePreviewAvailable).toBe(false);
+    expect(sample.artifacts.headPreviewAvailable).toBe(true);
+    expect(sample.previewImageCounts).toEqual({ base: 0, head: 3 });
+    expect(validateViSemanticDocument(sample).valid).toBe(true);
+  });
+
   it('omits unobserved runtime facts rather than serializing undefined', () => {
     const sample = buildViLatentCorpusSample({
       provenance: {

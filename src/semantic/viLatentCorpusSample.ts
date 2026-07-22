@@ -57,8 +57,28 @@ export interface ViLatentCorpusSample {
   previewImageCounts: { base: number; head: number };
 }
 
+/**
+ * Honest preview availability supplied by the review's preview-pair provider
+ * (metadata only: whether a render is available and its inline-image count), so
+ * a corpus record can state preview availability truthfully WITHOUT threading the
+ * raw preview image bytes. When supplied it overrides the image-array-derived
+ * availability; when absent, availability falls back to whatever preview images
+ * (if any) were passed to the region-correlation bundle.
+ */
+export interface ViLatentCorpusPreviewAvailability {
+  base?: { available: boolean; inlineImageCount?: number };
+  head?: { available: boolean; inlineImageCount?: number };
+}
+
 export interface BuildViLatentCorpusSampleInput extends RegionCorrelationBundleInput {
   provenance: ViLatentCorpusProvenance;
+  /**
+   * Optional honest preview availability from the pair provider. When present it
+   * is the source of truth for `artifacts.*PreviewAvailable` and
+   * `previewImageCounts`; when absent, both are derived from the bundle's own
+   * image counts (current behavior).
+   */
+  previewAvailability?: ViLatentCorpusPreviewAvailability;
 }
 
 /**
@@ -81,19 +101,35 @@ export function buildViLatentCorpusSample(
     locate: input.locate
   });
 
+  const availability = input.previewAvailability;
+  // Provider metadata is the source of truth for preview availability when
+  // supplied (it reflects a real render/cache peek, even when raw bytes were not
+  // threaded). Otherwise fall back to what the bundle counted from any supplied
+  // preview images. Never fabricated: an absent/false provider entry stays false.
+  const basePreviewAvailable = availability
+    ? availability.base?.available === true
+    : bundle.previewImageCounts.base > 0;
+  const headPreviewAvailable = availability
+    ? availability.head?.available === true
+    : bundle.previewImageCounts.head > 0;
+  const previewImageCounts = availability
+    ? {
+        base: availability.base?.inlineImageCount ?? 0,
+        head: availability.head?.inlineImageCount ?? 0
+      }
+    : bundle.previewImageCounts;
+
   return {
     schema: VI_LATENT_CORPUS_SAMPLE_SCHEMA_ID,
     provenance: normalizeProvenance(input.provenance),
     artifacts: {
-      // Availability and counts are derived from the bundle's own image counts so
-      // they cannot drift from how the bundle interpreted the supplied previews.
-      basePreviewAvailable: bundle.previewImageCounts.base > 0,
-      headPreviewAvailable: bundle.previewImageCounts.head > 0,
+      basePreviewAvailable,
+      headPreviewAvailable,
       comparisonReportAvailable: true
     },
     correlation: bundle.correlation,
     imageAssociations: bundle.imageAssociations,
-    previewImageCounts: bundle.previewImageCounts
+    previewImageCounts
   };
 }
 

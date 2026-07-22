@@ -14,6 +14,7 @@ import {
   buildViSemanticPrReview,
   buildViPreviewComparisonCorrelationsArtifact,
   buildViPreviewRegionCorrelationsArtifact,
+  buildViLatentCorpusSamplesArtifact,
   createDefaultListChangedPaths,
   isViSourcePath,
   planReviewReportCopies,
@@ -720,5 +721,50 @@ describe('buildViPreviewRegionCorrelationsArtifact (VHS-REQ-703.14)', () => {
       deps(['src/A.vi'], { 'src/A.vi': completed(makeModel({ vi: { title: 'A.vi' } })) })
     );
     expect(buildViPreviewRegionCorrelationsArtifact(review)).toBeUndefined();
+  });
+});
+
+describe('buildViLatentCorpusSamplesArtifact (VHS-REQ-703.17)', () => {
+  it('collects a reproducible sample for every completed VI, including a no-difference one', async () => {
+    const changed = buildViSemanticComparisonModelFromHtml(
+      `<h1 class="report-title">R</h1>
+       <h2 class="section-header">Detailed Information</h2>
+       <details><summary class="difference-heading">3. Block Diagram objects</summary>
+         <ol><li class="diff-detail">SubVI "X.vi" - added at (1570,358)</li></ol></details>`,
+      {}
+    );
+    const review = await buildViSemanticPrReview(
+      { repositoryRoot: '/repo', baseHash: 'aaa', selectedHash: 'bbb' },
+      deps(['src/A.vi', 'src/B.vi'], {
+        'src/A.vi': completed(changed),
+        'src/B.vi': completed(makeModel({ vi: { title: 'B.vi' }, hasDifferences: false }))
+      })
+    );
+    const artifact = buildViLatentCorpusSamplesArtifact(review, { provider: 'docker', version: '2026q1' });
+    expect(artifact).toBeDefined();
+    expect(artifact?.schema).toBe('vi-history-suite/vi-latent-corpus-samples@v1');
+    // Both completed VIs are sampled — the no-difference VI is a true-negative label.
+    expect(artifact?.sampleViCount).toBe(2);
+    const first = artifact?.entries[0];
+    expect(first?.relativePath).toBe('src/A.vi');
+    expect(first?.sample.provenance).toMatchObject({
+      viPath: 'src/A.vi',
+      baseRevision: 'aaa',
+      headRevision: 'bbb',
+      runtime: { provider: 'docker', version: '2026q1' }
+    });
+    // The changed VI's region-correlation body carries the coordinate-bearing object.
+    expect(first?.sample.correlation.entries[0].id).toBe('X.vi');
+    // No preview provider was wired, so previews are honestly unavailable.
+    expect(first?.sample.artifacts.basePreviewAvailable).toBe(false);
+    expect(first?.sample.artifacts.headPreviewAvailable).toBe(false);
+  });
+
+  it('returns undefined when the review has no completed VI', async () => {
+    const review = await buildViSemanticPrReview(
+      { repositoryRoot: '/repo', baseHash: 'a', selectedHash: 'b' },
+      deps(['src/A.vi'], { 'src/A.vi': { status: 'failed', reason: 'runtime unavailable' } })
+    );
+    expect(buildViLatentCorpusSamplesArtifact(review)).toBeUndefined();
   });
 });
