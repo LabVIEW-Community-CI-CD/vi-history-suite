@@ -38,6 +38,9 @@ export interface MirrorActorEntry {
 }
 
 export interface MirrorLedger {
+  /** Self-describing envelope (Phase 1 writer contract); required at rest. */
+  readonly $schema?: string;
+  readonly schemaVersion?: number;
   readonly actors: Readonly<Record<string, MirrorActorEntry>>;
   readonly runs: readonly MirrorRunRow[];
 }
@@ -98,19 +101,41 @@ function assertLedger(ledger: unknown): asserts ledger is MirrorLedger {
   ) {
     throw new Error('Mirror ledger must have an object `actors` and an array `runs`.');
   }
-  // When the ledger carries the self-describing envelope, it MUST match the
-  // Phase 1 contract (same fail-closed posture as the writer / ML projection) so
-  // a drifted/wrong file cannot satisfy the required gate.
+  // The self-describing envelope is REQUIRED and MUST match the Phase 1 contract
+  // (same fail-closed posture as the writer / ML projection) so a drifted, wrong,
+  // or hand-edited file cannot satisfy the required gate.
   const envelope = ledger as { $schema?: unknown; schemaVersion?: unknown };
-  const hasEnvelope = envelope.$schema !== undefined || envelope.schemaVersion !== undefined;
   if (
-    hasEnvelope &&
-    (envelope.$schema !== MIRROR_BENCHMARK_SCHEMA_ID || envelope.schemaVersion !== MIRROR_BENCHMARK_SCHEMA_VERSION)
+    envelope.$schema !== MIRROR_BENCHMARK_SCHEMA_ID ||
+    envelope.schemaVersion !== MIRROR_BENCHMARK_SCHEMA_VERSION
   ) {
     throw new Error(
       `Mirror ledger has an unexpected envelope ($schema=${JSON.stringify(envelope.$schema)}, ` +
         `schemaVersion=${JSON.stringify(envelope.schemaVersion)}); expected ${MIRROR_BENCHMARK_SCHEMA_ID} v${MIRROR_BENCHMARK_SCHEMA_VERSION}.`
     );
+  }
+  // Validate every run row's identity fields fail-closed so a malformed row cannot
+  // be silently skipped (which could otherwise mask a channel and yield a spurious
+  // pass). The report digest of `ok` rows is additionally verified at use.
+  (ledger as MirrorLedger).runs.forEach((row, index) => assertRunRow(row, index));
+}
+
+/** Fail-closed validation of a single run row's structural + identity fields. */
+function assertRunRow(row: unknown, index: number): asserts row is MirrorRunRow {
+  if (!row || typeof row !== 'object' || Array.isArray(row)) {
+    throw new Error(`Mirror ledger run[${index}] must be an object.`);
+  }
+  const r = row as Record<string, unknown>;
+  for (const field of ['parityKey', 'actorRef', 'sourceRevision', 'mode', 'outcome', 'reportSha256'] as const) {
+    if (typeof r[field] !== 'string') {
+      throw new Error(`Mirror ledger run[${index}] field \`${field}\` must be a string.`);
+    }
+  }
+  if (!SHA256_HEX.test(r.parityKey as string)) {
+    throw new Error(`Mirror ledger run[${index}] parityKey must be a sha256 hex digest.`);
+  }
+  if (!SHA256_HEX.test(r.actorRef as string)) {
+    throw new Error(`Mirror ledger run[${index}] actorRef must be a sha256 hex digest.`);
   }
 }
 

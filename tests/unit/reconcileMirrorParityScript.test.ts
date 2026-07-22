@@ -15,9 +15,9 @@ import { reconcileMirrorParity } from '../../src/reporting/mirror/mirrorParityRe
 // 1 gate fail (or advisory under --strict), 2 usage/read error. Injects the real
 // pure reconciler so no compiled out/ is required.
 
-const LEFT = 'l'.repeat(64);
-const RIGHT = 'r'.repeat(64);
-const PK = 'p'.repeat(64);
+const LEFT = '1'.repeat(64);
+const RIGHT = '2'.repeat(64);
+const PK = '4'.repeat(64);
 const SHA_A = 'a'.repeat(64);
 const REV = 'rev1';
 
