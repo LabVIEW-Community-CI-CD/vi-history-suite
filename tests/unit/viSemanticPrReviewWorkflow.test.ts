@@ -78,6 +78,13 @@ describe('VI semantic PR review dispatch workflow (VHS-REQ-661)', () => {
     expect(workflow).toContain('base_tree_dir: ${{ inputs.base_tree_dir }}');
   });
 
+  it('forwards the emit_corpus_samples input to the reusable workflow (VHS-REQ-703.18)', () => {
+    const workflow = readDispatch();
+
+    expect(workflow).toMatch(/^\s{6}emit_corpus_samples:/m);
+    expect(workflow).toContain('emit_corpus_samples: ${{ inputs.emit_corpus_samples }}');
+  });
+
   it('never references vagrant (VHS-REQ-661.6)', () => {
     expect(readDispatch().toLowerCase()).not.toContain('vagrant');
   });
@@ -221,6 +228,19 @@ describe('VI semantic PR review reusable workflow (VHS-REQ-661)', () => {
     expect(workflow).toMatch(/^\s{6}base_tree_dir:/m);
     expect(workflow).toContain('BASE_TREE_DIR: ${{ inputs.base_tree_dir }}');
     expect(workflow).toContain('args+=(--base-tree-dir "$effective_base_tree")');
+  });
+
+  it('emits the corpus-samples artifact when the opt-in input is set (VHS-REQ-703.18)', () => {
+    const workflow = readCallable();
+
+    // Opt-in input, mapped to an env var, and appended to the CLI args array
+    // only when true. --out review-out is already unconditional above, and the
+    // written vi-latent-corpus-samples.json rides the review-out/** upload.
+    expect(workflow).toMatch(/^\s{6}emit_corpus_samples:/m);
+    expect(workflow).toContain('EMIT_CORPUS_SAMPLES: ${{ inputs.emit_corpus_samples }}');
+    expect(workflow).toContain('if [ "$EMIT_CORPUS_SAMPLES" = "true" ]; then args+=(--emit-corpus-samples); fi');
+    expect(workflow).toContain('--out review-out');
+    expect(workflow).toContain('path: review-out/**');
   });
 
   it('pins the tool checkout to the reusable workflow own SHA via the job context (VHS-REQ-661.7)', () => {

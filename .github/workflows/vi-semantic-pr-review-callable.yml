@@ -69,6 +69,11 @@ on:
         required: false
         default: ''
         type: string
+      emit_corpus_samples:
+        description: 'Emit the deterministic per-VI corpus-samples artifact (vi-latent-corpus-samples@v1, VHS-REQ-703.17) into the uploaded review artifact — the closed-corpus data record for the gated ML research track (ADR-0027). Deterministic post-processing of the review already built (no added render cost); rides the existing review-out upload. Off by default.'
+        required: false
+        default: false
+        type: boolean
     secrets:
       VI_REVIEW_TARGET_TOKEN:
         description: 'Token with pull-requests: write on the target repository. Posted cross-repo, so the workflow GITHUB_TOKEN is insufficient.'
@@ -296,6 +301,7 @@ jobs:
           CORRELATE_PREVIEWS: ${{ inputs.correlate_previews }}
           PREVIEW_CACHE_DIR: ${{ inputs.preview_cache_dir }}
           BASE_TREE_DIR: ${{ inputs.base_tree_dir }}
+          EMIT_CORPUS_SAMPLES: ${{ inputs.emit_corpus_samples }}
         run: |
           # The docker comparison bind-mounts its staging directory into the
           # LabVIEW container. snap-packaged Docker runs in a private mount
@@ -329,6 +335,12 @@ jobs:
           )
           if [ "$PUBLISH_IMAGES" = "true" ]; then args+=(--publish-images); fi
           if [ "$CREATE_COMMIT_STATUS" = "true" ]; then args+=(--commit-status); fi
+          # Optionally emit the per-VI corpus-samples artifact (VHS-REQ-703.17):
+          # a reproducible vi-latent-corpus-samples@v1 bundle written into
+          # review-out for the gated ML research corpus (ADR-0027). --out is
+          # already set above, and the file rides the review-out/** upload; this
+          # is deterministic post-processing with no added render cost.
+          if [ "$EMIT_CORPUS_SAMPLES" = "true" ]; then args+=(--emit-corpus-samples); fi
           # Optionally attach the deterministic preview⇄comparison correlation
           # (VHS-REQ-703) by peeking the preview cache. The peek is cache-only
           # (launches no runtime) and honest: a miss reports the preview as
