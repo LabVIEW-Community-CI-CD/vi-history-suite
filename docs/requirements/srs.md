@@ -5170,9 +5170,10 @@ Missing numeric IDs are intentional.
     ML research track (ADR-0027) depends on.
   - VHS-REQ-703.18: The reusable and dispatch VI semantic PR-review workflows
     expose an opt-in input that passes `--emit-corpus-samples` to the review CLI
-    so a CI run writes the vi-latent-corpus-samples@v1 bundle into the uploaded
-    review artifact (it rides the existing `review-out/**` artifact upload; the
-    output directory is already set). Off by default, and emission is deterministic
+    so a CI run writes the vi-history-suite/vi-latent-corpus-samples@v1 bundle
+    (the `vi-latent-corpus-samples.json` file) into the uploaded review artifact
+    (it rides the existing `review-out/**` artifact upload; the output directory
+    is already set). Off by default, and emission is deterministic
     post-processing of the review already built, so enabling it adds no LabVIEW
     render cost; the dispatch workflow forwards the input to the reusable one so
     both share a single source of truth.
