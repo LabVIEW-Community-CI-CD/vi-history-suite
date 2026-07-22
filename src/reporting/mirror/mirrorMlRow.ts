@@ -103,7 +103,7 @@ function assertRepoRelativeViPath(viPath: string): void {
   const pii =
     /^[A-Za-z]:\//.test(normalized) || // Windows drive-letter absolute
     normalized.startsWith('/') || // POSIX absolute
-    /(^|\/)(Users|home)\//i.test(normalized); // home-dir segment
+    /^(Users|home)\/[^/]/i.test(normalized); // home-anchored relative (leading segment only)
   if (pii) {
     throw new Error(
       `Mirror ML row sampleViPath "${viPath}" is not repository-relative (PII/absolute); refusing to export.`
@@ -198,10 +198,15 @@ export function computePerfParityVerdicts(rows: readonly MirrorMlRow[]): PerfPar
     const windowsPresent = windows.length > 0;
     const linuxPresent = linux.length > 0;
 
-    const okDigests = new Set(group.filter((r) => r.labelOutcome === 'ok').map((r) => r.labelReportSha256));
-    // Exactly one distinct digest among ok runs = agreement. Zero ok rows is
-    // "no successful evidence" (NOT parity); two or more is divergence.
-    const correctnessParity = okDigests.size === 1;
+    const windowsOkDigests = new Set(windows.filter((r) => r.labelOutcome === 'ok').map((r) => r.labelReportSha256));
+    const linuxOkDigests = new Set(linux.filter((r) => r.labelOutcome === 'ok').map((r) => r.labelReportSha256));
+    // Cross-OS correctness parity requires an `ok` observation on BOTH the
+    // Windows and Linux sides that agree on a single shared report digest. A
+    // single OS side succeeding (or an absent/blocked other side) is NOT
+    // agreement — it must never read an absent mirror as parity.
+    const crossOsOkDigests = new Set([...windowsOkDigests, ...linuxOkDigests]);
+    const correctnessParity =
+      windowsOkDigests.size >= 1 && linuxOkDigests.size >= 1 && crossOsOkDigests.size === 1;
 
     let perfDeltaPct: number | null = null;
     if (windowsPresent && linuxPresent) {
