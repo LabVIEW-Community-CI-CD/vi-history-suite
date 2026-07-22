@@ -139,6 +139,44 @@ describe('computePerfParityVerdicts (VHS-REQ-708.3)', () => {
     expect(verdict.linuxPresent).toBe(false);
     expect(verdict.perfDeltaPct).toBeNull();
   });
+
+  it('keeps perfDeltaPct null when an OS side has only null per-core timings (cpuLogical 0)', () => {
+    const l = ledger();
+    // Linux actor with cpuLogical 0 -> targetWallMsPerCore null -> no valid obs.
+    const mutated: MirrorMlLedger = {
+      actors: { ...l.actors, [LREF]: { ...l.actors[LREF], cpuLogical: 0 } },
+      runs: l.runs
+    };
+    const [verdict] = computePerfParityVerdicts(projectMirrorMlRows(mutated));
+    expect(verdict.windowsPresent).toBe(true);
+    expect(verdict.linuxPresent).toBe(true);
+    expect(verdict.perfDeltaPct).toBeNull();
+  });
+
+  it('does not report correctness parity when there are no successful (ok) runs', () => {
+    const l = ledger();
+    const noOk: MirrorMlLedger = {
+      actors: l.actors,
+      runs: l.runs.map((r) => ({ ...r, outcome: 'blocked' }))
+    };
+    const [verdict] = computePerfParityVerdicts(projectMirrorMlRows(noOk));
+    expect(verdict.correctnessParity).toBe(false);
+  });
+});
+
+describe('projectMirrorMlRows PII guard (VHS-REQ-708.2)', () => {
+  it('rejects an absolute / home-anchored sampleViPath (no PII in the corpus)', () => {
+    const l = ledger();
+    const abs = (viPath: string): MirrorMlLedger => ({
+      actors: l.actors,
+      runs: [{ ...l.runs[0], fixture: { ...l.runs[0].fixture, viPath } }]
+    });
+    expect(() => projectMirrorMlRows(abs('C:\\Users\\Alice\\repo\\sample.vi'))).toThrow(/not repository-relative/);
+    expect(() => projectMirrorMlRows(abs('/home/alice/repo/sample.vi'))).toThrow(/not repository-relative/);
+    expect(() => projectMirrorMlRows(abs('/abs/sample.vi'))).toThrow(/not repository-relative/);
+    // a normal repo-relative path is accepted
+    expect(projectMirrorMlRows(abs('resource/plugins/lv_icon.vi'))).toHaveLength(1);
+  });
 });
 
 describe('classifyOsAxis + schema id (VHS-REQ-708.1)', () => {
