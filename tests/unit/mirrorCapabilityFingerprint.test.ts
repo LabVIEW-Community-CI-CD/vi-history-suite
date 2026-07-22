@@ -85,17 +85,17 @@ describe('captureLocalCapabilityInputs (VHS-REQ-707.9)', () => {
     expect(fp.role).toBe('decoupled');
   });
 
-  it('falls back to unknown cpu model when no cpus reported', () => {
-    const inputs = captureLocalCapabilityInputs({
-      actor: 'x',
-      role: 'decoupled',
-      capturedFrom: 'host',
-      labviewBuild: '26.1.1f1',
-      labviewBitness: 'x64',
-      diskFreeBytes: 1024 * 1024 * 1024,
-      osDeps: { cpus: () => [], totalmem: () => 1024 * 1024 * 1024, platform: () => 'linux', release: () => '1' }
-    });
-    expect(inputs.cpuModel).toBe('unknown');
-    expect(inputs.cpuLogical).toBe(0);
+  it('fails closed when no cpus are reported (consistent with buildCapabilityFingerprint)', () => {
+    expect(() =>
+      captureLocalCapabilityInputs({
+        actor: 'x',
+        role: 'decoupled',
+        capturedFrom: 'host',
+        labviewBuild: '26.1.1f1',
+        labviewBitness: 'x64',
+        diskFreeBytes: 1024 * 1024 * 1024,
+        osDeps: { cpus: () => [], totalmem: () => 1024 * 1024 * 1024, platform: () => 'linux', release: () => '1' }
+      })
+    ).toThrow(/CPUs/);
   });
 });
