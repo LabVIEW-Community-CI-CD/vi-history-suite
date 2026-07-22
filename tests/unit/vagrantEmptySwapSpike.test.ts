@@ -85,6 +85,15 @@ describe('vagrantEmptySwapSpike.buildSpikeCaseGuestScript (VHS-REQ-706.2)', () =
     expect(script).toContain(`$env:WIN_VI_PATH = "${GUEST_VI_PATH}"`);
     expect(script).toContain(`$env:VIHS_WIN_REPO_ROOT = "${GUEST_WORKSPACE}"`);
   });
+
+  it('refuses a case value containing a PowerShell metacharacter (no unescaped interpolation)', () => {
+    expect(() =>
+      buildSpikeCaseGuestScript(PATHS, { label: 'x"; rm -rf /', base: 'a', selected: 'b', headless: true })
+    ).toThrow(/PowerShell metacharacter/);
+    expect(() =>
+      buildSpikeCaseGuestScript(PATHS, { label: 'ok', base: 'a$(evil)', selected: 'b', headless: true })
+    ).toThrow(/PowerShell metacharacter/);
+  });
 });
 
 describe('vagrantEmptySwapSpike.parseArgs (VHS-REQ-706.3)', () => {
