@@ -162,6 +162,25 @@ describe('buildViLatentCorpusSample (VHS-REQ-703.16)', () => {
     expect(validateViSemanticDocument(sample).valid).toBe(true);
   });
 
+  it('keeps preview image counts consistent with availability (VHS-REQ-703.17)', () => {
+    const sample = buildViLatentCorpusSample({
+      provenance: PROVENANCE,
+      model: CHANGED_MODEL,
+      previewAvailability: {
+        // Unavailable base: count clamped to 0 even if a stray count is present.
+        base: { available: false, inlineImageCount: 5 },
+        // Available head but the provider omitted the count: falls back to the
+        // bundle-derived count (0 here, since no preview images were threaded).
+        head: { available: true }
+      }
+    });
+    expect(sample.artifacts.basePreviewAvailable).toBe(false);
+    expect(sample.previewImageCounts.base).toBe(0);
+    expect(sample.artifacts.headPreviewAvailable).toBe(true);
+    expect(sample.previewImageCounts.head).toBe(0);
+    expect(validateViSemanticDocument(sample).valid).toBe(true);
+  });
+
   it('omits unobserved runtime facts rather than serializing undefined', () => {
     const sample = buildViLatentCorpusSample({
       provenance: {
