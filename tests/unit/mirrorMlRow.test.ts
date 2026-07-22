@@ -109,6 +109,15 @@ describe('projectMirrorMlRows (VHS-REQ-708.1, VHS-REQ-708.2)', () => {
     // @ts-expect-error deliberate bad ledger
     expect(() => projectMirrorMlRows({ actors: [], runs: [] })).toThrow(/actors/);
   });
+
+  it('fails closed on an unexpected run mode (not cold|warm)', () => {
+    const l = ledger();
+    const bad: MirrorMlLedger = {
+      actors: l.actors,
+      runs: [{ ...l.runs[0], mode: 'lukewarm' }]
+    };
+    expect(() => projectMirrorMlRows(bad)).toThrow(/mode/);
+  });
 });
 
 describe('computePerfParityVerdicts (VHS-REQ-708.3)', () => {
@@ -164,6 +173,19 @@ describe('computePerfParityVerdicts (VHS-REQ-708.3)', () => {
     const [verdict] = computePerfParityVerdicts(projectMirrorMlRows(noOk));
     expect(verdict.correctnessParity).toBe(false);
   });
+
+  it('excludes non-ok runs from the perf delta (ok-only semantics)', () => {
+    const l = ledger();
+    // Linux side present but its only run is blocked -> no ok observation -> null delta.
+    const mutated: MirrorMlLedger = {
+      actors: l.actors,
+      runs: [l.runs[0], { ...l.runs[1], outcome: 'blocked' }]
+    };
+    const [verdict] = computePerfParityVerdicts(projectMirrorMlRows(mutated));
+    expect(verdict.linuxPresent).toBe(true);
+    expect(verdict.perfDeltaPct).toBeNull();
+    expect(verdict.correctnessParity).toBe(false);
+  });
 });
 
 describe('projectMirrorMlRows PII guard (VHS-REQ-708.2)', () => {
@@ -176,6 +198,10 @@ describe('projectMirrorMlRows PII guard (VHS-REQ-708.2)', () => {
     expect(() => projectMirrorMlRows(abs('C:\\Users\\Alice\\repo\\sample.vi'))).toThrow(/not repository-relative/);
     expect(() => projectMirrorMlRows(abs('/home/alice/repo/sample.vi'))).toThrow(/not repository-relative/);
     expect(() => projectMirrorMlRows(abs('/abs/sample.vi'))).toThrow(/not repository-relative/);
+    // dot / traversal segments are rejected (leak layout, bypass home/Users heuristic)
+    expect(() => projectMirrorMlRows(abs('../home/alice/sample.vi'))).toThrow(/not repository-relative/);
+    expect(() => projectMirrorMlRows(abs('./src/file.vi'))).toThrow(/not repository-relative/);
+    expect(() => projectMirrorMlRows(abs('src/../../etc/x.vi'))).toThrow(/not repository-relative/);
     // a normal repo-relative path is accepted
     expect(projectMirrorMlRows(abs('resource/plugins/lv_icon.vi'))).toHaveLength(1);
     // a legit repo-relative path with a mid-path dir named 'home'/'Users' is accepted
