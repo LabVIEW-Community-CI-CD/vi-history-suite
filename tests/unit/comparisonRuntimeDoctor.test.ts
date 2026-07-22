@@ -536,6 +536,10 @@ describe('comparisonRuntimeDoctor next-action taxonomy and fact surfaces', () =>
     ['comparison-tool-not-found', 'install LabVIEWCLI, or set viHistorySuite.labviewCliPath'],
     ['windows-vi-server-tcp-disabled', 'enable VI Server in LabVIEW (Tools'],
     ['linux-vi-server-tcp-disabled', 'enable VI Server TCP/IP for the selected LabVIEW'],
+    [
+      'linux-vi-server-tcp-port-unknown',
+      'declare an explicit server.tcp.port in the selected LabVIEW labview.conf'
+    ],
     ['docker-only-provider-not-supported-on-platform', 'runtimeProvider to host on this platform'],
     ['docker-provider-not-supported-on-platform', 'runtimeProvider to host on this platform'],
     ['docker-only-requires-windows-x64-provider', 'use Docker with viHistorySuite.labviewBitness=x64'],
