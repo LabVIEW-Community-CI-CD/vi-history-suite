@@ -99,6 +99,11 @@ describe('buildEmptySwapEvidence versioned typed record (VHS-REQ-711.2)', () => 
     expect(evidence.differenceDetected).toBeNull();
     expect(evidence.verdict).toBe('incomplete');
     expect(evidence.error).toBeNull();
+    // The declared provider coordinate stays host/docker; the runtime-resolved
+    // provider is a separate outcome field that starts null (a run fills it in,
+    // and must never overwrite `provider`).
+    expect(evidence.provider).toBe('docker');
+    expect(evidence.resolvedRuntimeProvider).toBeNull();
   });
 
   it('carries the container image only for the docker provider', () => {

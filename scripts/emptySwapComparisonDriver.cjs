@@ -80,7 +80,7 @@ async function main() {
       linuxContainerImage: containerImage,
       requireVersionAndBitness: provider === 'host'
     });
-    evidence.provider = runtimeSelection.provider;
+    evidence.resolvedRuntimeProvider = runtimeSelection.provider;
     evidence.blockedReason = runtimeSelection.blockedReason ?? null;
     console.error(
       `[empty-swap] provider=${runtimeSelection.provider} engine=${runtimeSelection.engine} blocked=${runtimeSelection.blockedReason ?? 'none'}`

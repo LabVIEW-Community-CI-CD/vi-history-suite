@@ -120,6 +120,13 @@ export interface EmptySwapEvidence {
     selectedHash: string;
   };
   runtimeState: string | null;
+  /**
+   * The runtime provider the locator actually resolved (`host-native`,
+   * `linux-container`, `windows-container`, or `unavailable`), distinct from the
+   * declared `provider` (`host`/`docker`); null until a run resolves it. Recorded
+   * separately so the versioned `provider` coordinate stays the declared value.
+   */
+  resolvedRuntimeProvider: string | null;
   reportExists: boolean;
   reportSha256: string | null;
   differenceDetected: boolean | null;
@@ -158,6 +165,7 @@ export function buildEmptySwapEvidence(
       selectedHash: options.selectedHash
     },
     runtimeState: null,
+    resolvedRuntimeProvider: null,
     reportExists: false,
     reportSha256: null,
     differenceDetected: null,

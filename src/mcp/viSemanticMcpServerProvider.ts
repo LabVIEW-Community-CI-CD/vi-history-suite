@@ -130,15 +130,16 @@ export interface ViSemanticMcpServerDefinitionFields {
 
 /**
  * Maps the `viHistorySuite.semantics.provider` setting to the environment the
- * launched MCP server reads (`VIHS_SEMANTICS_PROVIDER`). Only the opt-in `lvkit`
- * value is forwarded; `labview` (the default) and any unrecognized value yield an
- * empty env so the server keeps its built-in LabVIEW default. Pure and
+ * launched MCP server reads (`VIHS_SEMANTICS_PROVIDER`). Always sets the variable
+ * explicitly — `lvkit` for the opt-in value, `labview` for the default or any
+ * unrecognized value — so the setting deterministically overrides any
+ * `VIHS_SEMANTICS_PROVIDER` already present in the host environment (an inherited
+ * `lvkit` must not leak through when the setting selects `labview`). Pure and
  * case-insensitive, mirroring `resolveSemanticCompareProvider` on the read side.
  */
 export function buildViSemanticMcpServerEnv(semanticsProvider?: string): Record<string, string> {
-  return (semanticsProvider ?? '').trim().toLowerCase() === 'lvkit'
-    ? { VIHS_SEMANTICS_PROVIDER: 'lvkit' }
-    : {};
+  const provider = (semanticsProvider ?? '').trim().toLowerCase() === 'lvkit' ? 'lvkit' : 'labview';
+  return { VIHS_SEMANTICS_PROVIDER: provider };
 }
 
 /**

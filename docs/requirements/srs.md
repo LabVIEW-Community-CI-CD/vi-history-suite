@@ -5653,9 +5653,11 @@ Missing numeric IDs are intentional.
     status, and a dependent check whose prerequisite is unmet is recorded as skip
     rather than a misleading pass; the engine fails closed on malformed probes.
   - The engine emits an overall worst-of status and a ready-to-compare boolean
-    that is true only when every critical check passes, so that advisory warnings
-    such as an unknown licensing state do not block readiness, and it names the
-    first actionable remediation as the next action.
+    that is true only when every critical check passes and no optional smoke probe
+    that was actually attempted has failed, so that advisory warnings such as an
+    unknown licensing state do not block readiness while a LabVIEWCLI-launch or
+    comparison-smoke probe that ran and failed does, and it names the first
+    actionable remediation as the next action.
   - A command-line entry point gathers the real probes through an injected docker
     boundary and renders the verdict as text, JSON, JSON Schema, or Markdown,
     exiting zero only when ready to compare and non-zero when a critical check
