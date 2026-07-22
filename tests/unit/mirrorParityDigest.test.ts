@@ -14,7 +14,6 @@ import {
 
 const baseParity = {
   version: '2026',
-  bitness: 'x64' as const,
   fixtureSha: 'a'.repeat(64),
   viPath: 'resource/plugins/lv_icon.vi',
   recipe: 'docker:createComparisonReport'
@@ -39,26 +38,34 @@ describe('deriveParityKey (VHS-REQ-707.7)', () => {
     );
   });
 
+  it('does NOT include bitness so x86 and x64 mirrors of the same sample group together', () => {
+    // The two tangled mirrors (Vagrant x86 / Docker x64) must share a parityKey so
+    // the reconciler can pair them; bitness is fingerprint metadata, not a group key.
+    const key = deriveParityKey(baseParity);
+    // @ts-expect-error bitness is no longer part of ParityKeyInput; ignored if passed.
+    expect(deriveParityKey({ ...baseParity, bitness: 'x86' })).toBe(key);
+  });
+
   it('changes when any identity dimension changes', () => {
     const key = deriveParityKey(baseParity);
-    expect(deriveParityKey({ ...baseParity, bitness: 'x86' })).not.toBe(key);
     expect(deriveParityKey({ ...baseParity, version: '2025' })).not.toBe(key);
     expect(deriveParityKey({ ...baseParity, recipe: 'host:createComparisonReport' })).not.toBe(key);
-    expect(deriveParityKey({ ...baseParity, viPath: 'other.vi' })).not.toBe(key);
+    expect(deriveParityKey({ ...baseParity, viPath: 'resource/other.vi' })).not.toBe(key);
+    expect(deriveParityKey({ ...baseParity, fixtureSha: 'b'.repeat(64) })).not.toBe(key);
   });
 
   it('does not collide when a delimiter-like value shifts between fields', () => {
-    // Newline join keeps "a\nb" | "c" distinct from "a" | "b\nc".
+    // JSON-array canonicalization keeps "a\nb" | "c" distinct from "a" | "b\nc".
     const left = deriveParityKey({ ...baseParity, viPath: 'a\nb', recipe: 'c' });
     const right = deriveParityKey({ ...baseParity, viPath: 'a', recipe: 'b\nc' });
     expect(left).not.toBe(right);
   });
 
-  it('fails closed on empty fields and bad bitness', () => {
+  it('fails closed on empty fields and a non-sha256 fixtureSha', () => {
     expect(() => deriveParityKey({ ...baseParity, version: '   ' })).toThrow(/version/);
     expect(() => deriveParityKey({ ...baseParity, recipe: '' })).toThrow(/recipe/);
-    // @ts-expect-error deliberate bad bitness
-    expect(() => deriveParityKey({ ...baseParity, bitness: 'x128' })).toThrow(/bitness/);
+    expect(() => deriveParityKey({ ...baseParity, fixtureSha: 'not-a-sha' })).toThrow(/fixtureSha/);
+    expect(() => deriveParityKey({ ...baseParity, fixtureSha: 'a'.repeat(63) })).toThrow(/fixtureSha/);
   });
 });
 

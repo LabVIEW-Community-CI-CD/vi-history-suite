@@ -5,6 +5,7 @@ import {
   buildSchema,
   emptyLedger,
   normalizeFingerprint,
+  deriveActorFingerprintId,
   parseArgs,
   resolveLedgerPath,
   serializeLedger,
@@ -32,10 +33,13 @@ const fingerprint = {
   labviewBitness: 'x64'
 };
 
+// actorRef MUST be the fingerprint's derived id (the writer verifies this).
+const actorRef = deriveActorFingerprintId(normalizeFingerprint(fingerprint));
+
 function record(overrides = {}) {
   return {
     parityKey: 'a'.repeat(64),
-    actorRef: 'b'.repeat(64),
+    actorRef,
     sourceRevision: 'deadbeef',
     viPath: 'resource/plugins/lv_icon.vi',
     fixtureSha: 'c'.repeat(64),
@@ -57,8 +61,21 @@ describe('applyMirrorBenchmarkRecord (VHS-REQ-707.8)', () => {
     expect(ledger.$schema).toBe(SCHEMA_ID);
     expect(ledger.schemaVersion).toBe(SCHEMA_VERSION);
     expect(ledger.runs).toHaveLength(1);
-    expect(Object.keys(ledger.actors)).toEqual(['b'.repeat(64)]);
+    expect(Object.keys(ledger.actors)).toEqual([actorRef]);
     expect(ledger.runs[0].fixture.viPath).toBe('resource/plugins/lv_icon.vi');
+  });
+
+  it('rejects an --actor-ref that does not match the fingerprint id', () => {
+    expect(() => applyMirrorBenchmarkRecord(emptyLedger(), record({ actorRef: 'e'.repeat(64) }))).toThrow(
+      /does not match the fingerprint/
+    );
+  });
+
+  it('fails closed on a present-but-malformed ledger (never resets it)', () => {
+    expect(() => applyMirrorBenchmarkRecord({ actors: [], runs: {} }, record())).toThrow(/malformed/);
+    expect(() => applyMirrorBenchmarkRecord({ runs: [] }, record())).toThrow(/malformed/);
+    // null/undefined = explicit no-file path, allowed.
+    expect(applyMirrorBenchmarkRecord(null, record()).changed).toBe(true);
   });
 
   it('is a no-op when the identical row is re-applied', () => {
@@ -178,7 +195,7 @@ describe('main CLI (VHS-REQ-707.8)', () => {
 
   const cliArgs = [
     '--parity-key', 'a'.repeat(64),
-    '--actor-ref', 'b'.repeat(64),
+    '--actor-ref', actorRef,
     '--source-revision', 'deadbeef',
     '--vi-path', 'resource/plugins/lv_icon.vi',
     '--fixture-sha', 'c'.repeat(64),
