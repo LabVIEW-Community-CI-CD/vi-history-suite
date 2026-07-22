@@ -7087,17 +7087,23 @@ Missing numeric IDs are intentional.
 - Acceptance Criteria:
   - VHS-REQ-706.1: The host wrapper runs a fixed case matrix — a known-good
     full→full control (which must succeed to prove the host-native runtime is
-    healthy), empty→rich, rich→empty (directional asymmetry), and an empty→rich
-    headless case (`LV_RTE_WIN_HOSTNATIVE_HEADLESS`) — declared from
-    maintainer-provided git-swap corpus revisions, in a stable order.
+    healthy), empty→rich, and rich→empty (directional asymmetry) — declared from
+    maintainer-provided git-swap corpus revisions, in a stable order. All cases
+    run host-native headless, because WinRM has no interactive desktop; this does
+    not weaken the experiment, since the observed blocker classification is gated
+    to the Linux runtime, so a Windows host-native headless run is a genuinely
+    different environment.
   - VHS-REQ-706.2: Each case's in-guest command forces the host-native x86
-    LabVIEW 2026 contract (never a container provider or x64), wires the per-case
-    base/selected revisions and headless flag, and runs the committed guest
-    driver with `node` (never `npm run`, which the guest execution policy blocks).
+    LabVIEW 2026 headless contract (never a container provider or x64), wires the
+    per-case base/selected revisions, and runs the committed guest driver with
+    `node` (never `npm run`, which the guest execution policy blocks).
   - VHS-REQ-706.3: The wrapper is dependency-injected at its process-run boundary
-    so the matrix orchestration is unit-testable without a hypervisor, supports a
-    `--skip-up` mode that assumes a running guest, and fails closed when the
-    corpus revisions are unset; the in-guest driver forces
+    so the matrix orchestration is unit-testable without a hypervisor; it
+    compiles `out/` on the host before bringing the guest up (the guest imports
+    `out/reporting/*` and cannot run `npm`), parses `--skip-up`/`--out` and fails
+    fast on a missing `--out` value or an unknown argument, fails closed when the
+    corpus revisions are unset, and fails closed (non-zero exit) when the
+    load-bearing control case does not succeed. The in-guest driver forces
     `requestedProvider: 'host'`, writes an append-only NDJSON progress log and a
     guest-local result JSON, and emits a `VIHS_SPIKE_RESULT_JSON` sentinel with
     the typed `{runtimeState, reportExists, diagnosticReason}` outcome.

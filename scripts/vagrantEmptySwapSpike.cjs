@@ -23,8 +23,17 @@
  *   1. control    full  -> full   (known-good pair; MUST succeed = runtime healthy)
  *   2. empty2rich empty -> rich    (the primary probe)
  *   3. rich2empty rich  -> empty   (directional-asymmetry probe)
- *   4. empty2rich-headless (LV_RTE_WIN_HOSTNATIVE_HEADLESS=1) — isolates whether
- *      headless-ness itself (independent of Linux) triggers Error 66
+ *
+ * All cases run host-native HEADLESS. WinRM has no interactive desktop, so an
+ * unwrapped LabVIEWCLI invocation fails with -350000 (docs/vagrant.md); only the
+ * headless prelaunch (LV_RTE_WIN_HOSTNATIVE_HEADLESS=1) works over `vagrant
+ * powershell`. That does NOT weaken the experiment: the blocker under test
+ * (`linux-headless-recursive-load`) is gated to the LINUX runtime, so a Windows
+ * host-native HEADLESS run is a genuinely different environment — success here
+ * still shows the blocker was Linux-specific, and an intrinsic asymmetry would
+ * still surface the platform-independent `labview-cli-call-by-reference` Error-66.
+ * A true interactive-desktop run would need a scheduled-task boundary and is out
+ * of scope for this automated lane.
  *
  * Usage:
  *   node scripts/vagrantEmptySwapSpike.cjs [--skip-up] [--out <dir>]
@@ -71,18 +80,19 @@ function defaultRun(command, args, options = {}) {
 
 /**
  * The spike case matrix. Each case names the git-swap base/head revisions of the
- * corpus path and whether it runs headless. `base`/`selected` are resolved from
- * the maintainer-provided env SHAs so the matrix stays declarative.
+ * corpus path. All cases run host-native HEADLESS (the only mode WinRM can drive;
+ * see the header), so `headless` is constant true — the environmental-vs-
+ * intrinsic question is answered by Windows-headless vs the Linux-headless
+ * recursive-load path, not by a headless/interactive axis.
  */
 function buildSpikeMatrix(env = process.env) {
   const control = { base: env.CONTROL_BASE || '', head: env.CONTROL_HEAD || '' };
   const empty = env.EMPTY_SHA || '';
   const rich = env.RICH_SHA || '';
   return [
-    { label: 'control-full-full', base: control.base, selected: control.head, headless: false },
-    { label: 'empty2rich', base: empty, selected: rich, headless: false },
-    { label: 'rich2empty', base: rich, selected: empty, headless: false },
-    { label: 'empty2rich-headless', base: empty, selected: rich, headless: true }
+    { label: 'control-full-full', base: control.base, selected: control.head, headless: true },
+    { label: 'empty2rich', base: empty, selected: rich, headless: true },
+    { label: 'rich2empty', base: rich, selected: empty, headless: true }
   ];
 }
 
@@ -105,8 +115,8 @@ function buildSpikeCaseGuestScript(paths, caseSpec) {
     `$env:CASE_LABEL = "${caseSpec.label}"`,
     `$env:WIN_BASE = "${caseSpec.base}"`,
     `$env:WIN_SELECTED = "${caseSpec.selected}"`,
-    // Toggle host-native headless per case so we can isolate headless-ness from
-    // the (Linux-only) recursive-load classification.
+    // Toggle host-native headless per case. All automated cases run headless
+    // (WinRM has no interactive desktop); the builder keeps the flag explicit.
     `$env:LV_RTE_WIN_HOSTNATIVE_HEADLESS = "${caseSpec.headless ? '1' : '0'}"`,
     `cd ${paths.workspace}`,
     // npm run is blocked by the guest execution policy; call node directly. out/
@@ -123,16 +133,25 @@ function parseArgs(argv) {
     if (arg === '--skip-up') {
       options.skipUp = true;
     } else if (arg === '--out') {
-      options.out = argv[i + 1];
+      const value = argv[i + 1];
+      if (value === undefined || value.startsWith('--')) {
+        return { options, error: '--out requires a directory value.' };
+      }
+      options.out = value;
       i += 1;
+    } else {
+      return { options, error: `Unknown argument: ${arg}` };
     }
   }
-  return options;
+  return { options };
 }
 
 function main(deps = {}) {
   const run = deps.run || defaultRun;
-  const options = parseArgs(process.argv.slice(2));
+  const { options, error } = parseArgs(process.argv.slice(2));
+  if (error) {
+    fail(error);
+  }
   const paths = {
     workspace: GUEST_WORKSPACE,
     corpusRepo: GUEST_CORPUS_REPO,
@@ -148,6 +167,16 @@ function main(deps = {}) {
     fail(
       `Missing corpus SHAs for case(s): ${missing.join(', ')}. Set CONTROL_BASE/CONTROL_HEAD/EMPTY_SHA/RICH_SHA to the git-swap revisions of ${GUEST_VI_PATH} in ${GUEST_CORPUS_REPO}.`
     );
+  }
+
+  // Build out/ on the HOST before vagrant up: out/ is gitignored, the guest
+  // driver imports out/reporting/* at module load, and `npm run` is blocked in
+  // the guest. Compiling here guarantees the guest exercises the reviewed
+  // primitives (not a missing or stale build); fail closed if it does not build.
+  log('Compiling out/ on the host (guest imports out/reporting/*; npm run is blocked in-guest)...');
+  const compile = run('npm', ['run', 'compile']);
+  if (compile.status !== 0) {
+    fail('Host compile failed; out/ would be missing or stale in the guest. Fix the build before running the spike.');
   }
 
   if (!options.skipUp) {
@@ -174,7 +203,19 @@ function main(deps = {}) {
   log('Spike matrix complete. Per-case result JSON + NDJSON progress are under the guest VIHS_WIN_OUT.');
   log('Interpret: control-full-full MUST succeed; then compare empty2rich {runtimeState,diagnosticReason}');
   log('to decide environmental (Linux-headless) vs intrinsic (labview-cli-call-by-reference) blocker; post to #2295.');
-  return outcomes;
+
+  // The control case is load-bearing: if full->full did not even succeed, the
+  // host-native runtime is not healthy and NO empty->rich outcome can be trusted.
+  // Fail closed so an unhealthy run is never mistaken for a valid experiment.
+  const control = outcomes.find((o) => o.label === 'control-full-full');
+  const controlHealthy = control !== undefined && control.status === 0;
+  if (!controlHealthy) {
+    process.stderr.write(
+      '[empty-swap-spike] ERROR: the control-full-full case did not succeed; the host-native runtime is not proven healthy and the empty->rich outcomes are NOT trustworthy. Investigate before interpreting.\n'
+    );
+    process.exitCode = 1;
+  }
+  return { outcomes, controlHealthy };
 }
 
 module.exports = {
