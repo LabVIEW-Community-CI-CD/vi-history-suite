@@ -123,7 +123,22 @@ export interface ViSemanticMcpServerDefinitionFields {
   readonly label: string;
   readonly command: string;
   readonly args: string[];
+  /** Environment overrides passed to the launched stdio server process. */
+  readonly env: Record<string, string>;
   readonly version?: string;
+}
+
+/**
+ * Maps the `viHistorySuite.semantics.provider` setting to the environment the
+ * launched MCP server reads (`VIHS_SEMANTICS_PROVIDER`). Only the opt-in `lvkit`
+ * value is forwarded; `labview` (the default) and any unrecognized value yield an
+ * empty env so the server keeps its built-in LabVIEW default. Pure and
+ * case-insensitive, mirroring `resolveSemanticCompareProvider` on the read side.
+ */
+export function buildViSemanticMcpServerEnv(semanticsProvider?: string): Record<string, string> {
+  return (semanticsProvider ?? '').trim().toLowerCase() === 'lvkit'
+    ? { VIHS_SEMANTICS_PROVIDER: 'lvkit' }
+    : {};
 }
 
 /**
@@ -135,11 +150,13 @@ export function buildViSemanticMcpServerDefinitionFields(options: {
   readonly execPath: string;
   readonly version?: string;
   readonly scriptPath?: string;
+  readonly semanticsProvider?: string;
 }): ViSemanticMcpServerDefinitionFields {
   return {
     label: VI_SEMANTIC_MCP_SERVER_LABEL,
     command: options.execPath,
     args: [options.scriptPath ?? resolveViSemanticMcpServerScriptPath(options.extensionPath)],
+    env: buildViSemanticMcpServerEnv(options.semanticsProvider),
     version: options.version
   };
 }
@@ -164,6 +181,9 @@ export function registerViSemanticMcpServerProvider(
     extensionPath: context.extensionPath,
     execPath: process.execPath,
     version: context.extension?.packageJSON?.version as string | undefined,
+    semanticsProvider: vscode.workspace
+      .getConfiguration('viHistorySuite')
+      .get<string>('semantics.provider'),
     scriptPath: resolveViSemanticMcpLaunch({
       extensionPath: context.extensionPath,
       globalStorageDir: context.globalStorageUri.fsPath,
@@ -180,7 +200,7 @@ export function registerViSemanticMcpServerProvider(
         fields.label,
         fields.command,
         fields.args,
-        {},
+        fields.env,
         fields.version
       )
     ]

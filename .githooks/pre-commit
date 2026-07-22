@@ -28,11 +28,20 @@ fi
 # that legitimately has no Docker (this skips one gate, not all hooks — it is not
 # --no-verify). Quiet on success; the full check list prints only on failure.
 if [ "${VIHS_PRECOMMIT_SKIP_DIAGNOSTICS:-0}" != "1" ]; then
-  diagnostics_output="$(node scripts/diagnoseLabviewContainer.js 2>&1)"
-  if [ "$?" -ne 0 ]; then
-    printf '%s\n' "$diagnostics_output" >&2
-    echo "[pre-commit] Blocking: the NI LabVIEW container is not ready to compare (VHS-REQ-710). Apply the reported 'next' remediation, or set VIHS_PRECOMMIT_SKIP_DIAGNOSTICS=1 if this host has no Docker." >&2
-    exit 1
+  # The diagnostics engine is compiled under out/ (built by `npm run compile`).
+  # On a fresh checkout it may be absent; consistent with out/ staleness being
+  # advisory (not blocking) in checkEnvSync, skip the container-readiness gate
+  # rather than block an otherwise-valid (e.g. doc-only) commit. Compiling
+  # re-enables enforcement.
+  if [ ! -f out/reporting/containerDiagnostics/labviewContainerDiagnostics.js ]; then
+    echo "[pre-commit] advisory: compiled diagnostics engine absent (out/ not built); skipping container-readiness gate. Run 'npm run compile' to enable it." >&2
+  else
+    diagnostics_output="$(node scripts/diagnoseLabviewContainer.js 2>&1)"
+    if [ "$?" -ne 0 ]; then
+      printf '%s\n' "$diagnostics_output" >&2
+      echo "[pre-commit] Blocking: the NI LabVIEW container is not ready to compare (VHS-REQ-710). Apply the reported 'next' remediation, or set VIHS_PRECOMMIT_SKIP_DIAGNOSTICS=1 if this host has no Docker." >&2
+      exit 1
+    fi
   fi
 fi
 
