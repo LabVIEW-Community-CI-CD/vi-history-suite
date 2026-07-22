@@ -100,13 +100,15 @@ function assertLedger(ledger: unknown): asserts ledger is MirrorMlLedger {
  */
 function assertRepoRelativeViPath(viPath: string): void {
   const normalized = viPath.replace(/\\/g, '/');
+  const segments = normalized.split('/');
   const pii =
     /^[A-Za-z]:\//.test(normalized) || // Windows drive-letter absolute
     normalized.startsWith('/') || // POSIX absolute
-    /^(Users|home)\/[^/]/i.test(normalized); // home-anchored relative (leading segment only)
+    /^(Users|home)\/[^/]/i.test(normalized) || // home-anchored relative (leading segment)
+    segments.some((seg) => seg === '.' || seg === '..'); // dot / traversal segment
   if (pii) {
     throw new Error(
-      `Mirror ML row sampleViPath "${viPath}" is not repository-relative (PII/absolute); refusing to export.`
+      `Mirror ML row sampleViPath "${viPath}" is not repository-relative (PII/absolute/traversal); refusing to export.`
     );
   }
 }
@@ -123,6 +125,9 @@ export function projectMirrorMlRows(ledger: MirrorMlLedger): MirrorMlRow[] {
       throw new Error(`Mirror ML row references unknown actorRef ${run.actorRef}.`);
     }
     assertRepoRelativeViPath(run.fixture.viPath);
+    if (run.mode !== 'cold' && run.mode !== 'warm') {
+      throw new Error(`Mirror ML row mode must be "cold" or "warm"; received "${run.mode}".`);
+    }
     const wallMsPerCore = fp.cpuLogical > 0 ? Number((run.wallMs / fp.cpuLogical).toFixed(3)) : null;
     return {
       runParityKey: run.parityKey,
@@ -210,8 +215,16 @@ export function computePerfParityVerdicts(rows: readonly MirrorMlRow[]): PerfPar
 
     let perfDeltaPct: number | null = null;
     if (windowsPresent && linuxPresent) {
-      const w = meanOrNull(windows.map((r) => r.targetWallMsPerCore).filter((x): x is number => x != null));
-      const l = meanOrNull(linux.map((r) => r.targetWallMsPerCore).filter((x): x is number => x != null));
+      // Only successful (ok) runs contribute to the perf delta — wallMs is
+      // recorded even for blocked/failed runs, so including them could fabricate
+      // a delta with no successful observation on a side (matches the
+      // correctness "successful runs" semantics).
+      const w = meanOrNull(
+        windows.filter((r) => r.labelOutcome === 'ok').map((r) => r.targetWallMsPerCore).filter((x): x is number => x != null)
+      );
+      const l = meanOrNull(
+        linux.filter((r) => r.labelOutcome === 'ok').map((r) => r.targetWallMsPerCore).filter((x): x is number => x != null)
+      );
       // Preserve null (uncomputable) when either side has no valid normalized
       // observation or the baseline is <= 0 — never substitute a false 0% delta.
       if (w !== null && l !== null) {
