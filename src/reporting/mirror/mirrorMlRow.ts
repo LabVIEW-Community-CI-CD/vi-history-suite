@@ -118,7 +118,10 @@ function assertLedger(ledger: unknown): asserts ledger is MirrorMlLedger {
  * only requires a non-empty `--vi-path`, so this is the export-time boundary.
  */
 function assertRepoRelativeViPath(viPath: string): void {
-  const normalized = viPath.replace(/\\/g, '/');
+  if (typeof viPath !== 'string' || viPath.trim().length === 0) {
+    throw new Error('Mirror ML row sampleViPath must be a non-empty string.');
+  }
+  const normalized = viPath.trim().replace(/\\/g, '/');
   const segments = normalized.split('/');
   const pii =
     /^[A-Za-z]:\//.test(normalized) || // Windows drive-letter absolute
