@@ -69,11 +69,13 @@ function fail(message) {
 }
 
 function defaultRun(command, args, options = {}) {
+  // Inherit the ambient env with GH_PAGER pinned; do NOT re-inject HOME, which
+  // would pass HOME="undefined" to child processes when it is unset on the host.
   return spawnSync(command, args, {
     stdio: 'inherit',
     encoding: 'utf8',
     cwd: options.cwd || repoRoot,
-    env: { ...process.env, GH_PAGER: 'cat', HOME: process.env.HOME },
+    env: { ...process.env, GH_PAGER: 'cat' },
     ...options
   });
 }
