@@ -105,6 +105,30 @@ function buildSpikeMatrix(env = process.env) {
  * committed guest driver (never a container provider) must not drift.
  */
 function buildSpikeCaseGuestScript(paths, caseSpec) {
+  // The values below are interpolated into a single PowerShell `-c` string with
+  // double quotes and no PS escaping, so reject any value containing a PowerShell
+  // metacharacter (`"`, backtick, `$`, `;`, newline) rather than emit a script
+  // that could break out of the quoting. All legitimate values here are fixed
+  // paths/labels or hex git SHAs, so this only trips on a mistyped/hostile input.
+  const unsafe = /["`$;\r\n]/;
+  const guarded = {
+    workspace: paths.workspace,
+    corpusRepo: paths.corpusRepo,
+    viPath: paths.viPath,
+    out: paths.out,
+    lvVersion: paths.lvVersion,
+    lvBitness: paths.lvBitness,
+    label: caseSpec.label,
+    base: caseSpec.base,
+    selected: caseSpec.selected
+  };
+  for (const [key, value] of Object.entries(guarded)) {
+    if (typeof value !== 'string' || unsafe.test(value)) {
+      throw new Error(
+        `Refusing to build the guest script: field "${key}" ("${String(value)}") contains a PowerShell metacharacter or is not a string.`
+      );
+    }
+  }
   const lines = [
     '$ErrorActionPreference = "Stop"',
     `$env:VIHS_WIN_REPO_ROOT = "${paths.workspace}"`,
