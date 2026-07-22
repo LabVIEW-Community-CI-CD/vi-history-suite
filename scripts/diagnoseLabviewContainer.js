@@ -70,8 +70,11 @@ const IN_CONTAINER_PROBE = [
   'engine=$(ls -d /usr/local/natinst/LabVIEW-*-64 2>/dev/null | head -1 || true)',
   'year=$(printf "%s" "$engine" | grep -oE "[0-9]{4}" | head -1 || true)',
   'lvcompare=$([ -d /usr/local/natinst/lvcompare ] && echo true || echo false)',
+  // Licensing state cannot be reliably determined from inside the container by a
+  // shell probe (NI License Manager presence does not imply activation), so it is
+  // honestly reported as "unknown"; the evaluator treats that as an advisory
+  // warning and still runs comparisons.
   'lic="unknown"',
-  'if [ -d /usr/local/natinst/nilm ] || [ -e /etc/natinst/nilm ]; then lic="unknown"; fi',
   'printf \'{"labviewCliPath":"%s","labviewEnginePath":"%s","labviewYear":"%s","lvcompare":%s,"licensing":"%s"}\\n\' "$labviewcli" "$engine" "$year" "$lvcompare" "$lic"'
 ].join('; ');
 

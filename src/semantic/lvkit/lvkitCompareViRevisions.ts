@@ -19,9 +19,17 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import { promisify } from 'node:util';
 
-import type { CompareViRevisionsInput, CompareViRevisionsResult } from '../compareViRevisions';
-import { isWorktreeRevision, normalizeRelativeGitPath } from '../../git/gitCli';
+import type {
+  CompareViRevisionsInput,
+  CompareViRevisionsResult,
+  CompareViRevisionsDeps
+} from '../compareViRevisions';
+import { isWorktreeRevision, normalizeRelativeGitPath, runGit } from '../../git/gitCli';
 import { validateRepositoryTarget } from '../repositoryTarget';
+import {
+  computeViComparisonModelCacheKey,
+  type ViComparisonModelCache
+} from '../viComparisonModelCache';
 import { runExecFileText, type ExecFileTextRunner } from '../../tooling/execFileText';
 import { parseLvkitDiffJson } from './lvkitDiffModel';
 import { buildViSemanticModelFromLvkitDiff } from './lvkitSemanticAdapter';
@@ -30,6 +38,18 @@ import { locateLvkit, type LvkitLocation } from './lvkitLocator';
 const DEFAULT_TIMEOUT_MS = 120_000;
 const DEFAULT_MAX_BUFFER_BYTES = 64 * 1024 * 1024;
 const GIT_BLOB_MAX_BUFFER_BYTES = 256 * 1024 * 1024;
+
+// Cache-key discriminator that namespaces lvkit-produced models away from the
+// LabVIEW-backed provider's (`diff`/`print`) keys. Both providers share one
+// content-addressed cache directory, so without a distinct discriminator a model
+// produced by one backend could be served for the other on an identical VI +
+// revision pair. lvkit always performs a diff, so the provider name alone is the
+// right discriminator.
+const LVKIT_CACHE_DISCRIMINATOR = 'lvkit';
+
+// SHA-1 object-id shape (matching the LabVIEW-backed provider), so a resolved
+// content signature is only used as a cache key when git returns a real commit id.
+const GIT_OID_PATTERN = /^[0-9a-f]{40}$/i;
 
 const execFileBuffer = promisify(execFile);
 
@@ -75,16 +95,41 @@ function safeSlice(text: string, max = 500): string {
 }
 
 /**
- * VHS-REQ-712.5: build a `compareViRevisions`-shaped function backed by lvkit.
- * The returned function ignores the LabVIEW-oriented `CompareViRevisionsDeps`
- * (its collaborators are lvkit's own, injected here) and always yields a typed
- * `CompareViRevisionsResult`: `blocked-runtime` when lvkit is absent,
- * `blocked-preflight` when a revision cannot be read, `failed` when lvkit errors
- * or emits unparsable output, and `completed` with the shared model on success.
+ * Resolves a revision's commit object id as its content signature (the full
+ * tree/dependency context of that side), mirroring the LabVIEW-backed provider.
+ * Returns undefined when the revision has no commit id (e.g. the WORKTREE
+ * sentinel) so the caller skips caching rather than keying on a non-reproducible
+ * working-tree read. Never throws: a git failure disables caching, never a
+ * comparison.
+ */
+async function defaultResolveContentSignature(
+  repositoryRoot: string,
+  _relativePath: string,
+  revision: string
+): Promise<string | undefined> {
+  try {
+    const output = await runGit(['rev-parse', `${revision}^{commit}`], repositoryRoot, 'utf8');
+    const signature = String(output).trim();
+    return GIT_OID_PATTERN.test(signature) ? signature : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * VHS-REQ-712.5 / VHS-REQ-712.6: build a `compareViRevisions`-shaped function
+ * backed by lvkit. Its lvkit collaborators (locate/exec/blob-read/temp-dir) are
+ * injected here; the per-call `CompareViRevisionsDeps` is honored only for the
+ * shared content-addressed comparison-model cache (VHS-REQ-662.8), so
+ * `compare_vi_revisions` caches identically regardless of backend. The result is
+ * always a typed `CompareViRevisionsResult`: `blocked-runtime` when lvkit is
+ * absent, `blocked-preflight` when a revision cannot be read, `failed` when lvkit
+ * errors or emits unparsable output, and `completed` (with the shared model,
+ * from the cache on a hit) on success.
  */
 export function createLvkitCompareViRevisions(
   lvkitDeps: LvkitCompareDeps = {}
-): (input: CompareViRevisionsInput) => Promise<CompareViRevisionsResult> {
+): (input: CompareViRevisionsInput, deps?: CompareViRevisionsDeps) => Promise<CompareViRevisionsResult> {
   const locate = lvkitDeps.locate ?? locateLvkit;
   const readRevisionBlob = lvkitDeps.readRevisionBlob ?? defaultReadRevisionBlob;
   const makeTempDir =
@@ -95,7 +140,8 @@ export function createLvkitCompareViRevisions(
   const maxBufferBytes = lvkitDeps.maxBufferBytes ?? DEFAULT_MAX_BUFFER_BYTES;
 
   return async function lvkitCompareViRevisions(
-    input: CompareViRevisionsInput
+    input: CompareViRevisionsInput,
+    compareDeps: CompareViRevisionsDeps = {}
   ): Promise<CompareViRevisionsResult> {
     // Enforce the same repository-boundary guard as the LabVIEW-backed provider
     // so an escaping relativePath (e.g. `../outside.vi`, notably with the WORKTREE
@@ -111,6 +157,47 @@ export function createLvkitCompareViRevisions(
         status: 'blocked-preflight',
         reason: `invalid-repository-target: ${error instanceof Error ? error.message : String(error)}`
       };
+    }
+
+    // VHS-REQ-712.6: participate in the shared content-addressed comparison-model
+    // cache (VHS-REQ-662.8), like the LabVIEW-backed provider. Resolve each side's
+    // commit signature; on a hit reuse the stored model and skip lvkit entirely; a
+    // fresh success is stored below. The key is provider-namespaced so it can never
+    // collide with a LabVIEW-produced model in the shared cache directory. Engaged
+    // only when a cache is injected and both signatures resolve (never for a
+    // working-tree read, which has no reproducible commit id).
+    const comparisonModelCache: ViComparisonModelCache | undefined = compareDeps.comparisonModelCache;
+    const resolveContentSignature =
+      compareDeps.resolveContentSignature ?? defaultResolveContentSignature;
+    let cacheKey: string | undefined;
+    if (comparisonModelCache) {
+      const [baseSignature, selectedSignature] = await Promise.all([
+        resolveContentSignature(target.repositoryRoot, target.relativePath, input.baseHash),
+        resolveContentSignature(target.repositoryRoot, target.relativePath, input.selectedHash)
+      ]);
+      if (baseSignature !== undefined && selectedSignature !== undefined) {
+        cacheKey = computeViComparisonModelCacheKey(
+          target.relativePath,
+          baseSignature,
+          selectedSignature,
+          LVKIT_CACHE_DISCRIMINATOR
+        );
+        const cachedModel = await comparisonModelCache.get(cacheKey);
+        if (cachedModel) {
+          return {
+            status: 'completed',
+            hasDifferences: cachedModel.hasDifferences,
+            // Rehydrate the caller's revision identifiers so the returned model
+            // reflects this request, not the run that populated the cache (the key
+            // already pins the resolved commit context of both sides).
+            model: {
+              ...cachedModel,
+              revisions: { baseHash: input.baseHash, selectedHash: input.selectedHash }
+            },
+            runtime: { provider: 'cache', state: 'cached', reportFilePath: '' }
+          };
+        }
+      }
     }
 
     const location = locate({ env });
@@ -184,6 +271,13 @@ export function createLvkitCompareViRevisions(
         secondViPath: selectedPath,
         revisions: { baseHash: input.baseHash, selectedHash: input.selectedHash }
       });
+
+      // VHS-REQ-712.6: store the fresh model under the provider-namespaced key so
+      // the next identical request is a cache hit. Only when a signature-derived
+      // key resolved above; the cache set is best-effort and never fails a compare.
+      if (cacheKey !== undefined && comparisonModelCache) {
+        await comparisonModelCache.set(cacheKey, model);
+      }
 
       return {
         status: 'completed',

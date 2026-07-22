@@ -4982,6 +4982,14 @@ Missing numeric IDs are intentional.
     lvkit is absent or a revision cannot be read, failed when lvkit errors or
     emits unparsable output, and completed with the shared semantic model on
     success — always removing its temporary files.
+  - The lvkit compare provider participates in the shared content-addressed
+    comparison-model cache (VHS-REQ-662.8) it is handed, resolving each side's
+    commit signature to reuse a stored model on a hit (skipping the lvkit run)
+    and to store a fresh model on success, under a provider-namespaced cache key
+    that can never collide with a LabVIEW-produced model in the shared cache
+    directory, and caching engages only when a cache is supplied and both
+    signatures resolve so a working-tree comparison (no reproducible commit id)
+    is never cached.
 - Agent Work Scope:
   - Keep the parser and adapter pure and dependency-free so the semantic contract
     is unit tested without lvkit, LabVIEW, or Python; a maintainer `.cjs` driver

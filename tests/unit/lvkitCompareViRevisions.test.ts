@@ -9,6 +9,8 @@ import {
   buildViSemanticMcpServerDepsForEnv,
   createDefaultComparisonModelCache
 } from '../../src/mcp/viSemanticMcpServerDeps';
+import { computeViComparisonModelCacheKey } from '../../src/semantic/viComparisonModelCache';
+import type { ViSemanticComparisonModel } from '../../src/semantic/viSemanticModel';
 import type { LvkitLocation } from '../../src/semantic/lvkit/lvkitLocator';
 
 const INPUT = {
@@ -246,5 +248,104 @@ describe('createLvkitCompareViRevisions default blob readers (VHS-REQ-712.5)', (
     if (result.status === 'failed') {
       expect(result.reason).toContain('\u2026');
     }
+  });
+});
+
+describe('lvkit compare cache participation (VHS-REQ-712.6)', () => {
+  const BASE_SIG = 'a'.repeat(40);
+  const SELECTED_SIG = 'b'.repeat(40);
+
+  function fakeCache() {
+    const store = new Map<string, ViSemanticComparisonModel>();
+    return {
+      store,
+      get: vi.fn(async (key: string) => store.get(key)),
+      set: vi.fn(async (key: string, model: ViSemanticComparisonModel) => {
+        store.set(key, model);
+      })
+    };
+  }
+
+  function sigResolver() {
+    return vi.fn(async (_root: string, _relativePath: string, revision: string) =>
+      revision === INPUT.baseHash
+        ? BASE_SIG
+        : revision === INPUT.selectedHash
+          ? SELECTED_SIG
+          : undefined
+    );
+  }
+
+  it('runs lvkit on a miss and stores the fresh model under a provider-namespaced key', async () => {
+    const cache = fakeCache();
+    const resolveContentSignature = sigResolver();
+    const execFileAsync = vi.fn(async () => ({ stdout: DIFF_JSON, stderr: '' }));
+    const compare = createLvkitCompareViRevisions(baseDeps({ execFileAsync }) as never);
+    const result = await compare(INPUT, { comparisonModelCache: cache, resolveContentSignature } as never);
+    expect(result.status).toBe('completed');
+    // lvkit actually ran (a real miss), then the model was stored.
+    expect(execFileAsync).toHaveBeenCalledTimes(1);
+    const expectedKey = computeViComparisonModelCacheKey(INPUT.relativePath, BASE_SIG, SELECTED_SIG, 'lvkit');
+    expect(cache.get).toHaveBeenCalledWith(expectedKey);
+    expect(cache.set).toHaveBeenCalledTimes(1);
+    expect(cache.set.mock.calls[0][0]).toBe(expectedKey);
+  });
+
+  it('returns the cached model on a hit and never launches lvkit again', async () => {
+    const cache = fakeCache();
+    const resolveContentSignature = sigResolver();
+    const execFileAsync = vi.fn(async () => ({ stdout: DIFF_JSON, stderr: '' }));
+    const locate = vi.fn(() => AVAILABLE);
+    const compare = createLvkitCompareViRevisions(baseDeps({ execFileAsync, locate }) as never);
+    // First run populates the cache.
+    await compare(INPUT, { comparisonModelCache: cache, resolveContentSignature } as never);
+    expect(execFileAsync).toHaveBeenCalledTimes(1);
+    // Second identical run must be a hit: lvkit is neither located nor run.
+    execFileAsync.mockClear();
+    locate.mockClear();
+    const second = await compare(INPUT, { comparisonModelCache: cache, resolveContentSignature } as never);
+    expect(second.status).toBe('completed');
+    expect(execFileAsync).not.toHaveBeenCalled();
+    expect(locate).not.toHaveBeenCalled();
+    if (second.status === 'completed') {
+      expect(second.runtime).toMatchObject({ provider: 'cache', state: 'cached' });
+      // The caller's revision identifiers are rehydrated onto the stored model.
+      expect(second.model.revisions).toEqual({
+        baseHash: INPUT.baseHash,
+        selectedHash: INPUT.selectedHash
+      });
+    }
+  });
+
+  it('keys lvkit models distinctly from the LabVIEW report type so they never collide', async () => {
+    const cache = fakeCache();
+    const resolveContentSignature = sigResolver();
+    const compare = createLvkitCompareViRevisions(baseDeps() as never);
+    await compare(INPUT, { comparisonModelCache: cache, resolveContentSignature } as never);
+    const lvkitKey = computeViComparisonModelCacheKey(INPUT.relativePath, BASE_SIG, SELECTED_SIG, 'lvkit');
+    const labviewDiffKey = computeViComparisonModelCacheKey(INPUT.relativePath, BASE_SIG, SELECTED_SIG, 'diff');
+    expect(lvkitKey).not.toBe(labviewDiffKey);
+    expect(cache.set.mock.calls[0][0]).toBe(lvkitKey);
+  });
+
+  it('skips caching (no get/set) when a content signature cannot be resolved', async () => {
+    const cache = fakeCache();
+    // A working-tree-style read: the selected side has no reproducible commit id.
+    const resolveContentSignature = vi.fn(async (_root: string, _relativePath: string, revision: string) =>
+      revision === INPUT.baseHash ? BASE_SIG : undefined
+    );
+    const execFileAsync = vi.fn(async () => ({ stdout: DIFF_JSON, stderr: '' }));
+    const compare = createLvkitCompareViRevisions(baseDeps({ execFileAsync }) as never);
+    const result = await compare(INPUT, { comparisonModelCache: cache, resolveContentSignature } as never);
+    expect(result.status).toBe('completed');
+    expect(execFileAsync).toHaveBeenCalledTimes(1);
+    expect(cache.get).not.toHaveBeenCalled();
+    expect(cache.set).not.toHaveBeenCalled();
+  });
+
+  it('does not consult a cache when none is supplied (default behavior unchanged)', async () => {
+    const compare = createLvkitCompareViRevisions(baseDeps() as never);
+    const result = await compare(INPUT);
+    expect(result.status).toBe('completed');
   });
 });
