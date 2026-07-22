@@ -21,7 +21,7 @@
 //
 // Because WinRM buffers stdout until exit, this driver writes an append-only
 // NDJSON progress log and writes its result JSON guest-local (avoids a stale
-// synced-folder read). Not shipped, not in npm test; supporting VHS-REQ-703 / #2295.
+// synced-folder read). Not shipped, not in npm test; mapped to VHS-REQ-706 / #2295.
 const path = require('node:path');
 const fs = require('node:fs');
 const { createProgressLog } = require(path.join(__dirname, 'lib', 'guestProgress.cjs'));
