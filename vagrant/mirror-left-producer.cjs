@@ -99,13 +99,27 @@ function loadFingerprint() {
     return capability.buildCapabilityFingerprint(inputs);
   }
   // Host-native fallback: capture from this host's own os.* (the from-within
-  // context for the decoupled Linux actor). diskFreeBytes probed via statfs.
+  // Free disk (bytes) for the fingerprint. An explicit VIHS_L_DISK_FREE_BYTES
+  // override wins (for platforms where fs.statfsSync is unsupported); otherwise
+  // probe statfs. FAIL CLOSED if neither is available — a silent placeholder
+  // (e.g. 1 byte -> diskFreeGb 0.0) would fork the actorRef and mis-attribute the
+  // ledger row to a different actor identity.
   let diskFreeBytes;
-  try {
-    const st = fs.statfsSync(repoRoot);
-    diskFreeBytes = st.bavail * st.bsize;
-  } catch {
-    diskFreeBytes = 1;
+  if (env.VIHS_L_DISK_FREE_BYTES !== undefined) {
+    diskFreeBytes = Number(env.VIHS_L_DISK_FREE_BYTES);
+    if (!Number.isFinite(diskFreeBytes) || diskFreeBytes <= 0) {
+      throw new Error(`VIHS_L_DISK_FREE_BYTES must be a positive number; received "${env.VIHS_L_DISK_FREE_BYTES}".`);
+    }
+  } else {
+    try {
+      const st = fs.statfsSync(repoRoot);
+      diskFreeBytes = st.bavail * st.bsize;
+    } catch (error) {
+      throw new Error(
+        `Could not determine free disk via fs.statfsSync (${error && error.message ? error.message : error}); ` +
+          `set VIHS_L_DISK_FREE_BYTES to a from-within value.`
+      );
+    }
   }
   const inputs = capability.captureLocalCapabilityInputs({
     actor,
