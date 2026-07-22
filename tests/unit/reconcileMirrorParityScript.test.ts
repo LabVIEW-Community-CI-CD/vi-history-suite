@@ -102,6 +102,28 @@ describe('reconcileMirrorParity CLI (VHS-REQ-707.11)', () => {
     expect(main(['--schema'], deps)).toBe(0);
     expect(out.join('')).toContain(SCHEMA_ID);
   });
+
+  it('exits 2 with a compile remedy when the reconciler cannot be loaded', () => {
+    // No injected reconcile + a cwd with no compiled out/ -> require() throws;
+    // the CLI must fail closed (exit 2), not crash with a stack trace.
+    const cwd = path.resolve('no-compiled-out-here');
+    const store: Record<string, string> = {
+      [path.join(cwd, 'docs/requirements/mirror-benchmark-ledger.json')]: ledgerJson([okRun(LEFT), okRun(RIGHT)])
+    };
+    const err: string[] = [];
+    const deps = {
+      cwd,
+      stdout: { write: () => {} },
+      stderr: { write: (s: string) => err.push(s) },
+      readFile: (p: string) => {
+        if (!(p in store)) throw new Error(`ENOENT ${p}`);
+        return store[p];
+      }
+      // no `reconcile` -> forces the require() path
+    };
+    expect(main(['--queued-revision', REV], deps)).toBe(2);
+    expect(err.join('')).toMatch(/npm run compile/);
+  });
 });
 
 describe('reconcileMirrorParity CLI helpers (VHS-REQ-707.11)', () => {
