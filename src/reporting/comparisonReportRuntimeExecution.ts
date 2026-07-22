@@ -2102,15 +2102,16 @@ export async function resolveLinuxLabviewTcpSettings(
 
     if (!portMatch) {
       // VHS-REQ-156: VI Server TCP is enabled but no explicit server.tcp.port
-      // is declared. Rather than fabricate a default port (which produces a
-      // second, divergent LabVIEWCLI attach path that recursive-loads), fail
-      // closed with an actionable reason so the port always comes from disk.
+      // is declared. Rather than fabricate a default port (the fabricated 3363
+      // produced a divergent LabVIEWCLI attach path that recursive-loads on
+      // Linux host-native LabVIEW 2026), fail closed as a policy so -PortNumber
+      // is only ever supplied from a value read on disk.
       return {
         labviewIniPath: candidate,
         viServerTcpEnabled: true,
         inspectedCandidatePaths: candidates,
         notes: [
-          `Linux LabVIEW config at ${candidate} enables VI Server TCP (server.tcp.enabled=True) but does not declare server.tcp.port. The runtime fails closed instead of assuming a port; set an explicit server.tcp.port in labview.conf so LabVIEWCLI attaches to the correct VI Server port.`
+          `Linux LabVIEW config at ${candidate} enables VI Server TCP (server.tcp.enabled=True) but does not declare server.tcp.port. The runtime fails closed as a policy rather than assume a port; set an explicit server.tcp.port in labview.conf so the runtime can deterministically supply -PortNumber.`
         ]
       };
     }
@@ -2152,9 +2153,10 @@ function preflightLinuxHostRuntimeSurface(
 
   if (linuxLabviewTcpSettings.viServerTcpEnabled === true) {
     // VHS-REQ-156: VI Server TCP is enabled but the port could not be read
-    // from labview.conf. Fail closed rather than launch LabVIEWCLI without an
-    // explicit -PortNumber (or with a fabricated default), which recursive-
-    // loads on Linux host-native LabVIEW 2026.
+    // from labview.conf. Fail closed as a policy rather than fabricate a
+    // default -PortNumber (the fabricated 3363 recursive-loads on Linux
+    // host-native LabVIEW 2026), so the runtime only supplies -PortNumber
+    // from a value read on disk and never guesses a divergent attach path.
     if (linuxLabviewTcpSettings.labviewTcpPort === undefined) {
       return {
         blockedExecution: {
