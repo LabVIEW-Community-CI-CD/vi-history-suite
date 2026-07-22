@@ -138,6 +138,8 @@ describe('computePerfParityVerdicts (VHS-REQ-708.3)', () => {
     expect(verdict.windowsPresent).toBe(true);
     expect(verdict.linuxPresent).toBe(false);
     expect(verdict.perfDeltaPct).toBeNull();
+    // A single OS side succeeding must NOT read as cross-OS agreement.
+    expect(verdict.correctnessParity).toBe(false);
   });
 
   it('keeps perfDeltaPct null when an OS side has only null per-core timings (cpuLogical 0)', () => {
@@ -176,6 +178,9 @@ describe('projectMirrorMlRows PII guard (VHS-REQ-708.2)', () => {
     expect(() => projectMirrorMlRows(abs('/abs/sample.vi'))).toThrow(/not repository-relative/);
     // a normal repo-relative path is accepted
     expect(projectMirrorMlRows(abs('resource/plugins/lv_icon.vi'))).toHaveLength(1);
+    // a legit repo-relative path with a mid-path dir named 'home'/'Users' is accepted
+    expect(projectMirrorMlRows(abs('src/home/widget.vi'))).toHaveLength(1);
+    expect(projectMirrorMlRows(abs('lib/Users/panel.vi'))).toHaveLength(1);
   });
 });
 
