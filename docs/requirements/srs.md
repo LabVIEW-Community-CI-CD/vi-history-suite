@@ -5486,6 +5486,13 @@ Missing numeric IDs are intentional.
     comparison on an already-authored VI through the shipped runtime, computes the
     parity digests, and records an idempotent ledger row with its from-within
     fingerprint; it never authors `.vi` binaries and performs no live image pull.
+  - A deterministic parity reconciler reads the committed ledger and, per
+    `parityKey`, decides whether the mirrors agree: all present actors that
+    completed successfully must produce the same `reportSha256`. The reconciler is
+    a data-at-rest read (never a live image pull); the Vagrant left channel bound
+    to the queued revision is the hard precondition, and right-channel parity is
+    enforced only when a fresh right-channel record for that revision exists,
+    otherwise it is advisory so an outage cannot block the queue.
 - Agent Work Scope:
   - Change the ADR, this requirement, and the governance contract test together;
     keep the required gate deterministic and never make a live image pull the
@@ -5495,12 +5502,16 @@ Missing numeric IDs are intentional.
   - `docs/architecture/adr/ADR-0028-mirror-mode-dual-real-runtime-validation.md`
   - `src/reporting/mirror/mirrorParityDigest.ts`
   - `src/reporting/mirror/mirrorCapabilityFingerprint.ts`
+  - `src/reporting/mirror/mirrorParityReconciler.ts`
   - `scripts/recordMirrorBenchmark.js`
+  - `scripts/reconcileMirrorParity.js`
 - Verification References:
   - `tests/unit/mirrorModeGovernance.test.ts`
   - `tests/unit/mirrorParityDigest.test.ts`
   - `tests/unit/mirrorCapabilityFingerprint.test.ts`
   - `tests/unit/mirrorLeftProducer.test.ts`
+  - `tests/unit/mirrorParityReconciler.test.ts`
+  - `tests/unit/reconcileMirrorParityScript.test.ts`
   - `tests/unit/recordMirrorBenchmarkScript.test.ts`
 - Change Guidance:
   - This is a governance-foundation requirement: keep the documented invariants
