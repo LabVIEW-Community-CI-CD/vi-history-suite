@@ -50,6 +50,11 @@ describe('buildCapabilityFingerprint (VHS-REQ-707.9)', () => {
     expect(deriveActorFingerprintId(bigger)).not.toBe(a);
   });
 
+  it('accepts diskFreeBytes=0 (full disk) — no stricter than the ledger schema', () => {
+    const fp = buildCapabilityFingerprint({ ...guestInputs, diskFreeBytes: 0 });
+    expect(fp.diskFreeGb).toBe(0);
+  });
+
   it('fails closed on bad role/capturedFrom/bitness and non-positive numbers', () => {
     expect(() => buildCapabilityFingerprint({ ...guestInputs, role: 'x' as never })).toThrow(/role/);
     expect(() => buildCapabilityFingerprint({ ...guestInputs, capturedFrom: 'x' as never })).toThrow(/capturedFrom/);
