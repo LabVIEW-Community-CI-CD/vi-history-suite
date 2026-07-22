@@ -12,7 +12,8 @@ capturing a live cloud-agent run (P-C) are tracked separately in issue #2258.
 
 - Write access to the consumer repository's Settings.
 - The repository can run Docker on the Copilot coding-agent runner and pull the
-  public NI LabVIEW image (`nationalinstruments/labview:2026q1-linux`).
+  public NI LabVIEW image (the `nationalinstruments/labview:<version>-linux` tag
+  the setup-steps template pins via `CONTAINER_IMAGE_VERSION`, e.g. `2026q1`).
 
 ## Step 1 — add the setup-steps workflow
 

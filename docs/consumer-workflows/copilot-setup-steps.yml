@@ -61,7 +61,8 @@ jobs:
       # uses. Keep in lockstep with vi-history-suite's DEFAULT_LINUX_CONTAINER_IMAGE.
       CONTAINER_IMAGE_VERSION: 2026q1
       # A stable absolute path the repo-settings MCP JSON points at
-      # (`node $VIHS_HOME/out/cli/runViSemanticMcpServer.js`). Under $HOME so it
+      # (`node $VIHS_HOME/out/cli/runViSemanticMcpServer.js`). Under the Actions
+      # workspace (`$GITHUB_WORKSPACE`, itself under the runner home) so it
       # persists into the agent work phase and is writable by snap/native Docker.
       VIHS_HOME: ${{ github.workspace }}/.vi-history-suite
 
