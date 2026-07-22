@@ -5129,7 +5129,7 @@ Missing numeric IDs are intentional.
     non-positive-confidence or zero-area placement is dropped, so no pixel
     overlay is ever fabricated. A VI semantic PR review also emits the per-VI
     region correlations as a dedicated, schema-registered
-    `vi-history-suite/vi-preview-region-correlations@v1` artifact, written only
+    `vi-history-suite/vi-preview-region-correlations@v2` artifact, written only
     when at least one reviewed VI carries a coordinate-bearing region and removed
     from a reused output directory when this run has none.
   - VHS-REQ-703.15: The VI semantic MCP surface exposes a pure, read-only tool
@@ -5149,7 +5149,12 @@ Missing numeric IDs are intentional.
     resource. It records preview availability honestly, ships no model, adds no
     inferred label, and never fabricates a pixel region (diagram-space-only
     without an injected locator), providing the closed-corpus data record the
-    gated ML research track (ADR-0027) depends on.
+    gated ML research track (ADR-0027) depends on. To keep same-named object
+    instances uniquely joinable between a correlation entry and its image
+    association, each diff-region source carries a stable occurrence key
+    (`sourceIndex`, its ordinal in report order); adding that required key bumps
+    the pixel-region correlation and correlations-bundle schemas to
+    `@v2`.
 - Agent Work Scope:
   - Keep the correlation builder pure, deterministic, and dependency-injected so
     it stays unit-testable without VS Code, a network, or a LabVIEW runtime; do

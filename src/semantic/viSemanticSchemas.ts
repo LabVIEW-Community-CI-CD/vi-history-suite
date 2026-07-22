@@ -18,9 +18,9 @@ export const VI_PREVIEW_COMPARISON_CORRELATION_SCHEMA_ID =
 export const VI_PREVIEW_COMPARISON_CORRELATIONS_SCHEMA_ID =
   'vi-history-suite/vi-preview-comparison-correlations@v1';
 export const VI_PREVIEW_REGION_CORRELATION_SCHEMA_ID =
-  'vi-history-suite/vi-preview-region-correlation@v1';
+  'vi-history-suite/vi-preview-region-correlation@v2';
 export const VI_PREVIEW_REGION_CORRELATIONS_SCHEMA_ID =
-  'vi-history-suite/vi-preview-region-correlations@v1';
+  'vi-history-suite/vi-preview-region-correlations@v2';
 export const VI_LATENT_CORPUS_SAMPLE_SCHEMA_ID =
   'vi-history-suite/vi-latent-corpus-sample@v1';
 
@@ -544,7 +544,7 @@ export const VI_PREVIEW_REGION_CORRELATION_JSON_SCHEMA = {
 
 // The first-class bundle of per-VI pixel-region correlations a PR review emits
 // (VHS-REQ-703.14). Each entry's `regionCorrelation` is itself a
-// vi-preview-region-correlation@v1 document; typed as an object here (the offline
+// vi-preview-region-correlation@v2 document; typed as an object here (the offline
 // validator does not resolve $ref).
 export const VI_PREVIEW_REGION_CORRELATIONS_JSON_SCHEMA = {
   $schema: DRAFT_07,
@@ -582,7 +582,7 @@ export const VI_PREVIEW_REGION_CORRELATIONS_JSON_SCHEMA = {
 // A single labeled corpus sample (VHS-REQ-703.16): the deterministic
 // region-correlation body plus the provenance that makes it reproducible from a
 // named base/head revision pair (ADR-0027 closed-corpus rail). Its
-// `correlation` is a vi-preview-region-correlation@v1 document; typed as an
+// `correlation` is a vi-preview-region-correlation@v2 document; typed as an
 // object here (the offline validator does not resolve $ref).
 export const VI_LATENT_CORPUS_SAMPLE_JSON_SCHEMA = {
   $schema: DRAFT_07,
