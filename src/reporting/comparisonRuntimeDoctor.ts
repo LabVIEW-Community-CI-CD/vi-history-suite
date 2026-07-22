@@ -320,6 +320,10 @@ function deriveRuntimeDoctorNextAction(options: {
       return 'Next action: enable VI Server TCP/IP for the selected LabVIEW (set server.tcp.enabled=True in labview.conf, or enable it in LabVIEW Tools \u2192 Options \u2192 VI Server) so LabVIEWCLI can connect, then restart LabVIEW and rerun comparison report generation.';
     }
 
+    if (blockedReason === 'linux-vi-server-tcp-port-unknown') {
+      return 'Next action: declare an explicit server.tcp.port in the selected LabVIEW labview.conf (VI Server TCP/IP is enabled but no port is set, so LabVIEWCLI cannot attach to a known port), then restart LabVIEW and rerun comparison report generation.';
+    }
+
     if (
       blockedReason === 'docker-only-provider-not-supported-on-platform' ||
       blockedReason === 'docker-provider-not-supported-on-platform'

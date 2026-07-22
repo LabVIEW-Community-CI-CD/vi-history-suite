@@ -2904,13 +2904,14 @@ describe('resolveLinuxLabviewTcpSettings (VHS-REQ-156)', () => {
     expect(settings.labviewIniPath).toBe('/home/sergio/natinst/.config/LabVIEW-2026/labview.conf');
   });
 
-  it('defaults to port 3363 when TCP is enabled but server.tcp.port is omitted (VHS-REQ-156.7)', async () => {
+  it('fails closed with no resolved port (no fabricated default) when TCP is enabled but server.tcp.port is omitted (VHS-REQ-156.7, VHS-REQ-156.11)', async () => {
     const settings = await resolveLinuxLabviewTcpSettings(createLinuxRecord(), {
       readFile: vi.fn().mockResolvedValue('server.tcp.enabled=True\n') as never,
       homeDir: () => '/home/sergio'
     });
     expect(settings.viServerTcpEnabled).toBe(true);
-    expect(settings.labviewTcpPort).toBe(3363);
+    expect(settings.labviewTcpPort).toBeUndefined();
+    expect(settings.notes.join(' ')).toMatch(/does not declare server\.tcp\.port/);
   });
 
   it('flags VI Server TCP disabled when server.tcp.enabled=False (VHS-REQ-156.7)', async () => {
@@ -3071,6 +3072,71 @@ describe('Linux host-native VI Server TCP preflight (VHS-REQ-156)', () => {
     expect(result.record.runtimeExecution.labviewIniPath).toMatch(/labview\.conf$/);
     expect(result.record.runtimeExecution.diagnosticNotes?.join(' ')).toMatch(
       /VI Server/i
+    );
+  });
+
+  it('blocks execution with linux-vi-server-tcp-port-unknown when TCP is enabled but no server.tcp.port is declared (VHS-REQ-156.11)', async () => {
+    const record = createReadyRecord();
+    record.runtimeSelection.platform = 'linux';
+    record.runtimeSelection.bitness = 'x64';
+    record.runtimeSelection.provider = 'host-native';
+    record.runtimeSelection.executionMode = 'host-only';
+    record.runtimeSelection.requestedProvider = 'host';
+    record.runtimeSelection.requestedLabviewVersion = '2026';
+    record.runtimeSelection.labviewExe = {
+      kind: 'labview-exe',
+      path: '/usr/local/natinst/LabVIEW-2026-64/labview',
+      source: 'configured',
+      exists: true,
+      bitness: 'x64'
+    };
+    record.runtimeSelection.labviewCli = {
+      kind: 'labview-cli',
+      path: '/usr/local/bin/LabVIEWCLI',
+      source: 'configured',
+      exists: true,
+      bitness: 'x64'
+    };
+
+    const runCommand = vi.fn();
+    const writePacketRecord = vi.fn().mockResolvedValue(undefined);
+    const result = await executeComparisonReport(
+      { record, repositoryRoot: '/workspace/repo' },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
+        readdir: vi.fn().mockResolvedValue([]) as never,
+        readFile: vi.fn(async (filePath: string) => {
+          if (typeof filePath === 'string' && filePath.endsWith('labview.conf')) {
+            return 'server.tcp.enabled=True\n';
+          }
+          throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+        }) as never,
+        pathExists: vi.fn().mockResolvedValue(false),
+        runCommand: runCommand as never,
+        nowIso: vi.fn().mockReturnValue('2026-06-02T18:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord,
+        processPlatform: 'linux'
+      }
+    );
+
+    expect(runCommand).not.toHaveBeenCalled();
+    expect(result.record.runtimeExecution.state).toBe('not-available');
+    expect(result.record.runtimeExecution.blockedReason).toBe('linux-vi-server-tcp-port-unknown');
+    expect(result.record.runtimeExecution.diagnosticReason).toBe('linux-vi-server-tcp-port-unknown');
+    expect(result.record.runtimeExecution.labviewTcpPort).toBeUndefined();
+    expect(result.record.runtimeExecution.labviewIniPath).toMatch(/labview\.conf$/);
+    expect(result.record.runtimeExecution.diagnosticNotes?.join(' ')).toMatch(
+      /does not declare server\.tcp\.port/
     );
   });
 
