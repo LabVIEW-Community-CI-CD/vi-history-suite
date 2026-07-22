@@ -5464,8 +5464,10 @@ Missing numeric IDs are intentional.
     silently passing a different revision.
   - A shared, pure comparison-report digest foundation computes the cross-actor
     identity values deterministically and independent of host noise: a
-    `parityKey` over (version, bitness, fixtureSha, viPath, recipe) that groups
-    runs of the same sample across actors, a canonical `reportSha256` over the
+    `parityKey` over (version, fixtureSha, viPath, recipe) that groups
+    runs of the same sample across actors (bitness is deliberately excluded so
+    the x86 and x64 mirrors of one sample share a key; bitness is captured as
+    actor fingerprint metadata instead), a canonical `reportSha256` over the
     normalized report artifact that all mirrors must agree on, and a stable actor
     fingerprint id for the interned actor registry.
   - A mirror-benchmark ledger records mirror runs idempotently: the schema

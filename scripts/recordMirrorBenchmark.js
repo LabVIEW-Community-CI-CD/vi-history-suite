@@ -40,8 +40,8 @@
  *     [--ledger <relative-path>] [--json]
  *   node scripts/recordMirrorBenchmark.js --schema
  *
- * (--json and --schema are mutually exclusive; --actor-ref is optional and, when
- * supplied, must equal the fingerprint's derived id or the record is rejected.)
+ * (--json and --schema are mutually exclusive; --actor-ref is required and must
+ * equal the supplied fingerprint's derived id or the record is rejected.)
  */
 
 const crypto = require('node:crypto');
@@ -81,7 +81,7 @@ const FINGERPRINT_FIELDS = [
 function requireSha256(name, value) {
   const normalized = typeof value === 'string' ? value.trim().toLowerCase() : '';
   if (!SHA256_PATTERN.test(normalized)) {
-    throw new Error(`--${name} must be a 64-character lowercase hex sha256 digest.`);
+    throw new Error(`--${name} must be a 64-character hex sha256 digest.`);
   }
   return normalized;
 }
