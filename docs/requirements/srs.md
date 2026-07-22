@@ -5462,6 +5462,18 @@ Missing numeric IDs are intentional.
     outage cannot block the queue. This keeps both parity (when fresh evidence
     exists) and outage immunity, and prevents an older published record from
     silently passing a different revision.
+  - A shared, pure comparison-report digest foundation computes the cross-actor
+    identity values deterministically and independent of host noise: a
+    `parityKey` over (version, bitness, fixtureSha, viPath, recipe) that groups
+    runs of the same sample across actors, a canonical `reportSha256` over the
+    normalized report artifact that all mirrors must agree on, and a stable actor
+    fingerprint id for the interned actor registry.
+  - A mirror-benchmark ledger records mirror runs idempotently: the schema
+    (`vi-history-suite/mirror-benchmark@v1`) is a normalized model of an interned
+    `actors` registry keyed by fingerprint id plus an append-only `runs` fact
+    table bound to a source revision, and the writer upserts a run row by
+    (parityKey, actorRef, mode, sourceRevision) so re-recording the same run is a
+    no-op and never a live image pull.
 - Agent Work Scope:
   - Change the ADR, this requirement, and the governance contract test together;
     keep the required gate deterministic and never make a live image pull the
@@ -5469,8 +5481,12 @@ Missing numeric IDs are intentional.
     Vagrant box and are never created or mutated by automation.
 - Implementation References:
   - `docs/architecture/adr/ADR-0028-mirror-mode-dual-real-runtime-validation.md`
+  - `src/reporting/mirror/mirrorParityDigest.ts`
+  - `scripts/recordMirrorBenchmark.js`
 - Verification References:
   - `tests/unit/mirrorModeGovernance.test.ts`
+  - `tests/unit/mirrorParityDigest.test.ts`
+  - `tests/unit/recordMirrorBenchmarkScript.test.ts`
 - Change Guidance:
   - This is a governance-foundation requirement: keep the documented invariants
     (human/Vagrant-only authorship, run-only container, Vagrant→`merge_group`

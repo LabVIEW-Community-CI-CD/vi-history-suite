@@ -385,6 +385,7 @@
     "risk:ledger": "node scripts/buildRiskLedger.js",
     "risk:ledger:strict": "node scripts/buildRiskLedger.js --strict",
     "runtime:validation:record": "node scripts/recordRuntimeValidation.js",
+    "mirror:benchmark:record": "node scripts/recordMirrorBenchmark.js",
     "devtools:release": "node scripts/buildDevToolsRelease.js",
     "devtools:release:verify": "node scripts/verifyDevToolsRelease.js",
     "supply-chain:state": "node scripts/buildSupplyChainState.js",
