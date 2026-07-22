@@ -14,13 +14,20 @@ is accepted and its rails are met.
 
 ## Context
 
-The deterministic correlation pipeline (VHS-REQ-703) already extracts
-per-object diagram geometry and pixel regions from the three artifacts every
-comparison produces:
+The deterministic correlation pipeline (VHS-REQ-703) extracts, from the LabVIEW
+comparison report, per-object **diagram-space** coordinates and image sizes, and
+— only when the base/head previews are available AND a raster locator is injected
+— optional located **pixel** regions on the preview rasters. Two facts bound what
+reference data actually exists: the base/head previews are **optional**
+(VHS-REQ-703.3–.7; an ordinary comparison with correlation disabled, or a cache
+miss, has only the comparison report), and without an injected locator
+`buildViPreviewRegionCorrelationFromModel` records changes as **diagram-space
+only** — it never fabricates a pixel placement. The three artifacts every
+comparison can produce are:
 
-1. the base preview HTML (`PrintToSingleFileHtml`);
-2. the head preview HTML (`PrintToSingleFileHtml`);
-3. the LabVIEW comparison report (`CreateComparisonReport`).
+1. the base preview HTML (`PrintToSingleFileHtml`), when available;
+2. the head preview HTML (`PrintToSingleFileHtml`), when available;
+3. the LabVIEW comparison report (`CreateComparisonReport`), always.
 
 The maintainer note on #2295 observes that the flat `PrintToSingleFileHtml`
 output carries **latent information a deterministic parser leaves on the table**
@@ -59,13 +66,23 @@ all of the following. Until this ADR is accepted, no model code ships.
 
 ### Evaluation (deterministic is the source of truth)
 
-- The deterministic correlation (VHS-REQ-703) remains the **source of truth**. A
-  model is measured *against* it: on samples where the deterministic parser is
-  confident, the model must not contradict it; the model's value is only in the
-  latent structure the deterministic parser does not recover.
+- The deterministic correlation (VHS-REQ-703) remains the **source of truth** for
+  the structure it recovers: on samples where the deterministic parser is
+  confident (report-derived diagram coordinates/sizes, and located pixel regions
+  when a locator was injected), the model must not contradict it.
+- For the **latent structure the deterministic parser does not recover** (the
+  model's claimed added value), the deterministic parser supplies no expected
+  labels, so measuring against it would only score agreement on the
+  already-deterministic subset. Evaluating those targets therefore **requires an
+  independent, reproducible held-out ground-truth annotation source** — for
+  example runtime-derived labels (a LabVIEW/VI-server enumeration of the true
+  per-object placement and ownership) or a committed human-annotated fixture set —
+  named and versioned alongside the corpus. No latent-structure metric may be
+  claimed without such labels.
 - Every evaluation reports precision/recall (or an equivalent) against a held-out
-  set of reproducible samples, with the exact corpus revision pairs named, so a
-  result is auditable and re-runnable, not a one-off score.
+  set of reproducible samples, with the exact corpus revision pairs and the
+  ground-truth label source named, so a result is auditable and re-runnable, not
+  a one-off score.
 - No metric may be computed on data the model was trained on.
 
 ### Honesty and safety
