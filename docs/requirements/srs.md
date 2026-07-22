@@ -5418,6 +5418,57 @@ Missing numeric IDs are intentional.
     `.github/workflows`, and never make the gate default-on for local advisory
     readiness runs.
 
+### VHS-REQ-707: Mirror-Mode Dual Real-Runtime LabVIEW Validation
+
+- Status: Active
+- Parent: VHS-SYS-REQ-013
+- Area: CI And Developer Environment
+- Statement: Real-runtime LabVIEW validation shall be provided by two
+  independent channels that produce the same comparison/preview truth and are
+  reconciled by a subsequent deterministic step: a local Vagrant channel
+  (VirtualBox, LabVIEW Community 2026 x86) that is also the sole VI-authoring
+  surface, and a hosted-CI Docker channel (the NI LabVIEW Windows container,
+  x64) that is run-only. This requirement is the governance foundation recorded
+  in ADR-0028; it amends the lightweight hosted-CI posture of ADR-0012 to admit
+  one heavy mirror lane whose result reaches the required merge gate only
+  through a committed or published ledger, so the required gate itself stays
+  deterministic and queue-safe. Producers, the shared comparison-report digest,
+  the ledger mirror tracks, and the reconciler gate are delivered by later child
+  work; Phase 0 establishes the contract only.
+- Acceptance Criteria:
+  - ADR-0028 records the Mirror-Mode decision, is listed in the ADR index, cites
+    this requirement, and states that it amends ADR-0012's lightweight hosted-CI
+    posture.
+  - VI authorship is human-only and Vagrant-only: the sole author edits VIs only
+    on the Vagrant box, and the Docker channel plus all automation are consumers
+    of authored VIs that never create or modify `.vi` binaries.
+  - The Docker Windows LabVIEW channel is run-only: it executes the shipped
+    compiled runtime and is never used as an in-container development
+    environment.
+  - The channels are sequenced: the Vagrant left channel is the precondition for
+    entering the merge queue, and the merge queue's `merge_group` event triggers
+    the hosted Docker right channel, after which the reconciler unifies both
+    channel outputs.
+  - Queue safety is preserved: the required merge gate is a deterministic
+    ledger-read / parity check that ingests both channels' committed or published
+    outputs, never a live multi-GB image pull, so a registry outage cannot block
+    the merge queue; the heavy pull/run is a best-effort evidence producer.
+- Agent Work Scope:
+  - Change the ADR, this requirement, and the governance contract test together;
+    keep the required gate deterministic and never make a live image pull the
+    blocking check. VI binaries are authored only by the human maintainer on the
+    Vagrant box and are never created or mutated by automation.
+- Implementation References:
+  - `docs/architecture/adr/ADR-0028-mirror-mode-dual-real-runtime-validation.md`
+- Verification References:
+  - `tests/unit/mirrorModeGovernance.test.ts`
+- Change Guidance:
+  - This is a governance-foundation requirement: keep the documented invariants
+    (human/Vagrant-only authorship, run-only container, Vagrant→`merge_group`
+    sequencing, deterministic queue-safe gate) aligned across ADR-0028, this
+    block, and the contract test. Later phases add producers, the digest helper,
+    ledger tracks, and the reconciler as child work.
+
 ### VHS-REQ-667: Versioned Dev-Tools GitHub Release Channel
 
 - Status: Active

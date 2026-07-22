@@ -722,3 +722,4 @@ VHS-REQ-705,Software,Active,srs.md#vhs-req-705-consumer-copilot-cloud-agent-mcp-
 VHS-REQ-706,Software,Active,srs.md#vhs-req-706-host-native-empty-swap-comparison-feasibility-spike,,,docs/requirements/srs.md
 VHS-REQ-697,Software,Active,srs.md#vhs-req-697-agent-environment-consistency-gate,,,docs/requirements/srs.md
 VHS-REQ-699,Software,Active,srs.md#vhs-req-699-single-pass-comparison-preview-pipeline,,,docs/requirements/srs.md
+VHS-REQ-707,Software,Active,srs.md#vhs-req-707-mirror-mode-dual-real-runtime-labview-validation,,,docs/requirements/srs.md
