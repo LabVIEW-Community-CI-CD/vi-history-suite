@@ -94,6 +94,12 @@ function requireNonEmpty(name, value) {
 }
 
 function requireNonNegativeInteger(name, value) {
+  if (typeof value !== 'number' && typeof value !== 'string') {
+    throw new Error(`--${name} must be a non-negative integer.`);
+  }
+  if (typeof value === 'string' && value.trim() === '') {
+    throw new Error(`--${name} must be a non-negative integer.`);
+  }
   const n = typeof value === 'number' ? value : Number(value);
   if (!Number.isInteger(n) || n < 0) {
     throw new Error(`--${name} must be a non-negative integer.`);
@@ -102,6 +108,12 @@ function requireNonNegativeInteger(name, value) {
 }
 
 function requireNonNegativeNumber(name, value) {
+  if (typeof value !== 'number' && typeof value !== 'string') {
+    throw new Error(`--${name} must be a non-negative number.`);
+  }
+  if (typeof value === 'string' && value.trim() === '') {
+    throw new Error(`--${name} must be a non-negative number.`);
+  }
   const n = typeof value === 'number' ? value : Number(value);
   if (!Number.isFinite(n) || n < 0) {
     throw new Error(`--${name} must be a non-negative number.`);
@@ -146,9 +158,13 @@ function normalizeFingerprint(fingerprint) {
 
 // Derive the interned-registry key for a normalized fingerprint. MUST match
 // src/reporting/mirror/mirrorParityDigest.ts deriveActorFingerprintId exactly:
-// sha256 over the field VALUES in FINGERPRINT_FIELDS order, JSON-array encoded.
+// sha256 over the field VALUES in FINGERPRINT_FIELDS order (string fields trimmed,
+// numbers passed through), JSON-array encoded.
 function deriveActorFingerprintId(normalizedFingerprint) {
-  const values = FINGERPRINT_FIELDS.map((field) => normalizedFingerprint[field]);
+  const values = FINGERPRINT_FIELDS.map((field) => {
+    const v = normalizedFingerprint[field];
+    return typeof v === 'number' ? v : String(v).trim();
+  });
   return crypto.createHash('sha256').update(JSON.stringify(values), 'utf8').digest('hex');
 }
 

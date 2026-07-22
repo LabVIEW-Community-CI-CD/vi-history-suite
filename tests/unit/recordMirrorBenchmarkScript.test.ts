@@ -116,6 +116,17 @@ describe('applyMirrorBenchmarkRecord (VHS-REQ-707.8)', () => {
     expect(() => applyMirrorBenchmarkRecord(emptyLedger(), record({ wallMs: -1 }))).toThrow(/wall-ms/);
     expect(() => applyMirrorBenchmarkRecord(emptyLedger(), record({ previewImageCount: 1.5 }))).toThrow(/preview-image-count/);
   });
+
+  it('fails closed on empty-string numeric fields (no Number("") -> 0 coercion)', () => {
+    expect(() => applyMirrorBenchmarkRecord(emptyLedger(), record({ wallMs: '' }))).toThrow(/wall-ms/);
+    expect(() => applyMirrorBenchmarkRecord(emptyLedger(), record({ wallMs: '   ' }))).toThrow(/wall-ms/);
+    expect(() => applyMirrorBenchmarkRecord(emptyLedger(), record({ previewImageCount: '' }))).toThrow(/preview-image-count/);
+  });
+
+  it('derives the same actorRef as an untrimmed fingerprint (TS/JS canonicalization parity)', () => {
+    const padded = { ...fingerprint, actor: '  docker-x64  ', os: ' Windows Server 2022 ' };
+    expect(deriveActorFingerprintId(normalizeFingerprint(padded))).toBe(actorRef);
+  });
 });
 
 describe('normalizeFingerprint (VHS-REQ-707.8)', () => {
