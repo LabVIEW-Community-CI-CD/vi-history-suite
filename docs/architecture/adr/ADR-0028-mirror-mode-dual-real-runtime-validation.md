@@ -103,7 +103,9 @@ introduce a second, duplicate Windows-container producer.
   no-Vagrant-in-YAML rule.
 - A clean, human-authored, single-origin corpus of minimal intentional VI
   deltas becomes the foundation for labeled ML training/evaluation samples
-  (ties to ADR-0027 research rails), with unambiguous provenance.
+  (ties to ADR-0027 research rails), with unambiguous provenance. The ledger is
+  projectable into an ML-consumable, sample-traceable parity corpus with a
+  cross-OS performance signal (VHS-REQ-708).
 - Follow-on obligations: a shared deterministic comparison-report digest, ledger
   mirror tracks, the Vagrant left producer, the `merge_group` Docker right lane,
   and the reconciler gate. This ADR amends ADR-0012 (hosted CI stays lightweight)

@@ -5509,6 +5509,44 @@ Missing numeric IDs are intentional.
     block, and the contract test. Later phases add producers, the digest helper,
     ledger tracks, and the reconciler as child work.
 
+### VHS-REQ-708: Mirror-Mode ML-Consumable Parity Corpus
+
+- Status: Active
+- Parent: VHS-SYS-REQ-013
+- Area: CI And Developer Environment
+- Statement: The mirror-benchmark ledger shall be projectable into a flat,
+  machine-learning-consumable parity corpus that preserves sample-system
+  traceability and expresses a cross-operating-system performance-parity signal.
+- Acceptance Criteria:
+  - A pure projection maps each ledger run to one tidy row with stable column
+    names grouped into traceability keys, capability features, timing targets,
+    and outcome labels, with units encoded in the column names and explicit null
+    for a value that is absent (never a substituted zero); the projection fails
+    closed on a run that references an unknown actor.
+  - Sample-system traceability is first-class: every row carries the join keys
+    for the sample VI (path and fixture digest), the actor fingerprint reference,
+    and the source revision, and the corpus is free of personally identifying
+    host paths or user names.
+  - A cross-operating-system verdict groups rows by parity key and reports
+    whether the successful runs agree on the report digest and the
+    capability-normalized Windows-versus-Linux latency delta, using explicit
+    presence flags and a null delta when an operating-system side is absent so an
+    absent mirror is never read as agreement.
+- Agent Work Scope:
+  - Keep the projection and verdict pure and deterministic so the emitted corpus
+    is reproducible; the performance delta is an advisory signal and never a
+    merge gate. This corpus consumes the VHS-REQ-707 ledger and never authors
+    `.vi` binaries.
+- Implementation References:
+  - `src/reporting/mirror/mirrorMlRow.ts`
+- Verification References:
+  - `tests/unit/mirrorMlRow.test.ts`
+- Change Guidance:
+  - Evolve the ml-row column contract additively (schema id
+    `vi-history-suite/mirror-benchmark-mlrow@v1`) so a model trained on v1 rows
+    keeps working; keep features, targets, and labels separated and units in the
+    column names.
+
 ### VHS-REQ-667: Versioned Dev-Tools GitHub Release Channel
 
 - Status: Active
