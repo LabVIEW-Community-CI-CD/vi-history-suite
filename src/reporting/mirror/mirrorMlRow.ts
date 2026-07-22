@@ -93,6 +93,25 @@ function assertLedger(ledger: unknown): asserts ledger is MirrorMlLedger {
 }
 
 /**
+ * Reject a sample VI path that is not repository-relative, since an absolute or
+ * home-anchored path (e.g. `C:\Users\Alice\...` or `/home/alice/...`) would leak
+ * a username / host layout into the supposedly PII-free corpus. The ledger writer
+ * only requires a non-empty `--vi-path`, so this is the export-time boundary.
+ */
+function assertRepoRelativeViPath(viPath: string): void {
+  const normalized = viPath.replace(/\\/g, '/');
+  const pii =
+    /^[A-Za-z]:\//.test(normalized) || // Windows drive-letter absolute
+    normalized.startsWith('/') || // POSIX absolute
+    /(^|\/)(Users|home)\//i.test(normalized); // home-dir segment
+  if (pii) {
+    throw new Error(
+      `Mirror ML row sampleViPath "${viPath}" is not repository-relative (PII/absolute); refusing to export.`
+    );
+  }
+}
+
+/**
  * Project the ledger into flat ML rows (one per run). Fail-closed on a run that
  * references an unknown actor so the corpus can never contain an unjoinable row.
  */
@@ -103,6 +122,7 @@ export function projectMirrorMlRows(ledger: MirrorMlLedger): MirrorMlRow[] {
     if (!fp) {
       throw new Error(`Mirror ML row references unknown actorRef ${run.actorRef}.`);
     }
+    assertRepoRelativeViPath(run.fixture.viPath);
     const wallMsPerCore = fp.cpuLogical > 0 ? Number((run.wallMs / fp.cpuLogical).toFixed(3)) : null;
     return {
       runParityKey: run.parityKey,
@@ -153,8 +173,9 @@ export interface PerfParityVerdict {
   readonly perfDeltaPct: number | null;
 }
 
-function mean(values: number[]): number {
-  return values.reduce((s, x) => s + x, 0) / values.length;
+/** Mean of a non-empty numeric array, or null when the array is empty. */
+function meanOrNull(values: number[]): number | null {
+  return values.length > 0 ? values.reduce((s, x) => s + x, 0) / values.length : null;
 }
 
 /**
@@ -178,14 +199,22 @@ export function computePerfParityVerdicts(rows: readonly MirrorMlRow[]): PerfPar
     const linuxPresent = linux.length > 0;
 
     const okDigests = new Set(group.filter((r) => r.labelOutcome === 'ok').map((r) => r.labelReportSha256));
-    const correctnessParity = okDigests.size <= 1;
+    // Exactly one distinct digest among ok runs = agreement. Zero ok rows is
+    // "no successful evidence" (NOT parity); two or more is divergence.
+    const correctnessParity = okDigests.size === 1;
 
     let perfDeltaPct: number | null = null;
     if (windowsPresent && linuxPresent) {
-      const w = mean(windows.map((r) => r.targetWallMsPerCore).filter((x): x is number => x != null));
-      const l = mean(linux.map((r) => r.targetWallMsPerCore).filter((x): x is number => x != null));
-      const base = Math.min(w, l);
-      perfDeltaPct = base > 0 ? Number((((Math.max(w, l) - base) / base) * 100).toFixed(1)) : 0;
+      const w = meanOrNull(windows.map((r) => r.targetWallMsPerCore).filter((x): x is number => x != null));
+      const l = meanOrNull(linux.map((r) => r.targetWallMsPerCore).filter((x): x is number => x != null));
+      // Preserve null (uncomputable) when either side has no valid normalized
+      // observation or the baseline is <= 0 — never substitute a false 0% delta.
+      if (w !== null && l !== null) {
+        const base = Math.min(w, l);
+        if (base > 0) {
+          perfDeltaPct = Number((((Math.max(w, l) - base) / base) * 100).toFixed(1));
+        }
+      }
     }
     verdicts.push({ parityKey, windowsPresent, linuxPresent, correctnessParity, perfDeltaPct });
   }
