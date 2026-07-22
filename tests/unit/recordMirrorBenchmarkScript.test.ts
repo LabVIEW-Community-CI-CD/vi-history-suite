@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import path from 'node:path';
 import {
   applyMirrorBenchmarkRecord,
   buildSchema,
@@ -121,9 +122,11 @@ describe('serializeLedger (VHS-REQ-707.8)', () => {
 
 describe('resolveLedgerPath (VHS-REQ-707.8)', () => {
   it('rejects absolute and parent-escaping paths', () => {
-    expect(() => resolveLedgerPath('/repo', '/etc/passwd')).toThrow(/relative/);
-    expect(() => resolveLedgerPath('/repo', '../outside.json')).toThrow(/inside/);
-    expect(resolveLedgerPath('/repo', 'docs/x.json')).toBe('/repo/docs/x.json');
+    const root = path.resolve('repo-root');
+    // An absolute target (any platform) is rejected.
+    expect(() => resolveLedgerPath(root, path.resolve('elsewhere', 'x.json'))).toThrow(/relative/);
+    expect(() => resolveLedgerPath(root, path.join('..', 'outside.json'))).toThrow(/inside/);
+    expect(resolveLedgerPath(root, path.join('docs', 'x.json'))).toBe(path.join(root, 'docs', 'x.json'));
   });
 });
 
@@ -148,12 +151,16 @@ describe('buildSchema (VHS-REQ-707.8)', () => {
 });
 
 describe('main CLI (VHS-REQ-707.8)', () => {
-  function harness(files = {}) {
-    const store = { ...files };
+  function harness(fingerprintJson) {
+    const cwd = path.resolve('repo-root');
+    const store = {};
+    if (fingerprintJson !== undefined) {
+      store[path.join(cwd, 'fp.json')] = fingerprintJson;
+    }
     const out = [];
     const err = [];
     const deps = {
-      cwd: '/repo',
+      cwd,
       stdout: { write: (s) => out.push(s) },
       stderr: { write: (s) => err.push(s) },
       fileExists: (p) => p in store,
@@ -166,7 +173,7 @@ describe('main CLI (VHS-REQ-707.8)', () => {
       },
       now: () => new Date('2026-07-22T00:00:00.000Z')
     };
-    return { store, out, err, deps };
+    return { cwd, store, out, err, deps };
   }
 
   const cliArgs = [
@@ -191,17 +198,18 @@ describe('main CLI (VHS-REQ-707.8)', () => {
   });
 
   it('records a run then no-ops on a re-run', () => {
-    const { deps, store } = harness({ '/repo/fp.json': JSON.stringify(fingerprint) });
+    const { deps, store, cwd } = harness(JSON.stringify(fingerprint));
+    const ledgerKey = path.join(cwd, 'docs', 'x.json');
     expect(main([...cliArgs, '--ledger', 'docs/x.json'], deps)).toBe(0);
-    const written = JSON.parse(store['/repo/docs/x.json']);
+    const written = JSON.parse(store[ledgerKey]);
     expect(written.runs).toHaveLength(1);
     // Re-run: still exit 0, ledger unchanged (no duplicate row).
     expect(main([...cliArgs, '--ledger', 'docs/x.json'], deps)).toBe(0);
-    expect(JSON.parse(store['/repo/docs/x.json']).runs).toHaveLength(1);
+    expect(JSON.parse(store[ledgerKey]).runs).toHaveLength(1);
   });
 
   it('fails closed (exit 1) on a bad digest', () => {
-    const { deps, err } = harness({ '/repo/fp.json': JSON.stringify(fingerprint) });
+    const { deps, err } = harness(JSON.stringify(fingerprint));
     const bad = [...cliArgs];
     bad[1] = 'not-a-sha';
     expect(main([...bad, '--ledger', 'docs/x.json'], deps)).toBe(1);
