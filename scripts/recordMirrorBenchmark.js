@@ -180,8 +180,11 @@ function emptyLedger() {
 //
 // Fail-closed: a non-null ledger that lacks an object `actors` field or an array
 // `runs` field is rejected (never silently reset), so a truncated/schema-drifted
-// file can never be overwritten and lose prior evidence. Pass emptyLedger() (or
-// null/undefined) only for the explicit no-file path.
+// file can never be overwritten and lose prior evidence. A present ledger must
+// also carry the self-describing envelope ($schema === SCHEMA_ID, schemaVersion
+// === SCHEMA_VERSION) so a wrong file or a drifted schema is rejected rather than
+// overwritten. Pass emptyLedger() (or null/undefined) only for the explicit
+// no-file path.
 function applyMirrorBenchmarkRecord(ledger, record) {
   let base;
   if (ledger === null || ledger === undefined) {
@@ -193,6 +196,13 @@ function applyMirrorBenchmarkRecord(ledger, record) {
     !Array.isArray(ledger.actors) &&
     Array.isArray(ledger.runs)
   ) {
+    if (ledger.$schema !== SCHEMA_ID || ledger.schemaVersion !== SCHEMA_VERSION) {
+      throw new Error(
+        `Existing mirror-benchmark ledger has an unexpected envelope ` +
+          `($schema=${JSON.stringify(ledger.$schema)}, schemaVersion=${JSON.stringify(ledger.schemaVersion)}); ` +
+          `expected ${SCHEMA_ID} v${SCHEMA_VERSION}. Refusing to overwrite.`
+      );
+    }
     base = ledger;
   } else {
     throw new Error(

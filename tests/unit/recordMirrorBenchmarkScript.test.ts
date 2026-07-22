@@ -78,6 +78,25 @@ describe('applyMirrorBenchmarkRecord (VHS-REQ-707.8)', () => {
     expect(applyMirrorBenchmarkRecord(null, record()).changed).toBe(true);
   });
 
+  it('fails closed on an unexpected schema envelope (never overwrites a wrong file)', () => {
+    // Shaped like a ledger (actors object + runs array) but wrong/absent envelope.
+    expect(() => applyMirrorBenchmarkRecord({ actors: {}, runs: [] }, record())).toThrow(/envelope/);
+    expect(() =>
+      applyMirrorBenchmarkRecord(
+        { $schema: 'other/schema@v1', schemaVersion: 1, actors: {}, runs: [] },
+        record()
+      )
+    ).toThrow(/envelope/);
+    expect(() =>
+      applyMirrorBenchmarkRecord(
+        { $schema: SCHEMA_ID, schemaVersion: 2, actors: {}, runs: [] },
+        record()
+      )
+    ).toThrow(/envelope/);
+    // A correctly-enveloped empty ledger is accepted.
+    expect(applyMirrorBenchmarkRecord(emptyLedger(), record()).changed).toBe(true);
+  });
+
   it('is a no-op when the identical row is re-applied', () => {
     const first = applyMirrorBenchmarkRecord(emptyLedger(), record());
     const second = applyMirrorBenchmarkRecord(first.ledger, record());
