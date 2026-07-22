@@ -2689,3 +2689,105 @@ describe('openViHistoryCommand pure helpers (VHS-REQ-621 coverage)', () => {
   });
 });
 
+describe('openViHistoryCommand comparison progress + panel lifecycle (VHS-REQ-133)', () => {
+  beforeEach(() => {
+    vscodeHarness.reset();
+    workspaceState.isTrusted = true;
+    vscodeHarness.vscode.window.activeTextEditor = undefined;
+    createWebviewPanelMock.mockReturnValue(createMockPanel());
+  });
+
+  it('posts runtime progress panel updates as the comparison action reports progress', async () => {
+    const panel = createMockPanel();
+    createWebviewPanelMock.mockReturnValue(panel);
+    const historyService = { load: vi.fn().mockResolvedValue(createEligibleModel()) };
+    const panelTracker = new HistoryPanelTracker();
+    // The action drives the injected reportProgress callback, exercising the
+    // reportProgress arrow, buildComparisonRuntimeProgressPanelUpdate, and the
+    // withProgress `progress.report` bridge that no other test invokes.
+    const comparisonReportAction = vi.fn(
+      async (request: {
+        reportProgress: (update: { message: string; increment?: number }) => Promise<void> | void;
+      }) => {
+        await request.reportProgress({ message: 'Executing LabVIEW comparison-report runtime.' });
+        await request.reportProgress({ message: 'Acquiring container image n="img".' });
+        // Unrecognized phase -> status undefined -> no panel post.
+        await request.reportProgress({ message: 'Doing something unclassified.' });
+        return {
+          outcome: 'opened-comparison-report',
+          reportStatus: 'ready-for-runtime',
+          runtimeExecutionState: 'succeeded'
+        };
+      }
+    );
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      undefined,
+      panelTracker,
+      comparisonReportAction as never
+    );
+
+    await command(vscodeHarness.createUri('/workspace/test-repo/src/Sample.vi') as never);
+    await panelTracker.dispatchLastPanelMessage({
+      command: 'generateComparisonReport',
+      hash: 'abc1234567890abcdef1234567890abcdef12345'
+    });
+
+    const progressPosts = panel.webview.postMessage.mock.calls
+      .map((call: unknown[]) => call[0] as { type?: string; status?: string; summary?: string })
+      .filter((posted) => posted?.type === 'comparisonRuntimeProgress');
+    expect(progressPosts.map((posted) => posted.status)).toEqual(['running', 'acquiring']);
+    expect(progressPosts[0]?.summary).toContain('in progress');
+  });
+
+  it('marks the panel disposed through onDidDispose and stops posting to the dead webview', async () => {
+    let disposeHandler: (() => void) | undefined;
+    const panel = {
+      title: 'VI History: Sample.vi',
+      webview: {
+        html: '',
+        onDidReceiveMessage: vi.fn(),
+        postMessage: vi.fn().mockResolvedValue(true)
+      },
+      onDidDispose: vi.fn((handler: () => void) => {
+        disposeHandler = handler;
+      }),
+      dispose: vi.fn()
+    };
+    createWebviewPanelMock.mockReturnValue(panel);
+    const historyService = { load: vi.fn().mockResolvedValue(createEligibleModel()) };
+    const panelTracker = new HistoryPanelTracker();
+    const comparisonReportAction = vi.fn(
+      async (request: {
+        reportProgress: (update: { message: string; increment?: number }) => Promise<void> | void;
+      }) => {
+        await request.reportProgress({ message: 'Executing LabVIEW comparison-report runtime.' });
+        return {
+          outcome: 'opened-comparison-report',
+          reportStatus: 'ready-for-runtime',
+          runtimeExecutionState: 'succeeded'
+        };
+      }
+    );
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      undefined,
+      panelTracker,
+      comparisonReportAction as never
+    );
+
+    await command(vscodeHarness.createUri('/workspace/test-repo/src/Sample.vi') as never);
+    // Fire the registered dispose handler -> panelDisposed = true (the onDidDispose arrow).
+    expect(disposeHandler).toBeTypeOf('function');
+    disposeHandler?.();
+
+    await panelTracker.dispatchLastPanelMessage({
+      command: 'generateComparisonReport',
+      hash: 'abc1234567890abcdef1234567890abcdef12345'
+    });
+
+    // safePostPanelMessage early-returns once disposed, so no progress/result post lands.
+    expect(panel.webview.postMessage).not.toHaveBeenCalled();
+  });
+});
+

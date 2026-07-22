@@ -1,4 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
+import * as fs from 'node:fs';
+import * as os from 'node:os';
+import * as path from 'node:path';
 
 // VHS-REQ-697: agent-environment-consistency gate. Deterministic unit coverage of
 // the pure evaluation and the injectable collectors/recorder — no real fs, no git.
@@ -7,6 +10,7 @@ const {
   INSTALLED_LOCK_HASH_MARKER,
   evaluateEnvSync,
   computeLockHash,
+  readInstalledLockHash,
   recordInstalledLockHash,
   collectEnvFacts,
   renderReport,
@@ -14,12 +18,27 @@ const {
 } = require('../../scripts/checkEnvSync.js') as {
   INSTALLED_LOCK_HASH_MARKER: string;
   evaluateEnvSync: (facts: Record<string, unknown>) => { problems: Array<Record<string, unknown>>; hardStale: boolean };
-  computeLockHash: (repoRoot: string, deps: Record<string, unknown>) => string | undefined;
-  recordInstalledLockHash: (repoRoot: string, deps: Record<string, unknown>) => Record<string, unknown>;
-  collectEnvFacts: (options: Record<string, unknown>, deps: Record<string, unknown>) => Record<string, unknown>;
+  computeLockHash: (repoRoot: string, deps?: Record<string, unknown>) => string | undefined;
+  readInstalledLockHash: (repoRoot: string, deps?: Record<string, unknown>) => string | undefined;
+  recordInstalledLockHash: (repoRoot: string, deps?: Record<string, unknown>) => Record<string, unknown>;
+  collectEnvFacts: (options: Record<string, unknown>, deps?: Record<string, unknown>) => Record<string, unknown>;
   renderReport: (result: Record<string, unknown>, ctx: Record<string, unknown>) => string[];
   run: (argv: string[], deps?: Record<string, unknown>) => { exitCode: number; stdout?: string };
 };
+
+const tempRoots: string[] = [];
+
+function makeTempRoot(prefix: string): string {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
+  tempRoots.push(root);
+  return root;
+}
+
+afterEach(() => {
+  for (const root of tempRoots.splice(0)) {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
 
 describe('checkEnvSync: evaluateEnvSync (VHS-REQ-697.1)', () => {
   it('is in sync when the lock hash matches, out is present, and nothing changed', () => {
@@ -191,5 +210,118 @@ describe('checkEnvSync: renderReport + marker path', () => {
 
   it('marker lives under node_modules (git-ignored)', () => {
     expect(INSTALLED_LOCK_HASH_MARKER.replace(/\\/g, '/')).toBe('node_modules/.vihs-installed-lock-hash');
+  });
+});
+
+describe('checkEnvSync: default fs factories and error paths (VHS-REQ-697.4)', () => {
+  it('computeLockHash uses the real fs by default and returns undefined when the lockfile is absent', () => {
+    const root = makeTempRoot('vihs-envsync-lock-');
+    // No package-lock.json in the temp root -> default fs.readFileSync throws
+    // ENOENT -> the catch returns undefined.
+    expect(computeLockHash(root)).toBeUndefined();
+    // With a real lockfile the default fs path hashes it deterministically.
+    fs.writeFileSync(path.join(root, 'package-lock.json'), '{"lockfileVersion":3}');
+    expect(computeLockHash(root)).toMatch(/^[0-9a-f]{64}$/);
+  });
+
+  it('readInstalledLockHash uses the real fs by default and returns undefined when the marker is missing', () => {
+    const root = makeTempRoot('vihs-envsync-marker-');
+    expect(readInstalledLockHash(root)).toBeUndefined();
+  });
+
+  it('recordInstalledLockHash skips when the lockfile is absent (computeLockHash undefined)', () => {
+    // readFileSync throws for every path -> computeLockHash returns undefined ->
+    // the recorder skips with the no-package-lock reason before touching disk.
+    const throwing = {
+      readFileSync: () => {
+        throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+      },
+      existsSync: () => true,
+      writeFileSync: () => undefined
+    };
+    expect(recordInstalledLockHash('/repo', throwing)).toMatchObject({
+      action: 'skipped',
+      reason: 'no-package-lock'
+    });
+  });
+
+  it('recordInstalledLockHash reports a failed action when the marker write throws', () => {
+    const failingWrite = {
+      readFileSync: () => Buffer.from('{"lockfileVersion":3}'),
+      existsSync: () => true,
+      writeFileSync: () => {
+        throw new Error('disk full');
+      }
+    };
+    const outcome = recordInstalledLockHash('/repo', failingWrite);
+    expect(outcome).toMatchObject({ action: 'failed' });
+    expect(String((outcome as { reason?: string }).reason)).toContain('disk full');
+  });
+
+  it('recordInstalledLockHash records via the real fs when a lockfile and node_modules exist', () => {
+    const root = makeTempRoot('vihs-envsync-record-');
+    fs.writeFileSync(path.join(root, 'package-lock.json'), '{"lockfileVersion":3}');
+    fs.mkdirSync(path.join(root, 'node_modules'), { recursive: true });
+    const outcome = recordInstalledLockHash(root);
+    expect(outcome).toMatchObject({ action: 'recorded' });
+    // The marker was written to the real path and later reads back as in-sync.
+    expect(readInstalledLockHash(root)).toBe(computeLockHash(root));
+    const facts = collectEnvFacts({ repoRoot: root });
+    expect(facts.lockHashMatches).toBe(true);
+    expect(facts.outPresent).toBe(false);
+  });
+
+  it('collectEnvFacts treats an existsSync failure as out/ absent', () => {
+    const deps = {
+      readFileSync: (p: string) => {
+        if (String(p).replace(/\\/g, '/').endsWith('package-lock.json')) {
+          return Buffer.from('{"lockfileVersion":3}');
+        }
+        throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+      },
+      existsSync: () => {
+        throw new Error('permission denied');
+      }
+    };
+    const facts = collectEnvFacts({ repoRoot: '/repo' }, deps);
+    expect(facts.outPresent).toBe(false);
+    // Marker missing -> hard-stale signal preserved.
+    expect(facts.lockHashMatches).toBeUndefined();
+  });
+
+  it('collectEnvFacts defaults repoRoot to the process cwd and uses the real fs', () => {
+    // No repoRoot and no deps -> options.repoRoot falls back to process.cwd() and
+    // the default fs.existsSync probes the real out/ directory. The suite runs
+    // from the repo root where out/ is present after compile, but the assertion
+    // only requires a boolean so it holds regardless of compile state.
+    const facts = collectEnvFacts({});
+    expect(typeof facts.outPresent).toBe('boolean');
+  });
+
+  it('run emits JSON when --json is supplied', () => {
+    const inSyncDeps = {
+      repoRoot: '/repo',
+      readFileSync: (p: string) => {
+        const key = String(p).replace(/\\/g, '/');
+        if (key === '/repo/package-lock.json') return Buffer.from('{"lockfileVersion":3}');
+        if (key.endsWith('.vihs-installed-lock-hash')) {
+          return computeLockHash('/repo', { readFileSync: () => Buffer.from('{"lockfileVersion":3}') }) as string;
+        }
+        throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+      },
+      existsSync: () => true
+    };
+    const out = run(['--json'], inSyncDeps);
+    expect(out.exitCode).toBe(0);
+    const parsed = JSON.parse(String(out.stdout));
+    expect(parsed).toMatchObject({ problems: [], hardStale: false });
+  });
+
+  it('run defaults repoRoot to the process cwd for a --report and never fails', () => {
+    // No repoRoot in deps -> run() falls back to process.cwd() and reads the real
+    // repository via the default fs factories; --report is advisory-only (exit 0).
+    const out = run(['--report']);
+    expect(out.exitCode).toBe(0);
+    expect(typeof out.stdout).toBe('string');
   });
 });

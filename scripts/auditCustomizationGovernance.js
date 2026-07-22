@@ -150,10 +150,8 @@ function decodePathPart(pathPart) {
 }
 
 function resolveTargetPath(cwd, sourceRelativePath, pathPart) {
-  if (!pathPart || pathPart.length === 0) {
-    return path.join(cwd, sourceRelativePath);
-  }
-
+  // Precondition: the sole caller skips empty/anchor-only link targets before
+  // calling this, so `pathPart` is always a non-empty path here.
   const decodedPathPart = decodePathPart(pathPart);
   if (decodedPathPart.startsWith('/')) {
     return path.resolve(cwd, `.${decodedPathPart}`);

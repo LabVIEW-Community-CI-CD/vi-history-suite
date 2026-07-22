@@ -64,6 +64,23 @@ describe('buildCapabilityFingerprint (VHS-REQ-707.9)', () => {
     expect(() => buildCapabilityFingerprint({ ...guestInputs, ramTotalBytes: -1 })).toThrow(/ramTotalBytes/);
     expect(() => buildCapabilityFingerprint({ ...guestInputs, os: '  ' })).toThrow(/os/);
   });
+
+  it('fails closed on a negative or non-numeric free-disk reading', () => {
+    // requireNonNegative rejects a negative disk reading (n < 0) ...
+    expect(() => buildCapabilityFingerprint({ ...guestInputs, diskFreeBytes: -1 })).toThrow(
+      /diskFreeBytes.*non-negative/
+    );
+    // ... and a non-numeric reading, which coerces to NaN (!Number.isFinite).
+    expect(() =>
+      buildCapabilityFingerprint({ ...guestInputs, diskFreeBytes: 'nope' as never })
+    ).toThrow(/diskFreeBytes.*non-negative/);
+  });
+
+  it('fails closed when inputs are not an object', () => {
+    // `!inputs` (null) and `typeof inputs !== 'object'` (a number) both branches.
+    expect(() => buildCapabilityFingerprint(null as never)).toThrow(/must be an object/);
+    expect(() => buildCapabilityFingerprint(42 as never)).toThrow(/must be an object/);
+  });
 });
 
 describe('captureLocalCapabilityInputs (VHS-REQ-707.9)', () => {
@@ -88,6 +105,27 @@ describe('captureLocalCapabilityInputs (VHS-REQ-707.9)', () => {
     const fp = buildCapabilityFingerprint(inputs);
     expect(fp.ramTotalMb).toBe(61440);
     expect(fp.role).toBe('decoupled');
+  });
+
+  it('falls back to Node os built-ins when no osDeps are injected', () => {
+    // No osDeps: exercises the `?? os.cpus/totalmem/platform/release` defaults on
+    // the real host (deterministic — any host reports >=1 CPU and non-zero RAM).
+    const inputs = captureLocalCapabilityInputs({
+      actor: 'linux-host-native-x64',
+      role: 'decoupled',
+      capturedFrom: 'host',
+      labviewBuild: '26.1.1f1',
+      labviewBitness: 'x64',
+      diskFreeBytes: 1024 * 1024 * 1024
+    });
+    expect(Number.isInteger(inputs.cpuLogical)).toBe(true);
+    expect(inputs.cpuLogical).toBeGreaterThan(0);
+    expect(typeof inputs.cpuModel).toBe('string');
+    expect(inputs.cpuModel.length).toBeGreaterThan(0);
+    expect(typeof inputs.os).toBe('string');
+    expect(inputs.ramTotalBytes).toBeGreaterThan(0);
+    // The built inputs remain acceptable to the fingerprint builder.
+    expect(buildCapabilityFingerprint(inputs).role).toBe('decoupled');
   });
 
   it('fails closed when no cpus are reported (consistent with buildCapabilityFingerprint)', () => {

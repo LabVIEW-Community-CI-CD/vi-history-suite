@@ -117,21 +117,17 @@ function handleRepoGovernanceMcpMessage(message, deps = {}) {
   }
 }
 
-module.exports = {
-  REPO_GOVERNANCE_MCP_PROTOCOL_VERSION,
-  REPO_GOVERNANCE_MCP_SERVER_INFO,
-  REPO_GOVERNANCE_MCP_TOOLS,
-  GET_REPO_TRUTH_TOOL,
-  REPO_TRUTH_AUTH_ERROR_CODE,
-  handleRepoGovernanceMcpMessage
-};
-
 // Thin newline-delimited JSON-RPC stdio loop. Dependency-free; each input line is
-// one JSON-RPC message, each non-null response is written as one line.
-if (require.main === module) {
+// one JSON-RPC message, each non-null response is written as one line. Extracted
+// from the require.main block so the framing/dispatch loop is unit-testable with
+// injected stdin/stdout streams (no real subprocess). Behavior is unchanged.
+function runRepoGovernanceMcpStdioServer(deps = {}) {
+  const input = deps.stdin || process.stdin;
+  const output = deps.stdout || process.stdout;
+  const handle = deps.handleMessage || handleRepoGovernanceMcpMessage;
   let buffer = '';
-  process.stdin.setEncoding('utf8');
-  process.stdin.on('data', (chunk) => {
+  input.setEncoding('utf8');
+  input.on('data', (chunk) => {
     buffer += chunk;
     let newlineIndex = buffer.indexOf('\n');
     while (newlineIndex !== -1) {
@@ -140,15 +136,29 @@ if (require.main === module) {
       if (line) {
         let response = null;
         try {
-          response = handleRepoGovernanceMcpMessage(JSON.parse(line));
+          response = handle(JSON.parse(line));
         } catch (error) {
           response = failure(null, -32700, `Parse error: ${error instanceof Error ? error.message : String(error)}`);
         }
         if (response) {
-          process.stdout.write(`${JSON.stringify(response)}\n`);
+          output.write(`${JSON.stringify(response)}\n`);
         }
       }
       newlineIndex = buffer.indexOf('\n');
     }
   });
+}
+
+module.exports = {
+  REPO_GOVERNANCE_MCP_PROTOCOL_VERSION,
+  REPO_GOVERNANCE_MCP_SERVER_INFO,
+  REPO_GOVERNANCE_MCP_TOOLS,
+  GET_REPO_TRUTH_TOOL,
+  REPO_TRUTH_AUTH_ERROR_CODE,
+  handleRepoGovernanceMcpMessage,
+  runRepoGovernanceMcpStdioServer
+};
+
+if (require.main === module) {
+  runRepoGovernanceMcpStdioServer();
 }

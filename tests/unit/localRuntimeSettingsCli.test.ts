@@ -2,6 +2,7 @@ import { execFile } from 'node:child_process';
 import * as fs from 'node:fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
+import { promisify } from 'node:util';
 import { describe, expect, it, vi } from 'vitest';
 
 import {
@@ -31,6 +32,30 @@ import {
   escapeSingleQuotedShellString
 } from '../../src/tooling/localRuntimeSettingsCli';
 import type { ComparisonRuntimeSelection } from '../../src/reporting/comparisonRuntimeLocator';
+
+/**
+ * Global stub for `node:readline/promises`. The CLI only calls `createInterface`
+ * from `resolvePromptLine` when NO `promptLine` dependency is injected, which no
+ * other test in this file exercises, so this stub stays dormant except in the
+ * dedicated default-controller test below. `answers` is drained per question.
+ */
+const readlineMockState = vi.hoisted(() => ({
+  answers: [] as string[],
+  created: 0,
+  closed: 0
+}));
+
+vi.mock('node:readline/promises', () => ({
+  createInterface: () => {
+    readlineMockState.created += 1;
+    return {
+      question: async () => readlineMockState.answers.shift() ?? '',
+      close: () => {
+        readlineMockState.closed += 1;
+      }
+    };
+  }
+}));
 
 class MemoryFs {
   readonly files = new Map<string, string>();
@@ -1160,5 +1185,642 @@ describe('localRuntimeSettingsCli pure helpers (VHS-REQ-623 coverage)', () => {
     it('escapes single quotes for a POSIX single-quoted string', () => {
       expect(escapeSingleQuotedShellString("a'b")).toBe(`a'"'"'b`);
     });
+  });
+});
+
+describe('local runtime settings CLI additional branch coverage (VHS-REQ-623 coverage)', () => {
+  it('parses --help into a help request', () => {
+    const parsed = parseLocalRuntimeSettingsCliArgs(['--help']);
+    expect(parsed.helpRequested).toBe(true);
+    expect(parsed.validateRequested).toBeUndefined();
+  });
+
+  it('prints usage and returns a help outcome for --help', async () => {
+    const stdout = createWritable();
+    const result = await runLocalRuntimeSettingsCli(['--help'], { stdout: stdout.stream });
+    expect(result).toEqual({ outcome: 'help' });
+    expect(stdout.text()).toContain(getLocalRuntimeSettingsCliUsage());
+  });
+
+  it('resolves interactivity from stdin/stdout TTY flags when isInteractiveTerminal is unset', async () => {
+    const stdout = createWritable();
+    const code = await runLocalRuntimeSettingsCliMain([], {
+      stdin: { isTTY: false },
+      stdout: { ...stdout.stream, isTTY: false }
+    });
+    // Non-interactive TTY -> discovery text, not the interactive flow.
+    expect(code).toBe(0);
+    expect(stdout.text()).toContain('VI History runtime-settings terminal entrypoint');
+  });
+
+  it('runs the interactive flow through main when the terminal is interactive', async () => {
+    const memoryFs = new MemoryFs();
+    const stdout = createWritable();
+    memoryFs.seed(
+      '/build/buildInfo.json',
+      JSON.stringify({ extensionVersion: '1.4.2', extensionCommit: 'abcdef1234567890' })
+    );
+    const promptLine = vi
+      .fn()
+      .mockResolvedValueOnce('')
+      .mockResolvedValueOnce('')
+      .mockResolvedValueOnce('')
+      .mockResolvedValueOnce('');
+    const code = await runLocalRuntimeSettingsCliMain([], {
+      isInteractiveTerminal: true,
+      fs: memoryFs as never,
+      stdout: stdout.stream,
+      promptLine,
+      platform: 'win32',
+      env: { APPDATA: 'C:\\Users\\Test\\AppData\\Roaming' },
+      homedir: () => 'C:\\Users\\Test',
+      locateRuntime: vi.fn().mockResolvedValue(readyRuntimeSelection()),
+      buildInfoDeps: {
+        fs: memoryFs as never,
+        buildInfoPath: '/build/buildInfo.json',
+        packageJsonPath: '/package.json'
+      }
+    });
+    expect(code).toBe(0);
+    expect(stdout.text()).toContain('Current VI History settings');
+  });
+
+  it('skips creating default settings when complete runtime facts already exist', async () => {
+    const memoryFs = new MemoryFs();
+    const stdout = createWritable();
+    memoryFs.seed(
+      '/build/buildInfo.json',
+      JSON.stringify({ extensionVersion: '1.4.2', extensionCommit: 'abcdef1234567890' })
+    );
+    const settingsPath = resolveDefaultVsCodeSettingsPath(
+      'win32',
+      { APPDATA: 'C:\\Users\\Test\\AppData\\Roaming' },
+      () => 'C:\\Users\\Test'
+    );
+    memoryFs.seed(
+      settingsPath,
+      JSON.stringify({
+        'viHistorySuite.runtimeProvider': 'host',
+        'viHistorySuite.labviewVersion': '2026',
+        'viHistorySuite.labviewBitness': 'x86'
+      })
+    );
+    const promptLine = vi
+      .fn()
+      .mockResolvedValueOnce('')
+      .mockResolvedValueOnce('')
+      .mockResolvedValueOnce('')
+      .mockResolvedValueOnce('');
+    const result = await runInteractiveLocalRuntimeSettingsCli({
+      fs: memoryFs as never,
+      stdout: stdout.stream,
+      promptLine,
+      platform: 'win32',
+      env: { APPDATA: 'C:\\Users\\Test\\AppData\\Roaming' },
+      homedir: () => 'C:\\Users\\Test',
+      locateRuntime: vi.fn().mockResolvedValue(readyRuntimeSelection()),
+      buildInfoDeps: {
+        fs: memoryFs as never,
+        buildInfoPath: '/build/buildInfo.json',
+        packageJsonPath: '/package.json'
+      }
+    });
+    expect(result).toMatchObject({ outcome: 'validated-settings', persistedProvider: 'host' });
+    // The early-return path is taken: no default-settings creation message.
+    expect(stdout.text()).not.toContain('Created default VI History runtime settings');
+    expect(stdout.text()).toContain('Current VI History settings');
+  });
+
+  it('falls back to interactive defaults when persisted facts are a docker provider with unsupported version/bitness', async () => {
+    const memoryFs = new MemoryFs();
+    const stdout = createWritable();
+    memoryFs.seed(
+      '/build/buildInfo.json',
+      JSON.stringify({ extensionVersion: '1.4.2', extensionCommit: 'abcdef1234567890' })
+    );
+    const settingsPath = resolveDefaultVsCodeSettingsPath(
+      'win32',
+      { APPDATA: 'C:\\Users\\Test\\AppData\\Roaming' },
+      () => 'C:\\Users\\Test'
+    );
+    // All three facts are present (so the early-return path preserves them),
+    // but the year is unsupported and the bitness is invalid — exercising the
+    // deriveInteractiveSelection fallbacks (docker provider, '2026' year, docker
+    // default bitness).
+    memoryFs.seed(
+      settingsPath,
+      JSON.stringify({
+        'viHistorySuite.runtimeProvider': 'docker',
+        'viHistorySuite.labviewVersion': '2020',
+        'viHistorySuite.labviewBitness': 'weird'
+      })
+    );
+    const promptLine = vi
+      .fn()
+      .mockResolvedValueOnce('')
+      .mockResolvedValueOnce('')
+      .mockResolvedValueOnce('')
+      .mockResolvedValueOnce('');
+    const result = await runInteractiveLocalRuntimeSettingsCli({
+      fs: memoryFs as never,
+      stdout: stdout.stream,
+      promptLine,
+      platform: 'win32',
+      env: { APPDATA: 'C:\\Users\\Test\\AppData\\Roaming' },
+      homedir: () => 'C:\\Users\\Test',
+      locateRuntime: vi.fn().mockResolvedValue(dockerReadyRuntimeSelection()),
+      buildInfoDeps: {
+        fs: memoryFs as never,
+        buildInfoPath: '/build/buildInfo.json',
+        packageJsonPath: '/package.json'
+      }
+    });
+    expect(result).toMatchObject({
+      outcome: 'validated-settings',
+      persistedProvider: 'docker',
+      persistedLabviewVersion: '2026',
+      persistedLabviewBitness: 'x64'
+    });
+    expect(stdout.text()).not.toContain('Created default VI History runtime settings');
+  });
+
+  it('rethrows a non-ENOENT settings read error', async () => {
+    const failing = {
+      readFile: vi.fn(async () => {
+        throw Object.assign(new Error('EACCES: permission denied'), { code: 'EACCES' });
+      })
+    };
+    await expect(
+      readPersistedRuntimeSettingsFacts('/some/settings.json', failing as never)
+    ).rejects.toThrow('EACCES');
+  });
+
+  it('resolves a host provider and keeps the existing-Windows-host allowance', async () => {
+    const memory = new MemoryFs();
+    const settingsPath = '/home/test/.config/Code/User/settings.json';
+    memory.seed(
+      settingsPath,
+      JSON.stringify({
+        'viHistorySuite.runtimeProvider': 'host',
+        'viHistorySuite.labviewBitness': 'x64'
+      })
+    );
+    const facts = await readPersistedRuntimeSettingsFacts(settingsPath, memory as never);
+    expect(facts.runtimeSettings.requestedProvider).toBe('host');
+    expect(facts.runtimeSettings.allowExistingWindowsHostRuntime).toBe(true);
+    expect(facts.runtimeSettings.bitness).toBe('x64');
+  });
+
+  it('admits the terminal entrypoint and persists the Windows user PATH via the injected persister', async () => {
+    const memoryFs = new MemoryFs();
+    const plan = buildLocalRuntimeSettingsCliMaterialization(
+      '/global-storage',
+      '/extension-root',
+      'win32'
+    );
+    memoryFs.seed(plan.modulePath, 'module.exports = {};');
+    const environment = { prepend: vi.fn() };
+    const persistWindowsUserPathPrepend = vi.fn(async () => {});
+    await admitLocalRuntimeSettingsCliToTerminalPath(
+      '/global-storage',
+      '/extension-root',
+      environment,
+      {
+        fs: memoryFs as never,
+        platform: 'win32',
+        env: {},
+        persistWindowsUserPathPrepend
+      }
+    );
+    expect(environment.prepend).toHaveBeenCalledWith('PATH', plan.pathPrependValue);
+    expect(persistWindowsUserPathPrepend).toHaveBeenCalledWith(plan.rootDirectoryPath);
+  });
+
+  it('skips Windows user PATH persistence when the disable signal is set', async () => {
+    const memoryFs = new MemoryFs();
+    const plan = buildLocalRuntimeSettingsCliMaterialization(
+      '/global-storage',
+      '/extension-root',
+      'win32'
+    );
+    memoryFs.seed(plan.modulePath, 'module.exports = {};');
+    const environment = { prepend: vi.fn() };
+    const persistWindowsUserPathPrepend = vi.fn(async () => {});
+    await admitLocalRuntimeSettingsCliToTerminalPath(
+      '/global-storage',
+      '/extension-root',
+      environment,
+      {
+        fs: memoryFs as never,
+        platform: 'win32',
+        env: { VI_HISTORY_SUITE_DISABLE_PERSISTENT_USER_PATH_ADMISSION: '1' },
+        persistWindowsUserPathPrepend
+      }
+    );
+    expect(environment.prepend).toHaveBeenCalledWith('PATH', plan.pathPrependValue);
+    // The disable signal short-circuits before the injected persister runs.
+    expect(persistWindowsUserPathPrepend).not.toHaveBeenCalled();
+  });
+
+  it('formats a non-Error thrown value through the CLI main error path', async () => {
+    const memoryFs = new MemoryFs();
+    const stderr = createWritable();
+    memoryFs.seed(
+      '/build/buildInfo.json',
+      JSON.stringify({ extensionVersion: '1.4.2', extensionCommit: 'abcdef1234567890' })
+    );
+    const code = await runLocalRuntimeSettingsCliMain(
+      ['--validate', '--settings-file', 'runtime-settings.json'],
+      {
+        cwd: () => '/workspace',
+        fs: memoryFs as never,
+        stderr: stderr.stream,
+        locateRuntime: (async () => {
+          // A non-Error rejection exercises the String(error) fallback.
+          throw 'stringy runtime failure';
+        }) as never,
+        buildInfoDeps: {
+          fs: memoryFs as never,
+          buildInfoPath: '/build/buildInfo.json',
+          packageJsonPath: '/package.json'
+        }
+      }
+    );
+    expect(code).toBe(1);
+    expect(stderr.text()).toContain('stringy runtime failure');
+  });
+});
+
+describe('local runtime settings CLI proof-packet content branches (VHS-REQ-612)', () => {
+  it('suggests the feature-not-implemented template in the proof for a not-implemented runtime block', async () => {
+    const memoryFs = new MemoryFs();
+    const stdout = createWritable();
+    const settingsFilePath = path.resolve('/workspace', 'runtime-settings.json');
+    const proofDirectory = path.resolve('/workspace', 'proof');
+    memoryFs.seed(
+      settingsFilePath,
+      JSON.stringify({
+        'viHistorySuite.runtimeProvider': 'docker',
+        'viHistorySuite.labviewVersion': '2026',
+        'viHistorySuite.labviewBitness': 'x64'
+      })
+    );
+    memoryFs.seed(
+      '/build/buildInfo.json',
+      JSON.stringify({ extensionVersion: '1.4.2', extensionCommit: 'abcdef1234567890' })
+    );
+    const locateRuntime = vi
+      .fn()
+      .mockResolvedValue(blockedRuntimeSelection('docker-provider-labview-version-not-implemented'));
+
+    await runLocalRuntimeSettingsCli(
+      ['--validate', '--settings-file', 'runtime-settings.json', '--proof-out', 'proof'],
+      {
+        cwd: () => '/workspace',
+        env: { PATH: '/usr/bin' },
+        fs: memoryFs as never,
+        stdout: stdout.stream,
+        platform: 'linux',
+        locateRuntime,
+        buildInfoDeps: {
+          fs: memoryFs as never,
+          buildInfoPath: '/build/buildInfo.json',
+          packageJsonPath: '/package.json'
+        }
+      }
+    );
+
+    const proof = JSON.parse(
+      memoryFs.text(path.join(proofDirectory, 'vihs-validation-proof.json'))
+    ) as { implementationStatus: string; publicIntake: { suggestedTemplate: string } };
+    expect(proof.implementationStatus).toBe('not-implemented');
+    expect(proof.publicIntake.suggestedTemplate).toBe('feature-not-implemented.yml');
+  });
+
+  it('renders <missing> selected-variant facts in the issue body when persisted settings are empty', async () => {
+    const memoryFs = new MemoryFs();
+    const stdout = createWritable();
+    const settingsFilePath = path.resolve('/workspace', 'runtime-settings.json');
+    const proofDirectory = path.resolve('/workspace', 'proof');
+    // No viHistorySuite.* keys -> persisted facts resolve to null -> the issue
+    // body falls back to the <missing> placeholders.
+    memoryFs.seed(settingsFilePath, '{}');
+    memoryFs.seed(
+      '/build/buildInfo.json',
+      JSON.stringify({ extensionVersion: '1.4.2', extensionCommit: 'abcdef1234567890' })
+    );
+    const locateRuntime = vi
+      .fn()
+      .mockResolvedValue(blockedRuntimeSelection('docker-provider-unavailable'));
+
+    await runLocalRuntimeSettingsCli(
+      ['--validate', '--settings-file', 'runtime-settings.json', '--proof-out', 'proof'],
+      {
+        cwd: () => '/workspace',
+        env: { PATH: '/usr/bin' },
+        fs: memoryFs as never,
+        stdout: stdout.stream,
+        platform: 'linux',
+        locateRuntime,
+        buildInfoDeps: {
+          fs: memoryFs as never,
+          buildInfoPath: '/build/buildInfo.json',
+          packageJsonPath: '/package.json'
+        }
+      }
+    );
+
+    const issueBody = memoryFs.text(path.join(proofDirectory, 'vihs-validation-issue.md'));
+    expect(issueBody).toContain('- Provider: <missing>');
+    expect(issueBody).toContain('- LabVIEW year: <missing>');
+    expect(issueBody).toContain('- Bitness: <missing>');
+  });
+});
+
+/**
+ * Covers the default-dependency fall-throughs the injected-deps tests never
+ * reach: the `process.stdout`/`process.cwd`/`process.platform` sides of the
+ * `deps.x ?? process.x` defaults, the default `node:readline/promises`
+ * interactive controller, and the default `powershell.exe` PATH persister. All
+ * paths stay deterministic — `process.stdout` is spied, `createInterface` is
+ * globally stubbed, and `child_process` is mocked per test — so nothing spawns a
+ * real subprocess or blocks on a TTY.
+ */
+describe('local runtime settings CLI default-dependency coverage (VHS-REQ-612)', () => {
+  function spyStdout() {
+    return vi.spyOn(process.stdout, 'write').mockImplementation((() => true) as never);
+  }
+
+  function makeChildProcessMock(
+    handler: (file: string, args: readonly string[]) => { stdout: string; stderr: string }
+  ): { execFile: unknown; default: { execFile: unknown } } {
+    const execFileImpl = function execFileCallbackForm(): never {
+      throw new Error('callback-form execFile is not used by the persister');
+    } as unknown as Record<symbol, unknown>;
+    execFileImpl[promisify.custom] = async (file: string, args: readonly string[]) => handler(file, args);
+    return { execFile: execFileImpl, default: { execFile: execFileImpl } };
+  }
+
+  it('writes the terminal discovery text to process.stdout when no stdout is injected', async () => {
+    const writeSpy = spyStdout();
+    try {
+      const result = await runLocalRuntimeSettingsCli([]);
+      expect(result).toEqual({ outcome: 'help' });
+      expect(
+        writeSpy.mock.calls.some(([text]) => String(text).includes('terminal entrypoint'))
+      ).toBe(true);
+    } finally {
+      writeSpy.mockRestore();
+    }
+  });
+
+  it('writes the usage text to process.stdout for --help when no stdout is injected', async () => {
+    const writeSpy = spyStdout();
+    try {
+      const result = await runLocalRuntimeSettingsCli(['--help']);
+      expect(result).toEqual({ outcome: 'help' });
+      expect(writeSpy.mock.calls.some(([text]) => String(text).includes('Usage: vihs'))).toBe(true);
+    } finally {
+      writeSpy.mockRestore();
+    }
+  });
+
+  it('writes every update settings line to process.stdout when no stdout is injected', async () => {
+    const memoryFs = new MemoryFs();
+    const writeSpy = spyStdout();
+    try {
+      const result = await runLocalRuntimeSettingsCli(
+        [
+          '--provider',
+          'host',
+          '--labview-version',
+          '2026',
+          '--labview-bitness',
+          'x86',
+          '--settings-file',
+          'runtime-settings.json'
+        ],
+        { cwd: () => '/workspace', fs: memoryFs as never }
+      );
+      expect(result).toMatchObject({
+        outcome: 'updated-settings',
+        provider: 'host',
+        labviewVersion: '2026',
+        labviewBitness: 'x86'
+      });
+      expect(
+        writeSpy.mock.calls.some(([text]) => String(text).includes('viHistorySuite.labviewBitness=x86'))
+      ).toBe(true);
+    } finally {
+      writeSpy.mockRestore();
+    }
+  });
+
+  it('validate falls back to process.stdout/cwd/platform and records host defaults in the proof', async () => {
+    const memoryFs = new MemoryFs();
+    const settingsFilePath = path.join(os.tmpdir(), 'vihs-validate-defaults', 'runtime-settings.json');
+    const proofDirectory = path.join(os.tmpdir(), 'vihs-validate-defaults', 'proof');
+    memoryFs.seed(
+      settingsFilePath,
+      JSON.stringify({
+        'viHistorySuite.runtimeProvider': 'host',
+        'viHistorySuite.labviewVersion': '2026',
+        'viHistorySuite.labviewBitness': 'x64'
+      })
+    );
+    memoryFs.seed(
+      '/build/buildInfo.json',
+      JSON.stringify({ extensionVersion: '1.4.2', extensionCommit: 'abcdef1234567890' })
+    );
+    const writeSpy = spyStdout();
+    try {
+      const result = await runLocalRuntimeSettingsCli(
+        ['--validate', '--settings-file', settingsFilePath, '--proof-out', proofDirectory],
+        {
+          fs: memoryFs as never,
+          locateRuntime: vi.fn().mockResolvedValue(readyRuntimeSelection()),
+          buildInfoDeps: {
+            fs: memoryFs as never,
+            buildInfoPath: '/build/buildInfo.json',
+            packageJsonPath: '/package.json'
+          }
+        }
+      );
+      expect(result).toMatchObject({
+        outcome: 'validated-settings',
+        runtimeValidationOutcome: 'ready',
+        runtimeErrorCode: 'VIHS_OK'
+      });
+      expect(
+        writeSpy.mock.calls.some(([text]) => String(text).includes('runtimeValidationOutcome=ready'))
+      ).toBe(true);
+      const proof = JSON.parse(
+        memoryFs.text(path.join(proofDirectory, 'vihs-validation-proof.json'))
+      ) as { host: { processPlatform: string }; publicIntake: { suggestedTemplate: string } };
+      expect(proof.host.processPlatform).toBe(process.platform);
+      expect(proof.publicIntake.suggestedTemplate).toBe('validation-success.yml');
+    } finally {
+      writeSpy.mockRestore();
+    }
+  });
+
+  it('validate suggests the not-implemented template and honors an injected homedir in the proof', async () => {
+    const memoryFs = new MemoryFs();
+    const stdout = createWritable();
+    const settingsFilePath = path.resolve('/workspace', 'runtime-settings.json');
+    const proofDirectory = path.resolve('/workspace', 'proof');
+    memoryFs.seed(
+      settingsFilePath,
+      JSON.stringify({
+        'viHistorySuite.runtimeProvider': 'docker',
+        'viHistorySuite.labviewVersion': '2026',
+        'viHistorySuite.labviewBitness': 'x64'
+      })
+    );
+    memoryFs.seed(
+      '/build/buildInfo.json',
+      JSON.stringify({ extensionVersion: '1.4.2', extensionCommit: 'abcdef1234567890' })
+    );
+    const result = await runLocalRuntimeSettingsCli(
+      ['--validate', '--settings-file', 'runtime-settings.json', '--proof-out', 'proof'],
+      {
+        cwd: () => '/workspace',
+        fs: memoryFs as never,
+        stdout: stdout.stream,
+        platform: 'linux',
+        env: { PATH: '/usr/bin' },
+        homedir: () => '/home/injected-user',
+        locateRuntime: vi
+          .fn()
+          .mockResolvedValue(blockedRuntimeSelection('docker-provider-labview-version-not-implemented')),
+        buildInfoDeps: {
+          fs: memoryFs as never,
+          buildInfoPath: '/build/buildInfo.json',
+          packageJsonPath: '/package.json'
+        }
+      }
+    );
+    expect(result).toMatchObject({
+      runtimeValidationOutcome: 'blocked',
+      runtimeImplementationStatus: 'not-implemented'
+    });
+    const proof = JSON.parse(
+      memoryFs.text(path.join(proofDirectory, 'vihs-validation-proof.json'))
+    ) as { host: { homedir: string }; publicIntake: { suggestedTemplate: string } };
+    expect(proof.host.homedir).toBe('/home/injected-user');
+    expect(proof.publicIntake.suggestedTemplate).toBe('feature-not-implemented.yml');
+  });
+
+  it('main honors an explicit non-interactive terminal signal and prints discovery text', async () => {
+    const writeSpy = spyStdout();
+    try {
+      const code = await runLocalRuntimeSettingsCliMain([], { isInteractiveTerminal: false });
+      expect(code).toBe(0);
+      expect(
+        writeSpy.mock.calls.some(([text]) => String(text).includes('terminal entrypoint'))
+      ).toBe(true);
+    } finally {
+      writeSpy.mockRestore();
+    }
+  });
+
+  it('builds the default readline controller when no promptLine is injected', async () => {
+    readlineMockState.answers = ['', '', '', ''];
+    readlineMockState.created = 0;
+    readlineMockState.closed = 0;
+    const memoryFs = new MemoryFs();
+    const stdout = createWritable();
+    memoryFs.seed(
+      '/build/buildInfo.json',
+      JSON.stringify({ extensionVersion: '1.4.2', extensionCommit: 'abcdef1234567890' })
+    );
+    const result = await runInteractiveLocalRuntimeSettingsCli({
+      fs: memoryFs as never,
+      stdin: {} as never,
+      stdout: stdout.stream,
+      platform: 'win32',
+      env: { APPDATA: 'C:\\Users\\Test\\AppData\\Roaming' },
+      homedir: () => 'C:\\Users\\Test',
+      locateRuntime: vi.fn().mockResolvedValue(readyRuntimeSelection()),
+      buildInfoDeps: {
+        fs: memoryFs as never,
+        buildInfoPath: '/build/buildInfo.json',
+        packageJsonPath: '/package.json'
+      }
+    });
+    expect(result).toMatchObject({
+      outcome: 'validated-settings',
+      persistedProvider: 'host',
+      persistedLabviewVersion: '2026',
+      persistedLabviewBitness: 'x86'
+    });
+    expect(readlineMockState.created).toBe(1);
+    expect(readlineMockState.closed).toBe(1);
+  });
+
+  it('admits the terminal entrypoint through the default powershell persister on success', async () => {
+    vi.resetModules();
+    const execCalls: Array<{ file: string; args: readonly string[] }> = [];
+    vi.doMock('node:child_process', () =>
+      makeChildProcessMock((file, args) => {
+        execCalls.push({ file, args });
+        return { stdout: '', stderr: '' };
+      })
+    );
+    try {
+      const mod = await import('../../src/tooling/localRuntimeSettingsCli');
+      const memoryFs = new MemoryFs();
+      const plan = mod.buildLocalRuntimeSettingsCliMaterialization(
+        '/global-storage',
+        '/extension-root',
+        'win32'
+      );
+      memoryFs.seed(plan.modulePath, 'module.exports = {};');
+      const environment = { prepend: vi.fn() };
+      await mod.admitLocalRuntimeSettingsCliToTerminalPath(
+        '/global-storage',
+        '/extension-root',
+        environment,
+        { fs: memoryFs as never, platform: 'win32', env: {} }
+      );
+      expect(environment.prepend).toHaveBeenCalledWith('PATH', plan.pathPrependValue);
+      expect(execCalls).toHaveLength(1);
+      expect(execCalls[0].file).toBe('powershell.exe');
+      expect(execCalls[0].args).toContain('-NonInteractive');
+      expect(execCalls[0].args.some((arg) => arg.includes("SetEnvironmentVariable('Path'"))).toBe(true);
+    } finally {
+      vi.doUnmock('node:child_process');
+      vi.resetModules();
+    }
+  });
+
+  it('wraps a failure from the default powershell persister with an actionable message', async () => {
+    vi.resetModules();
+    vi.doMock('node:child_process', () =>
+      makeChildProcessMock(() => {
+        throw new Error('powershell.exe exited 1');
+      })
+    );
+    try {
+      const mod = await import('../../src/tooling/localRuntimeSettingsCli');
+      const memoryFs = new MemoryFs();
+      const plan = mod.buildLocalRuntimeSettingsCliMaterialization(
+        '/global-storage',
+        '/extension-root',
+        'win32'
+      );
+      memoryFs.seed(plan.modulePath, 'module.exports = {};');
+      await expect(
+        mod.admitLocalRuntimeSettingsCliToTerminalPath(
+          '/global-storage',
+          '/extension-root',
+          { prepend: vi.fn() },
+          { fs: memoryFs as never, platform: 'win32', env: {} }
+        )
+      ).rejects.toThrow('Failed to admit bare vihs terminal entrypoint into the user PATH');
+    } finally {
+      vi.doUnmock('node:child_process');
+      vi.resetModules();
+    }
   });
 });

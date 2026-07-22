@@ -11,6 +11,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   buildViSemanticMcpServerDeps,
   createDefaultComparisonModelCache,
+  createDefaultPreviewCacheInspectionFsDeps,
   resolveRuntimeHealth,
   listChangedVis
 } from '../../src/mcp/viSemanticMcpServerDeps';
@@ -236,6 +237,58 @@ describe('createDefaultComparisonModelCache', () => {
       await expect(created.get(key)).resolves.toEqual(model);
     } finally {
       await fsp.rm(cacheFile, { force: true });
+    }
+  });
+});
+
+describe('createDefaultPreviewCacheInspectionFsDeps', () => {
+  it('wires real fs operations for the preview-cache inspector (VHS-REQ-662.8)', async () => {
+    const deps = createDefaultPreviewCacheInspectionFsDeps();
+    const dir = await fsp.mkdtemp(path.join(os.tmpdir(), 'vihs-mcp-fsdeps-'));
+    const file = path.join(dir, 'entry.json');
+    try {
+      await fsp.writeFile(file, '{"k":1}', 'utf8');
+      expect(deps.joinPath(dir, 'entry.json')).toBe(file);
+      const names = await deps.listFiles(dir);
+      expect(names).toContain('entry.json');
+      expect(await deps.readFile(file)).toBe('{"k":1}');
+      expect(await deps.fileSizeBytes(file)).toBeGreaterThan(0);
+      expect(await deps.fileModifiedMs(file)).toBeGreaterThan(0);
+    } finally {
+      await fsp.rm(dir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('buildViSemanticMcpServerDeps preview-cache inspector arrows', () => {
+  it('runs the list/summarize/search/get inspector arrows against a real cache dir (VHS-REQ-662.8)', async () => {
+    // The inspector arrows on the built deps close over the default node-fs
+    // adapter; driving each one against a real temp cache dir exercises the wired
+    // list/summarize/search/get bindings the MCP `*_preview_cache` tools call.
+    const deps = buildViSemanticMcpServerDeps(cache);
+    const dir = await fsp.mkdtemp(path.join(os.tmpdir(), 'vihs-mcp-inspector-'));
+    const key = 'abc123';
+    try {
+      await fsp.writeFile(
+        path.join(dir, `${key}.html`),
+        '<html><body><img src="data:image/png;base64,AAAA"></body></html>',
+        'utf8'
+      );
+
+      const listed = await deps.previewCacheInspector?.list(dir);
+      expect(listed?.map((entry) => entry.key)).toContain(key);
+
+      const summary = await deps.previewCacheInspector?.summarize(dir);
+      expect(summary?.entryCount).toBe(1);
+
+      const matches = await deps.previewCacheInspector?.search(dir, 'image');
+      expect(matches?.map((entry) => entry.key)).toContain(key);
+
+      const fetched = await deps.previewCacheInspector?.get(dir, key, { includeHtml: true });
+      expect(fetched?.key).toBe(key);
+      expect(fetched?.html).toContain('data:image/png');
+    } finally {
+      await fsp.rm(dir, { recursive: true, force: true });
     }
   });
 });

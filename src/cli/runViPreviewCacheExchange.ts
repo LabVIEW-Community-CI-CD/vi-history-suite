@@ -57,13 +57,27 @@ export interface ViPreviewCacheExchangeDeps {
  * Default node adapter: `gh` for releases, `tar` for pack/extract, node fs for
  * the rest. Exported so its deterministic members (fs + tar round-trip +
  * graceful gh-failure) are covered without a real GitHub release.
+ *
+ * `runProcess` is the subprocess boundary (defaulting to the real
+ * `execFileAsync`); injecting a canned runner lets the `gh`-backed arrows
+ * (`listReleases` / `createRelease` / `downloadRelease`) be exercised offline
+ * without spawning `gh`. Production callers pass no argument, so behavior is
+ * identical to before.
  */
-export function nodeExchangeDeps(): ViPreviewCacheExchangeDeps {
+export type ExchangeProcessRunner = (
+  file: string,
+  args: readonly string[],
+  options: { maxBuffer: number }
+) => Promise<{ stdout: string }>;
+
+export function nodeExchangeDeps(
+  runProcess: ExchangeProcessRunner = execFileAsync
+): ViPreviewCacheExchangeDeps {
   const gh = async (args: string[]): Promise<string> => {
-    const { stdout } = await execFileAsync('gh', args, { maxBuffer: 64 * 1024 * 1024 });
+    const { stdout } = await runProcess('gh', args, { maxBuffer: 64 * 1024 * 1024 });
     return stdout;
   };
-  const tar = (args: string[]): Promise<unknown> => execFileAsync('tar', args, { maxBuffer: 64 * 1024 * 1024 });
+  const tar = (args: string[]): Promise<unknown> => runProcess('tar', args, { maxBuffer: 64 * 1024 * 1024 });
   return {
     listReleases: async () => {
       let stdout: string;

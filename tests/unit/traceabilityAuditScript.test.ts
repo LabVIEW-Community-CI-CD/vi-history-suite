@@ -112,6 +112,26 @@ src/other.ts,gap,Simple note`;
     expect(rows[1].Path).toBe('src/other.ts');
   });
 
+  it('parses CSV with escaped doubled quotes inside a quoted field', () => {
+    const rows = parseCsv('Path,Notes\nsrc/a.ts,"He said ""hi"" today"\n');
+    expect(rows).toHaveLength(1);
+    expect(rows[0].Notes).toBe('He said "hi" today');
+  });
+
+  it('parses CSV with CRLF line endings', () => {
+    const rows = parseCsv('Path,Classification\r\nsrc/a.ts,mapped\r\nsrc/b.ts,gap\r\n');
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toMatchObject({ Path: 'src/a.ts', Classification: 'mapped' });
+    expect(rows[1]).toMatchObject({ Path: 'src/b.ts', Classification: 'gap' });
+  });
+
+  it('returns an empty inventory when the inventory file is absent', () => {
+    const missingPath = path.join(os.tmpdir(), 'vihs-missing-traceability-inventory-does-not-exist.csv');
+    const inventory = loadInventory(missingPath);
+    expect(inventory.rows).toEqual([]);
+    expect(inventory.byPath.size).toBe(0);
+  });
+
   it('splits references on semicolons', () => {
     expect(splitReferences('src/a.ts;src/b.ts')).toEqual(['src/a.ts', 'src/b.ts']);
     expect(splitReferences('single.ts')).toEqual(['single.ts']);
@@ -241,6 +261,75 @@ describe('traceability audit execution', () => {
     expect(result.findings.missingRtmReferences.length).toBe(0);
     expect(result.findings.rtmCoverageMismatches.length).toBe(0);
     expect(result.findings.gapEntriesPresentInRtm.length).toBe(0);
+  });
+
+  it('fails closed when the inventory file is missing', () => {
+    const fixtureRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'traceability-audit-'));
+    fixtureRoots.push(fixtureRoot);
+
+    const result = auditTraceability({
+      cwd: fixtureRoot,
+      stdout: mockStdout,
+      stderr: mockStderr
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.findings.missingInventoryFile).toBe(true);
+    expect(capturedStderr).toContain('Missing inventory file');
+  });
+
+  it('fails closed when the RTM file is missing but the inventory exists', () => {
+    const fixtureRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'traceability-audit-'));
+    fixtureRoots.push(fixtureRoot);
+    const requirementsDir = path.join(fixtureRoot, 'docs', 'requirements');
+    fs.mkdirSync(requirementsDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(requirementsDir, 'traceability-inventory.csv'),
+      'Path,Classification,RtmCoverage,Notes\n',
+      'utf8'
+    );
+
+    const result = auditTraceability({
+      cwd: fixtureRoot,
+      stdout: mockStdout,
+      stderr: mockStderr
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.findings.missingInventoryFile).toBe(false);
+    expect(result.findings.missingRtmFile).toBe(true);
+    expect(capturedStderr).toContain('Missing RTM file');
+  });
+
+  it('flags invalid classifications and unmapped implementation/test candidates', () => {
+    const fixtureRoot = createAuditFixture({
+      files: ['src/bad.ts', 'src/nested/orphan.ts', 'tests/unit/orphan.ts'],
+      inventoryRows: [
+        { Path: 'src/bad.ts', Classification: 'bogus', RtmCoverage: 'No', Notes: 'invalid classification value' },
+        { Path: 'docs/requirements/traceability-inventory.csv', Classification: 'supporting', RtmCoverage: 'No', Notes: 'fixture inventory' },
+        { Path: 'docs/requirements/rtm.csv', Classification: 'supporting', RtmCoverage: 'No', Notes: 'fixture rtm' }
+      ],
+      rtmRows: []
+    });
+    fixtureRoots.push(fixtureRoot);
+
+    const result = auditTraceability({
+      cwd: fixtureRoot,
+      stdout: mockStdout,
+      stderr: mockStderr
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.findings.invalidClassifications).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ path: 'src/bad.ts', classification: 'bogus' })
+      ])
+    );
+    expect(result.findings.unmappedImplementationCandidates).toContain('src/nested/orphan.ts');
+    expect(result.findings.unmappedTestCandidates).toContain('tests/unit/orphan.ts');
+    expect(capturedStderr).toContain('Invalid classifications');
+    expect(capturedStdout).toContain('Unmapped implementation candidates');
+    expect(capturedStdout).toContain('Unmapped test candidates');
   });
 
   it('reports gap count as informational', () => {

@@ -2423,7 +2423,7 @@ Missing numeric IDs are intentional.
   - `npm run coverage:map` reads `coverage/coverage-summary.json`,
     `docs/requirements/traceability-inventory.csv`, and
     `docs/requirements/rtm.csv`.
-  - The report highlights requirement-mapped files below 50% coverage by
+  - The report highlights requirement-mapped files below 80% coverage by
     requirement, classification, missing lines, missing branches, and missing
     functions.
   - The report highlights zero-coverage supporting files tied to active
@@ -4939,6 +4939,76 @@ Missing numeric IDs are intentional.
     versioned so external consumers of the open VI-diff standard are not
     broken.
 
+### VHS-REQ-712: LabVIEW-Free lvkit Semantic Comparison Backend
+
+- Status: Active
+- Parent: VHS-SYS-REQ-008
+- Area: Review Workflow
+- Statement: The toolset shall provide a LabVIEW-free semantic VI comparison
+  backend, built on the clean-room lvkit VI parser, that projects a lvkit change
+  map onto the shared VI semantic comparison model so the agent MCP surface can
+  produce a block-diagram semantic comparison without a LabVIEW runtime, while
+  the LabVIEW-backed preview and comparison report remain the visual artifacts.
+- Acceptance Criteria:
+  - A pure parser reads a `lvkit diff --format json` document into a typed
+    record, normalizing lvkit's snake_case change fields to a camelCase model and
+    preserving an unrecognized change kind or action verbatim, and fails closed
+    on a non-object document, a missing changes array, or a change missing its
+    kind or its action, so a malformed backend response is an explicit error
+    rather than a silently empty comparison.
+  - Each lvkit change is formatted into the NI comparison-report detail-item
+    grammar (object kind, quoted name, change verb, and diagram coordinate) so
+    the shared geometry parser and change classifier read it unchanged, with
+    subVI node changes classified as dependency, wire changes as behavioral, and
+    other node changes as structural.
+  - A pure adapter projects the parsed lvkit document onto the shared
+    `vi-history-suite/vi-semantic-comparison@v1` model, recording the runtime
+    provider as lvkit, marking the block diagram included and the front-panel,
+    connector-pane, and VI-attribute surfaces excluded as the honest structural
+    scope of a LabVIEW-free diff, and deriving the shared classification, totals,
+    and narrative, so every MCP semantic tool, cache, and validator consumes one
+    model shape regardless of backend.
+  - A lvkit executable locator resolves how to invoke lvkit — an explicit
+    `VIHS_LVKIT_BIN` override, then `lvkit` on PATH, then `uvx --from lvkit
+    lvkit` — through an injectable PATH probe, failing available-false with a
+    remediation reason when none resolve; and the MCP server selects the backend
+    from the environment (`VIHS_SEMANTICS_PROVIDER=lvkit`) so the per-repo opt-in
+    binds `compare_vi_revisions` to the lvkit provider without changing any other
+    tool.
+  - A lvkit compare provider matching the `compareViRevisions` signature
+    materializes the two revisions' VI bytes (a git blob, or the working-tree
+    file for the working-tree sentinel), runs `lvkit diff --format json` through
+    an injectable process boundary, and returns a typed result — blocked when
+    lvkit is absent or a revision cannot be read, failed when lvkit errors or
+    emits unparsable output, and completed with the shared semantic model on
+    success — always removing its temporary files.
+- Agent Work Scope:
+  - Keep the parser and adapter pure and dependency-free so the semantic contract
+    is unit tested without lvkit, LabVIEW, or Python; a maintainer `.cjs` driver
+    runs the real `lvkit diff` and feeds its output through the shipped adapter
+    for evidence. This backend reads VI bytes through lvkit and never authors
+    `.vi` binaries; the LabVIEW-backed preview and comparison report remain the
+    visual artifacts.
+- Implementation References:
+  - `docs/architecture/adr/ADR-0031-labview-free-lvkit-semantic-backend.md`
+  - `src/semantic/lvkit/lvkitDiffModel.ts`
+  - `src/semantic/lvkit/lvkitSemanticAdapter.ts`
+  - `src/semantic/lvkit/lvkitLocator.ts`
+  - `src/semantic/lvkit/lvkitCompareViRevisions.ts`
+- Verification References:
+  - `tests/unit/lvkitDiffModel.test.ts`
+  - `tests/unit/lvkitSemanticAdapter.test.ts`
+  - `tests/unit/lvkitLocator.test.ts`
+  - `tests/unit/lvkitCompareViRevisions.test.ts`
+- Change Guidance:
+  - Evolve the parser and adapter additively (lvkit document schema id
+    `vi-history-suite/lvkit-diff@v1`); keep the projected model on the shared
+    `vi-semantic-comparison@v1` schema and keep the block-diagram-only scope
+    honest (never claim front-panel or attribute coverage lvkit does not have).
+    The backend is bound into the MCP compare seam behind the
+    `VIHS_SEMANTICS_PROVIDER` opt-in; keep the VI preview and comparison report
+    on the LabVIEW/Docker runtime.
+
 ### VHS-REQ-702: VI Semantic Change Classification
 
 - Status: Active
@@ -5557,6 +5627,129 @@ Missing numeric IDs are intentional.
     `vi-history-suite/mirror-benchmark-mlrow@v1`) so a model trained on v1 rows
     keeps working; keep features, targets, and labels separated and units in the
     column names.
+
+### VHS-REQ-710: NI LabVIEW Linux Container Setup Diagnostics
+
+- Status: Active
+- Parent: VHS-SYS-REQ-013
+- Area: CI And Developer Environment
+- Statement: The toolset shall provide a diagnostics capability that reports, as a
+  single agent-facing verdict, whether the NI LabVIEW Linux container is set up
+  and ready to run a real VI comparison, and when it is not, the exact next
+  remediation.
+- Acceptance Criteria:
+  - A pure, deterministic engine maps gathered container probe readings to an
+    ordered set of staged checks (docker CLI, docker daemon, image presence,
+    in-container LabVIEWCLI, LabVIEW engine, lvcompare, and licensing)
+    where each check carries a stable check id and a pass, warn, fail, or skip
+    status, and a dependent check whose prerequisite is unmet is recorded as skip
+    rather than a misleading pass; the engine fails closed on malformed probes.
+  - The engine emits an overall worst-of status and a ready-to-compare boolean
+    that is true only when every critical check passes, so that advisory warnings
+    such as an unknown licensing state do not block readiness, and it names the
+    first actionable remediation as the next action.
+  - A command-line entry point gathers the real probes through an injected docker
+    boundary and renders the verdict as text, JSON, JSON Schema, or Markdown,
+    exiting zero only when ready to compare and non-zero when a critical check
+    fails or the compiled engine cannot be loaded.
+  - A pure synchronization-pattern analyzer decodes the fiducial-and-stopwatch
+    sequence, namely the corner fiducial markers and the forty-bit machine strip
+    of an eight-bit preamble, a twenty-four-bit centiseconds payload, and an
+    exclusive-or checksum, and classifies the dominant failure signature of a
+    captured sequence in root-cause order (missing fiducials, out-of-bounds strip,
+    preamble mismatch, checksum mismatch, non-monotonic, stalled, or gapped
+    centiseconds) so a synchronization fault is localized mechanically rather than
+    by frame inspection.
+  - The same engine supports multiple hardware/runtime variants: for the
+    host-native variant the docker and image checks are recorded not-applicable
+    (skip) and readiness rests on the host LabVIEW tooling checks, whereas the
+    container variant additionally requires docker and the image; the command-line
+    entry point selects the variant and gathers variant-appropriate probes.
+  - An aggregation projects the per-variant diagnostics into an all-hardware
+    variants readiness matrix with one row per variant carrying its
+    ready-to-compare state, overall status, failure count, and next action, plus
+    any-ready and all-ready summaries, and the command-line entry point can emit
+    the matrix across the known variants; the aggregation fails closed on an empty
+    input.
+- Agent Work Scope:
+  - Keep the engine pure and dependency-free so the readiness contract is unit
+    tested without a container; the CLI performs the docker probing through an
+    injected boundary. This diagnostics capability never authors `.vi` binaries.
+- Implementation References:
+  - `docs/architecture/adr/ADR-0029-agent-facing-runtime-and-container-diagnostics.md`
+  - `src/reporting/containerDiagnostics/labviewContainerDiagnostics.ts`
+  - `src/reporting/syncDiagnostics/syncPatternFailureSignature.ts`
+  - `scripts/diagnoseLabviewContainer.js`
+- Verification References:
+  - `tests/unit/labviewContainerDiagnostics.test.ts`
+  - `tests/unit/diagnoseLabviewContainerScript.test.ts`
+  - `tests/unit/syncPatternFailureSignature.test.ts`
+- Change Guidance:
+  - Evolve the diagnostics contract additively (schema id
+    `vi-history-suite/labview-container-diagnostics@v1`); add new staged checks at
+    the end of the order and keep the skip-on-unmet-prerequisite staging so the
+    verdict never overstates readiness.
+
+### VHS-REQ-711: Cross-Host Empty-Swap Comparison Validation
+
+- Status: Active
+- Parent: VHS-SYS-REQ-013
+- Area: CI And Developer Environment
+- Statement: The toolset shall provide a versioned, cross-host validation
+  capability that runs one real LabVIEW comparison for the empty-swap fixture
+  (base = `empty.vi` bytes, selected = `empty1.vi` bytes on a single tracked
+  path) through the shipped comparison primitives, and classifies the run as
+  verified only when the real runtime produced a report that actually shows the
+  change, so the same validation is parameterized identically across hosts.
+- Acceptance Criteria:
+  - Cross-host inputs — provider (host or docker), platform, bitness, LabVIEW
+    version, container image, and the corpus base and selected revisions — are
+    resolved from the environment against ambient defaults, and resolution fails
+    closed when either the base or the selected revision is absent, so the same
+    driver is parameterized across hosts but never runs without both revisions
+    of the empty-swap corpus path.
+  - The validation emits a typed evidence record stamped with a versioned schema
+    id (`vi-history-suite/empty-swap-comparison@v1`, schema version one) that
+    carries the resolved provider, platform, bitness, and LabVIEW version, the
+    container image only for the docker provider, the corpus coordinates, and
+    outcome fields that start null with the verdict starting not-verified.
+  - The retained report digest is computed over content normalized for
+    carriage-return line endings and trailing whitespace so the digest is stable
+    across host line-ending conventions, and the digest is retained evidence
+    rather than the cross-host parity key.
+  - A comparison runtime record is projected into the outcome fields — runtime
+    state, report existence, diagnostic reason, failure reason, and blocked
+    reason — by reading the runtime-execution sub-record first and falling back
+    to the top-level record so a partial record still yields a well-typed
+    outcome.
+  - The rendered comparison report is inspected for VI, cosmetic, and generic
+    difference headings by matching the document class attribute rather than
+    style selectors, reporting whether a real difference was observed, so
+    cross-host parity rests on the semantic outcome rather than a byte-identical
+    report hash.
+  - The run is classified fail-closed: a verified verdict is returned only when
+    the runtime succeeded, the report exists, and a difference was detected, and
+    any error, blocked, runtime-failure, or unproven state yields a non-verified
+    verdict, so a validation run is never reported verified unless a real
+    comparison actually observed the empty-swap change.
+- Agent Work Scope:
+  - Keep the typed validation contract (option resolution, evidence shaping,
+    digest normalization, outcome summarization, difference detection, and
+    verdict classification) pure and dependency-free so it is unit tested without
+    a runtime; the maintainer `.cjs` harness performs the single real
+    `CreateComparisonReport` run and I/O and imports the compiled contract. This
+    validation capability never authors `.vi` binaries.
+- Implementation References:
+  - `docs/architecture/adr/ADR-0030-cross-host-empty-swap-comparison-validation.md`
+  - `src/reporting/comparisonValidation/emptySwapComparisonEvidence.ts`
+- Verification References:
+  - `tests/unit/emptySwapComparisonEvidence.test.ts`
+- Change Guidance:
+  - Evolve the evidence contract additively (schema id
+    `vi-history-suite/empty-swap-comparison@v1`); keep the verdict fail-closed so
+    only a runtime-succeeded, report-present, difference-detected run is reported
+    verified, and keep cross-host parity anchored on the semantic outcome rather
+    than the non-deterministic report hash.
 
 ### VHS-REQ-667: Versioned Dev-Tools GitHub Release Channel
 

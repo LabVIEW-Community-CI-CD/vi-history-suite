@@ -1788,3 +1788,121 @@ describe('multi standards audit script', () => {
     ]);
   });
 });
+
+// Additional branch coverage for fail-closed guards, skip/merge branches, and
+// score-file resolution in the exported pure summarizers.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const genAudit = require('../../scripts/runMultiStandardsAudit.js') as Record<string, any>;
+
+describe('runMultiStandardsAudit summarizer guard + skip/merge branches', () => {
+  it('parseArgs rejects positional arguments', () => {
+    expect(() => parseArgs(['stray-positional'])).toThrow(/Unknown argument/);
+  });
+
+  it('summarizeExternalUserInformation fails closed on non-object payloads and counts findings otherwise', () => {
+    expect(genAudit.summarizeExternalUserInformation(null)).toEqual({
+      ok: false,
+      findingCount: undefined,
+      checkedPathCount: undefined,
+      checkedPaths: []
+    });
+    expect(genAudit.summarizeExternalUserInformation('nope')).toMatchObject({ ok: false });
+    const ok = genAudit.summarizeExternalUserInformation({ ok: true, findings: [1, 2], checkedPaths: ['a'] });
+    expect(ok.ok).toBe(true);
+    expect(ok.findingCount).toBe(2);
+  });
+
+  it('summarizeRetainedGateScore returns {} for malformed payloads and skips non-object gates', () => {
+    expect(summarizeRetainedGateScore(null)).toEqual({});
+    expect(summarizeRetainedGateScore({ gates: 'nope' })).toEqual({});
+    expect(
+      summarizeRetainedGateScore({ gates: { req: { status: 'PASS', confidence: 'High' }, broken: null } })
+    ).toEqual({
+      req: { status: 'PASS', confidence: 'High', basis: undefined, standards: [], missingProof: [] }
+    });
+  });
+
+  it('summarizeRetainedStandardsCoverage returns {} for malformed payloads and skips non-object areas', () => {
+    expect(summarizeRetainedStandardsCoverage(null)).toEqual({});
+    expect(summarizeRetainedStandardsCoverage({ areas: 'nope' })).toEqual({});
+    expect(
+      summarizeRetainedStandardsCoverage({ areas: { REQ: { score: 5, confidence: 'High' }, broken: null } })
+    ).toEqual({
+      REQ: { score: 5, confidence: 'High', standards: [], rationale: undefined }
+    });
+  });
+
+  it('summarizeRetainedStandardsEvidence fails closed and drops empty / non-object strengths', () => {
+    expect(summarizeRetainedStandardsEvidence(null)).toEqual([]);
+    expect(summarizeRetainedStandardsEvidence({ top_strengths: 'nope' })).toEqual([]);
+    expect(
+      summarizeRetainedStandardsEvidence({
+        top_strengths: [
+          null,
+          { id: 'kept', summary: 'S', standards: ['29148'], evidence_paths: [] },
+          { id: 'dropped' }
+        ]
+      })
+    ).toEqual([{ id: 'kept', summary: 'S', standards: ['29148'], evidencePaths: [] }]);
+  });
+
+  it('profileScoreFile resolves the default target path, honors an explicit score file, and no-ops without a save dir', () => {
+    expect(genAudit.profileScoreFile({})).toBeUndefined();
+    expect(genAudit.profileScoreFile({ saveDir: 'quick-triage' })).toBe('quick-triage/target/score.json');
+    expect(genAudit.profileScoreFile({ saveDir: 'quick-triage', scoreFile: 'custom/score.json' })).toBe('custom/score.json');
+  });
+
+  it('buildStandardsEvidenceSummary skips items without evidence paths', () => {
+    expect(
+      buildStandardsEvidenceSummary([
+        {
+          name: 'quick-triage',
+          scoreFile: 'quick-triage/target/score.json',
+          standardsEvidence: [
+            { id: 'kept', summary: 'has evidence', standards: ['29148'], evidencePaths: ['docs/x.md'] },
+            { id: 'skipped', summary: 'no evidence', standards: ['29148'], evidencePaths: [] }
+          ]
+        }
+      ])
+    ).toEqual([
+      {
+        id: 'kept',
+        summary: 'has evidence',
+        standards: ['29148'],
+        evidencePaths: ['docs/x.md'],
+        profiles: ['quick-triage'],
+        scoreFiles: ['quick-triage/target/score.json']
+      }
+    ]);
+  });
+
+  it('buildStandardsGateStrengthSummary merges an identical strength across profiles and skips empty rows', () => {
+    expect(
+      buildStandardsGateStrengthSummary([
+        {
+          name: 'quick-triage',
+          scoreFile: 'quick-triage/target/score.json',
+          standardsEvidence: [
+            { id: 'gate-req', summary: 'req gate passes.', standards: ['29148'], evidencePaths: [] },
+            { id: 'noise', summary: '', standards: [], evidencePaths: [] }
+          ]
+        },
+        {
+          name: 'release-gate',
+          scoreFile: 'release-gate/target/score.json',
+          standardsEvidence: [
+            { id: 'gate-req', summary: 'req gate passes.', standards: ['29148'], evidencePaths: [] }
+          ]
+        }
+      ])
+    ).toEqual([
+      {
+        id: 'gate-req',
+        summary: 'req gate passes.',
+        standards: ['29148'],
+        profiles: ['quick-triage', 'release-gate'],
+        scoreFiles: ['quick-triage/target/score.json', 'release-gate/target/score.json']
+      }
+    ]);
+  });
+});

@@ -219,4 +219,39 @@ describe('buildViPreviewCacheHealth (VHS-REQ-675)', () => {
       'z/Last.vi'
     ]);
   });
+
+  it('sorts shuffled orphaned cache keys and removed VI paths ascending (VHS-REQ-675.2)', () => {
+    // Five shuffled distinct values drive the orphan/removed sort comparators
+    // through both their < and > sides (their equal side is unreachable after the
+    // Set-based de-duplication upstream).
+    const key = (c: string) => c.repeat(64);
+    const report = buildViPreviewCacheHealth({
+      cacheDirectory: '/cache',
+      // Empty workspace: every manifest path is "removed", every present key orphaned.
+      workspaceViPaths: [],
+      manifest: manifest([
+        { relativePath: 'c/R.vi', key: key('1'), outcome: 'rendered' },
+        { relativePath: 'e/R.vi', key: key('2'), outcome: 'rendered' },
+        { relativePath: 'a/R.vi', key: key('3'), outcome: 'rendered' },
+        { relativePath: 'd/R.vi', key: key('4'), outcome: 'rendered' },
+        { relativePath: 'b/R.vi', key: key('5'), outcome: 'rendered' }
+      ]),
+      presentCacheKeys: [key('e'), key('c'), key('a'), key('d'), key('b')],
+      generatedAt: '2026-07-19T00:00:00.000Z'
+    });
+    expect(report.orphanedCacheKeys).toEqual([
+      key('a'),
+      key('b'),
+      key('c'),
+      key('d'),
+      key('e')
+    ]);
+    expect(report.removedViPaths).toEqual([
+      'a/R.vi',
+      'b/R.vi',
+      'c/R.vi',
+      'd/R.vi',
+      'e/R.vi'
+    ]);
+  });
 });

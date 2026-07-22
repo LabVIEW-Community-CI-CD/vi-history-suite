@@ -220,4 +220,98 @@ describe('verifyDevToolsRelease (DS2)', () => {
     });
     expect(bad).toBe(1);
   });
+
+  it('verifyToolsetAgainstManifest throws when the manifest has no files array (fail-closed)', () => {
+    expect(() => verifier.verifyToolsetAgainstManifest(os.tmpdir(), {})).toThrow(/files array/);
+    expect(() => verifier.verifyToolsetAgainstManifest(os.tmpdir(), { files: 'nope' })).toThrow(/files array/);
+  });
+
+  it('listFilesRecursive returns an empty list for a non-existent root (readdir failure path)', () => {
+    const listFilesRecursive = (verifier as unknown as {
+      listFilesRecursive: (root: string, deps?: Record<string, unknown>) => string[];
+    }).listFilesRecursive;
+    expect(listFilesRecursive(path.join(os.tmpdir(), 'vihs-does-not-exist-xyz-1234'))).toEqual([]);
+  });
+
+  it('parseArgs rejects a flag that is missing its value', () => {
+    expect(() => verifier.parseArgs(['--root'])).toThrow(/requires a value/);
+    expect(() => verifier.parseArgs(['--manifest', '--root'])).toThrow(/requires a value/);
+  });
+
+  it('main returns 1 when argument parsing fails', () => {
+    const errs: string[] = [];
+    const code = verifier.main(['--nope'], {
+      stdout: { write: () => undefined },
+      stderr: { write: (s: string) => errs.push(s) }
+    });
+    expect(code).toBe(1);
+    expect(errs.join('')).toMatch(/Unknown argument/);
+  });
+
+  it('main returns 1 when the manifest cannot be loaded', () => {
+    const dir = makeFixtureRepo();
+    const errs: string[] = [];
+    const code = verifier.main(['--manifest', 'missing-manifest.json'], {
+      cwd: dir,
+      stdout: { write: () => undefined },
+      stderr: { write: (s: string) => errs.push(s) }
+    });
+    expect(code).toBe(1);
+    expect(errs.length).toBeGreaterThan(0);
+  });
+
+  it('main --verify-self returns 0 when the in-tree digest matches and 1 on drift', () => {
+    const { dir, manifest } = fixtureWithManifest();
+    const deps = {
+      cwd: dir,
+      now: () => new Date('2026-07-17T00:00:00.000Z'),
+      getGitCommit: () => 'abc',
+      getPackageVersion: () => '1.0.0',
+      stdout: { write: () => undefined },
+      stderr: { write: () => undefined }
+    };
+    const manifestPath = path.join(dir, 'provenance.json');
+    fs.writeFileSync(manifestPath, JSON.stringify(manifest), 'utf8');
+    expect(verifier.main(['--verify-self', '--manifest', manifestPath, '--root', dir], deps)).toBe(0);
+
+    const driftPath = path.join(dir, 'drift.json');
+    fs.writeFileSync(driftPath, JSON.stringify({ ...manifest, contentDigest: 'deadbeef' }), 'utf8');
+    expect(verifier.main(['--verify-self', '--manifest', driftPath, '--root', dir], deps)).toBe(1);
+  });
+
+  it('main reports missing, unexpected, and digest-mismatch details and returns 1', () => {
+    const { dir, manifest } = fixtureWithManifest();
+    const root = extractOnly(dir, manifest);
+    // Remove one manifest file (missing) and add one unlisted file (extra).
+    fs.rmSync(path.join(root, 'scripts', 'toolB.js'));
+    fs.writeFileSync(path.join(root, 'scripts', 'evil.js'), 'gotcha\n', 'utf8');
+    const manifestPath = path.join(dir, 'manifest.json');
+    fs.writeFileSync(manifestPath, JSON.stringify(manifest), 'utf8');
+    const errs: string[] = [];
+    const code = verifier.main(['--manifest', manifestPath, '--root', root], {
+      cwd: dir,
+      stdout: { write: () => undefined },
+      stderr: { write: (s: string) => errs.push(s) }
+    });
+    expect(code).toBe(1);
+    const err = errs.join('');
+    expect(err).toMatch(/MISSING scripts\/toolB\.js/);
+    expect(err).toMatch(/UNEXPECTED scripts\/evil\.js/);
+    expect(err).toMatch(/DIGEST MISMATCH/);
+  });
+
+  it('main returns 1 when verification throws on a manifest without a files array', () => {
+    const dir = makeFixtureRepo();
+    const manifestPath = path.join(dir, 'nofiles.json');
+    // Valid schema (passes loadManifest) but no files array -> verify throws.
+    fs.writeFileSync(manifestPath, JSON.stringify({ $schema: builder.SCHEMA_ID, contentDigest: 'x' }), 'utf8');
+    const errs: string[] = [];
+    const code = verifier.main(['--manifest', manifestPath, '--root', dir], {
+      cwd: dir,
+      stdout: { write: () => undefined },
+      stderr: { write: (s: string) => errs.push(s) }
+    });
+    expect(code).toBe(1);
+    expect(errs.join('')).toMatch(/files array/);
+  });
 });

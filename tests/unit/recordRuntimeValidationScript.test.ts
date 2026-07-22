@@ -1,4 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
+import * as fs from 'node:fs';
+import * as os from 'node:os';
 import * as path from 'node:path';
 
 // Requirement coverage: VHS-REQ-601 (Requirements As Agent Work Contracts).
@@ -52,6 +54,14 @@ function manifestFixture() {
     ]
   };
 }
+
+const tempRoots: string[] = [];
+
+afterEach(() => {
+  for (const root of tempRoots.splice(0)) {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
 
 describe('isValidVersion (VHS-REQ-601.32)', () => {
   it('accepts x.y.z and rejects anything else', () => {
@@ -254,5 +264,147 @@ describe('main (VHS-REQ-601.32)', () => {
       stderr: { write: () => undefined }
     });
     expect(code).toBe(1);
+  });
+});
+
+describe('main default factories and error paths (VHS-REQ-601.32)', () => {
+  it('parseArgs collects positional arguments', () => {
+    const options = parseArgs(['--track', 't', '--version', '1.34.0', 'extra-positional']);
+    expect(options.positionals).toEqual(['extra-positional']);
+  });
+
+  it('returns exit 1 when argument parsing fails', () => {
+    const errors: string[] = [];
+    const code = main(['--unknown-flag'], {
+      cwd: '/repo',
+      readFile: () => JSON.stringify(manifestFixture()),
+      writeFile: () => undefined,
+      stdout: { write: () => undefined },
+      stderr: { write: (text: string) => errors.push(text) }
+    });
+    expect(code).toBe(1);
+    expect(errors.join('')).toContain('Unknown argument');
+  });
+
+  it('returns exit 1 when the ledger path escapes the working directory', () => {
+    const errors: string[] = [];
+    const code = main(
+      ['--track', 'linux-host-native', '--version', '1.34.0', '--ledger', '/etc/passwd'],
+      {
+        cwd: '/repo',
+        readFile: () => JSON.stringify(manifestFixture()),
+        writeFile: () => undefined,
+        stdout: { write: () => undefined },
+        stderr: { write: (text: string) => errors.push(text) }
+      }
+    );
+    expect(code).toBe(1);
+    expect(errors.join('')).toContain('relative path');
+  });
+
+  it('returns exit 1 when the ledger is not valid JSON', () => {
+    const errors: string[] = [];
+    const code = main(['--track', 'linux-host-native', '--version', '1.34.0'], {
+      cwd: '/repo',
+      readFile: () => 'not-json{',
+      writeFile: () => undefined,
+      stdout: { write: () => undefined },
+      stderr: { write: (text: string) => errors.push(text) }
+    });
+    expect(code).toBe(1);
+    expect(errors.join('')).toContain('Failed to read runtime-validation ledger');
+  });
+
+  it('renders a human-readable summary when --json is omitted', () => {
+    const outputs: string[] = [];
+    const code = main(
+      [
+        '--track',
+        'linux-host-native',
+        '--version',
+        '1.34.0',
+        '--commit',
+        'abc1234',
+        '--evidence',
+        'issue:#2001'
+      ],
+      {
+        cwd: '/repo',
+        readFile: () => JSON.stringify(manifestFixture()),
+        writeFile: () => undefined,
+        stdout: { write: (text: string) => outputs.push(text) },
+        stderr: { write: () => undefined }
+      }
+    );
+    expect(code).toBe(0);
+    const text = outputs.join('');
+    expect(text).toContain('[runtime-validation] Recorded linux-host-native');
+    expect(text).toContain('1.34.0');
+    expect(text).toContain('abc1234');
+    expect(text).toContain('issue:#2001');
+  });
+
+  it('falls back to process.cwd() when cwd is not injected', () => {
+    // Omitting cwd exercises the `deps.cwd || process.cwd()` fallback. readFile
+    // and writeFile stay injected so the real committed ledger is never touched.
+    const written: Array<{ path: string; content: string }> = [];
+    const code = main(['--track', 'linux-host-native', '--version', '1.34.0', '--json'], {
+      readFile: () => JSON.stringify(manifestFixture()),
+      writeFile: (p: string, content: string) => written.push({ path: p, content }),
+      stdout: { write: () => undefined },
+      stderr: { write: () => undefined }
+    });
+    expect(code).toBe(0);
+    expect(written).toHaveLength(1);
+    // The default ledger path resolves under the process cwd (the repo root).
+    expect(written[0].path.replace(/\\/g, '/')).toContain(
+      'docs/requirements/runtime-validation-ledger.json'
+    );
+  });
+
+  it('writes to the real process streams when stdout/stderr are not injected', () => {
+    const originalOut = process.stdout.write.bind(process.stdout);
+    const originalErr = process.stderr.write.bind(process.stderr);
+    const captured: string[] = [];
+    (process.stdout as unknown as { write: (chunk: string) => boolean }).write = (chunk: string) => {
+      captured.push(String(chunk));
+      return true;
+    };
+    (process.stderr as unknown as { write: (chunk: string) => boolean }).write = () => true;
+    try {
+      const code = main(['--track', 'linux-host-native', '--version', '1.34.0'], {
+        cwd: '/repo',
+        readFile: () => JSON.stringify(manifestFixture()),
+        writeFile: () => undefined
+      });
+      expect(code).toBe(0);
+      expect(captured.join('')).toContain('linux-host-native');
+    } finally {
+      (process.stdout as unknown as { write: typeof originalOut }).write = originalOut;
+      (process.stderr as unknown as { write: typeof originalErr }).write = originalErr;
+    }
+  });
+
+  it('reads and writes a real ledger via the default fs factories', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'vihs-record-runtime-'));
+    tempRoots.push(root);
+    const ledgerPath = path.join(root, 'docs', 'requirements', 'runtime-validation-ledger.json');
+    fs.mkdirSync(path.dirname(ledgerPath), { recursive: true });
+    fs.writeFileSync(ledgerPath, JSON.stringify(manifestFixture()), 'utf8');
+
+    const code = main(['--track', 'linux-host-native', '--version', '1.34.0', '--commit', 'def5678'], {
+      cwd: root,
+      stdout: { write: () => undefined },
+      stderr: { write: () => undefined }
+    });
+
+    expect(code).toBe(0);
+    const persistedText = fs.readFileSync(ledgerPath, 'utf8');
+    const persisted = JSON.parse(persistedText);
+    const track = persisted.tracks.find((t: any) => t.trackId === 'linux-host-native');
+    expect(track.lastValidatedVersion).toBe('1.34.0');
+    expect(track.lastValidatedCommit).toBe('def5678');
+    // Serialized with a trailing newline by the default writeFile arrow.
+    expect(persistedText.endsWith('\n')).toBe(true);
   });
 });

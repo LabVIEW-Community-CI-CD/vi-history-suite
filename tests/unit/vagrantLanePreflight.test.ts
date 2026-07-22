@@ -1,9 +1,13 @@
 import * as path from 'node:path';
 
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const vagrantPreflight = require('../../scripts/vagrantLanePreflight.js');
+// Same cached module instance the script closed over, so vi.spyOn intercepts the
+// default spawnSync-backed runCommand wrappers without spawning a real process.
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const childProcess = require('node:child_process');
 
 const {
   DEFAULT_BOX_NAME,
@@ -94,6 +98,18 @@ describe('vagrantLanePreflight parsers (VHS-REQ-686.1)', () => {
     for (const state of ['poweroff', 'saved', 'aborted', 'stopped', 'stopping', 'paused', 'inaccessible']) {
       expect(parseVagrantStatus(`  vihs-local-win11   ${state} (virtualbox)`).state).toBe(state);
     }
+  });
+
+  it('skips box-list lines that do not match the "name (provider, ...)" shape', () => {
+    // A non-empty line without the parenthesized provider block must be ignored
+    // rather than parsed into a bogus row (exercises the `if (!match) continue`).
+    const rows = parseBoxList('There are no installed boxes!\nvihs/win11-labview2026 (virtualbox, 0, amd64)\n');
+    expect(rows).toEqual([{ name: 'vihs/win11-labview2026', provider: 'virtualbox', version: '0' }]);
+  });
+
+  it('returns a null lifecycle state for non-string status output', () => {
+    expect(parseVagrantStatus(undefined).state).toBeNull();
+    expect(parseVagrantStatus(42 as never).state).toBeNull();
   });
 });
 
@@ -189,6 +205,26 @@ describe('inspectVagrantLane', () => {
     const boxCheck = report.checks.find((c: { id: string }) => c.id === 'box-registered');
     expect(boxCheck.ok).toBe(false);
     expect(boxCheck.detail).toContain('not registered');
+  });
+
+  it("reports 'vagrant box list' failure when the CLI is present but listing fails", () => {
+    // vagrant --version succeeds (CLI available) but `vagrant box list` errors,
+    // exercising the else branch that records the box-list failure detail.
+    const report = inspectVagrantLane({
+      cwd: FIXTURE_CWD,
+      env: {},
+      existsSync: existsSyncFor(new Set([VAGRANTFILE])),
+      runCommand: runCommandFor({
+        'vagrant --version': OK('Vagrant 2.4.9'),
+        'VBoxManage --version': OK('7.2.6')
+        // 'vagrant box list' intentionally unmapped -> NOT_FOUND (error result).
+      })
+    });
+
+    expect(report.satisfied).toBe(false);
+    const boxCheck = report.checks.find((c: { id: string }) => c.id === 'box-registered');
+    expect(boxCheck.ok).toBe(false);
+    expect(boxCheck.detail).toBe("'vagrant box list' failed");
   });
 });
 
@@ -313,5 +349,55 @@ describe('formatPreflightReport + main', () => {
     expect(code).toBe(0);
     const parsed = JSON.parse(out.writes.join(''));
     expect(parsed).toMatchObject({ mode: 'status', state: 'paused', ok: true });
+  });
+});
+
+describe('default injected boundaries (VHS-REQ-686.1)', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('uses the default spawnSync-backed runCommand when no runner is injected', () => {
+    // No `runCommand` dep -> the script falls back to its childProcess.spawnSync
+    // wrapper. Spying the shared cached module keeps it deterministic and never
+    // starts a real vagrant/VBoxManage process.
+    const spawnSpy = vi
+      .spyOn(childProcess, 'spawnSync')
+      .mockReturnValue({ status: 0, stdout: 'Vagrant 2.4.9\n', stderr: '' } as never);
+
+    const report = inspectVagrantLane();
+
+    expect(spawnSpy).toHaveBeenCalledWith('vagrant', ['--version'], expect.objectContaining({ encoding: 'utf8' }));
+    expect(report.boxName).toBe(DEFAULT_BOX_NAME);
+    expect(report.checks).toHaveLength(4);
+    expect(report.checks.find((c: { id: string }) => c.id === 'vagrant-cli').ok).toBe(true);
+  });
+
+  it('uses the default spawnSync-backed runCommand for status when no runner is injected', () => {
+    const spawnSpy = vi
+      .spyOn(childProcess, 'spawnSync')
+      .mockReturnValue({ status: 0, stdout: '  vihs-local-win11   running (virtualbox)\n', stderr: '' } as never);
+
+    const status = inspectVagrantStatus();
+
+    expect(spawnSpy).toHaveBeenCalledWith(
+      'vagrant',
+      ['status'],
+      expect.objectContaining({ encoding: 'utf8' })
+    );
+    expect(status).toMatchObject({ state: 'running', ok: true });
+  });
+
+  it('main falls back to process.stdout when no stream is injected', () => {
+    const writeSpy = vi.spyOn(process.stdout, 'write').mockReturnValue(true);
+
+    const code = main({
+      cwd: FIXTURE_CWD,
+      argv: ['status'],
+      runCommand: () => OK('  vihs-local-win11   poweroff (virtualbox)\n')
+    });
+
+    expect(code).toBe(0);
+    expect(writeSpy).toHaveBeenCalledWith(expect.stringContaining('VM state: poweroff'));
   });
 });

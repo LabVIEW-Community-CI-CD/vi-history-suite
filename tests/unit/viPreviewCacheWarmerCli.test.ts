@@ -1,4 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
+import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
 
 import {
   PREVIEW_CACHE_WARM_SCHEMA,
@@ -414,5 +417,35 @@ describe('preview-cache-warm CLI main (VHS-REQ-671.6)', () => {
     await expect(
       main(['--cache-dir', '/cache', '--output', '../escape.json'], { run })
     ).rejects.toThrow(/--output must stay within the working directory/);
+  });
+});
+
+describe('runViPreviewCacheWarm default Node enumerator/renderer factories (VHS-REQ-671.2)', () => {
+  it('enumerates the workspace and short-circuits rendering without a real runtime', async () => {
+    // A temp workspace with a synthetic .vi: the default buildNodeListViFiles()
+    // enumerator (real fs.readdir) finds it, and the default buildNodeRenderOne()
+    // renderer short-circuits to `blocked` because the resolved runtime carries no
+    // `runtime` handle -> the whole path is exercised with no LabVIEW render.
+    const repoRoot = await mkdtemp(path.join(os.tmpdir(), 'vihs-warm-repo-'));
+    const cacheDirectory = await mkdtemp(path.join(os.tmpdir(), 'vihs-warm-cache-'));
+    await mkdir(path.join(repoRoot, 'nested'), { recursive: true });
+    await writeFile(path.join(repoRoot, 'nested', 'sample.vi'), 'binary-placeholder', 'utf8');
+    try {
+      const packet = await runViPreviewCacheWarm(
+        { repositoryRoot: repoRoot, cacheDirectory },
+        {
+          // Ready outcome but no `runtime` handle -> renderer returns blocked.
+          resolveRuntime: async () => ({ outcome: 'ready', provider: 'docker' })
+        }
+      );
+      expect(packet.runtime.outcome).toBe('ready');
+      expect(packet.totals.total).toBe(1);
+      expect(packet.totals.blocked + packet.totals.failed).toBe(1);
+      expect(packet.entries).toHaveLength(1);
+      expect(packet.entries[0].relativePath.replace(/\\/g, '/')).toBe('nested/sample.vi');
+    } finally {
+      await rm(repoRoot, { recursive: true, force: true });
+      await rm(cacheDirectory, { recursive: true, force: true });
+    }
   });
 });

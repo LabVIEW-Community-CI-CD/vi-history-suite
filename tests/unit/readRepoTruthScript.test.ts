@@ -13,6 +13,9 @@ const {
   summarizeOpenWork,
   buildRepoTruthPacket,
   collectRuntimeFidelityDomain,
+  collectOpenWorkDomain,
+  collectCoverageDomain,
+  collectRequirementHealthDomain,
   run
 } = require('../../scripts/readRepoTruth.js') as {
   REPO_TRUTH_SCHEMA_ID: string;
@@ -24,6 +27,9 @@ const {
   summarizeOpenWork: (prs: unknown) => Record<string, unknown>;
   buildRepoTruthPacket: (options: Record<string, unknown>, deps: Record<string, unknown>) => Record<string, unknown>;
   collectRuntimeFidelityDomain: (deps?: Record<string, unknown>) => Record<string, unknown>;
+  collectOpenWorkDomain: (options: Record<string, unknown>, deps?: Record<string, unknown>) => Record<string, unknown>;
+  collectCoverageDomain: (deps?: Record<string, unknown>) => Record<string, unknown>;
+  collectRequirementHealthDomain: (deps?: Record<string, unknown>) => Record<string, unknown>;
   run: (argv: string[], deps?: Record<string, unknown>) => { exitCode: number; stdout?: string; stderr?: string };
 };
 
@@ -286,5 +292,153 @@ describe('readRepoTruth: run', () => {
     expect(out.exitCode).toBe(0);
     expect(out.stdout).toContain('Merge queue: min-to-merge=3');
     expect(out.stdout).toContain('Requirement health: status=healthy');
+  });
+});
+
+// A ruleset with no merge_queue rule + every node sibling unhandled (fakeSpawn's
+// default is a nonzero/empty result) drives the "no policy" and "unavailable"
+// render branches without any real gh/node.
+const NO_QUEUE_RULESET = { id: 42, name: 'develop-rules', rules: [{ type: 'deletion' }] };
+function degradedDeps() {
+  return {
+    now: () => new Date('2026-07-20T00:00:00.000Z'),
+    repoRoot: '/repo',
+    spawnSync: fakeSpawn([
+      { match: (c, a) => c === 'gh' && a.includes('repos/LabVIEW-Community-CI-CD/vi-history-suite/rulesets'), result: { status: 0, stdout: JSON.stringify([{ id: 42 }]) } },
+      { match: (c, a) => c === 'gh' && a.some((x) => x.includes('/rulesets/42')), result: { status: 0, stdout: JSON.stringify(NO_QUEUE_RULESET) } },
+      { match: (c, a) => c === 'gh' && a.includes('pr') && a.includes('list'), result: { status: 0, stdout: JSON.stringify([]) } }
+    ])
+  };
+}
+
+describe('readRepoTruth: runGhJson error propagation (VHS-REQ-692.3)', () => {
+  // collectOpenWorkDomain makes exactly one gh call, so an injected spawnSync
+  // exercises each runGhJson failure branch deterministically.
+  function ghDeps(result: SpawnResult) {
+    return { spawnSync: () => result, repoRoot: '/repo' };
+  }
+
+  it('throws a generic (non-auth) error when gh fails to spawn without ENOENT', () => {
+    let caught: unknown;
+    try {
+      collectOpenWorkDomain({}, ghDeps({ error: Object.assign(new Error('spawn gh EACCES'), { code: 'EACCES' }) }));
+    } catch (error) {
+      caught = error;
+    }
+    expect(caught).toBeInstanceOf(Error);
+    expect(caught).not.toBeInstanceOf(RepoTruthAuthError);
+    expect((caught as Error).message).toContain('failed: spawn gh EACCES');
+  });
+
+  it('throws a generic (non-auth) error when gh exits nonzero without an auth signature', () => {
+    let caught: unknown;
+    try {
+      collectOpenWorkDomain({}, ghDeps({ status: 1, stdout: '', stderr: 'network is unreachable' }));
+    } catch (error) {
+      caught = error;
+    }
+    expect(caught).toBeInstanceOf(Error);
+    expect(caught).not.toBeInstanceOf(RepoTruthAuthError);
+    expect((caught as Error).message).toContain('failed (status 1): network is unreachable');
+  });
+
+  it('throws when gh returns invalid JSON on a successful exit', () => {
+    expect(() => collectOpenWorkDomain({}, ghDeps({ status: 0, stdout: 'not-json{' }))).toThrow(/returned invalid JSON/);
+  });
+});
+
+describe('readRepoTruth: sibling read-model degradation (VHS-REQ-692.4)', () => {
+  it('degrades coverage to available:false when the node script fails to spawn', () => {
+    const d = collectCoverageDomain({ spawnSync: () => ({ error: new Error('node ENOENT') }), repoRoot: '/repo' });
+    expect(d).toMatchObject({ available: false });
+    expect(String(d.reason)).toContain('node ENOENT');
+  });
+
+  it('degrades coverage to available:false when the node script emits invalid JSON', () => {
+    const d = collectCoverageDomain({ spawnSync: () => ({ status: 0, stdout: 'oops-not-json' }), repoRoot: '/repo' });
+    expect(d).toMatchObject({ available: false });
+    expect(String(d.reason)).toContain('invalid JSON');
+  });
+
+  it('degrades requirement health to available:false when its script yields no JSON', () => {
+    const d = collectRequirementHealthDomain({ spawnSync: () => ({ status: 1, stdout: '' }), repoRoot: '/repo' });
+    expect(d).toMatchObject({ available: false });
+    expect(String(d.reason)).toContain('no JSON');
+  });
+});
+
+describe('readRepoTruth: run rendering across modes and degraded domains (VHS-REQ-692.5)', () => {
+  it('renders "no merge_queue rule" and unavailable domain lines in text mode', () => {
+    const out = run([], degradedDeps());
+    expect(out.exitCode).toBe(0);
+    expect(out.stdout).toContain('Merge queue: no merge_queue rule configured on this branch.');
+    expect(out.stdout).toContain('Open work: 0 open PR(s)');
+    expect(out.stdout).toContain('Coverage: unavailable');
+    expect(out.stdout).toContain('Requirement health: unavailable');
+    expect(out.stdout).toContain('Release state: unavailable');
+    expect(out.stdout).toContain('Supply chain: unavailable');
+    expect(out.stdout).toContain('ADR governance: unavailable');
+  });
+
+  it('renders the domain table with available facts in markdown mode', () => {
+    const out = run(['--markdown'], happyDeps());
+    expect(out.exitCode).toBe(0);
+    expect(out.stdout).toContain('# Repo-truth read-model:');
+    expect(out.stdout).toContain('| Merge queue | min-to-merge 3');
+    expect(out.stdout).toContain('| Open work | 2 open PR(s) |');
+  });
+
+  it('renders no-queue / unavailable cells in markdown mode when domains are degraded', () => {
+    const out = run(['--markdown'], degradedDeps());
+    expect(out.exitCode).toBe(0);
+    expect(out.stdout).toContain('| Merge queue | no merge_queue rule |');
+    expect(out.stdout).toContain('unavailable');
+  });
+
+  it('reports a generic (non-auth) read-model failure as exit 1', () => {
+    // A successful gh exit carrying invalid JSON makes runGhJson throw a generic
+    // Error (not RepoTruthAuthError), so run() reports exit 1 (not the auth exit 2).
+    const deps = { spawnSync: fakeSpawn([{ match: (c) => c === 'gh', result: { status: 0, stdout: 'not-json{' } }]) };
+    const out = run(['--json'], deps);
+    expect(out.exitCode).toBe(1);
+    expect(out.stderr).toContain('repo-truth read-model error:');
+    expect(out.stdout).toBeUndefined();
+  });
+});
+
+describe('readRepoTruth: run --include-provenance across modes (VHS-REQ-692.5)', () => {
+  it('appends a provenance footer in text mode', () => {
+    const out = run(['--include-provenance'], happyDeps());
+    expect(out.exitCode).toBe(0);
+    expect(out.stdout).toContain('Merge queue: min-to-merge=3');
+    expect(out.stdout).toContain('[repo-truth] provenance generatedAt: 2026-07-20T00:00:00.000Z');
+    expect(out.stdout).toContain('[repo-truth] provenance outputMode: text');
+  });
+
+  it('attaches provenance under the schema key in json mode', () => {
+    const out = run(['--json', '--include-provenance'], happyDeps());
+    expect(out.exitCode).toBe(0);
+    const packet = JSON.parse(out.stdout as string);
+    expect(packet['x-vi-history-suite-provenance']).toMatchObject({ outputMode: 'json' });
+  });
+
+  it('appends a provenance footer in markdown mode', () => {
+    const out = run(['--markdown', '--include-provenance'], happyDeps());
+    expect(out.exitCode).toBe(0);
+    expect(out.stdout).toContain('[repo-truth] provenance outputMode: markdown');
+  });
+
+  it('embeds provenance in schema mode without any gh/node call', () => {
+    let spawnCalls = 0;
+    const out = run(['--schema', '--include-provenance'], {
+      spawnSync: () => {
+        spawnCalls += 1;
+        return { status: 0, stdout: '[]' };
+      },
+      now: () => new Date('2026-07-20T00:00:00.000Z')
+    });
+    expect(out.exitCode).toBe(0);
+    expect(spawnCalls).toBe(0);
+    expect(out.stdout).toContain('x-vi-history-suite-provenance');
   });
 });

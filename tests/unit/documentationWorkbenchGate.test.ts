@@ -137,4 +137,62 @@ describe('documentation workbench gate', () => {
     expect(check.details).toContain('checkDocumentationWorkbench.js');
     expect(runDocumentationWorkbenchGate({ cwd: root }).success).toBe(false);
   });
+
+  it('rethrows a non-ENOENT read error when the Dockerfile path is a directory', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'docs-gate-eisdir-'));
+    fixtureRoots.push(root);
+    // Making the Dockerfile path a directory makes fs.readFileSync throw a
+    // non-ENOENT error (EISDIR), which readFileIfPresent rethrows instead of
+    // treating the surface as absent.
+    fs.mkdirSync(path.join(root, 'docker', 'docs-authoring', 'Dockerfile'), { recursive: true });
+    expect(() => checkDockerfile(root)).toThrow();
+  });
+
+  it('fails closed when the workbench guide is missing entirely', () => {
+    const files = completeWorkbenchFiles();
+    delete files['docs/documentation-workbench.md'];
+    const root = createFixture(files);
+
+    const check = checkWorkbenchGuide(root);
+    expect(check.passed).toBe(false);
+    expect(check.details).toContain('missing docs/documentation-workbench.md');
+  });
+
+  it('fails closed when package.json is missing entirely', () => {
+    const files = completeWorkbenchFiles();
+    delete files['package.json'];
+    const root = createFixture(files);
+
+    const check = checkDocsGateScript(root);
+    expect(check.passed).toBe(false);
+    expect(check.details).toContain('missing package.json');
+  });
+
+  it('fails closed when package.json is not valid JSON', () => {
+    const files = completeWorkbenchFiles();
+    files['package.json'] = '{ not valid json';
+    const root = createFixture(files);
+
+    const check = checkDocsGateScript(root);
+    expect(check.passed).toBe(false);
+    expect(check.details).toContain('not valid JSON');
+  });
+
+  it('fails closed when package.json has no scripts section', () => {
+    const files = completeWorkbenchFiles();
+    files['package.json'] = `${JSON.stringify({ name: 'example' }, null, 2)}\n`;
+    const root = createFixture(files);
+
+    const check = checkDocsGateScript(root);
+    expect(check.passed).toBe(false);
+    expect(check.details).toContain('must invoke scripts/checkDocumentationWorkbench.js');
+  });
+
+  it('defaults to process.cwd() when no cwd option is supplied', () => {
+    // No options -> the `options.cwd || process.cwd()` fallback resolves the repo
+    // root, whose committed surfaces satisfy the gate.
+    const result = runDocumentationWorkbenchGate();
+    expect(result.success).toBe(true);
+    expect(result.checks).toHaveLength(3);
+  });
 });

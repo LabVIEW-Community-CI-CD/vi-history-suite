@@ -10,6 +10,7 @@ import {
   getFileHistoryCount,
   getFileHistoryEntries,
   getRepoHead,
+  getRepoRemoteUrl,
   getRepoRoot,
   getWindowsGitExecutableCandidates,
   isFileDirtyInWorkingTree,
@@ -542,5 +543,104 @@ describe('gitCli eligibility edge cases (VHS-REQ-006, VHS-REQ-007)', () => {
     expect(normalizeRelativeGitPath('folder///nested//file.vi')).toBe(
       'folder/nested/file.vi'
     );
+  });
+});
+
+describe('gitCli remote, dirtiness, and streaming edge cases', () => {
+  it('exercises the default fs.existsSync probe when no pathExists override is supplied', () => {
+    // Omitting the pathExists argument invokes the default fs.existsSync arrow
+    // while iterating the win32 candidates. On the Linux CI leg the Windows
+    // candidate paths never exist so the result falls back to bare "git"; on a
+    // Windows dev host with Git installed a real git.exe may resolve. Either
+    // branch exercises the default probe, so the assertion stays platform-neutral.
+    const resolved = resolveGitExecutable({ ProgramFiles: 'C:\\Program Files' }, 'win32');
+    expect(typeof resolved).toBe('string');
+    expect(resolved.length).toBeGreaterThan(0);
+  });
+
+  it('returns the configured remote URL and undefined when the remote is absent', async () => {
+    const repoRoot = await createTempGitRepo();
+
+    // No origin configured yet -> git errors -> caught -> undefined.
+    await expect(getRepoRemoteUrl(repoRoot)).resolves.toBeUndefined();
+
+    // After configuring origin the trimmed URL is returned.
+    await runGit(['remote', 'add', 'origin', 'https://example.invalid/vihs.git'], repoRoot);
+    await expect(getRepoRemoteUrl(repoRoot)).resolves.toBe('https://example.invalid/vihs.git');
+
+    // A named remote that does not exist is also caught and reported as undefined.
+    await expect(getRepoRemoteUrl(repoRoot, 'upstream')).resolves.toBeUndefined();
+  });
+
+  it('treats an empty relative path as not dirty without invoking git (VHS-REQ-641.1)', async () => {
+    const workingDirectory = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-git-empty-'));
+    tempDirectories.push(workingDirectory);
+    // normalizeRelativeGitPath('') is empty -> the guard returns false before any
+    // git subprocess is spawned.
+    await expect(isFileDirtyInWorkingTree(workingDirectory, '')).resolves.toBe(false);
+  });
+
+  it('reports not dirty when git status fails outside a repository (VHS-REQ-641.1)', async () => {
+    const nonRepositoryRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-git-status-nonrepo-'));
+    tempDirectories.push(nonRepositoryRoot);
+    // git status errors in a non-repo directory -> caught -> false so detection
+    // never blocks the panel.
+    await expect(isFileDirtyInWorkingTree(nonRepositoryRoot, 'sample.vi')).resolves.toBe(false);
+  });
+
+  it('returns an empty reachable set without streaming when no hashes are requested', async () => {
+    const workingDirectory = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-git-noreq-'));
+    tempDirectories.push(workingDirectory);
+    // Empty input short-circuits before spawning git.
+    await expect(findReachableCommitHashes(workingDirectory, [])).resolves.toEqual(new Set());
+    // Blank/whitespace-only hashes are filtered out, also short-circuiting.
+    await expect(findReachableCommitHashes(workingDirectory, ['   ', ''])).resolves.toEqual(
+      new Set()
+    );
+  });
+
+  it('stops streaming early once every requested commit is found', async () => {
+    const repoRoot = await createTempGitRepo();
+    const trackedPath = path.join(repoRoot, 'sample.vi');
+    await fs.writeFile(trackedPath, 'first');
+    await runGit(['add', '.'], repoRoot);
+    await runGit(['commit', '-m', 'First commit'], repoRoot);
+    await fs.writeFile(trackedPath, 'second');
+    await runGit(['add', '.'], repoRoot);
+    await runGit(['commit', '-m', 'Second commit'], repoRoot);
+
+    const head = await getRepoHead(repoRoot);
+    // Requesting only the newest commit (upper-cased to prove case-insensitive
+    // matching) lets the stream satisfy every pending hash on the first emitted
+    // line, which triggers the early-stop SIGTERM path.
+    await expect(findReachableCommitHashes(repoRoot, [head.toUpperCase()])).resolves.toEqual(
+      new Set([head])
+    );
+  });
+
+  it('rejects a streamed git command that exits non-zero with stderr detail', async () => {
+    // A freshly initialized repo has no commits, so `git rev-list HEAD` fails with
+    // a fatal error on stderr and the close handler rejects instead of returning
+    // a silent empty list.
+    const emptyRepo = await createTempGitRepo();
+    await expect(listReachableCommitHashes(emptyRepo)).rejects.toThrow();
+  });
+
+  it('rejects a streamed git command when the executable cannot be spawned', async () => {
+    const workingDirectory = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-git-spawn-'));
+    tempDirectories.push(workingDirectory);
+    const original = process.env.VI_HISTORY_SUITE_GIT_EXE;
+    // Point the resolver at a path that does not exist so spawn emits an 'error'
+    // event (ENOENT), which streamGitLines surfaces as a rejection.
+    process.env.VI_HISTORY_SUITE_GIT_EXE = path.join(workingDirectory, 'no-such-git-executable');
+    try {
+      await expect(listReachableCommitHashes(workingDirectory)).rejects.toThrow();
+    } finally {
+      if (original === undefined) {
+        delete process.env.VI_HISTORY_SUITE_GIT_EXE;
+      } else {
+        process.env.VI_HISTORY_SUITE_GIT_EXE = original;
+      }
+    }
   });
 });

@@ -65,6 +65,10 @@ const {
   main: (argv?: string[]) => number;
 };
 
+const { parseCsv } = require('../../scripts/mapCoverageToTraceability.js') as {
+  parseCsv: (text: string) => Array<Record<string, string>>;
+};
+
 function metric(total: number, covered: number) {
   return {
     total,
@@ -283,4 +287,200 @@ describe('coverage traceability map script', () => {
     const repoRoot = writeFixture();
     expect(main(['--enforce', '--repo-root', repoRoot])).toBe(1);
   });
+
+  it('rejects positional arguments and non-numeric or negative risk thresholds', () => {
+    expect(() => parseArgs(['unexpected-positional'])).toThrow(
+      'Unknown argument: unexpected-positional'
+    );
+    expect(() => parseArgs(['--risk-threshold', 'not-a-number'])).toThrow(
+      '--risk-threshold must be a non-negative number'
+    );
+    expect(() => parseArgs(['--risk-threshold', '-5'])).toThrow(
+      '--risk-threshold must be a non-negative number'
+    );
+  });
+
+  it('parses quoted CSV cells with escaped quotes and CRLF line endings', () => {
+    const rows = parseCsv('Path,Notes\r\n"src/a.ts","a, ""quoted"", b"\r\n');
+    expect(rows).toEqual([{ Path: 'src/a.ts', Notes: 'a, "quoted", b' }]);
+  });
+
+  it('orders multiple mapped-below and zero-coverage supporting files deterministically', () => {
+    const repoRoot = writeMultiRiskFixture();
+    try {
+      const map = generateCoverageMap({ repoRoot, riskThreshold: 50 });
+      // mappedBelowThreshold sorts by descending total missing units, so lowA
+      // (14 missing) precedes lowB (12 missing) — exercising the comparator.
+      expect(map.mappedBelowThreshold.map((file) => file.path)).toEqual([
+        'src/lowA.ts',
+        'src/lowB.ts'
+      ]);
+      // zeroCoverageSupportingRequirements sorts ascending by path.
+      expect(map.zeroCoverageSupportingRequirements.map((file) => file.path)).toEqual([
+        'src/supportA.ts',
+        'src/supportB.ts'
+      ]);
+    } finally {
+      fs.rmSync(repoRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('renders empty-state Markdown rows when no mapped-below or zero-coverage risk exists', () => {
+    const repoRoot = writeFixture();
+    try {
+      const map = generateCoverageMap({ repoRoot, riskThreshold: 50 });
+      const markdown = renderCoverageMapMarkdown({
+        ...map,
+        mappedBelowThreshold: [],
+        zeroCoverageSupportingRequirements: []
+      });
+      const emptyRows = markdown
+        .split('\n')
+        .filter((line) => line === '| - | - | - | - | - | - | 0 | 0 | 0 |');
+      expect(emptyRows.length).toBe(2);
+    } finally {
+      fs.rmSync(repoRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('supports help, schema, json, and enforce-success output modes through main', () => {
+    const cleanRepoRoot = writeCleanFixture();
+    const originalWrite = process.stdout.write.bind(process.stdout);
+    let captured = '';
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (process.stdout as any).write = (chunk: string) => {
+      captured += chunk;
+      return true;
+    };
+    try {
+      captured = '';
+      expect(main(['--help'])).toBe(0);
+      expect(captured).toContain('Usage: node scripts/mapCoverageToTraceability.js');
+
+      captured = '';
+      expect(main(['--schema'])).toBe(0);
+      expect(captured).toContain(COVERAGE_MAP_SCHEMA_ID);
+
+      captured = '';
+      expect(main(['--json', '--repo-root', cleanRepoRoot])).toBe(0);
+      expect(JSON.parse(captured).provenance).toBeUndefined();
+
+      captured = '';
+      expect(main(['--json', '--include-provenance', '--repo-root', cleanRepoRoot])).toBe(0);
+      const parsed = JSON.parse(captured) as { provenance: { outputMode: string }; riskThreshold: number };
+      expect(parsed.provenance.outputMode).toBe('json');
+      expect(parsed.riskThreshold).toBe(80);
+
+      captured = '';
+      expect(main(['--enforce', '--repo-root', cleanRepoRoot])).toBe(0);
+      expect(captured).toContain('no requirement-mapped file below');
+    } finally {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (process.stdout as any).write = originalWrite;
+      fs.rmSync(cleanRepoRoot, { recursive: true, force: true });
+    }
+  });
 });
+
+function writeMultiRiskFixture(): string {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'vihs-coverage-map-multi-'));
+  fs.mkdirSync(path.join(repoRoot, 'coverage'), { recursive: true });
+  fs.mkdirSync(path.join(repoRoot, 'docs', 'requirements'), { recursive: true });
+  fs.mkdirSync(path.join(repoRoot, 'src'), { recursive: true });
+
+  const lowA = path.join(repoRoot, 'src', 'lowA.ts');
+  const lowB = path.join(repoRoot, 'src', 'lowB.ts');
+  const supportA = path.join(repoRoot, 'src', 'supportA.ts');
+  const supportB = path.join(repoRoot, 'src', 'supportB.ts');
+  for (const filePath of [lowA, lowB, supportA, supportB]) {
+    fs.writeFileSync(filePath, 'export const value = true;\n', 'utf8');
+  }
+
+  fs.writeFileSync(
+    path.join(repoRoot, 'coverage', 'coverage-summary.json'),
+    JSON.stringify(
+      {
+        total: {
+          lines: metric(40, 6),
+          statements: metric(40, 6),
+          branches: metric(16, 2),
+          functions: metric(20, 4)
+        },
+        [lowA]: fileCoverage(10, 2),
+        [lowB]: fileCoverage(10, 4),
+        [supportA]: fileCoverage(10, 0),
+        [supportB]: fileCoverage(10, 0)
+      },
+      null,
+      2
+    ),
+    'utf8'
+  );
+  fs.writeFileSync(
+    path.join(repoRoot, 'docs', 'requirements', 'traceability-inventory.csv'),
+    [
+      'Path,Classification,RtmCoverage,Notes',
+      'src/lowA.ts,mapped,Yes,Low mapped A.',
+      'src/lowB.ts,mapped,Yes,Low mapped B.',
+      'src/supportA.ts,supporting,No,Supports VHS-REQ-610 dashboard evidence.',
+      'src/supportB.ts,supporting,No,Supports VHS-REQ-611 dashboard evidence.'
+    ].join('\n'),
+    'utf8'
+  );
+  fs.writeFileSync(
+    path.join(repoRoot, 'docs', 'requirements', 'rtm.csv'),
+    [
+      'ReqID,ParentID,Status,Area,Title,ImplementationRefs,VerificationRefs,Notes',
+      'VHS-REQ-613,VHS-SYS-REQ-017,Active,CI And Developer Environment,Coverage Intelligence,src/lowA.ts;src/lowB.ts,tests/unit/coverageMapScript.test.ts,Maps coverage.'
+    ].join('\n'),
+    'utf8'
+  );
+
+  return repoRoot;
+}
+
+function writeCleanFixture(): string {
+  const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'vihs-coverage-map-clean-'));
+  fs.mkdirSync(path.join(repoRoot, 'coverage'), { recursive: true });
+  fs.mkdirSync(path.join(repoRoot, 'docs', 'requirements'), { recursive: true });
+  fs.mkdirSync(path.join(repoRoot, 'src'), { recursive: true });
+
+  const coveredMappedPath = path.join(repoRoot, 'src', 'coveredMapped.ts');
+  fs.writeFileSync(coveredMappedPath, 'export const covered = true;\n', 'utf8');
+
+  fs.writeFileSync(
+    path.join(repoRoot, 'coverage', 'coverage-summary.json'),
+    JSON.stringify(
+      {
+        total: {
+          lines: metric(10, 10),
+          statements: metric(10, 10),
+          branches: metric(4, 4),
+          functions: metric(5, 5)
+        },
+        [coveredMappedPath]: fileCoverage(10, 10, 4, 5)
+      },
+      null,
+      2
+    ),
+    'utf8'
+  );
+  fs.writeFileSync(
+    path.join(repoRoot, 'docs', 'requirements', 'traceability-inventory.csv'),
+    [
+      'Path,Classification,RtmCoverage,Notes',
+      'src/coveredMapped.ts,mapped,Yes,Well-covered mapped implementation.'
+    ].join('\n'),
+    'utf8'
+  );
+  fs.writeFileSync(
+    path.join(repoRoot, 'docs', 'requirements', 'rtm.csv'),
+    [
+      'ReqID,ParentID,Status,Area,Title,ImplementationRefs,VerificationRefs,Notes',
+      'VHS-REQ-613,VHS-SYS-REQ-017,Active,CI And Developer Environment,Coverage Intelligence,src/coveredMapped.ts,tests/unit/coverageMapScript.test.ts,Maps coverage.'
+    ].join('\n'),
+    'utf8'
+  );
+
+  return repoRoot;
+}

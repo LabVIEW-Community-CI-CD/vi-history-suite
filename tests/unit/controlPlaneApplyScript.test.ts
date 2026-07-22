@@ -9,7 +9,8 @@ const {
   FIELD_MAP,
   resolveFieldTarget,
   createGhFieldUpdater,
-  runControlPlaneApply
+  runControlPlaneApply,
+  main
 } = require('../../scripts/controlPlaneApply.js') as {
   FIELD_MAP: Record<string, { fieldId: string; optionId: string }>;
   resolveFieldTarget: (update: unknown) => { fieldId: string; optionId: string } | null;
@@ -20,6 +21,7 @@ const {
     plannedCount: number;
     appliedCount: number;
   };
+  main: (deps?: Record<string, unknown>) => Record<string, unknown>;
 };
 
 const ENABLED = { enabled: true, approvers: ['svelderrainruiz'], tiers: { boardSync: true } };
@@ -103,5 +105,71 @@ describe('controlPlaneApply: runControlPlaneApply (VHS-REQ-698.3)', () => {
     });
     expect(result).toMatchObject({ executed: true, plannedCount: 0, appliedCount: 0 });
     expect(applied).toHaveLength(0);
+  });
+});
+
+describe('controlPlaneApply: createGhFieldUpdater gh boundary errors (VHS-REQ-698.3)', () => {
+  // A supported Status=Done update passes the Tier-1 gate and reaches runGh, so an
+  // injected spawnSync exercises each gh error branch without a real gh.
+  const DONE = { itemId: 'A', field: 'Status', value: 'Done' };
+
+  it('wraps a gh spawn error as a BoardSyncAuthError', () => {
+    const updater = createGhFieldUpdater({ spawnSync: () => ({ error: new Error('spawn gh ENOENT') }) });
+    expect(() => updater(DONE)).toThrow(/gh invocation failed: spawn gh ENOENT/);
+  });
+
+  it('wraps a nonzero gh exit (with stderr) as a BoardSyncAuthError', () => {
+    const updater = createGhFieldUpdater({ spawnSync: () => ({ status: 1, stderr: 'HTTP 401: Bad credentials' }) });
+    expect(() => updater(DONE)).toThrow(/gh exited 1: HTTP 401: Bad credentials/);
+  });
+
+  it('falls back to "unknown error" when a nonzero gh exit has no stderr', () => {
+    const updater = createGhFieldUpdater({ spawnSync: () => ({ status: 2, stderr: '' }) });
+    expect(() => updater(DONE)).toThrow(/gh exited 2: unknown error/);
+  });
+});
+
+describe('controlPlaneApply: main CLI reporter (VHS-REQ-698.3)', () => {
+  // Drive the extracted require.main reporter with an injected runner + streams +
+  // exit so each reporting/exit branch is covered without a real gh.
+  function harness(runnerDeps: Record<string, unknown>) {
+    const out: string[] = [];
+    const err: string[] = [];
+    const exits: number[] = [];
+    const result = main({
+      stdout: { write: (text: string) => out.push(text) },
+      stderr: { write: (text: string) => err.push(text) },
+      exit: (code: number) => exits.push(code),
+      ...runnerDeps
+    });
+    return { out: out.join(''), err: err.join(''), exits, result };
+  }
+
+  it('prints a no-writes line and exits 0 when nothing executed', () => {
+    const { out, err, exits } = harness({
+      runControlPlaneApply: () => ({ executed: false, reason: 'write-path-disabled', plannedCount: 0, appliedCount: 0 })
+    });
+    expect(out).toContain('[control-plane-apply] no writes (write-path-disabled). plannedCount=0');
+    expect(err).toBe('');
+    expect(exits).toEqual([0]);
+  });
+
+  it('prints an applied summary and exits 0 when writes executed', () => {
+    const { out, exits } = harness({
+      runControlPlaneApply: () => ({ executed: true, reason: undefined, plannedCount: 3, appliedCount: 2 })
+    });
+    expect(out).toContain('[control-plane-apply] applied 2 of 3 verified board update(s).');
+    expect(exits).toEqual([0]);
+  });
+
+  it('prints the error on stderr and exits 1 when the runner throws', () => {
+    const { err, exits, result } = harness({
+      runControlPlaneApply: () => {
+        throw new Error('gh exited 1: HTTP 403');
+      }
+    });
+    expect(err).toContain('[control-plane-apply] gh exited 1: HTTP 403');
+    expect(exits).toEqual([1]);
+    expect((result as { error?: Error }).error).toBeInstanceOf(Error);
   });
 });

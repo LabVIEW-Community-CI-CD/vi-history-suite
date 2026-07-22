@@ -339,4 +339,77 @@ describe('runtimeSettingsLiveSessionProbePacket (VHS-REQ-687.2)', () => {
     expect(summary.mutationTargetHostCount).toBe(0);
     expect(summary.mutationTargetDockerCount).toBe(0);
   });
+
+  it('re-reads a diverse retained-run history through an injected fs, covering every observation, target, and receipt branch (VHS-REQ-687.2)', async () => {
+    // Seeding retained run files directly (rather than a long persist sequence)
+    // deterministically exercises the history re-read classifiers for the false,
+    // unknown, and reload-required branches, a non-object scalar summary, and the
+    // injected-fs path (deps.fs supplied rather than defaulted).
+    const globalStoragePath = await freshRoot();
+    const packetRoot = path.join(
+      globalStoragePath,
+      'runtime-validation',
+      'runtime-provider-live-session-probe'
+    );
+    const seedRun = async (name: string, content: unknown): Promise<void> => {
+      const runDirectory = path.join(packetRoot, name);
+      await fs.mkdir(runDirectory, { recursive: true });
+      await fs.writeFile(
+        path.join(runDirectory, 'probe-summary.json'),
+        typeof content === 'string' ? content : JSON.stringify(content),
+        'utf8'
+      );
+    };
+
+    // Retained reload run whose persisted receipts are explicit "false".
+    await seedRun('run-reload-false', {
+      liveUptakeObservation: 'reload-required',
+      mutationProviderTarget: 'host',
+      mutationTargetPersistedMatch: false,
+      mutationTargetBaselineChanged: false
+    });
+    // Retained in-session run whose persisted receipts are explicit "true".
+    await seedRun('run-insession-true', {
+      liveUptakeObservation: 'in-session-updated',
+      mutationProviderTarget: 'docker',
+      mutationTargetPersistedMatch: true,
+      mutationTargetBaselineChanged: true
+    });
+    // Retained run with no recognizable observation/drift and non-boolean receipts.
+    await seedRun('run-unknown', {
+      liveUptakeObservation: 'no-signal',
+      driftDetected: null,
+      mutationProviderTarget: 'gpu',
+      mutationTargetPersistedMatch: 'maybe',
+      mutationTargetBaselineChanged: null
+    });
+    // Retained run whose probe-summary.json is a non-object scalar value.
+    await seedRun('run-non-object', '"scalar-run-summary"');
+
+    const summary = await persistRuntimeSettingsLiveSessionProbePacket(
+      baseSummary({
+        liveUptakeObservation: 'in-session-updated',
+        mutationProviderTarget: 'host',
+        mutationTargetPersistedMatch: undefined,
+        mutationTargetBaselineChanged: undefined
+      }),
+      globalStoragePath,
+      { fs, now: () => new Date('2026-04-14T13:09:00.000Z') }
+    );
+
+    // Four seeded runs plus the current run.
+    expect(summary.historyTotalRuns).toBe(5);
+    expect(summary.historyReloadRequiredCount).toBe(1);
+    expect(summary.historyInSessionUpdatedCount).toBe(2);
+    expect(summary.historyUnknownObservationCount).toBe(2);
+    expect(summary.mutationTargetHostCount).toBe(2);
+    expect(summary.mutationTargetDockerCount).toBe(1);
+    expect(summary.mutationTargetUnknownCount).toBe(2);
+    expect(summary.mutationTargetPersistedMatchCount).toBe(1);
+    expect(summary.mutationTargetPersistedMismatchCount).toBe(1);
+    expect(summary.mutationTargetPersistedUnknownCount).toBe(3);
+    expect(summary.mutationTargetBaselineChangedCount).toBe(1);
+    expect(summary.mutationTargetBaselineUnchangedCount).toBe(1);
+    expect(summary.mutationTargetBaselineUnknownCount).toBe(3);
+  });
 });

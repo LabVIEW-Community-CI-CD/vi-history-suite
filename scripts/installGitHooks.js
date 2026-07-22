@@ -37,19 +37,31 @@ function installGitHooks(deps = {}) {
   return { action: 'set', hooksPath: HOOKS_PATH, previous: currentValue || undefined };
 }
 
-module.exports = { HOOKS_PATH, installGitHooks };
-
-if (require.main === module) {
-  const result = installGitHooks();
+// Thin CLI reporter: run the installer and emit a one-line status. Extracted from
+// the require.main block so its reporting/exit branches are unit-testable with an
+// injected installer/streams/exit (no real git subprocess). Behavior is unchanged.
+function main(deps = {}) {
+  const install = deps.installGitHooks || installGitHooks;
+  const out = deps.stdout || process.stdout;
+  const err = deps.stderr || process.stderr;
+  const exit = deps.exit || process.exit;
+  const result = install(deps);
   if (result.action === 'set') {
-    process.stdout.write(`[install-git-hooks] core.hooksPath set to ${HOOKS_PATH}\n`);
+    out.write(`[install-git-hooks] core.hooksPath set to ${HOOKS_PATH}\n`);
   } else if (result.action === 'already-set') {
-    process.stdout.write(`[install-git-hooks] core.hooksPath already ${HOOKS_PATH}\n`);
+    out.write(`[install-git-hooks] core.hooksPath already ${HOOKS_PATH}\n`);
   } else if (result.action === 'skipped') {
-    process.stdout.write(`[install-git-hooks] skipped (${result.reason})\n`);
+    out.write(`[install-git-hooks] skipped (${result.reason})\n`);
   } else {
-    process.stderr.write(`[install-git-hooks] could not set core.hooksPath (${result.reason}); run 'npm run hooks:install'\n`);
+    err.write(`[install-git-hooks] could not set core.hooksPath (${result.reason}); run 'npm run hooks:install'\n`);
   }
   // Never fail the install lifecycle on hook enablement.
-  process.exit(0);
+  exit(0);
+  return result;
+}
+
+module.exports = { HOOKS_PATH, installGitHooks, main };
+
+if (require.main === module) {
+  main();
 }

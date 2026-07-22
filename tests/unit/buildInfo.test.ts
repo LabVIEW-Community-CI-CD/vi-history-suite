@@ -1,7 +1,11 @@
+import * as path from 'node:path';
+
 import { describe, expect, it, vi } from 'vitest';
 
 import {
   readBuildInfo,
+  resolveBuildInfoPath,
+  resolvePackageJsonPath,
   UNKNOWN_COMMIT,
   UNKNOWN_SHORT_COMMIT,
   formatShortCommit,
@@ -290,6 +294,34 @@ describe('buildInfo', () => {
         extensionCommit: UNKNOWN_COMMIT,
         extensionBuildRef: '4.1.0+unknown'
       });
+    });
+  });
+
+  describe('resolveBuildInfoPath', () => {
+    it('joins buildInfo.json onto an explicit extension path', () => {
+      expect(resolveBuildInfoPath('/ext/root').replace(/\\/g, '/')).toBe(
+        '/ext/root/buildInfo.json'
+      );
+    });
+
+    it('defaults to a module-relative absolute path when no extension path is given', () => {
+      const resolved = resolveBuildInfoPath();
+      expect(path.isAbsolute(resolved)).toBe(true);
+      expect(resolved.replace(/\\/g, '/').endsWith('/buildInfo.json')).toBe(true);
+    });
+  });
+
+  describe('resolvePackageJsonPath', () => {
+    it('joins package.json onto an explicit extension path', () => {
+      expect(resolvePackageJsonPath('/ext/root').replace(/\\/g, '/')).toBe(
+        '/ext/root/package.json'
+      );
+    });
+
+    it('defaults to a module-relative absolute path when no extension path is given', () => {
+      const resolved = resolvePackageJsonPath();
+      expect(path.isAbsolute(resolved)).toBe(true);
+      expect(resolved.replace(/\\/g, '/').endsWith('/package.json')).toBe(true);
     });
   });
 });

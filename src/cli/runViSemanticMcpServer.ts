@@ -5,14 +5,16 @@ import {
 } from '../semantic/viSemanticComparisonMcp';
 import { errorMessage } from '../support/errorMessage';
 import {
-  buildViSemanticMcpServerDeps,
+  buildViSemanticMcpServerDepsForEnv,
   createDefaultComparisonModelCache
 } from '../mcp/viSemanticMcpServerDeps';
 
 // The injected orchestrator set (including the cache-bound compare_vi_revisions)
 // is assembled by the requirement-mapped, unit-tested builder; this entrypoint
-// only wires stdin/stdout streams (VHS-REQ-662.7/662.8).
-const serverDeps = buildViSemanticMcpServerDeps(createDefaultComparisonModelCache());
+// only wires stdin/stdout streams (VHS-REQ-662.7/662.8). The semantic backend is
+// environment-selected (VHS-REQ-712.4): VIHS_SEMANTICS_PROVIDER=lvkit binds
+// compare_vi_revisions to the LabVIEW-free lvkit provider, else LabVIEW.
+const serverDeps = buildViSemanticMcpServerDepsForEnv(createDefaultComparisonModelCache());
 
 /**
  * Stdio transport for the VI semantic MCP server: newline-delimited JSON-RPC

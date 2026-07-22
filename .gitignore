@@ -16,6 +16,9 @@ assurance-*-evidence/
 # Windows comparison-runtime validation run evidence (issue #296 driver output)
 win-validation/
 
+# Linux comparison-runtime / semantic validation run evidence (driver output)
+lin-validation/
+
 
 # Vagrant acceptance artefacts
 vagrant/shared/
@@ -33,3 +36,7 @@ control-plane-write-log.jsonl
 
 # Mirror Mode transient fingerprint inputs (left-channel producer)
 .mirror-fp/
+
+# Vendored .NET TDMS infrastructure build outputs (tools/tdms, VHS-REQ-710)
+tools/**/bin/
+tools/**/obj/

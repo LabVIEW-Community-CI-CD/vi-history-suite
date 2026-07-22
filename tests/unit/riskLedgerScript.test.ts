@@ -43,6 +43,18 @@ const {
   main
 } = ledgerModule;
 
+const {
+  loadCoverageSignal,
+  loadRequirementsSignal,
+  loadStandardsSignal,
+  renderSummary
+} = ledgerModule as unknown as {
+  loadCoverageSignal: (cwd: string, deps?: Record<string, unknown>) => any;
+  loadRequirementsSignal: (cwd: string, deps?: Record<string, unknown>) => any;
+  loadStandardsSignal: (cwd: string, deps?: Record<string, unknown>) => any;
+  renderSummary: (ledger: unknown) => string;
+};
+
 const HEALTHY_HEALTH = {
   integrity: { success: true, violationCount: 0 },
   attention: []
@@ -516,5 +528,202 @@ describe('buildBoxProvenanceEntries (VHS-REQ-666)', () => {
     );
     expect(ledger.countsByDimension['box-provenance']).toBe(1);
     expect(ledger.inputs.boxManifest.available).toBe(true);
+  });
+});
+
+describe('buildRiskLedger coverage/standards entry edge cases (VHS-REQ-601.30)', () => {
+  it('emits mapped-below and zero-coverage-supporting entries and skips zero-debt requirement rows', () => {
+    const entries = buildCoverageEntries({
+      riskThreshold: 80,
+      mappedBelowThreshold: [{ path: 'src/a.ts', requirementIds: ['VHS-REQ-100'] }],
+      zeroCoverageSupportingRequirements: [{ path: 'src/b.ts', requirementIds: ['VHS-REQ-200'] }],
+      byRequirement: [
+        { reqId: 'VHS-REQ-300', fileCount: 1, missingLines: 5, missingBranches: 0, missingFunctions: 0, files: ['src/c.ts'] },
+        { reqId: 'VHS-REQ-400', fileCount: 1, missingLines: 0, missingBranches: 0, missingFunctions: 0, files: ['src/d.ts'] }
+      ]
+    });
+    const ids = entries.map((entry: any) => entry.id);
+    expect(ids).toContain('coverage/mapped-below/src/a.ts');
+    expect(ids).toContain('coverage/zero-supporting/src/b.ts');
+    expect(ids).toContain('coverage/debt/VHS-REQ-300');
+    // The zero-debt requirement row is skipped by the `debt <= 0` continue.
+    expect(ids).not.toContain('coverage/debt/VHS-REQ-400');
+    const mappedBelow = entries.find((entry: any) => entry.id === 'coverage/mapped-below/src/a.ts');
+    expect(mappedBelow.severityTier).toBe('HIGH');
+    expect(mappedBelow.requirementIds).toEqual(['VHS-REQ-100']);
+  });
+
+  it('emits MEDIUM standards gate-detail entries for non-PASS gates or missing proof only', () => {
+    const entries = buildStandardsEntries({
+      directChecks: [],
+      profiles: [],
+      standardsGateDetailSummary: [
+        { gate: 'g-fail', status: 'FAIL', missingProof: [] },
+        { gate: 'g-missing', status: 'PASS', missingProof: ['proof-1', 'proof-2'] },
+        { gate: 'g-ok', status: 'PASS', missingProof: [] }
+      ]
+    });
+    const ids = entries.map((entry: any) => entry.id);
+    expect(ids).toContain('standards/gate-detail/g-fail');
+    expect(ids).toContain('standards/gate-detail/g-missing');
+    // A passing gate with no missing proof produces no entry.
+    expect(ids).not.toContain('standards/gate-detail/g-ok');
+    const missing = entries.find((entry: any) => entry.id === 'standards/gate-detail/g-missing');
+    expect(missing.severityTier).toBe('MEDIUM');
+    expect(missing.severityScore).toBeGreaterThan(0);
+  });
+});
+
+describe('buildRiskLedger signal loading (VHS-REQ-601.30)', () => {
+  it('loadCoverageSignal reads an explicit coverage JSON path and degrades on read or generate failure', () => {
+    const ok = loadCoverageSignal('/cwd', {
+      coverageJsonPath: 'cov.json',
+      readFile: () => JSON.stringify(COVERAGE_WITH_DEBT)
+    });
+    expect(ok).toMatchObject({ available: true, source: 'cov.json' });
+    expect(ok.map.riskThreshold).toBe(50);
+
+    const badRead = loadCoverageSignal('/cwd', {
+      coverageJsonPath: 'cov.json',
+      readFile: () => {
+        throw new Error('read failed');
+      }
+    });
+    expect(badRead).toMatchObject({ available: false, source: 'cov.json' });
+
+    const badGenerate = loadCoverageSignal('/cwd', {
+      generateCoverageMap: () => {
+        throw new Error('generate failed');
+      }
+    });
+    expect(badGenerate).toMatchObject({ available: false, source: 'in-process:coverage-map' });
+  });
+
+  it('loadRequirementsSignal reads an explicit requirements JSON path and degrades on failure', () => {
+    const ok = loadRequirementsSignal('/cwd', {
+      requirementsJsonPath: 'req.json',
+      readFile: () => JSON.stringify(HEALTHY_HEALTH)
+    });
+    expect(ok).toMatchObject({ available: true, source: 'req.json' });
+
+    const badRead = loadRequirementsSignal('/cwd', {
+      requirementsJsonPath: 'req.json',
+      readFile: () => {
+        throw new Error('read failed');
+      }
+    });
+    expect(badRead).toMatchObject({ available: false, source: 'req.json' });
+
+    const badVerify = loadRequirementsSignal('/cwd', {
+      verifyRequirementsHealth: () => {
+        throw new Error('verify failed');
+      }
+    });
+    expect(badVerify).toMatchObject({ available: false, source: 'in-process:requirements-verify' });
+  });
+
+  it('loadStandardsSignal degrades gracefully with no path, a read failure, or a valid summary', () => {
+    expect(loadStandardsSignal('/cwd', {})).toMatchObject({ available: false, source: null });
+
+    const badRead = loadStandardsSignal('/cwd', {
+      standardsSummaryPath: 'audit.json',
+      readFile: () => {
+        throw new Error('read failed');
+      }
+    });
+    expect(badRead).toMatchObject({ available: false, source: 'audit.json' });
+
+    const ok = loadStandardsSignal('/cwd', {
+      standardsSummaryPath: 'audit.json',
+      readFile: () => '{"directChecks":[]}'
+    });
+    expect(ok).toMatchObject({ available: true, source: 'audit.json' });
+  });
+});
+
+describe('buildRiskLedger main output modes (VHS-REQ-601.30)', () => {
+  const injectedSignals = {
+    generateCoverageMap: () => COVERAGE_WITH_DEBT,
+    verifyRequirementsHealth: () => HEALTHY_HEALTH,
+    getPackageVersion: () => '9.9.9',
+    getGitCommit: () => 'abc1234',
+    now: () => new Date('2026-07-15T00:00:00.000Z')
+  };
+
+  it('main renders the JSON schema under --schema without loading signals', () => {
+    const out: string[] = [];
+    const code = main(['--schema'], {
+      stdout: { write: (text: string) => out.push(text) },
+      stderr: { write: () => undefined }
+    });
+    expect(code).toBe(0);
+    expect(out.join('')).toContain(RISK_LEDGER_SCHEMA_ID);
+  });
+
+  it('main renders a markdown ranking table under --markdown', () => {
+    const out: string[] = [];
+    const code = main(['--markdown'], {
+      cwd: makeTempDir(),
+      ...injectedSignals,
+      stdout: { write: (text: string) => out.push(text) },
+      stderr: { write: () => undefined }
+    });
+    expect(code).toBe(0);
+    expect(out.join('')).toContain('# Risk Ledger');
+    expect(out.join('')).toContain('coverage/debt/VHS-REQ-100');
+  });
+
+  it('main prints a text summary reporting no selectable target when only parked risk exists', () => {
+    const cwd = makeTempDir();
+    // A real package.json exercises the default getPackageVersion read path.
+    fs.writeFileSync(path.join(cwd, 'package.json'), JSON.stringify({ version: '7.7.7' }), 'utf8');
+    const out: string[] = [];
+    const code = main([], {
+      cwd,
+      // Only healthy signals + parked platform-proof risk -> no selectable target.
+      generateCoverageMap: () => ({
+        riskThreshold: 80,
+        mappedBelowThreshold: [],
+        zeroCoverageSupportingRequirements: [],
+        byRequirement: []
+      }),
+      verifyRequirementsHealth: () => HEALTHY_HEALTH,
+      // getPackageVersion intentionally NOT injected: exercise the real fs read.
+      getGitCommit: () => 'abc1234',
+      now: () => new Date('2026-07-15T00:00:00.000Z'),
+      stdout: { write: (text: string) => out.push(text) },
+      stderr: { write: () => undefined }
+    });
+    expect(code).toBe(0);
+    const text = out.join('');
+    expect(text).toContain('Next target: none');
+    expect(text).toContain('Parked (not auto-selectable)');
+  });
+
+  it('main falls back to a 0.0.0 extension version when no package.json is present', () => {
+    const cwd = makeTempDir(); // empty temp dir: getPackageVersion read fails -> 0.0.0
+    const out: string[] = [];
+    const code = main(['--json'], {
+      cwd,
+      generateCoverageMap: () => ({
+        riskThreshold: 80,
+        mappedBelowThreshold: [],
+        zeroCoverageSupportingRequirements: [],
+        byRequirement: []
+      }),
+      verifyRequirementsHealth: () => HEALTHY_HEALTH,
+      getGitCommit: () => 'abc1234',
+      now: () => new Date('2026-07-15T00:00:00.000Z'),
+      stdout: { write: (text: string) => out.push(text) },
+      stderr: { write: () => undefined }
+    });
+    expect(code).toBe(0);
+    expect(JSON.parse(out.join('')).extensionVersion).toBe('0.0.0');
+  });
+
+  it('renderSummary reports the no-selectable-target line directly for a parked-only ledger', () => {
+    const ledger = buildRiskLedger(signalsFrom({}), META);
+    const summary = renderSummary(ledger);
+    expect(summary).toContain('Next target: none (no selectable Linux-executable risk).');
   });
 });

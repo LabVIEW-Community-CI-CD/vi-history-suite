@@ -21,4 +21,19 @@ if ! node scripts/checkEnvSync.js --enforce --label pre-commit; then
   exit 1
 fi
 
+# Container-diagnostics enforcement (VHS-REQ-710 / ADR-0029). This ENFORCES — not
+# advises — that the NI LabVIEW container is set up to run a real comparison. A
+# non-ready container (missing Docker/daemon/image/LabVIEWCLI/engine/lvcompare)
+# blocks the commit. Set VIHS_PRECOMMIT_SKIP_DIAGNOSTICS=1 ONLY for an environment
+# that legitimately has no Docker (this skips one gate, not all hooks — it is not
+# --no-verify). Quiet on success; the full check list prints only on failure.
+if [ "${VIHS_PRECOMMIT_SKIP_DIAGNOSTICS:-0}" != "1" ]; then
+  diagnostics_output="$(node scripts/diagnoseLabviewContainer.js 2>&1)"
+  if [ "$?" -ne 0 ]; then
+    printf '%s\n' "$diagnostics_output" >&2
+    echo "[pre-commit] Blocking: the NI LabVIEW container is not ready to compare (VHS-REQ-710). Apply the reported 'next' remediation, or set VIHS_PRECOMMIT_SKIP_DIAGNOSTICS=1 if this host has no Docker." >&2
+    exit 1
+  fi
+fi
+
 exit 0
