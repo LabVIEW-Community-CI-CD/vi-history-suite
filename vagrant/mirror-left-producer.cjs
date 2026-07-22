@@ -42,6 +42,8 @@
  *   VIHS_L_ACTOR / VIHS_L_ROLE / VIHS_L_BUILD
  *   VIHS_L_LEDGER        ledger path, repo-relative (default docs/requirements/mirror-benchmark-ledger.json)
  *   VIHS_L_STORAGE       runtime storage root (default a temp dir)
+ *   VIHS_L_DISK_FREE_BYTES  explicit from-within free-disk bytes; REQUIRED where
+ *                        fs.statfsSync is unavailable (commonly win32)
  *   VIHS_L_MODE          cold | warm (default cold)
  *   VIHS_L_OUT           optional JSON evidence path
  */
@@ -112,7 +114,11 @@ function loadFingerprint() {
     }
   } else {
     try {
-      const st = fs.statfsSync(repoRoot);
+      // Probe the filesystem the comparison actually uses (the fixture repo
+      // that holds the compared VIs), not this tool's repoRoot — a repo/fixture
+      // on different volumes would otherwise record the wrong disk capacity and
+      // fork the derived actorRef.
+      const st = fs.statfsSync(fixtureRepo);
       diskFreeBytes = st.bavail * st.bsize;
     } catch (error) {
       throw new Error(
