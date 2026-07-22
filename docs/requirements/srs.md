@@ -7068,6 +7068,58 @@ Missing numeric IDs are intentional.
     capturing a live cloud-agent run (P-C) are tracked on issue #2258 and are out
     of this repository's scope.
 
+### VHS-REQ-706: Host-Native Empty-Swap Comparison Feasibility Spike
+
+- Status: Active
+- Parent: VHS-SYS-REQ-008
+- Area: Review Workflow
+- Statement: The suite shall provide a maintainer-run, automated Vagrant lane that
+  reruns the empty→rich VI comparison on the host-native Windows LabVIEW runtime
+  to determine whether the `Error 66` / `linux-headless-recursive-load` blocker
+  observed on the Docker Linux container (issue #2295) is a Linux-headless
+  environment artifact or an intrinsic empty→rich asymmetry. The lane drives the
+  shipped comparison primitives unmodified against two real git revisions of one
+  tracked path (the git-swap corpus), forces the host-native provider, and
+  records each case's typed runtime outcome so the feasibility question is
+  answered with reproducible evidence rather than a one-off run. This is a
+  feasibility spike governed by ADR-0027; it ships no model and promotes no ML
+  behavior.
+- Acceptance Criteria:
+  - VHS-REQ-706.1: The host wrapper runs a fixed case matrix — a known-good
+    full→full control (which must succeed to prove the host-native runtime is
+    healthy), empty→rich, rich→empty (directional asymmetry), and an empty→rich
+    headless case (`LV_RTE_WIN_HOSTNATIVE_HEADLESS`) — declared from
+    maintainer-provided git-swap corpus revisions, in a stable order.
+  - VHS-REQ-706.2: Each case's in-guest command forces the host-native x86
+    LabVIEW 2026 contract (never a container provider or x64), wires the per-case
+    base/selected revisions and headless flag, and runs the committed guest
+    driver with `node` (never `npm run`, which the guest execution policy blocks).
+  - VHS-REQ-706.3: The wrapper is dependency-injected at its process-run boundary
+    so the matrix orchestration is unit-testable without a hypervisor, supports a
+    `--skip-up` mode that assumes a running guest, and fails closed when the
+    corpus revisions are unset; the in-guest driver forces
+    `requestedProvider: 'host'`, writes an append-only NDJSON progress log and a
+    guest-local result JSON, and emits a `VIHS_SPIKE_RESULT_JSON` sentinel with
+    the typed `{runtimeState, reportExists, diagnosticReason}` outcome.
+- Agent Work Scope:
+  - Keep the lane a maintainer-run `.cjs` pair (host wrapper + guest driver) that
+    never runs in hosted CI and drives only the already-shipped comparison
+    primitives — do not add a comparison engine to the lane. Keep the host-native
+    x86 2026 env contract and the git-swap (real-revision) corpus approach; never
+    inject blobs to fake revisions.
+- Implementation References:
+  - `scripts/vagrantEmptySwapSpike.cjs`
+  - `vagrant/empty-swap-hostnative-driver.cjs`
+- Verification References:
+  - `tests/unit/vagrantEmptySwapSpike.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+- Change Guidance:
+  - This spike answers a feasibility question for the gated ML research track
+    (#2295) under ADR-0027; it must not ship a model or promote ML behavior. The
+    control case is load-bearing: never trust an empty→rich outcome unless the
+    full→full control succeeded on the same runtime. Docker and the Vagrant
+    host-native runtime are mutually exclusive.
+
 ### VHS-REQ-698: Control-Plane Loop Drift Radar
 
 - Status: Active

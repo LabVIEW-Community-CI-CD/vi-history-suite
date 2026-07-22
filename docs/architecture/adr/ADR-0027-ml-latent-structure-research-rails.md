@@ -122,4 +122,4 @@ all of the following. Until this ADR is accepted, no model code ships.
   (and authoring the promoted requirement) is a separate, deliberate step.
 - Superseded ADRs: none.
 
-Requirements: VHS-SYS-REQ-008; VHS-REQ-703.
+Requirements: VHS-SYS-REQ-008; VHS-REQ-703; VHS-REQ-706.
