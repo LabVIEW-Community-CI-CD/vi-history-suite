@@ -522,7 +522,7 @@ describe('runViSemanticPrReviewCli region-correlations artifact (VHS-REQ-703.14)
       const bundle = JSON.parse(
         await fs.readFile(path.join(outDir, 'vi-preview-region-correlations.json'), 'utf8')
       ) as { schema: string; entries: Array<{ relativePath: string }> };
-      expect(bundle.schema).toBe('vi-history-suite/vi-preview-region-correlations@v1');
+      expect(bundle.schema).toBe('vi-history-suite/vi-preview-region-correlations@v2');
       expect(bundle.entries[0].relativePath).toBe('src/A.vi');
     });
   });

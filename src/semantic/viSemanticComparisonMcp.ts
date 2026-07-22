@@ -849,17 +849,17 @@ export const VI_SEMANTIC_MCP_RESOURCES = [
     mimeType: 'application/schema+json'
   },
   {
-    uri: `${RESOURCE_URI_PREFIX}vi-preview-region-correlation@v1`,
-    name: 'vi-preview-region-correlation@v1 schema',
+    uri: `${RESOURCE_URI_PREFIX}vi-preview-region-correlation@v2`,
+    name: 'vi-preview-region-correlation@v2 schema',
     title: 'VI preview-region correlation schema',
-    description: 'JSON Schema for the vi-history-suite/vi-preview-region-correlation@v1 model.',
+    description: 'JSON Schema for the vi-history-suite/vi-preview-region-correlation@v2 model.',
     mimeType: 'application/schema+json'
   },
   {
-    uri: `${RESOURCE_URI_PREFIX}vi-preview-region-correlations@v1`,
-    name: 'vi-preview-region-correlations@v1 schema',
+    uri: `${RESOURCE_URI_PREFIX}vi-preview-region-correlations@v2`,
+    name: 'vi-preview-region-correlations@v2 schema',
     title: 'VI preview-region correlations bundle schema',
-    description: 'JSON Schema for the vi-history-suite/vi-preview-region-correlations@v1 review artifact.',
+    description: 'JSON Schema for the vi-history-suite/vi-preview-region-correlations@v2 review artifact.',
     mimeType: 'application/schema+json'
   },
   {

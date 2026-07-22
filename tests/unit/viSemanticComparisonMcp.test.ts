@@ -285,7 +285,7 @@ describe('viSemanticComparisonMcp', () => {
       entries: Array<{ id: string; coordinate: { x: number; y: number }; located: boolean }>;
       totals: { regionCount: number; locatedRegionCount: number };
     };
-    expect(region.schema).toBe('vi-history-suite/vi-preview-region-correlation@v1');
+    expect(region.schema).toBe('vi-history-suite/vi-preview-region-correlation@v2');
     expect(region.entries[0]).toMatchObject({ id: 'X.vi', coordinate: { x: 1570, y: 358 }, located: false });
     expect(region.totals).toMatchObject({ regionCount: 1, locatedRegionCount: 0 });
   });
@@ -1540,8 +1540,8 @@ describe('viSemanticComparisonMcp', () => {
         'vi-history-suite://schema/vi-repository-index@v1',
         'vi-history-suite://schema/vi-preview-comparison-correlation@v1',
         'vi-history-suite://schema/vi-preview-comparison-correlations@v1',
-        'vi-history-suite://schema/vi-preview-region-correlation@v1',
-        'vi-history-suite://schema/vi-preview-region-correlations@v1',
+        'vi-history-suite://schema/vi-preview-region-correlation@v2',
+        'vi-history-suite://schema/vi-preview-region-correlations@v2',
         'vi-history-suite://schema/vi-latent-corpus-sample@v1',
         'vi-history-suite://schema/index'
       ]);

@@ -708,7 +708,7 @@ describe('buildViPreviewRegionCorrelationsArtifact (VHS-REQ-703.14)', () => {
     );
     const artifact = buildViPreviewRegionCorrelationsArtifact(review);
     expect(artifact).toBeDefined();
-    expect(artifact?.schema).toBe('vi-history-suite/vi-preview-region-correlations@v1');
+    expect(artifact?.schema).toBe('vi-history-suite/vi-preview-region-correlations@v2');
     expect(artifact?.correlatedViCount).toBe(1);
     expect(artifact?.entries[0].relativePath).toBe('src/A.vi');
     expect(artifact?.entries[0].regionCorrelation.entries[0].id).toBe('X.vi');
