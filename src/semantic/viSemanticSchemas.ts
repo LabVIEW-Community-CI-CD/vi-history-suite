@@ -21,6 +21,8 @@ export const VI_PREVIEW_REGION_CORRELATION_SCHEMA_ID =
   'vi-history-suite/vi-preview-region-correlation@v1';
 export const VI_PREVIEW_REGION_CORRELATIONS_SCHEMA_ID =
   'vi-history-suite/vi-preview-region-correlations@v1';
+export const VI_LATENT_CORPUS_SAMPLE_SCHEMA_ID =
+  'vi-history-suite/vi-latent-corpus-sample@v1';
 
 const DRAFT_07 = 'http://json-schema.org/draft-07/schema#';
 
@@ -574,6 +576,86 @@ export const VI_PREVIEW_REGION_CORRELATIONS_JSON_SCHEMA = {
   }
 } as const;
 
+// A single labeled corpus sample (VHS-REQ-703.16): the deterministic
+// region-correlation body plus the provenance that makes it reproducible from a
+// named base/head revision pair (ADR-0027 closed-corpus rail). Its
+// `correlation` is a vi-preview-region-correlation@v1 document; typed as an
+// object here (the offline validator does not resolve $ref).
+export const VI_LATENT_CORPUS_SAMPLE_JSON_SCHEMA = {
+  $schema: DRAFT_07,
+  $id: VI_LATENT_CORPUS_SAMPLE_SCHEMA_ID,
+  title: 'VI latent-structure corpus sample',
+  description:
+    'A reproducible labeled corpus sample assembled from the base/head preview HTML and the LabVIEW comparison report, for the gated ML latent-structure research track (ADR-0027). Ships no model and carries no inferred label.',
+  type: 'object',
+  required: ['schema', 'provenance', 'artifacts', 'correlation', 'imageAssociations', 'previewImageCounts'],
+  properties: {
+    schema: { const: VI_LATENT_CORPUS_SAMPLE_SCHEMA_ID },
+    provenance: {
+      type: 'object',
+      required: ['viPath', 'baseRevision', 'headRevision', 'runtime'],
+      properties: {
+        viPath: { type: 'string' },
+        baseRevision: { type: 'string' },
+        headRevision: { type: 'string' },
+        runtime: {
+          type: 'object',
+          properties: {
+            engine: { type: 'string' },
+            provider: { type: 'string' },
+            bitness: { type: 'string' },
+            version: { type: 'string' }
+          }
+        }
+      }
+    },
+    artifacts: {
+      type: 'object',
+      required: ['basePreviewAvailable', 'headPreviewAvailable', 'comparisonReportAvailable'],
+      properties: {
+        basePreviewAvailable: { type: 'boolean' },
+        headPreviewAvailable: { type: 'boolean' },
+        // Always true: the comparison report is what produced the model.
+        comparisonReportAvailable: { const: true }
+      }
+    },
+    correlation: {
+      type: 'object',
+      required: ['schema'],
+      properties: { schema: { const: VI_PREVIEW_REGION_CORRELATION_SCHEMA_ID } }
+    },
+    imageAssociations: {
+      type: 'array',
+      items: {
+        type: 'object',
+        required: ['id', 'side', 'previewImageIndex', 'contentKey'],
+        properties: {
+          id: { type: 'string' },
+          side: { type: 'string', enum: ['base', 'head'] },
+          previewImageIndex: { type: 'integer', minimum: 0 },
+          contentKey: { type: 'string' },
+          pixelSize: {
+            type: 'object',
+            required: ['width', 'height'],
+            properties: {
+              width: { type: 'integer', minimum: 1 },
+              height: { type: 'integer', minimum: 1 }
+            }
+          }
+        }
+      }
+    },
+    previewImageCounts: {
+      type: 'object',
+      required: ['base', 'head'],
+      properties: {
+        base: { type: 'integer', minimum: 0 },
+        head: { type: 'integer', minimum: 0 }
+      }
+    }
+  }
+} as const;
+
 /** Registry of every published schema, keyed by its `$id`. */
 export const VI_SEMANTIC_SCHEMAS: Record<string, unknown> = {
   [VI_SEMANTIC_COMPARISON_SCHEMA_ID]: VI_SEMANTIC_COMPARISON_JSON_SCHEMA,
@@ -582,7 +664,8 @@ export const VI_SEMANTIC_SCHEMAS: Record<string, unknown> = {
   [VI_PREVIEW_COMPARISON_CORRELATION_SCHEMA_ID]: VI_PREVIEW_COMPARISON_CORRELATION_JSON_SCHEMA,
   [VI_PREVIEW_COMPARISON_CORRELATIONS_SCHEMA_ID]: VI_PREVIEW_COMPARISON_CORRELATIONS_JSON_SCHEMA,
   [VI_PREVIEW_REGION_CORRELATION_SCHEMA_ID]: VI_PREVIEW_REGION_CORRELATION_JSON_SCHEMA,
-  [VI_PREVIEW_REGION_CORRELATIONS_SCHEMA_ID]: VI_PREVIEW_REGION_CORRELATIONS_JSON_SCHEMA
+  [VI_PREVIEW_REGION_CORRELATIONS_SCHEMA_ID]: VI_PREVIEW_REGION_CORRELATIONS_JSON_SCHEMA,
+  [VI_LATENT_CORPUS_SAMPLE_SCHEMA_ID]: VI_LATENT_CORPUS_SAMPLE_JSON_SCHEMA
 };
 
 export interface SchemaValidationResult {

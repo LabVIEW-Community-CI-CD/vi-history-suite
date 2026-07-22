@@ -863,6 +863,13 @@ export const VI_SEMANTIC_MCP_RESOURCES = [
     mimeType: 'application/schema+json'
   },
   {
+    uri: `${RESOURCE_URI_PREFIX}vi-latent-corpus-sample@v1`,
+    name: 'vi-latent-corpus-sample@v1 schema',
+    title: 'VI latent-structure corpus sample schema',
+    description: 'JSON Schema for the vi-history-suite/vi-latent-corpus-sample@v1 research corpus sample.',
+    mimeType: 'application/schema+json'
+  },
+  {
     uri: SCHEMA_INDEX_URI,
     name: 'vi-diff schema index',
     title: 'Open VI-diff standard (all schemas)',

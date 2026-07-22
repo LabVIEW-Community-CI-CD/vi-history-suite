@@ -5139,6 +5139,17 @@ Missing numeric IDs are intentional.
     diagram-space-only, the model's schema is published in the semantic-schema
     registry and advertised as an MCP resource, and the tool is registered so the
     tools/list and known-tool guards stay in agreement.
+  - VHS-REQ-703.16: A pure, dependency-free builder assembles a reproducible
+    labeled corpus sample from the three existing artifacts (base preview HTML,
+    head preview HTML, and the comparison report) — the deterministic
+    region-correlation body plus provenance naming the VI path, base/head
+    revision pair, and observed runtime facts — published as the versioned
+    dependency-free vi-history-suite/vi-latent-corpus-sample@v1 model and
+    Draft-07 schema (validateViSemanticDocument) and advertised as an MCP
+    resource. It records preview availability honestly, ships no model, adds no
+    inferred label, and never fabricates a pixel region (diagram-space-only
+    without an injected locator), providing the closed-corpus data record the
+    gated ML research track (ADR-0027) depends on.
 - Agent Work Scope:
   - Keep the correlation builder pure, deterministic, and dependency-injected so
     it stays unit-testable without VS Code, a network, or a LabVIEW runtime; do
@@ -5162,6 +5173,7 @@ Missing numeric IDs are intentional.
   - `src/semantic/viSemanticComparisonMcp.ts`
   - `src/cli/runViSemanticPrReview.ts`
   - `src/semantic/viPreviewRegionCorrelation.ts`
+  - `src/semantic/viLatentCorpusSample.ts`
 - Verification References:
   - `tests/unit/viPreviewComparisonCorrelation.test.ts`
   - `tests/unit/viSemanticPrReview.test.ts`
@@ -5171,6 +5183,7 @@ Missing numeric IDs are intentional.
   - `tests/unit/coordinateFramesAcceptance.test.ts`
   - `tests/unit/comparisonDetailItemGeometry.test.ts`
   - `tests/unit/viPreviewRegionCorrelation.test.ts`
+  - `tests/unit/viLatentCorpusSample.test.ts`
   - `tests/unit/viSemanticComparisonMcp.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
 - Change Guidance:
