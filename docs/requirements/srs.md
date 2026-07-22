@@ -1632,8 +1632,8 @@ Missing numeric IDs are intentional.
     `labviewExe` directory segment (e.g. `LabVIEW-2026-64`) so the preflight
     can still locate the config. The `lvcompare` engine is exempt from this
     preflight because it does not connect to LabVIEW VI Server. When TCP is
-    enabled, the resolved `server.tcp.port` (default `3363`) is passed to
-    LabVIEWCLI as `-PortNumber`.
+    enabled, the resolved `server.tcp.port` is passed to LabVIEWCLI as
+    `-PortNumber`; there is no fabricated default port.
   - Linux host-native runs mirror the staged VI inputs and report output
     under a short tmpdir (default `${os.tmpdir()}/vi-history-suite-runtime`,
     overridable via `LVIE_LINUX_RUNTIME_TMPDIR`, opt-out via
@@ -1687,8 +1687,8 @@ Missing numeric IDs are intentional.
   - Keep the headless decision inside the plan so runtime evidence reflects
     the actual args used. Do not silently force `-Headless` on Linux
     host-native; LabVIEW 2026 26.1.1f1 hangs in headless mode, while the
-    non-headless path succeeds when VI Server TCP/IP is enabled
-    (default port 3363).
+    non-headless path succeeds when VI Server TCP/IP is enabled and an explicit
+    `server.tcp.port` is declared in `labview.conf` (no default is assumed).
 
 ### VHS-REQ-596: Devcontainer Source Evaluation
 
@@ -5530,7 +5530,7 @@ Missing numeric IDs are intentional.
 - Parent: VHS-SYS-REQ-007
 - Area: Comparison Reports
 - Statement: A single host-native LabVIEW install exposes exactly one local VI
-  Server endpoint (the derived `server.tcp.port`, default 3363). The extension
+  Server endpoint (the derived `server.tcp.port`). The extension
   shall serialize concurrent host-native LabVIEWCLI launches that would contend
   on the same local VI Server endpoint through a single in-process acquisition
   lock keyed by that endpoint, so overlapping host-native renders take turns

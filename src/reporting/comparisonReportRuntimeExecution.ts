@@ -2039,8 +2039,6 @@ export async function resolveWindowsLabviewTcpSettingsForLabviewPath(
   };
 }
 
-const DEFAULT_LINUX_LABVIEW_TCP_PORT = 3363;
-
 export async function resolveLinuxLabviewTcpSettings(
   record: ComparisonReportPacketRecord,
   deps: {
@@ -2102,9 +2100,22 @@ export async function resolveLinuxLabviewTcpSettings(
       };
     }
 
-    const labviewTcpPort = portMatch
-      ? Number.parseInt(portMatch[1], 10)
-      : DEFAULT_LINUX_LABVIEW_TCP_PORT;
+    if (!portMatch) {
+      // VHS-REQ-156: VI Server TCP is enabled but no explicit server.tcp.port
+      // is declared. Rather than fabricate a default port (which produces a
+      // second, divergent LabVIEWCLI attach path that recursive-loads), fail
+      // closed with an actionable reason so the port always comes from disk.
+      return {
+        labviewIniPath: candidate,
+        viServerTcpEnabled: true,
+        inspectedCandidatePaths: candidates,
+        notes: [
+          `Linux LabVIEW config at ${candidate} enables VI Server TCP (server.tcp.enabled=True) but does not declare server.tcp.port. The runtime fails closed instead of assuming a port; set an explicit server.tcp.port in labview.conf so LabVIEWCLI attaches to the correct VI Server port.`
+        ]
+      };
+    }
+
+    const labviewTcpPort = Number.parseInt(portMatch[1], 10);
 
     return {
       labviewIniPath: candidate,
@@ -2134,9 +2145,34 @@ function preflightLinuxHostRuntimeSurface(
   if (
     record.runtimeSelection.platform !== 'linux' ||
     record.runtimeSelection.provider !== 'host-native' ||
-    record.runtimeSelection.engine !== 'labview-cli' ||
-    linuxLabviewTcpSettings.viServerTcpEnabled === true
+    record.runtimeSelection.engine !== 'labview-cli'
   ) {
+    return undefined;
+  }
+
+  if (linuxLabviewTcpSettings.viServerTcpEnabled === true) {
+    // VHS-REQ-156: VI Server TCP is enabled but the port could not be read
+    // from labview.conf. Fail closed rather than launch LabVIEWCLI without an
+    // explicit -PortNumber (or with a fabricated default), which recursive-
+    // loads on Linux host-native LabVIEW 2026.
+    if (linuxLabviewTcpSettings.labviewTcpPort === undefined) {
+      return {
+        blockedExecution: {
+          state: 'not-available',
+          attempted: false,
+          reportExists: false,
+          blockedReason: 'linux-vi-server-tcp-port-unknown',
+          diagnosticReason: 'linux-vi-server-tcp-port-unknown',
+          diagnosticNotes: linuxLabviewTcpSettings.notes,
+          labviewIniPath: linuxLabviewTcpSettings.labviewIniPath,
+          labviewTcpPort: linuxLabviewTcpSettings.labviewTcpPort,
+          executable: commandPlan.executable,
+          args: commandPlan.args,
+          stdoutFilePath: record.artifactPlan.runtimeStdoutFilePath,
+          stderrFilePath: record.artifactPlan.runtimeStderrFilePath
+        }
+      };
+    }
     return undefined;
   }
 
