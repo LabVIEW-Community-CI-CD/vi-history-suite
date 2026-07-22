@@ -91,7 +91,9 @@ function optionalPolyline(value: unknown): LvkitPolyline | undefined {
         Array.isArray(p) &&
         p.length === 2 &&
         typeof p[0] === 'number' &&
-        typeof p[1] === 'number'
+        Number.isFinite(p[0]) &&
+        typeof p[1] === 'number' &&
+        Number.isFinite(p[1])
     )
   ) {
     return value.map((p) => [p[0], p[1]] as readonly [number, number]);
