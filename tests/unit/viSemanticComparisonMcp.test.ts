@@ -1542,6 +1542,7 @@ describe('viSemanticComparisonMcp', () => {
         'vi-history-suite://schema/vi-preview-comparison-correlations@v1',
         'vi-history-suite://schema/vi-preview-region-correlation@v1',
         'vi-history-suite://schema/vi-preview-region-correlations@v1',
+        'vi-history-suite://schema/vi-latent-corpus-sample@v1',
         'vi-history-suite://schema/index'
       ]);
       expect(result.resources).toEqual(VI_SEMANTIC_MCP_RESOURCES);
