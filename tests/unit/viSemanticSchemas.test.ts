@@ -17,6 +17,8 @@ import {
   VI_PREVIEW_COMPARISON_CORRELATIONS_SCHEMA_ID,
   VI_PREVIEW_REGION_CORRELATION_SCHEMA_ID,
   VI_PREVIEW_REGION_CORRELATIONS_SCHEMA_ID,
+  VI_PREVIEW_REGION_CORRELATION_V1_SCHEMA_ID,
+  VI_PREVIEW_REGION_CORRELATIONS_V1_SCHEMA_ID,
   VI_LATENT_CORPUS_SAMPLE_SCHEMA_ID,
   VI_REPOSITORY_INDEX_SCHEMA_ID,
   VI_SEMANTIC_COMPARISON_JSON_SCHEMA,
@@ -40,9 +42,22 @@ describe('viSemanticSchemas registry', () => {
         VI_PREVIEW_COMPARISON_CORRELATIONS_SCHEMA_ID,
         VI_PREVIEW_REGION_CORRELATION_SCHEMA_ID,
         VI_PREVIEW_REGION_CORRELATIONS_SCHEMA_ID,
+        VI_PREVIEW_REGION_CORRELATION_V1_SCHEMA_ID,
+        VI_PREVIEW_REGION_CORRELATIONS_V1_SCHEMA_ID,
         VI_LATENT_CORPUS_SAMPLE_SCHEMA_ID
       ].sort()
     );
+  });
+
+  it('still validates a legacy @v1 region-correlation document without sourceIndex (VHS-REQ-703.16)', () => {
+    const legacy = {
+      schema: VI_PREVIEW_REGION_CORRELATION_V1_SCHEMA_ID,
+      entries: [{ id: 'X.vi', changeType: 'added', located: false, regions: [] }],
+      totals: { regionCount: 1, locatedRegionCount: 0, diagramOnlyRegionCount: 1 }
+    };
+    const result = validateViSemanticDocument(legacy);
+    expect(result.valid).toBe(true);
+    expect(result.errors).toEqual([]);
   });
 
   it('validates a preview-comparison correlations bundle against its published schema (VHS-REQ-703.13)', () => {
