@@ -5628,6 +5628,18 @@ Missing numeric IDs are intentional.
     comment and feed the same embedding; it fails closed when the capture does
     not return a PDH-CSV string, and is deterministic given a deterministic
     capture and clock.
+  - A pure renderer emits the hardened native-PowerShell script that executes a
+    capture plan on an actor whose only expected shell is Windows PowerShell 5.1
+    (no Node, PowerShell Core, or bash): it runs the plan's logman lifecycle and
+    the comparison, wrapping every native invocation under `Continue` in
+    try/catch/finally so a nonzero exit, stderr text, or a missing executable
+    never aborts the run and the exit code is read back explicitly; it always
+    stops and deletes the collector and always writes the capture window from a
+    `finally` block; it writes the window record as UTF-8 without a byte-order
+    mark and resolves the real logman CSV filename; and it fails closed on a bad
+    plan, an empty executable or window path, or a negative settle. Deterministic
+    script text in, deterministic script text out; spawning it lives in the actor
+    harness.
 - Agent Work Scope:
   - Change the ADR, this requirement, and the governance contract test together;
     keep the required gate deterministic and never make a live image pull the
@@ -5645,6 +5657,7 @@ Missing numeric IDs are intentional.
   - `src/reporting/mirror/perfmonTdmsModel.ts`
   - `src/reporting/mirror/perfmonCapturePlan.ts`
   - `src/reporting/mirror/firstRunPerfmonPipeline.ts`
+  - `src/reporting/mirror/perfmonCaptureScript.ts`
 - Verification References:
   - `tests/unit/mirrorModeGovernance.test.ts`
   - `tests/unit/mirrorParityDigest.test.ts`
@@ -5658,6 +5671,7 @@ Missing numeric IDs are intentional.
   - `tests/unit/perfmonTdmsModel.test.ts`
   - `tests/unit/perfmonCapturePlan.test.ts`
   - `tests/unit/firstRunPerfmonPipeline.test.ts`
+  - `tests/unit/perfmonCaptureScript.test.ts`
 - Change Guidance:
   - This is a governance-foundation requirement: keep the documented invariants
     (human/Vagrant-only authorship, run-only container, Vagrant→`merge_group`
