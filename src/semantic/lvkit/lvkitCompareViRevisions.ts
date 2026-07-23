@@ -31,6 +31,11 @@ import {
   type ViComparisonModelCache
 } from '../viComparisonModelCache';
 import { runExecFileText, type ExecFileTextRunner } from '../../tooling/execFileText';
+import { createCycleMeter } from '../../reporting/runtime/cycleMeter';
+import {
+  localViServerLockKey,
+  sharedLocalViServerAcquisitionLock
+} from '../../reporting/runtime/localViServerAcquisitionLock';
 import { parseLvkitDiffJson } from './lvkitDiffModel';
 import { buildViSemanticModelFromLvkitDiff } from './lvkitSemanticAdapter';
 import { locateLvkit, type LvkitLocation } from './lvkitLocator';
@@ -87,6 +92,21 @@ export interface LvkitCompareDeps {
   env?: NodeJS.ProcessEnv;
   timeoutMs?: number;
   maxBufferBytes?: number;
+  /**
+   * VHS-REQ-669: acquires a serialization slot before the lvkit subprocess so
+   * it takes turns on the shared local-runtime lock with host-native LabVIEW
+   * launches (mutually exclusive when they resolve to the same endpoint) and
+   * with other lvkit runs. Defaults to `sharedLocalViServerAcquisitionLock`.
+   */
+  acquireLocalRuntimeSlot?: (key: string) => Promise<() => void>;
+  /**
+   * Local VI Server port used to derive the shared lock key; lvkit and a
+   * host-native LabVIEW run resolving to the same endpoint serialize. Omitted →
+   * the `host-native:default` slot.
+   */
+  localViServerPortNumber?: number;
+  /** Injectable monotonic clock for the cycle meter (deterministic tests). */
+  now?: () => number;
 }
 
 function safeSlice(text: string, max = 500): string {
@@ -138,6 +158,13 @@ export function createLvkitCompareViRevisions(
   const env = lvkitDeps.env ?? process.env;
   const timeoutMs = lvkitDeps.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const maxBufferBytes = lvkitDeps.maxBufferBytes ?? DEFAULT_MAX_BUFFER_BYTES;
+  const acquireLocalRuntimeSlot =
+    lvkitDeps.acquireLocalRuntimeSlot ??
+    ((key: string) => sharedLocalViServerAcquisitionLock.acquire(key));
+  const localViServerPortNumber = lvkitDeps.localViServerPortNumber;
+  // One meter per provider instance: successive compares are successive cycles,
+  // so interCycleGapMs reflects the real spacing between lvkit runs.
+  const cycleMeter = createCycleMeter(lvkitDeps.now);
 
   return async function lvkitCompareViRevisions(
     input: CompareViRevisionsInput,
@@ -243,11 +270,35 @@ export function createLvkitCompareViRevisions(
         '--search-path',
         target.repositoryRoot
       ];
-      const execResult = await runExecFileText(location.invocation.command, args, {
-        timeoutMs,
-        maxBufferBytes,
-        execFileAsync: lvkitDeps.execFileAsync
+      // VHS-REQ-669: serialize the lvkit subprocess on the shared local-runtime
+      // acquisition lock so it takes turns with host-native LabVIEW launches
+      // (mutually exclusive when they resolve to the same endpoint key) and with
+      // other lvkit runs, and cycle-meter the single attempt exactly as the
+      // preview/comparison pipelines meter theirs. The slot is released before
+      // JSON parsing, which needs no host resource.
+      const lockKey = localViServerLockKey({
+        provider: 'host-native',
+        portNumber: localViServerPortNumber
       });
+      const { execResult, cycle } = await (async () => {
+        const releaseSlot = await acquireLocalRuntimeSlot(lockKey);
+        const cycleHandle = cycleMeter.startCycle();
+        try {
+          const result = await runExecFileText(location.invocation.command, args, {
+            timeoutMs,
+            maxBufferBytes,
+            execFileAsync: lvkitDeps.execFileAsync
+          });
+          const measurement = cycleHandle.complete(
+            result.exitCode === 0
+              ? 'lvkit-diff-succeeded'
+              : `lvkit-diff-failed-exit-${result.exitCode}`
+          );
+          return { execResult: result, cycle: measurement };
+        } finally {
+          releaseSlot();
+        }
+      })();
       if (execResult.exitCode !== 0) {
         return {
           status: 'failed',
@@ -287,7 +338,8 @@ export function createLvkitCompareViRevisions(
           provider: 'lvkit',
           engine: 'lvkit-diff',
           state: 'succeeded',
-          reportFilePath: ''
+          reportFilePath: '',
+          cycles: [cycle]
         }
       };
     } catch (error) {

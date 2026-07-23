@@ -857,3 +857,55 @@ describe('multi-report dashboard evidence concentration (VHS-REQ-610)', () => {
     expect(html).toContain('mean-bias=-0m 3s');
   });
 });
+
+describe('renderMultiReportDashboardHtml missing commit-window hashes (VHS-REQ-610.4)', () => {
+  it("renders 'none' for an absent newest/oldest retained hash", () => {
+    // A commit window with no newest/oldest hash (both optional) exercises the
+    // `?? 'none'` fallbacks in the dashboard header.
+    const html = renderMultiReportDashboardHtml({
+      generatedAt: '2026-05-04T12:00:00.000Z',
+      repositoryName: 'repo',
+      repositoryRoot: '/workspace/repo',
+      relativePath: 'Source/Sample.vi',
+      signature: 'LVIN',
+      artifactPlan: {
+        repoId: 'repo',
+        fileId: 'file',
+        windowId: 'window',
+        dashboardDirectory: '/workspace/storage/dashboards/repo/file/window',
+        jsonFilePath: '/workspace/storage/dashboards/repo/file/window/dashboard.json',
+        htmlFilePath: '/workspace/storage/dashboards/repo/file/window/dashboard.html',
+        assetsDirectory: '/workspace/storage/dashboards/repo/file/window/assets'
+      },
+      commitWindow: { commitCount: 0, pairCount: 0 },
+      summary: {
+        representedPairCount: 0,
+        windowCompletenessState: 'complete',
+        archivedPairCount: 0,
+        missingPairCount: 0,
+        missingPairIds: [],
+        generatedReportCount: 0,
+        reportMetadataPairCount: 0,
+        failedPairCount: 0,
+        failedPairIds: [],
+        blockedPairCount: 0,
+        blockedPairIds: [],
+        overviewSectionCount: 0,
+        overviewImageCount: 0,
+        includedAttributeCount: 0,
+        detailSectionCount: 0,
+        detailItemCount: 0,
+        pairWithOverviewImageCount: 0,
+        pairWithDetailCount: 0,
+        providerSummaries: [],
+        overviewCaptionSummaries: [],
+        includedAttributeSummaries: [],
+        detailHeadingSummaries: [],
+        evidenceStateSummaries: []
+      },
+      entries: []
+    });
+    expect(html).toContain('<strong>Newest retained hash:</strong> none');
+    expect(html).toContain('<strong>Oldest retained hash:</strong> none');
+  });
+});

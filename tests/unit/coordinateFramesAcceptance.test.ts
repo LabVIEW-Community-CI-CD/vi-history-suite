@@ -132,3 +132,37 @@ describe('assessCoordinateFramesIsland (VHS-REQ-703.9)', () => {
     expect(bad).toContain(COORDINATE_FRAMES_ISLAND_ID);
   });
 });
+
+describe('assessCoordinateFramesIsland non-string and bare-base64 branches (VHS-REQ-703.9)', () => {
+  it('treats non-string HTML as an absent island without throwing', () => {
+    // Loosely-typed callers may pass a non-string; the `typeof html === 'string'`
+    // guards must yield a safe island-absent result rather than throwing.
+    const a = assessCoordinateFramesIsland(undefined as unknown as string);
+    expect(a.islandPresent).toBe(false);
+    expect(a.accepted).toBe(false);
+    expect(a.issues).toEqual(['island-absent']);
+  });
+
+  it('counts a bare (non-data-URI) base64 frame image as a real image', () => {
+    // A frame image that is a bare base64 string (no `data:...base64,` marker) is
+    // auto-prefixed by the frames model, so it must count as a real image (the
+    // no-marker branch of the payload check).
+    const json = JSON.stringify([
+      { Image: 'QUJDRA==', Position: { Left: 0, Top: 0, Width: 40, Height: 30 } }
+    ]);
+    const a = assessCoordinateFramesIsland(withIsland(json));
+    expect(a.framesWithImages).toBe(1);
+    expect(a.accepted).toBe(true);
+  });
+});
+
+describe('describeCoordinateFramesAssessment island-present rejection (VHS-REQ-703.9)', () => {
+  it('describes a present-but-unacceptable island (geometry, no image)', () => {
+    const assessment = assessCoordinateFramesIsland(
+      withIsland(JSON.stringify([{ Position: { Left: 1, Top: 2, Width: 40, Height: 30 } }]))
+    );
+    const text = describeCoordinateFramesAssessment(assessment);
+    expect(text).toContain('REJECTED');
+    expect(text).toContain('island present but not acceptable');
+  });
+});

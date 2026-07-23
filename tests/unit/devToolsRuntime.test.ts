@@ -385,3 +385,47 @@ describe('devToolsRuntime additional dependency-boundary coverage (VHS-REQ-679)'
     }
   });
 });
+
+describe('devToolsRuntime real dependency-factory fallbacks (VHS-REQ-679.2)', () => {
+  it('constructs real install deps when installPinnedDevTools receives no deps', async () => {
+    const { notifier, messages } = makeNotifier();
+    const seenDeps: unknown[] = [];
+    const result = await installPinnedDevTools({
+      versionSetting: 'devtools-v1.2.3',
+      installBaseDir: '/store/devtools',
+      isWorkspaceTrusted: true,
+      notifier,
+      // No `deps` -> exercises `options.deps ?? createDevToolsInstallDeps()`. The
+      // injected install stub ignores the constructed deps, so nothing touches
+      // the network or filesystem.
+      install: (opts) => {
+        seenDeps.push(opts.deps);
+        return Promise.resolve({ ok: true, version: '1.2.3', reason: '', detail: '' });
+      }
+    });
+    expect(result?.ok).toBe(true);
+    expect(seenDeps).toHaveLength(1);
+    expect(seenDeps[0]).toBeDefined();
+    expect(messages.some((m) => m.level === 'info')).toBe(true);
+  });
+
+  it('constructs real uninstall deps and reports none-installed for an empty store', async () => {
+    const installBaseDir = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-devtools-uninstall-'));
+    try {
+      const { notifier, messages } = makeNotifier();
+      // No `deps` -> exercises `options.deps ?? createDevToolsInstallDeps()`.
+      // listInstalledVersions is filesystem-only, so an empty temp store yields
+      // the none-installed outcome without any network access.
+      const result = await uninstallDevTools({
+        installBaseDir,
+        versionSetting: 'devtools-v1.2.3',
+        notifier,
+        pickVersion: () => Promise.resolve(undefined)
+      });
+      expect(result).toEqual({ removed: false, reason: 'none-installed' });
+      expect(messages.some((m) => m.message.includes('No pinned dev-tools versions'))).toBe(true);
+    } finally {
+      await fs.rm(installBaseDir, { recursive: true, force: true });
+    }
+  });
+});

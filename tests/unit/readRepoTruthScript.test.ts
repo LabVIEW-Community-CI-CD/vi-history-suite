@@ -442,3 +442,168 @@ describe('readRepoTruth: run --include-provenance across modes (VHS-REQ-692.5)',
     expect(out.stdout).toContain('x-vi-history-suite-provenance');
   });
 });
+
+describe('readRepoTruth: normalization fallback branches (#2333)', () => {
+  it('normalizes a merge_queue rule with a non-string ruleset name and no parameters', () => {
+    const policy = extractMergeQueuePolicy([
+      { id: 7, name: 123, rules: [{ type: 'merge_queue' }] }
+    ]) as Record<string, unknown>;
+    expect(policy.present).toBe(true);
+    // Non-string name -> undefined; absent parameters object -> every field undefined.
+    expect(policy.rulesetName).toBeUndefined();
+    expect(policy.minEntriesToMerge).toBeUndefined();
+    expect(policy.mergeMethod).toBeUndefined();
+  });
+
+  it('treats falsy inputs to isAuthFailureText as non-auth', () => {
+    expect(isAuthFailureText(undefined as unknown as string)).toBe(false);
+    expect(isAuthFailureText(null as unknown as string)).toBe(false);
+    expect(isAuthFailureText('')).toBe(false);
+  });
+
+  it('passes numeric (non-array) coverage counts straight through', () => {
+    const d = collectCoverageDomain({
+      spawnSync: () => ({
+        status: 0,
+        stdout: JSON.stringify({ riskThreshold: 90, mappedBelowThreshold: 7, zeroCoverageSupportingRequirements: 2 })
+      }),
+      repoRoot: '/repo'
+    }) as Record<string, unknown>;
+    expect(d).toMatchObject({ available: true, riskThreshold: 90, mappedBelowThreshold: 7, zeroCoverageSupporting: 2 });
+  });
+
+  it('falls back to {} when the requirement-health packet has no summary object', () => {
+    const d = collectRequirementHealthDomain({
+      spawnSync: () => ({ status: 0, stdout: JSON.stringify({ notASummary: true }) }),
+      repoRoot: '/repo'
+    }) as Record<string, unknown>;
+    expect(d).toMatchObject({ available: true });
+    expect(d.healthy).toBeUndefined();
+    expect(d.status).toBeUndefined();
+    expect(d.requirementsNeedingAttention).toBeUndefined();
+  });
+
+  it('maps a stale track with no recorded version to a null lastValidatedVersion and skips non-object tracks', () => {
+    const ledger = JSON.stringify({
+      tracks: [
+        null,
+        'not-an-object',
+        { trackId: 'linux-x', linuxExecutable: true }
+      ]
+    });
+    const read = (p: string) => {
+      if (String(p).endsWith('package.json')) return JSON.stringify({ version: '2.0.0' });
+      if (String(p).endsWith('runtime-validation-ledger.json')) return ledger;
+      throw new Error(`unexpected read ${p}`);
+    };
+    const d = collectRuntimeFidelityDomain({ readFileSync: read, repoRoot: '/repo' }) as {
+      currentVersion: string;
+      trackCount: number;
+      staleTracks: Array<{ trackId: string; lastValidatedVersion: string | null }>;
+    };
+    expect(d.currentVersion).toBe('2.0.0');
+    expect(d.trackCount).toBe(1);
+    expect(d.staleTracks).toEqual([{ trackId: 'linux-x', lastValidatedVersion: null }]);
+  });
+
+  it('reports a null current version when package.json is unreadable but the ledger is present', () => {
+    const ledger = JSON.stringify({
+      tracks: [{ trackId: 'linux-y', linuxExecutable: true, lastValidatedVersion: '1.0.0' }]
+    });
+    const read = (p: string) => {
+      if (String(p).endsWith('package.json')) throw new Error('no package.json');
+      if (String(p).endsWith('runtime-validation-ledger.json')) return ledger;
+      throw new Error(`unexpected read ${p}`);
+    };
+    const d = collectRuntimeFidelityDomain({ readFileSync: read, repoRoot: '/repo' }) as {
+      currentVersion: string | null;
+      staleTracks: Array<{ trackId: string; lastValidatedVersion: string | null }>;
+    };
+    expect(d.currentVersion).toBeNull();
+    expect(d.staleTracks).toEqual([{ trackId: 'linux-y', lastValidatedVersion: '1.0.0' }]);
+  });
+
+  it('leaves authorityComplete undefined when the release packet authority is not an object', () => {
+    const deps = {
+      now: () => new Date('2026-07-20T00:00:00.000Z'),
+      repoRoot: '/repo',
+      spawnSync: fakeSpawn([
+        { match: (c, a) => c === 'gh' && a.includes('repos/LabVIEW-Community-CI-CD/vi-history-suite/rulesets'), result: { status: 0, stdout: JSON.stringify([{ id: 42 }]) } },
+        { match: (c, a) => c === 'gh' && a.some((x) => x.includes('/rulesets/42')), result: { status: 0, stdout: JSON.stringify(MERGE_QUEUE_RULESET) } },
+        { match: (c, a) => c === 'gh' && a.includes('pr') && a.includes('list'), result: { status: 0, stdout: JSON.stringify([]) } },
+        { match: (c, a) => c === 'node' && a.some((x) => x.includes('buildReleaseState.js')), result: { status: 0, stdout: JSON.stringify({ stage: 'draft', status: 'pending', authority: 'not-an-object' }) } }
+      ])
+    };
+    const packet = buildRepoTruthPacket({}, deps);
+    const domains = packet.domains as Record<string, Record<string, unknown>>;
+    expect(domains.releaseState).toMatchObject({ available: true, stage: 'draft', status: 'pending' });
+    expect(domains.releaseState.authorityComplete).toBeUndefined();
+  });
+
+  it('defaults the sibling read-model repo root to process.cwd() when none is injected', () => {
+    // No repoRoot: the default process.cwd() factory is used, but spawnSync is
+    // still injected so no real node subprocess runs.
+    const d = collectCoverageDomain({
+      spawnSync: () => ({ status: 0, stdout: '{}' })
+    }) as Record<string, unknown>;
+    expect(d).toMatchObject({ available: true });
+  });
+
+  it('defaults the runtime-fidelity repo root to process.cwd() when none is injected', () => {
+    // No repoRoot: process.cwd() is used to locate the ledger, but readFileSync is
+    // injected so no real filesystem read occurs.
+    const d = collectRuntimeFidelityDomain({
+      readFileSync: (p: string) => {
+        if (String(p).endsWith('package.json')) return JSON.stringify({ version: '3.0.0' });
+        throw new Error('no ledger');
+      }
+    }) as Record<string, unknown>;
+    expect(d).toMatchObject({ available: false });
+  });
+
+  it('stringifies a gh spawn error object that carries no message', () => {
+    let caught: unknown;
+    try {
+      collectOpenWorkDomain({}, { spawnSync: () => ({ error: {} }), repoRoot: '/repo' });
+    } catch (error) {
+      caught = error;
+    }
+    expect(caught).toBeInstanceOf(Error);
+    expect(caught).not.toBeInstanceOf(RepoTruthAuthError);
+    expect((caught as Error).message).toContain('failed:');
+  });
+
+  it('reports a gh nonzero exit with an empty stderr as a generic failure', () => {
+    let caught: unknown;
+    try {
+      collectOpenWorkDomain({}, { spawnSync: () => ({ status: 1 }), repoRoot: '/repo' });
+    } catch (error) {
+      caught = error;
+    }
+    expect(caught).toBeInstanceOf(Error);
+    expect(caught).not.toBeInstanceOf(RepoTruthAuthError);
+    expect((caught as Error).message).toContain('failed (status 1):');
+  });
+
+  it('stringifies a sibling read-model spawn error object that carries no message', () => {
+    const d = collectCoverageDomain({ spawnSync: () => ({ error: {} }), repoRoot: '/repo' }) as Record<string, unknown>;
+    expect(d).toMatchObject({ available: false });
+    expect(typeof d.reason).toBe('string');
+  });
+
+  it('skips ruleset summaries that carry no id when collecting the merge-queue policy', () => {
+    const deps = {
+      now: () => new Date('2026-07-20T00:00:00.000Z'),
+      repoRoot: '/repo',
+      spawnSync: fakeSpawn([
+        { match: (c, a) => c === 'gh' && a.includes('repos/LabVIEW-Community-CI-CD/vi-history-suite/rulesets'), result: { status: 0, stdout: JSON.stringify([{ name: 'no-id-ruleset' }, { id: null }]) } },
+        { match: (c, a) => c === 'gh' && a.includes('pr') && a.includes('list'), result: { status: 0, stdout: JSON.stringify([]) } }
+      ])
+    };
+    const packet = buildRepoTruthPacket({}, deps);
+    const domains = packet.domains as Record<string, Record<string, unknown>>;
+    // Every summary was filtered out (no id), so no rule detail is fetched and the
+    // merge-queue policy resolves to "not present".
+    expect(domains.mergeQueue.policy).toEqual({ present: false });
+  });
+});

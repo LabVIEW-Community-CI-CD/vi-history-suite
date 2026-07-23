@@ -2312,3 +2312,434 @@ describe('runMultiStandardsAudit main CLI (#2331)', () => {
     errSpy.mockRestore();
   });
 });
+
+describe('runMultiStandardsAudit: provenance/matrix/summary edge coverage (#2333)', () => {
+  const m = require('../../scripts/runMultiStandardsAudit.js') as Record<string, any>;
+
+  it('renders failed commands and non-empty snapshot value lists in the provenance summary', () => {
+    const lines = m
+      .renderAuditRunProvenanceSummary({
+        snapshot: {
+          mode: 'tracked',
+          path: '/snap',
+          trackedFileCount: 3,
+          removed: false,
+          symlinkFiles: ['a.lnk', 'b.lnk'],
+          missingFiles: ['gone.txt'],
+          generatedRootsExcluded: ['out/']
+        },
+        commands: [
+          { stage: 'audit', name: 'evidence-scan', status: 2, file: 'scan.txt', command: 'python3 scan.py' }
+        ]
+      })
+      .join('\n');
+    expect(lines).toContain('FAIL (2)');
+    expect(lines).toContain('a.lnk<br>b.lnk');
+    expect(lines).toContain('gone.txt');
+    expect(lines).toContain('Removed After Run | no');
+  });
+
+  it('renders provenance commands with no snapshot object present', () => {
+    const lines = m
+      .renderAuditRunProvenanceSummary({ commands: [{ stage: 'image', name: 'inspect', status: 0 }] })
+      .join('\n');
+    expect(lines).toContain('| Mode | - |');
+    expect(lines).toContain('| image | inspect | pass |');
+  });
+
+  it('renders a coverage matrix cell without confidence and merges duplicate rows', () => {
+    const areas = { REQ: { score: 4 }, ARCH: {}, TEST: { score: 2, confidence: 'High', standards: ['A'] } };
+    const lines = m
+      .renderStandardsCoverageMatrix([
+        { profile: 'quick-triage', areas },
+        { profile: 'release-gate', areas }
+      ])
+      .join('\n');
+    // REQ has a score but no confidence -> "4/5 unknown"; ARCH is an empty object -> "?/5".
+    expect(lines).toContain('4/5 unknown');
+    expect(lines).toContain('?/5');
+    // Identical area cells across two profiles collapse into a single merged row.
+    expect(lines).toContain('quick-triage, release-gate');
+  });
+
+  it('treats a row with no profiles array as "none" in an evidence summary', () => {
+    const rows = m
+      .renderStandardsEvidenceSummary([{ summary: 'X', standards: ['A'], evidencePaths: ['p'] }], ['quick-triage'])
+      .join('\n');
+    expect(rows).toContain('none');
+  });
+
+  it('builds a gate-detail row from a detail that has a basis but no status', () => {
+    const rows = m.buildStandardsGateDetailSummary([
+      { name: 'quick-triage', scoreFile: 'q.json', scorecardDetails: { doc: { basis: 'why', missingProof: ['need x'] } } }
+    ]);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].missingProof).toEqual(['need x']);
+    expect(rows[0].status).toBeUndefined();
+  });
+
+  it('returns undefined/{} for portfolio and gate scorecards built from empty text', () => {
+    expect(m.summarizePortfolioTable('')).toBeUndefined();
+    expect(m.summarizePortfolioTable(undefined)).toBeUndefined();
+    expect(m.summarizeGateScorecard('')).toEqual({});
+  });
+
+  it('stops parsing gate rows at the first empty data line', () => {
+    const scorecard = [
+      '| Gate | Status | Missing Proof |',
+      '| --- | --- | --- |',
+      '| coverage | PASS | - |',
+      '',
+      '| doc | FAIL | need docs |'
+    ].join('\n');
+    const details = m.summarizeGateScorecard(scorecard);
+    expect(details.coverage).toMatchObject({ status: 'PASS' });
+    // The blank line breaks parsing, so the row after it is not captured.
+    expect(details.doc).toBeUndefined();
+  });
+});
+
+describe('runMultiStandardsAudit: coverage-floor 90 branch fill (#2333)', () => {
+  const mod = require('../../scripts/runMultiStandardsAudit.js') as Record<string, any>;
+
+  // --- build* dedup inner branches: profile-already-present + scoreFile-less merges ---
+  // The existing #2331 merge tests cover "new profile + new scoreFile"; these cover
+  // the complementary "same profile/scoreFile (no dup push)" and "no scoreFile" branches.
+
+  it('buildStandardsCoverageRationaleSummary skips duplicate profile/scoreFile pushes and merges a scoreFile-less profile', () => {
+    const areas = { REQ: { rationale: 'r', standards: ['A'] } };
+    const rows = mod.buildStandardsCoverageRationaleSummary([
+      { profile: 'quick-triage', scoreFile: 'q.json', areas },
+      { profile: 'quick-triage', scoreFile: 'q.json', areas }, // identical profile + scoreFile -> neither is pushed again
+      { profile: 'release-gate', areas } // new profile with no scoreFile -> profile pushed, scoreFile short-circuited
+    ]);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].profiles).toEqual(['quick-triage', 'release-gate']);
+    expect(rows[0].scoreFiles).toEqual(['q.json']);
+  });
+
+  it('buildStandardsEvidenceSummary skips duplicate pushes within a profile and merges a scoreFile-less profile', () => {
+    const item = () => ({ id: 'e1', summary: 'E', standards: ['A'], evidencePaths: ['p'] });
+    const rows = mod.buildStandardsEvidenceSummary([
+      { name: 'quick-triage', scoreFile: 'q.json', standardsEvidence: [item(), item()] }, // duplicate item in one profile
+      { name: 'release-gate', standardsEvidence: [item()] } // new profile, no scoreFile
+    ]);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].profiles).toEqual(['quick-triage', 'release-gate']);
+    expect(rows[0].scoreFiles).toEqual(['q.json']);
+  });
+
+  it('buildStandardsGateStrengthSummary skips duplicate pushes within a profile and merges a scoreFile-less profile', () => {
+    const item = () => ({ id: 'g1', summary: 's', standards: ['A'], evidencePaths: [] });
+    const rows = mod.buildStandardsGateStrengthSummary([
+      { name: 'quick-triage', scoreFile: 'q.json', standardsEvidence: [item(), item()] },
+      { name: 'release-gate', standardsEvidence: [item()] } // new profile, no scoreFile
+    ]);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].profiles).toEqual(['quick-triage', 'release-gate']);
+    expect(rows[0].scoreFiles).toEqual(['q.json']);
+  });
+
+  it('buildStandardsGateBasisSummary skips duplicate profile/scoreFile pushes and merges a scoreFile-less profile', () => {
+    const detail = () => ({ status: 'PASS', confidence: 'High', basis: 'b', standards: ['A'], missingProof: [] });
+    const rows = mod.buildStandardsGateBasisSummary([
+      { name: 'quick-triage', scoreFile: 'q.json', scorecardDetails: { coverage: detail() } },
+      { name: 'quick-triage', scoreFile: 'q.json', scorecardDetails: { coverage: detail() } }, // identical profile + scoreFile
+      { name: 'release-gate', scorecardDetails: { coverage: detail() } } // new profile, no scoreFile
+    ]);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].profiles).toEqual(['quick-triage', 'release-gate']);
+    expect(rows[0].scoreFiles).toEqual(['q.json']);
+  });
+
+  it('buildStandardsGateDetailSummary skips duplicate profile/scoreFile pushes and merges a scoreFile-less profile', () => {
+    const detail = () => ({ status: 'FAIL', confidence: 'Low', basis: 'b', standards: ['A'], missingProof: ['x'] });
+    const rows = mod.buildStandardsGateDetailSummary([
+      { name: 'quick-triage', scoreFile: 'q.json', scorecardDetails: { doc: detail() } },
+      { name: 'quick-triage', scoreFile: 'q.json', scorecardDetails: { doc: detail() } }, // identical profile + scoreFile
+      { name: 'release-gate', scorecardDetails: { doc: detail() } } // new profile, no scoreFile
+    ]);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].profiles).toEqual(['quick-triage', 'release-gate']);
+    expect(rows[0].scoreFiles).toEqual(['q.json']);
+    expect(rows[0].missingProof).toEqual(['x']);
+  });
+
+  // --- render-helper remaining branches ---
+
+  it('renderStandardsCoverageMatrix merges a profile-less duplicate row as "unknown"', () => {
+    const areas = { REQ: { score: 5, confidence: 'High', standards: ['A'] } };
+    const lines = mod
+      .renderStandardsCoverageMatrix([
+        { profile: 'quick-triage', areas },
+        { areas } // profile-less duplicate cells -> pushed as 'unknown'
+      ])
+      .join('\n');
+    expect(lines).toContain('quick-triage, unknown');
+    expect(lines).toContain('5/5 High (A)');
+  });
+
+  it('renderProfileSignalLines renders scorecard detail rows and falls back to the raw scorecard without details', () => {
+    const lines = mod
+      .renderProfileSignalLines([
+        {
+          name: 'quick-triage',
+          scorecard: { coverage: 'PASS' },
+          scorecardDetails: { coverage: { status: 'PASS', confidence: 'High', missingProof: ['need x'] } }
+        },
+        { name: 'release-gate', scorecard: { coverage: 'PASS' } } // no scorecardDetails -> raw fallback
+      ])
+      .join('\n');
+    expect(lines).toContain('coverage=PASS(High) missing=need x');
+    expect(lines).toContain('release-gate: coverage=PASS');
+  });
+
+  it('renderProfileSignalLines skips a step with neither scorecard nor portfolio and renders a minimal portfolio', () => {
+    const lines = mod.renderProfileSignalLines([
+      { name: 'noop' }, // neither scorecard (populated) nor portfolio -> skipped
+      { name: 'portfolio-review', portfolio: { tableFile: 't.md' } } // minimal portfolio -> "see t.md"
+    ]);
+    expect(lines).toEqual(['- portfolio-review: see t.md']);
+  });
+
+  it('renderDirectCheckEvidenceSummary renders empty checked paths as "-" and a plain failing step', () => {
+    const lines = mod
+      .renderDirectCheckEvidenceSummary([
+        { name: 'reqQ', file: 'r.json', status: 0, requirementsQuality: { ok: true, findingCount: 0 } },
+        {
+          name: 'ext',
+          file: 'e.json',
+          status: 0,
+          externalUserInformation: { ok: false, findingCount: 2, checkedPaths: [] } // empty -> '-'
+        },
+        { name: 'plain', status: 2 } // no requirementsQuality/externalUserInformation -> FAIL (2)
+      ])
+      .join('\n');
+    expect(lines).toContain('| reqQ | r.json | ok | 0 | - |');
+    expect(lines).toContain('| ext | e.json | not ok | 2 | - |');
+    expect(lines).toContain('| plain | - | FAIL (2) | - | - |');
+  });
+
+  it('buildAuditRunProvenanceSummary skips command steps with no name across every stage', () => {
+    const summary = mod.buildAuditRunProvenanceSummary(
+      { snapshot: { mode: 'tracked' }, imagePreparation: [{ name: 'inspect', status: 0 }, { status: 0 }] },
+      [{ name: 'reqQ', status: 0 }, {}], // second direct-check step has no name -> skipped
+      [{ name: 'gate', status: 1 }]
+    );
+    expect(summary.commands.map((command: { name: string }) => command.name)).toEqual(['inspect', 'reqQ', 'gate']);
+  });
+
+  it('renderAuditRunProvenanceSummary omits the Commands section when a snapshot has no commands', () => {
+    const lines = mod
+      .renderAuditRunProvenanceSummary({ snapshot: { mode: 'tracked' }, commands: [] })
+      .join('\n');
+    expect(lines).toContain('| Mode | tracked |');
+    expect(lines).not.toContain('Commands:');
+  });
+
+  // --- summarizeProfileStep + readProfileScore + mergeGateDetails (real filesystem, temp dir) ---
+
+  it('summarizeProfileStep reads a retained score file and merges scorecard + coverage + evidence', () => {
+    const root = makeTempRoot();
+    const outputDir = path.join(root, 'out');
+    const scoreDir = path.join(outputDir, 'quick-triage', 'target');
+    fs.mkdirSync(scoreDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(scoreDir, 'score.json'),
+      JSON.stringify({
+        // No `basis` on the retained gate -> mergeGateDetails falls back to the scorecard basis (undefined here).
+        gates: { coverage: { status: 'PASS', confidence: 'High', standards: ['29119-2'] } },
+        areas: { REQ: { score: 5, confidence: 'High', standards: ['29148'], rationale: 'requirements trace to code' } },
+        top_strengths: [{ id: 's1', summary: 'strong coverage', standards: ['29148'], evidence_paths: ['docs/x.md'] }]
+      }),
+      'utf8'
+    );
+    const step = {
+      name: 'quick-triage',
+      status: 0,
+      file: 'quick-triage-gate-scorecard.txt',
+      command: 'docker',
+      args: [],
+      saveDir: 'quick-triage',
+      output: 'gate-scorecard',
+      stdout: [
+        '| Gate | Status | Confidence | Missing Proof |',
+        '| --- | --- | --- | --- |',
+        '| coverage | PASS | High | need artifact |'
+      ].join('\n')
+    };
+    const summary = mod.summarizeProfileStep(step, { outputDir });
+    expect(summary.scoreFile).toBe(path.posix.join('quick-triage', 'target', 'score.json'));
+    // The scorecard-derived missingProof survives the merge with the retained gate detail.
+    expect(summary.scorecardDetails.coverage.missingProof).toEqual(['need artifact']);
+    expect(summary.scorecardDetails.coverage.standards).toEqual(['29119-2']);
+    expect(summary.standardsCoverage.REQ.rationale).toBe('requirements trace to code');
+    expect(summary.standardsEvidence[0].summary).toBe('strong coverage');
+  });
+
+  it('summarizeProfileStep skips retained-score reads when no output directory is supplied', () => {
+    const step = {
+      name: 'release-gate',
+      status: 0,
+      file: 'release-gate-gate-scorecard.txt',
+      command: 'docker',
+      args: [],
+      saveDir: 'release-gate',
+      output: 'gate-scorecard',
+      stdout: ['| Gate | Status |', '| --- | --- |', '| coverage | PASS |'].join('\n')
+    };
+    const summary = mod.summarizeProfileStep(step, {}); // no outputDir -> readProfileScore returns undefined
+    expect(summary.scoreFile).toBeUndefined();
+    expect(summary.standardsCoverage).toBeUndefined();
+    expect(summary.scorecardDetails.coverage.status).toBe('PASS');
+  });
+
+  it('summarizeProfileStep summarizes a portfolio step and tolerates a missing score file', () => {
+    const root = makeTempRoot();
+    const outputDir = path.join(root, 'out');
+    fs.mkdirSync(outputDir, { recursive: true });
+    const step = {
+      name: 'portfolio-review',
+      status: 0,
+      file: 'portfolio-review-table.txt',
+      command: 'docker',
+      args: [],
+      saveDir: 'portfolio-review',
+      scoreFile: path.posix.join('portfolio-review', 'repos', 'target', 'score.json'),
+      output: 'portfolio-table',
+      stdout: [
+        '| Repo | Overall | Gates | REQ | ARCH | TEST | CM | DOC | Top Risk |',
+        '| --- | --- | --- | --- | --- | --- | --- | --- | --- |',
+        '| target | High | 6P/0F | 5 | 5 | 5 | 5 | 5 | none |'
+      ].join('\n')
+    };
+    const summary = mod.summarizeProfileStep(step, { outputDir }); // score.json absent -> JSON.parse throws -> undefined
+    expect(summary.portfolio).toMatchObject({ tableFile: 'portfolio-review-table.txt', overall: 'High' });
+    expect(summary.scoreFile).toBeUndefined();
+  });
+
+  // --- full audit runs: runCommand error/status/timeout + commandLine quoting + snapshot retention ---
+
+  it('captures runCommand errors, normalizes non-numeric status, and quotes spaced command parts', () => {
+    const root = makeTempRoot();
+    const snapshotPath = path.join(root, 'snapshot');
+    fs.mkdirSync(snapshotPath, { recursive: true });
+    const spawnSync = vi.fn((command: string, args: string[]) => {
+      if (command === 'docker' && args[0] === 'image') {
+        return { status: 0, stdout: '[{"Id":"image"}]' };
+      }
+      if (args.includes('scripts/requirements_quality_check.py')) {
+        return { error: new Error('boom') }; // Error with a message, and no numeric status
+      }
+      if (args.includes('scripts/external_user_information_check.py')) {
+        return { error: 'raw-error' }; // truthy error without a `.message`, and no numeric status
+      }
+      if (args.includes('scripts/run_assurance.py')) {
+        return { status: 0, stdout: args.includes('portfolio-table') ? portfolioTable() : gateScorecard() };
+      }
+      return { status: 99 };
+    });
+    const result = mod.runMultiStandardsAudit(
+      ['--save-dir', path.join(root, 'evidence'), '--run-id', 'run-err', '--image', 'spaced image:tag'],
+      {
+        cwd: repoRoot,
+        spawnSync,
+        createTrackedWorktreeSnapshot: () => ({
+          mode: 'tracked-worktree-snapshot',
+          path: snapshotPath,
+          trackedFileCount: 1,
+          symlinkFiles: [],
+          missingFiles: [],
+          generatedRootsExcluded: []
+        }),
+        removeTrackedWorktreeSnapshot: vi.fn()
+      }
+    );
+    expect(result.exitCode).toBe(1);
+    expect(result.context.success).toBe(false);
+    const reqStep = result.context.directChecks.find(
+      (step: { name: string }) => step.name === 'requirements-quality-system'
+    );
+    const extStep = result.context.directChecks.find(
+      (step: { name: string }) => step.name === 'external-user-information'
+    );
+    // A missing numeric status is normalized to 1.
+    expect(reqStep.status).toBe(1);
+    expect(extStep.status).toBe(1);
+    // The spaced image name is JSON-quoted by commandLine in the retained command string.
+    expect(reqStep.command).toContain('"spaced image:tag"');
+  });
+
+  it('retains the tracked snapshot and reports it when --keep-snapshot is set', () => {
+    const root = makeTempRoot();
+    const snapshotPath = path.join(root, 'snapshot');
+    fs.mkdirSync(snapshotPath, { recursive: true });
+    const removeTrackedWorktreeSnapshot = vi.fn();
+    const spawnSync = vi.fn((command: string, args: string[]) => {
+      if (command === 'docker' && args[0] === 'image') {
+        return { status: 0, stdout: '[{"Id":"image"}]' };
+      }
+      if (args.includes('scripts/requirements_quality_check.py')) {
+        return { status: 0, stdout: JSON.stringify({ ok: true, findings: [] }) };
+      }
+      if (args.includes('scripts/external_user_information_check.py')) {
+        return { status: 0, stdout: JSON.stringify({ ok: true, findings: [], checkedPaths: [] }) };
+      }
+      if (args.includes('scripts/run_assurance.py')) {
+        writeProfileScoreFromDockerArgs(args);
+        return { status: 0, stdout: args.includes('portfolio-table') ? portfolioTable() : gateScorecard() };
+      }
+      return { status: 99 };
+    });
+    const result = mod.runMultiStandardsAudit(
+      ['--save-dir', path.join(root, 'evidence'), '--run-id', 'run-keep', '--keep-snapshot'],
+      {
+        cwd: repoRoot,
+        spawnSync,
+        createTrackedWorktreeSnapshot: () => ({
+          mode: 'tracked-worktree-snapshot',
+          path: snapshotPath,
+          trackedFileCount: 3,
+          symlinkFiles: [],
+          missingFiles: [],
+          generatedRootsExcluded: []
+        }),
+        removeTrackedWorktreeSnapshot
+      }
+    );
+    expect(result.exitCode).toBe(0);
+    expect(result.context.success).toBe(true);
+    expect(removeTrackedWorktreeSnapshot).not.toHaveBeenCalled();
+    expect(result.context.snapshot.removed).toBe(false);
+    expect(result.markdown).toContain(`Snapshot retained: ${snapshotPath}`);
+  });
+
+  // --- CLI defaults and error handling ---
+
+  it('runMultiStandardsAudit applies its default argv and deps when invoked with no arguments', () => {
+    const originalArgv = process.argv;
+    process.argv = ['node', 'runMultiStandardsAudit.js', '--help'];
+    try {
+      const result = mod.runMultiStandardsAudit(); // exercises the argv and deps default parameters
+      expect(result.exitCode).toBe(0);
+      expect(result.markdown).toContain('Usage: node scripts/runMultiStandardsAudit.js');
+    } finally {
+      process.argv = originalArgv;
+    }
+  });
+
+  it('main stringifies a non-Error value thrown during the audit', () => {
+    const root = makeTempRoot();
+    const err: string[] = [];
+    const code = mod.main(['--save-dir', path.join(root, 'evidence'), '--run-id', 'run-throw'], {
+      cwd: repoRoot,
+      stdout: { write: () => {} },
+      stderr: { write: (line: string) => err.push(line) },
+      createTrackedWorktreeSnapshot: () => {
+        throw 'snapshot-failure-string'; // non-Error throw -> String(error) branch in main
+      }
+    });
+    expect(code).toBe(1);
+    expect(err.join('')).toContain('snapshot-failure-string');
+  });
+});

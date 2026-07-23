@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -12,6 +12,15 @@ import {
   type RunViPreviewCacheWarmDeps
 } from '../../src/cli/runViPreviewCacheWarmer';
 import type { RenderViPreviewForFileResult } from '../../src/reporting/viPreview/viPreviewFileRender';
+import { locateComparisonRuntime } from '../../src/reporting/comparisonRuntimeLocator';
+
+// The default runtime resolver probes the host for a docker preview runtime; mock
+// only that boundary (preserving the module's other real exports) so the pure
+// orchestration runs deterministically without Docker or LabVIEW.
+vi.mock('../../src/reporting/comparisonRuntimeLocator', async (importActual) => ({
+  ...(await importActual<typeof import('../../src/reporting/comparisonRuntimeLocator')>()),
+  locateComparisonRuntime: vi.fn()
+}));
 
 const READY: ResolvedPreviewWorkerRuntime = {
   outcome: 'ready',
@@ -512,5 +521,87 @@ describe('parseArgs trailing-value edges (VHS-REQ-671.6)', () => {
 
   it('ignores a non-integer --cache-max-entries', () => {
     expect(parseArgs(['--cache-max-entries', 'nope']).cacheMaxEntries).toBeUndefined();
+  });
+
+  it('parses --operation-dir', () => {
+    expect(parseArgs(['--operation-dir', '/ops']).operationDirectory).toBe('/ops');
+  });
+});
+
+describe('runViPreviewCacheWarm default runtime resolution (VHS-REQ-671.2)', () => {
+  afterEach(() => {
+    vi.mocked(locateComparisonRuntime).mockReset();
+  });
+
+  it('resolves a ready docker runtime through the default resolver (no injected resolveRuntime)', async () => {
+    // With no `resolveRuntime` override the default resolver runs: it calls the
+    // mocked locator and maps the selection to a ready preview runtime. No VIs are
+    // listed, so nothing renders — the default resolution path is exercised alone.
+    vi.mocked(locateComparisonRuntime).mockResolvedValue({
+      provider: 'linux-container',
+      containerImage: 'nationalinstruments/labview:2026q1-linux'
+    } as unknown as Awaited<ReturnType<typeof locateComparisonRuntime>>);
+    const packet = await runViPreviewCacheWarm(
+      { repositoryRoot: '/repo', cacheDirectory: '/cache', containerImage: 'img:tag' },
+      { listViFiles: async () => [], renderOne: async () => ({ outcome: 'rendered', html: '', cached: false }) }
+    );
+    expect(packet.runtime.outcome).toBe('ready');
+    expect(packet.runtime.provider).toBe('linux-container');
+    expect(locateComparisonRuntime).toHaveBeenCalled();
+  });
+
+  it('resolves a blocked runtime through the default resolver when the selection is unusable', async () => {
+    // A labviewVersion is supplied (exercises the version branch) but the mapped
+    // selection is unusable, so the default resolver returns blocked.
+    vi.mocked(locateComparisonRuntime).mockResolvedValue({
+      provider: 'unavailable',
+      blockedReason: 'no-preview-runtime'
+    } as unknown as Awaited<ReturnType<typeof locateComparisonRuntime>>);
+    const packet = await runViPreviewCacheWarm(
+      { repositoryRoot: '/repo', cacheDirectory: '/cache', labviewVersion: '2026' },
+      { listViFiles: async () => [], renderOne: async () => ({ outcome: 'rendered', html: '', cached: false }) }
+    );
+    expect(packet.runtime.outcome).toBe('blocked');
+    expect(packet.totals.total).toBe(0);
+  });
+});
+
+describe('preview-cache-warm CLI main default run path (VHS-REQ-671.6)', () => {
+  afterEach(() => {
+    vi.mocked(locateComparisonRuntime).mockReset();
+  });
+
+  it('runs the real warm through the default runtime resolver and exits 1 when blocked', async () => {
+    // No `run` dep -> the CLI invokes the real runViPreviewCacheWarm, whose default
+    // resolver maps the (mocked) locator selection to a blocked runtime, so nothing
+    // renders and main exits 1.
+    vi.mocked(locateComparisonRuntime).mockResolvedValue({
+      provider: 'unavailable',
+      blockedReason: 'docker-unavailable'
+    } as unknown as Awaited<ReturnType<typeof locateComparisonRuntime>>);
+    const repoRoot = await mkdtemp(path.join(os.tmpdir(), 'vihs-warm-realrun-'));
+    const cacheDirectory = await mkdtemp(path.join(os.tmpdir(), 'vihs-warm-realcache-'));
+    try {
+      expect(await main(['--repo-root', repoRoot, '--cache-dir', cacheDirectory])).toBe(1);
+    } finally {
+      await rm(repoRoot, { recursive: true, force: true });
+      await rm(cacheDirectory, { recursive: true, force: true });
+    }
+  });
+
+  it('renders a blocked packet with an n/a reason fallback in human-readable output', async () => {
+    // A blocked packet whose reason is undefined exercises the `?? 'n/a'` fallback
+    // in the non-JSON summary line.
+    const run = vi.fn(async () => ({
+      $schema: PREVIEW_CACHE_WARM_SCHEMA,
+      schemaVersion: 1 as const,
+      generatedAt: '2026-07-18T00:00:00.000Z',
+      repositoryRoot: '/repo',
+      cacheDirectory: '/cache',
+      runtime: { outcome: 'blocked' as const, provider: 'unknown' },
+      totals: { total: 0, rendered: 0, cacheHit: 0, failed: 0, blocked: 0, bytes: 0 },
+      entries: []
+    }));
+    expect(await main(['--cache-dir', '/cache'], { run })).toBe(1);
   });
 });

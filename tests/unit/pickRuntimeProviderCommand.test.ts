@@ -87,6 +87,29 @@ describe('buildPickRuntimeProviderItems (VHS-REQ-620)', () => {
   it('returns an empty list when no runtimes are detected (no clear option)', () => {
     expect(buildPickRuntimeProviderItems(detectionEmpty)).toHaveLength(0);
   });
+
+  it('surfaces the detected LabVIEWCLI path in the host option detail when present (VHS-REQ-620.5)', () => {
+    const items = buildPickRuntimeProviderItems({
+      platform: 'win32',
+      host: {
+        installations: [
+          {
+            year: '2026',
+            bitness: 'x64',
+            labviewExePath: 'C:\\Program Files\\NI\\LabVIEW 2026\\LabVIEW.exe',
+            labviewCliPath: 'C:\\Program Files\\NI\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe'
+          }
+        ]
+      },
+      docker: { cliAvailable: false }
+    });
+    // Covers the truthy arm of the `installation.labviewCliPath ? ... : undefined`
+    // detail ternary, which the other fixtures (no CLI path) never exercise.
+    expect(items[0]).toMatchObject({ kind: 'host', labviewVersion: '2026', labviewBitness: 'x64' });
+    expect(items[0].detail).toBe(
+      'LabVIEWCLI: C:\\Program Files\\NI\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe'
+    );
+  });
 });
 
 describe('applyPickRuntimeProviderSelection (VHS-REQ-620)', () => {

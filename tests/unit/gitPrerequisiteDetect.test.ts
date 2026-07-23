@@ -206,4 +206,15 @@ describe('createRunGitVersion (VHS-REQ-619.1)', () => {
       vi.useRealTimers();
     }
   });
+
+  it('ignores a late error after a close has already settled the probe', async () => {
+    const child = createFakeChild();
+    const runGitVersion = createRunGitVersion((() => child) as never);
+    const promise = runGitVersion();
+    child.emit('close', 0);
+    // A subsequent error must hit the already-settled guard in the error
+    // handler and must not reject or change the already-resolved result.
+    child.emit('error', new Error('late error after close'));
+    await expect(promise).resolves.toEqual({ exitCode: 0, stdout: '', stderr: '' });
+  });
 });

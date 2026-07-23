@@ -1,4 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import * as fs from 'node:fs/promises';
+import * as os from 'node:os';
+import * as path from 'node:path';
 
 import {
   applyRuntimeSettingsSeed,
@@ -316,5 +319,23 @@ describe('isPersistedSelectionSatisfiable', () => {
         detectionHost2026x64
       )
     ).toBe(false);
+  });
+});
+
+describe('runtime settings seed real-filesystem fallback (VHS-REQ-616)', () => {
+  it('uses the real fs module when no fs dependency is injected', async () => {
+    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-seed-realfs-'));
+    try {
+      const realSettingsPath = path.join(tempRoot, 'User', 'settings.json');
+      // No `deps.fs` -> exercises the `deps.fs ?? fsPromises` fallback plus the
+      // real writeVsCodeSettingsFile path against an on-disk temp settings file.
+      const result = await applyRuntimeSettingsSeed(detectionHost2026x64, realSettingsPath);
+      expect(result.outcome).toBe('seeded');
+      const written = await fs.readFile(realSettingsPath, 'utf8');
+      expect(written).toContain('viHistorySuite.runtimeProvider');
+      expect(written).toContain('2026');
+    } finally {
+      await fs.rm(tempRoot, { recursive: true, force: true });
+    }
   });
 });

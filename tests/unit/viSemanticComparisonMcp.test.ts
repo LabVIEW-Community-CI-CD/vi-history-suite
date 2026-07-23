@@ -1759,3 +1759,219 @@ describe('viSemanticComparisonMcp', () => {
     });
   });
 });
+
+describe('viSemanticComparisonMcp async argument parsing', () => {
+  const toolCall = (name: string, args: unknown, id = 700) => ({
+    jsonrpc: '2.0' as const,
+    id,
+    method: 'tools/call' as const,
+    params: { name, arguments: args }
+  });
+  const noArgsCall = (name: string, id = 701) => ({
+    jsonrpc: '2.0' as const,
+    id,
+    method: 'tools/call' as const,
+    params: { name }
+  });
+  const runtimeHealth = {
+    schema: 'vi-history-suite/runtime-health@v1' as const,
+    platform: 'linux',
+    provider: 'linux-container',
+    engine: 'labview-cli' as unknown as string,
+    bitness: 'x64',
+    containerImage: null,
+    blocked: false,
+    blockedReason: null,
+    notes: []
+  };
+  const previewDiagnostics = {
+    schema: 'vi-history-suite/preview-diagnostics@v1' as const,
+    generatedAt: '2026-07-19T00:00:00.000Z',
+    runtime: { provider: 'linux-container', outcome: 'ready' as const },
+    cache: { directory: '/cache', present: true, entryCount: 1, totalBytes: 1, newestModifiedAt: null },
+    docker: { available: true, osType: 'linux', labviewImages: [] }
+  };
+
+  describe('get_runtime_health settings argument', () => {
+    it('accepts a valid settings object and threads it to the resolver', async () => {
+      const resolveRuntimeHealth = vi.fn(async () => runtimeHealth);
+      const response = successResult(
+        await handleViSemanticMcpMessageAsync(
+          toolCall('get_runtime_health', { platform: 'linux', settings: { requestedProvider: 'docker' } }),
+          { resolveRuntimeHealth }
+        )
+      ) as { content: Array<{ text: string }>; isError?: boolean };
+      expect(response.isError ?? false).toBe(false);
+      expect(resolveRuntimeHealth).toHaveBeenCalledWith(
+        expect.objectContaining({ platform: 'linux', settings: { requestedProvider: 'docker' } })
+      );
+    });
+
+    it('returns an empty input object when no arguments are provided', async () => {
+      const resolveRuntimeHealth = vi.fn(async () => runtimeHealth);
+      const response = successResult(
+        await handleViSemanticMcpMessageAsync(noArgsCall('get_runtime_health'), { resolveRuntimeHealth })
+      ) as { content: Array<{ text: string }>; isError?: boolean };
+      expect(response.isError ?? false).toBe(false);
+      expect(resolveRuntimeHealth).toHaveBeenCalledWith({});
+    });
+
+    it('rejects a string settings value as -32602', async () => {
+      const resolveRuntimeHealth = vi.fn();
+      const response = await handleViSemanticMcpMessageAsync(
+        toolCall('get_runtime_health', { settings: 'not-an-object' }),
+        { resolveRuntimeHealth }
+      );
+      const error = invalidParamsError(response);
+      expect(error.data?.issues?.[0]).toMatchObject({ field: 'settings', received: 'string' });
+      expect(resolveRuntimeHealth).not.toHaveBeenCalled();
+    });
+
+    it('rejects a null settings value as -32602', async () => {
+      const resolveRuntimeHealth = vi.fn();
+      const response = await handleViSemanticMcpMessageAsync(
+        toolCall('get_runtime_health', { settings: null }),
+        { resolveRuntimeHealth }
+      );
+      const error = invalidParamsError(response);
+      expect(error.data?.issues?.[0]).toMatchObject({ field: 'settings', received: 'null' });
+      expect(resolveRuntimeHealth).not.toHaveBeenCalled();
+    });
+
+    it('rejects an array settings value as -32602', async () => {
+      const resolveRuntimeHealth = vi.fn();
+      const response = await handleViSemanticMcpMessageAsync(
+        toolCall('get_runtime_health', { settings: [] }),
+        { resolveRuntimeHealth }
+      );
+      const error = invalidParamsError(response);
+      expect(error.data?.issues?.[0]).toMatchObject({ field: 'settings', received: 'array' });
+      expect(resolveRuntimeHealth).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('get_preview_diagnostics optional arguments', () => {
+    it('threads processPlatform, settings, and connectTimeoutSeconds to the collector', async () => {
+      const collectPreviewDiagnostics = vi.fn(async () => previewDiagnostics);
+      const response = successResult(
+        await handleViSemanticMcpMessageAsync(
+          toolCall('get_preview_diagnostics', {
+            cacheDirectory: '/cache',
+            processPlatform: 'linux',
+            settings: { requestedProvider: 'docker' },
+            connectTimeoutSeconds: 42
+          }),
+          { collectPreviewDiagnostics }
+        )
+      ) as { content: Array<{ text: string }>; isError?: boolean };
+      expect(response.isError ?? false).toBe(false);
+      expect(collectPreviewDiagnostics).toHaveBeenCalledWith(
+        expect.objectContaining({
+          cacheDirectory: '/cache',
+          processPlatform: 'linux',
+          settings: { requestedProvider: 'docker' },
+          connectTimeoutSeconds: 42
+        })
+      );
+    });
+
+    it('returns an empty options object when no arguments are provided', async () => {
+      const collectPreviewDiagnostics = vi.fn(async () => previewDiagnostics);
+      const response = successResult(
+        await handleViSemanticMcpMessageAsync(noArgsCall('get_preview_diagnostics'), {
+          collectPreviewDiagnostics
+        })
+      ) as { content: Array<{ text: string }>; isError?: boolean };
+      expect(response.isError ?? false).toBe(false);
+      expect(collectPreviewDiagnostics).toHaveBeenCalledWith({});
+    });
+
+    it('rejects a string connectTimeoutSeconds as -32602', async () => {
+      const collectPreviewDiagnostics = vi.fn();
+      const response = await handleViSemanticMcpMessageAsync(
+        toolCall('get_preview_diagnostics', { cacheDirectory: '/cache', connectTimeoutSeconds: 'soon' }),
+        { collectPreviewDiagnostics }
+      );
+      const error = invalidParamsError(response);
+      expect(error.data?.issues?.[0]).toMatchObject({
+        field: 'connectTimeoutSeconds',
+        received: 'string'
+      });
+      expect(collectPreviewDiagnostics).not.toHaveBeenCalled();
+    });
+
+    it('rejects a non-finite connectTimeoutSeconds as -32602', async () => {
+      const collectPreviewDiagnostics = vi.fn();
+      const response = await handleViSemanticMcpMessageAsync(
+        toolCall('get_preview_diagnostics', {
+          cacheDirectory: '/cache',
+          connectTimeoutSeconds: Number.POSITIVE_INFINITY
+        }),
+        { collectPreviewDiagnostics }
+      );
+      const error = invalidParamsError(response);
+      expect(error.data?.issues?.[0]).toMatchObject({
+        field: 'connectTimeoutSeconds',
+        received: 'number'
+      });
+      expect(collectPreviewDiagnostics).not.toHaveBeenCalled();
+    });
+
+    it('rejects an array settings value as -32602', async () => {
+      const collectPreviewDiagnostics = vi.fn();
+      const response = await handleViSemanticMcpMessageAsync(
+        toolCall('get_preview_diagnostics', { cacheDirectory: '/cache', settings: [1, 2] }),
+        { collectPreviewDiagnostics }
+      );
+      const error = invalidParamsError(response);
+      expect(error.data?.issues?.[0]).toMatchObject({ field: 'settings', received: 'array' });
+      expect(collectPreviewDiagnostics).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('completion/complete argument-shape guards', () => {
+    const completeCall = (params: unknown, id = 720) => ({
+      jsonrpc: '2.0' as const,
+      id,
+      method: 'completion/complete' as const,
+      params
+    });
+
+    it('completes to nothing when the argument is not an object', () => {
+      const result = successResult(
+        handleViSemanticMcpMessage(
+          completeCall({
+            ref: { type: 'ref/prompt', name: 'check_compare_readiness' },
+            argument: 'not-an-object'
+          })
+        )
+      ) as { completion: { values: string[]; total: number } };
+      expect(result.completion.values).toEqual([]);
+      expect(result.completion.total).toBe(0);
+    });
+
+    it('treats a missing argument name as empty (matches no candidate set)', () => {
+      const result = successResult(
+        handleViSemanticMcpMessage(
+          completeCall({
+            ref: { type: 'ref/prompt', name: 'check_compare_readiness' },
+            argument: { value: 'win' }
+          })
+        )
+      ) as { completion: { values: string[] } };
+      expect(result.completion.values).toEqual([]);
+    });
+
+    it('treats a non-string argument value as an empty partial (offers the full set)', () => {
+      const result = successResult(
+        handleViSemanticMcpMessage(
+          completeCall({
+            ref: { type: 'ref/prompt', name: 'check_compare_readiness' },
+            argument: { name: 'platform', value: 123 }
+          })
+        )
+      ) as { completion: { values: string[] } };
+      expect(result.completion.values).toEqual(['win32', 'linux', 'darwin']);
+    });
+  });
+});

@@ -1983,3 +1983,554 @@ describe('generateCloseoutEvidence: parseArgs + snapshot branch coverage (#2331)
     expect(ghFail.issue).toBeUndefined();
   });
 });
+
+describe('generateCloseoutEvidence: runner selection + render + command branches (#2333)', () => {
+  it('runs the explicit host standards runner and renders host evidence', () => {
+    const result = generateCloseoutEvidence(
+      ['--kind', 'standards', '--issue', '77', '--standards-runner', 'host'],
+      { platform: 'win32', cwd: 'C:\\repo', existsSync: () => true, spawnSync: hostSuccessSpawnSync() }
+    );
+    expect(result.context.standards.runner).toBe('host');
+    expect(result.markdown).toContain('Standards runner: host');
+  });
+
+  it('runs the explicit docker standards runner and renders the docker image line', () => {
+    const result = generateCloseoutEvidence(
+      ['--kind', 'standards', '--issue', '78', '--standards-runner', 'docker'],
+      { platform: 'win32', cwd: 'C:\\repo', existsSync: () => true, spawnSync: hostSuccessSpawnSync() }
+    );
+    expect(result.context.standards.runner).toBe('docker');
+    expect(result.markdown).toContain('Docker image:');
+  });
+
+  it('renders supplied release references for a release-kind run', () => {
+    const result = generateCloseoutEvidence(
+      [
+        '--kind', 'release', '--issue', '79', '--standards-runner', 'host',
+        '--release-tag', 'v9.9.9',
+        '--release-pr', 'https://github.com/x/y/pull/1',
+        '--back-sync-pr', 'https://github.com/x/y/pull/2',
+        '--marketplace-run', 'https://github.com/x/y/actions/runs/3'
+      ],
+      { platform: 'win32', cwd: 'C:\\repo', existsSync: () => true, spawnSync: hostSuccessSpawnSync() }
+    );
+    expect(result.markdown).toContain('Release tag: v9.9.9');
+    expect(result.markdown).toContain('Release PR: https://github.com/x/y/pull/1');
+    expect(result.markdown).toContain('Back-sync PR: https://github.com/x/y/pull/2');
+    expect(result.markdown).toContain('Marketplace workflow run: https://github.com/x/y/actions/runs/3');
+  });
+
+  it('normalizes a spawn error object with no message in runCommand', () => {
+    const result = runCommand('git', ['status'], { spawnSync: () => ({ error: {} }) });
+    expect(result.status).toBe(1);
+    expect(result.error).toBe('[object Object]');
+  });
+
+  it('retries a transient network failure before succeeding in runCommand', () => {
+    let attempts = 0;
+    const result = runCommand('git', ['ls-remote'], {
+      commandPolicy: { maxAttempts: 2, retryOnTransient: true },
+      spawnSync: () => {
+        attempts += 1;
+        return attempts === 1
+          ? { status: 1, stderr: 'connection reset by peer' }
+          : { status: 0, stdout: 'ok' };
+      }
+    });
+    expect(attempts).toBe(2);
+    expect(result.status).toBe(0);
+    expect(result.attempts).toBe(2);
+  });
+
+  it('classifies untrusted, missing, and test-fixture DoD evidence sources', () => {
+    const untrusted = summarizeDodGateEvidence(
+      { evidence: [{ path: 'docs/closeout-notes.md', rule_source: 'GATE:dod:context', matched_text: 'x' }] },
+      scorecardDodPass
+    );
+    expect(untrusted.status).toBe('N/A');
+    expect(untrusted.disqualifiedSources[0].classification).toBe('untrusted-source');
+    expect(untrusted.source).toBe('disqualified-only');
+
+    const missing = summarizeDodGateEvidence(
+      { evidence: [{ rule_source: 'GATE:dod:context', matched_text: 'x' }] },
+      scorecardDodPass
+    );
+    expect(missing.disqualifiedSources[0].classification).toBe('missing-source');
+
+    const testFixture = summarizeDodGateEvidence(
+      { evidence: [{ path: 'tests/unit/example.test.ts', rule_source: 'GATE:dod:context', matched_text: 'x' }] },
+      scorecardDodPass
+    );
+    expect(testFixture.disqualifiedSources[0].classification).toBe('test-fixture');
+  });
+
+  it('reports "none" as the DoD source when a raw PASS has no evidence at all', () => {
+    const none = summarizeDodGateEvidence({ evidence: [] }, scorecardDodPass);
+    expect(none.status).toBe('N/A');
+    expect(none.source).toBe('none');
+  });
+
+  it('marks a release profile successful when every required gate passes', () => {
+    const profiles = summarizeReleaseProfileResults([
+      { name: `release-profile-${RELEASE_STANDARDS_PROFILES[0]}`, file: 'f.txt', status: 0, stdout: releaseScorecardPass }
+    ]);
+    expect(profiles[0].success).toBe(true);
+    expect(profiles[0].missingGates).toEqual([]);
+    expect(profiles[0].failedGates).toEqual([]);
+  });
+
+  it('parses the --save-dir option', () => {
+    const options = parseArgs(['--kind', 'standards', '--issue', '5', '--save-dir', 'evidence/run']);
+    expect(options.saveDir).toBe('evidence/run');
+  });
+
+  it('classifies a FAILing DoD scorecard row with only a disqualified source and with none', () => {
+    const disqualifiedOnly = summarizeDodGateEvidence(
+      { evidence: [{ path: 'out/assurance/scorecard.txt', rule_source: 'GATE:dod:context', matched_text: 'x' }] },
+      ['| Gate | Status |', '| --- | --- |', '| dod | FAIL |'].join('\n')
+    );
+    expect(disqualifiedOnly.status).toBe('FAIL');
+    expect(disqualifiedOnly.source).toBe('disqualified-only');
+
+    const none = summarizeDodGateEvidence(
+      { evidence: [] },
+      ['| Gate | Status |', '| --- | --- |', '| dod | FAIL |'].join('\n')
+    );
+    expect(none.status).toBe('FAIL');
+    expect(none.source).toBe('none');
+  });
+
+  it('renders a release run with no supplied references as "not supplied"', () => {
+    const result = generateCloseoutEvidence(
+      ['--kind', 'release', '--issue', '81', '--standards-runner', 'host'],
+      { platform: 'win32', cwd: 'C:\\repo', existsSync: () => true, spawnSync: hostSuccessSpawnSync() }
+    );
+    expect(result.markdown).toContain('Release tag: not supplied');
+    expect(result.markdown).toContain('Marketplace workflow run: not supplied');
+  });
+
+  it('runs the closeout gates on a non-Windows platform using the plain npm command', () => {
+    const result = generateCloseoutEvidence(
+      ['--kind', 'standards', '--issue', '82', '--standards-runner', 'host', '--run-gates'],
+      { platform: 'linux', cwd: '/repo', existsSync: () => true, spawnSync: hostSuccessSpawnSync() }
+    );
+    // The gate commands resolve to `npm` (not `npm.cmd`) on a non-Windows host.
+    const npmGate = result.context.gates?.find((gate) => gate.command.startsWith('npm '));
+    expect(npmGate).toBeDefined();
+  });
+
+  it('exits nonzero and reports the DoD failure when a gate scorecard row fails', () => {
+    const failingScorecard = [
+      'Gate Scorecard',
+      '| Gate | Status | Confidence | Missing Proof |',
+      '| --- | --- | --- | --- |',
+      '| coverage | FAIL | High | need coverage evidence |',
+      '| doc | PASS | High | - |',
+      '| dod | FAIL | Med | - |'
+    ].join('\n');
+    const result = generateCloseoutEvidence(
+      ['--kind', 'standards', '--issue', '90', '--standards-runner', 'host'],
+      { platform: 'win32', cwd: 'C:\\repo', existsSync: () => true, spawnSync: hostSuccessSpawnSync({ scorecard: failingScorecard }) }
+    );
+    // A failing DoD scorecard row blocks closure (exit 1) even when the host
+    // standards runner itself completes.
+    expect(result.exitCode).toBe(1);
+    expect(result.context.closureDecision.closable).toBe(false);
+    expect(result.markdown).toContain('dod=');
+  });
+
+  it('renders the docker standards summary with image-access detail on a docker run', () => {
+    const result = generateCloseoutEvidence(
+      ['--kind', 'standards', '--issue', '91', '--standards-runner', 'docker', '--run-gates'],
+      { platform: 'win32', cwd: 'C:\\repo', existsSync: () => true, spawnSync: hostSuccessSpawnSync() }
+    );
+    expect(result.context.standards.runner).toBe('docker');
+    expect(result.markdown).toContain('image access=');
+  });
+});
+
+type SpawnResult = { status?: number | null; stdout?: string; stderr?: string; error?: Error };
+type SpawnFn = (command: string, args: string[]) => SpawnResult;
+
+const closeoutExtraExports = require('../../scripts/generateCloseoutEvidence.js') as {
+  renderCloseoutMarkdown: (context: Record<string, unknown>) => string;
+  runStandardsEvidence: (
+    options: Record<string, unknown>,
+    deps?: Record<string, unknown>
+  ) => { runner: string; success: boolean; failure?: string; hostFailure?: string };
+  runHostStandards: (
+    options: Record<string, unknown>,
+    deps?: Record<string, unknown>
+  ) => { runner: string; success: boolean; failure?: string };
+  runGateCommands: (
+    options: Record<string, unknown>,
+    deps?: Record<string, unknown>
+  ) => Array<{ name: string; command: string; success: boolean }>;
+  main: (argv?: string[], deps?: Record<string, unknown>) => number;
+};
+
+const { renderCloseoutMarkdown, runStandardsEvidence, runHostStandards, runGateCommands, main } =
+  closeoutExtraExports;
+
+describe('generateCloseoutEvidence: render + fallback branch coverage to the 90% floor (#2333)', () => {
+  const provenanceAllPass = {
+    success: true,
+    failure: undefined,
+    checks: [{ name: 'GitLab source main', success: true, message: 'GitLab source main resolves to abc.' }],
+    skillCache: { success: true, message: 'cache present.', authority: 'non-authoritative-cache' },
+    registry: { success: true, message: 'Published Docker workbench image is accessible.' }
+  };
+
+  it('renders the standards early-failure summary when standards fail with no summary object', () => {
+    // renderStandardsSummary early-returns when the runner failed before producing a
+    // summary; the failure fallback ('unknown failure') is used when failure is unset.
+    const markdown = renderCloseoutMarkdown({
+      options: { kind: 'standards', issue: '5' },
+      git: { branch: 'feature/x', fullCommit: 'abcdef0' },
+      githubContext: {},
+      gates: [{ name: 'check', success: true, command: 'npm run check' }],
+      traceabilitySummary: {},
+      standards: { runner: 'host', success: false, summary: undefined, failure: undefined },
+      provenance: provenanceAllPass,
+      closureDecision: { closable: false, reasons: [] }
+    });
+
+    expect(markdown).toContain('- Standards runner: host');
+    expect(markdown).toContain('- Standards evidence failed: unknown failure');
+    // A supplied gates array bypasses the NOT RUN sentinel and renders gate rows.
+    expect(markdown).toContain('| check | PASS | npm run check |');
+    // An empty traceability summary (inventoryEntries undefined) omits the INFO row.
+    expect(markdown).not.toContain('traceability summary | INFO');
+    // A passing provenance surface never renders the provenance-decision failure row.
+    expect(markdown).not.toContain('| provenance decision | FAIL |');
+    expect(markdown).toContain('- Closable: no.');
+  });
+
+  it('renders a release docker summary with failure line, release profiles, and provenance decision row', () => {
+    const markdown = renderCloseoutMarkdown({
+      options: {
+        kind: 'release',
+        issue: '9',
+        releaseTag: undefined,
+        releasePr: undefined,
+        backSyncPr: undefined,
+        marketplaceRun: undefined
+      },
+      git: { branch: 'develop', fullCommit: 'deadbeef' },
+      githubContext: {},
+      gates: [{ name: 'check', success: false, command: 'npm run check' }],
+      traceabilitySummary: { inventoryEntries: 100, gapEntries: undefined },
+      standards: {
+        runner: 'docker',
+        image: 'img:tag',
+        imageAccess: 'present',
+        success: false,
+        failure: 'docker standards failed',
+        summary: {
+          runner: 'docker',
+          requirementsQuality: { ok: false },
+          fileCount: undefined,
+          reqSignal: undefined,
+          testSignal: undefined,
+          coverageGate: undefined,
+          docGate: undefined,
+          dodGateEvidence: {
+            status: 'FAIL',
+            scorecardStatus: 'FAIL',
+            source: 'none',
+            trustedSources: [],
+            disqualifiedSources: []
+          },
+          releaseProfiles: [
+            { profile: '26514-review', success: true, gates: [{ gate: 'coverage', status: 'PASS' }] },
+            { profile: 'release-gate', success: false, gates: [] }
+          ]
+        }
+      },
+      provenance: {
+        success: false,
+        failure: 'provenance failed',
+        checks: [{ name: 'GitHub mirror main', success: false, message: 'GitHub mirror is unavailable.' }],
+        skillCache: { success: false, message: 'cache missing.', authority: 'non-authoritative-cache' },
+        registry: { success: false, message: 'registry denied.' }
+      },
+      closureDecision: { closable: false, reasons: [] }
+    });
+
+    // The non-early-return path renders the failure line inside the summary list.
+    expect(markdown).toContain('- Standards evidence failed: docker standards failed');
+    // A docker runner splices in the docker image/access line.
+    expect(markdown).toContain('- Docker image: img:tag; image access=present');
+    // Unknown/undefined summary metrics fall back to their sentinels.
+    expect(markdown).toContain('- Requirements quality: see raw evidence');
+    expect(markdown).toContain('coverage=FAIL; doc=FAIL');
+    expect(markdown).toContain('- Evidence scan: unknown files; REQ=unknown; TEST=unknown');
+    // Release profiles render, including the empty-gates fallback message.
+    expect(markdown).toContain('- Release/user-information profiles:');
+    expect(markdown).toContain('- 26514-review: PASS (coverage=PASS)');
+    expect(markdown).toContain('- release-gate: FAIL (no scorecard gates parsed)');
+    // Release references render with 'not supplied' defaults (right-hand fallbacks).
+    expect(markdown).toContain('## Release References');
+    expect(markdown).toContain('- Release tag: not supplied');
+    expect(markdown).toContain('- Release PR: not supplied');
+    expect(markdown).toContain('- Back-sync PR: not supplied');
+    expect(markdown).toContain('- Marketplace workflow run: not supplied');
+    // A failed provenance surface renders the decision row and the INFO traceability row.
+    expect(markdown).toContain('| provenance decision | FAIL | provenance failed |');
+    expect(markdown).toContain('100 inventory entries; unknown gaps');
+  });
+
+  it('runGateCommands honors an injected platform and falls back to process.platform', () => {
+    const spawnSync = vi.fn((): SpawnResult => ({ status: 0, stdout: 'ok' }));
+    const linuxGates = runGateCommands({}, { platform: 'linux', spawnSync });
+    expect(linuxGates.length).toBeGreaterThan(0);
+    expect(linuxGates.every((gate) => gate.command.startsWith('npm '))).toBe(true);
+
+    // Omitting deps.platform exercises the process.platform fallback operand.
+    const defaultGates = runGateCommands({}, { spawnSync });
+    expect(defaultGates.length).toBe(linuxGates.length);
+  });
+
+  it('reports an unavailable GitLab source in provenance when the git remote fails', () => {
+    const spawnSync = vi.fn((command: string, args: string[]): SpawnResult => {
+      if (command === 'git' && args[0] === 'ls-remote' && args.includes(STANDARDS_TOOLCHAIN_GITLAB_URL)) {
+        return { status: 1, stderr: 'network is unreachable' };
+      }
+      if (command === 'git' && args[0] === 'ls-remote' && args.includes(STANDARDS_TOOLCHAIN_GITHUB_URL)) {
+        return { status: 0, stdout: githubRemoteOk() };
+      }
+      if (command === 'docker' && args.join(' ') === `manifest inspect ${STANDARDS_TOOLCHAIN_REGISTRY_IMAGE}`) {
+        return { status: 0, stdout: json({ schemaVersion: 2 }) };
+      }
+      return { status: 0, stdout: '' };
+    });
+
+    const provenance = verifyStandardsToolchainProvenance({ skillRoot: '/skills' }, { existsSync: () => true, spawnSync });
+    const gitlabCheck = provenance.checks.find((check) => check.name === 'GitLab source main');
+
+    expect(gitlabCheck?.success).toBe(false);
+    expect(gitlabCheck?.message).toContain('GitLab source is unavailable');
+    expect(provenance.success).toBe(false);
+  });
+
+  it('surfaces the git ls-files error field when creating a snapshot without stderr', () => {
+    expect(() =>
+      createTrackedWorktreeSnapshot('/repo', {
+        spawnSync: () => ({ status: 1, error: new Error('spawn boom') }),
+        tmpdir: () => os.tmpdir()
+      } as never)
+    ).toThrow(/enumerate tracked files/);
+  });
+
+  it('resolves the snapshot base to the OS temp dir when the home directory is empty', () => {
+    // An empty homedir string forces the `|| ''` fallback and the tmpdir default.
+    const base = resolveAuditSnapshotBase({ homedir: () => '', env: {} });
+    expect(base).toBe(os.tmpdir());
+  });
+
+  it('builds an explicit local Docker image and fails closed when the build fails', () => {
+    const spawnSync = vi.fn((command: string, args: string[]): SpawnResult => {
+      if (command === 'docker' && args.join(' ') === `image inspect ${LOCAL_STANDARDS_IMAGE}`) {
+        return { status: 1, stderr: 'missing local image' };
+      }
+      if (command === 'docker' && args[0] === 'build') {
+        return { status: 1, stderr: 'build broke' };
+      }
+      return { status: 0, stdout: '' };
+    });
+
+    const result = runDockerStandards(
+      { standardsImage: LOCAL_STANDARDS_IMAGE, skillRoot: '/skills', buildStandardsImage: true },
+      { spawnSync }
+    );
+
+    expect(result.success).toBe(false);
+    expect(result.imageAccess).toBe('build-failed');
+    expect(result.failure).toContain('build failed');
+  });
+
+  it('fails closed when a built local Docker image cannot be inspected afterwards', () => {
+    let inspectCalls = 0;
+    const spawnSync = vi.fn((command: string, args: string[]): SpawnResult => {
+      if (command === 'docker' && args.join(' ') === `image inspect ${LOCAL_STANDARDS_IMAGE}`) {
+        inspectCalls += 1;
+        return { status: 1, stderr: 'still missing' };
+      }
+      if (command === 'docker' && args[0] === 'build') {
+        return { status: 0, stdout: 'built' };
+      }
+      return { status: 0, stdout: '' };
+    });
+
+    const result = runDockerStandards(
+      { standardsImage: LOCAL_STANDARDS_IMAGE, skillRoot: '/skills', buildStandardsImage: true },
+      { spawnSync }
+    );
+
+    expect(result.success).toBe(false);
+    expect(result.imageAccess).toBe('build-unverified');
+    expect(result.failure).toContain('could not be inspected');
+    expect(inspectCalls).toBe(2);
+  });
+
+  it('runs standards on a freshly built local Docker image (built-local)', () => {
+    let inspectCalls = 0;
+    const spawnSync = vi.fn((command: string, args: string[]): SpawnResult => {
+      const line = [command, ...args].join(' ');
+      if (command === 'docker' && args.join(' ') === `image inspect ${LOCAL_STANDARDS_IMAGE}`) {
+        inspectCalls += 1;
+        return inspectCalls === 1 ? { status: 1, stderr: 'missing' } : { status: 0, stdout: '[]' };
+      }
+      if (command === 'docker' && args[0] === 'build') {
+        return { status: 0, stdout: 'built' };
+      }
+      if (line.includes('requirements_quality_check.py')) return { status: 0, stdout: requirementsOk };
+      if (line.includes('repo_evidence_scan.py')) return { status: 0, stdout: evidenceWithTrustedDod };
+      if (line.includes('run_assurance.py')) return { status: 0, stdout: scorecardDodPass };
+      return { status: 0, stdout: '' };
+    });
+
+    const result = runDockerStandards(
+      { standardsImage: LOCAL_STANDARDS_IMAGE, skillRoot: '/skills', buildStandardsImage: true, kind: 'standards' },
+      { cwd: '/repo', spawnSync }
+    );
+
+    expect(result.success).toBe(true);
+    expect(result.imageAccess).toBe('built-local');
+    expect(inspectCalls).toBe(2);
+  });
+
+  it('summarizes a Docker standards command failure via summarizeStandardsFailure', () => {
+    const spawnSync = vi.fn((command: string, args: string[]): SpawnResult => {
+      const line = [command, ...args].join(' ');
+      if (command === 'docker' && args.join(' ') === `image inspect ${DEFAULT_STANDARDS_IMAGE}`) {
+        return { status: 0, stdout: '[]' };
+      }
+      if (line.includes('requirements_quality_check.py')) return { status: 1, stderr: 'requirements crashed' };
+      if (line.includes('repo_evidence_scan.py')) return { status: 0, stdout: evidenceWithTrustedDod };
+      if (line.includes('run_assurance.py')) return { status: 0, stdout: scorecardDodPass };
+      return { status: 0, stdout: '' };
+    });
+
+    const result = runDockerStandards(
+      { standardsImage: DEFAULT_STANDARDS_IMAGE, skillRoot: '/skills', kind: 'standards' },
+      { cwd: '/repo', spawnSync }
+    );
+
+    expect(result.success).toBe(false);
+    expect(result.failure).toContain('Standards command failures');
+    expect(result.failure).toContain('requirements-quality');
+  });
+
+  it('summarizes a non-zero release profile command with a command-status detail (host runner)', () => {
+    const spawnSync = vi.fn((command: string, args: string[]): SpawnResult => {
+      const line = [command, ...args].join(' ');
+      if (line.includes('preflight_local_dependencies.py')) return { status: 0, stdout: preflightOk };
+      if (line.includes('requirements_quality_check.py')) return { status: 0, stdout: requirementsOk };
+      if (line.includes('repo_evidence_scan.py')) return { status: 0, stdout: evidenceWithTrustedDod };
+      if (
+        line.includes('run_assurance.py') &&
+        args.some((arg) => RELEASE_STANDARDS_PROFILES.includes(arg))
+      ) {
+        return { status: 3, stderr: 'profile crashed' };
+      }
+      if (line.includes('run_assurance.py')) return { status: 0, stdout: scorecardDodPass };
+      return { status: 0, stdout: '' };
+    });
+
+    const result = runHostStandards({ skillRoot: '/skills', kind: 'release' }, { spawnSync });
+
+    expect(result.success).toBe(false);
+    expect(result.failure).toContain('command status 3');
+  });
+
+  it('auto runner falls through to a succeeding docker runner after host failure', () => {
+    const spawnSync = vi.fn((command: string, args: string[]): SpawnResult => {
+      const line = [command, ...args].join(' ');
+      if (line.includes('preflight_local_dependencies.py')) return { status: 1, stderr: 'python3 missing' };
+      if (command === 'docker' && args.join(' ').startsWith('image inspect')) return { status: 0, stdout: '[]' };
+      if (line.includes('requirements_quality_check.py')) return { status: 0, stdout: requirementsOk };
+      if (line.includes('repo_evidence_scan.py')) return { status: 0, stdout: evidenceWithTrustedDod };
+      if (line.includes('run_assurance.py')) return { status: 0, stdout: scorecardDodPass };
+      return { status: 0, stdout: '' };
+    });
+
+    const result = runStandardsEvidence(
+      { standardsRunner: 'auto', kind: 'standards', standardsImage: DEFAULT_STANDARDS_IMAGE, skillRoot: '/skills' },
+      { cwd: '/repo', spawnSync }
+    );
+
+    expect(result.runner).toBe('docker');
+    expect(result.success).toBe(true);
+    // The host failure message is carried onto the docker result.
+    expect(result.hostFailure).toBeTruthy();
+  });
+
+  it('auto runner returns a combined failure when host and docker both fail', () => {
+    const spawnSync = vi.fn((command: string, args: string[]): SpawnResult => {
+      const line = [command, ...args].join(' ');
+      if (line.includes('preflight_local_dependencies.py')) return { status: 1, stderr: 'python3 missing' };
+      if (command === 'docker' && args.join(' ') === `image inspect ${DEFAULT_STANDARDS_IMAGE}`) {
+        return { status: 1, stderr: 'missing' };
+      }
+      if (command === 'docker' && args[0] === 'pull') return { status: 1, stderr: 'denied' };
+      return { status: 1, stderr: 'unexpected' };
+    });
+
+    const result = runStandardsEvidence(
+      { standardsRunner: 'auto', kind: 'standards', standardsImage: DEFAULT_STANDARDS_IMAGE, skillRoot: '/skills' },
+      { cwd: '/repo', spawnSync }
+    );
+
+    expect(result.runner).toBe('auto');
+    expect(result.success).toBe(false);
+    expect(result.failure).toContain('Standards evidence failed through host and Docker');
+  });
+
+  it('rejects a --save-dir that resolves outside the repository root', () => {
+    const spawnSync = vi.fn();
+    expect(() =>
+      generateCloseoutEvidence(['--kind', 'standards', '--save-dir', '../outside-the-repo'], { spawnSync })
+    ).toThrow(/inside the repository root/);
+    // The guard rejects before any command is spawned.
+    expect(spawnSync).not.toHaveBeenCalled();
+  });
+
+  it('rejects a --save-dir equal to the repository root', () => {
+    const spawnSync = vi.fn();
+    expect(() => generateCloseoutEvidence(['--kind', 'standards', '--save-dir', '.'], { spawnSync })).toThrow(
+      /inside the repository root/
+    );
+    expect(spawnSync).not.toHaveBeenCalled();
+  });
+
+  it('returns usage text for --help without deps and without spawning anything', () => {
+    // No deps object is passed, exercising the generateCloseoutEvidence deps default.
+    const result = generateCloseoutEvidence(['--help']);
+    expect(result.exitCode).toBe(0);
+    expect(result.markdown).toContain('Usage: node scripts/generateCloseoutEvidence.js');
+  });
+
+  it('publishes the schema for --schema without deps', () => {
+    const result = generateCloseoutEvidence(['--schema']);
+    expect(result.exitCode).toBe(0);
+    expect((JSON.parse(result.markdown) as { $id: string }).$id).toBe(CLOSEOUT_SUMMARY_SCHEMA_ID);
+  });
+
+  it('main writes markdown and returns the exit code on success', () => {
+    // No deps object is passed, exercising the main deps default parameter.
+    expect(main(['--help'])).toBe(0);
+  });
+
+  it('main uses process.argv by default and returns 1 when parsing fails', () => {
+    const originalArgv = process.argv;
+    process.argv = ['node', 'generateCloseoutEvidence.js', '--kind', 'bogus-kind'];
+    try {
+      // Calling main() with no arguments exercises the argv default (process.argv.slice(2))
+      // and the catch path; the invalid --kind throws before any command is spawned.
+      expect(main()).toBe(1);
+    } finally {
+      process.argv = originalArgv;
+    }
+  });
+});

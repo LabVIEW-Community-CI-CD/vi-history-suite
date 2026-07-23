@@ -348,4 +348,27 @@ describe('runtime auto-detect (VHS-REQ-616)', () => {
       bitness: 'x64'
     });
   });
+
+  it('falls back to the process platform, fs, and env when no deps are injected (VHS-REQ-616)', async () => {
+    // No deps: exercises the `deps.platform ?? process.platform`,
+    // `deps.fs ?? fsPromises`, and `deps.env ?? process.env` fallbacks. Detection
+    // only stats real paths (it never spawns), so this stays safe and
+    // deterministic on any CI OS.
+    const detection = await detectAvailableRuntimes({});
+    expect(detection.platform).toBe(process.platform);
+    expect(Array.isArray(detection.host.installations)).toBe(true);
+    expect(typeof detection.docker.cliAvailable).toBe('boolean');
+  });
+
+  it('pickPreferredHostInstallation keeps the first of two same-year same-bitness installs (VHS-REQ-616.6)', () => {
+    const installations: DetectedHostInstallation[] = [
+      { year: '2026', bitness: 'x64', labviewExePath: 'first' },
+      { year: '2026', bitness: 'x64', labviewExePath: 'second' }
+    ];
+    // Identical year and bitness exercise the comparator's equal-ordering arm;
+    // V8's stable sort keeps the first entry preferred.
+    const preferred = pickPreferredHostInstallation(installations);
+    expect(preferred).toMatchObject({ year: '2026', bitness: 'x64' });
+    expect(preferred?.labviewExePath).toBe('first');
+  });
 });

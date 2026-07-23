@@ -131,3 +131,58 @@ describe('assessFramesModelFidelity', () => {
     expect(fidelity.reason).toContain('stacked child frames');
   });
 });
+
+describe('decodePngSize guard branches (VHS-REQ-659.12)', () => {
+  // Builds a 24-byte PNG header (enough to pass the length guard) at a known
+  // size, then optionally corrupts it, so each decode guard can be reached
+  // deterministically without shipping a real image.
+  function pngHeaderUri(width: number, height: number, mutate?: (buf: Buffer) => void): string {
+    const header = Buffer.alloc(24);
+    header.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], 0);
+    header.writeUInt32BE(13, 8);
+    header.write('IHDR', 12, 'ascii');
+    header.writeUInt32BE(width, 16);
+    header.writeUInt32BE(height, 20);
+    mutate?.(header);
+    return `data:image/png;base64,${header.toString('base64')}`;
+  }
+
+  it('rejects a full-length header whose PNG signature byte is corrupt', () => {
+    expect(decodePngSize(pngHeaderUri(10, 20, (buf) => { buf[0] = 0x00; }))).toBeUndefined();
+  });
+
+  it('rejects a full-length header whose IHDR chunk type is corrupt', () => {
+    expect(decodePngSize(pngHeaderUri(10, 20, (buf) => { buf[12] = 0x00; }))).toBeUndefined();
+  });
+
+  it('rejects a well-formed header whose IHDR width is zero', () => {
+    expect(decodePngSize(pngHeaderUri(0, 20))).toBeUndefined();
+  });
+
+  it('rejects a well-formed header whose IHDR height is zero', () => {
+    expect(decodePngSize(pngHeaderUri(10, 0))).toBeUndefined();
+  });
+
+  it('still decodes an uncorrupted full-length header', () => {
+    expect(decodePngSize(pngHeaderUri(10, 20))).toEqual({ width: 10, height: 20 });
+  });
+});
+
+describe('extractBlockDiagramFrames bare-image-src branch (VHS-REQ-659.12)', () => {
+  it('synthesizes the data-URI prefix for a bare (non-data-URI) base64 image src', () => {
+    // The <img src> carries a base64 marker but does not start with `data:`, so
+    // the extractor takes the prefix-synthesizing branch of the ternary. The
+    // synthetic payload does not decode to a PNG, so no frame is produced.
+    const html = '<H3>Block Diagram</H3><P><IMG src="xbase64,QUJD"></P><H3>End</H3>';
+    expect(extractBlockDiagramFrames(html)).toEqual([]);
+  });
+});
+
+describe('assessFramesModelFidelity missing-root branch (#2096)', () => {
+  it('treats a model whose rootIndex points past the frames as having no children', () => {
+    const fidelity = assessFramesModelFidelity({ frames: [], rootIndex: 5 });
+    expect(fidelity.childCount).toBe(0);
+    expect(fidelity.structureGroupCount).toBe(0);
+    expect(fidelity.faithful).toBe(true);
+  });
+});

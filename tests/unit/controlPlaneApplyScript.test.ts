@@ -227,3 +227,56 @@ describe('controlPlaneApply: main CLI reporter (VHS-REQ-698.3)', () => {
     expect(exits).toEqual([0, 1]);
   });
 });
+
+describe('controlPlaneApply: default boundary fallbacks (#2333)', () => {
+  // A single fake gh executor answers both the project item-list and the per-item
+  // issue-view reads the DEFAULT readers make, so omitting config + both readers
+  // exercises loadWriteConfig (over an injected readFileSync) and the default
+  // gh-backed readers (over an injected spawnSync) with no real GitHub.
+  function fakeGh(_command: string, args: string[]) {
+    const joined = args.join(' ');
+    if (joined.includes('item-list')) {
+      return {
+        status: 0,
+        stdout: JSON.stringify({
+          items: [{ id: 'A', content: { number: 1 }, status: 'Todo', 'evidence State': 'None' }]
+        })
+      };
+    }
+    if (joined.includes('issue') && joined.includes('view')) {
+      return { status: 0, stdout: JSON.stringify({ state: 'CLOSED', stateReason: 'COMPLETED' }) };
+    }
+    return { status: 0, stdout: '' };
+  }
+
+  it('resolves its own write config and the default gh-backed readers from injected boundaries', () => {
+    const applied: Array<Record<string, unknown>> = [];
+    const result = runControlPlaneApply({
+      // No config -> loadWriteConfig(repoRoot, deps) runs, reading via readFileSync.
+      repoRoot: '/virtual-control-plane-root',
+      readFileSync: () => JSON.stringify({ enabled: true, approvers: ['svelderrainruiz'], tiers: { boardSync: true } }),
+      // No readProjectItems / readVerifiedClosures -> the default gh readers run,
+      // each shelling through runGh -> the injected spawnSync (never a real gh).
+      spawnSync: fakeGh,
+      applyFieldUpdate: (u: Record<string, unknown>) => applied.push(u),
+      appendLog: () => {},
+      now: () => new Date('2026-07-20T00:00:00.000Z')
+    });
+    expect(result).toMatchObject({ executed: true });
+    // #1 is Todo/None and verified closed -> Status=Done + Evidence=Proven applied.
+    expect(applied.map((u) => `${u.field}=${u.value}`)).toEqual(['Status=Done', 'Evidence State=Proven']);
+  });
+
+  it('treats a disabled loaded config as a clean no-op (no gh writes)', () => {
+    const applied: unknown[] = [];
+    const result = runControlPlaneApply({
+      repoRoot: '/virtual-control-plane-root',
+      readFileSync: () => JSON.stringify({ enabled: false, approvers: [], tiers: { boardSync: true } }),
+      spawnSync: fakeGh,
+      applyFieldUpdate: (u: unknown) => applied.push(u),
+      appendLog: () => {}
+    });
+    expect(result).toMatchObject({ executed: false, reason: 'write-path-disabled', appliedCount: 0 });
+    expect(applied).toHaveLength(0);
+  });
+});

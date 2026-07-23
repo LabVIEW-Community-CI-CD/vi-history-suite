@@ -1,3 +1,7 @@
+import { mkdtemp, readFile as readFileAsync, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -742,5 +746,75 @@ describe('diagnosticsRecorder', () => {
       expect(parsed.applicable).toBe(true);
       expect(parsed.observedListenerOnRequestedPort).toBeUndefined();
     });
+  });
+});
+
+describe('diagnosticsRecorder default boundaries + guard branches', () => {
+  it('binds the default fs/clock boundaries and skips mtime when a stat carries none', async () => {
+    const tmpRoot = await mkdtemp(join(tmpdir(), 'vihs-diag-defaults-'));
+    try {
+      // No mkdir/writeFile/readFile/nowIso/processPlatform injected, so the module
+      // defaults are bound at construction. A stat with no mtime exercises the
+      // file/ini fingerprint mtime-absent branches.
+      const recorder = createDiagnosticsRecorder({ stat: (async () => ({})) as never });
+      const record = createRecord();
+      record.artifactPlan.reportDirectory = tmpRoot;
+
+      await recorder.recordEnvironmentFingerprint(record);
+
+      const parsed = JSON.parse(await readFileAsync(environmentFingerprintFilePath(tmpRoot), 'utf8'));
+      // The default clock (() => new Date().toISOString()) produced a real timestamp.
+      expect(Number.isNaN(Date.parse(parsed.capturedAt))).toBe(false);
+      expect(parsed.schemaVersion).toBe(DIAGNOSTICS_SCHEMA_VERSION);
+      // stat returned no mtime, so no toolchain mtimes were captured.
+      expect(parsed.toolchain.labviewExecutableMtime).toBeUndefined();
+      expect(parsed.toolchain.labviewIniMtime).toBeUndefined();
+    } finally {
+      await rm(tmpRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('takes the fragment early-return guard and skips registration when the classification write fails', async () => {
+    const harness = createHarness({ failWrite: true });
+
+    await expect(
+      harness.recorder.recordFailureClassification(createRecord(), 1, {
+        // Empty reason + no matched fragment -> the fragment extractor returns early.
+        failureReason: '',
+        artifactPaths: {}
+      })
+    ).resolves.toBeUndefined();
+
+    // The write failed, so no failure-classification entry was persisted.
+    expect(
+      harness.writes.find((w) => w.filePath.includes(FAILURE_CLASSIFICATION_FILENAME))
+    ).toBeUndefined();
+  });
+
+  it('skips the not-applicable baseline registration when the write fails', async () => {
+    const harness = createHarness({ processPlatform: 'linux', failWrite: true });
+
+    await expect(harness.recorder.recordPreLaunchBaseline(createRecord(), 1)).resolves.toBeUndefined();
+
+    expect(
+      harness.writes.find((w) => w.filePath.includes(PRE_LAUNCH_BASELINE_FILENAME))
+    ).toBeUndefined();
+  });
+
+  it('deduplicates already-registered runtime artifacts across repeated manifest flushes', async () => {
+    const harness = createHarness();
+    const record = createRecord();
+
+    await harness.recorder.flushManifest(record);
+    harness.writes.length = 0;
+    // A second flush finds the runtime-artifact candidates already present, taking
+    // the dedup else-branch instead of re-registering them.
+    await harness.recorder.flushManifest(record);
+
+    const manifestWrite = harness.writes.find((w) => w.filePath.includes(DIAGNOSTICS_MANIFEST_FILENAME));
+    expect(manifestWrite).toBeDefined();
+    const parsed = JSON.parse(manifestWrite!.contents);
+    const filePaths = parsed.entries.map((entry: { filePath: string }) => entry.filePath);
+    expect(new Set(filePaths).size).toBe(filePaths.length);
   });
 });

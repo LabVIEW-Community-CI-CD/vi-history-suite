@@ -12,6 +12,7 @@ import {
   preflightComparisonReportRevisions,
   resolveRevisionRelativePaths
 } from '../../src/reporting/comparisonReportPreflight';
+import { WORKTREE_REVISION_SENTINEL } from '../../src/git/gitCli';
 import {
   deriveCompareSelectionState,
   resolveSelectedComparePair,
@@ -791,5 +792,57 @@ describe('explicitComparePairWorkflow', () => {
       expect(stateOlderFirst.pair.selectedHash).toBe('newerCommit');
       expect(stateOlderFirst.pair.baseHash).toBe('olderCommit');
     });
+  });
+});
+
+describe('comparisonReportPreflight branch coverage (VHS-REQ-127)', () => {
+  it('skips path resolution and reports both revision ids missing when neither is supplied', async () => {
+    // Both revision ids empty -> requestedRevisionIds is empty, so the resolver
+    // is never invoked and an empty resolved-path map is used.
+    const resolveRevisionRelativePathsSpy = vi.fn(async () => new Map<string, string>());
+    const readRevisionBlobSpy = vi.fn(async () => Buffer.alloc(0));
+
+    const result = await preflightComparisonReportRevisions(
+      { repoRoot: '/repo', relativePath: 'foo.vi', leftRevisionId: '', rightRevisionId: '' },
+      {
+        resolveRevisionRelativePaths: resolveRevisionRelativePathsSpy,
+        readRevisionBlob: readRevisionBlobSpy
+      }
+    );
+
+    expect(resolveRevisionRelativePathsSpy).not.toHaveBeenCalled();
+    expect(readRevisionBlobSpy).not.toHaveBeenCalled();
+    expect(result.ready).toBe(false);
+    expect(result.blockedReason).toBe('left-revision-id-missing');
+  });
+
+  it('maps a left blob read failure to the left-blob-read-failed blocked reason', async () => {
+    const result = await preflightComparisonReportRevisions(
+      { repoRoot: '/repo', relativePath: 'foo.vi', leftRevisionId: 'aaaaaaaa', rightRevisionId: 'bbbbbbbb' },
+      {
+        resolveRevisionRelativePaths: async () => new Map<string, string>(),
+        readRevisionBlob: async () => {
+          throw new Error('git show failed');
+        }
+      }
+    );
+
+    expect(result.left.blockedReason).toBe('blob-read-failed');
+    expect(result.blockedReason).toBe('left-blob-read-failed');
+    expect(result.ready).toBe(false);
+  });
+
+  it('returns not-a-member immediately when the target path normalizes to empty', async () => {
+    const runGitSpy = vi.fn(async () => '');
+    const membership = await detectComparedViLibraryMembership('/repo', 'abcabc', '', runGitSpy as never);
+    expect(membership).toEqual({ isMember: false });
+    // The empty-target guard returns before any git call.
+    expect(runGitSpy).not.toHaveBeenCalled();
+  });
+
+  it('maps the worktree sentinel directly without following git rename history', async () => {
+    const resolved = await resolveRevisionRelativePaths('/repo', 'foo.vi', [WORKTREE_REVISION_SENTINEL]);
+    expect(resolved.get(WORKTREE_REVISION_SENTINEL)).toBe('foo.vi');
+    expect(resolved.size).toBe(1);
   });
 });

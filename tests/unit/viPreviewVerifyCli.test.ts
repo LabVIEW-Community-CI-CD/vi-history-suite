@@ -73,6 +73,40 @@ describe('resolveAndVerifyViPreview', () => {
     expect(proof.outcome).toBe('blocked');
     expect(proof.inlineImageCount).toBe(0);
   });
+
+  it('defaults the process platform to the host platform when none is injected (VHS-REQ-659)', async () => {
+    // No processPlatform -> the `?? process.platform` and `: 'linux'` runtime-
+    // platform branches; injected locateRuntime + renderDeps keep it deterministic.
+    const proof = await resolveAndVerifyViPreview(
+      { operationDirectory: '/ops', sampleViPath: '/repo/Sample.vi' },
+      {
+        locateRuntime: fakeLocateRuntime({
+          provider: 'host-native',
+          labviewCli: { path: '/usr/bin/labviewcli', source: 'scan', exists: true, kind: 'labview-cli' },
+          hostLabviewTcpPort: 3364
+        }),
+        renderDeps: makeRenderDeps(htmlWith(3))
+      }
+    );
+    expect(proof.outcome).toBe('rendered');
+    expect(proof.inlineImageCount).toBe(3);
+  });
+
+  it('returns a blocked proof with an unknown provider when the runtime resolves blocked (VHS-REQ-659)', async () => {
+    // A selection the adapter cannot map -> resolution blocked (not a render
+    // failure); the omitted provider surfaces as 'unknown'.
+    const proof = await resolveAndVerifyViPreview(
+      { operationDirectory: '/ops', sampleViPath: '/repo/Sample.vi' },
+      {
+        processPlatform: 'linux',
+        locateRuntime: fakeLocateRuntime({ blockedReason: 'no-usable-runtime' }),
+        renderDeps: makeRenderDeps(htmlWith(0))
+      }
+    );
+    expect(proof.outcome).toBe('blocked');
+    expect(proof.provider).toBe('unknown');
+    expect(proof.failureReason).toBe('no-usable-runtime');
+  });
 });
 
 describe('parseArgs (VHS-REQ-659)', () => {
@@ -287,6 +321,12 @@ describe('parseArgs full flag coverage (VHS-REQ-659)', () => {
     expect(parseArgs([])).toEqual({});
     expect(parseArgs(['--unknown', 'value', 'positional'])).toEqual({});
   });
+
+  it('defaults a trailing value flag with no following token to an empty string', () => {
+    // `--proof-out` at the end of argv consumes the missing next token as '' (the
+    // `argv[++index] ?? ''` guard).
+    expect(parseArgs(['--proof-out']).proofOutDirectoryPath).toBe('');
+  });
 });
 
 describe('defaultOperationDirectory / defaultSampleViPath (VHS-REQ-659)', () => {
@@ -399,6 +439,13 @@ describe('main (VHS-REQ-659)', () => {
     } finally {
       await fs.rm(proofRoot, { recursive: true, force: true });
     }
+  });
+
+  it('prints an n/a reason for a non-passing proof that carries no failureReason (VHS-REQ-659)', async () => {
+    // A blocked proof with no failureReason exercises the `?? 'n/a'` fallback in
+    // the FAIL summary line and exits nonzero.
+    const resolve = vi.fn(async () => ({ ...renderedProof, outcome: 'blocked' as const, inlineImageCount: 0 }));
+    expect(await main([], { resolve: resolve as never })).toBe(1);
   });
 });
 

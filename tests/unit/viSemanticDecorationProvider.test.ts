@@ -183,3 +183,25 @@ describe('registerViSemanticDecorationProvider (VHS-REQ-660.5)', () => {
     expect(context.subscriptions.length).toBeGreaterThanOrEqual(1);
   });
 });
+
+describe('ViSemanticFileDecorationProvider lifecycle and repository gating (VHS-REQ-660.4, VHS-REQ-660.5)', () => {
+  it('disposes its change emitter without throwing', () => {
+    const provider = new ViSemanticFileDecorationProvider(baseDeps());
+    expect(() => provider.dispose()).not.toThrow();
+  });
+
+  it('returns no decoration when the file is outside any git repository', async () => {
+    const resolveBlobId = vi.fn();
+    const provider = new ViSemanticFileDecorationProvider(
+      baseDeps({
+        resolveRepositoryRoot: vi.fn(async () => undefined),
+        resolveBlobId
+      })
+    );
+    expect(
+      await provider.provideFileDecoration(vscode.Uri.file('/outside/Widget.vi'))
+    ).toBeUndefined();
+    // The repository-root gate short-circuits before any signature resolution.
+    expect(resolveBlobId).not.toHaveBeenCalled();
+  });
+});

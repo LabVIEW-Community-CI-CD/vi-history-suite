@@ -358,3 +358,63 @@ describe('renderControlPlaneDigest: additional branch coverage (#2331)', () => {
   });
 });
 
+describe('renderControlPlaneDigest: fallback branch coverage (#2333)', () => {
+  it('falls back to "unknown" for a non-string release stage and status', () => {
+    expect(
+      deriveReleaseStateFromReadModel({ releaseState: { available: true, stage: 42, status: null, authorityComplete: false } })
+    ).toEqual({ stage: 'unknown', status: 'unknown', authorityComplete: false });
+  });
+
+  it('falls back to "unknown" for a non-string supply-chain status', () => {
+    expect(
+      deriveSupplyChainFromReadModel({ supplyChain: { available: true, status: 7, artifactCount: 'x', attentionCount: 'y' } })
+    ).toEqual({ status: 'unknown', artifactCount: 0, attentionCount: 0 });
+  });
+
+  it('falls back to an empty stale-tracks array when the domain field is not an array', () => {
+    expect(
+      deriveRuntimeFidelityFromReadModel({
+        runtimeFidelity: { available: true, currentVersion: 5, trackCount: 'n', staleTrackCount: 'n', allFresh: 'nope', staleTracks: 'not-an-array' }
+      })
+    ).toEqual({ currentVersion: 'unknown', trackCount: 0, staleTrackCount: 0, allFresh: false, staleTracks: [] });
+  });
+
+  it('renders an incomplete publish authority when authorityComplete is false', () => {
+    const { markdown } = buildControlPlaneDigest(
+      { boardDrift: [], releaseState: { stage: 'draft', status: 'pending', authorityComplete: false } },
+      { generatedAt: AT }
+    );
+    expect(markdown).toContain('Publish authority: incomplete');
+  });
+
+  it('renders the debt header while omitting both bullets when neither field is present', () => {
+    const { markdown } = buildControlPlaneDigest(
+      { boardDrift: [], debt: {} },
+      { generatedAt: AT }
+    );
+    expect(markdown).toContain('## Coverage & requirement debt');
+    expect(markdown).not.toContain('- Requirements needing attention:');
+    expect(markdown).not.toContain('below the coverage risk threshold');
+  });
+
+  it('uses explicit release/supply/runtime collectors over the read-model packet', () => {
+    const signals = collectControlPlaneSignals({
+      collectBoardSyncPlan: () => ({ items: [], updates: [] }),
+      readModelPacket: READ_MODEL,
+      collectReleaseState: () => ({ stage: 'canary', status: 'soaking', authorityComplete: false }),
+      collectSupplyChain: () => ({ status: 'degraded', artifactCount: 9, attentionCount: 2 }),
+      collectRuntimeFidelity: () => ({ currentVersion: '9.9.9', trackCount: 1, staleTrackCount: 1, allFresh: false, staleTracks: [] })
+    });
+    expect(signals.releaseState).toEqual({ stage: 'canary', status: 'soaking', authorityComplete: false });
+    expect(signals.supplyChain).toEqual({ status: 'degraded', artifactCount: 9, attentionCount: 2 });
+    expect(signals.runtimeFidelity).toMatchObject({ currentVersion: '9.9.9', staleTrackCount: 1 });
+  });
+
+  it('omits release/supply/runtime sections when neither a collector nor a packet is provided', () => {
+    const signals = collectControlPlaneSignals({ collectBoardSyncPlan: () => ({ items: [], updates: [] }) });
+    expect('releaseState' in signals).toBe(false);
+    expect('supplyChain' in signals).toBe(false);
+    expect('runtimeFidelity' in signals).toBe(false);
+  });
+});
+

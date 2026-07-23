@@ -17,6 +17,7 @@ const {
   issueViewArgs,
   standardsDockerSteps,
   replaceSnapshotMount,
+  renderMarkdown,
   runIssueStandardsTriage,
   main
 } = require('../../scripts/runIssueStandardsTriage.js') as {
@@ -44,6 +45,7 @@ const {
     requirementsSpecScope: string;
   }) => Array<{ name: string; file: string; command: string; args: string[] }>;
   replaceSnapshotMount: (args: string[], snapshotPath: string) => string[];
+  renderMarkdown: (context: Record<string, unknown>) => string;
   runIssueStandardsTriage: (
     argv: string[],
     deps: {
@@ -692,5 +694,56 @@ describe('runIssueStandardsTriage main CLI (VHS-REQ-700.2)', () => {
     expect(main(['--bogus'])).toBe(1);
     expect(errSpy).toHaveBeenCalledWith(expect.stringContaining('Unknown argument'));
     errSpy.mockRestore();
+  });
+});
+
+describe('runIssueStandardsTriage residual branch coverage (#2333)', () => {
+  it('renderMarkdown covers the title-less issue, absent image access, and image-inspect fallback arms', () => {
+    // A titleless issue exercises the `issue.title || ''` fallback; an absent
+    // imageAccess skips the docker-access line; an absent imagePreparation forces
+    // the `|| [{ docker-image-inspect }]` fallback; and a quoted arg with a space
+    // exercises the JSON.stringify arm of the internal commandLine helper.
+    const markdown = renderMarkdown({
+      options: { issue: '5', repo: 'o/r', image: 'img:tag', profile: 'quick-triage', requirementsSpecScope: 'system' },
+      outputDir: '/out',
+      issue: { skipped: false, status: 0, json: { number: 5 } },
+      imageInspect: { status: 0 },
+      snapshot: { mode: 'tracked-worktree-snapshot', trackedFileCount: 3, removed: true, path: '/snap' },
+      standards: [
+        {
+          name: 'requirements-quality',
+          status: 0,
+          file: 'requirements-quality.json',
+          command: 'docker',
+          args: ['run', '--rm', 'my image'],
+          stdout: JSON.stringify({ ok: true, findings: [] })
+        }
+      ]
+    });
+    expect(markdown).toContain('- Issue: #5');
+    expect(markdown).not.toContain('Docker image access:');
+    expect(markdown).toContain('- docker-image-inspect: pass');
+    expect(markdown).toContain('Requirements quality: ok');
+  });
+
+  it('main stringifies a non-Error thrown during triage and still appends usage', () => {
+    const root = makeTempRoot();
+    const err: string[] = [];
+    const code = main(['--issue', '11', '--skip-issue-fetch', '--save-dir', path.join(root, 'evidence')], {
+      cwd: repoRoot,
+      stdout: { write: () => undefined },
+      stderr: { write: (s: string) => err.push(s) },
+      spawnSync: () => ({ status: 0, stdout: '' }),
+      // Thrown before the try/finally -> propagates to main's catch as a string,
+      // exercising the `String(error)` arm of the error-format ternary.
+      createTrackedWorktreeSnapshot: () => {
+        // eslint-disable-next-line no-throw-literal
+        throw 'triage-string-failure';
+      },
+      removeTrackedWorktreeSnapshot: () => undefined
+    });
+    expect(code).toBe(1);
+    expect(err.join('')).toContain('triage-string-failure');
+    expect(err.join('')).toMatch(/Usage:/);
   });
 });

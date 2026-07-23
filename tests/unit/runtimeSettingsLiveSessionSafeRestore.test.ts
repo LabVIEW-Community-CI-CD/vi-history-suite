@@ -242,3 +242,37 @@ describe('runtimeSettingsLiveSessionSafeRestore (VHS-REQ-687.3)', () => {
     ).rejects.toThrow(/failed and could not safely restore settings \(disk-full\).*probe-boom/);
   });
 });
+
+describe('runtimeSettingsLiveSessionSafeRestore snapshot restore edge cases (VHS-REQ-687.3)', () => {
+  const temporaryDirectories: string[] = [];
+
+  afterEach(async () => {
+    await Promise.all(
+      temporaryDirectories.splice(0).map(async (directoryPath) => {
+        await fs.rm(directoryPath, { recursive: true, force: true });
+      })
+    );
+  });
+
+  it('restores an existed snapshot that carries no captured text as an empty file', async () => {
+    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-safe-restore-empty-'));
+    temporaryDirectories.push(tempRoot);
+    // Nested path forces the mkdir(recursive) branch; the absent snapshot.text
+    // exercises the `snapshot.text ?? ''` fallback when writing the restore.
+    const settingsFilePath = path.join(tempRoot, 'nested', 'settings.json');
+    await restoreRuntimeSettingsFileSnapshot(settingsFilePath, { existed: true });
+    await expect(fs.readFile(settingsFilePath, 'utf8')).resolves.toBe('');
+  });
+
+  it('verifies an existed snapshot with absent text against an empty on-disk file', async () => {
+    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-safe-restore-verify-'));
+    temporaryDirectories.push(tempRoot);
+    const settingsFilePath = path.join(tempRoot, 'settings.json');
+    await fs.writeFile(settingsFilePath, '', 'utf8');
+    // Both snapshot.text and current.text normalize through the `?? ''`
+    // fallbacks on the equality comparison.
+    await expect(
+      verifyRuntimeSettingsFileSnapshot(settingsFilePath, { existed: true })
+    ).resolves.toBe(true);
+  });
+});

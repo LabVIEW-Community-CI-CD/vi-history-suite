@@ -19,6 +19,7 @@ import {
   RuntimePlatform,
   locateComparisonRuntime
 } from '../reporting/comparisonRuntimeLocator';
+import type { CycleMeasurement } from '../reporting/runtime/cycleMeter';
 import {
   ViSemanticComparisonModel,
   buildViSemanticComparisonModel
@@ -98,6 +99,13 @@ export interface CompareViRevisionsRuntimeEvidence {
   engine?: string;
   state: string;
   reportFilePath: string;
+  /**
+   * VHS-REQ-669: per-attempt cycle measurements for providers that serialize
+   * and meter their runtime acquisition (the lvkit provider meters its single
+   * `lvkit diff` attempt). Absent for paths that do not meter (e.g. a cache
+   * hit).
+   */
+  cycles?: readonly CycleMeasurement[];
 }
 
 /**

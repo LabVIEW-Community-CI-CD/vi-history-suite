@@ -3,7 +3,8 @@ import { describe, expect, it } from 'vitest';
 import {
   parseComparisonDetailItemGeometry,
   parseComparisonDetailItemsGeometry,
-  hasDiagramCoordinate
+  hasDiagramCoordinate,
+  toPoint
 } from '../../src/dashboard/comparisonDetailItemGeometry';
 
 // VHS-REQ-703.10 (epic #2262): structured geometry extraction from NI comparison
@@ -81,5 +82,20 @@ describe('parseComparisonDetailItemGeometry (VHS-REQ-703.10)', () => {
     expect(records).toHaveLength(3);
     expect(records.map((r) => hasDiagramCoordinate(r))).toEqual([true, false, false]);
     expect(records[0].objectName).toBe('VisibleTextMarker.vi');
+  });
+});
+
+describe('toPoint numeric guard (VHS-REQ-703.10)', () => {
+  it('returns undefined when a captured coordinate group is not a finite number', () => {
+    // The POINT regex only ever captures digit runs, so this guard is defensive:
+    // a match array whose captured groups are non-numeric must yield no point
+    // rather than a NaN coordinate.
+    expect(toPoint(['(x,y)', 'NaNnum', '5'] as unknown as RegExpMatchArray)).toBeUndefined();
+    expect(toPoint(['(x,y)', '5', 'oops'] as unknown as RegExpMatchArray)).toBeUndefined();
+  });
+
+  it('returns the point for a valid numeric match and undefined for no match', () => {
+    expect(toPoint(['(3,4)', '3', '4'] as unknown as RegExpMatchArray)).toEqual({ x: 3, y: 4 });
+    expect(toPoint(null)).toBeUndefined();
   });
 });

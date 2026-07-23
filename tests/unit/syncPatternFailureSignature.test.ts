@@ -115,3 +115,47 @@ describe('analyzeSyncPattern (VHS-REQ-710.4)', () => {
     expect(() => analyzeSyncPattern(undefined as never)).toThrow(/array of frames/);
   });
 });
+
+describe('analyzeSyncPattern branch coverage (VHS-REQ-710.4)', () => {
+  it('reports a malformed (wrong-length) strip as preamble-mismatch when fiducials are present and in bounds', () => {
+    // Fiducials present + in bounds, but the strip is not 40 clean bits: the
+    // preamble-mismatch detail takes the "malformed strip" branch.
+    const bad: SyncFrameInput = { index: 1, stripBits: '111', fiducialMarkersDetected: 4, stripWithinBounds: true };
+    const r = analyzeSyncPattern([frame(0), bad]);
+    expect(r.signature).toBe('preamble-mismatch');
+    expect(r.firstOffendingFrame).toBe(1);
+    expect(r.findings.find((f) => f.index === 1)?.detail).toContain('malformed strip');
+  });
+
+  it('stays healthy for a normal in-tolerance step when an expected step is given', () => {
+    // step === 5 is neither a stall (0) nor a gap (> 5 * 1.5): the else-if guard
+    // falls through to its implicit else and the sequence stays healthy.
+    const r = analyzeSyncPattern(
+      [
+        { index: 0, stripBits: strip(10), fiducialMarkersDetected: 4, stripWithinBounds: true },
+        { index: 1, stripBits: strip(15), fiducialMarkersDetected: 4, stripWithinBounds: true }
+      ],
+      { expectedCentisecondStep: 5, gapTolerance: 0.5 }
+    );
+    expect(r.signature).toBe('healthy');
+    expect(r.findings).toHaveLength(0);
+  });
+
+  it('keeps the earliest frame as the offender when multiple frames share the dominant signature', () => {
+    // Two frames carry the same (checksum-mismatch) signature. The second frame
+    // is not more fundamental than the running dominant, so the reduction takes
+    // the else-if guard (evaluating both operands) while the earliest frame index
+    // is retained as the offender.
+    const flip = (n: number): string => {
+      const good = strip(n);
+      return good.slice(0, 39) + (good[39] === '0' ? '1' : '0');
+    };
+    const r = analyzeSyncPattern([
+      { index: 0, stripBits: flip(5), fiducialMarkersDetected: 4, stripWithinBounds: true },
+      { index: 1, stripBits: flip(6), fiducialMarkersDetected: 4, stripWithinBounds: true }
+    ]);
+    expect(r.signature).toBe('checksum-mismatch');
+    expect(r.findings).toHaveLength(2);
+    expect(r.firstOffendingFrame).toBe(0);
+  });
+});

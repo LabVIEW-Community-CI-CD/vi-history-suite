@@ -2875,3 +2875,177 @@ describe('acquireWindowsContainerImage stream progress gating (VHS-REQ-654)', ()
     expect(pullUpdates[0].message).toContain('40%');
   });
 });
+
+describe('acquireWindowsContainerImage additional branch coverage (VHS-REQ-654)', () => {
+  const image = 'nationalinstruments/labview:2026q1-windows';
+
+  it('deduplicates an identical consecutive progress snapshot from the daemon stream', async () => {
+    const updates: Array<{ message: string; increment?: number }> = [];
+    const snapshot = {
+      percent: 40,
+      downloadedBytes: 1073741824,
+      totalBytes: 2147483648,
+      completedLayers: 1,
+      totalLayers: 2
+    };
+    const streamPull = vi.fn(async (options: { onProgress?: (snap: unknown) => void | Promise<void> }) => {
+      await options.onProgress?.(snapshot);
+      await options.onProgress?.(snapshot); // identical message -> deduped
+      return { attempted: true, succeeded: true, statusLines: ['done'] };
+    });
+
+    const result = await acquireWindowsContainerImage(image, 'win32', {
+      streamPull: streamPull as never,
+      reportProgress: (update) => {
+        updates.push(update);
+      }
+    });
+
+    expect(result.acquisitionState).toBe('acquired');
+    const pullUpdates = updates.filter((update) => update.message.includes('Pulling container image'));
+    // The identical second snapshot did not add a second pull toast.
+    expect(pullUpdates).toHaveLength(1);
+  });
+
+  it('uses the last status line as the failure note when the stream fails without an error message', async () => {
+    const streamPull = vi.fn(async () => ({
+      attempted: true,
+      succeeded: false,
+      statusLines: ['Pulling from labview', 'unexpected EOF']
+    }));
+
+    const result = await acquireWindowsContainerImage(image, 'win32', {
+      streamPull: streamPull as never
+    });
+
+    expect(result.acquisitionState).toBe('failed');
+    expect(result.notes.at(-1)).toBe('unexpected EOF');
+  });
+
+  it('uses a generic failure note when the stream fails with neither an error message nor status lines', async () => {
+    const streamPull = vi.fn(async () => ({ attempted: true, succeeded: false, statusLines: [] }));
+
+    const result = await acquireWindowsContainerImage(image, 'win32', {
+      streamPull: streamPull as never
+    });
+
+    expect(result.acquisitionState).toBe('failed');
+    expect(result.notes.at(-1)).toBe(`Docker image acquisition failed for ${image}.`);
+  });
+
+  it('caps the CLI progress budget and skips blank and duplicate status lines', async () => {
+    const streamPull = vi.fn(async () => ({ attempted: false, succeeded: false, statusLines: [] }));
+    const { child, stdout } = makeFakeDockerChild();
+    const spawnImpl = vi.fn(() => child);
+    const updates: Array<{ message: string; increment?: number }> = [];
+
+    const resultPromise = acquireWindowsContainerImage(image, 'win32', {
+      streamPull: streamPull as never,
+      spawnImpl: spawnImpl as never,
+      reportProgress: (update) => {
+        updates.push(update);
+      }
+    });
+
+    await Promise.resolve();
+    await Promise.resolve();
+    // 18 unique lines exceed the 15-point per-line budget; a blank and a duplicate
+    // line are skipped entirely.
+    for (let index = 0; index < 18; index += 1) {
+      stdout.emit('data', `layer-${index}: Pull complete\n`);
+    }
+    stdout.emit('data', '\n');
+    stdout.emit('data', 'layer-0: Pull complete\n');
+    child.emit('close', 0);
+
+    const result = await resultPromise;
+    expect(result.acquisitionState).toBe('acquired');
+    // Per-line increments stopped once the 15-point budget was exhausted.
+    const incremented = updates.filter(
+      (update) => (update.increment ?? 0) > 0 && update.message.startsWith('Pulling container image')
+    );
+    expect(incremented.length).toBeLessThanOrEqual(15);
+    // The duplicate line was recorded only once.
+    expect(result.notes.filter((note) => note === 'layer-0: Pull complete')).toHaveLength(1);
+  });
+
+  it('reports an unknown-exit-code failure when the CLI pull closes with a null code and no output', async () => {
+    const streamPull = vi.fn(async () => ({ attempted: false, succeeded: false, statusLines: [] }));
+    const { child } = makeFakeDockerChild();
+    const spawnImpl = vi.fn(() => child);
+
+    const resultPromise = acquireWindowsContainerImage(image, 'win32', {
+      streamPull: streamPull as never,
+      spawnImpl: spawnImpl as never
+    });
+
+    await Promise.resolve();
+    await Promise.resolve();
+    child.emit('close', null);
+
+    const result = await resultPromise;
+    expect(result.acquisitionState).toBe('failed');
+    expect(result.notes.at(-1)).toContain('exit code unknown');
+  });
+});
+
+describe('probeWindowsRegistryHostLabviewAvailable default fs probe (VHS-REQ-634.1)', () => {
+  it('binds the default filesystem existence probe when none is injected', async () => {
+    const available = await probeWindowsRegistryHostLabviewAvailable({
+      queryWindowsRegistry: async () =>
+        [
+          'HKEY_LOCAL_MACHINE\\SOFTWARE\\National Instruments\\LabVIEW\\26.0',
+          '    Path    REG_SZ    C:\\Program Files\\National Instruments\\LabVIEW 2026\\',
+          ''
+        ].join('\r\n')
+    });
+
+    // The fabricated Windows install path is not present on the test host, so the
+    // default fs.access probe resolves the host runtime as unavailable.
+    expect(available).toBe(false);
+  });
+});
+
+describe('comparisonRuntimeLocator host-surface VI Server port validation (VHS-REQ-621, VHS-REQ-156)', () => {
+  it('records the configured VI Server port and a no-conflict surface when LabVIEW is observed idle', async () => {
+    const selection = await locateComparisonRuntime(
+      'win32',
+      {
+        requestedProvider: 'host',
+        requireVersionAndBitness: true,
+        labviewVersion: '2026',
+        bitness: 'x64',
+        allowExistingWindowsHostRuntime: true
+      },
+      {
+        pathExists: pathExistsFor([WINDOWS_LABVIEW_2026_X64, WINDOWS_LABVIEW_CLI_X86]),
+        queryWindowsRegistry: vi.fn().mockResolvedValue(''),
+        // A readable LabVIEW.ini yields a concrete positive VI Server port, so the
+        // listener-probe port list and the port-naming no-conflict note branches run.
+        readFile: vi
+          .fn()
+          .mockResolvedValue('server.tcp.enabled=True\r\nserver.tcp.port=3363\r\n') as never,
+        // LabVIEW observed "running" but with no enumerable processes and no bitness:
+        // no conflict is detected, and the observed-bitness falls back to 'unknown'.
+        observeWindowsProcesses: vi.fn().mockResolvedValue({
+          capturedAt: '2026-05-31T00:00:00.000Z',
+          hostPlatform: 'win32',
+          runtimePlatform: 'win32',
+          trigger: 'preflight',
+          observedProcesses: [],
+          observedProcessNames: [],
+          labviewProcessObserved: true,
+          labviewCliProcessObserved: false,
+          lvcompareProcessObserved: false,
+          labviewProcessBitness: undefined,
+          labviewProcessExecutablePath: undefined
+        }) as never,
+        observeWindowsTcpListeners: vi.fn().mockResolvedValue([]) as never
+      }
+    );
+
+    expect(selection.hostLabviewTcpPort).toBe(3363);
+    expect(selection.hostRuntimeConflictDetected).toBe(false);
+    expect(selection.notes.join('\n')).toContain('VI Server port 3363');
+  });
+});

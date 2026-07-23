@@ -176,3 +176,99 @@ describe('preview-cache-bundle CLI main (VHS-REQ-672.4)', () => {
     expect(await main(['unbundle', '--bundle-dir', path.join(root, 'nope'), '--into', path.join(root, 't')])).toBe(1);
   });
 });
+
+describe('preview-cache-bundle parseArgs, warm-manifest, and malformed-bundle edges (VHS-REQ-672.4)', () => {
+  let root: string;
+  beforeEach(async () => {
+    root = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-bundle-edge-'));
+  });
+  afterEach(async () => {
+    await fs.rm(root, { recursive: true, force: true });
+  });
+
+  it('defaults a trailing value-flag to an empty string', () => {
+    // A value flag with no following token resolves to '' via the `?? ''` guard.
+    expect(parseArgs(['bundle', '--cache-dir'])).toEqual({ command: 'bundle', cacheDirectory: '' });
+  });
+
+  it('ignores a missing or entry-less warm manifest when annotating VI paths', async () => {
+    const cacheDir = path.join(root, 'c1');
+    await fs.mkdir(cacheDir, { recursive: true });
+    await fs.writeFile(path.join(cacheDir, `${KEY_A}.html`), '<a/>');
+    // A warm-manifest path that does not exist -> read throws -> no annotations.
+    const m1 = await exportViPreviewCacheBundle({
+      cacheDirectory: cacheDir,
+      bundleDirectory: path.join(root, 'b1'),
+      warmManifestPath: path.join(root, 'missing.json')
+    });
+    expect(m1.entries[0].viPaths).toEqual([]);
+    // A warm manifest object with no `entries` array -> the `?? []` fallback.
+    const warm = path.join(root, 'warm-empty.json');
+    await fs.writeFile(warm, JSON.stringify({ note: 'no entries here' }));
+    const m2 = await exportViPreviewCacheBundle({
+      cacheDirectory: cacheDir,
+      bundleDirectory: path.join(root, 'b2'),
+      warmManifestPath: warm
+    });
+    expect(m2.entries[0].viPaths).toEqual([]);
+  });
+
+  it('merges repeated VI paths for one key and skips non-string manifest fields', async () => {
+    const cacheDir = path.join(root, 'c3');
+    await fs.mkdir(cacheDir, { recursive: true });
+    await fs.writeFile(path.join(cacheDir, `${KEY_A}.html`), '<a/>');
+    const warm = path.join(root, 'warm-dup.json');
+    await fs.writeFile(
+      warm,
+      JSON.stringify({
+        entries: [
+          { key: KEY_A, relativePath: 'a/A.vi' },
+          { key: KEY_A, relativePath: 'a/A2.vi' }, // same key -> existing-list branch
+          { key: 123, relativePath: 'skip.vi' }, // non-string key -> skipped
+          { key: KEY_A } // missing relativePath -> skipped
+        ]
+      })
+    );
+    const manifest = await exportViPreviewCacheBundle({
+      cacheDirectory: cacheDir,
+      bundleDirectory: path.join(root, 'b3'),
+      warmManifestPath: warm
+    });
+    expect(manifest.entries[0].viPaths).toEqual(['a/A.vi', 'a/A2.vi']);
+  });
+
+  it('reports bundle-not-found for a manifest that is invalid JSON or has non-array entries', async () => {
+    // Invalid JSON manifest.
+    const b1 = path.join(root, 'bad-json');
+    await fs.mkdir(b1, { recursive: true });
+    await fs.writeFile(path.join(b1, PREVIEW_CACHE_BUNDLE_MANIFEST_FILE), 'not json');
+    expect(await importViPreviewCacheBundle(b1, path.join(root, 't1'))).toMatchObject({
+      ok: false,
+      reason: 'bundle-not-found'
+    });
+    // Valid JSON but entries is not an array.
+    const b2 = path.join(root, 'bad-entries');
+    await fs.mkdir(b2, { recursive: true });
+    await fs.writeFile(
+      path.join(b2, PREVIEW_CACHE_BUNDLE_MANIFEST_FILE),
+      JSON.stringify({ entries: 'nope' })
+    );
+    expect(await importViPreviewCacheBundle(b2, path.join(root, 't2'))).toMatchObject({
+      ok: false,
+      reason: 'bundle-not-found'
+    });
+  });
+
+  it('emits human-readable bundle output and JSON unbundle output through main', async () => {
+    const cacheDir = path.join(root, 'c4');
+    const bundleDir = path.join(root, 'b4');
+    const targetDir = path.join(root, 't4');
+    await fs.mkdir(cacheDir, { recursive: true });
+    await fs.writeFile(path.join(cacheDir, `${KEY_A}.html`), '<a/>');
+    // bundle WITHOUT --json -> the human-readable summary branch.
+    expect(await main(['bundle', '--cache-dir', cacheDir, '--bundle-dir', bundleDir])).toBe(0);
+    // unbundle WITH --json -> the JSON output branch.
+    expect(await main(['unbundle', '--bundle-dir', bundleDir, '--into', targetDir, '--json'])).toBe(0);
+    expect(await fs.readFile(path.join(targetDir, `${KEY_A}.html`), 'utf8')).toBe('<a/>');
+  });
+});

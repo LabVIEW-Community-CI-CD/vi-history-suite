@@ -73,7 +73,7 @@ const FROM_POINT = new RegExp(`\\bfrom\\s*${POINT.source}`, 'i');
 const TO_POINT = new RegExp(`\\bto\\s*${POINT.source}`, 'i');
 const AT_POINT = new RegExp(`\\bat\\s*${POINT.source}`, 'i');
 
-function toPoint(match: RegExpMatchArray | null): DiagramPoint | undefined {
+export function toPoint(match: RegExpMatchArray | null): DiagramPoint | undefined {
   if (!match) {
     return undefined;
   }

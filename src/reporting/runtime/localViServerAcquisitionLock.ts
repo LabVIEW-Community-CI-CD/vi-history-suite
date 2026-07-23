@@ -71,7 +71,10 @@ export function createLocalViServerAcquisitionLock(): LocalViServerAcquisitionLo
 
   async function acquire(key: string): Promise<() => void> {
     const previous = tails.get(key) ?? Promise.resolve();
-    let releaseSlot: () => void = () => undefined;
+    // Definite-assignment: the Promise executor runs synchronously during
+    // construction below, so releaseSlot is always assigned before any use. A
+    // placeholder initializer would be dead code (never invoked).
+    let releaseSlot!: () => void;
     const current = new Promise<void>((resolve) => {
       releaseSlot = resolve;
     });

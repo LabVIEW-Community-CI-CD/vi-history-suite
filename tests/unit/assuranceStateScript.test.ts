@@ -901,3 +901,119 @@ describe('generateAssuranceState runAssuranceState + main entrypoints', () => {
     expect(errs.join('')).toContain('Usage: node scripts/generateAssuranceState.js');
   });
 });
+
+describe('generateAssuranceState review-finding + readJson branch coverage (#2333)', () => {
+  it('builds post-merge review-finding signals and renders their table', () => {
+    const cwd = makeTempRoot();
+    const auditPath = path.join(cwd, 'assurance-multi-standards-evidence', 'audit-green', 'audit-summary.json');
+    const state = buildAssuranceState(fixtureAuditSummary(), {
+      cwd,
+      auditSummaryPath: auditPath,
+      runId: 'state-green',
+      generatedAt: '2026-07-14T00:00:00.000Z',
+      metadata: {
+        issueLinks: [],
+        prLinks: [],
+        mergeShas: [],
+        requirements: [],
+        reviewFindings: [
+          {
+            state: 'candidate',
+            source: 'codex',
+            title: 'Possible null deref in loader',
+            url: 'https://github.com/x/y/pull/1#discussion_r1',
+            basis: 'Reviewer flagged a possible null deref.'
+          },
+          // Empty-slug source/title exercise the slug fallback; omitted basis
+          // exercises the default-basis branch.
+          {
+            state: 'green',
+            source: '!!!',
+            title: '###',
+            url: 'https://github.com/x/y/pull/2#discussion_r2'
+          }
+        ]
+      }
+    });
+    const reviewSignals = state.signals.filter((signal) => signal.kind === 'post-merge-review');
+    expect(reviewSignals).toHaveLength(2);
+    expect(reviewSignals[0].id.startsWith('post-merge-review:codex:')).toBe(true);
+    expect(reviewSignals[0].status).toBe('CANDIDATE');
+    expect(reviewSignals[0].basis).toBe('Reviewer flagged a possible null deref.');
+    // Empty slug falls back to the 'finding' segment for both source and title.
+    expect(reviewSignals[1].id).toContain(':finding:finding:');
+    expect(reviewSignals[1].basis).toBe('Post-merge review finding supplied as assurance-state provenance.');
+
+    const markdown = renderAssuranceStateMarkdown(state);
+    expect(markdown).toContain('## Review Findings');
+    expect(markdown).toContain('Possible null deref in loader');
+    expect(markdown).toContain('candidate: Possible null deref in loader (https://github.com/x/y/pull/1#discussion_r1)');
+  });
+
+  it('classifies failed retained commands with an "unknown" name fallback', () => {
+    const cwd = makeTempRoot();
+    const auditPath = path.join(cwd, 'assurance-multi-standards-evidence', 'audit-red', 'audit-summary.json');
+    const summary = {
+      schemaVersion: 1,
+      success: false,
+      snapshot: {},
+      // A failed step with no name exercises the `command.name || 'unknown'` fallback.
+      imagePreparation: [{ status: 2, command: 'docker build .' }]
+    };
+    const state = buildAssuranceState(summary, {
+      cwd,
+      auditSummaryPath: auditPath,
+      runId: 'state-red',
+      generatedAt: '2026-07-14T00:00:00.000Z',
+      metadata: { issueLinks: [], prLinks: [], mergeShas: [], requirements: [] }
+    });
+    const failedSignal = state.signals.find((signal) => signal.kind === 'retained-command-failure');
+    expect(failedSignal).toBeDefined();
+    expect(failedSignal?.id).toBe('standards-audit:command:image:unknown');
+    expect(failedSignal?.title).toContain('unknown');
+  });
+
+  it('surfaces a non-Error read failure through the JSON read wrapper', () => {
+    const cwd = makeTempRoot();
+    expect(() =>
+      runAssuranceState(['--audit-summary', 'explicit/audit-summary.json'], {
+        cwd,
+        // A boundary that throws a non-Error string drives the String(error) branch.
+        readFileSync: () => {
+          throw 'disk offline';
+        }
+      } as { cwd?: string; now?: () => Date })
+    ).toThrow(/Unable to read JSON from .*: disk offline/);
+  });
+
+  it('falls back across id/summary for evidence and gate-strength signal titles', () => {
+    const cwd = makeTempRoot();
+    const auditPath = path.join(cwd, 'assurance-multi-standards-evidence', 'audit-mixed', 'audit-summary.json');
+    const summary = {
+      schemaVersion: 1,
+      success: true,
+      snapshot: {},
+      // Evidence row with only an id exercises the summary->id title fallback.
+      standardsEvidenceSummary: [{ id: 'ev-only-id', standards: [], profiles: [], scoreFiles: [], evidencePaths: [] }],
+      // Gate-strength row with only a summary exercises the id->summary id fallback.
+      standardsGateStrengthSummary: [{ summary: 'gate strength summary only', standards: [] }],
+      // Gate-detail row with no confidence exercises the `row.confidence || 'unknown'` fallback.
+      standardsGateDetailSummary: [{ gate: 'coverage', status: 'PASS', missingProof: [] }]
+    };
+    const state = buildAssuranceState(summary, {
+      cwd,
+      auditSummaryPath: auditPath,
+      runId: 'state-mixed',
+      generatedAt: '2026-07-14T00:00:00.000Z',
+      metadata: { issueLinks: [], prLinks: [], mergeShas: [], requirements: [] }
+    });
+    const evidence = state.signals.find((signal) => signal.kind === 'standards-evidence');
+    expect(evidence?.id).toBe('standards-audit:evidence:ev-only-id');
+    expect(evidence?.title).toBe('ev-only-id');
+    const strength = state.signals.find((signal) => signal.kind === 'standards-gate-strength');
+    expect(strength?.id).toBe('standards-audit:gate-strength:gate strength summary only');
+    expect(strength?.title).toBe('gate strength summary only');
+    const detail = state.signals.find((signal) => signal.kind === 'standards-gate-detail');
+    expect(detail?.confidence).toBe('unknown');
+  });
+});

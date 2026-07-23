@@ -166,3 +166,31 @@ describe('materializeRevisionViTree (VHS-REQ-659.15)', () => {
     expect(result.stagedFileCount).toBe(3);
   });
 });
+
+describe('parseLsTreeOutput non-numeric size (VHS-REQ-659.15)', () => {
+  it('defaults a non-numeric blob size to zero rather than NaN', () => {
+    // A well-formed 4-field blob line whose size column is non-numeric must still
+    // be kept, with the size defaulting to 0.
+    const entries = parseLsTreeOutput('100644 blob 0abc notasize\tlib/Widget.vi\n');
+    expect(entries).toEqual([{ repoRelativePath: 'lib/Widget.vi', sizeBytes: 0 }]);
+  });
+});
+
+describe('materializeRevisionViTree non-Error blob failure (VHS-REQ-659.15)', () => {
+  it('stringifies a thrown non-Error when the required VI blob read fails', async () => {
+    const deps = {
+      listTreeFiles: vi.fn().mockResolvedValue([{ repoRelativePath: 'Widget.vi', sizeBytes: 10 }]),
+      // Reject with a non-Error value (no `.message`) so the error message must
+      // fall back to String(error) rather than reading `.message`.
+      readBlob: vi.fn().mockRejectedValue('disk exploded'),
+      ensureDirectory: vi.fn().mockResolvedValue(undefined),
+      writeFile: vi.fn().mockResolvedValue(undefined)
+    };
+    await expect(
+      materializeRevisionViTree(
+        { revisionId: 'rev1', relativePath: 'Widget.vi', destinationDirectory: '/dest' },
+        deps
+      )
+    ).rejects.toThrow('disk exploded');
+  });
+});

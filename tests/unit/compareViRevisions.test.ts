@@ -2,6 +2,10 @@
 // surface). Verifies the compare_vi_revisions orchestrator outcomes and
 // input-boundary validation (VHS-REQ-662.5).
 import { describe, expect, it, vi } from 'vitest';
+import { execFileSync } from 'node:child_process';
+import * as fs from 'node:fs/promises';
+import * as os from 'node:os';
+import * as path from 'node:path';
 
 import type { ParsedNiComparisonReport } from '../../src/dashboard/niComparisonReportParser';
 import type {
@@ -421,5 +425,105 @@ describe('compareViRevisions', () => {
     expect(get).not.toHaveBeenCalled();
     expect(set).not.toHaveBeenCalled();
     expect(harness.executeReport).toHaveBeenCalledTimes(1);
+  });
+
+  it('maps win32 and darwin process platforms through the default resolver', async () => {
+    // With no resolvePlatform injected, the orchestrator maps process.platform via
+    // resolveRuntimePlatform; assert the win32 and darwin branches route the right
+    // platform token to the locator. Restores the real platform afterwards.
+    const harness = makeHarness({ resolvePlatform: undefined });
+    const original = process.platform;
+    try {
+      Object.defineProperty(process, 'platform', { value: 'win32', configurable: true });
+      await compareViRevisions(input(), harness.deps);
+      expect(harness.locateRuntime).toHaveBeenLastCalledWith('win32', expect.any(Object));
+
+      Object.defineProperty(process, 'platform', { value: 'darwin', configurable: true });
+      await compareViRevisions(input(), harness.deps);
+      expect(harness.locateRuntime).toHaveBeenLastCalledWith('darwin', expect.any(Object));
+    } finally {
+      Object.defineProperty(process, 'platform', { value: original, configurable: true });
+    }
+  });
+
+  it('resolves content signatures through the default git resolver on a real repository (VHS-REQ-662.8)', async () => {
+    // No resolveContentSignature injected: the default `git rev-parse` signature
+    // resolver runs against a real throwaway repo, so both sides resolve to commit
+    // OIDs, the cache is consulted (miss), the mocked pipeline runs, and the fresh
+    // model is stored under the content-addressed key.
+    const repo = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-compare-git-'));
+    try {
+      const git = (args: string[]): string =>
+        execFileSync('git', ['-C', repo, ...args], { stdio: 'pipe' }).toString();
+      git(['init', '-q']);
+      git(['config', 'user.email', 't@example.com']);
+      git(['config', 'user.name', 'Test']);
+      git(['config', 'commit.gpgsign', 'false']);
+      await fs.writeFile(path.join(repo, 'w.vi'), 'base-bytes');
+      git(['add', 'w.vi']);
+      git(['commit', '-q', '-m', 'a']);
+      const baseHash = git(['rev-parse', 'HEAD']).trim();
+      await fs.writeFile(path.join(repo, 'w.vi'), 'selected-bytes');
+      git(['commit', '-q', '-am', 'b']);
+      const selectedHash = git(['rev-parse', 'HEAD']).trim();
+
+      const { get, set, cache } = cacheDouble();
+      const harness = makeHarness({ comparisonModelCache: cache });
+      const result = await compareViRevisions(
+        { repositoryRoot: repo, relativePath: 'w.vi', baseHash, selectedHash },
+        harness.deps
+      );
+
+      expect(result.status).toBe('completed');
+      // Both signatures resolved via real git -> a single cache lookup (miss) and a store.
+      expect(get).toHaveBeenCalledTimes(1);
+      expect(set).toHaveBeenCalledTimes(1);
+    } finally {
+      await fs.rm(repo, { recursive: true, force: true });
+    }
+  });
+
+  it('falls back to a platform message when the runtime is unavailable without a reason', async () => {
+    const harness = makeHarness({
+      locateRuntime: vi.fn(async () => selection({ provider: 'unavailable' }))
+    });
+    const result = await compareViRevisions(input(), harness.deps);
+    expect(result.status).toBe('blocked-selection');
+    if (result.status === 'blocked-selection') {
+      expect(result.reason).toContain('no comparison runtime available for platform');
+    }
+  });
+
+  it('falls back to a generic preflight message when no blocked reason is given', async () => {
+    const harness = makeHarness({
+      preflight: vi.fn(async () => preflight({ ready: false }))
+    });
+    const result = await compareViRevisions(input(), harness.deps);
+    expect(result).toEqual({ status: 'blocked-preflight', reason: 'preflight validation failed' });
+  });
+
+  it('maps a blocked-preflight packet status with no reason to the fallback message', async () => {
+    const harness = makeHarness({
+      persistPacket: vi.fn(async () => ({
+        record: record('blocked-preflight', runtimeExecution('not-run'))
+      }))
+    });
+    const result = await compareViRevisions(input(), harness.deps);
+    expect(result.status).toBe('blocked-preflight');
+    if (result.status === 'blocked-preflight') {
+      expect(result.reason).toContain('comparison packet not ready for runtime (blocked-preflight)');
+    }
+    expect(harness.executeReport).not.toHaveBeenCalled();
+  });
+
+  it('uses the runtime failure reason when a not-ready packet has no blocked reason', async () => {
+    const harness = makeHarness({
+      persistPacket: vi.fn(async () => ({
+        record: record('blocked-runtime', runtimeExecution('failed', { failureReason: 'staging-failed' }))
+      }))
+    });
+    const result = await compareViRevisions(input(), harness.deps);
+    expect(result).toEqual({ status: 'blocked-runtime', reason: 'staging-failed' });
+    expect(harness.executeReport).not.toHaveBeenCalled();
   });
 });

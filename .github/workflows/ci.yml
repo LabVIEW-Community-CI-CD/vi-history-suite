@@ -127,6 +127,24 @@ jobs:
       - name: Documentation Gate / docs-gate
         run: npm run docs:gate
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+      - name: Prepare lvkit + icon-editor corpus (VHS-REQ-712)
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Warm the uv cache with the LabVIEW-free lvkit diff tool (min-pinned);
+          # the compare provider resolves lvkit via 'uvx --from lvkit lvkit'.
+          uvx --from 'lvkit>=0.5.0' lvkit --version
+          # Minimal corpus: the two pinned icon-editor commits' VI blobs (the lvkit
+          # diff is search-path independent, so no working-tree checkout is needed).
+          corpus="$RUNNER_TEMP/lvkit-corpus"
+          rm -rf "$corpus"
+          git init -q "$corpus"
+          git -C "$corpus" remote add origin https://github.com/ni/labview-icon-editor
+          git -C "$corpus" fetch --depth 1 origin 537683398d8c5cb73533603b5c06b6eef62a6ac8
+          git -C "$corpus" fetch --depth 1 origin fc09736ae5e38c2016de081a9c8686256c9f2f9c
+          echo "VIHS_LVKIT_CORPUS_DIR=$corpus" >> "$GITHUB_ENV"
       - name: Test
         run: npm test
 
@@ -232,6 +250,24 @@ jobs:
       - name: Typecheck
         run: npm run check
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+      - name: Prepare lvkit + icon-editor corpus (VHS-REQ-712)
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Warm the uv cache with the LabVIEW-free lvkit diff tool (min-pinned);
+          # the compare provider resolves lvkit via 'uvx --from lvkit lvkit'.
+          uvx --from 'lvkit>=0.5.0' lvkit --version
+          # Minimal corpus: the two pinned icon-editor commits' VI blobs (the lvkit
+          # diff is search-path independent, so no working-tree checkout is needed).
+          corpus="$RUNNER_TEMP/lvkit-corpus"
+          rm -rf "$corpus"
+          git init -q "$corpus"
+          git -C "$corpus" remote add origin https://github.com/ni/labview-icon-editor
+          git -C "$corpus" fetch --depth 1 origin 537683398d8c5cb73533603b5c06b6eef62a6ac8
+          git -C "$corpus" fetch --depth 1 origin fc09736ae5e38c2016de081a9c8686256c9f2f9c
+          echo "VIHS_LVKIT_CORPUS_DIR=$corpus" >> "$GITHUB_ENV"
       - name: Test
         run: npm test
 
