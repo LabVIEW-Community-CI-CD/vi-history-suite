@@ -62,8 +62,11 @@ export interface RenderStopwatchSurfaceInput {
 /**
  * Render the stopwatch surface HTML for a centiseconds reading. The strip encodes
  * the centiseconds clamped to the 24-bit payload range; the printed time reflects
- * the full elapsed value. Fail-closed on non-finite centiseconds or dimensions
- * below 64 pixels.
+ * the full elapsed value. A negative reading is a signed difference (e.g. a
+ * cross-time-zone or cross-source capture skew): the unsigned strip and printed
+ * time floor it to zero, but the diagnostic `<title>` preserves the true signed
+ * centiseconds so the difference is not lost. Fail-closed on non-finite
+ * centiseconds or dimensions below 64 pixels.
  */
 export function renderMprrStopwatchSurfaceHtml(input: RenderStopwatchSurfaceInput): string {
   if (!Number.isFinite(input.centiseconds)) {
@@ -74,7 +77,14 @@ export function renderMprrStopwatchSurfaceHtml(input: RenderStopwatchSurfaceInpu
 
   const region = buildMprrStopwatchStripRegion(dimensions);
   const bits = encodeMprrMachineStrip(input.centiseconds);
-  const timeText = formatMprrStopwatchText(Math.max(0, Math.floor(input.centiseconds)) * 10);
+  // mprr's machine strip and printed HH:MM:SS.cc are unsigned by its frozen
+  // contract (24-bit payload / stopwatch format), so they floor a reading into
+  // the encodable range. A NEGATIVE reading is a meaningful signed difference
+  // (e.g. a cross-time-zone or cross-source capture skew), so the diagnostic
+  // <title> below preserves it verbatim rather than misrepresenting it as zero.
+  const renderedCentiseconds = Math.max(0, Math.floor(input.centiseconds));
+  const signedCentiseconds = Math.floor(input.centiseconds);
+  const timeText = formatMprrStopwatchText(renderedCentiseconds * 10);
   const borderWidth = Math.max(6, Math.round(dimensions.width / 240));
 
   const cellCount = bits.length; // MACHINE_STRIP_BIT_LENGTH
@@ -99,7 +109,7 @@ export function renderMprrStopwatchSurfaceHtml(input: RenderStopwatchSurfaceInpu
     '<html lang="en">',
     '<head>',
     '<meta charset="utf-8" />',
-    `<title>mprr stopwatch surface ${dimensions.width}x${dimensions.height} cs=${Math.floor(input.centiseconds)}</title>`,
+    `<title>mprr stopwatch surface ${dimensions.width}x${dimensions.height} cs=${signedCentiseconds}</title>`,
     '<style>',
     '  * { margin: 0; padding: 0; box-sizing: border-box; }',
     `  html, body { width: ${dimensions.width}px; height: ${dimensions.height}px; background: #ffffff; overflow: hidden; }`,

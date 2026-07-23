@@ -50,10 +50,16 @@ describe('renderMprrStopwatchSurfaceHtml (VHS-REQ-710.11)', () => {
     expect(html).toContain(`>${formatMprrStopwatchText(overflow * 10)}<`);
   });
 
-  it('clamps a negative centiseconds to zero for both strip and text', () => {
+  it('floors a negative centiseconds on the unsigned strip + time but preserves the signed value in the diagnostic title', () => {
+    // A negative reading is a signed difference (e.g. a cross-time-zone or
+    // cross-source capture skew). mprr's strip + HH:MM:SS.cc are unsigned, so
+    // they floor to zero...
     const html = renderMprrStopwatchSurfaceHtml({ centiseconds: -50, width: 800, height: 200 });
     expect(renderedBits(html)).toBe(encodeMprrMachineStrip(0));
     expect(html).toContain('>00:00:00.00<');
+    // ...but the diagnostic <title> preserves the true signed centiseconds so the
+    // difference is not misrepresented as zero.
+    expect(html).toContain('cs=-50</title>');
   });
 
   it('renders the black border and the strip band at the strip region', () => {

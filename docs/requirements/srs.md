@@ -5853,8 +5853,12 @@ Missing numeric IDs are intentional.
     at mprr's strip region (top seven percent, height nine percent, full width)
     with the printed HH:MM:SS.cc time and a black border. The strip payload
     clamps to the twenty-four-bit ceiling while the printed time reflects the full
-    elapsed value, so a headless capture decodes back to the same centiseconds. It
-    fails closed on non-finite centiseconds or dimensions below sixty-four pixels.
+    elapsed value, so a headless capture decodes back to the same centiseconds. A
+    negative reading — a signed difference such as a cross-time-zone or
+    cross-source capture skew — floors to zero on the unsigned strip and printed
+    time, while the diagnostic HTML title preserves the true signed centiseconds
+    so the difference is not lost. It fails closed on non-finite centiseconds or
+    dimensions below sixty-four pixels.
     Pure and deterministic.
 - Agent Work Scope:
   - Keep the engine pure and dependency-free so the readiness contract is unit
