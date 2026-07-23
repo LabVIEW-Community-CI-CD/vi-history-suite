@@ -82,6 +82,7 @@ import {
   presentOpenBlockedToast
 } from './ui/gitPrerequisiteNotice';
 import { registerRuntimeRuntimeCommands } from './commands/runtimeCommands';
+import { registerDevTimingStopwatch } from './dev/timingStopwatchHost';
 import { registerOpenRuntimeReportPanelCommand } from './commands/openRuntimeReportPanelCommand';
 import { registerPickContainerImageVersionCommand } from './commands/pickContainerImageVersionCommand';
 import { registerViPreviewCustomEditor } from './ui/viPreviewEditor';
@@ -409,6 +410,10 @@ export async function activate(
   const runtimeAvailabilityWatcher = createRuntimeAvailabilityWatcher(context);
   context.subscriptions.push(runtimeAvailabilityWatcher);
   registerRuntimeRuntimeCommands(context, runtimeAvailabilityWatcher);
+  // Dev-only: register the live mprr timing-stopwatch command in the Extension
+  // Development Host only (guarded by ExtensionMode.Development); never shipped
+  // as a user-facing command in a packaged VSIX.
+  registerDevTimingStopwatch(context);
   // VHS-REQ-620 / VHS-REQ-645: Register the Runtime & Report Settings panel
   // under the historical runtime-provider command id. The status bar item
   // created by the watcher (and the bitness/version open-gate toasts) target

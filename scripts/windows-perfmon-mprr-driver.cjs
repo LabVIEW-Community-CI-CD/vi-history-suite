@@ -47,7 +47,7 @@
 const path = require('node:path');
 const fs = require('node:fs');
 const zlib = require('node:zlib');
-const { spawn, spawnSync } = require('node:child_process');
+const { spawnSync } = require('node:child_process');
 
 function sleepMs(ms) {
   // Programmatic blocking sleep (no subprocess) so a background typeperf child
@@ -99,7 +99,7 @@ const EVIDENCE = {
   schemaVersion: 1,
   runAtIso: new Date().toISOString(),
   host: { platform: process.platform, node: process.version },
-  captureTool: 'typeperf (unelevated PDH-CSV; shipped logman plan + capture script retained as evidence per capture)',
+  captureTool: 'logman (elevated; real PDH-CSV collector; captures the LabVIEW closed->open transition). This host rejects the shipped plan repeated -c, so logman argv uses a single -c derived from the plan counters; the shipped logman plan + capture script are retained per capture as evidence.',
   config: { ...CONFIG },
   stages: {}
 };
@@ -299,41 +299,86 @@ function closeLabview() {
   spawnSync('powershell.exe', ['-NoProfile', '-Command', "Get-Process LabVIEW -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue"], { encoding: 'utf8' });
 }
 
-function labviewRunning() {
-  const result = spawnSync('powershell.exe', ['-NoProfile', '-Command', "(Get-Process LabVIEW -ErrorAction SilentlyContinue | Measure-Object).Count"], { encoding: 'utf8' });
-  return Number.parseInt((result.stdout || '0').trim(), 10) > 0;
+// ---------------------------------------------------------------------------
+// E1: capture a real logman PDH-CSV AROUND a real compare, using the shipped
+// plan's counters. The collector starts while LabVIEW is CLOSED and the compare
+// launches LabVIEW inside the capture window, so the trace captures the
+// transition: blank \Process(LabVIEW) cells while it is closed, then real
+// process metrics the moment LabVIEW opens (verified: logman binds the process
+// instance dynamically on this host). logman data-collector creation requires
+// an ELEVATED session.
+//
+// NB: this host's logman rejects the shipped plan's repeated `-c` flags
+// ("The parameter is incorrect"), so the logman argv is derived from the plan's
+// counter set with a SINGLE `-c`; the shipped plan + hardened capture script are
+// still built and retained per capture as evidence of the orchestration.
+// ---------------------------------------------------------------------------
+function runLogman(argv) {
+  return spawnSync('logman.exe', argv, { encoding: 'utf8', windowsHide: true });
 }
 
-// ---------------------------------------------------------------------------
-// E1: capture a PDH-CSV around a real compare, using the shipped plan.
-//
-// The shipped capture plan/script target an ELEVATED self-hosted runner (logman
-// data-collector creation requires admin / Performance Log Users). On an
-// unelevated interactive host we must not trigger a UAC prompt, so the actual
-// sampling uses `typeperf` (no collector, no elevation) with the SAME counter
-// set the shipped plan derives; the logman plan + hardened capture script are
-// still built and retained as evidence of the shipped orchestration.
-// ---------------------------------------------------------------------------
-function sanitizePdhCsv(csvPath) {
-  // typeperf force-terminated mid-sample can leave a truncated trailing line;
-  // keep the header plus every data row whose column count matches the header.
-  const text = fs.readFileSync(csvPath, 'utf8');
-  const lines = text.split(/\r?\n/).filter((line) => line.trim().length > 0);
-  if (lines.length === 0) {
-    return;
+function assertElevated() {
+  const probe = spawnSync(
+    'powershell.exe',
+    [
+      '-NoProfile',
+      '-Command',
+      '([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)'
+    ],
+    { encoding: 'utf8' }
+  );
+  const elevated = /true/i.test((probe.stdout || '').trim());
+  assert(elevated, 'logman capture requires an ELEVATED (admin) session. Start VS Code / the terminal as administrator.');
+}
+
+function resolveNewestCsv(dir, basename) {
+  if (!fs.existsSync(dir)) {
+    return undefined;
   }
-  const headerCols = lines[0].split('","').length;
-  const kept = [lines[0]];
-  for (let i = 1; i < lines.length; i += 1) {
-    if (lines[i].split('","').length === headerCols) {
-      kept.push(lines[i]);
+  const matches = fs
+    .readdirSync(dir)
+    .filter((n) => n.toLowerCase().startsWith(basename.toLowerCase()) && n.toLowerCase().endsWith('.csv'))
+    .map((n) => ({ name: n, mtime: fs.statSync(path.join(dir, n)).mtimeMs }))
+    .sort((a, b) => b.mtime - a.mtime);
+  return matches.length > 0 ? path.join(dir, matches[0].name) : undefined;
+}
+
+function waitForRelease(csvPath) {
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    try {
+      const handle = fs.openSync(csvPath, 'r+');
+      fs.closeSync(handle);
+      return true;
+    } catch {
+      sleepMs(500);
     }
   }
-  fs.writeFileSync(csvPath, `${kept.join('\r\n')}\r\n`, 'utf8');
+  return false;
 }
 
-function captureAroundCompare(options) {
-  const { tag, provider, withLabviewCounters } = options;
+function logmanCreateArgs(plan) {
+  const interval = capturePlanMod.formatLogmanInterval(plan.sampleIntervalSec);
+  return [
+    'create',
+    'counter',
+    plan.collectorName,
+    '-f',
+    'csv',
+    '-o',
+    plan.outputCsvPath,
+    '-si',
+    interval,
+    '-c',
+    ...plan.counters,
+    '-ow'
+  ];
+}
+
+// Capture a real logman trace around a real compare. The collector starts with
+// LabVIEW CLOSED (a short pre-roll baseline); the compare opens LabVIEW inside
+// the window, so the trace spans the closed -> open transition.
+function captureTransition(options) {
+  const { tag, provider } = options;
   const captureDir = ensureDir(path.join(CONFIG.outDir, tag));
   const csvBase = 'perf';
   const outputCsvPath = path.join(captureDir, csvBase);
@@ -343,12 +388,11 @@ function captureAroundCompare(options) {
     collectorName,
     outputCsvPath,
     sampleIntervalSec: 1,
-    ...(withLabviewCounters ? { labviewProcessName: 'LabVIEW' } : {})
+    labviewProcessName: 'LabVIEW'
   });
   assert(plan.schema === capturePlanMod.PERFMON_CAPTURE_PLAN_SCHEMA, 'capture plan schema mismatch');
 
-  // Retain the shipped hardened capture script as evidence of the elevated-actor
-  // orchestration (logman lifecycle) even though we sample via typeperf here.
+  // Retain the shipped hardened capture script as evidence of the orchestration.
   const captureScript = captureScriptMod.renderWindowsPerfmonCaptureScript({
     plan,
     comparisonExecutable: process.execPath,
@@ -358,37 +402,28 @@ function captureAroundCompare(options) {
   });
   fs.writeFileSync(path.join(captureDir, 'capture.ps1'), captureScript, 'utf8');
 
-  // Start typeperf sampling the plan's counters to a real PDH-CSV.
-  const csvPath = `${outputCsvPath}.csv`;
-  const typeperfArgs = [...plan.counters, '-si', '1', '-f', 'CSV', '-o', csvPath, '-y'];
-  const typeperf = spawn('typeperf.exe', typeperfArgs, { windowsHide: true, stdio: 'ignore' });
-  sleepMs(2500); // let typeperf resolve counters and write the header
+  // Ensure LabVIEW is CLOSED so the trace spans the open transition, and so the
+  // host-native compare starts from an uncontaminated runtime surface.
+  closeLabview();
+  sleepMs(1500);
 
-  // Run the real compare inside the capture window.
+  runLogman(['stop', collectorName]);
+  runLogman(['delete', collectorName]);
+  const created = runLogman(logmanCreateArgs(plan));
+  assert(created.status === 0, `logman create failed: ${created.stdout || ''}${created.stderr || ''}`);
+  const started = runLogman(['start', collectorName]);
+  assert(started.status === 0, `logman start failed: ${started.stdout || ''}${started.stderr || ''}`);
+  sleepMs(3000); // pre-roll: LabVIEW-CLOSED baseline rows before the compare opens it
+
   const storageRoot = path.join(captureDir, 'storage');
   const compare = runCompare(provider, `mprr-${tag}`, storageRoot);
 
-  // Stop typeperf (force + tree) and wait for the OS to release the CSV handle.
-  spawnSync('taskkill.exe', ['/PID', String(typeperf.pid), '/T', '/F'], { windowsHide: true });
-  try {
-    typeperf.kill('SIGKILL');
-  } catch {
-    // already exited
-  }
-  assert(fs.existsSync(csvPath), `no PDH-CSV produced at ${csvPath}`);
-  // Retry until typeperf has released the file (EBUSY otherwise).
-  let released = false;
-  for (let attempt = 0; attempt < 20 && !released; attempt += 1) {
-    try {
-      const handle = fs.openSync(csvPath, 'r+');
-      fs.closeSync(handle);
-      released = true;
-    } catch {
-      sleepMs(500);
-    }
-  }
-  assert(released, `PDH-CSV still locked by typeperf: ${csvPath}`);
-  sanitizePdhCsv(csvPath);
+  runLogman(['stop', collectorName]);
+  runLogman(['delete', collectorName]);
+
+  const csvPath = resolveNewestCsv(captureDir, csvBase);
+  assert(csvPath && fs.existsSync(csvPath), `no PDH-CSV produced in ${captureDir}`);
+  waitForRelease(csvPath);
 
   const cycles = [
     {
@@ -399,56 +434,17 @@ function captureAroundCompare(options) {
   ];
   const window = { startMs: compare.startMs, endMs: compare.endMs, cycles };
   fs.writeFileSync(path.join(captureDir, 'window.json'), JSON.stringify(window, null, 2), 'utf8');
-
   return { captureDir, csvPath, window, plan, compare };
 }
 
-// A resident capture samples an ALREADY-RUNNING LabVIEW with the process
-// counters resolved (the product blocks a second host-native compare while a
-// LabVIEW is resident with `windows-host-runtime-surface-contaminated`, so the
-// LabVIEW process channels are proven by sampling the resident engine rather
-// than by a blocked second compare).
-function captureResident(options) {
-  const { tag, sampleSeconds } = options;
-  const captureDir = ensureDir(path.join(CONFIG.outDir, tag));
-  const outputCsvPath = path.join(captureDir, 'perf');
-  const plan = capturePlanMod.buildWindowsPerfmonCapturePlan({
-    collectorName: `vihs-mprr-${tag}`,
-    outputCsvPath,
-    sampleIntervalSec: 1,
-    labviewProcessName: 'LabVIEW'
-  });
-  const csvPath = `${outputCsvPath}.csv`;
-  const typeperf = spawn('typeperf.exe', [...plan.counters, '-si', '1', '-f', 'CSV', '-o', csvPath, '-y'], {
-    windowsHide: true,
-    stdio: 'ignore'
-  });
-  const startMs = Date.now();
-  sleepMs((sampleSeconds || 15) * 1000 + 2500);
-  const endMs = Date.now();
-  spawnSync('taskkill.exe', ['/PID', String(typeperf.pid), '/T', '/F'], { windowsHide: true });
-  try {
-    typeperf.kill('SIGKILL');
-  } catch {
-    // already exited
-  }
-  assert(fs.existsSync(csvPath), `no PDH-CSV produced at ${csvPath}`);
-  let released = false;
-  for (let attempt = 0; attempt < 20 && !released; attempt += 1) {
-    try {
-      const handle = fs.openSync(csvPath, 'r+');
-      fs.closeSync(handle);
-      released = true;
-    } catch {
-      sleepMs(500);
-    }
-  }
-  assert(released, `PDH-CSV still locked by typeperf: ${csvPath}`);
-  sanitizePdhCsv(csvPath);
-  const cycles = [{ cycleIndex: 1, durationMs: endMs - startMs, outcome: 'labview-resident' }];
-  const window = { startMs, endMs, cycles };
-  fs.writeFileSync(path.join(captureDir, 'window.json'), JSON.stringify(window, null, 2), 'utf8');
-  return { captureDir, csvPath, window, plan };
+// Count LabVIEW-closed (null) vs LabVIEW-open (non-null) rows in a parsed
+// perfmon series so a capture can prove it spanned the open transition.
+function transitionSpan(perf) {
+  const lv = perf.series.labviewWorkingSetMb || perf.series.labviewCpuPct || [];
+  return {
+    closedRows: lv.filter((v) => v === null).length,
+    openRows: lv.filter((v) => v !== null).length
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -578,36 +574,52 @@ async function main() {
     log('E5: skipped (VIHS_MPRR_SKIP_CHROME=1)');
   }
 
-  // ---- E1: cold capture (real compare, system counters) + warm resident
-  // capture (LabVIEW process channels). A second host-native compare while
-  // LabVIEW is resident is blocked by design, so the LabVIEW channels are proven
-  // by sampling the resident engine rather than a blocked second compare. ----
-  log('E1: closing LabVIEW for a cold capture baseline');
-  closeLabview();
+  // ---- E1: two logman captures that each span the LabVIEW closed -> open
+  // transition (collector starts with LabVIEW closed; the compare opens it).
+  // A second host-native compare while LabVIEW is resident is blocked by design,
+  // so each capture closes LabVIEW first and captures a fresh open transition. ----
+  log('E1: capturing the LabVIEW closed->open transition via logman (elevated)');
+  assertElevated();
 
   const coldCapture = stageOk('E1-capture-cold', () => {
-    const capture = captureAroundCompare({ tag: 'cold', provider: 'host', withLabviewCounters: false });
+    const capture = captureTransition({ tag: 'cold', provider: 'host' });
     assert(capture.compare.compareResult && capture.compare.compareResult.runtimeState === 'succeeded', 'cold compare did not succeed');
-    return { csvPath: path.relative(REPO_ROOT, capture.csvPath), wallMs: capture.window.endMs - capture.window.startMs };
+    const perf = sampleSeriesMod.parsePdhCsv(fs.readFileSync(capture.csvPath, 'utf8'));
+    assert(
+      perf.series.labviewWorkingSetMb !== undefined || perf.series.labviewCpuPct !== undefined,
+      'LabVIEW process channels did not resolve in the transition capture'
+    );
+    const span = transitionSpan(perf);
+    assert(
+      span.closedRows > 0 && span.openRows > 0,
+      `expected a LabVIEW closed->open transition (closed rows=${span.closedRows}, open rows=${span.openRows})`
+    );
+    return {
+      csvPath: path.relative(REPO_ROOT, capture.csvPath),
+      wallMs: capture.window.endMs - capture.window.startMs,
+      sampleCount: perf.sampleCount,
+      transitionClosedRows: span.closedRows,
+      transitionOpenRows: span.openRows
+    };
   });
   const coldCsv = path.resolve(REPO_ROOT, coldCapture.csvPath);
   const coldWindow = JSON.parse(fs.readFileSync(path.join(CONFIG.outDir, 'cold', 'window.json'), 'utf8'));
 
-  assert(labviewRunning(), 'LabVIEW should be running after the cold compare for the resident capture');
   const warmCapture = stageOk('E1-capture-warm', () => {
-    const capture = captureResident({ tag: 'warm', sampleSeconds: 15 });
+    const capture = captureTransition({ tag: 'warm', provider: 'host' });
+    assert(capture.compare.compareResult && capture.compare.compareResult.runtimeState === 'succeeded', 'second transition compare did not succeed');
     const perf = sampleSeriesMod.parsePdhCsv(fs.readFileSync(capture.csvPath, 'utf8'));
-    const labviewChannelsResolved =
-      perf.series.labviewWorkingSetMb !== undefined || perf.series.labviewCpuPct !== undefined;
-    assert(labviewChannelsResolved, 'LabVIEW process channels did not resolve in the resident capture (\\Process(LabVIEW) at typeperf start)');
-    return { csvPath: path.relative(REPO_ROOT, capture.csvPath), sampleCount: perf.sampleCount, labviewChannelsResolved };
+    const labviewChannelsResolved = perf.series.labviewWorkingSetMb !== undefined || perf.series.labviewCpuPct !== undefined;
+    assert(labviewChannelsResolved, 'LabVIEW channels did not resolve in the second capture');
+    const span = transitionSpan(perf);
+    return { csvPath: path.relative(REPO_ROOT, capture.csvPath), sampleCount: perf.sampleCount, labviewChannelsResolved, transitionOpenRows: span.openRows };
   });
   const warmCsv = path.resolve(REPO_ROOT, warmCapture.csvPath);
   const warmWindow = JSON.parse(fs.readFileSync(path.join(CONFIG.outDir, 'warm', 'window.json'), 'utf8'));
 
-  // ---- E2: artifact + TDMS channel model. The cold compare capture is the
-  // primary artifact (real compare in the window); the resident capture is
-  // projected too to show the LabVIEW channels in a TDMS model. ----
+  // ---- E2: artifact + TDMS channel model. The cold transition capture is the
+  // primary artifact (real compare + the LabVIEW open transition, so it carries
+  // the LabVIEW process channels); the second capture feeds the session pattern. ----
   const e2 = stageOk('E2-artifact-tdms', () => {
     const perf = sampleSeriesMod.parsePdhCsv(fs.readFileSync(coldCsv, 'utf8'));
     const artifact = sampleSeriesMod.buildFirstRunPerfmonArtifact({
@@ -624,25 +636,23 @@ async function main() {
     const samplesGroup = model.groups.find((g) => g.name === tdmsModelMod.PERFMON_TDMS_SAMPLES_GROUP);
     assert(samplesGroup, 'resource-samples group missing');
     const channelNames = samplesGroup.channels.map((c) => c.name);
+    const labviewChannelsInPrimary = channelNames.includes('labview_cpu_pct') || channelNames.includes('labview_working_set_mb');
+    assert(labviewChannelsInPrimary, 'primary (transition) model is missing the LabVIEW process channels');
 
-    // Resident (warm) artifact + model, carrying the LabVIEW process channels.
+    // Second capture artifact/model for the session pattern.
     const warmPerf = sampleSeriesMod.parsePdhCsv(fs.readFileSync(warmCsv, 'utf8'));
     const warmArtifact = sampleSeriesMod.buildFirstRunPerfmonArtifact({
       source: 'self-hosted-runner',
-      actor: `windows-host-${CONFIG.lvVersion}-${CONFIG.lvBitness}-resident`,
+      actor: `windows-host-${CONFIG.lvVersion}-${CONFIG.lvBitness}-run2`,
       capturedAtIso: new Date(warmWindow.startMs).toISOString(),
       perf: warmPerf,
       wallMs: warmWindow.endMs - warmWindow.startMs,
       cycles: warmWindow.cycles
     });
-    const warmModel = tdmsModelMod.buildPerfmonTdmsModel(warmArtifact);
-    const warmChannels = warmModel.groups.find((g) => g.name === tdmsModelMod.PERFMON_TDMS_SAMPLES_GROUP).channels.map((c) => c.name);
-    const labviewChannelsInWarm = warmChannels.includes('labview_cpu_pct') || warmChannels.includes('labview_working_set_mb');
 
     fs.writeFileSync(path.join(CONFIG.outDir, 'cold', 'artifact.json'), JSON.stringify(artifact, null, 2), 'utf8');
     fs.writeFileSync(path.join(CONFIG.outDir, 'cold', 'tdms-model.json'), JSON.stringify(model, null, 2), 'utf8');
     fs.writeFileSync(path.join(CONFIG.outDir, 'warm', 'artifact.json'), JSON.stringify(warmArtifact, null, 2), 'utf8');
-    fs.writeFileSync(path.join(CONFIG.outDir, 'warm', 'tdms-model.json'), JSON.stringify(warmModel, null, 2), 'utf8');
     EVIDENCE._primaryArtifact = artifact;
     EVIDENCE._primaryModel = model;
     EVIDENCE._warmArtifact = warmArtifact;
@@ -650,8 +660,7 @@ async function main() {
       sampleCount: perf.sampleCount,
       intervalMs: perf.intervalMs,
       channels: channelNames,
-      warmChannels,
-      labviewChannelsInWarm,
+      labviewChannelsInPrimary,
       hasRunCyclesGroup: Boolean(model.groups.find((g) => g.name === tdmsModelMod.PERFMON_TDMS_CYCLES_GROUP))
     };
   });
@@ -736,7 +745,7 @@ async function main() {
   if (!CONFIG.skipDocker) {
     stageBestEffort('E6-dual-source', () => {
       closeLabview();
-      const dockerCapture = captureAroundCompare({ tag: 'docker', provider: 'docker', withLabviewCounters: false });
+      const dockerCapture = captureTransition({ tag: 'docker', provider: 'docker' });
       assert(dockerCapture.compare.compareResult && dockerCapture.compare.compareResult.runtimeState === 'succeeded', 'docker compare did not succeed');
       const dockerWindow = JSON.parse(fs.readFileSync(path.join(CONFIG.outDir, 'docker', 'window.json'), 'utf8'));
       const dockerPerf = sampleSeriesMod.parsePdhCsv(fs.readFileSync(dockerCapture.csvPath, 'utf8'));
