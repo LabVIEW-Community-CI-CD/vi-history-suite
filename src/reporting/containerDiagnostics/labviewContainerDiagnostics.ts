@@ -96,8 +96,15 @@ export interface LabviewContainerDiagnostics {
   readonly nextAction: string | null;
 }
 
-/** LabVIEW tooling checks that must PASS for readiness under any variant. */
-const LABVIEW_CRITICAL_CHECKS: readonly CheckId[] = ['labviewcli-present', 'labview-engine-present', 'lvcompare-present'];
+/**
+ * LabVIEW tooling checks that must PASS for readiness under any variant. Readiness
+ * for LabVIEWCLI CreateComparisonReport rests on LabVIEWCLI plus the LabVIEW
+ * engine. LVCompare is the SEPARATE source-control interactive diff tool
+ * (configured once), NOT a CreateComparisonReport dependency, so it is advisory
+ * only and never a readiness blocker. Community and Professional editions share
+ * the same features, so LVCompare is not edition-gated here.
+ */
+const LABVIEW_CRITICAL_CHECKS: readonly CheckId[] = ['labviewcli-present', 'labview-engine-present'];
 
 /**
  * Optional smoke probes: they are not required to run (a skipped, not-attempted
@@ -108,12 +115,22 @@ const LABVIEW_CRITICAL_CHECKS: readonly CheckId[] = ['labviewcli-present', 'labv
 const SMOKE_CHECK_IDS: readonly CheckId[] = ['cli-launch', 'comparison-smoke'];
 
 /**
- * Checks that must PASS for readiness (advisory warnings do not block). The
- * container variant additionally requires the docker + image checks; host-native
- * carries readiness on the LabVIEW tooling checks alone.
+ * Host-native runtime variants (Linux or Windows): the host install IS the
+ * runtime, so the docker + image checks are not applicable and readiness rests on
+ * the host LabVIEW tooling checks alone.
+ */
+function isHostNativeVariant(variant: string | undefined): boolean {
+  return variant === 'linux-host-native' || variant === 'windows-host-native';
+}
+
+/**
+ * Checks that must PASS for readiness (advisory warnings do not block). A
+ * host-native variant (Linux or Windows) carries readiness on the LabVIEW tooling
+ * checks alone; the container variant additionally requires the docker + image
+ * checks.
  */
 function criticalChecksFor(variant: string): ReadonlySet<CheckId> {
-  if (variant === 'linux-host-native') {
+  if (isHostNativeVariant(variant)) {
     return new Set(LABVIEW_CRITICAL_CHECKS);
   }
   return new Set(['docker-cli', 'docker-daemon', 'image-present', ...LABVIEW_CRITICAL_CHECKS]);
@@ -143,7 +160,8 @@ export function evaluateLabviewContainerDiagnostics(probes: LabviewContainerProb
     checks.push({ checkId, title, status, detail, remediation });
 
   // 1. docker CLI
-  const isHostNative = probes.variant === 'linux-host-native';
+  const isHostNative = isHostNativeVariant(probes.variant);
+  const isWindowsHostNative = probes.variant === 'windows-host-native';
   const dockerCli = probes.dockerCliAvailable;
   const daemonReachable = probes.dockerServerVersion !== null;
   const daemonOk = dockerCli && daemonReachable;
@@ -195,6 +213,18 @@ export function evaluateLabviewContainerDiagnostics(probes: LabviewContainerProb
   const skipInContainer = (checkId: CheckId, title: string) =>
     push(checkId, title, 'skip', 'skipped: NI LabVIEW image not present', null);
 
+  // Host-native remediation names OS-appropriate paths so an agent on Windows is
+  // never told to check Linux paths (and vice versa).
+  const labviewCliRemediation = isWindowsHostNative
+    ? 'Install the LabVIEW Command-Line Interface and confirm LabVIEWCLI.exe is on PATH (ships with LabVIEW under C:\\Program Files\\National Instruments\\LabVIEW <year>).'
+    : 'Confirm LabVIEWCLI is available (image ships it at /usr/local/bin/LabVIEWCLI; host-native needs the LabVIEW install on PATH).';
+  const labviewEngineRemediation = isWindowsHostNative
+    ? 'Expected C:\\Program Files\\National Instruments\\LabVIEW <year>; confirm a full LabVIEW install (not the runtime engine only).'
+    : 'Expected /usr/local/natinst/LabVIEW-<year>-64; confirm a full LabVIEW install (not runtime-only).';
+  const lvcompareRemediation = isWindowsHostNative
+    ? 'Optional: LVCompare.exe is the interactive source-control diff tool (configured once), not required for the CreateComparisonReport operation this toolset uses. It installs with LabVIEW at C:\\Program Files\\National Instruments\\Shared\\LabVIEW Compare\\LVCompare.exe (or the Program Files (x86) equivalent).'
+    : 'Optional: LVCompare is the interactive source-control diff tool (configured once), not required for the CreateComparisonReport operation this toolset uses. On Linux it installs at /usr/local/bin/LVCompare.';
+
   // 4. LabVIEWCLI present
   if (!imageOk) {
     skipInContainer('labviewcli-present', 'LabVIEWCLI present');
@@ -206,7 +236,7 @@ export function evaluateLabviewContainerDiagnostics(probes: LabviewContainerProb
       probes.labviewCliPath ? `LabVIEWCLI at ${probes.labviewCliPath}` : `LabVIEWCLI not found on the ${location}`,
       probes.labviewCliPath
         ? null
-        : 'Confirm LabVIEWCLI is available (image ships it at /usr/local/bin/LabVIEWCLI; host-native needs the LabVIEW install on PATH).'
+        : labviewCliRemediation
     );
   }
 
@@ -221,23 +251,27 @@ export function evaluateLabviewContainerDiagnostics(probes: LabviewContainerProb
       probes.labviewEnginePath
         ? `LabVIEW ${probes.labviewYear ?? '?'} at ${probes.labviewEnginePath}`
         : `LabVIEW engine directory not found on the ${location}`,
-      probes.labviewEnginePath ? null : 'Expected /usr/local/natinst/LabVIEW-<year>-64; confirm a full LabVIEW install (not runtime-only).'
+      probes.labviewEnginePath ? null : labviewEngineRemediation
     );
   }
 
-  // 6. lvcompare present (critical). lvmerge is intentionally out of scope: changes
-  // are generated by the novel capture/compare procedure, not the LabVIEW merge tool.
+  // 6. LVCompare (advisory, NEVER a readiness blocker). LVCompare.exe is the
+  // separate source-control interactive diff tool, configured once to register it
+  // with a source-control provider. Its responsibility is distinct from the
+  // LabVIEWCLI CreateComparisonReport operation this toolset uses, which does NOT
+  // depend on it. It ships with LabVIEW; Community and Professional editions share
+  // the same features. lvmerge is likewise out of scope.
   if (!imageOk) {
-    skipInContainer('lvcompare-present', 'lvcompare present');
+    skipInContainer('lvcompare-present', 'LVCompare source-control diff tool');
   } else {
     push(
       'lvcompare-present',
-      'lvcompare present',
-      probes.lvcomparePresent ? 'pass' : 'fail',
-      `lvcompare=${probes.lvcomparePresent ? 'yes' : 'no'}`,
+      'LVCompare source-control diff tool',
+      probes.lvcomparePresent ? 'pass' : 'warn',
       probes.lvcomparePresent
-        ? null
-        : 'lvcompare is required for CreateComparisonReport; confirm /usr/local/natinst/lvcompare exists (image or host install).'
+        ? 'LVCompare.exe available for interactive source-control diffs'
+        : 'LVCompare.exe not found (optional; not required for CreateComparisonReport)',
+      probes.lvcomparePresent ? null : lvcompareRemediation
     );
   }
 
@@ -400,60 +434,4 @@ function assertComparisonSmokeProbe(value: unknown): void {
   if (s.failureReason !== null && typeof s.failureReason !== 'string') {
     throw new Error('LabviewContainerProbes.comparisonSmoke.failureReason must be a string or null.');
   }
-}
-
-export const VARIANT_READINESS_MATRIX_SCHEMA = 'vi-history-suite/labview-variant-readiness-matrix@v1';
-export const VARIANT_READINESS_MATRIX_SCHEMA_VERSION = 1;
-
-export interface VariantReadinessRow {
-  readonly variant: string;
-  readonly readyToCompare: boolean;
-  readonly overall: CheckStatus;
-  readonly failureCount: number;
-  readonly nextAction: string | null;
-}
-
-export interface VariantReadinessMatrix {
-  readonly schema: typeof VARIANT_READINESS_MATRIX_SCHEMA;
-  readonly schemaVersion: typeof VARIANT_READINESS_MATRIX_SCHEMA_VERSION;
-  readonly variants: readonly VariantReadinessRow[];
-  /** True when at least one variant is ready to compare. */
-  readonly anyReady: boolean;
-  /** True when every diagnosed variant is ready to compare. */
-  readonly allReady: boolean;
-  readonly summary: string;
-}
-
-/**
- * Aggregate per-variant diagnostics into an all-hardware-variants readiness
- * matrix — the single signal an agent reads to pick a variant it can actually run
- * a comparison on. Pure and deterministic; fail-closed on an empty input.
- */
-export function buildVariantReadinessMatrix(
-  results: readonly LabviewContainerDiagnostics[]
-): VariantReadinessMatrix {
-  if (!Array.isArray(results) || results.length === 0) {
-    throw new Error('buildVariantReadinessMatrix requires a non-empty array of diagnostics.');
-  }
-  const variants: VariantReadinessRow[] = results.map((r) => ({
-    variant: r.variant,
-    readyToCompare: r.readyToCompare,
-    overall: r.overall,
-    failureCount: r.failures.length,
-    nextAction: r.nextAction
-  }));
-  const readyList = variants.filter((v) => v.readyToCompare).map((v) => v.variant);
-  const anyReady = readyList.length > 0;
-  const allReady = readyList.length === variants.length;
-  const summary = `${readyList.length}/${variants.length} variant(s) ready to compare${
-    readyList.length > 0 ? `: ${readyList.join(', ')}` : ''
-  }`;
-  return {
-    schema: VARIANT_READINESS_MATRIX_SCHEMA,
-    schemaVersion: VARIANT_READINESS_MATRIX_SCHEMA_VERSION,
-    variants,
-    anyReady,
-    allReady,
-    summary
-  };
 }

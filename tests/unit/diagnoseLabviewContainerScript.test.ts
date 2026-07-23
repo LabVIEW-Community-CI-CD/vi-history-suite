@@ -10,8 +10,7 @@ import {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
 } from '../../scripts/diagnoseLabviewContainer.js';
 import {
-  evaluateLabviewContainerDiagnostics,
-  buildVariantReadinessMatrix
+  evaluateLabviewContainerDiagnostics
 } from '../../src/reporting/containerDiagnostics/labviewContainerDiagnostics';
 
 // VHS-REQ-710.3 — the diagnostics CLI. Docker probing is dependency-injected so
@@ -116,7 +115,8 @@ describe('diagnoseLabviewContainer CLI (VHS-REQ-710.3)', () => {
 
   it('parses --variant and rejects an unknown variant (VHS-REQ-710.5)', () => {
     expect(parseArgs(['--variant', 'linux-host-native']).variant).toBe('linux-host-native');
-    expect(() => parseArgs(['--variant', 'mars'])).toThrow(/linux-container or linux-host-native/);
+    expect(parseArgs(['--variant', 'windows-host-native']).variant).toBe('windows-host-native');
+    expect(() => parseArgs(['--variant', 'mars'])).toThrow(/windows-host-native/);
   });
 
   it('gathers host-native probes via the injected host runner (VHS-REQ-710.5)', () => {
@@ -152,33 +152,80 @@ describe('diagnoseLabviewContainer CLI (VHS-REQ-710.3)', () => {
     expect(JSON.parse(out.join('')).variant).toBe('linux-host-native');
   });
 
-  it('emits an all-variants readiness matrix under --all-variants (VHS-REQ-710.6)', () => {
+  it('gathers Windows host-native probes via the injected host runner (VHS-REQ-710.5)', () => {
+    const runHost = (script) => {
+      if (script.includes('Get-Command LabVIEWCLI')) {
+        return { ok: true, stdout: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEWCLI.exe\n', code: 0 };
+      }
+      if (script.includes("-Filter 'LabVIEW *'")) {
+        return { ok: true, stdout: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\n', code: 0 };
+      }
+      if (script.includes('LVCompare.exe')) return { ok: true, stdout: 'True\n', code: 0 };
+      return { ok: true, stdout: '', code: 0 };
+    };
+    const p = gatherProbes({ image: 'x', variant: 'windows-host-native' }, { runHost });
+    expect(p.variant).toBe('windows-host-native');
+    expect(p.labviewCliPath).toContain('LabVIEWCLI.exe');
+    expect(p.labviewEnginePath).toContain('LabVIEW 2026');
+    expect(p.labviewYear).toBe('2026');
+    expect(p.lvcomparePresent).toBe(true);
+    expect(p.dockerCliAvailable).toBe(false);
+  });
+
+  it('main exits 0 for a ready Windows host-native install (VHS-REQ-710.5)', () => {
     const out = [];
-    const runHost = (script) =>
-      script.includes('lvcompare')
-        ? { ok: true, stdout: 'true\n', code: 0 }
-        : script.includes('LabVIEW-*-64')
-          ? { ok: true, stdout: '/usr/local/natinst/LabVIEW-2026-64\n', code: 0 }
-          : { ok: true, stdout: '/usr/local/bin/LabVIEWCLI\n', code: 0 };
+    const runHost = (script) => {
+      if (script.includes('Get-Command LabVIEWCLI')) {
+        return { ok: true, stdout: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEWCLI.exe\n', code: 0 };
+      }
+      if (script.includes("-Filter 'LabVIEW *'")) {
+        return { ok: true, stdout: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\n', code: 0 };
+      }
+      if (script.includes('LVCompare.exe')) return { ok: true, stdout: 'True\n', code: 0 };
+      return { ok: true, stdout: '', code: 0 };
+    };
     const deps = {
       stdout: { write: (s) => out.push(s) },
       stderr: { write: () => {} },
-      which: () => true,
-      runDocker: fakeDocker({ imagePresent: true, inContainer: READY_IN_CONTAINER }),
       runHost,
-      evaluate: evaluateLabviewContainerDiagnostics,
-      buildMatrix: buildVariantReadinessMatrix
+      evaluate: evaluateLabviewContainerDiagnostics
     };
-    expect(main(['--all-variants', '--json'], deps)).toBe(0);
-    const matrix = JSON.parse(out.join(''));
-    expect(matrix.variants.map((v) => v.variant)).toEqual(['linux-container', 'linux-host-native']);
-    expect(matrix.allReady).toBe(true);
+    expect(main(['--variant', 'windows-host-native', '--json'], deps)).toBe(0);
+    const result = JSON.parse(out.join(''));
+    expect(result.variant).toBe('windows-host-native');
+    expect(result.readyToCompare).toBe(true);
+  });
+
+  it('gatherWindowsHostNativeProbes: --smoke launches the host CLI and records the version (VHS-REQ-710.5)', () => {
+    const runHost = (script) => {
+      if (script.includes('Get-Command LabVIEWCLI')) {
+        return { ok: true, stdout: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEWCLI.exe\n', code: 0 };
+      }
+      if (script.includes("-Filter 'LabVIEW *'")) return { ok: true, stdout: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\n', code: 0 };
+      if (script.includes('LVCompare.exe')) return { ok: true, stdout: 'True\n', code: 0 };
+      if (script.includes('LabVIEWCLI -Version')) return { ok: true, stdout: 'LabVIEWCLI 26.1.1f0\n', code: 0 };
+      return { ok: true, stdout: '', code: 0 };
+    };
+    const p = gatherProbes({ image: 'x', variant: 'windows-host-native', smoke: true }, { runHost });
+    expect(p.cliLaunch).not.toBeNull();
+    expect(p.cliLaunch.version).toBe('LabVIEWCLI 26.1.1f0');
+  });
+
+  it('gatherWindowsHostNativeProbes: --smoke is a no-op without a host CLI and reports lvcompare absent (VHS-REQ-710.5)', () => {
+    const runHost = (script) => {
+      if (script.includes('LVCompare.exe')) return { ok: true, stdout: 'False\n', code: 0 };
+      return { ok: true, stdout: '', code: 0 };
+    };
+    const p = gatherProbes({ image: 'x', variant: 'windows-host-native', smoke: true }, { runHost });
+    expect(p.labviewCliPath).toBeNull();
+    expect(p.lvcomparePresent).toBe(false);
+    expect(p.cliLaunch).toBeNull();
   });
 
   it('prints usage under --help without probing (VHS-REQ-710.3)', () => {
     const { deps, out } = harness({ imagePresent: true, inContainer: READY_IN_CONTAINER });
     expect(main(['--help'], deps)).toBe(0);
-    expect(out.join('')).toMatch(/--variant|--all-variants|Usage|diagnose/i);
+    expect(out.join('')).toMatch(/--variant|Usage|diagnose/i);
   });
 
   it('renders a Markdown verdict under --markdown (VHS-REQ-710.3)', () => {
@@ -203,55 +250,6 @@ describe('diagnoseLabviewContainer CLI (VHS-REQ-710.3)', () => {
     const text = out.join('');
     expect(text).toContain('readyToCompare=false');
     expect(text).toContain('next:');
-    expect(text).toMatch(/→/);
-  });
-
-  it('renders the all-variants matrix as text without --json (VHS-REQ-710.6)', () => {
-    const out = [];
-    const runHost = (script) =>
-      script.includes('lvcompare')
-        ? { ok: true, stdout: 'true\n', code: 0 }
-        : script.includes('LabVIEW-*-64')
-          ? { ok: true, stdout: '/usr/local/natinst/LabVIEW-2026-64\n', code: 0 }
-          : { ok: true, stdout: '/usr/local/bin/LabVIEWCLI\n', code: 0 };
-    const deps = {
-      stdout: { write: (s) => out.push(s) },
-      stderr: { write: () => {} },
-      which: () => true,
-      runDocker: fakeDocker({ imagePresent: true, inContainer: READY_IN_CONTAINER }),
-      runHost,
-      evaluate: evaluateLabviewContainerDiagnostics,
-      buildMatrix: buildVariantReadinessMatrix
-    };
-    expect(main(['--all-variants'], deps)).toBe(0);
-    const text = out.join('');
-    expect(text).toContain('all-variants readiness matrix');
-    expect(text).toMatch(/linux-container|linux-host-native/);
-  });
-
-  it('renders a not-ready variant in the matrix text (VHS-REQ-710.6)', () => {
-    const out = [];
-    // Host-native ready, container NOT ready (image absent) -> mixed matrix with
-    // a not-ready row carrying a next action.
-    const runHost = (script) =>
-      script.includes('lvcompare')
-        ? { ok: true, stdout: 'true\n', code: 0 }
-        : script.includes('LabVIEW-*-64')
-          ? { ok: true, stdout: '/usr/local/natinst/LabVIEW-2026-64\n', code: 0 }
-          : { ok: true, stdout: '/usr/local/bin/LabVIEWCLI\n', code: 0 };
-    const deps = {
-      stdout: { write: (s) => out.push(s) },
-      stderr: { write: () => {} },
-      which: () => true,
-      runDocker: fakeDocker({ imagePresent: false, inContainer: '' }),
-      runHost,
-      evaluate: evaluateLabviewContainerDiagnostics,
-      buildMatrix: buildVariantReadinessMatrix
-    };
-    expect(main(['--all-variants'], deps)).toBe(0);
-    const text = out.join('');
-    expect(text).toContain('✘ not-ready');
-    expect(text).toContain('✔ ready');
     expect(text).toMatch(/→/);
   });
 
@@ -340,58 +338,6 @@ describe('diagnoseLabviewContainer CLI (VHS-REQ-710.3)', () => {
     expect(p.labviewYear).toBeNull();
     expect(p.cliLaunch).not.toBeNull();
     expect(p.cliLaunch.version).toBe('LabVIEWCLI 24.5.1f0');
-  });
-
-  it('main --all-variants exits 2 when the matrix engine cannot be loaded (VHS-REQ-710.6)', () => {
-    const out: string[] = [];
-    const err: string[] = [];
-    const deps = {
-      stdout: { write: (s: string) => out.push(s) },
-      stderr: { write: (s: string) => err.push(s) },
-      which: () => true,
-      runDocker: fakeDocker({ imagePresent: true, inContainer: READY_IN_CONTAINER }),
-      runHost: () => ({ ok: true, stdout: '', code: 0 }),
-      evaluate: evaluateLabviewContainerDiagnostics,
-      cwd: '/no-compiled-out-here'
-      // buildMatrix not injected -> require(out/...) throws -> exit 2
-    };
-    expect(main(['--all-variants', '--json'], deps)).toBe(2);
-    expect(err.join('')).toMatch(/npm run compile/);
-  });
-
-  it('main --all-variants exits 2 when the matrix builder throws (VHS-REQ-710.6)', () => {
-    const out: string[] = [];
-    const err: string[] = [];
-    const deps = {
-      stdout: { write: (s: string) => out.push(s) },
-      stderr: { write: (s: string) => err.push(s) },
-      which: () => true,
-      runDocker: fakeDocker({ imagePresent: true, inContainer: READY_IN_CONTAINER }),
-      runHost: () => ({ ok: true, stdout: '', code: 0 }),
-      evaluate: evaluateLabviewContainerDiagnostics,
-      buildMatrix: () => {
-        throw new Error('boom-matrix');
-      }
-    };
-    expect(main(['--all-variants', '--json'], deps)).toBe(2);
-    expect(err.join('')).toMatch(/boom-matrix/);
-  });
-
-  it('main --all-variants exits 1 when no variant is ready to compare (VHS-REQ-710.6)', () => {
-    const out: string[] = [];
-    const deps = {
-      stdout: { write: (s: string) => out.push(s) },
-      stderr: { write: () => {} },
-      which: () => true,
-      runDocker: fakeDocker({ imagePresent: false, inContainer: '' }),
-      runHost: () => ({ ok: true, stdout: '', code: 0 }),
-      evaluate: evaluateLabviewContainerDiagnostics,
-      buildMatrix: buildVariantReadinessMatrix
-    };
-    expect(main(['--all-variants'], deps)).toBe(1);
-    const text = out.join('');
-    expect(text).toContain('0/2 variant');
-    expect(text).toContain('✘ not-ready');
   });
 
   it('main exits 2 when the diagnostics engine throws during evaluation (VHS-REQ-710.3)', () => {
@@ -874,25 +820,6 @@ describe('diagnoseLabviewContainer residual branch coverage (#2333)', () => {
       (process.stdout as unknown as { write: typeof originalOut }).write = originalOut;
       (process.stderr as unknown as { write: typeof originalErr }).write = originalErr;
     }
-  });
-
-  it('main --all-variants surfaces a non-Error thrown by the matrix builder as a string', () => {
-    const out: string[] = [];
-    const err: string[] = [];
-    const deps = {
-      stdout: { write: (s: string) => out.push(s) },
-      stderr: { write: (s: string) => err.push(s) },
-      which: () => true,
-      runDocker: fakeDocker({ imagePresent: true, inContainer: READY_IN_CONTAINER }),
-      runHost: () => ({ ok: true, stdout: '', code: 0 }),
-      evaluate: evaluateLabviewContainerDiagnostics,
-      buildMatrix: () => {
-        // eslint-disable-next-line no-throw-literal
-        throw 'matrix-string-failure';
-      }
-    };
-    expect(main(['--all-variants', '--json'], deps)).toBe(2);
-    expect(err.join('')).toContain('matrix-string-failure');
   });
 
   it('main surfaces a non-Error thrown during evaluation as a string', () => {
