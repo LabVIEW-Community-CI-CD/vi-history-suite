@@ -5814,6 +5814,14 @@ Missing numeric IDs are intentional.
     closed on a non-array marker list or a non-positive tolerance, so a temporal
     stopwatch reading is trusted only after the capture is proven geometrically
     aligned.
+  - A pure cross-platform renderer reproduces the mprr calibration surface on a
+    non-Windows host as a self-contained HTML document — a white field with a
+    solid black border and the eight edge fiducials at their exact screen-relative
+    rectangles and expected colors, with marker geometry mirroring mprr's
+    round/twelve-pixel-minimum/clamp rule — and builds the matching
+    `review-capture-calibration-surface-v1` metadata, so a headless capture on
+    Linux is validated against the same calibration contract mprr uses on Windows.
+    It fails closed on dimensions below sixty-four pixels. Pure and deterministic.
 - Agent Work Scope:
   - Keep the engine pure and dependency-free so the readiness contract is unit
     tested without a container; the CLI performs the docker probing through an
@@ -5823,12 +5831,14 @@ Missing numeric IDs are intentional.
   - `src/reporting/containerDiagnostics/labviewContainerDiagnostics.ts`
   - `src/reporting/syncDiagnostics/syncPatternFailureSignature.ts`
   - `src/reporting/syncDiagnostics/mprrCalibrationSurface.ts`
+  - `src/reporting/syncDiagnostics/mprrCalibrationSurfaceRenderer.ts`
   - `scripts/diagnoseLabviewContainer.js`
 - Verification References:
   - `tests/unit/labviewContainerDiagnostics.test.ts`
   - `tests/unit/diagnoseLabviewContainerScript.test.ts`
   - `tests/unit/syncPatternFailureSignature.test.ts`
   - `tests/unit/mprrCalibrationSurface.test.ts`
+  - `tests/unit/mprrCalibrationSurfaceRenderer.test.ts`
 - Change Guidance:
   - Evolve the diagnostics contract additively (schema id
     `vi-history-suite/labview-container-diagnostics@v1`); add new staged checks at
