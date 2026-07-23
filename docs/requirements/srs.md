@@ -5761,6 +5761,17 @@ Missing numeric IDs are intentional.
     requires docker and the image; the command-line entry point selects the
     variant, gathers operating-system-appropriate host probes, and emits
     operating-system-appropriate remediation.
+  - A pure calibration-surface evaluator grounds the spatial prerequisite in the
+    authoritative mprr `review-capture-calibration-surface-v1` contract: a
+    captured full-screen surface is calibrated only when its solid black border
+    is visible and all eight edge fiducial markers are detected, each within its
+    fixed screen-relative rectangle and within a maximum Euclidean RGB distance
+    of sixty of its distinct expected color. It classifies the dominant fault in
+    root-cause order (a missing border is the wrong surface entirely, before a
+    missing marker, before a misplaced marker, before a color drift) and fails
+    closed on a non-array marker list or a non-positive tolerance, so a temporal
+    stopwatch reading is trusted only after the capture is proven geometrically
+    aligned.
 - Agent Work Scope:
   - Keep the engine pure and dependency-free so the readiness contract is unit
     tested without a container; the CLI performs the docker probing through an
@@ -5769,11 +5780,13 @@ Missing numeric IDs are intentional.
   - `docs/architecture/adr/ADR-0029-agent-facing-runtime-and-container-diagnostics.md`
   - `src/reporting/containerDiagnostics/labviewContainerDiagnostics.ts`
   - `src/reporting/syncDiagnostics/syncPatternFailureSignature.ts`
+  - `src/reporting/syncDiagnostics/mprrCalibrationSurface.ts`
   - `scripts/diagnoseLabviewContainer.js`
 - Verification References:
   - `tests/unit/labviewContainerDiagnostics.test.ts`
   - `tests/unit/diagnoseLabviewContainerScript.test.ts`
   - `tests/unit/syncPatternFailureSignature.test.ts`
+  - `tests/unit/mprrCalibrationSurface.test.ts`
 - Change Guidance:
   - Evolve the diagnostics contract additively (schema id
     `vi-history-suite/labview-container-diagnostics@v1`); add new staged checks at
