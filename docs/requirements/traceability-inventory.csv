@@ -443,6 +443,7 @@ docs/simplification/github-cutover-runbook.md,asset-doc,No,GitHub cutover runboo
 docs/simplification/github-first-simplification-analysis.md,asset-doc,No,GitHub-first simplification analysis documentation; process reference.
 docs/testing/test-plan.md,asset-doc,Yes,Test plan documentation including release evidence retention expectations; mapped through RTM.
 docs/vagrant.md,asset-doc,Yes,Vagrant documentation; mapped through RTM.
+docs/windows-hardening-host.md,asset-doc,Yes,Reproducible provisioning checklist for the real Windows hardening host (Docker Linux+Windows containers + LabVIEW 2020/2025/2026 x86/x64) with a content digest; mapped to VHS-REQ-713.
 docs/requirements/traceability-inventory.csv,mapped,Yes,Traceability inventory; mapped through RTM.
 docs/user-guide.md,asset-doc,No,Governed external user-information main guide for ISO 26514 audit posture; reference documentation not directly mapped in RTM.
 docs/faq.md,asset-doc,No,Governed external user-information FAQ for ISO 26514 support and fallback routes; reference documentation not directly mapped in RTM.
@@ -519,9 +520,9 @@ tests/unit/runtimeReportPanel.test.ts,mapped,Yes,Runtime & Report Settings panel
 tests/unit/openRuntimeReportPanelCommand.test.ts,mapped,Yes,Runtime & Report Settings panel command unit tests mapped to VHS-REQ-620 VHS-REQ-645 and VHS-REQ-651.
 tests/unit/comparisonReportOptionSelection.test.ts,mapped,Yes,Comparison report option settings writer unit tests mapped to VHS-REQ-645.
 tests/unit/runtimeAvailabilityWatcher.test.ts,mapped,Yes,Reactive runtime availability watcher unit tests mapped to VHS-REQ-617 and VHS-REQ-620.
-scripts/runWindowsRuntimeMatrix.js,mapped,Yes,Windows runtime conflict verification harness driver; mapped to VHS-REQ-622.
+scripts/runWindowsRuntimeMatrix.js,mapped,Yes,Windows runtime conflict verification harness driver (scenario manifest); mapped to VHS-REQ-622 and VHS-REQ-713.
 scripts/checkMaintainerRunnerPrerequisites.js,mapped,Yes,Maintainer runner prerequisite doctor; mapped to VHS-REQ-598 and VHS-REQ-652.
-tests/unit/runWindowsRuntimeMatrixScript.test.ts,mapped,Yes,Windows runtime conflict verification harness driver tests; mapped to VHS-REQ-622.
+tests/unit/runWindowsRuntimeMatrixScript.test.ts,mapped,Yes,Windows runtime conflict verification harness driver tests; mapped to VHS-REQ-622 and VHS-REQ-713.
 tests/unit/checkMaintainerRunnerPrerequisites.test.ts,mapped,Yes,Maintainer runner prerequisite doctor tests; mapped to VHS-REQ-598 and VHS-REQ-652.
 tests/unit/windowsRuntimeMatrixWorkflow.test.ts,mapped,Yes,Windows runtime matrix workflow contract tests; mapped to VHS-REQ-622.
 .github/workflows/windows-runtime-matrix.yml,release-ci,Yes,Windows runtime matrix workflow; mapped to VHS-REQ-622.

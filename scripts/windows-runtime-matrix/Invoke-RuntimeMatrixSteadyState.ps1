@@ -5,12 +5,18 @@
     selected -LabviewVersion/-SelectedBitness, and asserting that the proof JSON
     carries -ExpectedBlockedReason. Covers the VHS-REQ-622 bitness-conflict
     directions (steady-*, same year / different bitness), the VHS-REQ-653
-    version-conflict directions (version-*, same bitness / different year), and
-    the VHS-REQ-623 non-default VI Server port admit direction (port-*, where
+    version-conflict directions (version-*, same bitness / different year), the
+    VHS-REQ-623 non-default VI Server port admit direction (port-*, where
     -ExpectedBlockedReason is 'none' and -DerivePortFromSelectedIni asserts the
     observed proof port equals the VI Server port read from the SELECTED
     install's own LabVIEW.ini, and that the product read that exact ini -- never
-    a hardcoded or operator-supplied constant).
+    a hardcoded or operator-supplied constant), and the VHS-REQ-713 match
+    direction (match-*, Host == Selected on the default port, -ExpectedBlockedReason
+    'none', proving no false conflict). The scenario id/family is opaque to this
+    helper: it launches -HostVersion/-HostBitness, selects
+    -LabviewVersion/-SelectedBitness, and asserts -ExpectedBlockedReason, so the
+    Node driver's manifest (bitness/version/match/port) drives every cell of the
+    2020/2025/2026 x86/x64 grid through the same helper.
 
 .DESCRIPTION
     Called by `scripts/runWindowsRuntimeMatrix.js`. Emits a per-scenario log
