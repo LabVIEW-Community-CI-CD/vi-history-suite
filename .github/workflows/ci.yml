@@ -133,14 +133,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          # Pin lvkit to an exact version so the committed lvkitRealIntegration
-          # snapshots stay stable across upstream releases: install it as a uv
-          # tool and expose the pinned executable via VIHS_LVKIT_BIN (the compare
-          # provider's highest-priority resolution) rather than the unpinned
-          # 'uvx --from lvkit lvkit' fallback.
+          # Pin lvkit to an exact version and put it on PATH so the compare
+          # provider resolves exactly this build (locator priority: `lvkit` on
+          # PATH) rather than the unpinned `uvx --from lvkit lvkit` fallback,
+          # keeping the committed lvkitRealIntegration snapshots stable across
+          # upstream releases. `uv tool dir --bin` is cross-platform (resolves
+          # the Linux and Windows executable dirs), so this works on both legs.
           uv tool install 'lvkit==0.5.0'
-          echo "VIHS_LVKIT_BIN=$HOME/.local/bin/lvkit" >> "$GITHUB_ENV"
-          "$HOME/.local/bin/lvkit" --version
+          uv tool list
+          echo "$(uv tool dir --bin)" >> "$GITHUB_PATH"
           # Minimal corpus: the two pinned icon-editor commits' VI blobs (the lvkit
           # diff is search-path independent, so no working-tree checkout is needed).
           corpus="$RUNNER_TEMP/lvkit-corpus"
@@ -261,14 +262,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          # Pin lvkit to an exact version so the committed lvkitRealIntegration
-          # snapshots stay stable across upstream releases: install it as a uv
-          # tool and expose the pinned executable via VIHS_LVKIT_BIN (the compare
-          # provider's highest-priority resolution) rather than the unpinned
-          # 'uvx --from lvkit lvkit' fallback.
+          # Pin lvkit to an exact version and put it on PATH so the compare
+          # provider resolves exactly this build (locator priority: `lvkit` on
+          # PATH) rather than the unpinned `uvx --from lvkit lvkit` fallback,
+          # keeping the committed lvkitRealIntegration snapshots stable across
+          # upstream releases. `uv tool dir --bin` is cross-platform (resolves
+          # the Linux and Windows executable dirs), so this works on both legs.
           uv tool install 'lvkit==0.5.0'
-          echo "VIHS_LVKIT_BIN=$HOME/.local/bin/lvkit" >> "$GITHUB_ENV"
-          "$HOME/.local/bin/lvkit" --version
+          uv tool list
+          echo "$(uv tool dir --bin)" >> "$GITHUB_PATH"
           # Minimal corpus: the two pinned icon-editor commits' VI blobs (the lvkit
           # diff is search-path independent, so no working-tree checkout is needed).
           corpus="$RUNNER_TEMP/lvkit-corpus"
