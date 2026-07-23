@@ -14,6 +14,7 @@ const harness = require('../../scripts/runWindowsRuntimeMatrix.js') as {
     selectedBitness: 'x64' | 'x86';
     expectedBlockedReason: string;
     derivePortFromSelectedIni?: boolean;
+    portMode?: 'default' | 'non-default';
   }>;
   CANONICAL_SCENARIOS: readonly string[];
   LEGACY_SCENARIO_ALIASES: Readonly<Record<string, string>>;
@@ -29,6 +30,7 @@ const harness = require('../../scripts/runWindowsRuntimeMatrix.js') as {
         selectedVersion?: string;
         expectedBlockedReason: string;
         derivePortFromSelectedIni?: boolean;
+        portMode?: 'default' | 'non-default';
       }
     >
   >;
@@ -49,17 +51,17 @@ const harness = require('../../scripts/runWindowsRuntimeMatrix.js') as {
     proofDir?: string;
   }) => Array<{
     id: string;
-    parameters: { hostBitness: string; selectedBitness: string; derivePortFromSelectedIni?: boolean };
+    parameters: { hostBitness: string; selectedBitness: string; derivePortFromSelectedIni?: boolean; portMode?: 'default' | 'non-default' };
     proofPath: string;
     logPath: string;
   }>;
   buildPowershellArgs: (
-    scenario: { id: string; parameters: { hostBitness: string; selectedBitness: string }; proofPath: string; logPath: string },
+    scenario: { id: string; parameters: { hostBitness: string; selectedBitness: string; derivePortFromSelectedIni?: boolean; portMode?: 'default' | 'non-default' }; proofPath: string; logPath: string },
     options: { labviewVersion: string; keepRunning: boolean }
   ) => string[];
   normalizeWindowsPath: (value: unknown) => string | undefined;
   summarizeScenario: (
-    scenario: { id: string; parameters: { hostBitness: string; selectedBitness: string; derivePortFromSelectedIni?: boolean }; proofPath: string; logPath: string },
+    scenario: { id: string; parameters: { hostBitness: string; selectedBitness: string; derivePortFromSelectedIni?: boolean; portMode?: 'default' | 'non-default' }; proofPath: string; logPath: string },
     spawnResult: { status: number },
     scenarioLog: unknown
   ) => {
@@ -69,6 +71,7 @@ const harness = require('../../scripts/runWindowsRuntimeMatrix.js') as {
     expected: Record<string, string | number>;
     observed: Record<string, unknown>;
     portOracle?: Record<string, unknown>;
+    portMode?: 'default' | 'non-default';
     artifacts: { proofPath: string; scenarioLogPath: string };
     durationMs: number;
   };
@@ -128,6 +131,7 @@ describe('runWindowsRuntimeMatrix.SCENARIO_MANIFEST', () => {
       expect(row.hostBitness).toBe(row.selectedBitness);
       expect(row.expectedBlockedReason).toBe('none');
       expect(row.derivePortFromSelectedIni).toBeUndefined();
+      expect(row.portMode).toBe('default');
     }
     expect(matchRows).toHaveLength(6);
   });
@@ -138,6 +142,7 @@ describe('runWindowsRuntimeMatrix.SCENARIO_MANIFEST', () => {
       expect(row.hostBitness).toBe(row.selectedBitness);
       expect(row.expectedBlockedReason).toBe('none');
       expect(row.derivePortFromSelectedIni).toBe(true);
+      expect(row.portMode).toBe('non-default');
     }
   });
 
@@ -421,6 +426,45 @@ describe('runWindowsRuntimeMatrix.buildPowershellArgs', () => {
     expect(args).not.toContain('-ExpectedHostTcpPort');
   });
 
+  it('passes -PortMode non-default for the port-admit family and default for match (#2337, VHS-REQ-623)', () => {
+    const portScenario = {
+      id: 'port-2026-x64',
+      parameters: {
+        hostBitness: 'x64',
+        selectedBitness: 'x64',
+        expectedBlockedReason: 'none',
+        derivePortFromSelectedIni: true,
+        portMode: 'non-default'
+      },
+      proofPath: 'proofs/port-2026-x64.proof.json',
+      logPath: 'proofs/port-2026-x64.scenario.json'
+    };
+    const portArgs = harness.buildPowershellArgs(portScenario, {
+      labviewVersion: '2026',
+      keepRunning: false
+    });
+    expect(portArgs[portArgs.indexOf('-PortMode') + 1]).toBe('non-default');
+
+    const matchScenario = {
+      id: 'match-2026-x64',
+      parameters: {
+        hostBitness: 'x64',
+        selectedBitness: 'x64',
+        expectedBlockedReason: 'none',
+        portMode: 'default'
+      },
+      proofPath: 'proofs/match-2026-x64.proof.json',
+      logPath: 'proofs/match-2026-x64.scenario.json'
+    };
+    const matchArgs = harness.buildPowershellArgs(matchScenario, {
+      labviewVersion: '2026',
+      keepRunning: false
+    });
+    expect(matchArgs[matchArgs.indexOf('-PortMode') + 1]).toBe('default');
+    // match derives nothing from the ini; it asserts the observed default port.
+    expect(matchArgs).not.toContain('-DerivePortFromSelectedIni');
+  });
+
   it('omits port-admit flags for non-port scenarios', () => {
     const scenario = {
       id: 'steady-A',
@@ -438,6 +482,7 @@ describe('runWindowsRuntimeMatrix.buildPowershellArgs', () => {
     });
     expect(args).not.toContain('-DerivePortFromSelectedIni');
     expect(args).not.toContain('-ExpectedHostTcpPort');
+    expect(args).not.toContain('-PortMode');
   });
 
   it('never emits an empty-string argument', () => {
@@ -648,7 +693,8 @@ describe('runWindowsRuntimeMatrix.summarizeScenario', () => {
       hostBitness: 'x64',
       selectedBitness: 'x64',
       expectedBlockedReason: 'none',
-      derivePortFromSelectedIni: true
+      derivePortFromSelectedIni: true,
+      portMode: 'non-default'
     },
     proofPath: 'port-A.proof.json',
     logPath: 'port-A.scenario.json'
@@ -770,6 +816,52 @@ describe('runWindowsRuntimeMatrix.summarizeScenario', () => {
     );
     expect(summary.pass).toBe(false);
   });
+
+  it('fails the non-default port family when the selected ini resolves to the DEFAULT port (#2337)', () => {
+    // The product read the right ini and the observed port matches the derived
+    // one, but that port is the default 3363, so the non-default family must not
+    // silently pass -- it never exercised the non-default path it claims.
+    const summary = harness.summarizeScenario(
+      portScenario,
+      { status: 0 },
+      portLog({ derivedExpectedTcpPort: 3363, observedPort: 3363, isNonDefaultPort: false })
+    );
+    expect(summary.pass).toBe(false);
+    expect(summary.failureReason).toContain('non-default VI Server port');
+    expect(summary.portMode).toBe('non-default');
+  });
+
+  it('enforces the default port for the match family (#2337)', () => {
+    const matchScenario = {
+      id: 'match-2026-x64',
+      parameters: {
+        hostBitness: 'x64',
+        selectedBitness: 'x64',
+        expectedBlockedReason: 'none',
+        portMode: 'default'
+      },
+      proofPath: 'match.proof.json',
+      logPath: 'match.scenario.json'
+    };
+    const okLog = {
+      pass: true,
+      durationMs: 900,
+      observed: {
+        runtimeBlockedReason: 'none',
+        hostBitness: 'x64',
+        selectedBitness: 'x64',
+        hostLabviewTcpPort: 3363
+      }
+    };
+    const okSummary = harness.summarizeScenario(matchScenario, { status: 0 }, okLog);
+    expect(okSummary.pass).toBe(true);
+    expect(okSummary.portMode).toBe('default');
+
+    const badLog = { ...okLog, observed: { ...okLog.observed, hostLabviewTcpPort: 3399 } };
+    const badSummary = harness.summarizeScenario(matchScenario, { status: 0 }, badLog);
+    expect(badSummary.pass).toBe(false);
+    expect(badSummary.failureReason).toContain('default VI Server port');
+  });
 });
 
 describe('runWindowsRuntimeMatrix.runRuntimeMatrix', () => {
@@ -824,6 +916,10 @@ describe('runWindowsRuntimeMatrix.runRuntimeMatrix', () => {
       observed.selectedVersion = row.selectedVersion;
     }
     const log: Record<string, unknown> = { pass: true, durationMs: 100, observed };
+    if (row.family === 'match') {
+      // #2337: the match family enforces the documented default VI Server port.
+      observed.hostLabviewTcpPort = 3363;
+    }
     if (row.family === 'port') {
       const ini = `${labviewRoot(row.selectedBitness)}\\LabVIEW ${row.selectedVersion}\\LabVIEW.ini`;
       observed.hostLabviewTcpPort = 3366;
@@ -925,7 +1021,8 @@ describe('runWindowsRuntimeMatrix.runRuntimeMatrix', () => {
       'pass',
       'durationMs',
       'artifacts',
-      'portOracle'
+      'portOracle',
+      'portMode'
     ]);
     expect(Object.keys(retainedPortScenario?.portOracle ?? {})).toEqual([
       'selectedLabviewIniPath',

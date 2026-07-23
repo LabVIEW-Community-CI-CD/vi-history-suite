@@ -54,10 +54,13 @@ const DEFAULT_EVIDENCE_OUT = path.join(
 // least one conflict and one admit direction:
 //   - bitness (VHS-REQ-622): same year, opposite bitness -> bitness conflict.
 //   - version (VHS-REQ-653): same bitness, different year -> version conflict.
-//   - match: Host == Selected on the default port -> no conflict (the negative
-//     control the fixed matrix lacked per-cell).
-//   - port (VHS-REQ-623): Host == Selected on a non-default VI Server port ->
-//     no conflict, port derived from the selected install's own LabVIEW.ini.
+//   - match: Host == Selected on the DEFAULT port -> no conflict (the negative
+//     control the fixed matrix lacked per-cell); portMode 'default' asserts the
+//     observed VI Server port is the documented Windows default.
+//   - port (VHS-REQ-623): Host == Selected on a NON-DEFAULT VI Server port ->
+//     no conflict, port derived from the selected install's own LabVIEW.ini;
+//     portMode 'non-default' asserts the derived port is not the default, so
+//     the family provably exercises the non-default path it claims to cover.
 // The legacy ids (steady-A/B, version-A/B, port-A) remain accepted as aliases
 // that resolve to their canonical manifest row so the existing prompt/dispatch
 // keep working.
@@ -66,6 +69,10 @@ const MATRIX_BITNESSES = Object.freeze(['x86', 'x64']);
 const BITNESS_CONFLICT_REASON = 'windows-host-bitness-conflict';
 const VERSION_CONFLICT_REASON = 'windows-host-version-conflict';
 const NO_CONFLICT_REASON = 'none';
+// VHS-REQ-623: the documented Windows VI Server default when server.tcp.port is
+// absent from LabVIEW.ini (mirrors DEFAULT_WINDOWS_LABVIEW_TCP_PORT in the
+// product and $DefaultWindowsLabviewTcpPort in the PowerShell helper).
+const DEFAULT_WINDOWS_LABVIEW_TCP_PORT = 3363;
 
 function buildScenarioManifest() {
   const rows = [];
@@ -121,7 +128,8 @@ function buildScenarioManifest() {
         selectedVersion: year,
         hostBitness: bitness,
         selectedBitness: bitness,
-        expectedBlockedReason: NO_CONFLICT_REASON
+        expectedBlockedReason: NO_CONFLICT_REASON,
+        portMode: 'default'
       });
     }
   }
@@ -138,7 +146,8 @@ function buildScenarioManifest() {
         hostBitness: bitness,
         selectedBitness: bitness,
         expectedBlockedReason: NO_CONFLICT_REASON,
-        derivePortFromSelectedIni: true
+        derivePortFromSelectedIni: true,
+        portMode: 'non-default'
       });
     }
   }
@@ -267,8 +276,8 @@ function getUsage() {
     'CLI. Four families cover the 2020/2025/2026 x86/x64 grid:',
     '  bitness (same year, opposite bitness -> bitness conflict),',
     '  version (same bitness, different year -> version conflict),',
-    '  match   (Host == Selected, default port -> no conflict),',
-    '  port    (Host == Selected, VI Server port derived from the selected ini -> no conflict).',
+    '  match   (Host == Selected, enforced default VI Server port -> no conflict),',
+    '  port    (Host == Selected, enforced non-default ini-derived port -> no conflict).',
     '',
     'Options:',
     '  --scenario <id>         all | light | <canonical-id> | <legacy-alias>',
@@ -369,6 +378,13 @@ function buildPowershellArgs(scenario, options) {
   if (scenario.parameters.derivePortFromSelectedIni) {
     args.push('-DerivePortFromSelectedIni');
   }
+  // VHS-REQ-623 (#2337): admit families enforce their port mode -- 'default'
+  // asserts the observed VI Server port is the documented Windows default,
+  // 'non-default' asserts the ini-derived port is not the default -- so each
+  // admit family provably exercises the port mode it claims.
+  if (scenario.parameters.portMode) {
+    args.push('-PortMode', scenario.parameters.portMode);
+  }
   if (options.keepRunning) {
     args.push('-KeepRunning');
   }
@@ -439,6 +455,18 @@ function summarizeScenario(scenario, spawnResult, scenarioLog) {
       expectedIni === normalizeWindowsPath(observed.hostLabviewIniPath);
   }
 
+  // VHS-REQ-623 (#2337): each admit family enforces its declared port mode.
+  // 'non-default' requires the ini-derived port (surfaced by the helper's
+  // portOracle) to differ from the documented Windows default, so a selected
+  // install left on the default port fails instead of silently passing.
+  // 'default' requires the observed proof port to be that documented default.
+  let portModeMatches = true;
+  if (scenario.parameters.portMode === 'non-default') {
+    portModeMatches = portOracle != null && portOracle.isNonDefaultPort === true;
+  } else if (scenario.parameters.portMode === 'default') {
+    portModeMatches = observed.hostLabviewTcpPort === DEFAULT_WINDOWS_LABVIEW_TCP_PORT;
+  }
+
   // VHS-REQ-713: version-family scenarios (Host year != Selected year at the
   // same bitness) additionally assert the observed host/selected years match the
   // manifest row, so a version conflict is proven to arise from the intended
@@ -465,7 +493,8 @@ function summarizeScenario(scenario, spawnResult, scenarioLog) {
       observed.selectedBitness === expected.selectedBitness &&
       versionMatches &&
       portMatches &&
-      iniPathMatches
+      iniPathMatches &&
+      portModeMatches
   );
   let failureReason = scenarioLog?.failureReason
     ?? (spawnResult.status === 0 ? undefined : `powershell-exit-${spawnResult.status}`);
@@ -484,6 +513,13 @@ function summarizeScenario(scenario, spawnResult, scenarioLog) {
       failureReason =
         `expected hostLabviewIniPath=${expected.hostLabviewIniPath ?? '<derive-failed>'}, ` +
         `observed=${observed.hostLabviewIniPath ?? '<none>'}`;
+    } else if (!portModeMatches) {
+      failureReason =
+        scenario.parameters.portMode === 'non-default'
+          ? `expected a non-default VI Server port (ini-derived != ${DEFAULT_WINDOWS_LABVIEW_TCP_PORT}), ` +
+            `observed derived port=${portOracle?.derivedExpectedTcpPort ?? '<derive-failed>'}`
+          : `expected the default VI Server port (${DEFAULT_WINDOWS_LABVIEW_TCP_PORT}), ` +
+            `observed hostLabviewTcpPort=${observed.hostLabviewTcpPort ?? '<none>'}`;
     }
   }
 
@@ -501,6 +537,9 @@ function summarizeScenario(scenario, spawnResult, scenarioLog) {
   };
   if (portOracle !== undefined) {
     summary.portOracle = portOracle;
+  }
+  if (scenario.parameters.portMode) {
+    summary.portMode = scenario.parameters.portMode;
   }
   return summary;
 }

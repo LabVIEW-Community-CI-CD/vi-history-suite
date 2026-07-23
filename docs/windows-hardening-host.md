@@ -137,8 +137,8 @@ The matrix driver
 |---|---|---|---|
 | `bitness` | 6 | same year, opposite bitness | `windows-host-bitness-conflict` |
 | `version` | 12 | same bitness, different year (both directions, incl. 2020 convert path) | `windows-host-version-conflict` |
-| `match` | 6 | host == selected, default port | `none` |
-| `port` | 6 | host == selected, VI Server port derived from the selected ini | `none` |
+| `match` | 6 | host == selected, enforced default VI Server port | `none` |
+| `port` | 6 | host == selected, enforced non-default port derived from the selected ini | `none` |
 
 ```powershell
 # Full grid (30 rows):
