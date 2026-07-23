@@ -326,4 +326,50 @@ describe('docs link check script', () => {
     expect(stderr.write).toHaveBeenCalledWith(expect.stringContaining('Link check failed: 1'));
     expect(stdout.write).not.toHaveBeenCalled();
   });
+
+  it('skips Markdown links whose normalized target is empty', () => {
+    expect(extractMarkdownLinks('[Empty](<>)')).toEqual([]);
+  });
+
+  it('skips HTML links whose trimmed target is empty', () => {
+    expect(extractHtmlLinks('<a href=" ">Blank</a>')).toEqual([]);
+  });
+
+  it('skips headings that slug to an empty anchor', () => {
+    expect(markdownAnchors('# ***\n\n## Real Heading')).toEqual(new Set(['real-heading']));
+  });
+
+  it('resolves the working directory from argv[0] when no cwd dependency is supplied', () => {
+    const root = createFixture({
+      'README.md': '# Home\n'
+    });
+    const stdout = { write: vi.fn() };
+    const stderr = { write: vi.fn() };
+
+    const exitCode = main([root], { stdout, stderr });
+
+    expect(exitCode).toBe(0);
+    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Link check passed'));
+  });
+
+  it('skips directory entries that are neither files nor directories', () => {
+    const root = createFixture({
+      'docs/real.md': '# Real\n'
+    });
+    let symlinkCreated = false;
+    try {
+      fs.symlinkSync(path.join(root, 'docs', 'real.md'), path.join(root, 'link.md'));
+      symlinkCreated = true;
+    } catch {
+      // Symlink creation may be unavailable without elevated privileges (e.g.
+      // some Windows hosts); the non-file skip branch is exercised where it is.
+    }
+
+    const files = collectDocumentationFiles(root);
+
+    expect(files).toEqual(['docs/real.md']);
+    if (symlinkCreated) {
+      expect(files).not.toContain('link.md');
+    }
+  });
 });

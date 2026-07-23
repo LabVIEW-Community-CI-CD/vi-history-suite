@@ -2,7 +2,7 @@ import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 interface Criterion {
   criterionId: string;
@@ -56,6 +56,7 @@ const {
       now?: () => Date;
       readFile?: (relativePath: string) => string | undefined;
       stdout?: { write: (chunk: string) => void };
+      stderr?: { write: (chunk: string) => void };
       stepSummaryPath?: string;
       appendStepSummary?: (filePath: string, content: string) => void;
     }
@@ -452,6 +453,61 @@ describe('requirement acceptance-criteria inventory: additional branch coverage 
       expect(fs.readFileSync(summaryPath, 'utf8')).toContain('VHS-REQ-001');
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('returns 1 and reports a parse error via the default process.stderr on an unknown flag', () => {
+    // Exercises the parseArgs catch block and its `deps.stderr || process.stderr`
+    // default plus the `error instanceof Error ? ... : ...` message branch.
+    const stderrSpy = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
+    const stdoutSpy = vi.spyOn(process.stdout, 'write').mockReturnValue(true);
+    try {
+      const code = main(['--markdown'], { cwd: '/repo', readFile: makeReadFile(FIXTURE_FILES) });
+      expect(code).toBe(1);
+      expect(stderrSpy.mock.calls.length).toBeGreaterThan(0);
+    } finally {
+      stderrSpy.mockRestore();
+      stdoutSpy.mockRestore();
+    }
+  });
+
+  it('returns 1 and writes the parse error to an injected stderr on an unknown flag', () => {
+    // Same parse-failure path, but with an injected stderr sink to cover the
+    // `deps.stderr` arm of the catch-block stream selection.
+    let stderr = '';
+    const code = main(['--markdown'], {
+      cwd: '/repo',
+      readFile: makeReadFile(FIXTURE_FILES),
+      stderr: { write: (t: string) => { stderr += t; } }
+    });
+    expect(code).toBe(1);
+    expect(stderr.length).toBeGreaterThan(0);
+  });
+
+  it('writes the report to the default process.stdout when no stdout dep is injected', () => {
+    // Exercises the `deps.stdout || process.stdout` default stream.
+    const stdoutSpy = vi.spyOn(process.stdout, 'write').mockReturnValue(true);
+    try {
+      const code = main([], { cwd: '/repo', readFile: makeReadFile(FIXTURE_FILES) });
+      expect(code).toBe(0);
+      expect(stdoutSpy.mock.calls.some(([chunk]) => String(chunk).includes('[requirements-criteria]'))).toBe(true);
+    } finally {
+      stdoutSpy.mockRestore();
+    }
+  });
+
+  it('reports the mutual-exclusion error via the default process.stderr when no stderr dep is injected', () => {
+    // Exercises the assertSingleOutputMode catch block with the default
+    // `process.stderr` stream (no injected stderr).
+    const stderrSpy = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
+    const stdoutSpy = vi.spyOn(process.stdout, 'write').mockReturnValue(true);
+    try {
+      const code = main(['--json', '--schema'], { cwd: '/repo', readFile: makeReadFile(FIXTURE_FILES) });
+      expect(code).toBe(1);
+      expect(stderrSpy.mock.calls.some(([chunk]) => String(chunk).includes('one output mode'))).toBe(true);
+    } finally {
+      stderrSpy.mockRestore();
+      stdoutSpy.mockRestore();
     }
   });
 });

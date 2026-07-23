@@ -255,6 +255,22 @@ describe('buildRiskLedger rendering and CLI', () => {
     expect(markdown).toContain('coverage/debt/VHS-REQ-100');
   });
 
+  it('renderSummary names the next target and hasSelectableHighRisk flags a CRITICAL selectable entry (VHS-REQ-601.30)', () => {
+    // renderSummary over a ledger that HAS a nextTarget exercises the
+    // `if (ledger.ranking.nextTarget)` truthy arm (target + suggested action).
+    const ledger = buildRiskLedger(signalsFrom({ coverage: COVERAGE_WITH_DEBT, requirements: HEALTHY_HEALTH }), META);
+    const summary = renderSummary(ledger);
+    expect(summary).toContain('[risk-ledger] Next target:');
+    expect(summary).toContain('Suggested action:');
+    // A selectable CRITICAL entry short-circuits the `=== 'CRITICAL'` arm of the
+    // tier test in hasSelectableHighRisk.
+    expect(
+      hasSelectableHighRisk({
+        entries: [{ severityTier: 'CRITICAL', selectable: true, linuxExecutable: true, dimension: 'coverage' }]
+      })
+    ).toBe(true);
+  });
+
   it('renders a schema with the ledger enums and optional provenance (VHS-REQ-601)', () => {
     const schema = JSON.parse(renderSchema());
     expect(schema.$id).toBe(RISK_LEDGER_SCHEMA_ID);
@@ -572,6 +588,63 @@ describe('buildRiskLedger coverage/standards entry edge cases (VHS-REQ-601.30)',
     expect(missing.severityTier).toBe('MEDIUM');
     expect(missing.severityScore).toBeGreaterThan(0);
   });
+
+  it('reads alternate directCheck/profile/gate field names for standards risk (VHS-REQ-601.30)', () => {
+    // Exercises the fallback arms of the `?? ??`/`??` field selectors: a check
+    // using summary/findings/check instead of requirementsQuality/findingCount/
+    // name, a check with neither name nor check (the 'direct-check' fallback), a
+    // profile using scorecard/name instead of status/profile, and a gate lacking
+    // an explicit gate name and missingProof array.
+    const entries = buildStandardsEntries({
+      directChecks: [{ check: 'alt-check', summary: { findings: 3 } }, { summary: { findings: 1 } }],
+      profiles: [{ name: 'alt-profile', scorecard: 'FAIL' }],
+      standardsGateDetailSummary: [{ status: 'FAIL' }]
+    });
+    const ids = entries.map((entry: any) => entry.id);
+    expect(ids).toContain('standards/requirements-quality/alt-check');
+    expect(ids).toContain('standards/requirements-quality/direct-check');
+    expect(ids).toContain('standards/gate/alt-profile');
+    expect(ids).toContain('standards/gate-detail/gate');
+    const check = entries.find((entry: any) => entry.id === 'standards/requirements-quality/alt-check');
+    expect(check.title).toContain('3 finding(s)');
+  });
+
+  it('skips a passing directCheck (the `if (!ok)` false arm) (VHS-REQ-601.30)', () => {
+    // A directCheck that is ok with zero findings must produce no entry.
+    expect(
+      buildStandardsEntries({
+        directChecks: [{ name: 'good', requirementsQuality: { ok: true, findingCount: 0 } }],
+        profiles: []
+      })
+    ).toEqual([]);
+  });
+
+  it('builds a MEDIUM uncited-criteria verification entry via the criteriaUncited fallback (VHS-REQ-601.30)', () => {
+    // reason.count is absent, so `reason.count ?? requirement.criteriaUncited ?? 0`
+    // falls through to requirement.criteriaUncited.
+    const entries = buildVerificationEntries({
+      integrity: { success: true },
+      attention: [
+        { reqId: 'VHS-REQ-777', criteriaUncited: 4, attentionReasons: [{ reasonId: 'uncited-criteria' }] }
+      ]
+    });
+    const entry = entries.find((e: any) => e.id === 'verification/uncited-criteria/VHS-REQ-777');
+    expect(entry).toBeDefined();
+    expect(entry.severityTier).toBe('MEDIUM');
+    expect(entry.title).toContain('4 acceptance criterion');
+  });
+
+  it('returns [] for falsy health/coverage inputs and reports an unknown integrity count (VHS-REQ-601.30)', () => {
+    // Exercises the `if (!health)` / `if (!coverageMap)` guard arms and the
+    // `health.integrity.violationCount ?? 'unknown'` fallback.
+    expect(buildVerificationEntries(null)).toEqual([]);
+    expect(buildCoverageEntries(null)).toEqual([]);
+    const entries = buildVerificationEntries({ integrity: { success: false }, attention: [] });
+    const integrity = entries.find((e: any) => e.id === 'verification/structural-integrity');
+    expect(integrity).toBeDefined();
+    expect(integrity.severityTier).toBe('CRITICAL');
+    expect(integrity.title).toContain('unknown violation');
+  });
 });
 
 describe('buildRiskLedger signal loading (VHS-REQ-601.30)', () => {
@@ -725,5 +798,32 @@ describe('buildRiskLedger main output modes (VHS-REQ-601.30)', () => {
     const ledger = buildRiskLedger(signalsFrom({}), META);
     const summary = renderSummary(ledger);
     expect(summary).toContain('Next target: none (no selectable Linux-executable risk).');
+  });
+
+  it('main fails closed (exit 1) and reports a parse error on an unknown flag (VHS-REQ-601.30)', () => {
+    // Exercises the parseArgs catch block in main and its
+    // `error instanceof Error ? error.message : String(error)` message branch.
+    const err: string[] = [];
+    const code = main(['--bogus'], {
+      stdout: { write: () => undefined },
+      stderr: { write: (text: string) => err.push(text) }
+    });
+    expect(code).toBe(1);
+    expect(err.join('')).toContain('Unknown argument');
+  });
+
+  it('main attaches provenance to JSON output under --include-provenance (VHS-REQ-601.30)', () => {
+    // Exercises the `options.includeProvenance ? buildProvenance(...) : undefined`
+    // truthy arm and the provenance-attached JSON render.
+    const out: string[] = [];
+    const code = main(['--json', '--include-provenance'], {
+      cwd: makeTempDir(),
+      ...injectedSignals,
+      stdout: { write: (text: string) => out.push(text) },
+      stderr: { write: () => undefined }
+    });
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out.join('')) as { provenance?: unknown };
+    expect(parsed.provenance).toBeDefined();
   });
 });

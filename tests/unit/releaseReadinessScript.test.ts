@@ -963,3 +963,158 @@ describe('release-authority gate (VHS-REQ-670)', () => {
     expect(verdict.status).toBe('ATTENTION');
   });
 });
+
+describe('checkReleaseReadiness residual branch coverage (VHS-REQ-615.13)', () => {
+  it('labels release-gating tracks without a string trackId as unnamed (fresh and stale)', () => {
+    const fresh = checkReleaseAttestation(
+      { tracks: [{ releaseGating: true, lastValidatedVersion: '1.33.2' }] },
+      '1.33.2'
+    );
+    expect(fresh.passed).toBe(true);
+    expect(fresh.details).toContain('unnamed-track');
+
+    const stale = checkReleaseAttestation(
+      { tracks: [{ releaseGating: true, lastValidatedVersion: '0.0.0' }] },
+      '1.33.2'
+    );
+    expect(stale.passed).toBe(false);
+    expect(stale.details).toContain('unnamed-track');
+  });
+
+  it('checkBoxProvenanceBinding treats a non-object runtime manifest as no gating tracks', () => {
+    const result = checkBoxProvenanceBinding(undefined, { sha256: 'a'.repeat(64) });
+    expect(result.passed).toBe(true);
+    expect(result.details).toContain('No release-gating track records a structured boxSha256');
+  });
+
+  it('main derives an advisory verdict when optional signals degrade with explicit runtime evidence', () => {
+    const cwd = makeTempDir();
+    const code = main([], {
+      cwd,
+      // Every committed file read returns undefined -> shipped manifest, box
+      // manifest, changelog, and requirement sources all degrade gracefully.
+      readFile: () => undefined,
+      riskLedgerModule: {
+        loadCoverageSignal: () => ({ available: false }),
+        loadRequirementsSignal: () => ({ available: false }),
+        loadRuntimeValidationSignal: () => ({ available: false }),
+        buildRiskLedger: () => CLEAN_LEDGER,
+        hasSelectableHighRisk
+      },
+      manifestModule: { buildRequirementsManifest: () => ({ integrityDigest: undefined }) },
+      supplyChainModule: { collectSupplyChainState: () => ({}) },
+      releaseStateModule: { gatherSignals: () => ({}), deriveReleaseAuthority: () => undefined },
+      // Explicit runtime evidence -> the ledger-derivation fallback is skipped.
+      runtimeEvidence: { version: '1.33.2', tracks: [] },
+      getPackageVersion: () => '1.33.2',
+      getGitCommit: () => 'deadbeef',
+      now: () => new Date('2026-07-16T00:00:00.000Z'),
+      stdout: { write: () => undefined },
+      stderr: { write: () => undefined }
+    });
+    expect(code).toBe(0);
+  });
+
+  it('main derives a verdict when the runtime ledger is unavailable and no evidence is supplied', () => {
+    const cwd = makeTempDir();
+    const code = main([], {
+      cwd,
+      readFile: () => undefined,
+      riskLedgerModule: {
+        loadCoverageSignal: () => ({ available: false }),
+        loadRequirementsSignal: () => ({ available: false }),
+        loadRuntimeValidationSignal: () => ({ available: false }),
+        buildRiskLedger: () => CLEAN_LEDGER,
+        hasSelectableHighRisk
+      },
+      manifestModule: { buildRequirementsManifest: () => ({ integrityDigest: 'D' }) },
+      supplyChainModule: {
+        // A fresh rollup with no per-artifact records -> the artifacts field is
+        // not an array, exercising the `: undefined` arm of the records guard.
+        collectSupplyChainState: () => ({ status: 'fresh', attentionCount: 0, artifactCount: 1 })
+      },
+      releaseStateModule: { gatherSignals: () => ({}), deriveReleaseAuthority: () => undefined },
+      // No runtimeEvidence -> the derive-from-ledger block runs but the signal is
+      // unavailable, so it degrades to undefined.
+      getPackageVersion: () => '1.33.2',
+      getGitCommit: () => 'deadbeef',
+      now: () => new Date('2026-07-16T00:00:00.000Z'),
+      stdout: { write: () => undefined },
+      stderr: { write: () => undefined }
+    });
+    expect(code).toBe(0);
+  });
+
+  it('main --runtime-evidence degrades when the evidence file is unreadable', () => {
+    const code = main(['--runtime-evidence', 'missing.json'], {
+      cwd: makeTempDir(),
+      readFile: () => undefined,
+      riskLedgerModule: {
+        loadCoverageSignal: () => ({ available: false }),
+        loadRequirementsSignal: () => ({ available: false }),
+        loadRuntimeValidationSignal: () => ({ available: false }),
+        buildRiskLedger: () => CLEAN_LEDGER,
+        hasSelectableHighRisk
+      },
+      manifestModule: { buildRequirementsManifest: () => ({ integrityDigest: 'D' }) },
+      supplyChainModule: { collectSupplyChainState: () => undefined },
+      releaseStateModule: { gatherSignals: () => ({}), deriveReleaseAuthority: () => undefined },
+      getPackageVersion: () => '1.33.2',
+      getGitCommit: () => 'deadbeef',
+      now: () => new Date('2026-07-16T00:00:00.000Z'),
+      stdout: { write: () => undefined },
+      stderr: { write: () => undefined }
+    });
+    expect(code).toBe(0);
+  });
+
+  it('main --schema emits the schema and returns zero', () => {
+    const chunks: string[] = [];
+    const code = main(['--schema'], {
+      cwd: makeTempDir(),
+      stdout: { write: (chunk: string) => { chunks.push(chunk); } },
+      stderr: { write: () => undefined }
+    });
+    expect(code).toBe(0);
+    expect(chunks.join('').length).toBeGreaterThan(0);
+  });
+
+  function degradedSignalDeps(cwd: string, capture: string[]): Record<string, unknown> {
+    return {
+      cwd,
+      readFile: () => undefined,
+      riskLedgerModule: {
+        loadCoverageSignal: () => ({ available: false }),
+        loadRequirementsSignal: () => ({ available: false }),
+        loadRuntimeValidationSignal: () => ({ available: false }),
+        buildRiskLedger: () => CLEAN_LEDGER,
+        hasSelectableHighRisk
+      },
+      manifestModule: { buildRequirementsManifest: () => ({ integrityDigest: 'D' }) },
+      supplyChainModule: { collectSupplyChainState: () => undefined },
+      releaseStateModule: { gatherSignals: () => ({}), deriveReleaseAuthority: () => undefined },
+      getPackageVersion: () => '1.33.2',
+      getGitCommit: () => 'deadbeef',
+      now: () => new Date('2026-07-16T00:00:00.000Z'),
+      stdout: { write: (chunk: string) => { capture.push(chunk); } },
+      stderr: { write: () => undefined }
+    };
+  }
+
+  it('main --json renders the verdict as JSON', () => {
+    const chunks: string[] = [];
+    const code = main(['--json'], degradedSignalDeps(makeTempDir(), chunks));
+    expect(code).toBe(0);
+    const parsed = JSON.parse(chunks.join(''));
+    expect(parsed.status).toMatch(/READY|ATTENTION/);
+  });
+
+  it('main --json --include-provenance attaches provenance to the JSON verdict', () => {
+    const chunks: string[] = [];
+    const code = main(['--json', '--include-provenance'], degradedSignalDeps(makeTempDir(), chunks));
+    expect(code).toBe(0);
+    const parsed = JSON.parse(chunks.join(''));
+    expect(parsed.provenance).toBeDefined();
+  });
+});
+

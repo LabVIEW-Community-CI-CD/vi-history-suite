@@ -1,3 +1,5 @@
+import * as fs from 'node:fs';
+import * as os from 'node:os';
 import * as path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
@@ -187,6 +189,27 @@ describe('requirements cross-reference integrity guard', () => {
     expect(checkReplacementResolution(rows)).toEqual([
       { subject: 'VHS-REQ-003', detail: "ReplacementID 'VHS-REQ-999' is not a defined id-index ID" }
     ]);
+  });
+
+  it('checkReferenceAgreement compares matching blocks and skips RTM rows with no SRS block', () => {
+    const sections = new Map([['VHS-REQ-001', { implementation: [], verification: [] }]]);
+
+    // Section present with agreeing (empty) references -> the compare path runs
+    // with no violation.
+    expect(
+      checkReferenceAgreement(
+        [{ ReqID: 'VHS-REQ-001', ImplementationRefs: '', VerificationRefs: '' }],
+        sections
+      )
+    ).toEqual([]);
+
+    // Row whose ReqID has no SRS block -> the `if (!section)` continue is taken.
+    expect(
+      checkReferenceAgreement(
+        [{ ReqID: 'VHS-REQ-999', ImplementationRefs: 'src/x.ts', VerificationRefs: '' }],
+        sections
+      )
+    ).toEqual([]);
   });
 
   it('extracts Implementation and Verification references from an SRS block', () => {
@@ -473,5 +496,30 @@ describe('requirements cross-reference integrity guard', () => {
 
     expect(code).toBe(0);
     expect(stdoutChunks.join('')).toContain('Cross-reference integrity check passed.');
+  });
+
+  it('main writes the step summary via the default fs appender when none is injected', () => {
+    const cwd = path.join(path.sep, 'repo');
+    const summaryDir = fs.mkdtempSync(path.join(os.tmpdir(), 'vihs-reqintegrity-'));
+    const summaryFile = path.join(summaryDir, 'summary.md');
+    const stdoutChunks: string[] = [];
+
+    try {
+      // A passing repo + a real step-summary path but NO injected appender ->
+      // the default fs.appendFileSync appender runs and the success branch of
+      // renderStepSummary is exercised.
+      const code = main([], {
+        cwd,
+        readFile: makeReadFile(makeFixtureFiles()),
+        fileExists: makeFileExists(cwd, ['src/a.ts']),
+        stepSummaryPath: summaryFile,
+        stdout: { write: (chunk) => stdoutChunks.push(chunk) }
+      });
+
+      expect(code).toBe(0);
+      expect(fs.readFileSync(summaryFile, 'utf8')).toContain('## Requirements Cross-Reference Integrity');
+    } finally {
+      fs.rmSync(summaryDir, { recursive: true, force: true });
+    }
   });
 });

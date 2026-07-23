@@ -138,6 +138,13 @@ describe('buildDevToolsRelease helpers (DS1)', () => {
   it('readRequirementsManifestDigest returns the digest or null when absent', () => {
     const dir = makeFixtureRepo();
     expect(readRequirementsManifestDigest(dir)).toBe('REQDIGEST123');
+    // A manifest that parses but whose integrityDigest is not a string exercises
+    // the ternary's non-string arm (returns null rather than the value).
+    fs.writeFileSync(
+      path.join(dir, 'out', 'requirements', 'requirements-manifest.json'),
+      JSON.stringify({ integrityDigest: 42 })
+    );
+    expect(readRequirementsManifestDigest(dir)).toBeNull();
     fs.rmSync(path.join(dir, 'out', 'requirements', 'requirements-manifest.json'));
     expect(readRequirementsManifestDigest(dir)).toBeNull();
   });
@@ -189,6 +196,19 @@ describe('collectDevToolsRelease + main (DS1)', () => {
     fs.writeFileSync(path.join(dir, 'scripts', 'toolB.js'), 'module.exports = 999;\n', 'utf8');
     const after = collectDevToolsRelease(dir, {}, deterministicDeps(dir));
     expect(after.contentDigest).not.toBe(before.contentDigest);
+  });
+
+  it('stamps generatedAt from the real clock when no now dep is injected', () => {
+    // Omitting deps.now exercises the `typeof deps.now === 'function' ? ... :
+    // new Date()` real-clock arm; git/version boundaries stay injected.
+    const dir = makeFixtureRepo();
+    const manifest = collectDevToolsRelease(dir, { channel: 'stable' }, {
+      cwd: dir,
+      getGitCommit: () => 'deadbeefcafe',
+      getPackageVersion: () => '1.33.2'
+    });
+    expect(typeof manifest.generatedAt).toBe('string');
+    expect(Number.isNaN(Date.parse(manifest.generatedAt))).toBe(false);
   });
 
   it('parseArgs captures channel/manifest/output/json and rejects unknown flags', () => {

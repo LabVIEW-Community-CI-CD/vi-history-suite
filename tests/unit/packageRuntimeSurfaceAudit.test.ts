@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 const {
   ALLOWED_RUNTIME_DEPENDENCIES,
@@ -266,5 +266,26 @@ describe('auditPackagedRuntimeSurface orchestration', () => {
 
     expect(result.packagedPaths).toContain('node_modules/jsonc-parser/package.json');
     expect(stdoutChunks.join('')).toContain('Packaged runtime surface passed.');
+  });
+
+  it('uses the default process.stdout and repoRoot cwd when those deps are omitted', () => {
+    // Exercises the `deps.cwd ?? repoRoot` and `deps.stdout ?? process.stdout`
+    // fallback arms by omitting cwd and stdout from the injected deps.
+    const stdoutSpy = vi.spyOn(process.stdout, 'write').mockReturnValue(true);
+    try {
+      const result = auditPackagedRuntimeSurface({
+        vsceCliPath: 'vsce-cli.js',
+        execPath: 'node',
+        spawnSync: () => ({
+          status: 0,
+          stdout: ['package.json', 'out/extension.js', 'node_modules/jsonc-parser/package.json'].join('\n')
+        }),
+        manifest: { dependencies: { 'jsonc-parser': '^3.3.1' } }
+      });
+      expect(result.packagedPaths).toContain('out/extension.js');
+      expect(stdoutSpy.mock.calls.some(([chunk]) => String(chunk).includes('[package-audit]'))).toBe(true);
+    } finally {
+      stdoutSpy.mockRestore();
+    }
   });
 });

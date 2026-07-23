@@ -142,6 +142,7 @@ module.exports = {
   checkDockerfile,
   checkWorkbenchGuide,
   checkDocsGateScript,
+  main,
   renderResult,
   runDocumentationWorkbenchGate
 };
