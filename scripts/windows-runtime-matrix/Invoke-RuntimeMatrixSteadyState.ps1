@@ -6,7 +6,7 @@
     carries -ExpectedBlockedReason. Covers the VHS-REQ-622 bitness-conflict
     directions (steady-*, same year / different bitness), the VHS-REQ-653
     version-conflict directions (version-*, same bitness / different year), the
-    VHS-REQ-623 non-default VI Server port admit direction (port-*, where
+    VHS-REQ-623 VI Server port admit direction (port-*, where
     -ExpectedBlockedReason is 'none' and -DerivePortFromSelectedIni asserts the
     observed proof port equals the VI Server port read from the SELECTED
     install's own LabVIEW.ini, and that the product read that exact ini -- never
