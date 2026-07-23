@@ -5619,6 +5619,15 @@ Missing numeric IDs are intentional.
     ordered create/start/stop/delete commands as data, and a companion renderer
     describes the plan; executing it (spawning `logman`) lives in the actor
     harness so the builder stays pure and deterministic.
+  - A pure pipeline composes the whole contract for one mirror actor: it builds
+    the capture plan, runs the capture around the first-run comparison through a
+    single injected boundary, parses the resulting PDH-CSV, assembles the
+    artifact, and returns both the rendered pull-request comment and the TDMS
+    channel model. A Vagrant self-hosted runner and a Docker container actor each
+    supply only their own capture function, so both sources print the same
+    comment and feed the same embedding; it fails closed when the capture does
+    not return a PDH-CSV string, and is deterministic given a deterministic
+    capture and clock.
 - Agent Work Scope:
   - Change the ADR, this requirement, and the governance contract test together;
     keep the required gate deterministic and never make a live image pull the
@@ -5635,6 +5644,7 @@ Missing numeric IDs are intentional.
   - `scripts/renderFirstRunPerfmon.js`
   - `src/reporting/mirror/perfmonTdmsModel.ts`
   - `src/reporting/mirror/perfmonCapturePlan.ts`
+  - `src/reporting/mirror/firstRunPerfmonPipeline.ts`
 - Verification References:
   - `tests/unit/mirrorModeGovernance.test.ts`
   - `tests/unit/mirrorParityDigest.test.ts`
@@ -5647,6 +5657,7 @@ Missing numeric IDs are intentional.
   - `tests/unit/renderFirstRunPerfmonScript.test.ts`
   - `tests/unit/perfmonTdmsModel.test.ts`
   - `tests/unit/perfmonCapturePlan.test.ts`
+  - `tests/unit/firstRunPerfmonPipeline.test.ts`
 - Change Guidance:
   - This is a governance-foundation requirement: keep the documented invariants
     (human/Vagrant-only authorship, run-only container, Vagrant→`merge_group`
