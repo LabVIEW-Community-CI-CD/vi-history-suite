@@ -397,6 +397,7 @@
     "runtime:validation:record": "node scripts/recordRuntimeValidation.js",
     "mirror:benchmark:record": "node scripts/recordMirrorBenchmark.js",
     "mirror:reconcile": "node scripts/reconcileMirrorParity.js",
+    "perfmon:render": "node scripts/renderFirstRunPerfmon.js",
     "devtools:release": "node scripts/buildDevToolsRelease.js",
     "devtools:release:verify": "node scripts/verifyDevToolsRelease.js",
     "supply-chain:state": "node scripts/buildSupplyChainState.js",
