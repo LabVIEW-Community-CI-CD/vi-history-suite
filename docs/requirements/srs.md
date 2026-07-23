@@ -5586,8 +5586,12 @@ Missing numeric IDs are intentional.
     and fails closed on a non-PDH document; and a deterministic renderer projects
     the series into GitHub-native Mermaid xychart blocks so a pull request prints
     the first-run performance trace at runtime whether the run came from a Docker
-    container or a self-hosted runner. The columnar series are the
-    channel-per-series foundation for the eventual TDMS embedding.
+    container or a self-hosted runner. A companion builder assembles the series
+    with the actor, its source (Docker container or self-hosted runner), and
+    per-cycle timing into the first-run performance-monitor artifact (schema
+    `vi-history-suite/first-run-perfmon@v1`) that a renderer prints as the
+    pull-request comment; the columnar series are the channel-per-series
+    foundation for the eventual TDMS embedding.
 - Agent Work Scope:
   - Change the ADR, this requirement, and the governance contract test together;
     keep the required gate deterministic and never make a live image pull the

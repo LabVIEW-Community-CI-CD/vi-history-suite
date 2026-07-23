@@ -274,3 +274,134 @@ export function renderPerfmonMermaidXychart(
   ];
   return lines.join('\n');
 }
+
+export const FIRST_RUN_PERFMON_ARTIFACT_SCHEMA = 'vi-history-suite/first-run-perfmon@v1';
+export const FIRST_RUN_PERFMON_ARTIFACT_SCHEMA_VERSION = 1;
+
+/** The mirror actor a first-run capture came from (both feed one artifact contract). */
+export type PerfmonActorSource = 'docker-container' | 'self-hosted-runner';
+
+/**
+ * Minimal, decoupled per-cycle timing (a subset of runtime/cycleMeter's
+ * CycleMeasurement) carried alongside the sample series so the artifact records
+ * both the sampled resource trace and the run's own cycle timing.
+ */
+export interface PerfmonCycleMeasurement {
+  readonly cycleIndex: number;
+  readonly durationMs: number;
+  readonly outcome: string;
+}
+
+/**
+ * The whole first-run performance-monitor artifact: the sampled resource series,
+ * the run's cycle timing, and the actor identity, from either mirror source. It
+ * is the payload printed on a pull request now and embedded into TDMS later (each
+ * perf series is a channel; actor, source, interval, and peaks are properties).
+ */
+export interface FirstRunPerfmonArtifact {
+  readonly schema: typeof FIRST_RUN_PERFMON_ARTIFACT_SCHEMA;
+  readonly schemaVersion: typeof FIRST_RUN_PERFMON_ARTIFACT_SCHEMA_VERSION;
+  readonly source: PerfmonActorSource;
+  readonly actor: string;
+  readonly capturedAtIso: string;
+  readonly wallMs: number | null;
+  readonly perf: PerfmonSampleSeries;
+  readonly cycles: readonly PerfmonCycleMeasurement[];
+}
+
+export interface BuildFirstRunPerfmonArtifactInput {
+  readonly source: PerfmonActorSource;
+  readonly actor: string;
+  readonly capturedAtIso: string;
+  readonly perf: PerfmonSampleSeries;
+  readonly wallMs?: number | null;
+  readonly cycles?: readonly PerfmonCycleMeasurement[];
+}
+
+/**
+ * Assemble a first-run perfmon artifact, fail-closed on a bad source, actor, or a
+ * series that is not a parsed perfmon sample series. Pure and deterministic.
+ */
+export function buildFirstRunPerfmonArtifact(
+  input: BuildFirstRunPerfmonArtifactInput
+): FirstRunPerfmonArtifact {
+  if (input.source !== 'docker-container' && input.source !== 'self-hosted-runner') {
+    throw new Error('buildFirstRunPerfmonArtifact source must be docker-container or self-hosted-runner.');
+  }
+  if (typeof input.actor !== 'string' || input.actor.trim().length === 0) {
+    throw new Error('buildFirstRunPerfmonArtifact actor must be a non-empty string.');
+  }
+  if (!input.perf || input.perf.schema !== PERFMON_SAMPLE_SERIES_SCHEMA) {
+    throw new Error('buildFirstRunPerfmonArtifact requires a parsed perfmon sample series.');
+  }
+  if (typeof input.capturedAtIso !== 'string' || input.capturedAtIso.trim().length === 0) {
+    throw new Error('buildFirstRunPerfmonArtifact capturedAtIso must be a non-empty ISO timestamp.');
+  }
+  return {
+    schema: FIRST_RUN_PERFMON_ARTIFACT_SCHEMA,
+    schemaVersion: FIRST_RUN_PERFMON_ARTIFACT_SCHEMA_VERSION,
+    source: input.source,
+    actor: input.actor.trim(),
+    capturedAtIso: input.capturedAtIso,
+    wallMs: typeof input.wallMs === 'number' && Number.isFinite(input.wallMs) ? input.wallMs : null,
+    perf: input.perf,
+    cycles: Array.isArray(input.cycles) ? input.cycles : []
+  };
+}
+
+function minOf(values: (number | null)[]): number | null {
+  let min: number | null = null;
+  for (const value of values) {
+    if (value !== null && (min === null || value < min)) {
+      min = value;
+    }
+  }
+  return min;
+}
+
+function fmtPct(value: number | null): string {
+  return value === null ? 'n/a' : `${Math.round(value * 10) / 10}%`;
+}
+
+/**
+ * Render the full artifact as a self-contained pull-request comment: an actor +
+ * timing header, a peak/pressure summary table, and the Mermaid xychart trace.
+ * Printed on the PR at runtime for either mirror source with no external image
+ * host. Deterministic.
+ */
+export function renderFirstRunPerfmonPrComment(artifact: FirstRunPerfmonArtifact): string {
+  const p = artifact.perf;
+  const minMem = minOf(p.series.memAvailMb);
+  const cadence =
+    artifact.wallMs !== null
+      ? `${p.sampleCount} samples @ ~${p.intervalMs}ms, wall ${artifact.wallMs}ms`
+      : `${p.sampleCount} samples @ ~${p.intervalMs}ms`;
+  const table = [
+    '| metric | value |',
+    '| --- | ---: |',
+    `| Peak CPU total | ${fmtPct(p.peaks.cpuTotalPct)} |`,
+    `| Peak disk active | ${fmtPct(p.peaks.diskTotalPct)} |`,
+    `| Min available memory | ${minMem === null ? 'n/a' : `${minMem} MB`} |`
+  ];
+  if (p.series.labviewCpuPct) {
+    table.push(`| Peak LabVIEW CPU | ${fmtPct(p.peaks.labviewCpuPct ?? null)} |`);
+  }
+  if (p.series.labviewWorkingSetMb) {
+    const peakWs = p.peaks.labviewWorkingSetMb ?? null;
+    table.push(`| Peak LabVIEW working set | ${peakWs === null ? 'n/a' : `${peakWs} MB`} |`);
+  }
+  for (const cycle of artifact.cycles) {
+    table.push(`| Cycle ${cycle.cycleIndex} (${cycle.outcome}) | ${cycle.durationMs} ms |`);
+  }
+  return [
+    `### First-run performance monitor — ${artifact.source}`,
+    '',
+    `- actor: \`${artifact.actor}\``,
+    `- captured: ${artifact.capturedAtIso}`,
+    `- cadence: ${cadence}`,
+    '',
+    ...table,
+    '',
+    renderPerfmonMermaidXychart(p, { title: `${artifact.source} first run` })
+  ].join('\n');
+}

@@ -7,7 +7,10 @@ import { describe, expect, it } from 'vitest';
 import {
   parsePdhCsv,
   renderPerfmonMermaidXychart,
-  PERFMON_SAMPLE_SERIES_SCHEMA
+  buildFirstRunPerfmonArtifact,
+  renderFirstRunPerfmonPrComment,
+  PERFMON_SAMPLE_SERIES_SCHEMA,
+  FIRST_RUN_PERFMON_ARTIFACT_SCHEMA
 } from '../../src/reporting/mirror/perfmonSampleSeries';
 
 const HEADER_3 = String.raw`"(PDH-CSV 4.0) (Pacific Daylight Time)(420)","\\HARNESS\Processor(_Total)\% Processor Time","\\HARNESS\Memory\Available MBytes","\\HARNESS\PhysicalDisk(_Total)\% Disk Time"`;
@@ -134,5 +137,96 @@ describe('parsePdhCsv + renderer edge cases (VHS-REQ-707.12)', () => {
     const s = parsePdhCsv([HEADER_3, '"bad-row","1","2","3"'].join('\n'));
     expect(s.sampleCount).toBe(0);
     expect(renderPerfmonMermaidXychart(s)).toContain('x-axis "sample" 0 --> 0');
+  });
+});
+
+describe('buildFirstRunPerfmonArtifact + renderFirstRunPerfmonPrComment (VHS-REQ-707.12)', () => {
+  const series = () =>
+    parsePdhCsv(
+      [
+        HEADER_3,
+        '"07/23/2026 06:04:44.000","10","4000","5"',
+        '"07/23/2026 06:04:45.000","60","3800","40"'
+      ].join('\n')
+    );
+
+  it('assembles a schema-versioned artifact from either source with cycles and wall time', () => {
+    const artifact = buildFirstRunPerfmonArtifact({
+      source: 'self-hosted-runner',
+      actor: 'vagrant-win-x86-hostnative',
+      capturedAtIso: '2026-07-23T06:04:43.000Z',
+      perf: series(),
+      wallMs: 175000,
+      cycles: [{ cycleIndex: 1, durationMs: 120000, outcome: 'compared' }]
+    });
+    expect(artifact.schema).toBe(FIRST_RUN_PERFMON_ARTIFACT_SCHEMA);
+    expect(artifact.source).toBe('self-hosted-runner');
+    expect(artifact.wallMs).toBe(175000);
+    expect(artifact.cycles).toHaveLength(1);
+    expect(artifact.perf.schema).toBe(PERFMON_SAMPLE_SERIES_SCHEMA);
+  });
+
+  it('defaults wall to null and cycles to empty, and fails closed on bad input', () => {
+    const artifact = buildFirstRunPerfmonArtifact({
+      source: 'docker-container',
+      actor: 'docker-linux-x64',
+      capturedAtIso: '2026-07-23T06:04:43.000Z',
+      perf: series()
+    });
+    expect(artifact.wallMs).toBeNull();
+    expect(artifact.cycles).toEqual([]);
+    const iso = '2026-07-23T06:04:43.000Z';
+    expect(() =>
+      buildFirstRunPerfmonArtifact({ source: 'bad' as never, actor: 'x', capturedAtIso: iso, perf: series() })
+    ).toThrow(/source/);
+    expect(() =>
+      buildFirstRunPerfmonArtifact({ source: 'docker-container', actor: '  ', capturedAtIso: iso, perf: series() })
+    ).toThrow(/actor/);
+    expect(() =>
+      buildFirstRunPerfmonArtifact({ source: 'docker-container', actor: 'x', capturedAtIso: '', perf: series() })
+    ).toThrow(/capturedAtIso/);
+    expect(() =>
+      buildFirstRunPerfmonArtifact({
+        source: 'docker-container',
+        actor: 'x',
+        capturedAtIso: iso,
+        perf: { schema: 'nope' } as never
+      })
+    ).toThrow(/perfmon sample series/);
+  });
+
+  it('renders a PR comment with actor header, peak/pressure table, cycles, and the Mermaid chart', () => {
+    const artifact = buildFirstRunPerfmonArtifact({
+      source: 'self-hosted-runner',
+      actor: 'vagrant-win-x86-hostnative',
+      capturedAtIso: '2026-07-23T06:04:43.000Z',
+      perf: series(),
+      wallMs: 175000,
+      cycles: [{ cycleIndex: 1, durationMs: 120000, outcome: 'compared' }]
+    });
+    const md = renderFirstRunPerfmonPrComment(artifact);
+    expect(md).toContain('### First-run performance monitor — self-hosted-runner');
+    expect(md).toContain('vagrant-win-x86-hostnative');
+    expect(md).toContain('Peak CPU total | 60%');
+    expect(md).toContain('Min available memory | 3800 MB');
+    expect(md).toContain('Cycle 1 (compared) | 120000 ms');
+    expect(md).toContain('wall 175000ms');
+    expect(md).toContain('```mermaid');
+  });
+
+  it('includes LabVIEW process rows when the series carries them', () => {
+    const perf = parsePdhCsv(
+      [HEADER_5, '"07/23/2026 06:04:44.000","10","4000","5","55.5","104857600"'].join('\n')
+    );
+    const md = renderFirstRunPerfmonPrComment(
+      buildFirstRunPerfmonArtifact({
+        source: 'self-hosted-runner',
+        actor: 'x',
+        capturedAtIso: '2026-07-23T06:04:43.000Z',
+        perf
+      })
+    );
+    expect(md).toContain('Peak LabVIEW CPU');
+    expect(md).toContain('Peak LabVIEW working set | 100 MB');
   });
 });
