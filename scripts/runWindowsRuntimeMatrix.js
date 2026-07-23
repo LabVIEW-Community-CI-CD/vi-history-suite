@@ -69,6 +69,13 @@ const MATRIX_BITNESSES = Object.freeze(['x86', 'x64']);
 const BITNESS_CONFLICT_REASON = 'windows-host-bitness-conflict';
 const VERSION_CONFLICT_REASON = 'windows-host-version-conflict';
 const NO_CONFLICT_REASON = 'none';
+// #2338: LabVIEW years below this cannot be a comparison-report TARGET, so the
+// product blocks a SELECTED version below it as unsupported-for-comparison
+// BEFORE it ever reaches the host/selected version-conflict check. Confirmed on
+// real hardware: selecting 2020 (host 2026) returns the unsupported reason, not
+// windows-host-version-conflict.
+const MIN_COMPARISON_YEAR = 2025;
+const UNSUPPORTED_SELECTED_VERSION_REASON = 'labview-version-unsupported-for-comparison-report';
 // VHS-REQ-623: the documented Windows VI Server default when server.tcp.port is
 // absent from LabVIEW.ini (mirrors DEFAULT_WINDOWS_LABVIEW_TCP_PORT in the
 // product and $DefaultWindowsLabviewTcpPort in the PowerShell helper).
@@ -94,6 +101,10 @@ function buildScenarioManifest() {
   }
 
   // version family: same bitness, different year, both directions (12 rows).
+  // #2338: a row whose SELECTED year is below MIN_COMPARISON_YEAR is blocked as
+  // unsupported-for-comparison (the selected version cannot be a comparison
+  // target) rather than as a host/selected version conflict; the remaining rows
+  // (selected year comparison-supported) still assert the version conflict.
   const versionPairs = [
     ['2020', '2025'],
     ['2020', '2026'],
@@ -105,6 +116,7 @@ function buildScenarioManifest() {
       [upper, lower]
     ]) {
       for (const bitness of MATRIX_BITNESSES) {
+        const selectedUnsupported = Number(selectedVersion) < MIN_COMPARISON_YEAR;
         rows.push({
           id: `version-${hostVersion}-${selectedVersion}-${bitness}`,
           family: 'version',
@@ -112,7 +124,9 @@ function buildScenarioManifest() {
           selectedVersion,
           hostBitness: bitness,
           selectedBitness: bitness,
-          expectedBlockedReason: VERSION_CONFLICT_REASON
+          expectedBlockedReason: selectedUnsupported
+            ? UNSUPPORTED_SELECTED_VERSION_REASON
+            : VERSION_CONFLICT_REASON
         });
       }
     }
