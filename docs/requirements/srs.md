@@ -5822,16 +5822,28 @@ Missing numeric IDs are intentional.
     `review-capture-calibration-surface-v1` metadata, so a headless capture on
     Linux is validated against the same calibration contract mprr uses on Windows.
     It fails closed on dimensions below sixty-four pixels. Pure and deterministic.
+  - A pure deterministic agent-feedback cross-check mirrors mprr ADR-0041 for the
+    calibration surface: the primary feedback surface is packet-derived and a
+    screenshot is only the fallback cross-check witness, so a calibration segment
+    is authoritative only when the screenshot witness agrees with the
+    packet-derived contract and the sealed-feedback latency is within the
+    ten-second budget, fails closed above the budget, and is otherwise advisory
+    agent assistance that never overrides the authority floor. It keys on the
+    packet timestamp under a shared segment identity and fails closed on a
+    non-finite timestamp, an empty segment id, or a negative latency. Pure and
+    deterministic.
 - Agent Work Scope:
   - Keep the engine pure and dependency-free so the readiness contract is unit
     tested without a container; the CLI performs the docker probing through an
     injected boundary. This diagnostics capability never authors `.vi` binaries.
 - Implementation References:
   - `docs/architecture/adr/ADR-0029-agent-facing-runtime-and-container-diagnostics.md`
+  - `docs/architecture/adr/ADR-0032-deterministic-packet-derived-agent-feedback-with-screenshot-cross-check.md`
   - `src/reporting/containerDiagnostics/labviewContainerDiagnostics.ts`
   - `src/reporting/syncDiagnostics/syncPatternFailureSignature.ts`
   - `src/reporting/syncDiagnostics/mprrCalibrationSurface.ts`
   - `src/reporting/syncDiagnostics/mprrCalibrationSurfaceRenderer.ts`
+  - `src/reporting/syncDiagnostics/mprrAgentFeedbackCrossCheck.ts`
   - `scripts/diagnoseLabviewContainer.js`
 - Verification References:
   - `tests/unit/labviewContainerDiagnostics.test.ts`
@@ -5839,6 +5851,7 @@ Missing numeric IDs are intentional.
   - `tests/unit/syncPatternFailureSignature.test.ts`
   - `tests/unit/mprrCalibrationSurface.test.ts`
   - `tests/unit/mprrCalibrationSurfaceRenderer.test.ts`
+  - `tests/unit/mprrAgentFeedbackCrossCheck.test.ts`
 - Change Guidance:
   - Evolve the diagnostics contract additively (schema id
     `vi-history-suite/labview-container-diagnostics@v1`); add new staged checks at

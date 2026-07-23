@@ -54,3 +54,4 @@ The index and the required structure are enforced by `npm run adr:check`
 | [ADR-0029](./ADR-0029-agent-facing-runtime-and-container-diagnostics.md) | Agent-Facing Runtime And Container Diagnostics | Accepted |
 | [ADR-0030](./ADR-0030-cross-host-empty-swap-comparison-validation.md) | Cross-Host Empty-Swap Comparison Validation | Accepted |
 | [ADR-0031](./ADR-0031-labview-free-lvkit-semantic-backend.md) | LabVIEW-Free lvkit Semantic Backend | Accepted |
+| [ADR-0032](./ADR-0032-deterministic-packet-derived-agent-feedback-with-screenshot-cross-check.md) | Deterministic Packet-Derived Agent Feedback With Screenshot Cross-Check | Accepted |
