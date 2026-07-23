@@ -213,11 +213,16 @@ describe('documentation workbench gate', () => {
   });
 
   it('main runs the gate against the committed repo and returns zero', () => {
+    // Pin process.cwd() to the repo root so main() (which falls back to
+    // process.cwd() via runDocumentationWorkbenchGate) evaluates the committed
+    // surfaces even when the suite is executed from a non-repo working directory.
+    const cwdSpy = vi.spyOn(process, 'cwd').mockReturnValue(repoRoot);
     const writeSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
     try {
       expect(main()).toBe(0);
     } finally {
       writeSpy.mockRestore();
+      cwdSpy.mockRestore();
     }
   });
 });
