@@ -5596,6 +5596,18 @@ Missing numeric IDs are intentional.
     window and actor fingerprint and emits either the artifact JSON or its
     pull-request comment for either mirror source, with the filesystem, clock, and
     engine injected so the command stays deterministic without a real capture.
+  - A pure TDMS channel model projects the first-run performance-monitor artifact
+    into its eventual embedding target (schema
+    `vi-history-suite/perfmon-tdms-model@v1`): each sample series becomes a named
+    numeric channel in a `resource-samples` group with its unit, waveform
+    increment, sample count, and peak carried as channel properties; the actor,
+    source, cadence, and capture time become file and group properties; and the
+    run's per-cycle timing becomes a second `run-cycles` group whose channels
+    carry the cycle index and duration with each cycle outcome as a group
+    property. Missing samples stay a no-value so a real TDMS writer serializes the
+    model without re-deriving anything, and a companion renderer prints a
+    deterministic layout summary. Pure and deterministic, with no I/O and no
+    writer dependency.
 - Agent Work Scope:
   - Change the ADR, this requirement, and the governance contract test together;
     keep the required gate deterministic and never make a live image pull the
@@ -5610,6 +5622,7 @@ Missing numeric IDs are intentional.
   - `scripts/reconcileMirrorParity.js`
   - `src/reporting/mirror/perfmonSampleSeries.ts`
   - `scripts/renderFirstRunPerfmon.js`
+  - `src/reporting/mirror/perfmonTdmsModel.ts`
 - Verification References:
   - `tests/unit/mirrorModeGovernance.test.ts`
   - `tests/unit/mirrorParityDigest.test.ts`
@@ -5620,6 +5633,7 @@ Missing numeric IDs are intentional.
   - `tests/unit/recordMirrorBenchmarkScript.test.ts`
   - `tests/unit/perfmonSampleSeries.test.ts`
   - `tests/unit/renderFirstRunPerfmonScript.test.ts`
+  - `tests/unit/perfmonTdmsModel.test.ts`
 - Change Guidance:
   - This is a governance-foundation requirement: keep the documented invariants
     (human/Vagrant-only authorship, run-only container, Vagrant→`merge_group`
