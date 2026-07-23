@@ -142,8 +142,8 @@ export function buildTimingCorrelationModel(input: BuildTimingCorrelationInput):
     const end = Math.min(startFrame + framesPerSample, frames.length);
     for (let j = startFrame; j < end; j += 1) {
       const frame = frames[j];
-      if (frame && frame.wellFormed && typeof frame.decodedCentiseconds === 'number') {
-        return frame.decodedCentiseconds;
+      if (frame && frame.wellFormed && Number.isFinite(frame.decodedCentiseconds)) {
+        return frame.decodedCentiseconds as number;
       }
     }
     return null;
