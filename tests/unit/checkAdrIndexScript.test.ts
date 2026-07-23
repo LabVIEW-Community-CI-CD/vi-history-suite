@@ -2,12 +2,13 @@ import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
-const { auditAdrIndex, auditSyrsCoverage, buildGovernanceState } = require('../../scripts/checkAdrIndex.js') as {
+const { auditAdrIndex, auditSyrsCoverage, buildGovernanceState, main } = require('../../scripts/checkAdrIndex.js') as {
   auditAdrIndex: (repoRoot: string) => { ok: boolean; violations: string[] };
   auditSyrsCoverage: (repoRoot: string) => { ok: boolean; violations: string[] };
   buildGovernanceState: (repoRoot: string) => { consistent: boolean; violationCount: number; violations: string[] };
+  main: (repoRoot?: string) => number;
 };
 
 const tempRoots: string[] = [];
@@ -362,6 +363,16 @@ describe('auditSyrsCoverage', () => {
     // A SYRS with no Active SRS child (only a Retired row) is never demanded.
     expect(result.violations.some((v) => v.includes('VHS-SYS-REQ-099'))).toBe(false);
   });
+
+  it('reports every required SYRS as unlinked when no ADR cites any system requirement ([] fallback)', () => {
+    // validAdr cites VHS-REQ-001 but no VHS-SYS-REQ, so the SYRS citation set
+    // matches nothing and falls back to [] (the `?? []` arm); both
+    // Active-parenting SYRS ids are then reported as unlinked.
+    const root = makeRepoWithRtm({ 'ADR-0001-a.md': validAdr('0001', 'A') }, rtm);
+    const result = auditSyrsCoverage(root);
+    expect(result.ok).toBe(false);
+    expect(result.violations.some((v) => v.includes('VHS-SYS-REQ-001') && v.includes('VHS-SYS-REQ-004'))).toBe(true);
+  });
 });
 
 describe('auditSyrsCoverage reverse citation validation', () => {
@@ -438,6 +449,31 @@ describe('auditAdrIndex reverse citation validation', () => {
     expect(result.ok).toBe(false);
     expect(result.violations.some((v) => v.includes('VHS-REQ-300') && v.includes('is not Active'))).toBe(true);
   });
+
+  it('reports an Active requirement that no ADR cites as unlinked (empty citation set → [] fallback)', () => {
+    // The ADR cites only a system requirement, so the VHS-REQ citation set
+    // matches nothing and falls back to [] (the `?? []` arm). The Active
+    // VHS-REQ-100 row is then reported as unlinked into any ADR.
+    const body = [
+      '# ADR-0001: A',
+      '',
+      '- Status: Accepted',
+      '- Date: 2026-07-19',
+      '',
+      '## Context',
+      'Anchored to VHS-SYS-REQ-001 with no software requirement.',
+      '## Decision',
+      'y',
+      '## Consequences',
+      '- z',
+      ''
+    ].join('\n');
+    const result = auditAdrIndex(makeRepoWithRtm(body, rtm));
+    expect(result.ok).toBe(false);
+    expect(
+      result.violations.some((v) => v.includes('not linked into any ADR') && v.includes('VHS-REQ-100'))
+    ).toBe(true);
+  });
 });
 
 describe('the real repository ADR set', () => {
@@ -460,5 +496,34 @@ describe('buildGovernanceState (VHS-REQ-692 ADR/governance domain source)', () =
     expect(state.consistent).toBe(false);
     expect(state.violationCount).toBeGreaterThan(0);
     expect(state.violationCount).toBe(state.violations.length);
+  });
+});
+
+describe('main (adr-check CLI entrypoint)', () => {
+  it('defaults repoRoot to process.cwd() and returns 0 with a consistent banner', () => {
+    // No argument exercises the `repoRoot = process.cwd()` default; cwd is
+    // pinned to the real repo root so the success path is deterministic.
+    const repoRoot = path.resolve(__dirname, '..', '..');
+    const cwd = vi.spyOn(process, 'cwd').mockReturnValue(repoRoot);
+    const out = vi.spyOn(process.stdout, 'write').mockReturnValue(true);
+    try {
+      expect(main()).toBe(0);
+      expect(out.mock.calls.some(([chunk]) => String(chunk).includes('consistent'))).toBe(true);
+    } finally {
+      out.mockRestore();
+      cwd.mockRestore();
+    }
+  });
+
+  it('returns 1 and writes each violation to stderr when the ADR set is broken', () => {
+    const broken = makeAdrRepo({ 'ADR-0001-first.md': validAdr('0001', 'First') }, { index: null });
+    const err = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
+    try {
+      expect(main(broken)).toBe(1);
+      expect(err.mock.calls.some(([chunk]) => String(chunk).includes('check failed'))).toBe(true);
+      expect(err.mock.calls.some(([chunk]) => String(chunk).includes('Missing ADR index'))).toBe(true);
+    } finally {
+      err.mockRestore();
+    }
   });
 });

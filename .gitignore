@@ -3,6 +3,7 @@ out/
 out-tests/
 dist/
 coverage/
+.cov-*/
 .vscode-test/
 .stryker-tmp/
 reports/

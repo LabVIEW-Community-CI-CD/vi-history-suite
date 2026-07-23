@@ -324,4 +324,48 @@ describe('checkEnvSync: default fs factories and error paths (VHS-REQ-697.4)', (
     expect(out.exitCode).toBe(0);
     expect(typeof out.stdout).toBe('string');
   });
+
+  it('readInstalledLockHash treats a whitespace-only marker as absent', () => {
+    // The recorded marker holds only whitespace -> String(...).trim() is empty ->
+    // the `|| undefined` fallback reports the marker as missing.
+    const deps = { readFileSync: () => '   \n' };
+    expect(readInstalledLockHash('/repo', deps)).toBeUndefined();
+  });
+
+  it('recordInstalledLockHash stringifies a non-Error write failure', () => {
+    // A thrown value without a `.message` exercises the `: error` arm of the
+    // failure-reason expression.
+    const deps = {
+      readFileSync: () => Buffer.from('{"lockfileVersion":3}'),
+      existsSync: () => true,
+      writeFileSync: () => {
+        throw 'raw string failure';
+      }
+    };
+    const outcome = recordInstalledLockHash('/repo', deps);
+    expect(outcome).toMatchObject({ action: 'failed', reason: 'raw string failure' });
+  });
+
+  it('renderReport omits the blocking remedy line for advisory-only problems', () => {
+    const lines = renderReport(
+      { problems: [{ id: 'out-stale', hard: false, message: 'stale', remedy: 'npm run compile' }], hardStale: false },
+      {}
+    );
+    expect(lines.some((line) => line.includes('advisory'))).toBe(true);
+    expect(lines.some((line) => line.includes('blocking condition'))).toBe(false);
+  });
+
+  it('--record-lock-hash includes the skip reason when no lockfile is present', () => {
+    const deps = {
+      repoRoot: '/repo',
+      readFileSync: () => {
+        throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+      },
+      existsSync: () => true,
+      writeFileSync: () => undefined
+    };
+    const out = run(['--record-lock-hash'], deps);
+    expect(out.exitCode).toBe(0);
+    expect(String(out.stdout)).toContain('(no-package-lock)');
+  });
 });
