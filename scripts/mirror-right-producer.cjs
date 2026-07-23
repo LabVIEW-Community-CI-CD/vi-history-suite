@@ -41,9 +41,10 @@
  *   VIHS_R_BASE           base git rev (default HEAD~1)
  *   VIHS_R_SELECTED       selected git rev (default HEAD)
  *   VIHS_R_IMAGE          container image for the ACTIVE platform (overrides the platform
- *                         default; Linux default 2026q1-linux, Windows default 2026q1-windows)
- *   VIHS_R_LINUX_IMAGE    explicit Linux-container image (default 2026q1-linux)
- *   VIHS_R_WINDOWS_IMAGE  explicit Windows-container image (default 2026q1-windows)
+ *                         default; Linux default nationalinstruments/labview:2026q1-linux,
+ *                         Windows default nationalinstruments/labview:2026q1-windows)
+ *   VIHS_R_LINUX_IMAGE    explicit Linux-container image (default nationalinstruments/labview:2026q1-linux)
+ *   VIHS_R_WINDOWS_IMAGE  explicit Windows-container image (default nationalinstruments/labview:2026q1-windows)
  *   VIHS_R_VERSION        LabVIEW year (default 2026)
  *   VIHS_R_BITNESS        x86 | x64 (default x64) — fingerprint metadata
  *   VIHS_R_BUILD          LabVIEW build string for the fingerprint (default <version>-unknown)
@@ -115,6 +116,17 @@ function loadFingerprint() {
       throw new Error(`VIHS_R_FINGERPRINT set to "${env.VIHS_R_FINGERPRINT}" but the file does not exist (refusing host fallback).`);
     }
     const inputs = JSON.parse(fs.readFileSync(env.VIHS_R_FINGERPRINT, 'utf8'));
+    // Enforce the from-within rule: a supplied fingerprint MUST assert it was
+    // captured in-container. Reject a host-captured (or unlabeled) fingerprint so
+    // it cannot be recorded as the right-channel actor identity and corrupt the
+    // cross-actor parity/normalization.
+    if (!inputs || inputs.capturedFrom !== 'in-container') {
+      throw new Error(
+        'VIHS_R_FINGERPRINT must be an in-container capture (capturedFrom: "in-container"); received ' +
+          `capturedFrom=${JSON.stringify(inputs && inputs.capturedFrom)}. Refusing to record a host-derived ` +
+          'fingerprint as the right-channel actor identity.'
+      );
+    }
     return capability.buildCapabilityFingerprint(inputs);
   }
   // No explicit in-container fingerprint. The Docker provider normally runs THIS
