@@ -7913,6 +7913,16 @@ Missing numeric IDs are intentional.
     registered only in the Extension Development Host and never in a packaged
     VSIX (guarded by the extension development mode), so it is not a shipped
     user-facing command.
+  - The 12fps screen capture and the 1Hz perfmon log are folded into a
+    deterministic timing-correlation model (`vi-history-suite/timing-correlation@v1`)
+    that binds each captured screen frame to its perfmon second (frame index /
+    fps), recording per second the frame count, the observed on-screen stopwatch
+    reading, and its delta from the prior second; a cross-run post-processor
+    (`vi-history-suite/timing-correlation-signature@v1`) folds the per-run
+    summaries into a repeatable signature vector and returns a fail-closed
+    determinism verdict that passes only when every run is stopwatch-authoritative
+    and the effective fps, frames-per-second, and stopwatch-delta-per-second stay
+    within tolerance across runs.
 - Agent Work Scope:
   - Generalize `scripts/runWindowsRuntimeMatrix.js` from the fixed five-scenario
     enum into the scenario manifest with legacy-id aliases, keeping the manifest
@@ -7943,12 +7953,16 @@ Missing numeric IDs are intentional.
   - `scripts/windows-perfmon-mprr-driver.cjs`
   - `src/dev/timingStopwatchSurface.ts`
   - `src/dev/timingStopwatchHost.ts`
+  - `src/reporting/mirror/timingCorrelationModel.ts`
+  - `src/reporting/mirror/timingCorrelationSignature.ts`
   - `docs/requirements/runtime-validation-ledger.json`
   - `docs/windows-hardening-host.md`
 - Verification References:
   - `tests/unit/runWindowsRuntimeMatrixScript.test.ts`
   - `tests/unit/windowsPerfmonMprrPipeline.test.ts`
   - `tests/unit/timingStopwatchSurface.test.ts`
+  - `tests/unit/timingCorrelationModel.test.ts`
+  - `tests/unit/timingCorrelationSignature.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
   - `manual:windows-hardening-host-matrix`
   - `manual:windows-perfmon-mprr-pipeline`
