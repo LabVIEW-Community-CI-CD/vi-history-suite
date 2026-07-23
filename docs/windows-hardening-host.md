@@ -293,6 +293,99 @@ The portable pipeline-composition contract is guarded (no hardware) by
 (VHS-REQ-713.5); the real Windows-native run is recorded as the
 `winhost-perfmon-mprr-2026-x64` ledger track.
 
+## TDMS structure & decoding (VHS-REQ-713.5–.7)
+
+The capture pairs a **12fps screen stream** with a **1Hz perfmon stream** and
+projects them into a deterministic, TDMS-bound channel model so a consumer (a
+real NI TDMS writer, an agent, or an offline analyzer) can decode both on one
+timebase. There are three schemas; each is a pure function of its inputs, so the
+same capture always yields the same model.
+
+### 1. Perfmon channel model — `vi-history-suite/perfmon-tdms-model@v1`
+
+Produced by `buildPerfmonTdmsModel` (from a `first-run-perfmon@v1` artifact).
+TDMS layout: file properties + groups → channels, where each channel is a named
+numeric column with `unit`, `description`, and NI waveform properties
+(`wf_increment` = sample interval seconds, `wf_start_offset`, `wf_samples`).
+
+| Group | Channels (unit) | Notes |
+|---|---|---|
+| `resource-samples` | `time_s` (s), `cpu_total_pct` (%), `mem_avail_mb` (MB), `disk_total_pct` (%), optional `labview_cpu_pct` (%), `labview_working_set_mb` (MB) | one row per perfmon sample (1 Hz); LabVIEW channels present only when a `\Process(LabVIEW)` counter resolved. `null` = TDMS no-value. |
+| `run-cycles` | `cycle_index`, `duration_ms` (ms) | present only when the artifact carries per-cycle timing. |
+
+### 2. Timing-correlation model — `vi-history-suite/timing-correlation@v1`
+
+Produced by `buildTimingCorrelationModel`
+([src/reporting/mirror/timingCorrelationModel.ts](../src/reporting/mirror/timingCorrelationModel.ts)).
+It binds the two streams on a per-second grid. Top-level fields: `schema`,
+`schemaVersion`, `fps`, `sampleIntervalSec`, `seconds[]`, `signature`.
+
+Each `seconds[]` entry (one per 1 Hz perfmon second):
+
+| Field | Unit | Meaning |
+|---|---|---|
+| `secondIndex` | — | 0-based perfmon second |
+| `framesInSecond` | — | well-formed screen frames that fell in this second (≈ `fps`, e.g. 12) |
+| `observedStopwatchCs` | centiseconds | decoded on-screen stopwatch reading at the start of this second (ground truth), or `null` |
+| `observedDeltaCs` | centiseconds | `observedStopwatchCs` minus the previous second's (≈ 100 at 12fps/1Hz), or `null` |
+| `cpuTotalPct` / `memAvailMb` / `diskTotalPct` / `diskWriteBytesPerSec` | % / MB / % / B·s⁻¹ | the paired perfmon sample for this second |
+
+The per-run `signature` summary folds it: `perfmonSampleCount`, `frameCount`,
+`wellFormedFrameCount`, `effectiveFps`, `stopwatchClassification`,
+`medianFramesPerSecond`, `medianObservedDeltaCs`, `meanObservedDeltaCs`,
+`meanCpuPct`, `peakCpuPct`, `meanMemAvailMb`, `meanDiskWriteBytesPerSec`,
+`meanDiskTotalPct`.
+
+### 3. Cross-run signature — `vi-history-suite/timing-correlation-signature@v1`
+
+Produced by `buildTimingCorrelationSignature`
+([src/reporting/mirror/timingCorrelationSignature.ts](../src/reporting/mirror/timingCorrelationSignature.ts))
+from ≥2 per-run `signature` summaries. Fields: `runCount`, `tolerance`,
+`acrossRuns` (each metric an `AcrossRunStat` `{ values, mean, min, max, stddev,
+cov }`), `signatureVector` (`{ effectiveFps, framesPerSecond,
+stopwatchDeltaCsPerSecond, meanCpuPct, meanDiskWriteBytesPerSec }`), and
+`verdict`. `verdict.timingDeterministic` is `true` only when every run is
+stopwatch-`authoritative` and `effectiveFps` (default band 11.5–12.5, spread
+≤ 0.3), `medianFramesPerSecond` (11–13), and `medianObservedDeltaCs` (98–102)
+hold across all runs. Resource metrics are reported but do not gate the verdict.
+
+### On-disk TDMS the maintainer driver writes — `vi-history-suite/timing-correlation-tdms@v1`
+
+The capture driver serializes a file-shaped model (`runTag`, `fps`,
+`sampleIntervalSec`, `durationSec`, `signature`, `groups[]`) mirroring a real
+`.tdms` file → group → channel hierarchy:
+
+| Group | Channels |
+|---|---|
+| `resource-samples` | `time_s`, `cpu_total_pct`, `mem_avail_mb`, `disk_total_pct`, `disk_write_bytes_per_sec` (one per 1 Hz sample) |
+| `screen-frames` | `frame_index`, `decoded_centiseconds`, `well_formed` (0/1) (one per 12fps frame) |
+| `correlation` | `second_index`, `frames_in_second`, `observed_stopwatch_cs`, `observed_delta_cs`, `cpu_total_pct`, `disk_write_bytes_per_sec` (one per second) |
+
+### How to decode
+
+1. **Screen clock (ground truth).** Each `screen-frames` frame carries a decoded
+   mprr machine strip. The strip spans the **top 7 %–16 % of the frame, full
+   width**, as **40 cells**: an 8-bit `10100101` preamble, a 24-bit centiseconds
+   payload, and an 8-bit XOR checksum of the three payload bytes. Bit `1` = black
+   (lower luminance), `0` = white. Sample a luminance row through the strip band,
+   segment into 40 cells, threshold at the min/max midpoint, and read the bits
+   (`decodeMprrStripImage`). `decoded_centiseconds × 10 ms` = elapsed since the
+   stopwatch started — a monotonic real-time clock independent of the capture.
+2. **Frame → perfmon-second binding.** Frame `j` belongs to perfmon second
+   `floor(j / fps)` (both samplers start together), so second `s` owns frames
+   `[s·fps, (s+1)·fps)`. This is deterministic and needs no wall-clock alignment.
+3. **Correlation check.** Within each second, `observed_stopwatch_cs` is the first
+   well-formed decoded reading; `observed_delta_cs` ≈ 100 confirms the on-screen
+   clock advanced exactly one second while the perfmon sampler advanced one
+   sample — i.e. the 12fps screen stream and the 1 Hz perfmon stream are
+   deterministically correlated. Read the paired resource channels at the same
+   `secondIndex` to attribute CPU/disk to a screen-time window.
+4. **Determinism across runs.** Feed each run's `signature` to
+   `buildTimingCorrelationSignature` and read `verdict.timingDeterministic` plus
+   the `signatureVector` (validated on this host: `effectiveFps 12`,
+   `framesPerSecond 12`, `stopwatchDeltaCsPerSecond 100`, stddev 0 across 3×60 s
+   runs).
+
 ## References
 
 - [AGENTS.md](../AGENTS.md) — agent operating guide, gates, board.
