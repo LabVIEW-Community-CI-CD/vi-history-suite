@@ -524,7 +524,18 @@ finally {
                 Remove-Item -LiteralPath $portModeIniBackup -Force
             }
         }
-        catch {}
+        catch {
+            # A silent swallow here could leave the operator's LabVIEW.ini modified
+            # with no signal (risky on a hardening host). Surface it on the console
+            # AND in the retained scenario log (backup path + scenario id) so a
+            # partial restore is visible in CI artifacts and the operator can
+            # recover the ini from the .vihs-matrix-backup copy.
+            $restoreWarning =
+                "[$ScenarioId] FAILED to restore $portModeIniPath after -PortMode '$PortMode'; " +
+                "backup retained at '$portModeIniBackup': $($_.Exception.Message)"
+            Write-Warning $restoreWarning
+            $payload.iniRestoreWarning = $restoreWarning
+        }
     }
     if (-not $KeepRunning) {
         try { & $closeScript -Bitness 'any' -LabviewVersion $LabviewVersion | Out-Null } catch {}
