@@ -5848,6 +5848,14 @@ Missing numeric IDs are intentional.
     insufficient when there are too few readable frames or too short a run. It
     fails closed on an empty frame set or a non-positive frame rate. Pure and
     deterministic.
+  - A pure cross-platform stopwatch-surface renderer draws the mprr stopwatch on
+    a non-Windows host as HTML: the forty-bit machine strip as black/white cells
+    at mprr's strip region (top seven percent, height nine percent, full width)
+    with the printed HH:MM:SS.cc time and a black border. The strip payload
+    clamps to the twenty-four-bit ceiling while the printed time reflects the full
+    elapsed value, so a headless capture decodes back to the same centiseconds. It
+    fails closed on non-finite centiseconds or dimensions below sixty-four pixels.
+    Pure and deterministic.
 - Agent Work Scope:
   - Keep the engine pure and dependency-free so the readiness contract is unit
     tested without a container; the CLI performs the docker probing through an
@@ -5862,6 +5870,7 @@ Missing numeric IDs are intentional.
   - `src/reporting/syncDiagnostics/mprrAgentFeedbackCrossCheck.ts`
   - `src/reporting/syncDiagnostics/mprrStripImageDecoder.ts`
   - `src/reporting/syncDiagnostics/stopwatchCaptureAccuracy.ts`
+  - `src/reporting/syncDiagnostics/mprrStopwatchSurfaceRenderer.ts`
   - `scripts/diagnoseLabviewContainer.js`
 - Verification References:
   - `tests/unit/labviewContainerDiagnostics.test.ts`
@@ -5872,6 +5881,7 @@ Missing numeric IDs are intentional.
   - `tests/unit/mprrAgentFeedbackCrossCheck.test.ts`
   - `tests/unit/mprrStripImageDecoder.test.ts`
   - `tests/unit/stopwatchCaptureAccuracy.test.ts`
+  - `tests/unit/mprrStopwatchSurfaceRenderer.test.ts`
 - Change Guidance:
   - Evolve the diagnostics contract additively (schema id
     `vi-history-suite/labview-container-diagnostics@v1`); add new staged checks at
