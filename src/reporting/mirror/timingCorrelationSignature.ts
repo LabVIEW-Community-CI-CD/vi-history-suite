@@ -75,6 +75,7 @@ export interface TimingCorrelationSignatureReport {
   readonly verdict: {
     readonly timingDeterministic: boolean;
     readonly allAuthoritative: boolean;
+    readonly timingMetricsComplete: boolean;
     readonly effectiveFpsInBand: boolean;
     readonly effectiveFpsTight: boolean;
     readonly deltaCsInBand: boolean;
@@ -125,6 +126,14 @@ export function buildTimingCorrelationSignature(
   const meanDiskWriteBytesPerSec = statOf(runs.map((run) => run.meanDiskWriteBytesPerSec));
 
   const allAuthoritative = runs.every((run) => run.stopwatchClassification === 'authoritative');
+  // A missing/non-finite timing metric on any run must not be silently dropped by
+  // statOf and pass the band checks; require every run to supply all three.
+  const timingMetricsComplete = runs.every(
+    (run) =>
+      Number.isFinite(run.effectiveFps) &&
+      Number.isFinite(run.medianFramesPerSecond) &&
+      Number.isFinite(run.medianObservedDeltaCs)
+  );
   const effectiveFpsInBand = inBand(effectiveFps, tolerance.minEffectiveFps, tolerance.maxEffectiveFps);
   const effectiveFpsTight =
     effectiveFps.min !== null &&
@@ -137,7 +146,12 @@ export function buildTimingCorrelationSignature(
     tolerance.maxFramesPerSecond
   );
   const timingDeterministic =
-    allAuthoritative && effectiveFpsInBand && effectiveFpsTight && deltaCsInBand && framesPerSecondInBand;
+    timingMetricsComplete &&
+    allAuthoritative &&
+    effectiveFpsInBand &&
+    effectiveFpsTight &&
+    deltaCsInBand &&
+    framesPerSecondInBand;
 
   return {
     schema: TIMING_CORRELATION_SIGNATURE_SCHEMA,
@@ -155,6 +169,7 @@ export function buildTimingCorrelationSignature(
     verdict: {
       timingDeterministic,
       allAuthoritative,
+      timingMetricsComplete,
       effectiveFpsInBand,
       effectiveFpsTight,
       deltaCsInBand,

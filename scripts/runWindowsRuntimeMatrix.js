@@ -163,9 +163,11 @@ const LEGACY_SCENARIO_ALIASES = Object.freeze({
   'port-A': 'port-2026-x64'
 });
 
-// A lighter CI tier still covering every cell in at least one conflict and one
-// admit direction: 6 bitness + the 4 version extremes (2020<->2026, 2025<->2026)
-// at x64 + 3 match + 1 port ~= 14 rows (VHS-REQ-713 lighter tier).
+// A lighter CI tier still covering every version-and-bitness cell in at least
+// one conflict and one admit direction: 6 bitness (both bitnesses conflict) + the
+// 4 version extremes (2020<->2026, 2025<->2026) at x64 + 6 match (both bitnesses
+// admit, so x86 cells have a negative control too) + 1 port ~= 17 rows
+// (VHS-REQ-713 lighter tier).
 const LIGHT_TIER_SCENARIOS = Object.freeze([
   'bitness-2020-x64x86',
   'bitness-2020-x86x64',
@@ -178,8 +180,11 @@ const LIGHT_TIER_SCENARIOS = Object.freeze([
   'version-2025-2026-x64',
   'version-2026-2025-x64',
   'match-2020-x64',
+  'match-2020-x86',
   'match-2025-x64',
+  'match-2025-x86',
   'match-2026-x64',
+  'match-2026-x86',
   'port-2026-x64'
 ]);
 

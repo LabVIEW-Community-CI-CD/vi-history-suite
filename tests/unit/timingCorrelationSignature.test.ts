@@ -57,6 +57,15 @@ describe('buildTimingCorrelationSignature (VHS-REQ-713.7)', () => {
     expect(report.verdict.timingDeterministic).toBe(false);
   });
 
+  it('fails closed when a run is missing a timing metric rather than silently dropping it (VHS-REQ-713.7)', () => {
+    const report = buildTimingCorrelationSignature([
+      runSummary(),
+      runSummary({ effectiveFps: null })
+    ]);
+    expect(report.verdict.timingMetricsComplete).toBe(false);
+    expect(report.verdict.timingDeterministic).toBe(false);
+  });
+
   it('fails when the stopwatch delta drifts outside the 98..102cs band (VHS-REQ-713.7)', () => {
     const report = buildTimingCorrelationSignature([
       runSummary(),

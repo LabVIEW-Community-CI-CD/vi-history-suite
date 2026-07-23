@@ -1,4 +1,4 @@
-// Dev-only host binding for the live mprr timing stopwatch (VHS-REQ-710).
+// Dev-only host binding for the live mprr timing stopwatch (VHS-REQ-713.6).
 //
 // Wires the pure `renderLiveTimingStopwatchHtml` surface into a command that is
 // registered ONLY in the Extension Development Host
@@ -18,6 +18,7 @@ import * as vscode from 'vscode';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import * as fs from 'node:fs';
+import { pathToFileURL } from 'node:url';
 import { spawn } from 'node:child_process';
 
 import { renderLiveTimingStopwatchHtml } from './timingStopwatchSurface';
@@ -84,7 +85,7 @@ export function registerDevTimingStopwatch(context: vscode.ExtensionContext): vo
           '--disable-session-crashed-bubble',
           '--overscroll-history-navigation=0',
           `--user-data-dir=${profileDir}`,
-          `--app=file:///${htmlPath.replace(/\\/g, '/')}`
+          `--app=${pathToFileURL(htmlPath).href}`
         ],
         { detached: true, stdio: 'ignore' }
       );

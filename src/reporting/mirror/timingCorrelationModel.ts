@@ -132,11 +132,14 @@ export function buildTimingCorrelationModel(input: BuildTimingCorrelationInput):
   }
 
   const { fps, frames, perfmon } = input;
+  // Frames captured per perfmon sample = fps x sampleIntervalSec (e.g. 12 frames
+  // per 1s sample; 24 per 2s sample). Binding by frame index needs no wall clock.
+  const framesPerSample = fps * input.sampleIntervalSec;
   // The first well-formed decoded stopwatch reading at/after a frame index (the
-  // observed screen clock at the start of a perfmon second), bounded to that
-  // second's frame window so a gap never borrows a later second's reading.
+  // observed screen clock at the start of a perfmon sample), bounded to that
+  // sample's frame window so a gap never borrows a later sample's reading.
   const firstDecodedAt = (startFrame: number): number | null => {
-    const end = Math.min(startFrame + fps, frames.length);
+    const end = Math.min(startFrame + framesPerSample, frames.length);
     for (let j = startFrame; j < end; j += 1) {
       const frame = frames[j];
       if (frame && frame.wellFormed && typeof frame.decodedCentiseconds === 'number') {
@@ -149,8 +152,8 @@ export function buildTimingCorrelationModel(input: BuildTimingCorrelationInput):
   const seconds: TimingCorrelationSecond[] = [];
   let previousObserved: number | null = null;
   for (let secondIndex = 0; secondIndex < perfmon.length; secondIndex += 1) {
-    const startFrame = secondIndex * fps;
-    const windowFrames = frames.slice(startFrame, startFrame + fps);
+    const startFrame = secondIndex * framesPerSample;
+    const windowFrames = frames.slice(startFrame, startFrame + framesPerSample);
     const framesInSecond = windowFrames.filter((frame) => frame && frame.wellFormed).length;
     const observedStopwatchCs = firstDecodedAt(startFrame);
     const observedDeltaCs =

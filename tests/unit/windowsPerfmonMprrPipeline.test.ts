@@ -51,7 +51,8 @@ function syntheticPdhCsv(rows: number): string {
   const base = Date.UTC(2026, 6, 23, 6, 0, 0);
   const pad = (n: number, w = 2): string => String(n).padStart(w, '0');
   for (let i = 0; i < rows; i += 1) {
-    // typeperf/logman PDH-CSV timestamps are MM/DD/YYYY HH:MM:SS.fff (local).
+    // PDH-CSV timestamps are MM/DD/YYYY HH:MM:SS.fff. This synthetic header is
+    // (UTC) and the fields are UTC (parsePdhTimestampMs reads them via Date.UTC).
     const d = new Date(base + i * 1000);
     const ts = `${pad(d.getUTCMonth() + 1)}/${pad(d.getUTCDate())}/${d.getUTCFullYear()} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}.000`;
     const cpu = (10 + i).toFixed(3);
