@@ -121,13 +121,18 @@ export function renderMprrCalibrationSurfaceHtml(dimensions: CalibrationSurfaceD
     '<style>',
     '  * { margin: 0; padding: 0; box-sizing: border-box; }',
     `  html, body { width: ${dimensions.width}px; height: ${dimensions.height}px; background: #ffffff; overflow: hidden; }`,
-    `  .surface { position: relative; width: ${dimensions.width}px; height: ${dimensions.height}px;`,
-    `    background: #ffffff; border: ${borderWidth}px solid #000000; }`,
-    '  .marker { position: absolute; }',
+    `  .surface { position: relative; width: ${dimensions.width}px; height: ${dimensions.height}px; background: #ffffff; }`,
+    // The border is an underlay so it never insets the markers: marker rectangles
+    // stay at their exact screen-relative coordinates (resolveMarkerRect), and the
+    // markers paint OVER the border ring at the edges (marker color wins there),
+    // matching mprr's draw order.
+    `  .border { position: absolute; inset: 0; border: ${borderWidth}px solid #000000; box-sizing: border-box; z-index: 0; }`,
+    '  .marker { position: absolute; z-index: 1; }',
     '</style>',
     '</head>',
     '<body>',
     '  <div class="surface">',
+    '    <div class="border"></div>',
     markerDivs,
     '  </div>',
     '</body>',
