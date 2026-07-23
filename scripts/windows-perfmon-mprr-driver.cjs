@@ -427,7 +427,10 @@ function captureTransition(options) {
 
   const csvPath = resolveNewestCsv(captureDir, csvBase);
   assert(csvPath && fs.existsSync(csvPath), `no PDH-CSV produced in ${captureDir}`);
-  waitForRelease(csvPath);
+  assert(
+    waitForRelease(csvPath),
+    `logman did not release ${csvPath} within the wait budget; refusing to parse a possibly-truncated PDH-CSV`
+  );
 
   const cycles = [
     {
