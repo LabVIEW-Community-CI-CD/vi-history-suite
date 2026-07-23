@@ -7894,6 +7894,16 @@ Missing numeric IDs are intentional.
     asserts the observed host and selected years equal the manifest row for
     version-family scenarios, so a version conflict is proven to arise from the
     intended year mismatch rather than an incidental one.
+  - The host validates the mprr-grounded performance pipeline end to end: a real
+    Windows-native perfmon PDH-CSV captured around a real host-native comparison
+    is projected into the `first-run-perfmon@v1` artifact and the
+    `perfmon-tdms-model@v1` channel model (LabVIEW process channels present when
+    the resident engine is sampled), `buildPerfmonMprrSync` maps each sample to
+    the mprr stopwatch/frame timebase with a bit-exact 40-bit machine strip and
+    is authoritative only when the mprr calibration verdict is calibrated, and
+    the TDMS/artifact byte stream round-trips through the
+    `DeterministicRollingBlockRing` byte-identical with fail-closed three-block
+    admission control.
 - Agent Work Scope:
   - Generalize `scripts/runWindowsRuntimeMatrix.js` from the fixed five-scenario
     enum into the scenario manifest with legacy-id aliases, keeping the manifest
@@ -7905,14 +7915,24 @@ Missing numeric IDs are intentional.
     a content digest under `docs/`. Do not remove or weaken the Vagrant
     release-attestation track (VHS-REQ-666), and never name or invoke Vagrant or
     a hypervisor from `.github/workflows` (VHS-REQ-599).
+  - Keep the Part E real-hardware driver (`scripts/windows-perfmon-mprr-driver.cjs`)
+    an inventory-exempt `.cjs` that drives the shipped `out/reporting/mirror` and
+    `out/reporting/syncDiagnostics` modules verbatim; the portable pipeline
+    contract is guarded by `tests/unit/windowsPerfmonMprrPipeline.test.ts`, and
+    the real Windows-native run is recorded in the ledger (never fabricated). On
+    an unelevated host the driver samples via `typeperf` (no `logman` collector /
+    UAC) while retaining the shipped logman plan + capture script as evidence.
 - Implementation References:
   - `scripts/runWindowsRuntimeMatrix.js`
+  - `scripts/windows-perfmon-mprr-driver.cjs`
   - `docs/requirements/runtime-validation-ledger.json`
   - `docs/windows-hardening-host.md`
 - Verification References:
   - `tests/unit/runWindowsRuntimeMatrixScript.test.ts`
+  - `tests/unit/windowsPerfmonMprrPipeline.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
   - `manual:windows-hardening-host-matrix`
+  - `manual:windows-perfmon-mprr-pipeline`
 - Change Guidance:
   - Evolve the scenario manifest additively and keep every legacy alias resolving
     to its canonical row so existing dispatch keeps working; when a new LabVIEW

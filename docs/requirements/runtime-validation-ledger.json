@@ -109,6 +109,16 @@
       "lastValidatedCommit": "3f7e5d14",
       "evidence": "Windows hardening host (#2335, VHS-REQ-713): lv_icon.vi (5376833..fc09736) CreateComparisonReport windows-container runtimeState=succeeded reportExists=true, 2026-07-23",
       "fixture": "labview-icon-editor resource/plugins/lv_icon.vi"
+    },
+    {
+      "trackId": "winhost-perfmon-mprr-2026-x64",
+      "platform": "windows",
+      "provider": "host-native",
+      "linuxExecutable": false,
+      "lastValidatedVersion": "1.36.1",
+      "lastValidatedCommit": "ef2e228d",
+      "evidence": "Windows hardening host Part E (#2335, VHS-REQ-713.5): real Windows-native typeperf PDH-CSV around a host-native 2026 x64 compare -> first-run-perfmon@v1 + perfmon-tdms-model@v1; buildPerfmonMprrSync 114 samples authoritative (calibrated), bit-exact 40-bit strip; DeterministicRollingBlockRing admission fail-closed + byte-identical round-trip; mprr calibration 8/8 fiducials + stopwatch 11.996fps authoritative (Chrome headless); Docker+Windows-native TDMS dual-source reconcile. All E1-E6 stages passed, 2026-07-23",
+      "fixture": "labview-icon-editor resource/plugins/lv_icon.vi (perfmon->TDMS->mprr replay pipeline)"
     }
   ]
 }

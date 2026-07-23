@@ -523,6 +523,7 @@ tests/unit/runtimeAvailabilityWatcher.test.ts,mapped,Yes,Reactive runtime availa
 scripts/runWindowsRuntimeMatrix.js,mapped,Yes,Windows runtime conflict verification harness driver (scenario manifest); mapped to VHS-REQ-622 and VHS-REQ-713.
 scripts/checkMaintainerRunnerPrerequisites.js,mapped,Yes,Maintainer runner prerequisite doctor; mapped to VHS-REQ-598 and VHS-REQ-652.
 tests/unit/runWindowsRuntimeMatrixScript.test.ts,mapped,Yes,Windows runtime conflict verification harness driver tests; mapped to VHS-REQ-622 and VHS-REQ-713.
+tests/unit/windowsPerfmonMprrPipeline.test.ts,mapped,Yes,Portable pipeline-composition proof of the Part E perfmon->TDMS->mprr-sync->bounded-RAM-replay pipeline the windows-perfmon-mprr driver drives; mapped to VHS-REQ-713.
 tests/unit/checkMaintainerRunnerPrerequisites.test.ts,mapped,Yes,Maintainer runner prerequisite doctor tests; mapped to VHS-REQ-598 and VHS-REQ-652.
 tests/unit/windowsRuntimeMatrixWorkflow.test.ts,mapped,Yes,Windows runtime matrix workflow contract tests; mapped to VHS-REQ-622.
 .github/workflows/windows-runtime-matrix.yml,release-ci,Yes,Windows runtime matrix workflow; mapped to VHS-REQ-622.

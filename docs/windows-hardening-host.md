@@ -257,6 +257,42 @@ per scenario.
 ```
 <!-- provisioning-descriptor:end -->
 
+## Part E — perfmon → TDMS → mprr replay (the mprr-grounded core)
+
+This host is the only place the **Windows-native** half of the mprr dual-source
+pipeline runs on real hardware. The maintainer driver
+[scripts/windows-perfmon-mprr-driver.cjs](../scripts/windows-perfmon-mprr-driver.cjs)
+(inventory-exempt `.cjs`) drives the shipped `out/reporting/mirror/` +
+`out/reporting/syncDiagnostics/` modules verbatim and writes evidence to
+`win-validation/mprr/` (gitignored):
+
+```powershell
+npm run compile
+node scripts/windows-perfmon-mprr-driver.cjs
+# Env: VIHS_MPRR_SKIP_CHROME=1 (skip E5), VIHS_MPRR_SKIP_DOCKER=1 (skip E6),
+# VIHS_MPRR_LV_VERSION / VIHS_MPRR_LV_BITNESS, VIHS_MPRR_CONTAINER_IMAGE, VIHS_MPRR_CHROME.
+```
+
+| Stage | Proof |
+|---|---|
+| E1 | Real Windows-native perfmon PDH-CSV captured **around** a real host-native compare (cold, system counters) + a resident capture proving the `\Process(LabVIEW)` channels resolve. |
+| E2 | `first-run-perfmon@v1` artifact + `perfmon-tdms-model@v1` channel model (`resource-samples` + `run-cycles` groups). |
+| E3 | `buildPerfmonMprrSync` maps each sample to the mprr stopwatch/frame timebase with a bit-exact 40-bit machine strip; `authoritative` only when the E5 calibration is `calibrated`. |
+| E4 | `DeterministicRollingBlockRing` admission **fails closed** on an undersized budget, then a **byte-identical** TDMS/artifact round-trip; `analyzePerfmonSessionPattern` over the cold + resident captures. |
+| E5 | mprr calibration (8 fiducials ≤ 60 colour distance) + stopwatch accuracy (12 fps) proven via **real Chrome headless** captures decoded by the driver's built-in PNG decoder. |
+| E6 | Docker Windows-container + Windows-native perfmon TDMS models **reconcile** on the shared resource channels (dual-source parity). |
+
+> **Elevation note:** the shipped capture plan/script use `logman`, whose data
+> collectors require **admin / Performance Log Users**. On an unelevated
+> interactive host the driver samples via `typeperf` (identical `(PDH-CSV 4.0)`
+> format, no collector, no UAC) and retains the shipped logman plan + capture
+> script per capture as evidence of the elevated-actor orchestration.
+
+The portable pipeline-composition contract is guarded (no hardware) by
+[tests/unit/windowsPerfmonMprrPipeline.test.ts](../tests/unit/windowsPerfmonMprrPipeline.test.ts)
+(VHS-REQ-713.5); the real Windows-native run is recorded as the
+`winhost-perfmon-mprr-2026-x64` ledger track.
+
 ## References
 
 - [AGENTS.md](../AGENTS.md) — agent operating guide, gates, board.
