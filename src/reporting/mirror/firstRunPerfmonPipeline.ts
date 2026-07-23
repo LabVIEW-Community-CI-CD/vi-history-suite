@@ -86,7 +86,10 @@ export function runFirstRunPerfmonPipeline(
     typeof captured.startMs === 'number' &&
     Number.isFinite(captured.startMs) &&
     typeof captured.endMs === 'number' &&
-    Number.isFinite(captured.endMs);
+    Number.isFinite(captured.endMs) &&
+    // A reversed window (end before start) is nonsensical; treat it as no window
+    // rather than rendering a negative wall duration into the PR comment.
+    captured.endMs >= captured.startMs;
   const wallMs = hasWindow ? (captured.endMs as number) - (captured.startMs as number) : null;
   const capturedAtIso = hasWindow
     ? new Date(captured.startMs as number).toISOString()

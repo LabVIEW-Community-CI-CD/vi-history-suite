@@ -10,7 +10,10 @@
  * the stopwatch printed, and its accuracy measured against the capture cadence.
  *
  * Pure and deterministic: pixel samples in, decoded bits + centiseconds out, no
- * I/O. It never throws on a malformed strip; the caller inspects `wellFormed`.
+ * I/O. It validates its arguments (a non-positive cell count, or a row too short
+ * to segment into that many cells, throw), but never throws on malformed strip
+ * CONTENT: a bad preamble, payload, or checksum simply yields `wellFormed:
+ * false` for the caller to inspect.
  */
 
 import { MACHINE_STRIP_BIT_LENGTH, STOPWATCH_PREAMBLE } from './syncPatternFailureSignature';
