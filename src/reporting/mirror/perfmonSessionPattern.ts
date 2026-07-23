@@ -210,8 +210,10 @@ export function analyzePerfmonSessionPattern(
       count: values.length,
       first: values[0],
       last: values[values.length - 1],
-      min: Math.min(...values),
-      max: Math.max(...values),
+      // Iterative reduce (not Math.min(...values)) to avoid an argument-spread
+      // stack overflow when many sessions are analyzed.
+      min: values.reduce((a, b) => Math.min(a, b)),
+      max: values.reduce((a, b) => Math.max(a, b)),
       mean: round(mean(values)),
       deltaFirstToLast: round(values[values.length - 1] - values[0]),
       slopePerSession: round(slope),
