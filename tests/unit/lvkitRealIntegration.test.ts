@@ -15,7 +15,7 @@
 // lvkit output; environment-only noise (temp VI paths, cycle wall-clock timings)
 // is normalized out. lvkit is deterministic, so a snapshot change means the lvkit
 // output actually changed (e.g. a newer lvkit) -- a deliberate, reviewable signal.
-import { describe, expect, it, beforeAll } from 'vitest';
+import { describe, expect, it, beforeAll, vi } from 'vitest';
 import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import os from 'node:os';
@@ -27,6 +27,14 @@ import type { CompareViRevisionsResult } from '../../src/semantic/compareViRevis
 import { handleViSemanticMcpMessageAsync } from '../../src/semantic/viSemanticComparisonMcp';
 import { buildViSemanticMcpServerDepsForEnv } from '../../src/mcp/viSemanticMcpServerDeps';
 import type { ViComparisonModelCache } from '../../src/semantic/viComparisonModelCache';
+
+// Real lvkit spawns a subprocess (uv/python + git) per compare; the FIRST cold
+// invocation on a slow CI runner (notably the Windows leg, where setup-uv just
+// installed the tool) can exceed the 15s global default, timing out the first
+// case and leaving shared lvkit state that cascades into a later snapshot
+// mismatch. This suite is intentionally CI-time-heavy (real integration, not a
+// fast-path unit), so give the whole file a generous ceiling.
+vi.setConfig({ testTimeout: 120_000, hookTimeout: 60_000 });
 
 // Pinned icon-editor commits with three deliberately-chosen VIs:
 const BASE_COMMIT = '537683398d8c';
