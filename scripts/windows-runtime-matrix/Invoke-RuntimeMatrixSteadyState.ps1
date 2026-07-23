@@ -10,9 +10,12 @@
     -ExpectedBlockedReason is 'none' and -DerivePortFromSelectedIni asserts the
     observed proof port equals the VI Server port read from the SELECTED
     install's own LabVIEW.ini, and that the product read that exact ini -- never
-    a hardcoded or operator-supplied constant), and the VHS-REQ-713 match
-    direction (match-*, Host == Selected on the default port, -ExpectedBlockedReason
-    'none', proving no false conflict). The scenario id/family is opaque to this
+    a hardcoded or operator-supplied constant; -PortMode 'non-default' additionally
+    fails the scenario if that ini resolves to the documented default port, so the
+    family provably exercises the non-default path), and the VHS-REQ-713 match
+    direction (match-*, Host == Selected, -ExpectedBlockedReason 'none' and
+    -PortMode 'default' asserting the observed proof port is the documented
+    Windows default, proving no false conflict on the default port). The scenario id/family is opaque to this
     helper: it launches -HostVersion/-HostBitness, selects
     -LabviewVersion/-SelectedBitness, and asserts -ExpectedBlockedReason, so the
     Node driver's manifest (bitness/version/match/port) drives every cell of the
@@ -63,6 +66,9 @@ param(
     [string]$ExpectedBlockedReason = 'windows-host-bitness-conflict',
 
     [switch]$DerivePortFromSelectedIni,
+
+    [ValidateSet('default', 'non-default')]
+    [string]$PortMode,
 
     [Parameter(Mandatory = $true)]
     [string]$ProofOutPath,
@@ -228,6 +234,7 @@ $payload = @{
         hostLabviewIniPath       = $null
     }
     portOracle    = $null
+    portMode      = $PortMode
     spawn         = @{
         exitCode   = $null
         stdoutTail = $null
@@ -397,6 +404,20 @@ try {
         }
         if (-not $portMatches) {
             $failures += "expected hostLabviewTcpPort=$derivedExpectedPort (derived from $selectedIni), observed='$hostTcpPort'"
+        }
+        # #2337: the non-default admit family must provably exercise a non-default
+        # port; fail if the selected install resolves to the documented default.
+        if ($PortMode -eq 'non-default' -and $derivedExpectedPort -eq $DefaultWindowsLabviewTcpPort) {
+            $failures += "port family requires a NON-DEFAULT VI Server port, but the selected ini ($selectedIni) resolves to the default $DefaultWindowsLabviewTcpPort"
+        }
+    }
+
+    # #2337: the default admit family (match-*) must provably run on the
+    # documented Windows default VI Server port; it does not derive from the ini
+    # (there is nothing to override), it asserts the observed proof port directly.
+    if ($PortMode -eq 'default') {
+        if ($null -eq $hostTcpPort -or [int]$hostTcpPort -ne $DefaultWindowsLabviewTcpPort) {
+            $failures += "match family requires the DEFAULT VI Server port $DefaultWindowsLabviewTcpPort, observed hostLabviewTcpPort='$hostTcpPort'"
         }
     }
 
