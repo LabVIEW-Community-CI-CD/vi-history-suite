@@ -5,6 +5,19 @@ const harness = require('../../scripts/runWindowsRuntimeMatrix.js') as {
   EVIDENCE_SCHEMA: string;
   RACE_COVERAGE_NOTE: string;
   DEFAULT_EVIDENCE_OUT: string;
+  SCENARIO_MANIFEST: ReadonlyArray<{
+    id: string;
+    family: 'bitness' | 'version' | 'match' | 'port';
+    hostVersion: string;
+    selectedVersion: string;
+    hostBitness: 'x64' | 'x86';
+    selectedBitness: 'x64' | 'x86';
+    expectedBlockedReason: string;
+    derivePortFromSelectedIni?: boolean;
+  }>;
+  CANONICAL_SCENARIOS: readonly string[];
+  LEGACY_SCENARIO_ALIASES: Readonly<Record<string, string>>;
+  LIGHT_TIER_SCENARIOS: readonly string[];
   KNOWN_SCENARIOS: readonly string[];
   SCENARIO_PARAMETERS: Readonly<
     Record<
@@ -69,6 +82,98 @@ const harness = require('../../scripts/runWindowsRuntimeMatrix.js') as {
   };
 };
 
+describe('runWindowsRuntimeMatrix.SCENARIO_MANIFEST', () => {
+  it('defines exactly 30 canonical scenarios covering the four families (VHS-REQ-713.1)', () => {
+    expect(harness.SCENARIO_MANIFEST).toHaveLength(30);
+    expect(harness.CANONICAL_SCENARIOS).toHaveLength(30);
+    const byFamily = harness.SCENARIO_MANIFEST.reduce<Record<string, number>>((acc, row) => {
+      acc[row.family] = (acc[row.family] ?? 0) + 1;
+      return acc;
+    }, {});
+    expect(byFamily).toEqual({ bitness: 6, version: 12, match: 6, port: 6 });
+  });
+
+  it('has unique canonical ids that match the CANONICAL_SCENARIOS order', () => {
+    const ids = harness.SCENARIO_MANIFEST.map((row) => row.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(ids).toEqual([...harness.CANONICAL_SCENARIOS]);
+  });
+
+  it('bitness rows pair the same year at opposite bitness with the bitness-conflict reason (VHS-REQ-713.1)', () => {
+    for (const row of harness.SCENARIO_MANIFEST.filter((entry) => entry.family === 'bitness')) {
+      expect(row.hostVersion).toBe(row.selectedVersion);
+      expect(row.hostBitness).not.toBe(row.selectedBitness);
+      expect(row.expectedBlockedReason).toBe('windows-host-bitness-conflict');
+      expect(row.derivePortFromSelectedIni).toBeUndefined();
+    }
+  });
+
+  it('version rows pair the same bitness at different years with the version-conflict reason, including the 2020 convert path (VHS-REQ-713.1, VHS-REQ-713.4)', () => {
+    for (const row of harness.SCENARIO_MANIFEST.filter((entry) => entry.family === 'version')) {
+      expect(row.hostBitness).toBe(row.selectedBitness);
+      expect(row.hostVersion).not.toBe(row.selectedVersion);
+      expect(row.expectedBlockedReason).toBe('windows-host-version-conflict');
+    }
+    // At least one direction selects LabVIEW 2020 (the convert path).
+    const selects2020 = harness.SCENARIO_MANIFEST.filter(
+      (entry) => entry.family === 'version' && entry.selectedVersion === '2020'
+    );
+    expect(selects2020.length).toBeGreaterThan(0);
+  });
+
+  it('match rows admit an identical host/selected on the default port (VHS-REQ-713.1)', () => {
+    const matchRows = harness.SCENARIO_MANIFEST.filter((entry) => entry.family === 'match');
+    for (const row of matchRows) {
+      expect(row.hostVersion).toBe(row.selectedVersion);
+      expect(row.hostBitness).toBe(row.selectedBitness);
+      expect(row.expectedBlockedReason).toBe('none');
+      expect(row.derivePortFromSelectedIni).toBeUndefined();
+    }
+    expect(matchRows).toHaveLength(6);
+  });
+
+  it('port rows admit an identical host/selected and derive the port from the selected ini (VHS-REQ-713.1)', () => {
+    for (const row of harness.SCENARIO_MANIFEST.filter((entry) => entry.family === 'port')) {
+      expect(row.hostVersion).toBe(row.selectedVersion);
+      expect(row.hostBitness).toBe(row.selectedBitness);
+      expect(row.expectedBlockedReason).toBe('none');
+      expect(row.derivePortFromSelectedIni).toBe(true);
+    }
+  });
+
+  it('resolves every legacy alias to the correct canonical row parameters (VHS-REQ-713.3)', () => {
+    expect(harness.LEGACY_SCENARIO_ALIASES).toEqual({
+      'steady-A': 'bitness-2026-x64x86',
+      'steady-B': 'bitness-2026-x86x64',
+      'version-A': 'version-2025-2026-x64',
+      'version-B': 'version-2026-2025-x64',
+      'port-A': 'port-2026-x64'
+    });
+    for (const [alias, canonicalId] of Object.entries(harness.LEGACY_SCENARIO_ALIASES)) {
+      // The alias shares the exact frozen parameter object of its canonical row.
+      expect(harness.SCENARIO_PARAMETERS[alias]).toBe(harness.SCENARIO_PARAMETERS[canonicalId]);
+      // And KNOWN_SCENARIOS (the --scenario accept-list) carries both.
+      expect(harness.KNOWN_SCENARIOS).toContain(alias);
+      expect(harness.KNOWN_SCENARIOS).toContain(canonicalId);
+    }
+  });
+
+  it('preserves the legacy steady-A/steady-B bitness directions at 2026 (VHS-REQ-713.3)', () => {
+    expect(harness.SCENARIO_PARAMETERS['steady-A']).toMatchObject({
+      hostBitness: 'x64',
+      selectedBitness: 'x86',
+      hostVersion: '2026',
+      selectedVersion: '2026',
+      expectedBlockedReason: 'windows-host-bitness-conflict'
+    });
+    expect(harness.SCENARIO_PARAMETERS['steady-B']).toMatchObject({
+      hostBitness: 'x86',
+      selectedBitness: 'x64',
+      expectedBlockedReason: 'windows-host-bitness-conflict'
+    });
+  });
+});
+
 describe('runWindowsRuntimeMatrix.parseArgs', () => {
   it('defaults to running all scenarios with LabVIEW 2026 and the closeout evidence path', () => {
     const options = harness.parseArgs([]);
@@ -107,11 +212,27 @@ describe('runWindowsRuntimeMatrix.parseArgs', () => {
 });
 
 describe('runWindowsRuntimeMatrix.selectScenarios', () => {
-  it('returns every known scenario when asked for all', () => {
-    expect(harness.selectScenarios('all')).toEqual([...harness.KNOWN_SCENARIOS]);
+  it('returns every canonical scenario (not aliases) when asked for all (VHS-REQ-713.1)', () => {
+    expect(harness.selectScenarios('all')).toEqual([...harness.CANONICAL_SCENARIOS]);
+    // Aliases are never double-run under `all`.
+    for (const alias of Object.keys(harness.LEGACY_SCENARIO_ALIASES)) {
+      expect(harness.selectScenarios('all')).not.toContain(alias);
+    }
   });
 
-  it('returns a single-element list for a specific scenario', () => {
+  it('returns the lighter CI tier when asked for light (VHS-REQ-713.2)', () => {
+    expect(harness.selectScenarios('light')).toEqual([...harness.LIGHT_TIER_SCENARIOS]);
+    // Every light-tier id is a real canonical scenario.
+    for (const id of harness.LIGHT_TIER_SCENARIOS) {
+      expect(harness.CANONICAL_SCENARIOS).toContain(id);
+    }
+  });
+
+  it('returns a single-element list for a specific canonical scenario', () => {
+    expect(harness.selectScenarios('bitness-2026-x86x64')).toEqual(['bitness-2026-x86x64']);
+  });
+
+  it('returns the legacy alias id unchanged so dispatch keeps working (VHS-REQ-713.3)', () => {
     expect(harness.selectScenarios('steady-B')).toEqual(['steady-B']);
   });
 });
@@ -140,7 +261,7 @@ describe('runWindowsRuntimeMatrix.buildScenarioPlan', () => {
       scenario: 'all',
       out: 'assurance-closeout-evidence/manual-vhs-req-621.json'
     });
-    expect(plan).toHaveLength(harness.KNOWN_SCENARIOS.length);
+    expect(plan).toHaveLength(harness.CANONICAL_SCENARIOS.length);
     for (const entry of plan) {
       expect(entry.proofPath.endsWith(`${entry.id}.proof.json`)).toBe(true);
       expect(entry.logPath.endsWith(`${entry.id}.scenario.json`)).toBe(true);
@@ -433,6 +554,71 @@ describe('runWindowsRuntimeMatrix.summarizeScenario', () => {
     expect(summary.pass).toBe(false);
   });
 
+  it('fails a version scenario when the observed host/selected years do not match the manifest row (VHS-REQ-713.4)', () => {
+    const versionScenario = {
+      id: 'version-2026-2020-x64',
+      parameters: {
+        hostBitness: 'x64',
+        selectedBitness: 'x64',
+        hostVersion: '2026',
+        selectedVersion: '2020',
+        expectedBlockedReason: 'windows-host-version-conflict'
+      },
+      proofPath: 'v.proof.json',
+      logPath: 'v.scenario.json'
+    };
+    const summary = harness.summarizeScenario(
+      versionScenario,
+      { status: 0 },
+      {
+        pass: true,
+        observed: {
+          runtimeBlockedReason: 'windows-host-version-conflict',
+          hostBitness: 'x64',
+          selectedBitness: 'x64',
+          // The proof reports a different selected year than the manifest row.
+          hostVersion: '2026',
+          selectedVersion: '2025'
+        }
+      }
+    );
+    expect(summary.pass).toBe(false);
+    expect(summary.failureReason).toContain('selectedVersion=2020');
+    expect(summary.failureReason).toContain('selectedVersion=2025');
+  });
+
+  it('passes the 2020 convert-path direction when the observed years match the manifest row (VHS-REQ-713.4)', () => {
+    const versionScenario = {
+      id: 'version-2026-2020-x64',
+      parameters: {
+        hostBitness: 'x64',
+        selectedBitness: 'x64',
+        hostVersion: '2026',
+        selectedVersion: '2020',
+        expectedBlockedReason: 'windows-host-version-conflict'
+      },
+      proofPath: 'v.proof.json',
+      logPath: 'v.scenario.json'
+    };
+    const summary = harness.summarizeScenario(
+      versionScenario,
+      { status: 0 },
+      {
+        pass: true,
+        observed: {
+          runtimeBlockedReason: 'windows-host-version-conflict',
+          hostBitness: 'x64',
+          selectedBitness: 'x64',
+          hostVersion: '2026',
+          selectedVersion: '2020'
+        }
+      }
+    );
+    expect(summary.pass).toBe(true);
+    expect(summary.expected.hostVersion).toBe('2026');
+    expect(summary.expected.selectedVersion).toBe('2020');
+  });
+
   const SELECTED_PORT_A_INI =
     'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.ini';
   const portScenario = {
@@ -597,74 +783,53 @@ describe('runWindowsRuntimeMatrix.runRuntimeMatrix', () => {
     };
   }
 
-  it('writes an evidence file with passing summary when all runtime scenarios match expectations (VHS-REQ-622.1, VHS-REQ-622.3, VHS-REQ-623.6, VHS-REQ-653.7)', () => {
-    const spawnSync = vi.fn().mockReturnValue({ status: 0, error: undefined });
-    const scenarioLogPayloads = {
-      [`assurance-closeout-evidence${require('node:path').sep}runtime-matrix-proofs${require('node:path').sep}steady-A.scenario.json`]: {
-        pass: true,
-        durationMs: 100,
-        observed: {
-          runtimeBlockedReason: 'windows-host-bitness-conflict',
-          hostBitness: 'x64',
-          selectedBitness: 'x86',
-          labviewExecutablePath: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
-        }
-      },
-      [`assurance-closeout-evidence${require('node:path').sep}runtime-matrix-proofs${require('node:path').sep}steady-B.scenario.json`]: {
-        pass: true,
-        durationMs: 110,
-        observed: {
-          runtimeBlockedReason: 'windows-host-bitness-conflict',
-          hostBitness: 'x86',
-          selectedBitness: 'x64',
-          labviewExecutablePath: 'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
-        }
-      },
-      [`assurance-closeout-evidence${require('node:path').sep}runtime-matrix-proofs${require('node:path').sep}version-A.scenario.json`]: {
-        pass: true,
-        durationMs: 120,
-        observed: {
-          runtimeBlockedReason: 'windows-host-version-conflict',
-          hostBitness: 'x64',
-          selectedBitness: 'x64',
-          hostVersion: '2025',
-          selectedVersion: '2026',
-          labviewExecutablePath: 'C:\\Program Files\\National Instruments\\LabVIEW 2025\\LabVIEW.exe'
-        }
-      },
-      [`assurance-closeout-evidence${require('node:path').sep}runtime-matrix-proofs${require('node:path').sep}version-B.scenario.json`]: {
-        pass: true,
-        durationMs: 130,
-        observed: {
-          runtimeBlockedReason: 'windows-host-version-conflict',
-          hostBitness: 'x64',
-          selectedBitness: 'x64',
-          hostVersion: '2026',
-          selectedVersion: '2025',
-          labviewExecutablePath: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
-        }
-      },
-      [`assurance-closeout-evidence${require('node:path').sep}runtime-matrix-proofs${require('node:path').sep}port-A.scenario.json`]: {
-        pass: true,
-        durationMs: 140,
-        observed: {
-          runtimeBlockedReason: 'none',
-          hostBitness: 'x64',
-          selectedBitness: 'x64',
-          hostLabviewTcpPort: 3366,
-          hostLabviewIniPath: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.ini',
-          labviewExecutablePath: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
-        },
-        portOracle: {
-          selectedLabviewIniPath: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.ini',
-          derivedExpectedTcpPort: 3366,
-          isNonDefaultPort: true,
-          observedLabviewIniPath: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.ini',
-          observedTcpPort: 3366
-        }
-      }
+  // VHS-REQ-713: build a passing scenario log for every canonical manifest row
+  // so the "all scenarios pass" assertions stay in sync with the 30-row grid
+  // instead of a hand-maintained five-entry literal.
+  function labviewRoot(bitness: string): string {
+    return bitness === 'x64'
+      ? 'C:\\Program Files\\National Instruments'
+      : 'C:\\Program Files (x86)\\National Instruments';
+  }
+  function passingLogFor(row: (typeof harness.SCENARIO_MANIFEST)[number]): Record<string, unknown> {
+    const observed: Record<string, unknown> = {
+      runtimeBlockedReason: row.expectedBlockedReason,
+      hostBitness: row.hostBitness,
+      selectedBitness: row.selectedBitness,
+      labviewExecutablePath: `${labviewRoot(row.hostBitness)}\\LabVIEW ${row.hostVersion}\\LabVIEW.exe`
     };
-    const fake = buildFakeFs(scenarioLogPayloads);
+    if (row.family === 'version') {
+      observed.hostVersion = row.hostVersion;
+      observed.selectedVersion = row.selectedVersion;
+    }
+    const log: Record<string, unknown> = { pass: true, durationMs: 100, observed };
+    if (row.family === 'port') {
+      const ini = `${labviewRoot(row.selectedBitness)}\\LabVIEW ${row.selectedVersion}\\LabVIEW.ini`;
+      observed.hostLabviewTcpPort = 3366;
+      observed.hostLabviewIniPath = ini;
+      log.portOracle = {
+        selectedLabviewIniPath: ini,
+        derivedExpectedTcpPort: 3366,
+        isNonDefaultPort: true,
+        observedLabviewIniPath: ini,
+        observedTcpPort: 3366
+      };
+    }
+    return log;
+  }
+  function allPassingPayloads(): Record<string, unknown> {
+    const sep = require('node:path').sep as string;
+    const payloads: Record<string, unknown> = {};
+    for (const row of harness.SCENARIO_MANIFEST) {
+      payloads[`assurance-closeout-evidence${sep}runtime-matrix-proofs${sep}${row.id}.scenario.json`] =
+        passingLogFor(row);
+    }
+    return payloads;
+  }
+
+  it('writes an evidence file with passing summary when all runtime scenarios match expectations (VHS-REQ-622.1, VHS-REQ-622.3, VHS-REQ-623.6, VHS-REQ-653.7, VHS-REQ-713.1)', () => {
+    const spawnSync = vi.fn().mockReturnValue({ status: 0, error: undefined });
+    const fake = buildFakeFs(allPassingPayloads());
 
     const result = harness.runRuntimeMatrix([], {
       spawnSync,
@@ -678,11 +843,11 @@ describe('runWindowsRuntimeMatrix.runRuntimeMatrix', () => {
       stderr: { write: () => undefined }
     });
 
-    expect(spawnSync).toHaveBeenCalledTimes(harness.KNOWN_SCENARIOS.length);
+    expect(spawnSync).toHaveBeenCalledTimes(harness.CANONICAL_SCENARIOS.length);
     expect(result.exitCode).toBe(0);
     expect(result.evidence?.schema).toBe(harness.EVIDENCE_SCHEMA);
     expect(result.evidence?.summary).toEqual({
-      passed: harness.KNOWN_SCENARIOS.length,
+      passed: harness.CANONICAL_SCENARIOS.length,
       failed: 0,
       raceCoverage: harness.RACE_COVERAGE_NOTE
     });
@@ -712,7 +877,7 @@ describe('runWindowsRuntimeMatrix.runRuntimeMatrix', () => {
       }>;
       summary: { passed: number; failed: number; raceCoverage: string };
     };
-    const retainedPortScenario = retainedEvidence.scenarios.find((scenario) => scenario.id === 'port-A');
+    const retainedPortScenario = retainedEvidence.scenarios.find((scenario) => scenario.id === 'port-2026-x64');
 
     expect(Object.keys(retainedEvidence)).toEqual([
       'schema',
@@ -756,72 +921,7 @@ describe('runWindowsRuntimeMatrix.runRuntimeMatrix', () => {
 
   it('tolerates a UTF-8 BOM in the scenario log (Windows PowerShell Set-Content)', () => {
     const spawnSync = vi.fn().mockReturnValue({ status: 0, error: undefined });
-    const sep = require('node:path').sep;
-    const scenarioLogPayloads = {
-      [`assurance-closeout-evidence${sep}runtime-matrix-proofs${sep}steady-A.scenario.json`]: {
-        pass: true,
-        durationMs: 100,
-        observed: {
-          runtimeBlockedReason: 'windows-host-bitness-conflict',
-          hostBitness: 'x64',
-          selectedBitness: 'x86',
-          labviewExecutablePath: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
-        }
-      },
-      [`assurance-closeout-evidence${sep}runtime-matrix-proofs${sep}steady-B.scenario.json`]: {
-        pass: true,
-        durationMs: 110,
-        observed: {
-          runtimeBlockedReason: 'windows-host-bitness-conflict',
-          hostBitness: 'x86',
-          selectedBitness: 'x64',
-          labviewExecutablePath: 'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
-        }
-      },
-      [`assurance-closeout-evidence${sep}runtime-matrix-proofs${sep}version-A.scenario.json`]: {
-        pass: true,
-        durationMs: 120,
-        observed: {
-          runtimeBlockedReason: 'windows-host-version-conflict',
-          hostBitness: 'x64',
-          selectedBitness: 'x64',
-          hostVersion: '2025',
-          selectedVersion: '2026',
-          labviewExecutablePath: 'C:\\Program Files\\National Instruments\\LabVIEW 2025\\LabVIEW.exe'
-        }
-      },
-      [`assurance-closeout-evidence${sep}runtime-matrix-proofs${sep}version-B.scenario.json`]: {
-        pass: true,
-        durationMs: 130,
-        observed: {
-          runtimeBlockedReason: 'windows-host-version-conflict',
-          hostBitness: 'x64',
-          selectedBitness: 'x64',
-          hostVersion: '2026',
-          selectedVersion: '2025',
-          labviewExecutablePath: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
-        }
-      },
-      [`assurance-closeout-evidence${sep}runtime-matrix-proofs${sep}port-A.scenario.json`]: {
-        pass: true,
-        durationMs: 140,
-        observed: {
-          runtimeBlockedReason: 'none',
-          hostBitness: 'x64',
-          selectedBitness: 'x64',
-          hostLabviewTcpPort: 3366,
-          hostLabviewIniPath: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.ini',
-          labviewExecutablePath: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
-        },
-        portOracle: {
-          selectedLabviewIniPath: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.ini',
-          derivedExpectedTcpPort: 3366,
-          isNonDefaultPort: true,
-          observedLabviewIniPath: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.ini',
-          observedTcpPort: 3366
-        }
-      }
-    };
+    const scenarioLogPayloads = allPassingPayloads();
     // Emulate Windows PowerShell 5.1 `Set-Content -Encoding UTF8`, which prepends a BOM.
     const writes = new Map<string, string>();
     const fakeFs = {
@@ -852,7 +952,7 @@ describe('runWindowsRuntimeMatrix.runRuntimeMatrix', () => {
 
     expect(result.exitCode).toBe(0);
     expect(result.evidence?.summary).toEqual({
-      passed: harness.KNOWN_SCENARIOS.length,
+      passed: harness.CANONICAL_SCENARIOS.length,
       failed: 0,
       raceCoverage: harness.RACE_COVERAGE_NOTE
     });

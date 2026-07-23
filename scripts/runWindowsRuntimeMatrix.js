@@ -47,54 +47,164 @@ const DEFAULT_EVIDENCE_OUT = path.join(
   'assurance-closeout-evidence',
   'manual-vhs-req-621.json'
 );
-const KNOWN_SCENARIOS = Object.freeze([
-  'steady-A',
-  'steady-B',
-  'version-A',
-  'version-B',
-  'port-A'
-]);
-const SCENARIO_PARAMETERS = Object.freeze({
-  // VHS-REQ-622: bitness-conflict directions (same year, different bitness).
-  'steady-A': {
-    hostBitness: 'x64',
-    selectedBitness: 'x86',
-    expectedBlockedReason: 'windows-host-bitness-conflict'
-  },
-  'steady-B': {
-    hostBitness: 'x86',
-    selectedBitness: 'x64',
-    expectedBlockedReason: 'windows-host-bitness-conflict'
-  },
-  // VHS-REQ-653: version-conflict directions (same bitness, different year).
-  // Require LabVIEW 2025 and 2026 both installed at the scenario bitness.
-  'version-A': {
-    hostBitness: 'x64',
-    selectedBitness: 'x64',
-    hostVersion: '2025',
-    selectedVersion: '2026',
-    expectedBlockedReason: 'windows-host-version-conflict'
-  },
-  'version-B': {
-    hostBitness: 'x64',
-    selectedBitness: 'x64',
-    hostVersion: '2026',
-    selectedVersion: '2025',
-    expectedBlockedReason: 'windows-host-version-conflict'
-  },
-  // VHS-REQ-623: non-default VI Server port admit direction (same year/bitness).
-  // The expected VI Server port is DERIVED from the selected install's own
-  // LabVIEW.ini at runtime (derivePortFromSelectedIni) -- never a hardcoded or
-  // operator-supplied constant -- so the scenario admits the host (no false
-  // conflict) AND proves the product read that exact ini and observed its
-  // configured port, whatever the operator set it to.
-  'port-A': {
-    hostBitness: 'x64',
-    selectedBitness: 'x64',
-    expectedBlockedReason: 'none',
-    derivePortFromSelectedIni: true
+// VHS-REQ-713: the runtime-conflict matrix is defined by a scenario MANIFEST
+// rather than a fixed five-scenario enum. Each row models a Host (the LabVIEW
+// process actually running) vs a Selected (what the product is configured to
+// use). Four families cover every cell of the 2020/2025/2026 x86/x64 grid in at
+// least one conflict and one admit direction:
+//   - bitness (VHS-REQ-622): same year, opposite bitness -> bitness conflict.
+//   - version (VHS-REQ-653): same bitness, different year -> version conflict.
+//   - match: Host == Selected on the default port -> no conflict (the negative
+//     control the fixed matrix lacked per-cell).
+//   - port (VHS-REQ-623): Host == Selected on a non-default VI Server port ->
+//     no conflict, port derived from the selected install's own LabVIEW.ini.
+// The legacy ids (steady-A/B, version-A/B, port-A) remain accepted as aliases
+// that resolve to their canonical manifest row so the existing prompt/dispatch
+// keep working.
+const MATRIX_YEARS = Object.freeze(['2020', '2025', '2026']);
+const MATRIX_BITNESSES = Object.freeze(['x86', 'x64']);
+const BITNESS_CONFLICT_REASON = 'windows-host-bitness-conflict';
+const VERSION_CONFLICT_REASON = 'windows-host-version-conflict';
+const NO_CONFLICT_REASON = 'none';
+
+function buildScenarioManifest() {
+  const rows = [];
+
+  // bitness family: same year, opposite bitness (6 rows).
+  for (const year of MATRIX_YEARS) {
+    for (const hostBitness of MATRIX_BITNESSES) {
+      const selectedBitness = hostBitness === 'x64' ? 'x86' : 'x64';
+      rows.push({
+        id: `bitness-${year}-${hostBitness}${selectedBitness}`,
+        family: 'bitness',
+        hostVersion: year,
+        selectedVersion: year,
+        hostBitness,
+        selectedBitness,
+        expectedBlockedReason: BITNESS_CONFLICT_REASON
+      });
+    }
   }
+
+  // version family: same bitness, different year, both directions (12 rows).
+  const versionPairs = [
+    ['2020', '2025'],
+    ['2020', '2026'],
+    ['2025', '2026']
+  ];
+  for (const [lower, upper] of versionPairs) {
+    for (const [hostVersion, selectedVersion] of [
+      [lower, upper],
+      [upper, lower]
+    ]) {
+      for (const bitness of MATRIX_BITNESSES) {
+        rows.push({
+          id: `version-${hostVersion}-${selectedVersion}-${bitness}`,
+          family: 'version',
+          hostVersion,
+          selectedVersion,
+          hostBitness: bitness,
+          selectedBitness: bitness,
+          expectedBlockedReason: VERSION_CONFLICT_REASON
+        });
+      }
+    }
+  }
+
+  // match family: Host == Selected on the default port (6 rows).
+  for (const year of MATRIX_YEARS) {
+    for (const bitness of MATRIX_BITNESSES) {
+      rows.push({
+        id: `match-${year}-${bitness}`,
+        family: 'match',
+        hostVersion: year,
+        selectedVersion: year,
+        hostBitness: bitness,
+        selectedBitness: bitness,
+        expectedBlockedReason: NO_CONFLICT_REASON
+      });
+    }
+  }
+
+  // port family: Host == Selected on a non-default VI Server port derived from
+  // the selected install's own LabVIEW.ini (6 rows).
+  for (const year of MATRIX_YEARS) {
+    for (const bitness of MATRIX_BITNESSES) {
+      rows.push({
+        id: `port-${year}-${bitness}`,
+        family: 'port',
+        hostVersion: year,
+        selectedVersion: year,
+        hostBitness: bitness,
+        selectedBitness: bitness,
+        expectedBlockedReason: NO_CONFLICT_REASON,
+        derivePortFromSelectedIni: true
+      });
+    }
+  }
+
+  return rows;
+}
+
+const SCENARIO_MANIFEST = Object.freeze(
+  buildScenarioManifest().map((row) => Object.freeze(row))
+);
+
+// Canonical scenario ids, in manifest order (30 rows). `--scenario all` runs
+// exactly these; aliases are never double-run.
+const CANONICAL_SCENARIOS = Object.freeze(SCENARIO_MANIFEST.map((row) => row.id));
+
+// Legacy ids preserved as aliases resolving to their canonical manifest row.
+const LEGACY_SCENARIO_ALIASES = Object.freeze({
+  'steady-A': 'bitness-2026-x64x86',
+  'steady-B': 'bitness-2026-x86x64',
+  'version-A': 'version-2025-2026-x64',
+  'version-B': 'version-2026-2025-x64',
+  'port-A': 'port-2026-x64'
 });
+
+// A lighter CI tier still covering every cell in at least one conflict and one
+// admit direction: 6 bitness + the 4 version extremes (2020<->2026, 2025<->2026)
+// at x64 + 3 match + 1 port ~= 14 rows (VHS-REQ-713 lighter tier).
+const LIGHT_TIER_SCENARIOS = Object.freeze([
+  'bitness-2020-x64x86',
+  'bitness-2020-x86x64',
+  'bitness-2025-x64x86',
+  'bitness-2025-x86x64',
+  'bitness-2026-x64x86',
+  'bitness-2026-x86x64',
+  'version-2020-2026-x64',
+  'version-2026-2020-x64',
+  'version-2025-2026-x64',
+  'version-2026-2025-x64',
+  'match-2020-x64',
+  'match-2025-x64',
+  'match-2026-x64',
+  'port-2026-x64'
+]);
+
+// SCENARIO_PARAMETERS maps every accepted scenario id (canonical + alias) to its
+// parameter object. Aliases share the frozen parameter object of their canonical
+// row so `SCENARIO_PARAMETERS[alias]` keeps working for existing callers.
+const SCENARIO_PARAMETERS = Object.freeze(
+  (() => {
+    const map = {};
+    for (const row of SCENARIO_MANIFEST) {
+      const { id, family, ...rest } = row;
+      map[id] = Object.freeze({ family, ...rest });
+    }
+    for (const [alias, canonicalId] of Object.entries(LEGACY_SCENARIO_ALIASES)) {
+      map[alias] = map[canonicalId];
+    }
+    return map;
+  })()
+);
+
+// The full set of ids accepted by `--scenario` (canonical + legacy aliases).
+const KNOWN_SCENARIOS = Object.freeze([
+  ...CANONICAL_SCENARIOS,
+  ...Object.keys(LEGACY_SCENARIO_ALIASES)
+]);
 
 function parseArgs(argv) {
   const options = {
@@ -130,9 +240,13 @@ function parseArgs(argv) {
     return options;
   }
 
-  if (options.scenario !== 'all' && !KNOWN_SCENARIOS.includes(options.scenario)) {
+  if (
+    options.scenario !== 'all' &&
+    options.scenario !== 'light' &&
+    !KNOWN_SCENARIOS.includes(options.scenario)
+  ) {
     throw new Error(
-      `--scenario must be one of: ${KNOWN_SCENARIOS.join(', ')}, all`
+      `--scenario must be one of: all, light, ${KNOWN_SCENARIOS.join(', ')}`
     );
   }
 
@@ -143,18 +257,22 @@ function getUsage() {
   return [
     'Usage: node scripts/runWindowsRuntimeMatrix.js [options]',
     '',
-    'Drives the VHS-REQ-622 steady-state Windows bitness-conflict scenarios',
-    'against a real running LabVIEW 2026 + real vihs --validate CLI.',
+    'Drives the VHS-REQ-713 Windows runtime-conflict matrix (30-row scenario',
+    'manifest) against real running LabVIEW installs + the real vihs --validate',
+    'CLI. Four families cover the 2020/2025/2026 x86/x64 grid:',
+    '  bitness (same year, opposite bitness -> bitness conflict),',
+    '  version (same bitness, different year -> version conflict),',
+    '  match   (Host == Selected, default port -> no conflict),',
+    '  port    (Host == Selected, non-default ini-derived port -> no conflict).',
     '',
     'Options:',
-    '  --scenario <id>         steady-A | steady-B | version-A | version-B |',
-    '                          port-A | all',
-    '                          (default: all; steady-* assert bitness conflict,',
-    '                          version-* assert version conflict, port-A asserts',
-    "                          the selected install's configured VI Server port",
-    '                          is admitted + observed)',
-    '  --labview-version <yr>  LabVIEW major version for steady-* scenarios',
-    '                          (default: 2026; version-* carry their own years)',
+    '  --scenario <id>         all | light | <canonical-id> | <legacy-alias>',
+    '                          (default: all runs the 30 canonical rows; light',
+    '                          runs the ~14-row CI tier; legacy aliases steady-A/',
+    '                          steady-B/version-A/version-B/port-A resolve to',
+    '                          their canonical manifest row)',
+    '  --labview-version <yr>  Default LabVIEW major version for scenarios that',
+    '                          do not carry their own year (default: 2026)',
     `  --out <path>            Evidence output (default: ${DEFAULT_EVIDENCE_OUT})`,
     '  --proof-dir <path>      Directory for per-scenario proof JSON files',
     '                          (default: alongside --out)',
@@ -165,7 +283,10 @@ function getUsage() {
 
 function selectScenarios(scenarioArg) {
   if (scenarioArg === 'all') {
-    return KNOWN_SCENARIOS.slice();
+    return CANONICAL_SCENARIOS.slice();
+  }
+  if (scenarioArg === 'light') {
+    return LIGHT_TIER_SCENARIOS.slice();
   }
   return [scenarioArg];
 }
@@ -308,18 +429,44 @@ function summarizeScenario(scenario, spawnResult, scenarioLog) {
       expectedIni === normalizeWindowsPath(observed.hostLabviewIniPath);
   }
 
+  // VHS-REQ-713: version-family scenarios (Host year != Selected year at the
+  // same bitness) additionally assert the observed host/selected years match the
+  // manifest row, so a version conflict is proven to arise from the intended
+  // year mismatch rather than an incidental one. Bitness/match/port rows keep
+  // Host year == Selected year, so this guard is inert for them.
+  const assertVersions = Boolean(
+    scenario.parameters.hostVersion &&
+      scenario.parameters.selectedVersion &&
+      scenario.parameters.hostVersion !== scenario.parameters.selectedVersion
+  );
+  let versionMatches = true;
+  if (assertVersions) {
+    expected.hostVersion = scenario.parameters.hostVersion;
+    expected.selectedVersion = scenario.parameters.selectedVersion;
+    versionMatches =
+      observed.hostVersion === scenario.parameters.hostVersion &&
+      observed.selectedVersion === scenario.parameters.selectedVersion;
+  }
+
   const pass = Boolean(
     scenarioLog?.pass === true &&
       observed.runtimeBlockedReason === expected.runtimeBlockedReason &&
       observed.hostBitness === expected.hostBitness &&
       observed.selectedBitness === expected.selectedBitness &&
+      versionMatches &&
       portMatches &&
       iniPathMatches
   );
   let failureReason = scenarioLog?.failureReason
     ?? (spawnResult.status === 0 ? undefined : `powershell-exit-${spawnResult.status}`);
   if (!pass && failureReason === undefined) {
-    if (!portMatches) {
+    if (!versionMatches) {
+      failureReason =
+        `expected hostVersion=${expected.hostVersion ?? '<none>'}/` +
+        `selectedVersion=${expected.selectedVersion ?? '<none>'}, ` +
+        `observed hostVersion=${observed.hostVersion ?? '<none>'}/` +
+        `selectedVersion=${observed.selectedVersion ?? '<none>'}`;
+    } else if (!portMatches) {
       failureReason =
         `expected hostLabviewTcpPort=${expected.hostTcpPort ?? '<derive-failed>'}, ` +
         `observed=${observed.hostLabviewTcpPort ?? '<none>'}`;
@@ -450,6 +597,10 @@ module.exports = {
   EVIDENCE_SCHEMA,
   RACE_COVERAGE_NOTE,
   DEFAULT_EVIDENCE_OUT,
+  SCENARIO_MANIFEST,
+  CANONICAL_SCENARIOS,
+  LEGACY_SCENARIO_ALIASES,
+  LIGHT_TIER_SCENARIOS,
   KNOWN_SCENARIOS,
   SCENARIO_PARAMETERS,
   parseArgs,

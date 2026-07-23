@@ -7855,3 +7855,67 @@ Missing numeric IDs are intentional.
   - Keep `dev-only` in the retired set so the traceability gate stays fail-closed;
     map any new surface to a requirement instead of reintroducing a retired
     classification.
+
+### VHS-REQ-713: Real Windows Full-Matrix Runtime Validation Host
+
+- Status: Active
+- Parent: VHS-SYS-REQ-013
+- Area: CI And Developer Environment
+- Statement: A real Windows hardening host shall validate the comparison runtime
+  across the full LabVIEW version x bitness grid (2020/2025/2026 x86/x64) and
+  both Docker container modes (Linux and Windows containers), covering the
+  host-native Windows grid and the Windows-container path — never exercised on
+  real hardware before — in addition to the single Vagrant x86/2026 track. The
+  runtime-conflict matrix driver is defined by a scenario manifest that covers
+  every cell in at least one conflict and one admit direction; each validated
+  host-native cell and each validated Windows-container image is recorded as its
+  own track in the committed runtime-validation ledger; and the host provisioning
+  procedure is captured as a reproducible checklist with a content digest. This
+  host uses Docker and therefore does not run the Vagrant release-attestation box
+  (VHS-REQ-666), which stays a separate machine and is not replaced by this host.
+- Acceptance Criteria:
+  - The runtime-conflict matrix is a scenario manifest of thirty canonical rows
+    across four families — six `bitness` (same year, opposite bitness ->
+    `windows-host-bitness-conflict`), twelve `version` (same bitness, different
+    year, both directions -> `windows-host-version-conflict`), six `match` (host
+    equals selected on the default port -> `none`), and six `port` (host equals
+    selected on a non-default VI Server port derived from the selected install's
+    own LabVIEW.ini -> `none`) — and `--scenario all` runs exactly the canonical
+    rows without double-running any alias.
+  - A `--scenario light` tier selects a representative subset that still covers
+    every version-and-bitness cell in at least one conflict and one admit
+    direction, so a lighter CI dispatch is available when the full thirty-row
+    grid is too heavy.
+  - The legacy scenario ids `steady-A`, `steady-B`, `version-A`, `version-B`, and
+    `port-A` remain accepted `--scenario` aliases that resolve to their canonical
+    manifest row's parameters, so the existing prompt and dispatch keep working.
+  - The `version` family includes a direction whose selected version is LabVIEW
+    2020 (the older-VI convert path), and the per-scenario summary additionally
+    asserts the observed host and selected years equal the manifest row for
+    version-family scenarios, so a version conflict is proven to arise from the
+    intended year mismatch rather than an incidental one.
+- Agent Work Scope:
+  - Generalize `scripts/runWindowsRuntimeMatrix.js` from the fixed five-scenario
+    enum into the scenario manifest with legacy-id aliases, keeping the manifest
+    and its selection/summary logic pure and unit tested without a runtime; the
+    PowerShell helper stays scenario-agnostic (it launches the host install,
+    selects the configured runtime, and asserts the expected blocked reason).
+    Record a ledger track only from a genuine passing real-runtime run — never
+    fabricate ledger evidence — and capture the host provisioning checklist with
+    a content digest under `docs/`. Do not remove or weaken the Vagrant
+    release-attestation track (VHS-REQ-666), and never name or invoke Vagrant or
+    a hypervisor from `.github/workflows` (VHS-REQ-599).
+- Implementation References:
+  - `scripts/runWindowsRuntimeMatrix.js`
+  - `docs/requirements/runtime-validation-ledger.json`
+  - `docs/windows-hardening-host.md`
+- Verification References:
+  - `tests/unit/runWindowsRuntimeMatrixScript.test.ts`
+  - `tests/unit/requirementsDocs.test.ts`
+  - `manual:windows-hardening-host-matrix`
+- Change Guidance:
+  - Evolve the scenario manifest additively and keep every legacy alias resolving
+    to its canonical row so existing dispatch keeps working; when a new LabVIEW
+    year or bitness enters the grid, extend `MATRIX_YEARS`/`MATRIX_BITNESSES` and
+    the ledger tracks together, and keep ledger recording gated on genuine
+    real-runtime evidence.
