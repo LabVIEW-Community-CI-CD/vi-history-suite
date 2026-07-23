@@ -5608,6 +5608,17 @@ Missing numeric IDs are intentional.
     model without re-deriving anything, and a companion renderer prints a
     deterministic layout summary. Pure and deterministic, with no I/O and no
     writer dependency.
+  - A pure capture plan builds the Windows `logman` command lifecycle a
+    self-hosted runner executes to record the first-run trace as the PDH-CSV the
+    parser consumes (schema `vi-history-suite/perfmon-capture-plan@v1`): the
+    system processor, available-memory, and disk counters are always captured and
+    the LabVIEW process counters are opt-in for an exact running process name,
+    because `logman` resolves a process-counter instance at collector start so a
+    cold first-run launch captures the system counters only. It fails closed on an
+    empty collector name or output path and an out-of-range interval, exposes the
+    ordered create/start/stop/delete commands as data, and a companion renderer
+    describes the plan; executing it (spawning `logman`) lives in the actor
+    harness so the builder stays pure and deterministic.
 - Agent Work Scope:
   - Change the ADR, this requirement, and the governance contract test together;
     keep the required gate deterministic and never make a live image pull the
@@ -5623,6 +5634,7 @@ Missing numeric IDs are intentional.
   - `src/reporting/mirror/perfmonSampleSeries.ts`
   - `scripts/renderFirstRunPerfmon.js`
   - `src/reporting/mirror/perfmonTdmsModel.ts`
+  - `src/reporting/mirror/perfmonCapturePlan.ts`
 - Verification References:
   - `tests/unit/mirrorModeGovernance.test.ts`
   - `tests/unit/mirrorParityDigest.test.ts`
@@ -5634,6 +5646,7 @@ Missing numeric IDs are intentional.
   - `tests/unit/perfmonSampleSeries.test.ts`
   - `tests/unit/renderFirstRunPerfmonScript.test.ts`
   - `tests/unit/perfmonTdmsModel.test.ts`
+  - `tests/unit/perfmonCapturePlan.test.ts`
 - Change Guidance:
   - This is a governance-foundation requirement: keep the documented invariants
     (human/Vagrant-only authorship, run-only container, Vagrant→`merge_group`
