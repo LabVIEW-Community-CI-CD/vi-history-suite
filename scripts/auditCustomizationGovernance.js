@@ -561,17 +561,22 @@ function validateInstructionApplyTo(cwd, instructionPaths, repoFiles) {
     }
   }
 
-  return issues.sort((left, right) => {
-    const pathCompare = left.path.localeCompare(right.path);
-    if (pathCompare !== 0) {
-      return pathCompare;
-    }
-    const patternCompare = left.pattern.localeCompare(right.pattern);
-    if (patternCompare !== 0) {
-      return patternCompare;
-    }
-    return left.issue.localeCompare(right.issue);
-  });
+  return issues.sort(compareApplyToIssues);
+}
+
+// Deterministic ordering for applyTo issues (by path, then pattern, then issue).
+// Extracted from the inline `.sort()` callback so the ordering branches are
+// directly unit-testable.
+function compareApplyToIssues(left, right) {
+  const pathCompare = left.path.localeCompare(right.path);
+  if (pathCompare !== 0) {
+    return pathCompare;
+  }
+  const patternCompare = left.pattern.localeCompare(right.pattern);
+  if (patternCompare !== 0) {
+    return patternCompare;
+  }
+  return left.issue.localeCompare(right.issue);
 }
 
 function validateLocalMarkdownLinks(cwd, markdownFiles) {
@@ -625,23 +630,28 @@ function validateLocalMarkdownLinks(cwd, markdownFiles) {
     }
   }
 
-  return issues.sort((left, right) => {
-    const sourceCompare = left.source.localeCompare(right.source);
-    if (sourceCompare !== 0) {
-      return sourceCompare;
-    }
+  return issues.sort(compareLinkIssues);
+}
 
-    if (left.line !== right.line) {
-      return left.line - right.line;
-    }
+// Deterministic ordering for link issues (by source, then line, then target,
+// then issue). Extracted from the inline `.sort()` callback so the ordering
+// branches are directly unit-testable.
+function compareLinkIssues(left, right) {
+  const sourceCompare = left.source.localeCompare(right.source);
+  if (sourceCompare !== 0) {
+    return sourceCompare;
+  }
 
-    const targetCompare = left.target.localeCompare(right.target);
-    if (targetCompare !== 0) {
-      return targetCompare;
-    }
+  if (left.line !== right.line) {
+    return left.line - right.line;
+  }
 
-    return left.issue.localeCompare(right.issue);
-  });
+  const targetCompare = left.target.localeCompare(right.target);
+  if (targetCompare !== 0) {
+    return targetCompare;
+  }
+
+  return left.issue.localeCompare(right.issue);
 }
 
 function extractNpmScriptReferences(text) {
@@ -685,19 +695,24 @@ function validateCommandReferences(cwd, packageScripts) {
     }
   }
 
-  return issues.sort((left, right) => {
-    const sourceCompare = left.source.localeCompare(right.source);
-    if (sourceCompare !== 0) {
-      return sourceCompare;
-    }
+  return issues.sort(compareCommandIssues);
+}
 
-    const scriptCompare = left.script.localeCompare(right.script);
-    if (scriptCompare !== 0) {
-      return scriptCompare;
-    }
+// Deterministic ordering for command issues (by source, then script, then
+// issue). Extracted from the inline `.sort()` callback so the ordering branches
+// are directly unit-testable.
+function compareCommandIssues(left, right) {
+  const sourceCompare = left.source.localeCompare(right.source);
+  if (sourceCompare !== 0) {
+    return sourceCompare;
+  }
 
-    return left.issue.localeCompare(right.issue);
-  });
+  const scriptCompare = left.script.localeCompare(right.script);
+  if (scriptCompare !== 0) {
+    return scriptCompare;
+  }
+
+  return left.issue.localeCompare(right.issue);
 }
 
 function auditCustomizationGovernance(options = {}) {
@@ -1043,5 +1058,8 @@ module.exports = {
   validateFrontmatterSchemas,
   validateInstructionApplyTo,
   validateLocalMarkdownLinks,
+  compareApplyToIssues,
+  compareLinkIssues,
+  compareCommandIssues,
   FINDING_CATEGORIES
 };

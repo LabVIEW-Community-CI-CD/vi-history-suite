@@ -412,4 +412,45 @@ describe('runtimeSettingsLiveSessionProbePacket (VHS-REQ-687.2)', () => {
     expect(summary.mutationTargetBaselineUnchangedCount).toBe(1);
     expect(summary.mutationTargetBaselineUnknownCount).toBe(3);
   });
+
+  it('renders <none> receipts, drift = yes, and safe-restore = no with the default clock', async () => {
+    const tempRoot = await fs.mkdtemp(
+      path.join(os.tmpdir(), 'vihs-live-probe-packet-minimal-')
+    );
+    temporaryDirectories.push(tempRoot);
+
+    // A minimal summary: omit every optional persisted/baseline/live/runtime
+    // fact so the Markdown falls back to `<none>` (the right-hand side of the
+    // `?? '<none>'` receipts), flip version+bitness drift to `yes`, and leave
+    // safe-restore false so those `? 'yes' : 'no'` receipts render `no`.
+    // Persisting WITHOUT a `now` dep exercises the default `() => new Date()`
+    // clock (the right-hand side of `deps.now ?? (...)`).
+    const summary = await persistRuntimeSettingsLiveSessionProbePacket(
+      {
+        outcome: 'probed-runtime-settings-live-session',
+        providerDrift: false,
+        versionDrift: true,
+        bitnessDrift: true,
+        driftDetected: true,
+        liveUptakeObservation: 'reload-required',
+        safeRestoreApplied: false,
+        safeRestoreVerified: false
+      },
+      tempRoot
+    );
+
+    // The default clock produced a valid ISO-derived packet run id.
+    expect(summary.packetRunId).toMatch(/Z$/);
+    const markdown = await fs.readFile(summary.packetMarkdownPath, 'utf8');
+    expect(markdown).toContain('Version drift: `yes`');
+    expect(markdown).toContain('Bitness drift: `yes`');
+    expect(markdown).toContain('Safe restore applied: `no`');
+    expect(markdown).toContain('Safe restore verified: `no`');
+    // Every omitted persisted/baseline/live/runtime fact renders as `<none>`.
+    expect(markdown).toContain('Provider: `<none>`');
+    expect(markdown).toContain('LabVIEW version: `<none>`');
+    expect(markdown).toContain('Runtime provider: `<none>`');
+    expect(markdown).toContain('Runtime engine: `<none>`');
+    expect(markdown).toContain('Validation outcome: `<none>`');
+  });
 });

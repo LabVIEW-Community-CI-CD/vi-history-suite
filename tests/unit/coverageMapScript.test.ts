@@ -34,6 +34,9 @@ const {
   renderSchema,
   summarizeEnforcement,
   main,
+  isBelowThreshold,
+  isBranchMeasurementExempt,
+  BRANCH_MEASUREMENT_LIMITED_FILES,
   COVERAGE_MAP_SCHEMA_ID
 } = require('../../scripts/mapCoverageToTraceability.js') as {
   parseArgs: (argv: string[]) => {
@@ -63,6 +66,23 @@ const {
     violations: number;
   };
   main: (argv?: string[]) => number;
+  isBelowThreshold: (
+    file: {
+      path: string;
+      lines: { pct: number };
+      statements: { pct: number };
+      branches: { pct: number };
+      functions: { pct: number };
+    },
+    threshold: number
+  ) => boolean;
+  isBranchMeasurementExempt: (file: {
+    path: string;
+    lines: { pct: number };
+    statements: { pct: number };
+    functions: { pct: number };
+  }) => boolean;
+  BRANCH_MEASUREMENT_LIMITED_FILES: Set<string>;
 };
 
 const { parseCsv } = require('../../scripts/mapCoverageToTraceability.js') as {
@@ -369,7 +389,7 @@ describe('coverage traceability map script', () => {
       expect(main(['--json', '--include-provenance', '--repo-root', cleanRepoRoot])).toBe(0);
       const parsed = JSON.parse(captured) as { provenance: { outputMode: string }; riskThreshold: number };
       expect(parsed.provenance.outputMode).toBe('json');
-      expect(parsed.riskThreshold).toBe(80);
+      expect(parsed.riskThreshold).toBe(85);
 
       captured = '';
       expect(main(['--enforce', '--repo-root', cleanRepoRoot])).toBe(0);
@@ -379,6 +399,53 @@ describe('coverage traceability map script', () => {
       (process.stdout as any).write = originalWrite;
       fs.rmSync(cleanRepoRoot, { recursive: true, force: true });
     }
+  });
+});
+
+describe('branch-measurement exemption (VHS-REQ-613)', () => {
+  const exemptPath = 'scripts/auditCustomizationGovernance.js';
+
+  function fileAt(
+    pct: { l?: number; s?: number; b: number; f?: number },
+    at: string = exemptPath
+  ) {
+    return {
+      path: at,
+      lines: { pct: pct.l ?? 100 },
+      statements: { pct: pct.s ?? 100 },
+      branches: { pct: pct.b },
+      functions: { pct: pct.f ?? 100 }
+    };
+  }
+
+  it('lists only the documented branch-measurement-limited file', () => {
+    expect(BRANCH_MEASUREMENT_LIMITED_FILES.has(exemptPath)).toBe(true);
+  });
+
+  it('waives ONLY the branch metric for a listed file while lines/statements/functions are 100%', () => {
+    const file = fileAt({ b: 81.6 });
+    expect(isBranchMeasurementExempt(file)).toBe(true);
+    // Below-branch alone no longer flags the file at an 85% threshold.
+    expect(isBelowThreshold(file, 85)).toBe(false);
+  });
+
+  it('re-enforces the branch floor (fail-closed) when any non-branch metric drops below 100%', () => {
+    for (const drop of [{ l: 99.9 }, { s: 99.9 }, { f: 99.9 }]) {
+      const file = fileAt({ b: 81.6, ...drop });
+      expect(isBranchMeasurementExempt(file)).toBe(false);
+      expect(isBelowThreshold(file, 85)).toBe(true);
+    }
+  });
+
+  it('keeps the exemption branch-only: a listed file below threshold on functions still fails closed', () => {
+    const file = fileAt({ b: 100, f: 80 });
+    expect(isBelowThreshold(file, 85)).toBe(true);
+  });
+
+  it('does not exempt an unlisted file with low branch coverage', () => {
+    const file = fileAt({ b: 81.6 }, 'src/somethingElse.ts');
+    expect(isBranchMeasurementExempt(file)).toBe(false);
+    expect(isBelowThreshold(file, 85)).toBe(true);
   });
 });
 

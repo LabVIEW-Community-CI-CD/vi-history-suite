@@ -1,4 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
+import * as fs from 'node:fs/promises';
+import * as os from 'node:os';
 import * as path from 'node:path';
 
 import {
@@ -236,5 +238,78 @@ describe('runDevHost path helpers (VHS-REQ-621)', () => {
     expect(joinPreservingExplicitPathStyle(`C:${BS}runtime`, 'a/b', 'c')).toBe(`C:${BS}runtime${BS}a${BS}b${BS}c`);
     // UNC root -> win32 join preserving the leading double backslash.
     expect(joinPreservingExplicitPathStyle(`${BS}${BS}srv${BS}share`, 'a/b')).toBe(`${BS}${BS}srv${BS}share${BS}a${BS}b`);
+  });
+});
+
+// VHS-REQ-621: exercise the default dependency fall-throughs that the fully
+// injected CLI-flow tests above never reach, keeping every boundary hermetic
+// (no git, no VS Code launch, and no bogus Windows runtime-root probe).
+describe('runDevHostCli default dependency fall-throughs', () => {
+  it('writes usage to process.stdout when no stdout dependency is injected', async () => {
+    const writeSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    try {
+      const outcome = await runDevHostCli(['--help']);
+      expect(outcome).toBe('help');
+      expect(writeSpy).toHaveBeenCalled();
+    } finally {
+      writeSpy.mockRestore();
+    }
+  });
+
+  it('reuses the inline-prepared fixture for --prepare-workspace-only without a workspace path', async () => {
+    const write = vi.fn();
+    const prepareFixtureWorkspace = vi
+      .fn<(workspacePath: string) => Promise<ViHistoryDevHostWorkspaceMetadata>>()
+      .mockImplementation(async (workspacePath: string) => ({
+        workspacePath,
+        eligibleRelativePath: 'fixtures/eligible.vi',
+        ineligibleRelativePath: 'fixtures/ineligible.txt',
+        metadataPath: path.join(workspacePath, '.vihs-metadata.json')
+      }));
+
+    const outcome = await runDevHostCli(['--prepare-workspace-only'], {
+      repoRoot: '/repo',
+      resolveRuntimeRoot: vi.fn().mockResolvedValue('/tmp/runtime'),
+      prepareFixtureWorkspace,
+      stdout: { write }
+    });
+
+    expect(outcome).toBe('prepared');
+    // The workspace was prepared inline by the resolution ternary, so the
+    // prepare-only branch must not prepare it a second time.
+    expect(prepareFixtureWorkspace).toHaveBeenCalledTimes(1);
+    // runtimeRoot/workspace-fixture, derived the same way production joins it.
+    expect(prepareFixtureWorkspace).toHaveBeenCalledWith(
+      joinPreservingExplicitPathStyle('/tmp/runtime', 'workspace-fixture')
+    );
+  });
+
+  it('resolves the VS Code executable with the default resolver when none is injected', async () => {
+    const stageDir = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-devhost-code-'));
+    const codeExecutablePath = path.join(stageDir, 'code');
+    await fs.writeFile(codeExecutablePath, '#!/bin/sh\n', 'utf8');
+    const launcher = vi
+      .fn<(plan: ViHistoryDevHostLaunchPlan) => Promise<void>>()
+      .mockResolvedValue();
+    try {
+      const outcome = await runDevHostCli(
+        ['--workspace-path', '/home/dev/ws', '--code-path', codeExecutablePath],
+        {
+          repoRoot: '/repo',
+          resolveRuntimeRoot: vi.fn().mockResolvedValue('/tmp/runtime'),
+          prepareFixtureWorkspace: vi.fn(),
+          launcher,
+          stdout: { write: vi.fn() }
+          // resolveCodeExecutablePath intentionally omitted -> the default
+          // resolver runs and validates the real (temp) executable path.
+        }
+      );
+
+      expect(outcome).toBe('launched');
+      const plan = launcher.mock.calls[0]?.[0];
+      expect(plan?.codeExecutablePath).toBe(codeExecutablePath);
+    } finally {
+      await fs.rm(stageDir, { recursive: true, force: true });
+    }
   });
 });

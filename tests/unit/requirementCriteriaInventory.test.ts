@@ -1,4 +1,5 @@
 import * as fs from 'node:fs';
+import * as os from 'node:os';
 import * as path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
@@ -370,5 +371,87 @@ describe('requirement acceptance-criteria inventory (VHS-REQ-601)', () => {
     });
     expect(textOut).toContain('[requirements-criteria] provenance generatedAt: 2026-07-15T00:00:00.000Z');
     expect(textOut).toContain('provenance outputMode: text');
+  });
+});
+
+describe('requirement acceptance-criteria inventory: additional branch coverage (VHS-REQ-601)', () => {
+  it('records an empty status for a requirement heading with no "- Status:" line', () => {
+    // Exercises the `statusMatch ? ... : ''` fallback when a heading block omits
+    // its Status field.
+    const map = extractRequirementCriteria(
+      ['### VHS-REQ-050: No Status', '', '- Acceptance Criteria:', '  - Only criterion.', ''].join('\n')
+    );
+    expect(map.get('VHS-REQ-050')).toEqual({ status: '', criteria: ['Only criterion.'] });
+  });
+
+  it('skips RTM rows whose ReqID cell is empty', () => {
+    // Exercises the `if (reqId.length === 0) continue` guard: a blank-ReqID row
+    // must not create a verification-refs entry.
+    const rtmWithBlankRow =
+      FIXTURE_RTM + ',VHS-SYS-REQ-001,Active,Area,Blank,src/x.ts,tests/unit/x.test.ts,ok\n';
+    const result = auditRequirementCriteriaInventory('/repo', {
+      readFile: makeReadFile({ ...FIXTURE_FILES, 'docs/requirements/rtm.csv': rtmWithBlankRow })
+    });
+    // Only the three real requirements are inventoried; the blank row is ignored.
+    expect(result.requirements.map((r) => r.reqId)).toEqual(['VHS-REQ-001', 'VHS-REQ-003']);
+  });
+
+  it('stamps provenance with the real clock when no now dep is injected', () => {
+    // Exercises the `typeof deps.now === 'function' ? ... : new Date()` fallback.
+    let textOut = '';
+    const code = main(['--include-provenance'], {
+      cwd: '/repo',
+      readFile: makeReadFile(FIXTURE_FILES),
+      stdout: { write: (t: string) => { textOut += t; } }
+    });
+    expect(code).toBe(0);
+    expect(textOut).toContain('[requirements-criteria] provenance generatedAt:');
+    expect(textOut).toContain('provenance outputMode: text');
+  });
+
+  it('emits JSON with provenance and outputMode "json" under --json --include-provenance', () => {
+    // Exercises the `asJson ? 'json' : 'text'` provenance outputMode branch and
+    // the JSON output path.
+    let jsonOut = '';
+    const code = main(['--json', '--include-provenance'], {
+      cwd: '/repo',
+      readFile: makeReadFile(FIXTURE_FILES),
+      now: () => new Date('2026-07-15T00:00:00.000Z'),
+      stdout: { write: (t: string) => { jsonOut += t; } }
+    });
+    expect(code).toBe(0);
+    const parsed = JSON.parse(jsonOut) as { provenance?: { outputMode?: string } };
+    expect(parsed.provenance?.outputMode).toBe('json');
+  });
+
+  it('publishes the schema with outputMode "schema" under --schema --include-provenance', () => {
+    // Exercises the `asSchema ? 'schema' : ...` provenance outputMode branch.
+    let schemaOut = '';
+    const code = main(['--schema', '--include-provenance'], {
+      cwd: '/repo',
+      now: () => new Date('2026-07-15T00:00:00.000Z'),
+      stdout: { write: (t: string) => { schemaOut += t; } }
+    });
+    expect(code).toBe(0);
+    const parsed = JSON.parse(schemaOut) as Record<string, unknown>;
+    expect((parsed['x-vi-history-suite-provenance'] as { outputMode?: string }).outputMode).toBe('schema');
+  });
+
+  it('appends the step summary via the default fs writer when none is injected', () => {
+    // Exercises the default appendStepSummary arrow (fs.appendFileSync).
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'vihs-criteria-'));
+    const summaryPath = path.join(dir, 'summary.md');
+    try {
+      const code = main([], {
+        cwd: '/repo',
+        readFile: makeReadFile(FIXTURE_FILES),
+        stepSummaryPath: summaryPath,
+        stdout: { write: () => undefined }
+      });
+      expect(code).toBe(0);
+      expect(fs.readFileSync(summaryPath, 'utf8')).toContain('VHS-REQ-001');
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
   });
 });

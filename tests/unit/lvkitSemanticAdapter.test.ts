@@ -138,3 +138,40 @@ describe('buildViSemanticModelFromLvkitDiff rich diff (VHS-REQ-712.3)', () => {
     expect(model.narrative).toContain('block diagram only');
   });
 });
+
+describe('buildViSemanticModelFromLvkitDiff modified/moved changes (VHS-REQ-712.3)', () => {
+  it('tallies modified/moved nodes and omits absent vi paths from the context', () => {
+    const model = buildViSemanticModelFromLvkitDiff(
+      doc(
+        [
+          change({ uid: '1', kind: 'node', change: 'modified', label: 'Case Structure', bounds: [5, 6, 7, 8] }),
+          change({ uid: '2', kind: 'node', change: 'moved', label: 'Loop', boundsBefore: [1, 2, 3, 4], bounds: [11, 22, 33, 44] })
+        ],
+        10
+      ),
+      // Context WITHOUT firstViPath/secondViPath exercises the false arm of the
+      // spread-ternaries that add those vi fields.
+      { title: 'x.vi' }
+    );
+    expect(model.hasDifferences).toBe(true);
+    // 'modified' -> mapChangeVerb 'changed'; both changes fall into the tally
+    // else branch (nodesModified).
+    expect(model.detailSections[0].items[0]).toBe('Node "Case Structure" - changed at (5,6)');
+    expect(model.detailSections[0].items[1]).toBe('Node "Loop" - moved from (1,2) to (11,22)');
+    // buildNarrative reports the modified-node segment (tally.nodesModified > 0).
+    expect(model.narrative).toContain('2 nodes modified');
+    expect(model.vi).toEqual({ title: 'x.vi' });
+  });
+});
+
+describe('formatLvkitChangeAsDetailItem unrecognized kind and verb (VHS-REQ-712.2)', () => {
+  it('title-cases an unrecognized object kind and preserves an unknown change verb', () => {
+    // kind is neither 'wire' nor 'node' -> title-cased verbatim; an unknown
+    // change verb is preserved (mapChangeVerb default case).
+    expect(
+      formatLvkitChangeAsDetailItem(
+        change({ kind: 'structure' as never, change: 'resized' as never, label: 'Frame', bounds: [9, 9, 9, 9] })
+      )
+    ).toBe('Structure "Frame" - resized at (9,9)');
+  });
+});

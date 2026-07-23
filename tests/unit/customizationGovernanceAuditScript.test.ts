@@ -40,7 +40,10 @@ const {
   validateCommandReferences,
   validateFrontmatterSchemas,
   validateInstructionApplyTo,
-  validateLocalMarkdownLinks
+  validateLocalMarkdownLinks,
+  compareApplyToIssues,
+  compareLinkIssues,
+  compareCommandIssues
 } = require('../../scripts/auditCustomizationGovernance.js') as {
   auditCustomizationGovernance: (options?: { cwd?: string }) => AuditResult;
   discoverCustomizationFiles: (cwd: string) => string[];
@@ -98,6 +101,18 @@ const {
     cwd: string,
     packageScripts: Record<string, string>
   ) => AuditFindings['commandIssues'];
+  compareApplyToIssues: (
+    left: { path: string; pattern: string; issue: string },
+    right: { path: string; pattern: string; issue: string }
+  ) => number;
+  compareLinkIssues: (
+    left: { source: string; line: number; target: string; issue: string },
+    right: { source: string; line: number; target: string; issue: string }
+  ) => number;
+  compareCommandIssues: (
+    left: { source: string; script: string; issue: string },
+    right: { source: string; script: string; issue: string }
+  ) => number;
 };
 
 const fixtureRoots: string[] = [];
@@ -1492,5 +1507,224 @@ Body.
     expect(issues).toEqual([
       expect.objectContaining({ target: '..', issue: 'link resolves outside the repository root' })
     ]);
+  });
+
+  it('orders findings deterministically through the extracted comparators', () => {
+    // Directly exercises every ordering arm of the three extracted comparators
+    // (path/pattern/issue, source/line/target/issue, source/script/issue),
+    // including the terminal equal case.
+    expect(compareApplyToIssues({ path: 'a', pattern: 'x', issue: 'i' }, { path: 'b', pattern: 'x', issue: 'i' })).toBeLessThan(0);
+    expect(compareApplyToIssues({ path: 'a', pattern: 'x', issue: 'i' }, { path: 'a', pattern: 'y', issue: 'i' })).toBeLessThan(0);
+    expect(compareApplyToIssues({ path: 'a', pattern: 'x', issue: 'i1' }, { path: 'a', pattern: 'x', issue: 'i2' })).toBeLessThan(0);
+    expect(compareApplyToIssues({ path: 'a', pattern: 'x', issue: 'i' }, { path: 'a', pattern: 'x', issue: 'i' })).toBe(0);
+
+    expect(compareLinkIssues({ source: 'a', line: 1, target: 't', issue: 'i' }, { source: 'b', line: 1, target: 't', issue: 'i' })).toBeLessThan(0);
+    expect(compareLinkIssues({ source: 'a', line: 1, target: 't', issue: 'i' }, { source: 'a', line: 2, target: 't', issue: 'i' })).toBeLessThan(0);
+    expect(compareLinkIssues({ source: 'a', line: 1, target: 't1', issue: 'i' }, { source: 'a', line: 1, target: 't2', issue: 'i' })).toBeLessThan(0);
+    expect(compareLinkIssues({ source: 'a', line: 1, target: 't', issue: 'i1' }, { source: 'a', line: 1, target: 't', issue: 'i2' })).toBeLessThan(0);
+    expect(compareLinkIssues({ source: 'a', line: 1, target: 't', issue: 'i' }, { source: 'a', line: 1, target: 't', issue: 'i' })).toBe(0);
+
+    expect(compareCommandIssues({ source: 'a', script: 's', issue: 'i' }, { source: 'b', script: 's', issue: 'i' })).toBeLessThan(0);
+    expect(compareCommandIssues({ source: 'a', script: 's1', issue: 'i' }, { source: 'a', script: 's2', issue: 'i' })).toBeLessThan(0);
+    expect(compareCommandIssues({ source: 'a', script: 's', issue: 'i1' }, { source: 'a', script: 's', issue: 'i2' })).toBeLessThan(0);
+    expect(compareCommandIssues({ source: 'a', script: 's', issue: 'i' }, { source: 'a', script: 's', issue: 'i' })).toBe(0);
+  });
+
+  it('renders a clean passing summary and an empty failing summary (both guard sides)', () => {
+    // success:true -> "Audit passed." early return: covers the success branch and
+    // the empty side of the runtime-issues summary guard.
+    const passed = renderSummary({
+      success: true,
+      customizationFilesChecked: 4,
+      findings: emptyFindings()
+    });
+    expect(passed).toContain('[customization-audit] Audit passed.');
+    expect(passed).not.toContain('Runtime issues:');
+    expect(passed).not.toContain('Audit failed.');
+
+    // success:false with every category empty -> reaches the terminal "Audit failed."
+    // push while skipping every per-category detail block (the empty side of each
+    // `if (findings.X.length > 0)` guard).
+    const failedEmpty = renderSummary({
+      success: false,
+      customizationFilesChecked: 0,
+      findings: emptyFindings()
+    });
+    expect(failedEmpty).toContain('[customization-audit] Audit failed.');
+    expect(failedEmpty).not.toContain('Runtime failures:');
+    expect(failedEmpty).not.toContain('missing from AGENTS.md:');
+    expect(failedEmpty).not.toContain('references to missing customization files:');
+    expect(failedEmpty).not.toContain('Frontmatter schema issues:');
+    expect(failedEmpty).not.toContain('Link resolution issues:');
+    expect(failedEmpty).not.toContain('Command reference issues:');
+  });
+
+  it('drives main through its default process streams and clock across modes (no injected deps)', () => {
+    // Calling main WITHOUT deps exercises the process.stdout/stderr and new Date()
+    // fallback operands of `deps.X || process.X` / `deps.now || new Date()`.
+    const okRoot = createFixture(baseFixtureFiles());
+    expect(main([okRoot])).toBe(0); // text success -> process.stdout
+    expect(main(['--json', okRoot])).toBe(0); // json -> process.stdout
+    expect(main(['--json', '--include-provenance', okRoot])).toBe(0); // provenance clock
+    expect(main(['--schema'])).toBe(0); // schema -> process.stdout, no audit
+    expect(main(['--schema', '--include-provenance'])).toBe(0); // schema provenance clock
+    expect(main(['--unsupported-option'])).toBe(1); // parseMainArgs throw -> process.stderr
+    expect(main(['--json', '--schema'])).toBe(1); // single-output-mode throw -> process.stderr
+  });
+
+  it('accepts fully valid frontmatter for every customization artifact type', () => {
+    // Every guard in validateFrontmatterSchemas has an invalid (true) side that
+    // existing tests exercise; this fixture is entirely valid so each guard takes
+    // its false side (name/description present, name===folder, argument-hint
+    // present, skill description includes "Use", prompt agent==='agent',
+    // instruction applyTo present + "Use when" description, agent tools include
+    // read+search with an explicit user-invocable). Multiple valid files of each
+    // type keep the invalid consequents at zero executions while the valid path
+    // runs repeatedly.
+    const files: Record<string, string> = {};
+    for (const slug of ['alpha-skill', 'beta-skill', 'gamma-skill']) {
+      files[path.join('.github', 'skills', slug, 'SKILL.md')] = [
+        '---',
+        `name: ${slug}`,
+        `description: "Use when exercising ${slug} valid frontmatter."`,
+        'argument-hint: "Optional scope"',
+        '---',
+        '',
+        `# ${slug}`,
+        ''
+      ].join('\n');
+    }
+    for (const slug of ['alpha-prompt', 'beta-prompt', 'gamma-prompt']) {
+      files[path.join('.github', 'prompts', `${slug}.prompt.md`)] = [
+        '---',
+        `name: ${slug}`,
+        `description: "Generate ${slug} output."`,
+        'argument-hint: "Issue and requirement"',
+        'agent: "agent"',
+        '---',
+        '',
+        'Prompt body.',
+        ''
+      ].join('\n');
+    }
+    for (const slug of ['alpha-inst', 'beta-inst', 'gamma-inst']) {
+      files[path.join('.github', 'instructions', `${slug}.instructions.md`)] = [
+        '---',
+        `name: ${slug}`,
+        `description: "Use when editing ${slug} sources."`,
+        'applyTo: "src/**/*.ts"',
+        '---',
+        '',
+        'Instruction body.',
+        ''
+      ].join('\n');
+    }
+    for (const slug of ['alpha-agent', 'beta-agent', 'gamma-agent']) {
+      files[path.join('.github', 'agents', `${slug}.agent.md`)] = [
+        '---',
+        `name: ${slug}`,
+        `description: "Use when governing ${slug} workflows."`,
+        'argument-hint: "Task scope"',
+        'tools: [read, search, edit, execute, todo]',
+        'user-invocable: true',
+        '---',
+        '',
+        'Agent body.',
+        ''
+      ].join('\n');
+    }
+
+    const root = createFixture(files);
+    const customizationFiles = Object.keys(files).map((relativePath) =>
+      relativePath.split(path.sep).join('/')
+    );
+
+    expect(validateFrontmatterSchemas(root, customizationFiles)).toEqual([]);
+  });
+
+  it('deterministically orders large issue sets through the extracted comparators', () => {
+    // The extracted comparators run once per Array.prototype.sort comparison, so a
+    // large, deliberately-unsorted issue set exercises each tie-break arm many
+    // times: equal-key comparisons (source/line/target ties, path ties, source
+    // ties) and unequal-key comparisons across every level. Asserting the fully
+    // sorted order is a real regression guard for the deterministic ordering
+    // contract the audit relies on for stable evidence output.
+    const linkSourceLines: string[] = [];
+    for (let line = 0; line < 20; line += 1) {
+      // Each line carries several broken links, some sharing a target (target
+      // tie) and some differing, so source/line/target tie-breaks all fire.
+      linkSourceLines.push('[p](zzz-missing.md) [q](zzz-missing.md) [r](aaa-missing.md) [s](mmm-missing.md)');
+    }
+    const linkRoot = createFixture({
+      'z-second.md': '[t](second-missing.md)\n',
+      'a-first.md': linkSourceLines.join('\n')
+    });
+    const linkIssues = validateLocalMarkdownLinks(linkRoot, ['z-second.md', 'a-first.md']);
+    const firstSourceIssues = linkIssues.filter((issue) => issue.source === 'a-first.md');
+    // Sorted: a-first.md before z-second.md; within a source, ascending line, then
+    // target, then issue. Line 1 targets: aaa < mmm < zzz (zzz appears twice).
+    expect(linkIssues[0]).toMatchObject({ source: 'a-first.md', line: 1, target: 'aaa-missing.md' });
+    expect(linkIssues[linkIssues.length - 1]).toMatchObject({ source: 'z-second.md' });
+    for (let i = 1; i < firstSourceIssues.length; i += 1) {
+      const prev = firstSourceIssues[i - 1];
+      const curr = firstSourceIssues[i];
+      const ordered =
+        prev.line < curr.line ||
+        (prev.line === curr.line && prev.target.localeCompare(curr.target) <= 0);
+      expect(ordered).toBe(true);
+    }
+
+    // compareCommandIssues: many missing scripts from a single source (source
+    // ties) plus a second source (source break), unsorted script names.
+    const scriptRefs: string[] = [];
+    for (const name of ['zeta', 'mike', 'alpha', 'bravo', 'oscar', 'delta', 'kilo', 'echo']) {
+      scriptRefs.push(`npm run ${name}`);
+    }
+    const commandRoot = createFixture({
+      'AGENTS.md': `# Agents\n\n${scriptRefs.join('\n')}\n`,
+      '.github/skills/onboarding/SKILL.md': '# Onboarding\n\nnpm run november\n'
+    });
+    const commandIssues = validateCommandReferences(commandRoot, { keep: 'x' });
+    const agentsScripts = commandIssues
+      .filter((issue) => issue.source === 'AGENTS.md')
+      .map((issue) => issue.script);
+    expect(agentsScripts).toEqual([...agentsScripts].sort((a, b) => a.localeCompare(b)));
+    expect(commandIssues.some((issue) => issue.source === '.github/skills/onboarding/SKILL.md')).toBe(true);
+
+    // compareApplyToIssues: one instruction contributes many non-matching patterns
+    // (path ties, unsorted patterns), a second instruction breaks the path tie.
+    const applyPatterns = ['no-z/**/*.ts', 'no-m/**/*.ts', 'no-a/**/*.ts', 'no-d/**/*.ts', 'no-k/**/*.ts', 'no-b/**/*.ts'];
+    const applyRoot = createFixture({
+      '.github/instructions/alpha.instructions.md': [
+        '---',
+        'name: alpha',
+        'description: "Use when alpha."',
+        'applyTo:',
+        ...applyPatterns.map((pattern) => `  - "${pattern}"`),
+        '---',
+        '',
+        'Body.'
+      ].join('\n'),
+      '.github/instructions/beta.instructions.md': [
+        '---',
+        'name: beta',
+        'description: "Use when beta."',
+        'applyTo:',
+        '  - "no-beta/**/*.ts"',
+        '---',
+        '',
+        'Body.'
+      ].join('\n')
+    });
+    const applyPaths = [
+      '.github/instructions/beta.instructions.md',
+      '.github/instructions/alpha.instructions.md'
+    ];
+    const applyIssues = validateInstructionApplyTo(applyRoot, applyPaths, applyPaths);
+    const alphaPatterns = applyIssues
+      .filter((issue) => issue.path === '.github/instructions/alpha.instructions.md')
+      .map((issue) => issue.pattern);
+    expect(alphaPatterns).toEqual([...alphaPatterns].sort((a, b) => a.localeCompare(b)));
+    expect(applyIssues.some((issue) => issue.path === '.github/instructions/beta.instructions.md')).toBe(true);
   });
 });

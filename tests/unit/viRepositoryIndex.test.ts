@@ -154,4 +154,30 @@ describe('buildViRepositoryIndex', () => {
       'repositoryRoot is required'
     );
   });
+
+  it('clamps a non-finite maxVis to the default cap', async () => {
+    // A non-finite maxVis (Infinity) fails Number.isFinite, so the request falls
+    // back to the default cap rather than propagating Infinity (the false arm of
+    // the Number.isFinite ternary).
+    const harness = makeHarness(['a.vi', 'b.vi'], { 'a.vi': 1, 'b.vi': 1 }, {});
+    const index = await buildViRepositoryIndex(
+      input({ maxVis: Number.POSITIVE_INFINITY }),
+      harness.deps
+    );
+    expect(index.viCount).toBe(2);
+    expect(index.indexedCount).toBe(2);
+  });
+
+  it('falls back to the default git history boundaries when deps omit them', async () => {
+    // Providing only listTrackedFiles (with no VIs) exercises the default
+    // getFileHistoryCount/getFileHistoryEntries fallbacks (the right-hand side of
+    // each `?? default` boundary assignment) WITHOUT invoking real git: with no
+    // tracked VIs those history primitives are referenced but never called.
+    const index = await buildViRepositoryIndex(input(), {
+      listTrackedFiles: async () => ['README.md', 'src/app.ts']
+    });
+    expect(index.viCount).toBe(0);
+    expect(index.vis).toEqual([]);
+    expect(index.narrative).toContain('No tracked VIs were found');
+  });
 });

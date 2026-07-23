@@ -16,7 +16,7 @@ const { parseSharedOutputArgs } = require('./lib/outputContract.js');
 const DEFAULT_COVERAGE_SUMMARY = path.join('coverage', 'coverage-summary.json');
 const DEFAULT_INVENTORY = path.join('docs', 'requirements', 'traceability-inventory.csv');
 const DEFAULT_RTM = path.join('docs', 'requirements', 'rtm.csv');
-const DEFAULT_RISK_THRESHOLD = 80;
+const DEFAULT_RISK_THRESHOLD = 85;
 const COVERAGE_MAP_SCHEMA_ID = 'vi-history-suite/coverage-traceability-map@v1';
 const COVERAGE_MAP_SCHEMA_VERSION = 1;
 
@@ -75,7 +75,7 @@ function usage() {
     '  --inventory <path>          Default: docs/requirements/traceability-inventory.csv',
     '  --rtm <path>                Default: docs/requirements/rtm.csv',
     '  --repo-root <path>          Default: current working directory',
-    '  --risk-threshold <number>   Default: 80',
+    '  --risk-threshold <number>   Default: 85',
     '  --enforce                   Fail closed on mapped-below-threshold or zero-coverage supporting risk',
     '  --json',
     '  --schema                    Publish the JSON Schema without reading coverage',
@@ -244,11 +244,35 @@ function summarizeByClassification(files) {
   );
 }
 
+// Files whose BRANCH coverage cannot be measured at/above the risk threshold due
+// to a documented @vitest/coverage-v8 (ast-v8-to-istanbul) implicit-else
+// mis-count over long runs of sequential `if (bad) { ... }` guard statements: the
+// false arms provably execute (they sit on lines the same run reports 100%
+// covered) yet the provider emits [1,0] / negative branch counts. The exemption
+// is FAIL-CLOSED and NARROW: it applies ONLY to the branch metric, ONLY for a
+// listed file, and ONLY while that file's lines, statements, AND functions are
+// all 100% (which proves every guarded statement, hence both arms of each guard,
+// executes). If any other metric ever drops, the branch floor is re-enforced. The
+// file's real branch percentage still appears in the report; only the
+// below-threshold FLAG is suppressed. Evidence: PR #2331 (VHS-REQ-613/615) - two
+// independent coverage investigations reproduced the mis-count on Node 22 and 24,
+// scoped and full-suite, on 100%-line/statement/function code.
+const BRANCH_MEASUREMENT_LIMITED_FILES = new Set(['scripts/auditCustomizationGovernance.js']);
+
+function hasFullNonBranchCoverage(file) {
+  return file.lines.pct >= 100 && file.statements.pct >= 100 && file.functions.pct >= 100;
+}
+
+function isBranchMeasurementExempt(file) {
+  return BRANCH_MEASUREMENT_LIMITED_FILES.has(file.path) && hasFullNonBranchCoverage(file);
+}
+
 function isBelowThreshold(file, threshold) {
+  const branchEnforced = !isBranchMeasurementExempt(file);
   return (
     file.lines.pct < threshold ||
     file.statements.pct < threshold ||
-    file.branches.pct < threshold ||
+    (branchEnforced && file.branches.pct < threshold) ||
     file.functions.pct < threshold
   );
 }
@@ -513,5 +537,8 @@ module.exports = {
   parseArgs,
   parseCsv,
   renderCoverageMapMarkdown,
-  summarizeEnforcement
+  summarizeEnforcement,
+  isBelowThreshold,
+  isBranchMeasurementExempt,
+  BRANCH_MEASUREMENT_LIMITED_FILES
 };

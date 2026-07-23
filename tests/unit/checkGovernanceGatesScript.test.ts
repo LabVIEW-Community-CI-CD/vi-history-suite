@@ -8,7 +8,8 @@ const {
   GOVERNANCE_GATES,
   evaluateGovernanceGates,
   renderGovernanceGates,
-  loadPackageScripts
+  loadPackageScripts,
+  main
 } = require('../../scripts/checkGovernanceGates.js') as {
   GOVERNANCE_GATES: Array<{ id: string; script: string; alias: string }>;
   evaluateGovernanceGates: (
@@ -17,6 +18,12 @@ const {
   ) => { ok: boolean; problems: Array<{ gateId: string; reason: string; detail: string }> };
   renderGovernanceGates: (result: unknown) => string;
   loadPackageScripts: (repoRoot: string, deps?: Record<string, unknown>) => Record<string, string>;
+  main: (deps?: {
+    repoRoot?: string;
+    existsSync?: (p: string) => boolean;
+    readFileSync?: (p: string, enc: string) => string;
+    write?: (text: string) => void;
+  }) => number;
 };
 
 const path = require('node:path') as typeof import('node:path');
@@ -70,6 +77,21 @@ describe('checkGovernanceGates: evaluateGovernanceGates (VHS-REQ-681.1)', () => 
     );
     expect(r.problems).toContainEqual({ gateId: 'x', reason: 'duplicate-gate-id', detail: 'x' });
     expect(r.problems.some((p) => p.reason === 'malformed-gate')).toBe(true);
+  });
+
+  it('flags a gate whose id and script are strings but alias is not', () => {
+    // Exercises the final operand of the malformed-gate guard: the earlier
+    // id/script checks are false, so evaluation reaches the alias typeof check.
+    const r = evaluateGovernanceGates(
+      [{ id: 'y', script: 'scripts/y.js', alias: 123 as unknown as string }],
+      { packageScripts: {}, existsSync: allExist }
+    );
+    expect(r.ok).toBe(false);
+    expect(r.problems).toContainEqual({
+      gateId: 'y',
+      reason: 'malformed-gate',
+      detail: 'gate must declare id, script, alias'
+    });
   });
 
   it('treats an empty/non-array manifest as vacuously ok', () => {
@@ -156,3 +178,61 @@ describe('checkGovernanceGates: loadPackageScripts (VHS-REQ-681.3)', () => {
     expect(seenPath.replace(/\\/g, '/')).toContain('/package.json');
   });
 });
+
+describe('checkGovernanceGates: main CLI entrypoint (VHS-REQ-681.3)', () => {
+  const path = require('node:path') as typeof import('node:path');
+
+  it('returns 0 and prints OK when every declared gate is present and wired', () => {
+    const captured: string[] = [];
+    const seenExistsArgs: string[] = [];
+    const packageScripts = Object.fromEntries(
+      GOVERNANCE_GATES.map((g) => [g.alias, `node ${g.script}`])
+    );
+    const exitCode = main({
+      repoRoot: path.join('repo', 'root'),
+      readFileSync: () => JSON.stringify({ scripts: packageScripts }),
+      existsSync: (candidate: string) => {
+        seenExistsArgs.push(candidate.replace(/\\/g, '/'));
+        return true;
+      },
+      write: (text: string) => {
+        captured.push(text);
+      }
+    });
+    expect(exitCode).toBe(0);
+    expect(captured.join('')).toContain('OK:');
+    // The injected existsSync arrow joins repoRoot with each declared script.
+    expect(seenExistsArgs).toContain(['repo', 'root', GOVERNANCE_GATES[0].script].join('/'));
+  });
+
+  it('returns 1 and prints FAIL when a declared gate script is missing', () => {
+    const captured: string[] = [];
+    const packageScripts = Object.fromEntries(
+      GOVERNANCE_GATES.map((g) => [g.alias, `node ${g.script}`])
+    );
+    const exitCode = main({
+      repoRoot: 'repo',
+      readFileSync: () => JSON.stringify({ scripts: packageScripts }),
+      existsSync: () => false,
+      write: (text: string) => {
+        captured.push(text);
+      }
+    });
+    expect(exitCode).toBe(1);
+    expect(captured.join('')).toContain('FAIL:');
+  });
+
+  it('writes to process.stdout by default when no write collaborator is injected', () => {
+    // Exercises the default `(text) => process.stdout.write(text)` write arrow.
+    const packageScripts = Object.fromEntries(
+      GOVERNANCE_GATES.map((g) => [g.alias, `node ${g.script}`])
+    );
+    const exitCode = main({
+      repoRoot: 'repo',
+      readFileSync: () => JSON.stringify({ scripts: packageScripts }),
+      existsSync: () => true
+    });
+    expect(exitCode).toBe(0);
+  });
+});
+

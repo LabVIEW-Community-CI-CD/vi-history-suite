@@ -17,7 +17,8 @@ const {
   issueViewArgs,
   standardsDockerSteps,
   replaceSnapshotMount,
-  runIssueStandardsTriage
+  runIssueStandardsTriage,
+  main
 } = require('../../scripts/runIssueStandardsTriage.js') as {
   DEFAULT_REPO: string;
   DEFAULT_SAVE_DIR: string;
@@ -72,6 +73,7 @@ const {
       standards: Array<{ status: number }>;
     };
   };
+  main: (argv: string[], deps?: Record<string, unknown>) => number;
 };
 
 const tempRoots: string[] = [];
@@ -658,5 +660,37 @@ describe('issue standards triage script (VHS-REQ-700.2)', () => {
     expect(result.exitCode).toBe(1);
     expect(result.markdown).toContain('Snapshot retained');
     expect(removeSnapshot).not.toHaveBeenCalled();
+  });
+});
+
+describe('runIssueStandardsTriage main CLI (VHS-REQ-700.2)', () => {
+  it('writes the rendered markdown to stdout and returns the exit code', () => {
+    const out: string[] = [];
+    const code = main(['--schema'], { stdout: { write: (s: string) => out.push(s) } });
+    expect(code).toBe(0);
+    expect(out.join('')).toContain(TRIAGE_SUMMARY_SCHEMA_ID);
+  });
+
+  it('returns 1 and writes the error plus usage to stderr when triage throws', () => {
+    const err: string[] = [];
+    const code = main(['--bogus'], {
+      stdout: { write: () => {} },
+      stderr: { write: (s: string) => err.push(s) }
+    });
+    expect(code).toBe(1);
+    expect(err.join('')).toMatch(/Unknown argument/);
+    expect(err.join('')).toMatch(/Usage:/);
+  });
+
+  it('falls back to process.stdout / process.stderr when no stream deps are supplied', () => {
+    const outSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    expect(main(['--help'])).toBe(0);
+    expect(outSpy).toHaveBeenCalled();
+    outSpy.mockRestore();
+
+    const errSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    expect(main(['--bogus'])).toBe(1);
+    expect(errSpy).toHaveBeenCalledWith(expect.stringContaining('Unknown argument'));
+    errSpy.mockRestore();
   });
 });

@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
+import * as fs from 'node:fs';
+import * as os from 'node:os';
+import * as path from 'node:path';
+
 const {
   parseCsvRows,
   checkCsv,
@@ -163,5 +167,64 @@ describe('requirements CSV column-integrity guard', () => {
     expect(code).toBe(0);
     expect(stdoutChunks.join('')).toContain('Column-integrity check passed.');
     expect(renderSummary({ success: true, violationCount: 0, files: [] })).toContain('passed');
+  });
+
+  it('parses a final row that is not terminated by a trailing newline', () => {
+    // Exercises the end-of-input flush branch (no trailing newline): the last
+    // row must still be captured.
+    const rows = parseCsvRows('A,B,C\n1,2,3');
+    expect(rows).toHaveLength(2);
+    expect(rows[1].cells).toEqual(['1', '2', '3']);
+    expect(rows[1].lineNumber).toBe(2);
+  });
+
+  it('skips a fully-empty line between data rows', () => {
+    // Exercises the all-empty-cells branch: a blank line produces no row.
+    const rows = parseCsvRows('A,B\n\n1,2\n');
+    expect(rows).toHaveLength(2);
+    expect(rows[0].cells).toEqual(['A', 'B']);
+    expect(rows[1].cells).toEqual(['1', '2']);
+  });
+
+  it('resolves the working directory from argv[0] when no cwd dep is provided', () => {
+    // Exercises the `deps.cwd || argv[0]` fallback in main.
+    const stdoutChunks: string[] = [];
+    const code = main(['/repo'], {
+      readFile: makeReadFile({ 'a.csv': 'ReqID,Notes\nVHS-REQ-001,"quoted, safe"\n' }),
+      targets: [{ relativePath: 'a.csv', identityLabel: 'ReqID', isRequirementIndex: true }],
+      stdout: { write: (chunk) => stdoutChunks.push(chunk) }
+    });
+    expect(code).toBe(0);
+    expect(stdoutChunks.join('')).toContain('Column-integrity check passed.');
+  });
+
+  it('falls back to process.cwd() and process.stdout when neither is provided', () => {
+    // Exercises the `argv[0] || process.cwd()` and `deps.stdout || process.stdout`
+    // fallbacks; the injected readFile ignores the resolved cwd.
+    const code = main([], {
+      readFile: makeReadFile({ 'a.csv': 'ReqID,Notes\nVHS-REQ-001,"quoted, safe"\n' }),
+      targets: [{ relativePath: 'a.csv', identityLabel: 'ReqID', isRequirementIndex: true }]
+    });
+    expect(code).toBe(0);
+  });
+
+  it('appends the step summary via the default fs writer when none is injected', () => {
+    // Exercises the default appendStepSummary arrow (fs.appendFileSync) by
+    // pointing GITHUB_STEP_SUMMARY at a real temp file and omitting the injected
+    // writer.
+    const summaryPath = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'vihs-csvcols-')), 'summary.md');
+    try {
+      const code = main([], {
+        cwd: '/repo',
+        readFile: makeReadFile({ 'a.csv': 'ReqID,Notes\nVHS-REQ-001,"quoted, safe"\n' }),
+        targets: [{ relativePath: 'a.csv', identityLabel: 'ReqID', isRequirementIndex: true }],
+        stepSummaryPath: summaryPath,
+        stdout: { write: () => undefined }
+      });
+      expect(code).toBe(0);
+      expect(fs.readFileSync(summaryPath, 'utf8')).toContain('## Requirements CSV Integrity');
+    } finally {
+      fs.rmSync(path.dirname(summaryPath), { recursive: true, force: true });
+    }
   });
 });

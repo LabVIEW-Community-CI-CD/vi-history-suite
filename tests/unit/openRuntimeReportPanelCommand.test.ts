@@ -527,3 +527,146 @@ describe('openRuntimeReportPanelCommand pure helpers (VHS-REQ-657 / VHS-REQ-649 
     });
   });
 });
+
+describe('registerOpenRuntimeReportPanelCommand default deps and message edges (VHS-REQ-645 coverage)', () => {
+  function openWith(
+    deps: Parameters<typeof registerOpenRuntimeReportPanelCommand>[2],
+    watcher = createFakeWatcher(detectionBoth, dockerActiveSnapshot)
+  ): MockPanel {
+    const panel = createMockPanel();
+    vi.spyOn(vscode.window, 'createWebviewPanel').mockReturnValue(panel as never);
+    registerOpenRuntimeReportPanelCommand(createFakeContext() as never, watcher as never, deps);
+    return panel;
+  }
+
+  it('falls back to vscode.workspace.isTrusted when no isTrusted dependency is injected', async () => {
+    // No isTrusted dep -> the default reads the harness-trusted workspace flag.
+    const panel = openWith({ containerPlatform: 'linux' });
+    const result = await vscode.commands.executeCommand(OPEN_RUNTIME_REPORT_PANEL_COMMAND_ID);
+    expect(result).toEqual({ outcome: 'opened-panel' });
+    expect(panel.webview.html).toContain('data-testid="runtime-report-title"');
+  });
+
+  it('clears the cached panel reference when the panel is disposed so the next open re-creates it', async () => {
+    const panel = openWith({ isTrusted: () => true, containerPlatform: 'linux' });
+    const first = await vscode.commands.executeCommand(OPEN_RUNTIME_REPORT_PANEL_COMMAND_ID);
+    expect(first).toEqual({ outcome: 'opened-panel' });
+
+    // Firing dispose runs the onDidDispose callback, nulling the cached ref.
+    panel.fireDispose();
+
+    const second = await vscode.commands.executeCommand(OPEN_RUNTIME_REPORT_PANEL_COMMAND_ID);
+    // A fresh open (not a reveal) proves the disposed panel reference was cleared.
+    expect(second).toEqual({ outcome: 'opened-panel' });
+    expect(panel.reveal).not.toHaveBeenCalled();
+  });
+
+  it('renders no provider options and ignores provider selection when detection is unavailable', async () => {
+    const panel = openWith(
+      { isTrusted: () => true, containerPlatform: 'linux' },
+      createFakeWatcher(undefined)
+    );
+    await vscode.commands.executeCommand(OPEN_RUNTIME_REPORT_PANEL_COMMAND_ID);
+    // detection undefined -> the provider-items list resolves to the [] fallback.
+    await panel.dispatchMessage({ command: 'selectRuntimeProvider', index: 0 });
+    expect(sharedUpdate).not.toHaveBeenCalledWith(
+      'runtimeProvider',
+      expect.anything(),
+      expect.anything()
+    );
+  });
+
+  it('ignores malformed panel messages and applies the preview toggle', async () => {
+    const panel = openWith({ isTrusted: () => true, containerPlatform: 'linux' });
+    await vscode.commands.executeCommand(OPEN_RUNTIME_REPORT_PANEL_COMMAND_ID);
+
+    // Out-of-range provider index -> the resolved option is undefined -> early return.
+    const beforeBadIndex = sharedUpdate.mock.calls.length;
+    await panel.dispatchMessage({ command: 'selectRuntimeProvider', index: 99 });
+    expect(sharedUpdate.mock.calls.length).toBe(beforeBadIndex);
+
+    // selectContainerVersion with no tag -> the `?? ''` fallback yields a clear.
+    await panel.dispatchMessage({ command: 'selectContainerVersion' });
+    expect(sharedUpdate).toHaveBeenCalledWith(
+      'container.imageVersion',
+      undefined,
+      vscode.ConfigurationTarget.Global
+    );
+
+    // setReportInclude with no includeKey -> descriptor undefined -> early return.
+    const beforeInclude = sharedUpdate.mock.calls.length;
+    await panel.dispatchMessage({ command: 'setReportInclude', include: true });
+    expect(sharedUpdate.mock.calls.length).toBe(beforeInclude);
+
+    // setPreviewEnabled -> the preview toggle case persists a value.
+    const beforePreview = sharedUpdate.mock.calls.length;
+    await panel.dispatchMessage({ command: 'setPreviewEnabled', enabled: true });
+    expect(sharedUpdate.mock.calls.length).toBeGreaterThan(beforePreview);
+
+    // A null message (raw ?? {}) and an unknown command both fall through the
+    // switch default and resolve without touching settings.
+    const beforeFallthrough = sharedUpdate.mock.calls.length;
+    await expect(panel.dispatchMessage(null)).resolves.toBeUndefined();
+    await expect(panel.dispatchMessage({ command: 'unknown-command' })).resolves.toBeUndefined();
+    expect(sharedUpdate.mock.calls.length).toBe(beforeFallthrough);
+  });
+
+  it('resolves the persisted provider index for a docker selection (provider-only match)', async () => {
+    vi.spyOn(vscode.workspace, 'getConfiguration').mockReturnValue({
+      get: vi.fn((key: string) => (key === 'runtimeProvider' ? 'docker' : undefined)),
+      update: sharedUpdate,
+      has: vi.fn(),
+      inspect: vi.fn()
+    } as never);
+    const panel = openWith({ isTrusted: () => true, containerPlatform: 'linux' });
+    const result = await vscode.commands.executeCommand(OPEN_RUNTIME_REPORT_PANEL_COMMAND_ID);
+    expect(result).toEqual({ outcome: 'opened-panel' });
+    // The docker option is selected by provider alone (LabVIEW-agnostic match).
+    expect(panel.webview.html).toContain('data-testid="runtime-report-title"');
+  });
+
+  it('resolves the persisted provider index for a host selection matching version and bitness', async () => {
+    vi.spyOn(vscode.workspace, 'getConfiguration').mockReturnValue({
+      get: vi.fn((key: string) => {
+        if (key === 'runtimeProvider') {
+          return 'host';
+        }
+        if (key === 'labviewVersion') {
+          return '2025';
+        }
+        if (key === 'labviewBitness') {
+          return 'x86';
+        }
+        return undefined;
+      }),
+      update: sharedUpdate,
+      has: vi.fn(),
+      inspect: vi.fn()
+    } as never);
+    const panel = openWith(
+      { isTrusted: () => true, containerPlatform: 'linux' },
+      createFakeWatcher(detectionBoth)
+    );
+    const result = await vscode.commands.executeCommand(OPEN_RUNTIME_REPORT_PANEL_COMMAND_ID);
+    expect(result).toEqual({ outcome: 'opened-panel' });
+    // The host 2025 x86 option matches on version AND bitness (both operands run).
+    expect(panel.webview.html).toContain('data-testid="runtime-report-title"');
+  });
+
+  it('resolves the container platform via the injected daemon probe when no explicit platform is set', async () => {
+    const probeDaemonPlatform = vi.fn(async () => 'linux' as const);
+    const fetchPublishedTags = vi.fn(async () => ['2026q1-linux']);
+    const listLocalImages = vi.fn(async () => [] as string[]);
+    const panel = openWith({
+      isTrusted: () => true,
+      // containerPlatform intentionally omitted -> the daemon-probe fallback runs.
+      probeDaemonPlatform,
+      fetchPublishedTags,
+      listLocalImages
+    });
+    await vscode.commands.executeCommand(OPEN_RUNTIME_REPORT_PANEL_COMMAND_ID);
+    await panel.dispatchMessage({ command: 'discoverContainerVersions' });
+    expect(probeDaemonPlatform).toHaveBeenCalled();
+    expect(fetchPublishedTags).toHaveBeenCalled();
+  });
+});

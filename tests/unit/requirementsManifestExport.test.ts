@@ -376,3 +376,156 @@ describe('exportRequirementsManifest', () => {
     expect((JSON.parse(outputs.join('')) as Record<string, unknown>).$id).toBe(MANIFEST_SCHEMA_ID);
   });
 });
+
+describe('exportRequirementsManifest additional coverage (#2331)', () => {
+  it('reads the extension version from package.json via the default getPackageVersion', () => {
+    const repoRoot = makeTempDir();
+    fs.writeFileSync(path.join(repoRoot, 'package.json'), JSON.stringify({ version: '7.7.7' }), 'utf8');
+    const result = exportRequirementsManifest({
+      repoRoot,
+      outputDir: path.join(repoRoot, 'out', 'requirements'),
+      includeMarkdown: false,
+      readFile: (relativePath: string) => {
+        if (relativePath === 'docs/requirements/srs.md') {
+          return FIXTURE_SRS;
+        }
+        throw new Error(`no ${relativePath}`);
+      },
+      // getPackageVersion NOT injected -> exercises the default real-fs read.
+      getGitCommit: () => 'deadbeefdeadbeef',
+      now: () => new Date('2026-07-15T12:00:00.000Z')
+    });
+    expect(result.manifest.extensionVersion).toBe('7.7.7');
+  });
+
+  it('fails closed when the RTM carries an active ID absent from the SRS', () => {
+    const rtmWithExtra = [
+      'ReqID,ParentID,Status,Area,Title,ImplementationRefs,VerificationRefs,Notes',
+      'VHS-REQ-001,VHS-SYS-REQ-001,Active,Detection,First,src/first.ts,tests/unit/first.test.ts,note',
+      'VHS-REQ-003,VHS-SYS-REQ-002,Active,Reporting,Second,src/second.ts,tests/unit/second.test.ts,note',
+      'VHS-REQ-999,VHS-SYS-REQ-003,Active,Reporting,Ghost,src/ghost.ts,tests/unit/ghost.test.ts,note'
+    ].join('\n');
+    expect(() =>
+      buildRequirementsManifest({
+        srsText: FIXTURE_SRS,
+        rtmText: rtmWithExtra,
+        extensionVersion: '1.0.0',
+        extensionCommit: 'aaaaaaaaaaaa',
+        generatedAt: '2026-01-01T00:00:00.000Z'
+      })
+    ).toThrow(/only in RTM: VHS-REQ-999/);
+  });
+
+  it('honors an injected schema flag over parsed argv', () => {
+    const outputs: string[] = [];
+    const code = main([], { schema: true, stdout: { write: (t: string) => outputs.push(t) } });
+    expect(code).toBe(0);
+    expect((JSON.parse(outputs.join('')) as Record<string, unknown>).$id).toBe(MANIFEST_SCHEMA_ID);
+  });
+
+  it('writes the markdown build product by default (no --no-markdown)', () => {
+    const repoRoot = makeTempDir();
+    const outputDir = path.join(repoRoot, 'out', 'requirements');
+    const outputs: string[] = [];
+    const code = main([], {
+      repoRoot,
+      outputDir,
+      readFile: (relativePath: string) => {
+        if (relativePath === 'docs/requirements/srs.md') {
+          return FIXTURE_SRS;
+        }
+        throw new Error(`no ${relativePath}`);
+      },
+      getGitCommit: () => 'cafebabecafebabe',
+      getPackageVersion: () => '3.2.1',
+      now: () => new Date('2026-07-15T12:00:00.000Z'),
+      stdout: { write: (t: string) => outputs.push(t) }
+    });
+    expect(code).toBe(0);
+    expect(fs.existsSync(path.join(outputDir, 'requirements-manifest.md'))).toBe(true);
+  });
+
+  it('exports against the real repository SRS/RTM using the default fs factories', () => {
+    const outputDir = path.join(makeTempDir(), 'out', 'requirements');
+    // Inject only the git boundary; repoRoot/readFile/writeFile/mkdirSync/
+    // getPackageVersion/now all fall back to the real defaults (real committed
+    // srs.md + rtm.csv read, temp output written).
+    const result = exportRequirementsManifest({
+      outputDir,
+      getGitCommit: () => 'deadbeefdeadbeef'
+    });
+    expect(result.manifest.counts.requirements).toBeGreaterThan(0);
+    expect(fs.existsSync(result.jsonPath)).toBe(true);
+    expect(fs.existsSync(result.markdownPath as string)).toBe(true);
+    const written = JSON.parse(fs.readFileSync(result.jsonPath, 'utf8')) as { $schema: string };
+    expect(written.$schema).toBe(MANIFEST_SCHEMA_ID);
+  });
+
+  it('parses edge-case requirement blocks (empty title, absent scalar, wrapped statement)', () => {
+    const srs = [
+      '### VHS-REQ-100:',
+      '',
+      '- Status: Active',
+      '- Area: Detection',
+      '- Statement:',
+      '  wrapped statement text.',
+      '- Acceptance Criteria:',
+      '  - Only criterion.',
+      ''
+    ].join('\n');
+    const requirements = parseRequirementsFromSrs(srs);
+    expect(requirements).toHaveLength(1);
+    expect(requirements[0].title).toBe('');
+    expect(requirements[0].parent).toBe('');
+    expect(requirements[0].statement).toBe('wrapped statement text.');
+  });
+
+  it('main honors an injected includeMarkdown flag over the parsed toggle', () => {
+    const repoRoot = makeTempDir();
+    const outputDir = path.join(repoRoot, 'out', 'requirements');
+    const deps = {
+      repoRoot,
+      outputDir,
+      readFile: (relativePath: string) => {
+        if (relativePath === 'docs/requirements/srs.md') {
+          return FIXTURE_SRS;
+        }
+        throw new Error(`no ${relativePath}`);
+      },
+      getGitCommit: () => 'cafebabecafebabe',
+      getPackageVersion: () => '3.2.1',
+      now: () => new Date('2026-07-15T12:00:00.000Z'),
+      stdout: { write: () => undefined }
+    };
+    // deps.includeMarkdown=false overrides the (markdown-on) default.
+    expect(main([], { ...deps, includeMarkdown: false })).toBe(0);
+    expect(fs.existsSync(path.join(outputDir, 'requirements-manifest.md'))).toBe(false);
+    // deps.includeMarkdown=true overrides an explicit --no-markdown request.
+    expect(main(['--no-markdown'], { ...deps, includeMarkdown: true })).toBe(0);
+    expect(fs.existsSync(path.join(outputDir, 'requirements-manifest.md'))).toBe(true);
+  });
+
+  it('main falls back to the default process streams when none are injected', () => {
+    const outChunks: string[] = [];
+    const errChunks: string[] = [];
+    const origOut = process.stdout.write.bind(process.stdout);
+    const origErr = process.stderr.write.bind(process.stderr);
+    (process.stdout as unknown as { write: (c: string) => boolean }).write = (c: string) => {
+      outChunks.push(String(c));
+      return true;
+    };
+    (process.stderr as unknown as { write: (c: string) => boolean }).write = (c: string) => {
+      errChunks.push(String(c));
+      return true;
+    };
+    try {
+      expect(main(['--schema'])).toBe(0); // default stdout
+      expect(main(['--zzz-nope'])).toBe(1); // default stderr on a parse failure
+    } finally {
+      process.stdout.write = origOut;
+      process.stderr.write = origErr;
+    }
+    expect(outChunks.join('')).toContain(MANIFEST_SCHEMA_ID);
+    expect(errChunks.join('')).toContain('Unknown argument');
+  });
+});

@@ -274,4 +274,24 @@ describe('renderViPreviewForFile', () => {
       path.join('/tmp/ws', 'vi', 'shared', 'Helper.vi')
     );
   });
+
+  it('falls back to the containing directory when resolveStagingBaseDirectory rejects (VHS-REQ-659.10)', async () => {
+    const deps = makeDeps({ exitCode: 0, stdout: '', stderr: '' }, true, '<HTML>doc</HTML>');
+    // A rejecting project-root resolver is swallowed by the `.catch(() => undefined)`
+    // fallback, so staging proceeds from the VI's own containing directory.
+    const resolveStagingBaseDirectory = vi.fn().mockRejectedValue(new Error('project probe failed'));
+    const result = await renderViPreviewForFile(
+      { runtime: hostRuntime, viFilePath: '/repo/Foo.vi', operationDirectory: '/ops' },
+      { ...deps, resolveStagingBaseDirectory }
+    );
+
+    expect(result.outcome).toBe('rendered');
+    expect(result.html).toBe('<HTML>doc</HTML>');
+    expect(resolveStagingBaseDirectory).toHaveBeenCalledWith('/repo/Foo.vi');
+    // Fell back to the containing directory => the VI is staged by its basename.
+    expect(deps.copyFile).toHaveBeenCalledWith(
+      path.join('/repo', 'Foo.vi'),
+      path.join('/tmp/ws', 'vi', 'Foo.vi')
+    );
+  });
 });

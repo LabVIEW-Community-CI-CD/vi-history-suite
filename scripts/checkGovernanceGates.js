@@ -86,20 +86,30 @@ function loadPackageScripts(repoRoot, deps = {}) {
   }
 }
 
+// CLI entrypoint. Pure aside from the injected collaborators (defaulting to the
+// process cwd, real fs, and stdout) so it is unit-testable without spawning a
+// process or touching the real filesystem. Returns the intended exit code.
+function main(deps = {}) {
+  const repoRoot = deps.repoRoot || process.cwd();
+  const existsSync = typeof deps.existsSync === 'function' ? deps.existsSync : fs.existsSync;
+  const write = typeof deps.write === 'function' ? deps.write : (text) => process.stdout.write(text);
+  const packageScripts = loadPackageScripts(repoRoot, deps);
+  const result = evaluateGovernanceGates(GOVERNANCE_GATES, {
+    packageScripts,
+    existsSync: (rel) => existsSync(path.join(repoRoot, rel))
+  });
+  write(`${renderGovernanceGates(result)}\n`);
+  return result.ok ? 0 : 1;
+}
+
 module.exports = {
   GOVERNANCE_GATES,
   evaluateGovernanceGates,
   renderGovernanceGates,
-  loadPackageScripts
+  loadPackageScripts,
+  main
 };
 
 if (require.main === module) {
-  const repoRoot = process.cwd();
-  const packageScripts = loadPackageScripts(repoRoot);
-  const result = evaluateGovernanceGates(GOVERNANCE_GATES, {
-    packageScripts,
-    existsSync: (rel) => fs.existsSync(path.join(repoRoot, rel))
-  });
-  process.stdout.write(`${renderGovernanceGates(result)}\n`);
-  process.exit(result.ok ? 0 : 1);
+  process.exit(main());
 }

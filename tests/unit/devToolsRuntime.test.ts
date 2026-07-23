@@ -1,4 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import * as fs from 'node:fs/promises';
+import * as os from 'node:os';
+import * as path from 'node:path';
 
 import {
   installPinnedDevTools,
@@ -306,5 +309,79 @@ describe('consumer documentation of the dev-tools pinning lifecycle (VHS-REQ-680
     const doc = read('docs/mcp-server.md');
     expect(doc).toContain('Pinned build');
     expect(doc).toContain('viHistorySuite.devTools.version');
+  });
+});
+
+describe('devToolsRuntime additional dependency-boundary coverage (VHS-REQ-679)', () => {
+  it('falls back to result.reason when a failed install has no detail', async () => {
+    const { notifier, messages } = makeNotifier();
+    const result = await installPinnedDevTools({
+      versionSetting: 'devtools-v1.2.3',
+      installBaseDir: '/store/devtools',
+      isWorkspaceTrusted: true,
+      notifier,
+      deps: {} as never,
+      // detail is empty, so the error message must fall back to `reason`
+      // (the right operand of `result.detail || result.reason`).
+      install: () =>
+        Promise.resolve({ ok: false, version: '1.2.3', reason: 'digest-mismatch', detail: '' })
+    });
+    expect(result?.ok).toBe(false);
+    expect(messages[0]).toMatchObject({ level: 'error' });
+    expect(messages[0].message).toContain('digest-mismatch');
+  });
+
+  it('swallows a malformed pinned setting during the update check before any network call', async () => {
+    const { notifier, messages } = makeNotifier();
+    const notice = await runDevToolsUpdateCheck({
+      checkForUpdates: true,
+      versionSetting: 'not-a-valid-version',
+      isWorkspaceTrusted: true,
+      notifier,
+      deps: { listReleases: () => Promise.reject(new Error('should not be called')) }
+    });
+    // normalizeDevToolsVersionSetting throws for the malformed setting; the catch
+    // returns undefined before listReleases is ever invoked.
+    expect(notice).toBeUndefined();
+    expect(messages).toHaveLength(0);
+  });
+
+  it('reports a not-installed outcome when the chosen version was already gone', async () => {
+    const { notifier, messages } = makeNotifier();
+    const result = await uninstallDevTools({
+      installBaseDir: '/store/devtools',
+      versionSetting: 'bundled',
+      notifier,
+      pickVersion: (versions) => Promise.resolve(versions[0]),
+      deps: {
+        listInstalledVersions: () => Promise.resolve(['1.2.3']),
+        // uninstallVersion reports false: the version was not actually present.
+        uninstallVersion: () => Promise.resolve(false)
+      }
+    });
+    expect(result).toMatchObject({ removed: false, version: '1.2.3', reason: 'not-installed' });
+    expect(
+      messages.some((m) => m.level === 'warn' && m.message.includes('was not installed'))
+    ).toBe(true);
+  });
+
+  it('reads installed versions through the default fs boundary when deps are omitted', async () => {
+    const { notifier } = makeNotifier();
+    const installBaseDir = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-devtools-status-'));
+    try {
+      // No `deps`: reportDevToolsStatus builds the real createDevToolsInstallDeps
+      // and lists installed versions from the (empty) temp dir. Pure fs, no
+      // network (the right-hand side of `options.deps ?? createDevToolsInstallDeps()`).
+      const status = await reportDevToolsStatus({
+        installBaseDir,
+        versionSetting: 'bundled',
+        checkForUpdates: false,
+        notifier
+      });
+      expect(status.installedVersions).toEqual([]);
+      expect(status.activeSource).toBe('bundled');
+    } finally {
+      await fs.rm(installBaseDir, { recursive: true, force: true });
+    }
   });
 });

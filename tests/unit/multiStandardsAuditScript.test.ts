@@ -40,7 +40,8 @@ const {
   renderStandardsGateDetailSummary,
   renderProfileSignalLines,
   renderDirectCheckEvidenceSummary,
-  runMultiStandardsAudit
+  runMultiStandardsAudit,
+  main
 } = require('../../scripts/runMultiStandardsAudit.js') as {
   DEFAULT_SAVE_DIR: string;
   GATE_SCORECARD_PROFILES: string[];
@@ -58,6 +59,7 @@ const {
     help: boolean;
   };
   renderSchema: (options?: { provenance?: unknown }) => string;
+  main: (argv: string[], deps?: Record<string, unknown>) => number;
   directDockerSteps: (options: { image: string; requirementsSpecScope: string }) => Array<{
     name: string;
     file: string;
@@ -1904,5 +1906,409 @@ describe('runMultiStandardsAudit summarizer guard + skip/merge branches', () => 
         scoreFiles: ['quick-triage/target/score.json', 'release-gate/target/score.json']
       }
     ]);
+  });
+});
+
+describe('runMultiStandardsAudit: render-helper branch coverage (#2331)', () => {
+  // Re-require with a permissive signature so the completeProfiles second arg and
+  // synthetic rows can drive the render branches (the shared destructure types
+  // omit the optional completeProfiles parameter).
+  const rh = require('../../scripts/runMultiStandardsAudit.js') as {
+    renderStandardsEvidenceSummary: (summary: unknown, completeProfiles?: unknown) => string[];
+    renderStandardsGateStrengthSummary: (summary: unknown, completeProfiles?: unknown) => string[];
+    renderStandardsGateBasisSummary: (summary: unknown, completeProfiles?: unknown) => string[];
+    renderStandardsGateDetailSummary: (summary: unknown, completeProfiles?: unknown) => string[];
+    renderStandardsScoreFileLegend: (legend: unknown) => string[];
+    renderStandardsCoverageRationaleSummary: (summary: unknown, completeProfiles?: unknown) => string[];
+    renderStandardsCoverageMatrix: (matrix: unknown) => string[];
+    renderAuditRunProvenanceSummary: (summary: unknown) => string[];
+    renderProfileSignalLines: (profileSummaries: unknown) => string[];
+    renderDirectCheckEvidenceSummary: (directCheckSummaries: unknown) => string[];
+  };
+  const complete = ['quick-triage', 'release-gate'];
+
+  it('renderStandardsEvidenceSummary covers empty, all-profiles, and joined/none rows', () => {
+    expect(rh.renderStandardsEvidenceSummary([], complete)).toEqual([]);
+    expect(rh.renderStandardsEvidenceSummary(undefined, complete)).toEqual([]);
+    const rows = rh
+      .renderStandardsEvidenceSummary(
+        [
+          { summary: 'E1', standards: ['NPM'], profiles: ['quick-triage', 'release-gate'], evidencePaths: ['a', 'b'] },
+          { id: 'E2', standards: [], profiles: ['quick-triage'], evidencePaths: [] }
+        ],
+        complete
+      )
+      .join('\n');
+    expect(rows).toContain('all profiles');
+    expect(rows).toContain('a<br>b');
+    expect(rows).toContain('quick-triage');
+    expect(rows).toContain('none');
+  });
+
+  it('renderStandardsGateStrengthSummary covers empty, all-profiles, and none', () => {
+    expect(rh.renderStandardsGateStrengthSummary([], complete)).toEqual([]);
+    const rows = rh
+      .renderStandardsGateStrengthSummary(
+        [
+          { summary: 'S1', standards: ['A'], profiles: ['quick-triage', 'release-gate'] },
+          { id: 'S2', standards: [], profiles: ['quick-triage'] }
+        ],
+        complete
+      )
+      .join('\n');
+    expect(rows).toContain('all profiles');
+    expect(rows).toContain('none');
+  });
+
+  it('renderStandardsGateBasisSummary covers value fallbacks and all-profiles', () => {
+    expect(rh.renderStandardsGateBasisSummary([], complete)).toEqual([]);
+    const rows = rh
+      .renderStandardsGateBasisSummary(
+        [
+          { gate: 'coverage', status: 'PASS', confidence: 'High', standards: ['A'], basis: 'b', profiles: complete },
+          { profiles: ['quick-triage'] }
+        ],
+        complete
+      )
+      .join('\n');
+    expect(rows).toContain('all profiles');
+    expect(rows).toContain('unknown');
+    expect(rows).toContain('UNKNOWN');
+    expect(rows).toContain('none');
+  });
+
+  it('renderStandardsGateDetailSummary covers missingProof and unmapped standards', () => {
+    expect(rh.renderStandardsGateDetailSummary([], complete)).toEqual([]);
+    const rows = rh
+      .renderStandardsGateDetailSummary(
+        [
+          { gate: 'dod', status: 'FAIL', standards: ['A'], missingProof: ['need x', 'need y'], profiles: complete },
+          { profiles: ['release-gate'] }
+        ],
+        complete
+      )
+      .join('\n');
+    expect(rows).toContain('need x<br>need y');
+    expect(rows).toContain('unmapped');
+    expect(rows).toContain('all profiles');
+  });
+
+  it('renderStandardsScoreFileLegend covers empty and value fallbacks', () => {
+    expect(rh.renderStandardsScoreFileLegend([])).toEqual([]);
+    const rows = rh.renderStandardsScoreFileLegend([{ profile: 'quick-triage', scoreFile: 'f.json' }, {}]).join('\n');
+    expect(rows).toContain('quick-triage');
+    expect(rows).toContain('| unknown | - |');
+  });
+
+  it('renderStandardsCoverageRationaleSummary covers empty, all-profiles, and none', () => {
+    expect(rh.renderStandardsCoverageRationaleSummary([], complete)).toEqual([]);
+    const rows = rh
+      .renderStandardsCoverageRationaleSummary(
+        [
+          { area: 'REQ', rationale: 'r', standards: ['A'], profiles: complete },
+          { profiles: ['quick-triage'] }
+        ],
+        complete
+      )
+      .join('\n');
+    expect(rows).toContain('all profiles');
+    expect(rows).toContain('none');
+    expect(rows).toContain('unknown');
+  });
+
+  it('renderStandardsCoverageMatrix covers empty, populated cells, and row merging', () => {
+    expect(rh.renderStandardsCoverageMatrix([])).toEqual([]);
+    const rows = rh
+      .renderStandardsCoverageMatrix([
+        { profile: 'quick-triage', areas: { REQ: { score: 5, confidence: 'High', standards: ['A'] }, ARCH: undefined } },
+        { profile: 'release-gate', areas: { REQ: { score: 5, confidence: 'High', standards: ['A'] }, ARCH: undefined } }
+      ])
+      .join('\n');
+    expect(rows).toContain('quick-triage, release-gate');
+    expect(rows).toContain('5/5 High (A)');
+  });
+
+  it('renderAuditRunProvenanceSummary covers empty, snapshot, and command rows', () => {
+    expect(rh.renderAuditRunProvenanceSummary(undefined)).toEqual([]);
+    expect(rh.renderAuditRunProvenanceSummary({ snapshot: {}, commands: [] })).toEqual([]);
+    const rows = rh
+      .renderAuditRunProvenanceSummary({
+        snapshot: {
+          mode: 'tracked',
+          path: '/snap',
+          trackedFileCount: 3,
+          removed: false,
+          symlinkFiles: ['s'],
+          missingFiles: [],
+          generatedRootsExcluded: ['out']
+        },
+        commands: [
+          { stage: 'direct', name: 'preflight', status: 0, file: 'p.txt', command: 'x' },
+          { stage: 'profile', name: 'gate', status: 2, file: 'g.txt', command: 'y' }
+        ]
+      })
+      .join('\n');
+    expect(rows).toContain('| Mode | tracked |');
+    expect(rows).toContain('| Removed After Run | no |');
+    expect(rows).toContain('pass');
+    expect(rows).toContain('FAIL (2)');
+  });
+
+  it('renderProfileSignalLines covers scorecard, portfolio, and merged rows', () => {
+    const lines = rh.renderProfileSignalLines([
+      { name: 'quick-triage', scorecard: { coverage: 'PASS' } },
+      { name: 'release-gate', scorecard: { coverage: 'PASS' } },
+      {
+        name: 'portfolio',
+        portfolio: { overall: 'B+', gates: '5/6', areaScores: { REQ: 5, DOC: 3 }, topRisk: 'x', tableFile: 't.md' }
+      }
+    ]);
+    const text = lines.join('\n');
+    expect(text).toContain('quick-triage, release-gate: coverage=PASS');
+    expect(text).toContain('overall=B+');
+    expect(text).toContain('REQ=5');
+    expect(text).toContain('see t.md');
+  });
+
+  it('renderDirectCheckEvidenceSummary covers requirements-quality, external-user-information, and FAIL', () => {
+    expect(rh.renderDirectCheckEvidenceSummary([])).toEqual([]);
+    const rows = rh
+      .renderDirectCheckEvidenceSummary([
+        { name: 'reqQ', file: 'r.json', status: 0, requirementsQuality: { ok: false, findingCount: 3 } },
+        {
+          name: 'ext',
+          file: 'e.json',
+          status: 0,
+          externalUserInformation: { ok: true, findingCount: 0, checkedPaths: ['docs/a.md'] }
+        },
+        { name: 'plain', status: 1 }
+      ])
+      .join('\n');
+    expect(rows).toContain('not ok');
+    expect(rows).toContain('docs/a.md');
+    expect(rows).toContain('FAIL (1)');
+  });
+});
+
+describe('runMultiStandardsAudit: summarize-helper branch coverage (#2331)', () => {
+  const sh = require('../../scripts/runMultiStandardsAudit.js') as {
+    summarizeExternalUserInformation: (payload: unknown) => {
+      ok: boolean;
+      findingCount?: number;
+      checkedPathCount?: number;
+      checkedPaths: string[];
+    };
+    summarizePortfolioTable: (text: string) => unknown;
+    summarizeGateScorecard: (
+      text: string
+    ) => Record<string, { status?: string; confidence?: string; missingProof: string[] }>;
+    summarizeRetainedGateScore: (payload: unknown) => Record<string, unknown>;
+    summarizeRetainedStandardsCoverage: (payload: unknown) => Record<string, unknown>;
+    summarizeRetainedStandardsEvidence: (payload: unknown) => unknown[];
+    profileScoreFile: (step: unknown) => string | undefined;
+  };
+
+  it('summarizeExternalUserInformation defaults on a non-object and counts findings/paths', () => {
+    expect(sh.summarizeExternalUserInformation(undefined)).toMatchObject({ ok: false, checkedPaths: [] });
+    expect(sh.summarizeExternalUserInformation({ ok: true, findings: [1, 2], checkedPaths: ['a'] })).toMatchObject({
+      ok: true,
+      findingCount: 2,
+      checkedPathCount: 1,
+      checkedPaths: ['a']
+    });
+    expect(sh.summarizeExternalUserInformation({ ok: false })).toMatchObject({
+      ok: false,
+      findingCount: 0,
+      checkedPathCount: 0
+    });
+  });
+
+  it('summarizePortfolioTable extracts the first data row and coerces numeric area scores', () => {
+    const table = [
+      'noise',
+      '| Repo | Overall | Gates | REQ | ARCH | TEST | CM | DOC | Top Risk |',
+      '| --- | --- | --- | --- | --- | --- | --- | --- | --- |',
+      '| icon | B+ | 5/6 | 5 | 4 | high | 3 | 2 | none |'
+    ].join('\n');
+    const portfolio = sh.summarizePortfolioTable(table) as {
+      overall: string;
+      areaScores: Record<string, unknown>;
+      topRisk: string;
+    };
+    expect(portfolio.overall).toBe('B+');
+    expect(portfolio.areaScores.REQ).toBe(5);
+    expect(portfolio.areaScores.TEST).toBe('high');
+    expect(portfolio.topRisk).toBe('none');
+    // A table without the portfolio header columns yields undefined.
+    expect(sh.summarizePortfolioTable('| A | B |\n| - | - |\n| 1 | 2 |')).toBeUndefined();
+  });
+
+  it('summarizeGateScorecard parses gate rows and missing-proof cells', () => {
+    const table = [
+      '| Gate | Status | Confidence | Missing Proof |',
+      '| --- | --- | --- | --- |',
+      '| coverage | PASS | High | - |',
+      '| doc | FAIL | High | need a; need b |'
+    ].join('\n');
+    const details = sh.summarizeGateScorecard(table);
+    expect(details.coverage).toMatchObject({ status: 'PASS', missingProof: [] });
+    expect(details.doc.missingProof).toEqual(['need a', 'need b']);
+    expect(sh.summarizeGateScorecard('no table here')).toEqual({});
+  });
+
+  it('summarizeRetained* helpers default on malformed payloads and map valid ones', () => {
+    expect(sh.summarizeRetainedGateScore(undefined)).toEqual({});
+    expect(
+      sh.summarizeRetainedGateScore({
+        gates: { coverage: { status: 'PASS', standards: ['A'], missing: ['x'] }, bad: null }
+      })
+    ).toMatchObject({ coverage: { status: 'PASS', standards: ['A'], missingProof: ['x'] } });
+
+    expect(sh.summarizeRetainedStandardsCoverage({})).toEqual({});
+    expect(
+      sh.summarizeRetainedStandardsCoverage({ areas: { REQ: { score: 5, standards: ['A'] }, bad: 1 } })
+    ).toMatchObject({ REQ: { score: 5, standards: ['A'] } });
+
+    expect(sh.summarizeRetainedStandardsEvidence({})).toEqual([]);
+    expect(
+      sh.summarizeRetainedStandardsEvidence({
+        top_strengths: [{ id: 'g', summary: 's', standards: ['A'], evidence_paths: ['p'] }, 'skip', {}]
+      })
+    ).toEqual([{ id: 'g', summary: 's', standards: ['A'], evidencePaths: ['p'] }]);
+  });
+
+  it('profileScoreFile prefers an explicit score file and defaults otherwise', () => {
+    expect(sh.profileScoreFile({})).toBeUndefined();
+    expect(sh.profileScoreFile({ saveDir: 'quick-triage' })).toBe('quick-triage/target/score.json');
+    expect(sh.profileScoreFile({ saveDir: 'quick-triage', scoreFile: 'custom/score.json' })).toBe('custom/score.json');
+  });
+});
+
+describe('runMultiStandardsAudit: build-helper merge branch coverage (#2331)', () => {
+  const bh = require('../../scripts/runMultiStandardsAudit.js') as {
+    buildStandardsScoreFileLegend: (profiles: unknown) => Array<{ profile: string; scoreFile: string }>;
+    buildStandardsGateStrengthSummary: (profiles: unknown) => Array<{ profiles: string[]; scoreFiles: string[] }>;
+    buildStandardsGateBasisSummary: (profiles: unknown) => Array<{ profiles: string[]; scoreFiles: string[] }>;
+    buildStandardsGateDetailSummary: (
+      profiles: unknown
+    ) => Array<{ profiles: string[]; scoreFiles: string[]; missingProof: string[] }>;
+    buildStandardsCoverageRationaleSummary: (matrix: unknown) => Array<{ profiles: string[]; scoreFiles: string[] }>;
+  };
+
+  it('buildStandardsScoreFileLegend dedupes identical rows and skips scoreFile-less profiles', () => {
+    const rows = bh.buildStandardsScoreFileLegend([
+      { name: 'quick-triage', scoreFile: 's.json' },
+      { name: 'quick-triage', scoreFile: 's.json' },
+      { name: 'release-gate' }
+    ]);
+    expect(rows).toEqual([{ profile: 'quick-triage', scoreFile: 's.json' }]);
+  });
+
+  it('buildStandardsGateStrengthSummary merges a shared gate-strength item across profiles', () => {
+    const item = { id: 'g1', summary: 'strong', standards: ['A'], evidencePaths: [] };
+    const rows = bh.buildStandardsGateStrengthSummary([
+      { name: 'quick-triage', standardsEvidence: [item], scoreFile: 'q.json' },
+      { name: 'release-gate', standardsEvidence: [item], scoreFile: 'r.json' }
+    ]);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].profiles).toEqual(['quick-triage', 'release-gate']);
+    expect(rows[0].scoreFiles).toEqual(['q.json', 'r.json']);
+  });
+
+  it('buildStandardsGateBasisSummary merges a shared high-confidence gate across profiles', () => {
+    const details = {
+      scorecardDetails: { coverage: { status: 'PASS', confidence: 'High', basis: 'b', standards: ['A'], missingProof: [] } }
+    };
+    const rows = bh.buildStandardsGateBasisSummary([
+      { name: 'quick-triage', scoreFile: 'q.json', ...details },
+      { name: 'release-gate', scoreFile: 'r.json', ...details }
+    ]);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].profiles).toEqual(['quick-triage', 'release-gate']);
+    expect(rows[0].scoreFiles).toEqual(['q.json', 'r.json']);
+  });
+
+  it('buildStandardsGateDetailSummary merges a shared lower-confidence gate across profiles', () => {
+    const details = {
+      scorecardDetails: { doc: { status: 'FAIL', confidence: 'Low', basis: 'b', standards: ['A'], missingProof: ['x'] } }
+    };
+    const rows = bh.buildStandardsGateDetailSummary([
+      { name: 'quick-triage', scoreFile: 'q.json', ...details },
+      { name: 'release-gate', scoreFile: 'r.json', ...details }
+    ]);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].profiles).toEqual(['quick-triage', 'release-gate']);
+    expect(rows[0].missingProof).toEqual(['x']);
+  });
+
+  it('buildStandardsCoverageRationaleSummary merges a shared area rationale across profiles', () => {
+    const areas = { REQ: { rationale: 'because', standards: ['A'] } };
+    const rows = bh.buildStandardsCoverageRationaleSummary([
+      { profile: 'quick-triage', scoreFile: 'q.json', areas },
+      { profile: 'release-gate', scoreFile: 'r.json', areas }
+    ]);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].profiles).toEqual(['quick-triage', 'release-gate']);
+    expect(rows[0].scoreFiles).toEqual(['q.json', 'r.json']);
+  });
+});
+
+describe('runMultiStandardsAudit: renderMarkdown section-omission coverage (#2331)', () => {
+  const rm = require('../../scripts/runMultiStandardsAudit.js') as {
+    renderMarkdown: (context: unknown) => string;
+  };
+
+  it('omits every optional section for a minimal context', () => {
+    const md = rm.renderMarkdown({
+      options: { image: 'img:tag', requirementsSpecScope: 'system' },
+      outputDir: '/out',
+      snapshot: { mode: 'tracked', trackedFileCount: 0, removed: true },
+      imagePreparation: [],
+      directChecks: [],
+      profiles: []
+    });
+    expect(md).toContain('# Multi-Standard Audit');
+    expect(md).toContain('## Command Results');
+    expect(md).toContain('## Prioritization Use');
+    // With no profile/direct-check data every optional standards section is omitted.
+    expect(md).not.toContain('## Standards Coverage Matrix');
+    expect(md).not.toContain('## Standards Coverage Rationale Summary');
+    expect(md).not.toContain('## Standards Score File Legend');
+    expect(md).not.toContain('## Standards Evidence Summary');
+    expect(md).not.toContain('## Standards Gate Strength Summary');
+    expect(md).not.toContain('## Standards Gate Basis Summary');
+    expect(md).not.toContain('## Standards Gate Detail Summary');
+    expect(md).not.toContain('## Direct Check Evidence Summary');
+    // snapshot.removed=true -> the retained-snapshot line is omitted; no imageAccess.
+    expect(md).not.toContain('Snapshot retained');
+    expect(md).not.toContain('Docker image access');
+  });
+});
+
+describe('runMultiStandardsAudit main CLI (#2331)', () => {
+  it('writes the rendered markdown to stdout and returns the exit code', () => {
+    const out: string[] = [];
+    const code = main(['--schema'], { stdout: { write: (s: string) => out.push(s) } });
+    expect(code).toBe(0);
+    expect(out.join('')).toContain(MULTI_STANDARDS_AUDIT_SCHEMA_ID);
+  });
+
+  it('returns 1 and writes the error plus usage to stderr when the audit throws', () => {
+    const err: string[] = [];
+    const code = main(['--image'], { stdout: { write: () => {} }, stderr: { write: (s: string) => err.push(s) } });
+    expect(code).toBe(1);
+    expect(err.join('')).toMatch(/Usage:/);
+  });
+
+  it('falls back to process.stdout / process.stderr when no stream deps are supplied', () => {
+    const outSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    expect(main(['--schema'])).toBe(0);
+    expect(outSpy).toHaveBeenCalled();
+    outSpy.mockRestore();
+
+    const errSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    expect(main(['--image'])).toBe(1);
+    expect(errSpy).toHaveBeenCalled();
+    errSpy.mockRestore();
   });
 });

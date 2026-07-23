@@ -161,6 +161,23 @@ describe('checkMaintainerRunnerPrerequisites.resolveCommandOnPath', () => {
     });
     expect(resolved).toBeUndefined();
   });
+
+  it('falls back to an empty PATH and the default PATHEXT on Windows with an empty env', () => {
+    // Exercises `env.PATH ?? env.Path ?? ''` (both nullish) and the default
+    // `.COM;.EXE;.BAT;.CMD` PATHEXT fallback. No PATH dirs -> undefined.
+    const resolved = doctor.resolveCommandOnPath('git', 'win32', {
+      env: {},
+      existsSync: () => false
+    });
+    expect(resolved).toBeUndefined();
+  });
+
+  it('uses the real fs and environment defaults when no deps are injected', () => {
+    // Exercises the `deps.existsSync ?? fs.existsSync` and `deps.env ??
+    // process.env` defaults. A guaranteed-absent command resolves to undefined
+    // regardless of the host PATH, so the result stays deterministic.
+    expect(doctor.resolveCommandOnPath('vihs-absent-command-xyz', 'linux')).toBeUndefined();
+  });
 });
 
 describe('checkMaintainerRunnerPrerequisites.inspectPrerequisite', () => {
@@ -195,6 +212,18 @@ describe('checkMaintainerRunnerPrerequisites.inspectPrerequisite', () => {
       env: { PATH: '', PATHEXT: '.CMD' },
       existsSync: () => false
     });
+    expect(result.satisfied).toBe(false);
+    expect(result.detectedPath).toBeUndefined();
+  });
+
+  it('falls back to the real fs existsSync when none is injected', () => {
+    // Exercises the `deps.existsSync ?? fs.existsSync` default with a bogus
+    // candidate path and an empty PATH, so the check deterministically misses.
+    const result = doctor.inspectPrerequisite(
+      { id: 'bogus', required: true, candidatePaths: ['/vihs/definitely/absent'], commandNames: ['vihs-absent-cmd'] },
+      'linux',
+      { env: { PATH: '' } }
+    );
     expect(result.satisfied).toBe(false);
     expect(result.detectedPath).toBeUndefined();
   });
@@ -246,6 +275,17 @@ describe('checkMaintainerRunnerPrerequisites.inspectMaintainerRunnerPrerequisite
     expect(report.satisfied).toBe(false);
     expect(report.missingRequired).toEqual(['node', 'npm', 'git', 'vscode', 'labview', 'labview-cli']);
   });
+
+  it('falls back to the real process.env when no env dep is injected', () => {
+    // Exercises the `deps.env ?? process.env` default. existsSync is injected as
+    // always-false so every prerequisite is deterministically missing.
+    const report = doctor.inspectMaintainerRunnerPrerequisites('linux', {
+      existsSync: () => false
+    });
+    expect(report.platform).toBe('linux');
+    expect(report.checks.length).toBeGreaterThan(0);
+    expect(report.satisfied).toBe(false);
+  });
 });
 
 describe('checkMaintainerRunnerPrerequisites.formatPrerequisiteReport', () => {
@@ -258,6 +298,30 @@ describe('checkMaintainerRunnerPrerequisites.formatPrerequisiteReport', () => {
     expect(text).toContain('MISSING VS Code (integration host)');
     expect(text).toMatch(/remediation:/);
     expect(text).toContain('required prerequisite(s) missing');
+  });
+
+  it('labels an unsatisfied optional prerequisite as "(optional)"', () => {
+    // Exercises the `check.required ? 'required' : 'optional'` false branch.
+    const report = {
+      platform: 'linux',
+      checks: [
+        {
+          id: 'opt',
+          label: 'Optional Tool',
+          required: false,
+          satisfied: false,
+          detectedPath: undefined,
+          candidatePaths: ['/opt/x'],
+          commandNames: ['optcmd'],
+          remediation: 'install the optional tool'
+        }
+      ],
+      missingRequired: [],
+      satisfied: true
+    };
+    const text = doctor.formatPrerequisiteReport(report);
+    expect(text).toContain('Optional Tool (optional)');
+    expect(text).toContain('All required prerequisites satisfied');
   });
 });
 

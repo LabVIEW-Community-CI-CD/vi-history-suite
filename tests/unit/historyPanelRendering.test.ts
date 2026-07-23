@@ -422,4 +422,14 @@ describe('historyPanelRendering', () => {
       expect(html).toContain('(1 commit)');
     });
   });
+
+  describe('surface capabilities fallback', () => {
+    it('renders without capability-gated affordances when surfaceCapabilities is absent', () => {
+      // model.surfaceCapabilities is undefined -> the renderer falls back to an
+      // empty capability set (`model.surfaceCapabilities ?? {}`) and still renders.
+      const model = createTestViewModel({ surfaceCapabilities: undefined });
+      const html = renderHistoryPanelHtml(model);
+      expect(html).toContain('data-testid="history-title"');
+    });
+  });
 });

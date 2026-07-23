@@ -391,4 +391,35 @@ describe('compareViRevisions', () => {
     expect(set).not.toHaveBeenCalled();
     expect(harness.executeReport).toHaveBeenCalledTimes(1);
   });
+
+  it('assigns the default primitive boundaries even on an early blocked-selection exit', async () => {
+    // Provide ONLY locateRuntime (returning unavailable) so the orchestrator
+    // short-circuits at blocked-selection. The preflight/persistPacket/
+    // executeReport/parseReportFile boundaries fall through to their real
+    // defaults (the right-hand side of each `?? default`) but are never invoked,
+    // so no real primitive runs.
+    const result = await compareViRevisions(input(), {
+      locateRuntime: vi.fn(async () =>
+        selection({ provider: 'unavailable', blockedReason: 'no-runtime' })
+      )
+    });
+    expect(result).toEqual({ status: 'blocked-selection', reason: 'no-runtime' });
+  });
+
+  it('bypasses the cache when the selected-side content signature cannot be resolved', async () => {
+    const { get, set, cache } = cacheDouble();
+    // base resolves but selected does NOT: exercises the `&&` short-circuit where
+    // the second operand (selectedSignature !== undefined) evaluates false.
+    const resolveContentSignature = vi.fn(async (_root: string, _rel: string, rev: string) =>
+      rev === 'aaaaaaa' ? 'basesig' : undefined
+    );
+    const harness = makeHarness({ comparisonModelCache: cache, resolveContentSignature });
+    const result = await compareViRevisions(input(), harness.deps);
+
+    expect(result.status).toBe('completed');
+    expect(resolveContentSignature).toHaveBeenCalledTimes(2);
+    expect(get).not.toHaveBeenCalled();
+    expect(set).not.toHaveBeenCalled();
+    expect(harness.executeReport).toHaveBeenCalledTimes(1);
+  });
 });
