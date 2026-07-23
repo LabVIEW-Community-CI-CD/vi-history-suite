@@ -5832,6 +5832,22 @@ Missing numeric IDs are intentional.
     packet timestamp under a shared segment identity and fails closed on a
     non-finite timestamp, an empty segment id, or a negative latency. Pure and
     deterministic.
+  - A pure image-processing decoder recovers the printed stopwatch time from a
+    captured frame: it segments a sampled strip luminance row into forty cells,
+    samples each cell's middle third, thresholds to a bit at the min/max midpoint
+    (or a fixed override), and decodes the eight-bit preamble, twenty-four-bit
+    centiseconds payload, and exclusive-or checksum, reporting whether the strip
+    is well-formed without throwing. It fails closed on a row shorter than the
+    cell count or a non-positive cell count. Pure and deterministic.
+  - A pure analyzer measures how accurately the decoded stopwatch tracks real
+    time at a nominal capture cadence: from a sequence of captured frames (capture
+    timestamp plus decoded centiseconds) it computes the effective frame rate,
+    inter-frame interval jitter, dropped and duplicate frame estimates, and the
+    recovered-versus-capture time error, and classifies the run authoritative when
+    the error is within one frame interval, advisory when it exceeds it, and
+    insufficient when there are too few readable frames or too short a run. It
+    fails closed on an empty frame set or a non-positive frame rate. Pure and
+    deterministic.
 - Agent Work Scope:
   - Keep the engine pure and dependency-free so the readiness contract is unit
     tested without a container; the CLI performs the docker probing through an
@@ -5844,6 +5860,8 @@ Missing numeric IDs are intentional.
   - `src/reporting/syncDiagnostics/mprrCalibrationSurface.ts`
   - `src/reporting/syncDiagnostics/mprrCalibrationSurfaceRenderer.ts`
   - `src/reporting/syncDiagnostics/mprrAgentFeedbackCrossCheck.ts`
+  - `src/reporting/syncDiagnostics/mprrStripImageDecoder.ts`
+  - `src/reporting/syncDiagnostics/stopwatchCaptureAccuracy.ts`
   - `scripts/diagnoseLabviewContainer.js`
 - Verification References:
   - `tests/unit/labviewContainerDiagnostics.test.ts`
@@ -5852,6 +5870,8 @@ Missing numeric IDs are intentional.
   - `tests/unit/mprrCalibrationSurface.test.ts`
   - `tests/unit/mprrCalibrationSurfaceRenderer.test.ts`
   - `tests/unit/mprrAgentFeedbackCrossCheck.test.ts`
+  - `tests/unit/mprrStripImageDecoder.test.ts`
+  - `tests/unit/stopwatchCaptureAccuracy.test.ts`
 - Change Guidance:
   - Evolve the diagnostics contract additively (schema id
     `vi-history-suite/labview-container-diagnostics@v1`); add new staged checks at
