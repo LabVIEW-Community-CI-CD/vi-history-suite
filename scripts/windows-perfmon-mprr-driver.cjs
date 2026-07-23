@@ -347,7 +347,10 @@ function resolveNewestCsv(dir, basename) {
 function waitForRelease(csvPath) {
   for (let attempt = 0; attempt < 20; attempt += 1) {
     try {
-      const handle = fs.openSync(csvPath, 'r+');
+      // Read-only is enough to detect that logman has released its handle
+      // (it holds the CSV without read sharing while collecting) and avoids
+      // spurious failures on read-only/ACL-tightened evidence paths.
+      const handle = fs.openSync(csvPath, 'r');
       fs.closeSync(handle);
       return true;
     } catch {
