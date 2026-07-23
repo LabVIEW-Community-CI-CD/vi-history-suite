@@ -5666,6 +5666,16 @@ Missing numeric IDs are intentional.
     percent, and a degradation policy that preserves short-packet continuity
     before long-packet completeness (short packets block or fail closed rather
     than overwrite pinned bytes; long packets defer). Pure and deterministic.
+  - A pure cross-session pattern analyzer serves the agent as the consumer: over
+    multiple interactive sessions it correlates the per-session peak CPU, minimum
+    available memory, peak disk, and LabVIEW processor and working-set footprint
+    into per-metric trends (direction, slope, monotonicity, first-to-last delta),
+    flags anomalous sessions by z-score, and emits ordered agent-readable
+    interpretations that surface a monotonic working-set rise as a possible memory
+    leak, falling available memory as rising pressure, and rising CPU or disk
+    trends, so the agent gains longitudinal troubleshooting context. It orders
+    sessions by capture time, needs at least two defined points for a trend, and
+    fails closed on an empty observation set. Pure and deterministic.
 - Agent Work Scope:
   - Change the ADR, this requirement, and the governance contract test together;
     keep the required gate deterministic and never make a live image pull the
@@ -5686,6 +5696,7 @@ Missing numeric IDs are intentional.
   - `src/reporting/mirror/perfmonCaptureScript.ts`
   - `src/reporting/mirror/perfmonMprrSync.ts`
   - `src/reporting/mirror/deterministicRollingBlockRing.ts`
+  - `src/reporting/mirror/perfmonSessionPattern.ts`
 - Verification References:
   - `tests/unit/mirrorModeGovernance.test.ts`
   - `tests/unit/mirrorParityDigest.test.ts`
@@ -5702,6 +5713,7 @@ Missing numeric IDs are intentional.
   - `tests/unit/perfmonCaptureScript.test.ts`
   - `tests/unit/perfmonMprrSync.test.ts`
   - `tests/unit/deterministicRollingBlockRing.test.ts`
+  - `tests/unit/perfmonSessionPattern.test.ts`
 - Change Guidance:
   - This is a governance-foundation requirement: keep the documented invariants
     (human/Vagrant-only authorship, run-only container, Vagrant→`merge_group`
