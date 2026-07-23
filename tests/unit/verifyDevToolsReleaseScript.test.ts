@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
@@ -313,5 +313,97 @@ describe('verifyDevToolsRelease (DS2)', () => {
     });
     expect(code).toBe(1);
     expect(errs.join('')).toMatch(/files array/);
+  });
+});
+
+describe('verifyDevToolsRelease additional branch coverage (#2331)', () => {
+  const stableDeps = {
+    now: () => new Date('2026-07-17T00:00:00.000Z'),
+    getGitCommit: () => 'abc',
+    getPackageVersion: () => '1.0.0'
+  };
+
+  function buildFixtureManifest(): { dir: string; manifest: any } {
+    const dir = makeFixtureRepo();
+    const manifest = builder.collectDevToolsRelease(dir, { channel: 'stable' }, { cwd: dir, ...stableDeps });
+    return { dir, manifest };
+  }
+
+  function extractInto(root: string, dir: string, manifest: any): void {
+    for (const entry of manifest.files) {
+      const src = path.join(dir, ...entry.path.split('/'));
+      const dst = path.join(root, ...entry.path.split('/'));
+      fs.mkdirSync(path.dirname(dst), { recursive: true });
+      fs.copyFileSync(src, dst);
+    }
+  }
+
+  it('verifyToolsetAgainstManifest fails closed when contentDigest is not a string', () => {
+    const emptyRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'vihs-verify-nd-'));
+    tempDirs.push(emptyRoot);
+    // A numeric contentDigest resolves expectedDigest to null -> ok=false.
+    const result = verifier.verifyToolsetAgainstManifest(emptyRoot, { files: [], contentDigest: 42 });
+    expect(result.ok).toBe(false);
+    expect(result.expectedDigest).toBeNull();
+    expect(typeof result.actualDigest).toBe('string');
+  });
+
+  it('verifySelf fails closed when the manifest has no string contentDigest', () => {
+    const { dir, manifest } = buildFixtureManifest();
+    const result = verifier.verifySelf(dir, { ...manifest, contentDigest: undefined }, stableDeps);
+    expect(result.ok).toBe(false);
+    expect(result.expectedDigest).toBeNull();
+  });
+
+  it('main uses process.stdout/process.stderr when no stream deps are supplied', () => {
+    const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    // parseArgs throws -> the default stderr stream receives the message.
+    const code = verifier.main(['--nope']);
+    expect(code).toBe(1);
+    expect(stderrSpy).toHaveBeenCalledWith(expect.stringContaining('Unknown argument'));
+    stderrSpy.mockRestore();
+  });
+
+  it('main resolves a relative --root and a relative --manifest against cwd', () => {
+    const { dir, manifest } = buildFixtureManifest();
+    const root = path.join(dir, 'extracted');
+    extractInto(root, dir, manifest);
+    fs.writeFileSync(path.join(dir, 'm.json'), JSON.stringify(manifest), 'utf8');
+    const code = verifier.main(['--manifest', 'm.json', '--root', 'extracted'], {
+      cwd: dir,
+      ...stableDeps,
+      stdout: { write: () => undefined },
+      stderr: { write: () => undefined }
+    });
+    expect(code).toBe(0);
+  });
+
+  it('main --verify-self defaults root to cwd when --root is omitted', () => {
+    const { dir, manifest } = buildFixtureManifest();
+    const manifestPath = path.join(dir, 'prov.json');
+    fs.writeFileSync(manifestPath, JSON.stringify(manifest), 'utf8');
+    const code = verifier.main(['--verify-self', '--manifest', manifestPath], {
+      cwd: dir,
+      ...stableDeps,
+      stdout: { write: () => undefined },
+      stderr: { write: () => undefined }
+    });
+    expect(code).toBe(0);
+  });
+
+  it('main defaults cwd to process.cwd() when absolute --manifest/--root are supplied', () => {
+    const { dir, manifest } = buildFixtureManifest();
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'vihs-verify-abs-'));
+    tempDirs.push(root);
+    extractInto(root, dir, manifest);
+    const manifestPath = path.join(dir, 'abs.json');
+    fs.writeFileSync(manifestPath, JSON.stringify(manifest), 'utf8');
+    // No cwd dep -> main uses process.cwd(); the absolute paths avoid touching it.
+    const code = verifier.main(['--manifest', manifestPath, '--root', root], {
+      ...stableDeps,
+      stdout: { write: () => undefined },
+      stderr: { write: () => undefined }
+    });
+    expect(code).toBe(0);
   });
 });

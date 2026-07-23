@@ -172,4 +172,58 @@ describe('controlPlaneApply: main CLI reporter (VHS-REQ-698.3)', () => {
     expect(exits).toEqual([1]);
     expect((result as { error?: Error }).error).toBeInstanceOf(Error);
   });
+
+  it('stringifies a non-Error throw when reporting the failure', () => {
+    // Exercises the `String(err2)` side of the error-formatting ternary.
+    const { err, exits } = harness({
+      runControlPlaneApply: () => {
+        throw 'plain-string-failure';
+      }
+    });
+    expect(err).toContain('[control-plane-apply] plain-string-failure');
+    expect(exits).toEqual([1]);
+  });
+
+  it('falls back to the real apply runner (disabled config) when none is injected', () => {
+    // Omitting runControlPlaneApply exercises its `|| runControlPlaneApply`
+    // default; a DISABLED config keeps it hermetic (no gh) and omitting
+    // applyFieldUpdate exercises the createGhFieldUpdater default (never called).
+    const out: string[] = [];
+    const exits: number[] = [];
+    const result = main({
+      config: DISABLED,
+      readProjectItems: () => VERIFIED_ITEMS,
+      readVerifiedClosures: () => ({ 1: true }),
+      appendLog: () => {},
+      stdout: { write: (text: string) => out.push(text) },
+      stderr: { write: () => {} },
+      exit: (code: number) => exits.push(code)
+    });
+    expect(out.join('')).toContain('no writes (write-path-disabled)');
+    expect(exits).toEqual([0]);
+    expect(result).toMatchObject({ executed: false });
+  });
+
+  it('falls back to process.stdout / process.stderr when streams are not injected', () => {
+    // Exercises the `deps.stdout || process.stdout` and `deps.stderr ||
+    // process.stderr` defaults. `exit` stays injected so the test worker is not
+    // terminated by a real process.exit.
+    const exits: number[] = [];
+    expect(() =>
+      main({
+        runControlPlaneApply: () => ({ executed: false, reason: 'write-path-disabled', plannedCount: 0, appliedCount: 0 }),
+        exit: (code: number) => exits.push(code)
+      })
+    ).not.toThrow();
+
+    expect(() =>
+      main({
+        runControlPlaneApply: () => {
+          throw new Error('boundary failure routed to process.stderr');
+        },
+        exit: (code: number) => exits.push(code)
+      })
+    ).not.toThrow();
+    expect(exits).toEqual([0, 1]);
+  });
 });

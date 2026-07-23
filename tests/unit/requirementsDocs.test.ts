@@ -595,7 +595,7 @@ describe('requirements documentation coherence', () => {
     expect(syrs).toContain('low-coverage requirement-mapped files');
     expect(srs).toContain('### VHS-REQ-613: Coverage Intelligence And Test-Risk Mapping');
     expect(srs).toContain('`npm run coverage:map` reads `coverage/coverage-summary.json`');
-    expect(srs).toContain('requirement-mapped files below 80% coverage');
+    expect(srs).toContain('requirement-mapped files below 85% coverage');
     expect(srs).toContain('Standards closeout invokes the coverage map after `npm test`');
     expect(testPlan).toContain('Coverage Traceability Map');
     expect(testPlan).toContain('zero-coverage supporting files tied to active');

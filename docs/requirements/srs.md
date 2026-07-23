@@ -2423,14 +2423,18 @@ Missing numeric IDs are intentional.
   - `npm run coverage:map` reads `coverage/coverage-summary.json`,
     `docs/requirements/traceability-inventory.csv`, and
     `docs/requirements/rtm.csv`.
-  - The report highlights requirement-mapped files below 80% coverage by
+  - The report highlights requirement-mapped files below 85% coverage by
     requirement, classification, missing lines, missing branches, and missing
     functions.
   - The report highlights zero-coverage supporting files tied to active
     requirements.
   - `npm run coverage:map:enforce` fails closed when a requirement-mapped file
     is below the risk threshold or a supporting file tied to a requirement has
-    zero coverage; the hosted CI coverage-risk gate runs it after `npm test`.
+    zero coverage; the hosted CI coverage-risk gate runs it after `npm test`. A
+    narrow, fail-closed branch-measurement exemption waives only the branch
+    metric of a named file, and only while that file's lines, statements, and
+    functions are all fully covered, to absorb a documented coverage-provider
+    limitation that mis-counts otherwise-executed guard branches.
   - Coverage measurement instruments the product `src` tree and the
     requirement-supporting `scripts/*.js` guard and tool scripts, excluding
     dev-only host and CI-infrastructure runner scripts that require a real host,

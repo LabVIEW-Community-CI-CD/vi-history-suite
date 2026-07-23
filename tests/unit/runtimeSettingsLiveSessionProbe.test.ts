@@ -73,4 +73,24 @@ describe('runtimeSettingsLiveSessionProbe (VHS-REQ-687.1)', () => {
     expect(summary.runtimeValidationOutcome).toBe('blocked');
     expect(summary.runtimeProvider).toBe('unavailable');
   });
+
+  it('returns undefined mutation-target receipts when the persisted provider is neither host nor docker', () => {
+    const summary = buildRuntimeSettingsLiveSessionProbeSummary({
+      persisted: { runtimeProvider: 'windows', labviewVersion: '2026', labviewBitness: 'x64' },
+      baselinePersisted: { runtimeProvider: 'host', labviewVersion: '2026', labviewBitness: 'x64' },
+      live: { runtimeProvider: 'windows', labviewVersion: '2026', labviewBitness: 'x64' },
+      mutationProviderTarget: 'host'
+    });
+
+    // mutationProviderTarget is a valid host/docker target, but the persisted
+    // provider ('windows') is neither host nor docker, so the alignment receipt
+    // is undefined rather than a boolean (classifyMutationTargetPersistedMatch
+    // second guard: normalizedPersisted !== 'host' && !== 'docker').
+    expect(summary.mutationProviderTarget).toBe('host');
+    expect(summary.mutationTargetPersistedMatch).toBeUndefined();
+    // The baseline is a valid provider but the persisted side is not, so the
+    // baseline-changed receipt is likewise undefined
+    // (classifyMutationTargetBaselineChanged fourth-operand branch).
+    expect(summary.mutationTargetBaselineChanged).toBeUndefined();
+  });
 });

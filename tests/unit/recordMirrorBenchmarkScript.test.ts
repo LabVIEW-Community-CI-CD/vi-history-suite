@@ -1,4 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import {
   applyMirrorBenchmarkRecord,
@@ -261,5 +263,78 @@ describe('main CLI (VHS-REQ-707.8)', () => {
     bad[1] = 'not-a-sha';
     expect(main([...bad, '--ledger', 'docs/x.json'], deps)).toBe(1);
     expect(err.join('')).toMatch(/parity-key/);
+  });
+
+  it('emits a JSON summary under --json', () => {
+    const { deps, out } = harness(JSON.stringify(fingerprint));
+    expect(main([...cliArgs, '--ledger', 'docs/x.json', '--json'], deps)).toBe(0);
+    const summary = JSON.parse(out.join(''));
+    expect(summary).toMatchObject({ changed: true, runs: 1, actors: 1 });
+  });
+
+  it('attaches provenance to the schema output under --include-provenance', () => {
+    const { deps, out } = harness();
+    expect(main(['--schema', '--include-provenance'], deps)).toBe(0);
+    expect(out.join('')).toContain('2026-07-22T00:00:00.000Z');
+  });
+
+  it('fails closed when --fingerprint-file is missing', () => {
+    const { deps, err } = harness();
+    expect(main([...cliArgs.slice(0, -2), '--ledger', 'docs/x.json'], deps)).toBe(1);
+    expect(err.join('')).toMatch(/fingerprint-file/);
+  });
+
+  it('fails closed when the fingerprint file cannot be read', () => {
+    const { deps, err } = harness(); // no fp.json interned in the store
+    expect(main([...cliArgs, '--ledger', 'docs/x.json'], deps)).toBe(1);
+    expect(err.join('')).toContain('Failed to read fingerprint file');
+  });
+
+  it('fails closed when the existing ledger is unreadable JSON', () => {
+    const { deps, store, cwd, err } = harness(JSON.stringify(fingerprint));
+    store[path.join(cwd, 'docs', 'x.json')] = '{ not json';
+    expect(main([...cliArgs, '--ledger', 'docs/x.json'], deps)).toBe(1);
+    expect(err.join('')).toContain('Failed to read mirror-benchmark ledger');
+  });
+
+  it('fails closed (exit 1) on a parent-escaping ledger path', () => {
+    const { deps, err } = harness(JSON.stringify(fingerprint));
+    expect(main([...cliArgs, '--ledger', path.join('..', 'escape.json')], deps)).toBe(1);
+    expect(err.join('')).toMatch(/inside|relative/);
+  });
+
+  it('writes the schema to process.stdout when no stdout dep is supplied', () => {
+    const spy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    expect(main(['--schema'])).toBe(0);
+    expect(spy).toHaveBeenCalledWith(expect.stringContaining(SCHEMA_ID));
+    spy.mockRestore();
+  });
+
+  it('writes parse errors to process.stderr when no stderr dep is supplied', () => {
+    const spy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    expect(main(['--bogus'])).toBe(1);
+    expect(spy).toHaveBeenCalledWith(expect.stringContaining('Unknown argument'));
+    spy.mockRestore();
+  });
+
+  it('records against the real filesystem using the default fs factories', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'vihs-mirror-realfs-'));
+    try {
+      fs.writeFileSync(path.join(dir, 'fp.json'), JSON.stringify(fingerprint), 'utf8');
+      const out: string[] = [];
+      // No readFile/writeFile/fileExists deps -> exercises the real fs default factories.
+      const code = main([...cliArgs, '--ledger', 'led.json'], {
+        cwd: dir,
+        stdout: { write: (s: string) => out.push(s) }
+      });
+      expect(code).toBe(0);
+      const written = JSON.parse(fs.readFileSync(path.join(dir, 'led.json'), 'utf8'));
+      expect(written.runs).toHaveLength(1);
+      // Re-run against the now-present ledger -> no-op, still exit 0.
+      expect(main([...cliArgs, '--ledger', 'led.json'], { cwd: dir, stdout: { write: () => {} } })).toBe(0);
+      expect(JSON.parse(fs.readFileSync(path.join(dir, 'led.json'), 'utf8')).runs).toHaveLength(1);
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
   });
 });

@@ -36,6 +36,11 @@ const {
   runDockerStandards,
   summarizeReleaseProfileResults,
   summarizeDodGateEvidence,
+  evaluateClosureDecision,
+  findTagCommit,
+  findRemoteCommit,
+  collectGitContext,
+  collectGithubContext,
   verifyStandardsToolchainProvenance
 } = require('../../scripts/generateCloseoutEvidence.js') as {
   ALLOWED_EXECUTABLE_COMMANDS: string[];
@@ -120,7 +125,25 @@ const {
     source: string;
     trustedSources: Array<{ path: string; classification: string }>;
     disqualifiedSources: Array<{ path: string; classification: string }>;
+    reason: string;
   };
+  evaluateClosureDecision: (context: Record<string, unknown>) => {
+    closable: boolean;
+    localGatesRan: boolean;
+    localGatesPassed: boolean;
+    failedLocalGates: string[];
+    standardsPassed: boolean;
+    dodEvidencePassed: boolean;
+    provenancePassed: boolean;
+    reasons: string[];
+  };
+  findTagCommit: (entries: Array<{ commit: string; ref: string }>, tagName: string) => string | undefined;
+  findRemoteCommit: (entries: Array<{ commit: string; ref: string }>, refName: string) => string | undefined;
+  collectGitContext: (deps?: Record<string, unknown>) => { branch: string; commit: string; fullCommit: string };
+  collectGithubContext: (
+    options: Record<string, unknown>,
+    deps?: Record<string, unknown>
+  ) => { issue?: unknown; releasePr?: unknown; backSyncPr?: unknown };
   runDockerStandards: (
     options: { standardsImage: string; skillRoot: string; buildStandardsImage?: boolean },
     deps: {
@@ -1664,5 +1687,299 @@ describe('closeout evidence script', () => {
     expect(result.markdown).toContain('## Release References');
     expect(result.markdown).toContain('Release tag: v1.4.2');
     expect(result.markdown).toContain('Marketplace workflow run: https://example.invalid/run');
+  });
+});
+
+describe('generateCloseoutEvidence: pure-helper branch coverage (#2331)', () => {
+  it('classifies every Docker registry failure category', () => {
+    const image = STANDARDS_TOOLCHAIN_REGISTRY_IMAGE;
+    const desc = 'docker manifest inspect';
+    expect(classifyDockerRegistryFailure({ status: 0 }, image, desc).category).toBe('none');
+    expect(classifyDockerRegistryFailure({ status: 1, timedOut: true }, image, desc).category).toBe('timeout');
+    expect(classifyDockerRegistryFailure({ status: 1, stderr: 'operation timed out' }, image, desc).category).toBe('timeout');
+    expect(classifyDockerRegistryFailure({ status: 1, stderr: 'error getting credentials' }, image, desc).category).toBe(
+      'credential-helper'
+    );
+    expect(classifyDockerRegistryFailure({ status: 1, stderr: 'pull access denied' }, image, desc).category).toBe(
+      'auth-denied'
+    );
+    expect(
+      classifyDockerRegistryFailure({ status: 1, stderr: 'some unexpected error', command: 'docker pull x' }, image, desc)
+        .category
+    ).toBe('unknown');
+  });
+
+  it('detects transient network failures from stderr patterns and clears clean results', () => {
+    expect(isTransientNetworkFailure({ stderr: 'connection reset by peer' })).toBe(true);
+    expect(isTransientNetworkFailure({ error: 'dial tcp: i/o timeout' })).toBe(true);
+    expect(isTransientNetworkFailure({ stderr: 'ok', error: '' })).toBe(false);
+  });
+
+  it('normalizes N/A gate-status spelling variants and drops unrecognized statuses', () => {
+    const scorecard = ['| Gate | Status |', '| --- | --- |', '| coverage | N A |', '| doc | NA |', '| req | bogus |'].join(
+      '\n'
+    );
+    const statuses = parseGateScorecard(scorecard);
+    expect(statuses.coverage).toBe('N/A');
+    expect(statuses.doc).toBe('N/A');
+    expect(statuses.req).toBeUndefined();
+  });
+
+  it('summarizeDodGateEvidence returns FAIL when the scorecard row is FAIL', () => {
+    const failScorecard = ['| Gate | Status |', '| --- | --- |', '| dod | FAIL |'].join('\n');
+    const dod = summarizeDodGateEvidence(
+      { evidence: [{ path: '.github/workflows/ci.yml', rule_source: 'GATE:dod:context', matched_text: 'x' }] },
+      failScorecard
+    );
+    expect(dod.status).toBe('FAIL');
+    expect(dod.source).toBe('workflow');
+  });
+
+  it('summarizeDodGateEvidence treats generated build output as a disqualified source', () => {
+    const dod = summarizeDodGateEvidence(
+      { evidence: [{ path: 'out/assurance/scorecard.txt', rule_source: 'GATE:dod:context', matched_text: 'x' }] },
+      scorecardDodPass
+    );
+    expect(dod.status).toBe('N/A');
+    expect(dod.disqualifiedSources[0].classification).toBe('generated-build-output');
+  });
+
+  it('summarizeDodGateEvidence reports no evidence when the scorecard row is missing', () => {
+    const dod = summarizeDodGateEvidence({ evidence: [] }, ['| Gate | Status |', '| --- | --- |'].join('\n'));
+    expect(dod.status).toBe('FAIL');
+    expect(dod.source).toBe('none');
+  });
+
+  it('summarizeDodGateEvidence stays N/A when the scorecard has not promoted DoD', () => {
+    const withTrusted = summarizeDodGateEvidence(
+      { evidence: [{ path: '.github/workflows/ci.yml', rule_source: 'GATE:dod:context', matched_text: 'x' }] },
+      scorecardOk
+    );
+    expect(withTrusted.status).toBe('N/A');
+    expect(withTrusted.reason).toContain('visible');
+
+    const withoutTrusted = summarizeDodGateEvidence({ evidence: [] }, scorecardOk);
+    expect(withoutTrusted.status).toBe('N/A');
+    expect(withoutTrusted.reason).toContain('No scanner-visible');
+  });
+
+  it('summarizeReleaseProfileResults flags missing gates', () => {
+    const partialScorecard = ['| Gate | Status |', '| --- | --- |', '| coverage | PASS |'].join('\n');
+    const profiles = summarizeReleaseProfileResults([
+      { name: `release-profile-${RELEASE_STANDARDS_PROFILES[0]}`, file: 'f.txt', status: 0, stdout: partialScorecard }
+    ]);
+    expect(profiles[0].success).toBe(false);
+    expect(profiles[0].missingGates.length).toBeGreaterThan(0);
+  });
+
+  it('finds remote and tag commits, preferring the peeled tag ref', () => {
+    const entries = parseLsRemote(
+      ['aaaa\trefs/heads/main', 'bbbb\trefs/tags/v1.0.0', 'cccc\trefs/tags/v1.0.0^{}'].join('\n')
+    );
+    expect(findRemoteCommit(entries, 'refs/heads/main')).toBe('aaaa');
+    expect(findTagCommit(entries, 'v1.0.0')).toBe('cccc');
+
+    const lightweight = parseLsRemote('dddd\trefs/tags/v2.0.0');
+    expect(findTagCommit(lightweight, 'v2.0.0')).toBe('dddd');
+    expect(findRemoteCommit(lightweight, 'refs/heads/none')).toBeUndefined();
+  });
+
+  const closurePassing = {
+    gates: [{ name: 'check', success: true }],
+    standards: { success: true, summary: { dodGateEvidence: { status: 'PASS' } } },
+    provenance: { success: true }
+  };
+
+  it('evaluateClosureDecision is closable when every requirement passes', () => {
+    const decision = evaluateClosureDecision(closurePassing);
+    expect(decision.closable).toBe(true);
+    expect(decision.reasons).toEqual([]);
+  });
+
+  it('evaluateClosureDecision flags each failing requirement with a reason', () => {
+    expect(evaluateClosureDecision({ ...closurePassing, gates: undefined }).reasons.join(' ')).toContain(
+      'Local gates were not run'
+    );
+    expect(
+      evaluateClosureDecision({ ...closurePassing, gates: [{ name: 'traceability', success: false }] }).reasons.join(' ')
+    ).toContain('Local gate failures detected: traceability');
+    expect(
+      evaluateClosureDecision({ ...closurePassing, standards: { success: false, failure: 'boom-standards' } }).reasons.join(
+        ' '
+      )
+    ).toContain('boom-standards');
+    expect(evaluateClosureDecision({ ...closurePassing, standards: { success: false } }).reasons.join(' ')).toContain(
+      'Standards evidence failed.'
+    );
+    expect(
+      evaluateClosureDecision({
+        ...closurePassing,
+        standards: { success: true, summary: { dodGateEvidence: { status: 'FAIL' } } }
+      }).reasons.join(' ')
+    ).toContain('Definition-of-Done evidence did not pass');
+    expect(
+      evaluateClosureDecision({ ...closurePassing, provenance: { success: false, failure: 'prov-broke' } }).reasons.join(
+        ' '
+      )
+    ).toContain('prov-broke');
+    expect(evaluateClosureDecision({ ...closurePassing, provenance: { success: false } }).reasons.join(' ')).toContain(
+      'Standards toolchain provenance failed.'
+    );
+  });
+});
+
+describe('generateCloseoutEvidence: parseArgs + snapshot branch coverage (#2331)', () => {
+  it('parseArgs handles every flag plus defaults and validation errors', () => {
+    const full = parseArgs([
+      '--kind',
+      'release',
+      '--issue',
+      '42',
+      '--run-gates',
+      '--save-dir',
+      'ev',
+      '--standards-runner',
+      'docker',
+      '--standards-image',
+      'img:tag',
+      '--skill-root',
+      '/skills',
+      '--build-standards-image',
+      '--release-tag',
+      'v1.2.3',
+      '--release-pr',
+      '7',
+      '--back-sync-pr',
+      '8',
+      '--marketplace-run',
+      'https://run/1'
+    ]) as Record<string, unknown>;
+    expect(full).toMatchObject({
+      kind: 'release',
+      issue: '42',
+      runGates: true,
+      saveDir: 'ev',
+      standardsRunner: 'docker',
+      standardsImage: 'img:tag',
+      buildStandardsImage: true,
+      releaseTag: 'v1.2.3',
+      releasePr: '7',
+      backSyncPr: '8',
+      marketplaceRun: 'https://run/1'
+    });
+    expect(() => parseArgs(['--kind'])).toThrow(/--kind requires a value/);
+    expect(() => parseArgs(['--issue', '--run-gates'])).toThrow(/--issue requires a value/);
+    expect(() => parseArgs(['--zzz-unknown'])).toThrow(/Unknown argument/);
+    expect(() => parseArgs(['--kind', 'nope'])).toThrow(/--kind must be standards or release/);
+    expect(() => parseArgs(['--kind', 'standards', '--standards-runner', 'nope'])).toThrow(
+      /--standards-runner must be/
+    );
+    expect(parseArgs(['--help']) as Record<string, unknown>).toMatchObject({ help: true });
+  });
+
+  it('resolveAuditSnapshotBase honors an env override and tolerates homedir failure', () => {
+    expect(resolveAuditSnapshotBase({ env: { VIHS_CLOSEOUT_SNAPSHOT_DIR: '  /custom-snap  ' } })).toBe('/custom-snap');
+    const fallback = resolveAuditSnapshotBase({
+      homedir: () => {
+        throw new Error('no home');
+      },
+      env: {}
+    });
+    expect(typeof fallback).toBe('string');
+    expect(fallback.length).toBeGreaterThan(0);
+  });
+
+  it('createTrackedWorktreeSnapshot copies files, materializes symlinks, and skips missing files', () => {
+    const snapshotFn = createTrackedWorktreeSnapshot as unknown as (
+      repoRoot: string,
+      deps: Record<string, unknown>
+    ) => { trackedFileCount: number; symlinkFiles: string[]; missingFiles: string[] };
+    const copied: Array<[string, string]> = [];
+    const symlinked: string[] = [];
+    const snapshot = snapshotFn('/repo', {
+      spawnSync: (_c: string, args: string[]) =>
+        args.join(' ').startsWith('ls-files')
+          ? { status: 0, stdout: 'a.txt\0link.txt\0gone.txt\0' }
+          : { status: 0, stdout: '' },
+      tmpdir: () => os.tmpdir(),
+      mkdtempSync: (prefix: string) => `${prefix}snap`,
+      mkdirSync: () => undefined,
+      lstatSync: (p: string) => {
+        if (p.endsWith('link.txt')) {
+          return { isSymbolicLink: () => true, isFile: () => false };
+        }
+        if (p.endsWith('gone.txt')) {
+          const error = new Error('missing') as Error & { code?: string };
+          error.code = 'ENOENT';
+          throw error;
+        }
+        return { isSymbolicLink: () => false, isFile: () => true };
+      },
+      copyFileSync: (src: string, dst: string) => {
+        copied.push([src, dst]);
+      },
+      readlinkSync: () => '../target',
+      writeFileSync: (dst: string) => {
+        symlinked.push(dst);
+      }
+    });
+    expect(snapshot.trackedFileCount).toBe(3);
+    expect(snapshot.symlinkFiles).toEqual(['link.txt']);
+    expect(snapshot.missingFiles).toEqual(['gone.txt']);
+    expect(copied).toHaveLength(1);
+    expect(symlinked).toHaveLength(1);
+  });
+
+  it('createTrackedWorktreeSnapshot throws when git ls-files fails', () => {
+    const snapshotFn = createTrackedWorktreeSnapshot as unknown as (
+      repoRoot: string,
+      deps: Record<string, unknown>
+    ) => unknown;
+    expect(() =>
+      snapshotFn('/repo', { spawnSync: () => ({ status: 1, stderr: 'not a repo' }), tmpdir: () => os.tmpdir() })
+    ).toThrow(/enumerate tracked files/);
+  });
+
+  it('collectGitContext returns trimmed values or unknown on failure', () => {
+    const ok = collectGitContext({
+      spawnSync: (_c: string, args: string[]) => {
+        const a = args.join(' ');
+        if (a.includes('--show-current')) {
+          return { status: 0, stdout: 'feature/x\n' };
+        }
+        if (a.includes('--short=8')) {
+          return { status: 0, stdout: 'abcd1234\n' };
+        }
+        return { status: 0, stdout: 'abcd1234ffff\n' };
+      }
+    });
+    expect(ok).toEqual({ branch: 'feature/x', commit: 'abcd1234', fullCommit: 'abcd1234ffff' });
+
+    const failed = collectGitContext({ spawnSync: () => ({ status: 1, stdout: '', stderr: 'nope' }) });
+    expect(failed).toEqual({ branch: 'unknown', commit: 'unknown', fullCommit: 'unknown' });
+  });
+
+  it('collectGithubContext fetches only the requested entities via gh', () => {
+    const spawnSync = (_c: string, args: string[]) => {
+      const a = args.join(' ');
+      if (a.startsWith('issue view')) {
+        return { status: 0, stdout: JSON.stringify({ number: 5, url: 'u/5' }) };
+      }
+      if (a.startsWith('pr view')) {
+        return { status: 0, stdout: JSON.stringify({ number: 9, url: 'u/9' }) };
+      }
+      return { status: 1, stdout: '' };
+    };
+    const full = collectGithubContext({ issue: '5', releasePr: '9', backSyncPr: '9' }, { spawnSync });
+    expect(full.issue).toMatchObject({ number: 5 });
+    expect(full.releasePr).toMatchObject({ number: 9 });
+    expect(full.backSyncPr).toMatchObject({ number: 9 });
+
+    const none = collectGithubContext({}, { spawnSync: () => ({ status: 1, stdout: '' }) });
+    expect(none.issue).toBeUndefined();
+
+    // A gh failure -> tryGhJson returns undefined.
+    const ghFail = collectGithubContext({ issue: '5' }, { spawnSync: () => ({ status: 1, stdout: '' }) });
+    expect(ghFail.issue).toBeUndefined();
   });
 });

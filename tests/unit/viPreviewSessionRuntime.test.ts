@@ -118,3 +118,27 @@ describe('selectLaunchedLabviewPid', () => {
     expect(selectLaunchedLabviewPid([], [42, 43])).toBeUndefined();
   });
 });
+
+describe('viPreviewSessionRuntime edge branches (VHS-REQ-659)', () => {
+  it('returns undefined for an unrecognized provider (fail-safe default)', () => {
+    // A provider outside the known set falls through every branch to the final
+    // `return undefined`, so the caller renders per-invocation.
+    expect(
+      toViPreviewSessionRuntime(
+        { provider: 'unknown-provider' } as unknown as ViPreviewRuntimeSelection,
+        'win32'
+      )
+    ).toBeUndefined();
+  });
+
+  it('keys a host-native session with empty segments when optional fields are absent', () => {
+    // The three `?? ''` fallbacks (CLI path, install path, port) all fire.
+    expect(viPreviewSessionKey({ provider: 'host-native' })).toBe('host-native::::::');
+  });
+
+  it('keys a container session with an empty image segment when no image is set', () => {
+    // The container branch's `?? ''` image fallback fires for both providers.
+    expect(viPreviewSessionKey({ provider: 'linux-container' })).toBe('linux-container::');
+    expect(viPreviewSessionKey({ provider: 'windows-container' })).toBe('windows-container::');
+  });
+});

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 // VHS-REQ-697: idempotent git-hook enablement. Injected spawnSync — no real git.
 
@@ -117,5 +117,71 @@ describe('installGitHooks main CLI reporter (VHS-REQ-697.4)', () => {
     expect(result).toMatchObject({ action: 'skipped', reason: 'not-a-git-work-tree' });
     expect(out.join('')).toContain('[install-git-hooks] skipped (not-a-git-work-tree)');
     expect(exits).toEqual([0]);
+  });
+});
+
+describe('installGitHooks failure-reason branches (VHS-REQ-697.4)', () => {
+  // The failure reason is `String(set.stderr || set.error || 'git config failed')`;
+  // exercise the set.error and the generic fallback arms (stderr is covered above).
+  function gitStub(responses: Record<string, { status?: number; stdout?: string; stderr?: string; error?: Error }>) {
+    return (_cmd: string, args: string[]) => {
+      const key = args.join(' ');
+      for (const prefix of Object.keys(responses)) {
+        if (key.startsWith(prefix)) return responses[prefix];
+      }
+      return { status: 0, stdout: '' };
+    };
+  }
+
+  it('uses the spawn error when git config fails without stderr', () => {
+    const spawnSync = gitStub({
+      'rev-parse --is-inside-work-tree': { status: 0, stdout: 'true' },
+      'config --get core.hooksPath': { status: 1, stdout: '' },
+      'config core.hooksPath': { error: new Error('spawn ENOENT') }
+    });
+    expect(installGitHooks({ spawnSync })).toMatchObject({
+      action: 'failed',
+      reason: expect.stringContaining('spawn ENOENT')
+    });
+  });
+
+  it('falls back to a generic reason when git config fails with neither stderr nor error', () => {
+    const spawnSync = gitStub({
+      'rev-parse --is-inside-work-tree': { status: 0, stdout: 'true' },
+      'config --get core.hooksPath': { status: 1, stdout: '' },
+      'config core.hooksPath': { status: 1 }
+    });
+    expect(installGitHooks({ spawnSync })).toMatchObject({
+      action: 'failed',
+      reason: 'git config failed'
+    });
+  });
+});
+
+describe('installGitHooks main default streams (VHS-REQ-697.4)', () => {
+  // With no stdout/stderr deps, main writes to process.stdout / process.stderr;
+  // spy on both so the default-stream branches are covered without real git.
+  it('writes the set message to process.stdout when no stdout dep is given', () => {
+    const spy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    const exits: number[] = [];
+    main({
+      installGitHooks: () => ({ action: 'set', hooksPath: HOOKS_PATH }),
+      exit: (code: number) => exits.push(code)
+    });
+    expect(spy).toHaveBeenCalledWith(expect.stringContaining('core.hooksPath set to'));
+    expect(exits).toEqual([0]);
+    spy.mockRestore();
+  });
+
+  it('writes the failure hint to process.stderr when no stderr dep is given', () => {
+    const spy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    const exits: number[] = [];
+    main({
+      installGitHooks: () => ({ action: 'failed', reason: 'permission denied' }),
+      exit: (code: number) => exits.push(code)
+    });
+    expect(spy).toHaveBeenCalledWith(expect.stringContaining('could not set core.hooksPath'));
+    expect(exits).toEqual([0]);
+    spy.mockRestore();
   });
 });

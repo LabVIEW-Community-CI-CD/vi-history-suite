@@ -449,3 +449,68 @@ describe('runViPreviewCacheWarm default Node enumerator/renderer factories (VHS-
     }
   });
 });
+
+describe('runViPreviewCacheWarm branch coverage (VHS-REQ-671)', () => {
+  it('defaults provenance argv to an empty array when none is supplied', async () => {
+    const deps: RunViPreviewCacheWarmDeps = {
+      listViFiles: async () => [],
+      resolveRuntime: async () => READY,
+      renderOne: async () => ({ outcome: 'rendered', html: '', cached: false }),
+      now: () => new Date('2026-07-18T00:00:00.000Z')
+    };
+    // includeProvenance with no argv -> the `options.argv ?? []` fallback.
+    const packet = await runViPreviewCacheWarm({ ...baseOptions(), includeProvenance: true }, deps);
+    expect(packet.provenance).toMatchObject({ argv: [] });
+  });
+
+  it('carries provenance into a blocked packet when requested', async () => {
+    const packet = await runViPreviewCacheWarm(
+      { ...baseOptions(), includeProvenance: true },
+      {
+        listViFiles: async () => [],
+        resolveRuntime: async () => ({
+          outcome: 'blocked',
+          provider: 'unknown',
+          reason: 'docker-daemon-unreachable'
+        }),
+        renderOne: async () => ({ outcome: 'rendered', html: '', cached: false }),
+        now: () => new Date('2026-07-18T00:00:00.000Z')
+      }
+    );
+    // The blocked return carries provenance via the `provenance ? { provenance } : {}` spread.
+    expect(packet.runtime.outcome).toBe('blocked');
+    expect(packet.provenance).toMatchObject({ argv: [] });
+  });
+
+  it('renders only a fleet shard slice of the enumerated workspace', async () => {
+    const rendered: string[] = [];
+    const deps: RunViPreviewCacheWarmDeps = {
+      listViFiles: async () => ['/repo/a.vi', '/repo/b.vi', '/repo/c.vi', '/repo/d.vi'],
+      resolveRuntime: async () => READY,
+      renderOne: async (viFilePath: string) => {
+        rendered.push(viFilePath);
+        return { outcome: 'rendered', html: '<html></html>', cached: false, cacheKey: 'k' };
+      }
+    };
+    // options.shard set -> the shard-selection branch renders a disjoint slice.
+    const packet = await runViPreviewCacheWarm(
+      { ...baseOptions(), shard: { index: 0, count: 2 } },
+      deps
+    );
+    expect(packet.totals.total).toBeGreaterThan(0);
+    expect(packet.totals.total).toBeLessThan(4);
+    expect(rendered.length).toBe(packet.totals.total);
+  });
+});
+
+describe('parseArgs trailing-value edges (VHS-REQ-671.6)', () => {
+  it('yields an empty value for a flag with no following argument', () => {
+    // `--repo-root` at the end consumes the (missing) next arg as '' (the `?? ''`).
+    expect(parseArgs(['--repo-root'])).toEqual({ repositoryRoot: '' });
+    expect(parseArgs(['--output'])).toEqual({ outputPath: '' });
+  });
+
+  it('ignores a non-integer --cache-max-entries', () => {
+    expect(parseArgs(['--cache-max-entries', 'nope']).cacheMaxEntries).toBeUndefined();
+  });
+});

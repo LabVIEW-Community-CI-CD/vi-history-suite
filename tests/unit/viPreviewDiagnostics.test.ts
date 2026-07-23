@@ -184,6 +184,62 @@ describe('collectViPreviewDiagnostics (VHS-REQ-659)', () => {
     // Tolerant window: only assert the timestamp is recent, never a tight bound.
     expect(Math.abs(generated - before)).toBeLessThanOrEqual(60_000);
   });
+
+  it('marks a present cache with a null newest timestamp when every entry has a zero mtime', async () => {
+    // entryCount > 0 marks the cache present, but a max mtime of 0 keeps
+    // newestModifiedAt null (the false arm of `newestMs > 0 ? ... : null`).
+    const snapshot = await collectViPreviewDiagnostics(
+      { cacheDirectory: '/cache', processPlatform: 'linux' },
+      {
+        now: FIXED_NOW,
+        locateRuntime: fakeLocate({ provider: 'linux-container' }),
+        readCacheEntries: async () => [{ name: 'a.html', sizeBytes: 10, mtimeMs: 0 }],
+        runDocker: async () => {
+          throw new Error('no docker');
+        }
+      }
+    );
+    expect(snapshot.cache.present).toBe(true);
+    expect(snapshot.cache.entryCount).toBe(1);
+    expect(snapshot.cache.newestModifiedAt).toBeNull();
+  });
+
+  it('resolves the win32 runtime platform when the process platform is win32', async () => {
+    let requestedPlatform: 'win32' | 'linux' | undefined;
+    await collectViPreviewDiagnostics(
+      { processPlatform: 'win32' },
+      {
+        now: FIXED_NOW,
+        locateRuntime: (async (platform: 'win32' | 'linux') => {
+          requestedPlatform = platform;
+          return { provider: 'host-native' } as ComparisonRuntimeSelection;
+        }) as typeof locateComparisonRuntime,
+        readCacheEntries: async () => [],
+        runDocker: async () => {
+          throw new Error('no docker');
+        }
+      }
+    );
+    // processPlatform win32 -> runtimePlatform win32 (the true arm of the ternary).
+    expect(requestedPlatform).toBe('win32');
+  });
+
+  it('stringifies a non-Error thrown by the runtime locator', async () => {
+    const snapshot = await collectViPreviewDiagnostics(
+      { processPlatform: 'linux' },
+      {
+        now: FIXED_NOW,
+        locateRuntime: (async () => {
+          // Throw a non-Error to exercise the String(error) arm of the catch.
+          throw 'locator string failure';
+        }) as typeof locateComparisonRuntime,
+        readCacheEntries: async () => [],
+        runDocker: async () => 'linux'
+      }
+    );
+    expect(snapshot.runtime.outcome).toBe('blocked');
+    expect(snapshot.runtime.reason).toBe('locator string failure');
+  });
 });
 
 describe('defaultPreviewCacheDirectoryHint', () => {

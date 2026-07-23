@@ -76,6 +76,22 @@ describe('extractAgentDropdownOptions', () => {
     ].join('\n');
     expect(extractAgentDropdownOptions(text)).toEqual([]);
   });
+
+  it('stops collecting options when a top-level (column-0) line follows the dropdown list', () => {
+    // Exercises the options-terminating branch: a non-indented key after the
+    // option items closes the options block so later items are not collected.
+    const text = [
+      'body:',
+      '  - type: dropdown',
+      '    id: delegated_agent',
+      '    attributes:',
+      '      options:',
+      '        - workflow-governor (general)',
+      'labels: [triage]',
+      '        - should-not-be-collected (x)'
+    ].join('\n');
+    expect(extractAgentDropdownOptions(text)).toEqual(['workflow-governor']);
+  });
 });
 
 describe('auditAgentDelegation', () => {
@@ -157,5 +173,32 @@ describe('auditAgentDelegation extended contracts', () => {
     const result = auditAgentDelegation(root);
     expect(result.ok).toBe(false);
     expect(result.violations.some((v) => v.includes('missing-skill/SKILL.md') && v.includes('does not exist'))).toBe(true);
+  });
+});
+
+describe('auditAgentDelegation directory-guard branches', () => {
+  it('returns ok with no roster when the .github/agents directory is absent', () => {
+    // Exercises the discoverAgentSlugs early return when the agents directory
+    // does not exist: only the routing sentinel is offered, so there is nothing
+    // that must map to a (nonexistent) agent file.
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'vihs-agent-noagents-'));
+    tempRoots.push(root);
+    const templateDir = path.join(root, '.github', 'ISSUE_TEMPLATE');
+    fs.mkdirSync(templateDir, { recursive: true });
+    fs.writeFileSync(path.join(templateDir, 'bug_report.yml'), dropdownTemplate(['unsure / maintainer to route']));
+    expect(auditAgentDelegation(root)).toEqual({ ok: true, violations: [] });
+  });
+
+  it('returns ok early when the issue-template directory is absent', () => {
+    // Exercises the auditAgentDelegation early return when no ISSUE_TEMPLATE
+    // directory exists: the orphan-route check is skipped entirely.
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'vihs-agent-notpl-'));
+    tempRoots.push(root);
+    fs.mkdirSync(path.join(root, '.github', 'agents'), { recursive: true });
+    fs.writeFileSync(
+      path.join(root, '.github', 'agents', 'workflow-governor.agent.md'),
+      '---\nname: workflow-governor\ndescription: "Use when doing general work."\n---\n'
+    );
+    expect(auditAgentDelegation(root)).toEqual({ ok: true, violations: [] });
   });
 });

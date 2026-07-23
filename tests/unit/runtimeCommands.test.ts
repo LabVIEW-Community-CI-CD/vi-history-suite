@@ -410,3 +410,21 @@ describe('labviewViHistory.showRuntimeSummary', () => {
     expect(clipboardMock).not.toHaveBeenCalled();
   });
 });
+
+describe('registerRuntimeRuntimeCommands default dependencies (VHS-REQ-617)', () => {
+  it('falls back to vscode.workspace.isTrusted when no isTrusted dependency is injected', async () => {
+    const context = createFakeContext();
+    const watcher = createFakeWatcher();
+    // Inject only detect (keeping detection hermetic) and let isTrusted default to
+    // reading vscode.workspace.isTrusted, which the harness reports as trusted, so
+    // the default trust lambda executes and the command proceeds.
+    registerRuntimeRuntimeCommands(context as never, watcher, {
+      detect: async () => detectionDockerOnly
+    });
+
+    const result = await vscode.commands.executeCommand('labviewViHistory.detectRuntimeNow');
+
+    expect((result as { outcome: string }).outcome).toBe('detected-runtime');
+    expect(watcher.forceRefresh).toHaveBeenCalledTimes(1);
+  });
+});

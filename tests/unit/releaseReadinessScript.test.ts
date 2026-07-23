@@ -107,6 +107,108 @@ describe('checkReleaseReadiness', () => {
     expect(high.details).toContain('CRITICAL/HIGH');
   });
 
+  it('parses a non-string CHANGELOG input and a non-version heading label (VHS-REQ-615.13)', () => {
+    // Non-string input short-circuits to the empty result.
+    expect(parseChangelogTop(undefined as unknown as string)).toEqual({ released: undefined, unreleased: false });
+    // A heading whose label is neither "Unreleased" nor an X.Y.Z version is skipped.
+    expect(parseChangelogTop('# Changelog\n\n## [Draft]\n')).toEqual({ released: undefined, unreleased: false });
+  });
+
+  it('falls back to "none" as the next risk target when the ledger ranking is empty (VHS-REQ-615.13)', () => {
+    // Exercises the `ledger.ranking.nextTarget ?? 'none'` fallback on a
+    // no-selectable-high-risk ledger whose ranking omits a next target.
+    const result = checkRiskLedger({ entries: [], ranking: {} }, () => false);
+    expect(result.passed).toBe(true);
+    expect(result.details).toContain('next target none');
+  });
+
+  it('describes runtime attestation with unspecified tracks and a stale suffix (VHS-REQ-615.13)', () => {
+    // Exercises the non-array `tracks` fallback and the stale-suffix branch.
+    const text = describeRuntimeAttestation('1.33.2', {
+      present: true,
+      tracks: 'not-an-array',
+      staleTracks: ['linux-x64']
+    });
+    expect(text).toContain('unspecified tracks');
+    expect(text).toContain('Stale tracks needing re-validation at 1.33.2: linux-x64');
+  });
+
+  it('skips ledger tracks without a string trackId when deriving runtime attestation (VHS-REQ-615.14)', () => {
+    // Exercises the `if (!trackId) continue` guard for a non-string trackId.
+    const derived = deriveRuntimeAttestationFromLedger(
+      { tracks: [{ trackId: 123, linuxExecutable: true, lastValidatedVersion: '1.33.2' }] },
+      '1.33.2'
+    );
+    expect(derived).toEqual({ present: false, tracks: [], staleTracks: [], source: 'runtime-validation-ledger' });
+  });
+
+  it('names fresh and stale release-gating tracks by their string trackId (VHS-REQ-666)', () => {
+    // Exercises the string-trackId side of both the fresh and stale maps.
+    const stale = checkReleaseAttestation(
+      { tracks: [{ releaseGating: true, trackId: 'linux-x64', lastValidatedVersion: '1.30.0' }] },
+      '1.33.2'
+    );
+    expect(stale.passed).toBe(false);
+    expect(stale.details).toContain('linux-x64');
+
+    const fresh = checkReleaseAttestation(
+      { tracks: [{ releaseGating: true, trackId: 'linux-x64', lastValidatedVersion: '1.33.2' }] },
+      '1.33.2'
+    );
+    expect(fresh.passed).toBe(true);
+  });
+
+  it('summarizes supply-chain state and falls back for unavailable/malformed input (VHS-REQ-668.5)', () => {
+    // Exercises the integer attention/artifact-count branches and the
+    // non-object / non-string-status fallback.
+    expect(describeSupplyChainState({ status: 'fresh', attentionCount: 2, artifactCount: 5 })).toContain(
+      'Supply-chain provenance fresh: 2 attention of 5 artifact(s)'
+    );
+    expect(describeSupplyChainState({ status: 'stale' })).toContain('0 attention of 0 artifact(s)');
+    expect(describeSupplyChainState(null)).toContain('unavailable');
+    expect(describeSupplyChainState({ status: 123 })).toContain('unavailable');
+  });
+
+  it('derives fresh and stale runtime tracks from the ledger, skipping non-Linux tracks (VHS-REQ-615.14)', () => {
+    // Exercises the linuxExecutable === false skip and the fresh/stale split.
+    const derived = deriveRuntimeAttestationFromLedger(
+      {
+        tracks: [
+          { trackId: 'lin-x64', linuxExecutable: true, lastValidatedVersion: '1.33.2' },
+          { trackId: 'lin-x86', linuxExecutable: true, lastValidatedVersion: '1.30.0' },
+          { trackId: 'win-x64', linuxExecutable: false, lastValidatedVersion: '1.33.2' }
+        ]
+      },
+      '1.33.2'
+    );
+    expect(derived.tracks).toEqual(['lin-x64']);
+    expect(derived.staleTracks).toEqual(['lin-x86']);
+    expect(derived.present).toBe(true);
+  });
+
+  it('renders a Markdown verdict with an ATTENTION row, escaped details, and an n/a digest (VHS-REQ-615.13)', () => {
+    // Exercises renderMarkdown's `manifestDigest ?? 'n/a'` fallback, the
+    // PASS/ATTENTION per-check column, and the pipe/backslash detail escaping.
+    const md = renderMarkdown({
+      version: '1.33.2',
+      commit: 'abc1234',
+      status: 'ATTENTION',
+      manifestDigest: undefined,
+      checks: [
+        { name: 'risk-ledger', passed: true, details: 'clean' },
+        { name: 'manifest', passed: false, details: 'digest a|b differs \\ path' }
+      ],
+      runtimeAttestation: 'no record',
+      supplyChain: 'unavailable'
+    });
+    expect(md).toContain('# Release Readiness');
+    expect(md).toContain('Manifest digest: `n/a`');
+    expect(md).toContain('| risk-ledger | PASS | clean |');
+    expect(md).toContain('| manifest | ATTENTION |');
+    // A literal pipe in details is escaped so the Markdown table stays intact.
+    expect(md).toContain('a\\|b');
+  });
+
   it('passes the manifest check only when shipped digest matches the freshly built digest (VHS-REQ-615.13)', () => {
     expect(checkManifestDigest('abc123', { integrityDigest: 'abc123' }).passed).toBe(true);
     expect(checkManifestDigest('abc123', { integrityDigest: 'DIFFERENT' }).passed).toBe(false);
@@ -299,6 +401,48 @@ describe('checkReleaseReadiness', () => {
       stderr: { write: () => undefined }
     });
     expect(strictCode).toBe(1);
+  }, 30000);
+
+  it('main renders Markdown and loads runtime evidence from --runtime-evidence (VHS-REQ-615.13)', () => {
+    const cwd = makeTempDir();
+    fs.mkdirSync(path.join(cwd, 'out', 'requirements'), { recursive: true });
+    fs.writeFileSync(path.join(cwd, 'CHANGELOG.md'), '# Changelog\n\n## [Unreleased]\n', 'utf8');
+    fs.writeFileSync(
+      path.join(cwd, 'out', 'requirements', 'requirements-manifest.json'),
+      JSON.stringify({ integrityDigest: 'DIGEST123' }),
+      'utf8'
+    );
+
+    const riskLedgerModule = {
+      loadCoverageSignal: () => ({ available: false }),
+      loadRequirementsSignal: () => ({ available: false }),
+      buildRiskLedger: () => CLEAN_LEDGER,
+      hasSelectableHighRisk
+    };
+    const manifestModule = { buildRequirementsManifest: () => ({ integrityDigest: 'DIGEST123' }) };
+
+    const outputs: string[] = [];
+    // --runtime-evidence routes through the loadSignals file-read branch via the
+    // injected readFile; --markdown routes the verdict through renderMarkdown.
+    const code = main(['--markdown', '--runtime-evidence', 'evidence.json'], {
+      cwd,
+      riskLedgerModule,
+      manifestModule,
+      readFile: (relativePath: string) =>
+        relativePath === 'evidence.json'
+          ? JSON.stringify({ present: true, tracks: ['linux-host-native'] })
+          : undefined,
+      getPackageVersion: () => '1.33.2',
+      getGitCommit: () => 'deadbeefcafef00d',
+      now: () => new Date('2026-07-15T00:00:00.000Z'),
+      stdout: { write: (t: string) => outputs.push(t) },
+      stderr: { write: (t: string) => outputs.push(t) }
+    });
+
+    expect(code).toBe(0);
+    const rendered = outputs.join('');
+    expect(rendered).toContain('# Release Readiness');
+    expect(rendered).toContain('linux-host-native');
   }, 30000);
 });
 

@@ -1031,3 +1031,58 @@ describe('controlPlaneWrite: runCreateWorkCli (VHS-REQ-696.10)', () => {
     expect(out.lines.join('\n')).toContain('created 2 of 2');
   });
 });
+
+describe('controlPlaneWrite: default-collaborator and fallback branches (VHS-REQ-696)', () => {
+  it('normalizes a falsy repoRoot and non-array approvers / non-object tiers', () => {
+    // Exercises `repoRoot || process.cwd()`, the `Array.isArray(approvers)`
+    // fallback, and the `tiers && typeof tiers === 'object'` fallback.
+    const config = loadWriteConfig('', fakeRead(JSON.stringify({ enabled: true, approvers: 'nope', tiers: 5 })));
+    expect(config).toMatchObject({ enabled: true, approvers: [], tiers: {} });
+  });
+
+  it('returns closures from the default gh executor factories called with no deps', () => {
+    // Exercises the `deps = {}` default argument of each live-executor factory
+    // without invoking the returned closure (so no real gh is spawned).
+    expect(typeof defaultApplyFieldUpdate()).toBe('function');
+    expect(typeof defaultApplyAnnotation()).toBe('function');
+    expect(typeof defaultVerifyApprover()).toBe('function');
+    expect(typeof defaultApplyMergeQueueAction()).toBe('function');
+    expect(typeof defaultApplyCreateWork()).toBe('function');
+  });
+
+  it('plans nothing for a non-array input and skips items without a string itemId', () => {
+    // Exercises the `Array.isArray(items) ? items : []` fallback and the
+    // per-item `!item || typeof item.itemId !== 'string'` skip guard.
+    expect(planBoardSync('not-an-array' as unknown)).toEqual([]);
+    expect(
+      planBoardSync([
+        {},
+        { itemId: 'A', number: 3, linkedPrMerged: true, status: 'Todo', evidence: 'None' }
+      ])
+    ).toEqual([
+      { itemId: 'A', number: 3, field: 'Status', value: 'Done', reason: 'linked-pr-merged' },
+      { itemId: 'A', number: 3, field: 'Evidence State', value: 'Proven', reason: 'linked-pr-merged' }
+    ]);
+  });
+
+  it('loads config through the default loader in each run* function when none is injected', () => {
+    // Exercises the `deps.config || loadWriteConfig(repoRoot, deps)` fallback in
+    // each run* function; a disabled config keeps them fail-closed (no gh).
+    const disabled = fakeRead(JSON.stringify({ enabled: false }));
+    expect(runBoardSync({ items: [] }, disabled)).toMatchObject({ executed: false, reason: 'write-path-disabled' });
+    expect(runAnnotate({ actions: [] }, disabled)).toMatchObject({ executed: false, reason: 'write-path-disabled' });
+    expect(runMergeQueue({ actions: [] }, disabled)).toMatchObject({ executed: false, reason: 'write-path-disabled' });
+    expect(runCreateWork({ actions: [] }, disabled)).toMatchObject({ executed: false, reason: 'write-path-disabled' });
+  });
+
+  it('loads config through the default loader in each *Cli runner when none is injected', () => {
+    // Exercises the `deps.loadWriteConfig || loadWriteConfig` and
+    // `deps.config || loadConfig(...)` fallbacks in each CLI runner; a disabled
+    // config refuses at the enablement precheck before any live boundary.
+    const disabled = fakeRead(JSON.stringify({ enabled: false }));
+    expect(runBoardSyncCli([], disabled)).toMatchObject({ authorized: false, reason: 'write-path-disabled' });
+    expect(runAnnotateCli([], disabled)).toMatchObject({ authorized: false, reason: 'write-path-disabled' });
+    expect(runMergeQueueCli([], disabled)).toMatchObject({ authorized: false, reason: 'write-path-disabled' });
+    expect(runCreateWorkCli([], disabled)).toMatchObject({ authorized: false, reason: 'write-path-disabled' });
+  });
+});

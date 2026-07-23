@@ -303,3 +303,58 @@ describe('renderControlPlaneDigest: read-model-driven collector (VHS-REQ-698.1)'
   });
 });
 
+describe('renderControlPlaneDigest: additional branch coverage (#2331)', () => {
+  it('derives an unhealthy requirement gate with and without a status string', () => {
+    const withStatus = deriveGateHealthFromReadModel({
+      requirementHealth: { available: true, healthy: false, status: 'attention-needed' }
+    });
+    expect(withStatus).toContainEqual({ id: 'requirements:health', ok: false, detail: 'attention-needed' });
+
+    const withoutStatus = deriveGateHealthFromReadModel({
+      requirementHealth: { available: true, healthy: false }
+    });
+    expect(withoutStatus).toContainEqual({ id: 'requirements:health', ok: false, detail: 'attention' });
+  });
+
+  it('renders an unknown ADR violation count as "?" when it is absent', () => {
+    const gates = deriveGateHealthFromReadModel({ adrGovernance: { available: true, consistent: false } });
+    expect(gates).toContainEqual({ id: 'adr:governance', ok: false, detail: '? violation(s)' });
+  });
+
+  it('resolves domains nested under a .domains envelope', () => {
+    const gates = deriveGateHealthFromReadModel({
+      domains: { coverage: { available: true, mappedBelowThreshold: 0 } }
+    });
+    expect(gates).toContainEqual({ id: 'coverage:risk', ok: true, detail: '' });
+  });
+
+  it('renders a failing gate with the generic "failing" label when no detail is given', () => {
+    const { markdown } = buildControlPlaneDigest(
+      { boardDrift: [], gateHealth: [{ id: 'adr:check', ok: false }] },
+      { generatedAt: AT }
+    );
+    expect(markdown).toContain('❌ adr:check: failing');
+  });
+
+  it('renders the all-fresh runtime-fidelity section', () => {
+    const { markdown } = buildControlPlaneDigest(
+      {
+        boardDrift: [],
+        runtimeFidelity: { currentVersion: '1.40.0', trackCount: 3, staleTrackCount: 0, allFresh: true, staleTracks: [] }
+      },
+      { generatedAt: AT }
+    );
+    expect(markdown).toContain('✅ All 3 Linux runtime track(s) validated on real hardware at build 1.40.0');
+  });
+
+  it('renders open work with no blocked count and no queue depth', () => {
+    const { markdown } = buildControlPlaneDigest(
+      { boardDrift: [], openWork: { openPrs: 2 } },
+      { generatedAt: AT }
+    );
+    expect(markdown).toContain('Open PRs: 2');
+    expect(markdown).not.toContain('blocked)');
+    expect(markdown).not.toContain('Merge-queue depth');
+  });
+});
+

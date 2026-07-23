@@ -51,6 +51,16 @@ describe('classifyStagedPreviewRender', () => {
       failureReason: 'labview-preview-operation-load-failed'
     });
   });
+
+  it('defaults the failure reason to preview-render-failed when the render omits one', () => {
+    // A failed render without an explicit reason must still yield a concrete,
+    // stable failureReason for the gate rather than leaking undefined.
+    const result: RenderViPreviewForFileResult = { outcome: 'failed' };
+    expect(classifyStagedPreviewRender(result)).toEqual({
+      rendered: false,
+      failureReason: 'preview-render-failed'
+    });
+  });
 });
 
 describe('buildStagedViPreviewValidator', () => {

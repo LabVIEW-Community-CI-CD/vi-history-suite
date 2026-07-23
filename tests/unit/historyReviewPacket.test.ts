@@ -145,4 +145,99 @@ describe('historyReviewPacket', () => {
     expect(text).not.toContain('<b>bold</b>');
     expect(text).not.toContain('\r');
   });
+
+  it('renders a not-eligible signature and an undefined commit body as factual fallbacks', () => {
+    const text = renderHistoryReviewPacketText(
+      createTestViewModel({
+        eligible: false,
+        commits: [
+          createTestCommit({
+            hash: 'beadfeed1234567890abcdef1234567890abcd',
+            subject: 'Body-less commit',
+            body: undefined
+          })
+        ]
+      })
+    );
+    // eligible=false renders the "Not eligible" arm.
+    expect(text).toContain('Eligibility: Not eligible');
+    // An undefined body (not merely empty) still renders the factual fallback via
+    // the `commit.body ?? ''` default.
+    expect(text).toContain('- beadfeed :: Body-less commit :: No commit body');
+  });
+
+  it('summarizes every history-window mode and truncation combination', () => {
+    const windowSummary = (historyWindow: ViHistoryViewModel['historyWindow']): string => {
+      const text = renderHistoryReviewPacketText(createTestViewModel({ historyWindow }));
+      const line = text.split('\n').find((entry) => entry.startsWith('History window: '));
+      return (line ?? '').replace('History window: ', '');
+    };
+
+    // capped, not truncated, with a known total (the capped full-history arm).
+    expect(
+      windowSummary({
+        mode: 'capped',
+        configuredMaxEntries: 100,
+        effectiveEntryCeiling: 100,
+        loadedCommitCount: 2,
+        totalCommitCount: 2,
+        truncated: false,
+        decision: 'capped-full-history'
+      })
+    ).toBe('full history loaded within capped mode (2/2 commits)');
+
+    // auto, truncated at the automatic safety ceiling.
+    expect(
+      windowSummary({
+        mode: 'auto',
+        configuredMaxEntries: 100,
+        effectiveEntryCeiling: 1000,
+        loadedCommitCount: 1000,
+        totalCommitCount: 5000,
+        truncated: true,
+        decision: 'auto-truncated-to-ceiling'
+      })
+    ).toContain(
+      'auto window truncated to 1000/5000 commits at the automatic safety ceiling (1000)'
+    );
+
+    // capped, truncated at the configured ceiling.
+    expect(
+      windowSummary({
+        mode: 'capped',
+        configuredMaxEntries: 50,
+        effectiveEntryCeiling: 50,
+        loadedCommitCount: 50,
+        totalCommitCount: 200,
+        truncated: true,
+        decision: 'capped-truncated-to-max'
+      })
+    ).toContain('capped window truncated to 50/200 commits at the configured ceiling (50)');
+
+    // auto, total count unavailable.
+    expect(
+      windowSummary({
+        mode: 'auto',
+        configuredMaxEntries: 100,
+        effectiveEntryCeiling: 1000,
+        loadedCommitCount: 12,
+        totalCommitCount: undefined,
+        truncated: false,
+        decision: 'auto-fallback-unknown-total'
+      })
+    ).toBe('loaded 12 commits under auto mode; total history count was unavailable');
+
+    // capped, total count unavailable.
+    expect(
+      windowSummary({
+        mode: 'capped',
+        configuredMaxEntries: 100,
+        effectiveEntryCeiling: 100,
+        loadedCommitCount: 7,
+        totalCommitCount: undefined,
+        truncated: false,
+        decision: 'capped-fallback-unknown-total'
+      })
+    ).toBe('loaded 7 commits under capped mode; total history count was unavailable');
+  });
 });

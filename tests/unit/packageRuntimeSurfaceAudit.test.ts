@@ -151,6 +151,17 @@ describe('packaged runtime surface audit', () => {
       })
     ).toEqual([]);
   });
+
+  it('treats a manifest with no dependencies key as having no runtime dependencies', () => {
+    // Exercises the `manifest.dependencies ?? {}` fallback branch: a manifest
+    // that omits the dependencies key entirely must audit cleanly.
+    expect(
+      findRuntimeSurfaceViolations({
+        manifest: {},
+        packagedPaths: ['package.json', 'out/extension.js']
+      })
+    ).toEqual([]);
+  });
 });
 
 describe('summarizeCommandOutput', () => {
@@ -232,5 +243,28 @@ describe('auditPackagedRuntimeSurface orchestration', () => {
       )
     ).toThrow('Packaged runtime surface audit failed.');
     expect(stderrChunks.join('')).toContain('Unexpected runtime dependencies');
+  });
+
+  it('falls back to reading the committed package.json when no manifest is injected', () => {
+    // Exercises the `deps.manifest ?? JSON.parse(fs.readFileSync(...))` fallback:
+    // the audit reads the real (committed) manifest whose only runtime
+    // dependency is the allowed jsonc-parser payload.
+    const stdoutChunks: string[] = [];
+    const result = auditPackagedRuntimeSurface(
+      baseDeps({
+        spawnSync: () => ({
+          status: 0,
+          stdout: [
+            'package.json',
+            'out/extension.js',
+            'node_modules/jsonc-parser/package.json'
+          ].join('\n')
+        }),
+        stdout: { write: (chunk: string) => stdoutChunks.push(chunk) }
+      })
+    );
+
+    expect(result.packagedPaths).toContain('node_modules/jsonc-parser/package.json');
+    expect(stdoutChunks.join('')).toContain('Packaged runtime surface passed.');
   });
 });

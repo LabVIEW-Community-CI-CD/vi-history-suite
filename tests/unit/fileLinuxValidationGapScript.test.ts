@@ -14,6 +14,7 @@ const {
   OBSERVATIONAL_LABELS,
   isValidRepoSlug,
   isAllowedExecutableCommand,
+  assertAllowedExecutableCommand,
   parseArgs,
   usage,
   readRunEvidence,
@@ -29,6 +30,7 @@ const {
   OBSERVATIONAL_LABELS: string[];
   isValidRepoSlug: (repo: string) => boolean;
   isAllowedExecutableCommand: (command: string) => boolean;
+  assertAllowedExecutableCommand: (command: string) => void;
   parseArgs: (argv: string[]) => {
     runDir?: string;
     note?: string;
@@ -491,5 +493,100 @@ describe('fileLinuxValidationGap main', () => {
     });
     expect(spawnSync).toHaveBeenCalledTimes(1);
     expect(writes.join('')).toContain('https://issue/9');
+  });
+});
+
+describe('fileLinuxValidationGap additional branch coverage (#2331)', () => {
+  const content = {
+    title: 'Linux validation gap (host-native): report-finalize-failed',
+    body: '## Summary\nbody',
+    labels: ['copilot-target', 'bug']
+  };
+
+  it('accepts falsy input on the allow-list / repo-slug guards', () => {
+    expect(isAllowedExecutableCommand('')).toBe(false);
+    expect(isAllowedExecutableCommand(undefined as unknown as string)).toBe(false);
+    expect(isValidRepoSlug('')).toBe(false);
+    expect(isValidRepoSlug(undefined as unknown as string)).toBe(false);
+  });
+
+  it('assertAllowedExecutableCommand throws for a non-allow-listed command', () => {
+    expect(() => assertAllowedExecutableCommand('rm')).toThrow(/non-allow-listed/);
+    expect(() => assertAllowedExecutableCommand('gh')).not.toThrow();
+  });
+
+  it('parseArgs rejects a flag that is missing its value', () => {
+    expect(() => parseArgs(['--run-dir'])).toThrow(/--run-dir requires a value/);
+    expect(() => parseArgs(['--run-dir', RUN_DIR, '--note', '--dry-run'])).toThrow(/--note requires a value/);
+  });
+
+  it('marks metadata unreadable when report-metadata.json is malformed JSON', () => {
+    const evidence = readRunEvidence(RUN_DIR, fakeFs({ [METADATA_PATH]: '{ not valid json' }));
+    expect(evidence.metadataPresent).toBe(false);
+  });
+
+  it('treats a lone failure-classification artifact as a hard gap', () => {
+    const gap = detectGap(
+      {
+        runDir: RUN_DIR,
+        metadataPresent: true,
+        manifestPresent: true,
+        manifestEntries: [],
+        hasFailureClassification: true,
+        runtimeState: 'succeeded',
+        reportExists: true,
+        failureReason: 'residual-classification'
+      },
+      {}
+    );
+    expect(gap.severity).toBe('hard');
+    expect(gap.reasons.join(' ')).toContain('failure-classification');
+  });
+
+  it('falls back to "unexpected outcome" and unknown manifest fields for sparse evidence', () => {
+    const evidence = readRunEvidence(
+      RUN_DIR,
+      fakeFs({ [MANIFEST_PATH]: manifest([{ kind: undefined as never, filename: undefined as never }]) })
+    );
+    const gap = detectGap(evidence, {});
+    const composed = composeIssueContent(evidence, gap, {});
+    expect(gap.severity).toBe('hard');
+    expect(composed.title).toContain('unexpected outcome');
+    expect(composed.body).toContain('- unknown: unknown');
+  });
+
+  it('prints usage on --help without filing anything', () => {
+    const writes: string[] = [];
+    main(['--help'], { stdout: { write: (t: string) => writes.push(t) } });
+    expect(writes.join('')).toContain('--run-dir');
+  });
+
+  it('composes but does not file on a dry run', () => {
+    const writes: string[] = [];
+    const spawnSync = vi.fn();
+    main(['--run-dir', RUN_DIR, '--dry-run'], {
+      ...fakeFs({
+        [METADATA_PATH]: metadata({ state: 'failed', failureReason: 'command-spawn-failed' }),
+        [MANIFEST_PATH]: manifest([])
+      }),
+      writeFileSync: vi.fn(),
+      spawnSync,
+      stdout: { write: (t: string) => writes.push(t) }
+    });
+    expect(spawnSync).not.toHaveBeenCalled();
+    expect(writes.join('')).toContain('Dry run');
+  });
+
+  it('fileIssue refuses an invalid repo slug on a non-dry run', () => {
+    expect(() =>
+      fileIssue(content, { runDir: RUN_DIR, repo: 'not-a-slug', dryRun: false }, { writeFileSync: vi.fn(), spawnSync: vi.fn() })
+    ).toThrow(/invalid repo slug/);
+  });
+
+  it('fileIssue rethrows the spawn error when gh cannot be launched', () => {
+    const spawnSync = vi.fn().mockReturnValue({ error: new Error('spawn gh ENOENT') });
+    expect(() =>
+      fileIssue(content, { runDir: RUN_DIR, repo: 'owner/repo', dryRun: false }, { writeFileSync: vi.fn(), spawnSync })
+    ).toThrow(/spawn gh ENOENT/);
   });
 });

@@ -636,3 +636,107 @@ describe('diagnoseLabviewContainer default runners over an injected execFileSync
     expect(calls.every((call) => call.command === 'sh')).toBe(true);
   });
 });
+
+describe('diagnoseLabviewContainer default runner branches (#2331)', () => {
+  // Drive the DEFAULT runDocker/which/runHost by injecting only execFileSync so
+  // the wrapper try/catch + default-arg branches are covered (no real docker/sh).
+  it('parseArgs rejects --image / --variant that are missing their value', () => {
+    expect(() => parseArgs(['--image'])).toThrow(/--image requires a value/);
+    expect(() => parseArgs(['--image', '--json'])).toThrow(/--image requires a value/);
+    expect(() => parseArgs(['--variant'])).toThrow(/--variant requires a value/);
+    expect(() => parseArgs(['--variant', '--smoke'])).toThrow(/--variant requires a value/);
+  });
+
+  it('gatherProbes(container) drives the default docker/which runners via injected execFileSync', () => {
+    const execFileSync = (cmd: string, args: string[]) => {
+      if (cmd === 'sh') return ''; // which('docker'): `command -v docker` succeeds
+      if (cmd === 'docker') {
+        const a = args.join(' ');
+        if (a.startsWith('version')) return '29.3.1\n';
+        if (a.startsWith('image inspect')) return '5140000000\n';
+        if (a.startsWith('run')) return `${READY_IN_CONTAINER}\n`;
+      }
+      return '';
+    };
+    const p = gatherProbes({ image: 'x/y:z', variant: 'linux-container' }, { execFileSync });
+    expect(p.dockerCliAvailable).toBe(true);
+    expect(p.dockerServerVersion).toBe('29.3.1');
+    expect(p.imagePresent).toBe(true);
+    expect(p.imageSizeBytes).toBe(5140000000);
+    expect(p.labviewCliPath).toBe('/usr/local/bin/LabVIEWCLI');
+  });
+
+  it('gatherProbes(container) default runDocker catch yields ok:false when docker throws', () => {
+    const execFileSync = (cmd: string) => {
+      if (cmd === 'sh') return ''; // docker CLI present
+      if (cmd === 'docker') {
+        const error = new Error('cannot connect to the docker daemon') as Error & {
+          status?: number;
+          stdout?: string;
+          stderr?: string;
+        };
+        error.status = 1;
+        error.stdout = '';
+        error.stderr = 'daemon down';
+        throw error;
+      }
+      return '';
+    };
+    const p = gatherProbes({ image: 'x/y:z', variant: 'linux-container' }, { execFileSync });
+    expect(p.dockerCliAvailable).toBe(true);
+    expect(p.dockerServerVersion).toBeNull();
+    expect(p.imagePresent).toBe(false);
+  });
+
+  it('gatherProbes(container) default which returns false when command -v throws', () => {
+    const execFileSync = (cmd: string) => {
+      if (cmd === 'sh') throw new Error('command -v failed');
+      return '';
+    };
+    const p = gatherProbes({ image: 'x', variant: 'linux-container' }, { execFileSync });
+    expect(p.dockerCliAvailable).toBe(false);
+    expect(p.dockerServerVersion).toBeNull();
+    expect(p.imagePresent).toBe(false);
+  });
+
+  it('gatherProbes(host-native) drives the default host runner via injected execFileSync', () => {
+    const execFileSync = (cmd: string, args: string[]) => {
+      expect(cmd).toBe('sh');
+      const script = String(args[1]);
+      if (script.includes('command -v LabVIEWCLI')) return '/usr/local/bin/LabVIEWCLI\n';
+      if (script.includes('LabVIEW-*-64')) return '/usr/local/natinst/LabVIEW-2026-64\n';
+      if (script.includes('lvcompare')) return 'true\n';
+      return '';
+    };
+    const p = gatherProbes({ image: 'x', variant: 'linux-host-native' }, { execFileSync });
+    expect(p.variant).toBe('linux-host-native');
+    expect(p.labviewCliPath).toBe('/usr/local/bin/LabVIEWCLI');
+    expect(p.labviewYear).toBe('2026');
+    expect(p.lvcomparePresent).toBe(true);
+  });
+
+  it('gatherProbes(host-native) default host runner swallows a thrown probe', () => {
+    const execFileSync = () => {
+      const error = new Error('sh failed') as Error & { status?: number; stdout?: string };
+      error.status = 2;
+      error.stdout = '';
+      throw error;
+    };
+    const p = gatherProbes({ image: 'x', variant: 'linux-host-native' }, { execFileSync });
+    expect(p.labviewCliPath).toBeNull();
+    expect(p.labviewEnginePath).toBeNull();
+    expect(p.lvcomparePresent).toBe(false);
+  });
+
+  it('renders a ready text verdict, covering the passing-check render arms', () => {
+    const { deps, out } = harness({ imagePresent: true, inContainer: READY_IN_CONTAINER });
+    expect(main([], deps)).toBe(0);
+    expect(out.join('')).toContain('readyToCompare=true');
+  });
+
+  it('renders a ready Markdown verdict, covering the remediation-absent cell', () => {
+    const { deps, out } = harness({ imagePresent: true, inContainer: READY_IN_CONTAINER });
+    expect(main(['--markdown'], deps)).toBe(0);
+    expect(out.join('')).toContain('✅ yes');
+  });
+});

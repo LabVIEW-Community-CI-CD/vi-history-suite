@@ -149,6 +149,52 @@ describe('auditAdrIndex', () => {
     expect(result.violations.some((v) => v.includes('No ADR files found'))).toBe(true);
   });
 
+  it('fails when an ADR body is missing its heading', () => {
+    // Exercises the missing-heading branch: a body with no "# ADR-0001:" line.
+    const noHeading = [
+      '- Status: Accepted',
+      '- Date: 2026-07-19',
+      '',
+      '## Context',
+      'Records the decision behind VHS-REQ-001.',
+      '## Decision',
+      'y',
+      '## Consequences',
+      '- z',
+      ''
+    ].join('\n');
+    const root = makeAdrRepo({ 'ADR-0001-first.md': noHeading }, { index: 'ADR-0001-first.md\n' });
+    const result = auditAdrIndex(root);
+    expect(result.ok).toBe(false);
+    expect(result.violations.some((v) => v.includes('missing a "# ADR-0001'))).toBe(true);
+  });
+
+  it('fails when an ADR is missing its "- Date:" field', () => {
+    // Exercises the missing-Date branch: a fully-formed ADR minus the Date line.
+    const noDate = validAdr('0001', 'First')
+      .split('\n')
+      .filter((line) => !line.startsWith('- Date:'))
+      .join('\n');
+    const root = makeAdrRepo({ 'ADR-0001-first.md': noDate }, { index: 'ADR-0001-first.md\n' });
+    const result = auditAdrIndex(root);
+    expect(result.ok).toBe(false);
+    expect(result.violations.some((v) => v.includes('missing a "- Date:" field'))).toBe(true);
+  });
+
+  it('fails when two ADR files share the same number (duplicate numbers)', () => {
+    // Exercises the duplicate-number branch: two files parse to ADR number 1.
+    const root = makeAdrRepo(
+      {
+        'ADR-0001-first.md': validAdr('0001', 'First'),
+        'ADR-0001-dup.md': validAdr('0001', 'Dup')
+      },
+      { index: 'ADR-0001-first.md\nADR-0001-dup.md\n' }
+    );
+    const result = auditAdrIndex(root);
+    expect(result.ok).toBe(false);
+    expect(result.violations.some((v) => v.includes('Duplicate ADR numbers detected'))).toBe(true);
+  });
+
   it('fails when an ADR does not cite an SRS requirement', () => {
     const noSrs = [
       '# ADR-0001: First',

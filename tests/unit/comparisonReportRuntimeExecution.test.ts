@@ -7100,6 +7100,108 @@ describe('comparison-runtime execution primitives (VHS-REQ-621)', () => {
       expect(result.cancelled).toBe(true);
       expect(result.exitCode).toBe(130);
     });
+
+    it('falls back to empty stdout/stderr on a successful run with undefined output (VHS-REQ-621)', async () => {
+      const execFileImpl = vi.fn((_e, _a, _o, cb) => {
+        cb(null, undefined, undefined);
+        return { pid: 1, kill: vi.fn() };
+      });
+      const result = await runComparisonCommandPlan(
+        { executable: 'LVCompare', args: [] },
+        { execFileImpl: execFileImpl as never }
+      );
+      expect(result).toMatchObject({ exitCode: 0, stdout: '', stderr: '' });
+    });
+
+    it('falls back to empty output on a cancelled run whose callback reports no error (VHS-REQ-621)', async () => {
+      let cb: ((error: unknown, stdout?: string, stderr?: string) => void) | undefined;
+      const execFileImpl = vi.fn((_e, _a, _o, captured) => {
+        cb = captured;
+        return { pid: 3, kill: vi.fn() };
+      });
+      const { token, fire } = makeCancellationToken();
+      const resultPromise = runComparisonCommandPlan(
+        { executable: 'LVCompare', args: [] },
+        { execFileImpl: execFileImpl as never, cancellationToken: token as never, hostPlatform: 'linux' }
+      );
+      fire();
+      cb?.(null, undefined, undefined);
+      const result = await resultPromise;
+      expect(result.cancelled).toBe(true);
+      expect(result.exitCode).toBe(130);
+      expect(result.stdout).toBe('');
+      expect(result.stderr).toContain('comparison-command cancelled by user');
+    });
+
+    it('falls back to empty output on a cancelled run whose callback reports an error (VHS-REQ-621)', async () => {
+      let cb: ((error: unknown, stdout?: string, stderr?: string) => void) | undefined;
+      const execFileImpl = vi.fn((_e, _a, _o, captured) => {
+        cb = captured;
+        return { pid: 4, kill: vi.fn() };
+      });
+      const { token, fire } = makeCancellationToken();
+      const resultPromise = runComparisonCommandPlan(
+        { executable: 'LVCompare', args: [] },
+        { execFileImpl: execFileImpl as never, cancellationToken: token as never, hostPlatform: 'linux' }
+      );
+      fire();
+      // No timeoutMs -> not a timeout; cancelled + error takes the cancelled branch
+      // with the `String(stdout ?? execError.stdout ?? '')` fallbacks.
+      cb?.(Object.assign(new Error('killed'), { code: 'ESRCH' }), undefined, undefined);
+      const result = await resultPromise;
+      expect(result.cancelled).toBe(true);
+      expect(result.exitCode).toBe(130);
+      expect(result.stdout).toBe('');
+    });
+
+    it('reports a timeout via the killed SIGKILL signal with undefined output (VHS-REQ-621)', async () => {
+      const execError = Object.assign(new Error('killed'), { killed: true, signal: 'SIGKILL' });
+      const execFileImpl = vi.fn((_e, _a, _o, cb) => {
+        cb(execError, undefined, undefined);
+        return { pid: 1, kill: vi.fn() };
+      });
+      const result = await runComparisonCommandPlan(
+        { executable: 'LVCompare', args: [] },
+        { execFileImpl: execFileImpl as never, timeoutMs: 2000 }
+      );
+      expect(result.timedOut).toBe(true);
+      expect(result.exitCode).toBe(124);
+      expect(result.stdout).toBe('');
+      expect(result.stderr).toBe('');
+    });
+
+    it('reports a timeout via the "timed out" message with a numeric code (VHS-REQ-621)', async () => {
+      // signal is not SIGKILL, so the message regex classifies the timeout, and a
+      // numeric code is echoed instead of the 124 fallback.
+      const execError = Object.assign(new Error('Command failed: timed out'), {
+        killed: true,
+        signal: 'SIGTERM',
+        code: 77
+      });
+      const execFileImpl = vi.fn((_e, _a, _o, cb) => {
+        cb(execError, 'partial', 'warn');
+        return { pid: 1, kill: vi.fn() };
+      });
+      const result = await runComparisonCommandPlan(
+        { executable: 'LVCompare', args: [] },
+        { execFileImpl: execFileImpl as never, timeoutMs: 2000 }
+      );
+      expect(result.timedOut).toBe(true);
+      expect(result.exitCode).toBe(77);
+    });
+
+    it('echoes a numeric exit code with empty output when stdout/stderr are undefined (VHS-REQ-621)', async () => {
+      const execError = Object.assign(new Error('nonzero'), { code: 5, signal: 'SIGTERM' });
+      const execFileImpl = vi.fn((_e, _a, _o, cb) => {
+        cb(execError, undefined, undefined);
+        return { pid: 1, kill: vi.fn() };
+      });
+      const result = await runComparisonCommandPlan(
+        { executable: 'LVCompare', args: [] },
+        { execFileImpl: execFileImpl as never }
+      );
+      expect(result).toMatchObject({ exitCode: 5, stdout: '', stderr: '' });
+    });
   });
 });
 
@@ -7942,5 +8044,188 @@ describe('runComparisonCommandPlanWithObservation cli-log-banner trigger (VHS-RE
     expect(observeWindowsProcesses.mock.calls[0][0].trigger).toBe('cli-log-banner');
     expect(result.processObservation).toBe(bannerObservation);
     expect(result.exitProcessObservation).toBe(exitObservation);
+  });
+});
+
+describe('executeComparisonReport default dependency evaluation on the blocked path (VHS-REQ-621)', () => {
+  it('evaluates the default fs/runtime/clock dependencies without injection on a blocked plan', async () => {
+    // A blocked plan short-circuits before any spawn/fs work, so calling with only
+    // disableDiagnostics + a no-op packet writer lets every other `deps.X ?? default`
+    // fall through to its production default (fs.mkdir, pathExists, process.platform,
+    // buildDefaultRunCommand, defaultNowIso/defaultNowMs, ...) without touching the
+    // real filesystem or launching a process.
+    const record = createReadyRecord();
+    record.runtimeSelection.provider = 'unavailable';
+    record.runtimeSelection.blockedReason = 'labview-exe-not-found';
+    record.reportStatus = 'blocked-runtime';
+
+    const writePacketRecord = vi.fn().mockResolvedValue(undefined);
+    const result = await executeComparisonReport(
+      { record, repositoryRoot: '/workspace/repo' },
+      { disableDiagnostics: true, writePacketRecord }
+    );
+
+    expect(result.record.runtimeExecution.state).toBe('not-available');
+    expect(result.record.runtimeExecution.attempted).toBe(false);
+    expect(result.record.runtimeExecution.reportExists).toBe(false);
+    // The blocked path still finalizes the packet exactly once.
+    expect(writePacketRecord).toHaveBeenCalledTimes(1);
+  });
+
+  it('finalizes a blocked packet through the default packet writer with injected fs no-ops', async () => {
+    const record = createReadyRecord();
+    record.runtimeSelection.provider = 'unavailable';
+    record.runtimeSelection.blockedReason = 'labview-exe-not-found';
+    record.reportStatus = 'blocked-runtime';
+
+    const mkdir = vi.fn().mockResolvedValue(undefined);
+    const writeFile = vi.fn().mockResolvedValue(undefined);
+    // writePacketRecord omitted -> the default writeComparisonReportPacketRecord
+    // runs against the injected fs no-ops (hermetic), covering the default writer
+    // fall-through without touching the real filesystem.
+    const result = await executeComparisonReport(
+      { record, repositoryRoot: '/workspace/repo' },
+      { disableDiagnostics: true, mkdir, writeFile: writeFile as never }
+    );
+
+    expect(result.record.runtimeExecution.state).toBe('not-available');
+    expect(writeFile).toHaveBeenCalled();
+  });
+});
+
+describe('comparisonReportRuntimeExecution helper branch coverage (VHS-REQ-624 / VHS-REQ-623)', () => {
+  it('buildLinuxContainerCommandPlan returns undefined when the runtime selection has no engine', () => {
+    const record = createReadyRecord();
+    record.runtimeSelection = {
+      ...record.runtimeSelection,
+      platform: 'linux',
+      provider: 'linux-container',
+      engine: undefined
+    };
+
+    const plan = buildLinuxContainerCommandPlan(
+      record,
+      { executable: '/usr/local/bin/LabVIEWCLI', args: [] },
+      {
+        hostReportDirectory: '/host/report',
+        hostTempDirectory: '/host/report/container-temp',
+        containerWorkspaceRoot: '/workspace',
+        containerImage: 'nationalinstruments/labview:2026q1-linux',
+        processPlatform: 'linux'
+      }
+    );
+
+    expect(plan).toBeUndefined();
+  });
+
+  it('buildLinuxContainerCommandPlan prefixes the materialized staged depth when a relativeDirectory is supplied (VHS-REQ-624)', () => {
+    const record = createReadyRecord();
+    record.runtimeSelection = {
+      ...record.runtimeSelection,
+      platform: 'linux',
+      containerRuntimePlatform: 'linux',
+      provider: 'linux-container',
+      engine: 'labview-cli'
+    };
+
+    const plan = buildLinuxContainerCommandPlan(
+      record,
+      {
+        executable: '/usr/local/bin/LabVIEWCLI',
+        args: [
+          '-OperationName',
+          'CreateComparisonReport',
+          '-VI1',
+          '/host/staging/left-111111112222-foo.vi',
+          '-VI2',
+          '/host/staging/right-abcdef123456-foo.vi',
+          '-ReportType',
+          'htmlsinglefile',
+          '-ReportPath',
+          '/host/diff-report-foo.vi.html'
+        ]
+      },
+      {
+        hostReportDirectory: '/host/report',
+        hostTempDirectory: '/host/report/container-temp',
+        containerWorkspaceRoot: '/workspace',
+        containerImage: 'nationalinstruments/labview:2026q1-linux',
+        processPlatform: 'linux',
+        // A leading/trailing slash is trimmed; the depth is then prefixed onto the
+        // container VI filenames (both left and right ternary truthy branches).
+        relativeDirectory: '/nested/dir/'
+      }
+    );
+
+    expect(plan).toBeDefined();
+    const script = plan?.args[plan.args.length - 1] ?? '';
+    expect(script).toContain('nested/dir/');
+  });
+
+  it('resolveWindowsLabviewTcpSettingsForLabviewPath uses the ambient process platform when none is supplied (VHS-REQ-623)', async () => {
+    // processPlatform omitted -> the `deps.processPlatform ?? process.platform`
+    // default is exercised; the injected readFile supplies the .ini regardless.
+    const settings = await resolveWindowsLabviewTcpSettingsForLabviewPath(
+      'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe',
+      {
+        readFile: vi
+          .fn()
+          .mockResolvedValue('server.tcp.enabled="TRUE"\nserver.tcp.port="3363"\n') as never
+      }
+    );
+
+    expect(settings.viServerTcpEnabled).toBe(true);
+    expect(settings.labviewTcpPort).toBe(3363);
+  });
+});
+
+describe('comparisonReportRuntimeExecution helper branch coverage — lvcompare linux-container (VHS-REQ-657)', () => {
+  function lvcompareContainerRecord(): ComparisonReportPacketRecord {
+    const record = createReadyRecord();
+    record.runtimeSelection = {
+      ...record.runtimeSelection,
+      platform: 'linux',
+      containerRuntimePlatform: 'linux',
+      provider: 'linux-container',
+      engine: 'lvcompare'
+    };
+    return record;
+  }
+
+  it('builds a direct lvcompare container script for the lvcompare engine', () => {
+    const plan = buildLinuxContainerCommandPlan(
+      lvcompareContainerRecord(),
+      {
+        executable: 'LVCompare',
+        args: ['/host/staging/left-foo.vi', '/host/staging/right-foo.vi', '-lvpath', '/host/native-labview']
+      },
+      {
+        hostReportDirectory: '/host/report',
+        hostTempDirectory: '/host/report/container-temp',
+        containerWorkspaceRoot: '/workspace',
+        containerImage: 'nationalinstruments/labview:2026q1-linux',
+        processPlatform: 'linux'
+      }
+    );
+
+    expect(plan).toBeDefined();
+    expect(plan?.executable).toBe('docker');
+  });
+
+  it('returns undefined when the lvcompare args cannot be rewritten for the container', () => {
+    const plan = buildLinuxContainerCommandPlan(
+      lvcompareContainerRecord(),
+      // Fewer than two positional VI paths -> the rewrite fails -> plan is undefined.
+      { executable: 'LVCompare', args: ['only-one'] },
+      {
+        hostReportDirectory: '/host/report',
+        hostTempDirectory: '/host/report/container-temp',
+        containerWorkspaceRoot: '/workspace',
+        containerImage: 'nationalinstruments/labview:2026q1-linux',
+        processPlatform: 'linux'
+      }
+    );
+
+    expect(plan).toBeUndefined();
   });
 });

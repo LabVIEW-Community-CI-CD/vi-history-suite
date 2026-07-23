@@ -272,4 +272,54 @@ describe('renderCorrelationSurfaceTable (VHS-REQ-703.8)', () => {
     // The table cell keeps BOTH endpoints, not just the destination.
     expect(renderCorrelationSurfaceTable(correlation)).toContain('Y.vi (10,20)→(30,40)');
   });
+
+  it('summarizes more than three coordinate changes with a bounded "+N more" suffix (VHS-REQ-703.11)', () => {
+    const model = buildViSemanticComparisonModelFromHtml(
+      `<h1 class="report-title">R</h1>
+       <h2 class="section-header">Detailed Information</h2>
+       <details><summary class="difference-heading">3. Block Diagram objects</summary>
+         <ol>
+           <li class="diff-detail">SubVI "A.vi" - added at (1,1)</li>
+           <li class="diff-detail">SubVI "B.vi" - added at (2,2)</li>
+           <li class="diff-detail">SubVI "C.vi" - added at (3,3)</li>
+           <li class="diff-detail">SubVI "D.vi" - added at (4,4)</li>
+         </ol></details>`,
+      {}
+    );
+    const correlation = buildViPreviewComparisonCorrelation(model, {
+      base: { available: true },
+      head: { available: true }
+    });
+    const bdRow = renderCorrelationSurfaceTable(correlation)
+      .split('\n')
+      .find((line) => line.startsWith('| block diagram |'));
+    // Only the first three coordinate entries are shown; the remainder is bounded
+    // to a "+1 more" suffix (the remainder > 0 arm of renderCoordinateCell).
+    expect(bdRow).toContain('+1 more');
+  });
+
+  it('labels a coordinate change by its change type when object name and kind are absent (VHS-REQ-703.11)', () => {
+    const table = renderCorrelationSurfaceTable({
+      hasDifferences: true,
+      surfaces: [
+        {
+          surface: 'block-diagram',
+          changeKinds: [],
+          changeCount: 1,
+          sampleChanges: [],
+          basePreviewAvailable: true,
+          headPreviewAvailable: true,
+          correlated: true,
+          coordinateChanges: [
+            // No objectName and no objectKind: the cell label falls through the
+            // `?? ` chain to the change type.
+            { text: 'added at (3,4)', changeType: 'added', coordinate: { x: 3, y: 4 } }
+          ]
+        }
+      ],
+      totals: { changedSurfaceCount: 1, correlatedSurfaceCount: 1, uncorrelatedSurfaceCount: 0 }
+    });
+    const bdRow = table.split('\n').find((line) => line.startsWith('| block diagram |'));
+    expect(bdRow).toContain('added (3,4)');
+  });
 });

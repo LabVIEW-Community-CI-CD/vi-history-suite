@@ -486,3 +486,35 @@ describe('main --diagnostics (VHS-REQ-659)', () => {
     }
   });
 });
+
+describe('buildNodeViPreviewRenderDeps default filesystem closures (VHS-REQ-659)', () => {
+  it('exercises the default hashFile, fileModifiedMs, and removeFile closures', async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-verify-node-deps-'));
+    try {
+      const deps = buildNodeViPreviewRenderDeps({ cacheDirectory: dir, cacheMaxEntries: 1 });
+      const { hashFile, cache } = deps;
+      expect(hashFile).toBeDefined();
+      expect(cache).toBeDefined();
+      if (!hashFile || !cache) {
+        throw new Error('expected default hashFile and cache to be wired');
+      }
+
+      // Default hashFile closure: sha256 hex of a real file's bytes.
+      const sampleFile = path.join(dir, 'sample.bin');
+      await fs.writeFile(sampleFile, 'hello world');
+      const digest = await hashFile(sampleFile);
+      expect(digest).toMatch(/^[0-9a-f]{64}$/);
+
+      // Drive the file-backed cache past maxEntries=1 so eviction runs the
+      // default fileModifiedMs (LRU ordering) and removeFile (evict) closures.
+      const keyA = 'a'.repeat(64);
+      const keyB = 'b'.repeat(64);
+      await cache.set(keyA, '<html>A</html>');
+      await cache.set(keyB, '<html>B</html>');
+      // The most recent key survives eviction and is still served from disk.
+      expect(await cache.get(keyB)).toContain('B');
+    } finally {
+      await fs.rm(dir, { recursive: true, force: true });
+    }
+  });
+});
