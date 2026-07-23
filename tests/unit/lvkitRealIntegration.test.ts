@@ -24,6 +24,9 @@ import path from 'node:path';
 import { createLvkitCompareViRevisions } from '../../src/semantic/lvkit/lvkitCompareViRevisions';
 import { locateLvkit } from '../../src/semantic/lvkit/lvkitLocator';
 import type { CompareViRevisionsResult } from '../../src/semantic/compareViRevisions';
+import { handleViSemanticMcpMessageAsync } from '../../src/semantic/viSemanticComparisonMcp';
+import { buildViSemanticMcpServerDepsForEnv } from '../../src/mcp/viSemanticMcpServerDeps';
+import type { ViComparisonModelCache } from '../../src/semantic/viComparisonModelCache';
 
 // Pinned icon-editor commits with three deliberately-chosen VIs:
 const BASE_COMMIT = '537683398d8c';
@@ -74,36 +77,41 @@ function normalizeForSnapshot(result: CompareViRevisionsResult): unknown {
   return clone;
 }
 
+// Shared precondition (VHS-REQ-712): the real-lvkit suites hard-require lvkit and
+// the pinned corpus and FAIL (never silently skip) when either is absent, so the
+// standard unit gate proves the Linux lvkit stack rather than quietly degrading.
+function requireLvkitAndCorpus(): void {
+  const lvkit = locateLvkit({ env: process.env });
+  if (!lvkit.available) {
+    throw new Error(
+      'Real-lvkit integration requires lvkit (' +
+        (lvkit.reason ?? 'not located') +
+        "). Install it (uv tool install 'lvkit>=0.5.0') or set VIHS_LVKIT_BIN."
+    );
+  }
+  if (!existsSync(CORPUS_DIR)) {
+    throw new Error(
+      'Real-lvkit integration requires the icon-editor corpus at ' +
+        CORPUS_DIR +
+        '. Clone ni/labview-icon-editor there or set VIHS_LVKIT_CORPUS_DIR.'
+    );
+  }
+  for (const [rev, vi] of [
+    [BASE_COMMIT, CHANGED_VI],
+    [SELECTED_COMMIT, CHANGED_VI],
+    [BASE_COMMIT, BYTE_CHANGED_UNCHANGED_VI],
+    [SELECTED_COMMIT, BYTE_CHANGED_UNCHANGED_VI]
+  ] as const) {
+    if (!corpusHasBlob(rev, vi)) {
+      throw new Error(
+        'Corpus at ' + CORPUS_DIR + ' is missing ' + vi + ' at ' + rev + '. Fetch the pinned commits.'
+      );
+    }
+  }
+}
+
 describe('real lvkit compare provider integration (VHS-REQ-712)', () => {
-  beforeAll(() => {
-    const lvkit = locateLvkit({ env: process.env });
-    if (!lvkit.available) {
-      throw new Error(
-        'Real-lvkit integration requires lvkit (' +
-          (lvkit.reason ?? 'not located') +
-          "). Install it (uv tool install 'lvkit>=0.5.0') or set VIHS_LVKIT_BIN."
-      );
-    }
-    if (!existsSync(CORPUS_DIR)) {
-      throw new Error(
-        'Real-lvkit integration requires the icon-editor corpus at ' +
-          CORPUS_DIR +
-          '. Clone ni/labview-icon-editor there or set VIHS_LVKIT_CORPUS_DIR.'
-      );
-    }
-    for (const [rev, vi] of [
-      [BASE_COMMIT, CHANGED_VI],
-      [SELECTED_COMMIT, CHANGED_VI],
-      [BASE_COMMIT, BYTE_CHANGED_UNCHANGED_VI],
-      [SELECTED_COMMIT, BYTE_CHANGED_UNCHANGED_VI]
-    ] as const) {
-      if (!corpusHasBlob(rev, vi)) {
-        throw new Error(
-          'Corpus at ' + CORPUS_DIR + ' is missing ' + vi + ' at ' + rev + '. Fetch the pinned commits.'
-        );
-      }
-    }
-  });
+  beforeAll(requireLvkitAndCorpus);
 
   it('detects a specific known change (one added "Merge Errors" node) with its exact outcome', async () => {
     const compare = createLvkitCompareViRevisions();
@@ -177,5 +185,92 @@ describe('real lvkit compare provider integration (VHS-REQ-712)', () => {
       expect(result.model.narrative).toMatch(/No block-diagram differences detected/);
     }
     expect(normalizeForSnapshot(result)).toMatchSnapshot();
+  });
+});
+
+// A no-op cache so every MCP compare runs the REAL lvkit backend end to end (a
+// cache hit would short-circuit the subprocess and defeat the integration proof).
+const NO_MODEL_CACHE: ViComparisonModelCache = {
+  get: async () => undefined,
+  set: async () => undefined
+};
+
+// Build the async MCP dependency set exactly as the launcher does when a user
+// opts into the LabVIEW-free backend (VIHS_SEMANTICS_PROVIDER=lvkit): the
+// compare_vi_revisions tool is bound to the real lvkit provider. PATH is
+// inherited so locateLvkit resolves the real binary locally and the
+// `uvx --from lvkit lvkit` fallback on CI.
+function lvkitBackedMcpDeps() {
+  return buildViSemanticMcpServerDepsForEnv(NO_MODEL_CACHE, {
+    ...process.env,
+    VIHS_SEMANTICS_PROVIDER: 'lvkit'
+  });
+}
+
+function compareToolCall(args: Record<string, unknown>, id = 1) {
+  return {
+    jsonrpc: '2.0' as const,
+    id,
+    method: 'tools/call' as const,
+    params: { name: 'compare_vi_revisions', arguments: args }
+  };
+}
+
+interface McpToolTextResult {
+  content: Array<{ type: string; text: string }>;
+  isError: boolean;
+}
+
+// Extracts the tool-call text payload from the JSON-RPC success envelope,
+// asserting the exact envelope shape an MCP agent client (e.g. Copilot) receives.
+function toolResultModel(response: unknown): Record<string, unknown> {
+  const result = (response as { result?: McpToolTextResult }).result;
+  expect(result, 'expected a JSON-RPC success envelope with a tool result').toBeDefined();
+  expect(result?.isError).toBe(false);
+  return JSON.parse(result?.content?.[0]?.text ?? '') as Record<string, unknown>;
+}
+
+describe('real lvkit backend served to an agent over MCP compare_vi_revisions (VHS-REQ-712)', () => {
+  beforeAll(requireLvkitAndCorpus);
+
+  it('returns the real lvkit-backed change to an agent MCP call (provider=lvkit, no LabVIEW)', async () => {
+    // Full agent path: JSON-RPC tools/call -> resolveSemanticCompareProvider=lvkit
+    // -> real `lvkit diff` -> adapter -> shared vi-semantic-comparison@v1 model,
+    // marshalled back over the MCP envelope. This is what Copilot receives.
+    const response = await handleViSemanticMcpMessageAsync(
+      compareToolCall({
+        repositoryRoot: CORPUS_DIR,
+        relativePath: CHANGED_VI,
+        baseHash: BASE_COMMIT,
+        selectedHash: SELECTED_COMMIT
+      }),
+      lvkitBackedMcpDeps()
+    );
+    const model = toolResultModel(response);
+    expect(model.schema).toBe('vi-history-suite/vi-semantic-comparison@v1');
+    // The LabVIEW-free lvkit backend served the agent (not a LabVIEW/Docker run).
+    expect((model.runtime as { provider?: string }).provider).toBe('lvkit');
+    expect(model.hasDifferences).toBe(true);
+    expect(model.changedSurfaces).toEqual(['block-diagram']);
+    // The same surgical change (added "Merge Errors" node), proven across the MCP boundary.
+    const items = (model.detailSections as Array<{ items: string[] }>).flatMap((section) => section.items);
+    expect(items.some((item) => /Merge Errors/.test(item))).toBe(true);
+  });
+
+  it('reports no change to an agent MCP call when the edit is semantically empty', async () => {
+    const response = await handleViSemanticMcpMessageAsync(
+      compareToolCall({
+        repositoryRoot: CORPUS_DIR,
+        relativePath: BYTE_CHANGED_UNCHANGED_VI,
+        baseHash: BASE_COMMIT,
+        selectedHash: SELECTED_COMMIT
+      }),
+      lvkitBackedMcpDeps()
+    );
+    const model = toolResultModel(response);
+    expect((model.runtime as { provider?: string }).provider).toBe('lvkit');
+    expect(model.hasDifferences).toBe(false);
+    expect(model.changedSurfaces).toEqual([]);
+    expect(model.narrative).toMatch(/No block-diagram differences detected/);
   });
 });
