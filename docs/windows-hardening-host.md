@@ -22,7 +22,7 @@ checklist to an exact host shape, mirroring the Vagrant box attestation pattern
 (`vagrant/box-manifest.json`).
 
 - Descriptor schema: `vi-history-suite/windows-hardening-host@v1`
-- Descriptor SHA-256: `837c341ae24b14c718610a1da63225b0e5eac207aea438c681b43394e32c44e0`
+- Descriptor SHA-256: `424f0dc9d383c842f9356ffdeb33bf3a4c8577394395aeb4896727c43cc1768b`
 
 Recompute the digest after editing the descriptor block (from the repo root):
 
@@ -176,6 +176,25 @@ Linux-executable runtime-fidelity dimension does not surface them; they document
 real-hardware coverage without being release-gating (only the Vagrant
 `releaseGating: true` track gates a marketplace release — VHS-REQ-666).
 
+## Validation results (this host, 2026-07-23)
+
+Recorded from genuine `CreateComparisonReport` runs on this hardening host
+(fixture `lv_icon.vi`, `5376833..fc09736`), landed as ledger tracks:
+
+| Cell | Result | Ledger track |
+|---|---|---|
+| host-native 2026 x64 | `runtimeState=succeeded`, `reportExists=true` | `winhost-2026-x64` |
+| host-native 2026 x86 (32-bit) | `runtimeState=succeeded`, `reportExists=true` | `winhost-2026-x86` |
+| windows-container `2026q1patch2-windows` | `runtimeState=succeeded`, `reportExists=true` | `windows-container-2026q1patch2` |
+| host-native 2020 x64/x86 | **blocked** `labview-version-unsupported-for-comparison-report` (2025-minimum gate) | N/A — documented finding |
+| host-native 2025 x64/x86 | `labview-exe-not-found` (folders present, no `LabVIEW.exe`) | N/A — not a full install on this host |
+
+Observed real conflict-detection behavior: selecting **x86** while an **x64**
+LabVIEW is still running returned `windows-host-bitness-conflict`
+(`hostRuntimeConflictDetected=true`), so LabVIEW must be closed between
+opposite-bitness cells — exactly what the runtime-conflict matrix harness does
+per scenario.
+
 <!-- provisioning-descriptor:begin -->
 ```json
 {
@@ -197,6 +216,8 @@ real-hardware coverage without being release-gating (only the Vagrant
       "osTypeProbe": "windows",
       "hostBuild": "ltsc2022",
       "images": [
+        "nationalinstruments/labview:2026q1patch2-windows",
+        "nationalinstruments/labview:2026q1patch1-windows",
         "nationalinstruments/labview:2026q1-windows",
         "nationalinstruments/labview:2025q3-windows"
       ]
@@ -230,7 +251,7 @@ real-hardware coverage without being release-gating (only the Vagrant
   },
   "ledgerTracks": {
     "hostNative": ["winhost-2020-x86", "winhost-2020-x64", "winhost-2025-x86", "winhost-2025-x64", "winhost-2026-x86", "winhost-2026-x64"],
-    "windowsContainer": ["windows-container-2025q3", "windows-container-2026q1"]
+    "windowsContainer": ["windows-container-2025q3", "windows-container-2026q1", "windows-container-2026q1patch2"]
   }
 }
 ```
