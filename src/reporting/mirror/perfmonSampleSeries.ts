@@ -1,0 +1,276 @@
+// First-time-run performance-monitor sample series (VHS-REQ-707).
+//
+// A pure, deterministic parser + renderer for the perfmon sample-timing artifact
+// captured during a first-time comparison run, on ANY mirror actor (a Vagrant
+// self-hosted runner captures via Windows `logman` PDH-CSV; a Docker container
+// actor captures an equivalent counter stream). The captured samples are the
+// SAME shape regardless of source, so the mirror-benchmark perf payload, the
+// eventual TDMS embedding (each series is a channel; the interval + peaks are
+// channel properties), and the pull-request rendering all consume one contract.
+//
+// Design (reporting-orchestration guardrails): raw counter text in, a normalized
+// columnar series out, no I/O. The heavy capture (running logman / reading a
+// counter stream) lives in the actor harness; this module stays unit-testable
+// without a runtime.
+
+export const PERFMON_SAMPLE_SERIES_SCHEMA = 'vi-history-suite/perfmon-sample-series@v1';
+export const PERFMON_SAMPLE_SERIES_SCHEMA_VERSION = 1;
+
+/** Stable, plot-ready series keys. Parallel arrays map 1:1 to TDMS channels. */
+export interface PerfmonSeriesColumns {
+  /** Total processor time, percent (0-100). */
+  readonly cpuTotalPct: (number | null)[];
+  /** Available memory, megabytes. */
+  readonly memAvailMb: (number | null)[];
+  /** Total physical-disk active time, percent (can exceed 100 on some hosts). */
+  readonly diskTotalPct: (number | null)[];
+  /** LabVIEW process processor time, percent (present only when a LabVIEW process was sampled). */
+  readonly labviewCpuPct?: (number | null)[];
+  /** LabVIEW process private working set, megabytes (present only when sampled). */
+  readonly labviewWorkingSetMb?: (number | null)[];
+}
+
+export interface PerfmonSampleSeries {
+  readonly schema: typeof PERFMON_SAMPLE_SERIES_SCHEMA;
+  readonly schemaVersion: typeof PERFMON_SAMPLE_SERIES_SCHEMA_VERSION;
+  /** Median inter-sample spacing in milliseconds (derived from timestamps). */
+  readonly intervalMs: number;
+  readonly sampleCount: number;
+  /** Elapsed milliseconds from the first sample (TDMS time channel). */
+  readonly t: number[];
+  readonly series: PerfmonSeriesColumns;
+  /** Per-series maxima over the run (null when a series had no numeric samples). */
+  readonly peaks: {
+    readonly cpuTotalPct: number | null;
+    readonly memAvailMb: number | null;
+    readonly diskTotalPct: number | null;
+    readonly labviewCpuPct?: number | null;
+    readonly labviewWorkingSetMb?: number | null;
+  };
+}
+
+const BYTES_PER_MB = 1024 * 1024;
+
+/** Split one PDH-CSV line into its quoted fields (values never contain commas). */
+function splitPdhCsvLine(line: string): string[] {
+  const fields: string[] = [];
+  const matcher = /"((?:[^"]|"")*)"/g;
+  let match: RegExpExecArray | null;
+  while ((match = matcher.exec(line)) !== null) {
+    fields.push(match[1].replace(/""/g, '"'));
+  }
+  return fields;
+}
+
+/** A blank PDH cell (empty or whitespace, e.g. the leading warm-up sample) is missing data. */
+function parseCell(raw: string | undefined): number | null {
+  if (raw === undefined) {
+    return null;
+  }
+  const trimmed = raw.trim();
+  if (trimmed.length === 0) {
+    return null;
+  }
+  const value = Number(trimmed);
+  return Number.isFinite(value) ? value : null;
+}
+
+/** Parse a PDH-CSV timestamp `MM/DD/YYYY HH:mm:ss.fff` to epoch milliseconds. */
+function parsePdhTimestampMs(raw: string): number | null {
+  const match = raw
+    .trim()
+    .match(/^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,3}))?$/u);
+  if (!match) {
+    return null;
+  }
+  const [, mm, dd, yyyy, hh, mi, ss, fff] = match;
+  const ms = Date.UTC(
+    Number(yyyy),
+    Number(mm) - 1,
+    Number(dd),
+    Number(hh),
+    Number(mi),
+    Number(ss),
+    fff ? Number(fff.padEnd(3, '0')) : 0
+  );
+  return Number.isFinite(ms) ? ms : null;
+}
+
+type SeriesKey = 'cpuTotalPct' | 'memAvailMb' | 'diskTotalPct' | 'labviewCpuPct' | 'labviewWorkingSetMb';
+
+/** Map a PDH counter path to a stable series key (source-independent). */
+function counterKeyFor(counterPath: string): SeriesKey | null {
+  const path = counterPath.toLowerCase();
+  if (path.includes('\\processor(_total)\\% processor time')) {
+    return 'cpuTotalPct';
+  }
+  if (path.includes('\\memory\\available mbytes')) {
+    return 'memAvailMb';
+  }
+  if (path.includes('\\physicaldisk(_total)\\% disk time')) {
+    return 'diskTotalPct';
+  }
+  if (path.includes('\\process(') && path.includes('\\% processor time')) {
+    return 'labviewCpuPct';
+  }
+  if (path.includes('\\process(') && path.includes('working set')) {
+    return 'labviewWorkingSetMb';
+  }
+  return null;
+}
+
+function medianInterval(timestamps: number[]): number {
+  const deltas: number[] = [];
+  for (let i = 1; i < timestamps.length; i += 1) {
+    const delta = timestamps[i] - timestamps[i - 1];
+    if (Number.isFinite(delta) && delta > 0) {
+      deltas.push(delta);
+    }
+  }
+  if (deltas.length === 0) {
+    return 0;
+  }
+  deltas.sort((a, b) => a - b);
+  const mid = Math.floor(deltas.length / 2);
+  return deltas.length % 2 === 0 ? Math.round((deltas[mid - 1] + deltas[mid]) / 2) : deltas[mid];
+}
+
+function peakOf(values: (number | null)[]): number | null {
+  let peak: number | null = null;
+  for (const value of values) {
+    if (value !== null && (peak === null || value > peak)) {
+      peak = value;
+    }
+  }
+  return peak;
+}
+
+/**
+ * Parse a Windows `logman` PDH-CSV 4.0 capture into a normalized, plot-ready
+ * perfmon sample series. Fails closed on a document without a recognizable
+ * PDH-CSV header row. Unknown counters are ignored; recognized ones populate
+ * their stable series. The LabVIEW process series appear only when the capture
+ * included a matching `\Process(...)` counter.
+ */
+export function parsePdhCsv(csvText: string): PerfmonSampleSeries {
+  if (typeof csvText !== 'string' || csvText.trim().length === 0) {
+    throw new Error('parsePdhCsv requires non-empty PDH-CSV text.');
+  }
+  const lines = csvText.split(/\r?\n/u).filter((line) => line.trim().length > 0);
+  if (lines.length === 0) {
+    throw new Error('parsePdhCsv requires at least a header row.');
+  }
+  const header = splitPdhCsvLine(lines[0]);
+  if (header.length < 2 || !/^\(PDH-CSV/u.test(header[0])) {
+    throw new Error('parsePdhCsv header must be a PDH-CSV 4.0 counter row.');
+  }
+  // header[0] is the timestamp column; header[1..] are counter paths.
+  const columnKeys = header.slice(1).map(counterKeyFor);
+  const timestamps: number[] = [];
+  const columns: Record<SeriesKey, (number | null)[]> = {
+    cpuTotalPct: [],
+    memAvailMb: [],
+    diskTotalPct: [],
+    labviewCpuPct: [],
+    labviewWorkingSetMb: []
+  };
+  const seen = new Set<SeriesKey>();
+
+  for (let i = 1; i < lines.length; i += 1) {
+    const fields = splitPdhCsvLine(lines[i]);
+    if (fields.length === 0) {
+      continue;
+    }
+    const tsMs = parsePdhTimestampMs(fields[0]);
+    if (tsMs === null) {
+      continue;
+    }
+    timestamps.push(tsMs);
+    // Accumulate per recognized column; default missing columns to null this row.
+    const rowSeen = new Set<SeriesKey>();
+    for (let c = 0; c < columnKeys.length; c += 1) {
+      const key = columnKeys[c];
+      // Skip unrecognized columns and any counter that already populated its
+      // series this row (first matching column wins, so two `Process(LabVIEW*)`
+      // instances cannot double-push and misalign the parallel arrays).
+      if (!key || rowSeen.has(key)) {
+        continue;
+      }
+      let value = parseCell(fields[c + 1]);
+      if (value !== null && key === 'labviewWorkingSetMb') {
+        value = Math.round((value / BYTES_PER_MB) * 100) / 100;
+      }
+      columns[key].push(value);
+      rowSeen.add(key);
+      seen.add(key);
+    }
+  }
+
+  const firstTs = timestamps.length > 0 ? timestamps[0] : 0;
+  const t = timestamps.map((ts) => ts - firstTs);
+  const series: PerfmonSeriesColumns = {
+    cpuTotalPct: columns.cpuTotalPct,
+    memAvailMb: columns.memAvailMb,
+    diskTotalPct: columns.diskTotalPct,
+    ...(seen.has('labviewCpuPct') ? { labviewCpuPct: columns.labviewCpuPct } : {}),
+    ...(seen.has('labviewWorkingSetMb') ? { labviewWorkingSetMb: columns.labviewWorkingSetMb } : {})
+  };
+
+  return {
+    schema: PERFMON_SAMPLE_SERIES_SCHEMA,
+    schemaVersion: PERFMON_SAMPLE_SERIES_SCHEMA_VERSION,
+    intervalMs: medianInterval(timestamps),
+    sampleCount: timestamps.length,
+    t,
+    series,
+    peaks: {
+      cpuTotalPct: peakOf(columns.cpuTotalPct),
+      memAvailMb: peakOf(columns.memAvailMb),
+      diskTotalPct: peakOf(columns.diskTotalPct),
+      ...(seen.has('labviewCpuPct') ? { labviewCpuPct: peakOf(columns.labviewCpuPct) } : {}),
+      ...(seen.has('labviewWorkingSetMb') ? { labviewWorkingSetMb: peakOf(columns.labviewWorkingSetMb) } : {})
+    }
+  };
+}
+
+function mermaidLine(values: (number | null)[]): string {
+  // xychart-beta requires numeric points; a missing sample renders as 0.
+  return `    line [${values.map((v) => (v === null ? 0 : Math.round(v * 100) / 100)).join(', ')}]`;
+}
+
+/**
+ * Render a perfmon sample series as a GitHub-native Mermaid `xychart-beta` fenced
+ * block so a pull request prints the first-run performance trace at runtime with
+ * no external image host. CPU and disk percent share one chart; memory (MB) is a
+ * second chart because its scale differs. Deterministic: identical series in,
+ * identical block out.
+ */
+export function renderPerfmonMermaidXychart(
+  series: PerfmonSampleSeries,
+  options: { readonly title?: string } = {}
+): string {
+  const title = options.title ?? 'First-run performance monitor';
+  const n = series.sampleCount;
+  const xAxisMax = n > 0 ? n - 1 : 0;
+  const cpuMax = Math.max(100, Math.ceil((series.peaks.cpuTotalPct ?? 0) / 10) * 10);
+  const memMax = Math.max(1, Math.ceil((series.peaks.memAvailMb ?? 0) / 100) * 100);
+  const lines = [
+    '```mermaid',
+    'xychart-beta',
+    `    title "${title.replace(/"/gu, "'")} — CPU/disk % (n=${n})"`,
+    `    x-axis "sample" 0 --> ${xAxisMax}`,
+    `    y-axis "percent" 0 --> ${cpuMax}`,
+    mermaidLine(series.series.cpuTotalPct),
+    mermaidLine(series.series.diskTotalPct),
+    '```',
+    '',
+    '```mermaid',
+    'xychart-beta',
+    `    title "${title.replace(/"/gu, "'")} — memory available (MB)"`,
+    `    x-axis "sample" 0 --> ${xAxisMax}`,
+    `    y-axis "MBytes" 0 --> ${memMax}`,
+    mermaidLine(series.series.memAvailMb),
+    '```'
+  ];
+  return lines.join('\n');
+}
