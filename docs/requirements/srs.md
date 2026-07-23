@@ -7910,9 +7910,10 @@ Missing numeric IDs are intentional.
     above the target frame rate, each frame's strip decodes to an exact
     centisecond timestamp so screen-capture cadence is validated and screen
     frames anchor to a real-time base. The command that launches it is
-    registered only in the Extension Development Host and never in a packaged
-    VSIX (guarded by the extension development mode), so it is not a shipped
-    user-facing command.
+    contributed in `package.json` but is only registered/activated in the
+    Extension Development Host on Windows (guarded by the extension development
+    mode); in a packaged VSIX it is never registered and is not invokable, so it
+    is not a shipped user-facing command.
   - The 12fps screen capture and the 1Hz perfmon log are folded into a
     deterministic timing-correlation model (`vi-history-suite/timing-correlation@v1`)
     that binds each captured screen frame to its perfmon second (frame index /
