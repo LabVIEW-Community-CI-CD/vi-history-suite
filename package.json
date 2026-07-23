@@ -122,6 +122,11 @@
         "command": "labviewViHistory.showDevToolsStatus",
         "title": "Show Dev-Tools Status",
         "category": "VI History"
+      },
+      {
+        "command": "labviewViHistory.dev.openTimingStopwatch",
+        "title": "[Dev] Open mprr Timing Stopwatch",
+        "category": "VI History"
       }
     ],
     "menus": {
@@ -159,6 +164,10 @@
         {
           "command": "labviewViHistory.exportComparisonReport",
           "when": "activeWebviewPanelId == viHistorySuite.comparisonReport"
+        },
+        {
+          "command": "labviewViHistory.dev.openTimingStopwatch",
+          "when": "viHistorySuite.devMode"
         }
       ]
     },

@@ -38,6 +38,12 @@ export default defineConfig({
         // its scheduler/gating/orchestrator core in src/reporting/viPreview stays
         // measured. Excluded on the same rationale as the preview host bindings.
         'src/ui/viChangeWarmerService.ts',
+        // Dev-only host binding: registers a command only in the Extension
+        // Development Host and spawns an external browser, so it needs a real VS
+        // Code host to exercise. Excluded on the same rationale as the other host
+        // bindings; the testable surface generator (timingStopwatchSurface.ts)
+        // stays measured.
+        'src/dev/timingStopwatchHost.ts',
         // VHS-REQ-613: dev-only host/CI-infrastructure runner scripts require a
         // real VS Code host, integration host, or git remote/network to
         // exercise, so their thin CLI wrappers cannot be meaningfully unit

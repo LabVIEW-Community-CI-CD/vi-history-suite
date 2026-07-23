@@ -524,6 +524,9 @@ scripts/runWindowsRuntimeMatrix.js,mapped,Yes,Windows runtime conflict verificat
 scripts/checkMaintainerRunnerPrerequisites.js,mapped,Yes,Maintainer runner prerequisite doctor; mapped to VHS-REQ-598 and VHS-REQ-652.
 tests/unit/runWindowsRuntimeMatrixScript.test.ts,mapped,Yes,Windows runtime conflict verification harness driver tests; mapped to VHS-REQ-622 and VHS-REQ-713.
 tests/unit/windowsPerfmonMprrPipeline.test.ts,mapped,Yes,Portable pipeline-composition proof of the Part E perfmon->TDMS->mprr-sync->bounded-RAM-replay pipeline the windows-perfmon-mprr driver drives; mapped to VHS-REQ-713.
+tests/unit/timingStopwatchSurface.test.ts,mapped,Yes,Dev-only live mprr timing-stopwatch surface strip-encoding contract tests (ground-truth capture clock); mapped to VHS-REQ-713.
+src/dev/timingStopwatchSurface.ts,mapped,Yes,Dev-only live mprr timing-stopwatch surface generator (decodable ground-truth per-frame capture clock); mapped to VHS-REQ-713.
+src/dev/timingStopwatchHost.ts,mapped,Yes,Dev-only host binding registering the timing-stopwatch command only in the Extension Development Host (not shipped user-facing); mapped to VHS-REQ-713.
 tests/unit/checkMaintainerRunnerPrerequisites.test.ts,mapped,Yes,Maintainer runner prerequisite doctor tests; mapped to VHS-REQ-598 and VHS-REQ-652.
 tests/unit/windowsRuntimeMatrixWorkflow.test.ts,mapped,Yes,Windows runtime matrix workflow contract tests; mapped to VHS-REQ-622.
 .github/workflows/windows-runtime-matrix.yml,release-ci,Yes,Windows runtime matrix workflow; mapped to VHS-REQ-622.

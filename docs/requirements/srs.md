@@ -7904,6 +7904,15 @@ Missing numeric IDs are intentional.
     the TDMS/artifact byte stream round-trips through the
     `DeterministicRollingBlockRing` byte-identical with fail-closed three-block
     admission control.
+  - A dev-only live mprr timing-stopwatch surface (rendered full-screen, its
+    40-bit machine strip a verbatim client-side port of the shipped strip
+    encoding) provides a ground-truth per-frame capture clock: captured at or
+    above the target frame rate, each frame's strip decodes to an exact
+    centisecond timestamp so screen-capture cadence is validated and screen
+    frames anchor to a real-time base. The command that launches it is
+    registered only in the Extension Development Host and never in a packaged
+    VSIX (guarded by the extension development mode), so it is not a shipped
+    user-facing command.
 - Agent Work Scope:
   - Generalize `scripts/runWindowsRuntimeMatrix.js` from the fixed five-scenario
     enum into the scenario manifest with legacy-id aliases, keeping the manifest
@@ -7919,17 +7928,27 @@ Missing numeric IDs are intentional.
     an inventory-exempt `.cjs` that drives the shipped `out/reporting/mirror` and
     `out/reporting/syncDiagnostics` modules verbatim; the portable pipeline
     contract is guarded by `tests/unit/windowsPerfmonMprrPipeline.test.ts`, and
-    the real Windows-native run is recorded in the ledger (never fabricated). On
-    an unelevated host the driver samples via `typeperf` (no `logman` collector /
-    UAC) while retaining the shipped logman plan + capture script as evidence.
+    the real Windows-native run is recorded in the ledger (never fabricated). The
+    driver captures with `logman` (an elevated PDH-CSV collector) starting while
+    LabVIEW is closed so the trace spans the LabVIEW closed-to-open transition
+    (logman binds the `\Process(LabVIEW)` instance dynamically when it appears);
+    it derives a single-`-c` logman argv from the shipped plan's counter set for
+    logman builds that reject repeated `-c`, retaining the shipped plan and
+    capture script as evidence. Keep the dev-only live timing-stopwatch surface
+    (`src/dev/timingStopwatchSurface.ts`) pure/testable and its host binding
+    (`src/dev/timingStopwatchHost.ts`) registered only in the Extension
+    Development Host.
 - Implementation References:
   - `scripts/runWindowsRuntimeMatrix.js`
   - `scripts/windows-perfmon-mprr-driver.cjs`
+  - `src/dev/timingStopwatchSurface.ts`
+  - `src/dev/timingStopwatchHost.ts`
   - `docs/requirements/runtime-validation-ledger.json`
   - `docs/windows-hardening-host.md`
 - Verification References:
   - `tests/unit/runWindowsRuntimeMatrixScript.test.ts`
   - `tests/unit/windowsPerfmonMprrPipeline.test.ts`
+  - `tests/unit/timingStopwatchSurface.test.ts`
   - `tests/unit/requirementsDocs.test.ts`
   - `manual:windows-hardening-host-matrix`
   - `manual:windows-perfmon-mprr-pipeline`

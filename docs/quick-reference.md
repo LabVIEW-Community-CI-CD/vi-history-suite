@@ -56,6 +56,7 @@ Run these from the Command Palette (`Ctrl`/`Cmd`+`Shift`+`P`); all are under the
 | Install Pinned Dev-Tools Version | `labviewViHistory.installPinnedDevTools` | Install the dev-tools version pinned in settings (trusted workspace only). |
 | Uninstall Dev-Tools Version | `labviewViHistory.uninstallDevTools` | Remove an installed dev-tools version. |
 | Show Dev-Tools Status | `labviewViHistory.showDevToolsStatus` | Report the pinned/active dev-tools build and installed versions. |
+| [Dev] Open mprr Timing Stopwatch | `labviewViHistory.dev.openTimingStopwatch` | Dev-only (Extension Development Host): launch the full-screen live mprr timing-stopwatch as a decodable ground-truth capture clock. Not registered in a packaged VSIX. |
 
 ## Extension Settings
 
