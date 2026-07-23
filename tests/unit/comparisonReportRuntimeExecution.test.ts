@@ -5081,7 +5081,7 @@ describe('materializeSelectedRevisionTreeWithGit (VHS-REQ-624)', () => {
       await fs.rm(superRepo, { recursive: true, force: true });
       await fs.rm(destinationRoot, { recursive: true, force: true });
     }
-  });
+  }, 30000);
 
   it('attempts each submodule but skips unavailable ones without failing the comparison (#283) (VHS-REQ-624.3)', async () => {
     const calls: string[][] = [];

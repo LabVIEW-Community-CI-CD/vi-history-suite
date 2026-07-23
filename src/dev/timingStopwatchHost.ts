@@ -40,9 +40,12 @@ function resolveBrowser(): string | undefined {
 
 /**
  * Register the dev-only timing-stopwatch command. No-op unless the extension is
- * running in Development mode (the Extension Development Host). Accessing
- * `vscode.ExtensionMode` defensively keeps this safe under minimal test mocks
- * that may not define the enum.
+ * running in Development mode (the Extension Development Host) on Windows.
+ * `resolveBrowser()` only resolves Windows Chrome/Edge install paths and the
+ * stopwatch is a ground-truth clock for the Windows perfmon/logman capture, so
+ * registration is gated to win32 to avoid surfacing a non-functional command on
+ * macOS/Linux dev hosts. Accessing `vscode.ExtensionMode` defensively keeps this
+ * safe under minimal test mocks that may not define the enum.
  */
 export function registerDevTimingStopwatch(context: vscode.ExtensionContext): void {
   // Read ExtensionMode defensively: under minimal ESM test mocks that do not
@@ -55,7 +58,9 @@ export function registerDevTimingStopwatch(context: vscode.ExtensionContext): vo
     developmentMode = undefined;
   }
   const isDevelopment = developmentMode !== undefined && context.extensionMode === developmentMode;
-  if (!isDevelopment) {
+  // Windows-only: resolveBrowser() and the paired perfmon/logman capture are
+  // Windows-specific, so a non-win32 dev host would only get a broken command.
+  if (!isDevelopment || process.platform !== 'win32') {
     return;
   }
 

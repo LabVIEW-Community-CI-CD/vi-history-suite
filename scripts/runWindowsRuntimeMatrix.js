@@ -268,7 +268,7 @@ function getUsage() {
     '  bitness (same year, opposite bitness -> bitness conflict),',
     '  version (same bitness, different year -> version conflict),',
     '  match   (Host == Selected, default port -> no conflict),',
-    '  port    (Host == Selected, non-default ini-derived port -> no conflict).',
+    '  port    (Host == Selected, VI Server port derived from the selected ini -> no conflict).',
     '',
     'Options:',
     '  --scenario <id>         all | light | <canonical-id> | <legacy-alias>',
