@@ -5576,6 +5576,18 @@ Missing numeric IDs are intentional.
     to the queued revision is the hard precondition, and right-channel parity is
     enforced only when a fresh right-channel record for that revision exists,
     otherwise it is advisory so an outage cannot block the queue.
+  - A pure perfmon sample-series contract normalizes a first-run performance
+    trace captured on any mirror actor into one plot-ready columnar model
+    (schema `vi-history-suite/perfmon-sample-series@v1`): a parser maps recognized
+    Windows PDH-CSV counters to stable parallel series (total processor percent,
+    available memory, disk-active percent, and, when a LabVIEW process was
+    sampled, its processor percent and working set) with elapsed sample times, a
+    derived interval, and per-series peaks, treats blank warm-up cells as missing,
+    and fails closed on a non-PDH document; and a deterministic renderer projects
+    the series into GitHub-native Mermaid xychart blocks so a pull request prints
+    the first-run performance trace at runtime whether the run came from a Docker
+    container or a self-hosted runner. The columnar series are the
+    channel-per-series foundation for the eventual TDMS embedding.
 - Agent Work Scope:
   - Change the ADR, this requirement, and the governance contract test together;
     keep the required gate deterministic and never make a live image pull the
@@ -5588,6 +5600,7 @@ Missing numeric IDs are intentional.
   - `src/reporting/mirror/mirrorParityReconciler.ts`
   - `scripts/recordMirrorBenchmark.js`
   - `scripts/reconcileMirrorParity.js`
+  - `src/reporting/mirror/perfmonSampleSeries.ts`
 - Verification References:
   - `tests/unit/mirrorModeGovernance.test.ts`
   - `tests/unit/mirrorParityDigest.test.ts`
@@ -5596,6 +5609,7 @@ Missing numeric IDs are intentional.
   - `tests/unit/mirrorParityReconciler.test.ts`
   - `tests/unit/reconcileMirrorParityScript.test.ts`
   - `tests/unit/recordMirrorBenchmarkScript.test.ts`
+  - `tests/unit/perfmonSampleSeries.test.ts`
 - Change Guidance:
   - This is a governance-foundation requirement: keep the documented invariants
     (human/Vagrant-only authorship, run-only container, Vagrant→`merge_group`
