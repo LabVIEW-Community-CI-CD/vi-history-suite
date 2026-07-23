@@ -83,8 +83,19 @@ export function decodeMprrStripImage(input: DecodeStripImageInput): DecodedStrip
     cellLuminance.push(sum / count);
   }
 
-  const threshold =
-    input.threshold ?? (Math.min(...cellLuminance) + Math.max(...cellLuminance)) / 2;
+  // Compute the black/white midpoint iteratively: `bitCount` is caller-controlled,
+  // so a spread (Math.min(...cellLuminance)) could throw on a very large array.
+  let minLuminance = cellLuminance[0];
+  let maxLuminance = cellLuminance[0];
+  for (const value of cellLuminance) {
+    if (value < minLuminance) {
+      minLuminance = value;
+    }
+    if (value > maxLuminance) {
+      maxLuminance = value;
+    }
+  }
+  const threshold = input.threshold ?? (minLuminance + maxLuminance) / 2;
   const stripBits = cellLuminance.map((value) => (value < threshold ? '1' : '0')).join('');
 
   const preamble = stripBits.slice(0, STOPWATCH_PREAMBLE.length);

@@ -142,8 +142,9 @@ describe('createLvkitCompareViRevisions provider (VHS-REQ-712.5)', () => {
 
   it('serializes the lvkit attempt on the shared host-native runtime slot and releases it (VHS-REQ-669)', async () => {
     // lvkit shares the host-native local-runtime lock so it is mutually exclusive
-    // with a LabVIEW host-native launch (and other lvkit runs). Assert it acquires
-    // the default host-native endpoint key and releases the slot after the attempt.
+    // with a LabVIEW host-native launch (and other lvkit runs). With no explicit
+    // port it defaults to the canonical host-native VI Server port (3363) so it
+    // serializes with host-native default-port launches, not an inert token.
     const releases: string[] = [];
     const acquireLocalRuntimeSlot = vi.fn(async (key: string) => () => {
       releases.push(key);
@@ -152,8 +153,8 @@ describe('createLvkitCompareViRevisions provider (VHS-REQ-712.5)', () => {
     const result = await compare(INPUT);
     expect(result.status).toBe('completed');
     expect(acquireLocalRuntimeSlot).toHaveBeenCalledTimes(1);
-    expect(acquireLocalRuntimeSlot).toHaveBeenCalledWith('host-native:default');
-    expect(releases).toEqual(['host-native:default']);
+    expect(acquireLocalRuntimeSlot).toHaveBeenCalledWith('host-native:3363');
+    expect(releases).toEqual(['host-native:3363']);
   });
 
   it('derives the shared lock key from the injected local VI Server port (VHS-REQ-669)', async () => {

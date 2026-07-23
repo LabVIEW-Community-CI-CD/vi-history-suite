@@ -894,7 +894,7 @@ function runControlPlaneWriteCli(argv = process.argv.slice(2), io = {}, deps = {
     stdout.write(`${outcome.lines.join('\n')}\n`);
     return 0;
   } catch (err) {
-    stderr.write(`[control-plane-write] ${err.message}\n`);
+    stderr.write(`[control-plane-write] ${err instanceof Error ? err.message : String(err)}\n`);
     return 1;
   }
 }

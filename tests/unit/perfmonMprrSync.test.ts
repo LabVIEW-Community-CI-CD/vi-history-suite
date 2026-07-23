@@ -126,7 +126,7 @@ describe('buildPerfmonMprrSync (VHS-REQ-707.17)', () => {
     expect(sync.samples[1].frameIndex).toBe(10); // 1000ms / 100ms
   });
 
-  it('clamps the frame index to frameCount and stays advisory when uncalibrated', () => {
+  it('marks out-of-window samples unmapped (null) and stays advisory when uncalibrated', () => {
     const sync = buildPerfmonMprrSync({
       artifact: artifact(CSV_SYSTEM),
       frame: { epochMsAtFrameZero: CAPTURE_EPOCH, frameRateHz: 10, frameCount: 5 },
@@ -134,17 +134,19 @@ describe('buildPerfmonMprrSync (VHS-REQ-707.17)', () => {
     });
     expect(sync.authoritative).toBe(false); // not calibrated -> advisory only
     expect(sync.calibrated).toBe(false);
-    expect(sync.samples[1].frameIndex).toBe(4); // clamped to frameCount - 1
+    expect(sync.samples[1].frameIndex).toBeNull(); // beyond frameCount -> unmapped, not clamped
+    expect(sync.allSamplesWithinFrameWindow).toBe(false);
     expect(sync.samples.length).toBe(2); // still produced
   });
 
-  it('clamps pre-fiducial samples to frame zero with negative authority ticks', () => {
+  it('marks pre-fiducial samples unmapped (null) with negative authority ticks', () => {
     const sync = buildPerfmonMprrSync({
       artifact: artifact(CSV_SYSTEM),
       frame: { epochMsAtFrameZero: CAPTURE_EPOCH + 5_000 }, // frame zero 5s AFTER capture start
       calibration: calibration(true)
     });
-    expect(sync.samples[0].frameIndex).toBe(0);
+    expect(sync.samples[0].frameIndex).toBeNull();
+    expect(sync.allSamplesWithinFrameWindow).toBe(false);
     expect(sync.samples[0].stopwatchCentiseconds).toBe(0);
     expect(sync.samples[0].authorityTicks).toBe(-50_000_000); // -5000ms * 10000
   });

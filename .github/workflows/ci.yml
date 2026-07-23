@@ -133,9 +133,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          # Warm the uv cache with the LabVIEW-free lvkit diff tool (min-pinned);
-          # the compare provider resolves lvkit via 'uvx --from lvkit lvkit'.
-          uvx --from 'lvkit>=0.5.0' lvkit --version
+          # Pin lvkit to an exact version so the committed lvkitRealIntegration
+          # snapshots stay stable across upstream releases: install it as a uv
+          # tool and expose the pinned executable via VIHS_LVKIT_BIN (the compare
+          # provider's highest-priority resolution) rather than the unpinned
+          # 'uvx --from lvkit lvkit' fallback.
+          uv tool install 'lvkit==0.5.0'
+          echo "VIHS_LVKIT_BIN=$HOME/.local/bin/lvkit" >> "$GITHUB_ENV"
+          "$HOME/.local/bin/lvkit" --version
           # Minimal corpus: the two pinned icon-editor commits' VI blobs (the lvkit
           # diff is search-path independent, so no working-tree checkout is needed).
           corpus="$RUNNER_TEMP/lvkit-corpus"
@@ -256,9 +261,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          # Warm the uv cache with the LabVIEW-free lvkit diff tool (min-pinned);
-          # the compare provider resolves lvkit via 'uvx --from lvkit lvkit'.
-          uvx --from 'lvkit>=0.5.0' lvkit --version
+          # Pin lvkit to an exact version so the committed lvkitRealIntegration
+          # snapshots stay stable across upstream releases: install it as a uv
+          # tool and expose the pinned executable via VIHS_LVKIT_BIN (the compare
+          # provider's highest-priority resolution) rather than the unpinned
+          # 'uvx --from lvkit lvkit' fallback.
+          uv tool install 'lvkit==0.5.0'
+          echo "VIHS_LVKIT_BIN=$HOME/.local/bin/lvkit" >> "$GITHUB_ENV"
+          "$HOME/.local/bin/lvkit" --version
           # Minimal corpus: the two pinned icon-editor commits' VI blobs (the lvkit
           # diff is search-path independent, so no working-tree checkout is needed).
           corpus="$RUNNER_TEMP/lvkit-corpus"

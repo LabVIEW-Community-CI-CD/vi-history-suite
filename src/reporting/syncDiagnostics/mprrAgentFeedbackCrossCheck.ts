@@ -79,6 +79,9 @@ export function crossCheckMprrAgentFeedback(input: MprrAgentFeedbackCrossCheckIn
   }
 
   const feedbackBudgetMs = input.feedbackBudgetMs ?? MPRR_SEALED_FEEDBACK_BUDGET_MS;
+  if (!Number.isFinite(feedbackBudgetMs) || feedbackBudgetMs <= 0) {
+    throw new Error('feedbackBudgetMs must be a positive number of milliseconds.');
+  }
   const calibration = evaluateMprrCalibration(input.screenshot);
   const crossCheckPass = calibration.calibrated;
   const withinFeedbackBudget = input.feedbackLatencyMs <= feedbackBudgetMs;
