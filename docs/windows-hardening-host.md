@@ -283,8 +283,10 @@ node scripts/windows-perfmon-mprr-driver.cjs
 | E6 | Docker Windows-container + Windows-native perfmon TDMS models **reconcile** on the shared resource channels (dual-source parity). |
 
 > **Elevation note:** the capture uses `logman`, whose data collectors require
-> **admin / Performance Log Users**, so the driver **requires an elevated session
-> and fails closed** (`assertElevated()`) when run unelevated. It starts the
+> elevated privileges. The driver specifically **requires an Administrator
+> session and fails closed** (`assertElevated()` checks the Administrator role)
+> when run unelevated — it does not accept a non-admin Performance Log Users
+> session. It starts the
 > collector while LabVIEW is closed so the trace spans the LabVIEW closed-to-open
 > transition (logman binds `\Process(LabVIEW)` dynamically), and derives a
 > single-`-c` logman argv from the shipped plan for logman builds that reject
