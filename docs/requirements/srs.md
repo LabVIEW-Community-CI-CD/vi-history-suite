@@ -5591,7 +5591,11 @@ Missing numeric IDs are intentional.
     per-cycle timing into the first-run performance-monitor artifact (schema
     `vi-history-suite/first-run-perfmon@v1`) that a renderer prints as the
     pull-request comment; the columnar series are the channel-per-series
-    foundation for the eventual TDMS embedding.
+    foundation for the eventual TDMS embedding. A renderer CLI ties the contract
+    together end to end: it reads a captured PDH-CSV plus an optional capture
+    window and actor fingerprint and emits either the artifact JSON or its
+    pull-request comment for either mirror source, with the filesystem, clock, and
+    engine injected so the command stays deterministic without a real capture.
 - Agent Work Scope:
   - Change the ADR, this requirement, and the governance contract test together;
     keep the required gate deterministic and never make a live image pull the
@@ -5605,6 +5609,7 @@ Missing numeric IDs are intentional.
   - `scripts/recordMirrorBenchmark.js`
   - `scripts/reconcileMirrorParity.js`
   - `src/reporting/mirror/perfmonSampleSeries.ts`
+  - `scripts/renderFirstRunPerfmon.js`
 - Verification References:
   - `tests/unit/mirrorModeGovernance.test.ts`
   - `tests/unit/mirrorParityDigest.test.ts`
@@ -5614,6 +5619,7 @@ Missing numeric IDs are intentional.
   - `tests/unit/reconcileMirrorParityScript.test.ts`
   - `tests/unit/recordMirrorBenchmarkScript.test.ts`
   - `tests/unit/perfmonSampleSeries.test.ts`
+  - `tests/unit/renderFirstRunPerfmonScript.test.ts`
 - Change Guidance:
   - This is a governance-foundation requirement: keep the documented invariants
     (human/Vagrant-only authorship, run-only container, Vagrant→`merge_group`
