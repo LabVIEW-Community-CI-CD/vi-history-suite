@@ -2,7 +2,7 @@ import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const repoRoot = path.resolve(__dirname, '..', '..');
 
@@ -11,6 +11,7 @@ const {
   checkDockerfile,
   checkWorkbenchGuide,
   checkDocsGateScript,
+  main,
   renderResult,
   runDocumentationWorkbenchGate
 } = require('../../scripts/checkDocumentationWorkbench.js') as {
@@ -18,6 +19,7 @@ const {
   checkDockerfile: (cwd: string) => { name: string; passed: boolean; details: string };
   checkWorkbenchGuide: (cwd: string) => { name: string; passed: boolean; details: string };
   checkDocsGateScript: (cwd: string) => { name: string; passed: boolean; details: string };
+  main: () => number;
   renderResult: (result: {
     success: boolean;
     checks: Array<{ name: string; passed: boolean; details: string }>;
@@ -194,5 +196,28 @@ describe('documentation workbench gate', () => {
     const result = runDocumentationWorkbenchGate();
     expect(result.success).toBe(true);
     expect(result.checks).toHaveLength(3);
+  });
+
+  it('renders failing checks and a failed gate banner', () => {
+    const rendered = renderResult({
+      success: false,
+      checks: [
+        { name: 'ok surface', passed: true, details: 'wired' },
+        { name: 'broken surface', passed: false, details: 'missing' }
+      ]
+    });
+
+    expect(rendered).toContain('[docs-gate] PASS ok surface: wired');
+    expect(rendered).toContain('[docs-gate] FAIL broken surface: missing');
+    expect(rendered).toContain('[docs-gate] Gate failed.');
+  });
+
+  it('main runs the gate against the committed repo and returns zero', () => {
+    const writeSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    try {
+      expect(main()).toBe(0);
+    } finally {
+      writeSpy.mockRestore();
+    }
   });
 });

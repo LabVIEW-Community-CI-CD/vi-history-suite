@@ -334,4 +334,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { auditAdrIndex, auditSyrsCoverage, buildGovernanceState, ADR_DIR };
+module.exports = { auditAdrIndex, auditSyrsCoverage, buildGovernanceState, main, ADR_DIR };

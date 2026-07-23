@@ -1,6 +1,8 @@
+import * as fs from 'node:fs';
+import * as os from 'node:os';
 import * as path from 'node:path';
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 interface LinkageResult {
   total: number;
@@ -186,6 +188,56 @@ describe('requirement verification-linkage report (VHS-REQ-601)', () => {
       'this step fails when any Active requirement is unlinked'
     );
     expect(renderStepSummary(result)).toContain('does not fail CI');
+  });
+
+  it('skips rows with an empty ReqID and treats a row lacking VerificationRefs as manual-only (VHS-REQ-601)', () => {
+    // Empty/absent ReqID exercises the `(row.ReqID || '').trim()` fallback and
+    // the `reqId.length === 0` continue; a row with an id but no VerificationRefs
+    // exercises the `(row.VerificationRefs || '')` fallback and lands in manual-only.
+    const rows = [
+      { ReqID: '', VerificationRefs: 'tests/unit/x.test.ts' },
+      { VerificationRefs: 'tests/unit/y.test.ts' },
+      { ReqID: 'VHS-REQ-050' }
+    ];
+    const linkage = classifyRequirementLinkage(rows, () => undefined);
+    expect(linkage.linked).toEqual([]);
+    expect(linkage.unlinked).toEqual([]);
+    expect(linkage.manualOnly).toEqual(['VHS-REQ-050']);
+  });
+
+  it('omits the manual/external summary line when there are no manual-only requirements (VHS-REQ-601)', () => {
+    const result: LinkageResult = { total: 1, linked: ['VHS-REQ-001'], unlinked: [], manualOnly: [] };
+    const summary = renderSummary(result);
+    expect(summary).not.toContain('Manual/external verification only');
+    expect(summary).toContain('does not fail CI');
+  });
+
+  it('omits the unlinked step-summary table when there are no unlinked requirements (VHS-REQ-601)', () => {
+    const result: LinkageResult = { total: 1, linked: ['VHS-REQ-001'], unlinked: [], manualOnly: [] };
+    const stepSummary = renderStepSummary(result);
+    expect(stepSummary).not.toContain('### Unlinked requirements');
+    expect(stepSummary).toContain('- Unlinked: 0');
+  });
+
+  it('main uses the default fs step-summary writer and process.stdout when deps omit them (VHS-REQ-601)', () => {
+    // Omitting appendStepSummary exercises the default `fs.appendFileSync` writer
+    // (against a real temp file), and omitting stdout exercises the
+    // `process.stdout` default; both are the uninjected boundary fallbacks.
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'vihs-linkage-'));
+    const summaryFile = path.join(tmpDir, 'step-summary.md');
+    const stdoutSpy = vi.spyOn(process.stdout, 'write').mockReturnValue(true);
+    try {
+      const code = main([], {
+        readFile: makeReadFile(FIXTURE_FILES),
+        stepSummaryPath: summaryFile
+      });
+      expect(code).toBe(0);
+      expect(fs.readFileSync(summaryFile, 'utf8')).toContain('## Requirement Verification Linkage');
+      expect(stdoutSpy.mock.calls.some(([chunk]) => String(chunk).includes('[requirements-linkage]'))).toBe(true);
+    } finally {
+      stdoutSpy.mockRestore();
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
   });
 
   it('reports VHS-REQ-601 itself as linked on the real repository', () => {

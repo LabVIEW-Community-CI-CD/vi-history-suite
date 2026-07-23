@@ -1,4 +1,8 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+
+import * as fs from 'node:fs';
+import * as os from 'node:os';
+import * as path from 'node:path';
 
 // VHS-REQ-670: the release-state read-model derives durable release stages from
 // ground truth and reports a two-key publish-authority posture in one
@@ -288,6 +292,13 @@ describe('collectReleaseState default boundary readers (VHS-REQ-670.4, VHS-REQ-6
     const state = rs.collectReleaseState('/repo', {}, lowLevelDeps({ queryDispatcherActionsWrite: () => true }));
     expect(state.authority.dispatcherActionsWrite).toBe(true);
   });
+
+  it('degrades a signal getter that returns undefined to null (unverified) via safe()', () => {
+    // queryMarketplaceVersion returning undefined exercises safe()'s
+    // `value === undefined ? null : value` null arm.
+    const state = rs.collectReleaseState('/repo', {}, lowLevelDeps({ queryMarketplaceVersion: () => undefined }));
+    expect(state.stages.find((s) => s.id === 'published').reached).toBeNull();
+  });
 });
 
 describe('release-state rendering (VHS-REQ-670.5)', () => {
@@ -358,6 +369,40 @@ describe('release-state rendering (VHS-REQ-670.5)', () => {
     expect(out).toContain('- Argv:');
   });
 
+  it('renders unverified stages (reachedLabel null) via the default process.stdout stream', () => {
+    // A null (unverified) published stage exercises reachedLabel's
+    // `reached === null` arm; omitting deps.stdout exercises the
+    // `deps.stdout ?? process.stdout` default stream in main.
+    const captured: string[] = [];
+    const stdoutSpy = vi
+      .spyOn(process.stdout, 'write')
+      .mockImplementation((chunk: unknown) => {
+        captured.push(String(chunk));
+        return true;
+      });
+    try {
+      const code = rs.main([], renderDeps(fullSignals({ marketplaceVersion: null, developTipVersion: null })));
+      expect(code).toBe(0);
+      expect(captured.join('')).toContain('published: unverified');
+    } finally {
+      stdoutSpy.mockRestore();
+    }
+  });
+
+  it('renders a <none> furthest stage and no gaps for an all-unreached state', () => {
+    // Empty signals leave every stage unreached, so furthestStage() is undefined:
+    // exercises renderSummary's `state.stage ?? '<none>'` arm and stageGaps'
+    // `if (!furthest) return []` early-return arm.
+    const chunks: string[] = [];
+    const code = rs.main([], {
+      ...renderDeps({}),
+      stdout: { write: (s: string) => chunks.push(s) }
+    });
+    expect(code).toBe(0);
+    expect(chunks.join('')).toContain('Furthest stage: <none>');
+    expect(chunks.join('')).not.toContain('Stage gaps:');
+  });
+
   it('returns 1 and writes to stderr when the arguments cannot be parsed', () => {
     const errs: string[] = [];
     const code = rs.main(['--totally-unknown-flag'], {
@@ -366,5 +411,77 @@ describe('release-state rendering (VHS-REQ-670.5)', () => {
     });
     expect(code).toBe(1);
     expect(errs.join('')).toContain('Unknown argument');
+  });
+});
+
+describe('release-state low-level default readers, called directly (VHS-REQ-670.4, VHS-REQ-670.6)', () => {
+  const api = rs as unknown as {
+    getPackageVersion: (cwd: string, deps?: Record<string, unknown>) => string;
+    defaultQueryEnvironmentReviewerConfigured: (deps?: Record<string, unknown>) => boolean | null;
+    defaultQueryMarketplaceVersion: (cwd: string, deps?: Record<string, unknown>) => string | null;
+  };
+
+  it('getPackageVersion reads a real package.json with the default fs reader, else 0.0.0', () => {
+    // No deps.readFile: exercises the default `(p) => fs.readFileSync(p, 'utf8')`
+    // reader over a real temp directory.
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'vihs-rs-'));
+    const empty = fs.mkdtempSync(path.join(os.tmpdir(), 'vihs-rs-empty-'));
+    try {
+      fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ version: '3.2.1' }));
+      expect(api.getPackageVersion(dir)).toBe('3.2.1');
+      // A directory without package.json degrades to 0.0.0 via the catch.
+      expect(api.getPackageVersion(empty)).toBe('0.0.0');
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+      fs.rmSync(empty, { recursive: true, force: true });
+    }
+  });
+
+  it('defaultQueryEnvironmentReviewerConfigured reflects the required-reviewers protection rule', () => {
+    // No repo slug (default env, no GITHUB_REPOSITORY) -> unverified null.
+    expect(api.defaultQueryEnvironmentReviewerConfigured({ env: {} })).toBeNull();
+    // Repo present with a required_reviewers rule carrying a reviewer -> true.
+    expect(
+      api.defaultQueryEnvironmentReviewerConfigured({
+        env: { GITHUB_REPOSITORY: 'owner/repo' },
+        runGh: () =>
+          JSON.stringify({ protection_rules: [{ type: 'required_reviewers', reviewers: [{ type: 'User' }] }] })
+      })
+    ).toBe(true);
+    // Repo present but no required_reviewers rule -> false.
+    expect(
+      api.defaultQueryEnvironmentReviewerConfigured({
+        env: { GITHUB_REPOSITORY: 'owner/repo' },
+        runGh: () => JSON.stringify({ protection_rules: [{ type: 'wait_timer' }] })
+      })
+    ).toBe(false);
+  });
+
+  it('defaultQueryMarketplaceVersion resolves the latest published version or null', () => {
+    // publisher+name derive the extension id; latest version is returned.
+    expect(
+      api.defaultQueryMarketplaceVersion('/repo', {
+        readFile: () => JSON.stringify({ publisher: 'pub', name: 'ext' }),
+        env: {},
+        pinnedVsceModule: { buildPinnedVsceInvocation: (args: string[]) => ({ command: 'vsce', args }) },
+        runVsce: () => JSON.stringify({ versions: [{ version: '2.0.0' }, { version: '1.9.0' }] })
+      })
+    ).toBe('2.0.0');
+    // Explicit EXTENSION_ID env wins; an empty versions list yields null.
+    expect(
+      api.defaultQueryMarketplaceVersion('/repo', {
+        readFile: () => JSON.stringify({}),
+        env: { EXTENSION_ID: 'pub.ext' },
+        pinnedVsceModule: { buildPinnedVsceInvocation: (args: string[]) => ({ command: 'vsce', args }) },
+        runVsce: () => JSON.stringify({ versions: [] })
+      })
+    ).toBeNull();
+    // No publisher/name and no EXTENSION_ID -> null without invoking vsce.
+    expect(
+      api.defaultQueryMarketplaceVersion('/repo', {
+        readFile: () => JSON.stringify({ name: 'ext' }),
+        env: {}
+      })
+    ).toBeNull();
   });
 });

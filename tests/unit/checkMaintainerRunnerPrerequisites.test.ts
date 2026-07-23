@@ -441,6 +441,20 @@ describe('checkMaintainerRunnerPrerequisites.main', () => {
     expect(await doctor.main(['--bogus'], { stderr: stderr.stream })).toBe(1);
     expect(stderr.text()).toContain('Unknown argument: --bogus');
   });
+
+  it('reports a prerequisite-inspection failure to stderr and exits 1', async () => {
+    // An unsupported platform makes buildPrerequisiteContract throw, exercising
+    // main's inspection try/catch and the Error-message formatting arm.
+    const stdout = createWritable();
+    const stderr = createWritable();
+    const code = await doctor.main([], {
+      platform: 'bogus',
+      stdout: stdout.stream,
+      stderr: stderr.stream
+    });
+    expect(code).toBe(1);
+    expect(stderr.text()).toContain('Unsupported maintainer runner platform: bogus');
+  });
 });
 
 describe('checkMaintainerRunnerPrerequisites clock-skew preflight (#527)', () => {
@@ -550,6 +564,40 @@ describe('checkMaintainerRunnerPrerequisites clock-skew preflight (#527)', () =>
     };
     const ms = await doctor.fetchAuthoritativeNowMsViaGithub({ https: fakeHttps });
     expect(ms).toBeUndefined();
+  });
+
+  it('fetchAuthoritativeNowMsViaGithub ignores a late error after the response resolved', async () => {
+    const fixedIso = 'Sun, 14 Jun 2026 12:00:00 GMT';
+    const fakeHttps = {
+      request(
+        _url: string,
+        _options: unknown,
+        callback: (response: { headers: { date: string }; resume: () => void }) => void
+      ) {
+        const handlers: Record<string, (error?: Error) => void> = {};
+        queueMicrotask(() => {
+          // First settle: the response resolves with a real Date header.
+          callback({ headers: { date: fixedIso }, resume: () => undefined });
+          // Second settle attempt: a late error hits the `if (!settled)` guard
+          // and is ignored so the resolved value stands.
+          handlers.error?.(new Error('late error'));
+        });
+        return {
+          on(event: string, handler: (error?: Error) => void) {
+            handlers[event] = handler;
+            return this;
+          },
+          end() {
+            return this;
+          },
+          destroy() {
+            return this;
+          }
+        };
+      }
+    };
+    const ms = await doctor.fetchAuthoritativeNowMsViaGithub({ https: fakeHttps });
+    expect(ms).toBe(Date.parse(fixedIso));
   });
 
   it('formats each advisory state with actionable text', () => {

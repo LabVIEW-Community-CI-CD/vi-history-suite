@@ -17,6 +17,7 @@ const {
   checkPrEvidenceDocs,
   checkStaleDodDeferrals,
   parseCsvLine,
+  parseCsvRows,
   renderResult,
   runDefinitionOfDoneGate
 } = require('../../scripts/checkDefinitionOfDone.js') as {
@@ -34,6 +35,7 @@ const {
   checkPrEvidenceDocs: (cwd: string) => { name: string; passed: boolean; details: string };
   checkStaleDodDeferrals: (cwd: string) => { passed: boolean; details: string };
   parseCsvLine: (line: string) => string[];
+  parseCsvRows: (text: string) => Array<Record<string, string>>;
   renderResult: (result: { success: boolean; checks: Array<{ name: string; passed: boolean; details: string }> }) => string;
   runDefinitionOfDoneGate: (options?: { cwd?: string }) => {
     success: boolean;
@@ -52,6 +54,32 @@ function createFixture(files: Record<string, string>): string {
     fs.writeFileSync(filePath, body, 'utf8');
   }
   return root;
+}
+
+const DOD_FIXTURE_FILES = [
+  'package.json',
+  '.github/workflows/ci.yml',
+  'scripts/generateCloseoutEvidence.js',
+  '.github/ISSUE_TEMPLATE/requirement_target.yml',
+  'docs/testing/test-plan.md',
+  '.github/pull_request_template.md',
+  'docs/agent-workflows/templates/local-change-proposal.md',
+  'docs/agent-workflows/templates/local-pr-evidence.md',
+  'docs/requirements/rtm.csv',
+  'docs/requirements/traceability-inventory.csv',
+  'docs/requirements/README.md',
+  'docs/requirements/srs.md'
+];
+
+function createDodRepoFixture(mutate?: (files: Record<string, string>) => void): string {
+  const files: Record<string, string> = {};
+  for (const relativePath of DOD_FIXTURE_FILES) {
+    files[relativePath] = fs.readFileSync(path.join(repoRoot, relativePath), 'utf8');
+  }
+  if (mutate) {
+    mutate(files);
+  }
+  return createFixture(files);
 }
 
 function buildRequirementTemplate(options: { includeOptionalCopilotPrompt: boolean }): string {
@@ -337,5 +365,73 @@ environment blockers
     expect(driftedResult.passed).toBe(false);
     expect(driftedResult.details).toContain('## Files To Inspect');
     expect(driftedResult.details).toContain('Closeout readiness (required)');
+  });
+
+  it('reports missing labels through assertOrdered when a needle is absent', () => {
+    const result = assertOrdered('alpha\nbeta', ['Gamma'], (label) => label);
+
+    expect(result.passed).toBe(false);
+    expect(result.details).toBe('Missing: Gamma');
+  });
+
+  it('parseCsvRows pads short rows with empty trailing cells', () => {
+    const rows = parseCsvRows('H1,H2,H3\nfirst,second');
+
+    expect(rows).toEqual([{ H1: 'first', H2: 'second', H3: '' }]);
+  });
+
+  it('renderResult marks failing checks and a failed gate', () => {
+    const rendered = renderResult({
+      success: false,
+      checks: [
+        { name: 'ok check', passed: true, details: 'fine' },
+        { name: 'broken check', passed: false, details: 'broke' }
+      ]
+    });
+
+    expect(rendered).toContain('[dod-gate] PASS ok check: fine');
+    expect(rendered).toContain('[dod-gate] FAIL broken check: broke');
+    expect(rendered).toContain('[dod-gate] Gate failed.');
+  });
+
+  it('resolves the working directory from process.cwd() when no cwd option is supplied', () => {
+    expect(runDefinitionOfDoneGate().success).toBe(runDefinitionOfDoneGate({ cwd: repoRoot }).success);
+  });
+
+  it('surfaces every failing check against a mutated repo fixture (VHS-REQ-615.9)', () => {
+    const root = createDodRepoFixture((files) => {
+      const pkg = JSON.parse(files['package.json']) as { scripts: Record<string, string> };
+      delete pkg.scripts['dod:gate'];
+      files['package.json'] = JSON.stringify(pkg, null, 2);
+
+      expect(files['.github/workflows/ci.yml']).toContain('npm run customization:audit');
+      files['.github/workflows/ci.yml'] = files['.github/workflows/ci.yml']
+        .split('npm run customization:audit')
+        .join('npm run customization-audit-removed');
+
+      expect(files['scripts/generateCloseoutEvidence.js']).toContain('STANDARDS_TOOLCHAIN_REGISTRY_IMAGE');
+      files['scripts/generateCloseoutEvidence.js'] = files['scripts/generateCloseoutEvidence.js']
+        .split('STANDARDS_TOOLCHAIN_REGISTRY_IMAGE')
+        .join('STANDARDS_TOOLCHAIN_REMOVED_TOKEN');
+
+      const inventoryLine = 'scripts/checkDefinitionOfDone.js,mapped,Yes,';
+      expect(files['docs/requirements/traceability-inventory.csv']).toContain(inventoryLine);
+      files['docs/requirements/traceability-inventory.csv'] = files[
+        'docs/requirements/traceability-inventory.csv'
+      ].replace(inventoryLine, 'scripts/checkDefinitionOfDone.js,other,Yes,');
+    });
+
+    const result = runDefinitionOfDoneGate({ cwd: root });
+    const byName = new Map(result.checks.map((check) => [check.name, check]));
+
+    expect(result.success).toBe(false);
+    expect(byName.get('package dod:gate script')?.passed).toBe(false);
+    expect(byName.get('package dod:gate script')?.details).toBe('missing');
+    expect(byName.get('CI required step order')?.passed).toBe(false);
+    expect(byName.get('standards provenance configuration')?.passed).toBe(false);
+    expect(byName.get('standards provenance configuration')?.details).toContain('Missing:');
+    expect(byName.get('DoD checker traceability mapping')?.passed).toBe(false);
+    expect(byName.get('DoD checker traceability mapping')?.details).toContain('inventory ok=false');
+    expect(renderResult(result)).toContain('[dod-gate] Gate failed.');
   });
 });
