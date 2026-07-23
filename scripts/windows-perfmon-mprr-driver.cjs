@@ -1,5 +1,5 @@
 // Windows perfmon -> TDMS -> mprr-sync -> bounded-RAM replay validation driver
-// (issue #2335 Part E, VHS-REQ-707 Windows-native real-hardware proof).
+// (issue #2335 Part E, VHS-REQ-713.5 Windows-native real-hardware proof).
 //
 // Maintainer real-hardware evidence tool (a `.cjs`, exempt from the
 // `scripts/*.js` traceability glob like `windows-compare-driver.cjs`). It drives
@@ -50,8 +50,8 @@ const zlib = require('node:zlib');
 const { spawnSync } = require('node:child_process');
 
 function sleepMs(ms) {
-  // Programmatic blocking sleep (no subprocess) so a background typeperf child
-  // can initialize / flush while the main thread waits.
+  // Programmatic blocking sleep (no subprocess) so a background capture child
+  // (logman collector / ffmpeg) can initialize / flush while the main thread waits.
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
 }
 
@@ -545,7 +545,6 @@ async function main() {
 
   // ---- E5 first: calibration verdict gates E3's authoritative flag. ----
   let calibration = { calibrated: false, fault: 'not-evaluated' };
-  let stopwatchProof;
   if (!CONFIG.skipChrome) {
     const chromeDir = ensureDir(path.join(CONFIG.outDir, 'surfaces'));
     const chrome = resolveChrome();
@@ -558,7 +557,7 @@ async function main() {
       EVIDENCE.stages['E5-calibration'].fault = calib.result.fault;
       EVIDENCE.stages['E5-calibration'].detectedMarkerCount = calib.result.detectedMarkerCount;
     }
-    stopwatchProof = stageBestEffort('E5-stopwatch', () => {
+    stageBestEffort('E5-stopwatch', () => {
       const proof = proveStopwatch(chrome, chromeDir);
       assert(proof.accuracy.classification === 'authoritative', `stopwatch accuracy ${proof.accuracy.classification}`);
       return {
@@ -620,7 +619,7 @@ async function main() {
   // ---- E2: artifact + TDMS channel model. The cold transition capture is the
   // primary artifact (real compare + the LabVIEW open transition, so it carries
   // the LabVIEW process channels); the second capture feeds the session pattern. ----
-  const e2 = stageOk('E2-artifact-tdms', () => {
+  stageOk('E2-artifact-tdms', () => {
     const perf = sampleSeriesMod.parsePdhCsv(fs.readFileSync(coldCsv, 'utf8'));
     const artifact = sampleSeriesMod.buildFirstRunPerfmonArtifact({
       source: 'self-hosted-runner',

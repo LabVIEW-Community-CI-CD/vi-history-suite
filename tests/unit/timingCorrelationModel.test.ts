@@ -72,6 +72,25 @@ describe('buildTimingCorrelationModel (VHS-REQ-713.7)', () => {
     expect(buildTimingCorrelationModel(baseInput(5))).toEqual(buildTimingCorrelationModel(baseInput(5)));
   });
 
+  it('scales the per-sample frame window by sampleIntervalSec (VHS-REQ-713.7)', () => {
+    // 2s sample interval at 12fps -> 24 frames per perfmon sample; stopwatch
+    // advances ~200 centiseconds per 2s sample.
+    const model = buildTimingCorrelationModel({
+      fps: FPS,
+      sampleIntervalSec: 2,
+      frames: frames(3 * FPS * 2),
+      perfmon: perfmon(3),
+      effectiveFps: 12,
+      stopwatchClassification: 'authoritative'
+    });
+    expect(model.seconds).toHaveLength(3);
+    for (const second of model.seconds) {
+      expect(second.framesInSecond).toBe(24);
+    }
+    expect(model.seconds[1].observedDeltaCs).toBe(200);
+    expect(model.seconds[2].observedDeltaCs).toBe(200);
+  });
+
   it('does not borrow a later second reading across a decode gap in a second (VHS-REQ-713.7)', () => {
     const input: BuildTimingCorrelationInput = {
       ...baseInput(2),
@@ -102,5 +121,67 @@ describe('buildTimingCorrelationModel (VHS-REQ-713.7)', () => {
     expect(() => buildTimingCorrelationModel({ ...baseInput(1), perfmon: [] })).toThrow(
       /perfmon must be a non-empty sample array/
     );
+    // frames must be an array (line-guard branch).
+    expect(() =>
+      buildTimingCorrelationModel({ ...baseInput(1), frames: undefined as unknown as TimingCorrelationFrame[] })
+    ).toThrow(/frames must be an array/);
+  });
+
+  it('passes through null effective fps and classification when the analyzer values are omitted (VHS-REQ-713.7)', () => {
+    const model = buildTimingCorrelationModel({
+      fps: FPS,
+      sampleIntervalSec: 1,
+      frames: frames(FPS),
+      perfmon: perfmon(1)
+    });
+    expect(model.signature.effectiveFps).toBeNull();
+    expect(model.signature.stopwatchClassification).toBeNull();
+  });
+
+  it('folds null perfmon channels and unreadable frames to null aggregates (VHS-REQ-713.7)', () => {
+    const nullPerfmon: TimingCorrelationPerfmonSample[] = Array.from({ length: 3 }, () => ({
+      cpuTotalPct: null,
+      memAvailMb: null,
+      diskTotalPct: null,
+      diskWriteBytesPerSec: null
+    }));
+    const unreadableFrames: TimingCorrelationFrame[] = Array.from({ length: 3 * FPS }, (_, j) => ({
+      frameIndex: j,
+      decodedCentiseconds: null,
+      wellFormed: false
+    }));
+    const model = buildTimingCorrelationModel({
+      fps: FPS,
+      sampleIntervalSec: 1,
+      frames: unreadableFrames,
+      perfmon: nullPerfmon
+    });
+    expect(model.signature.wellFormedFrameCount).toBe(0);
+    expect(model.signature.medianFramesPerSecond).toBe(0);
+    // All deltas/resources are null -> the median/mean/peak helpers return null.
+    expect(model.signature.medianObservedDeltaCs).toBeNull();
+    expect(model.signature.meanObservedDeltaCs).toBeNull();
+    expect(model.signature.meanCpuPct).toBeNull();
+    expect(model.signature.peakCpuPct).toBeNull();
+    expect(model.signature.meanDiskWriteBytesPerSec).toBeNull();
+    expect(model.seconds[0].observedStopwatchCs).toBeNull();
+    expect(model.seconds[0].cpuTotalPct).toBeNull();
+  });
+
+  it('treats a well-formed frame carrying a null decoded reading as unread (VHS-REQ-713.7)', () => {
+    // All frames report wellFormed but never decode a numeric centiseconds value.
+    const wellFormedButNull: TimingCorrelationFrame[] = Array.from({ length: FPS }, (_, j) => ({
+      frameIndex: j,
+      decodedCentiseconds: null,
+      wellFormed: true
+    }));
+    const model = buildTimingCorrelationModel({
+      fps: FPS,
+      sampleIntervalSec: 1,
+      frames: wellFormedButNull,
+      perfmon: perfmon(1)
+    });
+    expect(model.seconds[0].framesInSecond).toBe(FPS);
+    expect(model.seconds[0].observedStopwatchCs).toBeNull();
   });
 });

@@ -282,11 +282,14 @@ node scripts/windows-perfmon-mprr-driver.cjs
 | E5 | mprr calibration (8 fiducials ≤ 60 colour distance) + stopwatch accuracy (12 fps) proven via **real Chrome headless** captures decoded by the driver's built-in PNG decoder. |
 | E6 | Docker Windows-container + Windows-native perfmon TDMS models **reconcile** on the shared resource channels (dual-source parity). |
 
-> **Elevation note:** the shipped capture plan/script use `logman`, whose data
-> collectors require **admin / Performance Log Users**. On an unelevated
-> interactive host the driver samples via `typeperf` (identical `(PDH-CSV 4.0)`
-> format, no collector, no UAC) and retains the shipped logman plan + capture
-> script per capture as evidence of the elevated-actor orchestration.
+> **Elevation note:** the capture uses `logman`, whose data collectors require
+> **admin / Performance Log Users**, so the driver **requires an elevated session
+> and fails closed** (`assertElevated()`) when run unelevated. It starts the
+> collector while LabVIEW is closed so the trace spans the LabVIEW closed-to-open
+> transition (logman binds `\Process(LabVIEW)` dynamically), and derives a
+> single-`-c` logman argv from the shipped plan for logman builds that reject
+> repeated `-c`, retaining the shipped plan + capture script per capture as
+> evidence of the elevated-actor orchestration.
 
 The portable pipeline-composition contract is guarded (no hardware) by
 [tests/unit/windowsPerfmonMprrPipeline.test.ts](../tests/unit/windowsPerfmonMprrPipeline.test.ts)

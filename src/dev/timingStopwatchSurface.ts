@@ -1,4 +1,5 @@
-// Dev-only live mprr timing-stopwatch surface (VHS-REQ-710 diagnostics family).
+// Dev-only live mprr timing-stopwatch surface (VHS-REQ-713.6; reuses the
+// VHS-REQ-710 mprr stopwatch machine-strip encoding).
 //
 // Pure, deterministic generator for a FULL-VIEWPORT live stopwatch page whose
 // 40-bit machine strip is a verbatim client-side port of the shipped

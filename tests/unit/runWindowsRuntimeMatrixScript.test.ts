@@ -228,6 +228,27 @@ describe('runWindowsRuntimeMatrix.selectScenarios', () => {
     }
   });
 
+  it('light tier covers every bitness in BOTH a conflict and an admit direction (VHS-REQ-713.2)', () => {
+    const rowsById = new Map(harness.SCENARIO_MANIFEST.map((row) => [row.id, row]));
+    const light = harness.LIGHT_TIER_SCENARIOS.map((id) => rowsById.get(id)!);
+    const conflictFamilies = new Set(['bitness', 'version']);
+    const admitFamilies = new Set(['match', 'port']);
+    for (const bitness of ['x86', 'x64']) {
+      const conflict = light.some(
+        (row) => conflictFamilies.has(row.family) && (row.hostBitness === bitness || row.selectedBitness === bitness)
+      );
+      const admit = light.some(
+        (row) => admitFamilies.has(row.family) && row.hostBitness === bitness && row.selectedBitness === bitness
+      );
+      expect(conflict, `light tier lacks a ${bitness} conflict row`).toBe(true);
+      expect(admit, `light tier lacks a ${bitness} admit (negative-control) row`).toBe(true);
+    }
+    // Every grid year appears in the light tier.
+    for (const year of ['2020', '2025', '2026']) {
+      expect(light.some((row) => row.hostVersion === year || row.selectedVersion === year)).toBe(true);
+    }
+  });
+
   it('returns a single-element list for a specific canonical scenario', () => {
     expect(harness.selectScenarios('bitness-2026-x86x64')).toEqual(['bitness-2026-x86x64']);
   });
