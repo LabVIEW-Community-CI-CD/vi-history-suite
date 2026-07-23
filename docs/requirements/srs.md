@@ -5640,6 +5640,19 @@ Missing numeric IDs are intentional.
     plan, an empty executable or window path, or a negative settle. Deterministic
     script text in, deterministic script text out; spawning it lives in the actor
     harness.
+  - A pure synchronizer correlates a captured perfmon trace with an mprr
+    fiducial/stopwatch reference so a resource event is locatable in the
+    deterministic-frame-rate replay: for each sample it derives the mprr frame
+    index at the default twelve-frames-per-second rate, the printed stopwatch
+    reading, the hundred-nanosecond timing-authority tick offset from frame zero,
+    and the bit-exact forty-bit machine strip (an eight-bit preamble, a
+    twenty-four-bit centiseconds payload, and an exclusive-or checksum) that mprr
+    renders on that frame, and it correlates each series peak to its frame and
+    stopwatch. Spatial calibration is the prerequisite for trust, so the
+    synchronization is authoritative only when the supplied mprr calibration
+    verdict is calibrated; it fails closed on a bad artifact, a missing
+    calibration verdict, an unparsable capture time, or a non-positive frame rate.
+    Pure and deterministic.
 - Agent Work Scope:
   - Change the ADR, this requirement, and the governance contract test together;
     keep the required gate deterministic and never make a live image pull the
@@ -5658,6 +5671,7 @@ Missing numeric IDs are intentional.
   - `src/reporting/mirror/perfmonCapturePlan.ts`
   - `src/reporting/mirror/firstRunPerfmonPipeline.ts`
   - `src/reporting/mirror/perfmonCaptureScript.ts`
+  - `src/reporting/mirror/perfmonMprrSync.ts`
 - Verification References:
   - `tests/unit/mirrorModeGovernance.test.ts`
   - `tests/unit/mirrorParityDigest.test.ts`
@@ -5672,6 +5686,7 @@ Missing numeric IDs are intentional.
   - `tests/unit/perfmonCapturePlan.test.ts`
   - `tests/unit/firstRunPerfmonPipeline.test.ts`
   - `tests/unit/perfmonCaptureScript.test.ts`
+  - `tests/unit/perfmonMprrSync.test.ts`
 - Change Guidance:
   - This is a governance-foundation requirement: keep the documented invariants
     (human/Vagrant-only authorship, run-only container, Vagrant→`merge_group`
