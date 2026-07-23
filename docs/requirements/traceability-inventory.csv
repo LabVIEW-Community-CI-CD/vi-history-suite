@@ -527,6 +527,10 @@ tests/unit/windowsPerfmonMprrPipeline.test.ts,mapped,Yes,Portable pipeline-compo
 tests/unit/timingStopwatchSurface.test.ts,mapped,Yes,Dev-only live mprr timing-stopwatch surface strip-encoding contract tests (ground-truth capture clock); mapped to VHS-REQ-713.
 src/dev/timingStopwatchSurface.ts,mapped,Yes,Dev-only live mprr timing-stopwatch surface generator (decodable ground-truth per-frame capture clock); mapped to VHS-REQ-713.
 src/dev/timingStopwatchHost.ts,mapped,Yes,Dev-only host binding registering the timing-stopwatch command only in the Extension Development Host (not shipped user-facing); mapped to VHS-REQ-713.
+src/reporting/mirror/timingCorrelationModel.ts,mapped,Yes,Deterministic 12fps-screen<->1Hz-perfmon timing-correlation model (per-second frame-to-perfmon binding + per-run signature summary); mapped to VHS-REQ-713.
+src/reporting/mirror/timingCorrelationSignature.ts,mapped,Yes,Cross-run timing-correlation signature post-processor (repeatable signature vector + fail-closed determinism verdict); mapped to VHS-REQ-713.
+tests/unit/timingCorrelationModel.test.ts,mapped,Yes,Timing-correlation model binding + signature-summary tests; mapped to VHS-REQ-713.
+tests/unit/timingCorrelationSignature.test.ts,mapped,Yes,Cross-run timing-correlation signature + determinism-verdict tests; mapped to VHS-REQ-713.
 tests/unit/checkMaintainerRunnerPrerequisites.test.ts,mapped,Yes,Maintainer runner prerequisite doctor tests; mapped to VHS-REQ-598 and VHS-REQ-652.
 tests/unit/windowsRuntimeMatrixWorkflow.test.ts,mapped,Yes,Windows runtime matrix workflow contract tests; mapped to VHS-REQ-622.
 .github/workflows/windows-runtime-matrix.yml,release-ci,Yes,Windows runtime matrix workflow; mapped to VHS-REQ-622.
