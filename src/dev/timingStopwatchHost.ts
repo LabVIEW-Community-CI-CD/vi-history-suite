@@ -75,7 +75,11 @@ export function registerDevTimingStopwatch(context: vscode.ExtensionContext): vo
         );
         return;
       }
-      const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'vihs-timing-stopwatch-'));
+      // Reuse one stable temp dir (and browser profile) across runs so a
+      // long-lived hardening host does not accumulate per-launch mkdtemp dirs;
+      // the browser is launched detached so we cannot clean up on exit.
+      const dir = path.join(os.tmpdir(), 'vihs-timing-stopwatch');
+      fs.mkdirSync(dir, { recursive: true });
       const htmlPath = path.join(dir, 'timing-stopwatch.html');
       fs.writeFileSync(htmlPath, renderLiveTimingStopwatchHtml(), 'utf8');
       const profileDir = path.join(dir, 'browser-profile');
