@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
   evaluateLabviewContainerDiagnostics,
-  buildVariantReadinessMatrix,
   CHECK_IDS,
   type LabviewContainerProbes
 } from '../../src/reporting/containerDiagnostics/labviewContainerDiagnostics';
@@ -76,11 +75,13 @@ describe('evaluateLabviewContainerDiagnostics verdict + remediation (VHS-REQ-710
     expect(evaluateLabviewContainerDiagnostics(probes()).nextAction).toBeNull();
   });
 
-  it('fails critically when lvcompare is absent (lvmerge is out of scope)', () => {
+  it('treats a missing LVCompare as advisory, never a readiness blocker (distinct from CreateComparisonReport)', () => {
     const r = evaluateLabviewContainerDiagnostics(probes({ lvcomparePresent: false }));
-    expect(r.checks.find((c) => c.checkId === 'lvcompare-present')?.status).toBe('fail');
-    expect(r.failures).toContain('lvcompare-present');
-    expect(r.readyToCompare).toBe(false);
+    // LVCompare is the SEPARATE source-control interactive diff tool, not a
+    // CreateComparisonReport dependency, so its absence warns but never blocks readiness.
+    expect(r.checks.find((c) => c.checkId === 'lvcompare-present')?.status).toBe('warn');
+    expect(r.failures).not.toContain('lvcompare-present');
+    expect(r.readyToCompare).toBe(true);
   });
 });
 
@@ -112,49 +113,26 @@ describe('evaluateLabviewContainerDiagnostics host-native variant (VHS-REQ-710.5
     expect(r.failures).toContain('labviewcli-present');
     expect(r.readyToCompare).toBe(false);
   });
-});
 
-describe('buildVariantReadinessMatrix (VHS-REQ-710.6)', () => {
-  function probes(over: Partial<LabviewContainerProbes> = {}): LabviewContainerProbes {
-    return {
-      imageRef: 'nationalinstruments/labview:2026q1-linux',
-      dockerCliAvailable: true,
-      dockerServerVersion: '29.3.1',
-      imagePresent: true,
-      imageSizeBytes: 5_140_000_000,
-      labviewCliPath: '/usr/local/bin/LabVIEWCLI',
-      labviewEnginePath: '/usr/local/natinst/LabVIEW-2026-64',
-      labviewYear: '2026',
-      lvcomparePresent: true,
-      licensing: 'activated',
-      cliLaunch: null,
-      comparisonSmoke: null,
-      ...over
-    };
-  }
+  it('supports the Windows host-native variant: docker/image skipped, ready on host tooling', () => {
+    const r = evaluateLabviewContainerDiagnostics(hostProbes({ variant: 'windows-host-native' }));
+    expect(r.variant).toBe('windows-host-native');
+    expect(r.checks.find((c) => c.checkId === 'docker-cli')?.status).toBe('skip');
+    expect(r.checks.find((c) => c.checkId === 'image-present')?.status).toBe('skip');
+    expect(r.readyToCompare).toBe(true);
+  });
 
-  it('aggregates per-variant diagnostics into a readiness matrix', () => {
-    const container = evaluateLabviewContainerDiagnostics(probes({ variant: 'linux-container' }));
-    const host = evaluateLabviewContainerDiagnostics(
-      probes({ variant: 'linux-host-native', dockerCliAvailable: false, dockerServerVersion: null, imagePresent: false })
+  it('emits Windows-appropriate remediation when Windows host tooling is absent', () => {
+    const r = evaluateLabviewContainerDiagnostics(
+      hostProbes({ variant: 'windows-host-native', labviewCliPath: null, lvcomparePresent: false })
     );
-    const matrix = buildVariantReadinessMatrix([container, host]);
-    expect(matrix.variants.map((v) => v.variant)).toEqual(['linux-container', 'linux-host-native']);
-    expect(matrix.anyReady).toBe(true);
-    expect(matrix.allReady).toBe(true);
-    expect(matrix.summary).toMatch(/2\/2 variant/);
-  });
-
-  it('reports allReady false when one variant is not ready', () => {
-    const ok = evaluateLabviewContainerDiagnostics(probes({ variant: 'linux-container' }));
-    const bad = evaluateLabviewContainerDiagnostics(probes({ variant: 'linux-container', imagePresent: false }));
-    const matrix = buildVariantReadinessMatrix([ok, bad]);
-    expect(matrix.anyReady).toBe(true);
-    expect(matrix.allReady).toBe(false);
-  });
-
-  it('fails closed on an empty input', () => {
-    expect(() => buildVariantReadinessMatrix([])).toThrow(/non-empty/);
+    expect(r.readyToCompare).toBe(false);
+    const cliCheck = r.checks.find((c) => c.checkId === 'labviewcli-present');
+    const lvcompareCheck = r.checks.find((c) => c.checkId === 'lvcompare-present');
+    // Windows paths, not Linux /usr/local, so an agent on Windows gets actionable guidance.
+    expect(cliCheck?.remediation).toMatch(/LabVIEWCLI\.exe/);
+    expect(lvcompareCheck?.remediation).toMatch(/LVCompare\.exe/);
+    expect(r.nextAction).toMatch(/LabVIEWCLI\.exe/);
   });
 });
 

@@ -5653,16 +5653,19 @@ Missing numeric IDs are intentional.
 - Acceptance Criteria:
   - A pure, deterministic engine maps gathered container probe readings to an
     ordered set of staged checks (docker CLI, docker daemon, image presence,
-    in-container LabVIEWCLI, LabVIEW engine, lvcompare, and licensing)
-    where each check carries a stable check id and a pass, warn, fail, or skip
-    status, and a dependent check whose prerequisite is unmet is recorded as skip
-    rather than a misleading pass; the engine fails closed on malformed probes.
+    in-container LabVIEWCLI, LabVIEW engine, the advisory LVCompare source-control
+    diff tool, and licensing) where each check carries a stable check id and a
+    pass, warn, fail, or skip status, and a dependent check whose prerequisite is
+    unmet is recorded as skip rather than a misleading pass; the engine fails
+    closed on malformed probes.
   - The engine emits an overall worst-of status and a ready-to-compare boolean
     that is true only when every critical check passes and no optional smoke probe
     that was actually attempted has failed, so that advisory warnings such as an
-    unknown licensing state do not block readiness while a LabVIEWCLI-launch or
-    comparison-smoke probe that ran and failed does, and it names the first
-    actionable remediation as the next action.
+    unknown licensing state or a missing LVCompare source-control diff tool (which
+    is distinct from, and not required by, the LabVIEWCLI CreateComparisonReport
+    operation) do not block readiness while a LabVIEWCLI-launch or comparison-smoke
+    probe that ran and failed does, and it names the first actionable remediation
+    as the next action.
   - A command-line entry point gathers the real probes through an injected docker
     boundary and renders the verdict as text, JSON, JSON Schema, or Markdown,
     exiting zero only when ready to compare and non-zero when a critical check
@@ -5675,17 +5678,13 @@ Missing numeric IDs are intentional.
     preamble mismatch, checksum mismatch, non-monotonic, stalled, or gapped
     centiseconds) so a synchronization fault is localized mechanically rather than
     by frame inspection.
-  - The same engine supports multiple hardware/runtime variants: for the
-    host-native variant the docker and image checks are recorded not-applicable
-    (skip) and readiness rests on the host LabVIEW tooling checks, whereas the
-    container variant additionally requires docker and the image; the command-line
-    entry point selects the variant and gathers variant-appropriate probes.
-  - An aggregation projects the per-variant diagnostics into an all-hardware
-    variants readiness matrix with one row per variant carrying its
-    ready-to-compare state, overall status, failure count, and next action, plus
-    any-ready and all-ready summaries, and the command-line entry point can emit
-    the matrix across the known variants; the aggregation fails closed on an empty
-    input.
+  - The same engine supports multiple hardware/runtime variants, including a
+    host-native variant on Linux and on Windows: for a host-native variant the
+    docker and image checks are recorded not-applicable (skip) and readiness rests
+    on the host LabVIEW tooling checks, whereas the container variant additionally
+    requires docker and the image; the command-line entry point selects the
+    variant, gathers operating-system-appropriate host probes, and emits
+    operating-system-appropriate remediation.
 - Agent Work Scope:
   - Keep the engine pure and dependency-free so the readiness contract is unit
     tested without a container; the CLI performs the docker probing through an

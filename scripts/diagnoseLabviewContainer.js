@@ -23,10 +23,10 @@ const path = require('node:path');
 
 const DEFAULT_IMAGE = 'nationalinstruments/labview:2026q1-linux';
 const SCHEMA_ID = 'vi-history-suite/labview-container-diagnostics@v1';
-const KNOWN_VARIANTS = ['linux-container', 'linux-host-native'];
+const KNOWN_VARIANTS = ['linux-container', 'linux-host-native', 'windows-host-native'];
 
 function parseArgs(argv = []) {
-  const options = { image: DEFAULT_IMAGE, variant: 'linux-container', allVariants: false, smoke: false, json: false, schema: false, markdown: false };
+  const options = { image: DEFAULT_IMAGE, variant: 'linux-container', smoke: false, json: false, schema: false, markdown: false };
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === '--image') {
@@ -37,13 +37,12 @@ function parseArgs(argv = []) {
     } else if (arg === '--variant') {
       const value = argv[i + 1];
       if (value === undefined || value.startsWith('--')) throw new Error('--variant requires a value');
-      if (value !== 'linux-container' && value !== 'linux-host-native') {
-        throw new Error('--variant must be linux-container or linux-host-native');
+      if (!KNOWN_VARIANTS.includes(value)) {
+        throw new Error(`--variant must be one of: ${KNOWN_VARIANTS.join(', ')}`);
       }
       options.variant = value;
       i += 1;
     } else if (arg === '--smoke') options.smoke = true;
-    else if (arg === '--all-variants') options.allVariants = true;
     else if (arg === '--json') options.json = true;
     else if (arg === '--schema') options.schema = true;
     else if (arg === '--markdown') options.markdown = true;
@@ -57,10 +56,11 @@ function parseArgs(argv = []) {
 
 function usage() {
   return [
-    'Usage: node scripts/diagnoseLabviewContainer.js [--image <ref>] [--variant <linux-container|linux-host-native>] [--smoke] [--json|--schema|--markdown]',
+    'Usage: node scripts/diagnoseLabviewContainer.js [--image <ref>] [--variant <linux-container|linux-host-native|windows-host-native>] [--smoke] [--json|--schema|--markdown]',
     '',
-    'Reports whether the NI LabVIEW Linux container is set up and ready to run a real VI comparison,',
-    'with ordered fail-closed checks and per-check remediation. --smoke also launches LabVIEWCLI.'
+    'Reports whether an NI LabVIEW runtime (the Linux container or a host-native LabVIEW install) is set up',
+    'and ready to run a real VI comparison, with ordered fail-closed checks and per-check remediation.',
+    '--smoke also launches LabVIEWCLI.'
   ].join('\n');
 }
 
@@ -94,6 +94,9 @@ function defaultRunDocker(args, { timeoutMs = 120000 } = {}, exec = execFileSync
 
 /** Gather raw probes for the engine. `deps.runDocker` is injectable for tests. */
 function gatherProbes(options, deps = {}) {
+  if (options.variant === 'windows-host-native') {
+    return gatherWindowsHostNativeProbes(options, deps);
+  }
   if (options.variant === 'linux-host-native') {
     return gatherHostNativeProbes(options, deps);
   }
@@ -215,8 +218,69 @@ function gatherHostNativeProbes(options, deps = {}) {
   };
 }
 
+/**
+ * Probe a host-native Windows LabVIEW install directly (no docker). Mirrors the
+ * Linux host probe but resolves Windows tooling: LabVIEWCLI.exe on PATH, the
+ * newest `LabVIEW <year>` install directory under Program Files, and LVCompare.exe
+ * under the NI shared directory. `deps.runHost` is injectable so the parsing is
+ * unit-tested without a real Windows host or PowerShell.
+ */
+function gatherWindowsHostNativeProbes(options, deps = {}) {
+  const exec = deps.execFileSync ?? execFileSync;
+  const runHost =
+    deps.runHost ??
+    ((script) => {
+      try {
+        return {
+          ok: true,
+          stdout: String(exec('powershell', ['-NoProfile', '-NonInteractive', '-Command', script], { encoding: 'utf8' })),
+          code: 0
+        };
+      } catch (error) {
+        return { ok: false, stdout: String(error.stdout ?? ''), code: typeof error.status === 'number' ? error.status : null };
+      }
+    });
+  // Get-Command resolves LabVIEWCLI.exe on PATH and returns its source path.
+  const cli = runHost('(Get-Command LabVIEWCLI.exe -ErrorAction SilentlyContinue).Source').stdout.trim();
+  // Newest `LabVIEW <year>` install directory under Program Files.
+  const engine = runHost(
+    "(Get-ChildItem 'C:\\Program Files\\National Instruments' -Directory -Filter 'LabVIEW *' -ErrorAction SilentlyContinue | Sort-Object Name -Descending | Select-Object -First 1).FullName"
+  ).stdout.trim();
+  const yearMatch = engine.match(/\d{4}/);
+  // Check BOTH Program Files roots: LabVIEW's shared tooling can live under
+  // Program Files (x86). LVCompare is advisory only, so this just keeps the
+  // informational signal accurate; it never blocks readiness.
+  const lvcompare =
+    runHost(
+      "if ((Test-Path 'C:\\Program Files\\National Instruments\\Shared\\LabVIEW Compare\\LVCompare.exe') -or (Test-Path 'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW Compare\\LVCompare.exe')) { 'True' } else { 'False' }"
+    )
+      .stdout.trim()
+      .toLowerCase() === 'true';
+  let cliLaunch = null;
+  if (options.smoke && cli) {
+    const run = runHost('$out = & LabVIEWCLI -Version 2>&1 | Out-String; Write-Output $out');
+    const versionLine = (run.stdout || '').split(/\r?\n/).find((l) => /\d+\.\d+/.test(l)) || null;
+    cliLaunch = { ok: run.ok, version: versionLine ? versionLine.trim() : null, exitCode: run.code };
+  }
+  return {
+    imageRef: options.image,
+    variant: 'windows-host-native',
+    dockerCliAvailable: false,
+    dockerServerVersion: null,
+    imagePresent: false,
+    imageSizeBytes: null,
+    labviewCliPath: cli || null,
+    labviewEnginePath: engine || null,
+    labviewYear: yearMatch ? yearMatch[0] : null,
+    lvcomparePresent: lvcompare,
+    licensing: 'unknown',
+    cliLaunch,
+    comparisonSmoke: null
+  };
+}
+
 function renderText(result) {
-  const target = result.variant === 'linux-host-native' ? 'host-native LabVIEW' : result.imageRef;
+  const target = result.variant.endsWith('-host-native') ? 'host-native LabVIEW' : result.imageRef;
   const lines = [`NI LabVIEW diagnostics [${result.variant}] — ${target}`, ''];
   const mark = { pass: '✔', warn: '!', fail: '✘', skip: '·' };
   for (const c of result.checks) {
@@ -230,7 +294,7 @@ function renderText(result) {
 }
 
 function renderMarkdown(result) {
-  const target = result.variant === 'linux-host-native' ? 'host-native LabVIEW' : result.imageRef;
+  const target = result.variant.endsWith('-host-native') ? 'host-native LabVIEW' : result.imageRef;
   const lines = [
     `## NI LabVIEW diagnostics [${result.variant}] — \`${target}\``,
     '',
@@ -279,18 +343,6 @@ function buildSchema() {
   };
 }
 
-function renderMatrixText(matrix) {
-  const mark = (ready) => (ready ? '✔ ready' : '✘ not-ready');
-  const lines = ['NI LabVIEW all-variants readiness matrix', ''];
-  for (const v of matrix.variants) {
-    lines.push(`  ${mark(v.readyToCompare)}  ${v.variant}  (overall=${v.overall}, failures=${v.failureCount})`);
-    if (v.nextAction) lines.push(`        → ${v.nextAction}`);
-  }
-  lines.push('');
-  lines.push(matrix.summary);
-  return lines.join('\n');
-}
-
 function main(argv = process.argv.slice(2), deps = {}) {
   const stdout = deps.stdout ?? process.stdout;
   const stderr = deps.stderr ?? process.stderr;
@@ -321,30 +373,6 @@ function main(argv = process.argv.slice(2), deps = {}) {
       );
       return 2;
     }
-  }
-
-  if (options.allVariants) {
-    let buildMatrix = deps.buildMatrix;
-    if (!buildMatrix) {
-      try {
-        const cwd = deps.cwd || process.cwd();
-        buildMatrix = require(path.resolve(cwd, 'out/reporting/containerDiagnostics/labviewContainerDiagnostics.js')).buildVariantReadinessMatrix;
-      } catch (error) {
-        stderr.write(`Failed to load the compiled diagnostics engine; run \`npm run compile\` first: ${error instanceof Error ? error.message : String(error)}\n`);
-        return 2;
-      }
-    }
-    let matrix;
-    try {
-      const results = KNOWN_VARIANTS.map((variant) => evaluate(gatherProbes({ ...options, variant }, deps)));
-      matrix = buildMatrix(results);
-    } catch (error) {
-      stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
-      return 2;
-    }
-    if (options.json) stdout.write(`${JSON.stringify(matrix, null, 2)}\n`);
-    else stdout.write(`${renderMatrixText(matrix)}\n`);
-    return matrix.anyReady ? 0 : 1;
   }
 
   let result;
