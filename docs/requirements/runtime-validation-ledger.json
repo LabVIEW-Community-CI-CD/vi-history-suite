@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "description": "Committed record of the last real-runtime comparison validation for each Linux-executable comparison-runtime track. The risk ledger (scripts/buildRiskLedger.js, VHS-REQ-601) reads this file and surfaces any track whose lastValidatedVersion is not the current build version as a selectable runtime-fidelity re-validation risk. Windows host-native and windows-container tracks are intentionally NOT listed as Linux-executable tracks: they are covered by the parked platform-proof awareness list (issue #1316) because they are not executable on a Linux host. EXCEPTION: a track marked releaseGating:true (linuxExecutable:false) is the mandatory local Vagrant release attestation (VHS-REQ-666) read by scripts/checkReleaseReadiness.js --require-release-attestation; the marketplace-release workflow fails closed unless its lastValidatedVersion equals the release version. Update a track's lastValidatedVersion/lastValidatedCommit/evidence after re-running its driver against a new build (use scripts/recordRuntimeValidation.js).",
+  "description": "Committed record of the last real-runtime comparison validation for each Linux-executable comparison-runtime track. The risk ledger (scripts/buildRiskLedger.js, VHS-REQ-601) reads this file and surfaces any track whose lastValidatedVersion is not the current build version as a selectable runtime-fidelity re-validation risk. Windows host-native and windows-container tracks are recorded with linuxExecutable:false so they document real-hardware coverage without being surfaced by the Linux-executable risk dimension. Historically the Windows grid was parked on the platform-proof awareness list (issue #1316); the real Windows hardening host (issue #2335, VHS-REQ-713) now records genuine winhost-* (host-native) and windows-container-* tracks from real CreateComparisonReport runs on this host. EXCEPTION: a track marked releaseGating:true (linuxExecutable:false) is the mandatory local Vagrant release attestation (VHS-REQ-666) read by scripts/checkReleaseReadiness.js --require-release-attestation; the marketplace-release workflow fails closed unless its lastValidatedVersion equals the release version. Update a track's lastValidatedVersion/lastValidatedCommit/evidence after re-running its driver against a new build (use scripts/recordRuntimeValidation.js).",
   "tracks": [
     {
       "trackId": "linux-host-native",
@@ -78,6 +78,37 @@
       "lastValidatedCommit": "f1ca054a",
       "evidence": "vagrant pathadmit+validation proof sha256:52d0e648d1b7b81ec5678277c795fafbdc15ae056bbaee354f5840f3b3f68d44 2026-07-17T06:27:36.094Z",
       "fixture": "real Windows user-PATH admission (persistWindowsUserPathPrepend) + validateLocalRuntimeSettingsCli --proof-out (runtime-validation-proof@v1)"
+    },
+    {
+      "trackId": "winhost-2026-x64",
+      "platform": "windows",
+      "provider": "host-native",
+      "linuxExecutable": false,
+      "lastValidatedVersion": "1.36.1",
+      "lastValidatedCommit": "3f7e5d14",
+      "evidence": "Windows hardening host (#2335, VHS-REQ-713): lv_icon.vi (5376833..fc09736) CreateComparisonReport host-native 2026 x64 runtimeState=succeeded reportExists=true, 2026-07-23",
+      "fixture": "labview-icon-editor resource/plugins/lv_icon.vi"
+    },
+    {
+      "trackId": "winhost-2026-x86",
+      "platform": "windows",
+      "provider": "host-native",
+      "linuxExecutable": false,
+      "lastValidatedVersion": "1.36.1",
+      "lastValidatedCommit": "3f7e5d14",
+      "evidence": "Windows hardening host (#2335, VHS-REQ-713): lv_icon.vi (5376833..fc09736) CreateComparisonReport host-native 2026 x86 (32-bit) runtimeState=succeeded reportExists=true, 2026-07-23",
+      "fixture": "labview-icon-editor resource/plugins/lv_icon.vi"
+    },
+    {
+      "trackId": "windows-container-2026q1patch2",
+      "platform": "windows",
+      "provider": "windows-container",
+      "image": "nationalinstruments/labview:2026q1patch2-windows",
+      "linuxExecutable": false,
+      "lastValidatedVersion": "1.36.1",
+      "lastValidatedCommit": "3f7e5d14",
+      "evidence": "Windows hardening host (#2335, VHS-REQ-713): lv_icon.vi (5376833..fc09736) CreateComparisonReport windows-container runtimeState=succeeded reportExists=true, 2026-07-23",
+      "fixture": "labview-icon-editor resource/plugins/lv_icon.vi"
     }
   ]
 }
