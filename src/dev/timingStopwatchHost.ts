@@ -79,25 +79,39 @@ export function registerDevTimingStopwatch(context: vscode.ExtensionContext): vo
       const htmlPath = path.join(dir, 'timing-stopwatch.html');
       fs.writeFileSync(htmlPath, renderLiveTimingStopwatchHtml(), 'utf8');
       const profileDir = path.join(dir, 'browser-profile');
-      const child = spawn(
-        browser,
-        [
-          '--kiosk',
-          '--force-device-scale-factor=1',
-          '--no-first-run',
-          '--no-default-browser-check',
-          '--disable-infobars',
-          '--disable-session-crashed-bubble',
-          '--overscroll-history-navigation=0',
-          `--user-data-dir=${profileDir}`,
-          `--app=${pathToFileURL(htmlPath).href}`
-        ],
-        { detached: true, stdio: 'ignore' }
-      );
-      child.unref();
-      void vscode.window.showInformationMessage(
-        'Dev timing stopwatch launched full-screen (kiosk). Press Alt+F4 / close the window to exit.'
-      );
+      try {
+        const child = spawn(
+          browser,
+          [
+            '--kiosk',
+            '--force-device-scale-factor=1',
+            '--no-first-run',
+            '--no-default-browser-check',
+            '--disable-infobars',
+            '--disable-session-crashed-bubble',
+            '--overscroll-history-navigation=0',
+            `--user-data-dir=${profileDir}`,
+            `--app=${pathToFileURL(htmlPath).href}`
+          ],
+          { detached: true, stdio: 'ignore' }
+        );
+        // spawn() surfaces failures to launch (blocked by policy, not runnable)
+        // asynchronously via an 'error' event; without a listener that throws
+        // and would crash the Extension Development Host.
+        child.on('error', (err) => {
+          void vscode.window.showErrorMessage(
+            `Dev timing stopwatch: failed to launch ${browser}: ${err.message}`
+          );
+        });
+        child.unref();
+        void vscode.window.showInformationMessage(
+          'Dev timing stopwatch launched full-screen (kiosk). Press Alt+F4 / close the window to exit.'
+        );
+      } catch (err) {
+        void vscode.window.showErrorMessage(
+          `Dev timing stopwatch: failed to launch ${browser}: ${err instanceof Error ? err.message : String(err)}`
+        );
+      }
     })
   );
 }
