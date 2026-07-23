@@ -155,6 +155,13 @@ their canonical manifest row so existing prompts and dispatch keep working. The
 harness launches/stops the correct Host install per row and asserts the expected
 blocked reason from a real `vihs --validate --proof-out` proof.
 
+Because a `match` row and the `port` row for the same year/bitness share one
+install's `LabVIEW.ini`, the helper **arranges the requested port mode per
+scenario** — it backs up that ini, writes the default (match) or a deterministic
+non-default (port) `server.tcp.port` before launch, then restores the original
+ini in a `finally` block — so both admit directions are satisfiable without
+leaving the operator's configuration changed.
+
 ## Part C — Record evidence in the ledger
 
 Record **only genuine passing runs** — never fabricate ledger evidence. For each
