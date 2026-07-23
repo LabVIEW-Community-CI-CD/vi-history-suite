@@ -7877,7 +7877,9 @@ Missing numeric IDs are intentional.
   - The runtime-conflict matrix is a scenario manifest of thirty canonical rows
     across four families — six `bitness` (same year, opposite bitness ->
     `windows-host-bitness-conflict`), twelve `version` (same bitness, different
-    year, both directions -> `windows-host-version-conflict`), six `match` (host
+    year, both directions -> `windows-host-version-conflict`, or
+    `labview-version-unsupported-for-comparison-report` when the selected year is
+    below the minimum comparison year), six `match` (host
     equals selected on the default port -> `none`), and six `port` (host equals
     selected on a non-default VI Server port derived from the selected install's
     own LabVIEW.ini -> `none`) — and `--scenario all` runs exactly the canonical
@@ -7890,7 +7892,12 @@ Missing numeric IDs are intentional.
     `port-A` remain accepted `--scenario` aliases that resolve to their canonical
     manifest row's parameters, so the existing prompt and dispatch keep working.
   - The `version` family includes a direction whose selected version is LabVIEW
-    2020 (the older-VI convert path), and the per-scenario summary additionally
+    2020; real-hardware validation (#2338) confirmed that a selected year below
+    the minimum comparison year is blocked as
+    `labview-version-unsupported-for-comparison-report` (the unsupported-target
+    gate fires before the version-conflict check), so those rows assert that
+    reason while the supported-selected rows assert `windows-host-version-conflict`.
+    The per-scenario summary additionally
     asserts the observed host and selected years equal the manifest row for
     version-family scenarios, so a version conflict is proven to arise from the
     intended year mismatch rather than an incidental one.

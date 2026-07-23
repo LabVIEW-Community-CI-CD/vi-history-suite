@@ -72,10 +72,13 @@ year), record it **N/A** in the evidence — that is not a gap.
 > [src/reporting/runtime/labviewVersionSelection.ts](../src/reporting/runtime/labviewVersionSelection.ts)).
 > A host-native **2020** *comparison* is therefore rejected end-to-end today.
 > The runtime-conflict matrix still exercises 2020 as a **selected** version in
-> the `version` family (the older-VI convert path) because a version conflict is
-> detected before the minimum-year gate. Lowering the minimum to admit a real
-> 2020 `CreateComparisonReport` is a product change that must be validated on
-> this host before it ships, not assumed.
+> the `version` family, but real-hardware validation (#2338) confirmed the
+> minimum-year gate fires **first**: selecting 2020 is blocked as
+> `labview-version-unsupported-for-comparison-report`, not as a version conflict.
+> Those rows therefore assert the unsupported reason (the supported-selected rows
+> still assert the version conflict). Lowering the minimum to admit a real 2020
+> `CreateComparisonReport` is a product change that must be validated on this
+> host before it ships, not assumed.
 
 ### A3. Repo + fixture setup
 
@@ -136,7 +139,7 @@ The matrix driver
 | Family | Rows | Host vs Selected | Expected `runtimeBlockedReason` |
 |---|---|---|---|
 | `bitness` | 6 | same year, opposite bitness | `windows-host-bitness-conflict` |
-| `version` | 12 | same bitness, different year (both directions, incl. 2020 convert path) | `windows-host-version-conflict` |
+| `version` | 12 | same bitness, different year (both directions) | `windows-host-version-conflict`, or `labview-version-unsupported-for-comparison-report` when the selected year is below 2025 (#2338) |
 | `match` | 6 | host == selected, enforced default VI Server port | `none` |
 | `port` | 6 | host == selected, enforced non-default port derived from the selected ini | `none` |
 

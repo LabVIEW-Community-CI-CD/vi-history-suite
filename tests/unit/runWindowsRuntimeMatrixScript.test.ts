@@ -111,17 +111,27 @@ describe('runWindowsRuntimeMatrix.SCENARIO_MANIFEST', () => {
     }
   });
 
-  it('version rows pair the same bitness at different years with the version-conflict reason, including the 2020 convert path (VHS-REQ-713.1, VHS-REQ-713.4)', () => {
+  it('version rows pair the same bitness at different years; selected-year comparison support drives the reason (VHS-REQ-713.1, VHS-REQ-713.4, #2338)', () => {
     for (const row of harness.SCENARIO_MANIFEST.filter((entry) => entry.family === 'version')) {
       expect(row.hostBitness).toBe(row.selectedBitness);
       expect(row.hostVersion).not.toBe(row.selectedVersion);
-      expect(row.expectedBlockedReason).toBe('windows-host-version-conflict');
+      // #2338: a selected year below the comparison minimum (2025) is blocked as
+      // unsupported-for-comparison; otherwise it asserts the version conflict.
+      if (Number(row.selectedVersion) < 2025) {
+        expect(row.expectedBlockedReason).toBe('labview-version-unsupported-for-comparison-report');
+      } else {
+        expect(row.expectedBlockedReason).toBe('windows-host-version-conflict');
+      }
     }
-    // At least one direction selects LabVIEW 2020 (the convert path).
-    const selects2020 = harness.SCENARIO_MANIFEST.filter(
-      (entry) => entry.family === 'version' && entry.selectedVersion === '2020'
-    );
+    // Both sub-behaviors are covered: at least one selected-2020 (unsupported)
+    // row and at least one supported-selected version-conflict row.
+    const versionRows = harness.SCENARIO_MANIFEST.filter((entry) => entry.family === 'version');
+    const selects2020 = versionRows.filter((entry) => entry.selectedVersion === '2020');
     expect(selects2020.length).toBeGreaterThan(0);
+    expect(selects2020.every((r) => r.expectedBlockedReason === 'labview-version-unsupported-for-comparison-report')).toBe(true);
+    expect(
+      versionRows.some((r) => r.expectedBlockedReason === 'windows-host-version-conflict')
+    ).toBe(true);
   });
 
   it('match rows admit an identical host/selected on the default port (VHS-REQ-713.1)', () => {
