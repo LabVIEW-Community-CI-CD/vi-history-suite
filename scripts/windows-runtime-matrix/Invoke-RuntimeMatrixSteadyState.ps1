@@ -326,8 +326,18 @@ try {
     # restored in the finally block. '<absent>' records that the file did not
     # exist so restore deletes the harness-created ini.
     if ($PortMode) {
-        if (Test-Path -LiteralPath $portModeIniPath) {
-            $portModeIniBackup = "$portModeIniPath.vihs-matrix-backup"
+        $backupCandidate = "$portModeIniPath.vihs-matrix-backup"
+        if (Test-Path -LiteralPath $backupCandidate) {
+            # A stale backup means a previous run crashed or failed to restore:
+            # the CURRENT ini is the harness-modified one and this backup is the
+            # true pristine original. Recover from it first and DO NOT overwrite
+            # it (that would destroy the only pristine copy), then re-arrange.
+            Write-Warning "[$ScenarioId] found stale ini backup '$backupCandidate'; recovering the operator's original ini before re-arranging"
+            Copy-Item -LiteralPath $backupCandidate -Destination $portModeIniPath -Force
+            $portModeIniBackup = $backupCandidate
+        }
+        elseif (Test-Path -LiteralPath $portModeIniPath) {
+            $portModeIniBackup = $backupCandidate
             Copy-Item -LiteralPath $portModeIniPath -Destination $portModeIniBackup -Force
         }
         else {
