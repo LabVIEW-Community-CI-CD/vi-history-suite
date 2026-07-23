@@ -77,6 +77,18 @@ describe('decodeMprrStripImage (VHS-REQ-710.9)', () => {
     expect(() => decodeMprrStripImage({ rowLuminance: bitsToRow(stripForCentiseconds(1)), bitCount: 0 })).toThrow(/positive integer/);
   });
 
+  it('fails closed on a non-finite luminance sample instead of silently zeroing the strip', () => {
+    const row: number[] = new Array(40).fill(120);
+    row[5] = Number.NaN;
+    expect(() => decodeMprrStripImage({ rowLuminance: row })).toThrow(/finite luminance samples/);
+  });
+
+  it('fails closed on a non-finite threshold override', () => {
+    expect(() =>
+      decodeMprrStripImage({ rowLuminance: bitsToRow(stripForCentiseconds(50)), threshold: Number.NaN })
+    ).toThrow(/threshold must be a finite number/);
+  });
+
   it('yields null centiseconds/checksum when the strip is too short to carry the payload', () => {
     const decoded = decodeMprrStripImage({ rowLuminance: bitsToRow('10100101'), bitCount: 8 });
     expect(decoded.preambleOk).toBe(true);

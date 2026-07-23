@@ -10,10 +10,10 @@
  * the stopwatch printed, and its accuracy measured against the capture cadence.
  *
  * Pure and deterministic: pixel samples in, decoded bits + centiseconds out, no
- * I/O. It validates its arguments (a non-positive cell count, or a row too short
- * to segment into that many cells, throw), but never throws on malformed strip
- * CONTENT: a bad preamble, payload, or checksum simply yields `wellFormed:
- * false` for the caller to inspect.
+ * I/O. It validates its arguments (a non-positive cell count, a row too short to
+ * segment into that many cells, or a non-finite luminance sample or threshold all
+ * throw), but never throws on malformed strip CONTENT: a bad preamble, payload,
+ * or checksum simply yields `wellFormed: false` for the caller to inspect.
  */
 
 import { MACHINE_STRIP_BIT_LENGTH, STOPWATCH_PREAMBLE } from './syncPatternFailureSignature';
@@ -54,8 +54,8 @@ export interface DecodedStripImage {
  * Decode the machine strip from a sampled luminance row. Segments the row into
  * `bitCount` equal cells, samples each cell's middle third (avoiding cell-edge
  * bleed), thresholds to a bit (darker than threshold = 1/black), and decodes the
- * centiseconds + checksum. Fail-closed on a row shorter than the cell count or a
- * non-positive cell count.
+ * centiseconds + checksum. Fail-closed on a row shorter than the cell count, a
+ * non-positive cell count, or a non-finite luminance sample or threshold.
  */
 export function decodeMprrStripImage(input: DecodeStripImageInput): DecodedStripImage {
   const bitCount = input.bitCount ?? MACHINE_STRIP_BIT_LENGTH;
@@ -88,9 +88,15 @@ export function decodeMprrStripImage(input: DecodeStripImageInput): DecodedStrip
 
   // Compute the black/white midpoint iteratively: `bitCount` is caller-controlled,
   // so a spread (Math.min(...cellLuminance)) could throw on a very large array.
+  // Fail-closed at this input boundary: a non-finite luminance sample (NaN/Inf)
+  // would otherwise threshold every cell to '0' and silently return an all-zeros
+  // strip instead of surfacing the bad input.
   let minLuminance = cellLuminance[0];
   let maxLuminance = cellLuminance[0];
   for (const value of cellLuminance) {
+    if (!Number.isFinite(value)) {
+      throw new Error('rowLuminance must contain only finite luminance samples.');
+    }
     if (value < minLuminance) {
       minLuminance = value;
     }
@@ -99,6 +105,11 @@ export function decodeMprrStripImage(input: DecodeStripImageInput): DecodedStrip
     }
   }
   const threshold = input.threshold ?? (minLuminance + maxLuminance) / 2;
+  // A non-finite threshold override makes every comparison false, which would
+  // silently zero the strip; reject it rather than fail silently.
+  if (!Number.isFinite(threshold)) {
+    throw new Error('threshold must be a finite number.');
+  }
   const stripBits = cellLuminance.map((value) => (value < threshold ? '1' : '0')).join('');
 
   const preamble = stripBits.slice(0, STOPWATCH_PREAMBLE.length);

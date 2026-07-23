@@ -5838,7 +5838,8 @@ Missing numeric IDs are intentional.
     (or a fixed override), and decodes the eight-bit preamble, twenty-four-bit
     centiseconds payload, and exclusive-or checksum, reporting whether the strip
     is well-formed without throwing. It fails closed on a row shorter than the
-    cell count or a non-positive cell count. Pure and deterministic.
+    cell count, a non-positive cell count, or a non-finite luminance sample or
+    threshold. Pure and deterministic.
   - A pure analyzer measures how accurately the decoded stopwatch tracks real
     time at a nominal capture cadence: from a sequence of captured frames (capture
     timestamp plus decoded centiseconds) it computes the effective frame rate,
