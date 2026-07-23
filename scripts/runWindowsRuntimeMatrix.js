@@ -273,7 +273,7 @@ function getUsage() {
     'Options:',
     '  --scenario <id>         all | light | <canonical-id> | <legacy-alias>',
     '                          (default: all runs the 30 canonical rows; light',
-    '                          runs the ~14-row CI tier; legacy aliases steady-A/',
+    '                          runs the curated CI tier; legacy aliases steady-A/',
     '                          steady-B/version-A/version-B/port-A resolve to',
     '                          their canonical manifest row)',
     '  --labview-version <yr>  Default LabVIEW major version for scenarios that',
