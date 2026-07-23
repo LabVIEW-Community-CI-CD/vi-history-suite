@@ -168,3 +168,34 @@ describe('controlPlaneBoardSync: live gh boundaries (VHS-REQ-695.3)', () => {
     expect(closures.size).toBe(0);
   });
 });
+
+describe('controlPlaneBoardSync residual branch coverage (#2333)', () => {
+  it('buildBoardSyncItems treats a non-array items argument as empty', () => {
+    expect(buildBoardSyncItems(null, {})).toEqual([]);
+    expect(buildBoardSyncItems(undefined, {})).toEqual([]);
+  });
+
+  it('buildBoardSyncItems coerces a nullish closure map to an empty Map (never inferring closure)', () => {
+    const fromNull = buildBoardSyncItems(PROJECT_ITEMS, null);
+    expect(fromNull.every((i) => i.linkedPrMerged === false)).toBe(true);
+    const fromUndefined = buildBoardSyncItems(PROJECT_ITEMS, undefined);
+    expect(fromUndefined.every((i) => i.linkedPrMerged === false)).toBe(true);
+  });
+
+  it('renderShadowPlan treats a non-array updates argument as in-sync', () => {
+    expect(renderShadowPlan(null)).toContain('in sync');
+    expect(renderShadowPlan(undefined)).toContain('in sync');
+  });
+
+  it('renderShadowPlan omits the report-only note when the write path is enabled', () => {
+    const out = renderShadowPlan([{ number: 1, field: 'Status', value: 'Done', reason: 'linked-pr-merged' }], {
+      enabledForWrite: true
+    });
+    expect(out).toContain('WOULD mirror');
+    expect(out).not.toContain('report-only');
+  });
+
+  it('runGh falls back to "unknown error" when a nonzero gh exit carries no stderr', () => {
+    expect(() => runGh(['x'], { spawnSync: () => ({ status: 3, stderr: '' }) })).toThrow(/gh exited 3: unknown error/);
+  });
+});

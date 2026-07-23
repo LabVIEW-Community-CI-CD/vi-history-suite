@@ -1161,3 +1161,77 @@ describe('presentVersionOpenBlockedToast (VHS-REQ-637)', () => {
     expect(executeCommand).not.toHaveBeenCalled();
   });
 });
+
+describe('runtime availability open-gate ambient dependency fallbacks (VHS-REQ-629, VHS-REQ-636, VHS-REQ-637)', () => {
+  it('presents the LabVIEW CLI blocked toast with default copy when no decision is provided', async () => {
+    const showWarning = vi.mocked(vscode.window.showWarningMessage);
+    const openExternal = vi.mocked(vscode.env.openExternal);
+    showWarning.mockClear();
+    openExternal.mockClear();
+    showWarning.mockResolvedValueOnce(undefined);
+    // No decision -> the default message / action-label / install-URL fallbacks.
+    await presentLabviewCliOpenBlockedToast();
+    expect(showWarning).toHaveBeenCalledWith(
+      LABVIEW_CLI_OPEN_BLOCKED_MESSAGE,
+      LABVIEW_CLI_NOTICE_BUTTON_INSTALL
+    );
+    expect(openExternal).not.toHaveBeenCalled();
+  });
+
+  it('presents the VI Server blocked toast with default copy when no decision is provided', async () => {
+    const showWarning = vi.mocked(vscode.window.showWarningMessage);
+    showWarning.mockClear();
+    showWarning.mockResolvedValueOnce(undefined);
+    // No decision -> the default VI-server message fallback.
+    await presentViServerOpenBlockedToast();
+    expect(showWarning).toHaveBeenCalledWith(VI_SERVER_OPEN_BLOCKED_MESSAGE);
+  });
+
+  it('defaults the bitness toast action label when the decision omits it', async () => {
+    const showWarning = vi.mocked(vscode.window.showWarningMessage);
+    showWarning.mockClear();
+    showWarning.mockResolvedValueOnce(undefined);
+    // toastMessage present but actionLabel omitted -> the action-label fallback.
+    await presentBitnessOpenBlockedToast({ kind: 'block', toastMessage: 'bitness conflict' });
+    expect(showWarning).toHaveBeenCalledWith('bitness conflict', BITNESS_OPEN_PICK_PROVIDER_ACTION);
+  });
+
+  it('defaults the version toast action label when the decision omits it', async () => {
+    const showWarning = vi.mocked(vscode.window.showWarningMessage);
+    showWarning.mockClear();
+    showWarning.mockResolvedValueOnce(undefined);
+    await presentVersionOpenBlockedToast({ kind: 'block', toastMessage: 'version mismatch' });
+    expect(showWarning).toHaveBeenCalledWith('version mismatch', expect.any(String));
+  });
+
+  it('resolves the registry-fallback platform from process.platform when no platform dep is injected', async () => {
+    // No deps -> `deps.platform ?? process.platform`. With no probe supplied the
+    // base block decision is returned unchanged.
+    const decision = await decideLabviewCliOpenGateWithRegistryFallback({
+      kind: 'block',
+      toastMessage: LABVIEW_CLI_OPEN_BLOCKED_MESSAGE,
+      actionLabel: LABVIEW_CLI_NOTICE_BUTTON_INSTALL
+    });
+    expect(decision.kind).toBe('block');
+  });
+
+  it('resolves the bitness-gate platform from process.platform when no platform dep is injected', async () => {
+    // detection present + snapshot undefined reaches the ambient-platform
+    // resolution, then fails open to allow on any host.
+    await expect(decideBitnessOpenGate(detectionHost, undefined)).resolves.toEqual({
+      kind: 'allow'
+    });
+  });
+
+  it('resolves the VI-server-gate platform from process.platform when no platform dep is injected', async () => {
+    await expect(decideViServerOpenGate(detectionHost, undefined)).resolves.toEqual({
+      kind: 'allow'
+    });
+  });
+
+  it('resolves the version-gate platform from process.platform when no platform dep is injected', async () => {
+    await expect(decideVersionOpenGate(detectionHost, undefined)).resolves.toEqual({
+      kind: 'allow'
+    });
+  });
+});

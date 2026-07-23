@@ -269,4 +269,65 @@ describe('viHistoryModel direct history facts', () => {
       decision: 'auto-fallback-unknown-total'
     });
   });
+
+  it('resolves the repository root via git when no repoRoot option is provided (VHS-REQ-635)', async () => {
+    // No repoRoot supplied: exercises the `options.repoRoot ?? getRepoRoot(...)`
+    // fallback so the git-backed root resolution path is measured.
+    const model = await loadViHistoryViewModelFromFsPath('/workspace/repo/src/Sample.vi');
+    expect(getRepoRootMock).toHaveBeenCalledWith('/workspace/repo/src');
+    expect(model.repositoryRoot).toBe('/workspace/repo');
+  });
+
+  it('returns an empty commit list without querying entries when the file has zero commits', async () => {
+    getFileHistoryCountMock.mockResolvedValue(0);
+    const model = await loadViHistoryViewModelFromFsPath('/workspace/repo/src/Sample.vi', {
+      repoRoot: '/workspace/repo'
+    });
+    expect(getFileHistoryEntriesMock).not.toHaveBeenCalled();
+    expect(model.commits).toEqual([]);
+    expect(model.historyWindow?.decision).toBe('auto-full-history');
+  });
+
+  it('records the capped fallback decision when total count is unknown under capped mode', async () => {
+    getFileHistoryCountMock.mockRejectedValue(new Error('count unavailable'));
+    getFileHistoryEntriesMock.mockResolvedValue([
+      { hash: 'c3', authorName: 'Dev', authorDate: '2026-01-03', subject: 'Third' }
+    ]);
+    const model = await loadViHistoryViewModelFromFsPath('/workspace/repo/src/Sample.vi', {
+      repoRoot: '/workspace/repo',
+      historyWindowMode: 'capped'
+    });
+    expect(model.historyWindow?.decision).toBe('capped-fallback-unknown-total');
+  });
+
+  it('records the auto truncated decision when loaded commits are fewer than total under auto mode', async () => {
+    getFileHistoryCountMock.mockResolvedValue(5);
+    getFileHistoryEntriesMock.mockResolvedValue([
+      { hash: 'e5', authorName: 'Dev', authorDate: '2026-01-05', subject: 'Fifth' },
+      { hash: 'd4', authorName: 'Dev', authorDate: '2026-01-04', subject: 'Fourth' }
+    ]);
+    const model = await loadViHistoryViewModelFromFsPath('/workspace/repo/src/Sample.vi', {
+      repoRoot: '/workspace/repo',
+      historyLimit: 2,
+      historyWindowMode: 'auto'
+    });
+    expect(model.historyWindow?.decision).toBe('auto-truncated-to-ceiling');
+    expect(model.historyWindow?.truncated).toBe(true);
+  });
+
+  it('records the capped full-history decision when loaded commits equal total under capped mode', async () => {
+    getFileHistoryCountMock.mockResolvedValue(2);
+    getFileHistoryEntriesMock.mockResolvedValue([
+      { hash: 'c3', authorName: 'Dev', authorDate: '2026-01-03', subject: 'Third' },
+      { hash: 'b2', authorName: 'Dev', authorDate: '2026-01-02', subject: 'Second' }
+    ]);
+    const model = await loadViHistoryViewModelFromFsPath('/workspace/repo/src/Sample.vi', {
+      repoRoot: '/workspace/repo',
+      historyLimit: 10,
+      configuredMaxHistoryEntries: 10,
+      historyWindowMode: 'capped'
+    });
+    expect(model.historyWindow?.decision).toBe('capped-full-history');
+    expect(model.historyWindow?.truncated).toBe(false);
+  });
 });

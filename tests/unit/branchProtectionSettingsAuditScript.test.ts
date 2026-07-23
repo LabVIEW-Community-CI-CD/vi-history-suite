@@ -2975,3 +2975,40 @@ describe('branch protection audit main', () => {
     expect(stderr.read()).toContain('returned invalid JSON');
   });
 });
+
+describe('branch protection audit ruleset-summary fallbacks (#2333)', () => {
+  it('applies default labels when ruleset name/target/enforcement are absent', () => {
+    expect(rulesetTargetEnforcementSummaries([null, {}])).toEqual([
+      { name: '(unnamed)', target: 'unknown', enforcement: 'unknown' }
+    ]);
+  });
+
+  it('applies default fields for an active ruleset missing name/source/rules/bypass metadata', () => {
+    const summaries = activeRulesetSummaries([
+      { enforcement: EXPECTED_ACTIVE_RULESET_ENFORCEMENT, target: EXPECTED_ACTIVE_RULESET_TARGET }
+    ]);
+    expect(summaries).toEqual([
+      {
+        name: '(unnamed)',
+        sourceType: 'unknown',
+        source: 'unknown',
+        sectionKeys: ['enforcement', 'target'],
+        conditionKeys: [],
+        refNameKeys: [],
+        ruleCount: 0,
+        ruleKeys: [],
+        ruleTypes: [],
+        refNameExclusions: [],
+        bypassActorCount: 0,
+        currentUserCanBypass: 'unknown'
+      }
+    ]);
+  });
+
+  it('drops rules with no type from the rule-type summary', () => {
+    expect(rulesetRuleTypes({ rules: [{ type: '' }, { notType: 1 }, null] })).toEqual([]);
+    // A ruleset whose rules is not an array yields an empty summary.
+    expect(rulesetRuleTypes({ rules: 'not-an-array' })).toEqual([]);
+    expect(rulesetRuleTypes(null)).toEqual([]);
+  });
+});

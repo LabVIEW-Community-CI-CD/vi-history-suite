@@ -140,3 +140,14 @@ describe('planViPreviewCacheBundleImport (VHS-REQ-672.3)', () => {
     expect(plan.toAdd).toEqual([KEY_A]);
   });
 });
+
+describe('buildViPreviewCacheBundleManifest viPaths ordering (VHS-REQ-672.1)', () => {
+  it('sorts several out-of-order viPaths for one document deterministically', () => {
+    // Multiple distinct, unsorted VI paths for a single content-addressed
+    // document drive the viPaths sort comparator through both directions.
+    const manifest = buildViPreviewCacheBundleManifest([
+      { key: KEY_A, html: '<a/>', viPaths: ['z/Z.vi', 'a/A.vi', 'm/M.vi', 'b/B.vi'] }
+    ]);
+    expect(manifest.entries[0].viPaths).toEqual(['a/A.vi', 'b/B.vi', 'm/M.vi', 'z/Z.vi']);
+  });
+});

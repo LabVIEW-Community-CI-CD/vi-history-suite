@@ -191,3 +191,30 @@ describe('repoGovernanceMcp stdio server (VHS-REQ-693.1)', () => {
     expect(JSON.parse(writes[0]).result.protocolVersion).toBe(REPO_GOVERNANCE_MCP_PROTOCOL_VERSION);
   });
 });
+
+describe('repoGovernanceMcp handler residual branches (#2333)', () => {
+  it('rejects a tools/call that omits the params object (params default to {})', () => {
+    // No `params` key -> `message.params || {}` takes its `{}` arm, so the
+    // missing-name guard fires with an invalid-params error.
+    const r = handleRepoGovernanceMcpMessage({ jsonrpc: '2.0', id: 20, method: 'tools/call' }, deps());
+    expect(r?.error?.code).toBe(-32602);
+    expect(r?.result).toBeUndefined();
+  });
+
+  it('defaults tool arguments to {} when a get_repo_truth call omits them', () => {
+    // `params.arguments` is absent -> the `? params.arguments : {}` false arm runs
+    // and the builder receives an empty options object.
+    let received: Record<string, unknown> | undefined;
+    const r = handleRepoGovernanceMcpMessage(
+      { jsonrpc: '2.0', id: 21, method: 'tools/call', params: { name: 'get_repo_truth' } },
+      deps({
+        buildRepoTruthPacket: (options: Record<string, unknown>) => {
+          received = options;
+          return FAKE_PACKET;
+        }
+      })
+    );
+    expect(received).toEqual({});
+    expect((r?.result as { isError: boolean } | undefined)?.isError).toBe(false);
+  });
+});

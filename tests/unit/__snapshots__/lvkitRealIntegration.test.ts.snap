@@ -1,0 +1,221 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`real lvkit compare provider integration (VHS-REQ-712) > detects a specific known change (one added "Merge Errors" node) with its exact outcome 1`] = `
+{
+  "hasDifferences": true,
+  "model": {
+    "attributes": {
+      "excluded": [
+        "front panel",
+        "connector pane",
+        "VI attributes",
+      ],
+      "included": [
+        "block diagram",
+      ],
+    },
+    "changeKinds": [
+      "structural",
+    ],
+    "changedSurfaces": [
+      "block-diagram",
+    ],
+    "classification": [
+      {
+        "kind": "structural",
+        "surface": "block-diagram",
+        "text": "Node "Merge Errors" - added at (2317,377)",
+      },
+    ],
+    "classificationConfidence": "low",
+    "detailSections": [
+      {
+        "heading": "Block Diagram",
+        "itemCount": 1,
+        "itemGeometry": [
+          {
+            "changeType": "added",
+            "coordinate": {
+              "x": 2317,
+              "y": 377,
+            },
+            "objectKind": "Node",
+            "objectName": "Merge Errors",
+            "text": "Node "Merge Errors" - added at (2317,377)",
+          },
+        ],
+        "items": [
+          "Node "Merge Errors" - added at (2317,377)",
+        ],
+        "surface": "block-diagram",
+      },
+    ],
+    "hasDifferences": true,
+    "narrative": "lvkit found 1 block-diagram change across 171 common nodes: 1 node added. This LabVIEW-free semantic diff covers the block diagram only. Risk assessed medium.",
+    "overviewSections": [],
+    "revisions": {
+      "baseHash": "537683398d8c",
+      "selectedHash": "fc09736ae5e3",
+    },
+    "riskLevel": "medium",
+    "riskRationale": "medium: structural change(s)",
+    "runtime": {
+      "engine": "lvkit-diff",
+      "provider": "lvkit",
+    },
+    "schema": "vi-history-suite/vi-semantic-comparison@v1",
+    "totals": {
+      "changedSurfaceCount": 1,
+      "detailItemCount": 1,
+      "detailSectionCount": 1,
+      "excludedAttributeCount": 3,
+      "includedAttributeCount": 1,
+      "overviewImageCount": 0,
+    },
+    "vi": {
+      "firstViPath": "<base.vi>",
+      "secondViPath": "<selected.vi>",
+      "title": "MenuSelection(User).vi",
+    },
+  },
+  "runtime": {
+    "cycles": [
+      {
+        "cycleIndex": 1,
+        "outcome": "lvkit-diff-succeeded",
+      },
+    ],
+    "engine": "lvkit-diff",
+    "provider": "lvkit",
+    "reportFilePath": "",
+    "state": "succeeded",
+  },
+  "status": "completed",
+}
+`;
+
+exports[`real lvkit compare provider integration (VHS-REQ-712) > reports NO changes for identical revisions (base == selected) 1`] = `
+{
+  "hasDifferences": false,
+  "model": {
+    "attributes": {
+      "excluded": [
+        "front panel",
+        "connector pane",
+        "VI attributes",
+      ],
+      "included": [
+        "block diagram",
+      ],
+    },
+    "changeKinds": [],
+    "changedSurfaces": [],
+    "classification": [],
+    "classificationConfidence": "low",
+    "detailSections": [],
+    "hasDifferences": false,
+    "narrative": "No block-diagram differences detected by the LabVIEW-free (lvkit) semantic diff across 172 common nodes. Front-panel cosmetics and VI attributes are out of scope for this backend.",
+    "overviewSections": [],
+    "revisions": {
+      "baseHash": "fc09736ae5e3",
+      "selectedHash": "fc09736ae5e3",
+    },
+    "riskLevel": "low",
+    "riskRationale": "low: no classified changes",
+    "runtime": {
+      "engine": "lvkit-diff",
+      "provider": "lvkit",
+    },
+    "schema": "vi-history-suite/vi-semantic-comparison@v1",
+    "totals": {
+      "changedSurfaceCount": 0,
+      "detailItemCount": 0,
+      "detailSectionCount": 0,
+      "excludedAttributeCount": 3,
+      "includedAttributeCount": 1,
+      "overviewImageCount": 0,
+    },
+    "vi": {
+      "firstViPath": "<base.vi>",
+      "secondViPath": "<selected.vi>",
+      "title": "MenuSelection(User).vi",
+    },
+  },
+  "runtime": {
+    "cycles": [
+      {
+        "cycleIndex": 1,
+        "outcome": "lvkit-diff-succeeded",
+      },
+    ],
+    "engine": "lvkit-diff",
+    "provider": "lvkit",
+    "reportFilePath": "",
+    "state": "succeeded",
+  },
+  "status": "completed",
+}
+`;
+
+exports[`real lvkit compare provider integration (VHS-REQ-712) > reports NO changes when the VI bytes differ but the semantics do not (negative assertion) 1`] = `
+{
+  "hasDifferences": false,
+  "model": {
+    "attributes": {
+      "excluded": [
+        "front panel",
+        "connector pane",
+        "VI attributes",
+      ],
+      "included": [
+        "block diagram",
+      ],
+    },
+    "changeKinds": [],
+    "changedSurfaces": [],
+    "classification": [],
+    "classificationConfidence": "low",
+    "detailSections": [],
+    "hasDifferences": false,
+    "narrative": "No block-diagram differences detected by the LabVIEW-free (lvkit) semantic diff across 0 common nodes. Front-panel cosmetics and VI attributes are out of scope for this backend.",
+    "overviewSections": [],
+    "revisions": {
+      "baseHash": "537683398d8c",
+      "selectedHash": "fc09736ae5e3",
+    },
+    "riskLevel": "low",
+    "riskRationale": "low: no classified changes",
+    "runtime": {
+      "engine": "lvkit-diff",
+      "provider": "lvkit",
+    },
+    "schema": "vi-history-suite/vi-semantic-comparison@v1",
+    "totals": {
+      "changedSurfaceCount": 0,
+      "detailItemCount": 0,
+      "detailSectionCount": 0,
+      "excludedAttributeCount": 3,
+      "includedAttributeCount": 1,
+      "overviewImageCount": 0,
+    },
+    "vi": {
+      "firstViPath": "<base.vi>",
+      "secondViPath": "<selected.vi>",
+      "title": "VI Template.vi",
+    },
+  },
+  "runtime": {
+    "cycles": [
+      {
+        "cycleIndex": 1,
+        "outcome": "lvkit-diff-succeeded",
+      },
+    ],
+    "engine": "lvkit-diff",
+    "provider": "lvkit",
+    "reportFilePath": "",
+    "state": "succeeded",
+  },
+  "status": "completed",
+}
+`;

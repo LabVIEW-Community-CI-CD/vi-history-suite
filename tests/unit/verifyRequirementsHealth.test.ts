@@ -1,6 +1,8 @@
+import * as fs from 'node:fs';
+import * as os from 'node:os';
 import * as path from 'node:path';
 
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 
 const {
   REQUIREMENTS_HEALTH_SCHEMA_VERSION,
@@ -996,5 +998,132 @@ describe('requirement verification health (VHS-REQ-601)', () => {
     expect(result.criteria.total).toBeGreaterThan(100);
     expect(result.criteria.uncited).toBe(0);
     expect(result.summary).toMatchObject({ status: 'HEALTHY', attentionCount: 0 });
+  });
+});
+
+describe('requirement verification health render + main branch coverage (#2333)', () => {
+  const tempRoots: string[] = [];
+  afterEach(() => {
+    for (const root of tempRoots.splice(0)) {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+  function makeTempRoot(): string {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'requirements-health-'));
+    tempRoots.push(root);
+    return root;
+  }
+
+  // An attention entry WITHOUT a precomputed attentionReasons array forces the
+  // renderers to recompute reasons via attentionReasonsForRequirement; the result
+  // also has no `summary`, so renderMarkdown recomputes it. Coverage/mutation are
+  // unavailable to exercise the "not available" render branches.
+  const RAW_ATTENTION = {
+    activeRequirements: 3,
+    integrity: { success: true, violationCount: 0 },
+    linkage: { linked: 1, total: 3, unlinked: 1, manualOnly: 1 },
+    criteria: { cited: 1, total: 2 },
+    coverage: { available: false },
+    mutation: { available: false },
+    requirements: [],
+    attention: [{ reqId: 'VHS-REQ-002', linkState: 'unlinked', criteriaUncited: 1, coverageRiskFiles: ['src/x.ts'] }],
+    healthy: false
+  };
+
+  it('recomputes attention reasons from a raw entry when summarizing', () => {
+    const summary = summarizeRequirementHealth(RAW_ATTENTION) as {
+      attentionCount: number;
+      reasonCounts: { unlinked: number; coverageRisk: number };
+    };
+    expect(summary.attentionCount).toBe(1);
+    expect(summary.reasonCounts.unlinked).toBe(1);
+    expect(summary.reasonCounts.coverageRisk).toBe(1);
+  });
+
+  it('renders text/step/markdown reports for a raw attention entry with unavailable signals', () => {
+    const text = renderSummary(RAW_ATTENTION);
+    expect(text).toContain('Coverage risk: not available');
+    expect(text).toContain('Mutation (advisory): not available');
+    expect(text).toContain('VHS-REQ-002: no citing test; 1 uncited criterion/criteria; coverage risk (src/x.ts)');
+
+    const step = renderStepSummary(RAW_ATTENTION);
+    expect(step).toContain('Coverage risk: not available');
+    expect(step).toContain('Mutation (advisory): not available');
+    expect(step).toContain('coverage risk: `src/x.ts`');
+
+    const markdown = renderMarkdown(RAW_ATTENTION);
+    expect(markdown).toContain('| Coverage risk | not available |');
+    expect(markdown).toContain('| Mutation | not available |');
+    expect(markdown).toContain('coverage risk: `src/x.ts`');
+  });
+
+  it('renders a "no requirements need attention" markdown table when healthy', () => {
+    const healthy = {
+      activeRequirements: 2,
+      integrity: { success: true, violationCount: 0 },
+      linkage: { linked: 2, total: 2, unlinked: 0, manualOnly: 0 },
+      criteria: { cited: 2, total: 2 },
+      coverage: { available: true, requirementsWithRisk: 0, riskThreshold: 50 },
+      mutation: { available: true, score: 90, killed: 9, timeout: 0, survived: 1 },
+      requirements: [],
+      attention: [],
+      healthy: true
+    };
+    expect(renderMarkdown(healthy)).toContain('No requirements need attention.');
+  });
+
+  it('stringifies non-Date provenance timestamps', () => {
+    expect(generatedAtForProvenance({ now: () => 1723000000000 as unknown as Date })).toBe('1723000000000');
+    expect(generatedAtForProvenance({ generatedAt: 'raw-stamp' as unknown as Date })).toBe('raw-stamp');
+  });
+
+  it('resolves the provenance cwd from deps and from process.cwd()', () => {
+    const fromDeps = buildRequirementsHealthProvenance({}, { cwd: path.join(os.tmpdir(), 'prov-x'), argv: [] });
+    expect(fromDeps.cwd).toBe(path.resolve(path.join(os.tmpdir(), 'prov-x')));
+    const fromProcess = buildRequirementsHealthProvenance({}, {});
+    expect(fromProcess.cwd).toBe(path.resolve(process.cwd()));
+  });
+
+  it('resolves an output path against process.cwd() when no cwd is injected', () => {
+    const resolved = resolveOutputPath('evidence/report.txt');
+    expect(resolved).toBe(path.resolve(process.cwd(), 'evidence/report.txt'));
+  });
+
+  it('writes report output to a real filesystem path using the default fs boundaries', () => {
+    const root = makeTempRoot();
+    writeRequirementsHealthOutput('nested/report.txt', 'body-line', { cwd: root });
+    const written = fs.readFileSync(path.join(root, 'nested', 'report.txt'), 'utf8');
+    expect(written).toBe('body-line\n');
+  });
+
+  it('rejects more than one output mode', () => {
+    const errors: string[] = [];
+    const code = main(['--json', '--markdown'], {
+      cwd: makeTempRoot(),
+      stdout: { write: () => undefined },
+      stderr: { write: (s: string) => errors.push(s) }
+    });
+    expect(code).toBe(1);
+    expect(errors.join('')).toContain('Use only one output mode');
+  });
+
+  it('appends the step summary via the default fs.appendFileSync boundary', () => {
+    const root = makeTempRoot();
+    const stepSummaryPath = path.join(root, 'step-summary.md');
+    const out: string[] = [];
+    const code = main([], {
+      cwd: root,
+      linkage: LINKAGE,
+      criteria: CRITERIA_ALL_CITED,
+      integrity: INTEGRITY_PASS,
+      coverage: { riskThreshold: 50, mappedBelowThreshold: [] },
+      mutation: MUTATION,
+      stepSummaryPath,
+      stdout: { write: (s: string) => out.push(s) },
+      stderr: { write: () => undefined }
+    });
+    expect(code).toBe(0);
+    const summaryContent = fs.readFileSync(stepSummaryPath, 'utf8');
+    expect(summaryContent).toContain('## Requirement Verification Health');
   });
 });

@@ -1824,3 +1824,19 @@ describe('local runtime settings CLI default-dependency coverage (VHS-REQ-612)',
     }
   });
 });
+
+describe('resolveLocalRuntimeSettingsCliContract ambient fallbacks', () => {
+  it('resolves the CLI contract from the ambient platform, env, and homedir when no deps are injected', () => {
+    // No deps -> exercises the `deps.platform ?? process.platform`,
+    // `deps.env ?? process.env`, and `deps.homedir ?? os.homedir` fallbacks in
+    // resolveLocalRuntimeSettingsCliContract.
+    const contract = resolveLocalRuntimeSettingsCliContract();
+    expect(contract.supportedSettingsTargets).toEqual([
+      'default-user-settings',
+      'explicit-settings-file'
+    ]);
+    expect(contract.untrustedWorkspacePosture).toBe('prepare-command-admitted-compare-blocked');
+    expect(typeof contract.defaultSettingsFilePath).toBe('string');
+    expect(contract.defaultSettingsFilePath.length).toBeGreaterThan(0);
+  });
+});

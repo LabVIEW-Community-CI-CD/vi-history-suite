@@ -312,4 +312,81 @@ describe('runDevHostCli default dependency fall-throughs', () => {
       await fs.rm(stageDir, { recursive: true, force: true });
     }
   });
+
+  it('falls back to the resolved repo root and the real code-path resolver when those deps are omitted', async () => {
+    const write = vi.fn();
+    const resolveRuntimeRoot = vi.fn().mockResolvedValue('/tmp/runtime');
+    const launcher = vi
+      .fn<(plan: ViHistoryDevHostLaunchPlan) => Promise<void>>()
+      .mockResolvedValue();
+    const workRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-devhost-code-'));
+    const codeExecutablePath = path.join(workRoot, 'code');
+    // A real, existing executable path so the omitted resolveCodeExecutablePath
+    // dep falls back to resolveViHistoryCodeExecutablePath, which only
+    // stat-checks the provided --code-path (no launch is performed).
+    await fs.writeFile(codeExecutablePath, '#!/bin/sh\n');
+    try {
+      const outcome = await runDevHostCli(
+        ['--workspace-path', path.join(workRoot, 'ws'), '--code-path', codeExecutablePath],
+        {
+          // repoRoot omitted -> `deps.repoRoot ?? path.resolve(__dirname, ...)`.
+          // resolveCodeExecutablePath omitted -> the real resolver fallback.
+          resolveRuntimeRoot,
+          launcher,
+          stdout: { write }
+        }
+      );
+      expect(outcome).toBe('launched');
+      expect(resolveRuntimeRoot).toHaveBeenCalledTimes(1);
+      const plan = launcher.mock.calls[0]?.[0];
+      expect(plan?.codeExecutablePath).toBe(codeExecutablePath);
+    } finally {
+      await fs.rm(workRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('stages the extension with the real fs stager when no stageExtension dep is injected', async () => {
+    const repoRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-devhost-repo-'));
+    const runtimeRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-devhost-runtime-'));
+    const codeExecutablePath = path.join(repoRoot, 'code');
+    try {
+      // Minimal extension layout the real stager copies (package.json + out/).
+      await fs.writeFile(path.join(repoRoot, 'package.json'), '{"name":"stub"}\n');
+      await fs.mkdir(path.join(repoRoot, 'out'));
+      await fs.writeFile(path.join(repoRoot, 'out', 'extension.js'), '// stub\n');
+      await fs.writeFile(codeExecutablePath, '#!/bin/sh\n');
+      const write = vi.fn();
+      const launcher = vi
+        .fn<(plan: ViHistoryDevHostLaunchPlan) => Promise<void>>()
+        .mockResolvedValue();
+      const outcome = await runDevHostCli(
+        [
+          '--workspace-path',
+          path.join(runtimeRoot, 'ws'),
+          '--code-path',
+          codeExecutablePath,
+          '--stage-extension'
+        ],
+        {
+          repoRoot,
+          resolveRuntimeRoot: async () => runtimeRoot,
+          // stageExtension omitted -> the `deps.stageExtension ??
+          // stageViHistoryDevHostExtension` fallback runs the real fs-only stager.
+          launcher,
+          stdout: { write }
+        }
+      );
+      expect(outcome).toBe('launched');
+      const stagedManifest = await fs.readFile(
+        path.join(runtimeRoot, 'extension-stage', 'package.json'),
+        'utf8'
+      );
+      expect(stagedManifest).toContain('stub');
+      const plan = launcher.mock.calls[0]?.[0];
+      expect(plan?.extensionMode).toBe('staged');
+    } finally {
+      await fs.rm(repoRoot, { recursive: true, force: true });
+      await fs.rm(runtimeRoot, { recursive: true, force: true });
+    }
+  });
 });

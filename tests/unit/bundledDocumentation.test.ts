@@ -57,6 +57,15 @@ describe('bundled documentation', () => {
     expect(loaded).toBeUndefined();
   });
 
+  it('falls back to the manifest default page id when no page id is requested', async () => {
+    // Covers the `requestedPageId ?? manifest.defaultPageId` fallback arm, which
+    // the other tests (always passing an explicit page id) never exercise.
+    const loaded = await loadBundledDocumentationPage(extensionUri as never);
+    expect(loaded).toBeDefined();
+    expect(loaded?.page.id).toBe('overview');
+    expect(loaded?.manifest.defaultPageId).toBe('overview');
+  });
+
   it('loads concise bundled pages that stay free of private authority links and standards-only pages', async () => {
     const loaded = await loadBundledDocumentationPage(extensionUri as never, 'user-workflow');
     expect(loaded).toBeDefined();

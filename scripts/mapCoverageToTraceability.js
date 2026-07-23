@@ -16,7 +16,7 @@ const { parseSharedOutputArgs } = require('./lib/outputContract.js');
 const DEFAULT_COVERAGE_SUMMARY = path.join('coverage', 'coverage-summary.json');
 const DEFAULT_INVENTORY = path.join('docs', 'requirements', 'traceability-inventory.csv');
 const DEFAULT_RTM = path.join('docs', 'requirements', 'rtm.csv');
-const DEFAULT_RISK_THRESHOLD = 85;
+const DEFAULT_RISK_THRESHOLD = 90;
 const COVERAGE_MAP_SCHEMA_ID = 'vi-history-suite/coverage-traceability-map@v1';
 const COVERAGE_MAP_SCHEMA_VERSION = 1;
 
@@ -75,7 +75,7 @@ function usage() {
     '  --inventory <path>          Default: docs/requirements/traceability-inventory.csv',
     '  --rtm <path>                Default: docs/requirements/rtm.csv',
     '  --repo-root <path>          Default: current working directory',
-    '  --risk-threshold <number>   Default: 85',
+    '  --risk-threshold <number>   Default: 90',
     '  --enforce                   Fail closed on mapped-below-threshold or zero-coverage supporting risk',
     '  --json',
     '  --schema                    Publish the JSON Schema without reading coverage',

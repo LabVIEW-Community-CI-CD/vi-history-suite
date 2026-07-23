@@ -2423,7 +2423,7 @@ Missing numeric IDs are intentional.
   - `npm run coverage:map` reads `coverage/coverage-summary.json`,
     `docs/requirements/traceability-inventory.csv`, and
     `docs/requirements/rtm.csv`.
-  - The report highlights requirement-mapped files below 85% coverage by
+  - The report highlights requirement-mapped files below 90% coverage by
     requirement, classification, missing lines, missing branches, and missing
     functions.
   - The report highlights zero-coverage supporting files tied to active
@@ -5012,6 +5012,7 @@ Missing numeric IDs are intentional.
   - `tests/unit/lvkitSemanticAdapter.test.ts`
   - `tests/unit/lvkitLocator.test.ts`
   - `tests/unit/lvkitCompareViRevisions.test.ts`
+  - `tests/unit/lvkitRealIntegration.test.ts`
 - Change Guidance:
   - Evolve the parser and adapter additively (lvkit document schema id
     `vi-history-suite/lvkit-diff@v1`); keep the projected model on the shared

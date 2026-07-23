@@ -1,3 +1,7 @@
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
 import { describe, expect, it, vi } from 'vitest';
 
 import {
@@ -1350,5 +1354,185 @@ describe('comparison-report packet pure helpers (VHS-REQ-643)', () => {
     expect(renderOptionalYesNo(true)).toBe('yes');
     expect(renderOptionalYesNo(false)).toBe('no');
     expect(renderOptionalYesNo(undefined)).toBe('none');
+  });
+});
+
+describe('comparisonReportPacket runtime-selection field rendering (VHS-REQ-148)', () => {
+  it('renders the affirmative tri-state and present-value branches for host-runtime selection facts', () => {
+    const record = createBaseRecord(
+      {},
+      {
+        runtimeSelection: {
+          platform: 'win32',
+          bitness: 'x86',
+          provider: 'host-native',
+          engine: 'labview-cli',
+          notes: [],
+          registryQueryPlans: [],
+          candidates: [],
+          // Affirmative container-image-present branch (`? 'yes'`).
+          containerImageAvailable: true,
+          // Present host VI Server port (`: String(...)` rather than 'none').
+          hostLabviewTcpPort: 3363,
+          // Detected host conflict (`... ? 'yes'`).
+          hostRuntimeConflictDetected: true,
+          // Admitted existing host runtime (`... ? 'yes'`).
+          allowExistingWindowsHostRuntime: true
+        }
+      }
+    );
+
+    const html = renderComparisonReportPacketHtml(record);
+    const selection = html.match(
+      /<div class="grid" data-testid="comparison-report-runtime-selection">[\s\S]*?<\/div>\s*<div class="note"/
+    );
+    const scoped = selection ? selection[0] : html;
+
+    expect(scoped).toContain('<strong>Container image present:</strong> yes');
+    expect(scoped).toContain('<strong>Host VI Server port:</strong> 3363');
+    expect(scoped).toContain('<strong>Host conflict detected:</strong> yes');
+    expect(scoped).toContain('<strong>Existing host runtime admitted:</strong> yes');
+  });
+
+  it('renders the negative tri-state branches when host-runtime facts are present but false', () => {
+    const record = createBaseRecord(
+      {},
+      {
+        runtimeSelection: {
+          platform: 'win32',
+          bitness: 'x86',
+          provider: 'host-native',
+          engine: 'labview-cli',
+          notes: [],
+          registryQueryPlans: [],
+          candidates: [],
+          // Detected-but-false conflict exercises the `: 'no'` leaf.
+          hostRuntimeConflictDetected: false,
+          // Present-but-false admission exercises the `: 'no'` leaf.
+          allowExistingWindowsHostRuntime: false
+        }
+      }
+    );
+
+    const html = renderComparisonReportPacketHtml(record);
+    expect(html).toContain('<strong>Host conflict detected:</strong> no');
+    expect(html).toContain('<strong>Existing host runtime admitted:</strong> no');
+  });
+});
+
+describe('comparisonReportPacket runtime-execution field rendering (VHS-REQ-148)', () => {
+  it('renders present numeric execution fields and falls back to none for absent artifacts', () => {
+    const record = createBaseRecord({
+      labviewTcpPort: 3363,
+      headlessSessionResetExitCode: 0,
+      // Explicitly clear the artifact paths so the `?? 'none'` fallbacks fire.
+      stdoutFilePath: undefined,
+      stderrFilePath: undefined
+    });
+
+    const html = renderComparisonReportPacketHtml(record);
+    const execution = html.match(
+      /<div class="grid" data-testid="comparison-report-runtime-execution">[\s\S]*?<\/div>\s*<div class="note"/
+    );
+    const scoped = execution ? execution[0] : html;
+
+    expect(scoped).toContain('<strong>Selected LabVIEW TCP port:</strong> 3363');
+    expect(scoped).toContain('<strong>Headless session reset exit code:</strong> 0');
+    expect(scoped).toContain('<strong>Stdout artifact:</strong> none');
+    expect(scoped).toContain('<strong>Stderr artifact:</strong> none');
+  });
+});
+
+describe('comparisonReportPacket preflight-signature fallback rendering (VHS-REQ-148)', () => {
+  it('renders the not-a-vi fallback when a side signature is absent', () => {
+    const record = createBaseRecord();
+    record.preflight.left = { ...record.preflight.left, signature: undefined };
+    record.preflight.right = { ...record.preflight.right, signature: undefined };
+
+    const html = renderComparisonReportPacketHtml(record);
+    expect(html).toContain('<strong>Left signature:</strong> not-a-vi');
+    expect(html).toContain('<strong>Right signature:</strong> not-a-vi');
+  });
+});
+
+describe('comparisonReportPacket library-member class fallback (VHS-REQ-625)', () => {
+  it('names the owning class and the generic library fallback when the relative path is absent', () => {
+    const record = createBaseRecord();
+    record.preflight.comparedViLibraryMembership = {
+      isMember: true,
+      // libraryRelativePath omitted -> `?? 'a LabVIEW library'` fallback fires.
+      libraryKind: 'lvclass'
+    };
+
+    const html = renderComparisonReportPacketHtml(record);
+    expect(html).toContain('data-testid="comparison-report-library-member-caveat"');
+    expect(html).toContain('a LabVIEW library');
+    // lvclass membership renders the "class" wording (`? 'class'` leaf).
+    expect(html).toContain('owning class');
+  });
+});
+
+describe('comparisonReportPacket default boundaries (VHS-REQ-148)', () => {
+  it('stamps generatedAt from the default clock when no now() dependency is injected', async () => {
+    const options: PersistComparisonReportPacketOptions = {
+      storageRoot: '/workspace/.storage',
+      repositoryRoot: '/workspace/repo',
+      relativePath: 'foo.vi',
+      reportType: 'diff',
+      selectedHash: 'abcdef1234567890',
+      baseHash: '1111111122222222',
+      preflight: {
+        normalizedRelativePath: 'foo.vi',
+        ready: true,
+        left: { revisionId: '1111111122222222', blobSpecifier: '1111111122222222:foo.vi', signature: 'LVIN', isVi: true },
+        right: { revisionId: 'abcdef1234567890', blobSpecifier: 'abcdef1234567890:foo.vi', signature: 'LVCC', isVi: true }
+      },
+      runtimeSelection: {
+        platform: 'win32',
+        bitness: 'x86',
+        provider: 'host-native',
+        engine: 'labview-cli',
+        notes: [],
+        registryQueryPlans: [],
+        candidates: []
+      }
+    };
+    // Inject only the write boundaries so the default clock (defaultNow) is used.
+    const deps = {
+      mkdir: vi.fn(async () => undefined),
+      writeFile: vi.fn(async () => undefined)
+    } as unknown as ComparisonReportPacketDeps;
+
+    const before = Date.now();
+    const result = await persistComparisonReportPacket(options, deps);
+    const stamped = Date.parse(result.record.generatedAt);
+
+    expect(Number.isNaN(stamped)).toBe(false);
+    // The default clock is real wall-clock time, so the stamp is not the frozen fixture value.
+    expect(result.record.generatedAt).not.toBe('2026-04-02T00:00:00.000Z');
+    expect(stamped).toBeGreaterThanOrEqual(before - 1000);
+  });
+
+  it('writes both artifacts through the real filesystem when no fs dependencies are injected', async () => {
+    const tmpRoot = await mkdtemp(join(tmpdir(), 'vihs-packet-realfs-'));
+    try {
+      const record = createBaseRecord();
+      const reportDirectory = join(tmpRoot, 'report');
+      const stagingDirectory = join(reportDirectory, 'staging');
+      record.artifactPlan.reportDirectory = reportDirectory;
+      record.artifactPlan.stagingDirectory = stagingDirectory;
+      record.artifactPlan.metadataFilePath = join(reportDirectory, 'report-metadata.json');
+      record.artifactPlan.packetFilePath = join(reportDirectory, 'report-packet.html');
+
+      // No deps -> exercises the `deps.mkdir ?? fs.mkdir` / `deps.writeFile ?? fs.writeFile` defaults.
+      await writeComparisonReportPacketRecord(record);
+
+      const metadata = await readFile(record.artifactPlan.metadataFilePath, 'utf8');
+      expect(() => JSON.parse(metadata)).not.toThrow();
+      const packet = await readFile(record.artifactPlan.packetFilePath, 'utf8');
+      expect(packet).toContain('Comparison Report');
+    } finally {
+      await rm(tmpRoot, { recursive: true, force: true });
+    }
   });
 });

@@ -4,16 +4,21 @@ import {
   STAGED_VI_PREVIEW_VALIDATION_FAILED,
   isPreviewValidationFailure,
   toPipelineCycleRecord,
-  toPipelineCycleRecords
+  toPipelineCycleRecords,
+  toStagingRecord,
+  toUnstagingRecord
 } from '../../src/reporting/comparisonPreviewPipelineIntegration';
 import {
   runComparisonPreviewPipeline,
   type ComparisonRunResult,
+  type PipelineCycleResult,
   type StageInputsResult,
   type StagedPair,
   type StagedPreviewRenderResult,
   type StagedSide,
-  type UnstageInputsResult
+  type StagingStateResult,
+  type UnstageInputsResult,
+  type UnstagingStateResult
 } from '../../src/reporting/comparisonPreviewPipeline';
 
 /**
@@ -186,5 +191,79 @@ describe('comparisonPreviewPipelineIntegration', () => {
     expect(records[0].state).toBe('STAGING');
     // The shared meter reports no inter-state gap for the first measured state.
     expect(records[0].interCycleGapMs).toBeUndefined();
+  });
+});
+
+describe('comparisonPreviewPipelineIntegration record mappers (untimed / no-gap branches)', () => {
+  function measurement(durationMs: number, interCycleGapMs: number | undefined) {
+    return {
+      cycleIndex: 1,
+      startedAtMs: 100,
+      endedAtMs: 100 + durationMs,
+      durationMs,
+      interCycleGapMs,
+      outcome: 'measured'
+    };
+  }
+
+  it('omits durationMs and interCycleGapMs from a cycle record with no timing', () => {
+    const result: PipelineCycleResult = { state: 'COMPARISON', outcome: 'compared' };
+    const record = toPipelineCycleRecord(result);
+    expect(record).toEqual({ state: 'COMPARISON', outcome: 'compared' });
+    expect(record.durationMs).toBeUndefined();
+    expect(record.interCycleGapMs).toBeUndefined();
+  });
+
+  it('retains durationMs but omits interCycleGapMs when a cycle carries duration without a gap', () => {
+    const result: PipelineCycleResult = {
+      state: 'PREVIEW_LEFT',
+      outcome: 'rendered',
+      input: 'left',
+      cycle: measurement(7, undefined)
+    };
+    const record = toPipelineCycleRecord(result);
+    expect(record.durationMs).toBe(7);
+    expect(record.interCycleGapMs).toBeUndefined();
+  });
+
+  it('omits timing from a staging record with no cycle', () => {
+    const result: StagingStateResult = {
+      state: 'STAGING',
+      outcome: 'failed',
+      failureReason: 'left-staged-input-missing'
+    };
+    const record = toStagingRecord(result);
+    expect(record).toEqual({ state: 'STAGING', outcome: 'failed', failureReason: 'left-staged-input-missing' });
+    expect(record.durationMs).toBeUndefined();
+  });
+
+  it('retains both durationMs and interCycleGapMs when a staging cycle carries a gap', () => {
+    const result: StagingStateResult = {
+      state: 'STAGING',
+      outcome: 'already-staged',
+      cycle: measurement(4, 2)
+    };
+    const record = toStagingRecord(result);
+    expect(record.durationMs).toBe(4);
+    expect(record.interCycleGapMs).toBe(2);
+  });
+
+  it('omits timing from an unstaging record with no cycle', () => {
+    const result: UnstagingStateResult = { state: 'UNSTAGING', status: 'removed' };
+    const record = toUnstagingRecord(result);
+    expect(record).toEqual({ state: 'UNSTAGING', outcome: 'removed' });
+    expect(record.durationMs).toBeUndefined();
+    expect(record.interCycleGapMs).toBeUndefined();
+  });
+
+  it('retains durationMs but omits interCycleGapMs when an unstaging cycle has no gap', () => {
+    const result: UnstagingStateResult = {
+      state: 'UNSTAGING',
+      status: 'removed',
+      cycle: measurement(9, undefined)
+    };
+    const record = toUnstagingRecord(result);
+    expect(record.durationMs).toBe(9);
+    expect(record.interCycleGapMs).toBeUndefined();
   });
 });

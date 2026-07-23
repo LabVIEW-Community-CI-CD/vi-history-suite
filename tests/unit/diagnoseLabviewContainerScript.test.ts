@@ -4,6 +4,8 @@ import {
   parseArgs,
   gatherProbes,
   buildSchema,
+  renderText,
+  renderMarkdown,
   SCHEMA_ID
   // eslint-disable-next-line @typescript-eslint/no-var-requires
 } from '../../scripts/diagnoseLabviewContainer.js';
@@ -738,5 +740,175 @@ describe('diagnoseLabviewContainer default runner branches (#2331)', () => {
     const { deps, out } = harness({ imagePresent: true, inContainer: READY_IN_CONTAINER });
     expect(main(['--markdown'], deps)).toBe(0);
     expect(out.join('')).toContain('✅ yes');
+  });
+});
+
+describe('diagnoseLabviewContainer residual branch coverage (#2333)', () => {
+  it('gatherProbes(container): an empty in-container probe line keeps tool defaults (empty stdout + empty pop)', () => {
+    const runDocker = (args: string[]) => {
+      if (args[0] === 'version') return { ok: true, stdout: '29.3.1\n', code: 0 };
+      if (args[0] === 'image' && args[1] === 'inspect') return { ok: true, stdout: '5140000000\n', code: 0 };
+      // Empty run stdout -> `probe.stdout || ''` and `.pop() || ''` both take their
+      // fallback arms; JSON.parse('') throws and the defaults are retained.
+      if (args[0] === 'run') return { ok: true, stdout: '', code: 0 };
+      return { ok: false, stdout: '', code: 1 };
+    };
+    const p = gatherProbes({ image: 'x/y:z' }, { which: () => true, runDocker });
+    expect(p.imagePresent).toBe(true);
+    expect(p.labviewCliPath).toBeNull();
+    expect(p.labviewEnginePath).toBeNull();
+    expect(p.licensing).toBe('unknown');
+  });
+
+  it('gatherProbes(container): empty engine and year fields fall back to null', () => {
+    const inContainer = JSON.stringify({
+      labviewCliPath: '/usr/local/bin/LabVIEWCLI',
+      labviewEnginePath: '',
+      labviewYear: '',
+      lvcompare: false,
+      licensing: 'activated'
+    });
+    const runDocker = (args: string[]) => {
+      if (args[0] === 'version') return { ok: true, stdout: '29.3.1\n', code: 0 };
+      if (args[0] === 'image' && args[1] === 'inspect') return { ok: true, stdout: '5140000000\n', code: 0 };
+      if (args[0] === 'run') return { ok: true, stdout: `${inContainer}\n`, code: 0 };
+      return { ok: false, stdout: '', code: 1 };
+    };
+    const p = gatherProbes({ image: 'x/y:z' }, { which: () => true, runDocker });
+    expect(p.labviewEnginePath).toBeNull();
+    expect(p.labviewYear).toBeNull();
+    expect(p.labviewCliPath).toBe('/usr/local/bin/LabVIEWCLI');
+  });
+
+  it('gatherProbes(container) --smoke: an empty launch stdout yields a null version', () => {
+    const runDocker = (args: string[]) => {
+      if (args[0] === 'version') return { ok: true, stdout: '29.3.1\n', code: 0 };
+      if (args[0] === 'image' && args[1] === 'inspect') return { ok: true, stdout: '5140000000\n', code: 0 };
+      if (args[0] === 'run' && String(args[args.length - 1]).includes('LabVIEWCLI -Version')) {
+        // Empty stdout -> `run.stdout || ''` takes its fallback arm.
+        return { ok: false, stdout: '', code: 9 };
+      }
+      if (args[0] === 'run') return { ok: true, stdout: `${READY_IN_CONTAINER}\n`, code: 0 };
+      return { ok: false, stdout: '', code: 1 };
+    };
+    const p = gatherProbes({ image: 'x/y:z', smoke: true }, { which: () => true, runDocker });
+    expect(p.cliLaunch).not.toBeNull();
+    expect(p.cliLaunch.version).toBeNull();
+    expect(p.cliLaunch.ok).toBe(false);
+  });
+
+  it('gatherProbes(host-native) default runHost catch: a bare Error yields empty stdout and a null code', () => {
+    // A thrown Error with no `.status`/`.stdout` exercises the `?? ''` and
+    // `typeof ... : null` fallback arms of the default host runHost catch.
+    const execFileSync = () => {
+      throw new Error('sh unavailable');
+    };
+    const p = gatherProbes({ image: 'x', variant: 'linux-host-native' }, { execFileSync });
+    expect(p.labviewCliPath).toBeNull();
+    expect(p.labviewEnginePath).toBeNull();
+    expect(p.lvcomparePresent).toBe(false);
+  });
+
+  it('gatherProbes(host-native) --smoke: an empty launch stdout yields a null version', () => {
+    const runHost = (script: string) => {
+      if (script.includes('command -v LabVIEWCLI')) return { ok: true, stdout: '/usr/local/bin/LabVIEWCLI\n', code: 0 };
+      if (script.includes('LabVIEW-*-64')) return { ok: true, stdout: '/usr/local/natinst/LabVIEW-2026-64\n', code: 0 };
+      if (script.includes('lvcompare')) return { ok: true, stdout: 'true\n', code: 0 };
+      // The smoke launch script runs `LabVIEWCLI -Version` -> empty stdout arm.
+      if (script.includes('LabVIEWCLI -Version')) return { ok: false, stdout: '', code: 5 };
+      return { ok: true, stdout: '', code: 0 };
+    };
+    const p = gatherProbes({ image: 'x', variant: 'linux-host-native', smoke: true }, { runHost });
+    expect(p.cliLaunch).not.toBeNull();
+    expect(p.cliLaunch.version).toBeNull();
+  });
+
+  it('renderText renders the host-native target and the unknown-status fallback mark', () => {
+    const text = renderText({
+      variant: 'linux-host-native',
+      imageRef: 'ignored-for-host-native',
+      checks: [{ checkId: 'x', title: 'Synthetic', status: 'bogus', detail: 'D', remediation: 'R' }],
+      overall: 'warn',
+      readyToCompare: false,
+      failures: [],
+      nextAction: 'do the thing'
+    });
+    expect(text).toContain('host-native LabVIEW');
+    expect(text).toContain('? [bogus] Synthetic');
+    expect(text).toContain('next: do the thing');
+  });
+
+  it('renderMarkdown renders the host-native target', () => {
+    const md = renderMarkdown({
+      variant: 'linux-host-native',
+      imageRef: 'ignored-for-host-native',
+      checks: [{ checkId: 'x', title: 'Synthetic', status: 'warn', detail: 'D', remediation: null }],
+      overall: 'warn',
+      readyToCompare: false,
+      failures: [],
+      nextAction: 'do the thing'
+    });
+    expect(md).toContain('host-native LabVIEW');
+    expect(md).toContain('❌ no');
+  });
+
+  it('main falls back to process.stdout/process.stderr when neither stream is injected', () => {
+    const originalOut = process.stdout.write.bind(process.stdout);
+    const originalErr = process.stderr.write.bind(process.stderr);
+    const captured: string[] = [];
+    (process.stdout as unknown as { write: (s: string) => boolean }).write = (s: string) => {
+      captured.push(String(s));
+      return true;
+    };
+    (process.stderr as unknown as { write: (s: string) => boolean }).write = () => true;
+    try {
+      const code = main(['--json'], {
+        which: () => true,
+        runDocker: fakeDocker({ imagePresent: true, inContainer: READY_IN_CONTAINER }),
+        evaluate: evaluateLabviewContainerDiagnostics
+        // no stdout/stderr injected -> the process.stdout/process.stderr arms run.
+      });
+      expect(code).toBe(0);
+      expect(captured.join('')).toContain('readyToCompare');
+    } finally {
+      (process.stdout as unknown as { write: typeof originalOut }).write = originalOut;
+      (process.stderr as unknown as { write: typeof originalErr }).write = originalErr;
+    }
+  });
+
+  it('main --all-variants surfaces a non-Error thrown by the matrix builder as a string', () => {
+    const out: string[] = [];
+    const err: string[] = [];
+    const deps = {
+      stdout: { write: (s: string) => out.push(s) },
+      stderr: { write: (s: string) => err.push(s) },
+      which: () => true,
+      runDocker: fakeDocker({ imagePresent: true, inContainer: READY_IN_CONTAINER }),
+      runHost: () => ({ ok: true, stdout: '', code: 0 }),
+      evaluate: evaluateLabviewContainerDiagnostics,
+      buildMatrix: () => {
+        // eslint-disable-next-line no-throw-literal
+        throw 'matrix-string-failure';
+      }
+    };
+    expect(main(['--all-variants', '--json'], deps)).toBe(2);
+    expect(err.join('')).toContain('matrix-string-failure');
+  });
+
+  it('main surfaces a non-Error thrown during evaluation as a string', () => {
+    const out: string[] = [];
+    const err: string[] = [];
+    const deps = {
+      stdout: { write: (s: string) => out.push(s) },
+      stderr: { write: (s: string) => err.push(s) },
+      which: () => true,
+      runDocker: fakeDocker({ imagePresent: true, inContainer: READY_IN_CONTAINER }),
+      evaluate: () => {
+        // eslint-disable-next-line no-throw-literal
+        throw 'eval-string-failure';
+      }
+    };
+    expect(main(['--json'], deps)).toBe(2);
+    expect(err.join('')).toContain('eval-string-failure');
   });
 });

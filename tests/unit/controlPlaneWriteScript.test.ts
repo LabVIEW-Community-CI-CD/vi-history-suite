@@ -1086,3 +1086,321 @@ describe('controlPlaneWrite: default-collaborator and fallback branches (VHS-REQ
     expect(runCreateWorkCli([], disabled)).toMatchObject({ authorized: false, reason: 'write-path-disabled' });
   });
 });
+
+const cpw = require('../../scripts/controlPlaneWrite.js') as Record<string, any>;
+
+describe('controlPlaneWrite: resolver + loader + default-boundary coverage (#2333)', () => {
+  it('rejects non-object actions/items in every resolver', () => {
+    expect(() => cpw.resolveAnnotateCommand(null)).toThrow(/annotate action must be an object/);
+    expect(() => cpw.resolveAnnotateCommand(42)).toThrow(/annotate action must be an object/);
+    expect(() => cpw.resolveMergeQueueArmCommand(null)).toThrow(/merge-queue action must be an object/);
+    expect(() => cpw.resolveCreateWorkCommand(null)).toThrow(/create-work item must be an object/);
+  });
+
+  it('rejects a merge-queue arm command with a bad number or non-arm op', () => {
+    expect(() => cpw.resolveMergeQueueArmCommand({ op: 'arm', number: 0 })).toThrow(/positive integer number/);
+    expect(() => cpw.resolveMergeQueueArmCommand({ op: 'dequeue', number: 1 })).toThrow(/only resolves 'arm'/);
+  });
+
+  it('defaults body and filters labels in a create-work command; rejects empty titles', () => {
+    expect(() => cpw.resolveCreateWorkCommand({ title: '   ' })).toThrow(/non-empty title/);
+    const args = cpw.resolveCreateWorkCommand({ title: 'New work', body: 123, labels: ['keep', '   ', 7] }) as string[];
+    // Non-string body -> empty string; non-string/blank labels filtered out.
+    expect(args).toContain('--body');
+    expect(args[args.indexOf('--body') + 1]).toBe('');
+    expect(args.filter((a) => a === '--label')).toHaveLength(1);
+    expect(args).toContain('keep');
+  });
+
+  it('loads annotate actions from inline JSON, a file, and rejects malformed input', () => {
+    expect(cpw.loadAnnotateActions([])).toEqual([]);
+    expect(cpw.loadAnnotateActions(['--actions', '[{"kind":"comment","target":"issue","number":1,"body":"hi"}]'])).toEqual([
+      { kind: 'comment', target: 'issue', number: 1, body: 'hi' }
+    ]);
+    const fromFile = cpw.loadAnnotateActions(['--actions-file', '/tmp/actions.json'], {
+      readFileSync: () => '[{"kind":"label","target":"pr","number":2,"label":"ready"}]'
+    });
+    expect(fromFile).toEqual([{ kind: 'label', target: 'pr', number: 2, label: 'ready' }]);
+    expect(() => cpw.loadAnnotateActions(['--actions'])).toThrow(/--actions requires a JSON array value/);
+    expect(() => cpw.loadAnnotateActions(['--actions-file'])).toThrow(/--actions-file requires a path value/);
+    expect(() => cpw.loadAnnotateActions(['--actions', 'not-json'])).toThrow(/must be valid JSON/);
+    expect(() => cpw.loadAnnotateActions(['--actions', '{"a":1}'])).toThrow(/must be a JSON array/);
+  });
+
+  it('uses the default append-log boundary (repoRoot) with a system clock', () => {
+    const appended: string[] = [];
+    const out = cpw.runBoardSync(
+      { items: [{ itemId: 'PVT_x', number: 5, linkedPrMerged: true, status: 'Todo', evidence: 'None' }] },
+      {
+        config: { enabled: true, approvers: [], tiers: { boardSync: true } },
+        repoRoot: '/repo',
+        applyFieldUpdate: () => undefined,
+        // No appendLog injected -> defaultAppendLog(repoRoot) is built and used;
+        // appendFileSync is injected so no real file is written. No `now` -> the
+        // system clock (new Date()) path is taken.
+        appendFileSync: (_p: string, line: string) => appended.push(line)
+      }
+    );
+    expect(out).toMatchObject({ executed: true, plannedCount: 2, appliedCount: 2 });
+    expect(appended).toHaveLength(2);
+    expect(JSON.parse(appended[0]).timestamp).toEqual(expect.any(String));
+  });
+
+  it('falls back to process.cwd() for the append-log path when no repoRoot is injected', () => {
+    const appended: string[] = [];
+    const out = cpw.runBoardSync(
+      { items: [{ itemId: 'PVT_y', number: 6, linkedPrMerged: true, status: 'Todo', evidence: 'None' }] },
+      {
+        config: { enabled: true, approvers: [], tiers: { boardSync: true } },
+        applyFieldUpdate: () => undefined,
+        appendFileSync: (_p: string, line: string) => appended.push(line)
+      }
+    );
+    expect(out).toMatchObject({ executed: true, appliedCount: 2 });
+    expect(appended).toHaveLength(2);
+  });
+
+  it('reads the board-sync plan through an injected collector and applies with --apply', () => {
+    const applied: unknown[] = [];
+    const out = cpw.runBoardSyncCli(['--apply'], {
+      config: { enabled: true, approvers: [], tiers: { boardSync: true } },
+      repoRoot: '/repo',
+      collectBoardSyncPlan: () => ({
+        items: [{ itemId: 'PVT_z', number: 9, linkedPrMerged: true, status: 'Todo', evidence: 'None' }],
+        updates: []
+      }),
+      applyFieldUpdate: (u: unknown) => applied.push(u),
+      appendLog: () => undefined,
+      now: () => new Date('2026-07-20T00:00:00.000Z')
+    });
+    expect(out).toMatchObject({ authorized: true, applied: true, dryRun: false, appliedCount: 2 });
+    expect(applied).toHaveLength(2);
+  });
+
+  it('routes every subcommand through the exported CLI dispatch', () => {
+    const disabled = { config: { enabled: false, approvers: [], tiers: {} }, repoRoot: '/repo' };
+    // A disabled gate refuses each tier before any gh call, so the dispatch is
+    // exercised end-to-end without a live GitHub boundary.
+    expect(cpw.dispatchControlPlaneWriteCli(['annotate'], disabled)).toMatchObject({ authorized: false });
+    expect(cpw.dispatchControlPlaneWriteCli(['merge-queue'], disabled)).toMatchObject({ authorized: false });
+    expect(cpw.dispatchControlPlaneWriteCli(['create-work'], disabled)).toMatchObject({ authorized: false });
+    // No subcommand -> the Tier 1 board-sync CLI.
+    expect(cpw.dispatchControlPlaneWriteCli([], disabled)).toMatchObject({ authorized: false, reason: 'write-path-disabled' });
+  });
+
+  it('runs the authorized annotate tier with no proposed actions', () => {
+    // Authorized boardSync-style annotate path with an empty action list exercises
+    // the `options.actions || []` planner fallback without any executor call.
+    const out = cpw.runAnnotate(
+      { approver: 'svelderrainruiz', approverVerified: true },
+      {
+        config: { enabled: true, approvers: ['svelderrainruiz'], tiers: { boardSync: true, annotate: true } },
+        applyAnnotation: () => undefined,
+        appendLog: () => undefined
+      }
+    );
+    expect(out).toMatchObject({ executed: true, plannedCount: 0, appliedCount: 0 });
+  });
+
+  it('applies each tier through its default append-log boundary with an injected clock', () => {
+    const appended: string[] = [];
+    const deps = {
+      config: { enabled: true, approvers: ['svelderrainruiz'], tiers: { boardSync: true, annotate: true, mergeQueue: true, createWork: true } },
+      repoRoot: '/repo',
+      appendFileSync: (_p: string, line: string) => appended.push(line),
+      now: () => new Date('2026-07-20T00:00:00.000Z')
+    };
+
+    const board = cpw.runBoardSync(
+      { items: [{ itemId: 'PVT_a', number: 1, linkedPrMerged: true, status: 'Todo', evidence: 'None' }] },
+      { ...deps, applyFieldUpdate: () => undefined }
+    );
+    expect(board).toMatchObject({ executed: true, appliedCount: 2 });
+
+    const mq = cpw.runMergeQueue(
+      { actions: [{ op: 'arm', number: 5 }], approver: 'svelderrainruiz', approverVerified: true },
+      { ...deps, applyMergeQueueAction: () => undefined }
+    );
+    expect(mq).toMatchObject({ executed: true, appliedCount: 1 });
+
+    const cw = cpw.runCreateWork(
+      { actions: [{ title: 'New' }], approver: 'svelderrainruiz', approverVerified: true },
+      { ...deps, applyCreateWork: () => undefined }
+    );
+    expect(cw).toMatchObject({ executed: true, appliedCount: 1 });
+
+    // Every applied action append-logged an entry stamped by the injected clock.
+    expect(appended.length).toBeGreaterThanOrEqual(4);
+    for (const line of appended) {
+      expect(JSON.parse(line).timestamp).toBe('2026-07-20T00:00:00.000Z');
+    }
+  });
+
+  it('applies board updates on the system clock when no clock is injected', () => {
+    const appended: string[] = [];
+    const board = cpw.runBoardSync(
+      { items: [{ itemId: 'PVT_b', number: 2, linkedPrMerged: true, status: 'Todo', evidence: 'None' }] },
+      {
+        config: { enabled: true, approvers: [], tiers: { boardSync: true } },
+        repoRoot: '/repo',
+        applyFieldUpdate: () => undefined,
+        appendFileSync: (_p: string, line: string) => appended.push(line)
+      }
+    );
+    expect(board).toMatchObject({ executed: true, appliedCount: 2 });
+    expect(typeof JSON.parse(appended[0]).timestamp).toBe('string');
+  });
+
+  it('stamps applied annotate/create-work actions with the injected clock', () => {
+    const logged: Array<Record<string, unknown>> = [];
+    const now = () => new Date('2026-07-20T00:00:00.000Z');
+    const annotate = cpw.runAnnotate(
+      { actions: [{ kind: 'comment', target: 'issue', number: 3, body: 'hi' }], approver: 'svelderrainruiz', approverVerified: true },
+      {
+        config: { enabled: true, approvers: ['svelderrainruiz'], tiers: { boardSync: true, annotate: true } },
+        applyAnnotation: () => undefined,
+        appendLog: (e: Record<string, unknown>) => logged.push(e),
+        now
+      }
+    );
+    expect(annotate).toMatchObject({ executed: true, appliedCount: 1 });
+
+    const createWork = cpw.runCreateWork(
+      { actions: [{ title: 'Task' }], approver: 'svelderrainruiz', approverVerified: true },
+      {
+        config: { enabled: true, approvers: ['svelderrainruiz'], tiers: { boardSync: true, createWork: true } },
+        applyCreateWork: () => undefined,
+        appendLog: (e: Record<string, unknown>) => logged.push(e),
+        now
+      }
+    );
+    expect(createWork).toMatchObject({ executed: true, appliedCount: 1 });
+    expect(logged.map((e) => e.timestamp)).toEqual(['2026-07-20T00:00:00.000Z', '2026-07-20T00:00:00.000Z']);
+  });
+
+  it('reads the board-sync plan through an injected collector in dry-run mode', () => {
+    const out = cpw.runBoardSyncCli([], {
+      config: { enabled: true, approvers: [], tiers: { boardSync: true } },
+      repoRoot: '/repo',
+      collectBoardSyncPlan: () => ({ items: [], updates: [{ itemId: 'X', field: 'Status', value: 'Done', reason: 'r' }] })
+    });
+    expect(out).toMatchObject({ authorized: true, applied: false, dryRun: true });
+    expect(out.lines.join('\n')).toContain('board update(s) mirror directly-verified truth');
+  });
+});
+
+describe('controlPlaneWrite: reachable-branch + CLI-entry coverage (#2333 floor)', () => {
+  const ANNOTATE_CONFIG = { enabled: true, approvers: ['svelderrainruiz'], tiers: { boardSync: true, annotate: true } };
+  const MQ_CONFIG = { enabled: true, approvers: ['svelderrainruiz'], tiers: { boardSync: true, mergeQueue: true } };
+
+  // A gh stand-in: approver permission reads resolve to `admin` (server-verified);
+  // the Tier 3 node-id resolution returns a synthetic id; every other gh call
+  // (annotate/merge-queue executor) succeeds. No real gh is ever spawned.
+  function fakeGh(permission = 'admin') {
+    return (_cmd: string, args: string[]) => {
+      if (args[0] === 'api' && args.some((a) => String(a).includes('/permission'))) {
+        return { status: 0, stdout: `${permission}\n`, stderr: '' };
+      }
+      if (args.includes('graphql') && args.some((a) => String(a).includes('pullRequest(number:'))) {
+        return { status: 0, stdout: 'PR_nodeid_abc\n', stderr: '' };
+      }
+      return { status: 0, stdout: '', stderr: '' };
+    };
+  }
+
+  it('defaultApplyMergeQueueAction fails closed on a dequeue action with a non-positive or non-integer number', () => {
+    const applier = defaultApplyMergeQueueAction({ spawnSync: fakeGh() });
+    // Trigger the dequeue number-guard body (throw) that the valid-number tests
+    // never reach: the left operand (non-integer) and the right operand (<= 0).
+    expect(() => applier({ op: 'dequeue', number: 1.5 })).toThrow(/positive integer number/);
+    expect(() => applier({ op: 'dequeue', number: 0 })).toThrow(/positive integer number/);
+    expect(() => applier({ op: 'dequeue', number: -3 })).toThrow(/positive integer number/);
+  });
+
+  it('runAnnotateCli builds the default verifier + applier from the injected gh boundary (no factory injected)', () => {
+    const logged: unknown[] = [];
+    const out = runAnnotateCli(
+      [
+        '--approver',
+        'svelderrainruiz',
+        '--apply',
+        '--actions',
+        JSON.stringify([{ kind: 'comment', target: 'issue', number: 1, body: 'hi' }])
+      ],
+      { config: ANNOTATE_CONFIG, spawnSync: fakeGh(), appendLog: (e: unknown) => logged.push(e) }
+    );
+    expect(out).toMatchObject({ authorized: true, applied: true, appliedCount: 1 });
+    expect(logged).toHaveLength(1);
+  });
+
+  it('runAnnotateCli refuses when the default verifier resolves a non-privileged collaborator', () => {
+    const out = runAnnotateCli(
+      ['--approver', 'svelderrainruiz', '--actions', JSON.stringify([{ kind: 'comment', target: 'issue', number: 1, body: 'hi' }])],
+      { config: ANNOTATE_CONFIG, spawnSync: fakeGh('read') }
+    );
+    expect(out).toMatchObject({ authorized: false, reason: 'approver-not-server-verified' });
+  });
+
+  it('runMergeQueueCli builds the default verifier + actor from the injected gh boundary (no factory injected)', () => {
+    const logged: unknown[] = [];
+    const out = runMergeQueueCli(
+      [
+        '--approver',
+        'svelderrainruiz',
+        '--apply',
+        '--actions',
+        JSON.stringify([{ op: 'arm', number: 5 }, { op: 'dequeue', number: 6 }])
+      ],
+      { config: MQ_CONFIG, spawnSync: fakeGh(), appendLog: (e: unknown) => logged.push(e) }
+    );
+    expect(out).toMatchObject({ authorized: true, applied: true, appliedCount: 2 });
+    expect(logged).toHaveLength(2);
+  });
+
+  it('runBoardSyncCli reads the plan through the real board-sync module when no collector is injected', () => {
+    const applied: unknown[] = [];
+    const out = runBoardSyncCli(['--apply'], {
+      config: { enabled: true, approvers: [], tiers: { boardSync: true } },
+      // No collectBoardSyncPlan injected -> the real controlPlaneBoardSync module
+      // runs with these injected readers (no live gh).
+      readProjectItems: () => [{ itemId: 'PVT_real', number: 42, status: 'In Progress', evidence: 'Ready' }],
+      readVerifiedClosures: () => new Map([[42, true]]),
+      applyFieldUpdate: (u: unknown) => applied.push(u),
+      appendLog: () => undefined,
+      now: () => new Date('2026-07-20T00:00:00.000Z')
+    });
+    expect(out).toMatchObject({ authorized: true, applied: true });
+    expect(applied.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('runControlPlaneWriteCli prints the dispatch outcome and returns 0 (injected + default IO)', () => {
+    const stdout: string[] = [];
+    const code = cpw.runControlPlaneWriteCli(
+      [],
+      { stdout: { write: (s: string) => stdout.push(s) } },
+      { config: DISABLED_CONFIG }
+    );
+    expect(code).toBe(0);
+    expect(stdout.join('')).toContain('refused (write-path-disabled)');
+    // Default IO path (io.stdout falls back to process.stdout) — still returns 0.
+    expect(cpw.runControlPlaneWriteCli([], undefined, { config: DISABLED_CONFIG })).toBe(0);
+  });
+
+  it('runControlPlaneWriteCli fails closed (returns 1, writes to stderr) when dispatch throws', () => {
+    const stderr: string[] = [];
+    const enabledAnnotate = {
+      config: { enabled: true, approvers: ['svelderrainruiz'], tiers: { boardSync: true, annotate: true } }
+    };
+    const code = cpw.runControlPlaneWriteCli(
+      ['annotate', '--actions', '{not-json'],
+      { stderr: { write: (s: string) => stderr.push(s) } },
+      enabledAnnotate
+    );
+    expect(code).toBe(1);
+    expect(stderr.join('')).toContain('[control-plane-write]');
+    // Default IO error path (io.stderr falls back to process.stderr).
+    expect(
+      cpw.runControlPlaneWriteCli(['annotate', '--actions', '{bad'], undefined, enabledAnnotate)
+    ).toBe(1);
+  });
+});

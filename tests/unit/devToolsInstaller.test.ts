@@ -392,3 +392,18 @@ describe('parseUstarTar tolerates an empty numeric size field (VHS-REQ-679.1)', 
     expect(entries[0].content).toHaveLength(0);
   });
 });
+
+describe('parseUstarTar prefix join and NUL-typeflag entries (VHS-REQ-679.1)', () => {
+  it('joins a ustar prefix with the name and includes NUL-typeflag regular entries', () => {
+    const header = Buffer.alloc(512, 0);
+    header.write('leaf.js', 0, 'ascii'); // name field (offset 0, length 100)
+    header.write('nested/dir', 345, 'ascii'); // prefix field (offset 345, length 155)
+    // typeflag (offset 156) intentionally left NUL -> exercises the
+    // `typeflag === '\0'` arm; the size field left NUL -> zero-length content.
+    const tar = Buffer.concat([header, Buffer.alloc(1024, 0)]);
+    const entries = parseUstarTar(tar);
+    expect(entries).toHaveLength(1);
+    expect(entries[0].path).toBe('nested/dir/leaf.js');
+    expect(entries[0].content).toHaveLength(0);
+  });
+});

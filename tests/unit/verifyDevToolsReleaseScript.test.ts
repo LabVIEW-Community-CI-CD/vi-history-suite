@@ -406,4 +406,54 @@ describe('verifyDevToolsRelease additional branch coverage (#2331)', () => {
     });
     expect(code).toBe(0);
   });
+
+  it('listFilesRecursive skips entries that are neither files nor directories (e.g. symlinks)', () => {
+    const listFilesRecursive = (verifier as unknown as {
+      listFilesRecursive: (root: string, deps?: Record<string, unknown>) => string[];
+    }).listFilesRecursive;
+    // The 'link' entry reports isDirectory()=false AND isFile()=false, exercising
+    // the else-if false arm so it is neither recursed into nor recorded.
+    const result = listFilesRecursive('/virtual-root', {
+      readdirSync: (dir: string) =>
+        dir === '/virtual-root'
+          ? [
+              { name: 'real.js', isDirectory: () => false, isFile: () => true },
+              { name: 'link', isDirectory: () => false, isFile: () => false }
+            ]
+          : []
+    });
+    expect(result).toEqual(['real.js']);
+  });
+
+  it('parseArgs silently ignores a positional (non-flag) argument', () => {
+    // A bare token is neither a known flag nor `--`-prefixed, so the trailing
+    // `else if (arg.startsWith('--'))` guard takes its false arm and no throw.
+    expect(verifier.parseArgs(['--manifest', 'm.json', 'positional-token'])).toMatchObject({
+      manifestPath: 'm.json'
+    });
+  });
+
+  it('main returns 1 for an extra-only toolset without printing a digest mismatch', () => {
+    const { dir, manifest } = buildFixtureManifest();
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'vihs-verify-extra-'));
+    tempDirs.push(root);
+    // All manifest files intact -> present === manifest.files -> digests match,
+    // but one unlisted file makes ok=false with expectedDigest === actualDigest,
+    // taking the false arm of the digest-mismatch guard.
+    extractInto(root, dir, manifest);
+    fs.writeFileSync(path.join(root, 'scripts', 'evil.js'), 'gotcha\n', 'utf8');
+    const manifestPath = path.join(dir, 'm-extra.json');
+    fs.writeFileSync(manifestPath, JSON.stringify(manifest), 'utf8');
+    const errs: string[] = [];
+    const code = verifier.main(['--manifest', manifestPath, '--root', root], {
+      cwd: dir,
+      ...stableDeps,
+      stdout: { write: () => undefined },
+      stderr: { write: (s: string) => errs.push(s) }
+    });
+    expect(code).toBe(1);
+    const err = errs.join('');
+    expect(err).toMatch(/UNEXPECTED scripts\/evil\.js/);
+    expect(err).not.toMatch(/DIGEST MISMATCH/);
+  });
 });

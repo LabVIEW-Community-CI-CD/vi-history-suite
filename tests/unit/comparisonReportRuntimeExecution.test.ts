@@ -27,6 +27,7 @@ import {
   inferSupportedLabviewYearFromExecutablePath,
   inferLinuxLabviewVersionFromExecutablePath,
   resolveLinuxLabviewTcpSettings,
+  resolveWindowsLabviewTcpSettings,
   resolveWindowsLabviewTcpSettingsForLabviewPath,
   buildLinuxLabviewIniCandidatePaths,
   buildLinuxHostNativeShortPathLayout,
@@ -8227,5 +8228,482 @@ describe('comparisonReportRuntimeExecution helper branch coverage — lvcompare 
     );
 
     expect(plan).toBeUndefined();
+  });
+});
+
+describe('observeWindowsRuntimeProcesses / observeWindowsTcpListeners default + edge branches (VHS-REQ-621, VHS-REQ-623)', () => {
+  function execFileCb(behavior: (executable: string) => { error?: unknown; stdout?: unknown }) {
+    return ((executable: string, _args: string[], _options: unknown, callback: (error: unknown, stdout: unknown, stderr: string) => void) => {
+      const { error, stdout } = behavior(executable);
+      callback(error ?? null, stdout as never, '');
+    }) as never;
+  }
+
+  it('coerces a null tasklist stdout to empty and reports no observed runtime processes', async () => {
+    const observation = await observeWindowsRuntimeProcesses(
+      { hostPlatform: 'win32', runtimePlatform: 'win32', trigger: 'process-exit' },
+      { execFileImpl: execFileCb(() => ({ stdout: null })), nowIso: () => '2026-01-01T00:00:00.000Z' }
+    );
+
+    expect(observation?.observedProcesses).toEqual([]);
+    expect(observation?.labviewProcessObserved).toBe(false);
+  });
+
+  it('resolves the executable path through the default resolver on a linux host without spawning', async () => {
+    // A LabVIEW.exe row plus an omitted resolveWindowsLabviewExecutablePath exercises
+    // the production default resolver; on a linux host it short-circuits to undefined
+    // (no PowerShell subprocess).
+    const observation = await observeWindowsRuntimeProcesses(
+      { hostPlatform: 'linux', runtimePlatform: 'win32', trigger: 'cli-log-banner' },
+      { execFileImpl: execFileCb(() => ({ stdout: '"LabVIEW.exe","4321","Console","1","100 K"' })) }
+    );
+
+    expect(observation?.labviewProcessObserved).toBe(true);
+    expect(observation?.labviewProcessBitness).toBeUndefined();
+    expect(observation?.labviewProcessExecutablePath).toBeUndefined();
+  });
+
+  it('short-circuits the default resolver for a non-positive pid on a win32 host without spawning', async () => {
+    const observation = await observeWindowsRuntimeProcesses(
+      { hostPlatform: 'win32', runtimePlatform: 'win32', trigger: 'process-spawn' },
+      {
+        execFileImpl: execFileCb(() => ({ stdout: '"LabVIEW.exe","0","Console","1","100 K"' })),
+        nowIso: () => '2026-01-01T00:00:00.000Z'
+      }
+    );
+
+    expect(observation?.labviewProcessObserved).toBe(true);
+    expect(observation?.labviewProcessExecutablePath).toBeUndefined();
+  });
+
+  it('coerces a null netstat stdout to empty and returns no listeners', async () => {
+    const listeners = await observeWindowsTcpListeners(
+      { hostPlatform: 'win32', runtimePlatform: 'win32', localPorts: [3363] },
+      { execFileImpl: execFileCb(() => ({ stdout: null })) }
+    );
+
+    expect(listeners).toEqual([]);
+  });
+
+  it('rejects when the tasklist lookup fails after a matching netstat listener is found', async () => {
+    const execFileImpl = execFileCb((executable) =>
+      String(executable).includes('netstat')
+        ? { stdout: 'TCP    0.0.0.0:3363    0.0.0.0:0    LISTENING    4321' }
+        : { error: new Error('tasklist failed') }
+    );
+
+    await expect(
+      observeWindowsTcpListeners(
+        { hostPlatform: 'win32', runtimePlatform: 'win32', localPorts: [3363] },
+        { execFileImpl }
+      )
+    ).rejects.toThrow('tasklist failed');
+  });
+
+  it('coerces a null tasklist stdout to empty when mapping listener process owners', async () => {
+    const execFileImpl = execFileCb((executable) =>
+      String(executable).includes('netstat')
+        ? { stdout: 'TCP    0.0.0.0:3363    0.0.0.0:0    LISTENING    4321' }
+        : { stdout: null }
+    );
+
+    const listeners = await observeWindowsTcpListeners(
+      { hostPlatform: 'win32', runtimePlatform: 'win32', localPorts: [3363] },
+      { execFileImpl }
+    );
+
+    expect(listeners).toHaveLength(1);
+    expect(listeners[0].processName).toBeUndefined();
+  });
+});
+
+describe('runComparisonCommandPlanWithObservation default + guard branches (VHS-REQ-621)', () => {
+  function makeObsChild() {
+    const stdout = Object.assign(new EventEmitter(), { setEncoding: vi.fn(), destroy: vi.fn() });
+    const stderr = Object.assign(new EventEmitter(), { setEncoding: vi.fn(), destroy: vi.fn() });
+    const child = Object.assign(new EventEmitter(), { stdout, stderr, pid: 4242, kill: vi.fn() });
+    return { child, stdout, stderr };
+  }
+
+  it('falls through to the default host/runtime platform and process observer when observation deps are omitted', async () => {
+    const { child } = makeObsChild();
+    const resultPromise = runComparisonCommandPlanWithObservation(
+      { executable: 'LVCompare', args: [] },
+      {
+        spawnImpl: (() => child) as never,
+        // engine lvcompare starts observation on spawn; host/runtime platform and the
+        // observer are omitted so the defaults bind. On this non-win32 host the default
+        // observer returns undefined without launching a process.
+        engine: 'lvcompare'
+      }
+    );
+
+    child.emit('spawn');
+    child.emit('exit', 0, null);
+
+    const result = await resultPromise;
+    expect(result.exitCode).toBe(0);
+    expect(result.processObservation).toBeUndefined();
+    expect(result.exitProcessObservation).toBeUndefined();
+  });
+
+  it('does not restart observation when the CLI banner appears after a spawn-triggered start', async () => {
+    const { child, stdout } = makeObsChild();
+    const observeWindowsProcesses = vi
+      .fn()
+      .mockResolvedValue({ observedProcessNames: [], trigger: 'process-spawn' });
+
+    const resultPromise = runComparisonCommandPlanWithObservation(
+      { executable: 'LVCompare', args: [] },
+      {
+        spawnImpl: (() => child) as never,
+        hostPlatform: 'win32',
+        runtimePlatform: 'win32',
+        engine: 'lvcompare',
+        observeWindowsProcesses: observeWindowsProcesses as never
+      }
+    );
+
+    child.emit('spawn');
+    stdout.emit('data', 'LabVIEWCLI started logging in file: C:\\Temp\\x.log\r\n');
+    child.emit('exit', 0, null);
+
+    const result = await resultPromise;
+    expect(result.exitCode).toBe(0);
+    const spawnStarts = observeWindowsProcesses.mock.calls.filter((call) => call[0].trigger === 'process-spawn');
+    expect(spawnStarts).toHaveLength(1);
+  });
+
+  it('ignores a repeated termination request under a doubled cancellation signal', async () => {
+    const { child } = makeObsChild();
+    const token = {
+      isCancellationRequested: true,
+      onCancellationRequested: (listener: () => void) => {
+        listener();
+        return { dispose: vi.fn() };
+      }
+    };
+
+    const resultPromise = runComparisonCommandPlanWithObservation(
+      { executable: 'LVCompare', args: [] },
+      {
+        spawnImpl: (() => child) as never,
+        hostPlatform: 'linux',
+        runtimePlatform: 'linux',
+        cancellationToken: token as never
+      }
+    );
+
+    child.emit('exit', null, null);
+
+    const result = await resultPromise;
+    expect(result.cancelled).toBe(true);
+    expect(result.exitCode).toBe(130);
+  });
+
+  it('ignores a second exit event after the first settles', async () => {
+    const { child } = makeObsChild();
+    const resultPromise = runComparisonCommandPlanWithObservation(
+      { executable: 'LVCompare', args: [] },
+      { spawnImpl: (() => child) as never, hostPlatform: 'linux', runtimePlatform: 'linux' }
+    );
+
+    child.emit('exit', 0, null);
+    child.emit('exit', 1, null);
+
+    const result = await resultPromise;
+    expect(result.exitCode).toBe(0);
+  });
+
+  it('ignores an error event after the process already exited', async () => {
+    const { child } = makeObsChild();
+    const resultPromise = runComparisonCommandPlanWithObservation(
+      { executable: 'LVCompare', args: [] },
+      { spawnImpl: (() => child) as never, hostPlatform: 'linux', runtimePlatform: 'linux' }
+    );
+
+    child.emit('exit', 0, null);
+    child.emit('error', new Error('late error'));
+
+    const result = await resultPromise;
+    expect(result.exitCode).toBe(0);
+  });
+
+  it('clears the pending timeout when the process errors before timing out', async () => {
+    const { child } = makeObsChild();
+    const resultPromise = runComparisonCommandPlanWithObservation(
+      { executable: 'LVCompare', args: [] },
+      { spawnImpl: (() => child) as never, hostPlatform: 'linux', runtimePlatform: 'linux', timeoutMs: 100000 }
+    );
+
+    child.emit('error', new Error('spawn failed'));
+
+    await expect(resultPromise).rejects.toThrow('spawn failed');
+  });
+});
+
+describe('runComparisonCommandPlan default + guard branches (VHS-REQ-621)', () => {
+  it('defaults a missing signal to undefined on a numeric-code error result', async () => {
+    const execFileImpl = vi.fn((_e: string, _a: string[], _o: unknown, cb: (error: unknown, stdout: string, stderr: string) => void) => {
+      cb(Object.assign(new Error('boom'), { code: 2 }), 'o', 'e');
+      return { pid: 1, kill: vi.fn() };
+    });
+
+    const result = await runComparisonCommandPlan(
+      { executable: 'x', args: [] },
+      { execFileImpl: execFileImpl as never, hostPlatform: 'linux' }
+    );
+
+    expect(result.exitCode).toBe(2);
+    expect(result.signal).toBeUndefined();
+  });
+
+  it('defaults a missing signal to undefined on a timeout result', async () => {
+    const execFileImpl = vi.fn((_e: string, _a: string[], _o: unknown, cb: (error: unknown, stdout: string, stderr: string) => void) => {
+      cb(Object.assign(new Error('Command failed: timed out after 500ms'), { killed: true }), '', '');
+      return { pid: 1, kill: vi.fn() };
+    });
+
+    const result = await runComparisonCommandPlan(
+      { executable: 'x', args: [] },
+      { execFileImpl: execFileImpl as never, timeoutMs: 500 }
+    );
+
+    expect(result.timedOut).toBe(true);
+    expect(result.signal).toBeUndefined();
+  });
+
+  it('ignores a repeated termination request and honors an already-cancelled token', async () => {
+    let capturedCallback: ((error: unknown, stdout: string, stderr: string) => void) | undefined;
+    const kill = vi.fn();
+    const execFileImpl = vi.fn((_e: string, _a: string[], _o: unknown, cb: (error: unknown, stdout: string, stderr: string) => void) => {
+      capturedCallback = cb;
+      return { pid: 7, kill };
+    });
+    const terminateProcessTree = vi.fn().mockResolvedValue(undefined);
+    const token = {
+      isCancellationRequested: true,
+      onCancellationRequested: (listener: () => void) => {
+        listener();
+        return { dispose: vi.fn() };
+      }
+    };
+
+    const resultPromise = runComparisonCommandPlan(
+      { executable: 'LVCompare', args: [] },
+      {
+        execFileImpl: execFileImpl as never,
+        cancellationToken: token as never,
+        hostPlatform: 'win32',
+        terminateProcessTree: terminateProcessTree as never
+      }
+    );
+
+    capturedCallback?.(null, 'out', 'err');
+
+    const result = await resultPromise;
+    expect(result.cancelled).toBe(true);
+    expect(result.exitCode).toBe(130);
+    // The doubled cancellation signal requested termination exactly once.
+    expect(terminateProcessTree).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('executeComparisonReport full runtime path without a diagnostics recorder (VHS-REQ-148)', () => {
+  function successDeps(overrides: Record<string, unknown> = {}) {
+    return {
+      disableDiagnostics: true,
+      readRevisionBlob: vi
+        .fn()
+        .mockResolvedValueOnce(Buffer.from('left-blob'))
+        .mockResolvedValueOnce(Buffer.from('right-blob')),
+      materializeSelectedRevisionTree: vi.fn().mockResolvedValue(undefined),
+      mkdir: vi.fn().mockResolvedValue(undefined),
+      writeFile: vi.fn().mockResolvedValue(undefined) as never,
+      pathExists: vi.fn().mockResolvedValue(true),
+      removePath: vi.fn().mockResolvedValue(undefined),
+      runCommand: vi.fn().mockResolvedValue({
+        exitCode: 0,
+        stdout: 'CreateComparisonReport operation succeeded.',
+        stderr: ''
+      }),
+      nowIso: vi.fn().mockReturnValue('2026-04-02T01:00:00.000Z'),
+      nowMs: vi.fn().mockReturnValue(1000),
+      writePacketRecord: vi.fn().mockResolvedValue(undefined),
+      processPlatform: 'win32' as NodeJS.Platform,
+      ...overrides
+    };
+  }
+
+  it('attempts and finalizes a successful comparison with diagnostics disabled', async () => {
+    const record = createReadyRecord();
+
+    const result = await executeComparisonReport(
+      { record, repositoryRoot: '/workspace/repo' },
+      successDeps() as never
+    );
+
+    // The single attempt ran the command through the no-recorder runtime path.
+    expect(result.record.runtimeExecution.attempted).toBe(true);
+    expect(result.record.runtimeExecution.reportExists).toBe(true);
+  });
+
+  it('materializes the selected tree with the default pathspec and retains the materialized tree', async () => {
+    const record = createReadyRecord();
+    // A tree root + revision (and no explicit pathspec) drives the `|| '.'` default
+    // pathspec and the materialized-tree retention branch.
+    record.stagedRevisionPlan.treeRoot = record.artifactPlan.stagingDirectory;
+    record.stagedRevisionPlan.treeRevisionId = record.selectedHash;
+    const materializeSelectedRevisionTree = vi.fn().mockResolvedValue(undefined);
+
+    const result = await executeComparisonReport(
+      { record, repositoryRoot: '/workspace/repo' },
+      successDeps({ materializeSelectedRevisionTree }) as never
+    );
+
+    expect(materializeSelectedRevisionTree).toHaveBeenCalledWith(
+      expect.objectContaining({ pathspec: '.' })
+    );
+    expect(result.record.runtimeExecution.materializedTree).toBeDefined();
+  });
+
+  it('records worktree snapshot provenance falling back to the artifact-plan relative path', async () => {
+    const record = createReadyRecord();
+    // A working-tree side produces a snapshot provenance note; clearing the
+    // preflight relative path drives the artifact-plan fallback and the empty
+    // diagnostic-notes spread.
+    record.selectedHash = 'WORKTREE';
+    (record.preflight as { normalizedRelativePath?: string }).normalizedRelativePath = undefined;
+
+    const result = await executeComparisonReport(
+      { record, repositoryRoot: '/workspace/repo' },
+      successDeps() as never
+    );
+
+    expect(result.record.runtimeExecution.attempted).toBe(true);
+    expect(result.record.runtimeExecution.diagnosticNotes?.some((note) => /snapshot/i.test(note))).toBe(true);
+  });
+});
+
+describe('executeComparisonReport Windows host-surface contamination + tcp-settings helper (VHS-REQ-623)', () => {
+  it('blocks with windows-host-runtime-surface-contaminated when existing processes and a listener are observed', async () => {
+    const record = createReadyRecord();
+    const runCommand = vi.fn();
+    const observeWindowsProcesses = vi.fn().mockResolvedValue({
+      capturedAt: '2026-06-03T18:00:00.000Z',
+      hostPlatform: 'win32',
+      runtimePlatform: 'win32',
+      trigger: 'preflight',
+      observedProcesses: [{ imageName: 'LabVIEW.exe', pid: 4321 }],
+      observedProcessNames: ['LabVIEW.exe'],
+      labviewProcessObserved: true,
+      labviewCliProcessObserved: false,
+      lvcompareProcessObserved: false,
+      labviewProcessBitness: 'x64'
+    });
+    const observeWindowsTcpListeners = vi
+      .fn()
+      .mockResolvedValue([{ localPort: 3363, pid: 4321, processName: 'LabVIEW.exe' }]);
+
+    const result = await executeComparisonReport(
+      { record, repositoryRoot: 'C:\\workspace\\repo' },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
+        readdir: vi.fn().mockResolvedValue([]) as never,
+        readFile: vi.fn(async (filePath: string) => {
+          if (typeof filePath === 'string' && filePath.endsWith('LabVIEW.ini')) {
+            // VI Server TCP enabled with a concrete port: the disabled-TCP preflight
+            // passes, so the host-surface contamination check runs with a real port.
+            return 'server.tcp.enabled="TRUE"\nserver.tcp.port="3363"\n';
+          }
+          throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+        }) as never,
+        pathExists: vi.fn().mockResolvedValue(true),
+        runCommand: runCommand as never,
+        nowIso: vi.fn().mockReturnValue('2026-06-03T18:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32',
+        enforceWindowsHostPreflight: true,
+        observeWindowsProcesses: observeWindowsProcesses as never,
+        observeWindowsTcpListeners: observeWindowsTcpListeners as never
+      }
+    );
+
+    expect(runCommand).not.toHaveBeenCalled();
+    expect(observeWindowsProcesses).toHaveBeenCalled();
+    expect(result.record.runtimeExecution.blockedReason).toBe('windows-host-runtime-surface-contaminated');
+    expect(result.record.runtimeExecution.state).toBe('not-available');
+  });
+
+  it('returns empty tcp settings when the command plan carries no -LabVIEWPath argument', async () => {
+    const record = createReadyRecord();
+
+    const settings = await resolveWindowsLabviewTcpSettings(
+      record,
+      { executable: 'LabVIEWCLI', args: ['-OperationName', 'CreateComparisonReport'] },
+      { readFile: vi.fn().mockRejectedValue(new Error('should not read')) as never, processPlatform: 'win32' }
+    );
+
+    expect(settings).toEqual({ notes: [] });
+  });
+});
+
+describe('prepareWindowsContainerExecutionContext interop-host branches (VHS-REQ-624)', () => {
+  function containerDeps(processPlatform: NodeJS.Platform) {
+    return {
+      mkdir: vi.fn().mockResolvedValue(undefined) as never,
+      writeFile: vi.fn().mockResolvedValue(undefined) as never,
+      processPlatform,
+      leftBlob: Buffer.from('left'),
+      rightBlob: Buffer.from('right')
+    };
+  }
+
+  const labviewCliCommandPlan = {
+    executable: 'C:\\NI\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+    args: ['-OperationName', 'CreateComparisonReport', '-VI1', 'left.vi', '-VI2', 'right.vi', '-ReportPath', 'report.html']
+  };
+
+  it('blocks when the interop workspace root is missing on a non-win32 host', async () => {
+    const record = createWindowsContainerReadyRecord();
+
+    const context = await prepareWindowsContainerExecutionContext(
+      record,
+      labviewCliCommandPlan,
+      undefined,
+      containerDeps('linux')
+    );
+
+    expect(context.outcome).toBe('blocked');
+    expect(context.failureReason).toBe('windows-interop-root-unavailable');
+  });
+
+  it('blocks in the interop branch when tree materialization fails on a non-win32 host', async () => {
+    const record = createWindowsContainerReadyRecord();
+    record.stagedRevisionPlan.treeRevisionId = record.selectedHash;
+
+    const context = await prepareWindowsContainerExecutionContext(
+      record,
+      labviewCliCommandPlan,
+      '/interop/workspace',
+      {
+        ...containerDeps('linux'),
+        repositoryRoot: 'C:\\repo',
+        materializeSelectedRevisionTree: vi.fn().mockRejectedValue(new Error('partial-clone')) as never
+      }
+    );
+
+    expect(context.outcome).toBe('blocked');
+    expect(context.failureReason).toBe('selected-tree-materialize-failed');
   });
 });

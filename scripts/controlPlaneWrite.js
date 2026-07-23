@@ -860,28 +860,45 @@ module.exports = {
   runMergeQueueCli,
   resolveCreateWorkCommand,
   defaultApplyCreateWork,
-  runCreateWorkCli
+  runCreateWorkCli,
+  dispatchControlPlaneWriteCli,
+  runControlPlaneWriteCli
 };
 
-if (require.main === module) {
+// Subcommand dispatch (exported for unit coverage): `annotate` -> Tier 2 CLI,
+// `merge-queue` -> Tier 3 CLI, `create-work` -> Tier 4 CLI; anything else runs
+// the Tier 1 board-sync CLI (backward compatible with the bare invocation). Deps
+// default to {}, so the guard invocation below is behavior-identical to the
+// prior inline dispatch.
+function dispatchControlPlaneWriteCli(argv = [], deps = {}) {
+  return argv[0] === 'annotate'
+    ? runAnnotateCli(argv.slice(1), deps)
+    : argv[0] === 'merge-queue'
+      ? runMergeQueueCli(argv.slice(1), deps)
+      : argv[0] === 'create-work'
+        ? runCreateWorkCli(argv.slice(1), deps)
+        : runBoardSyncCli(argv, deps);
+}
+
+// Thin CLI entrypoint (exported for unit coverage): dispatch the requested
+// subcommand, print its outcome, and return the process exit code. Fail-closed:
+// a live read/write failure (e.g. gh auth) surfaces on stderr with exit 1, never
+// a silent no-op. IO and deps are injected so the entrypoint is unit-tested
+// without touching the real process streams or exiting the runner; the guard
+// below invokes it behavior-identically to the prior inline try/catch.
+function runControlPlaneWriteCli(argv = process.argv.slice(2), io = {}, deps = {}) {
+  const stdout = io.stdout || process.stdout;
+  const stderr = io.stderr || process.stderr;
   try {
-    const argv = process.argv.slice(2);
-    // Subcommand dispatch: `annotate` -> Tier 2 CLI, `merge-queue` -> Tier 3
-    // CLI, `create-work` -> Tier 4 CLI; anything else runs the Tier 1 board-sync
-    // CLI (backward compatible with the bare invocation).
-    const outcome = argv[0] === 'annotate'
-      ? runAnnotateCli(argv.slice(1))
-      : argv[0] === 'merge-queue'
-        ? runMergeQueueCli(argv.slice(1))
-        : argv[0] === 'create-work'
-          ? runCreateWorkCli(argv.slice(1))
-          : runBoardSyncCli(argv);
-    process.stdout.write(`${outcome.lines.join('\n')}\n`);
-    process.exit(0);
+    const outcome = dispatchControlPlaneWriteCli(argv, deps);
+    stdout.write(`${outcome.lines.join('\n')}\n`);
+    return 0;
   } catch (err) {
-    // Fail-closed: a live read/write failure (e.g. gh auth) must surface,
-    // never silently no-op.
-    process.stderr.write(`[control-plane-write] ${err.message}\n`);
-    process.exit(1);
+    stderr.write(`[control-plane-write] ${err.message}\n`);
+    return 1;
   }
+}
+
+if (require.main === module) {
+  process.exit(runControlPlaneWriteCli());
 }

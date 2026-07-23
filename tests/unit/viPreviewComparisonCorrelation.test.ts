@@ -4,6 +4,7 @@ import { buildViSemanticComparisonModelFromHtml } from '../../src/semantic/viSem
 import type { ViChangeKind } from '../../src/semantic/viSemanticModel';
 import {
   buildViPreviewComparisonCorrelation,
+  renderCorrelationNarrative,
   renderCorrelationSurfaceTable,
   VI_PREVIEW_COMPARISON_CORRELATION_SCHEMA
 } from '../../src/semantic/viPreviewComparisonCorrelation';
@@ -321,5 +322,84 @@ describe('renderCorrelationSurfaceTable (VHS-REQ-703.8)', () => {
     });
     const bdRow = table.split('\n').find((line) => line.startsWith('| block diagram |'));
     expect(bdRow).toContain('added (3,4)');
+  });
+});
+
+describe('buildViPreviewComparisonCorrelation defensive and multi-surface branches (VHS-REQ-703)', () => {
+  it('tolerates a model whose classification and detailSections are not arrays', () => {
+    // Defensive guards: a malformed model with non-array classification/detail
+    // sections still yields a valid surface-only correlation (no coordinates).
+    const model = {
+      ...bdModel(),
+      classification: undefined,
+      detailSections: undefined
+    } as unknown as Parameters<typeof buildViPreviewComparisonCorrelation>[0];
+    const correlation = buildViPreviewComparisonCorrelation(model, {
+      base: { available: true },
+      head: { available: true }
+    });
+    const bd = correlation.surfaces[0];
+    expect(bd.surface).toBe('block-diagram');
+    expect(bd.changeCount).toBe(0);
+    expect(bd.coordinateChanges).toBeUndefined();
+  });
+
+  it('skips detail sections of other surfaces and tolerates a matching section with no itemGeometry', () => {
+    const model = {
+      ...bdModel(),
+      changedSurfaces: ['block-diagram'],
+      classification: [],
+      detailSections: [
+        // A different surface -> skipped by the surface guard.
+        { surface: 'front-panel', items: ['fp'], itemGeometry: [{ text: 'fp', changeType: 'other', coordinate: { x: 9, y: 9 } }] },
+        // Matching surface but no itemGeometry -> the `?? []` fallback.
+        { surface: 'block-diagram', items: ['bd1'], itemGeometry: undefined },
+        // Matching surface with a real coordinate.
+        { surface: 'block-diagram', items: ['bd2'], itemGeometry: [{ text: 'SubVI - deleted at (3,4)', changeType: 'deleted', coordinate: { x: 3, y: 4 } }] }
+      ]
+    } as unknown as Parameters<typeof buildViPreviewComparisonCorrelation>[0];
+    const correlation = buildViPreviewComparisonCorrelation(model, {
+      base: { available: true },
+      head: { available: true }
+    });
+    const bd = correlation.surfaces[0];
+    expect(bd.changeCount).toBe(2);
+    // Only the block-diagram coordinate is collected (the front-panel section is skipped).
+    expect(bd.coordinateChanges).toEqual([
+      { text: 'SubVI - deleted at (3,4)', changeType: 'deleted', coordinate: { x: 3, y: 4 } }
+    ]);
+  });
+});
+
+describe('renderCorrelationNarrative unclassified risk (VHS-REQ-703.2)', () => {
+  it("labels a difference with no risk level as 'unclassified'", () => {
+    const correlation = buildViPreviewComparisonCorrelation(bdModel(), {});
+    const narrative = renderCorrelationNarrative({ ...correlation, riskLevel: undefined });
+    expect(narrative).toContain('unclassified change');
+  });
+});
+
+describe('renderCorrelationSurfaceTable move-source-only coordinate (VHS-REQ-703.11)', () => {
+  it('renders the source point when a move records only its origin', () => {
+    const table = renderCorrelationSurfaceTable({
+      hasDifferences: true,
+      surfaces: [
+        {
+          surface: 'block-diagram',
+          changeKinds: [],
+          changeCount: 1,
+          sampleChanges: [],
+          basePreviewAvailable: true,
+          headPreviewAvailable: true,
+          correlated: true,
+          coordinateChanges: [
+            // fromCoordinate only (no destination) -> the `else if (fromCoordinate)` arm.
+            { text: 'SubVI "Y.vi" - moved from (10,20)', changeType: 'moved', objectName: 'Y.vi', fromCoordinate: { x: 10, y: 20 } }
+          ]
+        }
+      ],
+      totals: { changedSurfaceCount: 1, correlatedSurfaceCount: 1, uncorrelatedSurfaceCount: 0 }
+    });
+    expect(table).toContain('Y.vi (10,20)');
   });
 });

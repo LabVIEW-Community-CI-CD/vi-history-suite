@@ -181,4 +181,68 @@ describe('buildViSemanticHistory', () => {
     expect(history.narrative).toContain('connector pane (1)');
     expect(history.narrative).toContain('VI attributes (1)');
   });
+
+  it('falls back to the default revision depth when maxRevisions is not finite', async () => {
+    // `Number.isFinite(requested) ? requested : DEFAULT` — a non-finite request
+    // (Infinity/NaN) must resolve to the default depth (3), not propagate NaN.
+    const entries = [entry('cccc', 'x', 3), entry('bbbb', 'x', 2)];
+    const listHistory = vi.fn(async () => entries);
+    const compare = vi.fn(async () => completed([], 'No LabVIEW differences.', 'bbbb'));
+    const deps = {
+      getFileHistoryEntries: listHistory,
+      compareViRevisions: compare
+    } as unknown as ViSemanticHistoryDeps;
+
+    await buildViSemanticHistory(input({ maxRevisions: Number.POSITIVE_INFINITY }), deps);
+    expect(listHistory).toHaveBeenLastCalledWith(expect.any(String), 'vis/Widget.vi', 3);
+  });
+
+  it('assigns the default comparison orchestrator when only the history lister is injected', async () => {
+    // A single revision yields no adjacent pair, so the loop never runs and the
+    // default `compareViRevisions` is assigned (the `?? default` right operand)
+    // but never invoked — no real comparison runtime is touched.
+    const listHistory = vi.fn(async () => [entry('cccc', 'only', 3)]);
+    const deps = { getFileHistoryEntries: listHistory } as unknown as ViSemanticHistoryDeps;
+    const history = await buildViSemanticHistory(input(), deps);
+    expect(history.comparedStepCount).toBe(0);
+    expect(history.narrative).toContain('has no comparable revision history');
+  });
+
+  it('falls back to the older git hash when a completed model omits its revisions', async () => {
+    // `result.model.revisions?.baseHash ?? older.hash`: a completed model without
+    // a `revisions` block must still record the transition's older endpoint.
+    const entries = [entry('cccc2222', 'edit', 3), entry('bbbb1111', 'init', 2)];
+    const withoutRevisions: CompareViRevisionsResult = {
+      status: 'completed',
+      hasDifferences: true,
+      model: {
+        changedSurfaces: ['front-panel'],
+        narrative: 'The front panel differs.',
+        hasDifferences: true,
+        vi: { title: 'Widget.vi' }
+      } as unknown as ViSemanticComparisonModel,
+      runtime: { provider: 'linux-container', state: 'succeeded', reportFilePath: '/t/r.html' }
+    };
+    const harness = makeHarness(entries, [withoutRevisions]);
+    const history = await buildViSemanticHistory(input(), harness.deps);
+    expect(history.steps[0].baseHash).toBe('bbbb1111');
+    expect(history.steps[0].selectedHash).toBe('cccc2222');
+  });
+
+  it('pluralizes the blocked-comparison count when more than one step fails', async () => {
+    // `blockedOrFailedStepCount === 1 ? '' : 's'` — two blocked steps must read
+    // "2 comparisons could not be completed" (plural).
+    const entries = [
+      entry('dddd', 'edit', 4),
+      entry('cccc', 'edit', 3),
+      entry('bbbb', 'init', 2)
+    ];
+    const harness = makeHarness(entries, [
+      { status: 'blocked-selection', reason: 'docker-daemon-unreachable' },
+      { status: 'failed', reason: 'labview-cli-connection-failed' }
+    ]);
+    const history = await buildViSemanticHistory(input(), harness.deps);
+    expect(history.totals.blockedOrFailedStepCount).toBe(2);
+    expect(history.narrative).toContain('2 comparisons could not be completed');
+  });
 });

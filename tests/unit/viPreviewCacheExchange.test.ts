@@ -120,4 +120,19 @@ describe('selectExchangeReleaseToFetch (VHS-REQ-673.2)', () => {
     ];
     expect(selectExchangeReleaseToFetch(mixed)?.tag).toBe('preview-cache-222222222222');
   });
+
+  it('ranks a shuffled multi-release set with a createdAt tie (both comparator directions)', () => {
+    // A deliberately shuffled createdAt order forces the sort comparator through
+    // both the ascending (at < bt) and descending (at > bt) return branches; the
+    // 2026-05 createdAt tie exercises the tag tie-break. The newest still wins,
+    // with the higher tag breaking the tie.
+    const shuffled = [
+      { tag: 'preview-cache-000000000000', createdAt: '2026-03-01T00:00:00Z' },
+      { tag: 'preview-cache-111111111111', createdAt: '2026-01-01T00:00:00Z' },
+      { tag: 'preview-cache-aaaaaaaaaaaa', createdAt: '2026-05-01T00:00:00Z' },
+      { tag: 'preview-cache-bbbbbbbbbbbb', createdAt: '2026-05-01T00:00:00Z' },
+      { tag: 'preview-cache-222222222222', createdAt: '2026-02-01T00:00:00Z' }
+    ];
+    expect(selectExchangeReleaseToFetch(shuffled)?.tag).toBe('preview-cache-bbbbbbbbbbbb');
+  });
 });

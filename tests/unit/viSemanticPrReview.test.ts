@@ -788,3 +788,152 @@ describe('buildViLatentCorpusSamplesArtifact (VHS-REQ-703.17)', () => {
     expect(buildViLatentCorpusSamplesArtifact(review)).toBeUndefined();
   });
 });
+
+describe('buildViSemanticPrReview optional-argument and default-boundary branches', () => {
+  const regionHtml = `<h1 class="report-title">R</h1>
+       <h2 class="section-header">Detailed Information</h2>
+       <details><summary class="difference-heading">3. Block Diagram objects</summary>
+         <ol><li class="diff-detail">SubVI "X.vi" - added at (1570,358)</li></ol></details>`;
+
+  it('rejects a missing baseHash before touching any collaborator', async () => {
+    // `(input.baseHash ?? '')` — an undefined baseHash resolves to '' and fails
+    // the required-input guard before the default git/compare boundaries load.
+    await expect(
+      buildViSemanticPrReview(
+        { repositoryRoot: '/repo', baseHash: undefined, selectedHash: 'b' } as never,
+        {}
+      )
+    ).rejects.toThrow('baseHash and selectedHash are required');
+  });
+
+  it('rejects a missing selectedHash before touching any collaborator', async () => {
+    await expect(
+      buildViSemanticPrReview(
+        { repositoryRoot: '/repo', baseHash: 'a', selectedHash: undefined } as never,
+        {}
+      )
+    ).rejects.toThrow('baseHash and selectedHash are required');
+  });
+
+  it('falls back to the default VI cap when maxVis is not finite and assigns the default comparator', async () => {
+    // `Number.isFinite(requested) ? requested : DEFAULT_MAX_VIS` takes its default
+    // branch for a non-finite cap; with no changed VIs the default `compareVi`
+    // boundary is assigned (the `?? default` right operand) but never invoked.
+    const review = await buildViSemanticPrReview(
+      { repositoryRoot: '/repo', baseHash: 'a', selectedHash: 'b', maxVis: Number.NaN },
+      { listChangedPaths: async () => [] }
+    );
+    expect(review.changedViCount).toBe(0);
+    expect(review.reviewedCount).toBe(0);
+    expect(review.entries).toEqual([]);
+  });
+
+  it('counts a medium-risk VI in the narrative risk roll-up', async () => {
+    // Exercises the `if (counts.medium > 0)` roll-up branch, distinct from the
+    // existing high/low coverage.
+    const review = await buildViSemanticPrReview(
+      { repositoryRoot: '/repo', baseHash: 'a', selectedHash: 'b' },
+      {
+        listChangedPaths: async () => ['src/M.vi'],
+        compareVi: async () =>
+          completed(
+            makeModel({
+              vi: { title: 'M.vi' },
+              hasDifferences: true,
+              changedSurfaces: ['block-diagram'],
+              narrative: 'The block diagram differs.',
+              changeKinds: ['behavioral'],
+              riskLevel: 'medium',
+              riskRationale: 'medium: behavioral change(s)',
+              classificationConfidence: 'high'
+            })
+          )
+      }
+    );
+    expect(review.narrative).toContain('1 medium-risk');
+  });
+
+  it('skips non-completed entries when collecting the region-correlations artifact', async () => {
+    // `if (entry.status !== 'completed') continue;` — a failed VI is skipped so
+    // only the completed, coordinate-bearing VI lands in the bundle.
+    const model = buildViSemanticComparisonModelFromHtml(regionHtml, {});
+    const review = await buildViSemanticPrReview(
+      { repositoryRoot: '/repo', baseHash: 'a', selectedHash: 'b' },
+      {
+        listChangedPaths: async () => ['src/A.vi', 'src/B.vi'],
+        compareVi: async (input): Promise<CompareViRevisionsResult> =>
+          input.relativePath === 'src/A.vi'
+            ? {
+                status: 'completed',
+                hasDifferences: true,
+                model,
+                runtime: { provider: 'linux-container', state: 'succeeded', reportFilePath: '' }
+              }
+            : { status: 'failed', reason: 'labview-cli-connection-failed' }
+      }
+    );
+    const artifact = buildViPreviewRegionCorrelationsArtifact(review);
+    expect(artifact?.correlatedViCount).toBe(1);
+    expect(artifact?.entries.map((entry) => entry.relativePath)).toEqual(['src/A.vi']);
+  });
+
+  it('threads preview availability into a corpus sample when a correlation is present', async () => {
+    // `previewAvailability: entry.correlation ? {...} : undefined` — a wired
+    // preview provider attaches a correlation, so the corpus sample records the
+    // honest base/head availability from it.
+    const review = await buildViSemanticPrReview(
+      { repositoryRoot: '/repo', baseHash: 'aaa', selectedHash: 'bbb' },
+      {
+        listChangedPaths: async () => ['src/A.vi'],
+        compareVi: async () =>
+          completed(
+            makeModel({
+              vi: { title: 'A.vi' },
+              hasDifferences: true,
+              changedSurfaces: ['block-diagram'],
+              narrative: 'The block diagram differs.'
+            })
+          ),
+        resolvePreviewPair: async () => ({
+          base: { available: true, inlineImageCount: 2 },
+          head: { available: false, inlineImageCount: 0 }
+        })
+      }
+    );
+    const artifact = buildViLatentCorpusSamplesArtifact(review);
+    expect(artifact?.sampleViCount).toBe(1);
+    expect(artifact?.entries[0].sample.artifacts.basePreviewAvailable).toBe(true);
+    expect(artifact?.entries[0].sample.artifacts.headPreviewAvailable).toBe(false);
+  });
+
+  it('pluralizes the visual-diff gallery summary for multiple images', async () => {
+    // `images.length === 1 ? '' : 's'` — two images must read "2 images".
+    const review = await buildViSemanticPrReview(
+      { repositoryRoot: '/repo', baseHash: 'a', selectedHash: 'b' },
+      {
+        listChangedPaths: async () => ['src/A.vi'],
+        compareVi: async () =>
+          completed(
+            makeModel({
+              vi: { title: 'A.vi' },
+              hasDifferences: true,
+              changedSurfaces: ['block-diagram'],
+              narrative: 'The block diagram differs.'
+            })
+          )
+      }
+    );
+    const markdown = renderViSemanticPrReviewMarkdown(review, {
+      imagesByVi: new Map([
+        [
+          'src/A.vi',
+          [
+            { caption: 'Block Diagram — changed', url: 'https://example.test/1.png' },
+            { caption: 'Front Panel — changed', url: 'https://example.test/2.png' }
+          ]
+        ]
+      ])
+    });
+    expect(markdown).toContain('<summary>Visual diff (2 images)</summary>');
+  });
+});

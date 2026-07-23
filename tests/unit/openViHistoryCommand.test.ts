@@ -2437,6 +2437,41 @@ describe('openViHistoryCommand git-uri, preview, and plain-diff branches (VHS-RE
     });
   });
 
+  it('runs the materialize dependency callbacks it hands to the tree materializer (VHS-REQ-659.15)', async () => {
+    previewState.enabled = true;
+    // Invoke one of the real dependency callbacks the command constructs so its
+    // closure executes. ensureDirectory just mkdir(recursive)s an existing
+    // directory (process.cwd()), which is a safe idempotent no-op.
+    revisionTreeMock.materialize.mockImplementation(
+      async (_plan: unknown, deps: { ensureDirectory: (directory: string) => Promise<void> }) => {
+        await deps.ensureDirectory(process.cwd());
+        return { viFilePath: '/workspace/preview/Sample.vi' };
+      }
+    );
+    const historyService = { load: vi.fn().mockResolvedValue(createEligibleModel()) };
+    const panelTracker = new HistoryPanelTracker();
+    const gitApi = createGitApiStub();
+    const command = createOpenViHistoryCommand(historyService as never, gitApi as never, panelTracker);
+
+    vi.useFakeTimers();
+    try {
+      await command(vscodeHarness.createUri('/workspace/test-repo/src/Sample.vi') as never);
+      await panelTracker.dispatchLastPanelMessage({
+        command: 'previewRevision',
+        hash: 'abc1234567890abcdef1234567890abcdef12345'
+      });
+      vi.runOnlyPendingTimers();
+    } finally {
+      vi.useRealTimers();
+    }
+
+    expect(revisionTreeMock.materialize).toHaveBeenCalledTimes(1);
+    expect(panelTracker.getLastActionSummary()).toMatchObject({
+      command: 'previewRevision',
+      outcome: 'opened-revision-preview'
+    });
+  });
+
   it('opens a plain Git diff for a Diff prev on a non-comparison-capable eligible VI', async () => {
     const model = createEligibleModel({ signature: 'unknown' });
     const historyService = { load: vi.fn().mockResolvedValue(model) };

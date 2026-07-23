@@ -428,3 +428,22 @@ describe('registerRuntimeRuntimeCommands default dependencies (VHS-REQ-617)', ()
     expect(watcher.forceRefresh).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('buildRuntimeSummaryReport docker recommendation (VHS-REQ-617.9)', () => {
+  it('reports the docker CLI path and a docker recommendation', () => {
+    const detection: DetectedRuntimes = {
+      platform: 'linux',
+      host: { installations: [] },
+      docker: { cliAvailable: true, cliPath: '/usr/local/bin/docker' }
+    };
+    const report = buildRuntimeSummaryReport(
+      detection,
+      { provider: 'docker', labviewVersion: '2026', labviewBitness: 'x64' },
+      { runtimeProvider: undefined, labviewVersion: undefined, labviewBitness: undefined }
+    );
+    // Exercises the docker-cli-path report line and the docker arm of
+    // describeRecommendation.
+    expect(report).toContain('Docker CLI path: /usr/local/bin/docker');
+    expect(report).toContain('Recommendation: docker 2026 x64');
+  });
+});

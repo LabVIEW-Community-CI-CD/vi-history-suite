@@ -1081,3 +1081,112 @@ describe('runWindowsRuntimeMatrix.main', () => {
     }
   });
 });
+
+describe('runWindowsRuntimeMatrix residual branch coverage (#2333)', () => {
+  const sep = require('node:path').sep as string;
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const os = require('node:os') as { hostname: () => string };
+
+  const buildEvidence = (harness as unknown as {
+    buildEvidence: (
+      results: Array<{ pass: boolean }>,
+      options: Record<string, unknown>,
+      deps: Record<string, unknown>
+    ) => { host: { platform: string; hostname: string }; summary: { passed: number; failed: number; raceCoverage: string } };
+  }).buildEvidence;
+
+  const mainFn = (harness as unknown as {
+    main: (argv: string[], deps: Record<string, unknown>) => void;
+  }).main;
+
+  it('parses the labview-version, out, proof-dir, and keep-running flags', () => {
+    const options = harness.parseArgs([
+      '--scenario',
+      'steady-A',
+      '--labview-version',
+      '2025',
+      '--out',
+      'custom-out.json',
+      '--proof-dir',
+      'custom-proofs',
+      '--keep-running'
+    ]);
+    expect(options).toMatchObject({
+      scenario: 'steady-A',
+      labviewVersion: '2025',
+      out: 'custom-out.json',
+      proofDir: 'custom-proofs',
+      keepRunning: true
+    });
+  });
+
+  it('buildEvidence falls back to process.platform and os.hostname when those deps are omitted', () => {
+    const evidence = buildEvidence(
+      [{ pass: true }, { pass: false }],
+      { labviewVersion: '2026' },
+      { now: () => new Date('2026-05-31T00:00:00Z') }
+    );
+    // No deps.platform -> process.platform; no deps.hostname -> os.hostname().
+    expect(evidence.host.platform).toBe(process.platform);
+    expect(evidence.host.hostname).toBe(os.hostname());
+    expect(evidence.summary).toEqual({ passed: 1, failed: 1, raceCoverage: harness.RACE_COVERAGE_NOTE });
+  });
+
+  it('runRuntimeMatrix falls back to process cwd/platform/streams when those deps are omitted', () => {
+    const outSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    const errSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    try {
+      const steadyLogPath = `assurance-closeout-evidence${sep}runtime-matrix-proofs${sep}steady-A.scenario.json`;
+      const fakeFs = {
+        existsSync: (target: string) => target === steadyLogPath,
+        readFileSync: () =>
+          JSON.stringify({
+            pass: true,
+            durationMs: 5,
+            observed: {
+              runtimeBlockedReason: 'windows-host-bitness-conflict',
+              hostBitness: 'x64',
+              selectedBitness: 'x86'
+            }
+          }),
+        writeFileSync: () => undefined,
+        mkdirSync: () => undefined
+      };
+      const result = harness.runRuntimeMatrix(['--scenario', 'steady-A'], {
+        spawnSync: vi.fn().mockReturnValue({ status: 0, error: undefined }),
+        fs: fakeFs,
+        now: () => new Date('2026-05-31T00:00:00Z'),
+        hostname: () => 'fake-runner',
+        // platform, cwd, stdout, and stderr are omitted so the process.* fallback
+        // arms resolve; VIHS_FAKE_WINDOWS keeps the platform guard happy on Linux.
+        env: { VIHS_FAKE_WINDOWS: '1' }
+      });
+      expect(result.exitCode).toBe(0);
+      expect(outSpy).toHaveBeenCalled();
+    } finally {
+      outSpy.mockRestore();
+      errSpy.mockRestore();
+    }
+  });
+
+  it('main resolves process.stderr when a thrown run supplies no stderr stream', () => {
+    const previous = process.exitCode;
+    const errSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    try {
+      // platform=linux without the fake-windows override throws the guard, and with
+      // no deps.stderr the catch resolves the process.stderr fallback.
+      mainFn([], {
+        spawnSync: vi.fn(),
+        fs: { existsSync: () => false, readFileSync: () => '', writeFileSync: () => undefined, mkdirSync: () => undefined },
+        platform: 'linux',
+        env: {},
+        cwd: () => '.'
+      });
+      expect(process.exitCode).toBe(1);
+      expect(errSpy).toHaveBeenCalledWith(expect.stringContaining('requires Windows'));
+    } finally {
+      errSpy.mockRestore();
+      process.exitCode = previous;
+    }
+  });
+});

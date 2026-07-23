@@ -307,3 +307,80 @@ describe('runComparisonPreviewPipeline (VHS-REQ-699.1)', () => {
     expect(previewCache.set).not.toHaveBeenCalled();
   });
 });
+
+describe('runComparisonPreviewPipeline fallback + guard branches (VHS-REQ-699)', () => {
+  it('defaults the staging failure reason when a failed staging result carries none', async () => {
+    const result = await runComparisonPreviewPipeline(
+      deps({ stageInputs: vi.fn(async () => ({ outcome: 'failed' as const })) })
+    );
+
+    expect(result.staging.outcome).toBe('failed');
+    // Both the measured-state classifier and the staging record default to STAGING_FAILED.
+    expect(result.staging.failureReason).toBe('staging-failed');
+    expect(result.validation.outcome).toBe('rejected');
+    expect(result.validation.failureReason).toBe('staging-failed');
+    expect(result.finalState).toBe('FAILED');
+    expect(result.failureReason).toBe('staging-failed');
+  });
+
+  it('defaults each preview failure reason when a render fails without one', async () => {
+    // Both sides fail with no reason: the left and right `?? preview-render-failed`
+    // fallbacks fire.
+    const renderStagedPreview = vi.fn(async () => ({ rendered: false }));
+    const result = await runComparisonPreviewPipeline(deps({ renderStagedPreview }));
+
+    expect(result.previewLeft.outcome).toBe('failed');
+    expect(result.previewLeft.failureReason).toBe('preview-render-failed');
+    expect(result.previewRight.outcome).toBe('failed');
+    expect(result.previewRight.failureReason).toBe('preview-render-failed');
+  });
+
+  it('defaults the comparison failure reason when the comparison fails without one', async () => {
+    const runComparison = vi.fn(async () => ({ succeeded: false }));
+    const result = await runComparisonPreviewPipeline(deps({ runComparison }));
+
+    expect(result.comparison.outcome).toBe('failed');
+    expect(result.comparison.failureReason).toBe('comparison-failed');
+    expect(result.finalState).toBe('FAILED');
+    expect(result.failureReason).toBe('comparison-failed');
+  });
+
+  it('coerces a non-Error unstaging throw into a string failure reason', async () => {
+    const boom: unknown = 'cleanup-exploded';
+    const unstageInputs = vi.fn(async () => {
+      throw boom;
+    });
+    const result = await runComparisonPreviewPipeline(deps({ unstageInputs }));
+
+    expect(result.unstaging.status).toBe('failed');
+    expect(result.unstaging.failureReason).toBe('cleanup-exploded');
+  });
+
+  it('swallows a rejected pre-comparison quiesce hook and still runs the comparison', async () => {
+    const quiesceRuntimeBeforeComparison = vi.fn(async () => {
+      throw new Error('quiesce failed');
+    });
+    const result = await runComparisonPreviewPipeline(deps({ quiesceRuntimeBeforeComparison }));
+
+    // A failed quiesce is swallowed; the comparison still runs and completes.
+    expect(quiesceRuntimeBeforeComparison).toHaveBeenCalledTimes(1);
+    expect(result.comparison.outcome).toBe('compared');
+    expect(result.finalState).toBe('COMPLETE');
+  });
+
+  it('attempts idempotent cleanup and rethrows when a boundary throws (safety net)', async () => {
+    const stageInputs = vi.fn(async () => {
+      throw new Error('stage boom');
+    });
+    const unstageInputs = vi.fn(async () => {
+      throw new Error('unstage boom');
+    });
+
+    await expect(
+      runComparisonPreviewPipeline(deps({ stageInputs, unstageInputs }))
+    ).rejects.toThrow('stage boom');
+    // The finally-style cleanup was attempted (and its own rejection discarded)
+    // even though the original boundary error rethrows.
+    expect(unstageInputs).toHaveBeenCalledTimes(1);
+  });
+});

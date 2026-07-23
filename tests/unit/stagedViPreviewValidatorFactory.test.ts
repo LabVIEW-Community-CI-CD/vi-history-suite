@@ -193,4 +193,21 @@ describe('buildNodeViPreviewRenderDeps', () => {
       await fs.rm(ws, { recursive: true, force: true });
     }
   });
+
+  it('skips a source-named entry that is a directory, not a file', async () => {
+    // A directory whose name looks like a LabVIEW source file (e.g. `weird.vi`)
+    // passes the name filter but fails the `isFile()` guard, so it must not be
+    // enumerated as a source file.
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-factory-dirvi-'));
+    try {
+      await fs.writeFile(path.join(dir, 'real.vi'), 'AAAA');
+      await fs.mkdir(path.join(dir, 'weird.vi'), { recursive: true });
+      const deps = buildNodeViPreviewRenderDeps(inputWithTree(dir));
+      const entries = await deps.listSourceFiles(dir);
+      const rel = entries.map((e) => e.relativePath.replace(/\\/g, '/'));
+      expect(rel).toEqual(['real.vi']);
+    } finally {
+      await fs.rm(dir, { recursive: true, force: true });
+    }
+  });
 });

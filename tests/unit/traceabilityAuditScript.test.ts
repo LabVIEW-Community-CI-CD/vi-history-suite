@@ -2,7 +2,7 @@ import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 
-import { describe, expect, it, beforeEach, afterEach } from 'vitest';
+import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
 
 const repoRoot = path.resolve(__dirname, '..', '..');
 
@@ -560,5 +560,120 @@ describe('traceability policy documentation', () => {
     expect(readme).toContain('dev-only');
     expect(readme).toContain('release-ci');
     expect(readme).toContain('asset-doc');
+  });
+});
+
+describe('traceability audit residual branch coverage (#2333)', () => {
+  const roots: string[] = [];
+  const sink = { write: () => undefined };
+
+  afterEach(() => {
+    for (const root of roots.splice(0)) {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('parseCsv drops an all-empty row while keeping rows with content', () => {
+    // The blank middle line produces a row whose only cell is empty, so the
+    // `currentRow.some(cell => cell.length > 0)` guard takes its false arm.
+    const rows = parseCsv('Path,Classification\nsrc/a.ts,mapped\n\nsrc/b.ts,gap\n');
+    expect(rows.map((row: { Path: string }) => row.Path)).toEqual(['src/a.ts', 'src/b.ts']);
+  });
+
+  it('extractRtmPaths ignores a reference that cleans down to an empty path', () => {
+    // '#anchor' has no path segment before the fragment, so cleanReference is ''
+    // and the `cleanReference.length > 0` guard takes its false arm.
+    const paths = extractRtmPaths([{ ImplementationRefs: '#anchor', VerificationRefs: '' }]);
+    expect(paths.size).toBe(0);
+  });
+
+  it('records a gap-classified entry that is already represented in the RTM', () => {
+    const root = createAuditFixture({
+      files: ['src/gap-tracked.ts'],
+      inventoryRows: [{ Path: 'src/gap-tracked.ts', Classification: 'gap', RtmCoverage: 'Yes', Notes: 'gap already in rtm' }],
+      rtmRows: [
+        {
+          ReqID: 'VHS-REQ-1',
+          ParentID: '',
+          Status: '',
+          Area: '',
+          Title: '',
+          ImplementationRefs: 'src/gap-tracked.ts',
+          VerificationRefs: '',
+          Notes: ''
+        }
+      ]
+    });
+    roots.push(root);
+    const result = auditTraceability({ cwd: root, stdout: sink, stderr: sink });
+    // The gap entry IS in the RTM -> the `if (isInRtm)` true arm records it and
+    // the audit fails closed.
+    expect(result.findings.gapEntriesPresentInRtm).toContain('src/gap-tracked.ts');
+    expect(result.success).toBe(false);
+  });
+
+  it('does not flag an implementation file absent from inventory but present in the RTM', () => {
+    const root = createAuditFixture({
+      files: ['src/rtm-only-impl.ts'],
+      inventoryRows: [],
+      rtmRows: [
+        {
+          ReqID: 'VHS-REQ-2',
+          ParentID: '',
+          Status: '',
+          Area: '',
+          Title: '',
+          ImplementationRefs: 'src/rtm-only-impl.ts',
+          VerificationRefs: '',
+          Notes: ''
+        }
+      ]
+    });
+    roots.push(root);
+    const result = auditTraceability({ cwd: root, stdout: sink, stderr: sink });
+    // Not in inventory but in the RTM -> the `!rtmPaths.has(file)` guard takes its
+    // false arm, so it is not reported as an unmapped implementation candidate.
+    expect(result.findings.unmappedImplementationCandidates).not.toContain('src/rtm-only-impl.ts');
+  });
+
+  it('does not flag a test file absent from inventory but present in the RTM', () => {
+    const root = createAuditFixture({
+      files: ['tests/unit/rtm-only.test.ts'],
+      inventoryRows: [],
+      rtmRows: [
+        {
+          ReqID: 'VHS-REQ-3',
+          ParentID: '',
+          Status: '',
+          Area: '',
+          Title: '',
+          ImplementationRefs: '',
+          VerificationRefs: 'tests/unit/rtm-only.test.ts',
+          Notes: ''
+        }
+      ]
+    });
+    roots.push(root);
+    const result = auditTraceability({ cwd: root, stdout: sink, stderr: sink });
+    expect(result.findings.unmappedTestCandidates).not.toContain('tests/unit/rtm-only.test.ts');
+  });
+
+  it('falls back to process.stdout/process.stderr when streams are not injected', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'traceability-nostreams-'));
+    roots.push(root);
+    const outSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    const errSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    try {
+      // cwd is injected (so the repoRoot fallback is not taken) but stdout/stderr
+      // are omitted -> their `?? process.*` fallback arms resolve, and the
+      // missing-inventory message is written to the real process.stderr.
+      const result = auditTraceability({ cwd: root });
+      expect(result.success).toBe(false);
+      expect(result.findings.missingInventoryFile).toBe(true);
+      expect(errSpy).toHaveBeenCalledWith(expect.stringContaining('Missing inventory file'));
+    } finally {
+      outSpy.mockRestore();
+      errSpy.mockRestore();
+    }
   });
 });

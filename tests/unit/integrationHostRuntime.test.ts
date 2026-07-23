@@ -362,4 +362,55 @@ describe('integrationHostRuntime', () => {
     ).toThrow('ldd failed with permission denied');
     expect(execFileSync).toHaveBeenCalledTimes(1);
   });
+
+  it('recurses into subdirectories and skips non-runtime-dependency files (VHS-REQ-598.7)', async () => {
+    const runtimeRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-linux-runtime-tree-'));
+    const nestedDir = path.join(runtimeRoot, 'nested');
+    await fs.mkdir(nestedDir);
+    // A non-dependency file at the top level must be skipped; the runtime
+    // dependency lives one directory deeper so the directory-recursion branch is
+    // exercised end to end against the real filesystem.
+    await fs.writeFile(path.join(runtimeRoot, 'notes.txt'), 'not a runtime dependency');
+    const nestedSharedObject = path.join(nestedDir, 'libnested.so.1');
+    await fs.writeFile(nestedSharedObject, elfStub());
+
+    const execFileSync = vi.fn((command: string, args: readonly string[]) => {
+      expect(command).toBe('ldd');
+      expect(String(args[0])).toBe(nestedSharedObject);
+      return 'libnested-dep.so.2 => not found\n';
+    });
+
+    // Omit readdirSync/statSync so the real fs walks the on-disk tree: the
+    // directory-recursion arm and the non-dependency skip arm both execute.
+    expect(
+      collectMissingLinuxSharedLibraries(runtimeRoot, {
+        execFileSync: execFileSync as never
+      })
+    ).toEqual(['libnested-dep.so.2']);
+    expect(execFileSync).toHaveBeenCalledTimes(1);
+  });
+
+  it('resolves the Windows VS Code CLI with the real existsSync when no deps are injected', () => {
+    // No deps -> exercises the `deps.existsSync ?? fsSync.existsSync` fallback.
+    // Assert install-location-agnostically (a Windows CI runner may have VS Code
+    // at either standard candidate) that a Windows `code.cmd` candidate resolves.
+    const resolved = resolveStandardWindowsCodeCliPath(
+      'win32',
+      'C:\\Users\\agent\\AppData\\Local'
+    );
+    expect([
+      'C:\\Program Files\\Microsoft VS Code\\bin\\code.cmd',
+      'C:\\Users\\agent\\AppData\\Local\\Programs\\Microsoft VS Code\\bin\\code.cmd'
+    ]).toContain(resolved);
+  });
+
+  it('defaults windowsCodeAlreadyRunning to a false probe when the dependency is omitted', () => {
+    // Omit windowsCodeAlreadyRunning with an existing CLI path so the injected
+    // fallback probe is actually invoked (exercising the `() => false` default).
+    expect(
+      inspectIntegrationHostStrategy('C:\\Program Files\\Microsoft VS Code\\Code.exe', undefined, {
+        existsSync: () => true
+      })
+    ).toEqual({ mode: 'windows' });
+  });
 });

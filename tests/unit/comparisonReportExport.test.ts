@@ -154,6 +154,16 @@ describe('describeMissingGraphicsReportReason', () => {
       describeMissingGraphicsReportReason(createSource({ generatedReportExists: false }))
     ).toBe('no LabVIEW-generated graphics report was produced');
   });
+
+  it('omits the parenthetical detail clause when no underlying reason is retained', () => {
+    // blocked-preflight with no graphicsReportUnavailableReason exercises the
+    // withDetail(no-detail) branch: the base phrase carries no ` (detail)` suffix.
+    expect(
+      describeMissingGraphicsReportReason(
+        createSource({ generatedReportExists: false, reportStatus: 'blocked-preflight' })
+      )
+    ).toBe('the comparison was blocked before the LabVIEW runtime could run');
+  });
 });
 
 describe('resolveComparisonReportExportPlan', () => {
@@ -649,6 +659,56 @@ describe('runComparisonReportExport', () => {
     expect(deps.showOpenDialog).not.toHaveBeenCalled();
     expect(deps.exportBundle).not.toHaveBeenCalled();
   });
+
+  it('uses the default filesystem existence check when no pathExists dependency is injected', async () => {
+    // Omit pathExists so the default (real-fs) probe runs; createSource's fake
+    // paths do not exist, so the plan cannot resolve and the export reports
+    // source-missing without touching any external process.
+    const deps = createBaseDeps();
+    delete (deps as { pathExists?: unknown }).pathExists;
+
+    const result = await runComparisonReportExport(createSource(), deps);
+
+    expect(result.outcome).toBe('source-missing');
+  });
+
+  it('seeds the open dialog with the default destination directory when provided', async () => {
+    const deps = createBaseDeps();
+    deps.defaultDestinationDirectory = '/default/export/dir';
+
+    await runComparisonReportExport(createSource(), deps);
+
+    expect(deps.uriFile).toHaveBeenCalledWith('/default/export/dir');
+    expect(deps.showOpenDialog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        defaultUri: expect.objectContaining({ fsPath: '/default/export/dir' })
+      })
+    );
+  });
+
+  it('returns cancelled with the graphics-unavailable reason when the folder dialog is dismissed after confirming the packet', async () => {
+    const deps = createPacketDeps();
+    deps.showWarningMessage = vi.fn(async () => 'Export Evidence Packet' as never);
+    deps.showOpenDialog = vi.fn(async () => undefined);
+
+    const result = await runComparisonReportExport(createPacketSource(), deps);
+
+    expect(result.outcome).toBe('cancelled');
+    expect(result.evidenceKind).toBe('packet');
+    expect(result.graphicsReportUnavailableReason).toContain('runtime-unavailable');
+    expect(deps.exportBundle).not.toHaveBeenCalled();
+  });
+
+  it('stamps the export directory with the default clock when no now dependency is injected', async () => {
+    const deps = createBaseDeps();
+    delete (deps as { now?: unknown }).now;
+
+    const result = await runComparisonReportExport(createSource(), deps);
+
+    expect(result.outcome).toBe('exported');
+    // The default clock (defaultNow) produced a real timestamped bundle directory name.
+    expect(result.bundleDirectoryPath).toMatch(/vi-comparison-report-foo-vi-\d{4}-\d{2}-\d{2}T/);
+  });
 });
 
 describe('ComparisonReportExportRegistry', () => {
@@ -728,6 +788,33 @@ describe('ComparisonReportExportRegistry', () => {
     panel.fireDispose();
 
     expect(registry.getActiveSource()).toBeUndefined();
+  });
+
+  it('ignores a view-state change on a panel that is not the active source', () => {
+    const registry = new ComparisonReportExportRegistry();
+    const activePanel = createFakePanel(true);
+    const activeSource = createSource({ reportTitle: 'active' });
+    const otherPanel = createFakePanel(false);
+    registry.register(activePanel as never, activeSource);
+    registry.register(otherPanel as never, createSource({ reportTitle: 'other' }));
+
+    // The inactive "other" panel firing inactive must not clear the active source.
+    otherPanel.fireViewState(false);
+
+    expect(registry.getActiveSource()).toBe(activeSource);
+  });
+
+  it('ignores disposal of a panel that is not the active source', () => {
+    const registry = new ComparisonReportExportRegistry();
+    const activePanel = createFakePanel(true);
+    const activeSource = createSource({ reportTitle: 'active' });
+    const otherPanel = createFakePanel(false);
+    registry.register(activePanel as never, activeSource);
+    registry.register(otherPanel as never, createSource({ reportTitle: 'other' }));
+
+    otherPanel.fireDispose();
+
+    expect(registry.getActiveSource()).toBe(activeSource);
   });
 });
 
@@ -830,5 +917,14 @@ describe('injectRevisionContextIntoExportedReportHtml', () => {
     // The matched <body> tag is preserved exactly once and the report content remains.
     expect(out).toContain('<body>');
     expect(out).toContain('<p>report</p>');
+  });
+
+  it('injects context into a report that has a <head> but no <body> tag', () => {
+    // A <head>-only report: the <body> replacement branch is skipped and the
+    // whole head-injected document is wrapped in a context-bearing <body>.
+    const out = injectRevisionContextIntoExportedReportHtml('<head></head>', fullContext);
+
+    expect(out).toContain('.vihs-compare-context {');
+    expect(out).toContain('comparison-report-panel-context');
   });
 });

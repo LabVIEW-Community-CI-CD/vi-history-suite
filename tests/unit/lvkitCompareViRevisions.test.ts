@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { execFileSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -114,6 +115,90 @@ describe('createLvkitCompareViRevisions provider (VHS-REQ-712.5)', () => {
       expect(result.runtime).toMatchObject({ provider: 'lvkit', state: 'succeeded' });
     }
     expect(removeDir).toHaveBeenCalled();
+  });
+
+  it('detects no changes between two revisions when lvkit emits an empty diff (VHS-REQ-712)', async () => {
+    // A LabVIEW-free lvkit diff of two semantically-identical revisions yields an
+    // empty `changes[]`; the provider must report a completed no-change outcome
+    // (not a failure) with an explicit no-difference narrative.
+    const compare = createLvkitCompareViRevisions(
+      baseDeps({
+        execFileAsync: vi.fn(async () => ({
+          stdout: JSON.stringify({ changes: [], common_nodes: 512 }),
+          stderr: ''
+        }))
+      }) as never
+    );
+    const result = await compare(INPUT);
+    expect(result.status).toBe('completed');
+    if (result.status === 'completed') {
+      expect(result.hasDifferences).toBe(false);
+      expect(result.model.changedSurfaces).toEqual([]);
+      expect(result.model.detailSections).toEqual([]);
+      expect(result.model.narrative).toMatch(/No block-diagram differences detected/);
+      expect(result.runtime.cycles).toHaveLength(1);
+    }
+  });
+
+  it('serializes the lvkit attempt on the shared host-native runtime slot and releases it (VHS-REQ-669)', async () => {
+    // lvkit shares the host-native local-runtime lock so it is mutually exclusive
+    // with a LabVIEW host-native launch (and other lvkit runs). Assert it acquires
+    // the default host-native endpoint key and releases the slot after the attempt.
+    const releases: string[] = [];
+    const acquireLocalRuntimeSlot = vi.fn(async (key: string) => () => {
+      releases.push(key);
+    });
+    const compare = createLvkitCompareViRevisions(baseDeps({ acquireLocalRuntimeSlot }) as never);
+    const result = await compare(INPUT);
+    expect(result.status).toBe('completed');
+    expect(acquireLocalRuntimeSlot).toHaveBeenCalledTimes(1);
+    expect(acquireLocalRuntimeSlot).toHaveBeenCalledWith('host-native:default');
+    expect(releases).toEqual(['host-native:default']);
+  });
+
+  it('derives the shared lock key from the injected local VI Server port (VHS-REQ-669)', async () => {
+    const acquireLocalRuntimeSlot = vi.fn(async () => () => undefined);
+    const compare = createLvkitCompareViRevisions(
+      baseDeps({ acquireLocalRuntimeSlot, localViServerPortNumber: 3363 }) as never
+    );
+    await compare(INPUT);
+    expect(acquireLocalRuntimeSlot).toHaveBeenCalledWith('host-native:3363');
+  });
+
+  it('cycle-meters the lvkit attempt and surfaces the measurement in the result runtime (VHS-REQ-669)', async () => {
+    // Inject a deterministic monotonic clock so the single-attempt cycle timing
+    // is exact; the completed runtime carries one succeeded cycle measurement.
+    let clock = 1000;
+    const now = vi.fn(() => (clock += 5));
+    const compare = createLvkitCompareViRevisions(baseDeps({ now }) as never);
+    const result = await compare(INPUT);
+    expect(result.status).toBe('completed');
+    if (result.status === 'completed') {
+      expect(result.runtime.cycles).toHaveLength(1);
+      const [cycle] = result.runtime.cycles ?? [];
+      expect(cycle).toMatchObject({
+        cycleIndex: 1,
+        outcome: 'lvkit-diff-succeeded',
+        durationMs: 5,
+        interCycleGapMs: undefined
+      });
+    }
+  });
+
+  it('accumulates successive cycles on one provider instance with an inter-cycle gap (VHS-REQ-669)', async () => {
+    let clock = 0;
+    const now = vi.fn(() => (clock += 10));
+    const compare = createLvkitCompareViRevisions(baseDeps({ now }) as never);
+    const first = await compare(INPUT);
+    const second = await compare(INPUT);
+    expect(first.status).toBe('completed');
+    expect(second.status).toBe('completed');
+    if (first.status === 'completed' && second.status === 'completed') {
+      expect(first.runtime.cycles?.[0].cycleIndex).toBe(1);
+      expect(first.runtime.cycles?.[0].interCycleGapMs).toBeUndefined();
+      expect(second.runtime.cycles?.[0].cycleIndex).toBe(2);
+      expect(second.runtime.cycles?.[0].interCycleGapMs).toBe(10);
+    }
   });
 
   it('runs lvkit diff with json format and the repo search path', async () => {
@@ -347,5 +432,86 @@ describe('lvkit compare cache participation (VHS-REQ-712.6)', () => {
     const compare = createLvkitCompareViRevisions(baseDeps() as never);
     const result = await compare(INPUT);
     expect(result.status).toBe('completed');
+  });
+});
+
+describe('createLvkitCompareViRevisions cleanup + error normalization (VHS-REQ-712.5)', () => {
+  it('removes the temp dir via the default remover when none is injected', async () => {
+    let createdDir: string | undefined;
+    const compare = createLvkitCompareViRevisions({
+      locate: () => AVAILABLE,
+      readRevisionBlob: async () => Buffer.from('vi-bytes'),
+      execFileAsync: async () => ({ stdout: DIFF_JSON, stderr: '' }),
+      // Real temp dir, and NO removeDir injected: the default `fs.rm` cleanup
+      // runs in the finally block and the directory must be gone afterwards.
+      makeTempDir: async () => {
+        createdDir = await mkdtemp(path.join(os.tmpdir(), 'vihs-lvkit-defaultrm-'));
+        return createdDir;
+      }
+    });
+    const result = await compare(INPUT);
+    expect(result.status).toBe('completed');
+    expect(createdDir).toBeDefined();
+    expect(existsSync(createdDir as string)).toBe(false);
+  });
+
+  it('swallows a rejecting temp-dir remover without failing the completed compare', async () => {
+    // The finally-block cleanup is best-effort: a rejecting removeDir must be
+    // caught (`.catch(() => undefined)`) so a successful comparison still returns
+    // completed rather than surfacing a cleanup error.
+    const removeDir = vi.fn(async () => {
+      throw new Error('rm: permission denied');
+    });
+    const compare = createLvkitCompareViRevisions(baseDeps({ removeDir }) as never);
+    const result = await compare(INPUT);
+    expect(result.status).toBe('completed');
+    expect(removeDir).toHaveBeenCalledTimes(1);
+  });
+
+  it('normalizes a non-Error thrown while reading a revision blob', async () => {
+    // A thrown string (not an Error) must be coerced via String(error) in the
+    // revision-read failure reason, not crash the orchestrator.
+    const compare = createLvkitCompareViRevisions(
+      baseDeps({
+        readRevisionBlob: vi.fn(async () => {
+          throw 'raw-string-read-failure';
+        })
+      }) as never
+    );
+    const result = await compare(INPUT);
+    expect(result.status).toBe('blocked-preflight');
+    if (result.status === 'blocked-preflight') {
+      expect(result.reason).toBe('revision-read-failed: raw-string-read-failure');
+    }
+  });
+
+  it('maps an Error thrown after the read (temp-dir creation) to lvkit-compare-failed', async () => {
+    const compare = createLvkitCompareViRevisions(
+      baseDeps({
+        makeTempDir: vi.fn(async () => {
+          throw new Error('mkdtemp EACCES');
+        })
+      }) as never
+    );
+    const result = await compare(INPUT);
+    expect(result.status).toBe('failed');
+    if (result.status === 'failed') {
+      expect(result.reason).toBe('lvkit-compare-failed: mkdtemp EACCES');
+    }
+  });
+
+  it('normalizes a non-Error thrown after the read via String(error)', async () => {
+    const compare = createLvkitCompareViRevisions(
+      baseDeps({
+        makeTempDir: vi.fn(async () => {
+          throw 'mkdtemp-string-failure';
+        })
+      }) as never
+    );
+    const result = await compare(INPUT);
+    expect(result.status).toBe('failed');
+    if (result.status === 'failed') {
+      expect(result.reason).toBe('lvkit-compare-failed: mkdtemp-string-failure');
+    }
   });
 });
