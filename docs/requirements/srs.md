@@ -7947,7 +7947,8 @@ Missing numeric IDs are intentional.
     capture script as evidence. Keep the dev-only live timing-stopwatch surface
     (`src/dev/timingStopwatchSurface.ts`) pure/testable and its host binding
     (`src/dev/timingStopwatchHost.ts`) registered only in the Extension
-    Development Host.
+    Development Host on Windows (its browser resolution and paired perfmon/logman
+    capture are Windows-specific).
 - Implementation References:
   - `scripts/runWindowsRuntimeMatrix.js`
   - `scripts/windows-perfmon-mprr-driver.cjs`
