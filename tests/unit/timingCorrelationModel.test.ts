@@ -184,4 +184,22 @@ describe('buildTimingCorrelationModel (VHS-REQ-713.7)', () => {
     expect(model.seconds[0].framesInSecond).toBe(FPS);
     expect(model.seconds[0].observedStopwatchCs).toBeNull();
   });
+
+  it('rejects a non-finite decoded reading (NaN/Infinity) as unread (VHS-REQ-713.7)', () => {
+    // A well-formed frame whose decode produced NaN/Infinity must not propagate
+    // into observedStopwatchCs/observedDeltaCs (fail closed on malformed decode).
+    const nonFinite: TimingCorrelationFrame[] = Array.from({ length: FPS }, (_, j) => ({
+      frameIndex: j,
+      decodedCentiseconds: j % 2 === 0 ? Number.NaN : Number.POSITIVE_INFINITY,
+      wellFormed: true
+    }));
+    const model = buildTimingCorrelationModel({
+      fps: FPS,
+      sampleIntervalSec: 1,
+      frames: nonFinite,
+      perfmon: perfmon(1)
+    });
+    expect(model.seconds[0].framesInSecond).toBe(FPS);
+    expect(model.seconds[0].observedStopwatchCs).toBeNull();
+  });
 });
