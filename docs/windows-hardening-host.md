@@ -143,7 +143,7 @@ The matrix driver
 ```powershell
 # Full grid (30 rows):
 node scripts/runWindowsRuntimeMatrix.js --scenario all
-# Lighter CI tier (~14 rows, every cell in at least one conflict + one admit):
+# Lighter CI tier (curated subset: every cell in at least one conflict + one admit):
 node scripts/runWindowsRuntimeMatrix.js --scenario light
 # A single cell or a legacy alias still works:
 node scripts/runWindowsRuntimeMatrix.js --scenario bitness-2026-x64x86

@@ -48,6 +48,7 @@ const path = require('node:path');
 const fs = require('node:fs');
 const zlib = require('node:zlib');
 const { spawnSync } = require('node:child_process');
+const { pathToFileURL } = require('node:url');
 
 function sleepMs(ms) {
   // Programmatic blocking sleep (no subprocess) so a background capture child
@@ -249,7 +250,7 @@ function captureHtmlToPng(chrome, html, dims, workDir, tag) {
     `--user-data-dir=${profileDir}`,
     `--window-size=${dims.width},${dims.height}`,
     `--screenshot=${pngPath}`,
-    `file:///${htmlPath.replace(/\\/g, '/')}`
+    pathToFileURL(htmlPath).href
   ];
   const result = spawnSync(chrome, args, { encoding: 'utf8', timeout: 60000 });
   assert(fs.existsSync(pngPath), `Chrome did not produce ${pngPath} (status ${result.status})`);
