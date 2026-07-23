@@ -157,10 +157,11 @@ blocked reason from a real `vihs --validate --proof-out` proof.
 
 Because a `match` row and the `port` row for the same year/bitness share one
 install's `LabVIEW.ini`, the helper **arranges the requested port mode per
-scenario** — it backs up that ini, writes the default (match) or a deterministic
-non-default (port) `server.tcp.port` before launch, then restores the original
-ini in a `finally` block — so both admit directions are satisfiable without
-leaving the operator's configuration changed.
+scenario** — it backs up that ini, then for `match` **removes** `server.tcp.port`
+(so LabVIEW falls back to the documented default) and for `port` **writes** a
+deterministic non-default `server.tcp.port` before launch, then restores the
+original ini in a `finally` block — so both admit directions are satisfiable
+without leaving the operator's configuration changed.
 
 ## Part C — Record evidence in the ledger
 
