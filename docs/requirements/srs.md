@@ -5653,6 +5653,19 @@ Missing numeric IDs are intentional.
     verdict is calibrated; it fails closed on a bad artifact, a missing
     calibration verdict, an unparsable capture time, or a non-positive frame rate.
     Pure and deterministic.
+  - A deterministic rolling-block ring buffer mirrors mprr's Windows zero-copy
+    rolling-block memory IP so the MCP consumes an mprr replay with bounded RAM
+    that cannot overflow: a single preallocated continuous byte ring with no
+    per-write allocation (a contiguous read returns a zero-copy view and a
+    wrap-spanning read a single copy), single-producer/single-consumer offsets,
+    admission control that sizes required capacity to the maximum bytes over any
+    three consecutive forty-five-second logical blocks plus ten percent and fails
+    closed when the budget cannot hold that horizon, logical block ids over a
+    hundred-nanosecond monotonic tick base with current-plus-reserved-next
+    pinning, block-boundary variation classified non-authoritative above five
+    percent, and a degradation policy that preserves short-packet continuity
+    before long-packet completeness (short packets block or fail closed rather
+    than overwrite pinned bytes; long packets defer). Pure and deterministic.
 - Agent Work Scope:
   - Change the ADR, this requirement, and the governance contract test together;
     keep the required gate deterministic and never make a live image pull the
@@ -5672,6 +5685,7 @@ Missing numeric IDs are intentional.
   - `src/reporting/mirror/firstRunPerfmonPipeline.ts`
   - `src/reporting/mirror/perfmonCaptureScript.ts`
   - `src/reporting/mirror/perfmonMprrSync.ts`
+  - `src/reporting/mirror/deterministicRollingBlockRing.ts`
 - Verification References:
   - `tests/unit/mirrorModeGovernance.test.ts`
   - `tests/unit/mirrorParityDigest.test.ts`
@@ -5687,6 +5701,7 @@ Missing numeric IDs are intentional.
   - `tests/unit/firstRunPerfmonPipeline.test.ts`
   - `tests/unit/perfmonCaptureScript.test.ts`
   - `tests/unit/perfmonMprrSync.test.ts`
+  - `tests/unit/deterministicRollingBlockRing.test.ts`
 - Change Guidance:
   - This is a governance-foundation requirement: keep the documented invariants
     (human/Vagrant-only authorship, run-only container, Vagrant→`merge_group`
