@@ -51,6 +51,15 @@ describe('three-block capacity + admission control (VHS-REQ-707.18)', () => {
     expect(computeRequiredThreeBlockCapacityBytes(new Map())).toBe(0);
   });
 
+  it('scores a sparse ledger by populated block (not the id range) so widely-separated blocks stay cheap', () => {
+    // Blocks 0 and 1_000_000 are populated; the max three-consecutive-block
+    // window is the lone 500-byte block. The result is correct WITHOUT scanning
+    // the million empty ids between them (candidate starts derive from populated
+    // blocks only).
+    const sparse = new Map<number, number>([[0, 100], [1_000_000, 500]]);
+    expect(computeRequiredThreeBlockCapacityBytes(sparse)).toBe(Math.ceil(500 * 1.1));
+  });
+
   it('admits when the budget holds the horizon and fails closed otherwise', () => {
     const record = { 0: 100, 1: 200, 2: 300, 3: 400 };
     expect(planRingAdmission(991, record)).toMatchObject({ ok: true, requiredBytes: 991, configuredBytes: 991 });

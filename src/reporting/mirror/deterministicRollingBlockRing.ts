@@ -84,16 +84,24 @@ export function computeRequiredThreeBlockCapacityBytes(bytesByBlockId: BytesByBl
     return 0;
   }
   const bytesByBlock = new Map<number, number>();
-  let minBlockId = Number.POSITIVE_INFINITY;
-  let maxBlockId = Number.NEGATIVE_INFINITY;
   for (const [blockId, bytes] of entries) {
     bytesByBlock.set(blockId, bytes);
-    minBlockId = Math.min(minBlockId, blockId);
-    maxBlockId = Math.max(maxBlockId, blockId);
+  }
+
+  // Any horizon-sized window with a non-zero sum starts at one of {p, p-1, ...,
+  // p-(horizon-1)} for some populated block p, so only those candidate starts
+  // need scoring. This stays O(populated blocks) instead of O(block-id range),
+  // so a sparse ledger (widely separated block ids) never triggers a huge scan —
+  // consistent with the bounded-resource contract this ring mirrors.
+  const candidateStarts = new Set<number>();
+  for (const blockId of bytesByBlock.keys()) {
+    for (let back = 0; back < THREE_BLOCK_HORIZON; back += 1) {
+      candidateStarts.add(blockId - back);
+    }
   }
 
   let maxWindowBytes = 0;
-  for (let windowStart = minBlockId; windowStart <= maxBlockId; windowStart += 1) {
+  for (const windowStart of candidateStarts) {
     let windowBytes = 0;
     for (let offset = 0; offset < THREE_BLOCK_HORIZON; offset += 1) {
       windowBytes += bytesByBlock.get(windowStart + offset) ?? 0;

@@ -90,11 +90,15 @@ export function analyzeStopwatchCaptureAccuracy(input: AnalyzeStopwatchCaptureAc
   }
   const durationMs = frameCount > 1 ? ordered[frameCount - 1].captureEpochMs - ordered[0].captureEpochMs : 0;
   const effectiveFps = durationMs > 0 ? round(((frameCount - 1) * 1000) / durationMs) : null;
-  const intervalMsMean = intervals.length > 0 ? round(mean(intervals)) : null;
-  const intervalMsMin = intervals.length > 0 ? Math.min(...intervals) : null;
-  const intervalMsMax = intervals.length > 0 ? Math.max(...intervals) : null;
+  // Compute the interval mean once and reuse it for the std-dev (avoids an
+  // O(n^2) recomputation), and take min/max with an iterative reduce so a long
+  // capture's interval array cannot overflow the stack via argument spread.
+  const intervalMean = intervals.length > 0 ? mean(intervals) : null;
+  const intervalMsMean = intervalMean !== null ? round(intervalMean) : null;
+  const intervalMsMin = intervals.length > 0 ? intervals.reduce((a, b) => Math.min(a, b)) : null;
+  const intervalMsMax = intervals.length > 0 ? intervals.reduce((a, b) => Math.max(a, b)) : null;
   const intervalMsStdDev =
-    intervals.length > 0 ? round(Math.sqrt(mean(intervals.map((v) => (v - mean(intervals)) ** 2)))) : null;
+    intervalMean !== null ? round(Math.sqrt(mean(intervals.map((v) => (v - intervalMean) ** 2)))) : null;
 
   const readable = ordered.filter(
     (frame) => frame.decodedCentiseconds !== null && Number.isFinite(frame.decodedCentiseconds)
@@ -125,7 +129,7 @@ export function analyzeStopwatchCaptureAccuracy(input: AnalyzeStopwatchCaptureAc
       }
     }
   }
-  const stopwatchMaxAbsErrorMs = absErrors.length > 0 ? round(Math.max(...absErrors)) : null;
+  const stopwatchMaxAbsErrorMs = absErrors.length > 0 ? round(absErrors.reduce((a, b) => Math.max(a, b))) : null;
   const stopwatchMeanAbsErrorMs = absErrors.length > 0 ? round(mean(absErrors)) : null;
 
   let classification: StopwatchAccuracyClassification;
