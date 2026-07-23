@@ -8332,8 +8332,8 @@ describe('runComparisonCommandPlanWithObservation default + guard branches (VHS-
       {
         spawnImpl: (() => child) as never,
         // engine lvcompare starts observation on spawn; host/runtime platform and the
-        // observer are omitted so the defaults bind. On this non-win32 host the default
-        // observer returns undefined without launching a process.
+        // observer are omitted so the defaults bind (host/runtime platform default to
+        // process.platform and the default process observer binds).
         engine: 'lvcompare'
       }
     );
@@ -8343,8 +8343,11 @@ describe('runComparisonCommandPlanWithObservation default + guard branches (VHS-
 
     const result = await resultPromise;
     expect(result.exitCode).toBe(0);
-    expect(result.processObservation).toBeUndefined();
-    expect(result.exitProcessObservation).toBeUndefined();
+    if (process.platform !== 'win32') {
+      // On a non-win32 host the default observer returns undefined without launching a process.
+      expect(result.processObservation).toBeUndefined();
+      expect(result.exitProcessObservation).toBeUndefined();
+    }
   });
 
   it('does not restart observation when the CLI banner appears after a spawn-triggered start', async () => {
