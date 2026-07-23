@@ -128,7 +128,7 @@ function Get-LabviewIniViServerPort {
     # (resolveWindowsLabviewTcpSettingsForLabviewPath): quoted or unquoted,
     # case-insensitive, line-anchored; an absent server.tcp.port means the
     # documented Windows default. Deriving the expected port from the SELECTED
-    # install's own ini (which #2339 arranges per scenario, then restores) proves
+    # install's own ini (which #2337 arranges per scenario, then restores) proves
     # the product read that exact ini and plumbed its configured port through,
     # rather than trusting a hardcoded or operator-supplied constant.
     param(
@@ -164,7 +164,7 @@ function Get-LabviewIniViServerPort {
     return $facts
 }
 
-# #2337/#2339: the admit families assert OPPOSITE port modes on the SAME install
+# #2337: the admit families assert OPPOSITE port modes on the SAME install
 # (match-* wants the documented default port, port-* wants a non-default one),
 # which is only satisfiable if the harness ARRANGES the requested mode per
 # scenario. Before launch we back up the selected install's LabVIEW.ini, write
@@ -182,12 +182,19 @@ function Set-LabviewIniServerTcpPort {
         [int]$Port,
         [switch]$RemovePort
     )
+    $iniExists = Test-Path -LiteralPath $IniPath
     $lines = @()
-    if (Test-Path -LiteralPath $IniPath) {
+    if ($iniExists) {
         $lines = @(Get-Content -LiteralPath $IniPath)
     }
     $withoutPort = @($lines | Where-Object { $_ -notmatch '(?i)^\s*server\.tcp\.port\s*=' })
     if ($RemovePort) {
+        # If the ini is absent, the documented default port already applies --
+        # leave it absent rather than launching LabVIEW with a harness-created
+        # empty ini that could change behavior beyond clearing server.tcp.port.
+        if (-not $iniExists) {
+            return
+        }
         Set-Content -LiteralPath $IniPath -Value $withoutPort -Encoding ASCII
         return
     }
@@ -268,7 +275,7 @@ $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 $scriptDirectory = Split-Path -Parent $MyInvocation.MyCommand.Definition
 $closeScript = Join-Path $scriptDirectory 'Close-LabviewProcesses.ps1'
 
-# #2339: per-scenario port-mode arrangement state (see Set-LabviewIniServerTcpPort).
+# #2337: per-scenario port-mode arrangement state (see Set-LabviewIniServerTcpPort).
 # The selected install's ini is the one the launched LabVIEW reads (host==selected
 # for the match/port families) and the one Get-LabviewIniViServerPort derives from.
 $selectedExeForIni = Get-LabviewExecutablePath -Bitness $SelectedBitness -Version $LabviewVersion
@@ -314,7 +321,7 @@ try {
         throw "LabVIEW $HostVersion $HostBitness not found at $labviewExe"
     }
 
-    # #2339: arrange the requested port mode in the selected install's ini before
+    # #2337: arrange the requested port mode in the selected install's ini before
     # launch so LabVIEW starts on the correct VI Server port; the original ini is
     # restored in the finally block. '<absent>' records that the file did not
     # exist so restore deletes the harness-created ini.
@@ -511,7 +518,7 @@ catch {
     $payload.failureReason = $_.Exception.Message
 }
 finally {
-    # #2339: restore the operator's original ini regardless of outcome.
+    # #2337: restore the operator's original ini regardless of outcome.
     if ($PortMode -and $portModeIniPath) {
         try {
             if ($portModeIniBackup -eq '<absent>') {
