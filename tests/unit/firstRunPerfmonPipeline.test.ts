@@ -85,6 +85,17 @@ describe('runFirstRunPerfmonPipeline (VHS-REQ-707.15)', () => {
     expect(result.artifact.capturedAtIso).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
   });
 
+  it('treats a reversed window (endMs < startMs) as no window instead of a negative wall', () => {
+    const result = runFirstRunPerfmonPipeline(
+      { request: REQUEST, source: 'self-hosted-runner', actor: 'a' },
+      { capture: () => ({ csvText: CSV, startMs: 176000, endMs: 1000 }), now: () => 4242 }
+    );
+    // endMs < startMs would compute a negative wall; the pipeline nulls it and
+    // falls back to the injected clock for capturedAtIso.
+    expect(result.artifact.wallMs).toBeNull();
+    expect(result.artifact.capturedAtIso).toBe(new Date(4242).toISOString());
+  });
+
   it('fails closed on a missing capture function and a non-CSV capture result', () => {
     expect(() =>
       runFirstRunPerfmonPipeline({ request: REQUEST, source: 'docker-container', actor: 'a' }, {} as never)
