@@ -73,7 +73,7 @@ describe('crossCheckMprrAgentFeedback (VHS-REQ-710.8)', () => {
     expect(result.classification).toBe('fail-closed');
   });
 
-  it('fails closed on a bad packet timestamp, empty segment id, and negative latency', () => {
+  it('fails closed on a bad packet timestamp, empty segment id, negative latency, and a non-positive budget', () => {
     expect(() =>
       crossCheckMprrAgentFeedback({ packetTimestampMs: Number.NaN, segmentId: 's', screenshot: { borderVisible: true, markers: markers() }, feedbackLatencyMs: 0 })
     ).toThrow(/packetTimestampMs/);
@@ -83,5 +83,11 @@ describe('crossCheckMprrAgentFeedback (VHS-REQ-710.8)', () => {
     expect(() =>
       crossCheckMprrAgentFeedback({ packetTimestampMs: 0, segmentId: 's', screenshot: { borderVisible: true, markers: markers() }, feedbackLatencyMs: -1 })
     ).toThrow(/feedbackLatencyMs/);
+    expect(() =>
+      crossCheckMprrAgentFeedback({ packetTimestampMs: 0, segmentId: 's', screenshot: { borderVisible: true, markers: markers() }, feedbackLatencyMs: 0, feedbackBudgetMs: 0 })
+    ).toThrow(/feedbackBudgetMs/);
+    expect(() =>
+      crossCheckMprrAgentFeedback({ packetTimestampMs: 0, segmentId: 's', screenshot: { borderVisible: true, markers: markers() }, feedbackLatencyMs: 0, feedbackBudgetMs: Number.NaN })
+    ).toThrow(/feedbackBudgetMs/);
   });
 });

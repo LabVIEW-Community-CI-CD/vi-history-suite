@@ -40,7 +40,7 @@ export function labviewProcessCounters(processName: string): string[] {
 export interface PerfmonCaptureRequest {
   /** logman data-collector name (no whitespace). */
   readonly collectorName: string;
-  /** Absolute path logman writes the PDH-CSV to (logman appends a numeric suffix). */
+  /** Path logman writes the PDH-CSV to (logman appends a numeric suffix). */
   readonly outputCsvPath: string;
   /** Sample interval in whole seconds (1..86399). */
   readonly sampleIntervalSec: number;

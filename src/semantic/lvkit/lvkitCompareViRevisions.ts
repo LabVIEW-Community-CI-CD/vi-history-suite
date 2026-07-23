@@ -43,6 +43,11 @@ import { locateLvkit, type LvkitLocation } from './lvkitLocator';
 const DEFAULT_TIMEOUT_MS = 120_000;
 const DEFAULT_MAX_BUFFER_BYTES = 64 * 1024 * 1024;
 const GIT_BLOB_MAX_BUFFER_BYTES = 256 * 1024 * 1024;
+// Canonical host-native VI Server default port (server.tcp.port). Defaulting the
+// lock-key port to it, rather than the abstract 'default' token, means an lvkit
+// run with no explicitly-wired port still serializes with host-native LabVIEW
+// launches on the same default endpoint, honoring the shared-lock intent (VHS-REQ-669).
+const DEFAULT_HOST_NATIVE_VI_SERVER_PORT = 3363;
 
 // Cache-key discriminator that namespaces lvkit-produced models away from the
 // LabVIEW-backed provider's (`diff`/`print`) keys. Both providers share one
@@ -278,7 +283,7 @@ export function createLvkitCompareViRevisions(
       // JSON parsing, which needs no host resource.
       const lockKey = localViServerLockKey({
         provider: 'host-native',
-        portNumber: localViServerPortNumber
+        portNumber: localViServerPortNumber ?? DEFAULT_HOST_NATIVE_VI_SERVER_PORT
       });
       const { execResult, cycle } = await (async () => {
         const releaseSlot = await acquireLocalRuntimeSlot(lockKey);

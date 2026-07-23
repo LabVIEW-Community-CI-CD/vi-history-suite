@@ -80,7 +80,8 @@ export interface PerfmonMprrSyncSample {
   readonly epochMs: number;
   /** 100ns ticks since frame zero (mprr timing-authority base); may be negative before frame zero. */
   readonly authorityTicks: number;
-  readonly frameIndex: number;
+  /** The mprr frame this sample maps to, or null when it falls outside the captured frame window. */
+  readonly frameIndex: number | null;
   readonly stopwatchCentiseconds: number;
   readonly stopwatchText: string;
   /** The 40-bit machine strip mprr renders on that frame (bit-exact). */
@@ -91,7 +92,7 @@ export interface PerfmonMprrSyncPeak {
   readonly series: string;
   readonly value: number;
   readonly sampleIndex: number;
-  readonly frameIndex: number;
+  readonly frameIndex: number | null;
   readonly stopwatchCentiseconds: number;
 }
 
@@ -110,6 +111,8 @@ export interface PerfmonMprrSync {
   readonly calibrated: boolean;
   /** True only when the capture is calibrated; a synchronization is trusted only then. */
   readonly authoritative: boolean;
+  /** True when every sample maps to a frame inside the captured frame window (no unmapped samples). */
+  readonly allSamplesWithinFrameWindow: boolean;
   readonly samples: readonly PerfmonMprrSyncSample[];
   readonly peaks: readonly PerfmonMprrSyncPeak[];
 }
@@ -156,9 +159,18 @@ export function buildPerfmonMprrSync(input: BuildPerfmonMprrSyncInput): PerfmonM
   const maxFrameIndex = typeof frame.frameCount === 'number' && frame.frameCount > 0 ? frame.frameCount - 1 : null;
   const perf = artifact.perf;
 
-  const resolveFrameIndex = (elapsedMs: number): number => {
-    const raw = Math.floor(Math.max(0, elapsedMs) / frameIntervalMs);
-    return maxFrameIndex === null ? raw : Math.min(raw, maxFrameIndex);
+  const resolveFrameIndex = (elapsedSinceFrameZero: number): number | null => {
+    // A sample before frame zero or beyond the known captured frame window is
+    // unmapped (null) rather than clamped to an unrelated frame, so a resource
+    // peak is never reported in a frame whose strip encodes a different time.
+    if (elapsedSinceFrameZero < 0) {
+      return null;
+    }
+    const raw = Math.floor(elapsedSinceFrameZero / frameIntervalMs);
+    if (maxFrameIndex !== null && raw > maxFrameIndex) {
+      return null;
+    }
+    return raw;
   };
 
   const samples: PerfmonMprrSyncSample[] = perf.t.map((elapsedMs, sampleIndex) => {
@@ -218,6 +230,7 @@ export function buildPerfmonMprrSync(input: BuildPerfmonMprrSyncInput): PerfmonM
     captureEpochMs,
     calibrated: calibration.calibrated,
     authoritative: calibration.calibrated,
+    allSamplesWithinFrameWindow: samples.every((sample) => sample.frameIndex !== null),
     samples,
     peaks
   };
@@ -229,17 +242,22 @@ export function buildPerfmonMprrSync(input: BuildPerfmonMprrSyncInput): PerfmonM
  */
 export function renderPerfmonMprrSyncSummary(sync: PerfmonMprrSync): string {
   const verdict = sync.authoritative ? 'AUTHORITATIVE' : 'UNCALIBRATED (advisory)';
-  const firstFrame = sync.samples.length > 0 ? sync.samples[0].frameIndex : 0;
-  const lastFrame = sync.samples.length > 0 ? sync.samples[sync.samples.length - 1].frameIndex : 0;
+  const mappedFrames = sync.samples
+    .map((sample) => sample.frameIndex)
+    .filter((index): index is number => index !== null);
+  const frameSpan =
+    mappedFrames.length > 0
+      ? `${mappedFrames.reduce((a, b) => Math.min(a, b))}..${mappedFrames.reduce((a, b) => Math.max(a, b))}`
+      : 'unmapped';
   const lines = [
     `perfmon<->mprr sync ${verdict} — ${sync.source} (${sync.actor})`,
     `- timing authority: ${sync.timingAuthorityId} @ ${sync.tickResolutionNs}ns`,
     `- frame rate: ${sync.frameRateHz} Hz (~${Math.round(sync.frameIntervalMs * 100) / 100}ms/frame)`,
-    `- ${sync.samples.length} samples spanning frames ${firstFrame}..${lastFrame}`
+    `- ${sync.samples.length} samples spanning frames ${frameSpan}`
   ];
   for (const peak of sync.peaks) {
     lines.push(
-      `- peak ${peak.series} ${peak.value} at frame ${peak.frameIndex} (stopwatch ${formatMprrStopwatchText(peak.stopwatchCentiseconds * 10)})`
+      `- peak ${peak.series} ${peak.value} at frame ${peak.frameIndex ?? 'unmapped'} (stopwatch ${formatMprrStopwatchText(peak.stopwatchCentiseconds * 10)})`
     );
   }
   return lines.join('\n');
