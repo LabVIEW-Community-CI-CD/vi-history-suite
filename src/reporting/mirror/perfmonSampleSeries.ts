@@ -188,9 +188,11 @@ function peakOf(values: (number | null)[]): number | null {
 /**
  * Parse a Windows `logman` PDH-CSV 4.0 capture into a normalized, plot-ready
  * perfmon sample series. Fails closed on a document without a recognizable
- * PDH-CSV header row. Unknown counters are ignored; recognized ones populate
- * their stable series. The LabVIEW process series appear only when the capture
- * included a matching `\Process(...)` counter.
+ * PDH-CSV header row. Every counter column is preserved as a generic,
+ * host-independent `channel` (in header order); recognized counters
+ * additionally populate their stable named `series`. The LabVIEW process
+ * series appear only when the capture included a matching `\Process(...)`
+ * counter.
  */
 export function parsePdhCsv(csvText: string): PerfmonSampleSeries {
   if (typeof csvText !== 'string' || csvText.trim().length === 0) {
