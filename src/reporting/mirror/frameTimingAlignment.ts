@@ -372,3 +372,62 @@ export function alignFramesToPerf(input: AlignFramesToPerfInput): FrameTimingAli
     undecodableFrameCount
   };
 }
+
+/** xychart-beta bar values must be numeric; a null per-state mean renders as 0. */
+function barValues(values: (number | null)[]): string {
+  return `    bar [${values.map((v) => (v === null ? 0 : Math.round(v * 100) / 100)).join(', ')}]`;
+}
+
+/**
+ * Render a `FrameTimingAlignment` as GitHub-native Mermaid `xychart-beta` blocks
+ * keyed by pipeline state, so a pull request prints per-state resource pressure
+ * from the aligned frames — the per-state complement of the per-sample
+ * `renderPerfmonMermaidXychart`. The pipeline states are the categorical x-axis;
+ * one chart carries mean CPU and disk percent, a second the mean available
+ * memory (its scale differs). A null per-state mean renders as 0 with the state
+ * still labeled. Deterministic: identical alignment in, identical block out; an
+ * empty rollup yields a plain note rather than a broken chart.
+ */
+export function renderFrameTimingStateChart(
+  alignment: FrameTimingAlignment,
+  options: { readonly title?: string } = {}
+): string {
+  const title = (options.title ?? 'Per-state performance monitor').replace(/"/gu, "'");
+  const rollups = alignment.stateRollups;
+  if (rollups.length === 0) {
+    return '_No pipeline-state rollups to chart._';
+  }
+
+  const axis = `    x-axis [${rollups.map((r) => r.state).join(', ')}]`;
+  const cpu = rollups.map((r) => r.meanCpuTotalPct);
+  const disk = rollups.map((r) => r.meanDiskTotalPct);
+  const mem = rollups.map((r) => r.meanMemAvailMb);
+
+  const pctPeak = Math.max(
+    0,
+    ...cpu.map((v) => v ?? 0),
+    ...disk.map((v) => v ?? 0)
+  );
+  const pctMax = Math.max(100, Math.ceil(pctPeak / 10) * 10);
+  const memPeak = Math.max(0, ...mem.map((v) => v ?? 0));
+  const memMax = Math.max(1, Math.ceil(memPeak / 100) * 100);
+
+  return [
+    '```mermaid',
+    'xychart-beta',
+    `    title "${title} — mean CPU/disk % by state"`,
+    axis,
+    `    y-axis "percent" 0 --> ${pctMax}`,
+    barValues(cpu),
+    barValues(disk),
+    '```',
+    '',
+    '```mermaid',
+    'xychart-beta',
+    `    title "${title} — mean memory available (MB) by state"`,
+    axis,
+    `    y-axis "MBytes" 0 --> ${memMax}`,
+    barValues(mem),
+    '```'
+  ].join('\n');
+}

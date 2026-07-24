@@ -5687,6 +5687,13 @@ Missing numeric IDs are intentional.
     undecodable frame or a missing perfmon sample is an explicit null, never a
     fabricated value; it fails closed on malformed input. Pure and deterministic
     (schema `vi-history-suite/frame-timing-alignment@v1`).
+  - A pure renderer projects that frame-timing alignment into GitHub-native
+    Mermaid `xychart-beta` blocks keyed by pipeline state — the states are the
+    categorical x-axis, one chart carries the per-state mean CPU and disk percent
+    and a second the per-state mean available memory — so a pull request prints
+    per-state resource pressure from the aligned frames. A null per-state mean
+    renders as zero with the state still labeled, an empty rollup yields a plain
+    note rather than a broken chart, and it is deterministic.
 - Agent Work Scope:
   - Change the ADR, this requirement, and the governance contract test together;
     keep the required gate deterministic and never make a live image pull the
