@@ -27,7 +27,10 @@ const WRITE_LOG_FILENAME = 'control-plane-write-log.jsonl';
 // executor. These are stable GitHub ProjectV2 node ids; a board field rename in
 // the GitHub UI would require updating them here (and the resolver fails closed
 // on any field/value it does not know rather than issuing a blind edit).
-const PROJECT_ID = 'PVT_kwDODQiayc4Bd5Rq';
+// The board node id comes from the single source of truth (referenced by node id,
+// never by the ambiguous "vihs"/"VIHS" name) so it cannot drift or target the
+// duplicate Project #3.
+const { PROJECT_ID } = require('./lib/controlPlaneProject.js');
 const BOARD_FIELD_MAP = {
   Status: {
     fieldId: 'PVTSSF_lADODQiayc4Bd5RqzhYXb_U',
