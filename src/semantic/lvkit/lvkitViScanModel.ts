@@ -88,11 +88,18 @@ function requireNonEmptyString(value: unknown, field: string): string {
 const ISO_8601_INSTANT =
   /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,3}))?(?:Z|[+-]\d{2}:\d{2})$/;
 
-function requireIsoTimestamp(value: unknown): string {
-  const text = requireNonEmptyString(value, 'generatedAt');
+/**
+ * Classify a candidate timestamp: `not-iso` when it fails the canonical ISO-8601
+ * shape or does not parse, `not-real` when it parses but names an impossible
+ * calendar instant (e.g. `2026-02-31`), otherwise `ok`. Shared by the builder
+ * (which maps each outcome to a distinct fail-closed error) and the store read
+ * guard (which treats anything but `ok` as a cache miss), so both validate a
+ * timestamp identically without duplicating the logic.
+ */
+function classifyIsoTimestamp(text: string): 'ok' | 'not-iso' | 'not-real' {
   const match = ISO_8601_INSTANT.exec(text);
   if (!match || !Number.isFinite(Date.parse(text))) {
-    throw new Error('lvkit-vi-scan: generatedAt must be an ISO-8601 timestamp');
+    return 'not-iso';
   }
   const [, year, month, day, hour, minute, second] = match.map(Number);
   const roundTrip = new Date(Date.UTC(year, month - 1, day, hour, minute, second));
@@ -104,6 +111,28 @@ function requireIsoTimestamp(value: unknown): string {
     roundTrip.getUTCMinutes() !== minute ||
     roundTrip.getUTCSeconds() !== second
   ) {
+    return 'not-real';
+  }
+  return 'ok';
+}
+
+/**
+ * True only for a real ISO-8601 instant (canonical shape, parses, and names a
+ * valid calendar date). Exported so the scan store's fail-closed read guard can
+ * reject a tampered `generatedAt` exactly as {@link buildLvkitViScanEnvelope}
+ * enforces it, without duplicating the validation.
+ */
+export function isIsoTimestamp(value: unknown): value is string {
+  return typeof value === 'string' && classifyIsoTimestamp(value) === 'ok';
+}
+
+function requireIsoTimestamp(value: unknown): string {
+  const text = requireNonEmptyString(value, 'generatedAt');
+  const classification = classifyIsoTimestamp(text);
+  if (classification === 'not-iso') {
+    throw new Error('lvkit-vi-scan: generatedAt must be an ISO-8601 timestamp');
+  }
+  if (classification === 'not-real') {
     throw new Error('lvkit-vi-scan: generatedAt is not a real calendar instant');
   }
   return text;
