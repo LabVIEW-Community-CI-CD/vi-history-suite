@@ -22,6 +22,7 @@
 // side is surfaced rather than silently dropped.
 
 import type { TimedPipelineState } from '../comparisonPreviewPipeline';
+import { TIMED_PIPELINE_STATES } from '../comparisonPreviewPipeline';
 import { ANALYTICS_RUNTIMES, PER_STATE_RUN_ANALYTICS_SCHEMA } from './perStateRunAnalytics';
 import type { AnalyticsRuntime, PerStateRow, PerStateRunAnalytics } from './perStateRunAnalytics';
 
@@ -106,6 +107,9 @@ export function diffPerStateAnalytics(
       const r = row as { state?: unknown; durationMs?: unknown } | null;
       if (!r || typeof r !== 'object' || typeof r.state !== 'string' || r.state === '') {
         throw new Error(`${name}.states[${i}].state must be a non-empty string.`);
+      }
+      if (!(TIMED_PIPELINE_STATES as readonly string[]).includes(r.state)) {
+        throw new Error(`${name}.states[${i}].state '${r.state}' is not one of the six timed pipeline states.`);
       }
       if (seenStates.has(r.state)) {
         throw new Error(`${name}.states[${i}] duplicates state '${r.state}' (each state must appear once).`);
