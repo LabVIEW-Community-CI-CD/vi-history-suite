@@ -7877,26 +7877,28 @@ Missing numeric IDs are intentional.
   - The runtime-conflict matrix is a scenario manifest of thirty canonical rows
     across four families — six `bitness` (same year, opposite bitness ->
     `windows-host-bitness-conflict`), twelve `version` (same bitness, different
-    year, both directions -> `windows-host-version-conflict`, or
-    `labview-version-unsupported-for-comparison-report` when the selected year is
-    below the minimum comparison year), six `match` (host
+    year, both directions -> `windows-host-version-conflict`), six `match` (host
     equals selected on the default port -> `none`), and six `port` (host equals
     selected on a non-default VI Server port derived from the selected install's
-    own LabVIEW.ini -> `none`) — and `--scenario all` runs exactly the canonical
-    rows without double-running any alias.
+    own LabVIEW.ini -> `none`) — with the caveat that any row whose SELECTED year
+    is below the minimum comparison year is reclassified (across all families) to
+    expect `labview-version-unsupported-for-comparison-report`, and `--scenario
+    all` runs exactly the canonical rows without double-running any alias.
   - A `--scenario light` tier selects a representative subset that still covers
-    every version-and-bitness cell in at least one conflict and one admit
-    direction, so a lighter CI dispatch is available when the full thirty-row
-    grid is too heavy.
+    every SUPPORTED version-and-bitness cell in at least one conflict and one
+    admit direction, plus selected-below-minimum coverage of the
+    unsupported-for-comparison gate, so a lighter CI dispatch is available when
+    the full thirty-row grid is too heavy.
   - The legacy scenario ids `steady-A`, `steady-B`, `version-A`, `version-B`, and
     `port-A` remain accepted `--scenario` aliases that resolve to their canonical
     manifest row's parameters, so the existing prompt and dispatch keep working.
-  - The `version` family includes a direction whose selected version is LabVIEW
-    2020; real-hardware validation (#2338) confirmed that a selected year below
+  - Real-hardware validation (#2338/#2340) confirmed that a SELECTED year below
     the minimum comparison year is blocked as
     `labview-version-unsupported-for-comparison-report` (the unsupported-target
-    gate fires before the version-conflict check), so those rows assert that
-    reason while the supported-selected rows assert `windows-host-version-conflict`.
+    gate fires before any bitness/version conflict or admit/port check), for
+    EVERY family; so every selected-below-minimum row asserts that reason (and is
+    not a conflict or admit/port validation), while supported-selected rows
+    assert their family reason.
     The per-scenario summary additionally
     asserts the observed host and selected years equal the manifest row for
     version-family scenarios, so a version conflict is proven to arise from the

@@ -50,8 +50,8 @@ const DEFAULT_EVIDENCE_OUT = path.join(
 // VHS-REQ-713: the runtime-conflict matrix is defined by a scenario MANIFEST
 // rather than a fixed five-scenario enum. Each row models a Host (the LabVIEW
 // process actually running) vs a Selected (what the product is configured to
-// use). Four families cover every cell of the 2020/2025/2026 x86/x64 grid in at
-// least one conflict and one admit direction:
+// use). Four families cover the supported (2025/2026) x86/x64 cells in at least
+// one conflict and one admit direction:
 //   - bitness (VHS-REQ-622): same year, opposite bitness -> bitness conflict.
 //   - version (VHS-REQ-653): same bitness, different year -> version conflict.
 //   - match: Host == Selected on the DEFAULT port -> no conflict (the negative
@@ -61,6 +61,12 @@ const DEFAULT_EVIDENCE_OUT = path.join(
 //     no conflict, port derived from the selected install's own LabVIEW.ini;
 //     portMode 'non-default' asserts the derived port is not the default, so
 //     the family provably exercises the non-default path it claims to cover.
+// #2338/#2340: any row whose SELECTED year is below MIN_COMPARISON_YEAR is
+// reclassified (across ALL families) to expect the unsupported-for-comparison
+// reason -- the comparison-report minimum-year gate rejects a selected version
+// below the floor BEFORE any host/bitness/version-conflict or port inspection,
+// so a selected-2020 row can never be a bitness/version conflict or an
+// admit/port validation (confirmed on real hardware).
 // The legacy ids (steady-A/B, version-A/B, port-A) remain accepted as aliases
 // that resolve to their canonical manifest row so the existing prompt/dispatch
 // keep working.
@@ -101,10 +107,6 @@ function buildScenarioManifest() {
   }
 
   // version family: same bitness, different year, both directions (12 rows).
-  // #2338: a row whose SELECTED year is below MIN_COMPARISON_YEAR is blocked as
-  // unsupported-for-comparison (the selected version cannot be a comparison
-  // target) rather than as a host/selected version conflict; the remaining rows
-  // (selected year comparison-supported) still assert the version conflict.
   const versionPairs = [
     ['2020', '2025'],
     ['2020', '2026'],
@@ -116,7 +118,6 @@ function buildScenarioManifest() {
       [upper, lower]
     ]) {
       for (const bitness of MATRIX_BITNESSES) {
-        const selectedUnsupported = Number(selectedVersion) < MIN_COMPARISON_YEAR;
         rows.push({
           id: `version-${hostVersion}-${selectedVersion}-${bitness}`,
           family: 'version',
@@ -124,9 +125,7 @@ function buildScenarioManifest() {
           selectedVersion,
           hostBitness: bitness,
           selectedBitness: bitness,
-          expectedBlockedReason: selectedUnsupported
-            ? UNSUPPORTED_SELECTED_VERSION_REASON
-            : VERSION_CONFLICT_REASON
+          expectedBlockedReason: VERSION_CONFLICT_REASON
         });
       }
     }
@@ -166,6 +165,21 @@ function buildScenarioManifest() {
     }
   }
 
+  // #2338/#2340: the comparison-report minimum-year gate
+  // (comparisonRuntimeLocator) rejects a SELECTED version below the floor BEFORE
+  // any host/bitness/version-conflict inspection or port handling, for EVERY
+  // family. So reclassify any row whose selected year is unsupported-for-
+  // comparison to that reason, and strip its admit/port attributes (the port
+  // oracle can never be satisfied -- LabVIEW is blocked before a port is
+  // observed). Confirmed on real hardware for bitness/version/match/port 2020.
+  for (const row of rows) {
+    if (Number(row.selectedVersion) < MIN_COMPARISON_YEAR) {
+      row.expectedBlockedReason = UNSUPPORTED_SELECTED_VERSION_REASON;
+      delete row.portMode;
+      delete row.derivePortFromSelectedIni;
+    }
+  }
+
   return rows;
 }
 
@@ -186,10 +200,10 @@ const LEGACY_SCENARIO_ALIASES = Object.freeze({
   'port-A': 'port-2026-x64'
 });
 
-// A lighter CI tier still covering every version-and-bitness cell in at least
-// one conflict and one admit direction: 6 bitness (both bitnesses conflict) + the
-// 4 version extremes (2020<->2026, 2025<->2026) at x64 + 6 match (both bitnesses
-// admit, so x86 cells have a negative control too) + 1 port ~= 17 rows
+// A lighter CI tier covering every SUPPORTED (2025/2026) version-and-bitness
+// cell in at least one conflict and one admit direction, plus selected-2020
+// coverage of the unsupported-for-comparison gate (bitness/match 2020 rows,
+// which the min-year gate reclassifies to the unsupported reason). ~17 rows
 // (VHS-REQ-713 lighter tier).
 const LIGHT_TIER_SCENARIOS = Object.freeze([
   'bitness-2020-x64x86',
