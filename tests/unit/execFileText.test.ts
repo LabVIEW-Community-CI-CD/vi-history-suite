@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { runExecFileText, type ExecFileTextRunner } from '../../src/tooling/execFileText';
+import { runExecFileText, safeSlice, type ExecFileTextRunner } from '../../src/tooling/execFileText';
 
 // Contract tests for the shared structured execFile text runner (supporting
 // VHS-REQ-659). Verifies the success/failure mapping the preview/render + verify
@@ -44,5 +44,24 @@ describe('runExecFileText', () => {
     };
     const result = await runExecFileText('tool', [], { timeoutMs: 1, maxBufferBytes: 1, execFileAsync });
     expect(result).toEqual({ exitCode: 1, stdout: '', stderr: 'raw failure' });
+  });
+});
+
+describe('safeSlice', () => {
+  it('collapses internal whitespace (newlines/tabs) into a single-line message', () => {
+    expect(safeSlice('line one\nline two\ttabbed\r\n  spaced')).toBe('line one line two tabbed spaced');
+  });
+
+  it('trims surrounding whitespace', () => {
+    expect(safeSlice('   padded   ')).toBe('padded');
+  });
+
+  it('truncates to max with an ellipsis after collapsing', () => {
+    const sliced = safeSlice('a\nb\nc\nd', 3);
+    expect(sliced).toBe('a b\u2026');
+  });
+
+  it('returns an empty string for whitespace-only input', () => {
+    expect(safeSlice('  \n\t ')).toBe('');
   });
 });

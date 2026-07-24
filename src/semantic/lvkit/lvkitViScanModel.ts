@@ -76,7 +76,7 @@ function requireNonEmptyString(value: unknown, field: string): string {
   if (trimmed.length === 0) {
     throw new Error(`lvkit-vi-scan: ${field} must be a non-empty string`);
   }
-  return value;
+  return trimmed;
 }
 
 // Require a real ISO-8601 instant. `Date.parse` alone is too permissive: it

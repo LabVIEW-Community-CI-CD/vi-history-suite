@@ -61,11 +61,13 @@ export async function runExecFileText(
 }
 
 /**
- * Trim and length-cap captured process text (e.g. a subprocess `stderr`) for a
- * single-line diagnostic message, appending an ellipsis when truncated. Shared by
- * the lvkit providers so their failure messages format identically.
+ * Collapse and length-cap captured process text (e.g. a subprocess `stderr`) into
+ * a single-line diagnostic message: internal whitespace runs (newlines/tabs) are
+ * collapsed to a single space, then trimmed and truncated with an ellipsis when
+ * over `max`. Shared by the lvkit providers so their failure messages format
+ * identically and never span multiple lines.
  */
 export function safeSlice(text: string, max = 500): string {
-  const trimmed = text.trim();
-  return trimmed.length > max ? `${trimmed.slice(0, max)}…` : trimmed;
+  const collapsed = text.replace(/\s+/gu, ' ').trim();
+  return collapsed.length > max ? `${collapsed.slice(0, max)}…` : collapsed;
 }
