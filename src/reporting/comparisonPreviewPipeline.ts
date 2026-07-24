@@ -67,7 +67,11 @@ export type PipelineState =
 /**
  * The six timed pipeline states (excludes the terminal `COMPLETE`/`FAILED`
  * markers) — the per-state timing/analytics model operates on these only. The
- * `satisfies` clause keeps the state list in sync with the union.
+ * `satisfies` clause below checks each listed member is a valid non-terminal
+ * state (no stray/misspelled entries); the `_TimedStatesAreExhaustive` guard
+ * that follows checks the reverse — that every non-terminal `PipelineState`
+ * appears here — so adding a new timed state to `PipelineState` without listing
+ * it fails compilation.
  */
 export const TIMED_PIPELINE_STATES = [
   'STAGING',
@@ -78,6 +82,18 @@ export const TIMED_PIPELINE_STATES = [
   'UNSTAGING'
 ] as const satisfies readonly Exclude<PipelineState, 'COMPLETE' | 'FAILED'>[];
 export type TimedPipelineState = (typeof TIMED_PIPELINE_STATES)[number];
+
+/**
+ * Compile-time exhaustiveness guard: `T extends never` constrains the type
+ * argument to `never`, so if a non-terminal `PipelineState` is NOT covered by
+ * `TimedPipelineState` (i.e. someone added a timed state above the terminals but
+ * forgot to list it), the residual union is non-`never` and this alias errors
+ * with "Type '<missing state>' does not satisfy the constraint 'never'".
+ */
+type AssertNever<T extends never> = T;
+type _TimedStatesAreExhaustive = AssertNever<
+  Exclude<PipelineState, 'COMPLETE' | 'FAILED' | TimedPipelineState>
+>;
 
 /** The LabVIEW cycle states (one external invocation each). */
 export type PipelineCycleState = 'PREVIEW_LEFT' | 'PREVIEW_RIGHT' | 'COMPARISON';
