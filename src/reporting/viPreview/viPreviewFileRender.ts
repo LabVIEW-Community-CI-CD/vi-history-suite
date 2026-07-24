@@ -73,6 +73,15 @@ export interface RenderViPreviewForFileResult {
    * as a failure because its job is to STORE the cache.
    */
   cacheStored?: boolean;
+  /**
+   * Exact-frame guard (#2363): the SHA-256 hex content signature of the target
+   * VI bytes this render staged, present on a fresh live render when a file
+   * hasher is available. A preview-time scan consumer passes it as the expected
+   * signature so a scan that read different bytes (the VI was edited on disk
+   * mid-render) is not persisted against the displayed frame. Bare hex (no
+   * `sha256:` prefix); best-effort, so a hashing failure leaves it undefined.
+   */
+  contentSignature?: string;
 }
 
 export interface RenderViPreviewForFileDeps {
@@ -234,7 +243,21 @@ export async function renderViPreviewForFile(
           cacheStored = false;
         }
       }
-      return { outcome: 'rendered', html, cached: false, cacheKey, cacheStored };
+      // Exact-frame guard (#2363): hash the target VI's staged source bytes so a
+      // preview-time scan consumer can confirm the scan read the same revision
+      // that was rendered. Best-effort: a hashing failure must not fail the
+      // render, so it is left undefined.
+      let contentSignature: string | undefined;
+      if (deps.hashFile) {
+        try {
+          contentSignature = await deps.hashFile(
+            path.join(stagingRootDirectory, ...selection.plan.viRelativePath.split('/'))
+          );
+        } catch {
+          contentSignature = undefined;
+        }
+      }
+      return { outcome: 'rendered', html, cached: false, cacheKey, cacheStored, contentSignature };
     }
 
     return {

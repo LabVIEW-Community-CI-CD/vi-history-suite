@@ -148,12 +148,15 @@ export interface WorkspaceFolderLike {
  * deepest (most specific) containing folder in a multi-root workspace. Pure and
  * deterministic; the repository-boundary check itself is delegated downstream to
  * the scan provider, so this only establishes the (repositoryRoot, relativePath)
- * address and skips VIs that sit outside every folder.
+ * address and skips VIs that sit outside every folder. When the render supplied
+ * the exact-frame content signature (#2363), it is carried onto the request so
+ * the trigger can confirm the scan read the same bytes.
  */
 export function buildPreviewTimeViScanRequest(
   viFsPath: string,
   workspaceFolders: readonly WorkspaceFolderLike[] | undefined,
-  runtime: string
+  runtime: string,
+  expectedContentSignature?: string
 ): PreviewTimeViScanRequest | undefined {
   if (viFsPath.length === 0 || !workspaceFolders || workspaceFolders.length === 0) {
     return undefined;
@@ -178,7 +181,7 @@ export function buildPreviewTimeViScanRequest(
       continue;
     }
     if (!best || relativePath.length < best.relativePath.length) {
-      best = { repositoryRoot: root, relativePath, runtime };
+      best = { repositoryRoot: root, relativePath, runtime, expectedContentSignature };
     }
   }
   return best;

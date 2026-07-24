@@ -88,7 +88,7 @@ describe('runPreviewTimeViScan (VHS-REQ-717.1)', () => {
     expect(store.puts).toEqual([envelope]);
   });
 
-  it('persists when the expected content signature matches (modulo sha256: prefix) (#2363)', async () => {
+  it('persists when the expected content signature matches (modulo sha256: prefix) (VHS-REQ-717.3, #2363)', async () => {
     const envelope = makeEnvelope();
     const { scan } = scanReturning({ status: 'completed', envelope });
     const store = createFakeStore();
@@ -104,7 +104,7 @@ describe('runPreviewTimeViScan (VHS-REQ-717.1)', () => {
     expect(store.puts).toEqual([envelope]);
   });
 
-  it('does not persist (content-changed) when the scan read different bytes than were rendered (#2363)', async () => {
+  it('does not persist (content-changed) when the scan read different bytes than were rendered (VHS-REQ-717.3, #2363)', async () => {
     const envelope = makeEnvelope();
     const { scan } = scanReturning({ status: 'completed', envelope });
     const store = createFakeStore();
@@ -287,5 +287,11 @@ describe('buildPreviewTimeViScanRequest (VHS-REQ-717.2)', () => {
     const revisionVi = path.join(os.tmpdir(), 'vihs-vi-revision-abc123', 'resource', 'A.vi');
 
     expect(buildPreviewTimeViScanRequest(revisionVi, folders([ROOT]), 'host-native')).toBeUndefined();
+  });
+
+  it('carries the expected content signature onto the request (#2363)', () => {
+    const req = buildPreviewTimeViScanRequest(VI, folders([ROOT]), 'host-native', 'abc123');
+
+    expect(req?.expectedContentSignature).toBe('abc123');
   });
 });

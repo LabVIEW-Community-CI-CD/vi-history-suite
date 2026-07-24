@@ -68,7 +68,7 @@ export interface RegisterViPreviewCustomEditorOptions {
    * (`host-native`/`linux-container`/`windows-container`). Drives the best-effort
    * preview-time lvkit scan; the callback must never throw or block the preview.
    */
-  onPreviewScanReady?: (viFsPath: string, runtime: string) => void;
+  onPreviewScanReady?: (viFsPath: string, runtime: string, contentSignature?: string) => void;
   /**
    * Test-only hook invoked with the exact rendered webview HTML and its mode
    * after a preview is displayed. Production never supplies this; the extension
@@ -126,7 +126,7 @@ class ViPreviewEditorProvider implements vscode.CustomReadonlyEditorProvider<ViP
       html: string,
       mode: string
     ) => void | Promise<void>,
-    private readonly onPreviewScanReady?: (viFsPath: string, runtime: string) => void
+    private readonly onPreviewScanReady?: (viFsPath: string, runtime: string, contentSignature?: string) => void
   ) {
     this.cache = createViPreviewCache(context);
   }
@@ -308,7 +308,11 @@ class ViPreviewEditorProvider implements vscode.CustomReadonlyEditorProvider<ViP
           // fault can never fail the preview.
           if (document.uri.scheme === 'file' && result.cached !== true) {
             try {
-              this.onPreviewScanReady?.(document.uri.fsPath, runtime.runtime.provider);
+              this.onPreviewScanReady?.(
+                document.uri.fsPath,
+                runtime.runtime.provider,
+                result.contentSignature
+              );
             } catch {
               /* best-effort: preview-time scan wiring must never fail the preview */
             }

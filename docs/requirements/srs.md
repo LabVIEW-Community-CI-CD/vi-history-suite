@@ -5181,6 +5181,14 @@ Missing numeric IDs are intentional.
     folder in a multi-root workspace and carrying the runtime label through, and
     returns nothing when the VI lies outside every workspace folder or no folder
     is open, so a VI with no repository address is never scanned.
+  - When the scan request carries the content signature of the exact VI bytes the
+    runtime rendered, the trigger persists the completed scan only if the scan's
+    envelope describes those same bytes (signatures equal, compared modulo an
+    optional `sha256:` algorithm prefix), and otherwise reports a non-persisted
+    `content-changed` outcome without writing, so a VI edited on disk during a
+    long render never persists a scan mislabeled against the displayed preview
+    frame; when the request omits the signature the trigger performs no
+    cross-check (backward compatible).
 - Agent Work Scope:
   - Keep the trigger and target mapper pure and dependency-free (the mapper uses
     only `node:path`) so both are unit tested with in-memory fakes without lvkit,
@@ -5191,8 +5199,13 @@ Missing numeric IDs are intentional.
     runtime rendered, never for a cache-only display or a materialized non-`file`
     source. This trigger reads VI bytes through the lvkit scan and never authors
     `.vi` binaries; the LabVIEW-backed preview and comparison report remain the
-    visual artifacts. Live host-runtime and container end-to-end coverage of the
-    render-to-scan path is deferred, as with the Phase A real-lvkit boundary.
+    visual artifacts. The exact-frame content signature is supplied by the render
+    pipeline (the render result carries the SHA-256 of the staged target VI) and
+    threaded through the editor callback into the request; keep that supply
+    best-effort so a hashing failure leaves the signature absent and the trigger
+    simply skips the cross-check. Live host-runtime and container end-to-end
+    coverage of the render-to-scan path is deferred, as with the Phase A
+    real-lvkit boundary.
 - Implementation References:
   - `docs/architecture/adr/ADR-0033-agent-readable-vi-scan-lvkit-generate.md`
   - `src/semantic/lvkit/previewTimeViScanTrigger.ts`
