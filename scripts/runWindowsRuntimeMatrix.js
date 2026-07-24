@@ -202,9 +202,11 @@ const LEGACY_SCENARIO_ALIASES = Object.freeze({
 
 // A lighter CI tier covering every SUPPORTED (2025/2026) version-and-bitness
 // cell in at least one conflict and one admit direction, plus selected-2020
-// coverage of the unsupported-for-comparison gate (bitness/match 2020 rows,
-// which the min-year gate reclassifies to the unsupported reason). ~17 rows
-// (VHS-REQ-713 lighter tier).
+// coverage of the unsupported-for-comparison gate (the bitness-2020-*,
+// match-2020-*, and version-2026-2020-x64 rows are all reclassified to the
+// unsupported reason by the min-year gate; do not remove the selected-2020
+// version row as "redundant" -- it proves the gate in the version family too).
+// ~17 rows (VHS-REQ-713 lighter tier).
 const LIGHT_TIER_SCENARIOS = Object.freeze([
   'bitness-2020-x64x86',
   'bitness-2020-x86x64',
