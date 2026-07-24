@@ -202,6 +202,17 @@ describe('lvkitViScanStore (VHS-REQ-716)', () => {
       expect(await store.get(VI_PATH, CONTENT_SIGNATURE)).toBeUndefined();
     });
 
+    it('rejects an envelope whose runtime metadata is whitespace-only', async () => {
+      const store = createStore(
+        createFakeFs({
+          [storeFilePathFor(VI_PATH, CONTENT_SIGNATURE)]: tamperedEnvelopeJson((envelope) => {
+            envelope.runtime = '   ';
+          })
+        })
+      );
+      expect(await store.get(VI_PATH, CONTENT_SIGNATURE)).toBeUndefined();
+    });
+
     it('rejects an envelope with an empty modules array', async () => {
       const store = createStore(
         createFakeFs({
@@ -233,6 +244,18 @@ describe('lvkitViScanStore (VHS-REQ-716)', () => {
           [storeFilePathFor(VI_PATH, CONTENT_SIGNATURE)]: tamperedEnvelopeJson((envelope) => {
             const [module] = envelope.modules as Array<Record<string, unknown>>;
             module.relativePath = '';
+          })
+        })
+      );
+      expect(await store.get(VI_PATH, CONTENT_SIGNATURE)).toBeUndefined();
+    });
+
+    it('rejects an envelope whose module relative path is whitespace-only', async () => {
+      const store = createStore(
+        createFakeFs({
+          [storeFilePathFor(VI_PATH, CONTENT_SIGNATURE)]: tamperedEnvelopeJson((envelope) => {
+            const [module] = envelope.modules as Array<Record<string, unknown>>;
+            module.relativePath = '   ';
           })
         })
       );

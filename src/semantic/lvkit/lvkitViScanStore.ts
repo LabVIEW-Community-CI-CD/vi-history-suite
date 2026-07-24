@@ -75,7 +75,17 @@ export interface FileLvkitViScanStoreOptions {
 }
 
 /**
- * Structural guard for one generated module: an object carrying a non-empty
+ * True for a string with at least one non-whitespace character. Mirrors the
+ * builder's `requireNonEmptyString`, which trims and rejects blank input, so the
+ * read guard rejects a whitespace-only field the builder could never have
+ * produced instead of surfacing it as a valid scan.
+ */
+function isNonBlankString(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
+/**
+ * Structural guard for one generated module: an object carrying a non-blank
  * `relativePath` and a string `python` (an empty generated file is valid).
  */
 function isLvkitGeneratedModule(value: unknown): value is LvkitGeneratedModule {
@@ -83,11 +93,7 @@ function isLvkitGeneratedModule(value: unknown): value is LvkitGeneratedModule {
     return false;
   }
   const module = value as LvkitGeneratedModule;
-  return (
-    typeof module.relativePath === 'string' &&
-    module.relativePath.length > 0 &&
-    typeof module.python === 'string'
-  );
+  return isNonBlankString(module.relativePath) && typeof module.python === 'string';
 }
 
 /**
@@ -108,14 +114,10 @@ function isLvkitViScanEnvelope(value: unknown): value is LvkitViScanEnvelope {
   if (
     envelope.schema !== LVKIT_VI_SCAN_SCHEMA ||
     envelope.schemaVersion !== LVKIT_VI_SCAN_SCHEMA_VERSION ||
-    typeof envelope.viPath !== 'string' ||
-    envelope.viPath.length === 0 ||
-    typeof envelope.contentSignature !== 'string' ||
-    envelope.contentSignature.length === 0 ||
-    typeof envelope.runtime !== 'string' ||
-    envelope.runtime.length === 0 ||
-    typeof envelope.generatedAt !== 'string' ||
-    envelope.generatedAt.length === 0 ||
+    !isNonBlankString(envelope.viPath) ||
+    !isNonBlankString(envelope.contentSignature) ||
+    !isNonBlankString(envelope.runtime) ||
+    !isNonBlankString(envelope.generatedAt) ||
     !LVKIT_SCAN_SOURCES.includes(envelope.lvkitSource)
   ) {
     return false;
