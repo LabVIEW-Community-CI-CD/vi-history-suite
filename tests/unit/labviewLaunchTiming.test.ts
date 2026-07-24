@@ -1,8 +1,10 @@
 // Requirement coverage: VHS-REQ-707 (Mirror-Mode Dual Real-Runtime LabVIEW
 // Validation) — deterministic LabVIEW launch-timing parser (VHS-REQ-707.24, epic
 // #2344 Phase 1b). Pure parse of a per-launch LabVIEW/LabVIEWCLI application log
-// into identity + ms-precision launch lifecycle markers, separating launch dead
-// time from active work. Samples mirror real host-native `%TEMP%` logs.
+// into identity + lifecycle markers (the `#Date:` process start is second-
+// precision; the init and execution-ready markers are millisecond-precision),
+// separating launch dead time from active work. Samples mirror real host-native
+// `%TEMP%` logs.
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -172,5 +174,27 @@ describe('parseLabVIEWLaunchTiming (VHS-REQ-707.24, #2344)', () => {
   it('reports #Date as second-precision (fractional part always .000)', () => {
     const t = parseLabVIEWLaunchTiming('#Date: Fri, Jul 24, 2026 11:02:31 AM\n#AppName: LabVIEW');
     expect(t.processStartIso.endsWith('.000')).toBe(true);
+  });
+
+  it('rejects an impossible calendar date (Feb 31) instead of normalizing it', () => {
+    // Feb 31 passes the 1..31 day range but is not a real date; must fail closed
+    // rather than emit 2026-02-31 / silently normalize the epoch.
+    expect(() =>
+      parseLabVIEWLaunchTiming('#Date: Sat, Feb 31, 2026 11:02:31 AM\n#AppName: LabVIEW')
+    ).toThrow(/"#Date:" header/);
+  });
+
+  it('fails closed to null when execution-ready precedes init (negative duration)', () => {
+    const log = [
+      '#Date: Fri, Jul 24, 2026 11:02:31 AM',
+      '#AppName: LabVIEW',
+      '[HeadlessManager][7/24/2026 11:02:33.973 AM] Initializing headless LabVIEW',
+      // execution-ready BEFORE init -> a negative delta must not be emitted.
+      'starting LabVIEW Execution System 2 Thread 0 at [1.0, (11:02:31.179000000 2026:07:24)]'
+    ].join('\n');
+    const t = parseLabVIEWLaunchTiming(log);
+    expect(t.initAtIso).toBe('2026-07-24T11:02:33.973');
+    expect(t.executionReadyIso).toBe('2026-07-24T11:02:31.179');
+    expect(t.initToReadyMs).toBeNull();
   });
 });

@@ -43,7 +43,8 @@ export interface LabVIEWLaunchTiming {
   /** Execution-ready marker time (local ISO, no Z), or null. */
   readonly executionReadyIso: string | null;
   /** executionReady − initAt in milliseconds (the in-process launch spin-up), or
-   * null when either marker is absent. */
+   * null when either marker is absent OR the result would be negative
+   * (out-of-order / corrupted markers — a duration is never negative). */
   readonly initToReadyMs: number | null;
 }
 
@@ -81,6 +82,28 @@ function inRange(n: number, lo: number, hi: number): boolean {
   return Number.isInteger(n) && n >= lo && n <= hi;
 }
 
+/** Reject an IMPOSSIBLE calendar/clock instant. The `inRange` guards bound each
+ * field individually, but a day like `Feb 31` still passes 1..31 and `Date.UTC`
+ * would silently normalize it (to Mar 3), corrupting `processStartIso` and any
+ * derived delta. A UTC round-trip that must reproduce every component proves the
+ * date is real; otherwise the parser fails closed. */
+function isRealCalendarClock(c: Components): boolean {
+  const t = Date.UTC(c.year, c.month - 1, c.day, c.hour, c.minute, c.second, c.ms);
+  if (!Number.isFinite(t)) {
+    return false;
+  }
+  const d = new Date(t);
+  return (
+    d.getUTCFullYear() === c.year &&
+    d.getUTCMonth() === c.month - 1 &&
+    d.getUTCDate() === c.day &&
+    d.getUTCHours() === c.hour &&
+    d.getUTCMinutes() === c.minute &&
+    d.getUTCSeconds() === c.second &&
+    d.getUTCMilliseconds() === c.ms
+  );
+}
+
 /** Convert a 12-hour clock (with AM/PM) to 24-hour. */
 function to24Hour(hour12: number, meridiem: string): number {
   const m = meridiem.toUpperCase();
@@ -111,7 +134,7 @@ function parseHeaderDate(text: string): Components | null {
   if (!inRange(day, 1, 31) || !inRange(hour12, 1, 12) || !inRange(minute, 0, 59) || !inRange(second, 0, 59)) {
     return null;
   }
-  return {
+  const components: Components = {
     year: Number(m[3]),
     month,
     day,
@@ -120,6 +143,8 @@ function parseHeaderDate(text: string): Components | null {
     second,
     ms: 0
   };
+  // Reject an impossible calendar date (e.g. Feb 31) the field ranges cannot catch.
+  return isRealCalendarClock(components) ? components : null;
 }
 
 /** Parse a `[HeadlessManager][7/24/2026 11:02:31.179 AM] Initializing headless LabVIEW` line. */
@@ -142,7 +167,7 @@ function parseInitMarker(text: string): Components | null {
   ) {
     return null;
   }
-  return {
+  const components: Components = {
     year: Number(m[3]),
     month,
     day,
@@ -151,6 +176,7 @@ function parseInitMarker(text: string): Components | null {
     second,
     ms
   };
+  return isRealCalendarClock(components) ? components : null;
 }
 
 /** Parse the `starting LabVIEW Execution System ... (11:02:33.973165036 2026:07:24)` marker. */
@@ -175,7 +201,7 @@ function parseExecutionReadyMarker(text: string): Components | null {
   ) {
     return null;
   }
-  return {
+  const components: Components = {
     year: Number(m[5]),
     month,
     day,
@@ -184,6 +210,7 @@ function parseExecutionReadyMarker(text: string): Components | null {
     second,
     ms
   };
+  return isRealCalendarClock(components) ? components : null;
 }
 
 /** Read a single `#Header:` value line, trimmed, or null when absent. */
@@ -215,8 +242,12 @@ export function parseLabVIEWLaunchTiming(logText: string): LabVIEWLaunchTiming {
   }
   const initAt = parseInitMarker(logText);
   const executionReady = parseExecutionReadyMarker(logText);
-  const initToReadyMs =
+  const rawInitToReadyMs =
     initAt && executionReady ? toComponentEpochMs(executionReady) - toComponentEpochMs(initAt) : null;
+  // A negative duration means out-of-order / corrupted markers (execution-ready
+  // before init); fail closed to null rather than emit a nonsensical negative
+  // launch time.
+  const initToReadyMs = rawInitToReadyMs !== null && rawInitToReadyMs >= 0 ? rawInitToReadyMs : null;
 
   return {
     schema: LABVIEW_LAUNCH_TIMING_SCHEMA,
