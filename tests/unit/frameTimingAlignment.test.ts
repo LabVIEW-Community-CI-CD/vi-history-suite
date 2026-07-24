@@ -227,22 +227,22 @@ describe('alignFramesToPerf (VHS-REQ-707.20, #2324)', () => {
 
   it('fails closed on a malformed state window (reversed / empty / overlapping / non-finite / unnamed) (#2324 review)', () => {
     expect(() =>
-      alignFramesToPerf({ ...baseInput(), states: [{ state: 'X', startMs: 200, endMs: 100 }] })
+      alignFramesToPerf({ ...baseInput(), states: [{ state: 'STAGING', startMs: 200, endMs: 100 }] })
     ).toThrow(/startMs < endMs/);
     expect(() =>
-      alignFramesToPerf({ ...baseInput(), states: [{ state: 'X', startMs: 100, endMs: 100 }] })
+      alignFramesToPerf({ ...baseInput(), states: [{ state: 'STAGING', startMs: 100, endMs: 100 }] })
     ).toThrow(/startMs < endMs/);
     expect(() =>
       alignFramesToPerf({
         ...baseInput(),
         states: [
-          { state: 'A', startMs: 0, endMs: 150 },
-          { state: 'B', startMs: 100, endMs: 200 }
+          { state: 'STAGING', startMs: 0, endMs: 150 },
+          { state: 'PREVIEW_LEFT', startMs: 100, endMs: 200 }
         ]
       })
     ).toThrow(/overlaps the previous window/);
     expect(() =>
-      alignFramesToPerf({ ...baseInput(), states: [{ state: 'X', startMs: Number.POSITIVE_INFINITY, endMs: 100 }] })
+      alignFramesToPerf({ ...baseInput(), states: [{ state: 'STAGING', startMs: Number.POSITIVE_INFINITY, endMs: 100 }] })
     ).toThrow(/bounds must be finite/);
     expect(() =>
       // @ts-expect-error empty state name
@@ -272,8 +272,14 @@ describe('alignFramesToPerf (VHS-REQ-707.20, #2324)', () => {
       alignFramesToPerf({ ...baseInput(), frames: [null] })
     ).toThrow(/frames\[0\] must be an object/);
     expect(() =>
-      // @ts-expect-error bad frameIndex
+      // @ts-expect-error bad frameIndex type
       alignFramesToPerf({ ...baseInput(), frames: [{ frameIndex: 'x', stripBits: '0' }] })
-    ).toThrow(/frameIndex must be a finite number/);
+    ).toThrow(/frameIndex must be a non-negative integer/);
+    expect(() =>
+      alignFramesToPerf({ ...baseInput(), frames: [{ frameIndex: -1, stripBits: '0' }] })
+    ).toThrow(/frameIndex must be a non-negative integer/);
+    expect(() =>
+      alignFramesToPerf({ ...baseInput(), frames: [{ frameIndex: 1.5, stripBits: '0' }] })
+    ).toThrow(/frameIndex must be a non-negative integer/);
   });
 });

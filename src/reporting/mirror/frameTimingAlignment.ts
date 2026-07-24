@@ -21,6 +21,7 @@
 // `decodeMachineStrip`; no schema change here.
 
 import { decodeMachineStrip } from '../syncDiagnostics/syncPatternFailureSignature';
+import type { PipelineState } from '../comparisonPreviewPipeline';
 
 export const FRAME_TIMING_ALIGNMENT_SCHEMA = 'vi-history-suite/frame-timing-alignment@v1';
 export const FRAME_TIMING_ALIGNMENT_SCHEMA_VERSION = 1;
@@ -53,7 +54,8 @@ export interface AlignmentFrameInput {
 
 /** A pipeline-state window on the perfmon/state wall clock (endMs exclusive). */
 export interface AlignmentStateWindow {
-  readonly state: string;
+  /** The comparison pipeline state (VHS-REQ-699 single-source union). */
+  readonly state: PipelineState;
   readonly startMs: number;
   readonly endMs: number;
 }
@@ -93,7 +95,7 @@ export interface AlignedFrameRow {
   /** Stopwatch time mapped onto the perfmon/state clock (+ epochOffsetMs), or null. */
   readonly alignedMs: number | null;
   /** The pipeline state whose window contains alignedMs, or null. */
-  readonly state: string | null;
+  readonly state: PipelineState | null;
   /** Index of the nearest perfmon sample, or null (undecodable frame / no samples). */
   readonly perfSampleIndex: number | null;
   /** |perf.t[perfSampleIndex] − alignedMs| in ms, or null. */
@@ -106,7 +108,7 @@ export interface AlignedFrameRow {
 }
 
 export interface AlignedStateRollup {
-  readonly state: string;
+  readonly state: PipelineState;
   /** Frames whose decoded, aligned time fell inside this state's window. */
   readonly frameCount: number;
   readonly meanCpuTotalPct: number | null;
@@ -232,8 +234,8 @@ export function alignFramesToPerf(input: AlignFramesToPerfInput): FrameTimingAli
     if (!frame || typeof frame !== 'object') {
       throw new Error(`frames[${i}] must be an object.`);
     }
-    if (!Number.isFinite(frame.frameIndex)) {
-      throw new Error(`frames[${i}].frameIndex must be a finite number.`);
+    if (!Number.isInteger(frame.frameIndex) || frame.frameIndex < 0) {
+      throw new Error(`frames[${i}].frameIndex must be a non-negative integer.`);
     }
   });
 
@@ -283,7 +285,7 @@ export function alignFramesToPerf(input: AlignFramesToPerfInput): FrameTimingAli
     return { index: firstLo, offsetMs: Math.abs(perfTimes[firstLo] - alignedMs) };
   };
 
-  const findState = (alignedMs: number): string | null => {
+  const findState = (alignedMs: number): PipelineState | null => {
     for (const window of input.states) {
       if (alignedMs >= window.startMs && alignedMs < window.endMs) {
         return window.state;
@@ -341,7 +343,7 @@ export function alignFramesToPerf(input: AlignFramesToPerfInput): FrameTimingAli
   }
 
   // Per-state rollup, one entry per unique state name in first-seen order.
-  const stateOrder: string[] = [];
+  const stateOrder: PipelineState[] = [];
   for (const window of input.states) {
     if (!stateOrder.includes(window.state)) {
       stateOrder.push(window.state);
