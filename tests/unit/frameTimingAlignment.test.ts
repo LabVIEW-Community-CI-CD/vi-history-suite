@@ -225,10 +225,22 @@ describe('alignFramesToPerf (VHS-REQ-707.20, #2324)', () => {
     ).toThrow(/perf\.t must be non-decreasing/);
   });
 
-  it('fails closed on a malformed state window (reversed / non-finite / unnamed) (#2324 review)', () => {
+  it('fails closed on a malformed state window (reversed / empty / overlapping / non-finite / unnamed) (#2324 review)', () => {
     expect(() =>
       alignFramesToPerf({ ...baseInput(), states: [{ state: 'X', startMs: 200, endMs: 100 }] })
-    ).toThrow(/reversed/);
+    ).toThrow(/startMs < endMs/);
+    expect(() =>
+      alignFramesToPerf({ ...baseInput(), states: [{ state: 'X', startMs: 100, endMs: 100 }] })
+    ).toThrow(/startMs < endMs/);
+    expect(() =>
+      alignFramesToPerf({
+        ...baseInput(),
+        states: [
+          { state: 'A', startMs: 0, endMs: 150 },
+          { state: 'B', startMs: 100, endMs: 200 }
+        ]
+      })
+    ).toThrow(/overlaps the previous window/);
     expect(() =>
       alignFramesToPerf({ ...baseInput(), states: [{ state: 'X', startMs: Number.POSITIVE_INFINITY, endMs: 100 }] })
     ).toThrow(/bounds must be finite/);
@@ -236,6 +248,22 @@ describe('alignFramesToPerf (VHS-REQ-707.20, #2324)', () => {
       // @ts-expect-error empty state name
       alignFramesToPerf({ ...baseInput(), states: [{ state: '', startMs: 0, endMs: 100 }] })
     ).toThrow(/non-empty string/);
+  });
+
+  it('resolves duplicate perfmon timestamps to the earliest sample (binary-search tie-break) (#2324 review)', () => {
+    const input: AlignFramesToPerfInput = {
+      ...baseInput(),
+      // Two samples share t=100; a frame landing at 100 must pick the earlier idx 1.
+      frames: [{ frameIndex: 0, stripBits: encodeMprrMachineStrip(110) }], // aligned 1100-1000=100
+      perf: {
+        t: [0, 100, 100, 300],
+        cpuTotalPct: [10, 20, 21, 40],
+        memAvailMb: [900, 800, 800, 600],
+        diskTotalPct: [1, 2, 3, 4]
+      }
+    };
+    const result = alignFramesToPerf(input);
+    expect(result.frames[0]).toMatchObject({ alignedMs: 100, perfSampleIndex: 1, perfSampleOffsetMs: 0, cpuTotalPct: 20 });
   });
 
   it('fails closed on a malformed frame element (#2324 review)', () => {
