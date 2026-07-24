@@ -142,8 +142,36 @@ export function buildPerStateRunAnalytics(input: BuildPerStateRunAnalyticsInput)
     if (!Number.isFinite(perfTimes[i])) {
       throw new Error(`perf.t[${i}] must be a finite number.`);
     }
+    if (i > 0 && perfTimes[i] < perfTimes[i - 1]) {
+      throw new Error('perf.t must be non-decreasing.');
+    }
   }
 
+  // The mandatory series must be present and parallel to perf.t; the optional
+  // LabVIEW series, when present, must also be parallel. A length mismatch would
+  // otherwise silently read a real sample as "missing" and skew the rollups.
+  const requireSeries = (name: string, series: unknown): void => {
+    if (!Array.isArray(series)) {
+      throw new Error(`perf.${name} must be an array.`);
+    }
+    if (series.length !== perfTimes.length) {
+      throw new Error(`perf.${name} length (${series.length}) must match perf.t length (${perfTimes.length}).`);
+    }
+  };
+  requireSeries('cpuTotalPct', input.perf.cpuTotalPct);
+  requireSeries('memAvailMb', input.perf.memAvailMb);
+  requireSeries('diskTotalPct', input.perf.diskTotalPct);
+  if (input.perf.labviewCpuPct !== undefined) {
+    requireSeries('labviewCpuPct', input.perf.labviewCpuPct);
+  }
+  if (input.perf.labviewWorkingSetMb !== undefined) {
+    requireSeries('labviewWorkingSetMb', input.perf.labviewWorkingSetMb);
+  }
+
+  // Windows must be named, finite, non-empty, and ordered non-overlapping so a
+  // sample is never counted into two states and totalDurationMs cannot
+  // double-count (matching the frame-timing aligner's boundary contract).
+  let previousEndMs = Number.NEGATIVE_INFINITY;
   input.states.forEach((window, i) => {
     if (!window || typeof window !== 'object' || typeof window.state !== 'string' || window.state === '') {
       throw new Error(`states[${i}].state must be a non-empty string.`);
@@ -151,9 +179,17 @@ export function buildPerStateRunAnalytics(input: BuildPerStateRunAnalyticsInput)
     if (!Number.isFinite(window.startMs) || !Number.isFinite(window.endMs)) {
       throw new Error(`states[${i}] bounds must be finite numbers.`);
     }
-    if (window.startMs > window.endMs) {
-      throw new Error(`states[${i}] is reversed (startMs ${window.startMs} > endMs ${window.endMs}).`);
+    if (window.startMs >= window.endMs) {
+      throw new Error(
+        `states[${i}] must have startMs < endMs (got startMs ${window.startMs}, endMs ${window.endMs}).`
+      );
     }
+    if (window.startMs < previousEndMs) {
+      throw new Error(
+        `states[${i}] overlaps the previous window (startMs ${window.startMs} < previous endMs ${previousEndMs}).`
+      );
+    }
+    previousEndMs = window.endMs;
   });
 
   const frameCountByState = new Map<PipelineState, number>();
