@@ -3,13 +3,15 @@
 - Status: Accepted
 - Date: 2026-07-24
 
-> Authoritative requirements: VHS-REQ-714 (Single-VI lvkit Scan Provider) and
-> VHS-REQ-716 (lvkit VI Scan Store and Generated-Code Retrieval Tool), children
+> Authoritative requirements: VHS-REQ-714 (Single-VI lvkit Scan Provider),
+> VHS-REQ-716 (lvkit VI Scan Store and Generated-Code Retrieval Tool), and
+> VHS-REQ-717 (Preview-Time VI Scan Trigger), children
 > of system requirement VHS-SYS-REQ-008 (Review Workflow / Comparison Reports).
 > The requirements package holds the authoritative text; this ADR is the retained
-> design record. This covers Phase A (the scan provider) and Phase C (the
-> dedicated store and MCP retrieval tool) of epic #2348 (agent-readable VI change
-> intelligence) and builds on ADR-0031 (LabVIEW-free lvkit semantic backend).
+> design record. This covers Phase A (the scan provider), Phase B (the
+> preview-time trigger) and Phase C (the dedicated store and MCP retrieval tool)
+> of epic #2348 (agent-readable VI change intelligence) and builds on ADR-0031
+> (LabVIEW-free lvkit semantic backend).
 
 ## Context
 
@@ -49,9 +51,8 @@ verbatim into a schema-tagged store envelope for later agent consumption over MC
   returns a typed `blocked`/`failed`/`completed` result — never throwing, always
   cleaning up.
 
-The scan is the **VI-readability seed**; the preview-time trigger (Phase B) and
-benchmark correlation (Phase D) are later phases of epic #2348 that build on this
-envelope.
+The scan is the **VI-readability seed**; the benchmark correlation (Phase D) is a
+later phase of epic #2348 that builds on this envelope.
 
 **Phase C** adds the dedicated store and the agent retrieval tool (VHS-REQ-716).
 A content-addressed on-disk store (`lvkitViScanStore.ts`) is keyed by a SHA-256
@@ -66,6 +67,22 @@ envelope for a requested (VI path, content signature), returning a first-class
 not-found on a miss. The tool requires **both** the path and the content
 signature — a signature-less "latest" lookup is deferred — so it only ever returns
 the generated code captured for those precise VI bytes.
+
+**Phase B** wires the scan into the preview pipeline (VHS-REQ-717). When a VI
+renders **live** on its runtime in the preview custom editor, a pure best-effort
+trigger (`previewTimeViScanTrigger.ts` — `runPreviewTimeViScan`) runs the Phase A
+scan and persists the envelope into the Phase C store, resolving to a typed
+`persisted`/`not-persisted`/`errored` outcome and never throwing into the preview.
+A pure target mapper (`buildPreviewTimeViScanRequest`) resolves the rendered VI's
+absolute path against the open workspace folders to a repository-relative address,
+picking the deepest containing folder and skipping a VI outside every folder. The
+editor fires the trigger only at the live-render success path for a
+directly-opened on-disk `file` VI whose bytes match what the runtime rendered —
+never a cache-only display or a materialized `git`/revision source — and the scan
+provider and store are constructed once at activation and injected, so the
+coverage-excluded entrypoint holds no scan logic. Live host-runtime and container
+end-to-end coverage of the render-to-scan path is deferred, as with the Phase A
+real-lvkit boundary.
 
 Rejected: capturing the whole dependency closure (`--load-mode full`) for a
 "single-VI" scan (heavy, and vi.lib-primitive-dense VIs emit `.error` stubs that
@@ -91,3 +108,9 @@ add noise without the resolution store); auto-detecting a host LabVIEW `vi.lib`
   envelope with a readable primary module, byte-identical across repeated runs,
   and with no `.lvkit/` pollution of the repository — pinned by a hard-require
   real-lvkit integration test.
+- **Phase B (VHS-REQ-717) makes previewing a VI capture its scan**: rendering a
+  VI live on its runtime persists the LabVIEW-free Python projection into the
+  Phase C store as a best-effort side effect that never blocks the preview, so an
+  agent can later retrieve it by content address without re-running lvkit. The
+  pure trigger and target mapper are unit-tested with in-memory fakes; the live
+  host-runtime and container render-to-scan path is deferred (Phase A precedent).

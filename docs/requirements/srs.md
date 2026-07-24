@@ -5150,6 +5150,62 @@ Missing numeric IDs are intentional.
     with its store retriever injected so the pure MCP handler never reaches the
     filesystem on its own.
 
+### VHS-REQ-717: Preview-Time VI Scan Trigger
+
+- Status: Active
+- Parent: VHS-SYS-REQ-008
+- Area: Review Workflow
+- Statement: The toolset shall, when a VI renders live on its runtime during a
+  preview, run the single-VI lvkit scan (VHS-REQ-714) against the just-rendered
+  VI and persist the resulting envelope into the content-addressed store
+  (VHS-REQ-716) as a best-effort side effect that never blocks or fails the
+  preview, so the LabVIEW-free Python projection of the previewed revision is
+  captured for later agent retrieval without the reviewer running a separate
+  command. This is Phase B of the agent-readable VI change intelligence epic: the
+  writer that fills the Phase C store the Phase D benchmark correlation reads. The
+  trigger is invoked only from the preview custom editor's live-render success
+  path for a directly-opened on-disk `file` VI — never a cache-only display or a
+  materialized `git`/revision source — with the scan provider and store
+  constructed once at activation.
+- Acceptance Criteria:
+  - A pure trigger takes a resolved scan request (repository root, repository-
+    relative VI path, runtime label) and injected scan and store collaborators,
+    runs the scan, and only when the scan completes persists the returned
+    envelope, resolving to a typed outcome — persisted with the VI path and
+    content signature, not-persisted with the non-completed scan reason, or
+    errored with a stringified failure — and never throwing, so a scan or store
+    failure can never surface into the preview that produced it.
+  - A pure target mapper turns a just-rendered VI's absolute path and the open
+    workspace folders into a scan request addressed by repository root and
+    repository-relative path, selecting the most specific (deepest) containing
+    folder in a multi-root workspace and carrying the runtime label through, and
+    returns nothing when the VI lies outside every workspace folder or no folder
+    is open, so a VI with no repository address is never scanned.
+- Agent Work Scope:
+  - Keep the trigger and target mapper pure and dependency-free (the mapper uses
+    only `node:path`) so both are unit tested with in-memory fakes without lvkit,
+    LabVIEW, Python, or a real disk, and keep the scan provider and store injected
+    so the preview custom-editor wiring and the coverage-excluded activation
+    entrypoint hold no scan logic. The editor fires the trigger only at the
+    live-render success path for an on-disk `file` VI whose bytes match what the
+    runtime rendered, never for a cache-only display or a materialized non-`file`
+    source. This trigger reads VI bytes through the lvkit scan and never authors
+    `.vi` binaries; the LabVIEW-backed preview and comparison report remain the
+    visual artifacts. Live host-runtime and container end-to-end coverage of the
+    render-to-scan path is deferred, as with the Phase A real-lvkit boundary.
+- Implementation References:
+  - `docs/architecture/adr/ADR-0033-agent-readable-vi-scan-lvkit-generate.md`
+  - `src/semantic/lvkit/previewTimeViScanTrigger.ts`
+- Verification References:
+  - `tests/unit/previewTimeViScanTrigger.test.ts`
+- Change Guidance:
+  - Keep the trigger best-effort and pure: a scan or store failure must resolve
+    to a typed outcome, never throw, and never block the preview. Keep the scan
+    firing only on a live runtime render of an on-disk `file` VI (never a
+    cache-only display or a materialized revision) and the scan provider and
+    store constructed once and injected, so the coverage-excluded entrypoint holds
+    no scan logic and the pure trigger and mapper stay fully unit-tested.
+
 ### VHS-REQ-702: VI Semantic Change Classification
 
 - Status: Active

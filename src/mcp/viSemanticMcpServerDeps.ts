@@ -19,7 +19,7 @@ import {
   type ViComparisonModelCache
 } from '../semantic/viComparisonModelCache';
 import {
-  createFileLvkitViScanStore,
+  createDefaultLvkitViScanStore,
   type LvkitViScanStore
 } from '../semantic/lvkit/lvkitViScanStore';
 import type { ViSemanticMcpAsyncDeps } from '../semantic/viSemanticComparisonMcp';
@@ -65,27 +65,6 @@ export function createDefaultComparisonModelCache(): ViComparisonModelCache {
   return createFileViComparisonModelCache(
     {
       cacheDirectory: path.join(os.tmpdir(), 'vihs-vi-comparison-cache'),
-      joinPath: path.join
-    },
-    {
-      ensureDirectory: async (directory) => {
-        await fsp.mkdir(directory, { recursive: true });
-      },
-      readFile: (filePath) => fsp.readFile(filePath, 'utf8'),
-      writeFile: (filePath, data) => fsp.writeFile(filePath, data)
-    }
-  );
-}
-
-/**
- * Default file-backed lvkit VI-scan store, shared across tool calls in the
- * long-lived server process and stored under the OS temp directory. Backs the
- * read-only `get_vi_generated_code` retrieval tool (VHS-REQ-716).
- */
-export function createDefaultLvkitViScanStore(): LvkitViScanStore {
-  return createFileLvkitViScanStore(
-    {
-      storeDirectory: path.join(os.tmpdir(), 'vihs-lvkit-vi-scan-store'),
       joinPath: path.join
     },
     {

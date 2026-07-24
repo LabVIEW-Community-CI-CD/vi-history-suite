@@ -14,6 +14,8 @@
 // provider (its `blocked-preflight` result), so there is a single source of
 // validation truth.
 
+import * as path from 'node:path';
+
 import type { LvkitViScanInput, LvkitViScanResult } from './lvkitViScanProvider';
 import type { LvkitViScanStore } from './lvkitViScanStore';
 
@@ -89,4 +91,43 @@ export async function runPreviewTimeViScan(
     viPath: result.envelope.viPath,
     contentSignature: result.envelope.contentSignature
   };
+}
+
+/** Minimal shape of a VS Code workspace folder (its root path). */
+export interface WorkspaceFolderLike {
+  readonly uri: { readonly fsPath: string };
+}
+
+/**
+ * VHS-REQ-717: map a just-rendered VI to a {@link PreviewTimeViScanRequest}, or
+ * `undefined` when there is nothing to scan — the VI is not inside any open
+ * workspace folder (so it has no repository-relative address). Returns the
+ * deepest (most specific) containing folder in a multi-root workspace. Pure and
+ * deterministic; the repository-boundary check itself is delegated downstream to
+ * the scan provider, so this only establishes the (repositoryRoot, relativePath)
+ * address and skips VIs that sit outside every folder.
+ */
+export function buildPreviewTimeViScanRequest(
+  viFsPath: string,
+  workspaceFolders: readonly WorkspaceFolderLike[] | undefined,
+  runtime: string
+): PreviewTimeViScanRequest | undefined {
+  if (viFsPath.length === 0 || !workspaceFolders || workspaceFolders.length === 0) {
+    return undefined;
+  }
+  let best: PreviewTimeViScanRequest | undefined;
+  for (const folder of workspaceFolders) {
+    const root = folder.uri.fsPath;
+    if (root.length === 0) {
+      continue;
+    }
+    const relativePath = path.relative(root, viFsPath);
+    if (relativePath.length === 0 || relativePath.startsWith('..') || path.isAbsolute(relativePath)) {
+      continue;
+    }
+    if (!best || relativePath.length < best.relativePath.length) {
+      best = { repositoryRoot: root, relativePath, runtime };
+    }
+  }
+  return best;
 }

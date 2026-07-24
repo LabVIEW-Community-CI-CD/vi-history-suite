@@ -267,6 +267,43 @@ describe('VI Preview custom editor (VHS-REQ-659.8)', () => {
     expect(renderViPreviewForFileMock).not.toHaveBeenCalled();
   });
 
+  it('fires onPreviewScanReady with the runtime label after a live render (VHS-REQ-717)', async () => {
+    const onPreviewScanReady = vi.fn();
+    const sessionManager = {
+      renderVi: vi.fn().mockResolvedValue({ outcome: 'rendered', html: '<html>docker preview</html>' }),
+      dispose: vi.fn()
+    };
+    const context = createContext();
+    registerViPreviewCustomEditor(context as never, { onPreviewScanReady, sessionManager });
+    const provider = providerFromLastRegistration();
+
+    await resolveEditor(provider, createPanel(), '/workspace/repo/Foo.vit');
+
+    expect(onPreviewScanReady).toHaveBeenCalledWith('/workspace/repo/Foo.vit', 'linux-container');
+  });
+
+  it('does not fire onPreviewScanReady on a host-native cached display (VHS-REQ-717)', async () => {
+    const onPreviewScanReady = vi.fn();
+    resolvePreviewRuntimeMock.mockResolvedValueOnce({
+      outcome: 'ready',
+      runtime: { provider: 'host-native', labviewCliPath: 'C:\\LabVIEWCLI.exe' }
+    });
+    // A cache-only peek display is not a live runtime render, so it is not a scan
+    // opportunity — the callback must stay silent.
+    renderViPreviewForFileMock.mockResolvedValueOnce({
+      outcome: 'rendered',
+      html: '<html>cached host preview</html>',
+      cached: true
+    });
+    const context = createContext();
+    registerViPreviewCustomEditor(context as never, { onPreviewScanReady });
+    const provider = providerFromLastRegistration();
+
+    await resolveEditor(provider);
+
+    expect(onPreviewScanReady).not.toHaveBeenCalled();
+  });
+
   const BD_HTML =
     '<HTML><BODY><H3>Block Diagram</H3>' +
     '<P><IMG src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAACWCAIAAAA="></P>' +
