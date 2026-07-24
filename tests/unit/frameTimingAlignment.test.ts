@@ -9,6 +9,7 @@ import {
   FRAME_TIMING_ALIGNMENT_SCHEMA,
   alignFramesToPerf,
   decodeStopwatchBitStrip,
+  renderFrameTimingStateChart,
   type AlignFramesToPerfInput
 } from '../../src/reporting/mirror/frameTimingAlignment';
 
@@ -281,5 +282,50 @@ describe('alignFramesToPerf (VHS-REQ-707.20, #2324)', () => {
     expect(() =>
       alignFramesToPerf({ ...baseInput(), frames: [{ frameIndex: 1.5, stripBits: '0' }] })
     ).toThrow(/frameIndex must be a non-negative integer/);
+  });
+});
+
+describe('renderFrameTimingStateChart (VHS-REQ-707.21, #2342)', () => {
+  it('renders per-state CPU/disk and memory xychart blocks keyed by pipeline state', () => {
+    const chart = renderFrameTimingStateChart(alignFramesToPerf(baseInput()));
+    // Two Mermaid xychart-beta blocks.
+    expect(chart.match(/```mermaid/gu)?.length).toBe(2);
+    expect(chart).toContain('xychart-beta');
+    // Pipeline states are the categorical x-axis in rollup order.
+    expect(chart).toContain('x-axis [STAGING, PREVIEW_LEFT, COMPARISON]');
+    // Per-state mean bars: cpu [10,20,30], disk [1,2,3], mem [900,800,700].
+    expect(chart).toContain('bar [10, 20, 30]');
+    expect(chart).toContain('bar [1, 2, 3]');
+    expect(chart).toContain('bar [900, 800, 700]');
+  });
+
+  it('renders a null per-state mean as 0 with the state still labeled', () => {
+    // A state whose only frame has a null cpu cell -> meanCpuTotalPct null -> 0.
+    const input: AlignFramesToPerfInput = {
+      ...baseInput(),
+      perf: { t: [0, 100, 200, 300], cpuTotalPct: [null, 20, 30, 40], memAvailMb: [900, 800, 700, 600], diskTotalPct: [1, 2, 3, 4] }
+    };
+    const chart = renderFrameTimingStateChart(alignFramesToPerf(input));
+    expect(chart).toContain('x-axis [STAGING, PREVIEW_LEFT, COMPARISON]');
+    // STAGING cpu mean is null -> 0 (first bar value).
+    expect(chart).toContain('bar [0, 20, 30]');
+  });
+
+  it('returns a plain note (not a broken chart) when there are no state rollups', () => {
+    const chart = renderFrameTimingStateChart(alignFramesToPerf({ ...baseInput(), states: [] }));
+    expect(chart).toBe('_No pipeline-state rollups to chart._');
+    expect(chart).not.toContain('xychart-beta');
+  });
+
+  it('honors a custom title and sanitizes embedded quotes', () => {
+    const chart = renderFrameTimingStateChart(alignFramesToPerf(baseInput()), { title: 'Run "A"' });
+    expect(chart).toContain("Run 'A' — mean CPU/disk % by state");
+    expect(chart).not.toContain('Run "A"');
+  });
+
+  it('is deterministic: identical alignment yields identical chart', () => {
+    expect(renderFrameTimingStateChart(alignFramesToPerf(baseInput()))).toBe(
+      renderFrameTimingStateChart(alignFramesToPerf(baseInput()))
+    );
   });
 });
