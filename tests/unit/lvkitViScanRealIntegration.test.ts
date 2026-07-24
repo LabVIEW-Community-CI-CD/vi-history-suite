@@ -48,7 +48,11 @@ describe('createLvkitViScanProvider real lvkit (VHS-REQ-714.3)', () => {
     return scan({ repositoryRoot: REPO_ROOT, relativePath: VI_RELATIVE_PATH, runtime: 'host-native' });
   }
 
-  it('scans a real VI into a verbatim, schema-tagged envelope', async () => {
+  it('scans a real VI into a verbatim, schema-tagged envelope without polluting the repo', async () => {
+    // The scan isolates lvkit's `.lvkit/` resolution store to a temp workspace;
+    // capture the repo-root `.lvkit` presence before and assert it is unchanged
+    // after, pinning the no-pollution contract against a regression.
+    const lvkitStoreBefore = existsSync(path.join(REPO_ROOT, '.lvkit'));
     const result = await scanOnce();
     expect(result.status).toBe('completed');
     if (result.status !== 'completed') return;
@@ -65,10 +69,16 @@ describe('createLvkitViScanProvider real lvkit (VHS-REQ-714.3)', () => {
     expect(envelope.primaryModule).not.toBeNull();
     expect(envelope.primaryModule?.relativePath).toMatch(/make_path_absolute\.py$/);
     expect(envelope.primaryModule?.python).toContain('def make_path_absolute');
+    // Repo working tree untouched: no new `.lvkit/` store appeared.
+    expect(existsSync(path.join(REPO_ROOT, '.lvkit'))).toBe(lvkitStoreBefore);
   });
 
   it('is deterministic: two real runs yield byte-identical generated modules', async () => {
-    const [a, b] = await Promise.all([scanOnce(), scanOnce()]);
+    // Run the two real scans SEQUENTIALLY (not Promise.all): concurrent real
+    // lvkit runs can contend on shared tool/cold-start state and flake on slower
+    // CI runners (notably Windows), matching the sibling lvkitRealIntegration suite.
+    const a = await scanOnce();
+    const b = await scanOnce();
     expect(a.status).toBe('completed');
     expect(b.status).toBe('completed');
     if (a.status !== 'completed' || b.status !== 'completed') return;
