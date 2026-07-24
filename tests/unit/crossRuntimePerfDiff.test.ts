@@ -137,5 +137,9 @@ describe('diffPerStateAnalytics (VHS-REQ-707.23, #2344)', () => {
     const badRuntime = structuredClone(b) as { runtime: string };
     badRuntime.runtime = 'totally-not-a-runtime';
     expect(() => diffPerStateAnalytics(a, badRuntime as never)).toThrow(/candidate must be a per-state-run-analytics@v1 model/);
+    // Duplicate state rows collapse lossily in the by-state Map -> reject.
+    const dup = structuredClone(b) as { states: unknown[] };
+    dup.states = [...dup.states, dup.states[0]];
+    expect(() => diffPerStateAnalytics(a, dup as never)).toThrow(/duplicates state/);
   });
 });

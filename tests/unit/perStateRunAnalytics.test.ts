@@ -194,5 +194,10 @@ describe('buildPerStateRunAnalytics (VHS-REQ-707.22, #2344)', () => {
         ]
       })
     ).toThrow(/duplicates state 'STAGING'/);
+    // Terminal pipeline markers are not part of the timed-state model.
+    expect(() =>
+      // @ts-expect-error COMPLETE is not a TimedPipelineState
+      buildPerStateRunAnalytics({ ...baseInput(), states: [{ state: 'COMPLETE', startMs: 0, endMs: 100 }] })
+    ).toThrow(/is not one of the six timed pipeline states/);
   });
 });

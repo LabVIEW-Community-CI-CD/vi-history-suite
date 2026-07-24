@@ -20,6 +20,7 @@
 // explicit null (never fabricated) for a state with no samples in its window.
 
 import type { TimedPipelineState } from '../comparisonPreviewPipeline';
+import { TIMED_PIPELINE_STATES } from '../comparisonPreviewPipeline';
 import { FRAME_TIMING_ALIGNMENT_SCHEMA, type FrameTimingAlignment } from './frameTimingAlignment';
 
 export const PER_STATE_RUN_ANALYTICS_SCHEMA = 'vi-history-suite/per-state-run-analytics@v1';
@@ -177,6 +178,9 @@ export function buildPerStateRunAnalytics(input: BuildPerStateRunAnalyticsInput)
   input.states.forEach((window, i) => {
     if (!window || typeof window !== 'object' || typeof window.state !== 'string' || window.state === '') {
       throw new Error(`states[${i}].state must be a non-empty string.`);
+    }
+    if (!(TIMED_PIPELINE_STATES as readonly string[]).includes(window.state)) {
+      throw new Error(`states[${i}].state '${window.state}' is not one of the six timed pipeline states.`);
     }
     if (seenStates.has(window.state)) {
       throw new Error(`states[${i}] duplicates state '${window.state}' (each state must appear once).`);

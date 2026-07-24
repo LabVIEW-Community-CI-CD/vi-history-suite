@@ -99,12 +99,18 @@ export function diffPerStateAnalytics(
       throw new Error(`${name} must be a per-state-run-analytics@v1 model.`);
     }
     // Each row must be well-formed so a malformed model cannot yield NaN deltas
-    // or an undefined state key (fail closed at the boundary).
+    // or an undefined state key, and states must be unique (the differ collapses
+    // rows by state into a Map, so duplicates would be lossy). Fail closed.
+    const seenStates = new Set<string>();
     m.states.forEach((row, i) => {
       const r = row as { state?: unknown; durationMs?: unknown } | null;
       if (!r || typeof r !== 'object' || typeof r.state !== 'string' || r.state === '') {
         throw new Error(`${name}.states[${i}].state must be a non-empty string.`);
       }
+      if (seenStates.has(r.state)) {
+        throw new Error(`${name}.states[${i}] duplicates state '${r.state}' (each state must appear once).`);
+      }
+      seenStates.add(r.state);
       if (typeof r.durationMs !== 'number' || !Number.isFinite(r.durationMs)) {
         throw new Error(`${name}.states[${i}].durationMs must be a finite number.`);
       }
