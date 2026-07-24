@@ -158,6 +158,9 @@ export function buildWindowsPerfmonCapturePlan(request: PerfmonCaptureRequest): 
   const interval = formatLogmanInterval(request.sampleIntervalSec);
 
   const profile = request.profile ?? 'minimal';
+  if (profile !== 'minimal' && profile !== 'full') {
+    throw new Error(`profile must be 'minimal' or 'full' (received ${JSON.stringify(request.profile)}).`);
+  }
   const systemCounters =
     profile === 'full' ? PERFMON_FULL_PROFILE_SYSTEM_COUNTERS : PERFMON_SYSTEM_COUNTERS;
   const counters = [...systemCounters];
@@ -169,6 +172,9 @@ export function buildWindowsPerfmonCapturePlan(request: PerfmonCaptureRequest): 
     );
   }
   if (request.extraCounters !== undefined) {
+    if (!Array.isArray(request.extraCounters)) {
+      throw new Error('extraCounters must be an array of counter-path strings.');
+    }
     for (const raw of request.extraCounters) {
       const counter = typeof raw === 'string' ? raw.trim() : '';
       if (counter.length === 0) {
