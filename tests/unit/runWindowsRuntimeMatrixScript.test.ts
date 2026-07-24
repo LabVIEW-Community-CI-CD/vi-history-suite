@@ -102,12 +102,18 @@ describe('runWindowsRuntimeMatrix.SCENARIO_MANIFEST', () => {
     expect(ids).toEqual([...harness.CANONICAL_SCENARIOS]);
   });
 
-  it('bitness rows pair the same year at opposite bitness with the bitness-conflict reason (VHS-REQ-713.1)', () => {
+  it('bitness rows pair the same year at opposite bitness; supported years assert the bitness-conflict reason (VHS-REQ-713.1, #2340)', () => {
     for (const row of harness.SCENARIO_MANIFEST.filter((entry) => entry.family === 'bitness')) {
       expect(row.hostVersion).toBe(row.selectedVersion);
       expect(row.hostBitness).not.toBe(row.selectedBitness);
-      expect(row.expectedBlockedReason).toBe('windows-host-bitness-conflict');
       expect(row.derivePortFromSelectedIni).toBeUndefined();
+      // #2340: selecting a below-min year is unsupported-for-comparison before
+      // the bitness check is reached, so those rows cannot assert bitness conflict.
+      if (Number(row.selectedVersion) < 2025) {
+        expect(row.expectedBlockedReason).toBe('labview-version-unsupported-for-comparison-report');
+      } else {
+        expect(row.expectedBlockedReason).toBe('windows-host-bitness-conflict');
+      }
     }
   });
 
@@ -134,25 +140,50 @@ describe('runWindowsRuntimeMatrix.SCENARIO_MANIFEST', () => {
     ).toBe(true);
   });
 
-  it('match rows admit an identical host/selected on the default port (VHS-REQ-713.1)', () => {
+  it('match rows admit an identical host/selected on the default port (supported years) (VHS-REQ-713.1, #2340)', () => {
     const matchRows = harness.SCENARIO_MANIFEST.filter((entry) => entry.family === 'match');
     for (const row of matchRows) {
       expect(row.hostVersion).toBe(row.selectedVersion);
       expect(row.hostBitness).toBe(row.selectedBitness);
-      expect(row.expectedBlockedReason).toBe('none');
       expect(row.derivePortFromSelectedIni).toBeUndefined();
-      expect(row.portMode).toBe('default');
+      // #2340: a below-min selected year is unsupported before the admit path,
+      // so those rows are not port validations (no portMode).
+      if (Number(row.selectedVersion) < 2025) {
+        expect(row.expectedBlockedReason).toBe('labview-version-unsupported-for-comparison-report');
+        expect(row.portMode).toBeUndefined();
+      } else {
+        expect(row.expectedBlockedReason).toBe('none');
+        expect(row.portMode).toBe('default');
+      }
     }
     expect(matchRows).toHaveLength(6);
   });
 
-  it('port rows admit an identical host/selected and derive the port from the selected ini (VHS-REQ-713.1)', () => {
+  it('port rows admit an identical host/selected and derive the port from the selected ini (supported years) (VHS-REQ-713.1, #2340)', () => {
     for (const row of harness.SCENARIO_MANIFEST.filter((entry) => entry.family === 'port')) {
       expect(row.hostVersion).toBe(row.selectedVersion);
       expect(row.hostBitness).toBe(row.selectedBitness);
-      expect(row.expectedBlockedReason).toBe('none');
-      expect(row.derivePortFromSelectedIni).toBe(true);
-      expect(row.portMode).toBe('non-default');
+      if (Number(row.selectedVersion) < 2025) {
+        // #2340: unsupported before the port oracle can be satisfied.
+        expect(row.expectedBlockedReason).toBe('labview-version-unsupported-for-comparison-report');
+        expect(row.derivePortFromSelectedIni).toBeUndefined();
+        expect(row.portMode).toBeUndefined();
+      } else {
+        expect(row.expectedBlockedReason).toBe('none');
+        expect(row.derivePortFromSelectedIni).toBe(true);
+        expect(row.portMode).toBe('non-default');
+      }
+    }
+  });
+
+  it('reclassifies EVERY selected-below-min row (any family) to unsupported-for-comparison with no port attributes (#2340)', () => {
+    const belowMin = harness.SCENARIO_MANIFEST.filter((entry) => Number(entry.selectedVersion) < 2025);
+    // bitness(2) + version(4) + match(2) + port(2) = 10 selected-2020 rows.
+    expect(belowMin).toHaveLength(10);
+    for (const row of belowMin) {
+      expect(row.expectedBlockedReason).toBe('labview-version-unsupported-for-comparison-report');
+      expect(row.portMode).toBeUndefined();
+      expect(row.derivePortFromSelectedIni).toBeUndefined();
     }
   });
 
@@ -243,21 +274,36 @@ describe('runWindowsRuntimeMatrix.selectScenarios', () => {
     }
   });
 
-  it('light tier covers every bitness in BOTH a conflict and an admit direction (VHS-REQ-713.2)', () => {
+  it('light tier covers every bitness in a real conflict and a real admit direction, plus 2020 unsupported coverage (VHS-REQ-713.2, #2340)', () => {
     const rowsById = new Map(harness.SCENARIO_MANIFEST.map((row) => [row.id, row]));
     const light = harness.LIGHT_TIER_SCENARIOS.map((id) => rowsById.get(id)!);
-    const conflictFamilies = new Set(['bitness', 'version']);
-    const admitFamilies = new Set(['match', 'port']);
+    const conflictReasons = new Set(['windows-host-bitness-conflict', 'windows-host-version-conflict']);
     for (const bitness of ['x86', 'x64']) {
+      // A real conflict row (not a reclassified selected-2020 unsupported row).
       const conflict = light.some(
-        (row) => conflictFamilies.has(row.family) && (row.hostBitness === bitness || row.selectedBitness === bitness)
+        (row) =>
+          conflictReasons.has(row.expectedBlockedReason) &&
+          (row.hostBitness === bitness || row.selectedBitness === bitness)
       );
+      // A real admit row: host == selected at this bitness with reason 'none'.
       const admit = light.some(
-        (row) => admitFamilies.has(row.family) && row.hostBitness === bitness && row.selectedBitness === bitness
+        (row) =>
+          row.expectedBlockedReason === 'none' &&
+          row.hostBitness === bitness &&
+          row.selectedBitness === bitness
       );
       expect(conflict, `light tier lacks a ${bitness} conflict row`).toBe(true);
       expect(admit, `light tier lacks a ${bitness} admit (negative-control) row`).toBe(true);
     }
+    // #2340: 2020 has no admit (selecting it is unsupported); the light tier
+    // instead covers the unsupported-for-comparison gate for selected 2020.
+    expect(
+      light.some(
+        (row) =>
+          row.selectedVersion === '2020' &&
+          row.expectedBlockedReason === 'labview-version-unsupported-for-comparison-report'
+      )
+    ).toBe(true);
     // Every grid year appears in the light tier.
     for (const year of ['2020', '2025', '2026']) {
       expect(light.some((row) => row.hostVersion === year || row.selectedVersion === year)).toBe(true);
@@ -630,7 +676,7 @@ describe('runWindowsRuntimeMatrix.summarizeScenario', () => {
     expect(summary.pass).toBe(false);
   });
 
-  it('fails a version scenario when the observed host/selected years do not match the manifest row (VHS-REQ-713.4)', () => {
+  it('fails a selected-2020 scenario when the observed host/selected years do not match the manifest row (VHS-REQ-713.4, #2340)', () => {
     const versionScenario = {
       id: 'version-2026-2020-x64',
       parameters: {
@@ -638,7 +684,7 @@ describe('runWindowsRuntimeMatrix.summarizeScenario', () => {
         selectedBitness: 'x64',
         hostVersion: '2026',
         selectedVersion: '2020',
-        expectedBlockedReason: 'windows-host-version-conflict'
+        expectedBlockedReason: 'labview-version-unsupported-for-comparison-report'
       },
       proofPath: 'v.proof.json',
       logPath: 'v.scenario.json'
@@ -649,7 +695,7 @@ describe('runWindowsRuntimeMatrix.summarizeScenario', () => {
       {
         pass: true,
         observed: {
-          runtimeBlockedReason: 'windows-host-version-conflict',
+          runtimeBlockedReason: 'labview-version-unsupported-for-comparison-report',
           hostBitness: 'x64',
           selectedBitness: 'x64',
           // The proof reports a different selected year than the manifest row.
@@ -663,7 +709,7 @@ describe('runWindowsRuntimeMatrix.summarizeScenario', () => {
     expect(summary.failureReason).toContain('selectedVersion=2025');
   });
 
-  it('passes the 2020 convert-path direction when the observed years match the manifest row (VHS-REQ-713.4)', () => {
+  it('passes the selected-2020 unsupported-for-comparison direction when the observed years match the manifest row (VHS-REQ-713.4, #2340)', () => {
     const versionScenario = {
       id: 'version-2026-2020-x64',
       parameters: {
@@ -671,7 +717,7 @@ describe('runWindowsRuntimeMatrix.summarizeScenario', () => {
         selectedBitness: 'x64',
         hostVersion: '2026',
         selectedVersion: '2020',
-        expectedBlockedReason: 'windows-host-version-conflict'
+        expectedBlockedReason: 'labview-version-unsupported-for-comparison-report'
       },
       proofPath: 'v.proof.json',
       logPath: 'v.scenario.json'
@@ -682,7 +728,7 @@ describe('runWindowsRuntimeMatrix.summarizeScenario', () => {
       {
         pass: true,
         observed: {
-          runtimeBlockedReason: 'windows-host-version-conflict',
+          runtimeBlockedReason: 'labview-version-unsupported-for-comparison-report',
           hostBitness: 'x64',
           selectedBitness: 'x64',
           hostVersion: '2026',
