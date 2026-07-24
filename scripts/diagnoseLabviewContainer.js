@@ -104,9 +104,18 @@ function gatherProbes(options, deps = {}) {
   // subprocess; production passes no deps.execFileSync and uses the real builtin.
   const exec = deps.execFileSync ?? execFileSync;
   const runDocker = deps.runDocker ?? ((dockerArgs, options) => defaultRunDocker(dockerArgs, options, exec));
+  const platform = deps.platform ?? process.platform;
   const which = deps.which ?? ((cmd) => {
     try {
-      exec('sh', ['-lc', `command -v ${cmd}`], { stdio: 'ignore' });
+      if (platform === 'win32') {
+        // Windows hosts have no POSIX `sh`, so `sh -lc "command -v <cmd>"` throws
+        // ENOENT and would false-negative an installed Docker CLI. `where` is the
+        // Windows PATH resolver and exits 0 when the command resolves (including
+        // the `.exe` Docker Desktop installs).
+        exec('where', [cmd], { stdio: 'ignore' });
+      } else {
+        exec('sh', ['-lc', `command -v ${cmd}`], { stdio: 'ignore' });
+      }
       return true;
     } catch {
       return false;

@@ -113,6 +113,48 @@ describe('diagnoseLabviewContainer CLI (VHS-REQ-710.3)', () => {
     expect(probes.imageRef).toBe('a/b:c');
   });
 
+  it('detects the Docker CLI on Windows via `where` (POSIX sh is absent) (VHS-REQ-710.3)', () => {
+    const calls = [];
+    const execFileSync = (cmd, args = []) => {
+      calls.push([cmd, ...args]);
+      if (cmd === 'sh') {
+        const e = new Error('spawn sh ENOENT');
+        e.code = 'ENOENT';
+        throw e;
+      }
+      return ''; // `where docker` exits 0; `docker version` yields an empty server version
+    };
+    const p = gatherProbes({ image: 'x/y:z' }, { platform: 'win32', execFileSync });
+    expect(p.dockerCliAvailable).toBe(true);
+    expect(calls.some((c) => c[0] === 'where' && c[1] === 'docker')).toBe(true);
+    expect(calls.some((c) => c[0] === 'sh')).toBe(false);
+  });
+
+  it('reports the Docker CLI absent on Windows when `where` finds nothing (VHS-REQ-710.3)', () => {
+    const execFileSync = (cmd) => {
+      if (cmd === 'where') {
+        const e = new Error('INFO: Could not find files');
+        e.status = 1;
+        throw e;
+      }
+      return '';
+    };
+    const p = gatherProbes({ image: 'x/y:z' }, { platform: 'win32', execFileSync });
+    expect(p.dockerCliAvailable).toBe(false);
+  });
+
+  it('uses the POSIX `sh -lc command -v` probe on non-Windows hosts (VHS-REQ-710.3)', () => {
+    const calls = [];
+    const execFileSync = (cmd, args = []) => {
+      calls.push([cmd, ...args]);
+      return '';
+    };
+    const p = gatherProbes({ image: 'x/y:z' }, { platform: 'linux', execFileSync });
+    expect(p.dockerCliAvailable).toBe(true);
+    expect(calls.some((c) => c[0] === 'sh' && c.includes('command -v docker'))).toBe(true);
+    expect(calls.some((c) => c[0] === 'where')).toBe(false);
+  });
+
   it('parses --variant and rejects an unknown variant (VHS-REQ-710.5)', () => {
     expect(parseArgs(['--variant', 'linux-host-native']).variant).toBe('linux-host-native');
     expect(parseArgs(['--variant', 'windows-host-native']).variant).toBe('windows-host-native');
@@ -462,11 +504,14 @@ describe('diagnoseLabviewContainer default runners over an injected execFileSync
     });
     const out: string[] = [];
     // No runDocker/which injected -> the DEFAULT runners run against the fake exec.
+    // Pin platform so the POSIX `sh` which-probe is exercised deterministically
+    // regardless of the host running the suite (Windows uses `where`).
     const deps = {
       stdout: { write: (s: string) => out.push(s) },
       stderr: { write: () => {} },
       evaluate: evaluateLabviewContainerDiagnostics,
-      execFileSync: exec
+      execFileSync: exec,
+      platform: 'linux'
     };
     expect(main(['--json'], deps)).toBe(0);
     const packet = JSON.parse(out.join(''));
@@ -488,7 +533,7 @@ describe('diagnoseLabviewContainer default runners over an injected execFileSync
     // No which injected -> the default which arrow's catch (return false) executes.
     const probes = gatherProbes(
       { image: 'nationalinstruments/labview:x', variant: 'linux-container' },
-      { execFileSync: exec }
+      { execFileSync: exec, platform: 'linux' }
     );
     expect(probes.dockerCliAvailable).toBe(false);
     expect(probes.imagePresent).toBe(false);
@@ -641,7 +686,7 @@ describe('diagnoseLabviewContainer default runner branches (#2331)', () => {
       if (cmd === 'sh') throw new Error('command -v failed');
       return '';
     };
-    const p = gatherProbes({ image: 'x', variant: 'linux-container' }, { execFileSync });
+    const p = gatherProbes({ image: 'x', variant: 'linux-container' }, { execFileSync, platform: 'linux' });
     expect(p.dockerCliAvailable).toBe(false);
     expect(p.dockerServerVersion).toBeNull();
     expect(p.imagePresent).toBe(false);
