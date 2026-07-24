@@ -88,6 +88,36 @@ describe('runPreviewTimeViScan (VHS-REQ-717.1)', () => {
     expect(store.puts).toEqual([envelope]);
   });
 
+  it('persists when the expected content signature matches (modulo sha256: prefix) (#2363)', async () => {
+    const envelope = makeEnvelope();
+    const { scan } = scanReturning({ status: 'completed', envelope });
+    const store = createFakeStore();
+
+    // The envelope signature is `sha256:abc123`; the render supplies the bare hex
+    // `abc123`. Normalized comparison treats them as the same bytes.
+    const outcome = await runPreviewTimeViScan(
+      { ...REQUEST, expectedContentSignature: 'abc123' },
+      { scan, store }
+    );
+
+    expect(outcome.status).toBe('persisted');
+    expect(store.puts).toEqual([envelope]);
+  });
+
+  it('does not persist (content-changed) when the scan read different bytes than were rendered (#2363)', async () => {
+    const envelope = makeEnvelope();
+    const { scan } = scanReturning({ status: 'completed', envelope });
+    const store = createFakeStore();
+
+    const outcome = await runPreviewTimeViScan(
+      { ...REQUEST, expectedContentSignature: 'sha256:deadbeefdeadbeef' },
+      { scan, store }
+    );
+
+    expect(outcome).toEqual({ status: 'not-persisted', reason: 'content-changed' });
+    expect(store.puts).toEqual([]);
+  });
+
   it('forwards the request verbatim to the scan provider', async () => {
     const { scan, inputs } = scanReturning({ status: 'completed', envelope: makeEnvelope() });
     const store = createFakeStore();
