@@ -5693,7 +5693,10 @@ Missing numeric IDs are intentional.
     and a second the per-state mean available memory — so a pull request prints
     per-state resource pressure from the aligned frames. A null per-state mean
     renders as zero with the state still labeled, an empty rollup yields a plain
-    note rather than a broken chart, and it is deterministic.
+    note rather than a broken chart, and it is deterministic. The renderer is
+    wired into the first-run performance-monitor pull-request comment: the
+    per-state section is appended when a run carries a frame-timing alignment and
+    omitted (never fabricated) otherwise.
 - Agent Work Scope:
   - Change the ADR, this requirement, and the governance contract test together;
     keep the required gate deterministic and never make a live image pull the
