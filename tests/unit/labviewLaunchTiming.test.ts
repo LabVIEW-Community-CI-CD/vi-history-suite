@@ -48,7 +48,7 @@ const HEADLESS_CLI_LOG = [
   'starting LabVIEW Execution System 2 Thread 0 , capacity: 24 at [3867728735.36179924, (11:05:35.361799241 2026:07:24)]'
 ].join('\n');
 
-describe('parseLabviewLaunchTiming (VHS-REQ-707.24, #2344)', () => {
+describe('parseLabVIEWLaunchTiming (VHS-REQ-707.24, #2344)', () => {
   it('parses a headless LabVIEW log into identity + lifecycle markers', () => {
     const t = parseLabVIEWLaunchTiming(HEADLESS_LABVIEW_LOG);
     expect(t.schema).toBe(LABVIEW_LAUNCH_TIMING_SCHEMA);
