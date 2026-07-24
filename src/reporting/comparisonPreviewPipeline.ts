@@ -66,9 +66,18 @@ export type PipelineState =
 
 /**
  * The six timed pipeline states (excludes the terminal `COMPLETE`/`FAILED`
- * markers) — the per-state timing/analytics model operates on these only.
+ * markers) — the per-state timing/analytics model operates on these only. The
+ * `satisfies` clause keeps the runtime list in sync with the union.
  */
-export type TimedPipelineState = Exclude<PipelineState, 'COMPLETE' | 'FAILED'>;
+export const TIMED_PIPELINE_STATES = [
+  'STAGING',
+  'PREVIEW_LEFT',
+  'PREVIEW_RIGHT',
+  'VALIDATION',
+  'COMPARISON',
+  'UNSTAGING'
+] as const satisfies readonly Exclude<PipelineState, 'COMPLETE' | 'FAILED'>[];
+export type TimedPipelineState = (typeof TIMED_PIPELINE_STATES)[number];
 
 /** The LabVIEW cycle states (one external invocation each). */
 export type PipelineCycleState = 'PREVIEW_LEFT' | 'PREVIEW_RIGHT' | 'COMPARISON';
