@@ -152,12 +152,22 @@ export function buildPerStateRunAnalytics(input: BuildPerStateRunAnalyticsInput)
   // The mandatory series must be present and parallel to perf.t; the optional
   // LabVIEW series, when present, must also be parallel. A length mismatch would
   // otherwise silently read a real sample as "missing" and skew the rollups.
+  // Each cell must be either null (an explicitly missing sample) or a finite
+  // number; a NaN/undefined/non-number cell from a corrupted or hand-edited model
+  // would otherwise be silently swallowed as "missing" by the Number.isFinite
+  // rollups instead of failing closed at the boundary.
   const requireSeries = (name: string, series: unknown): void => {
     if (!Array.isArray(series)) {
       throw new Error(`perf.${name} must be an array.`);
     }
     if (series.length !== perfTimes.length) {
       throw new Error(`perf.${name} length (${series.length}) must match perf.t length (${perfTimes.length}).`);
+    }
+    for (let i = 0; i < series.length; i += 1) {
+      const cell = series[i];
+      if (cell !== null && (typeof cell !== 'number' || !Number.isFinite(cell))) {
+        throw new Error(`perf.${name}[${i}] must be null or a finite number.`);
+      }
     }
   };
   requireSeries('cpuTotalPct', input.perf.cpuTotalPct);
