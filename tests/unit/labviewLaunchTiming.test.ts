@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   LABVIEW_LAUNCH_TIMING_SCHEMA,
-  parseLabviewLaunchTiming
+  parseLabVIEWLaunchTiming
 } from '../../src/reporting/mirror/labviewLaunchTiming';
 
 // A real headless LabVIEW.exe application log (trimmed), as written to
@@ -50,7 +50,7 @@ const HEADLESS_CLI_LOG = [
 
 describe('parseLabviewLaunchTiming (VHS-REQ-707.24, #2344)', () => {
   it('parses a headless LabVIEW log into identity + lifecycle markers', () => {
-    const t = parseLabviewLaunchTiming(HEADLESS_LABVIEW_LOG);
+    const t = parseLabVIEWLaunchTiming(HEADLESS_LABVIEW_LOG);
     expect(t.schema).toBe(LABVIEW_LAUNCH_TIMING_SCHEMA);
     expect(t.schemaVersion).toBe(1);
     expect(t.appName).toBe('LabVIEW');
@@ -64,7 +64,7 @@ describe('parseLabviewLaunchTiming (VHS-REQ-707.24, #2344)', () => {
   });
 
   it('parses a LabVIEWCLI (32-bit) log', () => {
-    const t = parseLabviewLaunchTiming(HEADLESS_CLI_LOG);
+    const t = parseLabVIEWLaunchTiming(HEADLESS_CLI_LOG);
     expect(t.appName).toBe('LabVIEWCLI');
     expect(t.version).toBe('26.1.2f2 32-bit');
     expect(t.processStartIso).toBe('2026-07-24T11:05:34.000');
@@ -81,7 +81,7 @@ describe('parseLabviewLaunchTiming (VHS-REQ-707.24, #2344)', () => {
       '[HeadlessManager][7/24/2026 1:07:09.500 PM] Initializing headless LabVIEW',
       'starting LabVIEW Execution System 2 Thread 0 at [1.0, (13:07:11.250000000 2026:07:24)]'
     ].join('\n');
-    const t = parseLabviewLaunchTiming(log);
+    const t = parseLabVIEWLaunchTiming(log);
     expect(t.processStartIso).toBe('2026-07-24T13:07:09.000');
     expect(t.initAtIso).toBe('2026-07-24T13:07:09.500');
     expect(t.executionReadyIso).toBe('2026-07-24T13:07:11.250');
@@ -96,14 +96,14 @@ describe('parseLabviewLaunchTiming (VHS-REQ-707.24, #2344)', () => {
       '[HeadlessManager][7/24/2026 11:02:31.179 AM] Initializing headless LabVIEW',
       'Failed to initialize headless LabVIEW.'
     ].join('\n');
-    const t = parseLabviewLaunchTiming(log);
+    const t = parseLabVIEWLaunchTiming(log);
     expect(t.initAtIso).toBe('2026-07-24T11:02:31.179');
     expect(t.executionReadyIso).toBeNull();
     expect(t.initToReadyMs).toBeNull();
   });
 
   it('returns null init/ready when only the #Date header is present', () => {
-    const t = parseLabviewLaunchTiming('#Date: Fri, Jul 24, 2026 11:02:31 AM\n#AppName: LabVIEW');
+    const t = parseLabVIEWLaunchTiming('#Date: Fri, Jul 24, 2026 11:02:31 AM\n#AppName: LabVIEW');
     expect(t.processStartIso).toBe('2026-07-24T11:02:31.000');
     expect(t.initAtIso).toBeNull();
     expect(t.executionReadyIso).toBeNull();
@@ -112,39 +112,65 @@ describe('parseLabviewLaunchTiming (VHS-REQ-707.24, #2344)', () => {
   });
 
   it('is deterministic', () => {
-    expect(parseLabviewLaunchTiming(HEADLESS_LABVIEW_LOG)).toEqual(
-      parseLabviewLaunchTiming(HEADLESS_LABVIEW_LOG)
+    expect(parseLabVIEWLaunchTiming(HEADLESS_LABVIEW_LOG)).toEqual(
+      parseLabVIEWLaunchTiming(HEADLESS_LABVIEW_LOG)
     );
   });
 
   it('converts 12 AM (midnight) and 12 PM (noon) correctly', () => {
-    const midnight = parseLabviewLaunchTiming(
+    const midnight = parseLabVIEWLaunchTiming(
       '#Date: Fri, Jul 24, 2026 12:00:00 AM\n#AppName: LabVIEW'
     );
     expect(midnight.processStartIso).toBe('2026-07-24T00:00:00.000');
-    const noon = parseLabviewLaunchTiming('#Date: Fri, Jul 24, 2026 12:00:00 PM\n#AppName: LabVIEW');
+    const noon = parseLabVIEWLaunchTiming('#Date: Fri, Jul 24, 2026 12:00:00 PM\n#AppName: LabVIEW');
     expect(noon.processStartIso).toBe('2026-07-24T12:00:00.000');
   });
 
   it('treats an empty header value as absent (null)', () => {
-    const t = parseLabviewLaunchTiming('#Date: Fri, Jul 24, 2026 11:02:31 AM\n#AppName:   \n#Version:');
+    const t = parseLabVIEWLaunchTiming('#Date: Fri, Jul 24, 2026 11:02:31 AM\n#AppName:   \n#Version:');
     expect(t.appName).toBeNull();
     expect(t.version).toBeNull();
   });
 
   it('fails closed when the #Date month abbreviation is unrecognized', () => {
-    expect(() => parseLabviewLaunchTiming('#Date: Fri, Xyz 24, 2026 11:02:31 AM\n#AppName: LabVIEW')).toThrow(
+    expect(() => parseLabVIEWLaunchTiming('#Date: Fri, Xyz 24, 2026 11:02:31 AM\n#AppName: LabVIEW')).toThrow(
       /"#Date:" header/
     );
   });
 
   it('fails closed on empty, non-string, or non-LabVIEW-log input', () => {
-    expect(() => parseLabviewLaunchTiming('')).toThrow(/non-empty log text/);
-    expect(() => parseLabviewLaunchTiming('   ')).toThrow(/non-empty log text/);
+    expect(() => parseLabVIEWLaunchTiming('')).toThrow(/non-empty log text/);
+    expect(() => parseLabVIEWLaunchTiming('   ')).toThrow(/non-empty log text/);
     // @ts-expect-error non-string input
-    expect(() => parseLabviewLaunchTiming(null)).toThrow(/non-empty log text/);
-    expect(() => parseLabviewLaunchTiming('some random file\nwith no LabVIEW header')).toThrow(
+    expect(() => parseLabVIEWLaunchTiming(null)).toThrow(/non-empty log text/);
+    expect(() => parseLabVIEWLaunchTiming('some random file\nwith no LabVIEW header')).toThrow(
       /"#Date:" header/
     );
+  });
+
+  it('rejects an out-of-range #Date (fails closed, not silently normalized)', () => {
+    // day 99, hour 13 (invalid on a 12-hour clock), minute 70, second 80.
+    expect(() =>
+      parseLabVIEWLaunchTiming('#Date: Fri, Jul 99, 2026 13:70:80 PM\n#AppName: LabVIEW')
+    ).toThrow(/"#Date:" header/);
+  });
+
+  it('drops an out-of-range init or execution-ready marker to null', () => {
+    const log = [
+      '#Date: Fri, Jul 24, 2026 11:02:31 AM',
+      '#AppName: LabVIEW',
+      // hour 13 is invalid on the 12-hour init marker; minute 70 invalid on exec.
+      '[HeadlessManager][7/24/2026 13:02:31.179 AM] Initializing headless LabVIEW',
+      'starting LabVIEW Execution System 2 Thread 0 at [1.0, (11:70:33.973000000 2026:07:24)]'
+    ].join('\n');
+    const t = parseLabVIEWLaunchTiming(log);
+    expect(t.initAtIso).toBeNull();
+    expect(t.executionReadyIso).toBeNull();
+    expect(t.initToReadyMs).toBeNull();
+  });
+
+  it('reports #Date as second-precision (fractional part always .000)', () => {
+    const t = parseLabVIEWLaunchTiming('#Date: Fri, Jul 24, 2026 11:02:31 AM\n#AppName: LabVIEW');
+    expect(t.processStartIso.endsWith('.000')).toBe(true);
   });
 });
