@@ -184,5 +184,15 @@ describe('buildPerStateRunAnalytics (VHS-REQ-707.22, #2344)', () => {
         ]
       })
     ).toThrow(/overlaps the previous window/);
+    // Duplicate state labels break the 1-row-per-state contract.
+    expect(() =>
+      buildPerStateRunAnalytics({
+        ...baseInput(),
+        states: [
+          { state: 'STAGING', startMs: 0, endMs: 100 },
+          { state: 'STAGING', startMs: 100, endMs: 200 }
+        ]
+      })
+    ).toThrow(/duplicates state 'STAGING'/);
   });
 });

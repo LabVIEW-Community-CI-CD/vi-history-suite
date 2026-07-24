@@ -19,18 +19,19 @@
 // clock (the capture driver aligns them). Fail-closed at the input boundary;
 // explicit null (never fabricated) for a state with no samples in its window.
 
-import type { PipelineState } from '../comparisonPreviewPipeline';
+import type { TimedPipelineState } from '../comparisonPreviewPipeline';
 import { FRAME_TIMING_ALIGNMENT_SCHEMA, type FrameTimingAlignment } from './frameTimingAlignment';
 
 export const PER_STATE_RUN_ANALYTICS_SCHEMA = 'vi-history-suite/per-state-run-analytics@v1';
 export const PER_STATE_RUN_ANALYTICS_SCHEMA_VERSION = 1;
 
-/** The runtime a comparison run executed on. */
-export type AnalyticsRuntime = 'host-native' | 'windows-container' | 'linux-container';
+/** The runtimes a comparison run can execute on. */
+export const ANALYTICS_RUNTIMES = ['host-native', 'windows-container', 'linux-container'] as const;
+export type AnalyticsRuntime = (typeof ANALYTICS_RUNTIMES)[number];
 
 /** One pipeline-state window on the run's elapsed-ms clock (endMs exclusive). */
 export interface PerStateWindow {
-  readonly state: PipelineState;
+  readonly state: TimedPipelineState;
   readonly startMs: number;
   readonly endMs: number;
 }
@@ -59,7 +60,7 @@ export interface BuildPerStateRunAnalyticsInput {
 }
 
 export interface PerStateRow {
-  readonly state: PipelineState;
+  readonly state: TimedPipelineState;
   readonly durationMs: number;
   /** Number of perfmon samples whose time fell inside this state's window. */
   readonly sampleCount: number;
@@ -126,8 +127,7 @@ export function buildPerStateRunAnalytics(input: BuildPerStateRunAnalyticsInput)
   }
   if (input.runtime !== 'host-native' && input.runtime !== 'windows-container' && input.runtime !== 'linux-container') {
     throw new Error('runtime must be host-native, windows-container, or linux-container.');
-  }
-  if (typeof input.recording !== 'boolean') {
+  }  if (typeof input.recording !== 'boolean') {
     throw new Error('recording must be a boolean.');
   }
   if (!Array.isArray(input.states)) {
@@ -168,14 +168,20 @@ export function buildPerStateRunAnalytics(input: BuildPerStateRunAnalyticsInput)
     requireSeries('labviewWorkingSetMb', input.perf.labviewWorkingSetMb);
   }
 
-  // Windows must be named, finite, non-empty, and ordered non-overlapping so a
-  // sample is never counted into two states and totalDurationMs cannot
-  // double-count (matching the frame-timing aligner's boundary contract).
+  // Windows must be named, finite, non-empty, non-overlapping, and each state
+  // must be unique so a sample is never counted into two states, totalDurationMs
+  // cannot double-count, and the per-state model stays 1-row-per-state (the
+  // differ collapses by state, so duplicates would be lossy).
   let previousEndMs = Number.NEGATIVE_INFINITY;
+  const seenStates = new Set<string>();
   input.states.forEach((window, i) => {
     if (!window || typeof window !== 'object' || typeof window.state !== 'string' || window.state === '') {
       throw new Error(`states[${i}].state must be a non-empty string.`);
     }
+    if (seenStates.has(window.state)) {
+      throw new Error(`states[${i}] duplicates state '${window.state}' (each state must appear once).`);
+    }
+    seenStates.add(window.state);
     if (!Number.isFinite(window.startMs) || !Number.isFinite(window.endMs)) {
       throw new Error(`states[${i}] bounds must be finite numbers.`);
     }
@@ -209,7 +215,7 @@ export function buildPerStateRunAnalytics(input: BuildPerStateRunAnalyticsInput)
     }
   }
 
-  const frameCountByState = new Map<PipelineState, number>();
+  const frameCountByState = new Map<string, number>();
   if (input.alignment) {
     for (const rollup of input.alignment.stateRollups) {
       frameCountByState.set(rollup.state, rollup.frameCount);

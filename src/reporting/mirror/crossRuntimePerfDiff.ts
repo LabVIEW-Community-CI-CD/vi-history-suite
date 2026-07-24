@@ -21,8 +21,8 @@
 // explicit null delta (never a fabricated zero), and a state present on only one
 // side is surfaced rather than silently dropped.
 
-import type { PipelineState } from '../comparisonPreviewPipeline';
-import { PER_STATE_RUN_ANALYTICS_SCHEMA } from './perStateRunAnalytics';
+import type { TimedPipelineState } from '../comparisonPreviewPipeline';
+import { ANALYTICS_RUNTIMES, PER_STATE_RUN_ANALYTICS_SCHEMA } from './perStateRunAnalytics';
 import type { AnalyticsRuntime, PerStateRow, PerStateRunAnalytics } from './perStateRunAnalytics';
 
 export const CROSS_RUNTIME_PERF_DIFF_SCHEMA = 'vi-history-suite/cross-runtime-perf-diff@v1';
@@ -32,7 +32,7 @@ export const CROSS_RUNTIME_PERF_DIFF_SCHEMA_VERSION = 1;
 export type PerfDiffKind = 'cross-runtime' | 'recording-overhead';
 
 export interface PerStateDelta {
-  readonly state: PipelineState;
+  readonly state: TimedPipelineState;
   /** True when the state exists in both runs (a delta is defined). */
   readonly inBoth: boolean;
   readonly referenceDurationMs: number | null;
@@ -57,7 +57,7 @@ export interface CrossRuntimePerfDiff {
   /** Total candidate − reference duration across states present in both. */
   readonly totalDurationDeltaMs: number;
   /** States present in only one of the two runs (mismatch surfaced, not hidden). */
-  readonly unmatchedStates: PipelineState[];
+  readonly unmatchedStates: TimedPipelineState[];
 }
 
 function delta(reference: number | null, candidate: number | null): number | null {
@@ -92,6 +92,7 @@ export function diffPerStateAnalytics(
       m.schema !== PER_STATE_RUN_ANALYTICS_SCHEMA ||
       typeof m.runtime !== 'string' ||
       m.runtime === '' ||
+      !(ANALYTICS_RUNTIMES as readonly string[]).includes(m.runtime) ||
       typeof m.recording !== 'boolean' ||
       !Array.isArray(m.states)
     ) {
@@ -127,17 +128,17 @@ export function diffPerStateAnalytics(
       ? 'cross-runtime'
       : 'recording-overhead');
 
-  const referenceByState = new Map<PipelineState, PerStateRow>();
+  const referenceByState = new Map<TimedPipelineState, PerStateRow>();
   for (const row of reference.states) {
     referenceByState.set(row.state, row);
   }
-  const candidateByState = new Map<PipelineState, PerStateRow>();
+  const candidateByState = new Map<TimedPipelineState, PerStateRow>();
   for (const row of candidate.states) {
     candidateByState.set(row.state, row);
   }
 
   // Reference-ordered states first, then any candidate-only states (first-seen).
-  const orderedStates: PipelineState[] = [];
+  const orderedStates: TimedPipelineState[] = [];
   for (const row of reference.states) {
     if (!orderedStates.includes(row.state)) {
       orderedStates.push(row.state);
@@ -149,7 +150,7 @@ export function diffPerStateAnalytics(
     }
   }
 
-  const unmatchedStates: PipelineState[] = [];
+  const unmatchedStates: TimedPipelineState[] = [];
   let totalDurationDeltaMs = 0;
 
   const deltas: PerStateDelta[] = orderedStates.map((state) => {

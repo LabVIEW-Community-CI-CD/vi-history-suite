@@ -133,5 +133,9 @@ describe('diffPerStateAnalytics (VHS-REQ-707.23, #2344)', () => {
     const badMetric = structuredClone(b) as { states: { meanCpuTotalPct: number | null }[] };
     (badMetric.states[0] as { meanCpuTotalPct: unknown }).meanCpuTotalPct = Number.NaN;
     expect(() => diffPerStateAnalytics(a, badMetric as never)).toThrow(/meanCpuTotalPct must be a finite number or null/);
+    // A spoofed runtime (not an AnalyticsRuntime value) must not misclassify kind.
+    const badRuntime = structuredClone(b) as { runtime: string };
+    badRuntime.runtime = 'totally-not-a-runtime';
+    expect(() => diffPerStateAnalytics(a, badRuntime as never)).toThrow(/candidate must be a per-state-run-analytics@v1 model/);
   });
 });
