@@ -124,6 +124,24 @@ describe('lvkitViScanStore (VHS-REQ-716)', () => {
 
       expect(await store.get('resource\\a\\B.vi', CONTENT_SIGNATURE)).toEqual(envelope);
     });
+
+    it('normalizes a Windows-separator viPath on write so a later get can read it', async () => {
+      const fakeFs = createFakeFs();
+      const store = createStore(fakeFs);
+      // An envelope carrying Windows separators (e.g. constructed outside
+      // buildLvkitViScanEnvelope, which would otherwise normalize them). put must
+      // persist the normalized viPath or get()'s content-address check rejects it.
+      const windowsEnvelope = {
+        ...makeEnvelope({ viPath: 'resource/a/B.vi' }),
+        viPath: 'resource\\a\\B.vi'
+      };
+
+      await store.put(windowsEnvelope);
+
+      const stored = await store.get('resource/a/B.vi', CONTENT_SIGNATURE);
+      expect(stored?.viPath).toBe('resource/a/B.vi');
+      expect(await store.get('resource\\a\\B.vi', CONTENT_SIGNATURE)).toEqual(stored);
+    });
   });
 
   describe('createFileLvkitViScanStore fail-closed reads / best-effort writes (VHS-REQ-716.3)', () => {

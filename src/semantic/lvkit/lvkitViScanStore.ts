@@ -178,10 +178,18 @@ export function createFileLvkitViScanStore(
       return parsed;
     },
     async put(envelope) {
-      const key = computeLvkitViScanStoreKey(envelope.viPath, envelope.contentSignature);
+      // Normalize the VI path to POSIX before deriving the key AND before
+      // persisting it, so an envelope carrying Windows separators (e.g. one built
+      // outside buildLvkitViScanEnvelope) is stored under the same key and value
+      // that get()'s content-address verification recomputes. Otherwise it would
+      // be written under the normalized key but left permanently unreadable.
+      const normalizedPath = toPosixRelativePath(envelope.viPath);
+      const normalizedEnvelope =
+        normalizedPath === envelope.viPath ? envelope : { ...envelope, viPath: normalizedPath };
+      const key = computeLvkitViScanStoreKey(normalizedPath, envelope.contentSignature);
       try {
         await fsDeps.ensureDirectory(options.storeDirectory);
-        await fsDeps.writeFile(storeFilePath(key), JSON.stringify(envelope));
+        await fsDeps.writeFile(storeFilePath(key), JSON.stringify(normalizedEnvelope));
       } catch {
         // Best-effort: a store write failure must never fail the preview/scan
         // pipeline that produced the envelope.
