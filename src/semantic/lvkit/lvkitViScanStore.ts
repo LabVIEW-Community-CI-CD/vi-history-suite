@@ -16,7 +16,13 @@
 
 import { createHash } from 'node:crypto';
 
-import { LVKIT_VI_SCAN_SCHEMA, type LvkitViScanEnvelope } from './lvkitViScanModel';
+import {
+  LVKIT_SCAN_SOURCES,
+  LVKIT_VI_SCAN_SCHEMA,
+  LVKIT_VI_SCAN_SCHEMA_VERSION,
+  type LvkitGeneratedModule,
+  type LvkitViScanEnvelope
+} from './lvkitViScanModel';
 
 /** Normalize a Windows or POSIX relative path to POSIX separators. */
 function toPosixRelativePath(value: string): string {
@@ -68,21 +74,70 @@ export interface FileLvkitViScanStoreOptions {
 }
 
 /**
- * Structural guard mirroring the comparison-model cache: a stored value is only
- * reused when it is an object carrying the current `lvkit-vi-scan@v1` schema id
- * plus the fields consumers rely on, so a truncated, hand-edited, or
- * schema-drifted file is treated as a miss rather than surfaced as a bad scan.
+ * Structural guard for one generated module: an object carrying a non-empty
+ * `relativePath` and a string `python` (an empty generated file is valid).
+ */
+function isLvkitGeneratedModule(value: unknown): value is LvkitGeneratedModule {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+  const module = value as LvkitGeneratedModule;
+  return (
+    typeof module.relativePath === 'string' &&
+    module.relativePath.length > 0 &&
+    typeof module.python === 'string'
+  );
+}
+
+/**
+ * Fail-closed structural guard mirroring the comparison-model cache but validating
+ * the COMPLETE `lvkit-vi-scan@v1` envelope shape, because `get` hands the envelope
+ * to an agent as authoritative generated code. A stored value is only reused when
+ * it carries the current schema id and version, every required metadata field, a
+ * non-empty array of well-formed modules (plus an optional well-formed primary
+ * module), and self-consistent module counts. A truncated, hand-edited, old, or
+ * schema-drifted file therefore fails every affected check and is treated as a
+ * miss rather than surfaced as a partial or malformed scan.
  */
 function isLvkitViScanEnvelope(value: unknown): value is LvkitViScanEnvelope {
   if (typeof value !== 'object' || value === null) {
     return false;
   }
   const envelope = value as LvkitViScanEnvelope;
+  if (
+    envelope.schema !== LVKIT_VI_SCAN_SCHEMA ||
+    envelope.schemaVersion !== LVKIT_VI_SCAN_SCHEMA_VERSION ||
+    typeof envelope.viPath !== 'string' ||
+    envelope.viPath.length === 0 ||
+    typeof envelope.contentSignature !== 'string' ||
+    envelope.contentSignature.length === 0 ||
+    typeof envelope.runtime !== 'string' ||
+    envelope.runtime.length === 0 ||
+    typeof envelope.generatedAt !== 'string' ||
+    envelope.generatedAt.length === 0 ||
+    !LVKIT_SCAN_SOURCES.includes(envelope.lvkitSource)
+  ) {
+    return false;
+  }
+  if (envelope.primaryModule !== null && !isLvkitGeneratedModule(envelope.primaryModule)) {
+    return false;
+  }
+  if (!Array.isArray(envelope.modules) || envelope.modules.length === 0) {
+    return false;
+  }
+  if (!envelope.modules.every(isLvkitGeneratedModule)) {
+    return false;
+  }
+  // Self-consistent counts: total matches the array, the error count is a real
+  // non-negative integer no larger than the total, and resolved is exactly the
+  // remainder. Rejects a file whose counts were dropped or hand-edited.
   return (
-    envelope.schema === LVKIT_VI_SCAN_SCHEMA &&
-    typeof envelope.viPath === 'string' &&
-    typeof envelope.contentSignature === 'string' &&
-    Array.isArray(envelope.modules)
+    envelope.moduleCount === envelope.modules.length &&
+    Number.isInteger(envelope.errorModuleCount) &&
+    envelope.errorModuleCount >= 0 &&
+    envelope.errorModuleCount <= envelope.moduleCount &&
+    Number.isInteger(envelope.resolvedModuleCount) &&
+    envelope.resolvedModuleCount === envelope.moduleCount - envelope.errorModuleCount
   );
 }
 
