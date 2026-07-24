@@ -52,6 +52,11 @@ describe('buildLvkitViScanEnvelope (VHS-REQ-714.1, VHS-REQ-714.2)', () => {
     expect(envelope.lvkitSource).toBe('path');
   });
 
+  it('trims surrounding whitespace from envelope string fields (VHS-REQ-714.2)', () => {
+    const envelope = buildLvkitViScanEnvelope(baseInput({ runtime: '  host-native  ' }));
+    expect(envelope.runtime).toBe('host-native');
+  });
+
   it('sorts modules deterministically by relativePath and normalizes separators', () => {
     const envelope = buildLvkitViScanEnvelope(
       baseInput({
