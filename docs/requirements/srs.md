@@ -5676,6 +5676,17 @@ Missing numeric IDs are intentional.
     trends, so the agent gains longitudinal troubleshooting context. It orders
     sessions by capture time, needs at least two defined points for a trend, and
     fails closed on an empty observation set. Pure and deterministic.
+  - A pure frame-to-perfmon aligner lays a benchmark run's perfmon series onto
+    the deterministically recorded video frames and splits both across the
+    comparison pipeline states via mprr's stopwatch schema: it decodes each
+    recorded frame's forty-bit machine strip to its centiseconds (fail-closed to
+    null on a bad shape, preamble, or checksum), maps that stopwatch time onto
+    the perfmon/state clock through one shared epoch offset, and binds each frame
+    to the nearest perfmon sample and to the pipeline state whose window contains
+    it, emitting a per-frame perf/state table and a per-state rollup. An
+    undecodable frame or a missing perfmon sample is an explicit null, never a
+    fabricated value; it fails closed on malformed input. Pure and deterministic
+    (schema `vi-history-suite/frame-timing-alignment@v1`).
 - Agent Work Scope:
   - Change the ADR, this requirement, and the governance contract test together;
     keep the required gate deterministic and never make a live image pull the
@@ -5697,6 +5708,7 @@ Missing numeric IDs are intentional.
   - `src/reporting/mirror/perfmonMprrSync.ts`
   - `src/reporting/mirror/deterministicRollingBlockRing.ts`
   - `src/reporting/mirror/perfmonSessionPattern.ts`
+  - `src/reporting/mirror/frameTimingAlignment.ts`
 - Verification References:
   - `tests/unit/mirrorModeGovernance.test.ts`
   - `tests/unit/mirrorParityDigest.test.ts`
@@ -5714,6 +5726,7 @@ Missing numeric IDs are intentional.
   - `tests/unit/perfmonMprrSync.test.ts`
   - `tests/unit/deterministicRollingBlockRing.test.ts`
   - `tests/unit/perfmonSessionPattern.test.ts`
+  - `tests/unit/frameTimingAlignment.test.ts`
 - Change Guidance:
   - This is a governance-foundation requirement: keep the documented invariants
     (human/Vagrant-only authorship, run-only container, Vagrant→`merge_group`
