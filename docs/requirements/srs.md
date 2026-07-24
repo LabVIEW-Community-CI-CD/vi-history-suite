@@ -5582,7 +5582,8 @@ Missing numeric IDs are intentional.
     counter column onto a generic channel — its counter path with the leading
     `\\HOST` machine prefix stripped so it is host-independent, its raw per-sample
     values aligned one-to-one with the series time array, and its numeric maximum
-    — in header order, as a superset of the captured counters (raw values; the
+    — in header order, as a superset of the counters behind the named `series`
+    (raw values; the
     named `labviewWorkingSetMb` is byte→MB converted while its channel keeps raw
     bytes), while keeping the named
     `series` and `peaks` and the `vi-history-suite/perfmon-sample-series@v1`

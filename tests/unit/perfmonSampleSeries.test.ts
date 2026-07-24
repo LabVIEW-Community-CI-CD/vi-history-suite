@@ -16,7 +16,7 @@ import { alignFramesToPerf } from '../../src/reporting/mirror/frameTimingAlignme
 import { encodeMprrMachineStrip } from '../../src/reporting/mirror/perfmonMprrSync';
 
 const HEADER_3 = String.raw`"(PDH-CSV 4.0) (Pacific Daylight Time)(420)","\\HARNESS\Processor(_Total)\% Processor Time","\\HARNESS\Memory\Available MBytes","\\HARNESS\PhysicalDisk(_Total)\% Disk Time"`;
-const HEADER_5 = String.raw`"(PDH-CSV 4.0) (Pacific Daylight Time)(420)","\\HARNESS\Processor(_Total)\% Processor Time","\\HARNESS\Memory\Available MBytes","\\HARNESS\PhysicalDisk(_Total)\% Disk Time","\\HARNESS\Process(LabVIEW)\% Processor Time","\\HARNESS\Process(LabVIEW)\Working Set - Private"`;
+const HEADER_5 = String.raw`"(PDH-CSV 4.0) (Pacific Daylight Time)(420)","\\HARNESS\Processor(_Total)\% Processor Time","\\HARNESS\Memory\Available MBytes","\\HARNESS\PhysicalDisk(_Total)\% Disk Time","\\HARNESS\Process(LabVIEW)\% Processor Time","\\HARNESS\Process(LabVIEW)\Working Set"`;
 
 describe('parsePdhCsv (VHS-REQ-707.12)', () => {
   it('parses the three system counters, blanks -> null, elapsed t + median interval + peaks', () => {
@@ -267,7 +267,7 @@ describe('parsePdhCsv generic channels (VHS-REQ-715.1)', () => {
       String.raw`\Memory\Available MBytes`,
       String.raw`\PhysicalDisk(_Total)\% Disk Time`,
       String.raw`\Process(LabVIEW)\% Processor Time`,
-      String.raw`\Process(LabVIEW)\Working Set - Private`
+      String.raw`\Process(LabVIEW)\Working Set`
     ]);
     // Raw per-sample values, aligned 1:1 with t; peak is the numeric maximum.
     expect(s.channels[0].samples).toEqual([68.1, 74.6]);
@@ -279,6 +279,24 @@ describe('parsePdhCsv generic channels (VHS-REQ-715.1)', () => {
     for (const ch of s.channels) {
       expect(ch.samples).toHaveLength(s.sampleCount);
     }
+  });
+
+  it('maps the named working-set series to total Working Set, never the private variant (VHS-REQ-715.1)', () => {
+    // The full profile captures BOTH `Working Set` and `Working Set - Private`.
+    // The named series must deterministically be the TOTAL working set (not the
+    // private variant, and independent of column order); the private counter is
+    // still preserved as a generic channel.
+    const header = String.raw`"(PDH-CSV 4.0)","\\HARNESS\Process(LabVIEW)\Working Set","\\HARNESS\Process(LabVIEW)\Working Set - Private"`;
+    const csv = [header, '"07/23/2026 06:04:44.000","104857600","52428800"'].join('\n');
+    const s = parsePdhCsv(csv);
+    // 104857600 bytes -> 100 MB (total), NOT 52428800 -> 50 MB (private).
+    expect(s.series.labviewWorkingSetMb).toEqual([100]);
+    // Both counters remain generic channels with raw byte values.
+    expect(s.channels.map((c) => c.counterPath)).toEqual([
+      String.raw`\Process(LabVIEW)\Working Set`,
+      String.raw`\Process(LabVIEW)\Working Set - Private`
+    ]);
+    expect(s.channels[1].samples).toEqual([52428800]);
   });
 
   it('captures an unrecognized counter as a channel even though it maps to no named series', () => {
