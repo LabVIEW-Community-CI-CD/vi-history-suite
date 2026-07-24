@@ -80,10 +80,18 @@ export async function runPreviewTimeViScan(
     return { status: 'not-persisted', reason: `scan-${result.status}: ${result.reason}` };
   }
 
+  let written: boolean;
   try {
-    await deps.store.put(result.envelope);
+    written = await deps.store.put(result.envelope);
   } catch (error) {
     return { status: 'errored', reason: `store-threw: ${describeError(error)}` };
+  }
+
+  if (!written) {
+    // The store swallowed a filesystem error (disk full, permission), so the
+    // envelope was NOT persisted; report it honestly rather than claiming
+    // `persisted` and leaving the later MCP lookup to miss with no signal.
+    return { status: 'errored', reason: 'store-write-failed' };
   }
 
   return {
@@ -122,7 +130,16 @@ export function buildPreviewTimeViScanRequest(
       continue;
     }
     const relativePath = path.relative(root, viFsPath);
-    if (relativePath.length === 0 || relativePath.startsWith('..') || path.isAbsolute(relativePath)) {
+    // Reject only an actual parent-directory escape (`..` alone or a `..<sep>`
+    // prefix), not a valid in-workspace VI whose own basename merely begins with
+    // two dots (e.g. `..diagnostic.vi`). Also reject an absolute result (a
+    // different drive on Windows) — the VI is outside this folder either way.
+    if (
+      relativePath.length === 0 ||
+      relativePath === '..' ||
+      relativePath.startsWith(`..${path.sep}`) ||
+      path.isAbsolute(relativePath)
+    ) {
       continue;
     }
     if (!best || relativePath.length < best.relativePath.length) {

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import * as os from 'node:os';
 import * as path from 'node:path';
 
 import { buildLvkitViScanEnvelope, type LvkitViScanEnvelope } from '../../src/semantic/lvkit/lvkitViScanModel';
@@ -40,7 +41,7 @@ function makeEnvelope(): LvkitViScanEnvelope {
 }
 
 interface FakeStore {
-  put: (envelope: LvkitViScanEnvelope) => Promise<void>;
+  put: (envelope: LvkitViScanEnvelope) => Promise<boolean>;
   puts: LvkitViScanEnvelope[];
 }
 
@@ -51,6 +52,7 @@ function createFakeStore(onPut?: (envelope: LvkitViScanEnvelope) => void): FakeS
     put: async (envelope) => {
       puts.push(envelope);
       onPut?.(envelope);
+      return true;
     }
   };
 }
@@ -161,6 +163,21 @@ describe('runPreviewTimeViScan (VHS-REQ-717.1)', () => {
     expect(outcome).toEqual({ status: 'errored', reason: 'store-threw: disk full' });
   });
 
+  it('reports store-write-failed when the best-effort store write is suppressed', async () => {
+    const envelope = makeEnvelope();
+    const { scan } = scanReturning({ status: 'completed', envelope });
+    // The production store swallows filesystem errors and returns false rather
+    // than throwing; the trigger must not then claim the scan was persisted.
+    const store: FakeStore = {
+      puts: [],
+      put: async () => false
+    };
+
+    const outcome = await runPreviewTimeViScan(REQUEST, { scan, store });
+
+    expect(outcome).toEqual({ status: 'errored', reason: 'store-write-failed' });
+  });
+
   it('stringifies a non-Error thrown value', async () => {
     const scan = async (): Promise<LvkitViScanResult> => {
       // eslint-disable-next-line @typescript-eslint/no-throw-literal
@@ -218,5 +235,27 @@ describe('buildPreviewTimeViScanRequest (VHS-REQ-717.2)', () => {
 
     expect(req?.runtime).toBe('windows-container');
     expect(req?.repositoryRoot).toBe(ROOT);
+  });
+
+  it('maps an in-workspace VI whose basename begins with two dots', () => {
+    // `path.relative` returns `..diagnostic.vi`, which begins with `..` but is NOT
+    // a parent-directory escape; it must still map to a request.
+    const vi = path.join(ROOT, '..diagnostic.vi');
+
+    const req = buildPreviewTimeViScanRequest(vi, folders([ROOT]), 'host-native');
+
+    expect(req).toEqual({
+      repositoryRoot: ROOT,
+      relativePath: path.relative(ROOT, vi),
+      runtime: 'host-native'
+    });
+  });
+
+  it('returns undefined for a revision temp tree opened outside the workspace', () => {
+    // History-command revision previews open as `file` URIs under an OS temp tree
+    // (vihs-vi-revision-*), outside every workspace folder, so no scan is mapped.
+    const revisionVi = path.join(os.tmpdir(), 'vihs-vi-revision-abc123', 'resource', 'A.vi');
+
+    expect(buildPreviewTimeViScanRequest(revisionVi, folders([ROOT]), 'host-native')).toBeUndefined();
   });
 });

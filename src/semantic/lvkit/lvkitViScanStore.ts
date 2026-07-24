@@ -5,8 +5,11 @@
 // later retrieve the generated Python by content address. Mirrors the
 // comparison-model cache (VHS-REQ-662.8): a deterministic SHA-256 key,
 // `<key>.json` files, an injected filesystem boundary, a fail-closed structural
-// guard on read, and a best-effort write. Pure apart from `node:crypto`; performs
-// no I/O of its own.
+// guard on read, and a best-effort write. The key derivation and the store
+// behavior are pure apart from `node:crypto` and do no I/O of their own — all
+// filesystem access goes through the injected boundary; only the
+// `createDefaultLvkitViScanStore` convenience factory wires the real node-fs
+// adapter for production.
 //
 // The store is content-addressed by (VI path, content signature) exactly as the
 // epic locks it: a change to either the path or the scanned VI's content
@@ -61,9 +64,11 @@ export interface LvkitViScanStore {
    * Persists a scan envelope under its content address (derived from the
    * envelope's own `viPath` + `contentSignature`). Best-effort: a store write
    * failure never throws into the caller, because persisting a scan must never
-   * fail the preview/scan pipeline that produced it.
+   * fail the preview/scan pipeline that produced it. Resolves to `true` when the
+   * envelope was written and `false` when a filesystem error was suppressed, so
+   * the caller can report an accurate persisted/failed outcome without a throw.
    */
-  put(envelope: LvkitViScanEnvelope): Promise<void>;
+  put(envelope: LvkitViScanEnvelope): Promise<boolean>;
 }
 
 /** Injected filesystem boundary for the file-backed store. */
@@ -197,9 +202,12 @@ export function createFileLvkitViScanStore(
       try {
         await fsDeps.ensureDirectory(options.storeDirectory);
         await fsDeps.writeFile(storeFilePath(key), JSON.stringify(normalizedEnvelope));
+        return true;
       } catch {
         // Best-effort: a store write failure must never fail the preview/scan
-        // pipeline that produced the envelope.
+        // pipeline that produced the envelope; report it as `false` so the caller
+        // does not falsely claim the scan was persisted.
+        return false;
       }
     }
   };

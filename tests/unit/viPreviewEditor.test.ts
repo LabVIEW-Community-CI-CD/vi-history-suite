@@ -304,6 +304,25 @@ describe('VI Preview custom editor (VHS-REQ-659.8)', () => {
     expect(onPreviewScanReady).not.toHaveBeenCalled();
   });
 
+  it('does not fire onPreviewScanReady on a cached live-render hit (VHS-REQ-717)', async () => {
+    const onPreviewScanReady = vi.fn();
+    // A cache hit returns rendered HTML without running the runtime, so it is not
+    // a scan opportunity even though it reaches the live-render success path.
+    const sessionManager = {
+      renderVi: vi
+        .fn()
+        .mockResolvedValue({ outcome: 'rendered', html: '<html>docker preview</html>', cached: true }),
+      dispose: vi.fn()
+    };
+    const context = createContext();
+    registerViPreviewCustomEditor(context as never, { onPreviewScanReady, sessionManager });
+    const provider = providerFromLastRegistration();
+
+    await resolveEditor(provider, createPanel(), '/workspace/repo/Foo.vit');
+
+    expect(onPreviewScanReady).not.toHaveBeenCalled();
+  });
+
   const BD_HTML =
     '<HTML><BODY><H3>Block Diagram</H3>' +
     '<P><IMG src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAACWCAIAAAA="></P>' +
