@@ -1797,12 +1797,11 @@ function parseGetViGeneratedCodeArguments(rawArguments: unknown): GetViGenerated
 
 function renderGeneratedCodeResult(result: GetViGeneratedCodeResult): unknown {
   if (result.status === 'not-found') {
-    // A store miss is a tool-execution outcome (not a protocol error): keep it in
-    // the result envelope as isError so the agent reads the miss and its address.
-    return toolTextResult(
-      `No stored lvkit scan for ${result.viPath} @ ${result.contentSignature}`,
-      true
-    );
+    // A store miss is a valid tool-execution outcome (the VI has not been scanned
+    // yet), not a protocol error. Serialize the structured not-found result so the
+    // agent can machine-read the miss and the exact (viPath, contentSignature) that
+    // missed; it stays isError so a miss is distinguishable from a hit.
+    return toolTextResult(JSON.stringify(result, null, 2), true);
   }
   return toolTextResult(JSON.stringify(result.envelope, null, 2));
 }

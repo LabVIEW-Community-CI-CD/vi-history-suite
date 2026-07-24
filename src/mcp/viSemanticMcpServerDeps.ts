@@ -125,6 +125,7 @@ export function buildViSemanticMcpServerDeps(
   compareFn: typeof compareViRevisions = compareViRevisions
 ): ViSemanticMcpAsyncDeps {
   const previewCacheFs = createDefaultPreviewCacheInspectionFsDeps();
+  const lvkitViScanStore = createDefaultLvkitViScanStore();
   return {
     compareViRevisions: (input: CompareViRevisionsInput) =>
       compareFn(input, { comparisonModelCache }),
@@ -142,7 +143,7 @@ export function buildViSemanticMcpServerDeps(
     collectPreviewDiagnostics: (input: CollectViPreviewDiagnosticsOptions) =>
       collectViPreviewDiagnostics(input),
     listChangedVis: (input) => listChangedVis(input),
-    getViGeneratedCode: (input) => getViGeneratedCode(input)
+    getViGeneratedCode: (input) => getViGeneratedCode(input, lvkitViScanStore)
   };
 }
 

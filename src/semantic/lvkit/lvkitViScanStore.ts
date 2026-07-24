@@ -2,10 +2,11 @@
 // content-addressed on-disk store for the pure `lvkit-vi-scan@v1` envelopes the
 // Phase A scan provider produces (VHS-REQ-714), so the Phase B preview-time
 // trigger can persist a scan and an agent MCP tool (`get_vi_generated_code`) can
-// later retrieve the generated Python by content address. Mirrors the comparison
-// -model cache (VHS-REQ-662.8): a deterministic SHA-256 key, `<key>.json` files,
-// an injected filesystem boundary, a fail-closed structural guard on read, and a
-// best-effort write. Pure apart from `node:crypto`; performs no I/O of its own.
+// later retrieve the generated Python by content address. Mirrors the
+// comparison-model cache (VHS-REQ-662.8): a deterministic SHA-256 key,
+// `<key>.json` files, an injected filesystem boundary, a fail-closed structural
+// guard on read, and a best-effort write. Pure apart from `node:crypto`; performs
+// no I/O of its own.
 //
 // The store is content-addressed by (VI path, content signature) exactly as the
 // epic locks it: a change to either the path or the scanned VI's content
