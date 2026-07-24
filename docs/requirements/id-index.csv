@@ -728,3 +728,4 @@ VHS-REQ-710,Software,Active,srs.md#vhs-req-710-ni-labview-linux-container-setup-
 VHS-REQ-711,Software,Active,srs.md#vhs-req-711-cross-host-empty-swap-comparison-validation,,,docs/requirements/srs.md
 VHS-REQ-712,Software,Active,srs.md#vhs-req-712-labview-free-lvkit-semantic-comparison-backend,,,docs/requirements/srs.md
 VHS-REQ-713,Software,Active,srs.md#vhs-req-713-real-windows-full-matrix-runtime-validation-host,,,docs/requirements/srs.md
+VHS-REQ-714,Software,Active,srs.md#vhs-req-714-single-vi-lvkit-scan-provider,,,docs/requirements/srs.md
