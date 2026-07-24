@@ -1,8 +1,12 @@
 import { describe, expect, it } from 'vitest';
+import { promises as fsp } from 'node:fs';
+import * as os from 'node:os';
+import * as path from 'node:path';
 
 import { buildLvkitViScanEnvelope } from '../../src/semantic/lvkit/lvkitViScanModel';
 import {
   computeLvkitViScanStoreKey,
+  createDefaultLvkitViScanStore,
   createFileLvkitViScanStore,
   type FileLvkitViScanStoreFsDeps
 } from '../../src/semantic/lvkit/lvkitViScanStore';
@@ -369,5 +373,33 @@ describe('lvkitViScanStore (VHS-REQ-716)', () => {
       const store = createStore(fakeFs);
       await expect(store.put(makeEnvelope())).resolves.toBeUndefined();
     });
+  });
+});
+
+describe('createDefaultLvkitViScanStore (VHS-REQ-716.2)', () => {
+  it('returns a store exposing get and put operations', () => {
+    const created = createDefaultLvkitViScanStore();
+    expect(typeof created.get).toBe('function');
+    expect(typeof created.put).toBe('function');
+  });
+
+  it('round-trips an envelope through the OS temp-dir file store (exercises the fs deps)', async () => {
+    const created = createDefaultLvkitViScanStore();
+    // A per-run-unique (path, signature) keeps the round-trip isolated from other
+    // runs sharing the fixed OS temp store directory.
+    const viPath = `resource/RoundTrip-${process.pid}-${Date.now()}.vi`;
+    const contentSignature = `sha256:roundtrip-${process.pid}-${Date.now()}`;
+    const envelope = makeEnvelope({ viPath, contentSignature });
+    const storeFile = path.join(
+      os.tmpdir(),
+      'vihs-lvkit-vi-scan-store',
+      `${computeLvkitViScanStoreKey(viPath, contentSignature)}.json`
+    );
+    try {
+      await created.put(envelope);
+      await expect(created.get(viPath, contentSignature)).resolves.toEqual(envelope);
+    } finally {
+      await fsp.rm(storeFile, { force: true });
+    }
   });
 });
