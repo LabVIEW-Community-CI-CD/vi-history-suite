@@ -189,9 +189,14 @@ export function buildWindowsPerfmonCapturePlan(request: PerfmonCaptureRequest): 
   // Dedupe preserving first-seen order: a counter can appear in both a profile and
   // extraCounters, and logman rejects a duplicate `-c` on some hosts.
   const seenCounters = new Set<string>();
-  const dedupedCounters = counters.filter((counter) =>
-    seenCounters.has(counter) ? false : (seenCounters.add(counter), true)
-  );
+  const dedupedCounters: string[] = [];
+  for (const counter of counters) {
+    if (seenCounters.has(counter)) {
+      continue;
+    }
+    seenCounters.add(counter);
+    dedupedCounters.push(counter);
+  }
 
   const createArgs: string[] = ['create', 'counter', collectorName, '-f', 'csv', '-o', outputCsvPath, '-si', interval];
   for (const counter of dedupedCounters) {
