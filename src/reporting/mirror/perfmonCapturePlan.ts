@@ -165,6 +165,9 @@ export function buildWindowsPerfmonCapturePlan(request: PerfmonCaptureRequest): 
     profile === 'full' ? PERFMON_FULL_PROFILE_SYSTEM_COUNTERS : PERFMON_SYSTEM_COUNTERS;
   const counters = [...systemCounters];
   if (request.labviewProcessName !== undefined) {
+    if (typeof request.labviewProcessName !== 'string') {
+      throw new Error('labviewProcessName must be a string when provided.');
+    }
     counters.push(
       ...(profile === 'full'
         ? labviewProcessFullProfileCounters(request.labviewProcessName)

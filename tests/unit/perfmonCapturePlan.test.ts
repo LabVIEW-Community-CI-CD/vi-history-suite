@@ -193,6 +193,15 @@ describe('perfmon full-profile capture + generic channels (VHS-REQ-715.1, VHS-RE
     ).toThrow(/extraCounters must be an array/);
   });
 
+  it('fails closed on a non-string labviewProcessName (null from untyped input)', () => {
+    expect(() =>
+      buildWindowsPerfmonCapturePlan({ ...base, labviewProcessName: null as never })
+    ).toThrow(/labviewProcessName must be a string/);
+    expect(() =>
+      buildWindowsPerfmonCapturePlan({ ...base, labviewProcessName: 123 as never })
+    ).toThrow(/labviewProcessName must be a string/);
+  });
+
   it('round-trips a full-profile capture into generic host-independent channels', () => {
     const plan = buildWindowsPerfmonCapturePlan({ ...base, profile: 'full', labviewProcessName: 'LabVIEW' });
     // Synthesize a 2-sample PDH-CSV with a \\HOST prefix on every counter path.
