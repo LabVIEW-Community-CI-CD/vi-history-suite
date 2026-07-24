@@ -56,4 +56,4 @@ The index and the required structure are enforced by `npm run adr:check`
 | [ADR-0031](./ADR-0031-labview-free-lvkit-semantic-backend.md) | LabVIEW-Free lvkit Semantic Backend | Accepted |
 | [ADR-0032](./ADR-0032-deterministic-packet-derived-agent-feedback-with-screenshot-cross-check.md) | Deterministic Packet-Derived Agent Feedback With Screenshot Cross-Check | Accepted |
 | [ADR-0033](./ADR-0033-agent-readable-vi-scan-lvkit-generate.md) | Agent-Readable VI Scan (lvkit Generate) | Accepted |
-| [ADR-0033](./ADR-0033-full-perfmon-metadata-generic-channels.md) | Full Perfmon Metadata via Additive Generic Channels | Accepted |
+| [ADR-0034](./ADR-0034-full-perfmon-metadata-generic-channels.md) | Full Perfmon Metadata via Additive Generic Channels | Accepted |

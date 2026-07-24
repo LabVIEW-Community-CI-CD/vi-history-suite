@@ -5603,7 +5603,7 @@ Missing numeric IDs are intentional.
     validation step, not a hosted CI gate. Never break the additive contract:
     keep the `@v1` schema id and the named series/peaks intact.
 - Implementation References:
-  - `docs/architecture/adr/ADR-0033-full-perfmon-metadata-generic-channels.md`
+  - `docs/architecture/adr/ADR-0034-full-perfmon-metadata-generic-channels.md`
   - `src/reporting/mirror/perfmonSampleSeries.ts`
   - `src/reporting/mirror/perfmonCapturePlan.ts`
 - Verification References:
