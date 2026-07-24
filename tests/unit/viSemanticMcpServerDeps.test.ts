@@ -188,7 +188,7 @@ describe('buildViSemanticMcpServerDeps', () => {
       lvkitSource: 'path',
       modules: [{ relativePath: 'a/klass/a.py', python: 'def a():\n    return 1\n' }]
     });
-    const store: LvkitViScanStore = { get: async () => envelope, put: async () => {} };
+    const store: LvkitViScanStore = { get: async () => envelope, put: async () => true };
     const result = await getViGeneratedCode(
       { viPath: 'resource/A.vi', contentSignature: 'sha256:abc123' },
       store
@@ -197,7 +197,7 @@ describe('buildViSemanticMcpServerDeps', () => {
   });
 
   it('projects a store miss into a not-found result echoing the address (VHS-REQ-716.4)', async () => {
-    const store: LvkitViScanStore = { get: async () => undefined, put: async () => {} };
+    const store: LvkitViScanStore = { get: async () => undefined, put: async () => true };
     const result = await getViGeneratedCode(
       { viPath: 'resource/A.vi', contentSignature: 'sha256:missing' },
       store

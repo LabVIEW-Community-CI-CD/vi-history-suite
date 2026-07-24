@@ -356,22 +356,28 @@ describe('lvkitViScanStore (VHS-REQ-716)', () => {
       expect(await store.get(VI_PATH, CONTENT_SIGNATURE)).toBeUndefined();
     });
 
-    it('does not throw when the store write fails', async () => {
+    it('returns true (without throwing) when the store write succeeds', async () => {
+      const fakeFs = createFakeFs();
+      const store = createStore(fakeFs);
+      await expect(store.put(makeEnvelope())).resolves.toBe(true);
+    });
+
+    it('returns false (without throwing) when the store write fails', async () => {
       const fakeFs = createFakeFs();
       fakeFs.writeFile = async () => {
         throw new Error('disk full');
       };
       const store = createStore(fakeFs);
-      await expect(store.put(makeEnvelope())).resolves.toBeUndefined();
+      await expect(store.put(makeEnvelope())).resolves.toBe(false);
     });
 
-    it('does not throw when ensuring the store directory fails', async () => {
+    it('returns false (without throwing) when ensuring the store directory fails', async () => {
       const fakeFs = createFakeFs();
       fakeFs.ensureDirectory = async () => {
         throw new Error('permission denied');
       };
       const store = createStore(fakeFs);
-      await expect(store.put(makeEnvelope())).resolves.toBeUndefined();
+      await expect(store.put(makeEnvelope())).resolves.toBe(false);
     });
   });
 });
@@ -396,7 +402,7 @@ describe('createDefaultLvkitViScanStore (VHS-REQ-716.2)', () => {
       `${computeLvkitViScanStoreKey(viPath, contentSignature)}.json`
     );
     try {
-      await created.put(envelope);
+      await expect(created.put(envelope)).resolves.toBe(true);
       await expect(created.get(viPath, contentSignature)).resolves.toEqual(envelope);
     } finally {
       await fsp.rm(storeFile, { force: true });

@@ -300,11 +300,18 @@ class ViPreviewEditorProvider implements vscode.CustomReadonlyEditorProvider<ViP
           // VHS-REQ-717 (epic #2348 Phase B): a VI that just rendered LIVE on the
           // runtime is a scan opportunity. Fire the best-effort preview-time lvkit
           // scan for a directly-opened on-disk `file` VI (its bytes match what the
-          // runtime rendered); materialized sources (a `git` diff base or a
-          // `previewRevision` temp tree) are historical and skipped. The callback
-          // never throws or blocks the preview.
-          if (document.uri.scheme === 'file') {
-            this.onPreviewScanReady?.(document.uri.fsPath, runtime.runtime.provider);
+          // runtime rendered). Skip a cache-hit render (`cached === true`) — it did
+          // not run the runtime, so it is not a scan opportunity — and skip a
+          // materialized non-`file` source (a `git` diff base). A revision temp
+          // tree opens as a `file` URI but sits outside the workspace, so the
+          // request mapper drops it. The callback is guarded so a scan-wiring
+          // fault can never fail the preview.
+          if (document.uri.scheme === 'file' && result.cached !== true) {
+            try {
+              this.onPreviewScanReady?.(document.uri.fsPath, runtime.runtime.provider);
+            } catch {
+              /* best-effort: preview-time scan wiring must never fail the preview */
+            }
           }
           return;
         }
