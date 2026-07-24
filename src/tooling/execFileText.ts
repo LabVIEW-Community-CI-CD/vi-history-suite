@@ -59,3 +59,13 @@ export async function runExecFileText(
     };
   }
 }
+
+/**
+ * Trim and length-cap captured process text (e.g. a subprocess `stderr`) for a
+ * single-line diagnostic message, appending an ellipsis when truncated. Shared by
+ * the lvkit providers so their failure messages format identically.
+ */
+export function safeSlice(text: string, max = 500): string {
+  const trimmed = text.trim();
+  return trimmed.length > max ? `${trimmed.slice(0, max)}…` : trimmed;
+}

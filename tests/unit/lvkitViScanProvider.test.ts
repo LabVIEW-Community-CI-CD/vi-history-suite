@@ -252,4 +252,31 @@ describe('createLvkitViScanProvider (VHS-REQ-714.3)', () => {
     // No temp dir was created, so cleanup must not run.
     expect(removeDir).not.toHaveBeenCalled();
   });
+
+  it('serializes the lvkit subprocess on the shared local-runtime lock (VHS-REQ-669)', async () => {
+    const release = vi.fn();
+    const acquireLocalRuntimeSlot = vi.fn(async () => release);
+    const scan = createLvkitViScanProvider(baseDeps({ acquireLocalRuntimeSlot }));
+    const result = await scan(INPUT);
+    expect(result.status).toBe('completed');
+    expect(acquireLocalRuntimeSlot).toHaveBeenCalledTimes(1);
+    // Default lock key targets the canonical host-native VI Server port (3363).
+    expect(String(acquireLocalRuntimeSlot.mock.calls[0][0])).toContain('3363');
+    expect(release).toHaveBeenCalledTimes(1);
+  });
+
+  it('releases the shared lock even when lvkit exits non-zero (VHS-REQ-669)', async () => {
+    const release = vi.fn();
+    const scan = createLvkitViScanProvider(
+      baseDeps({
+        acquireLocalRuntimeSlot: vi.fn(async () => release),
+        execFileAsync: vi.fn(async () => {
+          throw Object.assign(new Error('generate failed'), { code: 2, stdout: '', stderr: 'boom' });
+        })
+      })
+    );
+    const result = await scan(INPUT);
+    expect(result.status).toBe('failed');
+    expect(release).toHaveBeenCalledTimes(1);
+  });
 });
