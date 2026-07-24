@@ -13,6 +13,8 @@
 // counter stream) lives in the actor harness; this module stays unit-testable
 // without a runtime.
 
+import { renderFrameTimingStateChart, type FrameTimingAlignment } from './frameTimingAlignment';
+
 export const PERFMON_SAMPLE_SERIES_SCHEMA = 'vi-history-suite/perfmon-sample-series@v1';
 export const PERFMON_SAMPLE_SERIES_SCHEMA_VERSION = 1;
 
@@ -369,7 +371,10 @@ function fmtPct(value: number | null): string {
  * Printed on the PR at runtime for either mirror source with no external image
  * host. Deterministic.
  */
-export function renderFirstRunPerfmonPrComment(artifact: FirstRunPerfmonArtifact): string {
+export function renderFirstRunPerfmonPrComment(
+  artifact: FirstRunPerfmonArtifact,
+  options: { readonly stateAlignment?: FrameTimingAlignment } = {}
+): string {
   const p = artifact.perf;
   const minMem = minOf(p.series.memAvailMb);
   const cadence =
@@ -393,7 +398,7 @@ export function renderFirstRunPerfmonPrComment(artifact: FirstRunPerfmonArtifact
   for (const cycle of artifact.cycles) {
     table.push(`| Cycle ${cycle.cycleIndex} (${cycle.outcome}) | ${cycle.durationMs} ms |`);
   }
-  return [
+  const sections = [
     `### First-run performance monitor — ${artifact.source}`,
     '',
     `- actor: \`${artifact.actor}\``,
@@ -403,5 +408,19 @@ export function renderFirstRunPerfmonPrComment(artifact: FirstRunPerfmonArtifact
     ...table,
     '',
     renderPerfmonMermaidXychart(p, { title: `${artifact.source} first run` })
-  ].join('\n');
+  ];
+  // VHS-REQ-707.21 (#2342): when a run also carries a frame-timing alignment
+  // (recorded frame stopwatch strips bound to this perf series across the
+  // pipeline states), append the per-state chart. The alignment is populated by
+  // the frame-recording capability sequenced in #2324; absent it, the section is
+  // simply omitted rather than fabricated.
+  if (options.stateAlignment) {
+    sections.push(
+      '',
+      `#### Per-state resource pressure — ${artifact.source}`,
+      '',
+      renderFrameTimingStateChart(options.stateAlignment, { title: `${artifact.source} per state` })
+    );
+  }
+  return sections.join('\n');
 }

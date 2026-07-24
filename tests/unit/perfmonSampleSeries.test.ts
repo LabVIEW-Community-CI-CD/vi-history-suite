@@ -12,6 +12,8 @@ import {
   PERFMON_SAMPLE_SERIES_SCHEMA,
   FIRST_RUN_PERFMON_ARTIFACT_SCHEMA
 } from '../../src/reporting/mirror/perfmonSampleSeries';
+import { alignFramesToPerf } from '../../src/reporting/mirror/frameTimingAlignment';
+import { encodeMprrMachineStrip } from '../../src/reporting/mirror/perfmonMprrSync';
 
 const HEADER_3 = String.raw`"(PDH-CSV 4.0) (Pacific Daylight Time)(420)","\\HARNESS\Processor(_Total)\% Processor Time","\\HARNESS\Memory\Available MBytes","\\HARNESS\PhysicalDisk(_Total)\% Disk Time"`;
 const HEADER_5 = String.raw`"(PDH-CSV 4.0) (Pacific Daylight Time)(420)","\\HARNESS\Processor(_Total)\% Processor Time","\\HARNESS\Memory\Available MBytes","\\HARNESS\PhysicalDisk(_Total)\% Disk Time","\\HARNESS\Process(LabVIEW)\% Processor Time","\\HARNESS\Process(LabVIEW)\Working Set - Private"`;
@@ -228,5 +230,25 @@ describe('buildFirstRunPerfmonArtifact + renderFirstRunPerfmonPrComment (VHS-REQ
     );
     expect(md).toContain('Peak LabVIEW CPU');
     expect(md).toContain('Peak LabVIEW working set | 100 MB');
+  });
+
+  it('appends the per-state chart when a frame-timing alignment is supplied (VHS-REQ-707.21, #2342/#2343)', () => {
+    const artifact = buildFirstRunPerfmonArtifact({
+      source: 'self-hosted-runner',
+      actor: 'x',
+      capturedAtIso: '2026-07-23T06:04:43.000Z',
+      perf: series()
+    });
+    const alignment = alignFramesToPerf({
+      frames: [{ frameIndex: 0, stripBits: encodeMprrMachineStrip(10) }],
+      perf: { t: [0, 100], cpuTotalPct: [10, 20], memAvailMb: [900, 800], diskTotalPct: [1, 2] },
+      states: [{ state: 'STAGING', startMs: 0, endMs: 100 }],
+      epochOffsetMs: 0
+    });
+    const withChart = renderFirstRunPerfmonPrComment(artifact, { stateAlignment: alignment });
+    expect(withChart).toContain('#### Per-state resource pressure — self-hosted-runner');
+    expect(withChart).toContain('x-axis [STAGING]');
+    // Absent an alignment the section is omitted (not fabricated).
+    expect(renderFirstRunPerfmonPrComment(artifact)).not.toContain('Per-state resource pressure');
   });
 });
