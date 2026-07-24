@@ -232,4 +232,24 @@ describe('createLvkitViScanProvider (VHS-REQ-714.3)', () => {
       expect(result.reason).toContain('lvkit-output-read-failed: output gremlin');
     }
   });
+
+  it('converts a temporary-workspace failure into a typed failed result', async () => {
+    const removeDir = vi.fn((dir: string) => rm(dir, { recursive: true, force: true }));
+    const scan = createLvkitViScanProvider(
+      baseDeps({
+        removeDir,
+        makeTempDir: vi.fn(async () => {
+          throw new Error('ENOSPC: no space left on device');
+        })
+      })
+    );
+    const result = await scan(INPUT);
+    expect(result.status).toBe('failed');
+    if (result.status === 'failed') {
+      expect(result.reason).toContain('lvkit-scan-workspace-failed');
+      expect(result.reason).toContain('ENOSPC');
+    }
+    // No temp dir was created, so cleanup must not run.
+    expect(removeDir).not.toHaveBeenCalled();
+  });
 });
