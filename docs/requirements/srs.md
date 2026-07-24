@@ -5022,6 +5022,70 @@ Missing numeric IDs are intentional.
     `VIHS_SEMANTICS_PROVIDER` opt-in; keep the VI preview and comparison report
     on the LabVIEW/Docker runtime.
 
+### VHS-REQ-714: Single-VI lvkit Scan Provider
+
+- Status: Active
+- Parent: VHS-SYS-REQ-008
+- Area: Review Workflow
+- Statement: The toolset shall provide a LabVIEW-free single-VI scan provider,
+  built on the clean-room lvkit generator, that turns one VI into agent-readable
+  Python and captures that output verbatim into a schema-tagged store envelope,
+  so an agent MCP surface can later reason about a change the opaque `.vi` binary
+  otherwise hides, while the LabVIEW-backed preview and comparison report remain
+  the visual artifacts. This is Phase A of the agent-readable VI change
+  intelligence epic and the VI-readability seed the later preview-time trigger,
+  dedicated store, MCP tool, and benchmark correlation build on.
+- Acceptance Criteria:
+  - A pure envelope builder projects already-captured lvkit output onto the
+    versioned `vi-history-suite/lvkit-vi-scan@v1` model, recording the VI path,
+    the scanned VI's content signature, the runtime the VI was staged on, an
+    injected generation timestamp, the lvkit resolution source, every generated
+    module captured verbatim in a deterministic order, a best-effort pointer to
+    the scanned VI's own module, and resolved/error module counts, and performs
+    no process, filesystem, or network I/O.
+  - The envelope builder fails closed — throwing a descriptive error rather than
+    returning a silently-empty or partial scan — on a missing or empty VI path,
+    content signature, or runtime, a non-ISO generation timestamp, an unknown
+    lvkit source, an empty or non-array module set, a module missing its path or
+    with non-string content, or a duplicate module path after separator
+    normalization.
+  - A scan provider matching an injectable-collaborator factory materializes the
+    staged VI bytes to a private temporary workspace (preserving the original
+    base name so lvkit's slug is meaningful), runs `lvkit generate` as a
+    single-VI export (`--load-mode none`), LabVIEW-free and host-independent
+    (`--no-auto-vilib`), with its resolution store isolated to the workspace
+    (`--project-root`) so the repository working tree is never polluted, through
+    an injectable process boundary, captures the generated modules verbatim, and
+    returns a typed result — blocked when lvkit is absent or the target is
+    invalid or unreadable, failed when lvkit errors or emits an unusable tree,
+    and completed with the envelope on success — always removing its temporary
+    workspace and never throwing.
+- Agent Work Scope:
+  - Keep the envelope builder pure and dependency-free so the store contract is
+    unit tested without lvkit, LabVIEW, or Python, and keep every provider I/O
+    collaborator injectable so orchestration is tested without a real lvkit run;
+    a hard-require real-lvkit integration test drives the shipped provider on a
+    vendored in-repo VI so the deterministic contract is pinned against lvkit
+    version drift. This provider reads VI bytes through lvkit and never authors
+    `.vi` binaries; the LabVIEW-backed preview and comparison report remain the
+    visual artifacts.
+- Implementation References:
+  - `docs/architecture/adr/ADR-0033-agent-readable-vi-scan-lvkit-generate.md`
+  - `src/semantic/lvkit/lvkitViScanModel.ts`
+  - `src/semantic/lvkit/lvkitViScanProvider.ts`
+- Verification References:
+  - `tests/unit/lvkitViScanModel.test.ts`
+  - `tests/unit/lvkitViScanProvider.test.ts`
+  - `tests/unit/lvkitViScanRealIntegration.test.ts`
+- Change Guidance:
+  - Evolve the model additively under the store schema id
+    `vi-history-suite/lvkit-vi-scan@v1`; a breaking change (field removal,
+    rename, or required-promotion) must introduce `@v2` under a superseding ADR.
+    Keep the scan single-VI and LabVIEW-free (`--load-mode none`,
+    `--no-auto-vilib`) and its resolution store isolated to a temp workspace so a
+    scan never pollutes the repository or depends on a host LabVIEW install; keep
+    the generated Python captured verbatim (never re-serialized).
+
 ### VHS-REQ-702: VI Semantic Change Classification
 
 - Status: Active
