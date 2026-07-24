@@ -5565,6 +5565,55 @@ Missing numeric IDs are intentional.
     `.github/workflows`, and never make the gate default-on for local advisory
     readiness runs.
 
+### VHS-REQ-715: Full Perfmon Metadata Capture and Generic Channel Series
+
+- Status: Active
+- Parent: VHS-SYS-REQ-013
+- Area: CI And Developer Environment
+- Statement: The toolset shall capture the full available Windows performance-
+  monitor metadata surface during a mirror-mode run and expose every captured
+  counter as a generic, host-independent channel on the perfmon sample series, so
+  an agent MCP surface can correlate a VI change with a rich per-process and
+  system performance profile, while preserving the existing minimal capture and
+  named series unchanged. This extends VHS-REQ-707.14 (the capture plan) and the
+  perfmon sample-series parser additively.
+- Acceptance Criteria:
+  - VHS-REQ-715.1: The perfmon sample-series parser projects every captured PDH
+    counter column onto a generic channel — its counter path with the leading
+    `\\HOST` machine prefix stripped so it is host-independent, its raw per-sample
+    values aligned one-to-one with the series time array, and its numeric maximum
+    — in header order, as a superset of the named series, while keeping the named
+    `series` and `peaks` and the `vi-history-suite/perfmon-sample-series@v1`
+    schema id unchanged so every existing consumer stays valid.
+  - VHS-REQ-715.2: The Windows perfmon capture plan builder offers a minimal
+    profile as the default (the three system counters, plus the two LabVIEW
+    process counters when a process name is given) and an opt-in full profile
+    adding the expanded system counters (CPU user/privileged split, memory commit
+    and paging pressure, disk throughput and queue depth) and expanded LabVIEW
+    process counters (CPU split, private/virtual/working-set-private bytes,
+    paging, IO throughput, handle and thread counts), accepts arbitrary extra
+    counter paths appended verbatim and deduplicated with order preserved, and
+    fails closed on an empty extra counter path.
+- Agent Work Scope:
+  - Keep the capture plan and the series parser pure and deterministic so the
+    contract is unit tested without a runtime; the real `logman` capture of the
+    full profile around a LabVIEW render is a maintainer, Windows-only, elevated
+    validation step, not a hosted CI gate. Never break the additive contract:
+    keep the `@v1` schema id and the named series/peaks intact.
+- Implementation References:
+  - `docs/architecture/adr/ADR-0033-full-perfmon-metadata-generic-channels.md`
+  - `src/reporting/mirror/perfmonSampleSeries.ts`
+  - `src/reporting/mirror/perfmonCapturePlan.ts`
+- Verification References:
+  - `tests/unit/perfmonSampleSeries.test.ts`
+  - `tests/unit/perfmonCapturePlan.test.ts`
+- Change Guidance:
+  - Evolve the channel model additively; a breaking change (removing or renaming
+    the generic `channels` field, or dropping a named series) must introduce a
+    superseding `@v2` schema under a new ADR. Add new curated counters to the
+    full profile only after verifying they exist via `typeperf -q` on a real
+    host; keep host-prefix stripping the only path normalization.
+
 ### VHS-REQ-707: Mirror-Mode Dual Real-Runtime LabVIEW Validation
 
 - Status: Active

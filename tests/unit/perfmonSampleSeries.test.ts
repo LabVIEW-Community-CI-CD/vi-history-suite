@@ -252,3 +252,42 @@ describe('buildFirstRunPerfmonArtifact + renderFirstRunPerfmonPrComment (VHS-REQ
     expect(renderFirstRunPerfmonPrComment(artifact)).not.toContain('Per-state resource pressure');
   });
 });
+
+describe('parsePdhCsv generic channels (VHS-REQ-715.1)', () => {
+  it('emits every counter as a host-independent channel, aligned and a superset of the named series', () => {
+    const csv = [
+      HEADER_5,
+      '"07/23/2026 06:04:44.000","68.1","4117","1056.5","12.5","2097152"',
+      '"07/23/2026 06:04:45.000","74.6","4155","296.5","20.0","4194304"'
+    ].join('\n');
+    const s = parsePdhCsv(csv);
+    // Five counter columns -> five channels, in header order, `\\HARNESS` stripped.
+    expect(s.channels.map((c) => c.counterPath)).toEqual([
+      String.raw`\Processor(_Total)\% Processor Time`,
+      String.raw`\Memory\Available MBytes`,
+      String.raw`\PhysicalDisk(_Total)\% Disk Time`,
+      String.raw`\Process(LabVIEW)\% Processor Time`,
+      String.raw`\Process(LabVIEW)\Working Set - Private`
+    ]);
+    // Raw per-sample values, aligned 1:1 with t; peak is the numeric maximum.
+    expect(s.channels[0].samples).toEqual([68.1, 74.6]);
+    expect(s.channels[0].peak).toBe(74.6);
+    // Channels keep RAW bytes (the named labviewWorkingSetMb series converts to MB).
+    expect(s.channels[4].samples).toEqual([2097152, 4194304]);
+    // Superset: the named cpu series equals its channel; every channel aligns to sampleCount.
+    expect(s.series.cpuTotalPct).toEqual(s.channels[0].samples);
+    for (const ch of s.channels) {
+      expect(ch.samples).toHaveLength(s.sampleCount);
+    }
+  });
+
+  it('captures an unrecognized counter as a channel even though it maps to no named series', () => {
+    const header = String.raw`"(PDH-CSV 4.0)","\\HARNESS\Process(LabVIEW)\Private Bytes"`;
+    const csv = [header, '"07/23/2026 06:04:44.000","1048576"'].join('\n');
+    const s = parsePdhCsv(csv);
+    expect(s.channels).toHaveLength(1);
+    expect(s.channels[0].counterPath).toBe(String.raw`\Process(LabVIEW)\Private Bytes`);
+    expect(s.channels[0].samples).toEqual([1048576]);
+    expect(s.channels[0].peak).toBe(1048576);
+  });
+});

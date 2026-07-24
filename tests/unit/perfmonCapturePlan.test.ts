@@ -7,10 +7,12 @@ import { parsePdhCsv } from '../../src/reporting/mirror/perfmonSampleSeries';
 import {
   PERFMON_CAPTURE_PLAN_SCHEMA,
   PERFMON_SYSTEM_COUNTERS,
+  PERFMON_FULL_PROFILE_SYSTEM_COUNTERS,
   buildWindowsPerfmonCapturePlan,
   describePerfmonCapturePlan,
   formatLogmanInterval,
   labviewProcessCounters,
+  labviewProcessFullProfileCounters,
   type PerfmonCaptureRequest
 } from '../../src/reporting/mirror/perfmonCapturePlan';
 
@@ -131,5 +133,73 @@ describe('describePerfmonCapturePlan (VHS-REQ-707.14)', () => {
     expect(text).toContain('logman create counter vihs-firstrun');
     expect(text).toContain('logman start vihs-firstrun');
     expect(text).toContain('logman delete vihs-firstrun');
+  });
+});
+
+describe('perfmon full-profile capture + generic channels (VHS-REQ-715.1, VHS-REQ-715.2)', () => {
+  const base = { collectorName: 'c', outputCsvPath: 'o', sampleIntervalSec: 1 };
+
+  it('defaults to the minimal profile (the 3 system counters, unchanged)', () => {
+    const plan = buildWindowsPerfmonCapturePlan({ ...base });
+    expect(plan.counters).toEqual([...PERFMON_SYSTEM_COUNTERS]);
+  });
+
+  it('captures the expanded system counter set under the full profile', () => {
+    const plan = buildWindowsPerfmonCapturePlan({ ...base, profile: 'full' });
+    expect(plan.counters).toEqual([...PERFMON_FULL_PROFILE_SYSTEM_COUNTERS]);
+    expect(plan.counters).toContain(String.raw`\Memory\Committed Bytes`);
+    expect(plan.counters).toContain(String.raw`\PhysicalDisk(_Total)\Disk Read Bytes/sec`);
+  });
+
+  it('adds the expanded LabVIEW process counters under the full profile', () => {
+    const plan = buildWindowsPerfmonCapturePlan({ ...base, profile: 'full', labviewProcessName: 'LabVIEW' });
+    expect(plan.counters).toEqual([
+      ...PERFMON_FULL_PROFILE_SYSTEM_COUNTERS,
+      ...labviewProcessFullProfileCounters('LabVIEW')
+    ]);
+    expect(plan.counters).toContain(String.raw`\Process(LabVIEW)\Private Bytes`);
+    expect(plan.counters).toContain(String.raw`\Process(LabVIEW)\IO Read Bytes/sec`);
+  });
+
+  it('appends arbitrary extra counters, deduped with order preserved', () => {
+    const plan = buildWindowsPerfmonCapturePlan({
+      ...base,
+      extraCounters: [
+        String.raw`\Processor(_Total)\% Processor Time`, // already in the minimal profile -> deduped
+        String.raw`\Network Interface(*)\Bytes Total/sec`
+      ]
+    });
+    expect(plan.counters).toEqual([
+      ...PERFMON_SYSTEM_COUNTERS,
+      String.raw`\Network Interface(*)\Bytes Total/sec`
+    ]);
+  });
+
+  it('fails closed on an empty extra counter', () => {
+    expect(() => buildWindowsPerfmonCapturePlan({ ...base, extraCounters: ['   '] })).toThrow(
+      /extraCounters/
+    );
+  });
+
+  it('round-trips a full-profile capture into generic host-independent channels', () => {
+    const plan = buildWindowsPerfmonCapturePlan({ ...base, profile: 'full', labviewProcessName: 'LabVIEW' });
+    // Synthesize a 2-sample PDH-CSV with a \\HOST prefix on every counter path.
+    const header = ['"(PDH-CSV 4.0)"', ...plan.counters.map((c) => `"\\\\HOST${c}"`)].join(',');
+    const mkRow = (ts: string, v: number) =>
+      [`"${ts}"`, ...plan.counters.map(() => `"${v}"`)].join(',');
+    const csv = [header, mkRow('01/01/2026 00:00:00.000', 1), mkRow('01/01/2026 00:00:01.000', 2)].join('\n');
+    const series = parsePdhCsv(csv);
+    // Every captured counter is a channel, host prefix stripped, aligned to t.
+    expect(series.channels.length).toBe(plan.counters.length);
+    expect(series.channels.map((ch) => ch.counterPath)).toEqual([...plan.counters]);
+    for (const ch of series.channels) {
+      expect(ch.samples).toEqual([1, 2]);
+      expect(ch.peak).toBe(2);
+    }
+    // channels is a superset of the named series, AND surfaces per-process
+    // full-profile metadata that the 5 named channels never carried.
+    expect(series.channels.some((ch) => ch.counterPath === String.raw`\Processor(_Total)\% Processor Time`)).toBe(true);
+    expect(series.channels.some((ch) => ch.counterPath === String.raw`\Process(LabVIEW)\Private Bytes`)).toBe(true);
+    expect(series.channels.some((ch) => ch.counterPath === String.raw`\Process(LabVIEW)\Thread Count`)).toBe(true);
   });
 });
