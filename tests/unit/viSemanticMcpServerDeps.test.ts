@@ -211,11 +211,13 @@ describe('buildViSemanticMcpServerDeps', () => {
 
   it('retrieves generated code through the injected deps orchestrator (exercises the wiring)', async () => {
     const deps = buildViSemanticMcpServerDeps(cache);
+    // A per-run-unique content signature keeps this miss deterministic against the
+    // fixed OS temp-dir store, which a previous run (or another test) may have
+    // populated at a fixed address.
     const result = await deps.getViGeneratedCode?.({
       viPath: 'resource/does-not-exist.vi',
-      contentSignature: 'sha256:none'
+      contentSignature: `sha256:none-${process.pid}-${Date.now()}`
     });
-    // The default store is empty for this address under the OS temp dir.
     expect(result?.status).toBe('not-found');
   });
 
