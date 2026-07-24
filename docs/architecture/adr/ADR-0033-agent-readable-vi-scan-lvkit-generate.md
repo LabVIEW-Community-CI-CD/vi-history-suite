@@ -3,10 +3,12 @@
 - Status: Accepted
 - Date: 2026-07-24
 
-> Authoritative requirement: VHS-REQ-714 (Single-VI lvkit Scan Provider), a child
+> Authoritative requirements: VHS-REQ-714 (Single-VI lvkit Scan Provider) and
+> VHS-REQ-716 (lvkit VI Scan Store and Generated-Code Retrieval Tool), children
 > of system requirement VHS-SYS-REQ-008 (Review Workflow / Comparison Reports).
 > The requirements package holds the authoritative text; this ADR is the retained
-> design record. This is Phase A of epic #2348 (agent-readable VI change
+> design record. This covers Phase A (the scan provider) and Phase C (the
+> dedicated store and MCP retrieval tool) of epic #2348 (agent-readable VI change
 > intelligence) and builds on ADR-0031 (LabVIEW-free lvkit semantic backend).
 
 ## Context
@@ -47,9 +49,23 @@ verbatim into a schema-tagged store envelope for later agent consumption over MC
   returns a typed `blocked`/`failed`/`completed` result — never throwing, always
   cleaning up.
 
-The scan is the **VI-readability seed**; the preview-time trigger, the dedicated
-content-addressed store, the MCP retrieval tool, and benchmark correlation are
-later phases of epic #2348 that build on this envelope.
+The scan is the **VI-readability seed**; the preview-time trigger (Phase B) and
+benchmark correlation (Phase D) are later phases of epic #2348 that build on this
+envelope.
+
+**Phase C** adds the dedicated store and the agent retrieval tool (VHS-REQ-716).
+A content-addressed on-disk store (`lvkitViScanStore.ts`) is keyed by a SHA-256
+over the POSIX-normalized VI path folded with the content signature — mirroring
+the comparison-model cache (VHS-REQ-662.8): `<key>.json` files behind an injected
+filesystem boundary, a fail-closed structural + content-address read guard (a
+stored envelope that does not describe the requested path + signature is treated
+as a miss, so a collided or hand-edited file can never surface the wrong VI's
+code), and a best-effort write that never fails the producing pipeline. A
+read-only, async-only `get_vi_generated_code` MCP tool retrieves the stored
+envelope for a requested (VI path, content signature), returning a first-class
+not-found on a miss. The tool requires **both** the path and the content
+signature — a signature-less "latest" lookup is deferred — so it only ever returns
+the generated code captured for those precise VI bytes.
 
 Rejected: capturing the whole dependency closure (`--load-mode full`) for a
 "single-VI" scan (heavy, and vi.lib-primitive-dense VIs emit `.error` stubs that

@@ -18,6 +18,10 @@ import {
   createFileViComparisonModelCache,
   type ViComparisonModelCache
 } from '../semantic/viComparisonModelCache';
+import {
+  createFileLvkitViScanStore,
+  type LvkitViScanStore
+} from '../semantic/lvkit/lvkitViScanStore';
 import type { ViSemanticMcpAsyncDeps } from '../semantic/viSemanticComparisonMcp';
 import {
   listPreviewCacheEntries,
@@ -40,7 +44,9 @@ import {
   type RuntimeHealthInput,
   type ViRuntimeHealth,
   type ChangedVisInput,
-  type ViChangedVis
+  type ViChangedVis,
+  type GetViGeneratedCodeInput,
+  type GetViGeneratedCodeResult
 } from '../semantic/viSemanticComparisonMcp';
 
 /**
@@ -59,6 +65,27 @@ export function createDefaultComparisonModelCache(): ViComparisonModelCache {
   return createFileViComparisonModelCache(
     {
       cacheDirectory: path.join(os.tmpdir(), 'vihs-vi-comparison-cache'),
+      joinPath: path.join
+    },
+    {
+      ensureDirectory: async (directory) => {
+        await fsp.mkdir(directory, { recursive: true });
+      },
+      readFile: (filePath) => fsp.readFile(filePath, 'utf8'),
+      writeFile: (filePath, data) => fsp.writeFile(filePath, data)
+    }
+  );
+}
+
+/**
+ * Default file-backed lvkit VI-scan store, shared across tool calls in the
+ * long-lived server process and stored under the OS temp directory. Backs the
+ * read-only `get_vi_generated_code` retrieval tool (VHS-REQ-716).
+ */
+export function createDefaultLvkitViScanStore(): LvkitViScanStore {
+  return createFileLvkitViScanStore(
+    {
+      storeDirectory: path.join(os.tmpdir(), 'vihs-lvkit-vi-scan-store'),
       joinPath: path.join
     },
     {
@@ -114,7 +141,8 @@ export function buildViSemanticMcpServerDeps(
     resolveRuntimeHealth: (input) => resolveRuntimeHealth(input),
     collectPreviewDiagnostics: (input: CollectViPreviewDiagnosticsOptions) =>
       collectViPreviewDiagnostics(input),
-    listChangedVis: (input) => listChangedVis(input)
+    listChangedVis: (input) => listChangedVis(input),
+    getViGeneratedCode: (input) => getViGeneratedCode(input)
   };
 }
 
@@ -175,6 +203,29 @@ export async function listChangedVis(
     selectedHash: input.selectedHash,
     changedVis,
     count: changedVis.length
+  };
+}
+
+/**
+ * Retrieves the stored lvkit VI-scan envelope for one VI revision (content
+ * signature) from the content-addressed store and projects the found/not-found
+ * result the `get_vi_generated_code` MCP tool returns (VHS-REQ-716). A store
+ * miss is a first-class `not-found` result (echoing the requested address), not
+ * an error. The store is injectable so the projection is unit-testable with an
+ * in-memory store, without touching the filesystem.
+ */
+export async function getViGeneratedCode(
+  input: GetViGeneratedCodeInput,
+  store: LvkitViScanStore = createDefaultLvkitViScanStore()
+): Promise<GetViGeneratedCodeResult> {
+  const envelope = await store.get(input.viPath, input.contentSignature);
+  if (envelope) {
+    return { status: 'found', envelope };
+  }
+  return {
+    status: 'not-found',
+    viPath: input.viPath,
+    contentSignature: input.contentSignature
   };
 }
 

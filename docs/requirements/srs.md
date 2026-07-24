@@ -5086,6 +5086,70 @@ Missing numeric IDs are intentional.
     scan never pollutes the repository or depends on a host LabVIEW install; keep
     the generated Python captured verbatim (never re-serialized).
 
+### VHS-REQ-716: lvkit VI Scan Store and Generated-Code Retrieval Tool
+
+- Status: Active
+- Parent: VHS-SYS-REQ-008
+- Area: Review Workflow
+- Statement: The toolset shall provide a dedicated, content-addressed on-disk
+  store for the single-VI `vi-history-suite/lvkit-vi-scan@v1` envelopes the scan
+  provider produces (VHS-REQ-714), together with a read-only agent MCP tool that
+  retrieves the stored generated Python for one VI revision by content address,
+  so an agent can obtain the LabVIEW-free Python projection of a change the
+  opaque `.vi` binary hides without re-running lvkit. This is Phase C of the
+  agent-readable VI change intelligence epic; the store is the persistence the
+  Phase B preview-time trigger writes into and the Phase D benchmark correlation
+  reads from.
+- Acceptance Criteria:
+  - A pure key derivation addresses a scan by the pair (VI path, content
+    signature): the VI path is normalized to POSIX separators and folded in with
+    the content signature under SHA-256, yielding a deterministic bare
+    64-character lowercase-hex digest, so a change to either the path or the
+    scanned VI's content signature yields a different address and two VIs never
+    collide.
+  - A file-backed store persists an envelope under its content address
+    (`<key>.json`, derived from the envelope's own path and signature) and, on a
+    round-trip lookup by the same (VI path, content signature), returns the
+    stored envelope verbatim, through an injected filesystem boundary so the
+    contract is unit tested without a real disk.
+  - The store read fails closed — returning a miss rather than a wrong or
+    partial scan — when the entry is absent, unreadable, not valid JSON, not a
+    current-schema `vi-history-suite/lvkit-vi-scan@v1` envelope, or a stored
+    envelope that does not describe the requested (path, signature); the store
+    write is best-effort and never throws into the caller, because persisting a
+    scan must never fail the pipeline that produced it.
+  - A read-only `get_vi_generated_code` MCP tool, available only through the
+    async server entrypoint and backed by an injected store retriever, returns
+    the stored envelope for a requested (VI path, content signature) on a cache
+    hit, reports a store miss as a first-class not-found result that echoes the
+    requested address, validates that both arguments are present as a structured
+    invalid-params error, and reports a wired-up error when no store retriever is
+    injected — never running lvkit or authoring a `.vi`.
+- Agent Work Scope:
+  - Keep the key derivation and store contract pure and dependency-free (apart
+    from `node:crypto`) so they are unit tested with an in-memory filesystem
+    without lvkit, LabVIEW, or Python, and keep the MCP tool's store retriever an
+    injected dependency so the JSON-RPC surface is tested without touching disk.
+    This surface reads stored scans and never authors `.vi` binaries; the
+    LabVIEW-backed preview and comparison report remain the visual artifacts.
+- Implementation References:
+  - `docs/architecture/adr/ADR-0033-agent-readable-vi-scan-lvkit-generate.md`
+  - `src/semantic/lvkit/lvkitViScanStore.ts`
+  - `src/semantic/viSemanticComparisonMcp.ts`
+  - `src/mcp/viSemanticMcpServerDeps.ts`
+- Verification References:
+  - `tests/unit/lvkitViScanStore.test.ts`
+  - `tests/unit/viSemanticComparisonMcp.test.ts`
+  - `tests/unit/viSemanticMcpServerDeps.test.ts`
+- Change Guidance:
+  - Keep the store content-addressed by (VI path, content signature) under the
+    `vi-history-suite/lvkit-vi-scan@v1` schema id; a breaking change to the
+    stored model follows VHS-REQ-714's `@v2`-under-a-superseding-ADR rule. Keep
+    the store read fail-closed (schema and content-address verified) and the
+    write best-effort, and keep `get_vi_generated_code` read-only and async-only
+    with its store retriever injected so the pure MCP handler never reaches the
+    filesystem on its own.
+
 ### VHS-REQ-702: VI Semantic Change Classification
 
 - Status: Active

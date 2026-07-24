@@ -24,6 +24,7 @@ import {
   buildViSemanticComparisonModelFromHtml,
   VI_SEMANTIC_COMPARISON_SCHEMA
 } from '../../src/semantic/viSemanticModel';
+import { buildLvkitViScanEnvelope } from '../../src/semantic/lvkit/lvkitViScanModel';
 
 const REPORT_HTML = `<!DOCTYPE html>
 <html><body>
@@ -103,7 +104,8 @@ describe('viSemanticComparisonMcp', () => {
       'get_preview_cache_entry',
       'get_runtime_health',
       'get_preview_diagnostics',
-      'list_changed_vis'
+      'list_changed_vis',
+      'get_vi_generated_code'
     ]);
     expect(result.tools).toEqual(VI_SEMANTIC_MCP_TOOLS);
   });
@@ -1311,6 +1313,85 @@ describe('viSemanticComparisonMcp', () => {
       ) as { content: Array<{ text: string }>; isError: boolean };
       expect(response.isError).toBe(true);
       expect(response.content[0].text).toContain('not wired');
+    });
+
+    // VHS-REQ-716.4: the read-only get_vi_generated_code retrieval tool returns
+    // the stored lvkit scan through the injected store retriever, reports a store
+    // miss as an isError not-found result, and validates its arguments.
+    describe('get_vi_generated_code (VHS-REQ-716.4)', () => {
+      const envelope = buildLvkitViScanEnvelope({
+        viPath: 'resource/A.vi',
+        contentSignature: 'sha256:abc123',
+        runtime: 'host-native',
+        generatedAt: '2026-07-24T11:02:31.000Z',
+        lvkitSource: 'path',
+        modules: [{ relativePath: 'a/klass/a.py', python: 'def a():\n    return 1\n' }]
+      });
+
+      it('returns the stored scan envelope through the injected store retriever', async () => {
+        const getViGeneratedCode = vi.fn(async () => ({ status: 'found' as const, envelope }));
+        const response = successResult(
+          await handleViSemanticMcpMessageAsync(
+            toolCall('get_vi_generated_code', {
+              viPath: 'resource/A.vi',
+              contentSignature: 'sha256:abc123'
+            }),
+            { getViGeneratedCode }
+          )
+        ) as { content: Array<{ text: string }>; isError?: boolean };
+        expect(getViGeneratedCode).toHaveBeenCalledWith({
+          viPath: 'resource/A.vi',
+          contentSignature: 'sha256:abc123'
+        });
+        expect(response.isError ?? false).toBe(false);
+        const parsed = JSON.parse(response.content[0].text) as { schema: string; viPath: string };
+        expect(parsed.schema).toBe('vi-history-suite/lvkit-vi-scan@v1');
+        expect(parsed.viPath).toBe('resource/A.vi');
+      });
+
+      it('reports a store miss as an isError not-found result echoing the address', async () => {
+        const getViGeneratedCode = vi.fn(async () => ({
+          status: 'not-found' as const,
+          viPath: 'resource/A.vi',
+          contentSignature: 'sha256:missing'
+        }));
+        const response = successResult(
+          await handleViSemanticMcpMessageAsync(
+            toolCall('get_vi_generated_code', {
+              viPath: 'resource/A.vi',
+              contentSignature: 'sha256:missing'
+            }),
+            { getViGeneratedCode }
+          )
+        ) as { content: Array<{ text: string }>; isError: boolean };
+        expect(response.isError).toBe(true);
+        expect(response.content[0].text).toContain('No stored lvkit scan');
+        expect(response.content[0].text).toContain('sha256:missing');
+      });
+
+      it('rejects get_vi_generated_code missing contentSignature as -32602', async () => {
+        const getViGeneratedCode = vi.fn();
+        const response = await handleViSemanticMcpMessageAsync(
+          toolCall('get_vi_generated_code', { viPath: 'resource/A.vi' }),
+          { getViGeneratedCode }
+        );
+        const error = invalidParamsError(response);
+        expect(error.data?.issues?.[0]).toMatchObject({ field: 'contentSignature' });
+        expect(getViGeneratedCode).not.toHaveBeenCalled();
+      });
+
+      it('reports a wired-up error when no store retriever is injected', async () => {
+        const response = successResult(
+          await handleViSemanticMcpMessageAsync(
+            toolCall('get_vi_generated_code', {
+              viPath: 'resource/A.vi',
+              contentSignature: 'sha256:abc123'
+            })
+          )
+        ) as { content: Array<{ text: string }>; isError: boolean };
+        expect(response.isError).toBe(true);
+        expect(response.content[0].text).toContain('not wired');
+      });
     });
   });
 

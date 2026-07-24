@@ -13,7 +13,8 @@ import {
   createDefaultComparisonModelCache,
   createDefaultPreviewCacheInspectionFsDeps,
   resolveRuntimeHealth,
-  listChangedVis
+  listChangedVis,
+  getViGeneratedCode
 } from '../../src/mcp/viSemanticMcpServerDeps';
 import type {
   CompareViRevisionsDeps,
@@ -28,6 +29,8 @@ import {
   VI_SEMANTIC_COMPARISON_SCHEMA,
   type ViSemanticComparisonModel
 } from '../../src/semantic/viSemanticModel';
+import { buildLvkitViScanEnvelope } from '../../src/semantic/lvkit/lvkitViScanModel';
+import type { LvkitViScanStore } from '../../src/semantic/lvkit/lvkitViScanStore';
 
 const cache: ViComparisonModelCache = {
   get: async () => undefined,
@@ -56,6 +59,7 @@ describe('buildViSemanticMcpServerDeps', () => {
     expect(typeof deps.resolveRuntimeHealth).toBe('function');
     expect(typeof deps.collectPreviewDiagnostics).toBe('function');
     expect(typeof deps.listChangedVis).toBe('function');
+    expect(typeof deps.getViGeneratedCode).toBe('function');
   });
 
   it('projects a resolved runtime selection into the runtime-health snapshot', async () => {
@@ -173,6 +177,46 @@ describe('buildViSemanticMcpServerDeps', () => {
     });
     expect(changed?.schema).toBe('vi-history-suite/changed-vis@v1');
     expect(changed?.count).toBe(0);
+  });
+
+  it('projects a store hit into a found generated-code result (VHS-REQ-716.4)', async () => {
+    const envelope = buildLvkitViScanEnvelope({
+      viPath: 'resource/A.vi',
+      contentSignature: 'sha256:abc123',
+      runtime: 'host-native',
+      generatedAt: '2026-07-24T11:02:31.000Z',
+      lvkitSource: 'path',
+      modules: [{ relativePath: 'a/klass/a.py', python: 'def a():\n    return 1\n' }]
+    });
+    const store: LvkitViScanStore = { get: async () => envelope, put: async () => {} };
+    const result = await getViGeneratedCode(
+      { viPath: 'resource/A.vi', contentSignature: 'sha256:abc123' },
+      store
+    );
+    expect(result).toEqual({ status: 'found', envelope });
+  });
+
+  it('projects a store miss into a not-found result echoing the address (VHS-REQ-716.4)', async () => {
+    const store: LvkitViScanStore = { get: async () => undefined, put: async () => {} };
+    const result = await getViGeneratedCode(
+      { viPath: 'resource/A.vi', contentSignature: 'sha256:missing' },
+      store
+    );
+    expect(result).toEqual({
+      status: 'not-found',
+      viPath: 'resource/A.vi',
+      contentSignature: 'sha256:missing'
+    });
+  });
+
+  it('retrieves generated code through the injected deps orchestrator (exercises the wiring)', async () => {
+    const deps = buildViSemanticMcpServerDeps(cache);
+    const result = await deps.getViGeneratedCode?.({
+      viPath: 'resource/does-not-exist.vi',
+      contentSignature: 'sha256:none'
+    });
+    // The default store is empty for this address under the OS temp dir.
+    expect(result?.status).toBe('not-found');
   });
 
   it('binds compare_vi_revisions to the shared comparison-model cache', async () => {
