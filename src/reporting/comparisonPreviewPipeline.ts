@@ -67,7 +67,7 @@ export type PipelineState =
 /**
  * The six timed pipeline states (excludes the terminal `COMPLETE`/`FAILED`
  * markers) — the per-state timing/analytics model operates on these only. The
- * `satisfies` clause keeps the runtime list in sync with the union.
+ * `satisfies` clause keeps the state list in sync with the union.
  */
 export const TIMED_PIPELINE_STATES = [
   'STAGING',
