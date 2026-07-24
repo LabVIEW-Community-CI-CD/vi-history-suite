@@ -68,6 +68,7 @@ export interface AlignmentPerfInput {
   readonly t: readonly number[];
   readonly cpuTotalPct: readonly (number | null)[];
   readonly memAvailMb: readonly (number | null)[];
+  readonly diskTotalPct: readonly (number | null)[];
   readonly labviewCpuPct?: readonly (number | null)[];
   readonly labviewWorkingSetMb?: readonly (number | null)[];
 }
@@ -99,6 +100,7 @@ export interface AlignedFrameRow {
   readonly perfSampleOffsetMs: number | null;
   readonly cpuTotalPct: number | null;
   readonly memAvailMb: number | null;
+  readonly diskTotalPct: number | null;
   readonly labviewCpuPct: number | null;
   readonly labviewWorkingSetMb: number | null;
 }
@@ -109,6 +111,7 @@ export interface AlignedStateRollup {
   readonly frameCount: number;
   readonly meanCpuTotalPct: number | null;
   readonly meanMemAvailMb: number | null;
+  readonly meanDiskTotalPct: number | null;
   readonly meanLabviewCpuPct: number | null;
   readonly meanLabviewWorkingSetMb: number | null;
 }
@@ -159,7 +162,7 @@ export function alignFramesToPerf(input: AlignFramesToPerfInput): FrameTimingAli
   if (!Array.isArray(input.states)) {
     throw new Error('states must be an array.');
   }
-  if (!input.perf || !Array.isArray(input.perf.t)) {
+  if (!input.perf || typeof input.perf !== 'object' || !Array.isArray(input.perf.t)) {
     throw new Error('perf.t must be an array of sample times.');
   }
   if (!Number.isFinite(input.epochOffsetMs)) {
@@ -167,6 +170,62 @@ export function alignFramesToPerf(input: AlignFramesToPerfInput): FrameTimingAli
   }
 
   const perfTimes = input.perf.t;
+  // perf.t must be finite and non-decreasing so "nearest sample" is meaningful.
+  for (let i = 0; i < perfTimes.length; i += 1) {
+    if (!Number.isFinite(perfTimes[i])) {
+      throw new Error(`perf.t[${i}] must be a finite number.`);
+    }
+    if (i > 0 && perfTimes[i] < perfTimes[i - 1]) {
+      throw new Error('perf.t must be non-decreasing.');
+    }
+  }
+
+  // The mandatory series must be present and parallel to perf.t; the optional
+  // LabVIEW series, when present, must also be parallel. A length mismatch would
+  // otherwise silently read a real sample as "missing".
+  const requireSeries = (name: string, series: unknown): void => {
+    if (!Array.isArray(series)) {
+      throw new Error(`perf.${name} must be an array.`);
+    }
+    if (series.length !== perfTimes.length) {
+      throw new Error(`perf.${name} length (${series.length}) must match perf.t length (${perfTimes.length}).`);
+    }
+  };
+  requireSeries('cpuTotalPct', input.perf.cpuTotalPct);
+  requireSeries('memAvailMb', input.perf.memAvailMb);
+  requireSeries('diskTotalPct', input.perf.diskTotalPct);
+  if (input.perf.labviewCpuPct !== undefined) {
+    requireSeries('labviewCpuPct', input.perf.labviewCpuPct);
+  }
+  if (input.perf.labviewWorkingSetMb !== undefined) {
+    requireSeries('labviewWorkingSetMb', input.perf.labviewWorkingSetMb);
+  }
+
+  // Each state window must have a name and finite, non-reversed bounds so a
+  // corrupt window cannot masquerade as a legitimately out-of-state frame.
+  input.states.forEach((window, i) => {
+    if (!window || typeof window !== 'object' || typeof window.state !== 'string' || window.state === '') {
+      throw new Error(`states[${i}].state must be a non-empty string.`);
+    }
+    if (!Number.isFinite(window.startMs) || !Number.isFinite(window.endMs)) {
+      throw new Error(`states[${i}] bounds must be finite numbers.`);
+    }
+    if (window.startMs > window.endMs) {
+      throw new Error(`states[${i}] is reversed (startMs ${window.startMs} > endMs ${window.endMs}).`);
+    }
+  });
+
+  // Each frame must be a shaped object; stripBits content is decoded fail-closed
+  // (a non-string or bad strip yields null), but a non-object frame would throw a
+  // non-diagnostic TypeError on property access.
+  input.frames.forEach((frame, i) => {
+    if (!frame || typeof frame !== 'object') {
+      throw new Error(`frames[${i}] must be an object.`);
+    }
+    if (!Number.isFinite(frame.frameIndex)) {
+      throw new Error(`frames[${i}].frameIndex must be a finite number.`);
+    }
+  });
 
   const findNearestSample = (alignedMs: number): { index: number; offsetMs: number } | null => {
     if (perfTimes.length === 0) {
@@ -215,6 +274,7 @@ export function alignFramesToPerf(input: AlignFramesToPerfInput): FrameTimingAli
         perfSampleOffsetMs: null,
         cpuTotalPct: null,
         memAvailMb: null,
+        diskTotalPct: null,
         labviewCpuPct: null,
         labviewWorkingSetMb: null
       });
@@ -237,6 +297,7 @@ export function alignFramesToPerf(input: AlignFramesToPerfInput): FrameTimingAli
       perfSampleOffsetMs: nearest?.offsetMs ?? null,
       cpuTotalPct: sampleIndex === null ? null : seriesValueAt(input.perf.cpuTotalPct, sampleIndex),
       memAvailMb: sampleIndex === null ? null : seriesValueAt(input.perf.memAvailMb, sampleIndex),
+      diskTotalPct: sampleIndex === null ? null : seriesValueAt(input.perf.diskTotalPct, sampleIndex),
       labviewCpuPct: sampleIndex === null ? null : seriesValueAt(input.perf.labviewCpuPct, sampleIndex),
       labviewWorkingSetMb:
         sampleIndex === null ? null : seriesValueAt(input.perf.labviewWorkingSetMb, sampleIndex)
@@ -257,6 +318,7 @@ export function alignFramesToPerf(input: AlignFramesToPerfInput): FrameTimingAli
       frameCount: stateRows.length,
       meanCpuTotalPct: meanOfFinite(stateRows.map((row) => row.cpuTotalPct)),
       meanMemAvailMb: meanOfFinite(stateRows.map((row) => row.memAvailMb)),
+      meanDiskTotalPct: meanOfFinite(stateRows.map((row) => row.diskTotalPct)),
       meanLabviewCpuPct: meanOfFinite(stateRows.map((row) => row.labviewCpuPct)),
       meanLabviewWorkingSetMb: meanOfFinite(stateRows.map((row) => row.labviewWorkingSetMb))
     };
