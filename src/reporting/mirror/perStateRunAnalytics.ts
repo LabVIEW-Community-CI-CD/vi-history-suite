@@ -20,7 +20,7 @@
 // explicit null (never fabricated) for a state with no samples in its window.
 
 import type { PipelineState } from '../comparisonPreviewPipeline';
-import type { FrameTimingAlignment } from './frameTimingAlignment';
+import { FRAME_TIMING_ALIGNMENT_SCHEMA, type FrameTimingAlignment } from './frameTimingAlignment';
 
 export const PER_STATE_RUN_ANALYTICS_SCHEMA = 'vi-history-suite/per-state-run-analytics@v1';
 export const PER_STATE_RUN_ANALYTICS_SCHEMA_VERSION = 1;
@@ -192,6 +192,23 @@ export function buildPerStateRunAnalytics(input: BuildPerStateRunAnalyticsInput)
     previousEndMs = window.endMs;
   });
 
+  // A supplied alignment must be consistent: it is a host-owned frame recording,
+  // so it is only valid on a recording host-native run and must be a real
+  // frame-timing-alignment@v1 model (else a truthy object throws later with a
+  // non-actionable error, or fabricates frame counts for a non-recording run).
+  if (input.alignment !== undefined) {
+    const a = input.alignment as { schema?: unknown; stateRollups?: unknown } | null;
+    if (!a || typeof a !== 'object' || a.schema !== FRAME_TIMING_ALIGNMENT_SCHEMA || !Array.isArray(a.stateRollups)) {
+      throw new Error('alignment must be a frame-timing-alignment@v1 model.');
+    }
+    if (!input.recording) {
+      throw new Error('alignment requires recording=true (a host frame recording produced it).');
+    }
+    if (input.runtime !== 'host-native') {
+      throw new Error('alignment (host-owned frame recording) is only valid for the host-native runtime.');
+    }
+  }
+
   const frameCountByState = new Map<PipelineState, number>();
   if (input.alignment) {
     for (const rollup of input.alignment.stateRollups) {
@@ -228,7 +245,11 @@ export function buildPerStateRunAnalytics(input: BuildPerStateRunAnalyticsInput)
       peakDiskTotalPct: peak(disk),
       meanLabviewCpuPct: mean(lvCpu),
       peakLabviewWorkingSetMb: peak(lvWs),
-      frameCount: input.alignment ? frameCountByState.get(window.state) ?? 0 : null
+      // When a recording alignment is present, a state it covers reports its
+      // frame count (0 is a real "no frames in this state"); a state the
+      // alignment does NOT cover reports null (an alignment/state mismatch,
+      // never a fabricated 0). No alignment at all -> null.
+      frameCount: input.alignment ? frameCountByState.get(window.state) ?? null : null
     };
   });
 

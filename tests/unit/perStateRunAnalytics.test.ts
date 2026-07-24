@@ -95,6 +95,39 @@ describe('buildPerStateRunAnalytics (VHS-REQ-707.22, #2344)', () => {
     expect(result.states.find((s) => s.state === 'COMPARISON')?.frameCount).toBe(1);
   });
 
+  it('reports null (not a fabricated 0) for a state the alignment does not cover (#2344 review)', () => {
+    const alignment = alignFramesToPerf({
+      frames: [{ frameIndex: 0, stripBits: encodeMprrMachineStrip(1) }], // STAGING only
+      perf: { t: [0, 100], cpuTotalPct: [10, 20], memAvailMb: [900, 800], diskTotalPct: [1, 2] },
+      states: [{ state: 'STAGING', startMs: 0, endMs: 100 }],
+      epochOffsetMs: 0
+    });
+    const result = buildPerStateRunAnalytics({ ...baseInput(), recording: true, alignment });
+    expect(result.states.find((s) => s.state === 'STAGING')?.frameCount).toBe(1);
+    // COMPARISON is absent from the alignment's rollups -> null, surfacing the mismatch.
+    expect(result.states.find((s) => s.state === 'COMPARISON')?.frameCount).toBeNull();
+  });
+
+  it('fails closed on an inconsistent or malformed alignment (#2344 review)', () => {
+    const alignment = alignFramesToPerf({
+      frames: [{ frameIndex: 0, stripBits: encodeMprrMachineStrip(1) }],
+      perf: { t: [0, 100], cpuTotalPct: [10, 20], memAvailMb: [900, 800], diskTotalPct: [1, 2] },
+      states: STATES,
+      epochOffsetMs: 0
+    });
+    // An alignment implies a recording ran.
+    expect(() => buildPerStateRunAnalytics({ ...baseInput(), recording: false, alignment })).toThrow(/recording=true/);
+    // Frames are host-native only.
+    expect(() =>
+      buildPerStateRunAnalytics({ ...baseInput(), runtime: 'windows-container', recording: true, alignment })
+    ).toThrow(/host-native runtime/);
+    // Must be a real frame-timing-alignment@v1 model.
+    expect(() =>
+      // @ts-expect-error bogus alignment shape
+      buildPerStateRunAnalytics({ ...baseInput(), recording: true, alignment: { stateRollups: [] } })
+    ).toThrow(/frame-timing-alignment@v1 model/);
+  });
+
   it('treats a null perfmon cell as missing, not zero', () => {
     const input: BuildPerStateRunAnalyticsInput = {
       ...baseInput(),
