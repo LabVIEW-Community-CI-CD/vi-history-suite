@@ -63,6 +63,13 @@ export interface RegisterViPreviewCustomEditorOptions {
   /** Invoked with the VI path after a preview renders successfully (drives cache warming). */
   onPreviewOpened?: (viFsPath: string) => void;
   /**
+   * VHS-REQ-717 (epic #2348 Phase B): invoked after a VI renders LIVE on the
+   * runtime, with the on-disk VI path and the runtime provider label
+   * (`host-native`/`linux-container`/`windows-container`). Drives the best-effort
+   * preview-time lvkit scan; the callback must never throw or block the preview.
+   */
+  onPreviewScanReady?: (viFsPath: string, runtime: string) => void;
+  /**
    * Test-only hook invoked with the exact rendered webview HTML and its mode
    * after a preview is displayed. Production never supplies this; the extension
    * wires it only under integration-test intent (VIHS_TEST_CAPTURE_PREVIEW) so
@@ -118,7 +125,8 @@ class ViPreviewEditorProvider implements vscode.CustomReadonlyEditorProvider<ViP
       viFsPath: string,
       html: string,
       mode: string
-    ) => void | Promise<void>
+    ) => void | Promise<void>,
+    private readonly onPreviewScanReady?: (viFsPath: string, runtime: string) => void
   ) {
     this.cache = createViPreviewCache(context);
   }
@@ -289,6 +297,15 @@ class ViPreviewEditorProvider implements vscode.CustomReadonlyEditorProvider<ViP
 
         if (result.outcome === 'rendered' && result.html) {
           await this.renderResultToWebview(webviewPanel, result.html, document.uri.fsPath);
+          // VHS-REQ-717 (epic #2348 Phase B): a VI that just rendered LIVE on the
+          // runtime is a scan opportunity. Fire the best-effort preview-time lvkit
+          // scan for a directly-opened on-disk `file` VI (its bytes match what the
+          // runtime rendered); materialized sources (a `git` diff base or a
+          // `previewRevision` temp tree) are historical and skipped. The callback
+          // never throws or blocks the preview.
+          if (document.uri.scheme === 'file') {
+            this.onPreviewScanReady?.(document.uri.fsPath, runtime.runtime.provider);
+          }
           return;
         }
 
@@ -320,7 +337,7 @@ export function registerViPreviewCustomEditor(
 ): vscode.Disposable {
   const registration = vscode.window.registerCustomEditorProvider(
     VI_PREVIEW_VIEW_TYPE,
-    new ViPreviewEditorProvider(context, options.onPreviewOpened, options.sessionManager, options.onPreviewRendered),
+    new ViPreviewEditorProvider(context, options.onPreviewOpened, options.sessionManager, options.onPreviewRendered, options.onPreviewScanReady),
     {
       supportsMultipleEditorsPerDocument: false,
       webviewOptions: { retainContextWhenHidden: true }

@@ -86,6 +86,9 @@ import { registerDevTimingStopwatch } from './dev/timingStopwatchHost';
 import { registerOpenRuntimeReportPanelCommand } from './commands/openRuntimeReportPanelCommand';
 import { registerPickContainerImageVersionCommand } from './commands/pickContainerImageVersionCommand';
 import { registerViPreviewCustomEditor } from './ui/viPreviewEditor';
+import { buildPreviewTimeViScanRequest, runPreviewTimeViScan } from './semantic/lvkit/previewTimeViScanTrigger';
+import { createLvkitViScanProvider } from './semantic/lvkit/lvkitViScanProvider';
+import { createDefaultLvkitViScanStore } from './semantic/lvkit/lvkitViScanStore';
 import { createViPreviewCacheWarmerService } from './ui/viPreviewCacheWarmerService';
 import { createViChangeWarmerService } from './ui/viChangeWarmerService';
 import { createViPreviewSessionManager } from './ui/viPreviewSessionManager';
@@ -446,9 +449,25 @@ export async function activate(
   });
   const viPreviewCacheWarmer = createViPreviewCacheWarmerService(context, viPreviewSessionManager);
   context.subscriptions.push(viPreviewCacheWarmer);
+  // VHS-REQ-717 (epic #2348 Phase B): construct the preview-time lvkit VI-scan
+  // collaborators ONCE. The provider runs `lvkit generate` against the staged
+  // VI; the store is the same on-disk store the MCP `get_vi_generated_code` tool
+  // reads (a separate process), so a fresh instance over the shared temp dir is
+  // correct. The scan is best-effort — failures never surface to the preview.
+  const previewTimeViScan = createLvkitViScanProvider();
+  const previewTimeViScanStore = createDefaultLvkitViScanStore();
   registerViPreviewCustomEditor(context, {
     sessionManager: viPreviewSessionManager,
     onPreviewOpened: (viFsPath) => viPreviewCacheWarmer.notePreviewOpened(viFsPath),
+    // VHS-REQ-717: after a VI renders live on the runtime, resolve its
+    // repository-relative address and fire the best-effort scan. Skipped when the
+    // VI is outside every open workspace folder (no repository address).
+    onPreviewScanReady: (viFsPath, runtime) => {
+      const request = buildPreviewTimeViScanRequest(viFsPath, vscode.workspace.workspaceFolders, runtime);
+      if (request) {
+        void runPreviewTimeViScan(request, { scan: previewTimeViScan, store: previewTimeViScanStore });
+      }
+    },
     // Test-only: when the integration test sets VIHS_TEST_CAPTURE_PREVIEW=1 (and
     // VIHS_TEST_PREVIEW_OUT), persist the exact rendered custom-editor webview
     // HTML so an automated test can assert the live content. The env is checked

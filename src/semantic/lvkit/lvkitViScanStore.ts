@@ -16,6 +16,9 @@
 // file can never surface the wrong VI's generated code to an agent.
 
 import { createHash } from 'node:crypto';
+import { promises as fsp } from 'node:fs';
+import * as os from 'node:os';
+import * as path from 'node:path';
 
 import {
   isIsoTimestamp,
@@ -200,4 +203,30 @@ export function createFileLvkitViScanStore(
       }
     }
   };
+}
+
+/**
+ * Default file-backed lvkit VI-scan store. Both sides of epic #2348 address the
+ * SAME on-disk directory under the OS temp dir: the extension host writes here
+ * from the Phase B preview-time trigger (VHS-REQ-717) and the long-lived MCP
+ * server process reads here from the read-only `get_vi_generated_code` tool
+ * (VHS-REQ-716). They are separate processes, so a fresh instance per process
+ * over the shared directory is correct. Defined in this light, dependency-minimal
+ * module (only `node:crypto`/`node:fs`/`node:os`/`node:path`) so the extension
+ * entrypoint can construct the store without pulling in the MCP/PR-review graph.
+ */
+export function createDefaultLvkitViScanStore(): LvkitViScanStore {
+  return createFileLvkitViScanStore(
+    {
+      storeDirectory: path.join(os.tmpdir(), 'vihs-lvkit-vi-scan-store'),
+      joinPath: path.join
+    },
+    {
+      ensureDirectory: async (directory) => {
+        await fsp.mkdir(directory, { recursive: true });
+      },
+      readFile: (filePath) => fsp.readFile(filePath, 'utf8'),
+      writeFile: (filePath, data) => fsp.writeFile(filePath, data)
+    }
+  );
 }

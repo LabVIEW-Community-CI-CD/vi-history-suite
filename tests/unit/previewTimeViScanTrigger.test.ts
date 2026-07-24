@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
+import * as path from 'node:path';
 
 import { buildLvkitViScanEnvelope, type LvkitViScanEnvelope } from '../../src/semantic/lvkit/lvkitViScanModel';
 import type { LvkitViScanInput, LvkitViScanResult } from '../../src/semantic/lvkit/lvkitViScanProvider';
 import {
+  buildPreviewTimeViScanRequest,
   runPreviewTimeViScan,
   type PreviewTimeViScanRequest
 } from '../../src/semantic/lvkit/previewTimeViScanTrigger';
@@ -68,7 +70,7 @@ function scanReturning(result: LvkitViScanResult): {
   };
 }
 
-describe('runPreviewTimeViScan (VHS-REQ-717)', () => {
+describe('runPreviewTimeViScan (VHS-REQ-717.1)', () => {
   it('persists the envelope when the scan completes', async () => {
     const envelope = makeEnvelope();
     const { scan } = scanReturning({ status: 'completed', envelope });
@@ -169,5 +171,52 @@ describe('runPreviewTimeViScan (VHS-REQ-717)', () => {
     const outcome = await runPreviewTimeViScan(REQUEST, { scan, store });
 
     expect(outcome).toEqual({ status: 'errored', reason: 'scan-threw: string failure' });
+  });
+});
+
+describe('buildPreviewTimeViScanRequest (VHS-REQ-717.2)', () => {
+  const ROOT = path.resolve('/repo');
+  const VI = path.join(ROOT, 'resource', 'A.vi');
+  const folders = (roots: string[]) => roots.map((fsPath) => ({ uri: { fsPath } }));
+
+  it('maps a VI inside the workspace folder to a request', () => {
+    const req = buildPreviewTimeViScanRequest(VI, folders([ROOT]), 'host-native');
+
+    expect(req).toEqual({
+      repositoryRoot: ROOT,
+      relativePath: path.relative(ROOT, VI),
+      runtime: 'host-native'
+    });
+  });
+
+  it('returns undefined when there are no workspace folders', () => {
+    expect(buildPreviewTimeViScanRequest(VI, undefined, 'host-native')).toBeUndefined();
+    expect(buildPreviewTimeViScanRequest(VI, [], 'host-native')).toBeUndefined();
+  });
+
+  it('returns undefined for a VI outside every workspace folder', () => {
+    const outside = path.join(path.resolve('/other'), 'B.vi');
+
+    expect(buildPreviewTimeViScanRequest(outside, folders([ROOT]), 'host-native')).toBeUndefined();
+  });
+
+  it('picks the deepest containing folder in a multi-root workspace', () => {
+    const nested = path.join(ROOT, 'nested');
+    const vi = path.join(nested, 'C.vi');
+
+    const req = buildPreviewTimeViScanRequest(vi, folders([ROOT, nested]), 'linux-container');
+
+    expect(req).toEqual({
+      repositoryRoot: nested,
+      relativePath: path.relative(nested, vi),
+      runtime: 'linux-container'
+    });
+  });
+
+  it('carries the runtime label through and skips folders with an empty root', () => {
+    const req = buildPreviewTimeViScanRequest(VI, folders(['', ROOT]), 'windows-container');
+
+    expect(req?.runtime).toBe('windows-container');
+    expect(req?.repositoryRoot).toBe(ROOT);
   });
 });
