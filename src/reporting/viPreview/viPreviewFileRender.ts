@@ -243,15 +243,17 @@ export async function renderViPreviewForFile(
           cacheStored = false;
         }
       }
-      // Exact-frame guard (#2363): hash the target VI's staged source bytes so a
-      // preview-time scan consumer can confirm the scan read the same revision
-      // that was rendered. Best-effort: a hashing failure must not fail the
-      // render, so it is left undefined.
+      // Exact-frame guard (#2363): hash the STAGED COPY of the target VI — the
+      // immutable snapshot LabVIEW actually rendered — so a preview-time scan
+      // consumer can confirm the scan read the same bytes. Hashing the working-
+      // tree source instead would nearly always match the scan's later source
+      // read even after a mid-render edit, defeating the guard. Best-effort: a
+      // hashing failure must not fail the render, so it is left undefined.
       let contentSignature: string | undefined;
       if (deps.hashFile) {
         try {
           contentSignature = await deps.hashFile(
-            path.join(stagingRootDirectory, ...selection.plan.viRelativePath.split('/'))
+            path.join(workspaceDirectory, STAGING_SUBDIRECTORY, ...selection.plan.viRelativePath.split('/'))
           );
         } catch {
           contentSignature = undefined;
