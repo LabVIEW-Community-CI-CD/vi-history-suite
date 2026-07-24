@@ -1365,8 +1365,16 @@ describe('viSemanticComparisonMcp', () => {
           )
         ) as { content: Array<{ text: string }>; isError: boolean };
         expect(response.isError).toBe(true);
-        expect(response.content[0].text).toContain('No stored lvkit scan');
-        expect(response.content[0].text).toContain('sha256:missing');
+        const parsed = JSON.parse(response.content[0].text) as {
+          status: string;
+          viPath: string;
+          contentSignature: string;
+        };
+        expect(parsed).toEqual({
+          status: 'not-found',
+          viPath: 'resource/A.vi',
+          contentSignature: 'sha256:missing'
+        });
       });
 
       it('rejects get_vi_generated_code missing contentSignature as -32602', async () => {
