@@ -18,6 +18,7 @@
 import { createHash } from 'node:crypto';
 
 import {
+  isIsoTimestamp,
   LVKIT_SCAN_SOURCES,
   LVKIT_VI_SCAN_SCHEMA,
   LVKIT_VI_SCAN_SCHEMA_VERSION,
@@ -100,11 +101,12 @@ function isLvkitGeneratedModule(value: unknown): value is LvkitGeneratedModule {
  * Fail-closed structural guard mirroring the comparison-model cache but validating
  * the COMPLETE `lvkit-vi-scan@v1` envelope shape, because `get` hands the envelope
  * to an agent as authoritative generated code. A stored value is only reused when
- * it carries the current schema id and version, every required metadata field, a
- * non-empty array of well-formed modules (plus an optional well-formed primary
- * module), and self-consistent module counts. A truncated, hand-edited, old, or
- * schema-drifted file therefore fails every affected check and is treated as a
- * miss rather than surfaced as a partial or malformed scan.
+ * it carries the current schema id and version, every required metadata field
+ * (with `generatedAt` a real ISO-8601 instant), a non-empty array of well-formed
+ * modules (plus an optional well-formed primary module), and self-consistent
+ * module counts. A truncated, hand-edited, old, or schema-drifted file therefore
+ * fails every affected check and is treated as a miss rather than surfaced as a
+ * partial or malformed scan.
  */
 function isLvkitViScanEnvelope(value: unknown): value is LvkitViScanEnvelope {
   if (typeof value !== 'object' || value === null) {
@@ -117,7 +119,7 @@ function isLvkitViScanEnvelope(value: unknown): value is LvkitViScanEnvelope {
     !isNonBlankString(envelope.viPath) ||
     !isNonBlankString(envelope.contentSignature) ||
     !isNonBlankString(envelope.runtime) ||
-    !isNonBlankString(envelope.generatedAt) ||
+    !isIsoTimestamp(envelope.generatedAt) ||
     !LVKIT_SCAN_SOURCES.includes(envelope.lvkitSource)
   ) {
     return false;

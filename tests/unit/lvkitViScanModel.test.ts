@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildLvkitViScanEnvelope,
   deriveViNameSlug,
+  isIsoTimestamp,
   LVKIT_VI_SCAN_SCHEMA,
   LVKIT_VI_SCAN_SCHEMA_VERSION,
   type BuildLvkitViScanEnvelopeInput,
@@ -252,5 +253,26 @@ describe('deriveViNameSlug (VHS-REQ-714)', () => {
 
   it('returns an empty slug for a name with no usable characters', () => {
     expect(deriveViNameSlug('()')).toBe('');
+  });
+});
+
+describe('isIsoTimestamp (VHS-REQ-714)', () => {
+  it('accepts a canonical ISO-8601 instant (UTC and with an offset)', () => {
+    expect(isIsoTimestamp('2026-07-24T11:02:31.000Z')).toBe(true);
+    expect(isIsoTimestamp('2026-07-24T13:02:31.500+02:00')).toBe(true);
+  });
+
+  it('rejects a non-ISO or unparseable string', () => {
+    expect(isIsoTimestamp('not-a-date')).toBe(false);
+    expect(isIsoTimestamp('July 24, 2026')).toBe(false);
+  });
+
+  it('rejects an impossible calendar instant Date.parse would roll over', () => {
+    expect(isIsoTimestamp('2026-02-31T00:00:00Z')).toBe(false);
+  });
+
+  it('rejects a non-string value', () => {
+    expect(isIsoTimestamp(undefined)).toBe(false);
+    expect(isIsoTimestamp(1_753_356_151_000)).toBe(false);
   });
 });

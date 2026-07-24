@@ -213,6 +213,28 @@ describe('lvkitViScanStore (VHS-REQ-716)', () => {
       expect(await store.get(VI_PATH, CONTENT_SIGNATURE)).toBeUndefined();
     });
 
+    it('rejects an envelope whose generatedAt is not an ISO-8601 timestamp', async () => {
+      const store = createStore(
+        createFakeFs({
+          [storeFilePathFor(VI_PATH, CONTENT_SIGNATURE)]: tamperedEnvelopeJson((envelope) => {
+            envelope.generatedAt = 'not-a-date';
+          })
+        })
+      );
+      expect(await store.get(VI_PATH, CONTENT_SIGNATURE)).toBeUndefined();
+    });
+
+    it('rejects an envelope missing its generatedAt timestamp', async () => {
+      const store = createStore(
+        createFakeFs({
+          [storeFilePathFor(VI_PATH, CONTENT_SIGNATURE)]: tamperedEnvelopeJson((envelope) => {
+            delete envelope.generatedAt;
+          })
+        })
+      );
+      expect(await store.get(VI_PATH, CONTENT_SIGNATURE)).toBeUndefined();
+    });
+
     it('rejects an envelope with an empty modules array', async () => {
       const store = createStore(
         createFakeFs({
