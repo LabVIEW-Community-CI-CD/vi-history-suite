@@ -115,8 +115,8 @@ export function diffPerStateAnalytics(
         throw new Error(`${name}.states[${i}] duplicates state '${r.state}' (each state must appear once).`);
       }
       seenStates.add(r.state);
-      if (typeof r.durationMs !== 'number' || !Number.isFinite(r.durationMs)) {
-        throw new Error(`${name}.states[${i}].durationMs must be a finite number.`);
+      if (typeof r.durationMs !== 'number' || !Number.isFinite(r.durationMs) || r.durationMs < 0) {
+        throw new Error(`${name}.states[${i}].durationMs must be a finite, non-negative number.`);
       }
       for (const field of ['meanCpuTotalPct', 'meanMemAvailMb', 'meanDiskTotalPct'] as const) {
         const metric = (r as Record<string, unknown>)[field];

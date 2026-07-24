@@ -126,9 +126,10 @@ export function buildPerStateRunAnalytics(input: BuildPerStateRunAnalyticsInput)
   if (!input || typeof input !== 'object') {
     throw new Error('buildPerStateRunAnalytics requires an input object.');
   }
-  if (input.runtime !== 'host-native' && input.runtime !== 'windows-container' && input.runtime !== 'linux-container') {
-    throw new Error('runtime must be host-native, windows-container, or linux-container.');
-  }  if (typeof input.recording !== 'boolean') {
+  if (!(ANALYTICS_RUNTIMES as readonly string[]).includes(input.runtime)) {
+    throw new Error(`runtime must be one of: ${ANALYTICS_RUNTIMES.join(', ')}.`);
+  }
+  if (typeof input.recording !== 'boolean') {
     throw new Error('recording must be a boolean.');
   }
   if (!Array.isArray(input.states)) {
