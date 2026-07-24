@@ -27,14 +27,25 @@ export interface PreviewTimeViScanRequest {
   readonly relativePath: string;
   /** Runtime the VI was rendered on, recorded in the envelope (e.g. `host-native`). */
   readonly runtime: string;
+  /**
+   * Exact-frame guard (#2363): the content signature of the exact VI bytes the
+   * runtime rendered, when the render pipeline can supply it. When set, the
+   * trigger persists the scan only if the scan read those same bytes (its
+   * envelope's content signature matches), so a VI edited on disk during a long
+   * render does not persist a scan describing a different revision than the
+   * displayed preview. Optional and backward-compatible: when absent, no
+   * cross-check is performed. Compared modulo an optional `sha256:` prefix.
+   */
+  readonly expectedContentSignature?: string;
 }
 
 /**
  * Typed, non-throwing outcome of a preview-time scan attempt.
  * - `persisted`: the scan completed and its envelope was written to the store.
  * - `not-persisted`: the scan did not complete (runtime blocked, preflight
- *   blocked, or lvkit failed); nothing was written. This is an expected,
- *   non-error best-effort outcome.
+ *   blocked, or lvkit failed), or it completed but read different bytes than the
+ *   render displayed (`content-changed`, the exact-frame guard for #2363);
+ *   nothing was written. This is an expected, non-error best-effort outcome.
  * - `errored`: the scan or the store write failed. This covers both an
  *   unexpected throw from the scan or store (`scan-threw`/`store-threw`) and a
  *   best-effort store write that was suppressed without throwing and reported
@@ -60,6 +71,15 @@ function describeError(error: unknown): string {
 }
 
 /**
+ * Strip an optional `sha256:` algorithm prefix and lowercase, so a signature
+ * produced with the prefix (the scan envelope) compares equal to one produced
+ * without it (a bare hex digest from the render's file hasher).
+ */
+function normalizeContentSignature(signature: string): string {
+  return signature.replace(/^sha256:/i, '').toLowerCase();
+}
+
+/**
  * VHS-REQ-717: run a best-effort single-VI lvkit scan for a just-rendered VI and
  * persist it to the store. Never throws; always resolves to a typed outcome so
  * the caller can fire it and forget (or observe the returned outcome for
@@ -82,6 +102,17 @@ export async function runPreviewTimeViScan(
 
   if (result.status !== 'completed') {
     return { status: 'not-persisted', reason: `scan-${result.status}: ${result.reason}` };
+  }
+
+  if (
+    request.expectedContentSignature !== undefined &&
+    normalizeContentSignature(result.envelope.contentSignature) !==
+      normalizeContentSignature(request.expectedContentSignature)
+  ) {
+    // The VI changed on disk between the render staging and the scan read, so the
+    // scan describes a different revision than the displayed preview. Skip the
+    // write rather than persist a scan mislabeled against the rendered frame.
+    return { status: 'not-persisted', reason: 'content-changed' };
   }
 
   let written: boolean;
