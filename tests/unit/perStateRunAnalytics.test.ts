@@ -132,6 +132,12 @@ describe('buildPerStateRunAnalytics (VHS-REQ-707.22, #2344)', () => {
     expect(() =>
       buildPerStateRunAnalytics({ ...baseInput(), recording: true, alignment: corrupt as never })
     ).toThrow(/frameCount must be a non-negative integer/);
+    // A duplicate rollup state fails closed instead of silently overwriting.
+    const dup = structuredClone(alignment) as { stateRollups: { state: string; frameCount: number }[] };
+    dup.stateRollups.push({ ...dup.stateRollups[0] });
+    expect(() =>
+      buildPerStateRunAnalytics({ ...baseInput(), recording: true, alignment: dup as never })
+    ).toThrow(/duplicate state/);
   });
 
   it('treats a null perfmon cell as missing, not zero', () => {

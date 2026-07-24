@@ -243,6 +243,12 @@ export function buildPerStateRunAnalytics(input: BuildPerStateRunAnalyticsInput)
       if (typeof r.frameCount !== 'number' || !Number.isInteger(r.frameCount) || r.frameCount < 0) {
         throw new Error(`alignment.stateRollups[${i}].frameCount must be a non-negative integer.`);
       }
+      // Reject a duplicate rollup state: collapsing into the Map would silently
+      // let a later entry overwrite an earlier one and report the wrong frame
+      // count, so fail closed as the rest of the model does.
+      if (frameCountByState.has(r.state)) {
+        throw new Error(`alignment.stateRollups has a duplicate state '${r.state}'.`);
+      }
       frameCountByState.set(r.state, r.frameCount);
     });
   }
