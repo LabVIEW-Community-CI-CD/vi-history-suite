@@ -51,6 +51,21 @@ describe('renderViPreviewForFile', () => {
     expect(deps.removeDirectory).toHaveBeenCalledWith('/tmp/ws');
   });
 
+  it('exposes the target VI content signature on a fresh render (#2363)', async () => {
+    const deps = makeDeps({ exitCode: 0, stdout: '', stderr: '' }, true, '<HTML>doc</HTML>');
+    const result = await renderViPreviewForFile(
+      { runtime: hostRuntime, viFilePath: '/repo/My VI.vi', operationDirectory: '/ops' },
+      deps
+    );
+
+    expect(result.outcome).toBe('rendered');
+    // The mock hashFile hashes the staged SOURCE path; the target VI source is the
+    // working-tree file a preview-time scan would also read, so its signature is
+    // the exact-frame token forwarded to the scan trigger.
+    const expected = createHash('sha256').update(path.join('/repo', 'My VI.vi')).digest('hex');
+    expect(result.contentSignature).toBe(expected);
+  });
+
   it('stages sibling LabVIEW source files as a dependency tree and skips non-source files (VHS-REQ-659.10)', async () => {
     const deps = makeDeps({ exitCode: 0, stdout: '', stderr: '' }, true, '<HTML>doc</HTML>', [
       { relativePath: 'Foo.vi', sizeBytes: 10 },

@@ -461,9 +461,16 @@ export async function activate(
     onPreviewOpened: (viFsPath) => viPreviewCacheWarmer.notePreviewOpened(viFsPath),
     // VHS-REQ-717: after a VI renders live on the runtime, resolve its
     // repository-relative address and fire the best-effort scan. Skipped when the
-    // VI is outside every open workspace folder (no repository address).
-    onPreviewScanReady: (viFsPath, runtime) => {
-      const request = buildPreviewTimeViScanRequest(viFsPath, vscode.workspace.workspaceFolders, runtime);
+    // VI is outside every open workspace folder (no repository address). The
+    // render's content signature (#2363) is forwarded so the trigger persists
+    // only a scan that read the same bytes that were rendered.
+    onPreviewScanReady: (viFsPath, runtime, contentSignature) => {
+      const request = buildPreviewTimeViScanRequest(
+        viFsPath,
+        vscode.workspace.workspaceFolders,
+        runtime,
+        contentSignature
+      );
       if (request) {
         void runPreviewTimeViScan(request, { scan: previewTimeViScan, store: previewTimeViScanStore });
       }

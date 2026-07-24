@@ -267,10 +267,12 @@ describe('VI Preview custom editor (VHS-REQ-659.8)', () => {
     expect(renderViPreviewForFileMock).not.toHaveBeenCalled();
   });
 
-  it('fires onPreviewScanReady with the runtime label after a live render (VHS-REQ-717)', async () => {
+  it('fires onPreviewScanReady with the runtime label and content signature after a live render (VHS-REQ-717, #2363)', async () => {
     const onPreviewScanReady = vi.fn();
     const sessionManager = {
-      renderVi: vi.fn().mockResolvedValue({ outcome: 'rendered', html: '<html>docker preview</html>' }),
+      renderVi: vi
+        .fn()
+        .mockResolvedValue({ outcome: 'rendered', html: '<html>docker preview</html>', contentSignature: 'deadbeef' }),
       dispose: vi.fn()
     };
     const context = createContext();
@@ -279,7 +281,7 @@ describe('VI Preview custom editor (VHS-REQ-659.8)', () => {
 
     await resolveEditor(provider, createPanel(), '/workspace/repo/Foo.vit');
 
-    expect(onPreviewScanReady).toHaveBeenCalledWith('/workspace/repo/Foo.vit', 'linux-container');
+    expect(onPreviewScanReady).toHaveBeenCalledWith('/workspace/repo/Foo.vit', 'linux-container', 'deadbeef');
   });
 
   it('does not fire onPreviewScanReady on a host-native cached display (VHS-REQ-717)', async () => {
