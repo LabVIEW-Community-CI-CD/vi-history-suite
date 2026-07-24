@@ -69,8 +69,9 @@ function delta(reference: number | null, candidate: number | null): number | nul
 }
 
 /**
- * Diff two per-state run-analytics models. For each state in the reference, emits
- * the candidate−reference duration and perfmon deltas (null when either side is
+ * Diff two per-state run-analytics models. Emits, for the union of reference and
+ * candidate states (reference order first, then any candidate-only states), the
+ * candidate−reference duration and perfmon deltas (null when either side is
  * absent). States present on only one side are listed in `unmatchedStates` and
  * still emitted with `inBoth=false` and null deltas. Fail-closed on non-analytics
  * input.
