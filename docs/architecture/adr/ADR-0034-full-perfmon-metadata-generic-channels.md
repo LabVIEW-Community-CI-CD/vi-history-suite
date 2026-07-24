@@ -1,4 +1,4 @@
-# ADR-0033: Full Perfmon Metadata via Additive Generic Channels
+# ADR-0034: Full Perfmon Metadata via Additive Generic Channels
 
 - Status: Accepted
 - Date: 2026-07-24
