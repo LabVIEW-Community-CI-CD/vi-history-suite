@@ -30,7 +30,7 @@ import {
   computeViComparisonModelCacheKey,
   type ViComparisonModelCache
 } from '../viComparisonModelCache';
-import { runExecFileText, type ExecFileTextRunner } from '../../tooling/execFileText';
+import { runExecFileText, safeSlice, type ExecFileTextRunner } from '../../tooling/execFileText';
 import { createCycleMeter } from '../../reporting/runtime/cycleMeter';
 import {
   localViServerLockKey,
@@ -112,11 +112,6 @@ export interface LvkitCompareDeps {
   localViServerPortNumber?: number;
   /** Injectable monotonic clock for the cycle meter (deterministic tests). */
   now?: () => number;
-}
-
-function safeSlice(text: string, max = 500): string {
-  const trimmed = text.trim();
-  return trimmed.length > max ? `${trimmed.slice(0, max)}…` : trimmed;
 }
 
 /**

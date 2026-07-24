@@ -22,8 +22,12 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 
 import { validateRepositoryTarget } from '../repositoryTarget';
-import { runExecFileText, type ExecFileTextRunner } from '../../tooling/execFileText';
+import { runExecFileText, safeSlice, type ExecFileTextRunner } from '../../tooling/execFileText';
 import { locateLvkit, type LvkitLocation } from './lvkitLocator';
+import {
+  localViServerLockKey,
+  sharedLocalViServerAcquisitionLock
+} from '../../reporting/runtime/localViServerAcquisitionLock';
 import {
   buildLvkitViScanEnvelope,
   type LvkitGeneratedModule,
@@ -32,6 +36,10 @@ import {
 
 const DEFAULT_TIMEOUT_MS = 120_000;
 const DEFAULT_MAX_BUFFER_BYTES = 64 * 1024 * 1024;
+// Canonical host-native VI Server default port. Defaulting the lock-key port to it
+// serializes an lvkit run with host-native LabVIEW launches on the same endpoint
+// (VHS-REQ-669), matching the lvkit compare provider.
+const DEFAULT_HOST_NATIVE_VI_SERVER_PORT = 3363;
 
 /** Request for a single-VI lvkit scan. */
 export interface LvkitViScanInput {
@@ -69,6 +77,15 @@ export interface LvkitViScanDeps {
   env?: NodeJS.ProcessEnv;
   timeoutMs?: number;
   maxBufferBytes?: number;
+  /**
+   * VHS-REQ-669: acquires a serialization slot before the lvkit subprocess so it
+   * takes turns on the shared local-runtime lock with host-native LabVIEW launches
+   * and other lvkit runs, mirroring the lvkit compare provider. Defaults to
+   * `sharedLocalViServerAcquisitionLock`.
+   */
+  acquireLocalRuntimeSlot?: (key: string) => Promise<() => void>;
+  /** Local VI Server port used to derive the shared lock key (defaults to 3363). */
+  localViServerPortNumber?: number;
 }
 
 function defaultComputeContentSignature(bytes: Buffer): string {
@@ -95,12 +112,6 @@ async function defaultReadGeneratedModules(outputDir: string): Promise<LvkitGene
   return modules;
 }
 
-function safeSlice(text: string, max = 500): string {
-  const trimmed = text.trim();
-  return trimmed.length > max ? `${trimmed.slice(0, max)}…` : trimmed;
-}
-
-/** Human-readable message for a thrown value, whether or not it is an `Error`. */
 function describeError(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
@@ -127,6 +138,10 @@ export function createLvkitViScanProvider(
   const env = scanDeps.env ?? process.env;
   const timeoutMs = scanDeps.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const maxBufferBytes = scanDeps.maxBufferBytes ?? DEFAULT_MAX_BUFFER_BYTES;
+  const acquireLocalRuntimeSlot =
+    scanDeps.acquireLocalRuntimeSlot ??
+    ((key: string) => sharedLocalViServerAcquisitionLock.acquire(key));
+  const localViServerPortNumber = scanDeps.localViServerPortNumber;
 
   return async function runLvkitViScan(input: LvkitViScanInput): Promise<LvkitViScanResult> {
     let target: { repositoryRoot: string; relativePath: string };
@@ -189,11 +204,26 @@ export function createLvkitViScanProvider(
         '-o',
         outputDir
       ];
-      const execResult = await runExecFileText(location.invocation.command, args, {
-        timeoutMs,
-        maxBufferBytes,
-        execFileAsync: scanDeps.execFileAsync
+      // VHS-REQ-669: serialize the lvkit subprocess on the shared local-runtime
+      // acquisition lock so it takes turns with host-native LabVIEW launches and
+      // other lvkit runs, mirroring the lvkit compare provider. Released before
+      // the generated output is read (no host resource needed after the process).
+      const lockKey = localViServerLockKey({
+        provider: 'host-native',
+        portNumber: localViServerPortNumber ?? DEFAULT_HOST_NATIVE_VI_SERVER_PORT
       });
+      const execResult = await (async () => {
+        const releaseSlot = await acquireLocalRuntimeSlot(lockKey);
+        try {
+          return await runExecFileText(location.invocation.command, args, {
+            timeoutMs,
+            maxBufferBytes,
+            execFileAsync: scanDeps.execFileAsync
+          });
+        } finally {
+          releaseSlot();
+        }
+      })();
       if (execResult.exitCode !== 0) {
         return {
           status: 'failed',
