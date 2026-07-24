@@ -5697,6 +5697,24 @@ Missing numeric IDs are intentional.
     wired into the first-run performance-monitor pull-request comment: the
     per-state section is appended when a run carries a frame-timing alignment and
     omitted (never fabricated) otherwise.
+  - A pure per-state run-analytics model projects one comparison run into
+    per-pipeline-state analytics (schema `vi-history-suite/per-state-run-analytics@v1`):
+    for each state window it records the duration and rolls up the perfmon
+    samples inside the window (mean and peak CPU and disk, mean and minimum
+    available memory), tags the run's runtime and whether the host frame
+    recording was on, and — when a frame-timing alignment is supplied — the
+    recorded frame count per state. A state with no samples in its window yields
+    explicit null rollups; it fails closed on malformed input. Pure and
+    deterministic.
+  - A pure differ compares two per-state run-analytics models and reports, per
+    state, the candidate-minus-reference duration and perfmon deltas (schema
+    `vi-history-suite/cross-runtime-perf-diff@v1`); one differ serves both the
+    cross-runtime comparison (reference host-native versus a container candidate)
+    and the recording-overhead comparison (host recording-off versus
+    recording-on), auto-classified by whether the runtimes differ. A metric
+    absent on either side is an explicit null delta (never a fabricated zero),
+    and a state present on only one side is surfaced rather than dropped. Pure
+    and deterministic.
 - Agent Work Scope:
   - Change the ADR, this requirement, and the governance contract test together;
     keep the required gate deterministic and never make a live image pull the
@@ -5719,6 +5737,8 @@ Missing numeric IDs are intentional.
   - `src/reporting/mirror/deterministicRollingBlockRing.ts`
   - `src/reporting/mirror/perfmonSessionPattern.ts`
   - `src/reporting/mirror/frameTimingAlignment.ts`
+  - `src/reporting/mirror/perStateRunAnalytics.ts`
+  - `src/reporting/mirror/crossRuntimePerfDiff.ts`
 - Verification References:
   - `tests/unit/mirrorModeGovernance.test.ts`
   - `tests/unit/mirrorParityDigest.test.ts`
@@ -5737,6 +5757,8 @@ Missing numeric IDs are intentional.
   - `tests/unit/deterministicRollingBlockRing.test.ts`
   - `tests/unit/perfmonSessionPattern.test.ts`
   - `tests/unit/frameTimingAlignment.test.ts`
+  - `tests/unit/perStateRunAnalytics.test.ts`
+  - `tests/unit/crossRuntimePerfDiff.test.ts`
 - Change Guidance:
   - This is a governance-foundation requirement: keep the documented invariants
     (human/Vagrant-only authorship, run-only container, Vagrant→`merge_group`
