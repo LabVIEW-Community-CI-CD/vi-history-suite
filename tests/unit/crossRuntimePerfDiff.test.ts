@@ -106,7 +106,7 @@ describe('diffPerStateAnalytics (VHS-REQ-707.23, #2344)', () => {
       // No samples in the window -> null cpu mean on the reference side.
       perf: { t: [500], cpuTotalPct: [30], memAvailMb: [700], diskTotalPct: [4] }
     });
-    const candidate = run('windows-container', false, 100, [60]);
+    const candidate = run('windows-container', false, 150, [60]);
     const diff = diffPerStateAnalytics(reference, candidate);
     expect(diff.deltas.find((d) => d.state === 'COMPARISON')?.meanCpuDeltaPct).toBeNull();
   });
@@ -117,7 +117,10 @@ describe('diffPerStateAnalytics (VHS-REQ-707.23, #2344)', () => {
     expect(diffPerStateAnalytics(a, b)).toEqual(diffPerStateAnalytics(a, b));
     // @ts-expect-error null reference
     expect(() => diffPerStateAnalytics(null, b)).toThrow(/reference must be/);
-    // @ts-expect-error bad candidate
-    expect(() => diffPerStateAnalytics(a, { states: 'x' })).toThrow(/candidate must be/);
+    // @ts-expect-error bad candidate (only a states array, missing schema/runtime/recording)
+    expect(() => diffPerStateAnalytics(a, { states: [] })).toThrow(/candidate must be a per-state-run-analytics@v1 model/);
+    // @ts-expect-error wrong schema
+    expect(() => diffPerStateAnalytics({ ...a, schema: 'nope' }, b)).toThrow(/reference must be a per-state-run-analytics@v1 model/);
+    expect(() => diffPerStateAnalytics(a, b, { kind: 'bogus' as never })).toThrow(/options\.kind must be/);
   });
 });

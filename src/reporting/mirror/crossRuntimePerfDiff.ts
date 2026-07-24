@@ -19,6 +19,7 @@
 // side is surfaced rather than silently dropped.
 
 import type { PipelineState } from '../comparisonPreviewPipeline';
+import { PER_STATE_RUN_ANALYTICS_SCHEMA } from './perStateRunAnalytics';
 import type { PerStateRow, PerStateRunAnalytics } from './perStateRunAnalytics';
 
 export const CROSS_RUNTIME_PERF_DIFF_SCHEMA = 'vi-history-suite/cross-runtime-perf-diff@v1';
@@ -75,13 +76,29 @@ export function diffPerStateAnalytics(
   candidate: PerStateRunAnalytics,
   options: { readonly kind?: PerfDiffKind } = {}
 ): CrossRuntimePerfDiff {
-  for (const [name, model] of [
-    ['reference', reference],
-    ['candidate', candidate]
-  ] as const) {
-    if (!model || typeof model !== 'object' || !Array.isArray(model.states)) {
-      throw new Error(`${name} must be a per-state-run-analytics model.`);
+  const validate = (name: string, value: unknown): void => {
+    const m = value as {
+      schema?: unknown;
+      runtime?: unknown;
+      recording?: unknown;
+      states?: unknown;
+    } | null;
+    if (
+      !m ||
+      typeof m !== 'object' ||
+      m.schema !== PER_STATE_RUN_ANALYTICS_SCHEMA ||
+      typeof m.runtime !== 'string' ||
+      m.runtime === '' ||
+      typeof m.recording !== 'boolean' ||
+      !Array.isArray(m.states)
+    ) {
+      throw new Error(`${name} must be a per-state-run-analytics@v1 model.`);
     }
+  };
+  validate('reference', reference);
+  validate('candidate', candidate);
+  if (options.kind !== undefined && options.kind !== 'cross-runtime' && options.kind !== 'recording-overhead') {
+    throw new Error("options.kind must be 'cross-runtime' or 'recording-overhead'.");
   }
 
   const kind: PerfDiffKind =

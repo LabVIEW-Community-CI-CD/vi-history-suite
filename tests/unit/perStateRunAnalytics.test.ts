@@ -125,7 +125,31 @@ describe('buildPerStateRunAnalytics (VHS-REQ-707.22, #2344)', () => {
       buildPerStateRunAnalytics({ ...baseInput(), perf: { t: [0, Number.NaN], cpuTotalPct: [1, 2], memAvailMb: [1, 2], diskTotalPct: [1, 2] } })
     ).toThrow(/perf\.t\[1\] must be a finite number/);
     expect(() =>
+      buildPerStateRunAnalytics({ ...baseInput(), perf: { t: [0, 50, 25], cpuTotalPct: [1, 2, 3], memAvailMb: [1, 2, 3], diskTotalPct: [1, 2, 3] } })
+    ).toThrow(/perf\.t must be non-decreasing/);
+    // A mandatory series shorter than perf.t must fail closed, not read as missing.
+    expect(() =>
+      buildPerStateRunAnalytics({ ...baseInput(), perf: { t: [0, 50], cpuTotalPct: [1], memAvailMb: [1, 2], diskTotalPct: [1, 2] } })
+    ).toThrow(/perf\.cpuTotalPct length/);
+    expect(() =>
+      // @ts-expect-error missing diskTotalPct
+      buildPerStateRunAnalytics({ ...baseInput(), perf: { t: [0, 50], cpuTotalPct: [1, 2], memAvailMb: [1, 2] } })
+    ).toThrow(/perf\.diskTotalPct must be an array/);
+    expect(() =>
       buildPerStateRunAnalytics({ ...baseInput(), states: [{ state: 'STAGING', startMs: 100, endMs: 0 }] })
-    ).toThrow(/reversed/);
+    ).toThrow(/startMs < endMs/);
+    expect(() =>
+      buildPerStateRunAnalytics({ ...baseInput(), states: [{ state: 'STAGING', startMs: 50, endMs: 50 }] })
+    ).toThrow(/startMs < endMs/);
+    // Overlapping windows would double-count samples across states.
+    expect(() =>
+      buildPerStateRunAnalytics({
+        ...baseInput(),
+        states: [
+          { state: 'STAGING', startMs: 0, endMs: 150 },
+          { state: 'COMPARISON', startMs: 100, endMs: 300 }
+        ]
+      })
+    ).toThrow(/overlaps the previous window/);
   });
 });
