@@ -64,6 +64,12 @@ export type PipelineState =
   | 'COMPLETE'
   | 'FAILED';
 
+/**
+ * The six timed pipeline states (excludes the terminal `COMPLETE`/`FAILED`
+ * markers) — the per-state timing/analytics model operates on these only.
+ */
+export type TimedPipelineState = Exclude<PipelineState, 'COMPLETE' | 'FAILED'>;
+
 /** The LabVIEW cycle states (one external invocation each). */
 export type PipelineCycleState = 'PREVIEW_LEFT' | 'PREVIEW_RIGHT' | 'COMPARISON';
 
