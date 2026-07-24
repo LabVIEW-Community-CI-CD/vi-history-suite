@@ -136,6 +136,25 @@ describe('buildLvkitViScanEnvelope (VHS-REQ-714.1, VHS-REQ-714.2)', () => {
     );
   });
 
+  it('rejects a parseable-but-non-ISO generatedAt (e.g. "July 24, 2026")', () => {
+    expect(() => buildLvkitViScanEnvelope(baseInput({ generatedAt: 'July 24, 2026' }))).toThrow(
+      /generatedAt must be an ISO-8601 timestamp/
+    );
+  });
+
+  it('rejects an impossible calendar date that Date.parse would roll over (Feb 31)', () => {
+    expect(() =>
+      buildLvkitViScanEnvelope(baseInput({ generatedAt: '2026-02-31T00:00:00Z' }))
+    ).toThrow(/not a real calendar instant/);
+  });
+
+  it('accepts a valid ISO-8601 instant with a timezone offset', () => {
+    const envelope = buildLvkitViScanEnvelope(
+      baseInput({ generatedAt: '2026-07-24T13:02:31.500+02:00' })
+    );
+    expect(envelope.generatedAt).toBe('2026-07-24T13:02:31.500+02:00');
+  });
+
   it('fails closed on an unknown lvkitSource', () => {
     expect(() => buildLvkitViScanEnvelope(baseInput({ lvkitSource: 'docker' as never }))).toThrow(
       /lvkitSource must be one of/

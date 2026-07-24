@@ -229,6 +229,15 @@ export function createLvkitViScanProvider(
       }
 
       return { status: 'completed', envelope };
+    } catch (error) {
+      // Workspace setup (temp-dir make, mkdir, VI materialization) is the only
+      // remaining throw source in this block; convert it to a typed result so a
+      // full disk or permission error is machine-readable rather than an
+      // unhandled rejection.
+      return {
+        status: 'failed',
+        reason: `lvkit-scan-workspace-failed: ${describeError(error)}`
+      };
     } finally {
       if (tempDir) {
         await removeDir(tempDir).catch(() => undefined);

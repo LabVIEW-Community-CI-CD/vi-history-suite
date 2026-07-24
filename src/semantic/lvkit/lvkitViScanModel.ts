@@ -79,14 +79,31 @@ function requireNonEmptyString(value: unknown, field: string): string {
   return value;
 }
 
-// Reject a non-ISO or non-real generatedAt so a persisted envelope always carries
-// a meaningful timestamp; a UTC round-trip catches both malformed strings and
-// impossible calendar dates (e.g. Feb 31) that Date.parse would otherwise coerce.
+// Require a real ISO-8601 instant. `Date.parse` alone is too permissive: it
+// accepts non-ISO text (e.g. `July 24, 2026`) and silently rolls impossible
+// calendar dates over (e.g. `2026-02-31` -> Mar 3). So we (1) require the
+// canonical ISO-8601 shape and (2) round-trip the named calendar fields through
+// `Date.UTC` and require they come back unchanged, rejecting impossible dates.
+const ISO_8601_INSTANT =
+  /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,3}))?(?:Z|[+-]\d{2}:\d{2})$/;
+
 function requireIsoTimestamp(value: unknown): string {
   const text = requireNonEmptyString(value, 'generatedAt');
-  const epoch = Date.parse(text);
-  if (!Number.isFinite(epoch)) {
+  const match = ISO_8601_INSTANT.exec(text);
+  if (!match || !Number.isFinite(Date.parse(text))) {
     throw new Error('lvkit-vi-scan: generatedAt must be an ISO-8601 timestamp');
+  }
+  const [, year, month, day, hour, minute, second] = match.map(Number);
+  const roundTrip = new Date(Date.UTC(year, month - 1, day, hour, minute, second));
+  if (
+    roundTrip.getUTCFullYear() !== year ||
+    roundTrip.getUTCMonth() !== month - 1 ||
+    roundTrip.getUTCDate() !== day ||
+    roundTrip.getUTCHours() !== hour ||
+    roundTrip.getUTCMinutes() !== minute ||
+    roundTrip.getUTCSeconds() !== second
+  ) {
+    throw new Error('lvkit-vi-scan: generatedAt is not a real calendar instant');
   }
   return text;
 }
