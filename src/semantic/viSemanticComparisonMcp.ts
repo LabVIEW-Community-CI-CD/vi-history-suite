@@ -31,6 +31,10 @@ import {
   renderViSemanticPrReviewMarkdown
 } from './viSemanticReviewMarkdown';
 import type { ViRepositoryIndex, ViRepositoryIndexInput } from './viRepositoryIndex';
+// Type-only: the retrieval tool returns a stored lvkit VI-scan envelope; the
+// store (filesystem) is injected via ViSemanticMcpAsyncDeps so this module
+// stays runtime-pure and free of the node-fs boundary.
+import type { LvkitViScanEnvelope } from './lvkit/lvkitViScanModel';
 import type {
   ViPreviewCacheEntry,
   ViPreviewCacheEntryDocument,
@@ -118,6 +122,24 @@ export interface ViChangedVis {
   changedVis: string[];
   count: number;
 }
+
+/** Arguments accepted by the `get_vi_generated_code` tool. */
+export interface GetViGeneratedCodeInput {
+  /** Repository-relative path to the VI (POSIX or Windows separators). */
+  viPath: string;
+  /** Content signature of the exact VI revision that keyed the stored scan. */
+  contentSignature: string;
+}
+
+/**
+ * Result of a `get_vi_generated_code` lookup. `found` carries the stored
+ * lvkit-vi-scan envelope verbatim (a content-addressed cache hit); `not-found`
+ * echoes the requested address so an agent can report the miss precisely (no
+ * scan has been persisted for that VI path + content signature).
+ */
+export type GetViGeneratedCodeResult =
+  | { status: 'found'; envelope: LvkitViScanEnvelope }
+  | { status: 'not-found'; viPath: string; contentSignature: string };
 
 export interface JsonRpcRequest {
   jsonrpc: '2.0';
@@ -505,6 +527,23 @@ const CHANGED_VIS_INPUT_SCHEMA = {
   required: ['repositoryRoot', 'baseHash', 'selectedHash']
 } as const;
 
+const GET_VI_GENERATED_CODE_INPUT_SCHEMA = {
+  type: 'object',
+  properties: {
+    viPath: {
+      type: 'string',
+      description:
+        'Repository-relative path to the VI whose generated code to retrieve (POSIX or Windows separators).'
+    },
+    contentSignature: {
+      type: 'string',
+      description:
+        'Content signature of the exact VI revision (e.g. a sha256:... digest of the VI bytes) that keyed the stored scan.'
+    }
+  },
+  required: ['viPath', 'contentSignature']
+} as const;
+
 /**
  * MCP tool annotations (per the 2025-06-18 spec `ToolAnnotations`) declaring
  * behavioral hints so an agent host can reason about a tool before calling it.
@@ -696,6 +735,17 @@ export const VI_SEMANTIC_MCP_TOOLS = [
       'many VIs) before committing to it. Read-only.',
     inputSchema: CHANGED_VIS_INPUT_SCHEMA,
     annotations: { title: 'List changed VIs', ...READ_ONLY_OPEN_WORLD }
+  },
+  {
+    name: 'get_vi_generated_code',
+    description:
+      'Retrieve the stored lvkit-generated Python for one VI revision \u2014 a ' +
+      'vi-history-suite/lvkit-vi-scan@v1 envelope (the LabVIEW-free Python projection of the VI plus ' +
+      'its module inventory), addressed by the VI\u2019s repository-relative path and content ' +
+      'signature. Returns the exact stored scan on a cache hit, or a not-found result when no scan ' +
+      'has been persisted for that path + signature. Read-only; never runs lvkit.',
+    inputSchema: GET_VI_GENERATED_CODE_INPUT_SCHEMA,
+    annotations: { title: 'Get VI generated code', ...READ_ONLY_OPEN_WORLD }
   }
 ] as const;
 
@@ -1219,7 +1269,8 @@ const ASYNC_ONLY_TOOL_NAMES: ReadonlySet<string> = new Set([
   'get_preview_cache_entry',
   'get_runtime_health',
   'get_preview_diagnostics',
-  'list_changed_vis'
+  'list_changed_vis',
+  'get_vi_generated_code'
 ]);
 
 /** Every tool name published by the registry (the authoritative known set). */
@@ -1736,6 +1787,26 @@ function renderPrReviewResult(
   return toolTextResult(JSON.stringify(review, null, 2));
 }
 
+function parseGetViGeneratedCodeArguments(rawArguments: unknown): GetViGeneratedCodeInput {
+  const args = requireArgumentsObject(rawArguments);
+  return {
+    viPath: requireStringArg(args, 'viPath'),
+    contentSignature: requireStringArg(args, 'contentSignature')
+  };
+}
+
+function renderGeneratedCodeResult(result: GetViGeneratedCodeResult): unknown {
+  if (result.status === 'not-found') {
+    // A store miss is a tool-execution outcome (not a protocol error): keep it in
+    // the result envelope as isError so the agent reads the miss and its address.
+    return toolTextResult(
+      `No stored lvkit scan for ${result.viPath} @ ${result.contentSignature}`,
+      true
+    );
+  }
+  return toolTextResult(JSON.stringify(result.envelope, null, 2));
+}
+
 export interface ViSemanticMcpAsyncDeps {
   /**
    * Runtime orchestrator that invokes a real comparison. Injected by the stdio
@@ -1791,6 +1862,13 @@ export interface ViSemanticMcpAsyncDeps {
    * when absent, `list_changed_vis` reports a wired-up error.
    */
   listChangedVis?: (input: ChangedVisInput) => Promise<ViChangedVis>;
+  /**
+   * Read-only lvkit VI-scan retriever backed by the content-addressed store
+   * (filesystem). Injected by the stdio entrypoint; when absent,
+   * `get_vi_generated_code` reports a wired-up error. Keeps the fs boundary out
+   * of the pure handler (VHS-REQ-716).
+   */
+  getViGeneratedCode?: (input: GetViGeneratedCodeInput) => Promise<GetViGeneratedCodeResult>;
 }
 
 /** Injected read-only preview-cache inspection surface for the MCP tools. */
@@ -1922,6 +2000,15 @@ export async function handleViSemanticMcpMessageAsync(
         deps.listChangedVis,
         () => parseChangedVisArguments(params.arguments),
         (changed) => toolTextResult(JSON.stringify(changed, null, 2))
+      );
+    }
+    if (params.name === 'get_vi_generated_code') {
+      return invokeInjectedTool(
+        id,
+        'get_vi_generated_code',
+        deps.getViGeneratedCode,
+        () => parseGetViGeneratedCodeArguments(params.arguments),
+        renderGeneratedCodeResult
       );
     }
   }

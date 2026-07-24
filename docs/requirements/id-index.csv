@@ -730,3 +730,4 @@ VHS-REQ-712,Software,Active,srs.md#vhs-req-712-labview-free-lvkit-semantic-compa
 VHS-REQ-713,Software,Active,srs.md#vhs-req-713-real-windows-full-matrix-runtime-validation-host,,,docs/requirements/srs.md
 VHS-REQ-714,Software,Active,srs.md#vhs-req-714-single-vi-lvkit-scan-provider,,,docs/requirements/srs.md
 VHS-REQ-715,Software,Active,srs.md#vhs-req-715-full-perfmon-metadata-capture-and-generic-channel-series,,,docs/requirements/srs.md
+VHS-REQ-716,Software,Active,srs.md#vhs-req-716-lvkit-vi-scan-store-and-generated-code-retrieval-tool,,,docs/requirements/srs.md
