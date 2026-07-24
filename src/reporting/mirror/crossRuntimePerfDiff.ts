@@ -97,6 +97,23 @@ export function diffPerStateAnalytics(
     ) {
       throw new Error(`${name} must be a per-state-run-analytics@v1 model.`);
     }
+    // Each row must be well-formed so a malformed model cannot yield NaN deltas
+    // or an undefined state key (fail closed at the boundary).
+    m.states.forEach((row, i) => {
+      const r = row as { state?: unknown; durationMs?: unknown } | null;
+      if (!r || typeof r !== 'object' || typeof r.state !== 'string' || r.state === '') {
+        throw new Error(`${name}.states[${i}].state must be a non-empty string.`);
+      }
+      if (typeof r.durationMs !== 'number' || !Number.isFinite(r.durationMs)) {
+        throw new Error(`${name}.states[${i}].durationMs must be a finite number.`);
+      }
+      for (const field of ['meanCpuTotalPct', 'meanMemAvailMb', 'meanDiskTotalPct'] as const) {
+        const metric = (r as Record<string, unknown>)[field];
+        if (metric !== null && (typeof metric !== 'number' || !Number.isFinite(metric))) {
+          throw new Error(`${name}.states[${i}].${field} must be a finite number or null.`);
+        }
+      }
+    });
   };
   validate('reference', reference);
   validate('candidate', candidate);

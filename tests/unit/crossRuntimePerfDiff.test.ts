@@ -123,4 +123,15 @@ describe('diffPerStateAnalytics (VHS-REQ-707.23, #2344)', () => {
     expect(() => diffPerStateAnalytics({ ...a, schema: 'nope' }, b)).toThrow(/reference must be a per-state-run-analytics@v1 model/);
     expect(() => diffPerStateAnalytics(a, b, { kind: 'bogus' as never })).toThrow(/options\.kind must be/);
   });
+
+  it('fails closed on a malformed states row (missing durationMs / NaN metric) (#2344 review)', () => {
+    const a = run('host-native', false, 300, [30, 40, 50]);
+    const b = run('windows-container', false, 300, [30, 40, 50]);
+    const badDuration = structuredClone(b) as { states: { durationMs: number }[] };
+    (badDuration.states[0] as { durationMs: unknown }).durationMs = Number.NaN;
+    expect(() => diffPerStateAnalytics(a, badDuration as never)).toThrow(/durationMs must be a finite number/);
+    const badMetric = structuredClone(b) as { states: { meanCpuTotalPct: number | null }[] };
+    (badMetric.states[0] as { meanCpuTotalPct: unknown }).meanCpuTotalPct = Number.NaN;
+    expect(() => diffPerStateAnalytics(a, badMetric as never)).toThrow(/meanCpuTotalPct must be a finite number or null/);
+  });
 });
