@@ -170,6 +170,17 @@ describe('buildPerStateRunAnalytics (VHS-REQ-707.22, #2344)', () => {
     expect(() =>
       buildPerStateRunAnalytics({ ...baseInput(), perf: { t: [0, 50], cpuTotalPct: [1], memAvailMb: [1, 2], diskTotalPct: [1, 2] } })
     ).toThrow(/perf\.cpuTotalPct length/);
+    // A non-finite (NaN) or non-number cell must fail closed, not be swallowed as "missing".
+    expect(() =>
+      buildPerStateRunAnalytics({ ...baseInput(), perf: { t: [0, 50], cpuTotalPct: [1, Number.NaN], memAvailMb: [1, 2], diskTotalPct: [1, 2] } })
+    ).toThrow(/perf\.cpuTotalPct\[1\] must be null or a finite number/);
+    expect(() =>
+      buildPerStateRunAnalytics({ ...baseInput(), perf: { t: [0, 50], cpuTotalPct: [1, 2], memAvailMb: [1, 2], diskTotalPct: [1, 'x' as unknown as number] } })
+    ).toThrow(/perf\.diskTotalPct\[1\] must be null or a finite number/);
+    // null cells (explicitly missing samples) remain valid.
+    expect(() =>
+      buildPerStateRunAnalytics({ ...baseInput(), perf: { t: [0, 50], cpuTotalPct: [1, null], memAvailMb: [null, 2], diskTotalPct: [1, 2] } })
+    ).not.toThrow();
     expect(() =>
       // @ts-expect-error missing diskTotalPct
       buildPerStateRunAnalytics({ ...baseInput(), perf: { t: [0, 50], cpuTotalPct: [1, 2], memAvailMb: [1, 2] } })
