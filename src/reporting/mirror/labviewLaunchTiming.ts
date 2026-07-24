@@ -145,7 +145,9 @@ function parseExecutionReadyMarker(text: string): Components | null {
 
 /** Read a single `#Header:` value line, trimmed, or null when absent. */
 function readHeaderValue(text: string, header: string): string | null {
-  const m = text.match(new RegExp(`^#${header}:\\s*(.*)$`, 'mu'));
+  // Horizontal whitespace only (`[ \t]`, not `\s`) so an EMPTY value does not
+  // greedily consume the newline and capture the following header line.
+  const m = text.match(new RegExp(`^#${header}:[ \\t]*(.*)$`, 'mu'));
   if (!m) {
     return null;
   }

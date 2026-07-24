@@ -117,6 +117,27 @@ describe('parseLabviewLaunchTiming (VHS-REQ-707.24, #2344)', () => {
     );
   });
 
+  it('converts 12 AM (midnight) and 12 PM (noon) correctly', () => {
+    const midnight = parseLabviewLaunchTiming(
+      '#Date: Fri, Jul 24, 2026 12:00:00 AM\n#AppName: LabVIEW'
+    );
+    expect(midnight.processStartIso).toBe('2026-07-24T00:00:00.000');
+    const noon = parseLabviewLaunchTiming('#Date: Fri, Jul 24, 2026 12:00:00 PM\n#AppName: LabVIEW');
+    expect(noon.processStartIso).toBe('2026-07-24T12:00:00.000');
+  });
+
+  it('treats an empty header value as absent (null)', () => {
+    const t = parseLabviewLaunchTiming('#Date: Fri, Jul 24, 2026 11:02:31 AM\n#AppName:   \n#Version:');
+    expect(t.appName).toBeNull();
+    expect(t.version).toBeNull();
+  });
+
+  it('fails closed when the #Date month abbreviation is unrecognized', () => {
+    expect(() => parseLabviewLaunchTiming('#Date: Fri, Xyz 24, 2026 11:02:31 AM\n#AppName: LabVIEW')).toThrow(
+      /"#Date:" header/
+    );
+  });
+
   it('fails closed on empty, non-string, or non-LabVIEW-log input', () => {
     expect(() => parseLabviewLaunchTiming('')).toThrow(/non-empty log text/);
     expect(() => parseLabviewLaunchTiming('   ')).toThrow(/non-empty log text/);
