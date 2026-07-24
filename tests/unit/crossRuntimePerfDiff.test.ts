@@ -141,5 +141,9 @@ describe('diffPerStateAnalytics (VHS-REQ-707.23, #2344)', () => {
     const dup = structuredClone(b) as { states: unknown[] };
     dup.states = [...dup.states, dup.states[0]];
     expect(() => diffPerStateAnalytics(a, dup as never)).toThrow(/duplicates state/);
+    // Terminal/arbitrary state labels violate the TimedPipelineState contract.
+    const badState = structuredClone(b) as { states: { state: string }[] };
+    badState.states[0].state = 'COMPLETE';
+    expect(() => diffPerStateAnalytics(a, badState as never)).toThrow(/is not one of the six timed pipeline states/);
   });
 });
