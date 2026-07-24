@@ -32,8 +32,10 @@ const {
 
 // Project #4 field/option ids. Recorded in repo memory; the source of truth is
 // the live project, but Tier-1 only ever sets these two known values, so pinning
-// them keeps the executor a pure lookup.
-const PROJECT_ID = 'PVT_kwDODQiayc4Bd5Rq';
+// them keeps the executor a pure lookup. The board node id is imported from the
+// single source of truth (referenced by node id, never by the ambiguous
+// "vihs"/"VIHS" name).
+const { PROJECT_ID } = require('./lib/controlPlaneProject.js');
 const FIELD_MAP = {
   'Status::Done': { fieldId: 'PVTSSF_lADODQiayc4Bd5RqzhYXb_U', optionId: '98236657' },
   'Evidence State::Proven': { fieldId: 'PVTSSF_lADODQiayc4Bd5RqzhYXcAU', optionId: '0c635d9f' }

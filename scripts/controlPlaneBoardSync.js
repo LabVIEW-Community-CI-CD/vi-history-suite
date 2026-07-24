@@ -20,9 +20,9 @@
 
 const { spawnSync } = require('node:child_process');
 const { planBoardSync } = require('./controlPlaneWrite.js');
-
-const PROJECT_NUMBER = 4;
-const PROJECT_OWNER = 'LabVIEW-Community-CI-CD';
+// Board identity (number + owner) comes from the single source of truth so the
+// authoritative Project #4 "vihs" is never confused with the duplicate #3 "VIHS".
+const { PROJECT_NUMBER, PROJECT_OWNER } = require('./lib/controlPlaneProject.js');
 
 class BoardSyncAuthError extends Error {
   constructor(message) {
