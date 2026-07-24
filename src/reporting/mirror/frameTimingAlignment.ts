@@ -201,8 +201,10 @@ export function alignFramesToPerf(input: AlignFramesToPerfInput): FrameTimingAli
     requireSeries('labviewWorkingSetMb', input.perf.labviewWorkingSetMb);
   }
 
-  // Each state window must have a name and finite, non-reversed bounds so a
-  // corrupt window cannot masquerade as a legitimately out-of-state frame.
+  // Each state window must have a name and finite, ordered, non-empty,
+  // non-overlapping bounds so a corrupt window cannot masquerade as a
+  // legitimately out-of-state frame, and state assignment stays unambiguous.
+  let previousEndMs = Number.NEGATIVE_INFINITY;
   input.states.forEach((window, i) => {
     if (!window || typeof window !== 'object' || typeof window.state !== 'string' || window.state === '') {
       throw new Error(`states[${i}].state must be a non-empty string.`);
@@ -210,9 +212,17 @@ export function alignFramesToPerf(input: AlignFramesToPerfInput): FrameTimingAli
     if (!Number.isFinite(window.startMs) || !Number.isFinite(window.endMs)) {
       throw new Error(`states[${i}] bounds must be finite numbers.`);
     }
-    if (window.startMs > window.endMs) {
-      throw new Error(`states[${i}] is reversed (startMs ${window.startMs} > endMs ${window.endMs}).`);
+    if (window.startMs >= window.endMs) {
+      throw new Error(
+        `states[${i}] must have startMs < endMs (got startMs ${window.startMs}, endMs ${window.endMs}).`
+      );
     }
+    if (window.startMs < previousEndMs) {
+      throw new Error(
+        `states[${i}] overlaps the previous window (startMs ${window.startMs} < previous endMs ${previousEndMs}).`
+      );
+    }
+    previousEndMs = window.endMs;
   });
 
   // Each frame must be a shaped object; stripBits content is decoded fail-closed
@@ -228,23 +238,49 @@ export function alignFramesToPerf(input: AlignFramesToPerfInput): FrameTimingAli
   });
 
   const findNearestSample = (alignedMs: number): { index: number; offsetMs: number } | null => {
-    if (perfTimes.length === 0) {
+    const n = perfTimes.length;
+    if (n === 0) {
       return null;
     }
-    let bestIndex = -1;
-    let bestOffset = Number.POSITIVE_INFINITY;
-    for (let i = 0; i < perfTimes.length; i += 1) {
-      const sampleTime = perfTimes[i];
-      if (!Number.isFinite(sampleTime)) {
-        continue;
-      }
-      const offset = Math.abs(sampleTime - alignedMs);
-      if (offset < bestOffset) {
-        bestOffset = offset;
-        bestIndex = i;
+    // perf.t is validated non-decreasing, so the nearest sample is one of the
+    // two neighbors of the lower-bound insertion point — O(log n) per frame.
+    let lo = 0;
+    let hi = n;
+    while (lo < hi) {
+      const mid = (lo + hi) >>> 1;
+      if (perfTimes[mid] < alignedMs) {
+        lo = mid + 1;
+      } else {
+        hi = mid;
       }
     }
-    return bestIndex === -1 ? null : { index: bestIndex, offsetMs: bestOffset };
+    const right = lo; // first index with perfTimes[right] >= alignedMs (or n)
+    const left = lo - 1; // last index with perfTimes[left] < alignedMs (or -1)
+    let bestIndex: number;
+    if (left < 0) {
+      bestIndex = right;
+    } else if (right >= n) {
+      bestIndex = left;
+    } else {
+      const distLeft = alignedMs - perfTimes[left];
+      const distRight = perfTimes[right] - alignedMs;
+      // Tie goes to the earlier (left) sample, matching the linear contract.
+      bestIndex = distRight < distLeft ? right : left;
+    }
+    // Snap to the FIRST index carrying the chosen value so duplicate timestamps
+    // resolve to the earliest sample (identical to a left-to-right scan).
+    const bestValue = perfTimes[bestIndex];
+    let firstLo = 0;
+    let firstHi = n;
+    while (firstLo < firstHi) {
+      const mid = (firstLo + firstHi) >>> 1;
+      if (perfTimes[mid] < bestValue) {
+        firstLo = mid + 1;
+      } else {
+        firstHi = mid;
+      }
+    }
+    return { index: firstLo, offsetMs: Math.abs(perfTimes[firstLo] - alignedMs) };
   };
 
   const findState = (alignedMs: number): string | null => {
