@@ -37,7 +37,9 @@ without a breaking schema change:
   unchanged named `series`/`peaks`, a `channels` array: every captured counter
   column as `{ counterPath, samples, peak }`, in header order, with the leading
   `\\HOST` machine prefix stripped so paths are host-independent and comparable
-  across a developer host and CI. This is a superset of the named series. The
+  across a developer host and CI. This is a superset of the captured *counters*
+  (raw values — note the named `labviewWorkingSetMb` series is byte→MB converted
+  while its channel keeps raw bytes, so it is not a value-superset of `series`). The
   schema id stays `vi-history-suite/perfmon-sample-series@v1` because the change
   is purely additive (a new field; the named channels and all existing consumers
   are untouched).

@@ -181,6 +181,18 @@ describe('perfmon full-profile capture + generic channels (VHS-REQ-715.1, VHS-RE
     );
   });
 
+  it('fails closed on an unrecognized profile', () => {
+    expect(() =>
+      buildWindowsPerfmonCapturePlan({ ...base, profile: 'expanded' as never })
+    ).toThrow(/profile must be/);
+  });
+
+  it('fails closed on a non-array extraCounters (a bare string must not iterate per-char)', () => {
+    expect(() =>
+      buildWindowsPerfmonCapturePlan({ ...base, extraCounters: '\\Processor(_Total)\\% Processor Time' as never })
+    ).toThrow(/extraCounters must be an array/);
+  });
+
   it('round-trips a full-profile capture into generic host-independent channels', () => {
     const plan = buildWindowsPerfmonCapturePlan({ ...base, profile: 'full', labviewProcessName: 'LabVIEW' });
     // Synthesize a 2-sample PDH-CSV with a \\HOST prefix on every counter path.

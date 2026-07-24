@@ -55,10 +55,14 @@ export interface PerfmonSampleSeries {
    * VHS-REQ-715: every captured counter as a generic, host-independent channel
    * (the PDH path with the leading `\\HOST` stripped), in header order, with raw
    * per-sample values aligned 1:1 with `t`. This is the full-metadata surface — a
-   * superset of the named `series` above — so a consumer can read any counter the
-   * tiered capture plan recorded (e.g. per-process Private Bytes, IO Read
-   * Bytes/sec, page faults), not only the five named channels. Additive: the
-   * named `series`/`peaks` are unchanged and the schema id stays `@v1`.
+   * superset of the *counters* behind the named `series` — so a consumer can read
+   * any counter the tiered capture plan recorded (e.g. per-process Private Bytes,
+   * IO Read Bytes/sec, page faults), not only the five named channels. Values are
+   * RAW as captured: note the named `labviewWorkingSetMb` series is byte→MB
+   * converted, whereas its channel keeps the raw byte value, so `channels` is a
+   * superset of the captured counters, not of the named series' transformed
+   * values. Additive: the named `series`/`peaks` are unchanged and the schema id
+   * stays `@v1`.
    */
   readonly channels: readonly PerfmonChannel[];
   /** Per-series maxima over the run (null when a series had no numeric samples). */
