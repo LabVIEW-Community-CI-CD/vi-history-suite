@@ -32,6 +32,16 @@ export interface PerfmonSeriesColumns {
   readonly labviewWorkingSetMb?: (number | null)[];
 }
 
+/** One captured PDH counter as a generic, host-independent channel. */
+export interface PerfmonChannel {
+  /** PDH counter path with the leading `\\HOST` stripped (host-independent). */
+  readonly counterPath: string;
+  /** Raw per-sample values, aligned 1:1 with the series `t` array. */
+  readonly samples: (number | null)[];
+  /** Maximum numeric sample over the run (null when the channel had none). */
+  readonly peak: number | null;
+}
+
 export interface PerfmonSampleSeries {
   readonly schema: typeof PERFMON_SAMPLE_SERIES_SCHEMA;
   readonly schemaVersion: typeof PERFMON_SAMPLE_SERIES_SCHEMA_VERSION;
@@ -41,6 +51,16 @@ export interface PerfmonSampleSeries {
   /** Elapsed milliseconds from the first sample (TDMS time channel). */
   readonly t: number[];
   readonly series: PerfmonSeriesColumns;
+  /**
+   * VHS-REQ-715: every captured counter as a generic, host-independent channel
+   * (the PDH path with the leading `\\HOST` stripped), in header order, with raw
+   * per-sample values aligned 1:1 with `t`. This is the full-metadata surface — a
+   * superset of the named `series` above — so a consumer can read any counter the
+   * tiered capture plan recorded (e.g. per-process Private Bytes, IO Read
+   * Bytes/sec, page faults), not only the five named channels. Additive: the
+   * named `series`/`peaks` are unchanged and the schema id stays `@v1`.
+   */
+  readonly channels: readonly PerfmonChannel[];
   /** Per-series maxima over the run (null when a series had no numeric samples). */
   readonly peaks: {
     readonly cpuTotalPct: number | null;
@@ -121,6 +141,11 @@ function counterKeyFor(counterPath: string): SeriesKey | null {
   return null;
 }
 
+/** Strip the leading `\\HOST` machine prefix so a counter path is host-independent. */
+function normalizeCounterPath(counterPath: string): string {
+  return counterPath.replace(/^\\\\[^\\]+/u, '');
+}
+
 function medianInterval(timestamps: number[]): number {
   const deltas: number[] = [];
   for (let i = 1; i < timestamps.length; i += 1) {
@@ -168,6 +193,10 @@ export function parsePdhCsv(csvText: string): PerfmonSampleSeries {
   }
   // header[0] is the timestamp column; header[1..] are counter paths.
   const columnKeys = header.slice(1).map(counterKeyFor);
+  // VHS-REQ-715: every counter column becomes a generic host-independent channel,
+  // in header order, regardless of whether it maps to a named series.
+  const channelPaths = header.slice(1).map(normalizeCounterPath);
+  const channelSamples: (number | null)[][] = channelPaths.map(() => []);
   const timestamps: number[] = [];
   const columns: Record<SeriesKey, (number | null)[]> = {
     cpuTotalPct: [],
@@ -188,6 +217,11 @@ export function parsePdhCsv(csvText: string): PerfmonSampleSeries {
       continue;
     }
     timestamps.push(tsMs);
+    // Full-metadata channels: capture EVERY column's raw value this row (null when
+    // absent), keeping each channel aligned 1:1 with the timestamps/`t` array.
+    for (let c = 0; c < channelPaths.length; c += 1) {
+      channelSamples[c].push(parseCell(fields[c + 1]));
+    }
     // Accumulate per recognized column; default missing columns to null this row.
     const rowSeen = new Set<SeriesKey>();
     for (let c = 0; c < columnKeys.length; c += 1) {
@@ -210,6 +244,11 @@ export function parsePdhCsv(csvText: string): PerfmonSampleSeries {
 
   const firstTs = timestamps.length > 0 ? timestamps[0] : 0;
   const t = timestamps.map((ts) => ts - firstTs);
+  const channels: PerfmonChannel[] = channelPaths.map((counterPath, i) => ({
+    counterPath,
+    samples: channelSamples[i],
+    peak: peakOf(channelSamples[i])
+  }));
   const series: PerfmonSeriesColumns = {
     cpuTotalPct: columns.cpuTotalPct,
     memAvailMb: columns.memAvailMb,
@@ -225,6 +264,7 @@ export function parsePdhCsv(csvText: string): PerfmonSampleSeries {
     sampleCount: timestamps.length,
     t,
     series,
+    channels,
     peaks: {
       cpuTotalPct: peakOf(columns.cpuTotalPct),
       memAvailMb: peakOf(columns.memAvailMb),
