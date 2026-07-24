@@ -28,7 +28,7 @@ export interface PerfmonSeriesColumns {
   readonly diskTotalPct: (number | null)[];
   /** LabVIEW process processor time, percent (present only when a LabVIEW process was sampled). */
   readonly labviewCpuPct?: (number | null)[];
-  /** LabVIEW process private working set, megabytes (present only when sampled). */
+  /** LabVIEW process working set (total), megabytes (present only when sampled). */
   readonly labviewWorkingSetMb?: (number | null)[];
 }
 
@@ -60,9 +60,9 @@ export interface PerfmonSampleSeries {
    * IO Read Bytes/sec, page faults), not only the five named channels. Values are
    * RAW as captured: note the named `labviewWorkingSetMb` series is byte→MB
    * converted, whereas its channel keeps the raw byte value, so `channels` is a
-   * superset of the captured counters, not of the named series' transformed
-   * values. Additive: the named `series`/`peaks` are unchanged and the schema id
-   * stays `@v1`.
+   * superset of the *counters* behind the named `series`, but not a value-superset
+   * of the named series' transformed values. Additive: the named `series`/`peaks`
+   * are unchanged and the schema id stays `@v1`.
    */
   readonly channels: readonly PerfmonChannel[];
   /** Per-series maxima over the run (null when a series had no numeric samples). */
@@ -139,7 +139,16 @@ function counterKeyFor(counterPath: string): SeriesKey | null {
   if (path.includes('\\process(') && path.includes('\\% processor time')) {
     return 'labviewCpuPct';
   }
-  if (path.includes('\\process(') && path.includes('working set')) {
+  // Map the named working-set series to the process TOTAL Working Set only, never
+  // the `Working Set - Private` variant. The full profile captures BOTH counters,
+  // so a loose `working set` match would be order-dependent; excluding the private
+  // variant makes the named series deterministically the total working set (the
+  // private counter is still preserved as a generic channel).
+  if (
+    path.includes('\\process(') &&
+    path.includes('working set') &&
+    !path.includes('working set - private')
+  ) {
     return 'labviewWorkingSetMb';
   }
   return null;
@@ -223,8 +232,13 @@ export function parsePdhCsv(csvText: string): PerfmonSampleSeries {
     timestamps.push(tsMs);
     // Full-metadata channels: capture EVERY column's raw value this row (null when
     // absent), keeping each channel aligned 1:1 with the timestamps/`t` array.
+    // Parse each cell ONCE into rowCells and reuse it for both the generic channel
+    // and the recognized named series below (no per-cell double parse).
+    const rowCells: (number | null)[] = new Array(channelPaths.length);
     for (let c = 0; c < channelPaths.length; c += 1) {
-      channelSamples[c].push(parseCell(fields[c + 1]));
+      const cell = parseCell(fields[c + 1]);
+      rowCells[c] = cell;
+      channelSamples[c].push(cell);
     }
     // Accumulate per recognized column; default missing columns to null this row.
     const rowSeen = new Set<SeriesKey>();
@@ -236,7 +250,7 @@ export function parsePdhCsv(csvText: string): PerfmonSampleSeries {
       if (!key || rowSeen.has(key)) {
         continue;
       }
-      let value = parseCell(fields[c + 1]);
+      let value = rowCells[c];
       if (value !== null && key === 'labviewWorkingSetMb') {
         value = Math.round((value / BYTES_PER_MB) * 100) / 100;
       }
