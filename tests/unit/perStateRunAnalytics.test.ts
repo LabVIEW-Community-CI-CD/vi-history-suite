@@ -126,6 +126,12 @@ describe('buildPerStateRunAnalytics (VHS-REQ-707.22, #2344)', () => {
       // @ts-expect-error bogus alignment shape
       buildPerStateRunAnalytics({ ...baseInput(), recording: true, alignment: { stateRollups: [] } })
     ).toThrow(/frame-timing-alignment@v1 model/);
+    // A corrupted rollup entry (bad frameCount) fails closed rather than propagating.
+    const corrupt = structuredClone(alignment) as { stateRollups: { frameCount: number }[] };
+    (corrupt.stateRollups[0] as { frameCount: unknown }).frameCount = Number.NaN;
+    expect(() =>
+      buildPerStateRunAnalytics({ ...baseInput(), recording: true, alignment: corrupt as never })
+    ).toThrow(/frameCount must be a non-negative integer/);
   });
 
   it('treats a null perfmon cell as missing, not zero', () => {

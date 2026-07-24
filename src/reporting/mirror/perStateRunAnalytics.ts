@@ -222,9 +222,19 @@ export function buildPerStateRunAnalytics(input: BuildPerStateRunAnalyticsInput)
 
   const frameCountByState = new Map<string, number>();
   if (input.alignment) {
-    for (const rollup of input.alignment.stateRollups) {
-      frameCountByState.set(rollup.state, rollup.frameCount);
-    }
+    // The alignment shape is validated above, but a corrupted/hand-edited model
+    // could still carry a bad rollup entry; fail closed rather than propagate a
+    // NaN/negative frame count into the analytics.
+    input.alignment.stateRollups.forEach((rollup, i) => {
+      const r = rollup as { state?: unknown; frameCount?: unknown } | null;
+      if (!r || typeof r !== 'object' || typeof r.state !== 'string' || r.state === '') {
+        throw new Error(`alignment.stateRollups[${i}].state must be a non-empty string.`);
+      }
+      if (typeof r.frameCount !== 'number' || !Number.isInteger(r.frameCount) || r.frameCount < 0) {
+        throw new Error(`alignment.stateRollups[${i}].frameCount must be a non-negative integer.`);
+      }
+      frameCountByState.set(r.state, r.frameCount);
+    });
   }
 
   const rows: PerStateRow[] = input.states.map((window) => {
