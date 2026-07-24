@@ -18,7 +18,8 @@ export const LVKIT_VI_SCAN_SCHEMA_VERSION = 1;
 /** How lvkit was resolved for the scan (provenance, mirrors the locator). */
 export type LvkitScanSource = 'env' | 'path' | 'uvx';
 
-const LVKIT_SCAN_SOURCES: readonly LvkitScanSource[] = ['env', 'path', 'uvx'];
+/** The complete set of valid {@link LvkitScanSource} provenance values. */
+export const LVKIT_SCAN_SOURCES: readonly LvkitScanSource[] = ['env', 'path', 'uvx'];
 
 /** One generated Python file, captured verbatim. */
 export interface LvkitGeneratedModule {
