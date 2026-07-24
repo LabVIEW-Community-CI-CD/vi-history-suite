@@ -35,8 +35,12 @@ export interface PreviewTimeViScanRequest {
  * - `not-persisted`: the scan did not complete (runtime blocked, preflight
  *   blocked, or lvkit failed); nothing was written. This is an expected,
  *   non-error best-effort outcome.
- * - `errored`: the scan or the store write threw unexpectedly; swallowed here so
- *   the preview is never affected.
+ * - `errored`: the scan or the store write failed. This covers both an
+ *   unexpected throw from the scan or store (`scan-threw`/`store-threw`) and a
+ *   best-effort store write that was suppressed without throwing and reported
+ *   `false` (`store-write-failed`), so a caller never reads `persisted` for a
+ *   scan that was not actually written. Always swallowed here so the preview is
+ *   never affected.
  */
 export type PreviewTimeViScanOutcome =
   | { readonly status: 'persisted'; readonly viPath: string; readonly contentSignature: string }
