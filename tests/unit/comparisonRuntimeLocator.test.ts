@@ -1,4 +1,5 @@
 import { EventEmitter } from 'node:events';
+import { randomUUID } from 'node:crypto';
 
 import { describe, expect, it, vi } from 'vitest';
 
@@ -2991,17 +2992,25 @@ describe('acquireWindowsContainerImage additional branch coverage (VHS-REQ-654)'
 
 describe('probeWindowsRegistryHostLabviewAvailable default fs probe (VHS-REQ-634.1)', () => {
   it('binds the default filesystem existence probe when none is injected', async () => {
+    // A registry install directory that matches the parser's `...\LabVIEW <year>\`
+    // shape but is GUARANTEED absent on every host: a random-UUID subtree at the
+    // drive root that this test never creates. Injecting no `pathExists` exercises
+    // the production default (`fs.access`) while keeping the assertion deterministic
+    // regardless of whether the host actually has LabVIEW installed. (The earlier
+    // fabricated `C:\Program Files\...\LabVIEW 2026\` path exists on dev/CI hosts
+    // that do have LabVIEW 2026, which made the default probe return true.)
+    const absentInstallDir = `C:\\vihs-absent-${randomUUID()}\\National Instruments\\LabVIEW 2026\\`;
     const available = await probeWindowsRegistryHostLabviewAvailable({
       queryWindowsRegistry: async () =>
         [
           'HKEY_LOCAL_MACHINE\\SOFTWARE\\National Instruments\\LabVIEW\\26.0',
-          '    Path    REG_SZ    C:\\Program Files\\National Instruments\\LabVIEW 2026\\',
+          `    Path    REG_SZ    ${absentInstallDir}`,
           ''
         ].join('\r\n')
     });
 
-    // The fabricated Windows install path is not present on the test host, so the
-    // default fs.access probe resolves the host runtime as unavailable.
+    // The derived `<dir>LabVIEW.exe` cannot exist, so the default fs.access probe
+    // resolves the host runtime as unavailable.
     expect(available).toBe(false);
   });
 });
