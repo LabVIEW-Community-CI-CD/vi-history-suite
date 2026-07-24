@@ -8,8 +8,11 @@
 //   - recording-overhead: reference = host recording-OFF, candidate = host
 //     recording-ON (the cost the host-owned frame recording adds per state).
 //
-// The reference is the baseline "how this host performed"; positive duration or
-// CPU deltas mean the candidate was slower / heavier. Host-orchestrated states
+// The reference is the baseline "how this host performed"; every delta is
+// candidate MINUS reference. Sign convention differs by metric: for duration,
+// CPU percent, and disk percent a POSITIVE delta means the candidate was slower
+// or heavier; for AVAILABLE memory a NEGATIVE delta means the candidate had less
+// memory free (i.e. HIGHER memory pressure). Host-orchestrated states
 // (STAGING/VALIDATION/UNSTAGING) should show near-zero cross-runtime deltas (a
 // control); the runtime-executed states (previews + comparison) carry the signal.
 //
@@ -20,7 +23,7 @@
 
 import type { PipelineState } from '../comparisonPreviewPipeline';
 import { PER_STATE_RUN_ANALYTICS_SCHEMA } from './perStateRunAnalytics';
-import type { PerStateRow, PerStateRunAnalytics } from './perStateRunAnalytics';
+import type { AnalyticsRuntime, PerStateRow, PerStateRunAnalytics } from './perStateRunAnalytics';
 
 export const CROSS_RUNTIME_PERF_DIFF_SCHEMA = 'vi-history-suite/cross-runtime-perf-diff@v1';
 export const CROSS_RUNTIME_PERF_DIFF_SCHEMA_VERSION = 1;
@@ -46,8 +49,8 @@ export interface CrossRuntimePerfDiff {
   readonly schema: typeof CROSS_RUNTIME_PERF_DIFF_SCHEMA;
   readonly schemaVersion: typeof CROSS_RUNTIME_PERF_DIFF_SCHEMA_VERSION;
   readonly kind: PerfDiffKind;
-  readonly referenceRuntime: string;
-  readonly candidateRuntime: string;
+  readonly referenceRuntime: AnalyticsRuntime;
+  readonly candidateRuntime: AnalyticsRuntime;
   readonly referenceRecording: boolean;
   readonly candidateRecording: boolean;
   readonly deltas: PerStateDelta[];
