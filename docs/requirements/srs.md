@@ -5715,6 +5715,20 @@ Missing numeric IDs are intentional.
     absent on either side is an explicit null delta (never a fabricated zero),
     and a state present on only one side is surfaced rather than dropped. Pure
     and deterministic.
+  - A pure LabVIEW launch-timing parser reads the deterministic per-launch
+    LabVIEW/LabVIEWCLI application log (host-native / mirror-mode only) so a run's
+    LabVIEW launch dead time is separable from its active work (schema
+    `vi-history-suite/labview-launch-timing@v1`): from one log document it extracts
+    the identity headers (app name, version, run mode) and the deterministic,
+    millisecond-precision lifecycle markers — the `#Date:` process start, the
+    `Initializing headless LabVIEW` init marker, and the `starting LabVIEW
+    Execution System` execution-ready marker — and derives the init-to-ready
+    duration. Emitted timestamps are local wall-clock strings (the log records
+    local time) while the derived duration is computed from a shared component
+    epoch so the delta is time-zone independent; a marker a failed launch never
+    wrote is an explicit null (never fabricated), and it fails closed on a
+    non-string or empty document and on a document lacking the `#Date:` LabVIEW-log
+    header. Pure and deterministic.
 - Agent Work Scope:
   - Change the ADR, this requirement, and the governance contract test together;
     keep the required gate deterministic and never make a live image pull the
@@ -5739,6 +5753,7 @@ Missing numeric IDs are intentional.
   - `src/reporting/mirror/frameTimingAlignment.ts`
   - `src/reporting/mirror/perStateRunAnalytics.ts`
   - `src/reporting/mirror/crossRuntimePerfDiff.ts`
+  - `src/reporting/mirror/labviewLaunchTiming.ts`
 - Verification References:
   - `tests/unit/mirrorModeGovernance.test.ts`
   - `tests/unit/mirrorParityDigest.test.ts`
@@ -5759,6 +5774,7 @@ Missing numeric IDs are intentional.
   - `tests/unit/frameTimingAlignment.test.ts`
   - `tests/unit/perStateRunAnalytics.test.ts`
   - `tests/unit/crossRuntimePerfDiff.test.ts`
+  - `tests/unit/labviewLaunchTiming.test.ts`
 - Change Guidance:
   - This is a governance-foundation requirement: keep the documented invariants
     (human/Vagrant-only authorship, run-only container, Vagrant→`merge_group`
