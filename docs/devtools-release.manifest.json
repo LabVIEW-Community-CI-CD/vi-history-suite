@@ -6,9 +6,10 @@
   "categories": [
     {
       "id": "scripts-cli",
-      "description": "Node CLI tools under scripts/ (risk ledger, release readiness, traceability/requirements audits, etc.) plus the Windows runtime-matrix PowerShell helpers invoked by runWindowsRuntimeMatrix.js.",
+      "description": "Node CLI tools under scripts/ (risk ledger, release readiness, traceability/requirements audits, etc.) plus their scripts/lib/ helper modules (schemaEnvelope, outputContract, controlPlaneProject) and the Windows runtime-matrix PowerShell helpers invoked by runWindowsRuntimeMatrix.js. The scripts/lib/**/*.js glob keeps the released CLI dependency closure complete — many scripts/*.js CLIs require ./lib/*.js at runtime, so shipping the CLIs without them fails with Cannot find module.",
       "include": [
         "scripts/*.js",
+        "scripts/lib/**/*.js",
         "scripts/windows-runtime-matrix/**/*.ps1"
       ]
     },
