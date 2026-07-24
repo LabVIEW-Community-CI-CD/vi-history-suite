@@ -59,10 +59,10 @@ describe('renderViPreviewForFile', () => {
     );
 
     expect(result.outcome).toBe('rendered');
-    // The mock hashFile hashes the staged SOURCE path; the target VI source is the
-    // working-tree file a preview-time scan would also read, so its signature is
-    // the exact-frame token forwarded to the scan trigger.
-    const expected = createHash('sha256').update(path.join('/repo', 'My VI.vi')).digest('hex');
+    // The mock hashFile hashes the given path; the signature is taken of the
+    // STAGED COPY under the workspace `vi/` root — the immutable bytes LabVIEW
+    // rendered — which the scan trigger compares against the later source read.
+    const expected = createHash('sha256').update(path.join('/tmp/ws', 'vi', 'My VI.vi')).digest('hex');
     expect(result.contentSignature).toBe(expected);
   });
 
