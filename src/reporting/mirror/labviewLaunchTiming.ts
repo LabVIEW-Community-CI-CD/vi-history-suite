@@ -8,7 +8,8 @@
 // runs inside the container and is not host-observable).
 //
 // Each launch writes `%TEMP%\LabVIEW[CLI]_<bits>_<ver>_<mode>_<user>_cur.txt`
-// with deterministic, millisecond-precision markers:
+// with deterministic markers (the `#Date:` header is SECOND-precision; the
+// init and execution-ready markers below are MILLISECOND-precision):
 //   #Date: Fri, Jul 24, 2026 11:02:31 AM        (process start + identity headers)
 //   #AppName: LabVIEW    #Version: 26.1.2f2 64-bit    #AppRunMode: Headless
 //   [HeadlessManager][7/24/2026 11:02:31.179 AM] Initializing headless LabVIEW
@@ -25,7 +26,7 @@
 export const LABVIEW_LAUNCH_TIMING_SCHEMA = 'vi-history-suite/labview-launch-timing@v1';
 export const LABVIEW_LAUNCH_TIMING_SCHEMA_VERSION = 1;
 
-export interface LabviewLaunchTiming {
+export interface LabVIEWLaunchTiming {
   readonly schema: typeof LABVIEW_LAUNCH_TIMING_SCHEMA;
   readonly schemaVersion: typeof LABVIEW_LAUNCH_TIMING_SCHEMA_VERSION;
   /** `#AppName` header (e.g. `LabVIEW`, `LabVIEWCLI`), or null when absent. */
@@ -34,7 +35,8 @@ export interface LabviewLaunchTiming {
   readonly version: string | null;
   /** `#AppRunMode` header (e.g. `Headless`, `Interactive`), or null when absent. */
   readonly runMode: string | null;
-  /** Process start from the `#Date:` header, as a local ISO string (no Z). */
+  /** Process start from the `#Date:` header, as a local ISO string (no Z). The
+   * `#Date:` header is second-precision, so the fractional part is always `.000`. */
   readonly processStartIso: string;
   /** `Initializing headless LabVIEW` marker time (local ISO, no Z), or null. */
   readonly initAtIso: string | null;
@@ -72,6 +74,13 @@ function toComponentEpochMs(c: Components): number {
   return Date.UTC(c.year, c.month - 1, c.day, c.hour, c.minute, c.second, c.ms);
 }
 
+/** Integer range guard (inclusive) so a syntactically-matching but out-of-range
+ * component (e.g. day 99, hour 70) is rejected rather than silently normalized
+ * by `Date.UTC` into an impossible timestamp or a misleading duration. */
+function inRange(n: number, lo: number, hi: number): boolean {
+  return Number.isInteger(n) && n >= lo && n <= hi;
+}
+
 /** Convert a 12-hour clock (with AM/PM) to 24-hour. */
 function to24Hour(hour12: number, meridiem: string): number {
   const m = meridiem.toUpperCase();
@@ -93,13 +102,22 @@ function parseHeaderDate(text: string): Components | null {
   if (!month) {
     return null;
   }
+  const day = Number(m[2]);
+  const hour12 = Number(m[4]);
+  const minute = Number(m[5]);
+  const second = Number(m[6]);
+  // Reject out-of-range calendar/clock fields (fail closed): a 12-hour clock hour
+  // is 1..12, and a corrupted `#Date` (e.g. `Jul 99 ... 13:70:80`) must not pass.
+  if (!inRange(day, 1, 31) || !inRange(hour12, 1, 12) || !inRange(minute, 0, 59) || !inRange(second, 0, 59)) {
+    return null;
+  }
   return {
     year: Number(m[3]),
     month,
-    day: Number(m[2]),
-    hour: to24Hour(Number(m[4]), m[7]),
-    minute: Number(m[5]),
-    second: Number(m[6]),
+    day,
+    hour: to24Hour(hour12, m[7]),
+    minute,
+    second,
     ms: 0
   };
 }
@@ -112,14 +130,26 @@ function parseInitMarker(text: string): Components | null {
   if (!m) {
     return null;
   }
+  const month = Number(m[1]);
+  const day = Number(m[2]);
+  const hour12 = Number(m[4]);
+  const minute = Number(m[5]);
+  const second = Number(m[6]);
+  const ms = Number(m[7].padEnd(3, '0'));
+  if (
+    !inRange(month, 1, 12) || !inRange(day, 1, 31) || !inRange(hour12, 1, 12) ||
+    !inRange(minute, 0, 59) || !inRange(second, 0, 59) || !inRange(ms, 0, 999)
+  ) {
+    return null;
+  }
   return {
     year: Number(m[3]),
-    month: Number(m[1]),
-    day: Number(m[2]),
-    hour: to24Hour(Number(m[4]), m[8]),
-    minute: Number(m[5]),
-    second: Number(m[6]),
-    ms: Number(m[7].padEnd(3, '0'))
+    month,
+    day,
+    hour: to24Hour(hour12, m[8]),
+    minute,
+    second,
+    ms
   };
 }
 
@@ -131,15 +161,28 @@ function parseExecutionReadyMarker(text: string): Components | null {
   if (!m) {
     return null;
   }
+  const hour = Number(m[1]);
+  const minute = Number(m[2]);
+  const second = Number(m[3]);
+  // Fractional seconds are nanoseconds in the exec-system marker; truncate to ms.
+  const ms = Number(m[4].slice(0, 3).padEnd(3, '0'));
+  const month = Number(m[6]);
+  const day = Number(m[7]);
+  // The exec-system marker uses a 24-hour clock.
+  if (
+    !inRange(month, 1, 12) || !inRange(day, 1, 31) || !inRange(hour, 0, 23) ||
+    !inRange(minute, 0, 59) || !inRange(second, 0, 59) || !inRange(ms, 0, 999)
+  ) {
+    return null;
+  }
   return {
     year: Number(m[5]),
-    month: Number(m[6]),
-    day: Number(m[7]),
-    hour: Number(m[1]),
-    minute: Number(m[2]),
-    second: Number(m[3]),
-    // Fractional seconds are nanoseconds in the exec-system marker; truncate to ms.
-    ms: Number(m[4].slice(0, 3).padEnd(3, '0'))
+    month,
+    day,
+    hour,
+    minute,
+    second,
+    ms
   };
 }
 
@@ -162,13 +205,13 @@ function readHeaderValue(text: string, header: string): string | null {
  * launch markers surface as explicit null (never fabricated) so a failed launch
  * that never reached execution-ready is represented faithfully.
  */
-export function parseLabviewLaunchTiming(logText: string): LabviewLaunchTiming {
+export function parseLabVIEWLaunchTiming(logText: string): LabVIEWLaunchTiming {
   if (typeof logText !== 'string' || logText.trim().length === 0) {
-    throw new Error('parseLabviewLaunchTiming requires non-empty log text.');
+    throw new Error('parseLabVIEWLaunchTiming requires non-empty log text.');
   }
   const processStart = parseHeaderDate(logText);
   if (!processStart) {
-    throw new Error('parseLabviewLaunchTiming requires a LabVIEW log with a "#Date:" header.');
+    throw new Error('parseLabVIEWLaunchTiming requires a LabVIEW log with a "#Date:" header.');
   }
   const initAt = parseInitMarker(logText);
   const executionReady = parseExecutionReadyMarker(logText);

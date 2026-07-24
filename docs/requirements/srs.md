@@ -5719,15 +5719,17 @@ Missing numeric IDs are intentional.
     LabVIEW/LabVIEWCLI application log (host-native / mirror-mode only) so a run's
     LabVIEW launch dead time is separable from its active work (schema
     `vi-history-suite/labview-launch-timing@v1`): from one log document it extracts
-    the identity headers (app name, version, run mode) and the deterministic,
-    millisecond-precision lifecycle markers — the `#Date:` process start, the
+    the identity headers (app name, version, run mode) and the deterministic
+    lifecycle markers — the `#Date:` process start (second-precision), the
     `Initializing headless LabVIEW` init marker, and the `starting LabVIEW
-    Execution System` execution-ready marker — and derives the init-to-ready
-    duration. Emitted timestamps are local wall-clock strings (the log records
-    local time) while the derived duration is computed from a shared component
-    epoch so the delta is time-zone independent; a marker a failed launch never
-    wrote is an explicit null (never fabricated), and it fails closed on a
-    non-string or empty document and on a document lacking the `#Date:` LabVIEW-log
+    Execution System` execution-ready marker (both millisecond-precision) — and
+    derives the init-to-ready duration. Emitted timestamps are local wall-clock
+    strings (the log records local time) while the derived duration is computed
+    from a shared component epoch so the delta is time-zone independent;
+    out-of-range calendar/clock components are rejected (fail closed) rather than
+    silently normalized; a marker a failed launch never wrote is an explicit null
+    (never fabricated), and it fails closed on a non-string or empty document and
+    on a document lacking the `#Date:` LabVIEW-log
     header. Pure and deterministic.
 - Agent Work Scope:
   - Change the ADR, this requirement, and the governance contract test together;
