@@ -57,7 +57,8 @@ function baseInput(): AlignFramesToPerfInput {
     perf: {
       t: [0, 100, 200, 300],
       cpuTotalPct: [10, 20, 30, 40],
-      memAvailMb: [900, 800, 700, 600]
+      memAvailMb: [900, 800, 700, 600],
+      diskTotalPct: [1, 2, 3, 4]
     },
     states: STATES,
     epochOffsetMs: -1000
@@ -80,7 +81,8 @@ describe('alignFramesToPerf (VHS-REQ-707.20, #2324)', () => {
       perfSampleIndex: 0,
       perfSampleOffsetMs: 10,
       cpuTotalPct: 10,
-      memAvailMb: 900
+      memAvailMb: 900,
+      diskTotalPct: 1
     });
     expect(result.frames[1]).toMatchObject({ alignedMs: 110, state: 'PREVIEW_LEFT', perfSampleIndex: 1, cpuTotalPct: 20 });
     expect(result.frames[2]).toMatchObject({ alignedMs: 210, state: 'COMPARISON', perfSampleIndex: 2, cpuTotalPct: 30 });
@@ -101,10 +103,10 @@ describe('alignFramesToPerf (VHS-REQ-707.20, #2324)', () => {
   it('rolls per-state perfmon up as a mean over the frames in each state', () => {
     const result = alignFramesToPerf(baseInput());
     const byState = new Map(result.stateRollups.map((r) => [r.state, r]));
-    expect(byState.get('STAGING')).toMatchObject({ frameCount: 1, meanCpuTotalPct: 10 });
+    expect(byState.get('STAGING')).toMatchObject({ frameCount: 1, meanCpuTotalPct: 10, meanDiskTotalPct: 1 });
     expect(byState.get('PREVIEW_LEFT')).toMatchObject({ frameCount: 1, meanCpuTotalPct: 20 });
     // Two COMPARISON frames (aligned 210 + 250), both nearest sample idx 2 (cpu 30).
-    expect(byState.get('COMPARISON')).toMatchObject({ frameCount: 2, meanCpuTotalPct: 30 });
+    expect(byState.get('COMPARISON')).toMatchObject({ frameCount: 2, meanCpuTotalPct: 30, meanDiskTotalPct: 3 });
     // One rollup per unique state, in first-seen order.
     expect(result.stateRollups.map((r) => r.state)).toEqual(['STAGING', 'PREVIEW_LEFT', 'COMPARISON']);
   });
@@ -130,6 +132,7 @@ describe('alignFramesToPerf (VHS-REQ-707.20, #2324)', () => {
       perfSampleOffsetMs: null,
       cpuTotalPct: null,
       memAvailMb: null,
+      diskTotalPct: null,
       labviewCpuPct: null,
       labviewWorkingSetMb: null
     });
@@ -141,7 +144,7 @@ describe('alignFramesToPerf (VHS-REQ-707.20, #2324)', () => {
   it('yields null perfmon fields (never fabricated) when there are no samples, but still assigns state', () => {
     const input: AlignFramesToPerfInput = {
       ...baseInput(),
-      perf: { t: [], cpuTotalPct: [], memAvailMb: [] }
+      perf: { t: [], cpuTotalPct: [], memAvailMb: [], diskTotalPct: [] }
     };
     const result = alignFramesToPerf(input);
     expect(result.frames[0]).toMatchObject({
@@ -160,6 +163,7 @@ describe('alignFramesToPerf (VHS-REQ-707.20, #2324)', () => {
         t: [0, 100, 200, 300],
         cpuTotalPct: [10, 20, 30, 40],
         memAvailMb: [900, 800, 700, 600],
+        diskTotalPct: [1, 2, 3, 4],
         labviewCpuPct: [5, 15, 25, 35],
         labviewWorkingSetMb: [100, 110, 120, 130]
       }
@@ -173,7 +177,7 @@ describe('alignFramesToPerf (VHS-REQ-707.20, #2324)', () => {
   it('treats a null series cell as missing (null), not zero', () => {
     const input: AlignFramesToPerfInput = {
       ...baseInput(),
-      perf: { t: [0, 100, 200, 300], cpuTotalPct: [null, 20, 30, 40], memAvailMb: [900, 800, 700, 600] }
+      perf: { t: [0, 100, 200, 300], cpuTotalPct: [null, 20, 30, 40], memAvailMb: [900, 800, 700, 600], diskTotalPct: [1, 2, 3, 4] }
     };
     const result = alignFramesToPerf(input);
     expect(result.frames[0].cpuTotalPct).toBeNull();
@@ -193,8 +197,55 @@ describe('alignFramesToPerf (VHS-REQ-707.20, #2324)', () => {
     // @ts-expect-error states not array
     expect(() => alignFramesToPerf({ ...baseInput(), states: 'x' })).toThrow(/states must be an array/);
     expect(() =>
-      alignFramesToPerf({ ...baseInput(), perf: { t: undefined as unknown as number[], cpuTotalPct: [], memAvailMb: [] } })
+      alignFramesToPerf({ ...baseInput(), perf: { t: undefined as unknown as number[], cpuTotalPct: [], memAvailMb: [], diskTotalPct: [] } })
     ).toThrow(/perf\.t must be an array/);
     expect(() => alignFramesToPerf({ ...baseInput(), epochOffsetMs: Number.NaN })).toThrow(/epochOffsetMs/);
+  });
+
+  it('fails closed on a mandatory series that is missing or mismatched in length (#2324 review)', () => {
+    // diskTotalPct is a mandatory perfmon-sample-series channel.
+    expect(() =>
+      // @ts-expect-error missing diskTotalPct
+      alignFramesToPerf({ ...baseInput(), perf: { t: [0, 100], cpuTotalPct: [1, 2], memAvailMb: [1, 2] } })
+    ).toThrow(/perf\.diskTotalPct must be an array/);
+    expect(() =>
+      alignFramesToPerf({
+        ...baseInput(),
+        perf: { t: [0, 100, 200, 300], cpuTotalPct: [10, 20], memAvailMb: [900, 800, 700, 600], diskTotalPct: [1, 2, 3, 4] }
+      })
+    ).toThrow(/perf\.cpuTotalPct length/);
+  });
+
+  it('fails closed on non-finite or non-decreasing perf.t (#2324 review)', () => {
+    expect(() =>
+      alignFramesToPerf({ ...baseInput(), perf: { t: [0, Number.NaN, 200, 300], cpuTotalPct: [1, 2, 3, 4], memAvailMb: [1, 2, 3, 4], diskTotalPct: [1, 2, 3, 4] } })
+    ).toThrow(/perf\.t\[1\] must be a finite number/);
+    expect(() =>
+      alignFramesToPerf({ ...baseInput(), perf: { t: [0, 200, 100, 300], cpuTotalPct: [1, 2, 3, 4], memAvailMb: [1, 2, 3, 4], diskTotalPct: [1, 2, 3, 4] } })
+    ).toThrow(/perf\.t must be non-decreasing/);
+  });
+
+  it('fails closed on a malformed state window (reversed / non-finite / unnamed) (#2324 review)', () => {
+    expect(() =>
+      alignFramesToPerf({ ...baseInput(), states: [{ state: 'X', startMs: 200, endMs: 100 }] })
+    ).toThrow(/reversed/);
+    expect(() =>
+      alignFramesToPerf({ ...baseInput(), states: [{ state: 'X', startMs: Number.POSITIVE_INFINITY, endMs: 100 }] })
+    ).toThrow(/bounds must be finite/);
+    expect(() =>
+      // @ts-expect-error empty state name
+      alignFramesToPerf({ ...baseInput(), states: [{ state: '', startMs: 0, endMs: 100 }] })
+    ).toThrow(/non-empty string/);
+  });
+
+  it('fails closed on a malformed frame element (#2324 review)', () => {
+    expect(() =>
+      // @ts-expect-error null frame
+      alignFramesToPerf({ ...baseInput(), frames: [null] })
+    ).toThrow(/frames\[0\] must be an object/);
+    expect(() =>
+      // @ts-expect-error bad frameIndex
+      alignFramesToPerf({ ...baseInput(), frames: [{ frameIndex: 'x', stripBits: '0' }] })
+    ).toThrow(/frameIndex must be a finite number/);
   });
 });
