@@ -1,0 +1,278 @@
+{
+  "changes": [
+    {
+      "uid": "3682",
+      "full_id": "MouseDown.vi::3682",
+      "kind": "node",
+      "change": "removed",
+      "label": "ViewLayer.vi",
+      "detail": null,
+      "bounds": [
+        1957.0,
+        158.0,
+        1989.0,
+        190.0
+      ],
+      "bounds_before": null,
+      "path": null,
+      "path_before": null,
+      "chain_paths": [
+        [
+          [
+            1865.5,
+            162.5
+          ],
+          [
+            1961.0,
+            162.0
+          ]
+        ],
+        [
+          [
+            1985.0,
+            162.0
+          ],
+          [
+            2222.0,
+            162.0
+          ],
+          [
+            2222.0,
+            357.5
+          ]
+        ]
+      ],
+      "container_uid": "188",
+      "frame_path": "188=3"
+    },
+    {
+      "uid": "1171",
+      "full_id": "MouseDown.vi::1171",
+      "kind": "wire",
+      "change": "added",
+      "label": "Bundle/Unbundle By Name",
+      "detail": "\u2190 Dropper.vi",
+      "bounds": [
+        1286.0,
+        296.5,
+        1286.0,
+        296.5
+      ],
+      "bounds_before": null,
+      "path": [
+        [
+          929.5,
+          93.5
+        ],
+        [
+          1286.0,
+          93.5
+        ],
+        [
+          1286.0,
+          296.5
+        ]
+      ],
+      "path_before": null,
+      "chain_paths": null,
+      "container_uid": "188",
+      "frame_path": "188=3"
+    },
+    {
+      "uid": "2281",
+      "full_id": "MouseDown.vi::2281",
+      "kind": "wire",
+      "change": "modified",
+      "label": "f_value",
+      "detail": "\u2190 Action (was Action)",
+      "bounds": [
+        1046.5,
+        266.5,
+        1046.5,
+        266.5
+      ],
+      "bounds_before": [
+        1162.0,
+        388.0,
+        1162.0,
+        388.0
+      ],
+      "path": [
+        [
+          416.0,
+          342.0
+        ],
+        [
+          1021.0,
+          342.0
+        ],
+        [
+          1021.0,
+          266.5
+        ],
+        [
+          1046.5,
+          266.5
+        ]
+      ],
+      "path_before": [
+        [
+          1352.0,
+          386.0
+        ],
+        [
+          1362.0,
+          386.0
+        ],
+        [
+          1362.0,
+          416.0
+        ],
+        [
+          1957.0,
+          416.0
+        ],
+        [
+          1957.0,
+          327.5
+        ],
+        [
+          1982.5,
+          327.5
+        ]
+      ],
+      "chain_paths": null,
+      "container_uid": "188",
+      "frame_path": "188=3"
+    },
+    {
+      "uid": "6616",
+      "full_id": "MouseDown.vi::6616",
+      "kind": "node",
+      "change": "added",
+      "label": "Not",
+      "detail": null,
+      "bounds": [
+        1355.0,
+        53.0,
+        1387.0,
+        85.0
+      ],
+      "bounds_before": null,
+      "path": null,
+      "path_before": null,
+      "chain_paths": [
+        [
+          [
+            1335.5,
+            69.5
+          ],
+          [
+            1365.5,
+            69.0
+          ]
+        ],
+        [
+          [
+            1376.0,
+            69.0
+          ],
+          [
+            1403.0,
+            69.0
+          ],
+          [
+            1403.0,
+            333.0
+          ],
+          [
+            1413.0,
+            333.0
+          ]
+        ]
+      ],
+      "container_uid": null,
+      "frame_path": null
+    },
+    {
+      "uid": "6452",
+      "full_id": "MouseDown.vi::6452",
+      "kind": "structure",
+      "change": "added",
+      "label": "Case structure",
+      "detail": null,
+      "bounds": [
+        1409.0,
+        298.0,
+        1490.0,
+        410.0
+      ],
+      "bounds_before": null,
+      "path": null,
+      "path_before": null,
+      "chain_paths": null,
+      "container_uid": null,
+      "frame_path": null
+    },
+    {
+      "uid": "3428",
+      "full_id": "MouseDown.vi::3428",
+      "kind": "wire",
+      "change": "modified",
+      "label": "Merge Errors",
+      "detail": "\u2190 Edge Color (was Edge Color)",
+      "bounds": [
+        368.0,
+        315.0,
+        368.0,
+        315.0
+      ],
+      "bounds_before": [
+        1162.0,
+        404.0,
+        1162.0,
+        404.0
+      ],
+      "path": [
+        [
+          226.0,
+          319.0
+        ],
+        [
+          312.0,
+          319.0
+        ],
+        [
+          312.0,
+          315.0
+        ],
+        [
+          368.0,
+          315.0
+        ]
+      ],
+      "path_before": [
+        [
+          1162.0,
+          404.0
+        ],
+        [
+          1222.0,
+          404.0
+        ],
+        [
+          1222.0,
+          431.0
+        ],
+        [
+          1304.0,
+          431.0
+        ]
+      ],
+      "chain_paths": null,
+      "container_uid": null,
+      "frame_path": null
+    }
+  ],
+  "common_nodes": 52
+}

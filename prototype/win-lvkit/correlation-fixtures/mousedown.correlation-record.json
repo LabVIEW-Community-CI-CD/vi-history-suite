@@ -1,0 +1,38 @@
+{
+  "schema": "vi-history-suite/preview-compare-lvkit-correlation@v1",
+  "vi": "resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/MouseDown.vi",
+  "revisionPair": {
+    "selected": "fc09736",
+    "base": "537683"
+  },
+  "lvkit": {
+    "changeCount": 6,
+    "kinds": [
+      "removed",
+      "added",
+      "modified",
+      "added",
+      "added",
+      "modified"
+    ],
+    "kindHistogram": "added:3,modified:2,removed:1"
+  },
+  "labview": {
+    "differenceBlocks": 53,
+    "cosmetic": 48,
+    "nonCosmetic": 5,
+    "comparedImagePairs": 0,
+    "htmlBytes": 1350283
+  },
+  "correlation": {
+    "primary": "lvkit.changeCount <-> labview.nonCosmetic",
+    "lvkitChangeCount": 6,
+    "labviewNonCosmetic": 5,
+    "countAgreement": 0,
+    "granularityGap_cosmeticOnlyInLabview": 48,
+    "note": "lvkit structural node changes align with LabVIEW NON-cosmetic differences; LabVIEW additionally reports cosmetic (position/appearance) diffs lvkit omits by design"
+  },
+  "timings": {
+    "compareColdSec": 53.4
+  }
+}
