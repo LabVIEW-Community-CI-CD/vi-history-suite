@@ -144,14 +144,52 @@ function isLvkitViScanEnvelope(value: unknown): value is LvkitViScanEnvelope {
   // Self-consistent counts: total matches the array, the error count is a real
   // non-negative integer no larger than the total, and resolved is exactly the
   // remainder. Rejects a file whose counts were dropped or hand-edited.
-  return (
-    envelope.moduleCount === envelope.modules.length &&
-    Number.isInteger(envelope.errorModuleCount) &&
-    envelope.errorModuleCount >= 0 &&
-    envelope.errorModuleCount <= envelope.moduleCount &&
-    Number.isInteger(envelope.resolvedModuleCount) &&
-    envelope.resolvedModuleCount === envelope.moduleCount - envelope.errorModuleCount
-  );
+  if (
+    !(
+      envelope.moduleCount === envelope.modules.length &&
+      Number.isInteger(envelope.errorModuleCount) &&
+      envelope.errorModuleCount >= 0 &&
+      envelope.errorModuleCount <= envelope.moduleCount &&
+      Number.isInteger(envelope.resolvedModuleCount) &&
+      envelope.resolvedModuleCount === envelope.moduleCount - envelope.errorModuleCount
+    )
+  ) {
+    return false;
+  }
+  // #2376 provenance (optional, additive): when present, resolutionCounts must be
+  // four non-negative integers summing to moduleCount. Absent is valid (an
+  // envelope captured before the field existed), so old cache entries still read.
+  if (
+    envelope.resolutionCounts !== undefined &&
+    !isLvkitResolutionCounts(envelope.resolutionCounts, envelope.moduleCount)
+  ) {
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Structural guard for the optional {@link LvkitViScanEnvelope.resolutionCounts}:
+ * an object carrying the four resolution buckets as non-negative integers that
+ * sum to the envelope's module count. Mirrors the builder's
+ * `summarizeModuleResolutions`, so a dropped bucket or an inconsistent total
+ * (hand-edited or truncated) is a cache miss rather than a surfaced scan.
+ */
+function isLvkitResolutionCounts(value: unknown, moduleCount: number): boolean {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+  const counts = value as Record<string, unknown>;
+  const buckets = ['resolved', 'unresolvedPrimitive', 'unresolvedVilib', 'errorStub'] as const;
+  let sum = 0;
+  for (const bucket of buckets) {
+    const n = counts[bucket];
+    if (!Number.isInteger(n) || (n as number) < 0) {
+      return false;
+    }
+    sum += n as number;
+  }
+  return sum === moduleCount;
 }
 
 /**
