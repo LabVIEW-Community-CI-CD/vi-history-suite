@@ -48,6 +48,7 @@ function loadGoverned(name) {
 const { parsePdhCsv, buildFirstRunPerfmonArtifact } = loadGoverned('perfmonSampleSeries');
 const { buildPerfmonMprrSync } = loadGoverned('perfmonMprrSync');
 const { buildMprrTimelineNav, buildMprrDrawtextOverlay } = loadGoverned('mprrTimelineNavSidecar');
+import { proveScreenshotCalibration } from './proveScreenshotCalibration.mjs';
 
 function findExe(name, envVar) {
   if (process.env[envVar] && existsSync(process.env[envVar])) return process.env[envVar];
@@ -93,6 +94,7 @@ async function main() {
   // clock). This does NOT set the governed spatial calibration (still advisory) --
   // it certifies that the frame<->time cadence the sync relies on is trustworthy.
   let cadenceCert = null;
+  let spatialCert = null;
   if (CALIBRATE) {
     console.log('[cap] pre-flight: gdigrab-cadence calibration via the mprr stopwatch...');
     spawnSync(process.execPath, [join('prototype', 'mprr', 'proveStopwatchCapture.mjs')], { cwd: repoRoot, encoding: 'utf8', env: process.env });
@@ -101,6 +103,11 @@ async function main() {
       try { cadenceCert = JSON.parse(readFileSync(proofPath, 'utf8')).accuracy || null; } catch { cadenceCert = null; }
     }
     console.log(`[cap] cadence: ${cadenceCert ? cadenceCert.classification + ' (maxErr ' + cadenceCert.stopwatchMaxAbsErrorMs + 'ms, effFps ' + cadenceCert.effectiveFps + ', dropped ' + cadenceCert.droppedFrameEstimate + ')' : 'unavailable'}`);
+    // SPATIAL calibration cert via headless Chrome --screenshot (exact device px, DPI-independent):
+    // certifies the governed render+decode contract holds on this host/config (8/8 fiducials).
+    console.log('[cap] pre-flight: spatial calibration via the mprr calibration surface (--screenshot)...');
+    try { spatialCert = proveScreenshotCalibration(); } catch (e) { console.log('[cap] spatial calibration failed: ' + e.message); }
+    console.log(`[cap] spatial: ${spatialCert ? spatialCert.detectedMarkerCount + '/' + spatialCert.expectedMarkerCount + ' calibrated=' + spatialCert.calibrated : 'unavailable'}`);
   }
 
   // 1) perfmon via typeperf -> clean PDH-CSV file (-si is integer seconds; -y auto-confirms overwrite).
@@ -173,7 +180,7 @@ async function main() {
   const sync = buildPerfmonMprrSync({
     artifact,
     frame: { epochMsAtFrameZero: frameZeroEpoch, frameRateHz: FPS, frameCount },
-    calibration: { calibrated: false, fault: 'no-mprr-fiducial-in-screen-capture' }
+    calibration: { calibrated: !!(spatialCert && spatialCert.calibrated), fault: spatialCert ? spatialCert.fault : 'no-spatial-cert' }
   });
   console.log(`[cap] perfmon-mprr-sync: samples=${sync.samples.length} peaks=${sync.peaks.length} authoritative=${sync.authoritative} (advisory=${!sync.authoritative})`);
 
@@ -218,6 +225,9 @@ async function main() {
     advisory: !sync.authoritative,
     captureCadenceCertificate: cadenceCert,
     timingCadenceAuthoritative: !!(cadenceCert && cadenceCert.classification === 'authoritative'),
+    spatialCalibrationCertificate: spatialCert,
+    spatialAuthoritative: !!(spatialCert && spatialCert.calibrated),
+    fullyAuthoritative: !!(spatialCert && spatialCert.calibrated) && !!(cadenceCert && cadenceCert.classification === 'authoritative'),
     navCueCount: nav.cueCount,
     overlaySegments: overlay.segmentCount,
     outputs: { screen: rel(screenMp4), nav: rel(navMp4), vtt: rel(vttPath), ffmeta: rel(ffmetaPath) }
