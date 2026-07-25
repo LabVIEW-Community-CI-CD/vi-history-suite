@@ -18,13 +18,12 @@
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import { SYSTEM, scoreParts } from './vichangeEvalCore.mjs';
 
 const OLLAMA = process.env.OLLAMA_URL || 'http://localhost:11434';
 const MODEL = process.env.OLLAMA_MODEL || 'llama3.1:8b';
 const OUT_DIR = path.join(process.cwd(), 'prototype', 'ml', 'dataset');
 fs.mkdirSync(OUT_DIR, { recursive: true });
-
-const SYSTEM = 'You are a VI-change summarizer for vi-history-suite. Report ONLY facts grounded in the provided lvkit and LabVIEW comparison data. Rules: NEVER say "no changes" when the structural change count is greater than 0; always state the exact structural change count; distinguish STRUCTURAL changes (from lvkit) from COSMETIC differences (position/appearance, reported only by LabVIEW and omitted by lvkit by design); never invent numbers not present in the facts.';
 
 // 1. Ground truth from LINUX's shipped correlation report.
 const rep = spawnSync('node', ['prototype/correlationReport.mjs'], { cwd: process.cwd(), encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
@@ -107,23 +106,7 @@ fs.writeFileSync(path.join(OUT_DIR, 'vichange-finetune-v1.jsonl'), ftLines.join(
 fs.writeFileSync(path.join(OUT_DIR, 'vichange-eval-v1.jsonl'), evalItems.map((e) => JSON.stringify(e)).join('\n') + '\n', 'utf8');
 
 // 3. Baseline faithfulness eval of the live model (ollama /api/chat), PER TASK TYPE.
-function scoreParts(output, gt) {
-  const text = output.toLowerCase();
-  const N = gt.lvkitChangeCount;
-  const h = {};
-  for (const k of gt.kinds || []) h[k] = (h[k] || 0) + 1;
-  const kindWords = Object.keys(h);
-  const statesStructuralCount = new RegExp(`\\b${N}\\b`).test(output);
-  const noFalseNoChange = N === 0 ? true : !/\bno\s+(change|changes|difference|differences|structural)\b/.test(text);
-  const mentionsCosmetic = /cosmetic/.test(text);
-  const mentionsKinds = kindWords.length ? kindWords.every((k) => text.includes(k)) : true;
-  const nums = (output.match(/\d+/g) || []).map(Number);
-  const allowed = new Set(gt.allowedNumbers);
-  const invented = nums.filter((n) => n > 1 && !allowed.has(n));
-  const noInventedNumbers = invented.length === 0;
-  return { parts: { statesStructuralCount, noFalseNoChange, mentionsCosmetic, mentionsKinds, noInventedNumbers }, invented };
-}
-
+// scoreParts imported from vichangeEvalCore.mjs (shared with evalCompareConfigs.mjs).
 const results = [];
 for (const e of evalItems) {
   let output = '';
