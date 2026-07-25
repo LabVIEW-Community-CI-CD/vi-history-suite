@@ -31,6 +31,14 @@ communicate progress back to the Windows machine via commits on this branch.
 `develop`/`main`. Only push to `prototype/ollama-mcp-linux-collab`. **Never
 force-push** this shared branch — always `git pull --rebase` first.
 
+**Handshake bus:** coordinate through the GitHub **Discussion** thread
+**#2365** — <https://github.com/LabVIEW-Community-CI-CD/vi-history-suite/discussions/2365>.
+The branch carries the *artifacts* (commits); the Discussion carries the
+*coordination* (claims, acks, progress, done, handoffs). Use the executable
+protocol helper `prototype/collab.mjs` (details below) so every message is both
+human-readable and machine-parseable — never edit a shared file without first
+claiming it on the bus and seeing no live conflicting claim.
+
 ---
 
 ## What already exists on this branch (built + validated on Windows)
@@ -73,6 +81,8 @@ cd vi-history-suite
 git fetch origin
 git switch prototype/ollama-mcp-linux-collab   # the shared collaboration branch
 git pull --rebase                              # ALWAYS before you start
+gh auth status || gh auth login                # REQUIRED for the Discussions handshake bus
+node prototype/collab.mjs poll                 # read the handshake thread before doing anything
 
 # 2. Node deps + build (Node LTS required; see INSTALL.md)
 npm ci
@@ -163,16 +173,40 @@ agent operating rules (note: the gate suite is for PRs; on this prototype branch
 
 ## Collaboration protocol (how the two machines talk)
 
-- **Before any work:** `git switch prototype/ollama-mcp-linux-collab && git pull --rebase`.
-- **Commit small and often** with descriptive messages — the commit log *is* the
-  conversation. Prefix Linux-side commits with `linux:` so the Windows machine can
-  scan them (e.g., `linux: mcp:pr-review runs in 2026q1patch2-linux container`).
-- **Push to this branch only:** `git push origin prototype/ollama-mcp-linux-collab`.
-- To leave freeform notes for the Windows machine, append to
-  `prototype/COLLAB-NOTES.md` (create it) and commit — keep a running log there.
-- **Never** `git push --force` this shared branch. If your push is rejected because
-  the Windows machine pushed first, `git pull --rebase` and re-push.
-- Do **not** open a PR; do **not** touch `develop`/`main`.
+**Two channels, one loop.** The Discussion thread **#2365** is the *handshake +
+status bus*; the branch is the *artifact channel*. Identify yourself with
+`export VIHS_COLLAB_AGENT=LINUX` (the Windows side uses `WIN`).
+
+The `prototype/collab.mjs` helper wraps the Discussions GraphQL API. Every
+message is a Discussion comment that is both prose and a fenced
+`vihs-collab-msg@v1` JSON block (fields: `agent`, `type`, `task`, `ts`, `ref`,
+`msg`, `next`, `to`). Message types: `CLAIM`, `ACK`, `PROGRESS`, `DONE`,
+`BLOCKED`, `HANDOFF`, `QUESTION`, `ANSWER`, `NOTE`.
+
+```bash
+export VIHS_COLLAB_AGENT=LINUX
+node prototype/collab.mjs poll                         # read recent handshake messages
+node prototype/collab.mjs claim --task <id> --msg "…"  # advisory lock; warns on a live conflicting claim
+node prototype/collab.mjs ack   --task <id>            # acknowledge the other agent's claim/handoff
+node prototype/collab.mjs post  --type PROGRESS --task <id> --msg "…"
+node prototype/collab.mjs done  --task <id> --ref <pushed-sha> --msg "…" --next "…"
+node prototype/collab.mjs handoff --to WIN --task <id> --ref <sha> --msg "…"
+```
+
+**The loop for every unit of work:**
+
+1. `git pull --rebase` and `node prototype/collab.mjs poll` — see what WIN is doing.
+2. `node prototype/collab.mjs claim --task <id>` — if it reports a CONFLICT (WIN
+   holds a live claim on that task), pick different work or resolve it on the bus
+   (`ack`/`handoff`) first. Otherwise proceed.
+3. Do the work; drop a `PROGRESS` message for anything long-running.
+4. `git push origin prototype/ollama-mcp-linux-collab` (rebase + retry if rejected;
+   **never** force-push), then `node prototype/collab.mjs done --task <id> --ref <sha>`.
+5. `handoff --to WIN` when you want the Windows side to pick up the next step.
+
+**Commit hygiene:** small commits, messages prefixed `linux:` so WIN can scan the
+log (e.g., `linux: mcp:pr-review runs in 2026q1patch2-linux container`). Do **not**
+open a PR; do **not** touch `develop`/`main`.
 
 ---
 
@@ -187,8 +221,14 @@ agent operating rules (note: the gate suite is for PRs; on this prototype branch
 
 ---
 
-## Report back (in a commit on this branch)
+## Report back (on the handshake bus + a commit on this branch)
 
-Add your findings to `prototype/COLLAB-NOTES.md`: which validators passed on Linux,
-timings vs Windows, whether the comparison model hash matched, any Linux-specific
-fixes you made, and the next iteration you recommend. Then push.
+When you finish a unit of work: push the commit, then
+`node prototype/collab.mjs done --task <id> --ref <sha> --msg "…" --next "…"`.
+Use the bus for the running narrative (which validators passed on Linux, timings
+vs Windows, whether the comparison model hash matched, Linux-specific fixes,
+blockers via `BLOCKED`, and the next iteration you recommend). For longer-form
+findings you may also append to `prototype/COLLAB-NOTES.md` and commit, but the
+Discussion thread is the source of truth for coordination. Finish a session with a
+`handoff --to WIN` (or a `NOTE` summarizing state) so the Windows side knows the
+baton is free.
