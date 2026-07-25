@@ -49,6 +49,16 @@ export interface LvkitViScanInput {
   readonly relativePath: string;
   /** Runtime the VI was staged on, recorded in the envelope (e.g. `host-native`). */
   readonly runtime: string;
+  /**
+   * VHS-REQ-714 / #2373 (derive-from-scratch): when true, pass
+   * `--placeholder-on-unresolved` to lvkit so an unresolved primitive or vi.lib
+   * SubVI yields an inline placeholder in the generated Python (a usable
+   * born-from-scratch generate) instead of a hard `failed`. Default false
+   * preserves the strict single-VI-export behavior. With it, a first-commit /
+   * dependency-bearing VI content-address-matches the container and Windows
+   * legs (verified byte-identical after LF normalization).
+   */
+  readonly placeholderOnUnresolved?: boolean;
 }
 
 /** Typed outcome of a single-VI lvkit scan (never thrown). */
@@ -199,6 +209,12 @@ export function createLvkitViScanProvider(
         '--load-mode',
         'none',
         '--no-auto-vilib',
+        // #2373: opt-in born-from-scratch mode. Without this, an unresolved
+        // primitive or vi.lib SubVI makes lvkit exit non-zero and the scan returns
+        // `failed`; with it lvkit emits an inline `raise ...ResolutionNeeded(...)`
+        // placeholder so a first-commit / dependency-bearing VI still yields a
+        // usable, content-address-stable generate.
+        ...(input.placeholderOnUnresolved ? ['--placeholder-on-unresolved'] : []),
         '--project-root',
         storeDir,
         '-o',
