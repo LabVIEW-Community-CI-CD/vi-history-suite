@@ -130,6 +130,39 @@
       "createdAt": "2026-07-25T11:14:19.461Z",
       "updatedAt": "2026-07-25T12:36:18.523Z",
       "syncedAt": null
+    },
+    {
+      "id": "item-0003",
+      "title": "Derive-from-scratch: first-commit VI cache via lvkit generate (Python mirrors LabVIEW)",
+      "issueUrl": "https://github.com/LabVIEW-Community-CI-CD/vi-history-suite/issues/2373",
+      "fields": {
+        "status": "In Progress",
+        "intakeStage": "Spawned",
+        "sourceDiscussion": 2372,
+        "origin": "collab"
+      },
+      "fieldMeta": {
+        "status": {
+          "ts": "2026-07-25T12:47:38.952Z",
+          "by": "LINUX"
+        },
+        "intakeStage": {
+          "ts": "2026-07-25T12:47:09.513Z",
+          "by": "LINUX"
+        },
+        "sourceDiscussion": {
+          "ts": "2026-07-25T12:47:09.513Z",
+          "by": "LINUX"
+        },
+        "origin": {
+          "ts": "2026-07-25T12:47:09.513Z",
+          "by": "LINUX"
+        }
+      },
+      "remoteItemId": null,
+      "createdAt": "2026-07-25T12:47:09.513Z",
+      "updatedAt": "2026-07-25T12:47:38.952Z",
+      "syncedAt": null
     }
   ],
   "sync": {
