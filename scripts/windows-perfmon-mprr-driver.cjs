@@ -253,7 +253,24 @@ function captureHtmlToPng(chrome, html, dims, workDir, tag) {
     pathToFileURL(htmlPath).href
   ];
   const result = spawnSync(chrome, args, { encoding: 'utf8', timeout: 60000 });
-  assert(fs.existsSync(pngPath), `Chrome did not produce ${pngPath} (status ${result.status})`);
+  // Chrome `--headless=new --screenshot` can return (status 0) BEFORE the PNG is
+  // fully flushed to disk -- observed on the animated (requestAnimationFrame)
+  // stopwatch surface, where a single existsSync check right after exit missed a
+  // file that appeared a beat later, while the static calibration surface was
+  // fine. Poll for the file to SETTLE (present + non-zero + size stable across
+  // two reads) up to a short deadline so a flush race is not misreported as a
+  // capture failure.
+  const deadline = Date.now() + 5000;
+  let lastSize = -1;
+  while (Date.now() < deadline) {
+    if (fs.existsSync(pngPath)) {
+      const size = fs.statSync(pngPath).size;
+      if (size > 0 && size === lastSize) break;
+      lastSize = size;
+    }
+    sleepMs(150);
+  }
+  assert(fs.existsSync(pngPath) && fs.statSync(pngPath).size > 0, `Chrome did not produce ${pngPath} (status ${result.status})`);
   return decodePng(fs.readFileSync(pngPath));
 }
 
