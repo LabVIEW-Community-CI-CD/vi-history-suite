@@ -1,0 +1,143 @@
+{
+  "schema": "vi-history-suite/vichange-shippable-conclusion@v1",
+  "generatedAt": "2026-07-25T20:27:04.730Z",
+  "issue": "#2381",
+  "title": "Grounded VI-change faithful summarization -- shippable conclusion",
+  "inputsMissing": [],
+  "dataset": {
+    "vis": [
+      "LoadTemplates.vi",
+      "MenuSelection(User).vi",
+      "MouseDown.vi",
+      "PictureControl_MouseUp.vi",
+      "Process Template Graphics.vi",
+      "VI Template.vi",
+      "VisibleTextMarker.vi",
+      "lv_icon.vi"
+    ],
+    "foldCount": 8,
+    "finetunePairs": 42,
+    "evalItems": 42,
+    "method": "leave-one-VI-out (train 4+ VIs / eval 1 held-out VI, rotate); grounded facts = lvkit structural changes + LabVIEW cosmetic/non-cosmetic (the vi-semantic-comparison@v1 detail model)."
+  },
+  "evalTiers": [
+    {
+      "id": "8b-raw",
+      "overall": 0.917,
+      "adversarialMean": 1,
+      "guardPass": true
+    },
+    {
+      "id": "8b-fewshot",
+      "overall": 0.946,
+      "adversarialMean": 1,
+      "guardPass": true
+    },
+    {
+      "id": "14b",
+      "overall": 0.976,
+      "adversarialMean": 1,
+      "guardPass": true
+    },
+    {
+      "id": "8b-2shot",
+      "overall": 0.946,
+      "adversarialMean": 0.958,
+      "guardPass": false
+    }
+  ],
+  "heldOutBar": {
+    "note": "Leakage-free leave-one-VI-out macro-mean across held-out VIs. Configs are NOT fold-trained (raw/14b zero-shot; few-shot/2-shot use HELD-OUT synthetic exemplars), so this is the honest generalization bar a future held-out-trained LoRA must beat.",
+    "gpu": {
+      "host": "LINUX",
+      "backend": "gpu",
+      "ranking": [
+        {
+          "id": "14b",
+          "macroOverall": 0.961,
+          "macroAdversarial": 0.967
+        },
+        {
+          "id": "8b-2shot",
+          "macroOverall": 0.924,
+          "macroAdversarial": 1
+        },
+        {
+          "id": "8b-raw",
+          "macroOverall": 0.904,
+          "macroAdversarial": 1
+        },
+        {
+          "id": "8b-fewshot",
+          "macroOverall": 0.897,
+          "macroAdversarial": 1
+        }
+      ]
+    },
+    "cpu": {
+      "host": "WIN",
+      "backend": "cpu",
+      "ranking": [
+        {
+          "id": "14b",
+          "macroOverall": 0.954,
+          "macroAdversarial": 1
+        },
+        {
+          "id": "8b-2shot",
+          "macroOverall": 0.942,
+          "macroAdversarial": 1
+        },
+        {
+          "id": "8b-raw",
+          "macroOverall": 0.929,
+          "macroAdversarial": 1
+        },
+        {
+          "id": "8b-fewshot",
+          "macroOverall": 0.897,
+          "macroAdversarial": 1
+        }
+      ]
+    },
+    "backendAgreement": {
+      "gpuRanking": [
+        "14b",
+        "8b-2shot",
+        "8b-raw",
+        "8b-fewshot"
+      ],
+      "cpuRanking": [
+        "14b",
+        "8b-2shot",
+        "8b-raw",
+        "8b-fewshot"
+      ],
+      "exactOrderMatch": true,
+      "spearman": 1,
+      "maxAbsDelta": 0.025
+    }
+  },
+  "divergenceFinding": {
+    "status": "closed",
+    "summary": "The 8b-2shot adversarial statesStructuralCount gap on one borderline VI (lv_icon, N=6) is a GPU-offload-config-dependent numerics artifact: seed-invariant within one model load (seedDivergenceCheck.mjs, temp 0, seeds none/0/1/42/123) but run-context-variant across loads (isolated load -> MISS; loaded right after another 8b -> PASS). Independently corroborated by the WIN CPU backend, which holds adversarialMean=1.0 on all configs (crossBackendCheck.mjs). Not sampling noise, not a fixable model/prompt content gap; a ~0.012 band on 8b-2shot macro-overall, ranking robust."
+  },
+  "mcpProductHome": {
+    "surfaces": [
+      "get_vi_semantic_comparison (narrative)",
+      "summarize_vi_history (per-step + aggregate narrative)",
+      "build_vi_pr_review (per-VI + aggregate narrative; markdown sticky PR comment)"
+    ],
+    "groundingContract": "The model consumes the vi-semantic-comparison@v1 model (changedSurfaces, detailSections, totals.detailItemCount = non-cosmetic count, attributes) and emits its narrative -- a closed loop inside the governed contract.",
+    "gapVsTemplate": "The current MCP narrative is a deterministic template (renderViSemanticNarrative) that reports only the non-cosmetic detail count and DROPS cosmetic sections (verified: a report with 3 non-cosmetic + 2 cosmetic items yields narrative \"The block diagram differs. 3 detailed changes...\" with no mention of the 2 cosmetic changes). A grounded faithful-summarizer surfaces cosmetic-vs-structural, fabricates no counts, and never says \"no changes\" over real changes.",
+    "integrationPoint": "src/semantic/viSemanticModel.ts: renderViSemanticNarrative(model) (defined ~line 309) is called at ~line 264 (`narrative: renderViSemanticNarrative(model)`). A model-backed narrative generator is a drop-in alternative at that swap site -- same input (the semantic model), richer grounded output, with the deterministic template retained as the ungrounded fallback. Surfaced identically in the Source Control hover, PR/CI comment, and MCP tool output.",
+    "qualityGate": "The governed faithfulness scorer (statesStructuralCount / noFalseNoChange / mentionsCosmetic / noInventedNumbers) is the narrative-quality gate for the MCP surface."
+  },
+  "recommendation": {
+    "localDefault": "8b-2shot (vichange8b-2shot) -- cheapest local, adversarially robust (adv 1.0), most consistent 8b across the held-out VIs, within a small band of 14b on the leakage-free bar.",
+    "largerModel": "qwen2.5:14b when a larger model is acceptable -- top generalization on the held-out bar; verify its lone adversarial N=1 miss (MenuSelection(User)).",
+    "notRecommended": "1-shot few-shot as the default -- on the wider honest bar (with genuine-no-change VIs) its assert-a-count bias drops it below raw; it is not the robust choice.",
+    "loRA": "DEFERRED -- the leakage fix is the held-out split (already honored by raw/few-shot/2-shot); a LoRA is backend-orthogonal to the closed GPU divergence; and the torch/Blackwell-sm_120/gated-HF/disk fine-tune infra is not cheap. A future held-out-trained LoRA is compared to the leakage-free bar above, never to a single-split memorization ceiling.",
+    "ungroundedFallback": "Keep the deterministic template narrative as the ungrounded fallback when no model backend is available."
+  }
+}

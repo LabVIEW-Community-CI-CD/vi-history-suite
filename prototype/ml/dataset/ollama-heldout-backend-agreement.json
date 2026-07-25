@@ -1,0 +1,72 @@
+{
+  "schema": "vi-history-suite/ollama-heldout-backend-agreement@v1",
+  "generatedAt": "2026-07-25T20:27:04.611Z",
+  "sources": {
+    "gpu": {
+      "file": "prototype/ml/dataset/ollama-heldout-lovo-baseline.json",
+      "host": "LINUX",
+      "foldCount": 8
+    },
+    "cpu": {
+      "file": "prototype/ml/dataset/ollama-heldout-crossbackend.json",
+      "host": "WIN",
+      "foldCount": 8
+    }
+  },
+  "sharedConfigs": [
+    "8b-raw",
+    "8b-fewshot",
+    "8b-2shot",
+    "14b"
+  ],
+  "gpuRanking": [
+    "14b",
+    "8b-2shot",
+    "8b-raw",
+    "8b-fewshot"
+  ],
+  "cpuRanking": [
+    "14b",
+    "8b-2shot",
+    "8b-raw",
+    "8b-fewshot"
+  ],
+  "exactOrderMatch": true,
+  "spearman": 1,
+  "maxAbsDelta": 0.025,
+  "perConfig": [
+    {
+      "id": "14b",
+      "gpu": 0.961,
+      "cpu": 0.954,
+      "delta": -0.007,
+      "gpuRank": 1,
+      "cpuRank": 1
+    },
+    {
+      "id": "8b-2shot",
+      "gpu": 0.924,
+      "cpu": 0.942,
+      "delta": 0.018,
+      "gpuRank": 2,
+      "cpuRank": 2
+    },
+    {
+      "id": "8b-raw",
+      "gpu": 0.904,
+      "cpu": 0.929,
+      "delta": 0.025,
+      "gpuRank": 3,
+      "cpuRank": 3
+    },
+    {
+      "id": "8b-fewshot",
+      "gpu": 0.897,
+      "cpu": 0.897,
+      "delta": 0,
+      "gpuRank": 4,
+      "cpuRank": 4
+    }
+  ],
+  "note": "Backend-robust ranking => the #2381 \"few-shot 8b as default\" recommendation does not depend on a single host. exactOrderMatch=true or spearman=1 means the GPU and CPU backends agree on the generalization ordering; per-config delta shows absolute-score drift (expected small; the 8b-2shot adversarial offload band lives inside adv, mostly averaged out at macro-overall)."
+}

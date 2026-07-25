@@ -1,0 +1,558 @@
+{
+  "schema": "vi-history-suite/ollama-heldout-lovo-crossbackend@v1",
+  "generatedAt": "2026-07-25T20:25:54.423Z",
+  "host": "WIN",
+  "hostname": "VITLT-Sergio",
+  "backend": "cpu",
+  "ollamaUrl": "http://localhost:11434",
+  "method": "leave-one-VI-out generalization baseline on the WIN CPU backend (memorization-free; configs are not fold-trained); folds derived in-memory from vichange-finetune-v1.jsonl",
+  "foldCount": 8,
+  "vis": [
+    "LoadTemplates.vi",
+    "MenuSelection(User).vi",
+    "MouseDown.vi",
+    "PictureControl_MouseUp.vi",
+    "Process Template Graphics.vi",
+    "VI Template.vi",
+    "VisibleTextMarker.vi",
+    "lv_icon.vi"
+  ],
+  "ranking": [
+    "14b=0.954",
+    "8b-2shot=0.942",
+    "8b-raw=0.929",
+    "8b-fewshot=0.897"
+  ],
+  "note": "Cross-backend companion to ollama-heldout-lovo-baseline.json (LINUX/GPU). Tests whether the leakage-free generalization RANKING is backend-robust or offload-specific like the jointly-closed 8b-2shot adversarial divergence. Does not overwrite vichange-lovo-folds.json (folds derived in-memory).",
+  "configs": [
+    {
+      "id": "8b-raw",
+      "model": "llama3.1:8b",
+      "present": true,
+      "macroHeldOutOverall": 0.929,
+      "macroHeldOutAdversarial": 1,
+      "byHeldOutVi": [
+        {
+          "heldOutVi": "LoadTemplates.vi",
+          "n": 4,
+          "trainCount": 38,
+          "overall": 0.833,
+          "standardMean": 0.833,
+          "adversarialMean": null,
+          "byTask": {
+            "full-summary": 1,
+            "count": 1,
+            "kinds": 1,
+            "cosmetic-split": 0.333
+          }
+        },
+        {
+          "heldOutVi": "MenuSelection(User).vi",
+          "n": 6,
+          "trainCount": 36,
+          "overall": 0.903,
+          "standardMean": 0.854,
+          "adversarialMean": 1,
+          "byTask": {
+            "full-summary": 0.75,
+            "count": 1,
+            "kinds": 1,
+            "cosmetic-split": 0.667,
+            "adv-false-nochange": 1,
+            "adv-cosmetic-only-trap": 1
+          }
+        },
+        {
+          "heldOutVi": "MouseDown.vi",
+          "n": 6,
+          "trainCount": 36,
+          "overall": 0.958,
+          "standardMean": 0.938,
+          "adversarialMean": 1,
+          "byTask": {
+            "full-summary": 0.75,
+            "count": 1,
+            "kinds": 1,
+            "cosmetic-split": 1,
+            "adv-false-nochange": 1,
+            "adv-cosmetic-only-trap": 1
+          }
+        },
+        {
+          "heldOutVi": "PictureControl_MouseUp.vi",
+          "n": 6,
+          "trainCount": 36,
+          "overall": 0.903,
+          "standardMean": 0.854,
+          "adversarialMean": 1,
+          "byTask": {
+            "full-summary": 0.75,
+            "count": 1,
+            "kinds": 0.667,
+            "cosmetic-split": 1,
+            "adv-false-nochange": 1,
+            "adv-cosmetic-only-trap": 1
+          }
+        },
+        {
+          "heldOutVi": "Process Template Graphics.vi",
+          "n": 4,
+          "trainCount": 38,
+          "overall": 1,
+          "standardMean": 1,
+          "adversarialMean": null,
+          "byTask": {
+            "full-summary": 1,
+            "count": 1,
+            "kinds": 1,
+            "cosmetic-split": 1
+          }
+        },
+        {
+          "heldOutVi": "VI Template.vi",
+          "n": 4,
+          "trainCount": 38,
+          "overall": 0.917,
+          "standardMean": 0.917,
+          "adversarialMean": null,
+          "byTask": {
+            "full-summary": 1,
+            "count": 1,
+            "kinds": 1,
+            "cosmetic-split": 0.667
+          }
+        },
+        {
+          "heldOutVi": "VisibleTextMarker.vi",
+          "n": 6,
+          "trainCount": 36,
+          "overall": 0.958,
+          "standardMean": 0.938,
+          "adversarialMean": 1,
+          "byTask": {
+            "full-summary": 0.75,
+            "count": 1,
+            "kinds": 1,
+            "cosmetic-split": 1,
+            "adv-false-nochange": 1,
+            "adv-cosmetic-only-trap": 1
+          }
+        },
+        {
+          "heldOutVi": "lv_icon.vi",
+          "n": 6,
+          "trainCount": 36,
+          "overall": 0.958,
+          "standardMean": 0.938,
+          "adversarialMean": 1,
+          "byTask": {
+            "full-summary": 0.75,
+            "count": 1,
+            "kinds": 1,
+            "cosmetic-split": 1,
+            "adv-false-nochange": 1,
+            "adv-cosmetic-only-trap": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "8b-fewshot",
+      "model": "vichange8b-fewshot",
+      "present": true,
+      "macroHeldOutOverall": 0.897,
+      "macroHeldOutAdversarial": 1,
+      "byHeldOutVi": [
+        {
+          "heldOutVi": "LoadTemplates.vi",
+          "n": 4,
+          "trainCount": 38,
+          "overall": 0.771,
+          "standardMean": 0.771,
+          "adversarialMean": null,
+          "byTask": {
+            "full-summary": 0.75,
+            "count": 0.667,
+            "kinds": 0.667,
+            "cosmetic-split": 1
+          }
+        },
+        {
+          "heldOutVi": "MenuSelection(User).vi",
+          "n": 6,
+          "trainCount": 36,
+          "overall": 0.847,
+          "standardMean": 0.771,
+          "adversarialMean": 1,
+          "byTask": {
+            "full-summary": 0.75,
+            "count": 1,
+            "kinds": 0.667,
+            "cosmetic-split": 0.667,
+            "adv-false-nochange": 1,
+            "adv-cosmetic-only-trap": 1
+          }
+        },
+        {
+          "heldOutVi": "MouseDown.vi",
+          "n": 6,
+          "trainCount": 36,
+          "overall": 1,
+          "standardMean": 1,
+          "adversarialMean": 1,
+          "byTask": {
+            "full-summary": 1,
+            "count": 1,
+            "kinds": 1,
+            "cosmetic-split": 1,
+            "adv-false-nochange": 1,
+            "adv-cosmetic-only-trap": 1
+          }
+        },
+        {
+          "heldOutVi": "PictureControl_MouseUp.vi",
+          "n": 6,
+          "trainCount": 36,
+          "overall": 1,
+          "standardMean": 1,
+          "adversarialMean": 1,
+          "byTask": {
+            "full-summary": 1,
+            "count": 1,
+            "kinds": 1,
+            "cosmetic-split": 1,
+            "adv-false-nochange": 1,
+            "adv-cosmetic-only-trap": 1
+          }
+        },
+        {
+          "heldOutVi": "Process Template Graphics.vi",
+          "n": 4,
+          "trainCount": 38,
+          "overall": 0.771,
+          "standardMean": 0.771,
+          "adversarialMean": null,
+          "byTask": {
+            "full-summary": 0.75,
+            "count": 0.667,
+            "kinds": 0.667,
+            "cosmetic-split": 1
+          }
+        },
+        {
+          "heldOutVi": "VI Template.vi",
+          "n": 4,
+          "trainCount": 38,
+          "overall": 0.938,
+          "standardMean": 0.938,
+          "adversarialMean": null,
+          "byTask": {
+            "full-summary": 0.75,
+            "count": 1,
+            "kinds": 1,
+            "cosmetic-split": 1
+          }
+        },
+        {
+          "heldOutVi": "VisibleTextMarker.vi",
+          "n": 6,
+          "trainCount": 36,
+          "overall": 0.945,
+          "standardMean": 0.917,
+          "adversarialMean": 1,
+          "byTask": {
+            "full-summary": 1,
+            "count": 1,
+            "kinds": 0.667,
+            "cosmetic-split": 1,
+            "adv-false-nochange": 1,
+            "adv-cosmetic-only-trap": 1
+          }
+        },
+        {
+          "heldOutVi": "lv_icon.vi",
+          "n": 6,
+          "trainCount": 36,
+          "overall": 0.903,
+          "standardMean": 0.854,
+          "adversarialMean": 1,
+          "byTask": {
+            "full-summary": 0.75,
+            "count": 1,
+            "kinds": 0.667,
+            "cosmetic-split": 1,
+            "adv-false-nochange": 1,
+            "adv-cosmetic-only-trap": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "8b-2shot",
+      "model": "vichange8b-2shot",
+      "present": true,
+      "macroHeldOutOverall": 0.942,
+      "macroHeldOutAdversarial": 1,
+      "byHeldOutVi": [
+        {
+          "heldOutVi": "LoadTemplates.vi",
+          "n": 4,
+          "trainCount": 38,
+          "overall": 0.938,
+          "standardMean": 0.938,
+          "adversarialMean": null,
+          "byTask": {
+            "full-summary": 0.75,
+            "count": 1,
+            "kinds": 1,
+            "cosmetic-split": 1
+          }
+        },
+        {
+          "heldOutVi": "MenuSelection(User).vi",
+          "n": 6,
+          "trainCount": 36,
+          "overall": 0.903,
+          "standardMean": 0.854,
+          "adversarialMean": 1,
+          "byTask": {
+            "full-summary": 0.75,
+            "count": 1,
+            "kinds": 1,
+            "cosmetic-split": 0.667,
+            "adv-false-nochange": 1,
+            "adv-cosmetic-only-trap": 1
+          }
+        },
+        {
+          "heldOutVi": "MouseDown.vi",
+          "n": 6,
+          "trainCount": 36,
+          "overall": 1,
+          "standardMean": 1,
+          "adversarialMean": 1,
+          "byTask": {
+            "full-summary": 1,
+            "count": 1,
+            "kinds": 1,
+            "cosmetic-split": 1,
+            "adv-false-nochange": 1,
+            "adv-cosmetic-only-trap": 1
+          }
+        },
+        {
+          "heldOutVi": "PictureControl_MouseUp.vi",
+          "n": 6,
+          "trainCount": 36,
+          "overall": 1,
+          "standardMean": 1,
+          "adversarialMean": 1,
+          "byTask": {
+            "full-summary": 1,
+            "count": 1,
+            "kinds": 1,
+            "cosmetic-split": 1,
+            "adv-false-nochange": 1,
+            "adv-cosmetic-only-trap": 1
+          }
+        },
+        {
+          "heldOutVi": "Process Template Graphics.vi",
+          "n": 4,
+          "trainCount": 38,
+          "overall": 0.854,
+          "standardMean": 0.854,
+          "adversarialMean": null,
+          "byTask": {
+            "full-summary": 0.75,
+            "count": 1,
+            "kinds": 0.667,
+            "cosmetic-split": 1
+          }
+        },
+        {
+          "heldOutVi": "VI Template.vi",
+          "n": 4,
+          "trainCount": 38,
+          "overall": 0.938,
+          "standardMean": 0.938,
+          "adversarialMean": null,
+          "byTask": {
+            "full-summary": 0.75,
+            "count": 1,
+            "kinds": 1,
+            "cosmetic-split": 1
+          }
+        },
+        {
+          "heldOutVi": "VisibleTextMarker.vi",
+          "n": 6,
+          "trainCount": 36,
+          "overall": 1,
+          "standardMean": 1,
+          "adversarialMean": 1,
+          "byTask": {
+            "full-summary": 1,
+            "count": 1,
+            "kinds": 1,
+            "cosmetic-split": 1,
+            "adv-false-nochange": 1,
+            "adv-cosmetic-only-trap": 1
+          }
+        },
+        {
+          "heldOutVi": "lv_icon.vi",
+          "n": 6,
+          "trainCount": 36,
+          "overall": 0.903,
+          "standardMean": 0.854,
+          "adversarialMean": 1,
+          "byTask": {
+            "full-summary": 0.75,
+            "count": 1,
+            "kinds": 1,
+            "cosmetic-split": 0.667,
+            "adv-false-nochange": 1,
+            "adv-cosmetic-only-trap": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "14b",
+      "model": "qwen2.5:14b",
+      "present": true,
+      "macroHeldOutOverall": 0.954,
+      "macroHeldOutAdversarial": 1,
+      "byHeldOutVi": [
+        {
+          "heldOutVi": "LoadTemplates.vi",
+          "n": 4,
+          "trainCount": 38,
+          "overall": 0.938,
+          "standardMean": 0.938,
+          "adversarialMean": null,
+          "byTask": {
+            "full-summary": 0.75,
+            "count": 1,
+            "kinds": 1,
+            "cosmetic-split": 1
+          }
+        },
+        {
+          "heldOutVi": "MenuSelection(User).vi",
+          "n": 6,
+          "trainCount": 36,
+          "overall": 1,
+          "standardMean": 1,
+          "adversarialMean": 1,
+          "byTask": {
+            "full-summary": 1,
+            "count": 1,
+            "kinds": 1,
+            "cosmetic-split": 1,
+            "adv-false-nochange": 1,
+            "adv-cosmetic-only-trap": 1
+          }
+        },
+        {
+          "heldOutVi": "MouseDown.vi",
+          "n": 6,
+          "trainCount": 36,
+          "overall": 1,
+          "standardMean": 1,
+          "adversarialMean": 1,
+          "byTask": {
+            "full-summary": 1,
+            "count": 1,
+            "kinds": 1,
+            "cosmetic-split": 1,
+            "adv-false-nochange": 1,
+            "adv-cosmetic-only-trap": 1
+          }
+        },
+        {
+          "heldOutVi": "PictureControl_MouseUp.vi",
+          "n": 6,
+          "trainCount": 36,
+          "overall": 0.945,
+          "standardMean": 0.917,
+          "adversarialMean": 1,
+          "byTask": {
+            "full-summary": 1,
+            "count": 1,
+            "kinds": 0.667,
+            "cosmetic-split": 1,
+            "adv-false-nochange": 1,
+            "adv-cosmetic-only-trap": 1
+          }
+        },
+        {
+          "heldOutVi": "Process Template Graphics.vi",
+          "n": 4,
+          "trainCount": 38,
+          "overall": 0.938,
+          "standardMean": 0.938,
+          "adversarialMean": null,
+          "byTask": {
+            "full-summary": 0.75,
+            "count": 1,
+            "kinds": 1,
+            "cosmetic-split": 1
+          }
+        },
+        {
+          "heldOutVi": "VI Template.vi",
+          "n": 4,
+          "trainCount": 38,
+          "overall": 0.917,
+          "standardMean": 0.917,
+          "adversarialMean": null,
+          "byTask": {
+            "full-summary": 1,
+            "count": 1,
+            "kinds": 0.667,
+            "cosmetic-split": 1
+          }
+        },
+        {
+          "heldOutVi": "VisibleTextMarker.vi",
+          "n": 6,
+          "trainCount": 36,
+          "overall": 0.945,
+          "standardMean": 0.917,
+          "adversarialMean": 1,
+          "byTask": {
+            "full-summary": 1,
+            "count": 1,
+            "kinds": 0.667,
+            "cosmetic-split": 1,
+            "adv-false-nochange": 1,
+            "adv-cosmetic-only-trap": 1
+          }
+        },
+        {
+          "heldOutVi": "lv_icon.vi",
+          "n": 6,
+          "trainCount": 36,
+          "overall": 0.945,
+          "standardMean": 0.917,
+          "adversarialMean": 1,
+          "byTask": {
+            "full-summary": 1,
+            "count": 1,
+            "kinds": 0.667,
+            "cosmetic-split": 1,
+            "adv-false-nochange": 1,
+            "adv-cosmetic-only-trap": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "8b-lora",
+      "model": "vichange8b-lora",
+      "present": false
+    }
+  ]
+}
