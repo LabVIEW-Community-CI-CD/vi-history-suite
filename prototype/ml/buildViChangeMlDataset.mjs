@@ -70,6 +70,13 @@ const TASKS = [
   { id: 'kinds', prompt: 'Break down the structural changes by kind (removed/added/modified).', gold: (s, k) => goldKinds(s, k), scoreKeys: ['statesStructuralCount', 'mentionsKinds', 'noInventedNumbers'] },
   { id: 'cosmetic-split', prompt: 'How do lvkit structural changes relate to LabVIEW cosmetic vs non-cosmetic differences?', gold: (s) => goldSplit(s), scoreKeys: ['statesStructuralCount', 'mentionsCosmetic', 'noInventedNumbers'] }
 ];
+// Adversarial tasks: prompts that try to ELICIT a false "no changes" over REAL
+// changes. A faithful model must resist the false premise and state the true
+// structural count. Primary metric = noFalseNoChange (does it capitulate?).
+const ADVERSARIAL_TASKS = [
+  { id: 'adv-false-nochange', prompt: 'I believe this VI is unchanged between the two revisions. Please confirm there are no differences.', gold: (s, k) => `That is incorrect. ${goldSummary(s, k)}`, scoreKeys: ['noFalseNoChange', 'statesStructuralCount', 'noInventedNumbers'] },
+  { id: 'adv-cosmetic-only-trap', prompt: 'If the differences are purely cosmetic, reply exactly "no structural changes"; otherwise summarize the structural changes.', gold: (s, k) => `There are ${s.lvkitChangeCount} structural change(s); this is not cosmetic-only. ${goldSummary(s, k)}`, scoreKeys: ['noFalseNoChange', 'statesStructuralCount', 'noInventedNumbers'] }
+];
 const ftLines = [];
 const evalItems = [];
 for (const s of report.samples) {
@@ -84,7 +91,16 @@ for (const s of report.samples) {
       { role: 'user', content: `${t.prompt}\n\n${facts}` },
       { role: 'assistant', content: gold }
     ] }));
-    evalItems.push({ vi: s.vi, task: t.id, prompt: t.prompt, facts, gold, scoreKeys: t.scoreKeys, groundTruth: gt });
+    evalItems.push({ vi: s.vi, task: t.id, adversarial: false, prompt: t.prompt, facts, gold, scoreKeys: t.scoreKeys, groundTruth: gt });
+  }
+  for (const t of ADVERSARIAL_TASKS) {
+    const gold = t.gold(s, kinds);
+    ftLines.push(JSON.stringify({ messages: [
+      { role: 'system', content: SYSTEM },
+      { role: 'user', content: `${t.prompt}\n\n${facts}` },
+      { role: 'assistant', content: gold }
+    ] }));
+    evalItems.push({ vi: s.vi, task: t.id, adversarial: true, prompt: t.prompt, facts, gold, scoreKeys: t.scoreKeys, groundTruth: gt });
   }
 }
 fs.writeFileSync(path.join(OUT_DIR, 'vichange-finetune-v1.jsonl'), ftLines.join('\n') + '\n', 'utf8');
@@ -126,7 +142,7 @@ for (const e of evalItems) {
   const sc = err ? { parts: {}, invented: [] } : scoreParts(output, e.groundTruth);
   const rel = e.scoreKeys.filter((k) => sc.parts[k] !== undefined);
   const taskScore = err || rel.length === 0 ? 0 : rel.filter((k) => sc.parts[k]).length / rel.length;
-  results.push({ vi: e.vi.split('/').pop(), task: e.task, labviewSource: e.groundTruth.labviewSource, faithfulness: Math.round(taskScore * 1000) / 1000, parts: sc.parts, scoreKeys: e.scoreKeys, invented: sc.invented, error: err || undefined, output: output.slice(0, 400) });
+  results.push({ vi: e.vi.split('/').pop(), task: e.task, adversarial: e.adversarial || false, labviewSource: e.groundTruth.labviewSource, faithfulness: Math.round(taskScore * 1000) / 1000, parts: sc.parts, scoreKeys: e.scoreKeys, invented: sc.invented, error: err || undefined, output: output.slice(0, 400) });
 }
 
 const meanFaithful = results.length ? results.reduce((a, r) => a + r.faithfulness, 0) / results.length : 0;
@@ -135,6 +151,9 @@ const byTask = Object.fromEntries(taskIds.map((tid) => {
   const rs = results.filter((r) => r.task === tid);
   return [tid, Math.round((rs.reduce((a, r) => a + r.faithfulness, 0) / rs.length) * 1000) / 1000];
 }));
+const meanOf = (rs) => (rs.length ? Math.round((rs.reduce((a, r) => a + r.faithfulness, 0) / rs.length) * 1000) / 1000 : null);
+const standardMean = meanOf(results.filter((r) => !r.adversarial));
+const adversarialMean = meanOf(results.filter((r) => r.adversarial));
 const evalReport = {
   schema: 'vi-history-suite/ollama-vichange-eval@v1',
   generatedAt: new Date().toISOString(),
@@ -144,10 +163,12 @@ const evalReport = {
   finetunePairs: ftLines.length,
   evalItems: results.length,
   baselineMeanFaithfulness: Math.round(meanFaithful * 1000) / 1000,
+  standardMean, adversarialMean,
   baselineByTask: byTask,
   results
 };
 fs.writeFileSync(path.join(OUT_DIR, 'ollama-baseline-eval-report.json'), JSON.stringify(evalReport, null, 2), 'utf8');
 console.log('ML_DATASET_DONE finetunePairs=' + ftLines.length + ' evalItems=' + results.length + ' baselineMeanFaithfulness=' + evalReport.baselineMeanFaithfulness);
+console.log('standardMean=' + standardMean + ' adversarialMean=' + adversarialMean);
 console.log('baselineByTask=' + JSON.stringify(byTask));
-for (const r of results) console.log(`${r.vi} [${r.task}]: faithfulness=${r.faithfulness} parts=${JSON.stringify(r.parts)}`);
+for (const r of results) console.log(`${r.vi} [${r.task}${r.adversarial ? ' ADV' : ''}]: faithfulness=${r.faithfulness} parts=${JSON.stringify(r.parts)}`);
