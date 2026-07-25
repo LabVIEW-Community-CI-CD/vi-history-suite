@@ -95,6 +95,17 @@ export interface LvkitViScanEnvelope {
   readonly errorModuleCount: number;
   /** `moduleCount - errorModuleCount`. */
   readonly resolvedModuleCount: number;
+  /**
+   * #2376 provenance: per-VI tally of module resolution outcomes (clean vs the
+   * primitive wall vs the vi.lib wall vs SubVI `.error.py` stubs), derived from
+   * `modules`. Optional + additive: envelopes captured before this field existed
+   * omit it and stay valid (the shared store read-guard tolerates its absence);
+   * new envelopes always carry it. Unlike `errorModuleCount` (which counts only
+   * `.error.py`), this separately surfaces the inline `raise ...ResolutionNeeded`
+   * placeholders a `--placeholder-on-unresolved` born-from-scratch generate emits
+   * in normally-named modules, so a consumer sees the two walls distinctly.
+   */
+  readonly resolutionCounts?: LvkitResolutionCounts;
 }
 
 /** Input for {@link buildLvkitViScanEnvelope}: already-captured lvkit output + metadata. */
@@ -363,6 +374,7 @@ export function buildLvkitViScanEnvelope(
     modules,
     moduleCount: modules.length,
     errorModuleCount,
-    resolvedModuleCount: modules.length - errorModuleCount
+    resolvedModuleCount: modules.length - errorModuleCount,
+    resolutionCounts: summarizeModuleResolutions(modules)
   };
 }
