@@ -32,10 +32,13 @@ The model consumes the vi-semantic-comparison@v1 model (changedSurfaces, detailS
 
 *PoC evidence:* prototype/ml/mcpNarrativePoc.mjs -> prototype/ml/dataset/mcp-narrative-poc.json (schema vi-history-suite/mcp-narrative-poc@v1): 8 real fixtures, meanTemplate 0.906, meanGrounded 1.0, template mentionsCosmetic 8/8, grounded selected 8/8. Runs anywhere (template-only fallback when no ollama backend).
 
+*Cost decomposition:* Cost decomposition (mcpNarrativePoc.mjs template-v2): a cheap DETERMINISTIC template fix -- drop the raw NI diff-block ordinal indices and state the cosmetic count -- scores 1.0 on all 8 VIs, EQUAL to the grounded model (template 0.906 -> template-v2 1.0 = grounded 1.0). So the measured faithfulness gap on the MCP narrative surface is FULLY recoverable with zero model dependency; the grounded 8b-2shot narrator adds no scored-faithfulness value here, only qualitative readability (a plain-language reviewer split like "N structural, M cosmetic that can be ignored for review").
+
 ## Recommendation
 
 - **Local default:** 8b-2shot (vichange8b-2shot) -- cheapest local, adversarially robust (adv 1.0), most consistent 8b across the held-out VIs, within a small band of 14b on the leakage-free bar.
 - **Larger model:** qwen2.5:14b when a larger model is acceptable -- top generalization on the held-out bar; verify its lone adversarial N=1 miss (MenuSelection(User)).
 - **Not recommended:** 1-shot few-shot as the default -- on the wider honest bar (with genuine-no-change VIs) its assert-a-count bias drops it below raw; it is not the robust choice.
 - **LoRA:** DEFERRED -- the leakage fix is the held-out split (already honored by raw/few-shot/2-shot); a LoRA is backend-orthogonal to the closed GPU divergence; and the torch/Blackwell-sm_120/gated-HF/disk fine-tune infra is not cheap. A future held-out-trained LoRA is compared to the leakage-free bar above, never to a single-split memorization ceiling.
+- **MCP narrative:** MCP narrative surface: ship the DETERMINISTIC template-v2 fix (number hygiene -- no raw ordinal indices -- plus an explicit cosmetic count) as the primary faithfulness improvement; it closes the governed-scorer gap with zero latency/dependency. Treat the grounded 8b-2shot narrator as an OPTIONAL readability layer gated by the same faithfulness scorer, NOT a faithfulness requirement. The durable ML contribution to the MCP surface is the governed faithfulness SCORER as the narrative-quality gate.
 - **Fallback:** Keep the deterministic template narrative as the ungrounded fallback when no model backend is available.

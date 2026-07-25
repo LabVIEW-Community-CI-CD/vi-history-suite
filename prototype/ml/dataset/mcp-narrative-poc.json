@@ -1,6 +1,6 @@
 {
   "schema": "vi-history-suite/mcp-narrative-poc@v1",
-  "generatedAt": "2026-07-25T20:35:25.878Z",
+  "generatedAt": "2026-07-25T20:40:39.204Z",
   "ollama": "http://localhost:11434",
   "note": "Grounded MCP narrative swap PoC over real NI comparison reports. Template = shipped renderViSemanticNarrative; grounded = 8b-2shot over cosmetic-enriched semantic facts; scorer = shared governed faithfulness rubric; template is the fallback.",
   "summary": {
@@ -8,6 +8,7 @@
     "modelPresent": true,
     "viCount": 8,
     "meanTemplateScore": 0.906,
+    "meanTemplateV2Score": 1,
     "meanGroundedScore": 1,
     "templateMentionsCosmetic": 8,
     "groundedMentionsCosmetic": 8,
@@ -23,6 +24,17 @@
       "total": 2,
       "template": {
         "narrative": "The block diagram differs. 2 detailed changes across 1 section (1. Block Diagram objects). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute.",
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": false,
+          "noInventedNumbers": true
+        },
+        "score": 1
+      },
+      "templateV2": {
+        "narrative": "2 non-cosmetic structural changes across 1 section. 0 cosmetic (position/appearance) differences.",
         "parts": {
           "statesStructuralCount": true,
           "noFalseNoChange": true,
@@ -64,6 +76,17 @@
         },
         "score": 0.75
       },
+      "templateV2": {
+        "narrative": "8 non-cosmetic structural changes across 3 sections. 19 cosmetic (position/appearance) differences.",
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": false,
+          "noInventedNumbers": true
+        },
+        "score": 1
+      },
       "grounded": {
         "narrative": "There are 8 non-cosmetic structural changes between the two revisions of the VI. Additionally, there are 19 cosmetic differences in position/appearance that do not affect the VI's functionality or structure.",
         "parts": {
@@ -87,6 +110,17 @@
       "total": 3,
       "template": {
         "narrative": "The block diagram differs. 2 detailed changes across 1 section (2. Block Diagram objects). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute.",
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": false,
+          "noInventedNumbers": true
+        },
+        "score": 1
+      },
+      "templateV2": {
+        "narrative": "2 non-cosmetic structural changes across 1 section. 1 cosmetic (position/appearance) difference.",
         "parts": {
           "statesStructuralCount": true,
           "noFalseNoChange": true,
@@ -128,6 +162,17 @@
         },
         "score": 0.75
       },
+      "templateV2": {
+        "narrative": "19 non-cosmetic structural changes across 6 sections. 47 cosmetic (position/appearance) differences.",
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": false,
+          "noInventedNumbers": true
+        },
+        "score": 1
+      },
       "grounded": {
         "narrative": "19 non-cosmetic structural changes were made to the VI's block-diagram. There are 47 cosmetic (position/appearance) differences that can be ignored for code review purposes, as they do not affect the VI's functionality or structure.",
         "parts": {
@@ -160,6 +205,17 @@
         },
         "score": 0.75
       },
+      "templateV2": {
+        "narrative": "43 non-cosmetic structural changes across 10 sections. 29 cosmetic (position/appearance) differences.",
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": false,
+          "noInventedNumbers": true
+        },
+        "score": 1
+      },
       "grounded": {
         "narrative": "There are 43 non-cosmetic structural changes. Additionally, there are 29 cosmetic differences in position/appearance.",
         "parts": {
@@ -183,6 +239,17 @@
       "total": 2,
       "template": {
         "narrative": "The block diagram differs. 2 detailed changes across 1 section (1. Block Diagram objects). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute.",
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": false,
+          "noInventedNumbers": true
+        },
+        "score": 1
+      },
+      "templateV2": {
+        "narrative": "2 non-cosmetic structural changes across 1 section. 0 cosmetic (position/appearance) differences.",
         "parts": {
           "statesStructuralCount": true,
           "noFalseNoChange": true,
@@ -224,6 +291,17 @@
         },
         "score": 1
       },
+      "templateV2": {
+        "narrative": "2 non-cosmetic structural changes across 1 section. 0 cosmetic (position/appearance) differences.",
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": false,
+          "noInventedNumbers": true
+        },
+        "score": 1
+      },
       "grounded": {
         "narrative": "There are 2 non-cosmetic structural changes between the two revisions. There are no cosmetic differences, meaning all 2 reported differences are related to the structure or behavior of the VI.",
         "parts": {
@@ -247,6 +325,17 @@
       "total": 3,
       "template": {
         "narrative": "The front panel and block diagram differ. 6 detailed changes across 2 sections (1. Block Diagram objects and 2. Front Panel - Cluster). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute.",
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": false,
+          "noInventedNumbers": true
+        },
+        "score": 1
+      },
+      "templateV2": {
+        "narrative": "6 non-cosmetic structural changes across 2 sections. 0 cosmetic (position/appearance) differences.",
         "parts": {
           "statesStructuralCount": true,
           "noFalseNoChange": true,

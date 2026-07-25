@@ -99,6 +99,23 @@ function buildFacts(model, counts) {
   ].join('\n');
 }
 
+// Deterministic TEMPLATE-V2: the cheap fix the PoC surfaces -- drop the raw NI diff-block
+// ordinal indices (the invented-number hazard) and state the cosmetic count explicitly.
+// No model. Isolates how much of the template->grounded faithfulness gain is recoverable
+// by a trivial deterministic edit vs what genuinely needs the grounded narrator.
+function buildTemplateV2(model, counts) {
+  if (!model.hasDifferences) {
+    return 'No LabVIEW differences were detected between the two revisions.';
+  }
+  const N = model.totals.detailItemCount;
+  const sectionCount = model.totals.detailSectionCount;
+  const parts = [
+    `${N} non-cosmetic structural change${N === 1 ? '' : 's'} across ${sectionCount} section${sectionCount === 1 ? '' : 's'}.`,
+    `${counts.cosmetic} cosmetic (position/appearance) difference${counts.cosmetic === 1 ? '' : 's'}.`
+  ];
+  return parts.join(' ');
+}
+
 async function main() {
   const dataset = JSON.parse(fs.readFileSync(DATASET, 'utf8'));
   const lvkitBySlug = new Map(dataset.samples.map((s) => [fixtureSlug(s.vi), s]));
@@ -146,6 +163,11 @@ async function main() {
     const templateParts = scoreParts(templateNarrative, gt).parts;
     const templateScore = taskScoreOf(templateParts, SCORE_KEYS, null);
 
+    // Cheap deterministic fix (no model).
+    const templateV2Narrative = buildTemplateV2(model, counts);
+    const templateV2Parts = scoreParts(templateV2Narrative, gt).parts;
+    const templateV2Score = taskScoreOf(templateV2Parts, SCORE_KEYS, null);
+
     let grounded = null;
     if (present) {
       try {
@@ -175,6 +197,7 @@ async function main() {
       cosmetic: counts.cosmetic,
       total: counts.total,
       template: { narrative: templateNarrative, parts: templateParts, score: templateScore },
+      templateV2: { narrative: templateV2Narrative, parts: templateV2Parts, score: templateV2Score },
       grounded,
       selected,
       cosmeticGapClosed: !!(grounded && grounded.parts && grounded.parts.mentionsCosmetic && !templateParts.mentionsCosmetic)
@@ -188,6 +211,7 @@ async function main() {
     modelPresent: present,
     viCount: scored.length,
     meanTemplateScore: mean(scored.map((r) => r.template.score)),
+    meanTemplateV2Score: mean(scored.map((r) => r.templateV2.score)),
     meanGroundedScore: present ? mean(scored.filter((r) => r.grounded && r.grounded.score != null).map((r) => r.grounded.score)) : null,
     templateMentionsCosmetic: scored.filter((r) => r.template.parts.mentionsCosmetic).length,
     groundedMentionsCosmetic: present ? scored.filter((r) => r.grounded && r.grounded.parts && r.grounded.parts.mentionsCosmetic).length : null,
@@ -209,15 +233,15 @@ async function main() {
 
   console.log(`MCP_NARRATIVE_POC_DONE model=${MODEL} present=${present} vis=${summary.viCount}`);
   console.log(
-    `meanTemplate=${summary.meanTemplateScore} meanGrounded=${summary.meanGroundedScore} templateCosmetic=${summary.templateMentionsCosmetic}/${summary.viCount} groundedCosmetic=${summary.groundedMentionsCosmetic}/${summary.viCount} cosmeticGapClosed=${summary.cosmeticGapClosedCount}/${summary.viCount} groundedSelected=${summary.groundedSelectedCount}/${summary.viCount}`
+    `meanTemplate=${summary.meanTemplateScore} meanTemplateV2=${summary.meanTemplateV2Score} meanGrounded=${summary.meanGroundedScore} templateCosmetic=${summary.templateMentionsCosmetic}/${summary.viCount} groundedCosmetic=${summary.groundedMentionsCosmetic}/${summary.viCount} cosmeticGapClosed=${summary.cosmeticGapClosedCount}/${summary.viCount} groundedSelected=${summary.groundedSelectedCount}/${summary.viCount}`
   );
-  console.log('| vi | mcpN | cosmetic | tmplCosmetic? | grndCosmetic? | tmplScore | grndScore | selected |');
-  console.log('|---|---|---|---|---|---|---|---|');
+  console.log('| vi | mcpN | cosmetic | tmplScore | tmplV2Score | grndScore | selected |');
+  console.log('|---|---|---|---|---|---|---|');
   for (const r of scored) {
     console.log(
-      `| ${r.vi} | ${r.mcpStructuralCount} | ${r.cosmetic} | ${r.template.parts.mentionsCosmetic} | ${
-        r.grounded && r.grounded.parts ? r.grounded.parts.mentionsCosmetic : 'n/a'
-      } | ${r.template.score} | ${r.grounded && r.grounded.score != null ? r.grounded.score : 'n/a'} | ${r.selected} |`
+      `| ${r.vi} | ${r.mcpStructuralCount} | ${r.cosmetic} | ${r.template.score} | ${r.templateV2.score} | ${
+        r.grounded && r.grounded.score != null ? r.grounded.score : 'n/a'
+      } | ${r.selected} |`
     );
   }
 }
