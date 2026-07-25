@@ -1,7 +1,7 @@
 {
   "schema": "vi-history-suite/ml-datasets-index@v1",
-  "generatedAt": "2026-07-25T17:02:37.819Z",
-  "sourceCommit": "53745e1885ec98fe8ea90dc4652fba630e9d20af",
+  "generatedAt": "2026-07-25T17:18:37.172Z",
+  "sourceCommit": "5e7a008001ee37bea7ac69dfd91f6abd374df703",
   "generator": "prototype/ml/datasetManifest.mjs",
   "task": "grounded-vi-change-faithful-summarization",
   "datasets": [
@@ -58,23 +58,23 @@
       "file": "prototype/ml/dataset/ollama-eval-compare-configs.json",
       "schema": "vi-history-suite/ollama-vichange-eval-compare@v1",
       "kind": "multi-config-compare",
-      "evalItems": 12,
+      "evalItems": 28,
       "configs": [
         {
           "id": "8b-raw",
           "model": "llama3.1:8b",
           "present": true,
-          "overall": 0.958,
-          "standardMean": 0.938,
-          "adversarialMean": 1,
-          "guardPass": true
+          "overall": 0.896,
+          "standardMean": 0.888,
+          "adversarialMean": 0.917,
+          "guardPass": false
         },
         {
           "id": "8b-fewshot",
           "model": "vichange8b-fewshot",
           "present": true,
-          "overall": 1,
-          "standardMean": 1,
+          "overall": 0.946,
+          "standardMean": 0.925,
           "adversarialMean": 1,
           "guardPass": true
         },
@@ -82,8 +82,8 @@
           "id": "14b",
           "model": "qwen2.5:14b",
           "present": true,
-          "overall": 0.972,
-          "standardMean": 0.958,
+          "overall": 0.955,
+          "standardMean": 0.938,
           "adversarialMean": 1,
           "guardPass": true
         }
@@ -203,21 +203,54 @@
       "score": 0.75
     },
     {
+      "task": "full-summary",
+      "config": "8b-fewshot",
+      "score": 0.9
+    },
+    {
+      "task": "full-summary",
+      "config": "14b",
+      "score": 0.95
+    },
+    {
+      "task": "count",
+      "config": "8b-fewshot",
+      "score": 0.933
+    },
+    {
+      "task": "kinds",
+      "config": "8b-fewshot",
+      "score": 0.867
+    },
+    {
       "task": "kinds",
       "config": "14b",
-      "score": 0.834
+      "score": 0.8
+    },
+    {
+      "task": "cosmetic-split",
+      "config": "8b-raw",
+      "score": 0.8
+    },
+    {
+      "task": "adv-false-nochange",
+      "config": "8b-raw",
+      "score": 0.833
     }
   ],
   "enrichmentGuidance": {
     "note": "Add NEW verified samples (commit a LabVIEW report HTML -> correlationReport.mjs -> buildViChangeMlDataset.mjs -> re-run this manifest). openResiduals lists task/config scores < 1.0 = the specific gaps to target.",
     "residualTasks": [
       "full-summary",
-      "kinds"
+      "count",
+      "kinds",
+      "cosmetic-split",
+      "adv-false-nochange"
     ]
   },
   "lineage": {
-    "previousCommit": "3d1d1246f60ef6fe5d5e024d44e1d33404d6869c",
-    "previousGeneratedAt": "2026-07-25T16:54:28.843Z",
+    "previousCommit": "53745e1885ec98fe8ea90dc4652fba630e9d20af",
+    "previousGeneratedAt": "2026-07-25T17:02:37.819Z",
     "previousSampleCount": 5,
     "newSamplesSincePrevious": [],
     "carriedOverSamples": [
@@ -238,17 +271,17 @@
     "available": true,
     "source": "os.tmpdir()/vihs-cycles",
     "note": "benchmark excludes the manifest-writing cycle (its meta is written after this runs)",
-    "cycleCount": 74,
+    "cycleCount": 84,
     "window": {
       "firstStart": "2026-07-25T15:03:54.804Z",
-      "lastEnd": "2026-07-25T16:57:48.333Z",
-      "wallClockSec": 6833.5
+      "lastEnd": "2026-07-25T17:17:57.461Z",
+      "wallClockSec": 8042.7
     },
-    "activeSec": 1187.2,
-    "deadSec": 5646.3,
-    "deadFraction": 0.826,
+    "activeSec": 1692.3,
+    "deadSec": 6350.4,
+    "deadFraction": 0.79,
     "deadTimeThresholdSec": 20,
-    "encapsulatableDeadSec": 5549.9,
+    "encapsulatableDeadSec": 6253.9,
     "largestGaps": [
       {
         "afterCycle": "c19-env-check",
@@ -261,6 +294,11 @@
         "deadSec": 314.6
       },
       {
+        "afterCycle": "c73-handoff",
+        "beforeCycle": "c74-align-refine",
+        "deadSec": 288.8
+      },
+      {
         "afterCycle": "c54-manifest",
         "beforeCycle": "c55-benchmark",
         "deadSec": 266
@@ -269,11 +307,6 @@
         "afterCycle": "c52-commit-md",
         "beforeCycle": "c53-modecheck",
         "deadSec": 244
-      },
-      {
-        "afterCycle": "c14-push-propose-post",
-        "beforeCycle": "c15-sync",
-        "deadSec": 195.8
       }
     ],
     "encapsulationCandidates": [
@@ -286,6 +319,11 @@
         "afterCycle": "c67-commit-scale",
         "beforeCycle": "c66-state",
         "deadSec": 314.6
+      },
+      {
+        "afterCycle": "c73-handoff",
+        "beforeCycle": "c74-align-refine",
+        "deadSec": 288.8
       },
       {
         "afterCycle": "c54-manifest",
@@ -388,6 +426,11 @@
         "deadSec": 81.1
       },
       {
+        "afterCycle": "c78-evidence",
+        "beforeCycle": "c79-mprr-rerun",
+        "deadSec": 80.6
+      },
+      {
         "afterCycle": "c33-ack-crossmodel",
         "beforeCycle": "c34-sync",
         "deadSec": 78.7
@@ -443,14 +486,29 @@
         "deadSec": 59.9
       },
       {
+        "afterCycle": "c75-compile",
+        "beforeCycle": "c76-elev-mprrtests",
+        "deadSec": 58.4
+      },
+      {
         "afterCycle": "c55-benchmark",
         "beforeCycle": "c56-verify",
         "deadSec": 56
       },
       {
+        "afterCycle": "c81-rebase-push",
+        "beforeCycle": "c82-recompile-mprrtest",
+        "deadSec": 54.1
+      },
+      {
         "afterCycle": "c1-render-status",
         "beforeCycle": "c2-compare",
         "deadSec": 50.4
+      },
+      {
+        "afterCycle": "c77-mprr-driver",
+        "beforeCycle": "c78-evidence",
+        "deadSec": 48.5
       },
       {
         "afterCycle": "c30-enriched-ml",
@@ -483,8 +541,18 @@
         "deadSec": 43.5
       },
       {
+        "afterCycle": "c79-mprr-rerun",
+        "beforeCycle": "c80-commit-mprr",
+        "deadSec": 43.2
+      },
+      {
         "afterCycle": "c58-bus",
         "beforeCycle": "c59-refresh-manifest",
+        "deadSec": 41.5
+      },
+      {
+        "afterCycle": "c82-recompile-mprrtest",
+        "beforeCycle": "c83-sync",
         "deadSec": 41.5
       },
       {
@@ -578,6 +646,11 @@
         "deadSec": 32.8
       },
       {
+        "afterCycle": "c74-align-refine",
+        "beforeCycle": "c75-compile",
+        "deadSec": 31.8
+      },
+      {
         "afterCycle": "c42-status",
         "beforeCycle": "c43-clean",
         "deadSec": 31
@@ -593,9 +666,19 @@
         "deadSec": 30.7
       },
       {
+        "afterCycle": "c76-elev-mprrtests",
+        "beforeCycle": "c77-mprr-driver",
+        "deadSec": 29.9
+      },
+      {
         "afterCycle": "c59-refresh-manifest",
         "beforeCycle": "c60-refresh-commit",
         "deadSec": 28.6
+      },
+      {
+        "afterCycle": "c80-commit-mprr",
+        "beforeCycle": "c81-rebase-push",
+        "deadSec": 27.2
       },
       {
         "afterCycle": "c26-locate-pc-report",
@@ -1357,21 +1440,121 @@
         "exitCode": 0,
         "hadException": false,
         "deadBeforeSec": 60.4
+      },
+      {
+        "id": "c74-align-refine",
+        "description": "align refine",
+        "startedAt": "2026-07-25T17:02:37.130Z",
+        "endedAt": "2026-07-25T17:02:41.530Z",
+        "elapsedSec": 4.4,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 288.8
+      },
+      {
+        "id": "c75-compile",
+        "description": "compile",
+        "startedAt": "2026-07-25T17:03:13.333Z",
+        "endedAt": "2026-07-25T17:03:15.433Z",
+        "elapsedSec": 2.1,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 31.8
+      },
+      {
+        "id": "c76-elev-mprrtests",
+        "description": "elev mprrtests",
+        "startedAt": "2026-07-25T17:04:13.845Z",
+        "endedAt": "2026-07-25T17:04:14.945Z",
+        "elapsedSec": 1.1,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 58.4
+      },
+      {
+        "id": "c77-mprr-driver",
+        "description": "mprr driver",
+        "startedAt": "2026-07-25T17:04:44.830Z",
+        "endedAt": "2026-07-25T17:08:59.830Z",
+        "elapsedSec": 255,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 29.9
+      },
+      {
+        "id": "c78-evidence",
+        "description": "evidence",
+        "startedAt": "2026-07-25T17:09:48.378Z",
+        "endedAt": "2026-07-25T17:09:48.478Z",
+        "elapsedSec": 0.1,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 48.5
+      },
+      {
+        "id": "c79-mprr-rerun",
+        "description": "mprr rerun",
+        "startedAt": "2026-07-25T17:11:09.055Z",
+        "endedAt": "2026-07-25T17:14:59.055Z",
+        "elapsedSec": 230,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 80.6
+      },
+      {
+        "id": "c80-commit-mprr",
+        "description": "commit mprr",
+        "startedAt": "2026-07-25T17:15:42.262Z",
+        "endedAt": "2026-07-25T17:15:45.562Z",
+        "elapsedSec": 3.3,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 43.2
+      },
+      {
+        "id": "c81-rebase-push",
+        "description": "rebase push",
+        "startedAt": "2026-07-25T17:16:12.757Z",
+        "endedAt": "2026-07-25T17:16:17.257Z",
+        "elapsedSec": 4.5,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 27.2
+      },
+      {
+        "id": "c82-recompile-mprrtest",
+        "description": "recompile mprrtest",
+        "startedAt": "2026-07-25T17:17:11.390Z",
+        "endedAt": "2026-07-25T17:17:14.090Z",
+        "elapsedSec": 2.7,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 54.1
+      },
+      {
+        "id": "c83-sync",
+        "description": "sync",
+        "startedAt": "2026-07-25T17:17:55.561Z",
+        "endedAt": "2026-07-25T17:17:57.461Z",
+        "elapsedSec": 1.9,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 41.5
       }
     ],
     "timeline": {
       "purpose": "Fit a constant-FPS screenshot stream to wall-clock: assemble frames into a video with ffmpeg, and let an LLM navigate event -> frame -> screenshot and correlate to a performance-monitor time series (all keyed by epoch ms).",
       "t0": "2026-07-25T15:03:54.804Z",
       "t0EpochMs": 1784991834804,
-      "endEpochMs": 1784998668333,
-      "wallClockSec": 6833.5,
+      "endEpochMs": 1784999877461,
+      "wallClockSec": 8042.7,
       "fpsSupported": [
         12,
         18
       ],
       "frameCounts": {
-        "fps12": 82002,
-        "fps18": 123003
+        "fps12": 96513,
+        "fps18": 144769
       },
       "frameForEpochMs": "frame = round((epochMs - t0EpochMs) / 1000 * fps)  // 0-based, continuous capture from t0",
       "screenshotPattern": "frame_%06d.png",
@@ -1391,7 +1574,7 @@
           "driver": "scripts/windows-perfmon-mprr-driver.cjs (E1-E6 real-hardware perfmon->TDMS->mprr-sync->bounded-RAM replay)"
         }
       },
-      "eventCount": 147,
+      "eventCount": 167,
       "events": [
         {
           "kind": "cycle",
@@ -3965,6 +4148,356 @@
           "endFrame12": 82002,
           "startFrame18": 122978,
           "endFrame18": 123004
+        },
+        {
+          "kind": "dead-gap",
+          "afterCycle": "c73-handoff",
+          "beforeCycle": "c74-align-refine",
+          "startAt": "2026-07-25T16:57:48.333Z",
+          "endAt": "2026-07-25T17:02:37.130Z",
+          "startEpochMs": 1784998668333,
+          "endEpochMs": 1784998957130,
+          "tStartSec": 6833.5,
+          "tEndSec": 7122.3,
+          "deadSec": 288.8,
+          "encapsulationCandidate": true,
+          "startFrame12": 82002,
+          "endFrame12": 85468,
+          "startFrame18": 123004,
+          "endFrame18": 128202
+        },
+        {
+          "kind": "cycle",
+          "id": "c74-align-refine",
+          "description": "align refine",
+          "startAt": "2026-07-25T17:02:37.130Z",
+          "endAt": "2026-07-25T17:02:41.530Z",
+          "startEpochMs": 1784998957130,
+          "endEpochMs": 1784998961530,
+          "tStartSec": 7122.3,
+          "tEndSec": 7126.7,
+          "durationSec": 4.4,
+          "exitCode": 0,
+          "hadException": false,
+          "startFrame12": 85468,
+          "endFrame12": 85521,
+          "startFrame18": 128202,
+          "endFrame18": 128281
+        },
+        {
+          "kind": "dead-gap",
+          "afterCycle": "c74-align-refine",
+          "beforeCycle": "c75-compile",
+          "startAt": "2026-07-25T17:02:41.530Z",
+          "endAt": "2026-07-25T17:03:13.333Z",
+          "startEpochMs": 1784998961530,
+          "endEpochMs": 1784998993333,
+          "tStartSec": 7126.7,
+          "tEndSec": 7158.5,
+          "deadSec": 31.8,
+          "encapsulationCandidate": true,
+          "startFrame12": 85521,
+          "endFrame12": 85902,
+          "startFrame18": 128281,
+          "endFrame18": 128854
+        },
+        {
+          "kind": "cycle",
+          "id": "c75-compile",
+          "description": "compile",
+          "startAt": "2026-07-25T17:03:13.333Z",
+          "endAt": "2026-07-25T17:03:15.433Z",
+          "startEpochMs": 1784998993333,
+          "endEpochMs": 1784998995433,
+          "tStartSec": 7158.5,
+          "tEndSec": 7160.6,
+          "durationSec": 2.1,
+          "exitCode": 0,
+          "hadException": false,
+          "startFrame12": 85902,
+          "endFrame12": 85928,
+          "startFrame18": 128854,
+          "endFrame18": 128891
+        },
+        {
+          "kind": "dead-gap",
+          "afterCycle": "c75-compile",
+          "beforeCycle": "c76-elev-mprrtests",
+          "startAt": "2026-07-25T17:03:15.433Z",
+          "endAt": "2026-07-25T17:04:13.845Z",
+          "startEpochMs": 1784998995433,
+          "endEpochMs": 1784999053845,
+          "tStartSec": 7160.6,
+          "tEndSec": 7219,
+          "deadSec": 58.4,
+          "encapsulationCandidate": true,
+          "startFrame12": 85928,
+          "endFrame12": 86628,
+          "startFrame18": 128891,
+          "endFrame18": 129943
+        },
+        {
+          "kind": "cycle",
+          "id": "c76-elev-mprrtests",
+          "description": "elev mprrtests",
+          "startAt": "2026-07-25T17:04:13.845Z",
+          "endAt": "2026-07-25T17:04:14.945Z",
+          "startEpochMs": 1784999053845,
+          "endEpochMs": 1784999054945,
+          "tStartSec": 7219,
+          "tEndSec": 7220.1,
+          "durationSec": 1.1,
+          "exitCode": 0,
+          "hadException": false,
+          "startFrame12": 86628,
+          "endFrame12": 86642,
+          "startFrame18": 129943,
+          "endFrame18": 129963
+        },
+        {
+          "kind": "dead-gap",
+          "afterCycle": "c76-elev-mprrtests",
+          "beforeCycle": "c77-mprr-driver",
+          "startAt": "2026-07-25T17:04:14.945Z",
+          "endAt": "2026-07-25T17:04:44.830Z",
+          "startEpochMs": 1784999054945,
+          "endEpochMs": 1784999084830,
+          "tStartSec": 7220.1,
+          "tEndSec": 7250,
+          "deadSec": 29.9,
+          "encapsulationCandidate": true,
+          "startFrame12": 86642,
+          "endFrame12": 87000,
+          "startFrame18": 129963,
+          "endFrame18": 130500
+        },
+        {
+          "kind": "cycle",
+          "id": "c77-mprr-driver",
+          "description": "mprr driver",
+          "startAt": "2026-07-25T17:04:44.830Z",
+          "endAt": "2026-07-25T17:08:59.830Z",
+          "startEpochMs": 1784999084830,
+          "endEpochMs": 1784999339830,
+          "tStartSec": 7250,
+          "tEndSec": 7505,
+          "durationSec": 255,
+          "exitCode": 0,
+          "hadException": false,
+          "startFrame12": 87000,
+          "endFrame12": 90060,
+          "startFrame18": 130500,
+          "endFrame18": 135090
+        },
+        {
+          "kind": "dead-gap",
+          "afterCycle": "c77-mprr-driver",
+          "beforeCycle": "c78-evidence",
+          "startAt": "2026-07-25T17:08:59.830Z",
+          "endAt": "2026-07-25T17:09:48.378Z",
+          "startEpochMs": 1784999339830,
+          "endEpochMs": 1784999388378,
+          "tStartSec": 7505,
+          "tEndSec": 7553.6,
+          "deadSec": 48.5,
+          "encapsulationCandidate": true,
+          "startFrame12": 90060,
+          "endFrame12": 90643,
+          "startFrame18": 135090,
+          "endFrame18": 135964
+        },
+        {
+          "kind": "cycle",
+          "id": "c78-evidence",
+          "description": "evidence",
+          "startAt": "2026-07-25T17:09:48.378Z",
+          "endAt": "2026-07-25T17:09:48.478Z",
+          "startEpochMs": 1784999388378,
+          "endEpochMs": 1784999388478,
+          "tStartSec": 7553.6,
+          "tEndSec": 7553.7,
+          "durationSec": 0.1,
+          "exitCode": 0,
+          "hadException": false,
+          "startFrame12": 90643,
+          "endFrame12": 90644,
+          "startFrame18": 135964,
+          "endFrame18": 135966
+        },
+        {
+          "kind": "dead-gap",
+          "afterCycle": "c78-evidence",
+          "beforeCycle": "c79-mprr-rerun",
+          "startAt": "2026-07-25T17:09:48.478Z",
+          "endAt": "2026-07-25T17:11:09.055Z",
+          "startEpochMs": 1784999388478,
+          "endEpochMs": 1784999469055,
+          "tStartSec": 7553.7,
+          "tEndSec": 7634.3,
+          "deadSec": 80.6,
+          "encapsulationCandidate": true,
+          "startFrame12": 90644,
+          "endFrame12": 91611,
+          "startFrame18": 135966,
+          "endFrame18": 137417
+        },
+        {
+          "kind": "cycle",
+          "id": "c79-mprr-rerun",
+          "description": "mprr rerun",
+          "startAt": "2026-07-25T17:11:09.055Z",
+          "endAt": "2026-07-25T17:14:59.055Z",
+          "startEpochMs": 1784999469055,
+          "endEpochMs": 1784999699055,
+          "tStartSec": 7634.3,
+          "tEndSec": 7864.3,
+          "durationSec": 230,
+          "exitCode": 0,
+          "hadException": false,
+          "startFrame12": 91611,
+          "endFrame12": 94371,
+          "startFrame18": 137417,
+          "endFrame18": 141557
+        },
+        {
+          "kind": "dead-gap",
+          "afterCycle": "c79-mprr-rerun",
+          "beforeCycle": "c80-commit-mprr",
+          "startAt": "2026-07-25T17:14:59.055Z",
+          "endAt": "2026-07-25T17:15:42.262Z",
+          "startEpochMs": 1784999699055,
+          "endEpochMs": 1784999742262,
+          "tStartSec": 7864.3,
+          "tEndSec": 7907.5,
+          "deadSec": 43.2,
+          "encapsulationCandidate": true,
+          "startFrame12": 94371,
+          "endFrame12": 94889,
+          "startFrame18": 141557,
+          "endFrame18": 142334
+        },
+        {
+          "kind": "cycle",
+          "id": "c80-commit-mprr",
+          "description": "commit mprr",
+          "startAt": "2026-07-25T17:15:42.262Z",
+          "endAt": "2026-07-25T17:15:45.562Z",
+          "startEpochMs": 1784999742262,
+          "endEpochMs": 1784999745562,
+          "tStartSec": 7907.5,
+          "tEndSec": 7910.8,
+          "durationSec": 3.3,
+          "exitCode": 0,
+          "hadException": false,
+          "startFrame12": 94889,
+          "endFrame12": 94929,
+          "startFrame18": 142334,
+          "endFrame18": 142394
+        },
+        {
+          "kind": "dead-gap",
+          "afterCycle": "c80-commit-mprr",
+          "beforeCycle": "c81-rebase-push",
+          "startAt": "2026-07-25T17:15:45.562Z",
+          "endAt": "2026-07-25T17:16:12.757Z",
+          "startEpochMs": 1784999745562,
+          "endEpochMs": 1784999772757,
+          "tStartSec": 7910.8,
+          "tEndSec": 7938,
+          "deadSec": 27.2,
+          "encapsulationCandidate": true,
+          "startFrame12": 94929,
+          "endFrame12": 95255,
+          "startFrame18": 142394,
+          "endFrame18": 142883
+        },
+        {
+          "kind": "cycle",
+          "id": "c81-rebase-push",
+          "description": "rebase push",
+          "startAt": "2026-07-25T17:16:12.757Z",
+          "endAt": "2026-07-25T17:16:17.257Z",
+          "startEpochMs": 1784999772757,
+          "endEpochMs": 1784999777257,
+          "tStartSec": 7938,
+          "tEndSec": 7942.5,
+          "durationSec": 4.5,
+          "exitCode": 0,
+          "hadException": false,
+          "startFrame12": 95255,
+          "endFrame12": 95309,
+          "startFrame18": 142883,
+          "endFrame18": 142964
+        },
+        {
+          "kind": "dead-gap",
+          "afterCycle": "c81-rebase-push",
+          "beforeCycle": "c82-recompile-mprrtest",
+          "startAt": "2026-07-25T17:16:17.257Z",
+          "endAt": "2026-07-25T17:17:11.390Z",
+          "startEpochMs": 1784999777257,
+          "endEpochMs": 1784999831390,
+          "tStartSec": 7942.5,
+          "tEndSec": 7996.6,
+          "deadSec": 54.1,
+          "encapsulationCandidate": true,
+          "startFrame12": 95309,
+          "endFrame12": 95959,
+          "startFrame18": 142964,
+          "endFrame18": 143939
+        },
+        {
+          "kind": "cycle",
+          "id": "c82-recompile-mprrtest",
+          "description": "recompile mprrtest",
+          "startAt": "2026-07-25T17:17:11.390Z",
+          "endAt": "2026-07-25T17:17:14.090Z",
+          "startEpochMs": 1784999831390,
+          "endEpochMs": 1784999834090,
+          "tStartSec": 7996.6,
+          "tEndSec": 7999.3,
+          "durationSec": 2.7,
+          "exitCode": 0,
+          "hadException": false,
+          "startFrame12": 95959,
+          "endFrame12": 95991,
+          "startFrame18": 143939,
+          "endFrame18": 143987
+        },
+        {
+          "kind": "dead-gap",
+          "afterCycle": "c82-recompile-mprrtest",
+          "beforeCycle": "c83-sync",
+          "startAt": "2026-07-25T17:17:14.090Z",
+          "endAt": "2026-07-25T17:17:55.561Z",
+          "startEpochMs": 1784999834090,
+          "endEpochMs": 1784999875561,
+          "tStartSec": 7999.3,
+          "tEndSec": 8040.8,
+          "deadSec": 41.5,
+          "encapsulationCandidate": true,
+          "startFrame12": 95991,
+          "endFrame12": 96489,
+          "startFrame18": 143987,
+          "endFrame18": 144734
+        },
+        {
+          "kind": "cycle",
+          "id": "c83-sync",
+          "description": "sync",
+          "startAt": "2026-07-25T17:17:55.561Z",
+          "endAt": "2026-07-25T17:17:57.461Z",
+          "startEpochMs": 1784999875561,
+          "endEpochMs": 1784999877461,
+          "tStartSec": 8040.8,
+          "tEndSec": 8042.7,
+          "durationSec": 1.9,
+          "exitCode": 0,
+          "hadException": false,
+          "startFrame12": 96489,
+          "endFrame12": 96512,
+          "startFrame18": 144734,
+          "endFrame18": 144768
         }
       ]
     }

@@ -11,9 +11,9 @@
     "generator": "prototype/ml/datasetManifest.mjs",
     "datasetGenerator": "prototype/ml/buildViChangeMlDataset.mjs",
     "groundTruthSource": "prototype/correlationReport.mjs over prototype/win-lvkit/correlation-fixtures",
-    "sourceCommit": "53745e1885ec98fe8ea90dc4652fba630e9d20af",
+    "sourceCommit": "5e7a008001ee37bea7ac69dfd91f6abd374df703",
     "nodeVersion": "v24.16.0",
-    "generatedAt": "2026-07-25T17:02:37.819Z"
+    "generatedAt": "2026-07-25T17:18:37.172Z"
   },
   "coverage": {
     "sampleCount": 5,
@@ -154,23 +154,23 @@
       "file": "prototype/ml/dataset/ollama-eval-compare-configs.json",
       "schema": "vi-history-suite/ollama-vichange-eval-compare@v1",
       "kind": "multi-config-compare",
-      "evalItems": 12,
+      "evalItems": 28,
       "configs": [
         {
           "id": "8b-raw",
           "model": "llama3.1:8b",
           "present": true,
-          "overall": 0.958,
-          "standardMean": 0.938,
-          "adversarialMean": 1,
-          "guardPass": true
+          "overall": 0.896,
+          "standardMean": 0.888,
+          "adversarialMean": 0.917,
+          "guardPass": false
         },
         {
           "id": "8b-fewshot",
           "model": "vichange8b-fewshot",
           "present": true,
-          "overall": 1,
-          "standardMean": 1,
+          "overall": 0.946,
+          "standardMean": 0.925,
           "adversarialMean": 1,
           "guardPass": true
         },
@@ -178,8 +178,8 @@
           "id": "14b",
           "model": "qwen2.5:14b",
           "present": true,
-          "overall": 0.972,
-          "standardMean": 0.958,
+          "overall": 0.955,
+          "standardMean": 0.938,
           "adversarialMean": 1,
           "guardPass": true
         }
@@ -198,6 +198,6 @@
   "lineage": {
     "previousSha256": "1a6b4d81c86d21a0a203c0e5b1f74cfe2857d69e494f448f97ede0c41449834f",
     "changedSincePrevious": false,
-    "derivedFrom": "3d1d1246f60ef6fe5d5e024d44e1d33404d6869c"
+    "derivedFrom": "53745e1885ec98fe8ea90dc4652fba630e9d20af"
   }
 }
