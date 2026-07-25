@@ -231,6 +231,27 @@ describe('buildCorrelationReport (#2379)', () => {
     expect(report.calibration.prototypeSamples).toBe(1);
     // Both ratios are 1.0 here -> meanRatio (empirical best-fit k) = 1.
     expect(report.calibration.empiricalBestFitK).toBe(1);
+    // #2379 k-distribution: ratio is VI-dependent, reported as a distribution.
+    expect(report.calibration.ratioDistribution).toMatchObject({ n: 2, min: 1, max: 1, mean: 1, median: 1, stdev: 0 });
+    expect(report.calibration.ratioDistribution.perSample).toHaveLength(2);
+  });
+
+  it('reports the full ratio distribution incl. lvkit=0 (ratio spread, not a point)', () => {
+    const dataset = {
+      samples: [
+        { vi: 'A/Zero.vi', lvkit: { changeCount: 0, kinds: [] }, labview: { differenceBlocks: 5, cosmetic: 4, nonCosmetic: 1 }, preview: { deltaInlineImages: 0 } },
+        { vi: 'B/Over.vi', lvkit: { changeCount: 4, kinds: ['added', 'added', 'modified', 'modified'] }, labview: { differenceBlocks: 8, cosmetic: 6, nonCosmetic: 2 }, preview: { deltaInlineImages: 1 } }
+      ]
+    };
+    const report = buildCorrelationReport(dataset, '/fx', { exists: () => false, readFile: () => '' });
+    const dist = report.calibration.ratioDistribution;
+    // Over.vi lvkit 4 / nonCosmetic 2 = 2.0; Zero.vi lvkit 0 / nonCosmetic 1 = 0.
+    expect(dist.min).toBe(0);
+    expect(dist.max).toBe(2);
+    expect(dist.n).toBe(2);
+    expect(dist.perSample.map((p: { ratio: number }) => p.ratio).sort()).toEqual([0, 2]);
+    // Positive-only meanRatio excludes the 0 (back-compat), so it is 2, not 1.
+    expect(report.calibration.meanRatio).toBe(2);
   });
 
   it('throws fail-closed on a malformed dataset', () => {

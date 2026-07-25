@@ -79,21 +79,54 @@ export function buildCorrelationReport(dataset, fixturesDir, deps, calibrationK 
       cosmeticAxis: labview.cosmetic
     };
   });
-  const ratios = samples.map((s) => s.ratio).filter((r) => typeof r === 'number' && r > 0);
-  const meanRatio = ratios.length ? round4(ratios.reduce((a, b) => a + b, 0) / ratios.length) : null;
+  const positiveRatios = samples.map((s) => s.ratio).filter((r) => typeof r === 'number' && r > 0);
+  const meanRatio = positiveRatios.length
+    ? round4(positiveRatios.reduce((a, b) => a + b, 0) / positiveRatios.length)
+    : null;
+  // #2379 calibration finding (WIN + LINUX, 5 verified samples): the lvkit <->
+  // LabVIEW-nonCosmetic ratio is VI-DEPENDENT (observed 0..2), NOT a single
+  // constant k. Report the full DISTRIBUTION (incl. lvkit=0 cases, e.g.
+  // LoadTemplates lvkit=0 vs nonCosmetic=1 = a non-cosmetic difference lvkit's
+  // structural diff omits) so a consumer treats k as a distribution, not a point.
+  const allRatios = samples
+    .map((s) => ({ vi: s.vi.split('/').pop(), ratio: s.ratio }))
+    .filter((x) => typeof x.ratio === 'number');
+  const values = allRatios.map((x) => x.ratio);
+  const ratioDistribution = values.length ? summarizeDistribution(values, allRatios) : null;
   return {
     schema: 'vi-history-suite/preview-compare-lvkit-correlation-report@v1',
     calibrationK,
     sampleCount: samples.length,
     samples,
     calibration: {
+      // Positive-only mean, retained for back-compat (excludes lvkit=0 samples).
       meanRatio,
-      // Empirical best-fit k: the multiplier that makes lvkit ~ k*nonCosmetic on
-      // average (WIN predicted ~1.3; converges as robust-parser samples grow).
       empiricalBestFitK: meanRatio,
+      // Full ratio distribution across ALL verified samples (the honest signal).
+      ratioDistribution,
+      note:
+        'lvkit<->LabVIEW-nonCosmetic ratio is VI-dependent (observed 0..2), NOT a single constant k; use ratioDistribution, not a point. ratio=0 (e.g. LoadTemplates lvkit=0/nonCosmetic=1) = a non-cosmetic difference lvkit structural-diff omits.',
       verifiedSamples: samples.filter((s) => s.labviewSource === 'robust-parser').length,
       prototypeSamples: samples.filter((s) => s.labviewSource === 'prototype-dataset').length
     }
+  };
+}
+
+// Distribution stats (n/min/max/mean/median/stdev + per-sample) over the ratios.
+function summarizeDistribution(values, perSample) {
+  const n = values.length;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mean = values.reduce((a, b) => a + b, 0) / n;
+  const median = n % 2 ? sorted[(n - 1) / 2] : (sorted[n / 2 - 1] + sorted[n / 2]) / 2;
+  const variance = values.reduce((a, b) => a + (b - mean) ** 2, 0) / n;
+  return {
+    n,
+    min: round4(Math.min(...values)),
+    max: round4(Math.max(...values)),
+    mean: round4(mean),
+    median: round4(median),
+    stdev: round4(Math.sqrt(variance)),
+    perSample
   };
 }
 
