@@ -1,0 +1,338 @@
+{
+    "schema":  "vi-history-suite/primitive-census@v1",
+    "purpose":  "Cleanroom primitive census for the born-from-scratch depth-recovery lever (#2373). Terminal signatures captured from lvkit raise diagnostics (NOT vi.lib block diagrams). Feeds cleanroom .lvkit/primitives.json authoring: addressable=true ids (non-zero) resolve via a mapping; addressable=false (id 0 hiddenFBNode/Class018D) are unaddressable upstream-lvkit holdouts.",
+    "corpus":  "SerialPortNuggets @06939af (26 born VIs)",
+    "generatedAt":  "2026-07-25T16:06:52.8871320+02:00",
+    "lvkit":  "lvkit 0.5.2",
+    "primitives":  [
+                       {
+                           "prim_id":  "1925",
+                           "prim_name":  "unknown_primitive_1925",
+                           "addressable":  true,
+                           "occurrences":  15,
+                           "exampleVi":  "ASCII CMD-Response Instrument.vi",
+                           "exampleModule":  "ascii_cmd_response_instrument.py",
+                           "terminals":  {
+                                             "value":  [
+                                                           {
+                                                               "index":  0,
+                                                               "direction":  "output",
+                                                               "name":  null,
+                                                               "type":  "Cluster",
+                                                               "wired":  true
+                                                           },
+                                                           {
+                                                               "index":  1,
+                                                               "direction":  "output",
+                                                               "name":  null,
+                                                               "type":  "NumUInt32",
+                                                               "wired":  false
+                                                           },
+                                                           {
+                                                               "index":  2,
+                                                               "direction":  "output",
+                                                               "name":  null,
+                                                               "type":  "String",
+                                                               "wired":  true
+                                                           },
+                                                           {
+                                                               "index":  3,
+                                                               "direction":  "output",
+                                                               "name":  null,
+                                                               "type":  "Refnum",
+                                                               "wired":  true
+                                                           },
+                                                           {
+                                                               "index":  8,
+                                                               "direction":  "input",
+                                                               "name":  null,
+                                                               "type":  "Cluster",
+                                                               "wired":  true
+                                                           },
+                                                           {
+                                                               "index":  10,
+                                                               "direction":  "input",
+                                                               "name":  null,
+                                                               "type":  "NumUInt32",
+                                                               "wired":  true
+                                                           },
+                                                           {
+                                                               "index":  11,
+                                                               "direction":  "input",
+                                                               "name":  null,
+                                                               "type":  "Refnum",
+                                                               "wired":  true
+                                                           }
+                                                       ],
+                                             "Count":  7
+                                         }
+                       },
+                       {
+                           "prim_id":  "1926",
+                           "prim_name":  "unknown_primitive_1926",
+                           "addressable":  true,
+                           "occurrences":  12,
+                           "exampleVi":  "Write ASCII Message.vi",
+                           "exampleModule":  "write_ascii_message.py",
+                           "terminals":  {
+                                             "value":  [
+                                                           {
+                                                               "index":  0,
+                                                               "direction":  "output",
+                                                               "name":  null,
+                                                               "type":  "Cluster",
+                                                               "wired":  true
+                                                           },
+                                                           {
+                                                               "index":  2,
+                                                               "direction":  "output",
+                                                               "name":  null,
+                                                               "type":  "NumUInt32",
+                                                               "wired":  false
+                                                           },
+                                                           {
+                                                               "index":  3,
+                                                               "direction":  "output",
+                                                               "name":  null,
+                                                               "type":  "Refnum",
+                                                               "wired":  true
+                                                           },
+                                                           {
+                                                               "index":  8,
+                                                               "direction":  "input",
+                                                               "name":  null,
+                                                               "type":  "Cluster",
+                                                               "wired":  true
+                                                           },
+                                                           {
+                                                               "index":  10,
+                                                               "direction":  "input",
+                                                               "name":  null,
+                                                               "type":  "String",
+                                                               "wired":  true
+                                                           },
+                                                           {
+                                                               "index":  11,
+                                                               "direction":  "input",
+                                                               "name":  null,
+                                                               "type":  "Refnum",
+                                                               "wired":  true
+                                                           }
+                                                       ],
+                                             "Count":  6
+                                         }
+                       },
+                       {
+                           "prim_id":  "1922",
+                           "prim_name":  "unknown_primitive_1922",
+                           "addressable":  true,
+                           "occurrences":  8,
+                           "exampleVi":  "ASCII CMD-Response Instrument.vi",
+                           "exampleModule":  "ascii_cmd_response_instrument.py",
+                           "terminals":  {
+                                             "value":  [
+                                                           {
+                                                               "index":  0,
+                                                               "direction":  "output",
+                                                               "name":  null,
+                                                               "type":  "Cluster",
+                                                               "wired":  true
+                                                           },
+                                                           {
+                                                               "index":  8,
+                                                               "direction":  "input",
+                                                               "name":  null,
+                                                               "type":  "Cluster",
+                                                               "wired":  true
+                                                           },
+                                                           {
+                                                               "index":  11,
+                                                               "direction":  "input",
+                                                               "name":  null,
+                                                               "type":  "Refnum",
+                                                               "wired":  true
+                                                           }
+                                                       ],
+                                             "Count":  3
+                                         }
+                       },
+                       {
+                           "prim_id":  "0",
+                           "prim_name":  "hiddenFBNode",
+                           "addressable":  false,
+                           "occurrences":  5,
+                           "exampleVi":  "Queue Manager.vi",
+                           "exampleModule":  "queue_manager.py",
+                           "terminals":  {
+                                             "value":  [
+                                                           {
+                                                               "index":  0,
+                                                               "direction":  "output",
+                                                               "name":  null,
+                                                               "type":  "Refnum",
+                                                               "wired":  true
+                                                           },
+                                                           {
+                                                               "index":  1,
+                                                               "direction":  "output",
+                                                               "name":  null,
+                                                               "type":  "Refnum",
+                                                               "wired":  false
+                                                           }
+                                                       ],
+                                             "Count":  2
+                                         }
+                       },
+                       {
+                           "prim_id":  "1506",
+                           "prim_name":  "unknown_primitive_1506",
+                           "addressable":  true,
+                           "occurrences":  3,
+                           "exampleVi":  "ASCII CMD-Response Instrument.vi",
+                           "exampleModule":  "ascii_cmd_response_instrument.py",
+                           "terminals":  {
+                                             "value":  [
+                                                           {
+                                                               "index":  0,
+                                                               "direction":  "output",
+                                                               "name":  null,
+                                                               "type":  "String",
+                                                               "wired":  true
+                                                           },
+                                                           {
+                                                               "index":  1,
+                                                               "direction":  "input",
+                                                               "name":  null,
+                                                               "type":  "Boolean",
+                                                               "wired":  false
+                                                           },
+                                                           {
+                                                               "index":  2,
+                                                               "direction":  "input",
+                                                               "name":  null,
+                                                               "type":  "NumInt16",
+                                                               "wired":  true
+                                                           },
+                                                           {
+                                                               "index":  3,
+                                                               "direction":  "input",
+                                                               "name":  null,
+                                                               "type":  "NumInt16",
+                                                               "wired":  false
+                                                           },
+                                                           {
+                                                               "index":  4,
+                                                               "direction":  "input",
+                                                               "name":  null,
+                                                               "type":  "NumFloat64",
+                                                               "wired":  true
+                                                           }
+                                                       ],
+                                             "Count":  5
+                                         }
+                       },
+                       {
+                           "prim_id":  "1187",
+                           "prim_name":  "unknown_primitive_1187",
+                           "addressable":  true,
+                           "occurrences":  3,
+                           "exampleVi":  "ASCII Intermittent Instrument.vi",
+                           "exampleModule":  "ascii_intermittent_instrument.py",
+                           "terminals":  {
+                                             "value":  [
+                                                           {
+                                                               "index":  0,
+                                                               "direction":  "output",
+                                                               "name":  null,
+                                                               "type":  "NumFloat64",
+                                                               "wired":  true
+                                                           },
+                                                           {
+                                                               "index":  1,
+                                                               "direction":  "output",
+                                                               "name":  null,
+                                                               "type":  "NumInt32",
+                                                               "wired":  false
+                                                           },
+                                                           {
+                                                               "index":  2,
+                                                               "direction":  "input",
+                                                               "name":  null,
+                                                               "type":  "Boolean",
+                                                               "wired":  false
+                                                           },
+                                                           {
+                                                               "index":  3,
+                                                               "direction":  "input",
+                                                               "name":  null,
+                                                               "type":  "NumFloat64",
+                                                               "wired":  false
+                                                           },
+                                                           {
+                                                               "index":  4,
+                                                               "direction":  "input",
+                                                               "name":  null,
+                                                               "type":  "NumInt32",
+                                                               "wired":  false
+                                                           },
+                                                           {
+                                                               "index":  5,
+                                                               "direction":  "input",
+                                                               "name":  null,
+                                                               "type":  "String",
+                                                               "wired":  true
+                                                           }
+                                                       ],
+                                             "Count":  6
+                                         }
+                       },
+                       {
+                           "prim_id":  "0",
+                           "prim_name":  "Class018D",
+                           "addressable":  false,
+                           "occurrences":  2,
+                           "exampleVi":  "Binary Actor.vi",
+                           "exampleModule":  "binary_actor.py",
+                           "terminals":  {
+                                             "value":  [
+                                                           {
+                                                               "index":  0,
+                                                               "direction":  "input",
+                                                               "name":  null,
+                                                               "type":  "116",
+                                                               "wired":  false
+                                                           },
+                                                           {
+                                                               "index":  1,
+                                                               "direction":  "output",
+                                                               "name":  null,
+                                                               "type":  "Array",
+                                                               "wired":  true
+                                                           },
+                                                           {
+                                                               "index":  2,
+                                                               "direction":  "input",
+                                                               "name":  null,
+                                                               "type":  "NumUInt8",
+                                                               "wired":  false
+                                                           },
+                                                           {
+                                                               "index":  3,
+                                                               "direction":  "output",
+                                                               "name":  null,
+                                                               "type":  "Boolean",
+                                                               "wired":  false
+                                                           },
+                                                           {
+                                                               "index":  4,
+                                                               "direction":  "input",
+                                                               "name":  null,
+                                                               "type":  "Array",
+                                                               "wired":  false
+                                                           }
+                                                       ],
+                                             "Count":  5
+                                         }
+                       }
+                   ]
+}
