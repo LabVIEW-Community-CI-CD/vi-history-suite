@@ -24,7 +24,16 @@ import {
   type PerfmonActorSource,
   type PerfmonCycleMeasurement
 } from './perfmonSampleSeries';
-import { buildPerfmonTdmsModel, type PerfmonTdmsModel } from './perfmonTdmsModel';
+import {
+  buildPerfmonTdmsModel,
+  type PerfmonTdmsLabviewFrameMetadata,
+  type PerfmonTdmsModel
+} from './perfmonTdmsModel';
+import type { FrameStreamReference } from './labviewFrameCorrelation';
+import {
+  correlateFirstRunPerfmonLaunch,
+  type FirstRunPerfmonLaunchCorrelation
+} from './firstRunPerfmonLaunchCorrelation';
 
 /** The raw result of executing a capture plan around the first-run comparison. */
 export interface PerfmonCaptureResult {
@@ -44,6 +53,18 @@ export interface FirstRunPerfmonPipelineInput {
   readonly actor: string;
   /** Cycle timing supplied directly (overrides any cycles the capture returns). */
   readonly cycles?: readonly PerfmonCycleMeasurement[];
+  /**
+   * Optional LabVIEW launch enrichment (VHS-REQ-718): the raw launch-log text
+   * plus the deterministic replay-frame stream captured alongside it. When
+   * supplied, the pipeline reconciles the perfmon capture start with the LabVIEW
+   * launch markers, places each marker in a replay frame, and stamps both onto
+   * the TDMS model. Best-effort: a malformed log never breaks the perfmon
+   * artifact / PR comment / TDMS channel contract.
+   */
+  readonly labviewLaunch?: {
+    readonly logText: string;
+    readonly frameStream: FrameStreamReference;
+  };
 }
 
 export interface FirstRunPerfmonPipelineDeps {
@@ -58,6 +79,12 @@ export interface FirstRunPerfmonPipelineResult {
   readonly artifact: FirstRunPerfmonArtifact;
   readonly prComment: string;
   readonly tdmsModel: PerfmonTdmsModel;
+  /**
+   * The LabVIEW launch correlation outcome, present only when `labviewLaunch`
+   * input was supplied. An explicit staged outcome (`correlated` or
+   * `unavailable` with a reason), never a throw.
+   */
+  readonly launchCorrelation?: FirstRunPerfmonLaunchCorrelation;
 }
 
 /**
@@ -106,10 +133,28 @@ export function runFirstRunPerfmonPipeline(
     cycles
   });
 
+  // Optional LabVIEW launch enrichment (VHS-REQ-718): reconcile the perfmon
+  // capture start with the LabVIEW launch markers and place them in the replay
+  // frame stream, then stamp both onto the TDMS. Best-effort — an `unavailable`
+  // outcome leaves the TDMS metadata unstamped but never breaks the pipeline.
+  let launchCorrelation: FirstRunPerfmonLaunchCorrelation | undefined;
+  let tdmsMetadata: PerfmonTdmsLabviewFrameMetadata | undefined;
+  if (input.labviewLaunch) {
+    launchCorrelation = correlateFirstRunPerfmonLaunch({
+      perfmonCapturedAtIso: capturedAtIso,
+      labviewLogText: input.labviewLaunch.logText,
+      frameStream: input.labviewLaunch.frameStream
+    });
+    if (launchCorrelation.status === 'correlated') {
+      tdmsMetadata = launchCorrelation.tdmsMetadata;
+    }
+  }
+
   return {
     plan,
     artifact,
     prComment: renderFirstRunPerfmonPrComment(artifact),
-    tdmsModel: buildPerfmonTdmsModel(artifact)
+    tdmsModel: buildPerfmonTdmsModel(artifact, tdmsMetadata),
+    ...(launchCorrelation ? { launchCorrelation } : {})
   };
 }

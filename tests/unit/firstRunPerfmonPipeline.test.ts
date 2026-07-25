@@ -5,6 +5,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { runFirstRunPerfmonPipeline, type PerfmonCapturePlan } from '../../src/reporting/mirror/firstRunPerfmonPipeline';
+import { localIsoToEpochMs } from '../../src/reporting/mirror/perfmonLabviewCorrelation';
 
 const CSV = [
   String.raw`"(PDH-CSV 4.0) (UTC)(0)","\\H\Processor(_Total)\% Processor Time","\\H\Memory\Available MBytes","\\H\PhysicalDisk(_Total)\% Disk Time"`,
@@ -17,6 +18,19 @@ const REQUEST = {
   outputCsvPath: 'C:/vihs-proof-tmp/perf.csv',
   sampleIntervalSec: 1
 };
+
+// A minimal real LabVIEW launch log: #Date process-start + execution-ready marker
+// 2.973 s later (35 frames at 12 fps).
+const LABVIEW_LOG = [
+  '####',
+  '#Date: Fri, Jul 24, 2026 11:02:31 AM',
+  '#AppName: LabVIEW',
+  '#AppRunMode: Headless',
+  '',
+  '[HeadlessManager][7/24/2026 11:02:31.179 AM] Initializing headless LabVIEW',
+  'starting LabVIEW Execution System 2 Thread 0 , capacity: 24 at [3867728553.97316504, (11:02:33.973165036 2026:07:24)]'
+].join('\n');
+const LABVIEW_PROCESS_START_MS = localIsoToEpochMs('2026-07-24T11:02:31.000') as number;
 
 describe('runFirstRunPerfmonPipeline (VHS-REQ-707.15)', () => {
   it('composes plan -> capture -> parse -> artifact -> {PR comment, TDMS model}', () => {
@@ -106,5 +120,69 @@ describe('runFirstRunPerfmonPipeline (VHS-REQ-707.15)', () => {
         { capture: () => ({ csvText: 123 as unknown as string }) }
       )
     ).toThrow(/PDH-CSV string/);
+  });
+
+  it('enriches with the LabVIEW launch correlation and stamps the TDMS when a launch log + frame stream are supplied (VHS-REQ-718)', () => {
+    const result = runFirstRunPerfmonPipeline(
+      {
+        request: REQUEST,
+        source: 'self-hosted-runner',
+        actor: 'vagrant-win-x86-hostnative',
+        labviewLaunch: {
+          logText: LABVIEW_LOG,
+          frameStream: { frameRateHz: 12, frameCount: 100, epochMsAtFrameZero: LABVIEW_PROCESS_START_MS }
+        }
+      },
+      { capture: () => ({ csvText: CSV, startMs: 1000, endMs: 176000 }), now: () => 0 }
+    );
+
+    expect(result.launchCorrelation?.status).toBe('correlated');
+    if (result.launchCorrelation?.status === 'correlated') {
+      expect(result.launchCorrelation.frameCorrelation.processStartFrameIndex).toBe(0);
+      expect(result.launchCorrelation.frameCorrelation.executionReadyFrameIndex).toBe(35);
+    }
+
+    // The launch/frame metadata is stamped onto the TDMS file properties.
+    const fileProps = Object.fromEntries(result.tdmsModel.fileProperties.map((p) => [p.name, p.value]));
+    expect(fileProps.labview_process_start_iso).toBe('2026-07-24T11:02:31.000');
+    expect(fileProps.labview_execution_ready_iso).toBe('2026-07-24T11:02:33.973');
+    expect(fileProps.frame_rate_hz).toBe(12);
+    expect(fileProps.frame_count).toBe(100);
+    expect(fileProps.epoch_ms_at_frame_zero).toBe(LABVIEW_PROCESS_START_MS);
+
+    // The primary perfmon contract is untouched by the enrichment.
+    expect(result.prComment).toContain('```mermaid');
+    expect(result.artifact.wallMs).toBe(175000);
+  });
+
+  it('keeps the perfmon contract intact and reports unavailable (never throws) on a malformed launch log', () => {
+    const result = runFirstRunPerfmonPipeline(
+      {
+        request: REQUEST,
+        source: 'docker-container',
+        actor: 'docker-x64',
+        labviewLaunch: { logText: 'not a labview log', frameStream: { epochMsAtFrameZero: 0 } }
+      },
+      { capture: () => ({ csvText: CSV, startMs: 0, endMs: 5000 }), now: () => 0 }
+    );
+    expect(result.launchCorrelation?.status).toBe('unavailable');
+    // No launch/frame properties are stamped when correlation is unavailable.
+    const fileProps = Object.fromEntries(result.tdmsModel.fileProperties.map((p) => [p.name, p.value]));
+    expect(fileProps.labview_process_start_iso).toBeUndefined();
+    expect(fileProps.frame_rate_hz).toBeUndefined();
+    // Primary artifact + PR comment still produced.
+    expect(result.prComment).toContain('```mermaid');
+    expect(result.tdmsModel.schema).toBe('vi-history-suite/perfmon-tdms-model@v1');
+  });
+
+  it('omits launchCorrelation and TDMS launch metadata entirely when no launch input is supplied', () => {
+    const result = runFirstRunPerfmonPipeline(
+      { request: REQUEST, source: 'self-hosted-runner', actor: 'a' },
+      { capture: () => ({ csvText: CSV, startMs: 1000, endMs: 2000 }), now: () => 0 }
+    );
+    expect(result.launchCorrelation).toBeUndefined();
+    const fileProps = Object.fromEntries(result.tdmsModel.fileProperties.map((p) => [p.name, p.value]));
+    expect(fileProps.labview_process_start_iso).toBeUndefined();
+    expect(fileProps.epoch_ms_at_frame_zero).toBeUndefined();
   });
 });

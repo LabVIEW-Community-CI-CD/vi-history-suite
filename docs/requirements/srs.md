@@ -5782,6 +5782,16 @@ Missing numeric IDs are intentional.
     marker before frame zero or beyond the captured frame window unmapped rather
     than clamped, and failing closed on a non-positive frame rate, a non-finite
     frame-zero, or a missing process-start instant.
+  - VHS-REQ-718.3: A best-effort composing stage feeds a first-run perfmon
+    capture start, a real LabVIEW launch log, and the replay-frame stream through
+    the correlation and the post-verification, emitting an explicit staged
+    outcome — the parsed launch timing, the reconciled correlation, the frame
+    post-verification, and the TDMS metadata that stamps the LabVIEW-log instants
+    and the replay-frame descriptor onto the perfmon TDMS model — and returns an
+    `unavailable` outcome with a reason string (never throwing) on a malformed
+    log or an unreconcilable capture, so the mirror-mode first-run pipeline can
+    embed the launch telemetry without the enrichment ever breaking the primary
+    perfmon artifact, PR comment, or TDMS channel contract.
 - Agent Work Scope:
   - Keep the correlation and post-verification pure and deterministic so both are
     unit tested without a runtime, LabVIEW, or a capture; the real render that
@@ -5796,15 +5806,19 @@ Missing numeric IDs are intentional.
   - `docs/architecture/adr/ADR-0028-mirror-mode-dual-real-runtime-validation.md`
   - `src/reporting/mirror/perfmonLabviewCorrelation.ts`
   - `src/reporting/mirror/labviewFrameCorrelation.ts`
+  - `src/reporting/mirror/firstRunPerfmonLaunchCorrelation.ts`
 - Verification References:
   - `tests/unit/perfmonLabviewCorrelation.test.ts`
   - `tests/unit/labviewFrameCorrelation.test.ts`
+  - `tests/unit/firstRunPerfmonLaunchCorrelation.test.ts`
 - Change Guidance:
   - Keep the two time bases reconciled to epoch milliseconds in one place (never
     compare the raw ISO strings); keep the frame-index rule identical to the
     perfmon-to-frame sync so a LabVIEW marker and a resource peak land in the same
-    frame; and keep both projections pure — the capture/render that produces the
-    inputs stays a maintainer validation step.
+    frame; keep the composing stage best-effort and fail-closed so a malformed
+    log never breaks the primary perfmon contract; and keep every projection
+    pure — the capture/render that produces the inputs stays a maintainer
+    validation step.
 
 ### VHS-REQ-707: Mirror-Mode Dual Real-Runtime LabVIEW Validation
 
