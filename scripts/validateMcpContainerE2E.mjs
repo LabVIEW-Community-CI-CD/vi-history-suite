@@ -52,16 +52,35 @@ import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import { resolveContainerTarget, defaultCorpus } from '../prototype/lib/resolveContainerTarget.mjs';
 
 const REPO = process.cwd();
 const serverEntry = path.join(REPO, 'out', 'cli', 'runViSemanticMcpServer.js');
-const IMAGE_VERSION = process.env.VIHS_MCP_IMAGE_VERSION || '2026q1patch2-windows';
-const IMAGE = 'nationalinstruments/labview:' + IMAGE_VERSION;
-const CORPUS = process.env.VIHS_MCP_REPO || 'C:\\repos\\labview-icon-editor';
+// Container target resolved from the Docker ENGINE OS (discussion #2368): engine OS
+// is the contract; an explicit VIHS_MCP_IMAGE_VERSION drives platform from its own
+// -windows/-linux suffix. Unresolved requests fail closed in preflightDocker().
+function detectDockerEngineOs() {
+  try {
+    return execFileSync('docker', ['version', '--format', '{{.Server.Os}}'], { encoding: 'utf8', timeout: 30000 }).trim();
+  } catch {
+    return '';
+  }
+}
+const ENGINE_OS = detectDockerEngineOs();
+let containerTargetError = null;
+let containerTarget = null;
+try {
+  containerTarget = resolveContainerTarget(ENGINE_OS, process.env);
+} catch (e) {
+  containerTargetError = e.message;
+}
+const IMAGE_VERSION = containerTarget ? containerTarget.imageVersion : (process.env.VIHS_MCP_IMAGE_VERSION || '');
+const IMAGE = containerTarget ? containerTarget.image : 'nationalinstruments/labview:' + IMAGE_VERSION;
+const CORPUS = defaultCorpus(ENGINE_OS, process.env, os.homedir());
 const VI = process.env.VIHS_MCP_VI || 'resource/plugins/lv_icon.vi';
 const BASE = process.env.VIHS_MCP_BASE || '5376833';
 const SEL = process.env.VIHS_MCP_SEL || 'fc09736';
-const PLATFORM = process.env.VIHS_MCP_PLATFORM || (process.platform === 'win32' ? 'win32' : process.platform === 'darwin' ? 'darwin' : 'linux');
+const PLATFORM = containerTarget ? containerTarget.platform : 'linux';
 const BITNESS = (process.env.VIHS_MCP_BITNESS || 'x64').toLowerCase() === 'x86' ? 'x86' : 'x64';
 const CACHE_DIR = path.join(os.tmpdir(), 'vihs-vi-comparison-cache');
 const COMPARE_TIMEOUT_MS = Number(process.env.VIHS_MCP_COMPARE_TIMEOUT_MS || 900000);
@@ -106,15 +125,17 @@ function dockerRmByAncestor() {
   }
 }
 function preflightDocker() {
-  let serverOs;
-  try {
-    serverOs = execFileSync('docker', ['version', '--format', '{{.Server.Os}}'], { encoding: 'utf8', timeout: 30000 }).trim();
-  } catch (err) {
-    log('Docker not available: ' + (err.message || err));
+  if (!ENGINE_OS) {
+    log('Docker not available (could not read the engine OS). Start Docker and retry.');
     process.exit(2);
   }
-  if (PLATFORM === 'win32' && serverOs !== 'windows') {
-    log(`Docker engine is "${serverOs}", not "windows". Switch Docker Desktop to Windows containers.`);
+  if (containerTargetError) {
+    log('cannot resolve a container target: ' + containerTargetError);
+    process.exit(2);
+  }
+  const expectedEngine = PLATFORM === 'win32' ? 'windows' : 'linux';
+  if (ENGINE_OS !== expectedEngine) {
+    log(`Docker engine is "${ENGINE_OS}" but target image ${IMAGE} is ${expectedEngine}. Switch the Docker engine or adjust VIHS_MCP_IMAGE_VERSION.`);
     process.exit(2);
   }
   try {

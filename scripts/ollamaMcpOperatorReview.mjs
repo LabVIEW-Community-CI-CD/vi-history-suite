@@ -52,20 +52,40 @@ import process from 'node:process';
 import { execFileSync } from 'node:child_process';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import { resolveContainerTarget, defaultCorpus } from '../prototype/lib/resolveContainerTarget.mjs';
 
 const REPO = process.cwd();
 const serverEntry = path.join(REPO, 'out', 'cli', 'runViSemanticMcpServer.js');
 const OLLAMA = process.env.VIHS_OLLAMA_URL || 'http://localhost:11434';
 const MODEL = process.env.VIHS_OLLAMA_MODEL || 'llama3.1:8b';
-const IMAGE_VERSION = process.env.VIHS_MCP_IMAGE_VERSION || '2026q1patch2-linux';
-const IMAGE = 'nationalinstruments/labview:' + IMAGE_VERSION;
-const CORPUS = process.env.VIHS_MCP_REPO || 'C:\\repos\\labview-icon-editor';
+// Container target resolved from the Docker ENGINE OS (discussion #2368): engine OS
+// is the contract; an explicit VIHS_MCP_IMAGE_VERSION drives platform from its own
+// -windows/-linux suffix. Unresolved requests fail closed in preflight().
+function detectDockerEngineOs() {
+  try {
+    return execFileSync('docker', ['version', '--format', '{{.Server.Os}}'], { encoding: 'utf8', timeout: 30000 }).trim();
+  } catch {
+    return '';
+  }
+}
+const ENGINE_OS = detectDockerEngineOs();
+let containerTargetError = null;
+let containerTarget = null;
+try {
+  containerTarget = resolveContainerTarget(ENGINE_OS, process.env);
+} catch (e) {
+  containerTargetError = e.message;
+}
+const IMAGE_VERSION = containerTarget ? containerTarget.imageVersion : (process.env.VIHS_MCP_IMAGE_VERSION || '');
+const IMAGE = containerTarget ? containerTarget.image : 'nationalinstruments/labview:' + IMAGE_VERSION;
+const TARGET_PLATFORM = containerTarget ? containerTarget.platform : 'linux';
+const CORPUS = defaultCorpus(ENGINE_OS, process.env, os.homedir());
 const BASE = process.env.VIHS_MCP_BASE || '9545c483f2b947c71de68c7f70aedefaedadabf7';
 const ALT_REV = process.env.VIHS_MCP_ALT || 'f57c3cfd6494abf1da968ddcc116222e93e953b4';
 const VI = process.env.VIHS_MCP_VI || 'resource/plugins/NIIconEditor/Class/FakedArray/Misc/UpdateVisibleData.vi';
 const SYNTHETIC = ALT_REV.toLowerCase() !== 'none';
 const CACHE_DIR = path.join(os.tmpdir(), 'vihs-vi-comparison-cache');
-const RUNTIME_POLICY = { provider: 'docker', platform: 'linux', bitness: 'x64', containerImageVersion: IMAGE_VERSION };
+const RUNTIME_POLICY = { provider: 'docker', platform: TARGET_PLATFORM, bitness: 'x64', containerImageVersion: IMAGE_VERSION };
 const MAX_TURNS = Number(process.env.VIHS_OLLAMA_MAX_TURNS || 8);
 const viDiskPath = path.join(CORPUS, ...VI.split('/'));
 
@@ -141,7 +161,7 @@ function applyPolicy(name, args) {
     a.selectedHash = 'WORKTREE'; // the operator's uncommitted edit (pinned)
   }
   if (name === 'get_runtime_health') {
-    a.platform = a.platform || 'linux';
+    a.platform = a.platform || TARGET_PLATFORM;
     a.settings = { requestedProvider: 'docker', containerImageVersion: IMAGE_VERSION, ...(a.settings || {}) };
   }
   return a;
@@ -175,15 +195,17 @@ async function preflight() {
     log('Ollama not reachable at ' + OLLAMA + ' (' + e.message + '). Start it: ollama serve');
     process.exit(2);
   }
-  let serverOs;
-  try {
-    serverOs = execFileSync('docker', ['version', '--format', '{{.Server.Os}}'], { encoding: 'utf8', timeout: 30000 }).trim();
-  } catch (e) {
-    log('Docker not available: ' + (e.message || e));
+  if (!ENGINE_OS) {
+    log('Docker not available (could not read the engine OS). Start Docker and retry.');
     process.exit(2);
   }
-  if (serverOs !== 'linux') {
-    log(`Docker engine is "${serverOs}", not "linux". Switch Docker Desktop to Linux containers.`);
+  if (containerTargetError) {
+    log('cannot resolve a container target: ' + containerTargetError);
+    process.exit(2);
+  }
+  const expectedEngine = TARGET_PLATFORM === 'win32' ? 'windows' : 'linux';
+  if (ENGINE_OS !== expectedEngine) {
+    log(`Docker engine is "${ENGINE_OS}" but target image ${IMAGE} is ${expectedEngine}. Switch the Docker engine or adjust VIHS_MCP_IMAGE_VERSION.`);
     process.exit(2);
   }
   try {

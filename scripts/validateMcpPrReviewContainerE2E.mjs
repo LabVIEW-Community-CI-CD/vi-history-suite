@@ -51,18 +51,38 @@ import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import { resolveContainerTarget, defaultCorpus } from '../prototype/lib/resolveContainerTarget.mjs';
 
 const REPO = process.cwd();
 const serverEntry = path.join(REPO, 'out', 'cli', 'runViSemanticMcpServer.js');
-const IMAGE_VERSION = process.env.VIHS_MCP_IMAGE_VERSION || '2026q1patch2-windows';
-const IMAGE = 'nationalinstruments/labview:' + IMAGE_VERSION;
-const CORPUS = process.env.VIHS_MCP_REPO || 'C:\\repos\\labview-icon-editor';
+// Container target resolved from the Docker ENGINE OS (discussion #2368): engine OS
+// is the contract; an explicit VIHS_MCP_IMAGE_VERSION drives platform from its own
+// -windows/-linux suffix. Unresolved requests fail closed in preflightDocker().
+function detectDockerEngineOs() {
+  try {
+    return execFileSync('docker', ['version', '--format', '{{.Server.Os}}'], { encoding: 'utf8', timeout: 30000 }).trim();
+  } catch {
+    return '';
+  }
+}
+const ENGINE_OS = detectDockerEngineOs();
+let containerTargetError = null;
+let containerTarget = null;
+try {
+  containerTarget = resolveContainerTarget(ENGINE_OS, process.env);
+} catch (e) {
+  containerTargetError = e.message;
+}
+const IMAGE_VERSION = containerTarget ? containerTarget.imageVersion : (process.env.VIHS_MCP_IMAGE_VERSION || '');
+const IMAGE = containerTarget ? containerTarget.image : 'nationalinstruments/labview:' + IMAGE_VERSION;
+const TARGET_PLATFORM = containerTarget ? containerTarget.platform : 'win32';
+const CORPUS = defaultCorpus(ENGINE_OS, process.env, os.homedir());
 const BASE = process.env.VIHS_MCP_BASE || '9545c483f2b947c71de68c7f70aedefaedadabf7';
 const HEAD = process.env.VIHS_MCP_SEL || 'f57c3cfd6494abf1da968ddcc116222e93e953b4';
 const MAX_VIS = Number(process.env.VIHS_MCP_MAX_VIS || 3);
 const CACHE_DIR = path.join(os.tmpdir(), 'vihs-vi-comparison-cache');
 const CALL_TIMEOUT_MS = Number(process.env.VIHS_MCP_CALL_TIMEOUT_MS || 1800000);
-const RUNTIME = { provider: 'docker', platform: 'win32', bitness: 'x64', containerImageVersion: IMAGE_VERSION };
+const RUNTIME = { provider: 'docker', platform: TARGET_PLATFORM, bitness: 'x64', containerImageVersion: IMAGE_VERSION };
 const CONTAINER_PROVIDERS = new Set(['docker', 'windows-container', 'linux-container']);
 
 const evidence = { schema: 'vi-history-suite/mcp-pr-review-e2e-evidence@v1', generatedAt: new Date().toISOString(), image: IMAGE, corpus: { CORPUS, BASE, HEAD, MAX_VIS }, phases: {}, ok: false };
@@ -92,15 +112,17 @@ function dockerRmByAncestor() {
   }
 }
 function preflightDocker() {
-  let serverOs;
-  try {
-    serverOs = execFileSync('docker', ['version', '--format', '{{.Server.Os}}'], { encoding: 'utf8', timeout: 30000 }).trim();
-  } catch (err) {
-    log('Docker not available: ' + (err.message || err));
+  if (!ENGINE_OS) {
+    log('Docker not available (could not read the engine OS). Start Docker and retry.');
     process.exit(2);
   }
-  if (serverOs !== 'windows') {
-    log(`Docker engine is "${serverOs}", not "windows". Switch Docker Desktop to Windows containers.`);
+  if (containerTargetError) {
+    log('cannot resolve a container target: ' + containerTargetError);
+    process.exit(2);
+  }
+  const expectedEngine = TARGET_PLATFORM === 'win32' ? 'windows' : 'linux';
+  if (ENGINE_OS !== expectedEngine) {
+    log(`Docker engine is "${ENGINE_OS}" but target image ${IMAGE} is ${expectedEngine}. Switch the Docker engine or adjust VIHS_MCP_IMAGE_VERSION.`);
     process.exit(2);
   }
   try {
@@ -140,7 +162,7 @@ async function main() {
     log('phase0: ' + toolNames.length + ' tools');
 
     // Phase 1: runtime-health (container-aware, fast-fail)
-    const health = jsonOf(await client.callTool({ name: 'get_runtime_health', arguments: { platform: 'win32', settings: { requestedProvider: 'docker', containerImageVersion: IMAGE_VERSION } } }));
+    const health = jsonOf(await client.callTool({ name: 'get_runtime_health', arguments: { platform: TARGET_PLATFORM, settings: { requestedProvider: 'docker', containerImageVersion: IMAGE_VERSION } } }));
     evidence.phases.runtimeHealth = health;
     const healthOk = health && CONTAINER_PROVIDERS.has(health.provider) && !health.blocked && (health.containerImage || '').includes(IMAGE_VERSION);
     log('phase1 runtime-health: provider=' + health?.provider + ' image=' + health?.containerImage + ' blocked=' + health?.blocked);
