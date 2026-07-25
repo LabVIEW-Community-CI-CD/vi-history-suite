@@ -67,9 +67,7 @@ describe('buildWindowsPerfmonCapturePlan (VHS-REQ-707.14)', () => {
       '00:00:01',
       '-c',
       String.raw`\Processor(_Total)\% Processor Time`,
-      '-c',
       String.raw`\Memory\Available MBytes`,
-      '-c',
       String.raw`\PhysicalDisk(_Total)\% Disk Time`,
       '-ow'
     ]);

@@ -187,7 +187,7 @@ export function buildWindowsPerfmonCapturePlan(request: PerfmonCaptureRequest): 
     }
   }
   // Dedupe preserving first-seen order: a counter can appear in both a profile and
-  // extraCounters, and logman rejects a duplicate `-c` on some hosts.
+  // extraCounters, and logman rejects a duplicate counter path in the `-c` list.
   const seenCounters = new Set<string>();
   const dedupedCounters: string[] = [];
   for (const counter of counters) {
@@ -198,11 +198,14 @@ export function buildWindowsPerfmonCapturePlan(request: PerfmonCaptureRequest): 
     dedupedCounters.push(counter);
   }
 
-  const createArgs: string[] = ['create', 'counter', collectorName, '-f', 'csv', '-o', outputCsvPath, '-si', interval];
-  for (const counter of dedupedCounters) {
-    createArgs.push('-c', counter);
-  }
-  createArgs.push('-ow'); // overwrite an existing collector definition.
+  // logman's `-c` accepts ALL counter paths as space-separated arguments; a
+  // REPEATED `-c` flag is rejected by logman.exe ("The parameter is incorrect.").
+  // Emit exactly one `-c` followed by every (deduped) counter path.
+  const createArgs: string[] = [
+    'create', 'counter', collectorName, '-f', 'csv', '-o', outputCsvPath, '-si', interval,
+    '-c', ...dedupedCounters,
+    '-ow' // overwrite an existing collector definition.
+  ];
 
   return {
     schema: PERFMON_CAPTURE_PLAN_SCHEMA,
