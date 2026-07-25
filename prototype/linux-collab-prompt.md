@@ -41,7 +41,7 @@ claiming it on the bus and seeing no live conflicting claim.
 
 ---
 
-## FIRST ACTION — kickoff check-in (do this before anything else)
+## FIRST ACTION — kickoff: readiness, then align on the board schema + flow
 
 The operator starts you with a **single word**. On that trigger, do **exactly
 this and nothing else**:
@@ -57,21 +57,28 @@ node prototype/collab.mjs checkin
 `out/`, Docker **Linux** engine + the `2026q1patch2-linux` image, Ollama + the
 `llama3.1:8b` model, the corpus repo + PR #537 base/head commits, and `gh` auth —
 and posts a **READY** (all green) or **BLOCKED** (with the exact remedy for each
-gap) message to Discussion #2365. **Then STOP and wait. Do not run any validators
-yet.**
+gap) message to Discussion #2365. Fix any BLOCKED items (the Set-up section has every
+command) and re-run `checkin` until READY — you can clear your own environment
+gaps without waiting for WIN.
 
-The Windows agent polls the thread, reads your `checks`, and replies with one of:
+Then the **kickoff proper**: the board **schema + flow** is what the two machines
+must agree on, and that agreement happens **only in a discussion**. Read the
+kickoff alignment discussion **#2366**
+(<https://github.com/LabVIEW-Community-CI-CD/vi-history-suite/discussions/2366>),
+review `prototype/board/board.json`, `prototype/collab.mjs`, and this prompt, then:
 
-- **AUTHORIZE** (task `kickoff`, `to: LINUX`) → you are cleared. Proceed to *Run
-  the Linux-native validators* below.
-- **REFINE** (carries a `ref` SHA) → the Windows agent pushed a flow refinement.
-  Run `git pull --rebase`, then `node prototype/collab.mjs checkin` again, and wait
-  once more.
+- **Ask / opine first if needed** (only on the discussion):
+  `node prototype/collab.mjs ask --discussion 2366 --msg "…your question…"`.
+- **If you agree** (and `checkin` is READY):
+  `node prototype/collab.mjs align --discussion 2366`.
+- **If you disagree**:
+  `node prototype/collab.mjs post --type BLOCKED --discussion 2366 --msg "…objection…"` and WIN will refine.
 
-Watch for the decision with `node prototype/collab.mjs poll --type AUTHORIZE` and
-`--type REFINE`. If your own check-in was **BLOCKED**, fix the listed blockers
-(the Set-up section has every command), then re-run `checkin` — you don't need to
-wait for the Windows agent to clear an environment gap you can fix yourself.
+The kickoff discussion resolves by **close**: the `align` that completes consensus
+**closes #2366 as RESOLVED with no issue** — that closure **is** a successful
+kickoff. **Alignment is required before any active development** — do not run the
+validators until #2366 is aligned and closed
+(`node prototype/collab.mjs status --discussion 2366` exits 0 when aligned).
 
 ---
 
@@ -254,16 +261,23 @@ Discussion and is created only after BOTH machines align on it.** No agent opens
 an issue directly.
 
 1. **PROPOSE** — either machine opens a dedicated **Ideas** discussion for the
-   work item: `node prototype/collab.mjs propose --title "…" --body "…" [--acceptance "…"]`.
+   work item and declares how consensus resolves:
+   `node prototype/collab.mjs propose --title "…" [--body "…" | --body-file <path>] [--acceptance "…"] [--resolution issue|close|convert] [--refs 12,34]`.
 2. **ALIGN** — the *other* machine reviews and agrees (or posts `BLOCKED` with a
    counter): `node prototype/collab.mjs align --discussion <n> --msg "…"`. A
    `PROPOSE` **and** an `ALIGN` from the two *distinct* machines, with no later
    `BLOCKED`, = **decided**. You cannot align your own proposal.
-3. **SPAWN (autonomous on consensus)** — the `align` that completes consensus
-   **automatically** creates the issue: labelled `from-discussion` + `prototype`,
-   its body links the source discussion, and a `SPAWNED` message with the issue
-   URL is posted back on the discussion. `node prototype/collab.mjs spawn-issue
-   --discussion <n>` does the same explicitly (consensus-gated + idempotent).
+3. **RESOLVE (autonomous on consensus)** — the `align` that completes consensus
+   **applies the proposal's declared resolution**:
+   - `issue` (default) → create a tracking issue (labels `from-discussion` +
+     `prototype`, body links the discussion), post `SPAWNED`, add it to the board.
+   - `close` → **close the discussion as RESOLVED with no issue** (when the
+     agreement itself is the deliverable — e.g. aligning on the board schema +
+     flow); post `RESOLVED`.
+   - `convert` → consolidate the referenced issues (`--refs`) into one new issue,
+     then close the discussion.
+   `node prototype/collab.mjs resolve --discussion <n>` applies it explicitly
+   (consensus-gated + idempotent).
 4. **BOARD (offline-first, local)** — `spawn-issue` also adds the item to a local,
    versioned board at `prototype/board/board.json` (Status=`Triage`, Intake
    Stage=`Spawned`, Source Discussion, Origin=`collab`). The board lives offline
@@ -279,6 +293,15 @@ an issue directly.
 
 The discussion is the durable record of *why* each issue exists. Never open an
 issue by hand; never align your own proposal (consensus needs both machines).
+
+**Questions & opinions** between the two machines are exchanged **only inside a
+discussion** (never out-of-band): `node prototype/collab.mjs ask --discussion <n>
+--msg "…"` and `answer --discussion <n> --msg "…"`. Resolve open questions before
+aligning.
+
+**Alignment gates active development.** Do not start active development on a work
+item until its discussion is aligned — check `node prototype/collab.mjs status
+--discussion <n>` (exit 0 = ALIGNED, 3 = not yet).
 
 ---
 

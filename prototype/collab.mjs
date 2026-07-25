@@ -36,7 +36,7 @@ const TITLE = process.env.VIHS_COLLAB_TITLE || 'Prototype handshake: Ollama × M
 const AGENT = (process.env.VIHS_COLLAB_AGENT || (process.platform === 'win32' ? 'WIN' : 'LINUX')).toUpperCase();
 const BRANCH = 'prototype/ollama-mcp-linux-collab';
 const SCHEMA = 'vihs-collab-msg@v1';
-const TYPES = new Set(['CLAIM', 'ACK', 'PROGRESS', 'DONE', 'BLOCKED', 'HANDOFF', 'QUESTION', 'ANSWER', 'NOTE', 'READY', 'AUTHORIZE', 'REFINE', 'PROPOSE', 'ALIGN', 'SPAWNED']);
+const TYPES = new Set(['CLAIM', 'ACK', 'PROGRESS', 'DONE', 'BLOCKED', 'HANDOFF', 'QUESTION', 'ANSWER', 'NOTE', 'READY', 'AUTHORIZE', 'REFINE', 'PROPOSE', 'ALIGN', 'SPAWNED', 'RESOLVED']);
 
 // Readiness-probe targets (used by `checkin`), all env-overridable.
 const OLLAMA = process.env.VIHS_OLLAMA_URL || 'http://localhost:11434';
@@ -273,6 +273,7 @@ function consensusState(messages) {
   const propose = messages.find((m) => m.type === 'PROPOSE');
   const aligns = messages.filter((m) => m.type === 'ALIGN');
   const spawned = messages.find((m) => m.type === 'SPAWNED');
+  const resolved = messages.find((m) => m.type === 'SPAWNED' || m.type === 'RESOLVED');
   let decided = false;
   let by = [];
   if (propose) {
@@ -282,7 +283,7 @@ function consensusState(messages) {
       if (!blockedAfter) { decided = true; by = [propose.agent, otherAlign.agent]; }
     }
   }
-  return { propose, aligns, spawned, decided, by };
+  return { propose, aligns, spawned, resolved, decided, by, resolution: (propose && propose.resolution) || 'issue', refs: (propose && propose.refs) || [] };
 }
 function spawnIssue(number) {
   const d = getDiscussion(number);
@@ -319,6 +320,46 @@ function spawnIssue(number) {
   postToDiscussion(number, { type: 'SPAWNED', task: 'issue', ref: issueUrl, msg: 'Issue created by ' + st.by.join(' + ') + ' consensus: ' + issueUrl + ' — ' + localNote + remoteNote });
   console.log('spawned ' + issueUrl + '  [' + localNote + remoteNote + ']');
   return issueUrl;
+}
+
+function closeDiscussionResolved(number) {
+  const d = getDiscussion(number);
+  gql('mutation($id:ID!){closeDiscussion(input:{discussionId:$id,reason:RESOLVED}){discussion{closed}}}', [['id', d.id]]);
+}
+function createConsolidatedIssue(d, st, refs) {
+  ensureLabels();
+  const refLine = refs && refs.length ? '\n\nConsolidates: ' + refs.map((n) => '#' + n).join(', ') : '';
+  const body = `${d.body || ''}${refLine}\n\n---\n_Converted from discussion #${d.number} (${d.url}) by ${st.by.join(' + ')} consensus._`;
+  const created = sh('gh', ['issue', 'create', '--repo', `${OWNER}/${REPO}`, '--title', d.title, '--body', body, '--label', 'from-discussion', '--label', 'prototype']);
+  const issueUrl = (created || '').split(/\r?\n/).map((s) => s.trim()).filter(Boolean).pop();
+  if (!issueUrl || !/\/issues\/\d+/.test(issueUrl)) throw new Error('gh issue create failed: ' + created);
+  try {
+    const lb = board.loadBoard() || board.initBoard(AGENT).board;
+    if (!lb.items.some((it) => it.issueUrl === issueUrl)) { board.addItem(lb, { title: d.title, issueUrl, fields: { status: 'Triage', intakeStage: 'Spawned', sourceDiscussion: d.number, origin: 'collab' } }, AGENT); board.saveBoard(lb); }
+  } catch { /* board best-effort */ }
+  return issueUrl;
+}
+// Apply the decided resolution: close (no issue) | issue | convert (consolidate refs).
+function resolveDiscussion(number) {
+  const d = getDiscussion(number);
+  const { messages } = readDiscussionMessages(number);
+  const st = consensusState(messages);
+  if (st.resolved) { console.log('already resolved (idempotent): ' + st.resolved.type + (st.resolved.ref ? ' ' + st.resolved.ref : '')); return; }
+  if (!st.decided) { console.error('NOT decided: need a PROPOSE and an ALIGN from two DISTINCT machines, no later BLOCKED.'); process.exit(3); }
+  if (st.resolution === 'close') {
+    closeDiscussionResolved(number);
+    postToDiscussion(number, { type: 'RESOLVED', task: (st.propose && st.propose.task) || 'work-item', msg: 'Aligned by ' + st.by.join(' + ') + ' — discussion CLOSED as RESOLVED, no issue. Kickoff successful.' });
+    console.log('resolved #' + number + ': CLOSED (no issue) — kickoff successful');
+    return;
+  }
+  if (st.resolution === 'convert') {
+    const url = createConsolidatedIssue(d, st, st.refs);
+    closeDiscussionResolved(number);
+    postToDiscussion(number, { type: 'SPAWNED', task: 'issue', ref: url, msg: 'Aligned by ' + st.by.join(' + ') + ' — consolidated ' + st.refs.length + ' issue(s) into ' + url + '; discussion closed.' });
+    console.log('resolved #' + number + ': converted -> ' + url);
+    return;
+  }
+  spawnIssue(number);
 }
 
 function prune(o) {
@@ -410,20 +451,25 @@ async function main() {
     await checkin(a);
     return;
   }
-  const SPECIAL = ['claim', 'ack', 'done', 'handoff', 'authorize', 'refine', 'post', 'propose', 'align', 'spawn-issue', 'board'];
+  const SPECIAL = ['claim', 'ack', 'done', 'handoff', 'authorize', 'refine', 'post', 'propose', 'align', 'spawn-issue', 'resolve', 'ask', 'answer', 'status', 'board'];
   if (!TYPES.has((cmd || '').toUpperCase()) && !SPECIAL.includes(cmd)) {
-    console.error('usage: init | poll | checkin | propose --title X | align --discussion N | spawn-issue --discussion N | post --type T --task X | claim|ack|done|handoff|authorize|refine --task X ...');
+    console.error('usage: init | poll | checkin | propose --title X [--resolution issue|close|convert] | ask|answer --discussion N --msg X | align --discussion N | status --discussion N | resolve --discussion N | spawn-issue --discussion N | post --type T [--discussion N] | claim|ack|done|handoff|authorize|refine ...');
     process.exit(2);
   }
 
   if (cmd === 'propose') {
     const title = req(a, 'title');
+    const resolution = ['close', 'issue', 'convert'].includes(a.resolution) ? a.resolution : 'issue';
+    const refs = a.refs && a.refs !== true ? String(a.refs).split(',').map((s) => Number(s.trim())).filter((n) => n) : [];
+    const bodyText = a['body-file'] && a['body-file'] !== true ? fs.readFileSync(a['body-file'], 'utf8') : (a.body && a.body !== true ? a.body : '');
     const parts = [];
-    if (a.body) parts.push(a.body);
+    if (bodyText) parts.push(bodyText);
+    if (refs.length) parts.push('\n**Consolidates issues:** ' + refs.map((n) => '#' + n).join(', '));
     if (a.acceptance) parts.push('\n**Acceptance:** ' + a.acceptance);
+    parts.push('\n**On consensus:** ' + (resolution === 'close' ? 'close this discussion as RESOLVED (no issue)' : resolution === 'convert' ? 'convert into a consolidated issue' : 'spawn a tracking issue') + '. Both machines (WIN + LINUX) must align.');
     const d = createDiscussionIn(ITEM_CATEGORY, title, parts.join('\n') || title);
-    postToDiscussion(d.number, { type: 'PROPOSE', task: a.task || 'work-item', msg: a.msg || ('Proposed: ' + title) });
-    console.log('proposed discussion #' + d.number + '  ' + d.url);
+    postToDiscussion(d.number, { type: 'PROPOSE', task: a.task || 'work-item', resolution, refs, msg: a.msg || ('Proposed: ' + title) });
+    console.log('proposed discussion #' + d.number + '  ' + d.url + '  (on consensus: ' + resolution + ')');
     return;
   }
   if (cmd === 'align') {
@@ -431,12 +477,26 @@ async function main() {
     postToDiscussion(n, { type: 'ALIGN', task: a.task || 'work-item', msg: a.msg || undefined });
     const { messages } = readDiscussionMessages(n);
     const st = consensusState(messages);
-    if (st.spawned) { console.log('aligned; issue already spawned: ' + st.spawned.ref); return; }
-    if (st.decided) { console.log('consensus reached (' + st.by.join(' + ') + ') — spawning issue autonomously...'); spawnIssue(n); return; }
+    if (st.resolved) { console.log('aligned; already resolved (' + st.resolved.type + (st.resolved.ref ? ' ' + st.resolved.ref : '') + ')'); return; }
+    if (st.decided) { console.log('consensus reached (' + st.by.join(' + ') + ') — applying resolution "' + st.resolution + '" autonomously...'); resolveDiscussion(n); return; }
     console.log('aligned; not yet decided (need the other machine to PROPOSE/ALIGN on discussion #' + n + ')');
     return;
   }
   if (cmd === 'spawn-issue') { spawnIssue(Number(req(a, 'discussion'))); return; }
+  if (cmd === 'resolve') { resolveDiscussion(Number(req(a, 'discussion'))); return; }
+  if (cmd === 'ask') { const r = postToDiscussion(Number(req(a, 'discussion')), { type: 'QUESTION', task: a.task || 'work-item', to: a.to || undefined, msg: req(a, 'msg') }); console.log('asked QUESTION on #' + a.discussion + '  ' + r.comment.url); return; }
+  if (cmd === 'answer') { const r = postToDiscussion(Number(req(a, 'discussion')), { type: 'ANSWER', task: a.task || 'work-item', msg: req(a, 'msg') }); console.log('answered on #' + a.discussion + '  ' + r.comment.url); return; }
+  if (cmd === 'status') {
+    const n = Number(req(a, 'discussion'));
+    const { messages } = readDiscussionMessages(n);
+    const st = consensusState(messages);
+    const questions = messages.filter((m) => m.type === 'QUESTION').length;
+    const answers = messages.filter((m) => m.type === 'ANSWER').length;
+    console.log('discussion #' + n + '  resolution=' + st.resolution + '  proposed=' + Boolean(st.propose) + '  aligns=' + JSON.stringify(st.aligns.map((x) => x.agent)) + '  decided=' + st.decided + (st.decided ? ' by ' + st.by.join('+') : '') + '  resolved=' + Boolean(st.resolved) + '  Q=' + questions + '  A=' + answers);
+    console.log(st.decided ? 'ALIGNED — active development may begin.' : 'NOT ALIGNED — do not begin active development; align in the discussion first.');
+    process.exitCode = st.decided ? 0 : 3;
+    return;
+  }
   if (cmd === 'board') { boardCommand(rest, a); return; }
 
   if (cmd === 'claim') {
@@ -461,8 +521,9 @@ async function main() {
   if (cmd === 'post') {
     const type = req(a, 'type').toUpperCase();
     if (!TYPES.has(type)) { console.error('unknown --type ' + type + ' (valid: ' + [...TYPES].join(', ') + ')'); process.exit(2); }
-    const r = post({ type, task: a.task || undefined, ref: a.ref || undefined, msg: a.msg || undefined, next: a.next || undefined, to: a.to || undefined });
-    console.log('posted ' + type + ' ' + r.comment.url);
+    const payload = { type, task: a.task || undefined, ref: a.ref || undefined, msg: a.msg || undefined, next: a.next || undefined, to: a.to || undefined };
+    const r = a.discussion && a.discussion !== true ? postToDiscussion(Number(a.discussion), payload) : post(payload);
+    console.log('posted ' + type + (a.discussion ? ' on #' + a.discussion : '') + '  ' + r.comment.url);
     return;
   }
 
