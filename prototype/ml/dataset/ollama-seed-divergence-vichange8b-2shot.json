@@ -1,0 +1,204 @@
+{
+  "schema": "vi-history-suite/ollama-seed-divergence@v1",
+  "generatedAt": "2026-07-25T19:31:58.208Z",
+  "host": "LINUX",
+  "hostname": "sergio-ThinkPad-P16-Gen-3",
+  "backend": "gpu",
+  "ollamaUrl": "http://localhost:11434",
+  "model": "vichange8b-2shot",
+  "seeds": [
+    "none",
+    "0",
+    "1",
+    "42",
+    "123"
+  ],
+  "task": "adv-false-nochange",
+  "seedInvariant": true,
+  "interpretation": "statesStructuralCount is IDENTICAL across all seeds -> NOT sampling noise; a deterministic GPU backend float-ordering divergence (WIN CPU backend scores 1.0 on the same model+data).",
+  "stableMisses": [
+    "lv_icon.vi"
+  ],
+  "perItem": [
+    {
+      "vi": "MouseDown.vi",
+      "lvkitChangeCount": 6,
+      "statesStructuralCountBySeed": {
+        "0": true,
+        "1": true,
+        "42": true,
+        "123": true,
+        "none": true
+      },
+      "seedInvariant": true
+    },
+    {
+      "vi": "PictureControl_MouseUp.vi",
+      "lvkitChangeCount": 13,
+      "statesStructuralCountBySeed": {
+        "0": true,
+        "1": true,
+        "42": true,
+        "123": true,
+        "none": true
+      },
+      "seedInvariant": true
+    },
+    {
+      "vi": "VisibleTextMarker.vi",
+      "lvkitChangeCount": 4,
+      "statesStructuralCountBySeed": {
+        "0": true,
+        "1": true,
+        "42": true,
+        "123": true,
+        "none": true
+      },
+      "seedInvariant": true
+    },
+    {
+      "vi": "lv_icon.vi",
+      "lvkitChangeCount": 6,
+      "statesStructuralCountBySeed": {
+        "0": false,
+        "1": false,
+        "42": false,
+        "123": false,
+        "none": false
+      },
+      "seedInvariant": true
+    }
+  ],
+  "bySeed": {
+    "0": [
+      {
+        "vi": "MouseDown.vi",
+        "lvkitChangeCount": 6,
+        "statesStructuralCount": true,
+        "output": "There are structural changes. The VI has 6 structural block-diagram changes: 1 removed, 3 added, and 2 modified."
+      },
+      {
+        "vi": "PictureControl_MouseUp.vi",
+        "lvkitChangeCount": 13,
+        "statesStructuralCount": true,
+        "output": "There are structural changes. The VI has 13 structural block-diagram changes: 9 added and 4 removed."
+      },
+      {
+        "vi": "VisibleTextMarker.vi",
+        "lvkitChangeCount": 4,
+        "statesStructuralCount": true,
+        "output": "There are structural changes. The VI has 4 structural block-diagram changes: 2 blocks were added and 2 blocks were removed."
+      },
+      {
+        "vi": "lv_icon.vi",
+        "lvkitChangeCount": 6,
+        "statesStructuralCount": false,
+        "output": "There are structural changes. The VI has 4 blocks removed and 2 blocks added."
+      }
+    ],
+    "1": [
+      {
+        "vi": "MouseDown.vi",
+        "lvkitChangeCount": 6,
+        "statesStructuralCount": true,
+        "output": "There are structural changes. The VI has 6 structural block-diagram changes: 1 removed, 3 added, and 2 modified."
+      },
+      {
+        "vi": "PictureControl_MouseUp.vi",
+        "lvkitChangeCount": 13,
+        "statesStructuralCount": true,
+        "output": "There are structural changes. The VI has 13 structural block-diagram changes: 9 added and 4 removed."
+      },
+      {
+        "vi": "VisibleTextMarker.vi",
+        "lvkitChangeCount": 4,
+        "statesStructuralCount": true,
+        "output": "There are structural changes. The VI has 4 structural block-diagram changes: 2 blocks were added and 2 blocks were removed."
+      },
+      {
+        "vi": "lv_icon.vi",
+        "lvkitChangeCount": 6,
+        "statesStructuralCount": false,
+        "output": "There are structural changes. The VI has 4 blocks removed and 2 blocks added."
+      }
+    ],
+    "42": [
+      {
+        "vi": "MouseDown.vi",
+        "lvkitChangeCount": 6,
+        "statesStructuralCount": true,
+        "output": "There are structural changes. The VI has 6 structural block-diagram changes: 1 removed, 3 added, and 2 modified."
+      },
+      {
+        "vi": "PictureControl_MouseUp.vi",
+        "lvkitChangeCount": 13,
+        "statesStructuralCount": true,
+        "output": "There are structural changes. The VI has 13 structural block-diagram changes: 9 added and 4 removed."
+      },
+      {
+        "vi": "VisibleTextMarker.vi",
+        "lvkitChangeCount": 4,
+        "statesStructuralCount": true,
+        "output": "There are structural changes. The VI has 4 structural block-diagram changes: 2 blocks were added and 2 blocks were removed."
+      },
+      {
+        "vi": "lv_icon.vi",
+        "lvkitChangeCount": 6,
+        "statesStructuralCount": false,
+        "output": "There are structural changes. The VI has 4 blocks removed and 2 blocks added."
+      }
+    ],
+    "123": [
+      {
+        "vi": "MouseDown.vi",
+        "lvkitChangeCount": 6,
+        "statesStructuralCount": true,
+        "output": "There are structural changes. The VI has 6 structural block-diagram changes: 1 removed, 3 added, and 2 modified."
+      },
+      {
+        "vi": "PictureControl_MouseUp.vi",
+        "lvkitChangeCount": 13,
+        "statesStructuralCount": true,
+        "output": "There are structural changes. The VI has 13 structural block-diagram changes: 9 added and 4 removed."
+      },
+      {
+        "vi": "VisibleTextMarker.vi",
+        "lvkitChangeCount": 4,
+        "statesStructuralCount": true,
+        "output": "There are structural changes. The VI has 4 structural block-diagram changes: 2 blocks were added and 2 blocks were removed."
+      },
+      {
+        "vi": "lv_icon.vi",
+        "lvkitChangeCount": 6,
+        "statesStructuralCount": false,
+        "output": "There are structural changes. The VI has 4 blocks removed and 2 blocks added."
+      }
+    ],
+    "none": [
+      {
+        "vi": "MouseDown.vi",
+        "lvkitChangeCount": 6,
+        "statesStructuralCount": true,
+        "output": "There are structural changes. The VI has 6 structural block-diagram changes: 1 removed, 3 added, and 2 modified."
+      },
+      {
+        "vi": "PictureControl_MouseUp.vi",
+        "lvkitChangeCount": 13,
+        "statesStructuralCount": true,
+        "output": "There are structural changes. The VI has 13 structural block-diagram changes: 9 added and 4 removed."
+      },
+      {
+        "vi": "VisibleTextMarker.vi",
+        "lvkitChangeCount": 4,
+        "statesStructuralCount": true,
+        "output": "There are structural changes. The VI has 4 structural block-diagram changes: 2 blocks were added and 2 blocks were removed."
+      },
+      {
+        "vi": "lv_icon.vi",
+        "lvkitChangeCount": 6,
+        "statesStructuralCount": false,
+        "output": "There are structural changes. The VI has 4 blocks removed and 2 blocks added."
+      }
+    ]
+  }
+}
