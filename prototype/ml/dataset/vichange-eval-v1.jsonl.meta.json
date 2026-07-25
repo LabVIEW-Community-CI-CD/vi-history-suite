@@ -1,26 +1,29 @@
 {
   "schema": "vi-history-suite/ml-dataset-meta@v1",
-  "datasetId": "vichange-eval-v1@1b97e73f846b",
+  "datasetId": "vichange-eval-v1@06ebee83deb2",
   "file": "prototype/ml/dataset/vichange-eval-v1.jsonl",
   "kind": "eval",
   "recordSchema": "vichange-eval-item",
-  "bytes": 26899,
-  "sha256": "1b97e73f846b4759d979960d0defa2bc6a0e55e091afcc15216b9e51085d2b91",
-  "recordCount": 28,
+  "bytes": 38733,
+  "sha256": "06ebee83deb291b00c68810035522bb128993f3c65e94981f455ccc3340ddc6a",
+  "recordCount": 42,
   "provenance": {
     "generator": "prototype/ml/datasetManifest.mjs",
     "datasetGenerator": "prototype/ml/buildViChangeMlDataset.mjs",
     "groundTruthSource": "prototype/correlationReport.mjs over prototype/win-lvkit/correlation-fixtures",
-    "sourceCommit": "b0679618814eb44dfb790125343eca497b179a46",
+    "sourceCommit": "53ee0381f85466f5ffb7010329de975ae6fcf4da",
     "nodeVersion": "v24.16.0",
-    "generatedAt": "2026-07-25T19:12:20.276Z"
+    "generatedAt": "2026-07-25T19:54:24.383Z"
   },
   "coverage": {
-    "sampleCount": 5,
+    "sampleCount": 8,
     "sampleVis": [
       "LoadTemplates.vi",
+      "MenuSelection(User).vi",
       "MouseDown.vi",
       "PictureControl_MouseUp.vi",
+      "Process Template Graphics.vi",
+      "VI Template.vi",
       "VisibleTextMarker.vi",
       "lv_icon.vi"
     ],
@@ -119,6 +122,38 @@
           "removed"
         ],
         "labviewSource": "robust-parser"
+      },
+      "VI Template.vi": {
+        "lvkitChangeCount": 0,
+        "labview": {
+          "total": 2,
+          "cosmetic": 0,
+          "nonCosmetic": 1
+        },
+        "kinds": [],
+        "labviewSource": "robust-parser"
+      },
+      "Process Template Graphics.vi": {
+        "lvkitChangeCount": 0,
+        "labview": {
+          "total": 2,
+          "cosmetic": 0,
+          "nonCosmetic": 1
+        },
+        "kinds": [],
+        "labviewSource": "robust-parser"
+      },
+      "MenuSelection(User).vi": {
+        "lvkitChangeCount": 1,
+        "labview": {
+          "total": 3,
+          "cosmetic": 1,
+          "nonCosmetic": 1
+        },
+        "kinds": [
+          "added"
+        ],
+        "labviewSource": "robust-parser"
       }
     }
   },
@@ -206,7 +241,7 @@
   ],
   "lineage": {
     "previousSha256": "1b97e73f846b4759d979960d0defa2bc6a0e55e091afcc15216b9e51085d2b91",
-    "changedSincePrevious": false,
-    "derivedFrom": "5e7a008001ee37bea7ac69dfd91f6abd374df703"
+    "changedSincePrevious": true,
+    "derivedFrom": "b0679618814eb44dfb790125343eca497b179a46"
   }
 }

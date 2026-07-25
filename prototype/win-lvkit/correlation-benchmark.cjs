@@ -37,7 +37,10 @@ const ALL_SAMPLES = [
   { vi: 'resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/PictureControl_MouseUp.vi', base: '537683', selected: 'fc09736', slug: 'picturecontrol-mouseup' },
   { vi: 'resource/plugins/NIIconEditor/Miscellaneous/Graphics/LoadTemplates.vi', base: '537683', selected: 'fc09736', slug: 'loadtemplates' },
   { vi: 'resource/plugins/NIIconEditor/Miscellaneous/Tools/VisibleTextMarker.vi', base: '537683', selected: 'fc09736', slug: 'visibletextmarker' },
-  { vi: 'resource/plugins/lv_icon.vi', base: '537683', selected: 'fc09736', slug: 'lv-icon' }
+  { vi: 'resource/plugins/lv_icon.vi', base: '537683', selected: 'fc09736', slug: 'lv-icon' },
+  { vi: 'Test/Templates/VI Template.vi', base: '537683', selected: 'fc09736', slug: 'vi-template' },
+  { vi: 'resource/plugins/NIIconEditor/Class/FakedArray/Misc/Process Template Graphics.vi', base: '537683', selected: 'fc09736', slug: 'process-template-graphics' },
+  { vi: 'resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/MenuSelection(User).vi', base: '537683', selected: 'fc09736', slug: 'menuselection-user' }
 ];
 // CORR_ONLY_SLUGS (comma list) runs a subset; CORR_MERGE keeps prior samples (grow, not replace);
 // CORR_LIMIT caps count. fixtureSlug (HTML fixture name) = basename lowercased, per correlationReport.mjs.

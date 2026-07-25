@@ -1,28 +1,28 @@
 {
   "schema": "vi-history-suite/ml-datasets-index@v1",
-  "generatedAt": "2026-07-25T19:12:20.276Z",
-  "sourceCommit": "b0679618814eb44dfb790125343eca497b179a46",
+  "generatedAt": "2026-07-25T19:54:24.383Z",
+  "sourceCommit": "53ee0381f85466f5ffb7010329de975ae6fcf4da",
   "generator": "prototype/ml/datasetManifest.mjs",
   "task": "grounded-vi-change-faithful-summarization",
   "datasets": [
     {
-      "datasetId": "vichange-finetune-v1@1a6b4d81c86d",
+      "datasetId": "vichange-finetune-v1@6eca2a312297",
       "file": "prototype/ml/dataset/vichange-finetune-v1.jsonl",
       "kind": "finetune",
       "recordSchema": "openai-chat-messages",
-      "sha256": "1a6b4d81c86d21a0a203c0e5b1f74cfe2857d69e494f448f97ede0c41449834f",
-      "bytes": 30449,
-      "recordCount": 28,
+      "sha256": "6eca2a3122977b96af54a1d4617ff027cabb4a7988cc426526f39a814957e10f",
+      "bytes": 44887,
+      "recordCount": 42,
       "metaFile": "prototype/ml/dataset/vichange-finetune-v1.jsonl.meta.json"
     },
     {
-      "datasetId": "vichange-eval-v1@1b97e73f846b",
+      "datasetId": "vichange-eval-v1@06ebee83deb2",
       "file": "prototype/ml/dataset/vichange-eval-v1.jsonl",
       "kind": "eval",
       "recordSchema": "vichange-eval-item",
-      "sha256": "1b97e73f846b4759d979960d0defa2bc6a0e55e091afcc15216b9e51085d2b91",
-      "bytes": 26899,
-      "recordCount": 28,
+      "sha256": "06ebee83deb291b00c68810035522bb128993f3c65e94981f455ccc3340ddc6a",
+      "bytes": 38733,
+      "recordCount": 42,
       "metaFile": "prototype/ml/dataset/vichange-eval-v1.jsonl.meta.json"
     }
   ],
@@ -203,6 +203,38 @@
         "removed"
       ],
       "labviewSource": "robust-parser"
+    },
+    "VI Template.vi": {
+      "lvkitChangeCount": 0,
+      "labview": {
+        "total": 2,
+        "cosmetic": 0,
+        "nonCosmetic": 1
+      },
+      "kinds": [],
+      "labviewSource": "robust-parser"
+    },
+    "Process Template Graphics.vi": {
+      "lvkitChangeCount": 0,
+      "labview": {
+        "total": 2,
+        "cosmetic": 0,
+        "nonCosmetic": 1
+      },
+      "kinds": [],
+      "labviewSource": "robust-parser"
+    },
+    "MenuSelection(User).vi": {
+      "lvkitChangeCount": 1,
+      "labview": {
+        "total": 3,
+        "cosmetic": 1,
+        "nonCosmetic": 1
+      },
+      "kinds": [
+        "added"
+      ],
+      "labviewSource": "robust-parser"
     }
   },
   "openResiduals": [
@@ -273,10 +305,14 @@
     ]
   },
   "lineage": {
-    "previousCommit": "5e7a008001ee37bea7ac69dfd91f6abd374df703",
-    "previousGeneratedAt": "2026-07-25T17:18:37.172Z",
+    "previousCommit": "b0679618814eb44dfb790125343eca497b179a46",
+    "previousGeneratedAt": "2026-07-25T19:12:20.276Z",
     "previousSampleCount": 5,
-    "newSamplesSincePrevious": [],
+    "newSamplesSincePrevious": [
+      "MenuSelection(User).vi",
+      "Process Template Graphics.vi",
+      "VI Template.vi"
+    ],
     "carriedOverSamples": [
       "LoadTemplates.vi",
       "MouseDown.vi",
@@ -295,22 +331,27 @@
     "available": true,
     "source": "os.tmpdir()/vihs-cycles",
     "note": "benchmark excludes the manifest-writing cycle (its meta is written after this runs)",
-    "cycleCount": 141,
+    "cycleCount": 164,
     "window": {
       "firstStart": "2026-07-25T15:03:54.804Z",
-      "lastEnd": "2026-07-25T19:11:36.654Z",
-      "wallClockSec": 14861.9
+      "lastEnd": "2026-07-25T19:54:04.897Z",
+      "wallClockSec": 17410.1
     },
-    "activeSec": 2564.7,
-    "deadSec": 12297.2,
-    "deadFraction": 0.8270000000000001,
+    "activeSec": 3705.4,
+    "deadSec": 13704.7,
+    "deadFraction": 0.787,
     "deadTimeThresholdSec": 20,
-    "encapsulatableDeadSec": 12147.5,
+    "encapsulatableDeadSec": 13450.8,
     "largestGaps": [
       {
         "afterCycle": "c134-commit-detect",
         "beforeCycle": "c135-screenshot-cal",
         "deadSec": 928.3
+      },
+      {
+        "afterCycle": "c162-scale-dataset",
+        "beforeCycle": "c163-rebuild-jsonl",
+        "deadSec": 559.5
       },
       {
         "afterCycle": "c19-env-check",
@@ -326,11 +367,6 @@
         "afterCycle": "c137-commit-authoritative",
         "beforeCycle": "c138-capstone",
         "deadSec": 337.9
-      },
-      {
-        "afterCycle": "c67-commit-scale",
-        "beforeCycle": "c66-state",
-        "deadSec": 314.6
       }
     ],
     "encapsulationCandidates": [
@@ -338,6 +374,11 @@
         "afterCycle": "c134-commit-detect",
         "beforeCycle": "c135-screenshot-cal",
         "deadSec": 928.3
+      },
+      {
+        "afterCycle": "c162-scale-dataset",
+        "beforeCycle": "c163-rebuild-jsonl",
+        "deadSec": 559.5
       },
       {
         "afterCycle": "c19-env-check",
@@ -475,6 +516,11 @@
         "deadSec": 120.6
       },
       {
+        "afterCycle": "c143-sync-configs",
+        "beforeCycle": "c144-state-ollama",
+        "deadSec": 119.3
+      },
+      {
         "afterCycle": "c67-stash-rebase",
         "beforeCycle": "c68-timeline",
         "deadSec": 115.4
@@ -493,6 +539,11 @@
         "afterCycle": "c94-locate-ffmpeg",
         "beforeCycle": "c95-render-video",
         "deadSec": 105.4
+      },
+      {
+        "afterCycle": "c142-commit-handoff",
+        "beforeCycle": "c143-sync-configs",
+        "deadSec": 104.9
       },
       {
         "afterCycle": "c127-detect-reuse",
@@ -565,6 +616,11 @@
         "deadSec": 80.6
       },
       {
+        "afterCycle": "c157-14b-evidence-poll",
+        "beforeCycle": "c158-commit-14b-decide",
+        "deadSec": 78.8
+      },
+      {
         "afterCycle": "c33-ack-crossmodel",
         "beforeCycle": "c34-sync",
         "deadSec": 78.7
@@ -600,6 +656,11 @@
         "deadSec": 70.7
       },
       {
+        "afterCycle": "c144-state-ollama",
+        "beforeCycle": "c145-commit-slot",
+        "deadSec": 67.1
+      },
+      {
         "afterCycle": "c24-commit-propose-post-ml",
         "beforeCycle": "c25-sync",
         "deadSec": 66.5
@@ -618,6 +679,11 @@
         "afterCycle": "c66-ml-regen",
         "beforeCycle": "c67-commit-scale",
         "deadSec": 62.4
+      },
+      {
+        "afterCycle": "c145-commit-slot",
+        "beforeCycle": "c146-crossbackend",
+        "deadSec": 62.2
       },
       {
         "afterCycle": "c69-rebase-regen",
@@ -695,6 +761,11 @@
         "deadSec": 49.8
       },
       {
+        "afterCycle": "c141-reingest",
+        "beforeCycle": "c142-commit-handoff",
+        "deadSec": 49.7
+      },
+      {
         "afterCycle": "c77-mprr-driver",
         "beforeCycle": "c78-evidence",
         "deadSec": 48.5
@@ -750,6 +821,11 @@
         "deadSec": 43.5
       },
       {
+        "afterCycle": "c140-sync",
+        "beforeCycle": "c141-reingest",
+        "deadSec": 43.5
+      },
+      {
         "afterCycle": "c79-mprr-rerun",
         "beforeCycle": "c80-commit-mprr",
         "deadSec": 43.2
@@ -783,6 +859,11 @@
         "afterCycle": "c82-recompile-mprrtest",
         "beforeCycle": "c83-sync",
         "deadSec": 41.5
+      },
+      {
+        "afterCycle": "c154-commit-corroborate",
+        "beforeCycle": "c155-check-14b",
+        "deadSec": 41.4
       },
       {
         "afterCycle": "c32-sync",
@@ -900,6 +981,11 @@
         "deadSec": 32.8
       },
       {
+        "afterCycle": "c161-inspect-stash",
+        "beforeCycle": "c162-scale-dataset",
+        "deadSec": 32.3
+      },
+      {
         "afterCycle": "c74-align-refine",
         "beforeCycle": "c75-compile",
         "deadSec": 31.8
@@ -928,6 +1014,11 @@
         "afterCycle": "c112-scalecrop",
         "beforeCycle": "c113-decode-final",
         "deadSec": 30.6
+      },
+      {
+        "afterCycle": "c153-read-evidence",
+        "beforeCycle": "c154-commit-corroborate",
+        "deadSec": 30.5
       },
       {
         "afterCycle": "c110-decode-reuse",
@@ -970,6 +1061,11 @@
         "deadSec": 26.7
       },
       {
+        "afterCycle": "c146-crossbackend",
+        "beforeCycle": "c147-find-ollama",
+        "deadSec": 26.6
+      },
+      {
         "afterCycle": "c41-commit-regression-guard",
         "beforeCycle": "c42-status",
         "deadSec": 24.9
@@ -980,6 +1076,11 @@
         "deadSec": 24.8
       },
       {
+        "afterCycle": "c158-commit-14b-decide",
+        "beforeCycle": "c159-decision-handoff",
+        "deadSec": 24.5
+      },
+      {
         "afterCycle": "c117-commit-authoritative",
         "beforeCycle": "c118-rebase-push",
         "deadSec": 23.7
@@ -988,6 +1089,21 @@
         "afterCycle": "c89-scan-evidence",
         "beforeCycle": "c90-render-nav",
         "deadSec": 23.4
+      },
+      {
+        "afterCycle": "c149-commit-crossbackend",
+        "beforeCycle": "c150-bus-crossbackend",
+        "deadSec": 21.5
+      },
+      {
+        "afterCycle": "c150-bus-crossbackend",
+        "beforeCycle": "c151-bus-handoff",
+        "deadSec": 21.3
+      },
+      {
+        "afterCycle": "c148-crossbackend2",
+        "beforeCycle": "c149-commit-crossbackend",
+        "deadSec": 20.2
       }
     ],
     "optimization": {
@@ -2404,21 +2520,251 @@
         "exitCode": 0,
         "hadException": false,
         "deadBeforeSec": 70.7
+      },
+      {
+        "id": "c141-reingest",
+        "description": "reingest",
+        "startedAt": "2026-07-25T19:12:20.167Z",
+        "endedAt": "2026-07-25T19:12:20.467Z",
+        "elapsedSec": 0.3,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 43.5
+      },
+      {
+        "id": "c142-commit-handoff",
+        "description": "commit handoff",
+        "startedAt": "2026-07-25T19:13:10.122Z",
+        "endedAt": "2026-07-25T19:13:13.922Z",
+        "elapsedSec": 3.8,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 49.7
+      },
+      {
+        "id": "c143-sync-configs",
+        "description": "sync configs",
+        "startedAt": "2026-07-25T19:14:58.801Z",
+        "endedAt": "2026-07-25T19:15:00.401Z",
+        "elapsedSec": 1.6,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 104.9
+      },
+      {
+        "id": "c144-state-ollama",
+        "description": "state ollama",
+        "startedAt": "2026-07-25T19:16:59.734Z",
+        "endedAt": "2026-07-25T19:17:00.434Z",
+        "elapsedSec": 0.7,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 119.3
+      },
+      {
+        "id": "c145-commit-slot",
+        "description": "commit slot",
+        "startedAt": "2026-07-25T19:18:07.575Z",
+        "endedAt": "2026-07-25T19:18:09.475Z",
+        "elapsedSec": 1.9,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 67.1
+      },
+      {
+        "id": "c146-crossbackend",
+        "description": "crossbackend",
+        "startedAt": "2026-07-25T19:19:11.650Z",
+        "endedAt": "2026-07-25T19:19:11.750Z",
+        "elapsedSec": 0.1,
+        "exitCode": 0,
+        "hadException": true,
+        "deadBeforeSec": 62.2
+      },
+      {
+        "id": "c147-find-ollama",
+        "description": "find ollama",
+        "startedAt": "2026-07-25T19:19:38.318Z",
+        "endedAt": "2026-07-25T19:19:38.518Z",
+        "elapsedSec": 0.2,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 26.6
+      },
+      {
+        "id": "c148-crossbackend2",
+        "description": "crossbackend2",
+        "startedAt": "2026-07-25T19:19:52.350Z",
+        "endedAt": "2026-07-25T19:21:48.550Z",
+        "elapsedSec": 116.2,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 13.8
+      },
+      {
+        "id": "c149-commit-crossbackend",
+        "description": "commit crossbackend",
+        "startedAt": "2026-07-25T19:22:08.772Z",
+        "endedAt": "2026-07-25T19:22:11.572Z",
+        "elapsedSec": 2.8,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 20.2
+      },
+      {
+        "id": "c150-bus-crossbackend",
+        "description": "bus crossbackend",
+        "startedAt": "2026-07-25T19:22:33.057Z",
+        "endedAt": "2026-07-25T19:22:33.157Z",
+        "elapsedSec": 0.1,
+        "exitCode": 2,
+        "hadException": false,
+        "deadBeforeSec": 21.5
+      },
+      {
+        "id": "c151-bus-handoff",
+        "description": "bus handoff",
+        "startedAt": "2026-07-25T19:22:54.438Z",
+        "endedAt": "2026-07-25T19:22:55.838Z",
+        "elapsedSec": 1.4,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 21.3
+      },
+      {
+        "id": "c152-poll-and-fewshot",
+        "description": "poll and fewshot",
+        "startedAt": "2026-07-25T19:23:13.720Z",
+        "endedAt": "2026-07-25T19:26:16.820Z",
+        "elapsedSec": 183.1,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 17.9
+      },
+      {
+        "id": "c153-read-evidence",
+        "description": "read evidence",
+        "startedAt": "2026-07-25T19:26:33.010Z",
+        "endedAt": "2026-07-25T19:26:33.010Z",
+        "elapsedSec": 0,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 16.2
+      },
+      {
+        "id": "c154-commit-corroborate",
+        "description": "commit corroborate",
+        "startedAt": "2026-07-25T19:27:03.487Z",
+        "endedAt": "2026-07-25T19:27:07.287Z",
+        "elapsedSec": 3.8,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 30.5
+      },
+      {
+        "id": "c155-check-14b",
+        "description": "check 14b",
+        "startedAt": "2026-07-25T19:27:48.675Z",
+        "endedAt": "2026-07-25T19:27:48.775Z",
+        "elapsedSec": 0.1,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 41.4
+      },
+      {
+        "id": "c156-pull-run-14b",
+        "description": "pull run 14b",
+        "startedAt": "2026-07-25T19:28:01.320Z",
+        "endedAt": "2026-07-25T19:34:42.820Z",
+        "elapsedSec": 401.5,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 12.5
+      },
+      {
+        "id": "c157-14b-evidence-poll",
+        "description": "14b evidence poll",
+        "startedAt": "2026-07-25T19:34:58.620Z",
+        "endedAt": "2026-07-25T19:34:59.820Z",
+        "elapsedSec": 1.2,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 15.8
+      },
+      {
+        "id": "c158-commit-14b-decide",
+        "description": "commit 14b decide",
+        "startedAt": "2026-07-25T19:36:18.606Z",
+        "endedAt": "2026-07-25T19:36:21.706Z",
+        "elapsedSec": 3.1,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 78.8
+      },
+      {
+        "id": "c159-decision-handoff",
+        "description": "decision handoff",
+        "startedAt": "2026-07-25T19:36:46.209Z",
+        "endedAt": "2026-07-25T19:36:47.609Z",
+        "elapsedSec": 1.4,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 24.5
+      },
+      {
+        "id": "c160-oracle-status",
+        "description": "oracle status",
+        "startedAt": "2026-07-25T19:37:05.490Z",
+        "endedAt": "2026-07-25T19:37:05.690Z",
+        "elapsedSec": 0.2,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 17.9
+      },
+      {
+        "id": "c161-inspect-stash",
+        "description": "inspect stash",
+        "startedAt": "2026-07-25T19:37:15.883Z",
+        "endedAt": "2026-07-25T19:37:15.983Z",
+        "elapsedSec": 0.1,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 10.2
+      },
+      {
+        "id": "c162-scale-dataset",
+        "description": "scale dataset",
+        "startedAt": "2026-07-25T19:37:48.319Z",
+        "endedAt": "2026-07-25T19:44:45.119Z",
+        "elapsedSec": 416.8,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 32.3
+      },
+      {
+        "id": "c163-rebuild-jsonl",
+        "description": "rebuild jsonl",
+        "startedAt": "2026-07-25T19:54:04.597Z",
+        "endedAt": "2026-07-25T19:54:04.897Z",
+        "elapsedSec": 0.3,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 559.5
       }
     ],
     "timeline": {
       "purpose": "Fit a constant-FPS screenshot stream to wall-clock: assemble frames into a video with ffmpeg, and let an LLM navigate event -> frame -> screenshot and correlate to a performance-monitor time series (all keyed by epoch ms).",
       "t0": "2026-07-25T15:03:54.804Z",
       "t0EpochMs": 1784991834804,
-      "endEpochMs": 1785006696654,
-      "wallClockSec": 14861.9,
+      "endEpochMs": 1785009244897,
+      "wallClockSec": 17410.1,
       "fpsSupported": [
         12,
         18
       ],
       "frameCounts": {
-        "fps12": 178343,
-        "fps18": 267515
+        "fps12": 208922,
+        "fps18": 313382
       },
       "frameForEpochMs": "frame = round((epochMs - t0EpochMs) / 1000 * fps)  // 0-based, continuous capture from t0",
       "screenshotPattern": "frame_%06d.png",
@@ -2438,7 +2784,7 @@
           "driver": "scripts/windows-perfmon-mprr-driver.cjs (E1-E6 real-hardware perfmon->TDMS->mprr-sync->bounded-RAM replay)"
         }
       },
-      "eventCount": 281,
+      "eventCount": 327,
       "events": [
         {
           "kind": "cycle",
@@ -7357,6 +7703,811 @@
           "endFrame12": 178342,
           "startFrame18": 267485,
           "endFrame18": 267513
+        },
+        {
+          "kind": "dead-gap",
+          "afterCycle": "c140-sync",
+          "beforeCycle": "c141-reingest",
+          "startAt": "2026-07-25T19:11:36.654Z",
+          "endAt": "2026-07-25T19:12:20.167Z",
+          "startEpochMs": 1785006696654,
+          "endEpochMs": 1785006740167,
+          "tStartSec": 14861.9,
+          "tEndSec": 14905.4,
+          "deadSec": 43.5,
+          "encapsulationCandidate": true,
+          "startFrame12": 178342,
+          "endFrame12": 178864,
+          "startFrame18": 267513,
+          "endFrame18": 268297
+        },
+        {
+          "kind": "cycle",
+          "id": "c141-reingest",
+          "description": "reingest",
+          "startAt": "2026-07-25T19:12:20.167Z",
+          "endAt": "2026-07-25T19:12:20.467Z",
+          "startEpochMs": 1785006740167,
+          "endEpochMs": 1785006740467,
+          "tStartSec": 14905.4,
+          "tEndSec": 14905.7,
+          "durationSec": 0.3,
+          "exitCode": 0,
+          "hadException": false,
+          "startFrame12": 178864,
+          "endFrame12": 178868,
+          "startFrame18": 268297,
+          "endFrame18": 268302
+        },
+        {
+          "kind": "dead-gap",
+          "afterCycle": "c141-reingest",
+          "beforeCycle": "c142-commit-handoff",
+          "startAt": "2026-07-25T19:12:20.467Z",
+          "endAt": "2026-07-25T19:13:10.122Z",
+          "startEpochMs": 1785006740467,
+          "endEpochMs": 1785006790122,
+          "tStartSec": 14905.7,
+          "tEndSec": 14955.3,
+          "deadSec": 49.7,
+          "encapsulationCandidate": true,
+          "startFrame12": 178868,
+          "endFrame12": 179464,
+          "startFrame18": 268302,
+          "endFrame18": 269196
+        },
+        {
+          "kind": "cycle",
+          "id": "c142-commit-handoff",
+          "description": "commit handoff",
+          "startAt": "2026-07-25T19:13:10.122Z",
+          "endAt": "2026-07-25T19:13:13.922Z",
+          "startEpochMs": 1785006790122,
+          "endEpochMs": 1785006793922,
+          "tStartSec": 14955.3,
+          "tEndSec": 14959.1,
+          "durationSec": 3.8,
+          "exitCode": 0,
+          "hadException": false,
+          "startFrame12": 179464,
+          "endFrame12": 179509,
+          "startFrame18": 269196,
+          "endFrame18": 269264
+        },
+        {
+          "kind": "dead-gap",
+          "afterCycle": "c142-commit-handoff",
+          "beforeCycle": "c143-sync-configs",
+          "startAt": "2026-07-25T19:13:13.922Z",
+          "endAt": "2026-07-25T19:14:58.801Z",
+          "startEpochMs": 1785006793922,
+          "endEpochMs": 1785006898801,
+          "tStartSec": 14959.1,
+          "tEndSec": 15064,
+          "deadSec": 104.9,
+          "encapsulationCandidate": true,
+          "startFrame12": 179509,
+          "endFrame12": 180768,
+          "startFrame18": 269264,
+          "endFrame18": 271152
+        },
+        {
+          "kind": "cycle",
+          "id": "c143-sync-configs",
+          "description": "sync configs",
+          "startAt": "2026-07-25T19:14:58.801Z",
+          "endAt": "2026-07-25T19:15:00.401Z",
+          "startEpochMs": 1785006898801,
+          "endEpochMs": 1785006900401,
+          "tStartSec": 15064,
+          "tEndSec": 15065.6,
+          "durationSec": 1.6,
+          "exitCode": 0,
+          "hadException": false,
+          "startFrame12": 180768,
+          "endFrame12": 180787,
+          "startFrame18": 271152,
+          "endFrame18": 271181
+        },
+        {
+          "kind": "dead-gap",
+          "afterCycle": "c143-sync-configs",
+          "beforeCycle": "c144-state-ollama",
+          "startAt": "2026-07-25T19:15:00.401Z",
+          "endAt": "2026-07-25T19:16:59.734Z",
+          "startEpochMs": 1785006900401,
+          "endEpochMs": 1785007019734,
+          "tStartSec": 15065.6,
+          "tEndSec": 15184.9,
+          "deadSec": 119.3,
+          "encapsulationCandidate": true,
+          "startFrame12": 180787,
+          "endFrame12": 182219,
+          "startFrame18": 271181,
+          "endFrame18": 273329
+        },
+        {
+          "kind": "cycle",
+          "id": "c144-state-ollama",
+          "description": "state ollama",
+          "startAt": "2026-07-25T19:16:59.734Z",
+          "endAt": "2026-07-25T19:17:00.434Z",
+          "startEpochMs": 1785007019734,
+          "endEpochMs": 1785007020434,
+          "tStartSec": 15184.9,
+          "tEndSec": 15185.6,
+          "durationSec": 0.7,
+          "exitCode": 0,
+          "hadException": false,
+          "startFrame12": 182219,
+          "endFrame12": 182228,
+          "startFrame18": 273329,
+          "endFrame18": 273341
+        },
+        {
+          "kind": "dead-gap",
+          "afterCycle": "c144-state-ollama",
+          "beforeCycle": "c145-commit-slot",
+          "startAt": "2026-07-25T19:17:00.434Z",
+          "endAt": "2026-07-25T19:18:07.575Z",
+          "startEpochMs": 1785007020434,
+          "endEpochMs": 1785007087575,
+          "tStartSec": 15185.6,
+          "tEndSec": 15252.8,
+          "deadSec": 67.1,
+          "encapsulationCandidate": true,
+          "startFrame12": 182228,
+          "endFrame12": 183033,
+          "startFrame18": 273341,
+          "endFrame18": 274550
+        },
+        {
+          "kind": "cycle",
+          "id": "c145-commit-slot",
+          "description": "commit slot",
+          "startAt": "2026-07-25T19:18:07.575Z",
+          "endAt": "2026-07-25T19:18:09.475Z",
+          "startEpochMs": 1785007087575,
+          "endEpochMs": 1785007089475,
+          "tStartSec": 15252.8,
+          "tEndSec": 15254.7,
+          "durationSec": 1.9,
+          "exitCode": 0,
+          "hadException": false,
+          "startFrame12": 183033,
+          "endFrame12": 183056,
+          "startFrame18": 274550,
+          "endFrame18": 274584
+        },
+        {
+          "kind": "dead-gap",
+          "afterCycle": "c145-commit-slot",
+          "beforeCycle": "c146-crossbackend",
+          "startAt": "2026-07-25T19:18:09.475Z",
+          "endAt": "2026-07-25T19:19:11.650Z",
+          "startEpochMs": 1785007089475,
+          "endEpochMs": 1785007151650,
+          "tStartSec": 15254.7,
+          "tEndSec": 15316.8,
+          "deadSec": 62.2,
+          "encapsulationCandidate": true,
+          "startFrame12": 183056,
+          "endFrame12": 183802,
+          "startFrame18": 274584,
+          "endFrame18": 275703
+        },
+        {
+          "kind": "cycle",
+          "id": "c146-crossbackend",
+          "description": "crossbackend",
+          "startAt": "2026-07-25T19:19:11.650Z",
+          "endAt": "2026-07-25T19:19:11.750Z",
+          "startEpochMs": 1785007151650,
+          "endEpochMs": 1785007151750,
+          "tStartSec": 15316.8,
+          "tEndSec": 15316.9,
+          "durationSec": 0.1,
+          "exitCode": 0,
+          "hadException": true,
+          "startFrame12": 183802,
+          "endFrame12": 183803,
+          "startFrame18": 275703,
+          "endFrame18": 275705
+        },
+        {
+          "kind": "dead-gap",
+          "afterCycle": "c146-crossbackend",
+          "beforeCycle": "c147-find-ollama",
+          "startAt": "2026-07-25T19:19:11.750Z",
+          "endAt": "2026-07-25T19:19:38.318Z",
+          "startEpochMs": 1785007151750,
+          "endEpochMs": 1785007178318,
+          "tStartSec": 15316.9,
+          "tEndSec": 15343.5,
+          "deadSec": 26.6,
+          "encapsulationCandidate": true,
+          "startFrame12": 183803,
+          "endFrame12": 184122,
+          "startFrame18": 275705,
+          "endFrame18": 276183
+        },
+        {
+          "kind": "cycle",
+          "id": "c147-find-ollama",
+          "description": "find ollama",
+          "startAt": "2026-07-25T19:19:38.318Z",
+          "endAt": "2026-07-25T19:19:38.518Z",
+          "startEpochMs": 1785007178318,
+          "endEpochMs": 1785007178518,
+          "tStartSec": 15343.5,
+          "tEndSec": 15343.7,
+          "durationSec": 0.2,
+          "exitCode": 0,
+          "hadException": false,
+          "startFrame12": 184122,
+          "endFrame12": 184125,
+          "startFrame18": 276183,
+          "endFrame18": 276187
+        },
+        {
+          "kind": "dead-gap",
+          "afterCycle": "c147-find-ollama",
+          "beforeCycle": "c148-crossbackend2",
+          "startAt": "2026-07-25T19:19:38.518Z",
+          "endAt": "2026-07-25T19:19:52.350Z",
+          "startEpochMs": 1785007178518,
+          "endEpochMs": 1785007192350,
+          "tStartSec": 15343.7,
+          "tEndSec": 15357.5,
+          "deadSec": 13.8,
+          "encapsulationCandidate": false,
+          "startFrame12": 184125,
+          "endFrame12": 184291,
+          "startFrame18": 276187,
+          "endFrame18": 276436
+        },
+        {
+          "kind": "cycle",
+          "id": "c148-crossbackend2",
+          "description": "crossbackend2",
+          "startAt": "2026-07-25T19:19:52.350Z",
+          "endAt": "2026-07-25T19:21:48.550Z",
+          "startEpochMs": 1785007192350,
+          "endEpochMs": 1785007308550,
+          "tStartSec": 15357.5,
+          "tEndSec": 15473.7,
+          "durationSec": 116.2,
+          "exitCode": 0,
+          "hadException": false,
+          "startFrame12": 184291,
+          "endFrame12": 185685,
+          "startFrame18": 276436,
+          "endFrame18": 278527
+        },
+        {
+          "kind": "dead-gap",
+          "afterCycle": "c148-crossbackend2",
+          "beforeCycle": "c149-commit-crossbackend",
+          "startAt": "2026-07-25T19:21:48.550Z",
+          "endAt": "2026-07-25T19:22:08.772Z",
+          "startEpochMs": 1785007308550,
+          "endEpochMs": 1785007328772,
+          "tStartSec": 15473.7,
+          "tEndSec": 15494,
+          "deadSec": 20.2,
+          "encapsulationCandidate": true,
+          "startFrame12": 185685,
+          "endFrame12": 185928,
+          "startFrame18": 278527,
+          "endFrame18": 278891
+        },
+        {
+          "kind": "cycle",
+          "id": "c149-commit-crossbackend",
+          "description": "commit crossbackend",
+          "startAt": "2026-07-25T19:22:08.772Z",
+          "endAt": "2026-07-25T19:22:11.572Z",
+          "startEpochMs": 1785007328772,
+          "endEpochMs": 1785007331572,
+          "tStartSec": 15494,
+          "tEndSec": 15496.8,
+          "durationSec": 2.8,
+          "exitCode": 0,
+          "hadException": false,
+          "startFrame12": 185928,
+          "endFrame12": 185961,
+          "startFrame18": 278891,
+          "endFrame18": 278942
+        },
+        {
+          "kind": "dead-gap",
+          "afterCycle": "c149-commit-crossbackend",
+          "beforeCycle": "c150-bus-crossbackend",
+          "startAt": "2026-07-25T19:22:11.572Z",
+          "endAt": "2026-07-25T19:22:33.057Z",
+          "startEpochMs": 1785007331572,
+          "endEpochMs": 1785007353057,
+          "tStartSec": 15496.8,
+          "tEndSec": 15518.3,
+          "deadSec": 21.5,
+          "encapsulationCandidate": true,
+          "startFrame12": 185961,
+          "endFrame12": 186219,
+          "startFrame18": 278942,
+          "endFrame18": 279329
+        },
+        {
+          "kind": "cycle",
+          "id": "c150-bus-crossbackend",
+          "description": "bus crossbackend",
+          "startAt": "2026-07-25T19:22:33.057Z",
+          "endAt": "2026-07-25T19:22:33.157Z",
+          "startEpochMs": 1785007353057,
+          "endEpochMs": 1785007353157,
+          "tStartSec": 15518.3,
+          "tEndSec": 15518.4,
+          "durationSec": 0.1,
+          "exitCode": 2,
+          "hadException": false,
+          "startFrame12": 186219,
+          "endFrame12": 186220,
+          "startFrame18": 279329,
+          "endFrame18": 279330
+        },
+        {
+          "kind": "dead-gap",
+          "afterCycle": "c150-bus-crossbackend",
+          "beforeCycle": "c151-bus-handoff",
+          "startAt": "2026-07-25T19:22:33.157Z",
+          "endAt": "2026-07-25T19:22:54.438Z",
+          "startEpochMs": 1785007353157,
+          "endEpochMs": 1785007374438,
+          "tStartSec": 15518.4,
+          "tEndSec": 15539.6,
+          "deadSec": 21.3,
+          "encapsulationCandidate": true,
+          "startFrame12": 186220,
+          "endFrame12": 186476,
+          "startFrame18": 279330,
+          "endFrame18": 279713
+        },
+        {
+          "kind": "cycle",
+          "id": "c151-bus-handoff",
+          "description": "bus handoff",
+          "startAt": "2026-07-25T19:22:54.438Z",
+          "endAt": "2026-07-25T19:22:55.838Z",
+          "startEpochMs": 1785007374438,
+          "endEpochMs": 1785007375838,
+          "tStartSec": 15539.6,
+          "tEndSec": 15541,
+          "durationSec": 1.4,
+          "exitCode": 0,
+          "hadException": false,
+          "startFrame12": 186476,
+          "endFrame12": 186492,
+          "startFrame18": 279713,
+          "endFrame18": 279739
+        },
+        {
+          "kind": "dead-gap",
+          "afterCycle": "c151-bus-handoff",
+          "beforeCycle": "c152-poll-and-fewshot",
+          "startAt": "2026-07-25T19:22:55.838Z",
+          "endAt": "2026-07-25T19:23:13.720Z",
+          "startEpochMs": 1785007375838,
+          "endEpochMs": 1785007393720,
+          "tStartSec": 15541,
+          "tEndSec": 15558.9,
+          "deadSec": 17.9,
+          "encapsulationCandidate": false,
+          "startFrame12": 186492,
+          "endFrame12": 186707,
+          "startFrame18": 279739,
+          "endFrame18": 280060
+        },
+        {
+          "kind": "cycle",
+          "id": "c152-poll-and-fewshot",
+          "description": "poll and fewshot",
+          "startAt": "2026-07-25T19:23:13.720Z",
+          "endAt": "2026-07-25T19:26:16.820Z",
+          "startEpochMs": 1785007393720,
+          "endEpochMs": 1785007576820,
+          "tStartSec": 15558.9,
+          "tEndSec": 15742,
+          "durationSec": 183.1,
+          "exitCode": 0,
+          "hadException": false,
+          "startFrame12": 186707,
+          "endFrame12": 188904,
+          "startFrame18": 280060,
+          "endFrame18": 283356
+        },
+        {
+          "kind": "dead-gap",
+          "afterCycle": "c152-poll-and-fewshot",
+          "beforeCycle": "c153-read-evidence",
+          "startAt": "2026-07-25T19:26:16.820Z",
+          "endAt": "2026-07-25T19:26:33.010Z",
+          "startEpochMs": 1785007576820,
+          "endEpochMs": 1785007593010,
+          "tStartSec": 15742,
+          "tEndSec": 15758.2,
+          "deadSec": 16.2,
+          "encapsulationCandidate": false,
+          "startFrame12": 188904,
+          "endFrame12": 189098,
+          "startFrame18": 283356,
+          "endFrame18": 283648
+        },
+        {
+          "kind": "cycle",
+          "id": "c153-read-evidence",
+          "description": "read evidence",
+          "startAt": "2026-07-25T19:26:33.010Z",
+          "endAt": "2026-07-25T19:26:33.010Z",
+          "startEpochMs": 1785007593010,
+          "endEpochMs": 1785007593010,
+          "tStartSec": 15758.2,
+          "tEndSec": 15758.2,
+          "durationSec": 0,
+          "exitCode": 0,
+          "hadException": false,
+          "startFrame12": 189098,
+          "endFrame12": 189098,
+          "startFrame18": 283648,
+          "endFrame18": 283648
+        },
+        {
+          "kind": "dead-gap",
+          "afterCycle": "c153-read-evidence",
+          "beforeCycle": "c154-commit-corroborate",
+          "startAt": "2026-07-25T19:26:33.010Z",
+          "endAt": "2026-07-25T19:27:03.487Z",
+          "startEpochMs": 1785007593010,
+          "endEpochMs": 1785007623487,
+          "tStartSec": 15758.2,
+          "tEndSec": 15788.7,
+          "deadSec": 30.5,
+          "encapsulationCandidate": true,
+          "startFrame12": 189098,
+          "endFrame12": 189464,
+          "startFrame18": 283648,
+          "endFrame18": 284196
+        },
+        {
+          "kind": "cycle",
+          "id": "c154-commit-corroborate",
+          "description": "commit corroborate",
+          "startAt": "2026-07-25T19:27:03.487Z",
+          "endAt": "2026-07-25T19:27:07.287Z",
+          "startEpochMs": 1785007623487,
+          "endEpochMs": 1785007627287,
+          "tStartSec": 15788.7,
+          "tEndSec": 15792.5,
+          "durationSec": 3.8,
+          "exitCode": 0,
+          "hadException": false,
+          "startFrame12": 189464,
+          "endFrame12": 189510,
+          "startFrame18": 284196,
+          "endFrame18": 284265
+        },
+        {
+          "kind": "dead-gap",
+          "afterCycle": "c154-commit-corroborate",
+          "beforeCycle": "c155-check-14b",
+          "startAt": "2026-07-25T19:27:07.287Z",
+          "endAt": "2026-07-25T19:27:48.675Z",
+          "startEpochMs": 1785007627287,
+          "endEpochMs": 1785007668675,
+          "tStartSec": 15792.5,
+          "tEndSec": 15833.9,
+          "deadSec": 41.4,
+          "encapsulationCandidate": true,
+          "startFrame12": 189510,
+          "endFrame12": 190006,
+          "startFrame18": 284265,
+          "endFrame18": 285010
+        },
+        {
+          "kind": "cycle",
+          "id": "c155-check-14b",
+          "description": "check 14b",
+          "startAt": "2026-07-25T19:27:48.675Z",
+          "endAt": "2026-07-25T19:27:48.775Z",
+          "startEpochMs": 1785007668675,
+          "endEpochMs": 1785007668775,
+          "tStartSec": 15833.9,
+          "tEndSec": 15834,
+          "durationSec": 0.1,
+          "exitCode": 0,
+          "hadException": false,
+          "startFrame12": 190006,
+          "endFrame12": 190008,
+          "startFrame18": 285010,
+          "endFrame18": 285011
+        },
+        {
+          "kind": "dead-gap",
+          "afterCycle": "c155-check-14b",
+          "beforeCycle": "c156-pull-run-14b",
+          "startAt": "2026-07-25T19:27:48.775Z",
+          "endAt": "2026-07-25T19:28:01.320Z",
+          "startEpochMs": 1785007668775,
+          "endEpochMs": 1785007681320,
+          "tStartSec": 15834,
+          "tEndSec": 15846.5,
+          "deadSec": 12.5,
+          "encapsulationCandidate": false,
+          "startFrame12": 190008,
+          "endFrame12": 190158,
+          "startFrame18": 285011,
+          "endFrame18": 285237
+        },
+        {
+          "kind": "cycle",
+          "id": "c156-pull-run-14b",
+          "description": "pull run 14b",
+          "startAt": "2026-07-25T19:28:01.320Z",
+          "endAt": "2026-07-25T19:34:42.820Z",
+          "startEpochMs": 1785007681320,
+          "endEpochMs": 1785008082820,
+          "tStartSec": 15846.5,
+          "tEndSec": 16248,
+          "durationSec": 401.5,
+          "exitCode": 0,
+          "hadException": false,
+          "startFrame12": 190158,
+          "endFrame12": 194976,
+          "startFrame18": 285237,
+          "endFrame18": 292464
+        },
+        {
+          "kind": "dead-gap",
+          "afterCycle": "c156-pull-run-14b",
+          "beforeCycle": "c157-14b-evidence-poll",
+          "startAt": "2026-07-25T19:34:42.820Z",
+          "endAt": "2026-07-25T19:34:58.620Z",
+          "startEpochMs": 1785008082820,
+          "endEpochMs": 1785008098620,
+          "tStartSec": 16248,
+          "tEndSec": 16263.8,
+          "deadSec": 15.8,
+          "encapsulationCandidate": false,
+          "startFrame12": 194976,
+          "endFrame12": 195166,
+          "startFrame18": 292464,
+          "endFrame18": 292749
+        },
+        {
+          "kind": "cycle",
+          "id": "c157-14b-evidence-poll",
+          "description": "14b evidence poll",
+          "startAt": "2026-07-25T19:34:58.620Z",
+          "endAt": "2026-07-25T19:34:59.820Z",
+          "startEpochMs": 1785008098620,
+          "endEpochMs": 1785008099820,
+          "tStartSec": 16263.8,
+          "tEndSec": 16265,
+          "durationSec": 1.2,
+          "exitCode": 0,
+          "hadException": false,
+          "startFrame12": 195166,
+          "endFrame12": 195180,
+          "startFrame18": 292749,
+          "endFrame18": 292770
+        },
+        {
+          "kind": "dead-gap",
+          "afterCycle": "c157-14b-evidence-poll",
+          "beforeCycle": "c158-commit-14b-decide",
+          "startAt": "2026-07-25T19:34:59.820Z",
+          "endAt": "2026-07-25T19:36:18.606Z",
+          "startEpochMs": 1785008099820,
+          "endEpochMs": 1785008178606,
+          "tStartSec": 16265,
+          "tEndSec": 16343.8,
+          "deadSec": 78.8,
+          "encapsulationCandidate": true,
+          "startFrame12": 195180,
+          "endFrame12": 196126,
+          "startFrame18": 292770,
+          "endFrame18": 294188
+        },
+        {
+          "kind": "cycle",
+          "id": "c158-commit-14b-decide",
+          "description": "commit 14b decide",
+          "startAt": "2026-07-25T19:36:18.606Z",
+          "endAt": "2026-07-25T19:36:21.706Z",
+          "startEpochMs": 1785008178606,
+          "endEpochMs": 1785008181706,
+          "tStartSec": 16343.8,
+          "tEndSec": 16346.9,
+          "durationSec": 3.1,
+          "exitCode": 0,
+          "hadException": false,
+          "startFrame12": 196126,
+          "endFrame12": 196163,
+          "startFrame18": 294188,
+          "endFrame18": 294244
+        },
+        {
+          "kind": "dead-gap",
+          "afterCycle": "c158-commit-14b-decide",
+          "beforeCycle": "c159-decision-handoff",
+          "startAt": "2026-07-25T19:36:21.706Z",
+          "endAt": "2026-07-25T19:36:46.209Z",
+          "startEpochMs": 1785008181706,
+          "endEpochMs": 1785008206209,
+          "tStartSec": 16346.9,
+          "tEndSec": 16371.4,
+          "deadSec": 24.5,
+          "encapsulationCandidate": true,
+          "startFrame12": 196163,
+          "endFrame12": 196457,
+          "startFrame18": 294244,
+          "endFrame18": 294685
+        },
+        {
+          "kind": "cycle",
+          "id": "c159-decision-handoff",
+          "description": "decision handoff",
+          "startAt": "2026-07-25T19:36:46.209Z",
+          "endAt": "2026-07-25T19:36:47.609Z",
+          "startEpochMs": 1785008206209,
+          "endEpochMs": 1785008207609,
+          "tStartSec": 16371.4,
+          "tEndSec": 16372.8,
+          "durationSec": 1.4,
+          "exitCode": 0,
+          "hadException": false,
+          "startFrame12": 196457,
+          "endFrame12": 196474,
+          "startFrame18": 294685,
+          "endFrame18": 294710
+        },
+        {
+          "kind": "dead-gap",
+          "afterCycle": "c159-decision-handoff",
+          "beforeCycle": "c160-oracle-status",
+          "startAt": "2026-07-25T19:36:47.609Z",
+          "endAt": "2026-07-25T19:37:05.490Z",
+          "startEpochMs": 1785008207609,
+          "endEpochMs": 1785008225490,
+          "tStartSec": 16372.8,
+          "tEndSec": 16390.7,
+          "deadSec": 17.9,
+          "encapsulationCandidate": false,
+          "startFrame12": 196474,
+          "endFrame12": 196688,
+          "startFrame18": 294710,
+          "endFrame18": 295032
+        },
+        {
+          "kind": "cycle",
+          "id": "c160-oracle-status",
+          "description": "oracle status",
+          "startAt": "2026-07-25T19:37:05.490Z",
+          "endAt": "2026-07-25T19:37:05.690Z",
+          "startEpochMs": 1785008225490,
+          "endEpochMs": 1785008225690,
+          "tStartSec": 16390.7,
+          "tEndSec": 16390.9,
+          "durationSec": 0.2,
+          "exitCode": 0,
+          "hadException": false,
+          "startFrame12": 196688,
+          "endFrame12": 196691,
+          "startFrame18": 295032,
+          "endFrame18": 295036
+        },
+        {
+          "kind": "dead-gap",
+          "afterCycle": "c160-oracle-status",
+          "beforeCycle": "c161-inspect-stash",
+          "startAt": "2026-07-25T19:37:05.690Z",
+          "endAt": "2026-07-25T19:37:15.883Z",
+          "startEpochMs": 1785008225690,
+          "endEpochMs": 1785008235883,
+          "tStartSec": 16390.9,
+          "tEndSec": 16401.1,
+          "deadSec": 10.2,
+          "encapsulationCandidate": false,
+          "startFrame12": 196691,
+          "endFrame12": 196813,
+          "startFrame18": 295036,
+          "endFrame18": 295219
+        },
+        {
+          "kind": "cycle",
+          "id": "c161-inspect-stash",
+          "description": "inspect stash",
+          "startAt": "2026-07-25T19:37:15.883Z",
+          "endAt": "2026-07-25T19:37:15.983Z",
+          "startEpochMs": 1785008235883,
+          "endEpochMs": 1785008235983,
+          "tStartSec": 16401.1,
+          "tEndSec": 16401.2,
+          "durationSec": 0.1,
+          "exitCode": 0,
+          "hadException": false,
+          "startFrame12": 196813,
+          "endFrame12": 196814,
+          "startFrame18": 295219,
+          "endFrame18": 295221
+        },
+        {
+          "kind": "dead-gap",
+          "afterCycle": "c161-inspect-stash",
+          "beforeCycle": "c162-scale-dataset",
+          "startAt": "2026-07-25T19:37:15.983Z",
+          "endAt": "2026-07-25T19:37:48.319Z",
+          "startEpochMs": 1785008235983,
+          "endEpochMs": 1785008268319,
+          "tStartSec": 16401.2,
+          "tEndSec": 16433.5,
+          "deadSec": 32.3,
+          "encapsulationCandidate": true,
+          "startFrame12": 196814,
+          "endFrame12": 197202,
+          "startFrame18": 295221,
+          "endFrame18": 295803
+        },
+        {
+          "kind": "cycle",
+          "id": "c162-scale-dataset",
+          "description": "scale dataset",
+          "startAt": "2026-07-25T19:37:48.319Z",
+          "endAt": "2026-07-25T19:44:45.119Z",
+          "startEpochMs": 1785008268319,
+          "endEpochMs": 1785008685119,
+          "tStartSec": 16433.5,
+          "tEndSec": 16850.3,
+          "durationSec": 416.8,
+          "exitCode": 0,
+          "hadException": false,
+          "startFrame12": 197202,
+          "endFrame12": 202204,
+          "startFrame18": 295803,
+          "endFrame18": 303306
+        },
+        {
+          "kind": "dead-gap",
+          "afterCycle": "c162-scale-dataset",
+          "beforeCycle": "c163-rebuild-jsonl",
+          "startAt": "2026-07-25T19:44:45.119Z",
+          "endAt": "2026-07-25T19:54:04.597Z",
+          "startEpochMs": 1785008685119,
+          "endEpochMs": 1785009244597,
+          "tStartSec": 16850.3,
+          "tEndSec": 17409.8,
+          "deadSec": 559.5,
+          "encapsulationCandidate": true,
+          "startFrame12": 202204,
+          "endFrame12": 208918,
+          "startFrame18": 303306,
+          "endFrame18": 313376
+        },
+        {
+          "kind": "cycle",
+          "id": "c163-rebuild-jsonl",
+          "description": "rebuild jsonl",
+          "startAt": "2026-07-25T19:54:04.597Z",
+          "endAt": "2026-07-25T19:54:04.897Z",
+          "startEpochMs": 1785009244597,
+          "endEpochMs": 1785009244897,
+          "tStartSec": 17409.8,
+          "tEndSec": 17410.1,
+          "durationSec": 0.3,
+          "exitCode": 0,
+          "hadException": false,
+          "startFrame12": 208918,
+          "endFrame12": 208921,
+          "startFrame18": 313376,
+          "endFrame18": 313382
         }
       ]
     }
