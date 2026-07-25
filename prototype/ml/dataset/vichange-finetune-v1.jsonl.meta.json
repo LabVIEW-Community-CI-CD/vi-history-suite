@@ -11,9 +11,9 @@
     "generator": "prototype/ml/datasetManifest.mjs",
     "datasetGenerator": "prototype/ml/buildViChangeMlDataset.mjs",
     "groundTruthSource": "prototype/correlationReport.mjs over prototype/win-lvkit/correlation-fixtures",
-    "sourceCommit": "95f382d91e1b88d11bb0a9fe3dc15db495749467",
+    "sourceCommit": "814251b07f10e102a874b979584faeab8ae8b364",
     "nodeVersion": "v24.16.0",
-    "generatedAt": "2026-07-25T16:23:26.303Z"
+    "generatedAt": "2026-07-25T16:25:15.591Z"
   },
   "coverage": {
     "sampleCount": 2,
@@ -115,8 +115,8 @@
           "id": "8b-raw",
           "model": "llama3.1:8b",
           "present": true,
-          "overall": 0.931,
-          "standardMean": 0.896,
+          "overall": 0.958,
+          "standardMean": 0.938,
           "adversarialMean": 1,
           "guardPass": true
         },
@@ -132,11 +132,11 @@
         {
           "id": "14b",
           "model": "qwen2.5:14b",
-          "present": false,
-          "overall": null,
-          "standardMean": null,
-          "adversarialMean": null,
-          "guardPass": null
+          "present": true,
+          "overall": 0.972,
+          "standardMean": 0.958,
+          "adversarialMean": 1,
+          "guardPass": true
         }
       ]
     },

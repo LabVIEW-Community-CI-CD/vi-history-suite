@@ -1,7 +1,7 @@
 {
   "schema": "vi-history-suite/ml-datasets-index@v1",
-  "generatedAt": "2026-07-25T16:23:26.303Z",
-  "sourceCommit": "95f382d91e1b88d11bb0a9fe3dc15db495749467",
+  "generatedAt": "2026-07-25T16:25:15.591Z",
+  "sourceCommit": "814251b07f10e102a874b979584faeab8ae8b364",
   "generator": "prototype/ml/datasetManifest.mjs",
   "task": "grounded-vi-change-faithful-summarization",
   "datasets": [
@@ -64,8 +64,8 @@
           "id": "8b-raw",
           "model": "llama3.1:8b",
           "present": true,
-          "overall": 0.931,
-          "standardMean": 0.896,
+          "overall": 0.958,
+          "standardMean": 0.938,
           "adversarialMean": 1,
           "guardPass": true
         },
@@ -81,11 +81,11 @@
         {
           "id": "14b",
           "model": "qwen2.5:14b",
-          "present": false,
-          "overall": null,
-          "standardMean": null,
-          "adversarialMean": null,
-          "guardPass": null
+          "present": true,
+          "overall": 0.972,
+          "standardMean": 0.958,
+          "adversarialMean": 1,
+          "guardPass": true
         }
       ]
     },
@@ -162,7 +162,7 @@
     },
     {
       "task": "kinds",
-      "config": "8b-raw",
+      "config": "14b",
       "score": 0.834
     }
   ],
@@ -175,7 +175,7 @@
   },
   "lineage": {
     "previousCommit": "95f382d91e1b88d11bb0a9fe3dc15db495749467",
-    "previousGeneratedAt": "2026-07-25T16:22:30.120Z",
+    "previousGeneratedAt": "2026-07-25T16:23:26.303Z",
     "previousSampleCount": 2,
     "newSamplesSincePrevious": [],
     "carriedOverSamples": [
@@ -188,17 +188,17 @@
     "available": true,
     "source": "os.tmpdir()/vihs-cycles",
     "note": "benchmark excludes the manifest-writing cycle (its meta is written after this runs)",
-    "cycleCount": 54,
+    "cycleCount": 57,
     "window": {
       "firstStart": "2026-07-25T15:03:54.804Z",
-      "lastEnd": "2026-07-25T16:22:30.205Z",
-      "wallClockSec": 4715.4
+      "lastEnd": "2026-07-25T16:24:33.974Z",
+      "wallClockSec": 4839.2
     },
-    "activeSec": 660.1,
-    "deadSec": 4055.3,
-    "deadFraction": 0.86,
+    "activeSec": 666,
+    "deadSec": 4173.2,
+    "deadFraction": 0.862,
     "deadTimeThresholdSec": 20,
-    "encapsulatableDeadSec": 3987,
+    "encapsulatableDeadSec": 4090.7,
     "largestGaps": [
       {
         "afterCycle": "c19-env-check",
@@ -338,6 +338,11 @@
         "deadSec": 64.6
       },
       {
+        "afterCycle": "c55-benchmark",
+        "beforeCycle": "c56-verify",
+        "deadSec": 56
+      },
+      {
         "afterCycle": "c1-render-status",
         "beforeCycle": "c2-compare",
         "deadSec": 50.4
@@ -350,6 +355,11 @@
       {
         "afterCycle": "c4-rebase",
         "beforeCycle": "c5-correlate-mousedown",
+        "deadSec": 47.7
+      },
+      {
+        "afterCycle": "c56-verify",
+        "beforeCycle": "c57-commit-post",
         "deadSec": 47.7
       },
       {
@@ -1017,6 +1027,36 @@
         "exitCode": 0,
         "hadException": false,
         "deadBeforeSec": 266
+      },
+      {
+        "id": "c56-verify",
+        "description": "verify",
+        "startedAt": "2026-07-25T16:23:26.230Z",
+        "endedAt": "2026-07-25T16:23:26.430Z",
+        "elapsedSec": 0.2,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 56
+      },
+      {
+        "id": "c57-commit-post",
+        "description": "commit post",
+        "startedAt": "2026-07-25T16:24:14.114Z",
+        "endedAt": "2026-07-25T16:24:18.814Z",
+        "elapsedSec": 4.7,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 47.7
+      },
+      {
+        "id": "c58-bus",
+        "description": "bus",
+        "startedAt": "2026-07-25T16:24:32.974Z",
+        "endedAt": "2026-07-25T16:24:33.974Z",
+        "elapsedSec": 1,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 14.2
       }
     ]
   }
