@@ -1,0 +1,1023 @@
+{
+  "schema": "vi-history-suite/ml-datasets-index@v1",
+  "generatedAt": "2026-07-25T16:23:26.303Z",
+  "sourceCommit": "95f382d91e1b88d11bb0a9fe3dc15db495749467",
+  "generator": "prototype/ml/datasetManifest.mjs",
+  "task": "grounded-vi-change-faithful-summarization",
+  "datasets": [
+    {
+      "datasetId": "vichange-finetune-v1@e2a425a1f607",
+      "file": "prototype/ml/dataset/vichange-finetune-v1.jsonl",
+      "kind": "finetune",
+      "recordSchema": "openai-chat-messages",
+      "sha256": "e2a425a1f6075b035e10a4251a5fca6990c14508b59400ee6742ca4d532c25ee",
+      "bytes": 12230,
+      "recordCount": 12,
+      "metaFile": "prototype/ml/dataset/vichange-finetune-v1.jsonl.meta.json"
+    },
+    {
+      "datasetId": "vichange-eval-v1@7c1e326ac176",
+      "file": "prototype/ml/dataset/vichange-eval-v1.jsonl",
+      "kind": "eval",
+      "recordSchema": "vichange-eval-item",
+      "sha256": "7c1e326ac176fc1996641d7e6d899043daf7bc9d96c7d245274ea541d79231f3",
+      "bytes": 11244,
+      "recordCount": 12,
+      "metaFile": "prototype/ml/dataset/vichange-eval-v1.jsonl.meta.json"
+    }
+  ],
+  "evalArtifacts": [
+    {
+      "file": "prototype/ml/dataset/ollama-baseline-eval-report.json",
+      "schema": "vi-history-suite/ollama-vichange-eval@v1",
+      "kind": "single-model",
+      "model": "llama3.1:8b",
+      "overall": 0.931,
+      "standardMean": 0.896,
+      "adversarialMean": 1
+    },
+    {
+      "file": "prototype/ml/dataset/ollama-eval-8b-fewshot-adversarial.json",
+      "schema": "vi-history-suite/ollama-vichange-eval@v1",
+      "kind": "single-model",
+      "model": "vichange8b-fewshot",
+      "overall": 1,
+      "standardMean": 1,
+      "adversarialMean": 1
+    },
+    {
+      "file": "prototype/ml/dataset/ollama-eval-8b-fewshot-modelfile.json",
+      "schema": "vi-history-suite/ollama-vichange-eval@v1",
+      "kind": "single-model",
+      "model": "vichange8b-fewshot",
+      "overall": 1,
+      "standardMean": 1,
+      "adversarialMean": 1
+    },
+    {
+      "file": "prototype/ml/dataset/ollama-eval-compare-configs.json",
+      "schema": "vi-history-suite/ollama-vichange-eval-compare@v1",
+      "kind": "multi-config-compare",
+      "evalItems": 12,
+      "configs": [
+        {
+          "id": "8b-raw",
+          "model": "llama3.1:8b",
+          "present": true,
+          "overall": 0.931,
+          "standardMean": 0.896,
+          "adversarialMean": 1,
+          "guardPass": true
+        },
+        {
+          "id": "8b-fewshot",
+          "model": "vichange8b-fewshot",
+          "present": true,
+          "overall": 1,
+          "standardMean": 1,
+          "adversarialMean": 1,
+          "guardPass": true
+        },
+        {
+          "id": "14b",
+          "model": "qwen2.5:14b",
+          "present": false,
+          "overall": null,
+          "standardMean": null,
+          "adversarialMean": null,
+          "guardPass": null
+        }
+      ]
+    },
+    {
+      "file": "prototype/ml/dataset/ollama-eval-qwen2.5-14b.json",
+      "schema": "vi-history-suite/ollama-vichange-eval@v1",
+      "kind": "single-model",
+      "model": "qwen2.5:14b",
+      "overall": 0.972,
+      "standardMean": 0.958,
+      "adversarialMean": 1
+    }
+  ],
+  "taskTypes": [
+    "full-summary",
+    "count",
+    "kinds",
+    "cosmetic-split",
+    "adv-false-nochange",
+    "adv-cosmetic-only-trap"
+  ],
+  "adversarialTaskTypes": [
+    "adv-false-nochange",
+    "adv-cosmetic-only-trap"
+  ],
+  "sampleInventory": {
+    "MouseDown.vi": {
+      "lvkitChangeCount": 6,
+      "labview": {
+        "total": 53,
+        "cosmetic": 47,
+        "nonCosmetic": 6
+      },
+      "kinds": [
+        "removed",
+        "added",
+        "modified",
+        "added",
+        "added",
+        "modified"
+      ],
+      "labviewSource": "robust-parser"
+    },
+    "PictureControl_MouseUp.vi": {
+      "lvkitChangeCount": 13,
+      "labview": {
+        "total": 39,
+        "cosmetic": 29,
+        "nonCosmetic": 10
+      },
+      "kinds": [
+        "added",
+        "added",
+        "added",
+        "added",
+        "added",
+        "added",
+        "added",
+        "added",
+        "added",
+        "removed",
+        "removed",
+        "removed",
+        "removed"
+      ],
+      "labviewSource": "robust-parser"
+    }
+  },
+  "openResiduals": [
+    {
+      "task": "full-summary",
+      "config": "8b-raw",
+      "score": 0.75
+    },
+    {
+      "task": "kinds",
+      "config": "8b-raw",
+      "score": 0.834
+    }
+  ],
+  "enrichmentGuidance": {
+    "note": "Add NEW verified samples (commit a LabVIEW report HTML -> correlationReport.mjs -> buildViChangeMlDataset.mjs -> re-run this manifest). openResiduals lists task/config scores < 1.0 = the specific gaps to target.",
+    "residualTasks": [
+      "full-summary",
+      "kinds"
+    ]
+  },
+  "lineage": {
+    "previousCommit": "95f382d91e1b88d11bb0a9fe3dc15db495749467",
+    "previousGeneratedAt": "2026-07-25T16:22:30.120Z",
+    "previousSampleCount": 2,
+    "newSamplesSincePrevious": [],
+    "carriedOverSamples": [
+      "MouseDown.vi",
+      "PictureControl_MouseUp.vi"
+    ]
+  },
+  "benchmark": {
+    "schema": "vi-history-suite/agent-cycle-benchmark@v1",
+    "available": true,
+    "source": "os.tmpdir()/vihs-cycles",
+    "note": "benchmark excludes the manifest-writing cycle (its meta is written after this runs)",
+    "cycleCount": 54,
+    "window": {
+      "firstStart": "2026-07-25T15:03:54.804Z",
+      "lastEnd": "2026-07-25T16:22:30.205Z",
+      "wallClockSec": 4715.4
+    },
+    "activeSec": 660.1,
+    "deadSec": 4055.3,
+    "deadFraction": 0.86,
+    "deadTimeThresholdSec": 20,
+    "encapsulatableDeadSec": 3987,
+    "largestGaps": [
+      {
+        "afterCycle": "c19-env-check",
+        "beforeCycle": "c20-sync-ollama",
+        "deadSec": 490.9
+      },
+      {
+        "afterCycle": "c54-manifest",
+        "beforeCycle": "c55-benchmark",
+        "deadSec": 266
+      },
+      {
+        "afterCycle": "c52-commit-md",
+        "beforeCycle": "c53-modecheck",
+        "deadSec": 244
+      },
+      {
+        "afterCycle": "c14-push-propose-post",
+        "beforeCycle": "c15-sync",
+        "deadSec": 195.8
+      },
+      {
+        "afterCycle": "c43-clean",
+        "beforeCycle": "c44-sync",
+        "deadSec": 158.4
+      }
+    ],
+    "encapsulationCandidates": [
+      {
+        "afterCycle": "c19-env-check",
+        "beforeCycle": "c20-sync-ollama",
+        "deadSec": 490.9
+      },
+      {
+        "afterCycle": "c54-manifest",
+        "beforeCycle": "c55-benchmark",
+        "deadSec": 266
+      },
+      {
+        "afterCycle": "c52-commit-md",
+        "beforeCycle": "c53-modecheck",
+        "deadSec": 244
+      },
+      {
+        "afterCycle": "c14-push-propose-post",
+        "beforeCycle": "c15-sync",
+        "deadSec": 195.8
+      },
+      {
+        "afterCycle": "c43-clean",
+        "beforeCycle": "c44-sync",
+        "deadSec": 158.4
+      },
+      {
+        "afterCycle": "c29-post-resolution",
+        "beforeCycle": "c30-enriched-ml",
+        "deadSec": 150.6
+      },
+      {
+        "afterCycle": "c15-sync",
+        "beforeCycle": "c16-benchmark-run",
+        "deadSec": 146.1
+      },
+      {
+        "afterCycle": "c18-post-benchmark",
+        "beforeCycle": "c19-env-check",
+        "deadSec": 136.6
+      },
+      {
+        "afterCycle": "c45-models",
+        "beforeCycle": "c46-compare",
+        "deadSec": 120.6
+      },
+      {
+        "afterCycle": "c34-sync",
+        "beforeCycle": "c35-adversarial-ml",
+        "deadSec": 113.9
+      },
+      {
+        "afterCycle": "c53-modecheck",
+        "beforeCycle": "c54-manifest",
+        "deadSec": 98.3
+      },
+      {
+        "afterCycle": "c2-compare",
+        "beforeCycle": "c3-sync",
+        "deadSec": 95.4
+      },
+      {
+        "afterCycle": "c10-commit-fixtures",
+        "beforeCycle": "c11-push-and-locations",
+        "deadSec": 88
+      },
+      {
+        "afterCycle": "c13-enrich-record",
+        "beforeCycle": "c14-push-propose-post",
+        "deadSec": 81.5
+      },
+      {
+        "afterCycle": "c22-run-correlation-report",
+        "beforeCycle": "c23-ml-dataset-eval",
+        "deadSec": 81.1
+      },
+      {
+        "afterCycle": "c37-sync",
+        "beforeCycle": "c38-fewshot-adversarial",
+        "deadSec": 81.1
+      },
+      {
+        "afterCycle": "c33-ack-crossmodel",
+        "beforeCycle": "c34-sync",
+        "deadSec": 78.7
+      },
+      {
+        "afterCycle": "c23-ml-dataset-eval",
+        "beforeCycle": "c24-commit-propose-post-ml",
+        "deadSec": 76.1
+      },
+      {
+        "afterCycle": "c8-html-structure",
+        "beforeCycle": "c9-correlation-record",
+        "deadSec": 73.7
+      },
+      {
+        "afterCycle": "c49-bus",
+        "beforeCycle": "c50-post",
+        "deadSec": 72.7
+      },
+      {
+        "afterCycle": "c24-commit-propose-post-ml",
+        "beforeCycle": "c25-sync",
+        "deadSec": 66.5
+      },
+      {
+        "afterCycle": "c6-parse-c5",
+        "beforeCycle": "c8-html-structure",
+        "deadSec": 64.6
+      },
+      {
+        "afterCycle": "c1-render-status",
+        "beforeCycle": "c2-compare",
+        "deadSec": 50.4
+      },
+      {
+        "afterCycle": "c30-enriched-ml",
+        "beforeCycle": "c31-commit-post-enriched",
+        "deadSec": 47.8
+      },
+      {
+        "afterCycle": "c4-rebase",
+        "beforeCycle": "c5-correlate-mousedown",
+        "deadSec": 47.7
+      },
+      {
+        "afterCycle": "c39-ollama-diag",
+        "beforeCycle": "c40-fewshot-create-eval",
+        "deadSec": 46.1
+      },
+      {
+        "afterCycle": "c20-sync-ollama",
+        "beforeCycle": "c21-rebase-inspect",
+        "deadSec": 44.2
+      },
+      {
+        "afterCycle": "c25-sync",
+        "beforeCycle": "c26-locate-pc-report",
+        "deadSec": 43.5
+      },
+      {
+        "afterCycle": "c32-sync",
+        "beforeCycle": "c33-ack-crossmodel",
+        "deadSec": 40.6
+      },
+      {
+        "afterCycle": "c16-benchmark-run",
+        "beforeCycle": "c17-commit-benchmark",
+        "deadSec": 40.1
+      },
+      {
+        "afterCycle": "c50-post",
+        "beforeCycle": "c51-markdown",
+        "deadSec": 39.9
+      },
+      {
+        "afterCycle": "c28-commit-and-rebuild-ml",
+        "beforeCycle": "c29-post-resolution",
+        "deadSec": 39.5
+      },
+      {
+        "afterCycle": "c3-sync",
+        "beforeCycle": "c4-rebase",
+        "deadSec": 37.9
+      },
+      {
+        "afterCycle": "c12-preview-both-staged",
+        "beforeCycle": "c13-enrich-record",
+        "deadSec": 37.7
+      },
+      {
+        "afterCycle": "c35-adversarial-ml",
+        "beforeCycle": "c36-commit-adv",
+        "deadSec": 37.6
+      },
+      {
+        "afterCycle": "c47-clean-baseline",
+        "beforeCycle": "c48-commit",
+        "deadSec": 37.2
+      },
+      {
+        "afterCycle": "c38-fewshot-adversarial",
+        "beforeCycle": "c39-ollama-diag",
+        "deadSec": 36.8
+      },
+      {
+        "afterCycle": "c11-push-and-locations",
+        "beforeCycle": "c12-preview-both-staged",
+        "deadSec": 36.6
+      },
+      {
+        "afterCycle": "c40-fewshot-create-eval",
+        "beforeCycle": "c41-commit-regression-guard",
+        "deadSec": 36.3
+      },
+      {
+        "afterCycle": "c17-commit-benchmark",
+        "beforeCycle": "c18-post-benchmark",
+        "deadSec": 35.5
+      },
+      {
+        "afterCycle": "c27-commit-pc-fixture",
+        "beforeCycle": "c28-commit-and-rebuild-ml",
+        "deadSec": 33.8
+      },
+      {
+        "afterCycle": "c21-rebase-inspect",
+        "beforeCycle": "c22-run-correlation-report",
+        "deadSec": 33.5
+      },
+      {
+        "afterCycle": "c9-correlation-record",
+        "beforeCycle": "c10-commit-fixtures",
+        "deadSec": 32.8
+      },
+      {
+        "afterCycle": "c42-status",
+        "beforeCycle": "c43-clean",
+        "deadSec": 31
+      },
+      {
+        "afterCycle": "c51-markdown",
+        "beforeCycle": "c52-commit-md",
+        "deadSec": 30.9
+      },
+      {
+        "afterCycle": "c46-compare",
+        "beforeCycle": "c47-clean-baseline",
+        "deadSec": 30.7
+      },
+      {
+        "afterCycle": "c26-locate-pc-report",
+        "beforeCycle": "c27-commit-pc-fixture",
+        "deadSec": 26.7
+      },
+      {
+        "afterCycle": "c44-sync",
+        "beforeCycle": "c45-models",
+        "deadSec": 26.7
+      },
+      {
+        "afterCycle": "c41-commit-regression-guard",
+        "beforeCycle": "c42-status",
+        "deadSec": 24.9
+      }
+    ],
+    "optimization": {
+      "note": "encapsulationCandidates are between-cycle gaps >= deadTimeThresholdSec: wrap that work in an Invoke-Cycle so it is measured. deadFraction is the share of wall-clock spent outside any cycle.",
+      "worstGapSec": 490.9
+    },
+    "cycles": [
+      {
+        "id": "c1-render-status",
+        "description": "render status",
+        "startedAt": "2026-07-25T15:03:54.804Z",
+        "endedAt": "2026-07-25T15:03:54.904Z",
+        "elapsedSec": 0.1,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": null
+      },
+      {
+        "id": "c2-compare",
+        "description": "compare",
+        "startedAt": "2026-07-25T15:04:45.345Z",
+        "endedAt": "2026-07-25T15:05:38.745Z",
+        "elapsedSec": 53.4,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 50.4
+      },
+      {
+        "id": "c3-sync",
+        "description": "sync",
+        "startedAt": "2026-07-25T15:07:14.124Z",
+        "endedAt": "2026-07-25T15:07:16.224Z",
+        "elapsedSec": 2.1,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 95.4
+      },
+      {
+        "id": "c4-rebase",
+        "description": "rebase",
+        "startedAt": "2026-07-25T15:07:54.094Z",
+        "endedAt": "2026-07-25T15:07:54.694Z",
+        "elapsedSec": 0.6,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 37.9
+      },
+      {
+        "id": "c5-correlate-mousedown",
+        "description": "correlate mousedown",
+        "startedAt": "2026-07-25T15:08:42.372Z",
+        "endedAt": "2026-07-25T15:08:45.272Z",
+        "elapsedSec": 2.9,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 47.7
+      },
+      {
+        "id": "c6-parse-c5",
+        "description": "parse c5",
+        "startedAt": "2026-07-25T15:08:59.082Z",
+        "endedAt": "2026-07-25T15:08:59.082Z",
+        "elapsedSec": 0,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 13.8
+      },
+      {
+        "id": "c8-html-structure",
+        "description": "html structure",
+        "startedAt": "2026-07-25T15:10:03.713Z",
+        "endedAt": "2026-07-25T15:10:04.113Z",
+        "elapsedSec": 0.4,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 64.6
+      },
+      {
+        "id": "c9-correlation-record",
+        "description": "correlation record",
+        "startedAt": "2026-07-25T15:11:17.813Z",
+        "endedAt": "2026-07-25T15:11:18.113Z",
+        "elapsedSec": 0.3,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 73.7
+      },
+      {
+        "id": "c10-commit-fixtures",
+        "description": "commit fixtures",
+        "startedAt": "2026-07-25T15:11:50.908Z",
+        "endedAt": "2026-07-25T15:11:51.708Z",
+        "elapsedSec": 0.8,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 32.8
+      },
+      {
+        "id": "c11-push-and-locations",
+        "description": "push and locations",
+        "startedAt": "2026-07-25T15:13:19.664Z",
+        "endedAt": "2026-07-25T15:13:22.064Z",
+        "elapsedSec": 2.4,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 88
+      },
+      {
+        "id": "c12-preview-both-staged",
+        "description": "preview both staged",
+        "startedAt": "2026-07-25T15:13:58.656Z",
+        "endedAt": "2026-07-25T15:15:28.956Z",
+        "elapsedSec": 90.3,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 36.6
+      },
+      {
+        "id": "c13-enrich-record",
+        "description": "enrich record",
+        "startedAt": "2026-07-25T15:16:06.685Z",
+        "endedAt": "2026-07-25T15:16:07.485Z",
+        "elapsedSec": 0.8,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 37.7
+      },
+      {
+        "id": "c14-push-propose-post",
+        "description": "push propose post",
+        "startedAt": "2026-07-25T15:17:28.943Z",
+        "endedAt": "2026-07-25T15:17:34.843Z",
+        "elapsedSec": 5.9,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 81.5
+      },
+      {
+        "id": "c15-sync",
+        "description": "sync",
+        "startedAt": "2026-07-25T15:20:50.622Z",
+        "endedAt": "2026-07-25T15:20:52.522Z",
+        "elapsedSec": 1.9,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 195.8
+      },
+      {
+        "id": "c16-benchmark-run",
+        "description": "benchmark run",
+        "startedAt": "2026-07-25T15:23:18.665Z",
+        "endedAt": "2026-07-25T15:28:03.265Z",
+        "elapsedSec": 284.6,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 146.1
+      },
+      {
+        "id": "c17-commit-benchmark",
+        "description": "commit benchmark",
+        "startedAt": "2026-07-25T15:28:43.373Z",
+        "endedAt": "2026-07-25T15:28:45.873Z",
+        "elapsedSec": 2.5,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 40.1
+      },
+      {
+        "id": "c18-post-benchmark",
+        "description": "post benchmark",
+        "startedAt": "2026-07-25T15:29:21.392Z",
+        "endedAt": "2026-07-25T15:29:22.792Z",
+        "elapsedSec": 1.4,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 35.5
+      },
+      {
+        "id": "c19-env-check",
+        "description": "env check",
+        "startedAt": "2026-07-25T15:31:39.368Z",
+        "endedAt": "2026-07-25T15:31:41.768Z",
+        "elapsedSec": 2.4,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 136.6
+      },
+      {
+        "id": "c20-sync-ollama",
+        "description": "sync ollama",
+        "startedAt": "2026-07-25T15:39:52.715Z",
+        "endedAt": "2026-07-25T15:40:04.415Z",
+        "elapsedSec": 11.7,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 490.9
+      },
+      {
+        "id": "c21-rebase-inspect",
+        "description": "rebase inspect",
+        "startedAt": "2026-07-25T15:40:48.566Z",
+        "endedAt": "2026-07-25T15:40:49.166Z",
+        "elapsedSec": 0.6,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 44.2
+      },
+      {
+        "id": "c22-run-correlation-report",
+        "description": "run correlation report",
+        "startedAt": "2026-07-25T15:41:22.642Z",
+        "endedAt": "2026-07-25T15:41:22.742Z",
+        "elapsedSec": 0.1,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 33.5
+      },
+      {
+        "id": "c23-ml-dataset-eval",
+        "description": "ml dataset eval",
+        "startedAt": "2026-07-25T15:42:43.881Z",
+        "endedAt": "2026-07-25T15:42:45.581Z",
+        "elapsedSec": 1.7,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 81.1
+      },
+      {
+        "id": "c24-commit-propose-post-ml",
+        "description": "commit propose post ml",
+        "startedAt": "2026-07-25T15:44:01.680Z",
+        "endedAt": "2026-07-25T15:44:08.080Z",
+        "elapsedSec": 6.4,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 76.1
+      },
+      {
+        "id": "c25-sync",
+        "description": "sync",
+        "startedAt": "2026-07-25T15:45:14.558Z",
+        "endedAt": "2026-07-25T15:45:16.058Z",
+        "elapsedSec": 1.5,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 66.5
+      },
+      {
+        "id": "c26-locate-pc-report",
+        "description": "locate pc report",
+        "startedAt": "2026-07-25T15:45:59.525Z",
+        "endedAt": "2026-07-25T15:45:59.625Z",
+        "elapsedSec": 0.1,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 43.5
+      },
+      {
+        "id": "c27-commit-pc-fixture",
+        "description": "commit pc fixture",
+        "startedAt": "2026-07-25T15:46:26.302Z",
+        "endedAt": "2026-07-25T15:46:26.802Z",
+        "elapsedSec": 0.5,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 26.7
+      },
+      {
+        "id": "c28-commit-and-rebuild-ml",
+        "description": "commit and rebuild ml",
+        "startedAt": "2026-07-25T15:47:00.636Z",
+        "endedAt": "2026-07-25T15:47:05.536Z",
+        "elapsedSec": 4.9,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 33.8
+      },
+      {
+        "id": "c29-post-resolution",
+        "description": "post resolution",
+        "startedAt": "2026-07-25T15:47:45.022Z",
+        "endedAt": "2026-07-25T15:47:46.622Z",
+        "elapsedSec": 1.6,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 39.5
+      },
+      {
+        "id": "c30-enriched-ml",
+        "description": "enriched ml",
+        "startedAt": "2026-07-25T15:50:17.233Z",
+        "endedAt": "2026-07-25T15:50:26.333Z",
+        "elapsedSec": 9.1,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 150.6
+      },
+      {
+        "id": "c31-commit-post-enriched",
+        "description": "commit post enriched",
+        "startedAt": "2026-07-25T15:51:14.151Z",
+        "endedAt": "2026-07-25T15:51:18.351Z",
+        "elapsedSec": 4.2,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 47.8
+      },
+      {
+        "id": "c32-sync",
+        "description": "sync",
+        "startedAt": "2026-07-25T15:51:37.513Z",
+        "endedAt": "2026-07-25T15:51:39.013Z",
+        "elapsedSec": 1.5,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 19.2
+      },
+      {
+        "id": "c33-ack-crossmodel",
+        "description": "ack crossmodel",
+        "startedAt": "2026-07-25T15:52:19.564Z",
+        "endedAt": "2026-07-25T15:52:21.364Z",
+        "elapsedSec": 1.8,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 40.6
+      },
+      {
+        "id": "c34-sync",
+        "description": "sync",
+        "startedAt": "2026-07-25T15:53:40.062Z",
+        "endedAt": "2026-07-25T15:53:42.062Z",
+        "elapsedSec": 2,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 78.7
+      },
+      {
+        "id": "c35-adversarial-ml",
+        "description": "adversarial ml",
+        "startedAt": "2026-07-25T15:55:36.008Z",
+        "endedAt": "2026-07-25T15:55:52.908Z",
+        "elapsedSec": 16.9,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 113.9
+      },
+      {
+        "id": "c36-commit-adv",
+        "description": "commit adv",
+        "startedAt": "2026-07-25T15:56:30.502Z",
+        "endedAt": "2026-07-25T15:56:34.802Z",
+        "elapsedSec": 4.3,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 37.6
+      },
+      {
+        "id": "c37-sync",
+        "description": "sync",
+        "startedAt": "2026-07-25T15:56:51.719Z",
+        "endedAt": "2026-07-25T15:56:53.319Z",
+        "elapsedSec": 1.6,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 16.9
+      },
+      {
+        "id": "c38-fewshot-adversarial",
+        "description": "fewshot adversarial",
+        "startedAt": "2026-07-25T15:58:14.419Z",
+        "endedAt": "2026-07-25T15:58:18.819Z",
+        "elapsedSec": 4.4,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 81.1
+      },
+      {
+        "id": "c39-ollama-diag",
+        "description": "ollama diag",
+        "startedAt": "2026-07-25T15:58:55.592Z",
+        "endedAt": "2026-07-25T15:58:57.792Z",
+        "elapsedSec": 2.2,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 36.8
+      },
+      {
+        "id": "c40-fewshot-create-eval",
+        "description": "fewshot create eval",
+        "startedAt": "2026-07-25T15:59:43.874Z",
+        "endedAt": "2026-07-25T16:00:02.974Z",
+        "elapsedSec": 19.1,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 46.1
+      },
+      {
+        "id": "c41-commit-regression-guard",
+        "description": "commit regression guard",
+        "startedAt": "2026-07-25T16:00:39.256Z",
+        "endedAt": "2026-07-25T16:00:43.456Z",
+        "elapsedSec": 4.2,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 36.3
+      },
+      {
+        "id": "c42-status",
+        "description": "status",
+        "startedAt": "2026-07-25T16:01:08.333Z",
+        "endedAt": "2026-07-25T16:01:08.533Z",
+        "elapsedSec": 0.2,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 24.9
+      },
+      {
+        "id": "c43-clean",
+        "description": "clean",
+        "startedAt": "2026-07-25T16:01:39.580Z",
+        "endedAt": "2026-07-25T16:01:39.780Z",
+        "elapsedSec": 0.2,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 31
+      },
+      {
+        "id": "c44-sync",
+        "description": "sync",
+        "startedAt": "2026-07-25T16:04:18.219Z",
+        "endedAt": "2026-07-25T16:04:19.919Z",
+        "elapsedSec": 1.7,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 158.4
+      },
+      {
+        "id": "c45-models",
+        "description": "models",
+        "startedAt": "2026-07-25T16:04:46.579Z",
+        "endedAt": "2026-07-25T16:04:48.679Z",
+        "elapsedSec": 2.1,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 26.7
+      },
+      {
+        "id": "c46-compare",
+        "description": "compare",
+        "startedAt": "2026-07-25T16:06:49.298Z",
+        "endedAt": "2026-07-25T16:07:35.098Z",
+        "elapsedSec": 45.8,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 120.6
+      },
+      {
+        "id": "c47-clean-baseline",
+        "description": "clean baseline",
+        "startedAt": "2026-07-25T16:08:05.773Z",
+        "endedAt": "2026-07-25T16:08:21.073Z",
+        "elapsedSec": 15.3,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 30.7
+      },
+      {
+        "id": "c48-commit",
+        "description": "commit",
+        "startedAt": "2026-07-25T16:08:58.227Z",
+        "endedAt": "2026-07-25T16:09:01.327Z",
+        "elapsedSec": 3.1,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 37.2
+      },
+      {
+        "id": "c49-bus",
+        "description": "bus",
+        "startedAt": "2026-07-25T16:09:19.939Z",
+        "endedAt": "2026-07-25T16:09:21.139Z",
+        "elapsedSec": 1.2,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 18.6
+      },
+      {
+        "id": "c50-post",
+        "description": "post",
+        "startedAt": "2026-07-25T16:10:33.821Z",
+        "endedAt": "2026-07-25T16:10:35.921Z",
+        "elapsedSec": 2.1,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 72.7
+      },
+      {
+        "id": "c51-markdown",
+        "description": "markdown",
+        "startedAt": "2026-07-25T16:11:15.779Z",
+        "endedAt": "2026-07-25T16:11:45.079Z",
+        "elapsedSec": 29.3,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 39.9
+      },
+      {
+        "id": "c52-commit-md",
+        "description": "commit md",
+        "startedAt": "2026-07-25T16:12:16.018Z",
+        "endedAt": "2026-07-25T16:12:19.618Z",
+        "elapsedSec": 3.6,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 30.9
+      },
+      {
+        "id": "c53-modecheck",
+        "description": "modecheck",
+        "startedAt": "2026-07-25T16:16:23.617Z",
+        "endedAt": "2026-07-25T16:16:25.617Z",
+        "elapsedSec": 2,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 244
+      },
+      {
+        "id": "c54-manifest",
+        "description": "manifest",
+        "startedAt": "2026-07-25T16:18:03.892Z",
+        "endedAt": "2026-07-25T16:18:03.992Z",
+        "elapsedSec": 0.1,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 98.3
+      },
+      {
+        "id": "c55-benchmark",
+        "description": "benchmark",
+        "startedAt": "2026-07-25T16:22:30.005Z",
+        "endedAt": "2026-07-25T16:22:30.205Z",
+        "elapsedSec": 0.2,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 266
+      }
+    ]
+  }
+}

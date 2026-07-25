@@ -1,0 +1,158 @@
+{
+  "schema": "vi-history-suite/ml-dataset-meta@v1",
+  "datasetId": "vichange-eval-v1@7c1e326ac176",
+  "file": "prototype/ml/dataset/vichange-eval-v1.jsonl",
+  "kind": "eval",
+  "recordSchema": "vichange-eval-item",
+  "bytes": 11244,
+  "sha256": "7c1e326ac176fc1996641d7e6d899043daf7bc9d96c7d245274ea541d79231f3",
+  "recordCount": 12,
+  "provenance": {
+    "generator": "prototype/ml/datasetManifest.mjs",
+    "datasetGenerator": "prototype/ml/buildViChangeMlDataset.mjs",
+    "groundTruthSource": "prototype/correlationReport.mjs over prototype/win-lvkit/correlation-fixtures",
+    "sourceCommit": "95f382d91e1b88d11bb0a9fe3dc15db495749467",
+    "nodeVersion": "v24.16.0",
+    "generatedAt": "2026-07-25T16:23:26.303Z"
+  },
+  "coverage": {
+    "sampleCount": 2,
+    "sampleVis": [
+      "MouseDown.vi",
+      "PictureControl_MouseUp.vi"
+    ],
+    "taskTypes": [
+      "full-summary",
+      "count",
+      "kinds",
+      "cosmetic-split",
+      "adv-false-nochange",
+      "adv-cosmetic-only-trap"
+    ],
+    "adversarialTaskTypes": [
+      "adv-false-nochange",
+      "adv-cosmetic-only-trap"
+    ],
+    "groundTruthFacts": {
+      "MouseDown.vi": {
+        "lvkitChangeCount": 6,
+        "labview": {
+          "total": 53,
+          "cosmetic": 47,
+          "nonCosmetic": 6
+        },
+        "kinds": [
+          "removed",
+          "added",
+          "modified",
+          "added",
+          "added",
+          "modified"
+        ],
+        "labviewSource": "robust-parser"
+      },
+      "PictureControl_MouseUp.vi": {
+        "lvkitChangeCount": 13,
+        "labview": {
+          "total": 39,
+          "cosmetic": 29,
+          "nonCosmetic": 10
+        },
+        "kinds": [
+          "added",
+          "added",
+          "added",
+          "added",
+          "added",
+          "added",
+          "added",
+          "added",
+          "added",
+          "removed",
+          "removed",
+          "removed",
+          "removed"
+        ],
+        "labviewSource": "robust-parser"
+      }
+    }
+  },
+  "evalLineage": [
+    {
+      "file": "prototype/ml/dataset/ollama-baseline-eval-report.json",
+      "schema": "vi-history-suite/ollama-vichange-eval@v1",
+      "kind": "single-model",
+      "model": "llama3.1:8b",
+      "overall": 0.931,
+      "standardMean": 0.896,
+      "adversarialMean": 1
+    },
+    {
+      "file": "prototype/ml/dataset/ollama-eval-8b-fewshot-adversarial.json",
+      "schema": "vi-history-suite/ollama-vichange-eval@v1",
+      "kind": "single-model",
+      "model": "vichange8b-fewshot",
+      "overall": 1,
+      "standardMean": 1,
+      "adversarialMean": 1
+    },
+    {
+      "file": "prototype/ml/dataset/ollama-eval-8b-fewshot-modelfile.json",
+      "schema": "vi-history-suite/ollama-vichange-eval@v1",
+      "kind": "single-model",
+      "model": "vichange8b-fewshot",
+      "overall": 1,
+      "standardMean": 1,
+      "adversarialMean": 1
+    },
+    {
+      "file": "prototype/ml/dataset/ollama-eval-compare-configs.json",
+      "schema": "vi-history-suite/ollama-vichange-eval-compare@v1",
+      "kind": "multi-config-compare",
+      "evalItems": 12,
+      "configs": [
+        {
+          "id": "8b-raw",
+          "model": "llama3.1:8b",
+          "present": true,
+          "overall": 0.931,
+          "standardMean": 0.896,
+          "adversarialMean": 1,
+          "guardPass": true
+        },
+        {
+          "id": "8b-fewshot",
+          "model": "vichange8b-fewshot",
+          "present": true,
+          "overall": 1,
+          "standardMean": 1,
+          "adversarialMean": 1,
+          "guardPass": true
+        },
+        {
+          "id": "14b",
+          "model": "qwen2.5:14b",
+          "present": false,
+          "overall": null,
+          "standardMean": null,
+          "adversarialMean": null,
+          "guardPass": null
+        }
+      ]
+    },
+    {
+      "file": "prototype/ml/dataset/ollama-eval-qwen2.5-14b.json",
+      "schema": "vi-history-suite/ollama-vichange-eval@v1",
+      "kind": "single-model",
+      "model": "qwen2.5:14b",
+      "overall": 0.972,
+      "standardMean": 0.958,
+      "adversarialMean": 1
+    }
+  ],
+  "lineage": {
+    "previousSha256": "7c1e326ac176fc1996641d7e6d899043daf7bc9d96c7d245274ea541d79231f3",
+    "changedSincePrevious": false,
+    "derivedFrom": "95f382d91e1b88d11bb0a9fe3dc15db495749467"
+  }
+}
