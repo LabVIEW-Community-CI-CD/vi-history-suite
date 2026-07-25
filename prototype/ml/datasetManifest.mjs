@@ -82,6 +82,63 @@ function computeBenchmark() {
   const encapsulationCandidates = gaps.filter((g) => g.deadSec >= threshold).sort((a, b) => b.deadSec - a.deadSec);
   const encapsulatableDeadSec = round1(encapsulationCandidates.reduce((a, g) => a + g.deadSec, 0));
   const sourceLabel = process.env.VIHS_CYCLE_DIR ? '(VIHS_CYCLE_DIR)' : 'os.tmpdir()/vihs-cycles';
+
+  // --- Timeline: fit a CONSTANT-FPS screenshot stream to wall-clock. Screen capture is assumed
+  // continuous at a fixed FPS from t0 (=firstStart, frame 0) to lastEnd, so frame index and
+  // wall-clock are interconvertible. This lets ffmpeg assemble the frames into a video AND lets
+  // an LLM navigate event -> frame -> screenshot and correlate an event to a historical
+  // performance-monitor time series (events + perf samples share the same epoch-ms axis).
+  const frameOf = (ms, fps) => Math.round(((ms - firstStart) / 1000) * fps);
+  const frameFields = (startMs, endMs) => ({
+    startFrame12: frameOf(startMs, 12), endFrame12: frameOf(endMs, 12),
+    startFrame18: frameOf(startMs, 18), endFrame18: frameOf(endMs, 18)
+  });
+  const framePattern = process.env.VIHS_FRAME_PATTERN || 'frame_%06d.png';
+  const events = [];
+  for (let i = 0; i < cycles.length; i += 1) {
+    const c = cycles[i];
+    events.push({
+      kind: 'cycle', id: c.id, description: describe(c.id),
+      startAt: new Date(c.startMs).toISOString(), endAt: new Date(c.endMs).toISOString(),
+      startEpochMs: c.startMs, endEpochMs: c.endMs,
+      tStartSec: round1((c.startMs - firstStart) / 1000), tEndSec: round1((c.endMs - firstStart) / 1000),
+      durationSec: c.elapsedSec, exitCode: c.exitCode, hadException: c.hadException,
+      ...frameFields(c.startMs, c.endMs)
+    });
+    if (i > 0) {
+      const gStart = cycles[i - 1].endMs;
+      const gEnd = c.startMs;
+      const gDeadSec = round1((gEnd - gStart) / 1000);
+      if (gEnd > gStart) events.push({
+        kind: 'dead-gap', afterCycle: cycles[i - 1].id, beforeCycle: c.id,
+        startAt: new Date(gStart).toISOString(), endAt: new Date(gEnd).toISOString(),
+        startEpochMs: gStart, endEpochMs: gEnd,
+        tStartSec: round1((gStart - firstStart) / 1000), tEndSec: round1((gEnd - firstStart) / 1000),
+        deadSec: gDeadSec, encapsulationCandidate: gDeadSec >= threshold,
+        ...frameFields(gStart, gEnd)
+      });
+    }
+  }
+  events.sort((a, b) => a.startEpochMs - b.startEpochMs);
+  const timeline = {
+    purpose: 'Fit a constant-FPS screenshot stream to wall-clock: assemble frames into a video with ffmpeg, and let an LLM navigate event -> frame -> screenshot and correlate to a performance-monitor time series (all keyed by epoch ms).',
+    t0: new Date(firstStart).toISOString(),
+    t0EpochMs: firstStart,
+    endEpochMs: lastEnd,
+    wallClockSec,
+    fpsSupported: [12, 18],
+    frameCounts: { fps12: Math.ceil(wallClockSec * 12), fps18: Math.ceil(wallClockSec * 18) },
+    frameForEpochMs: 'frame = round((epochMs - t0EpochMs) / 1000 * fps)  // 0-based, continuous capture from t0',
+    screenshotPattern: framePattern,
+    screenshotForFrame: 'sprintf(screenshotPattern, frame)  // 0-based frame index',
+    ffmpeg: {
+      fps12: `ffmpeg -framerate 12 -start_number 0 -i ${framePattern} -c:v libx264 -pix_fmt yuv420p -vf fps=12 session_12fps.mp4`,
+      fps18: `ffmpeg -framerate 18 -start_number 0 -i ${framePattern} -c:v libx264 -pix_fmt yuv420p -vf fps=18 session_18fps.mp4`
+    },
+    perfMonitorCorrelation: 'each event carries startEpochMs/endEpochMs; bisect a performance-monitor time series by epoch ms to find the sample(s) spanning an event, and map the same epoch ms to a video frame via frameForEpochMs.',
+    eventCount: events.length,
+    events
+  };
   return {
     schema, available: true, source: sourceLabel, note: 'benchmark excludes the manifest-writing cycle (its meta is written after this runs)',
     cycleCount: cycles.length,
@@ -96,7 +153,8 @@ function computeBenchmark() {
       note: 'encapsulationCandidates are between-cycle gaps >= deadTimeThresholdSec: wrap that work in an Invoke-Cycle so it is measured. deadFraction is the share of wall-clock spent outside any cycle.',
       worstGapSec: largestGaps.length ? largestGaps[0].deadSec : 0
     },
-    cycles: cycleRows
+    cycles: cycleRows,
+    timeline
   };
 }
 
@@ -235,8 +293,17 @@ const index = {
     newSamplesSincePrevious,
     carriedOverSamples
   },
+  // LLM navigation entry point: how to jump from an event to its video frame / screenshot and to
+  // a performance-monitor sample. All three (events, video frames, perf samples) share the same
+  // epoch-ms axis established by benchmark.timeline.
+  navigation: {
+    note: 'benchmark.timeline maps every cycle and dead-gap event to 12 & 18 fps frame numbers and epoch ms. To find the screenshot for an event: frame = round((event.startEpochMs - benchmark.timeline.t0EpochMs) / 1000 * fps); filename = sprintf(benchmark.timeline.screenshotPattern, frame). To correlate a performance-monitor sample: match by epoch ms. To locate an event by symptom, scan benchmark.timeline.events (sorted by time) for kind=dead-gap with encapsulationCandidate=true (idle/optimization windows) or kind=cycle by description.',
+    timelineRef: 'benchmark.timeline',
+    axis: 'epochMs'
+  },
   // Agent Invoke-Cycle benchmark: global timing + per-cycle descriptions + between-cycle dead
-  // time (encapsulation candidates + optimization areas). Session-scoped, reflects THIS host.
+  // time (encapsulation candidates + optimization areas) + a constant-FPS frame timeline.
+  // Session-scoped, reflects THIS host.
   benchmark: computeBenchmark()
 };
 fs.writeFileSync(INDEX_PATH, JSON.stringify(index, null, 2), 'utf8');
@@ -249,6 +316,10 @@ if (index.benchmark && index.benchmark.available) {
   const b = index.benchmark;
   console.log('benchmark: cycles=' + b.cycleCount + ' wallClock=' + b.window.wallClockSec + 's active=' + b.activeSec + 's dead=' + b.deadSec + 's deadFraction=' + b.deadFraction + ' encapsulatableDead=' + b.encapsulatableDeadSec + 's (>=' + b.deadTimeThresholdSec + 's gaps=' + b.encapsulationCandidates.length + ')');
   console.log('largestGaps=' + JSON.stringify(b.largestGaps));
+  if (b.timeline) {
+    console.log('timeline: t0=' + b.timeline.t0 + ' frames@12fps=' + b.timeline.frameCounts.fps12 + ' frames@18fps=' + b.timeline.frameCounts.fps18 + ' events=' + b.timeline.eventCount);
+    console.log('timeline.ffmpeg.fps12=' + b.timeline.ffmpeg.fps12);
+  }
 } else {
   console.log('benchmark: unavailable (' + (index.benchmark ? index.benchmark.reason : 'null') + ')');
 }

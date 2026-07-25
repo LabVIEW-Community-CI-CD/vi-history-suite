@@ -11,9 +11,9 @@
     "generator": "prototype/ml/datasetManifest.mjs",
     "datasetGenerator": "prototype/ml/buildViChangeMlDataset.mjs",
     "groundTruthSource": "prototype/correlationReport.mjs over prototype/win-lvkit/correlation-fixtures",
-    "sourceCommit": "21fbcd7f1e9db0a7487e9f65f5c49ee26b9dd27c",
+    "sourceCommit": "3d1d1246f60ef6fe5d5e024d44e1d33404d6869c",
     "nodeVersion": "v24.16.0",
-    "generatedAt": "2026-07-25T16:43:24.967Z"
+    "generatedAt": "2026-07-25T16:54:28.843Z"
   },
   "coverage": {
     "sampleCount": 5,
@@ -196,8 +196,8 @@
     }
   ],
   "lineage": {
-    "previousSha256": "e2a425a1f6075b035e10a4251a5fca6990c14508b59400ee6742ca4d532c25ee",
-    "changedSincePrevious": true,
-    "derivedFrom": "814251b07f10e102a874b979584faeab8ae8b364"
+    "previousSha256": "1a6b4d81c86d21a0a203c0e5b1f74cfe2857d69e494f448f97ede0c41449834f",
+    "changedSincePrevious": false,
+    "derivedFrom": "21fbcd7f1e9db0a7487e9f65f5c49ee26b9dd27c"
   }
 }
