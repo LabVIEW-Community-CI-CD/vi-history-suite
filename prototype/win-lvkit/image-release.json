@@ -1,0 +1,11 @@
+{
+  "schema": "vi-history-suite/win-lvkit-image-release@v1",
+  "image": "vihs-lvkit-stage-win",
+  "tag": "devtools-v2.2.1",
+  "devtoolsVersion": "2.2.1",
+  "devtoolsChannel": "prerelease",
+  "devtoolsContentDigest": "1b56eb61a63a68acc43a5b235d136429c4dfd583f520cd7ab14587de56e3dd39",
+  "baseImage": "nationalinstruments/labview:2026q1patch2-windows",
+  "gitCommit": "a736cf6e2601bd208f420533675c2cfdd928d96f",
+  "note": "Windows lvkit staging image bound to the dev-tools PRERELEASE tag devtools-v2.2.1 (schema vi-history-suite/devtools-release@v1, contentDigest above, built from prototype's compiled out/ at gitCommit). Build via prototype/lvkit-stage-win.Dockerfile in CI (the local Docker Desktop Windows builder has no DNS); tag + run the container after the dev-tools tag: vihs-lvkit-stage-win:devtools-v2.2.1. The image bakes prototype/win-lvkit/ (provision.ps1 + derive.ps1) so it is self-contained. lvkit generate uses the image's real LabVIEW vi.lib to resolve wired SubVIs."
+}
