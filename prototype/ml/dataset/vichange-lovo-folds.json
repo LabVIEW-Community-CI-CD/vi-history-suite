@@ -1,0 +1,237 @@
+{
+  "schema": "vi-history-suite/vichange-lovo-folds@v1",
+  "generatedAt": "2026-07-25T19:39:55.527Z",
+  "source": "prototype/ml/dataset/vichange-finetune-v1.jsonl",
+  "totalItems": 28,
+  "vis": [
+    "LoadTemplates.vi",
+    "MouseDown.vi",
+    "PictureControl_MouseUp.vi",
+    "VisibleTextMarker.vi",
+    "lv_icon.vi"
+  ],
+  "method": "leave-one-VI-out",
+  "note": "finetune==eval 28/28; a fold trains on trainIndices (4 VIs) and evaluates on heldOutIndices (1 VI). A single-split fine-tune scored on its own training VIs is a memorization ceiling and MUST be labeled as such.",
+  "folds": [
+    {
+      "fold": 0,
+      "heldOutVi": "LoadTemplates.vi",
+      "trainVis": [
+        "MouseDown.vi",
+        "PictureControl_MouseUp.vi",
+        "VisibleTextMarker.vi",
+        "lv_icon.vi"
+      ],
+      "heldOutCount": 4,
+      "trainCount": 24,
+      "heldOutIndices": [
+        12,
+        13,
+        14,
+        15
+      ],
+      "trainIndices": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27
+      ]
+    },
+    {
+      "fold": 1,
+      "heldOutVi": "MouseDown.vi",
+      "trainVis": [
+        "LoadTemplates.vi",
+        "PictureControl_MouseUp.vi",
+        "VisibleTextMarker.vi",
+        "lv_icon.vi"
+      ],
+      "heldOutCount": 6,
+      "trainCount": 22,
+      "heldOutIndices": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "trainIndices": [
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27
+      ]
+    },
+    {
+      "fold": 2,
+      "heldOutVi": "PictureControl_MouseUp.vi",
+      "trainVis": [
+        "LoadTemplates.vi",
+        "MouseDown.vi",
+        "VisibleTextMarker.vi",
+        "lv_icon.vi"
+      ],
+      "heldOutCount": 6,
+      "trainCount": 22,
+      "heldOutIndices": [
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "trainIndices": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27
+      ]
+    },
+    {
+      "fold": 3,
+      "heldOutVi": "VisibleTextMarker.vi",
+      "trainVis": [
+        "LoadTemplates.vi",
+        "MouseDown.vi",
+        "PictureControl_MouseUp.vi",
+        "lv_icon.vi"
+      ],
+      "heldOutCount": 6,
+      "trainCount": 22,
+      "heldOutIndices": [
+        16,
+        17,
+        18,
+        19,
+        20,
+        21
+      ],
+      "trainIndices": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27
+      ]
+    },
+    {
+      "fold": 4,
+      "heldOutVi": "lv_icon.vi",
+      "trainVis": [
+        "LoadTemplates.vi",
+        "MouseDown.vi",
+        "PictureControl_MouseUp.vi",
+        "VisibleTextMarker.vi"
+      ],
+      "heldOutCount": 6,
+      "trainCount": 22,
+      "heldOutIndices": [
+        22,
+        23,
+        24,
+        25,
+        26,
+        27
+      ],
+      "trainIndices": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21
+      ]
+    }
+  ]
+}
