@@ -409,6 +409,38 @@ set `VIHS_OUT` to write the typed evidence JSON for attaching to the requirement
 It exits `0` on a correlated pass, `3` when correlation is unavailable, and `4`
 on a real-capture sanity failure.
 
+### Perfmon <-> LabVIEW-launch correlation in a container (isolation + idempotency)
+
+`scripts/validatePerfmonLabviewContainerE2E.cjs` proves the same VHS-REQ-718
+correlation but runs LabVIEW inside a throwaway
+`nationalinstruments/labview:*-windows` container instead of a host install. This
+gives **setup isolation** (no host LabVIEW install, no host-process
+interference, no host-native render guard) and **idempotency** (a fresh
+container and workspace each run, so the cold launch is reproducible; the
+container also boots faster than a host cold launch because the image ships the
+LabVIEW add-on caches pre-baked). It reuses the shipped Windows-container preview
+render plan, whose container `TEMP` root lives under the bind-mounted workspace,
+so the container's `LabVIEW_*_cur.txt` launch log surfaces on the host and host
+`logman` correlates the system-counter trace against it.
+
+Prerequisites: Docker in **Windows-container** mode with the image pulled
+(`docker pull nationalinstruments/labview:2026q1patch2-windows`). Under Hyper-V
+isolation the validator uses the minimal system-counter profile (the container's
+`\Process(LabVIEW)` instance is not visible to host logman). Run it from the repo
+root after `npm run compile`:
+
+```powershell
+npm run compile
+npm run perfmon:labview:container:e2e
+```
+
+Override defaults with `VIHS_CONTAINER_IMAGE`, `VIHS_LV_OPDIR`, `VIHS_LV_VI`,
+`VIHS_PERFMON_COLLECTOR`, `VIHS_MARKER_TIMEOUT_MS`, and `VIHS_MIN_CAPTURE_MS`; set
+`VIHS_OUT` to write the typed evidence JSON. It is idempotent — it removes any
+container spawned from the image and recreates the throwaway workspace before and
+after the run — and exits `0` on a correlated pass, `3` when correlation is
+unavailable, and `4` on a real-capture sanity failure.
+
 ## Linux/LabVIEW Runner
 
 The Linux maintainer runner is the sibling of the Windows runner above: a
