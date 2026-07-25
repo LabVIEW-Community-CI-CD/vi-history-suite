@@ -1,0 +1,40 @@
+{
+  "schema": "vi-history-suite/ollama-vichange-eval@v1",
+  "generatedAt": "2026-07-25T15:48:23.366Z",
+  "model": "qwen2.5:14b",
+  "task": "grounded-vi-change-faithful-summarization",
+  "datasetFiles": {
+    "finetune": "prototype/ml/dataset/vichange-finetune-v1.jsonl",
+    "eval": "prototype/ml/dataset/vichange-eval-v1.jsonl"
+  },
+  "sampleCount": 2,
+  "baselineMeanFaithfulness": 1,
+  "results": [
+    {
+      "vi": "MouseDown.vi",
+      "labviewSource": "robust-parser",
+      "faithfulness": 1,
+      "parts": {
+        "statesStructuralCount": true,
+        "noFalseNoChange": true,
+        "mentionsCosmetic": true,
+        "noInventedNumbers": true
+      },
+      "invented": [],
+      "output": "For the VI \"MouseDown.vi\":\n\n- **Structural Changes** (from lvkit):\n  - Removed: 1\n  - Added: 3\n  - Modified: 2\n  - Total structural changes: 6\n\n- **Non-cosmetic Differences** (from LabVIEW comparison, excluding cosmetic differences):\n  - Total non-cosmetic differences: 6\n\nThere are no additional cosmetic differences reported by LabVIEW that are not already accounted for in the lvkit data."
+    },
+    {
+      "vi": "PictureControl_MouseUp.vi",
+      "labviewSource": "prototype-dataset",
+      "faithfulness": 1,
+      "parts": {
+        "statesStructuralCount": true,
+        "noFalseNoChange": true,
+        "mentionsCosmetic": true,
+        "noInventedNumbers": true
+      },
+      "invented": [],
+      "output": "The VI \"PictureControl_MouseUp.vi\" has undergone the following changes:\n\n- **Structural Changes** (from lvkit): There are 13 structural changes, with 9 additions and 4 removals.\n- **Non-cosmetic Differences** (from LabVIEW comparison): There are 9 non-cosmetic differences.\n\nCosmetic differences totaling 30 are not reported as per the design of lvkit."
+    }
+  ]
+}
