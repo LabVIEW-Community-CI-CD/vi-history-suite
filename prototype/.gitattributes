@@ -1,0 +1,5 @@
+# Keep prototype collaboration files LF so the git-synced board/scripts don't churn
+# between the Windows and Linux machines (avoids spurious EOL merge conflicts).
+board/board.json text eol=lf
+*.mjs text eol=lf
+*.md text eol=lf
