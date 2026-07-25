@@ -1,0 +1,90 @@
+{
+  "schema": "vi-history-suite/ollama-vichange-stability@v1",
+  "generatedAt": "2026-07-25T17:40:32.740Z",
+  "ollamaHost": "linux",
+  "runsPerModel": 3,
+  "evalItemCount": 28,
+  "configs": [
+    {
+      "model": "vichange8b-2shot",
+      "overall": {
+        "runs": [
+          0.958,
+          0.958,
+          0.958
+        ],
+        "min": 0.958,
+        "max": 0.958,
+        "mean": 0.958
+      },
+      "tasks": {
+        "full-summary": {
+          "runs": [
+            0.9,
+            0.9,
+            0.9
+          ],
+          "min": 0.9,
+          "max": 0.9,
+          "mean": 0.9,
+          "deterministic": true
+        },
+        "count": {
+          "runs": [
+            0.933,
+            0.933,
+            0.933
+          ],
+          "min": 0.933,
+          "max": 0.933,
+          "mean": 0.933,
+          "deterministic": true
+        },
+        "kinds": {
+          "runs": [
+            1,
+            1,
+            1
+          ],
+          "min": 1,
+          "max": 1,
+          "mean": 1,
+          "deterministic": true
+        },
+        "cosmetic-split": {
+          "runs": [
+            0.933,
+            0.933,
+            0.933
+          ],
+          "min": 0.933,
+          "max": 0.933,
+          "mean": 0.933,
+          "deterministic": true
+        },
+        "adv-false-nochange": {
+          "runs": [
+            1,
+            1,
+            1
+          ],
+          "min": 1,
+          "max": 1,
+          "mean": 1,
+          "deterministic": true
+        },
+        "adv-cosmetic-only-trap": {
+          "runs": [
+            1,
+            1,
+            1
+          ],
+          "min": 1,
+          "max": 1,
+          "mean": 1,
+          "deterministic": true
+        }
+      }
+    }
+  ]
+}
