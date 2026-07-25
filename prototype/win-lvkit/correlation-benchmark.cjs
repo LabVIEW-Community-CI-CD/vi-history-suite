@@ -32,10 +32,19 @@ const MOUNT_HOST = path.join(process.env.TEMP, 'winlvkit');
 const CONTAINER_MOUNT = 'C:\\out';
 const VILIB = 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\vi.lib';
 
-const SAMPLES = [
+const ALL_SAMPLES = [
   { vi: 'resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/MouseDown.vi', base: '537683', selected: 'fc09736', slug: 'mousedown' },
-  { vi: 'resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/PictureControl_MouseUp.vi', base: '537683', selected: 'fc09736', slug: 'picturecontrol-mouseup' }
-].slice(0, process.env.CORR_LIMIT ? Number(process.env.CORR_LIMIT) : 99);
+  { vi: 'resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/PictureControl_MouseUp.vi', base: '537683', selected: 'fc09736', slug: 'picturecontrol-mouseup' },
+  { vi: 'resource/plugins/NIIconEditor/Miscellaneous/Graphics/LoadTemplates.vi', base: '537683', selected: 'fc09736', slug: 'loadtemplates' },
+  { vi: 'resource/plugins/NIIconEditor/Miscellaneous/Tools/VisibleTextMarker.vi', base: '537683', selected: 'fc09736', slug: 'visibletextmarker' },
+  { vi: 'resource/plugins/lv_icon.vi', base: '537683', selected: 'fc09736', slug: 'lv-icon' }
+];
+// CORR_ONLY_SLUGS (comma list) runs a subset; CORR_MERGE keeps prior samples (grow, not replace);
+// CORR_LIMIT caps count. fixtureSlug (HTML fixture name) = basename lowercased, per correlationReport.mjs.
+const ONLY = process.env.CORR_ONLY_SLUGS ? new Set(process.env.CORR_ONLY_SLUGS.split(',').map((x) => x.trim())) : null;
+let SAMPLES = ONLY ? ALL_SAMPLES.filter((s) => ONLY.has(s.slug)) : ALL_SAMPLES;
+if (process.env.CORR_LIMIT) SAMPLES = SAMPLES.slice(0, Number(process.env.CORR_LIMIT));
+function fixtureSlug(viPath) { return path.basename(viPath).replace(/\.vi$/i, '').toLowerCase(); }
 
 function sec(ms) { return Math.round(ms / 100) / 10; }
 function containerPath(hostAbs) {
@@ -80,6 +89,7 @@ function parseLabviewReport(htmlPath) {
 
 const samples = [];
 for (const s of SAMPLES) {
+  try {
   const storageRoot = path.join(MOUNT_HOST, 'corrbench', s.slug, 'storage');
   fs.rmSync(path.join(MOUNT_HOST, 'corrbench', s.slug), { recursive: true, force: true });
   fs.mkdirSync(storageRoot, { recursive: true });
@@ -108,6 +118,10 @@ for (const s of SAMPLES) {
   const pSel = preview(R.rightStaged, path.join(MOUNT_HOST, 'corrbench', s.slug, 'preview-selected'));
 
   const lv = parseLabviewReport(R.reportFilePath);
+  // Copy the report HTML into the committed fixtures so correlationReport.mjs robust-parses it
+  // (single-source: this run produces both the dataset entry AND its ground-truth fixture).
+  const fixtureDest = path.join(REPO_ROOT, 'prototype', 'win-lvkit', 'correlation-fixtures', fixtureSlug(s.vi) + '.labview-diff-report.html');
+  fs.copyFileSync(R.reportFilePath, fixtureDest);
 
   const countAgreement = lvkitChangeCount != null ? Number(lvkitChangeCount === lv.nonCosmetic) : 0;
   const previewDelta = pBase.inlineImageCount != null && pSel.inlineImageCount != null ? (pSel.inlineImageCount - pBase.inlineImageCount) : null;
@@ -125,21 +139,33 @@ for (const s of SAMPLES) {
     },
     timingsSec: { compareCold: sec(cmp.tMs), lvkitDiff: sec(tDiff), lvkitGen: sec(tGen), previewBaseCold: sec(pBase.tMs), previewSelectedCold: sec(pSel.tMs) }
   });
+  } catch (e) {
+    console.log('SKIP ' + s.slug + ': ' + String((e && e.message) || e).slice(0, 200));
+  }
 }
 
-const totals = samples.reduce((a, x) => {
+const outPath = path.join(REPO_ROOT, 'prototype', 'win-lvkit', 'correlation-fixtures', 'benchmark-dataset.json');
+// Merge newly-run samples into the existing dataset (by vi) when CORR_MERGE is set, so a partial
+// scaling run (CORR_ONLY_SLUGS) grows the dataset instead of dropping the prior samples.
+let merged = samples;
+if (process.env.CORR_MERGE && fs.existsSync(outPath)) {
+  const prev = JSON.parse(fs.readFileSync(outPath, 'utf8'));
+  const byVi = new Map((prev.samples || []).map((x) => [x.vi, x]));
+  for (const s of samples) byVi.set(s.vi, s);
+  merged = [...byVi.values()];
+}
+const totals = merged.reduce((a, x) => {
   const t = x.timingsSec; a.compareCold += t.compareCold; a.lvkitDiff += t.lvkitDiff; a.lvkitGen += t.lvkitGen; a.previewBaseCold += t.previewBaseCold; a.previewSelectedCold += t.previewSelectedCold; return a;
 }, { compareCold: 0, lvkitDiff: 0, lvkitGen: 0, previewBaseCold: 0, previewSelectedCold: 0 });
 const dataset = {
   schema: 'vi-history-suite/preview-compare-lvkit-benchmark@v1',
   generatedAt: new Date().toISOString(),
-  image: IMAGE, sampleCount: samples.length,
+  image: IMAGE, sampleCount: merged.length,
   pipeline: 'compareReport -> staged left/right + commits -> preview(both) + lvkit(diff,generate) -> correlation record',
-  samples,
-  aggregate: { totalTimingsSec: totals, countAgreementRate: samples.length ? samples.filter((s) => s.correlation.countAgreement_lvkit_vs_nonCosmetic === 1).length / samples.length : 0 }
+  samples: merged,
+  aggregate: { totalTimingsSec: totals, countAgreementRate: merged.length ? merged.filter((s) => s.correlation.countAgreement_lvkit_vs_nonCosmetic === 1).length / merged.length : 0 }
 };
-const outPath = path.join(REPO_ROOT, 'prototype', 'win-lvkit', 'correlation-fixtures', 'benchmark-dataset.json');
 fs.writeFileSync(outPath, JSON.stringify(dataset, null, 2), 'utf8');
-console.log('BENCHMARK_DONE samples=' + samples.length + ' out=' + outPath);
+console.log('BENCHMARK_DONE ran=' + samples.length + ' total=' + merged.length + ' out=' + outPath);
 console.log(JSON.stringify(dataset.aggregate));
 for (const s of samples) console.log(s.vi.split('/').pop() + ': lvkit=' + s.lvkit.changeCount + ' labviewNonCosmetic=' + s.labview.nonCosmetic + ' cosmetic=' + s.labview.cosmetic + ' previewDelta=' + s.preview.deltaInlineImages + ' t=' + JSON.stringify(s.timingsSec));

@@ -50,18 +50,19 @@ function factsBlock(s, kinds) {
 function goldSummary(s, kinds) {
   const h = kindHistogram(kinds);
   const kindStr = Object.entries(h).map(([k, n]) => `${n} ${k}`).join(', ') || 'unspecified';
-  return `${s.lvkitChangeCount} structural block-diagram change(s) (${kindStr}). LabVIEW's comparison reports ${s.labview.total} total differences: ${s.labview.nonCosmetic} non-cosmetic (the structural set, aligning with lvkit's ${s.lvkitChangeCount}) and ${s.labview.cosmetic} cosmetic (position/appearance) differences that lvkit omits by design.`;
+  return `${s.lvkitChangeCount} structural block-diagram change(s) (${kindStr}) per lvkit. LabVIEW's comparison reports ${s.labview.nonCosmetic} non-cosmetic (structural/behavioral) and ${s.labview.cosmetic} cosmetic (position/appearance) difference(s); lvkit omits cosmetic differences by design and counts node-level edits, so lvkit's structural tally and LabVIEW's non-cosmetic tally are related but measured at different granularity and need not be equal.`;
 }
 
 // 2. Emit fine-tune JSONL (messages format) + eval JSONL -- MULTIPLE task types per sample.
 function goldCount(s) { return `${s.lvkitChangeCount} structural block-diagram change(s).`; }
 function goldKinds(s, kinds) {
+  if (s.lvkitChangeCount === 0) return 'There are 0 structural changes, so there is no kind breakdown.';
   const h = kindHistogram(kinds);
   const kindStr = Object.entries(h).map(([k, n]) => `${n} ${k}`).join(', ') || 'unspecified';
   return `The ${s.lvkitChangeCount} structural changes break down as: ${kindStr}.`;
 }
 function goldSplit(s) {
-  return `lvkit reports ${s.lvkitChangeCount} structural changes. LabVIEW reports ${s.labview.total} total differences = ${s.labview.nonCosmetic} non-cosmetic (structural, aligning with lvkit) + ${s.labview.cosmetic} cosmetic (position/appearance, omitted by lvkit by design).`;
+  return `lvkit reports ${s.lvkitChangeCount} structural change(s) (node-level). LabVIEW reports ${s.labview.nonCosmetic} non-cosmetic (structural/behavioral) and ${s.labview.cosmetic} cosmetic (position/appearance, omitted by lvkit by design) difference(s). The two structural measures -- lvkit ${s.lvkitChangeCount} and LabVIEW non-cosmetic ${s.labview.nonCosmetic} -- are related but need not match exactly due to granularity.`;
 }
 const TASKS = [
   { id: 'full-summary', prompt: 'Summarize the change for this VI.', gold: (s, k) => goldSummary(s, k), scoreKeys: ['statesStructuralCount', 'noFalseNoChange', 'mentionsCosmetic', 'noInventedNumbers'] },
@@ -92,18 +93,30 @@ for (const s of report.samples) {
     ] }));
     evalItems.push({ vi: s.vi, task: t.id, adversarial: false, prompt: t.prompt, facts, gold, scoreKeys: t.scoreKeys, groundTruth: gt });
   }
-  for (const t of ADVERSARIAL_TASKS) {
-    const gold = t.gold(s, kinds);
-    ftLines.push(JSON.stringify({ messages: [
-      { role: 'system', content: SYSTEM },
-      { role: 'user', content: `${t.prompt}\n\n${facts}` },
-      { role: 'assistant', content: gold }
-    ] }));
-    evalItems.push({ vi: s.vi, task: t.id, adversarial: true, prompt: t.prompt, facts, gold, scoreKeys: t.scoreKeys, groundTruth: gt });
+  // Adversarial tasks assume a FALSE no-change premise, so they only apply where lvkit found
+  // real structural changes (N>0). For N=0 samples (lvkit sees no structural change) the
+  // premise is not false, so they are excluded to avoid contradictory training signal.
+  if (s.lvkitChangeCount > 0) {
+    for (const t of ADVERSARIAL_TASKS) {
+      const gold = t.gold(s, kinds);
+      ftLines.push(JSON.stringify({ messages: [
+        { role: 'system', content: SYSTEM },
+        { role: 'user', content: `${t.prompt}\n\n${facts}` },
+        { role: 'assistant', content: gold }
+      ] }));
+      evalItems.push({ vi: s.vi, task: t.id, adversarial: true, prompt: t.prompt, facts, gold, scoreKeys: t.scoreKeys, groundTruth: gt });
+    }
   }
 }
 fs.writeFileSync(path.join(OUT_DIR, 'vichange-finetune-v1.jsonl'), ftLines.join('\n') + '\n', 'utf8');
 fs.writeFileSync(path.join(OUT_DIR, 'vichange-eval-v1.jsonl'), evalItems.map((e) => JSON.stringify(e)).join('\n') + '\n', 'utf8');
+
+// On hosts without ollama (e.g. WIN in windows-container mode) skip the live eval and emit the
+// JSONL only; the ollama host (LINUX) runs the baseline eval + the 3-config comparator.
+if (process.env.SKIP_OLLAMA_EVAL) {
+  console.log('ML_DATASET_JSONL_ONLY finetunePairs=' + ftLines.length + ' evalItems=' + evalItems.length + ' samples=' + report.samples.length + ' (ollama eval skipped; run on ollama host)');
+  process.exit(0);
+}
 
 // 3. Baseline faithfulness eval of the live model (ollama /api/chat), PER TASK TYPE.
 // scoreParts imported from vichangeEvalCore.mjs (shared with evalCompareConfigs.mjs).

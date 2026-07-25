@@ -1,25 +1,28 @@
 {
   "schema": "vi-history-suite/ml-dataset-meta@v1",
-  "datasetId": "vichange-finetune-v1@e2a425a1f607",
+  "datasetId": "vichange-finetune-v1@1a6b4d81c86d",
   "file": "prototype/ml/dataset/vichange-finetune-v1.jsonl",
   "kind": "finetune",
   "recordSchema": "openai-chat-messages",
-  "bytes": 12230,
-  "sha256": "e2a425a1f6075b035e10a4251a5fca6990c14508b59400ee6742ca4d532c25ee",
-  "recordCount": 12,
+  "bytes": 30449,
+  "sha256": "1a6b4d81c86d21a0a203c0e5b1f74cfe2857d69e494f448f97ede0c41449834f",
+  "recordCount": 28,
   "provenance": {
     "generator": "prototype/ml/datasetManifest.mjs",
     "datasetGenerator": "prototype/ml/buildViChangeMlDataset.mjs",
     "groundTruthSource": "prototype/correlationReport.mjs over prototype/win-lvkit/correlation-fixtures",
-    "sourceCommit": "814251b07f10e102a874b979584faeab8ae8b364",
+    "sourceCommit": "21fbcd7f1e9db0a7487e9f65f5c49ee26b9dd27c",
     "nodeVersion": "v24.16.0",
-    "generatedAt": "2026-07-25T16:25:15.591Z"
+    "generatedAt": "2026-07-25T16:43:24.967Z"
   },
   "coverage": {
-    "sampleCount": 2,
+    "sampleCount": 5,
     "sampleVis": [
+      "LoadTemplates.vi",
       "MouseDown.vi",
-      "PictureControl_MouseUp.vi"
+      "PictureControl_MouseUp.vi",
+      "VisibleTextMarker.vi",
+      "lv_icon.vi"
     ],
     "taskTypes": [
       "full-summary",
@@ -70,6 +73,48 @@
           "added",
           "removed",
           "removed",
+          "removed",
+          "removed"
+        ],
+        "labviewSource": "robust-parser"
+      },
+      "LoadTemplates.vi": {
+        "lvkitChangeCount": 0,
+        "labview": {
+          "total": 2,
+          "cosmetic": 0,
+          "nonCosmetic": 1
+        },
+        "kinds": [],
+        "labviewSource": "robust-parser"
+      },
+      "VisibleTextMarker.vi": {
+        "lvkitChangeCount": 4,
+        "labview": {
+          "total": 3,
+          "cosmetic": 0,
+          "nonCosmetic": 2
+        },
+        "kinds": [
+          "added",
+          "added",
+          "removed",
+          "removed"
+        ],
+        "labviewSource": "robust-parser"
+      },
+      "lv_icon.vi": {
+        "lvkitChangeCount": 6,
+        "labview": {
+          "total": 23,
+          "cosmetic": 19,
+          "nonCosmetic": 3
+        },
+        "kinds": [
+          "added",
+          "removed",
+          "removed",
+          "added",
           "removed",
           "removed"
         ],
@@ -152,7 +197,7 @@
   ],
   "lineage": {
     "previousSha256": "e2a425a1f6075b035e10a4251a5fca6990c14508b59400ee6742ca4d532c25ee",
-    "changedSincePrevious": false,
-    "derivedFrom": "95f382d91e1b88d11bb0a9fe3dc15db495749467"
+    "changedSincePrevious": true,
+    "derivedFrom": "814251b07f10e102a874b979584faeab8ae8b364"
   }
 }

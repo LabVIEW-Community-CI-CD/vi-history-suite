@@ -1,28 +1,28 @@
 {
   "schema": "vi-history-suite/ml-datasets-index@v1",
-  "generatedAt": "2026-07-25T16:25:15.591Z",
-  "sourceCommit": "814251b07f10e102a874b979584faeab8ae8b364",
+  "generatedAt": "2026-07-25T16:43:24.967Z",
+  "sourceCommit": "21fbcd7f1e9db0a7487e9f65f5c49ee26b9dd27c",
   "generator": "prototype/ml/datasetManifest.mjs",
   "task": "grounded-vi-change-faithful-summarization",
   "datasets": [
     {
-      "datasetId": "vichange-finetune-v1@e2a425a1f607",
+      "datasetId": "vichange-finetune-v1@1a6b4d81c86d",
       "file": "prototype/ml/dataset/vichange-finetune-v1.jsonl",
       "kind": "finetune",
       "recordSchema": "openai-chat-messages",
-      "sha256": "e2a425a1f6075b035e10a4251a5fca6990c14508b59400ee6742ca4d532c25ee",
-      "bytes": 12230,
-      "recordCount": 12,
+      "sha256": "1a6b4d81c86d21a0a203c0e5b1f74cfe2857d69e494f448f97ede0c41449834f",
+      "bytes": 30449,
+      "recordCount": 28,
       "metaFile": "prototype/ml/dataset/vichange-finetune-v1.jsonl.meta.json"
     },
     {
-      "datasetId": "vichange-eval-v1@7c1e326ac176",
+      "datasetId": "vichange-eval-v1@1b97e73f846b",
       "file": "prototype/ml/dataset/vichange-eval-v1.jsonl",
       "kind": "eval",
       "recordSchema": "vichange-eval-item",
-      "sha256": "7c1e326ac176fc1996641d7e6d899043daf7bc9d96c7d245274ea541d79231f3",
-      "bytes": 11244,
-      "recordCount": 12,
+      "sha256": "1b97e73f846b4759d979960d0defa2bc6a0e55e091afcc15216b9e51085d2b91",
+      "bytes": 26899,
+      "recordCount": 28,
       "metaFile": "prototype/ml/dataset/vichange-eval-v1.jsonl.meta.json"
     }
   ],
@@ -152,6 +152,48 @@
         "removed"
       ],
       "labviewSource": "robust-parser"
+    },
+    "LoadTemplates.vi": {
+      "lvkitChangeCount": 0,
+      "labview": {
+        "total": 2,
+        "cosmetic": 0,
+        "nonCosmetic": 1
+      },
+      "kinds": [],
+      "labviewSource": "robust-parser"
+    },
+    "VisibleTextMarker.vi": {
+      "lvkitChangeCount": 4,
+      "labview": {
+        "total": 3,
+        "cosmetic": 0,
+        "nonCosmetic": 2
+      },
+      "kinds": [
+        "added",
+        "added",
+        "removed",
+        "removed"
+      ],
+      "labviewSource": "robust-parser"
+    },
+    "lv_icon.vi": {
+      "lvkitChangeCount": 6,
+      "labview": {
+        "total": 23,
+        "cosmetic": 19,
+        "nonCosmetic": 3
+      },
+      "kinds": [
+        "added",
+        "removed",
+        "removed",
+        "added",
+        "removed",
+        "removed"
+      ],
+      "labviewSource": "robust-parser"
     }
   },
   "openResiduals": [
@@ -174,10 +216,14 @@
     ]
   },
   "lineage": {
-    "previousCommit": "95f382d91e1b88d11bb0a9fe3dc15db495749467",
-    "previousGeneratedAt": "2026-07-25T16:23:26.303Z",
+    "previousCommit": "814251b07f10e102a874b979584faeab8ae8b364",
+    "previousGeneratedAt": "2026-07-25T16:25:15.591Z",
     "previousSampleCount": 2,
-    "newSamplesSincePrevious": [],
+    "newSamplesSincePrevious": [
+      "LoadTemplates.vi",
+      "VisibleTextMarker.vi",
+      "lv_icon.vi"
+    ],
     "carriedOverSamples": [
       "MouseDown.vi",
       "PictureControl_MouseUp.vi"
@@ -188,17 +234,17 @@
     "available": true,
     "source": "os.tmpdir()/vihs-cycles",
     "note": "benchmark excludes the manifest-writing cycle (its meta is written after this runs)",
-    "cycleCount": 57,
+    "cycleCount": 64,
     "window": {
       "firstStart": "2026-07-25T15:03:54.804Z",
-      "lastEnd": "2026-07-25T16:24:33.974Z",
-      "wallClockSec": 4839.2
+      "lastEnd": "2026-07-25T16:40:19.008Z",
+      "wallClockSec": 5784.2
     },
-    "activeSec": 666,
-    "deadSec": 4173.2,
-    "deadFraction": 0.862,
+    "activeSec": 1168.4,
+    "deadSec": 4615.8,
+    "deadFraction": 0.7979999999999999,
     "deadTimeThresholdSec": 20,
-    "encapsulatableDeadSec": 4090.7,
+    "encapsulatableDeadSec": 4519.4,
     "largestGaps": [
       {
         "afterCycle": "c19-env-check",
@@ -221,9 +267,9 @@
         "deadSec": 195.8
       },
       {
-        "afterCycle": "c43-clean",
-        "beforeCycle": "c44-sync",
-        "deadSec": 158.4
+        "afterCycle": "c62-discover-vis",
+        "beforeCycle": "c63-compile",
+        "deadSec": 159.8
       }
     ],
     "encapsulationCandidates": [
@@ -246,6 +292,11 @@
         "afterCycle": "c14-push-propose-post",
         "beforeCycle": "c15-sync",
         "deadSec": 195.8
+      },
+      {
+        "afterCycle": "c62-discover-vis",
+        "beforeCycle": "c63-compile",
+        "deadSec": 159.8
       },
       {
         "afterCycle": "c43-clean",
@@ -276,6 +327,11 @@
         "afterCycle": "c34-sync",
         "beforeCycle": "c35-adversarial-ml",
         "deadSec": 113.9
+      },
+      {
+        "afterCycle": "c60-refresh-commit",
+        "beforeCycle": "c61-sync",
+        "deadSec": 101.4
       },
       {
         "afterCycle": "c53-modecheck",
@@ -338,6 +394,11 @@
         "deadSec": 64.6
       },
       {
+        "afterCycle": "c64-scale-run",
+        "beforeCycle": "c65-robust-report",
+        "deadSec": 64.5
+      },
+      {
         "afterCycle": "c55-benchmark",
         "beforeCycle": "c56-verify",
         "deadSec": 56
@@ -376,6 +437,11 @@
         "afterCycle": "c25-sync",
         "beforeCycle": "c26-locate-pc-report",
         "deadSec": 43.5
+      },
+      {
+        "afterCycle": "c58-bus",
+        "beforeCycle": "c59-refresh-manifest",
+        "deadSec": 41.5
       },
       {
         "afterCycle": "c32-sync",
@@ -448,6 +514,11 @@
         "deadSec": 33.5
       },
       {
+        "afterCycle": "c61-sync",
+        "beforeCycle": "c62-discover-vis",
+        "deadSec": 32.9
+      },
+      {
         "afterCycle": "c9-correlation-record",
         "beforeCycle": "c10-commit-fixtures",
         "deadSec": 32.8
@@ -466,6 +537,11 @@
         "afterCycle": "c46-compare",
         "beforeCycle": "c47-clean-baseline",
         "deadSec": 30.7
+      },
+      {
+        "afterCycle": "c59-refresh-manifest",
+        "beforeCycle": "c60-refresh-commit",
+        "deadSec": 28.6
       },
       {
         "afterCycle": "c26-locate-pc-report",
@@ -1057,6 +1133,76 @@
         "exitCode": 0,
         "hadException": false,
         "deadBeforeSec": 14.2
+      },
+      {
+        "id": "c59-refresh-manifest",
+        "description": "refresh manifest",
+        "startedAt": "2026-07-25T16:25:15.509Z",
+        "endedAt": "2026-07-25T16:25:15.709Z",
+        "elapsedSec": 0.2,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 41.5
+      },
+      {
+        "id": "c60-refresh-commit",
+        "description": "refresh commit",
+        "startedAt": "2026-07-25T16:25:44.264Z",
+        "endedAt": "2026-07-25T16:25:48.964Z",
+        "elapsedSec": 4.7,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 28.6
+      },
+      {
+        "id": "c61-sync",
+        "description": "sync",
+        "startedAt": "2026-07-25T16:27:30.330Z",
+        "endedAt": "2026-07-25T16:27:32.130Z",
+        "elapsedSec": 1.8,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 101.4
+      },
+      {
+        "id": "c62-discover-vis",
+        "description": "discover vis",
+        "startedAt": "2026-07-25T16:28:05.061Z",
+        "endedAt": "2026-07-25T16:28:05.161Z",
+        "elapsedSec": 0.1,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 32.9
+      },
+      {
+        "id": "c63-compile",
+        "description": "compile",
+        "startedAt": "2026-07-25T16:30:44.918Z",
+        "endedAt": "2026-07-25T16:30:46.118Z",
+        "elapsedSec": 1.2,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 159.8
+      },
+      {
+        "id": "c64-scale-run",
+        "description": "scale run",
+        "startedAt": "2026-07-25T16:31:00.064Z",
+        "endedAt": "2026-07-25T16:39:14.364Z",
+        "elapsedSec": 494.3,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 13.9
+      },
+      {
+        "id": "c65-robust-report",
+        "description": "robust report",
+        "startedAt": "2026-07-25T16:40:18.908Z",
+        "endedAt": "2026-07-25T16:40:19.008Z",
+        "elapsedSec": 0.1,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 64.5
       }
     ]
   }
