@@ -1,6 +1,6 @@
 {
   "schema": "vi-history-suite/ollama-vichange-eval@v1",
-  "generatedAt": "2026-07-25T15:42:45.563Z",
+  "generatedAt": "2026-07-25T15:47:02.349Z",
   "model": "llama3.1:8b",
   "task": "grounded-vi-change-faithful-summarization",
   "datasetFiles": {
@@ -25,7 +25,7 @@
     },
     {
       "vi": "PictureControl_MouseUp.vi",
-      "labviewSource": "prototype-dataset",
+      "labviewSource": "robust-parser",
       "faithfulness": 0.75,
       "parts": {
         "statesStructuralCount": true,
@@ -34,7 +34,7 @@
         "noInventedNumbers": true
       },
       "invented": [],
-      "output": "There were 13 STRUCTURAL changes to the VI \"PictureControl_MouseUp.vi\"."
+      "output": "There were 13 STRUCTURAL changes to the VI \"PictureControl_MouseUp.vi\", with 9 elements added and 4 elements removed."
     }
   ]
 }
