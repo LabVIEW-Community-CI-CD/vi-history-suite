@@ -163,6 +163,39 @@
       "createdAt": "2026-07-25T12:47:09.513Z",
       "updatedAt": "2026-07-25T13:29:56.341Z",
       "syncedAt": null
+    },
+    {
+      "id": "item-0004",
+      "title": "Cleanroom primitive/SubVI mapping pack for strict-clean born-from-scratch generates",
+      "issueUrl": "https://github.com/LabVIEW-Community-CI-CD/vi-history-suite/issues/2376",
+      "fields": {
+        "status": "In Progress",
+        "intakeStage": "Spawned",
+        "sourceDiscussion": 2375,
+        "origin": "collab"
+      },
+      "fieldMeta": {
+        "status": {
+          "ts": "2026-07-25T14:27:05.454Z",
+          "by": "LINUX"
+        },
+        "intakeStage": {
+          "ts": "2026-07-25T14:26:53.278Z",
+          "by": "LINUX"
+        },
+        "sourceDiscussion": {
+          "ts": "2026-07-25T14:26:53.278Z",
+          "by": "LINUX"
+        },
+        "origin": {
+          "ts": "2026-07-25T14:26:53.278Z",
+          "by": "LINUX"
+        }
+      },
+      "remoteItemId": null,
+      "createdAt": "2026-07-25T14:26:53.278Z",
+      "updatedAt": "2026-07-25T14:27:05.454Z",
+      "syncedAt": null
     }
   ],
   "sync": {
