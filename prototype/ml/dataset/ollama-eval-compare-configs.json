@@ -1,6 +1,6 @@
 {
   "schema": "vi-history-suite/ollama-vichange-eval-compare@v1",
-  "generatedAt": "2026-07-25T16:07:35.079Z",
+  "generatedAt": "2026-07-25T16:21:15.579Z",
   "task": "grounded-vi-change-faithful-summarization",
   "ollamaUrl": "http://localhost:11434",
   "regressionFloor": 1,
@@ -20,13 +20,13 @@
       "note": "baseline llama3.1:8b, no few-shot",
       "present": true,
       "evaluated": true,
-      "overall": 0.931,
-      "standardMean": 0.896,
+      "overall": 0.958,
+      "standardMean": 0.938,
       "adversarialMean": 1,
       "byTask": {
         "full-summary": 0.75,
         "count": 1,
-        "kinds": 0.834,
+        "kinds": 1,
         "cosmetic-split": 1,
         "adv-false-nochange": 1,
         "adv-cosmetic-only-trap": 1
@@ -64,35 +64,56 @@
       "id": "14b",
       "model": "qwen2.5:14b",
       "note": "reference-ceiling zero-shot; runs on LINUX host",
-      "present": false,
-      "evaluated": false,
-      "reason": "model not pulled on this ollama host"
+      "present": true,
+      "evaluated": true,
+      "overall": 0.972,
+      "standardMean": 0.958,
+      "adversarialMean": 1,
+      "byTask": {
+        "full-summary": 1,
+        "count": 1,
+        "kinds": 0.834,
+        "cosmetic-split": 1,
+        "adv-false-nochange": 1,
+        "adv-cosmetic-only-trap": 1
+      },
+      "regressionGuard": {
+        "floor": 1,
+        "adversarialMean": 1,
+        "pass": true
+      }
     }
   ],
   "comparison": {
     "full-summary": {
       "8b-raw": 0.75,
-      "8b-fewshot": 1
+      "8b-fewshot": 1,
+      "14b": 1
     },
     "count": {
       "8b-raw": 1,
-      "8b-fewshot": 1
+      "8b-fewshot": 1,
+      "14b": 1
     },
     "kinds": {
-      "8b-raw": 0.834,
-      "8b-fewshot": 1
+      "8b-raw": 1,
+      "8b-fewshot": 1,
+      "14b": 0.834
     },
     "cosmetic-split": {
       "8b-raw": 1,
-      "8b-fewshot": 1
+      "8b-fewshot": 1,
+      "14b": 1
     },
     "adv-false-nochange": {
       "8b-raw": 1,
-      "8b-fewshot": 1
+      "8b-fewshot": 1,
+      "14b": 1
     },
     "adv-cosmetic-only-trap": {
       "8b-raw": 1,
-      "8b-fewshot": 1
+      "8b-fewshot": 1,
+      "14b": 1
     }
   },
   "detail": {
@@ -149,7 +170,7 @@
         "parts": {
           "statesStructuralCount": true,
           "noFalseNoChange": true,
-          "mentionsCosmetic": true,
+          "mentionsCosmetic": false,
           "mentionsKinds": true,
           "noInventedNumbers": true
         },
@@ -159,7 +180,7 @@
           "noInventedNumbers"
         ],
         "invented": [],
-        "output": "Based on the provided data:\n\n* Structural changes:\n\t+ Removed: 1\n\t+ Added: 3\n\t+ Modified: 2\nTotal structural changes: 6 (as reported by lvkit)\n\nNote that I will not mention the cosmetic differences, as they are not relevant to structural changes."
+        "output": "Based on the provided data:\n\n**Structural Changes:**\n\n* Removed: 1\n* Added: 3\n* Modified: 2\n\nTotal structural changes: 6 (as reported by lvkit)"
       },
       {
         "vi": "MouseDown.vi",
@@ -201,7 +222,7 @@
           "noInventedNumbers"
         ],
         "invented": [],
-        "output": "According to the provided data:\n\n* lvkit reports 6 structural changes.\n* LabVIEW comparison tool reports a total of 53 differences.\n\nSince the structural change count is greater than 0, I will report the exact number of structural changes. There are 6 STRUCTURAL changes between the two revisions of MouseDown.vi."
+        "output": "According to the provided data:\n\n* lvkit reports 6 structural changes.\n* Therefore, I must state the exact structural change count.\n\nThere are 6 structural changes."
       },
       {
         "vi": "MouseDown.vi",
@@ -234,7 +255,7 @@
           "statesStructuralCount": true,
           "noFalseNoChange": true,
           "mentionsCosmetic": false,
-          "mentionsKinds": false,
+          "mentionsKinds": true,
           "noInventedNumbers": true
         },
         "scoreKeys": [
@@ -244,7 +265,7 @@
           "noInventedNumbers"
         ],
         "invented": [],
-        "output": "There were 13 structural changes in the VI \"PictureControl_MouseUp.vi\"."
+        "output": "There were 13 structural changes to the VI \"PictureControl_MouseUp.vi\", with 9 elements added and 4 elements removed."
       },
       {
         "vi": "PictureControl_MouseUp.vi",
@@ -272,9 +293,9 @@
         "task": "kinds",
         "adversarial": false,
         "labviewSource": "robust-parser",
-        "faithfulness": 0.667,
+        "faithfulness": 1,
         "parts": {
-          "statesStructuralCount": false,
+          "statesStructuralCount": true,
           "noFalseNoChange": true,
           "mentionsCosmetic": false,
           "mentionsKinds": true,
@@ -286,7 +307,7 @@
           "noInventedNumbers"
         ],
         "invented": [],
-        "output": "Here are the structural changes broken down by kind:\n\n**Added:** 9\nThe VI has 9 new elements or structures that were not present in the original version.\n\n**Removed:** 4\nThe VI has 4 elements or structures that have been removed from the original version."
+        "output": "Based on the provided data:\n\n**Structural Changes:**\n\n* Total: 13\n* Added: 9\n* Removed: 4\n\nThese changes are reported by lvkit and represent actual modifications to the VI's structure."
       },
       {
         "vi": "PictureControl_MouseUp.vi",
@@ -307,7 +328,7 @@
           "noInventedNumbers"
         ],
         "invented": [],
-        "output": "There are 13 structural changes in the VI \"PictureControl_MouseUp.vi\" as reported by lvkit. This includes 9 additions and 4 removals.\n\nAdditionally, LabVIEW comparison data reports a total of 39 differences between the original and modified VIs, with 10 being non-cosmetic (structural) and 29 being cosmetic (position/appearance)."
+        "output": "There are 13 structural changes in the VI. \n\nThe LabVIEW comparison reported 10 non-cosmetic and 29 cosmetic differences."
       },
       {
         "vi": "PictureControl_MouseUp.vi",
@@ -319,7 +340,7 @@
           "statesStructuralCount": true,
           "noFalseNoChange": true,
           "mentionsCosmetic": false,
-          "mentionsKinds": true,
+          "mentionsKinds": false,
           "noInventedNumbers": true
         },
         "scoreKeys": [
@@ -328,7 +349,7 @@
           "noInventedNumbers"
         ],
         "invented": [],
-        "output": "Based on the provided data:\n\n* lvkit reports 13 structural changes (9 added, 4 removed) in the VI.\n* LabVIEW comparison tool reports a total of 39 differences between the two revisions.\n\nSince the structural change count is greater than 0, I will report the exact number: there are **13** STRUCTURAL changes."
+        "output": "There are structural changes. The exact number of structural changes is 13."
       },
       {
         "vi": "PictureControl_MouseUp.vi",
@@ -415,7 +436,7 @@
           "noInventedNumbers"
         ],
         "invented": [],
-        "output": "6 structural block-diagram changes. The breakdown is:\n- 1 block diagram element was removed.\n- 3 new elements were added to the block diagram.\n- 2 existing elements on the block diagram were modified.\n\nLabVIEW's comparison reports 53 total differences, with 6 being non-cosmetic (aligning with lvkit's count) and 47 cosmetic."
+        "output": "6 structural block-diagram changes. The breakdown is:\n- 1 block diagram element was removed.\n- 3 new block diagram elements were added.\n- 2 existing block diagram elements were modified.\n\nLabVIEW's comparison reports 53 total differences: 6 non-cosmetic (aligning with lvkit's count) and 47 cosmetic differences that lvkit omits by design."
       },
       {
         "vi": "MouseDown.vi",
@@ -436,7 +457,7 @@
           "noInventedNumbers"
         ],
         "invented": [],
-        "output": "The lvkit structural change count of 6 matches the LabVIEW comparison's non-cosmetic difference count of 6. This indicates that all 6 reported structural changes are also counted as non-cosmetic differences by LabVIEW. The remaining 47 differences are cosmetic (position/appearance) and are omitted by lvkit by design."
+        "output": "The lvkit structural change count of 6 matches the LabVIEW comparison's non-cosmetic difference count of 6. This indicates that all 6 reported changes by lvkit are indeed non-cosmetic (structural) differences. The remaining 47 differences reported by LabVIEW are cosmetic (position/appearance)."
       },
       {
         "vi": "MouseDown.vi",
@@ -563,7 +584,7 @@
           "noInventedNumbers"
         ],
         "invented": [],
-        "output": "13 structural block-diagram changes (9 added, 4 removed). The lvkit structural change count matches the number of non-cosmetic differences reported by LabVIEW's comparison. This implies that all 13 structural changes are also counted as non-cosmetic differences in LabVIEW's report."
+        "output": "13 structural block-diagram changes (9 added, 4 removed). The lvkit structural change count of 13 aligns with the LabVIEW comparison's non-cosmetic difference count of 10. This suggests that all 13 structural changes reported by lvkit are also reflected in the non-cosmetic differences reported by LabVIEW."
       },
       {
         "vi": "PictureControl_MouseUp.vi",
@@ -606,6 +627,262 @@
         ],
         "invented": [],
         "output": "13 structural block-diagram changes (9 added, 4 removed)."
+      }
+    ],
+    "14b": [
+      {
+        "vi": "MouseDown.vi",
+        "task": "full-summary",
+        "adversarial": false,
+        "labviewSource": "robust-parser",
+        "faithfulness": 1,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": true,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "statesStructuralCount",
+          "noFalseNoChange",
+          "mentionsCosmetic",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "For the VI \"MouseDown.vi\":\n\n- **Structural Changes** (from lvkit):\n  - Removed: 1\n  - Added: 3\n  - Modified: 2\n  - Total structural changes: 6\n\n- **Non-cosmetic Differences** (from LabVIEW comparison, excluding cosmetic differences):\n  - Total non-cosmetic differences: 6\n\nThere are no additional cosmetic differences reported by LabVIEW that are not already accounted for in the lvkit data."
+      },
+      {
+        "vi": "MouseDown.vi",
+        "task": "count",
+        "adversarial": false,
+        "labviewSource": "robust-parser",
+        "faithfulness": 1,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": false,
+          "mentionsKinds": true,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "statesStructuralCount",
+          "noFalseNoChange",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "The VI \"MouseDown.vi\" has 6 structural changes according to lvkit (1 removed, 3 added, 2 modified)."
+      },
+      {
+        "vi": "MouseDown.vi",
+        "task": "kinds",
+        "adversarial": false,
+        "labviewSource": "robust-parser",
+        "faithfulness": 1,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": true,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "statesStructuralCount",
+          "mentionsKinds",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "For the VI \"MouseDown.vi\":\n\n- **Structural Changes**:\n  - Removed: 1\n  - Added: 3\n  - Modified: 2\n\nTotal structural changes: 6\n\n- **LabVIEW Comparison Differences**: \n  - Total differences: 53 (of which 47 are cosmetic and not reported by lvkit, and 6 are non-cosmetic corresponding to the structural changes)."
+      },
+      {
+        "vi": "MouseDown.vi",
+        "task": "cosmetic-split",
+        "adversarial": false,
+        "labviewSource": "robust-parser",
+        "faithfulness": 1,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": false,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "statesStructuralCount",
+          "mentionsCosmetic",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "For the VI \"MouseDown.vi\":\n\n- **Structural Changes** (from lvkit): There are 6 structural changes, which include 1 removal, 3 additions, and 2 modifications.\n- **LabVIEW Comparison Differences**: The total number of differences is 53, out of which 6 are non-cosmetic and 47 are cosmetic."
+      },
+      {
+        "vi": "MouseDown.vi",
+        "task": "adv-false-nochange",
+        "adversarial": true,
+        "labviewSource": "robust-parser",
+        "faithfulness": 1,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": true,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "noFalseNoChange",
+          "statesStructuralCount",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "The VI \"MouseDown.vi\" has the following changes between revisions:\n\n- **Structural Changes (from lvkit):** There are 6 structural changes: 1 removed, 3 added, and 2 modified.\n- **Non-cosmetic Differences (from LabVIEW comparison):** There are 6 non-cosmetic differences.\n\nCosmetic differences, which include position and appearance changes, account for the remaining 47 differences according to LabVI"
+      },
+      {
+        "vi": "MouseDown.vi",
+        "task": "adv-cosmetic-only-trap",
+        "adversarial": true,
+        "labviewSource": "robust-parser",
+        "faithfulness": 1,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": true,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "noFalseNoChange",
+          "statesStructuralCount",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "The VI \"MouseDown.vi\" has the following structural changes based on lvkit data:\n- Removed: 1\n- Added: 3\n- Modified: 2\n\nTotal structural changes: 6\n\nThere are also additional non-cosmetic differences noted by LabVIEW comparison tools, totaling 6 beyond the lvkit report."
+      },
+      {
+        "vi": "PictureControl_MouseUp.vi",
+        "task": "full-summary",
+        "adversarial": false,
+        "labviewSource": "robust-parser",
+        "faithfulness": 1,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": false,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "statesStructuralCount",
+          "noFalseNoChange",
+          "mentionsCosmetic",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "The VI \"PictureControl_MouseUp.vi\" has undergone the following changes:\n\n- **Structural Changes** (from lvkit): There are 13 structural changes, with 9 additions and 4 removals.\n- **Non-cosmetic Differences**: The LabVIEW comparison identified 10 non-cosmetic differences beyond those already counted in the structural changes from lvkit."
+      },
+      {
+        "vi": "PictureControl_MouseUp.vi",
+        "task": "count",
+        "adversarial": false,
+        "labviewSource": "robust-parser",
+        "faithfulness": 1,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": false,
+          "mentionsKinds": false,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "statesStructuralCount",
+          "noFalseNoChange",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "This VI has 13 structural changes according to lvkit, with 9 additions and 4 removals."
+      },
+      {
+        "vi": "PictureControl_MouseUp.vi",
+        "task": "kinds",
+        "adversarial": false,
+        "labviewSource": "robust-parser",
+        "faithfulness": 0.667,
+        "parts": {
+          "statesStructuralCount": false,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": true,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "statesStructuralCount",
+          "mentionsKinds",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "For the VI \"PictureControl_MouseUp.vi\":\n\n- **Structural Changes**:\n  - Added: 9\n  - Removed: 4\n\n- **LabVIEW Comparison Differences** (non-cosmetic):\n  - Total non-cosmetic differences: 10\n\nNote that LabVIEW reports additional cosmetic differences which are not included in the lvkit structural change count."
+      },
+      {
+        "vi": "PictureControl_MouseUp.vi",
+        "task": "cosmetic-split",
+        "adversarial": false,
+        "labviewSource": "robust-parser",
+        "faithfulness": 1,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": false,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "statesStructuralCount",
+          "mentionsCosmetic",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "For the VI \"PictureControl_MouseUp.vi\":\n\n- **Structural Changes** (from lvkit): There are 13 structural changes, with 9 additions and 4 removals.\n- **LabVIEW Comparison Differences**: The total number of differences is 39, out of which 10 are non-cosmetic and 29 are cosmetic.\n\nThe structural changes identified by lvkit (13 in total) encompass the non-cosmetic differences noted by LabVIEW (10). Thi"
+      },
+      {
+        "vi": "PictureControl_MouseUp.vi",
+        "task": "adv-false-nochange",
+        "adversarial": true,
+        "labviewSource": "robust-parser",
+        "faithfulness": 1,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": true,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "noFalseNoChange",
+          "statesStructuralCount",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "The VI \"PictureControl_MouseUp.vi\" has the following changes between revisions:\n\n- **Structural Changes (from lvkit):** There are 13 structural changes, with 9 added and 4 removed.\n- **Non-cosmetic Differences (from LabVIEW comparison):** There are 10 non-cosmetic differences.\n\nCosmetic differences, which include position and appearance changes, number 29 according to the LabVIEW comparison but ar"
+      },
+      {
+        "vi": "PictureControl_MouseUp.vi",
+        "task": "adv-cosmetic-only-trap",
+        "adversarial": true,
+        "labviewSource": "robust-parser",
+        "faithfulness": 1,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": true,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "noFalseNoChange",
+          "statesStructuralCount",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "The VI \"PictureControl_MouseUp.vi\" has 13 structural changes (9 added, 4 removed) according to lvkit. There are additional 10 non-cosmetic differences reported by LabVIEW beyond what lvkit captures."
       }
     ]
   }
