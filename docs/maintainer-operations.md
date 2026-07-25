@@ -503,6 +503,34 @@ Point it at any PR change surface with `VIHS_MCP_REPO`, `VIHS_MCP_BASE`, and
 PR, and set `VIHS_MCP_OUT` to write the typed evidence JSON. It exits `0` on a full
 pass and `1` on any assertion failure.
 
+### MCP review of an unstaged working-tree edit in a Linux container
+
+`scripts/validateMcpLinuxWorktreeE2E.mjs` proves the on-demand **operator**
+path — reviewing a VI a human is currently editing (an uncommitted working-tree
+change) against its committed HEAD — end-to-end against real LabVIEW in a **Linux**
+LabVIEW container. It is the workflow a local LLM runner (for example Ollama) will
+drive through this same MCP server so an operator can ask "what did my in-progress
+VI edit change?" without committing first. It drives the shipped MCP server as a
+real stdio client, creates a reversible uncommitted edit, and calls
+`compare_vi_revisions` with `selectedHash="WORKTREE"` and a Linux-container
+runtime, then validates the produced model and repeats the (uncached) comparison
+to prove it is deterministic. The working tree is always restored on the way out,
+even on error.
+
+Prerequisites: Docker in **Linux-container** mode with the image pulled
+(`docker pull nationalinstruments/labview:2026q1patch2-linux`) and a local Git
+clone whose target VI is clean. Run it from the repo root after `npm run compile`:
+
+```powershell
+npm run compile
+npm run mcp:worktree:e2e
+```
+
+Override `VIHS_MCP_REPO`, `VIHS_MCP_VI`, `VIHS_MCP_BASE`, and `VIHS_MCP_ALT` to
+target any repo / VI / edit source (`VIHS_MCP_ALT` supplies the bytes written as
+the uncommitted edit); set `VIHS_MCP_OUT` to write the typed evidence JSON. It
+exits `0` on a full pass and `1` on any assertion failure.
+
 ## Linux/LabVIEW Runner
 
 The Linux maintainer runner is the sibling of the Windows runner above: a
