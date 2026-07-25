@@ -24,6 +24,9 @@
 // Message types: CLAIM, ACK, PROGRESS, DONE, BLOCKED, HANDOFF, QUESTION, ANSWER, NOTE.
 
 import { execFileSync } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
 
 const OWNER = process.env.VIHS_COLLAB_OWNER || 'LabVIEW-Community-CI-CD';
 const REPO = process.env.VIHS_COLLAB_REPO || 'vi-history-suite';
@@ -32,7 +35,15 @@ const TITLE = process.env.VIHS_COLLAB_TITLE || 'Prototype handshake: Ollama × M
 const AGENT = (process.env.VIHS_COLLAB_AGENT || (process.platform === 'win32' ? 'WIN' : 'LINUX')).toUpperCase();
 const BRANCH = 'prototype/ollama-mcp-linux-collab';
 const SCHEMA = 'vihs-collab-msg@v1';
-const TYPES = new Set(['CLAIM', 'ACK', 'PROGRESS', 'DONE', 'BLOCKED', 'HANDOFF', 'QUESTION', 'ANSWER', 'NOTE']);
+const TYPES = new Set(['CLAIM', 'ACK', 'PROGRESS', 'DONE', 'BLOCKED', 'HANDOFF', 'QUESTION', 'ANSWER', 'NOTE', 'READY', 'AUTHORIZE', 'REFINE']);
+
+// Readiness-probe targets (used by `checkin`), all env-overridable.
+const OLLAMA = process.env.VIHS_OLLAMA_URL || 'http://localhost:11434';
+const MODEL = process.env.VIHS_OLLAMA_MODEL || 'llama3.1:8b';
+const IMAGE = 'nationalinstruments/labview:' + (process.env.VIHS_MCP_IMAGE_VERSION || '2026q1patch2-linux');
+const CORPUS = process.env.VIHS_MCP_REPO || (process.platform === 'win32' ? 'C:\\repos\\labview-icon-editor' : path.join(os.homedir(), 'repos', 'labview-icon-editor'));
+const CORPUS_BASE = process.env.VIHS_MCP_BASE || '9545c483f2b947c71de68c7f70aedefaedadabf7';
+const CORPUS_HEAD = process.env.VIHS_MCP_ALT || 'f57c3cfd6494abf1da968ddcc116222e93e953b4';
 
 function gh(args) {
   try {
@@ -103,6 +114,8 @@ function renderBody(msg) {
   if (msg.ref) lines.push('- ref: `' + msg.ref + '`');
   if (msg.next) lines.push('- next: ' + msg.next);
   if (msg.to) lines.push('- to: ' + msg.to);
+  if (msg.checks) lines.push('', 'checks: ' + Object.entries(msg.checks).map(([k, v]) => k + '=' + (v === true ? 'ok' : v === false ? 'FAIL' : v === null ? '-' : v)).join(', '));
+  if (Array.isArray(msg.blockers) && msg.blockers.length) lines.push('', 'blockers:', ...msg.blockers.map((b) => '- ' + b));
   lines.push('', '```json', JSON.stringify(msg), '```');
   return lines.join('\n');
 }
@@ -136,10 +149,84 @@ function readMessages(limit = 50) {
   return { discussion: d, messages };
 }
 
-function main() {
+function sh(cmd, args) {
+  try {
+    return execFileSync(cmd, args, { encoding: 'utf8', timeout: 30000 }).trim();
+  } catch {
+    return null;
+  }
+}
+async function httpJson(url) {
+  try {
+    const r = await fetch(url, { signal: AbortSignal.timeout(4000) });
+    return r.ok ? await r.json() : null;
+  } catch {
+    return null;
+  }
+}
+
+// Probe the local environment so the other agent can decide GO / REFINE.
+async function probeEnv() {
+  const c = {};
+  c.platform = process.platform;
+  c.node = process.version;
+  c.npm = sh('npm', ['--version']);
+  c.branch = sh('git', ['rev-parse', '--abbrev-ref', 'HEAD']);
+  c.head = sh('git', ['rev-parse', '--short', 'HEAD']);
+  c.clean = sh('git', ['status', '--porcelain']) === '';
+  sh('git', ['fetch', 'origin', BRANCH]);
+  const local = sh('git', ['rev-parse', 'HEAD']);
+  const remote = sh('git', ['rev-parse', 'origin/' + BRANCH]);
+  c.inSyncWithOrigin = Boolean(local && remote && local === remote);
+  c.compiled = fs.existsSync(path.join(process.cwd(), 'out', 'cli', 'runViSemanticMcpServer.js'));
+  c.dockerServerOs = sh('docker', ['version', '--format', '{{.Server.Os}}']);
+  c.image = sh('docker', ['image', 'inspect', IMAGE, '--format', '{{.Id}}']) ? IMAGE : null;
+  const ov = await httpJson(OLLAMA + '/api/version');
+  c.ollama = ov ? (ov.version || true) : null;
+  const tags = await httpJson(OLLAMA + '/api/tags');
+  c.model = tags && (tags.models || []).some((m) => m.name === MODEL || m.name === MODEL + ':latest') ? MODEL : null;
+  c.corpus = fs.existsSync(CORPUS) ? CORPUS : null;
+  if (c.corpus) {
+    c.corpusClean = sh('git', ['-C', CORPUS, 'status', '--porcelain']) === '';
+    c.corpusBase = Boolean(sh('git', ['-C', CORPUS, 'cat-file', '-t', CORPUS_BASE]));
+    c.corpusHead = Boolean(sh('git', ['-C', CORPUS, 'cat-file', '-t', CORPUS_HEAD]));
+  }
+  c.gh = Boolean(sh('gh', ['auth', 'token']));
+  return c;
+}
+
+function readinessBlockers(c) {
+  const b = [];
+  if (c.branch !== BRANCH) b.push(`not on branch ${BRANCH} (on ${c.branch})`);
+  if (!c.inSyncWithOrigin) b.push('local HEAD is not in sync with origin/' + BRANCH + ' (git pull --rebase)');
+  if (!c.compiled) b.push('out/ not built (npm ci && npm run compile)');
+  if (c.dockerServerOs !== 'linux') b.push(`docker engine is "${c.dockerServerOs}", not linux`);
+  if (!c.image) b.push(`image ${IMAGE} missing (docker pull ${IMAGE})`);
+  if (!c.ollama) b.push('ollama not reachable at ' + OLLAMA);
+  if (!c.model) b.push(`model ${MODEL} not pulled (ollama pull ${MODEL})`);
+  if (!c.corpus) b.push('corpus repo missing (clone it and set VIHS_MCP_REPO)');
+  if (c.corpus && (!c.corpusBase || !c.corpusHead)) b.push('corpus missing base/head commits (git fetch origin pull/537/head)');
+  if (!c.gh) b.push('gh not authenticated (gh auth login)');
+  return b;
+}
+
+// The Linux agent's FIRST action on the single-word kickoff trigger: probe the
+// environment and post READY (all green) or BLOCKED (with the exact remedies).
+async function checkin(a) {
+  const checks = await probeEnv();
+  const blockers = readinessBlockers(checks);
+  const type = blockers.length ? 'BLOCKED' : 'READY';
+  const msg = blockers.length
+    ? 'Not ready — ' + blockers.length + ' blocker(s). See remedies below.'
+    : `Ready on ${checks.platform} (node ${checks.node}, docker=${checks.dockerServerOs}, image ok, ollama=${checks.ollama}/${MODEL}, corpus clean & at base/head, branch in sync). Awaiting AUTHORIZE.`;
+  const r = post({ type, task: a.task || 'kickoff', ref: checks.head || undefined, msg, checks, blockers });
+  console.log('posted ' + type + ' ' + r.comment.url);
+  for (const b of blockers) console.log('  BLOCKER: ' + b);
+}
+
+async function main() {
   const [cmd, ...rest] = process.argv.slice(2);
   const a = parseArgs(rest);
-  if (a.agent && cmd !== 'poll') { /* agent override only meaningful for poll filter */ }
 
   if (cmd === 'init') {
     const d = ensureDiscussion();
@@ -157,8 +244,13 @@ function main() {
     for (const m of out) console.log(`[${m.ts}] ${m.agent} ${m.type}${m.task ? ' ' + m.task : ''}${m.ref ? ' @' + m.ref : ''}${m.msg ? ' — ' + m.msg : ''}`);
     return;
   }
-  if (!TYPES.has((cmd || '').toUpperCase()) && !['claim', 'ack', 'done', 'handoff'].includes(cmd)) {
-    console.error('usage: init | poll | post --type T --task X | claim|ack|done|handoff --task X ...');
+  if (cmd === 'checkin') {
+    await checkin(a);
+    return;
+  }
+  const SPECIAL = ['claim', 'ack', 'done', 'handoff', 'authorize', 'refine'];
+  if (!TYPES.has((cmd || '').toUpperCase()) && !SPECIAL.includes(cmd)) {
+    console.error('usage: init | poll | checkin | post --type T --task X | claim|ack|done|handoff|authorize|refine --task X ...');
     process.exit(2);
   }
 
@@ -179,6 +271,8 @@ function main() {
   if (cmd === 'ack') { const r = post({ type: 'ACK', task: req(a, 'task'), msg: a.msg || undefined }); console.log('posted ACK ' + r.comment.url); return; }
   if (cmd === 'done') { const r = post({ type: 'DONE', task: req(a, 'task'), ref: a.ref || undefined, msg: a.msg || undefined, next: a.next || undefined }); console.log('posted DONE ' + r.comment.url); return; }
   if (cmd === 'handoff') { const r = post({ type: 'HANDOFF', task: req(a, 'task'), to: a.to || undefined, ref: a.ref || undefined, msg: a.msg || undefined }); console.log('posted HANDOFF ' + r.comment.url); return; }
+  if (cmd === 'authorize') { const r = post({ type: 'AUTHORIZE', task: req(a, 'task'), to: a.to || 'LINUX', ref: a.ref || undefined, msg: a.msg || undefined, next: a.next || undefined }); console.log('posted AUTHORIZE ' + r.comment.url); return; }
+  if (cmd === 'refine') { const r = post({ type: 'REFINE', task: req(a, 'task'), ref: req(a, 'ref'), to: a.to || 'LINUX', msg: a.msg || undefined, next: a.next || undefined }); console.log('posted REFINE ' + r.comment.url); return; }
 
   // generic post
   const type = cmd.toUpperCase();
@@ -191,4 +285,4 @@ function req(a, key) {
   return String(a[key]);
 }
 
-main();
+main().catch((e) => { console.error(e.message || e); process.exit(1); });

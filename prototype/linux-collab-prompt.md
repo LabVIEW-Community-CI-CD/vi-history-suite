@@ -41,6 +41,40 @@ claiming it on the bus and seeing no live conflicting claim.
 
 ---
 
+## FIRST ACTION — kickoff check-in (do this before anything else)
+
+The operator starts you with a **single word**. On that trigger, do **exactly
+this and nothing else**:
+
+```bash
+export VIHS_COLLAB_AGENT=LINUX
+export VIHS_MCP_REPO="$HOME/repos/labview-icon-editor"   # your Linux corpus path
+git switch prototype/ollama-mcp-linux-collab && git pull --rebase
+node prototype/collab.mjs checkin
+```
+
+`checkin` probes your environment — branch + in-sync-with-origin, `npm` + built
+`out/`, Docker **Linux** engine + the `2026q1patch2-linux` image, Ollama + the
+`llama3.1:8b` model, the corpus repo + PR #537 base/head commits, and `gh` auth —
+and posts a **READY** (all green) or **BLOCKED** (with the exact remedy for each
+gap) message to Discussion #2365. **Then STOP and wait. Do not run any validators
+yet.**
+
+The Windows agent polls the thread, reads your `checks`, and replies with one of:
+
+- **AUTHORIZE** (task `kickoff`, `to: LINUX`) → you are cleared. Proceed to *Run
+  the Linux-native validators* below.
+- **REFINE** (carries a `ref` SHA) → the Windows agent pushed a flow refinement.
+  Run `git pull --rebase`, then `node prototype/collab.mjs checkin` again, and wait
+  once more.
+
+Watch for the decision with `node prototype/collab.mjs poll --type AUTHORIZE` and
+`--type REFINE`. If your own check-in was **BLOCKED**, fix the listed blockers
+(the Set-up section has every command), then re-run `checkin` — you don't need to
+wait for the Windows agent to clear an environment gap you can fix yourself.
+
+---
+
 ## What already exists on this branch (built + validated on Windows)
 
 Commit stack on top of `develop` (read the commit messages for detail):
@@ -180,11 +214,14 @@ status bus*; the branch is the *artifact channel*. Identify yourself with
 The `prototype/collab.mjs` helper wraps the Discussions GraphQL API. Every
 message is a Discussion comment that is both prose and a fenced
 `vihs-collab-msg@v1` JSON block (fields: `agent`, `type`, `task`, `ts`, `ref`,
-`msg`, `next`, `to`). Message types: `CLAIM`, `ACK`, `PROGRESS`, `DONE`,
-`BLOCKED`, `HANDOFF`, `QUESTION`, `ANSWER`, `NOTE`.
+`msg`, `next`, `to`, `checks`). Message types: `READY`, `AUTHORIZE`, `REFINE`,
+`CLAIM`, `ACK`, `PROGRESS`, `DONE`, `BLOCKED`, `HANDOFF`, `QUESTION`, `ANSWER`,
+`NOTE` (the Windows agent sends `AUTHORIZE`/`REFINE`; you send `READY`/`BLOCKED`
+via `checkin`, then `PROGRESS`/`DONE`/`HANDOFF`).
 
 ```bash
 export VIHS_COLLAB_AGENT=LINUX
+node prototype/collab.mjs checkin                      # kickoff readiness probe -> READY/BLOCKED (your FIRST action)
 node prototype/collab.mjs poll                         # read recent handshake messages
 node prototype/collab.mjs claim --task <id> --msg "…"  # advisory lock; warns on a live conflicting claim
 node prototype/collab.mjs ack   --task <id>            # acknowledge the other agent's claim/handoff
