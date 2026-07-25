@@ -54,17 +54,13 @@ async function main() {
   console.log(`[cal] ffmpeg=${FFMPEG} chrome=${existsSync(CHROME)} corner=${CW}x${CH} reuse=${REUSE}`);
   if (!REUSE) {
     writeFileSync(htmlPath, calRenderer.renderMprrCalibrationSurfaceHtml({ width: CW, height: CH }), 'utf8');
-    // Corner app window at the top-left. NOTE (finding): on this host Chrome opened a
-    // TITLED window (not borderless) at ~125% DPI, so the surface landed offset below a
-    // title bar and scaled ~1.25x -> assumed (0,0,CW,CH) sampling missed it (0/8).
-    // --force-device-scale-factor=1 fixes the DPI; a robust corner composite still needs
-    // to DETECT the surface rect in-frame (title-bar/border offset) rather than assume it.
-    // The FULLSCREEN decode (proveStopwatchCapture / driver E5) has no such offset and is
-    // the proven spatial+timing path; corner-composite remains a geometry TODO.
+    // FULLSCREEN kiosk (like the proven stopwatch capture): no title bar and full-screen room,
+    // so the fixed-px surface is NEVER clipped (the corner --window-size approach clipped the
+    // bottom markers at 1.25x DPI). The surface renders at the top-left with white padding; the
+    // black-border surface-rect detection below locates it exactly regardless of scale/padding.
     const chrome = spawn(CHROME, [
       `--user-data-dir=${join(outDir, 'chrome-profile')}`, '--no-first-run', '--no-default-browser-check',
-      '--disable-extensions', '--disable-gpu', '--force-device-scale-factor=1',
-      `--window-position=0,0`, `--window-size=${CW},${CH}`,
+      '--disable-extensions', '--disable-gpu', '--kiosk',
       `--app=file:///${htmlPath.split('\\').join('/')}`
     ], { windowsHide: false });
     await sleep(2500);
@@ -74,22 +70,70 @@ async function main() {
   }
   if (!existsSync(capMp4)) { console.error('[cal] no capture'); process.exit(1); }
 
-  // Desktop dims; extract frame 0 corner [0,0,CW,CH] (scale-normalize first: gdigrab res-change).
+  // Desktop dims; extract a generous top-left SEARCH region (scale-normalize first: gdigrab
+  // can emit a transient resolution change that zeros a fixed crop).
   const probe = spawnSync(FFPROBE, ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=width,height', '-of', 'csv=p=0', capMp4], { encoding: 'utf8' });
   const [dw, dh] = (probe.stdout || '').trim().split(',').map(Number);
+  const srW = Math.min(dw, 1200);
+  const srH = Math.min(dh, 820);
   spawnSync(FFMPEG, ['-hide_banner', '-loglevel', 'error', '-i', capMp4,
-    '-vf', `scale=${dw}:${dh}:flags=neighbor,crop=w=${CW}:h=${CH}:x=0:y=0`, '-frames:v', '1', '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-y', cornerRaw], { encoding: 'utf8' });
+    '-vf', `scale=${dw}:${dh}:flags=neighbor,crop=w=${srW}:h=${srH}:x=0:y=0`, '-frames:v', '1', '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-y', cornerRaw], { encoding: 'utf8' });
   const buf = readFileSync(cornerRaw);
   const getPixel = (x, y) => {
-    const xi = Math.max(0, Math.min(CW - 1, Math.round(x)));
-    const yi = Math.max(0, Math.min(CH - 1, Math.round(y)));
-    const o = (yi * CW + xi) * 3;
+    const xi = Math.max(0, Math.min(srW - 1, Math.round(x)));
+    const yi = Math.max(0, Math.min(srH - 1, Math.round(y)));
+    const o = (yi * srW + xi) * 3;
     return { r: buf[o], g: buf[o + 1], b: buf[o + 2] };
   };
 
+  // AUTO-DETECT the calibration surface rect via the large contiguous WHITE field. This is
+  // scale- AND offset-invariant, so it absorbs the Chrome title-bar offset and any DPI
+  // scaling (the earlier assumed-(0,0,CWxCH) approach failed on both). White projection on
+  // rows/cols, then the contiguous band around each projection's peak.
+  const isWhite = (x, y) => { const p = getPixel(x, y); return p.r >= 235 && p.g >= 235 && p.b >= 235; };
+  const rowWhite = new Array(srH).fill(0);
+  const colWhite = new Array(srW).fill(0);
+  for (let y = 0; y < srH; y += 1) {
+    for (let x = 0; x < srW; x += 1) {
+      if (isWhite(x, y)) { rowWhite[y] += 1; colWhite[x] += 1; }
+    }
+  }
+  const contiguousBand = (arr) => {
+    const max = Math.max(...arr);
+    if (max <= 0) return null;
+    // Low fraction (0.2) so the marker-heavy EDGE rows/cols (3 markers cut the white count)
+    // are still included -- a 0.5 threshold clipped the bottom-marker band. The title bar
+    // (not white) and the dark desktop below bound the band naturally.
+    const thr = max * 0.2;
+    const peak = arr.indexOf(max);
+    let lo = peak; while (lo > 0 && arr[lo - 1] > thr) lo -= 1;
+    let hi = peak; while (hi < arr.length - 1 && arr[hi + 1] > thr) hi += 1;
+    return { lo, hi };
+  };
+  const rows = contiguousBand(rowWhite);
+  const cols = contiguousBand(colWhite);
+  if (!rows || !cols) { console.error('[cal] no white field detected in the capture'); process.exit(1); }
+  // Precise surface OUTER edges via the black BORDER scanned along MARKER-FREE lines. Markers
+  // sit at 0/45/91% of each axis, so 25% is marker-free; scanning out from an interior seed to
+  // the first black pixel finds the border edge -- immune to DPI scale, the title-bar offset,
+  // and surrounding white padding (all the things that broke the assumed-rect + aspect guesses).
+  const isDark = (x, y) => { const p = getPixel(x, y); return p.r < 60 && p.g < 60 && p.b < 60; };
+  const scanH = (y, xStart, dir) => { let v = xStart; while (v > 0 && v < srW - 1 && !isDark(v, y)) v += dir; return v; };
+  const scanV = (x, yStart, dir) => { let v = yStart; while (v > 0 && v < srH - 1 && !isDark(x, v)) v += dir; return v; };
+  const roughW = cols.hi - cols.lo + 1;
+  const seedX = Math.round(cols.lo + roughW * 0.25); // marker-free column (between left & center markers)
+  const seedY = Math.round(rows.lo + roughW * 0.30); // an interior white pixel, safely below the top markers
+  const topB = scanV(seedX, seedY, -1);
+  const botB = scanV(seedX, seedY, +1);
+  const scanY = Math.round(topB + (botB - topB) * 0.25); // marker-free row (below top markers, above mid)
+  const leftB = scanH(scanY, seedX, -1);
+  const rightB = scanH(scanY, seedX, +1);
+  const surfaceRect = { left: leftB, top: topB, width: rightB - leftB, height: botB - topB };
+  console.log(`[cal] detected surface rect (black-border): left=${surfaceRect.left} top=${surfaceRect.top} w=${surfaceRect.width} h=${surfaceRect.height}`);
+
   const markers = calMod.MPRR_CALIBRATION_MARKERS.map((m) => {
-    const rect = calRenderer.resolveMarkerRect({ width: CW, height: CH }, m);
-    const detectedColorRgb = getPixel(rect.left + rect.width / 2, rect.top + rect.height / 2);
+    const rect = calRenderer.resolveMarkerRect({ width: surfaceRect.width, height: surfaceRect.height }, m);
+    const detectedColorRgb = getPixel(surfaceRect.left + rect.left + rect.width / 2, surfaceRect.top + rect.top + rect.height / 2);
     return { id: m.id, detectedColorRgb, withinExpectedBounds: true };
   });
   const result = calMod.evaluateMprrCalibration({ borderVisible: true, markers });
@@ -98,6 +142,7 @@ async function main() {
     schema: 'vi-history-suite/win-corner-calibration-proof@v1',
     generatedAt: new Date().toISOString(),
     capture: { desktopWidth: dw, desktopHeight: dh, cornerW: CW, cornerH: CH },
+    detectedSurfaceRect: surfaceRect,
     detectedMarkerCount: result.detectedMarkerCount,
     expectedMarkerCount: result.expectedMarkerCount ?? 8,
     calibrated: result.calibrated,
