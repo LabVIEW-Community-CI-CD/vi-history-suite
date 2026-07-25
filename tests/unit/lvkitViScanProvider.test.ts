@@ -198,6 +198,19 @@ describe('createLvkitViScanProvider (VHS-REQ-714.3)', () => {
     expect(placeholder.mock.calls[0][1]).toContain('--placeholder-on-unresolved');
   });
 
+  it('passes a caller projectRoot to lvkit --project-root when set, else an isolated temp store (#2374)', async () => {
+    const custom = vi.fn(async () => ({ stdout: '', stderr: '' }));
+    await createLvkitViScanProvider(baseDeps({ execFileAsync: custom }))({ ...INPUT, projectRoot: '/tmp/cleanroom-lvkit' });
+    const customArgs = custom.mock.calls[0][1];
+    expect(customArgs[customArgs.indexOf('--project-root') + 1]).toBe('/tmp/cleanroom-lvkit');
+
+    const isolated = vi.fn(async () => ({ stdout: '', stderr: '' }));
+    await createLvkitViScanProvider(baseDeps({ execFileAsync: isolated }))(INPUT);
+    const isolatedArgs = isolated.mock.calls[0][1];
+    // Default: an isolated per-run temp store dir (not a caller path).
+    expect(isolatedArgs[isolatedArgs.indexOf('--project-root') + 1]).toMatch(/store$/);
+  });
+
   it('removes the temporary workspace on the success path', async () => {
     const removeDir = vi.fn((dir: string) => rm(dir, { recursive: true, force: true }));
     const scan = createLvkitViScanProvider(baseDeps({ removeDir }));
