@@ -185,6 +185,19 @@ describe('createLvkitViScanProvider (VHS-REQ-714.3)', () => {
     expect(args[generateIndex + 1].replace(/\\/g, '/')).toMatch(/\/Make path absolute\.vi$/);
   });
 
+  it('omits --placeholder-on-unresolved by default and includes it when opted in (#2373)', async () => {
+    const strict = vi.fn(async () => ({ stdout: '', stderr: '' }));
+    await createLvkitViScanProvider(baseDeps({ execFileAsync: strict }))(INPUT);
+    expect(strict.mock.calls[0][1]).not.toContain('--placeholder-on-unresolved');
+
+    const placeholder = vi.fn(async () => ({ stdout: '', stderr: '' }));
+    await createLvkitViScanProvider(baseDeps({ execFileAsync: placeholder }))({
+      ...INPUT,
+      placeholderOnUnresolved: true
+    });
+    expect(placeholder.mock.calls[0][1]).toContain('--placeholder-on-unresolved');
+  });
+
   it('removes the temporary workspace on the success path', async () => {
     const removeDir = vi.fn((dir: string) => rm(dir, { recursive: true, force: true }));
     const scan = createLvkitViScanProvider(baseDeps({ removeDir }));
