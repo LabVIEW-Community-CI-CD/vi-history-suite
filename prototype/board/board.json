@@ -103,14 +103,14 @@
       "title": "Relay scaffolding vs model-size: is evidence-r2 sufficient across VIs? (8b vs 14b)",
       "issueUrl": "https://github.com/LabVIEW-Community-CI-CD/vi-history-suite/issues/2371",
       "fields": {
-        "status": "In Progress",
+        "status": "Done",
         "intakeStage": "Spawned",
         "sourceDiscussion": 2370,
         "origin": "collab"
       },
       "fieldMeta": {
         "status": {
-          "ts": "2026-07-25T11:25:27.072Z",
+          "ts": "2026-07-25T12:36:18.522Z",
           "by": "WIN"
         },
         "intakeStage": {
@@ -128,7 +128,7 @@
       },
       "remoteItemId": null,
       "createdAt": "2026-07-25T11:14:19.461Z",
-      "updatedAt": "2026-07-25T11:25:27.073Z",
+      "updatedAt": "2026-07-25T12:36:18.523Z",
       "syncedAt": null
     }
   ],
