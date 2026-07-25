@@ -1,0 +1,6 @@
+[
+  { "viPath": "resource/plugins/lv_icon.vi", "commit": "fe98acb" },
+  { "viPath": "resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/MouseDown.vi", "commit": "fe98acb" },
+  { "viPath": "resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/PictureControl_MouseUp.vi", "commit": "fe98acb" },
+  { "viPath": "resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/MenuSelection(User).vi", "commit": "fe98acb" }
+]

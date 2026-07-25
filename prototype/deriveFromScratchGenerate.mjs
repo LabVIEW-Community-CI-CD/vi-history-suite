@@ -54,8 +54,8 @@ async function loadCompiled(rel) {
   return import(path.sep === '\\' ? 'file://' + f.replace(/\\/g, '/') : f);
 }
 
-function gitBlob(vi) {
-  return execFileSync('git', ['-C', CORPUS, 'cat-file', '-p', `${COMMIT}:${vi}`], {
+function gitBlob(vi, commit) {
+  return execFileSync('git', ['-C', CORPUS, 'cat-file', '-p', `${commit}:${vi}`], {
     encoding: 'buffer',
     maxBuffer: 64 * 1024 * 1024
   });
@@ -81,10 +81,10 @@ const GEN_SCRIPT = [
   'if [ -d /tmp/out ]; then cd /tmp/out && tar cf - .; fi'
 ].join('; ');
 
-function generateModules(vi) {
+function generateModules(vi, commit) {
   const tarBytes = execFileSync(
     'docker',
-    ['run', '--rm', '-e', `C=${COMMIT}`, '-e', `V=${vi}`, '-v', `${CORPUS}:/repo:ro`, IMAGE, 'sh', '-c', GEN_SCRIPT],
+    ['run', '--rm', '-e', `C=${commit}`, '-e', `V=${vi}`, '-v', `${CORPUS}:/repo:ro`, IMAGE, 'sh', '-c', GEN_SCRIPT],
     { encoding: 'buffer', maxBuffer: 256 * 1024 * 1024 }
   );
   if (!tarBytes || tarBytes.length === 0) {
@@ -122,26 +122,38 @@ async function main() {
   const { createDefaultLvkitViScanStore, computeLvkitViScanStoreKey } = await loadCompiled('lvkitViScanStore.js');
   const store = createDefaultLvkitViScanStore(CORPUS);
 
-  let vis = listFirstCommitVis();
-  if (LIMIT > 0) {
-    vis = vis.slice(0, LIMIT);
+  // Two enumeration modes: a per-VI born-commit SET (VIHS_DFS_SET, a JSON array of
+  // { viPath, commit } for corpora like icon-editor where first appearances are
+  // scattered across commits), else every VI present at a single born COMMIT (for
+  // corpora like SerialPortNuggets where one commit adds them all).
+  const SET = process.env.VIHS_DFS_SET;
+  let entries;
+  if (SET) {
+    entries = JSON.parse(fs.readFileSync(SET, 'utf8')).map((e) => ({ viPath: e.viPath, commit: e.commit || COMMIT }));
+    log(`${entries.length} first-commit VI(s) from set ${SET} in ${CORPUS}`);
+  } else {
+    let vis = listFirstCommitVis();
+    if (LIMIT > 0) {
+      vis = vis.slice(0, LIMIT);
+    }
+    entries = vis.map((vi) => ({ viPath: vi, commit: COMMIT }));
+    log(`${entries.length} first-commit VI(s) at ${COMMIT} in ${CORPUS}`);
   }
-  log(`${vis.length} first-commit VI(s) at ${COMMIT} in ${CORPUS}`);
 
   const evidence = {
     schema: 'vi-history-suite/derive-from-scratch-linux@v1',
     generatedAt: new Date().toISOString(),
     corpus: CORPUS,
-    commit: COMMIT,
+    commit: SET ? 'per-vi-set' : COMMIT,
     image: IMAGE,
     runtime: RUNTIME,
     storeDir: path.join(CORPUS, '.vihs', 'cache', 'lvkit-vi-scan'),
     entries: []
   };
 
-  for (const vi of vis) {
-    const contentSignature = 'sha256:' + crypto.createHash('sha256').update(gitBlob(vi)).digest('hex');
-    const modules = generateModules(vi);
+  for (const { viPath: vi, commit } of entries) {
+    const contentSignature = 'sha256:' + crypto.createHash('sha256').update(gitBlob(vi, commit)).digest('hex');
+    const modules = generateModules(vi, commit);
     if (!modules.length) {
       evidence.entries.push({ vi, ok: false, reason: 'no-generated-output' });
       log(`  ! ${path.basename(vi)}: no generated output`);
@@ -167,6 +179,7 @@ async function main() {
     const cleanGenerate = envelope.errorModuleCount === 0;
     evidence.entries.push({
       vi,
+      commit,
       ok: true,
       stored,
       key,
@@ -182,7 +195,7 @@ async function main() {
   const withOutput = evidence.entries.filter((e) => e.ok);
   const cleanGenerate = withOutput.filter((e) => e.cleanGenerate);
   evidence.summary = {
-    total: vis.length,
+    total: entries.length,
     withOutput: withOutput.length,
     cleanGenerate: cleanGenerate.length,
     stored: withOutput.filter((e) => e.stored).length
