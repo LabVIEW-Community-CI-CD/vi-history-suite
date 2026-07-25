@@ -209,7 +209,12 @@ function normalizeModules(
       throw new Error(`lvkit-vi-scan: duplicate module relativePath "${relativePath}"`);
     }
     seen.add(relativePath);
-    return { relativePath, python: module.python };
+    // VHS-REQ-714: normalize generated-Python line endings to LF so the SAME VI
+    // yields a byte-identical envelope (and thus a stable content address) whether
+    // lvkit ran on Windows (CRLF) or Linux (LF). Without this, a Windows and a
+    // Linux born-from-scratch generate of one VI differ only by EOL and split the
+    // shared lvkit-vi-scan cache / diverge on any generated-Python hash (#2373).
+    return { relativePath, python: module.python.replace(/\r\n/g, '\n') };
   });
   normalized.sort((a, b) =>
     a.relativePath < b.relativePath ? -1 : a.relativePath > b.relativePath ? 1 : 0

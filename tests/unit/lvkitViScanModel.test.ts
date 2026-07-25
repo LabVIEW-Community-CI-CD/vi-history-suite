@@ -79,6 +79,20 @@ describe('buildLvkitViScanEnvelope (VHS-REQ-714.1, VHS-REQ-714.2)', () => {
     expect(primary?.python).toBe('def make_path_absolute():\n    return 1\n');
   });
 
+  it('normalizes generated-Python CRLF line endings to LF for cross-OS parity (VHS-REQ-714)', () => {
+    const crlf = buildLvkitViScanEnvelope(
+      baseInput({ modules: [{ relativePath: 'pkg/win.py', python: 'def f():\r\n    return 1\r\n' }] })
+    );
+    const lf = buildLvkitViScanEnvelope(
+      baseInput({ modules: [{ relativePath: 'pkg/win.py', python: 'def f():\n    return 1\n' }] })
+    );
+    // A Windows (CRLF) and a Linux (LF) generate of the SAME VI must produce a
+    // byte-identical envelope, so the shared lvkit-vi-scan cache does not split by
+    // OS line endings and any generated-Python hash matches across machines (#2373).
+    expect(crlf.modules[0].python).toBe('def f():\n    return 1\n');
+    expect(JSON.stringify(crlf)).toBe(JSON.stringify(lf));
+  });
+
   it('identifies the primary module by the VI name slug', () => {
     const envelope = buildLvkitViScanEnvelope(baseInput());
     expect(envelope.primaryModule?.relativePath).toBe(
