@@ -60,6 +60,7 @@ const FFPROBE = findExe('ffprobe', 'VIHS_FFPROBE');
 
 const SECONDS = Number(process.env.VIHS_CAP_SECONDS || 20);
 const FPS = 12;
+const CALIBRATE = process.env.VIHS_CAP_CALIBRATE !== '0'; // pre-flight gdigrab-cadence certificate (mprr stopwatch)
 const outDir = resolve(repoRoot, process.env.VIHS_CAP_OUT || join('win-validation', 'mprr', 'session'));
 mkdirSync(outDir, { recursive: true });
 const rel = (p) => p.split(repoRoot + '\\').join('').split(repoRoot + '/').join('').split('\\').join('/');
@@ -84,6 +85,22 @@ function cpuBurst(ms) {
 async function main() {
   console.log(`[cap] ffmpeg=${FFMPEG}`);
   console.log(`[cap] capturing ${SECONDS}s @ ${FPS}fps -> ${rel(outDir)}`);
+
+  // 0) PRE-FLIGHT cadence certificate: run the proven mprr stopwatch capture proof
+  // so the session carries an authoritative TIMING-CADENCE certificate for this
+  // host/config (gdigrab 12fps drift/jitter verified against the mprr ground-truth
+  // clock). This does NOT set the governed spatial calibration (still advisory) --
+  // it certifies that the frame<->time cadence the sync relies on is trustworthy.
+  let cadenceCert = null;
+  if (CALIBRATE) {
+    console.log('[cap] pre-flight: gdigrab-cadence calibration via the mprr stopwatch...');
+    spawnSync(process.execPath, [join('prototype', 'mprr', 'proveStopwatchCapture.mjs')], { cwd: repoRoot, encoding: 'utf8', env: process.env });
+    const proofPath = join(repoRoot, 'win-validation', 'mprr', 'stopwatch-capture', 'stopwatch-capture-proof.json');
+    if (existsSync(proofPath)) {
+      try { cadenceCert = JSON.parse(readFileSync(proofPath, 'utf8')).accuracy || null; } catch { cadenceCert = null; }
+    }
+    console.log(`[cap] cadence: ${cadenceCert ? cadenceCert.classification + ' (maxErr ' + cadenceCert.stopwatchMaxAbsErrorMs + 'ms, effFps ' + cadenceCert.effectiveFps + ', dropped ' + cadenceCert.droppedFrameEstimate + ')' : 'unavailable'}`);
+  }
 
   // 1) perfmon via typeperf -> clean PDH-CSV file (-si is integer seconds; -y auto-confirms overwrite).
   const perfCsvPath = join(outDir, 'perf.csv');
@@ -175,6 +192,8 @@ async function main() {
     peaks: sync.peaks.map((p) => ({ series: p.series, value: p.value, frameIndex: p.frameIndex, stopwatchCentiseconds: p.stopwatchCentiseconds })),
     authoritative: sync.authoritative,
     advisory: !sync.authoritative,
+    captureCadenceCertificate: cadenceCert,
+    timingCadenceAuthoritative: !!(cadenceCert && cadenceCert.classification === 'authoritative'),
     navCueCount: nav.cueCount,
     overlaySegments: overlay.segmentCount,
     outputs: { screen: rel(screenMp4), nav: rel(navMp4), vtt: rel(vttPath), ffmeta: rel(ffmetaPath) }
