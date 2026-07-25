@@ -1,0 +1,6 @@
+[
+  { "label": "ASCII Command-Response.vi", "viPath": "ASCII/Terminals/ASCII Command-Response.vi", "base": "06939af", "selected": "6406793" },
+  { "label": "ASCII CMD-Response Instrument.vi", "viPath": "ASCII/Instruments/ASCII CMD-Response Instrument.vi", "base": "06939af", "selected": "6406793" },
+  { "label": "ASCII Intermittent.vi", "viPath": "ASCII/Terminals/ASCII Intermittent.vi", "base": "06939af", "selected": "6406793" },
+  { "label": "ASCII Stream.vi", "viPath": "ASCII/Terminals/ASCII Stream.vi", "base": "06939af", "selected": "6406793" }
+]
