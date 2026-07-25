@@ -1,40 +1,189 @@
 {
   "schema": "vi-history-suite/ollama-vichange-eval@v1",
-  "generatedAt": "2026-07-25T15:47:02.349Z",
+  "generatedAt": "2026-07-25T15:50:26.321Z",
   "model": "llama3.1:8b",
   "task": "grounded-vi-change-faithful-summarization",
+  "taskTypes": [
+    "full-summary",
+    "count",
+    "kinds",
+    "cosmetic-split"
+  ],
   "datasetFiles": {
     "finetune": "prototype/ml/dataset/vichange-finetune-v1.jsonl",
     "eval": "prototype/ml/dataset/vichange-eval-v1.jsonl"
   },
-  "sampleCount": 2,
-  "baselineMeanFaithfulness": 0.75,
+  "finetunePairs": 8,
+  "evalItems": 8,
+  "baselineMeanFaithfulness": 0.896,
+  "baselineByTask": {
+    "full-summary": 0.75,
+    "count": 1,
+    "kinds": 0.834,
+    "cosmetic-split": 1
+  },
   "results": [
     {
       "vi": "MouseDown.vi",
+      "task": "full-summary",
       "labviewSource": "robust-parser",
       "faithfulness": 0.75,
       "parts": {
         "statesStructuralCount": true,
         "noFalseNoChange": true,
         "mentionsCosmetic": false,
+        "mentionsKinds": false,
         "noInventedNumbers": true
       },
+      "scoreKeys": [
+        "statesStructuralCount",
+        "noFalseNoChange",
+        "mentionsCosmetic",
+        "noInventedNumbers"
+      ],
       "invented": [],
       "output": "There were 6 STRUCTURAL changes to the VI \"MouseDown.vi\"."
     },
     {
+      "vi": "MouseDown.vi",
+      "task": "count",
+      "labviewSource": "robust-parser",
+      "faithfulness": 1,
+      "parts": {
+        "statesStructuralCount": true,
+        "noFalseNoChange": true,
+        "mentionsCosmetic": false,
+        "mentionsKinds": false,
+        "noInventedNumbers": true
+      },
+      "scoreKeys": [
+        "statesStructuralCount",
+        "noFalseNoChange",
+        "noInventedNumbers"
+      ],
+      "invented": [],
+      "output": "The VI has 6 structural changes."
+    },
+    {
+      "vi": "MouseDown.vi",
+      "task": "kinds",
+      "labviewSource": "robust-parser",
+      "faithfulness": 1,
+      "parts": {
+        "statesStructuralCount": true,
+        "noFalseNoChange": true,
+        "mentionsCosmetic": true,
+        "mentionsKinds": true,
+        "noInventedNumbers": true
+      },
+      "scoreKeys": [
+        "statesStructuralCount",
+        "mentionsKinds",
+        "noInventedNumbers"
+      ],
+      "invented": [],
+      "output": "Based on the provided data:\n\n* Structural changes:\n\t+ Removed: 1\n\t+ Added: 3\n\t+ Modified: 2\nTotal structural changes: 6 (as reported by lvkit)\n\nNote that I will not mention the cosmetic differences, as they are not relevant to structural changes."
+    },
+    {
+      "vi": "MouseDown.vi",
+      "task": "cosmetic-split",
+      "labviewSource": "robust-parser",
+      "faithfulness": 1,
+      "parts": {
+        "statesStructuralCount": true,
+        "noFalseNoChange": true,
+        "mentionsCosmetic": true,
+        "mentionsKinds": true,
+        "noInventedNumbers": true
+      },
+      "scoreKeys": [
+        "statesStructuralCount",
+        "mentionsCosmetic",
+        "noInventedNumbers"
+      ],
+      "invented": [],
+      "output": "According to the provided data:\n\n* The VI has 6 lvkit structural changes:\n\t+ 1 node was removed.\n\t+ 3 nodes were added.\n\t+ 2 nodes were modified.\n* LabVIEW comparison reported a total of 53 differences between the two versions of the VI.\n* Out of these 53 differences, 6 are non-cosmetic (structural).\n* The remaining 47 differences are cosmetic."
+    },
+    {
       "vi": "PictureControl_MouseUp.vi",
+      "task": "full-summary",
       "labviewSource": "robust-parser",
       "faithfulness": 0.75,
       "parts": {
         "statesStructuralCount": true,
         "noFalseNoChange": true,
         "mentionsCosmetic": false,
+        "mentionsKinds": false,
         "noInventedNumbers": true
       },
+      "scoreKeys": [
+        "statesStructuralCount",
+        "noFalseNoChange",
+        "mentionsCosmetic",
+        "noInventedNumbers"
+      ],
       "invented": [],
-      "output": "There were 13 STRUCTURAL changes to the VI \"PictureControl_MouseUp.vi\", with 9 elements added and 4 elements removed."
+      "output": "There were 13 structural changes to the VI \"PictureControl_MouseUp.vi\"."
+    },
+    {
+      "vi": "PictureControl_MouseUp.vi",
+      "task": "count",
+      "labviewSource": "robust-parser",
+      "faithfulness": 1,
+      "parts": {
+        "statesStructuralCount": true,
+        "noFalseNoChange": true,
+        "mentionsCosmetic": false,
+        "mentionsKinds": false,
+        "noInventedNumbers": true
+      },
+      "scoreKeys": [
+        "statesStructuralCount",
+        "noFalseNoChange",
+        "noInventedNumbers"
+      ],
+      "invented": [],
+      "output": "The VI has 13 structural changes."
+    },
+    {
+      "vi": "PictureControl_MouseUp.vi",
+      "task": "kinds",
+      "labviewSource": "robust-parser",
+      "faithfulness": 0.667,
+      "parts": {
+        "statesStructuralCount": false,
+        "noFalseNoChange": true,
+        "mentionsCosmetic": false,
+        "mentionsKinds": true,
+        "noInventedNumbers": true
+      },
+      "scoreKeys": [
+        "statesStructuralCount",
+        "mentionsKinds",
+        "noInventedNumbers"
+      ],
+      "invented": [],
+      "output": "Here are the structural changes broken down by kind:\n\n**Added:** 9\nThe lvkit data indicates that 9 new elements were added to the VI.\n\n**Removed:** 4\nThe lvkit data confirms that 4 existing elements were removed from the VI.\n\nThere is no information provided about modified elements."
+    },
+    {
+      "vi": "PictureControl_MouseUp.vi",
+      "task": "cosmetic-split",
+      "labviewSource": "robust-parser",
+      "faithfulness": 1,
+      "parts": {
+        "statesStructuralCount": true,
+        "noFalseNoChange": true,
+        "mentionsCosmetic": true,
+        "mentionsKinds": false,
+        "noInventedNumbers": true
+      },
+      "scoreKeys": [
+        "statesStructuralCount",
+        "mentionsCosmetic",
+        "noInventedNumbers"
+      ],
+      "invented": [],
+      "output": "There are 13 structural changes in the VI. \n\nThe LabVIEW comparison reported 10 non-cosmetic and 29 cosmetic differences."
     }
   ]
 }
