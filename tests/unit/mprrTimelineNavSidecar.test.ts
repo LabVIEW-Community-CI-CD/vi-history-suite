@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
+  buildMprrDrawtextOverlay,
   buildMprrTimelineNav,
   formatVttTimestamp,
+  MPRR_DRAWTEXT_OVERLAY_SCHEMA,
   MPRR_TIMELINE_NAV_SCHEMA
 } from '../../src/reporting/mirror/mprrTimelineNavSidecar';
 import type { PerfmonMprrSync } from '../../src/reporting/mirror/perfmonMprrSync';
@@ -91,5 +93,54 @@ describe('buildMprrTimelineNav (#2377 nav sidecar)', () => {
   it('throws fail-closed on a non-object sync', () => {
     // @ts-expect-error deliberate wrong type
     expect(() => buildMprrTimelineNav(null)).toThrow(/perfmon-mprr-sync/);
+  });
+});
+
+describe('buildMprrDrawtextOverlay (#2377 nav sidecar stretch)', () => {
+  it('burns each resource-event window onto its frames with an enable range', () => {
+    const overlay = buildMprrDrawtextOverlay(fakeSync());
+    expect(overlay.schema).toBe(MPRR_DRAWTEXT_OVERLAY_SCHEMA);
+    expect(overlay.segmentCount).toBe(3);
+    expect(overlay.unplaceablePeakCount).toBe(1);
+    // sorted by frame: 12 (mem) -> 240 (cpu95) -> 600 (cpu88).
+    expect(overlay.segments[0]).toMatchObject({ frameIndex: 12, startSec: 1, endSec: 20 });
+    expect(overlay.segments[0].text).toBe('mem 800 | f12 | 00.00.01.000');
+    expect(overlay.segments[1]).toMatchObject({ frameIndex: 240, startSec: 20, endSec: 50 });
+    expect(overlay.segments[0].filter).toContain("enable='between(t,1,20)'");
+    expect(overlay.segments[0].filter).toContain("drawtext=text='mem 800 | f12 | 00.00.01.000'");
+  });
+
+  it('joins segments into one filtergraph and a runnable ffmpeg command', () => {
+    const overlay = buildMprrDrawtextOverlay(fakeSync(), { framePattern: 'shot_%05d.png', outputPath: 'out.mp4' });
+    expect(overlay.filtergraph.split(',drawtext=').length).toBe(3); // 3 chained drawtext filters
+    expect(overlay.ffmpegCommand).toContain('-framerate 12');
+    expect(overlay.ffmpegCommand).toContain('-i shot_%05d.png');
+    expect(overlay.ffmpegCommand).toContain('-y out.mp4');
+    expect(overlay.ffmpegCommand).toContain('-vf "');
+  });
+
+  it('sanitizes drawtext-hostile characters so they cannot break the filtergraph', () => {
+    const sync = fakeSync({
+      peaks: [{ series: "a:b,c'd", value: 1, sampleIndex: 0, frameIndex: 12, stopwatchCentiseconds: 0 }]
+    });
+    const { segments } = buildMprrDrawtextOverlay(sync);
+    expect(segments[0].text).not.toMatch(/[:,'\\%]/);
+    expect(segments[0].text).toContain('a.b cd'); // colon->'.', comma->space, quote dropped
+  });
+
+  it('burns ADVISORY into every label when the mprr capture is uncalibrated', () => {
+    const overlay = buildMprrDrawtextOverlay(fakeSync({ calibrated: false, authoritative: false }));
+    expect(overlay.advisory).toBe(true);
+    expect(overlay.segments.every((s) => s.text.startsWith('ADVISORY '))).toBe(true);
+  });
+
+  it('degrades to a null passthrough filtergraph when no peak is placeable', () => {
+    const overlay = buildMprrDrawtextOverlay(
+      fakeSync({ peaks: [{ series: 'cpu', value: 1, sampleIndex: 0, frameIndex: null, stopwatchCentiseconds: 0 }] })
+    );
+    expect(overlay.segmentCount).toBe(0);
+    expect(overlay.unplaceablePeakCount).toBe(1);
+    expect(overlay.filtergraph).toBe('null');
+    expect(overlay.ffmpegCommand).toContain('-vf "null"');
   });
 });

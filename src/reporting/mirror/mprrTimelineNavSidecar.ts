@@ -67,16 +67,25 @@ function frameStartMs(frameIndex: number, frameIntervalMs: number): number {
   return frameIndex * frameIntervalMs;
 }
 
+interface NavCueComputation {
+  readonly cues: readonly MprrNavCue[];
+  readonly unplaceablePeakCount: number;
+  readonly frameRateHz: number;
+  readonly frameIntervalMs: number;
+  readonly authoritative: boolean;
+}
+
 /**
- * Build the navigation sidecar from a perfmon-mprr-sync@v1 record. Peaks without
- * an in-window frame index are skipped (counted in `unplaceablePeakCount`); the
- * remaining peaks become cues sorted by frame, each spanning to the next cue (or
- * `minCueDurationMs` for the last). Fail-closed on a non-object input.
+ * Shared peak->cue projection used by every video artifact (WebVTT/ffmetadata
+ * chapters and the drawtext overlay). Peaks without an in-window frame index are
+ * skipped (counted in `unplaceablePeakCount`); the rest are sorted by frame and
+ * each spans to the next cue (or `minCueDurationMs` for the last). Fail-closed on
+ * a non-object input so a malformed sync can never silently yield empty artifacts.
  */
-export function buildMprrTimelineNav(
+function computeNavCues(
   sync: PerfmonMprrSync,
   options: BuildMprrTimelineNavOptions = {}
-): MprrTimelineNav {
+): NavCueComputation {
   if (typeof sync !== 'object' || sync === null) {
     throw new Error('mprr-timeline-nav: sync must be a perfmon-mprr-sync@v1 object');
   }
@@ -115,7 +124,24 @@ export function buildMprrTimelineNav(
     };
   });
 
-  const authoritative = sync.authoritative === true;
+  return {
+    cues,
+    unplaceablePeakCount,
+    frameRateHz,
+    frameIntervalMs,
+    authoritative: sync.authoritative === true
+  };
+}
+
+/**
+ * Build the navigation sidecar from a perfmon-mprr-sync@v1 record, emitting WebVTT
+ * and ffmetadata chapters. Mirrors `sync.authoritative`; ADVISORY when uncalibrated.
+ */
+export function buildMprrTimelineNav(
+  sync: PerfmonMprrSync,
+  options: BuildMprrTimelineNavOptions = {}
+): MprrTimelineNav {
+  const { cues, unplaceablePeakCount, frameRateHz, authoritative } = computeNavCues(sync, options);
   return {
     schema: MPRR_TIMELINE_NAV_SCHEMA,
     schemaVersion: MPRR_TIMELINE_NAV_SCHEMA_VERSION,
@@ -153,4 +179,111 @@ function renderFfmetadata(cues: readonly MprrNavCue[], title: string, authoritat
     );
   }
   return lines.join('\n') + '\n';
+}
+
+// --- drawtext overlay (stretch: burn the active resource event onto each frame) ---
+
+export const MPRR_DRAWTEXT_OVERLAY_SCHEMA = 'vi-history-suite/mprr-drawtext-overlay@v1';
+export const MPRR_DRAWTEXT_OVERLAY_SCHEMA_VERSION = 1;
+
+export interface MprrDrawtextSegment {
+  readonly frameIndex: number;
+  readonly startSec: number;
+  readonly endSec: number;
+  /** Sanitized, drawtext-safe label burned onto the frames in this window. */
+  readonly text: string;
+  /** The single `drawtext=...:enable='between(t,start,end)'` filter for this window. */
+  readonly filter: string;
+}
+
+export interface MprrDrawtextOverlay {
+  readonly schema: typeof MPRR_DRAWTEXT_OVERLAY_SCHEMA;
+  readonly schemaVersion: typeof MPRR_DRAWTEXT_OVERLAY_SCHEMA_VERSION;
+  readonly frameRateHz: number;
+  readonly authoritative: boolean;
+  readonly advisory: boolean;
+  readonly segmentCount: number;
+  readonly unplaceablePeakCount: number;
+  readonly segments: readonly MprrDrawtextSegment[];
+  /** Comma-joined drawtext filters (or `null` passthrough when there is nothing to burn). */
+  readonly filtergraph: string;
+  /** Ready-to-run ffmpeg assembly command that burns the overlay onto the frame stream. */
+  readonly ffmpegCommand: string;
+}
+
+export interface BuildMprrDrawtextOverlayOptions extends BuildMprrTimelineNavOptions {
+  /** Frame filename pattern fed to `ffmpeg -i` (default `frame_%06d.png`). */
+  readonly framePattern?: string;
+  /** Output video path in the generated command (default `mprr-overlay.mp4`). */
+  readonly outputPath?: string;
+  readonly fontSize?: number;
+  /** drawtext x/y expressions (default top-left inset). */
+  readonly x?: string;
+  readonly y?: string;
+}
+
+/**
+ * ffmpeg `drawtext` special characters cannot be reliably escaped across shells, so
+ * the burned label is reduced to an unambiguous charset instead: `:` becomes `.`
+ * (so timecodes stay readable), `,` becomes a space (so it cannot split the
+ * comma-joined filtergraph), and quote/backslash/percent are dropped.
+ */
+function drawtextSanitize(value: string): string {
+  return value
+    .replace(/[\r\n]+/g, ' ')
+    .replace(/:/g, '.')
+    .replace(/,/g, ' ')
+    .replace(/['\\%]/g, '')
+    .trim();
+}
+
+function toSeconds(ms: number): number {
+  return Number((Math.max(0, ms) / 1000).toFixed(3));
+}
+
+/**
+ * Build an ffmpeg `drawtext` overlay filtergraph from a perfmon-mprr-sync@v1 record:
+ * each resource-event window burns `<series> <value> | f<frame> | <timecode>` onto the
+ * frames it spans (`enable='between(t,start,end)'`), so the assembled replay video is
+ * self-describing without an external chapter track. ADVISORY is burned into every
+ * label when the mprr capture is uncalibrated. Composes {@link computeNavCues}; pure.
+ */
+export function buildMprrDrawtextOverlay(
+  sync: PerfmonMprrSync,
+  options: BuildMprrDrawtextOverlayOptions = {}
+): MprrDrawtextOverlay {
+  const { cues, unplaceablePeakCount, frameRateHz, authoritative } = computeNavCues(sync, options);
+  const framePattern = options.framePattern ?? 'frame_%06d.png';
+  const outputPath = options.outputPath ?? 'mprr-overlay.mp4';
+  const fontSize = typeof options.fontSize === 'number' && options.fontSize > 0 ? options.fontSize : 24;
+  const x = options.x ?? '20';
+  const y = options.y ?? '20';
+  const prefix = authoritative ? '' : 'ADVISORY ';
+
+  const segments: MprrDrawtextSegment[] = cues.map((c) => {
+    const startSec = toSeconds(c.startMs);
+    const endSec = toSeconds(c.endMs);
+    const text = drawtextSanitize(`${prefix}${c.series} ${c.value} | f${c.frameIndex} | ${c.timecode}`);
+    const filter =
+      `drawtext=text='${text}':x=${x}:y=${y}:fontsize=${fontSize}:fontcolor=white:` +
+      `box=1:boxcolor=black@0.5:enable='between(t,${startSec},${endSec})'`;
+    return { frameIndex: c.frameIndex, startSec, endSec, text, filter };
+  });
+
+  const filtergraph = segments.length > 0 ? segments.map((s) => s.filter).join(',') : 'null';
+  const ffmpegCommand =
+    `ffmpeg -framerate ${frameRateHz} -i ${framePattern} -vf "${filtergraph}" -y ${outputPath}`;
+
+  return {
+    schema: MPRR_DRAWTEXT_OVERLAY_SCHEMA,
+    schemaVersion: MPRR_DRAWTEXT_OVERLAY_SCHEMA_VERSION,
+    frameRateHz,
+    authoritative,
+    advisory: !authoritative,
+    segmentCount: segments.length,
+    unplaceablePeakCount,
+    segments,
+    filtergraph,
+    ffmpegCommand
+  };
 }
