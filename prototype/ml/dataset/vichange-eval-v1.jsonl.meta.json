@@ -11,9 +11,9 @@
     "generator": "prototype/ml/datasetManifest.mjs",
     "datasetGenerator": "prototype/ml/buildViChangeMlDataset.mjs",
     "groundTruthSource": "prototype/correlationReport.mjs over prototype/win-lvkit/correlation-fixtures",
-    "sourceCommit": "5e7a008001ee37bea7ac69dfd91f6abd374df703",
+    "sourceCommit": "b0679618814eb44dfb790125343eca497b179a46",
     "nodeVersion": "v24.16.0",
-    "generatedAt": "2026-07-25T17:18:37.172Z"
+    "generatedAt": "2026-07-25T19:12:20.276Z"
   },
   "coverage": {
     "sampleCount": 5,
@@ -160,10 +160,10 @@
           "id": "8b-raw",
           "model": "llama3.1:8b",
           "present": true,
-          "overall": 0.896,
-          "standardMean": 0.888,
-          "adversarialMean": 0.917,
-          "guardPass": false
+          "overall": 0.917,
+          "standardMean": 0.883,
+          "adversarialMean": 1,
+          "guardPass": true
         },
         {
           "id": "8b-fewshot",
@@ -178,10 +178,19 @@
           "id": "14b",
           "model": "qwen2.5:14b",
           "present": true,
-          "overall": 0.955,
-          "standardMean": 0.938,
+          "overall": 0.976,
+          "standardMean": 0.967,
           "adversarialMean": 1,
           "guardPass": true
+        },
+        {
+          "id": "8b-2shot",
+          "model": "vichange8b-2shot",
+          "present": true,
+          "overall": 0.946,
+          "standardMean": 0.942,
+          "adversarialMean": 0.958,
+          "guardPass": false
         }
       ]
     },
@@ -198,6 +207,6 @@
   "lineage": {
     "previousSha256": "1b97e73f846b4759d979960d0defa2bc6a0e55e091afcc15216b9e51085d2b91",
     "changedSincePrevious": false,
-    "derivedFrom": "53745e1885ec98fe8ea90dc4652fba630e9d20af"
+    "derivedFrom": "5e7a008001ee37bea7ac69dfd91f6abd374df703"
   }
 }
