@@ -196,6 +196,39 @@
       "createdAt": "2026-07-25T14:26:53.278Z",
       "updatedAt": "2026-07-25T15:23:27.743Z",
       "syncedAt": null
+    },
+    {
+      "id": "item-0005",
+      "title": "Preview + VI Comparison report <-> lvkit correlation & benchmark pipeline",
+      "issueUrl": "https://github.com/LabVIEW-Community-CI-CD/vi-history-suite/issues/2379",
+      "fields": {
+        "status": "In Progress",
+        "intakeStage": "Spawned",
+        "sourceDiscussion": 2377,
+        "origin": "collab"
+      },
+      "fieldMeta": {
+        "status": {
+          "ts": "2026-07-25T15:34:52.547Z",
+          "by": "LINUX"
+        },
+        "intakeStage": {
+          "ts": "2026-07-25T15:33:17.369Z",
+          "by": "LINUX"
+        },
+        "sourceDiscussion": {
+          "ts": "2026-07-25T15:33:17.369Z",
+          "by": "LINUX"
+        },
+        "origin": {
+          "ts": "2026-07-25T15:33:17.369Z",
+          "by": "LINUX"
+        }
+      },
+      "remoteItemId": null,
+      "createdAt": "2026-07-25T15:33:17.369Z",
+      "updatedAt": "2026-07-25T15:34:52.548Z",
+      "syncedAt": null
     }
   ],
   "sync": {

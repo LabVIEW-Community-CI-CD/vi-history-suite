@@ -28,6 +28,20 @@ export function agreementRatio(a, b) {
   return score < 0 ? 0 : score > 1 ? 1 : score;
 }
 
+// [0,1] calibrated closeness of `a` against `k*b` (WIN's granularity insight:
+// lvkit changeCount runs ~1.2-1.4x LabVIEW non-cosmetic, so strict equality is
+// wrong -- a calibration constant k models the expected ratio). k=1 reduces to
+// strict agreementRatio. The denominator stays max(|a|,|b|,1) so the score is a
+// bounded relative gap, not amplified by k.
+export function agreementCalibrated(a, b, k = 1) {
+  const x = toFiniteNumber(a);
+  const y = toFiniteNumber(b);
+  const kk = typeof k === 'number' && Number.isFinite(k) && k > 0 ? k : 1;
+  if (x === 0 && y === 0) return 1;
+  const score = 1 - Math.min(1, Math.abs(x - kk * y) / Math.max(Math.abs(x), Math.abs(y), 1));
+  return score < 0 ? 0 : score > 1 ? 1 : score;
+}
+
 function round4(n) {
   return Math.round(n * 1e4) / 1e4;
 }
@@ -48,9 +62,16 @@ export function scoreCorrelation(input = {}) {
   const lvkitChangeCount = toFiniteNumber(lvkit.changeCount);
   const labviewNonCosmetic = toFiniteNumber(labview.nonCosmetic);
   const labviewCosmetic = toFiniteNumber(labview.cosmetic);
+  // WIN calibration insight: lvkit ~ k*nonCosmetic (k~1.3 over the first 2
+  // points). Default k=1 (strict) so the tuning is explicit + opt-in.
+  const calibrationK =
+    typeof input.calibrationK === 'number' && Number.isFinite(input.calibrationK) && input.calibrationK > 0
+      ? input.calibrationK
+      : 1;
 
-  // 0.5 countAgreement: the PRIMARY structural axis.
-  const countAgreement = agreementRatio(lvkitChangeCount, labviewNonCosmetic);
+  // 0.5 countAgreement: the PRIMARY structural axis (calibrated ratio band).
+  const countAgreement = agreementCalibrated(lvkitChangeCount, labviewNonCosmetic, calibrationK);
+  const countRatio = labviewNonCosmetic > 0 ? round4(lvkitChangeCount / labviewNonCosmetic) : null;
 
   // 0.3 setAgreement: Jaccard when a true matched set is supplied, else a
   // transparent cardinality proxy (flagged so a consumer never mistakes it for
@@ -92,7 +113,14 @@ export function scoreCorrelation(input = {}) {
     schema: 'vi-history-suite/preview-compare-lvkit-correlation-score@v1',
     composite,
     terms: {
-      countAgreement: { weight: 0.5, value: round4(countAgreement), a: lvkitChangeCount, b: labviewNonCosmetic },
+      countAgreement: {
+        weight: 0.5,
+        value: round4(countAgreement),
+        a: lvkitChangeCount,
+        b: labviewNonCosmetic,
+        calibrationK,
+        ratio: countRatio
+      },
       setAgreement: { weight: 0.3, value: round4(setAgreement), basis: setAgreementBasis },
       structuralCardinality: {
         weight: 0.2,

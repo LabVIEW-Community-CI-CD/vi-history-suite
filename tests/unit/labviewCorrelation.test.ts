@@ -136,6 +136,47 @@ describe('scoreCorrelation (#2378)', () => {
   });
 });
 
+describe('scoreCorrelation k-calibration + WIN benchmark dataset (#2379)', () => {
+  it('calibrationK models the lvkit ~ k*nonCosmetic granularity band (WIN insight)', () => {
+    // PictureControl point: lvkit 13 vs nonCosmetic 9. k=1 leaves a gap; k~1.3 tightens it.
+    const strict = scoreCorrelation({
+      lvkit: { changeCount: 13, addedNodes: 0, removedNodes: 0 },
+      labview: { total: 39, cosmetic: 30, nonCosmetic: 9 }
+    });
+    const calibrated = scoreCorrelation({
+      lvkit: { changeCount: 13, addedNodes: 0, removedNodes: 0 },
+      labview: { total: 39, cosmetic: 30, nonCosmetic: 9 },
+      calibrationK: 1.3
+    });
+    expect(calibrated.terms.countAgreement.value).toBeGreaterThan(strict.terms.countAgreement.value);
+    expect(calibrated.terms.countAgreement.calibrationK).toBe(1.3);
+    expect(strict.terms.countAgreement.ratio).toBeCloseTo(13 / 9, 4);
+  });
+
+  it('the robust parser CORRECTS WINs prototype MouseDown count (5 -> 6) to an exact lvkit match', () => {
+    const dataset = JSON.parse(readFileSync(fixturePath('benchmark-dataset.json'), 'utf8')) as {
+      samples: Array<{ vi: string; lvkit: { changeCount: number }; labview: { nonCosmetic: number } }>;
+    };
+    const mouseDown = dataset.samples.find((s) => /MouseDown\.vi$/.test(s.vi));
+    expect(mouseDown).toBeDefined();
+    // WIN's committed dataset used a PROTOTYPE regex -> nonCosmetic 5.
+    expect(mouseDown!.labview.nonCosmetic).toBe(5);
+    // The robust LINUX parser on the same report -> 6 (LabVIEW's own class tag),
+    // which matches lvkit changeCount 6 EXACTLY at k=1.
+    const html = readFileSync(fixturePath('mousedown.labview-diff-report.html'), 'utf8');
+    const parsed = parseLabviewDiffReportCounts(html);
+    expect(parsed.nonCosmetic).toBe(6);
+    expect(parsed.nonCosmetic).toBe(mouseDown!.lvkit.changeCount);
+    const score = scoreCorrelation({
+      lvkit: { changeCount: mouseDown!.lvkit.changeCount, addedNodes: 3, removedNodes: 1 },
+      labview: parsed,
+      preview: { deltaInlineImages: 1 }
+    });
+    expect(score.terms.countAgreement.value).toBe(1);
+    expect(score.terms.countAgreement.ratio).toBe(1);
+  });
+});
+
 function round(n: number): number {
   return Math.round(n * 1e4) / 1e4;
 }
