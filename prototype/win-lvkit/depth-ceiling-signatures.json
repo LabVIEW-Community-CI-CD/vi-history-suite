@@ -1,0 +1,106 @@
+{
+    "schema":  "vi-history-suite/depth-ceiling-signatures@v1",
+    "purpose":  "Standalone connector-pane signatures of Class-A depth-ceiling callees, as cross-reference fixtures for the shipped lvkit-vi-scan store-enrichment spike (#2373 fullmode-depth-recovery). A caller placeholder naming one of these SubVIs can be annotated/synthesized from defSignature+resultType+terminals.",
+    "generatedAt":  "2026-07-25T15:48:32.7470737+02:00",
+    "lvkit":  "lvkit 0.5.2",
+    "callerToCallee":  [
+                           {
+                               "caller":  "ASCII/Actor/Request Data.vi",
+                               "callee":  "Queue Manager.vi"
+                           },
+                           {
+                               "caller":  "ASCII/Actor/Stop Actor.vi",
+                               "callee":  "Queue Manager.vi"
+                           },
+                           {
+                               "caller":  "Binary/Actor/Stop Actor.vi",
+                               "callee":  "Queue Manager.vi"
+                           },
+                           {
+                               "caller":  "Binary/Actor/Write to Port.vi",
+                               "callee":  "Queue Manager.vi"
+                           },
+                           {
+                               "caller":  "Binary/Actor/Binary Actor Example.vi",
+                               "callee":  "Binary Actor.vi"
+                           },
+                           {
+                               "caller":  "resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/MouseDown.vi",
+                               "callee":  "CoordinatesCorrection.vi"
+                           },
+                           {
+                               "caller":  "resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/PictureControl_MouseUp.vi",
+                               "callee":  "CoordinatesCorrection.vi"
+                           },
+                           {
+                               "caller":  "resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/MenuSelection(User).vi",
+                               "callee":  "Defer_FP_Updates.vi"
+                           }
+                       ],
+    "callees":  [
+                    {
+                        "name":  "Queue Manager.vi",
+                        "corpus":  "SerialPortNuggets",
+                        "present":  true,
+                        "primaryModule":  "queue_manager.py",
+                        "defSignature":  "def queue_manager(task: QueueTask, command: ActorCommand=None) -\u003e QueueManagerResult:",
+                        "resultType":  "class QueueManagerResult(NamedTuple):",
+                        "bodyRaisesPrimitive":  "hiddenFBNode",
+                        "moduleCount":  5,
+                        "modules":  [
+                                        "actor_commandctl.py",
+                                        "actor_taskctl.py",
+                                        "queue_taskctl.py",
+                                        "queue_manager.py",
+                                        "clear_errors.py"
+                                    ],
+                        "moduleText":  "from __future__ import annotations\nfrom typing import Any, NamedTuple\nfrom lvkit.primitive_resolver import PrimitiveResolutionNeeded\n\nclass QueueManagerResult(NamedTuple):\n    queue: Any\n\ndef queue_manager(task: QueueTask, command: ActorCommand=None) -\u003e QueueManagerResult:\n    raise PrimitiveResolutionNeeded(prim_id=0, prim_name=\u0027hiddenFBNode\u0027, terminals=[{\u0027index\u0027: 0, \u0027direction\u0027: \u0027output\u0027, \u0027name\u0027: None, \u0027type\u0027: \u0027Refnum\u0027, \u0027wired\u0027: True}, {\u0027index\u0027: 1, \u0027direction\u0027: \u0027output\u0027, \u0027name\u0027: None, \u0027type\u0027: \u0027Refnum\u0027, \u0027wired\u0027: False}], vi_name=\u0027Queue Manager.vi\u0027, qualified_vi_name=\u0027Queue Manager.vi\u0027)"
+                    },
+                    {
+                        "name":  "Binary Actor.vi",
+                        "corpus":  "SerialPortNuggets",
+                        "present":  true,
+                        "primaryModule":  "binary_actor.py",
+                        "defSignature":  "def binary_actor(visa_resource_name: Any=None) -\u003e BinaryActorResult:",
+                        "resultType":  {
+
+                                       },
+                        "bodyRaisesPrimitive":  "Class018D",
+                        "moduleCount":  7,
+                        "modules":  [
+                                        "actor_commandctl.py",
+                                        "actor_taskctl.py",
+                                        "queue_taskctl.py",
+                                        "visa_configure_serial_port_instr.py",
+                                        "write_ascii_message.py",
+                                        "binary_actor.py",
+                                        "queue_manager.py"
+                                    ],
+                        "moduleText":  "from __future__ import annotations\nfrom typing import Any, NamedTuple\nfrom ..binary_actorlvlib.queue_manager import queue_manager\nfrom ..visa_configure_serial_port import visa_configure_serial_port\nfrom ..write_ascii_message import write_ascii_message\nfrom lvkit.labview_queue import dequeue_element, enqueue_element, release_queue\nfrom lvkit.primitive_resolver import PrimitiveResolutionNeeded\nimport concurrent.futures\n\ndef binary_actor(visa_resource_name: Any=None) -\u003e BinaryActorResult:\n    with concurrent.futures.ThreadPoolExecutor() as _executor:\n\n        def _branch_0():\n            visa_configure_serial_port_result = visa_configure_serial_port(visa_resource_name=visa_resource_name)\n            return visa_configure_serial_port_result\n        _f0 = _executor.submit(_branch_0)\n\n        def _branch_1():\n            queue_manager_result = queue_manager(task=0, command=\"{\u0027Task\u0027: 0, \u0027Data\u0027: \u0027\u0027, \u0027Response Queue\u0027: None}\")\n            return queue_manager_result\n        _f1 = _executor.submit(_branch_1)\n    visa_configure_serial_port_result = _f0.result()\n    queue_manager_result = _f1.result()\n    size_0 = \u0027None\u0027\n    while True:\n        element, timed_out = dequeue_element(queue_manager_result.queue, 10)\n        out_0 = None\n        if timed_out:\n            visa_configure_serial_port_resultvisa_resource_name_out_serial_settingsnumber_of_bytes_at_serial_port = visa_configure_serial_port_result.visa_resource_name_out.serial_settingsnumber_of_bytes_at_serial_port\n            visa_configure_serial_port_resultvisa_resource_name_out_prop_3 = visa_configure_serial_port_result.visa_resource_name_out\n            visa_configure_serial_port_resultvisa_resource_name_out_prop_4 = visa_configure_serial_port_result.visa_resource_name_out\n            if visa_configure_serial_port_resultvisa_resource_name_out_prop_4 \u003e 0:\n                values = []\n                values = []\n                for j in range(min(len(size_0), len(size_0_item))):\n                    timed_out_2643 = enqueue_element(size_0_item, None, -1)\n                    values.append(size_0_item)\n        else:\n            out_0 = None\n            match element.task:\n                case 0:\n                    with concurrent.futures.ThreadPoolExecutor() as _executor:\n\n                        def _branch_0():\n                            write_ascii_message_result = write_ascii_message(message=element.data, visa_resource_in=visa_configure_serial_port_result.visa_resource_name_out)\n                            return write_ascii_message_result\n                        _f0 = _executor.submit(_branch_0)\n\n                        def _branch_1():\n                            items = [size_0] + [element.response_queue]\n                            return items\n                        _f1 = _executor.submit(_branch_1)\n                    write_ascii_message_result = _f0.result()\n                    items = _f1.result()\n                case 1:\n                    data_string = str(element.data)\n                    element_0 = data_string[int(0)]\n                    out_1 = None\n                    out_3 = None\n                    raise PrimitiveResolutionNeeded(prim_id=0, prim_name=\u0027Class018D\u0027, terminals=[{\u0027index\u0027: 0, \u0027direction\u0027: \u0027input\u0027, \u0027name\u0027: None, \u0027type\u0027: \u0027116\u0027, \u0027wired\u0027: False}, {\u0027index\u0027: 1, \u0027direction\u0027: \u0027output\u0027, \u0027name\u0027: None, \u0027type\u0027: \u0027Array\u0027, \u0027wired\u0027: True}, {\u0027index\u0027: 2, \u0027direction\u0027: \u0027input\u0027, \u0027name\u0027: None, \u0027type\u0027: \u0027NumUInt8\u0027, \u0027wired\u0027: False}, {\u0027index\u0027: 3, \u0027direction\u0027: \u0027output\u0027, \u0027name\u0027: None, \u0027type\u0027: \u0027Boolean\u0027, \u0027wired\u0027: False}, {\u0027index\u0027: 4, \u0027direction\u0027: \u0027input\u0027, \u0027name\u0027: None, \u0027type\u0027: \u0027Array\u0027, \u0027wired\u0027: False}], vi_name=\u0027Binary Actor.vi\u0027, qualified_vi_name=\u0027Binary Actor.vi\u0027)\n                    items = out_1 + [element.response_queue]\n                    out_0 = None\n                    out_2 = None\n                    out_3_2708 = None\n                    raise PrimitiveResolutionNeeded(prim_id=0, prim_name=\u0027Class018D\u0027, terminals=[{\u0027index\u0027: 0, \u0027direction\u0027: \u0027output\u0027, \u0027name\u0027: None, \u0027type\u0027: \u0027116\u0027, \u0027wired\u0027: False}, {\u0027index\u0027: 1, \u0027direction\u0027: \u0027input\u0027, \u0027name\u0027: None, \u0027type\u0027: \u0027Array\u0027, \u0027wired\u0027: True}, {\u0027index\u0027: 2, \u0027direction\u0027: \u0027output\u0027, \u0027name\u0027: None, \u0027type\u0027: \u0027NumUInt8\u0027, \u0027wired\u0027: False}, {\u0027index\u0027: 3, \u0027direction\u0027: \u0027output\u0027, \u0027name\u0027: None, \u0027type\u0027: \u0027Boolean\u0027, \u0027wired\u0027: False}, {\u0027index\u0027: 4, \u0027direction\u0027: \u0027input\u0027, \u0027name\u0027: None, \u0027type\u0027: \u0027UnitUInt32\u0027, \u0027wired\u0027: True}], vi_name=\u0027Binary Actor.vi\u0027, qualified_vi_name=\u0027Binary Actor.vi\u0027)\n                case 2:\n                    with concurrent.futures.ThreadPoolExecutor() as _executor:\n\n                        def _branch_2():\n                            raise PrimitiveResolutionNeeded(prim_id=1922, prim_name=\u0027unknown_primitive_1922\u0027, terminals=[{\u0027index\u0027: 0, \u0027direction\u0027: \u0027output\u0027, \u0027name\u0027: None, \u0027type\u0027: \u0027Cluster\u0027, \u0027wired\u0027: True}, {\u0027index\u0027: 8, \u0027direction\u0027: \u0027input\u0027, \u0027name\u0027: None, \u0027type\u0027: \u0027Cluster\u0027, \u0027wired\u0027: True}, {\u0027index\u0027: 11, \u0027direction\u0027: \u0027input\u0027, \u0027name\u0027: None, \u0027type\u0027: \u0027Refnum\u0027, \u0027wired\u0027: True}], vi_name=\u0027Binary Actor.vi\u0027, qualified_vi_name=\u0027Binary Actor.vi\u0027)\n                        _executor.submit(_branch_2)\n\n                        def _branch_3():\n                            remaining_elements = release_queue(queue_manager_result.queue, False)\n                            return remaining_elements\n                        _f3 = _executor.submit(_branch_3)\n                    remaining_elements = _f3.result()\n        break"
+                    },
+                    {
+                        "name":  "CoordinatesCorrection.vi",
+                        "corpus":  "labview-icon-editor",
+                        "present":  true,
+                        "primaryModule":  "coordinatescorrection.py",
+                        "defSignature":  "def coordinatescorrection(coordinates_in: LVPoint32TypeDef=None) -\u003e CoordinatescorrectionResult:",
+                        "resultType":  "class CoordinatescorrectionResult(NamedTuple):",
+                        "bodyRaisesPrimitive":  null,
+                        "moduleCount":  1,
+                        "modules":  "coordinatescorrection.py",
+                        "moduleText":  "from __future__ import annotations\nfrom typing import Any, NamedTuple\n\nclass CoordinatescorrectionResult(NamedTuple):\n    corrected_out: LVPoint32TypeDef\n\ndef coordinatescorrection(coordinates_in: LVPoint32TypeDef=None) -\u003e CoordinatescorrectionResult:\n    difference = \"{\u0027Horizontal\u0027: 607, \u0027Vertical\u0027: 8}\" - coordinates_in\n    first_subarray = difference[:int(10)]\n    coerced_value = \"{\u0027Horizontal\u0027: 31, \u0027Vertical\u0027: 31}\" \u003c= \"{\u0027Horizontal\u0027: 0, \u0027Vertical\u0027: 0}\" \u003c= first_subarray\n    return CoordinatescorrectionResult(corrected_out=coerced_value)"
+                    },
+                    {
+                        "name":  "Defer_FP_Updates.vi",
+                        "corpus":  "labview-icon-editor",
+                        "present":  true,
+                        "primaryModule":  "defer_fp_updates.py",
+                        "defSignature":  "def defer_fp_updates(lv_iconvi_in: Any, defer_panel_updates: bool) -\u003e DeferFpUpdatesResult:",
+                        "resultType":  "class DeferFpUpdatesResult(NamedTuple):",
+                        "bodyRaisesPrimitive":  null,
+                        "moduleCount":  1,
+                        "modules":  "defer_fp_updates.py",
+                        "moduleText":  "from __future__ import annotations\nfrom typing import Any, NamedTuple\n\nclass DeferFpUpdatesResult(NamedTuple):\n    lv_iconvi_out: Any\n\ndef defer_fp_updates(lv_iconvi_in: Any, defer_panel_updates: bool) -\u003e DeferFpUpdatesResult:\n    lv_iconvi_in_panel = lv_iconvi_in.panel\n    lv_iconvi_in_prop_3 = lv_iconvi_in\n    lv_iconvi_in_prop_4 = lv_iconvi_in\n    lv_iconvi_in_prop_4.deferpanupdts = lv_iconvi_in_prop_3\n    \u0027TODO: unresolved primitive 8011 (Close Reference)\u0027\n    pass\n    return DeferFpUpdatesResult(lv_iconvi_out=lv_iconvi_in_panel)"
+                    }
+                ]
+}
