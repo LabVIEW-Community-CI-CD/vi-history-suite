@@ -27,6 +27,7 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
+import * as board from './boardStore.mjs';
 
 const OWNER = process.env.VIHS_COLLAB_OWNER || 'LabVIEW-Community-CI-CD';
 const REPO = process.env.VIHS_COLLAB_REPO || 'vi-history-suite';
@@ -35,7 +36,7 @@ const TITLE = process.env.VIHS_COLLAB_TITLE || 'Prototype handshake: Ollama × M
 const AGENT = (process.env.VIHS_COLLAB_AGENT || (process.platform === 'win32' ? 'WIN' : 'LINUX')).toUpperCase();
 const BRANCH = 'prototype/ollama-mcp-linux-collab';
 const SCHEMA = 'vihs-collab-msg@v1';
-const TYPES = new Set(['CLAIM', 'ACK', 'PROGRESS', 'DONE', 'BLOCKED', 'HANDOFF', 'QUESTION', 'ANSWER', 'NOTE', 'READY', 'AUTHORIZE', 'REFINE']);
+const TYPES = new Set(['CLAIM', 'ACK', 'PROGRESS', 'DONE', 'BLOCKED', 'HANDOFF', 'QUESTION', 'ANSWER', 'NOTE', 'READY', 'AUTHORIZE', 'REFINE', 'PROPOSE', 'ALIGN', 'SPAWNED']);
 
 // Readiness-probe targets (used by `checkin`), all env-overridable.
 const OLLAMA = process.env.VIHS_OLLAMA_URL || 'http://localhost:11434';
@@ -44,6 +45,12 @@ const IMAGE = 'nationalinstruments/labview:' + (process.env.VIHS_MCP_IMAGE_VERSI
 const CORPUS = process.env.VIHS_MCP_REPO || (process.platform === 'win32' ? 'C:\\repos\\labview-icon-editor' : path.join(os.homedir(), 'repos', 'labview-icon-editor'));
 const CORPUS_BASE = process.env.VIHS_MCP_BASE || '9545c483f2b947c71de68c7f70aedefaedadabf7';
 const CORPUS_HEAD = process.env.VIHS_MCP_ALT || 'f57c3cfd6494abf1da968ddcc116222e93e953b4';
+
+// Discussion -> issue -> board flow (prototype governance): every issue spawns
+// from a dedicated Ideas discussion once BOTH machines have aligned on it.
+const ITEM_CATEGORY = process.env.VIHS_COLLAB_ITEM_CATEGORY || 'Ideas';
+const PROJECT = process.env.VIHS_COLLAB_PROJECT || null; // board number; board-add is deferred until the board exists
+const PROJECT_OWNER = process.env.VIHS_COLLAB_PROJECT_OWNER || OWNER;
 
 function gh(args) {
   try {
@@ -72,12 +79,12 @@ function parseArgs(argv) {
   return a;
 }
 
-function resolveContext() {
+function resolveContext(categoryName = CATEGORY) {
   const q = 'query($owner:String!,$name:String!){repository(owner:$owner,name:$name){id discussionCategories(first:30){nodes{id name}}}}';
   const r = gql(q, [['owner', OWNER], ['name', REPO]]);
   const repo = r.data.repository;
-  const cat = (repo.discussionCategories.nodes || []).find((c) => c.name.toLowerCase() === CATEGORY.toLowerCase());
-  if (!cat) throw new Error(`discussion category "${CATEGORY}" not found`);
+  const cat = (repo.discussionCategories.nodes || []).find((c) => c.name.toLowerCase() === categoryName.toLowerCase());
+  if (!cat) throw new Error(`discussion category "${categoryName}" not found`);
   return { repoId: repo.id, categoryId: cat.id };
 }
 
@@ -224,6 +231,161 @@ async function checkin(a) {
   for (const b of blockers) console.log('  BLOCKER: ' + b);
 }
 
+// --- Discussion -> issue -> board flow ---------------------------------------
+function createDiscussionIn(categoryName, title, body) {
+  const { repoId, categoryId } = resolveContext(categoryName);
+  const m = 'mutation($repo:ID!,$cat:ID!,$title:String!,$body:String!){createDiscussion(input:{repositoryId:$repo,categoryId:$cat,title:$title,body:$body}){discussion{number url id}}}';
+  const r = gql(m, [['repo', repoId], ['cat', categoryId], ['title', title], ['body', body || title]]);
+  return r.data.createDiscussion.discussion;
+}
+function getDiscussion(number) {
+  const q = 'query($owner:String!,$name:String!,$num:Int!){repository(owner:$owner,name:$name){discussion(number:$num){id number title body url}}}';
+  const r = gql(q, [['owner', OWNER], ['name', REPO], ['num', String(number), true]]);
+  const d = r.data.repository.discussion;
+  if (!d) throw new Error('discussion #' + number + ' not found');
+  return d;
+}
+function readDiscussionMessages(number, limit = 100) {
+  const q = 'query($owner:String!,$name:String!,$num:Int!,$last:Int!){repository(owner:$owner,name:$name){discussion(number:$num){comments(last:$last){nodes{author{login} createdAt body url}}}}}';
+  const r = gql(q, [['owner', OWNER], ['name', REPO], ['num', String(number), true], ['last', String(limit), true]]);
+  const nodes = r.data.repository.discussion.comments.nodes || [];
+  const messages = [];
+  for (const nd of nodes) {
+    const f = /```json\s*(\{[\s\S]*?\})\s*```/.exec(nd.body || '');
+    if (!f) continue;
+    try { const p = JSON.parse(f[1]); if (p.schema === SCHEMA) messages.push({ ...p, login: nd.author?.login, url: nd.url }); } catch { /* skip */ }
+  }
+  return { messages };
+}
+function postToDiscussion(number, msg) {
+  const d = getDiscussion(number);
+  const full = { schema: SCHEMA, v: 1, agent: AGENT, ts: new Date().toISOString(), branch: BRANCH, discussion: number, ...msg };
+  const m = 'mutation($id:ID!,$body:String!){addDiscussionComment(input:{discussionId:$id,body:$body}){comment{url}}}';
+  const r = gql(m, [['id', d.id], ['body', renderBody(full)]]);
+  return { comment: r.data.addDiscussionComment.comment, msg: full };
+}
+function ensureLabels() {
+  sh('gh', ['label', 'create', 'from-discussion', '--repo', `${OWNER}/${REPO}`, '--color', '1D76DB', '--description', 'Issue spawned from a GitHub Discussion by two-machine consensus']);
+  sh('gh', ['label', 'create', 'prototype', '--repo', `${OWNER}/${REPO}`, '--color', '5319E7', '--description', 'Prototype-branch pioneering work']);
+}
+// Consensus = a PROPOSE and an ALIGN from two DISTINCT machines, no later BLOCKED.
+function consensusState(messages) {
+  const propose = messages.find((m) => m.type === 'PROPOSE');
+  const aligns = messages.filter((m) => m.type === 'ALIGN');
+  const spawned = messages.find((m) => m.type === 'SPAWNED');
+  let decided = false;
+  let by = [];
+  if (propose) {
+    const otherAlign = aligns.find((x) => x.agent && x.agent !== propose.agent);
+    if (otherAlign) {
+      const blockedAfter = messages.some((m) => m.type === 'BLOCKED' && m.ts > otherAlign.ts);
+      if (!blockedAfter) { decided = true; by = [propose.agent, otherAlign.agent]; }
+    }
+  }
+  return { propose, aligns, spawned, decided, by };
+}
+function spawnIssue(number) {
+  const d = getDiscussion(number);
+  const { messages } = readDiscussionMessages(number);
+  const st = consensusState(messages);
+  if (st.spawned) { console.log('already spawned (idempotent): ' + (st.spawned.ref || '')); return st.spawned.ref; }
+  if (!st.decided) {
+    console.error('NOT decided: need a PROPOSE and an ALIGN from two DISTINCT machines with no later BLOCKED. ' +
+      'propose=' + (st.propose ? st.propose.agent : 'none') + ' aligns=' + JSON.stringify(st.aligns.map((x) => x.agent)));
+    process.exit(3);
+  }
+  ensureLabels();
+  const body = `${d.body || ''}\n\n---\n_Spawned from discussion #${number} (${d.url}) by ${st.by.join(' + ')} consensus (prototype flow: discussion → issue → board)._`;
+  const created = sh('gh', ['issue', 'create', '--repo', `${OWNER}/${REPO}`, '--title', d.title, '--body', body, '--label', 'from-discussion', '--label', 'prototype']);
+  const issueUrl = (created || '').split(/\r?\n/).map((s) => s.trim()).filter(Boolean).pop();
+  if (!issueUrl || !/\/issues\/\d+/.test(issueUrl)) throw new Error('gh issue create did not return an issue URL: ' + created);
+  // Offline-first LOCAL board is the primary board (git-synced between machines).
+  let localNote;
+  try {
+    const lb = board.loadBoard() || board.initBoard(AGENT).board;
+    const drift = board.schemaState(lb).drift;
+    if (lb.items.some((it) => it.issueUrl === issueUrl)) {
+      localNote = 'already on local board';
+    } else {
+      const item = board.addItem(lb, { title: d.title, issueUrl, fields: { status: 'Triage', intakeStage: 'Spawned', sourceDiscussion: number, origin: 'collab' } }, AGENT);
+      board.saveBoard(lb);
+      localNote = 'local board ' + item.id + (drift ? ' [SCHEMA DRIFT — run `board schema-bump`]' : '') + ' (commit prototype/board/board.json to share)';
+    }
+  } catch (e) {
+    localNote = 'local board update FAILED: ' + e.message;
+  }
+  let remoteNote = ' | remote board deferred';
+  if (PROJECT) { const r = sh('gh', ['project', 'item-add', PROJECT, '--owner', PROJECT_OWNER, '--url', issueUrl]); remoteNote = r ? ' | remote board ' + PROJECT : ' | remote board-add FAILED'; }
+  postToDiscussion(number, { type: 'SPAWNED', task: 'issue', ref: issueUrl, msg: 'Issue created by ' + st.by.join(' + ') + ' consensus: ' + issueUrl + ' — ' + localNote + remoteNote });
+  console.log('spawned ' + issueUrl + '  [' + localNote + remoteNote + ']');
+  return issueUrl;
+}
+
+function prune(o) {
+  const r = {};
+  for (const [k, v] of Object.entries(o)) if (v !== undefined && v !== null && v !== '' && v !== true) r[k] = v;
+  return r;
+}
+
+function boardCommand(rest, a) {
+  const sub = rest[0] && !rest[0].startsWith('--') ? rest[0] : 'show';
+  if (sub === 'init') {
+    const { created, board: b } = board.initBoard(AGENT);
+    console.log((created ? 'created ' : 'exists ') + board.BOARD_PATH + '  (schema v' + b.schemaVersion + ', ' + b.fields.length + ' fields)');
+    return;
+  }
+  const b = board.loadBoard();
+  if (!b) { console.error('no local board; run: node prototype/collab.mjs board init'); process.exit(2); }
+  const ss = board.schemaState(b);
+  if (sub === 'show' || sub === 'list') {
+    console.log(b.board.name + '  schema v' + b.schemaVersion + (ss.drift ? '  [SCHEMA DRIFT]' : '') + '  items=' + b.items.length);
+    for (const it of b.items) console.log('  ' + it.id + '  [' + (it.fields.status || '?') + ' / ' + (it.fields.intakeStage || '?') + ']  ' + it.title + (it.issueUrl ? '  ' + it.issueUrl : '') + (it.fields.sourceDiscussion ? '  disc#' + it.fields.sourceDiscussion : ''));
+    return;
+  }
+  if (sub === 'schema-check') {
+    console.log('schema v' + ss.version + '  recorded=' + ss.recorded + '  current=' + ss.current + '  drift=' + ss.drift);
+    if (ss.drift) { console.log('SCHEMA DRIFT: fields changed without a version bump -> node prototype/collab.mjs board schema-bump --note "..."'); process.exitCode = 3; }
+    return;
+  }
+  if (sub === 'schema-bump') {
+    board.schemaBump(b, a.note || 'schema change', AGENT);
+    board.saveBoard(b);
+    console.log('schema bumped to v' + b.schemaVersion + '  digest=' + b.schemaDigest + ' (commit prototype/board/board.json)');
+    return;
+  }
+  if (sub === 'add') {
+    const item = board.addItem(b, { title: req(a, 'title'), issueUrl: a.issue && a.issue !== true ? a.issue : null, fields: prune({ status: a.status || 'Triage', intakeStage: a.intake || (a.issue ? 'Spawned' : 'Proposed'), sourceDiscussion: a.discussion, origin: a.origin || AGENT }) }, AGENT);
+    board.saveBoard(b);
+    console.log('added ' + item.id + ' (commit prototype/board/board.json to share)');
+    return;
+  }
+  if (sub === 'set') {
+    const item = board.setField(b, req(a, 'item'), req(a, 'field'), req(a, 'value'), AGENT);
+    board.saveBoard(b);
+    console.log('set ' + item.id + '.' + a.field + ' = ' + a.value + ' (commit prototype/board/board.json)');
+    return;
+  }
+  if (sub === 'sync') {
+    if (ss.drift) { console.error('SYNC BLOCKED: schema drift — run `board schema-bump`, then migrate the remote to the new version.'); process.exit(3); }
+    const configured = PROJECT || b.board.remote.projectNumber;
+    if (!configured) {
+      const unpushed = b.items.filter((it) => !it.remoteItemId).length;
+      console.log('No remote GitHub Project configured yet — local board is authoritative offline.');
+      console.log('Sync plan (when the org project is created):');
+      console.log('  - push ' + unpushed + ' local item(s) as project items');
+      console.log('  - map fields: ' + b.fields.map((f) => f.name).join(', '));
+      console.log('  - reconcile conflicts by ' + b.sync.conflictPolicy + ' (per-field fieldMeta.ts)');
+      console.log('  - require remote schema == local schema v' + b.schemaVersion + ' (else migrate first)');
+      console.log('Set VIHS_COLLAB_PROJECT + board.remote.projectNumber, then re-run to apply.');
+      return;
+    }
+    console.log('Live remote apply is intentionally not wired yet (safe by design). Local schema v' + b.schemaVersion + ' is ready to push to project ' + configured + '.');
+    return;
+  }
+  console.error('board subcommands: init | show | list | add | set | schema-check | schema-bump | sync');
+  process.exit(2);
+}
+
 async function main() {
   const [cmd, ...rest] = process.argv.slice(2);
   const a = parseArgs(rest);
@@ -248,11 +410,34 @@ async function main() {
     await checkin(a);
     return;
   }
-  const SPECIAL = ['claim', 'ack', 'done', 'handoff', 'authorize', 'refine', 'post'];
+  const SPECIAL = ['claim', 'ack', 'done', 'handoff', 'authorize', 'refine', 'post', 'propose', 'align', 'spawn-issue', 'board'];
   if (!TYPES.has((cmd || '').toUpperCase()) && !SPECIAL.includes(cmd)) {
-    console.error('usage: init | poll | checkin | post --type T --task X | claim|ack|done|handoff|authorize|refine --task X ...');
+    console.error('usage: init | poll | checkin | propose --title X | align --discussion N | spawn-issue --discussion N | post --type T --task X | claim|ack|done|handoff|authorize|refine --task X ...');
     process.exit(2);
   }
+
+  if (cmd === 'propose') {
+    const title = req(a, 'title');
+    const parts = [];
+    if (a.body) parts.push(a.body);
+    if (a.acceptance) parts.push('\n**Acceptance:** ' + a.acceptance);
+    const d = createDiscussionIn(ITEM_CATEGORY, title, parts.join('\n') || title);
+    postToDiscussion(d.number, { type: 'PROPOSE', task: a.task || 'work-item', msg: a.msg || ('Proposed: ' + title) });
+    console.log('proposed discussion #' + d.number + '  ' + d.url);
+    return;
+  }
+  if (cmd === 'align') {
+    const n = Number(req(a, 'discussion'));
+    postToDiscussion(n, { type: 'ALIGN', task: a.task || 'work-item', msg: a.msg || undefined });
+    const { messages } = readDiscussionMessages(n);
+    const st = consensusState(messages);
+    if (st.spawned) { console.log('aligned; issue already spawned: ' + st.spawned.ref); return; }
+    if (st.decided) { console.log('consensus reached (' + st.by.join(' + ') + ') — spawning issue autonomously...'); spawnIssue(n); return; }
+    console.log('aligned; not yet decided (need the other machine to PROPOSE/ALIGN on discussion #' + n + ')');
+    return;
+  }
+  if (cmd === 'spawn-issue') { spawnIssue(Number(req(a, 'discussion'))); return; }
+  if (cmd === 'board') { boardCommand(rest, a); return; }
 
   if (cmd === 'claim') {
     // advisory lock: warn if the OTHER agent has a live CLAIM on this task with no later DONE/HANDOFF/ACK from us.

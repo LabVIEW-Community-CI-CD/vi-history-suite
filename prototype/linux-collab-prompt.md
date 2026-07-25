@@ -247,6 +247,41 @@ open a PR; do **not** touch `develop`/`main`.
 
 ---
 
+## New issues spawn from a discussion (prototype governance)
+
+**Effective on this branch: every new issue originates from a dedicated GitHub
+Discussion and is created only after BOTH machines align on it.** No agent opens
+an issue directly.
+
+1. **PROPOSE** — either machine opens a dedicated **Ideas** discussion for the
+   work item: `node prototype/collab.mjs propose --title "…" --body "…" [--acceptance "…"]`.
+2. **ALIGN** — the *other* machine reviews and agrees (or posts `BLOCKED` with a
+   counter): `node prototype/collab.mjs align --discussion <n> --msg "…"`. A
+   `PROPOSE` **and** an `ALIGN` from the two *distinct* machines, with no later
+   `BLOCKED`, = **decided**. You cannot align your own proposal.
+3. **SPAWN (autonomous on consensus)** — the `align` that completes consensus
+   **automatically** creates the issue: labelled `from-discussion` + `prototype`,
+   its body links the source discussion, and a `SPAWNED` message with the issue
+   URL is posted back on the discussion. `node prototype/collab.mjs spawn-issue
+   --discussion <n>` does the same explicitly (consensus-gated + idempotent).
+4. **BOARD (offline-first, local)** — `spawn-issue` also adds the item to a local,
+   versioned board at `prototype/board/board.json` (Status=`Triage`, Intake
+   Stage=`Spawned`, Source Discussion, Origin=`collab`). The board lives offline
+   and is shared between the two machines *through this branch* — so after a spawn
+   (or any `board add` / `board set`), **commit & push `prototype/board/board.json`**.
+   Inspect/edit it with `node prototype/collab.mjs board show|add|set|schema-check|schema-bump|sync`.
+   The field/stage schema is digest-tracked: if you change `fields` you must
+   `board schema-bump --note "…"` (version++ + changelog) or `board`/`sync` flags
+   **SCHEMA DRIFT**. It reconciles to a real GitHub Project later via `board sync`;
+   until one is created the local board is authoritative and on sync per-field
+   conflicts resolve by last-writer-wins on `updatedAt` (a new org project will be
+   created when we're ready).
+
+The discussion is the durable record of *why* each issue exists. Never open an
+issue by hand; never align your own proposal (consensus needs both machines).
+
+---
+
 ## Safety
 
 - The worktree/Ollama drivers create a **reversible** uncommitted edit (overwriting

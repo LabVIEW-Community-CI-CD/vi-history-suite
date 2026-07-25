@@ -1,0 +1,74 @@
+{
+  "schema": "vihs-local-board@v1",
+  "schemaVersion": 1,
+  "schemaDigest": "a29d003f4d60ea72",
+  "schemaChangelog": [
+    {
+      "version": 1,
+      "ts": "2026-07-25T07:55:10.778Z",
+      "by": "WIN",
+      "note": "initial schema (Status, Intake Stage, Source Discussion, Origin)",
+      "digest": "a29d003f4d60ea72"
+    }
+  ],
+  "board": {
+    "name": "VIHS Intake — discussion → issue → board",
+    "remote": {
+      "provider": "github-projects-v2",
+      "owner": "LabVIEW-Community-CI-CD",
+      "projectNumber": null,
+      "projectId": null,
+      "createWhenReady": true
+    }
+  },
+  "fields": [
+    {
+      "key": "status",
+      "name": "Status",
+      "type": "single-select",
+      "options": [
+        "Triage",
+        "Backlog",
+        "In Progress",
+        "In Review",
+        "Blocked",
+        "Done",
+        "Dropped"
+      ]
+    },
+    {
+      "key": "intakeStage",
+      "name": "Intake Stage",
+      "type": "single-select",
+      "options": [
+        "Proposed",
+        "Aligned",
+        "Spawned",
+        "Direct"
+      ]
+    },
+    {
+      "key": "sourceDiscussion",
+      "name": "Source Discussion",
+      "type": "number"
+    },
+    {
+      "key": "origin",
+      "name": "Origin",
+      "type": "single-select",
+      "options": [
+        "WIN",
+        "LINUX",
+        "collab",
+        "human"
+      ]
+    }
+  ],
+  "items": [],
+  "sync": {
+    "lastSyncedAt": null,
+    "lastSyncBy": null,
+    "remoteSchemaVersion": null,
+    "conflictPolicy": "field-lww-by-updatedAt"
+  }
+}
