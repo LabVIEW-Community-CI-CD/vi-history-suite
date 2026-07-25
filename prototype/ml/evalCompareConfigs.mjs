@@ -27,7 +27,8 @@ const OUT_DIR = path.join(process.cwd(), 'prototype', 'ml', 'dataset');
 const CONFIGS = [
   { id: '8b-raw', model: process.env.MODEL_8B_RAW || 'llama3.1:8b', note: 'baseline llama3.1:8b, no few-shot' },
   { id: '8b-fewshot', model: process.env.MODEL_8B_FEWSHOT || 'vichange8b-fewshot', note: "LINUX's CPU few-shot Modelfile (FROM llama3.1:8b + synthetic exemplar)" },
-  { id: '14b', model: process.env.MODEL_14B || 'qwen2.5:14b', note: 'reference-ceiling zero-shot; runs on LINUX host' }
+  { id: '14b', model: process.env.MODEL_14B || 'qwen2.5:14b', note: 'reference-ceiling zero-shot; runs on LINUX host' },
+  { id: '8b-2shot', model: process.env.MODEL_8B_2SHOT || 'vichange8b-2shot', note: "LINUX's 2-shot Modelfile (adds the modified-kind + terse adversarial exemplar; #2381)" }
 ];
 
 // Load the frozen eval items.

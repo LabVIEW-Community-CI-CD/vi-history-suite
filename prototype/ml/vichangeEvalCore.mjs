@@ -5,6 +5,10 @@
 // buildViChangeMlDataset.mjs (dataset + single-model baseline) and evalCompareConfigs.mjs
 // (multi-config side-by-side comparator).
 
+// Hardened noFalseNoChange (accepted by WIN, #2381): a model that CORRECTLY refutes a false
+// "no changes" claim by quoting it must not be penalized like one that ASSERTS no-change.
+import { noFalseNoChangeHardened } from './scorerHardening.mjs';
+
 export const SYSTEM = 'You are a VI-change summarizer for vi-history-suite. Report ONLY facts grounded in the provided lvkit and LabVIEW comparison data. Rules: NEVER say "no changes" when the structural change count is greater than 0; always state the exact structural change count; distinguish STRUCTURAL changes (from lvkit) from COSMETIC differences (position/appearance, reported only by LabVIEW and omitted by lvkit by design); never invent numbers not present in the facts.';
 
 // Score the raw model output against the deterministic ground truth. Boolean parts; the
@@ -16,7 +20,8 @@ export function scoreParts(output, gt) {
   for (const k of gt.kinds || []) h[k] = (h[k] || 0) + 1;
   const kindWords = Object.keys(h);
   const statesStructuralCount = new RegExp(`\\b${N}\\b`).test(output);
-  const noFalseNoChange = N === 0 ? true : !/\bno\s+(change|changes|difference|differences|structural)\b/.test(text);
+  // Hardened: only an ASSERTED no-change is a violation, not a quoted/refuted one (scorerHardening.mjs).
+  const noFalseNoChange = noFalseNoChangeHardened(output, N);
   const mentionsCosmetic = /cosmetic/.test(text);
   const mentionsKinds = kindWords.length ? kindWords.every((k) => text.includes(k)) : true;
   const nums = (output.match(/\d+/g) || []).map(Number);

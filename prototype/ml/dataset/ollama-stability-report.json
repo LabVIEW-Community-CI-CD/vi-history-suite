@@ -1,6 +1,6 @@
 {
   "schema": "vi-history-suite/ollama-vichange-stability@v1",
-  "generatedAt": "2026-07-25T17:40:32.740Z",
+  "generatedAt": "2026-07-25T19:00:11.304Z",
   "ollamaHost": "linux",
   "runsPerModel": 3,
   "evalItemCount": 28,
@@ -9,13 +9,13 @@
       "model": "vichange8b-2shot",
       "overall": {
         "runs": [
-          0.958,
-          0.958,
-          0.958
+          0.946,
+          0.946,
+          0.946
         ],
-        "min": 0.958,
-        "max": 0.958,
-        "mean": 0.958
+        "min": 0.946,
+        "max": 0.946,
+        "mean": 0.946
       },
       "tasks": {
         "full-summary": {
@@ -64,13 +64,13 @@
         },
         "adv-false-nochange": {
           "runs": [
-            1,
-            1,
-            1
+            0.917,
+            0.917,
+            0.917
           ],
-          "min": 1,
-          "max": 1,
-          "mean": 1,
+          "min": 0.917,
+          "max": 0.917,
+          "mean": 0.917,
           "deterministic": true
         },
         "adv-cosmetic-only-trap": {
