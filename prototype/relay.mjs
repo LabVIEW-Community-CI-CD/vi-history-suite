@@ -137,6 +137,7 @@ export function suffixText(from) {
     'one entry per tool/step OR per distinct finding in `evidence` (do not leave `evidence` empty when you',
     'have findings), pass/fail signals in `checks`, and any blocker or open',
     'question in `summary`+`details` with `kind` set to BLOCKED or QUESTION.',
+    'ALWAYS emit the block even when there is nothing to report: set a summary that says so and leave `evidence` [].',
     'For any optional field you have nothing for, use an empty string "" or omit it — NEVER output null.',
     '',
     fenced({
