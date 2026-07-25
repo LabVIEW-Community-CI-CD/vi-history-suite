@@ -5750,6 +5750,62 @@ Missing numeric IDs are intentional.
     full profile only after verifying they exist via `typeperf -q` on a real
     host; keep host-prefix stripping the only path normalization.
 
+### VHS-REQ-718: Perfmon-to-LabVIEW-Log Timestamp Correlation and Frame-Index Post-Verification
+
+- Status: Active
+- Parent: VHS-SYS-REQ-013
+- Area: CI And Developer Environment
+- Statement: The toolset shall correlate the mirror-mode perfmon capture
+  timestamp with the deterministic LabVIEW launch-log timestamps and post-verify
+  a run by locating the LabVIEW-log launch markers within the
+  deterministic-frame-rate replay stream, so an agent can align a resource event
+  with the LabVIEW launch and with individual replay-frame indexes. This builds
+  on VHS-REQ-707 (mirror-mode dual real-runtime validation) and the LabVIEW
+  launch-timing parser, and consumes the perfmon capture (VHS-REQ-715) plus the
+  replay-frame stream the TDMS holds.
+- Acceptance Criteria:
+  - VHS-REQ-718.1: A pure correlation reconciles the perfmon capture start (UTC,
+    carrying an explicit zone) and the LabVIEW launch markers (local wall-clock,
+    no zone) to epoch milliseconds before differencing — never a same-string
+    comparison, which is silently off by the host UTC offset — and reports the
+    offset of the perfmon capture start from the LabVIEW process-start and
+    execution-ready markers, failing closed on a perfmon timestamp without an
+    explicit zone or an unparseable process-start, with the execution-ready
+    marker optional.
+  - VHS-REQ-718.2: A pure post-verification consumes the LabVIEW launch instants
+    in epoch milliseconds and the replay-frame stream descriptor (frame rate,
+    frame count, frame-zero epoch) and computes the frame-index performance
+    counters — the process-start and execution-ready frame indexes, the launch
+    span in frames, the launch dead-time in milliseconds, and the sub-frame
+    quantization residual — resolving each marker to a frame index by the same
+    floor-of-elapsed-over-interval rule the perfmon-to-frame sync uses, leaving a
+    marker before frame zero or beyond the captured frame window unmapped rather
+    than clamped, and failing closed on a non-positive frame rate, a non-finite
+    frame-zero, or a missing process-start instant.
+- Agent Work Scope:
+  - Keep the correlation and post-verification pure and deterministic so both are
+    unit tested without a runtime, LabVIEW, or a capture; the real render that
+    produces the LabVIEW log and the perfmon/replay capture is a maintainer,
+    Windows-only validation step, not a hosted CI gate. The TDMS holds both the
+    LabVIEW-log instants and the replay-frame stream descriptor (as file
+    properties on the perfmon TDMS model) so the post-verification consumes the
+    same artifact the capture produced. Frame rate is configurable — the mprr
+    12-fps default, with 18 fps sharpening localization at roughly 1.5x frame
+    cost.
+- Implementation References:
+  - `docs/architecture/adr/ADR-0028-mirror-mode-dual-real-runtime-validation.md`
+  - `src/reporting/mirror/perfmonLabviewCorrelation.ts`
+  - `src/reporting/mirror/labviewFrameCorrelation.ts`
+- Verification References:
+  - `tests/unit/perfmonLabviewCorrelation.test.ts`
+  - `tests/unit/labviewFrameCorrelation.test.ts`
+- Change Guidance:
+  - Keep the two time bases reconciled to epoch milliseconds in one place (never
+    compare the raw ISO strings); keep the frame-index rule identical to the
+    perfmon-to-frame sync so a LabVIEW marker and a resource peak land in the same
+    frame; and keep both projections pure — the capture/render that produces the
+    inputs stays a maintainer validation step.
+
 ### VHS-REQ-707: Mirror-Mode Dual Real-Runtime LabVIEW Validation
 
 - Status: Active

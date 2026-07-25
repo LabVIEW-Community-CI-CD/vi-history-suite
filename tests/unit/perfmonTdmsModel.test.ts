@@ -93,6 +93,59 @@ describe('buildPerfmonTdmsModel (VHS-REQ-707.13)', () => {
     expect(time.data).toEqual([0, 1]);
   });
 
+  it('holds the LabVIEW-log instants + replay-frame stream as file properties when supplied (supports VHS-REQ-718)', () => {
+    const model = buildPerfmonTdmsModel(artifactFrom(CSV_SYSTEM_ONLY), {
+      labviewProcessStartIso: '2026-07-24T22:44:53.000',
+      labviewExecutionReadyIso: '2026-07-24T22:44:53.472',
+      frameRateHz: 12,
+      frameCount: 240,
+      epochMsAtFrameZero: 1_700_000_000_000
+    });
+    const fileProps = Object.fromEntries(model.fileProperties.map((p) => [p.name, p.value]));
+    expect(fileProps.labview_process_start_iso).toBe('2026-07-24T22:44:53.000');
+    expect(fileProps.labview_execution_ready_iso).toBe('2026-07-24T22:44:53.472');
+    expect(fileProps.frame_rate_hz).toBe(12);
+    expect(fileProps.frame_count).toBe(240);
+    expect(fileProps.epoch_ms_at_frame_zero).toBe(1_700_000_000_000);
+  });
+
+  it('omits the absent LabVIEW/frame properties (partial metadata; null exec-ready skipped)', () => {
+    const model = buildPerfmonTdmsModel(artifactFrom(CSV_SYSTEM_ONLY), {
+      labviewProcessStartIso: '2026-07-24T22:44:53.000',
+      labviewExecutionReadyIso: null,
+      frameRateHz: 18
+    });
+    const fileProps = Object.fromEntries(model.fileProperties.map((p) => [p.name, p.value]));
+    expect(fileProps.labview_process_start_iso).toBe('2026-07-24T22:44:53.000');
+    expect(fileProps.labview_execution_ready_iso).toBeUndefined();
+    expect(fileProps.frame_rate_hz).toBe(18);
+    expect(fileProps.frame_count).toBeUndefined();
+    expect(fileProps.epoch_ms_at_frame_zero).toBeUndefined();
+  });
+
+  it('omits all LabVIEW/frame file properties when no metadata is supplied (backward compatible)', () => {
+    const fileProps = Object.fromEntries(
+      buildPerfmonTdmsModel(artifactFrom(CSV_SYSTEM_ONLY)).fileProperties.map((p) => [p.name, p.value])
+    );
+    expect(fileProps.labview_process_start_iso).toBeUndefined();
+    expect(fileProps.frame_rate_hz).toBeUndefined();
+    expect(fileProps.epoch_ms_at_frame_zero).toBeUndefined();
+  });
+
+  it('holds only the supplied subset when process-start and frame-rate are omitted', () => {
+    const model = buildPerfmonTdmsModel(artifactFrom(CSV_SYSTEM_ONLY), {
+      labviewExecutionReadyIso: '2026-07-24T22:44:53.472',
+      frameCount: 240,
+      epochMsAtFrameZero: 1_700_000_000_000
+    });
+    const fileProps = Object.fromEntries(model.fileProperties.map((p) => [p.name, p.value]));
+    expect(fileProps.labview_process_start_iso).toBeUndefined();
+    expect(fileProps.frame_rate_hz).toBeUndefined();
+    expect(fileProps.labview_execution_ready_iso).toBe('2026-07-24T22:44:53.472');
+    expect(fileProps.frame_count).toBe(240);
+    expect(fileProps.epoch_ms_at_frame_zero).toBe(1_700_000_000_000);
+  });
+
   it('adds a run-cycles group with index + duration channels and per-cycle outcome properties', () => {
     const artifact = artifactFrom(CSV_SYSTEM_ONLY, {
       cycles: [{ cycleIndex: 1, durationMs: 90000, outcome: 'compared' }]

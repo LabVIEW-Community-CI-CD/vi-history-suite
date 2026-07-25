@@ -106,6 +106,11 @@ introduce a second, duplicate Windows-container producer.
   (ties to ADR-0027 research rails), with unambiguous provenance. The ledger is
   projectable into an ML-consumable, sample-traceable parity corpus with a
   cross-OS performance signal (VHS-REQ-708).
+- The dual-real-runtime run also emits a deterministic LabVIEW launch log and a
+  fixed-frame-rate replay/perfmon capture; correlating the perfmon capture start
+  with the LabVIEW launch markers and post-verifying the launch against the
+  replay-frame stream turns the run's raw timestamps into frame-indexed launch
+  telemetry (VHS-REQ-718).
 - Follow-on obligations: a shared deterministic comparison-report digest, ledger
   mirror tracks, the Vagrant left producer, the `merge_group` Docker right lane,
   and the reconciler gate. This ADR amends ADR-0012 (hosted CI stays lightweight)

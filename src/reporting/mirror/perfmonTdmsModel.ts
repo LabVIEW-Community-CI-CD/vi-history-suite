@@ -85,11 +85,32 @@ function toChannel(spec: ChannelSpec, intervalSec: number): PerfmonTdmsChannel {
 }
 
 /**
+ * Optional LabVIEW-log + replay-frame metadata the TDMS holds alongside the
+ * perfmon series (VHS-REQ-718): the deterministic LabVIEW launch instants and
+ * the replay-frame stream descriptor, so post-verification
+ * (labviewFrameCorrelation) can correlate the LabVIEW-log timestamps to
+ * individual frame indexes.
+ */
+export interface PerfmonTdmsLabviewFrameMetadata {
+  readonly labviewProcessStartIso?: string;
+  readonly labviewExecutionReadyIso?: string | null;
+  readonly frameRateHz?: number;
+  readonly frameCount?: number;
+  readonly epochMsAtFrameZero?: number;
+}
+
+/**
  * Project a first-run perfmon artifact into a TDMS channel model. Fail-closed on
  * anything that is not a first-run-perfmon@v1 artifact carrying a parsed series.
- * Pure and deterministic: identical artifact in, identical model out.
+ * Pure and deterministic: identical artifact (and metadata) in, identical model
+ * out. When `metadata` is supplied (VHS-REQ-718.3), the LabVIEW-log instants and
+ * the replay-frame stream descriptor are added as file properties so the TDMS
+ * holds both the perfmon series and the launch/frame correlation inputs.
  */
-export function buildPerfmonTdmsModel(artifact: FirstRunPerfmonArtifact): PerfmonTdmsModel {
+export function buildPerfmonTdmsModel(
+  artifact: FirstRunPerfmonArtifact,
+  metadata?: PerfmonTdmsLabviewFrameMetadata
+): PerfmonTdmsModel {
   if (!artifact || artifact.schema !== FIRST_RUN_PERFMON_ARTIFACT_SCHEMA) {
     throw new Error('buildPerfmonTdmsModel requires a first-run-perfmon@v1 artifact.');
   }
@@ -112,6 +133,26 @@ export function buildPerfmonTdmsModel(artifact: FirstRunPerfmonArtifact): Perfmo
   ];
   if (artifact.wallMs !== null) {
     fileProperties.push({ name: 'wall_ms', value: artifact.wallMs });
+  }
+  // VHS-REQ-718.3: hold the LabVIEW-log instants + replay-frame stream descriptor
+  // so the TDMS carries both the perfmon series and the launch/frame correlation
+  // inputs post-verification consumes.
+  if (metadata) {
+    if (typeof metadata.labviewProcessStartIso === 'string') {
+      fileProperties.push({ name: 'labview_process_start_iso', value: metadata.labviewProcessStartIso });
+    }
+    if (typeof metadata.labviewExecutionReadyIso === 'string') {
+      fileProperties.push({ name: 'labview_execution_ready_iso', value: metadata.labviewExecutionReadyIso });
+    }
+    if (typeof metadata.frameRateHz === 'number') {
+      fileProperties.push({ name: 'frame_rate_hz', value: metadata.frameRateHz });
+    }
+    if (typeof metadata.frameCount === 'number') {
+      fileProperties.push({ name: 'frame_count', value: metadata.frameCount });
+    }
+    if (typeof metadata.epochMsAtFrameZero === 'number') {
+      fileProperties.push({ name: 'epoch_ms_at_frame_zero', value: metadata.epochMsAtFrameZero });
+    }
   }
 
   const channelSpecs: ChannelSpec[] = [
