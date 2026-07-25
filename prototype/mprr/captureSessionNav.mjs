@@ -58,7 +58,8 @@ function findExe(name, envVar) {
 const FFMPEG = findExe('ffmpeg', 'VIHS_FFMPEG');
 const FFPROBE = findExe('ffprobe', 'VIHS_FFPROBE');
 
-const SECONDS = Number(process.env.VIHS_CAP_SECONDS || 20);
+const WORKLOAD = (process.env.VIHS_CAP_WORKLOAD || 'burst').toLowerCase(); // 'burst' | 'compare'
+const SECONDS = Number(process.env.VIHS_CAP_SECONDS || (WORKLOAD === 'compare' ? 120 : 20));
 const FPS = 12;
 const CALIBRATE = process.env.VIHS_CAP_CALIBRATE !== '0'; // pre-flight gdigrab-cadence certificate (mprr stopwatch)
 const outDir = resolve(repoRoot, process.env.VIHS_CAP_OUT || join('win-validation', 'mprr', 'session'));
@@ -125,11 +126,33 @@ async function main() {
   const gdDone = new Promise((r) => gd.on('close', r));
 
   // 3) drive a real, LABELLED workload inside the capture window so there is a
-  // genuine resource event to navigate to: idle -> CPU burst -> idle.
-  await sleep(Math.round(SECONDS * 1000 * 0.35));
-  const burstAtEpoch = Date.now();
-  console.log(`[cap] CPU burst at t=${((burstAtEpoch - frameZeroEpoch) / 1000).toFixed(1)}s (frame ${Math.round((burstAtEpoch - frameZeroEpoch) / 1000 * FPS)})`);
-  cpuBurst(Math.round(SECONDS * 1000 * 0.2));
+  // genuine resource event to navigate to. 'compare' = a REAL host-native LabVIEW
+  // comparison (windows-compare-driver, lv_icon.vi) -> LabVIEW launches on the
+  // captured screen and its render spikes CPU; 'burst' = a synthetic CPU burst.
+  let workloadAtEpoch;
+  if (WORKLOAD === 'compare') {
+    await sleep(3000);
+    workloadAtEpoch = Date.now();
+    console.log(`[cap] launching REAL host-native LabVIEW compare (lv_icon.vi) at t=${((workloadAtEpoch - frameZeroEpoch) / 1000).toFixed(1)}s ...`);
+    const cmp = spawnSync(process.execPath, [join('scripts', 'windows-compare-driver.cjs')], {
+      cwd: repoRoot, encoding: 'utf8', windowsHide: false,
+      env: {
+        ...process.env,
+        WIN_REPO_ROOT: process.env.VIHS_CAP_REPO || 'C:\\repos\\labview-icon-editor',
+        WIN_VI_PATH: process.env.VIHS_CAP_VI || 'resource/plugins/lv_icon.vi',
+        WIN_BASE: process.env.VIHS_CAP_BASE || '5376833',
+        WIN_SELECTED: process.env.VIHS_CAP_SELECTED || 'fc09736',
+        WIN_PROVIDER: 'host', WIN_LV_VERSION: '2026', WIN_LV_BITNESS: 'x64',
+        WIN_LABEL: 'session-nav', WIN_STORAGE_ROOT: join(outDir, 'compare-storage')
+      }
+    });
+    console.log(`[cap] compare exit=${cmp.status}`);
+  } else {
+    await sleep(Math.round(SECONDS * 1000 * 0.35));
+    workloadAtEpoch = Date.now();
+    console.log(`[cap] CPU burst at t=${((workloadAtEpoch - frameZeroEpoch) / 1000).toFixed(1)}s (frame ${Math.round((workloadAtEpoch - frameZeroEpoch) / 1000 * FPS)})`);
+    cpuBurst(Math.round(SECONDS * 1000 * 0.2));
+  }
 
   await Promise.all([tpDone, gdDone]);
   const perfCsv = existsSync(perfCsvPath) ? readFileSync(perfCsvPath, 'utf8') : '';
@@ -185,8 +208,9 @@ async function main() {
     schema: 'vi-history-suite/win-session-nav-capture@v1',
     generatedAt: new Date().toISOString(),
     captureSeconds: SECONDS, fps: FPS,
+    workload: WORKLOAD,
     frameZeroEpochMs: frameZeroEpoch,
-    burstAtFrame: Math.round((burstAtEpoch - frameZeroEpoch) / 1000 * FPS),
+    workloadAtFrame: Math.round((workloadAtEpoch - frameZeroEpoch) / 1000 * FPS),
     screenFrameCount: frameCount,
     perfmonSamples: sync.samples.length,
     peaks: sync.peaks.map((p) => ({ series: p.series, value: p.value, frameIndex: p.frameIndex, stopwatchCentiseconds: p.stopwatchCentiseconds })),
