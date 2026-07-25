@@ -143,4 +143,48 @@ describe('buildMprrDrawtextOverlay (#2377 nav sidecar stretch)', () => {
     expect(overlay.filtergraph).toBe('null');
     expect(overlay.ffmpegCommand).toContain('-vf "null"');
   });
+
+  it('defaults to the frame-sequence assembler (back-compat)', () => {
+    const overlay = buildMprrDrawtextOverlay(fakeSync());
+    expect(overlay.assemblesFrom).toBe('frames');
+    expect(overlay.runningClock).toBe(false);
+    expect(overlay.ffmpegCommand).toContain('-framerate 12 -i frame_%06d.png');
+  });
+
+  it('assembles onto a real base video with chapters attached (working assembler)', () => {
+    const overlay = buildMprrDrawtextOverlay(fakeSync(), {
+      baseVideo: 'screen.mp4',
+      chaptersPath: 'chapters.ffmeta',
+      outputPath: 'session-nav.mp4'
+    });
+    expect(overlay.assemblesFrom).toBe('video');
+    expect(overlay.ffmpegCommand).toContain('-i screen.mp4');
+    expect(overlay.ffmpegCommand).not.toContain('-framerate');
+    expect(overlay.ffmpegCommand).toContain('-i chapters.ffmeta -map_metadata 1');
+    expect(overlay.ffmpegCommand).toContain('-y session-nav.mp4');
+  });
+
+  it('appends a backslash-escaped running mprr clock when requested', () => {
+    const overlay = buildMprrDrawtextOverlay(fakeSync(), { runningClock: true });
+    expect(overlay.runningClock).toBe(true);
+    expect(overlay.filtergraph).toContain("text='%{pts\\:hms}'"); // colon stays escaped
+    expect(overlay.filtergraph.split('drawtext=').length - 1).toBe(4); // 3 peaks + 1 clock
+  });
+
+  it('still emits the clock when no peak is placeable (not a null passthrough)', () => {
+    const overlay = buildMprrDrawtextOverlay(
+      fakeSync({ peaks: [{ series: 'cpu', value: 1, sampleIndex: 0, frameIndex: null, stopwatchCentiseconds: 0 }] }),
+      { runningClock: true }
+    );
+    expect(overlay.segmentCount).toBe(0);
+    expect(overlay.filtergraph).not.toBe('null');
+    expect(overlay.filtergraph).toContain('%{pts\\:hms}');
+  });
+
+  it('applies a colon-free fontfile to every drawtext filter', () => {
+    const overlay = buildMprrDrawtextOverlay(fakeSync(), { fontFile: '/fonts/DejaVuSans.ttf', runningClock: true });
+    const drawtexts = overlay.filtergraph.split(',').filter((f) => f.startsWith('drawtext='));
+    expect(drawtexts.length).toBe(4); // 3 peaks + clock
+    expect(drawtexts.every((f) => f.includes("fontfile='/fonts/DejaVuSans.ttf':"))).toBe(true);
+  });
 });

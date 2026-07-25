@@ -76,14 +76,29 @@ const label = inputArg ? basename(inputArg).replace(/\.json$/i, '') : 'synthetic
 const outDir = resolve(outArg ?? join(repoRoot, 'out', 'mprr-nav', label));
 mkdirSync(outDir, { recursive: true });
 
+// Working-assembler options (env, all optional). MPRR_BASE_VIDEO burns onto a real screen
+// recording instead of a frame sequence; MPRR_RUNNING_CLOCK adds the live mprr clock;
+// MPRR_FONT_FILE sets a COLON-FREE fontfile (Windows has no fontconfig). When a base video
+// is given, the assembler auto-attaches the chapters file this renderer writes.
+const baseVideo = process.env.MPRR_BASE_VIDEO || undefined;
+const fontFile = process.env.MPRR_FONT_FILE || undefined;
+const runningClock = /^(1|true|yes|on)$/i.test(process.env.MPRR_RUNNING_CLOCK || '');
+const chaptersFileName = `${label}.ffmeta.txt`;
+
 const nav = buildMprrTimelineNav(sync, { title: label });
-const overlay = buildMprrDrawtextOverlay(sync, { outputPath: `${label}.mp4` });
+const overlay = buildMprrDrawtextOverlay(sync, {
+  outputPath: `${label}.mp4`,
+  baseVideo,
+  chaptersPath: baseVideo ? chaptersFileName : undefined,
+  runningClock,
+  fontFile
+});
 
 const files = {
   [`${label}.vtt`]: nav.webvtt,
   [`${label}.ffmeta.txt`]: nav.ffmetadata,
   [`${label}.filtergraph.txt`]: `${overlay.filtergraph}\n`,
-  [`${label}.ffmpeg.sh`]: `#!/usr/bin/env bash\n# assemble the navigable overlay video from the mprr frame stream\n${overlay.ffmpegCommand}\n`,
+  [`${label}.ffmpeg.sh`]: `#!/usr/bin/env bash\n# assemble the navigable overlay video (assembles from: ${overlay.assemblesFrom})\nset -euo pipefail\ncd "$(dirname "$0")"  # resolve the relative chapters/frame paths\n${overlay.ffmpegCommand}\n`,
   [`${label}.nav.json`]: `${JSON.stringify({ nav, overlay }, null, 2)}\n`
 };
 for (const [name, content] of Object.entries(files)) {
@@ -93,4 +108,5 @@ for (const [name, content] of Object.entries(files)) {
 console.log(`mprr nav artifacts (${nav.schema}) -> ${outDir}`);
 console.log(`  authoritative=${nav.authoritative} advisory=${nav.advisory} frameRateHz=${nav.frameRateHz}`);
 console.log(`  cues=${nav.cueCount} unplaceablePeaks=${nav.unplaceablePeakCount} drawtextSegments=${overlay.segmentCount}`);
+console.log(`  assemblesFrom=${overlay.assemblesFrom} runningClock=${overlay.runningClock}${baseVideo ? ` baseVideo=${baseVideo}` : ''}`);
 console.log(`  files: ${Object.keys(files).join(', ')}`);

@@ -204,10 +204,14 @@ export interface MprrDrawtextOverlay {
   readonly advisory: boolean;
   readonly segmentCount: number;
   readonly unplaceablePeakCount: number;
+  /** Whether a running mprr clock (`%{pts\:hms}`) overlay was appended. */
+  readonly runningClock: boolean;
+  /** Whether the assembler reads a frame sequence or an existing base video. */
+  readonly assemblesFrom: 'frames' | 'video';
   readonly segments: readonly MprrDrawtextSegment[];
   /** Comma-joined drawtext filters (or `null` passthrough when there is nothing to burn). */
   readonly filtergraph: string;
-  /** Ready-to-run ffmpeg assembly command that burns the overlay onto the frame stream. */
+  /** Ready-to-run ffmpeg assembler: burns the overlay (+ optional chapters) onto the source. */
   readonly ffmpegCommand: string;
 }
 
@@ -220,6 +224,22 @@ export interface BuildMprrDrawtextOverlayOptions extends BuildMprrTimelineNavOpt
   /** drawtext x/y expressions (default top-left inset). */
   readonly x?: string;
   readonly y?: string;
+  /**
+   * Assemble onto an EXISTING base video (e.g. a real screen recording) instead of a
+   * frame sequence. When set, the command reads `-i <baseVideo>` rather than
+   * `-framerate <fps> -i <framePattern>`.
+   */
+  readonly baseVideo?: string;
+  /** Attach an ffmetadata chapters file via `-i <chaptersPath> -map_metadata 1`. */
+  readonly chaptersPath?: string;
+  /** Append a running mprr clock overlay (`%{pts\:hms}`, bottom-left). */
+  readonly runningClock?: boolean;
+  /**
+   * drawtext `fontfile` for every overlay. On Windows there is no fontconfig and a
+   * drive-letter `:` breaks the filter grammar, so pass a COLON-FREE path (copy the
+   * `.ttf` local) — see the assembler recipe above {@link buildMprrDrawtextOverlay}.
+   */
+  readonly fontFile?: string;
 }
 
 /**
@@ -247,6 +267,16 @@ function toSeconds(ms: number): number {
  * frames it spans (`enable='between(t,start,end)'`), so the assembled replay video is
  * self-describing without an external chapter track. ADVISORY is burned into every
  * label when the mprr capture is uncalibrated. Composes {@link computeNavCues}; pure.
+ *
+ * `ffmpegCommand` is a WORKING assembler, not just the frame-sequence command. Assembler
+ * recipe (validated on Windows ffmpeg 8.x against a real capture):
+ *   - `-vf` is passed INLINE as one arg (a `-/vf` filter file read was flaky);
+ *   - the emitted filter string is BOM-free (plain UTF-8);
+ *   - a literal `%` breaks drawtext, so burned labels use words (the sanitizer drops `%`);
+ *   - the running clock keeps its colon backslash-escaped (`%{pts\:hms}`) even in quotes;
+ *   - `fontFile` must be a COLON-FREE path on Windows (no fontconfig; copy the `.ttf` local).
+ * Set `baseVideo` to burn onto a real screen recording, `chaptersPath` to attach the
+ * ffmetadata chapters, and `runningClock` for the live mprr clock.
  */
 export function buildMprrDrawtextOverlay(
   sync: PerfmonMprrSync,
@@ -259,20 +289,38 @@ export function buildMprrDrawtextOverlay(
   const x = options.x ?? '20';
   const y = options.y ?? '20';
   const prefix = authoritative ? '' : 'ADVISORY ';
+  // Colon-free fontfile per the Windows recipe; empty -> ffmpeg's built-in default font.
+  const fontPart = options.fontFile ? `fontfile='${options.fontFile}':` : '';
 
   const segments: MprrDrawtextSegment[] = cues.map((c) => {
     const startSec = toSeconds(c.startMs);
     const endSec = toSeconds(c.endMs);
     const text = drawtextSanitize(`${prefix}${c.series} ${c.value} | f${c.frameIndex} | ${c.timecode}`);
     const filter =
-      `drawtext=text='${text}':x=${x}:y=${y}:fontsize=${fontSize}:fontcolor=white:` +
+      `drawtext=${fontPart}text='${text}':x=${x}:y=${y}:fontsize=${fontSize}:fontcolor=white:` +
       `box=1:boxcolor=black@0.5:enable='between(t,${startSec},${endSec})'`;
     return { frameIndex: c.frameIndex, startSec, endSec, text, filter };
   });
 
-  const filtergraph = segments.length > 0 ? segments.map((s) => s.filter).join(',') : 'null';
-  const ffmpegCommand =
-    `ffmpeg -framerate ${frameRateHz} -i ${framePattern} -vf "${filtergraph}" -y ${outputPath}`;
+  const filters = segments.map((s) => s.filter);
+  // The running mprr clock is a FIXED, known-safe ffmpeg expansion (NOT user data, so it is
+  // never sanitized); its colon MUST stay backslash-escaped even inside the quotes.
+  if (options.runningClock) {
+    filters.push(
+      `drawtext=${fontPart}text='%{pts\\:hms}':x=${x}:y=h-th-20:fontsize=${fontSize}:` +
+        `fontcolor=yellow:box=1:boxcolor=black@0.5`
+    );
+  }
+  const filtergraph = filters.length > 0 ? filters.join(',') : 'null';
+
+  // Working assembler: read a frame sequence OR an existing base video, optionally attach an
+  // ffmetadata chapters file (metadata mapped from that input), and apply the overlay inline.
+  const assemblesFrom: 'frames' | 'video' = options.baseVideo ? 'video' : 'frames';
+  const input = options.baseVideo
+    ? `-i ${options.baseVideo}`
+    : `-framerate ${frameRateHz} -i ${framePattern}`;
+  const chaptersPart = options.chaptersPath ? ` -i ${options.chaptersPath} -map_metadata 1` : '';
+  const ffmpegCommand = `ffmpeg ${input}${chaptersPart} -vf "${filtergraph}" -y ${outputPath}`;
 
   return {
     schema: MPRR_DRAWTEXT_OVERLAY_SCHEMA,
@@ -282,6 +330,8 @@ export function buildMprrDrawtextOverlay(
     advisory: !authoritative,
     segmentCount: segments.length,
     unplaceablePeakCount,
+    runningClock: options.runningClock === true,
+    assemblesFrom,
     segments,
     filtergraph,
     ffmpegCommand
