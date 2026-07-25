@@ -248,7 +248,7 @@ async function main() {
     await checkin(a);
     return;
   }
-  const SPECIAL = ['claim', 'ack', 'done', 'handoff', 'authorize', 'refine'];
+  const SPECIAL = ['claim', 'ack', 'done', 'handoff', 'authorize', 'refine', 'post'];
   if (!TYPES.has((cmd || '').toUpperCase()) && !SPECIAL.includes(cmd)) {
     console.error('usage: init | poll | checkin | post --type T --task X | claim|ack|done|handoff|authorize|refine --task X ...');
     process.exit(2);
@@ -273,6 +273,13 @@ async function main() {
   if (cmd === 'handoff') { const r = post({ type: 'HANDOFF', task: req(a, 'task'), to: a.to || undefined, ref: a.ref || undefined, msg: a.msg || undefined }); console.log('posted HANDOFF ' + r.comment.url); return; }
   if (cmd === 'authorize') { const r = post({ type: 'AUTHORIZE', task: req(a, 'task'), to: a.to || 'LINUX', ref: a.ref || undefined, msg: a.msg || undefined, next: a.next || undefined }); console.log('posted AUTHORIZE ' + r.comment.url); return; }
   if (cmd === 'refine') { const r = post({ type: 'REFINE', task: req(a, 'task'), ref: req(a, 'ref'), to: a.to || 'LINUX', msg: a.msg || undefined, next: a.next || undefined }); console.log('posted REFINE ' + r.comment.url); return; }
+  if (cmd === 'post') {
+    const type = req(a, 'type').toUpperCase();
+    if (!TYPES.has(type)) { console.error('unknown --type ' + type + ' (valid: ' + [...TYPES].join(', ') + ')'); process.exit(2); }
+    const r = post({ type, task: a.task || undefined, ref: a.ref || undefined, msg: a.msg || undefined, next: a.next || undefined, to: a.to || undefined });
+    console.log('posted ' + type + ' ' + r.comment.url);
+    return;
+  }
 
   // generic post
   const type = cmd.toUpperCase();
