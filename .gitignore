@@ -14,6 +14,9 @@ reports/
 tmp/
 assurance-*-evidence/
 
+# vihs local cache root (sibling of lvkit's .lvkit/cache); never committed
+.vihs/
+
 # Windows comparison-runtime validation run evidence (issue #296 driver output)
 win-validation/
 

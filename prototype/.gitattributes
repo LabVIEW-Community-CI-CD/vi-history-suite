@@ -3,3 +3,4 @@
 board/board.json text eol=lf
 *.mjs text eol=lf
 *.md text eol=lf
+*.Dockerfile text eol=lf

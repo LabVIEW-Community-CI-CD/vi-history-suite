@@ -32,11 +32,12 @@
 //   refs      [ "#2369", "<commit-sha>", "<url>" ]
 
 import fs from 'node:fs';
+import { pathToFileURL } from 'node:url';
 
-const SCHEMA = 'vihs-relay@v1';
-const FROM = new Set(['EDH-copilot', 'LINUX', 'WIN', 'ollama', 'human']);
-const KIND = new Set(['RESULT', 'QUESTION', 'BLOCKED', 'NOTE', 'PROPOSE', 'ALIGN', 'DONE']);
-const REQUIRED = ['schema', 'from', 'kind', 'summary'];
+export const SCHEMA = 'vihs-relay@v1';
+export const FROM = new Set(['EDH-copilot', 'LINUX', 'WIN', 'ollama', 'human']);
+export const KIND = new Set(['RESULT', 'QUESTION', 'BLOCKED', 'NOTE', 'PROPOSE', 'ALIGN', 'DONE']);
+export const REQUIRED = ['schema', 'from', 'kind', 'summary'];
 
 function parseArgs(argv) {
   const a = {};
@@ -53,7 +54,7 @@ function parseArgs(argv) {
 // Extract the LAST fenced `vihs-relay` / `json` block whose payload carries the
 // `vihs-relay@v1` schema. Taking the last match tolerates a responder that shows
 // a draft earlier and the final envelope at the end of its message.
-function extractEnvelope(text) {
+export function extractEnvelope(text) {
   const re = /```(?:vihs-relay|json)\s*(\{[\s\S]*?\})\s*```/g;
   let match;
   let found = null;
@@ -68,7 +69,7 @@ function extractEnvelope(text) {
   return found;
 }
 
-function validate(env) {
+export function validate(env) {
   const errors = [];
   if (!env || typeof env !== 'object') return ['payload is not a JSON object'];
   for (const key of REQUIRED) {
@@ -83,7 +84,29 @@ function validate(env) {
   return errors;
 }
 
-function templateEnvelope(a) {
+// Small models (e.g. llama3.1:8b via Ollama) emit `null`/`""`/`[]`/`{}` for
+// optional fields they didn't fill. Those pass validation but are noise to a
+// consumer, so normalize a VALID envelope to its meaningful content: keep the
+// required fields verbatim and drop optional fields that are null/empty. Never
+// fabricates values — only strips absent ones.
+export function normalizeEnvelope(env) {
+  if (!env || typeof env !== 'object') return env;
+  const out = {};
+  for (const [k, v] of Object.entries(env)) {
+    if (REQUIRED.includes(k)) {
+      out[k] = v;
+      continue;
+    }
+    if (v === null || v === undefined) continue;
+    if (typeof v === 'string' && v.trim() === '') continue;
+    if (Array.isArray(v) && v.length === 0) continue;
+    if (typeof v === 'object' && !Array.isArray(v) && Object.keys(v).length === 0) continue;
+    out[k] = v;
+  }
+  return out;
+}
+
+export function templateEnvelope(a) {
   return {
     schema: SCHEMA,
     from: FROM.has(a.from) ? a.from : 'EDH-copilot',
@@ -104,7 +127,7 @@ function fenced(obj) {
   return '```vihs-relay\n' + JSON.stringify(obj, null, 2) + '\n```';
 }
 
-function suffixText(from) {
+export function suffixText(from) {
   const who = FROM.has(from) ? from : 'EDH-copilot';
   return [
     '---',
@@ -113,6 +136,7 @@ function suffixText(from) {
     'Fill EVERY field from your actual work — do not invent values. Put your narrative in `details`,',
     'one entry per tool/step in `evidence`, pass/fail signals in `checks`, and any blocker or open',
     'question in `summary`+`details` with `kind` set to BLOCKED or QUESTION.',
+    'For any optional field you have nothing for, use an empty string "" or omit it — NEVER output null.',
     '',
     fenced({
       schema: SCHEMA,
@@ -172,17 +196,18 @@ function main() {
       process.exitCode = 2;
       return;
     }
-    console.log(`[${env.from}] ${env.kind}${env.topic ? ' · ' + env.topic : ''}${env.task ? ' · task ' + env.task : ''}`);
-    console.log('summary: ' + env.summary);
-    if (Array.isArray(env.evidence) && env.evidence.length) {
+    const clean = normalizeEnvelope(env);
+    console.log(`[${clean.from}] ${clean.kind}${clean.topic ? ' · ' + clean.topic : ''}${clean.task ? ' · task ' + clean.task : ''}`);
+    console.log('summary: ' + clean.summary);
+    if (Array.isArray(clean.evidence) && clean.evidence.length) {
       console.log('evidence:');
-      for (const e of env.evidence) console.log('  - ' + (e.name || '?') + ': ' + (typeof e.result === 'string' ? e.result : JSON.stringify(e.result)));
+      for (const e of clean.evidence) console.log('  - ' + (e.name || '?') + ': ' + (typeof e.result === 'string' ? e.result : JSON.stringify(e.result)));
     }
-    if (env.checks && Object.keys(env.checks).length) {
-      console.log('checks: ' + Object.entries(env.checks).map(([k, v]) => k + '=' + (v === true ? 'ok' : v === false ? 'FAIL' : v === null ? '-' : v)).join(', '));
+    if (clean.checks && Object.keys(clean.checks).length) {
+      console.log('checks: ' + Object.entries(clean.checks).map(([k, v]) => k + '=' + (v === true ? 'ok' : v === false ? 'FAIL' : v === null ? '-' : v)).join(', '));
     }
-    if (env.next) console.log('next: ' + env.next);
-    if (Array.isArray(env.refs) && env.refs.length) console.log('refs: ' + env.refs.join(', '));
+    if (clean.next) console.log('next: ' + clean.next);
+    if (Array.isArray(clean.refs) && clean.refs.length) console.log('refs: ' + clean.refs.join(', '));
     console.log('\nOK: valid ' + SCHEMA);
     return;
   }
@@ -191,4 +216,8 @@ function main() {
   process.exitCode = cmd ? 2 : 0;
 }
 
-main();
+// Run the CLI only when invoked directly, so this module can also be imported
+// (e.g. by the Ollama exercise driver) to reuse extractEnvelope/validate.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main();
+}
