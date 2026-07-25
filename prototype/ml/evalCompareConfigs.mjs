@@ -10,13 +10,16 @@
 // absent ones (e.g. 14b on WIN lives on LINUX's host) instead of failing. Same scorer +
 // same SYSTEM as the single-model baseline builder.
 //
-// Run from repo root: node prototype/ml/evalCompareConfigs.mjs
+// Run from repo root: node prototype/ml/evalCompareConfigs.mjs [--markdown]
+// --markdown also writes/prints a paste-ready side-by-side table (ollama-eval-compare-configs.md).
 // Env: OLLAMA_URL (default http://localhost:11434), REGRESSION_FLOOR (default 1),
 //   MODEL_8B_RAW / MODEL_8B_FEWSHOT / MODEL_14B to override the config->model mapping.
 import fs from 'node:fs';
 import path from 'node:path';
 import { runEvalForModel, aggregate } from './vichangeEvalCore.mjs';
 
+const argv = process.argv.slice(2);
+const WANT_MARKDOWN = argv.includes('--markdown');
 const OLLAMA = process.env.OLLAMA_URL || 'http://localhost:11434';
 const FLOOR = process.env.REGRESSION_FLOOR ? Number(process.env.REGRESSION_FLOOR) : 1;
 const OUT_DIR = path.join(process.cwd(), 'prototype', 'ml', 'dataset');
@@ -76,6 +79,41 @@ const report = {
   detail: Object.fromEntries(evaluated.map((c) => [c.id, c.results]))
 };
 fs.writeFileSync(path.join(OUT_DIR, 'ollama-eval-compare-configs.json'), JSON.stringify(report, null, 2), 'utf8');
+
+// Optional Markdown side-by-side table (paste-ready for PR/board), written next to the JSON.
+function fmt(v) { return v === null || v === undefined ? '–' : String(v); }
+function toMarkdown(rep) {
+  const lines = [];
+  lines.push(`### Grounded VI-change faithful summarization — 3-config eval`);
+  lines.push('');
+  lines.push(`Schema \`${rep.schema}\` · floor ${rep.regressionFloor} · ${rep.evalItems} items · host \`${rep.ollamaUrl}\``);
+  lines.push('');
+  lines.push('| config | model | present | overall | standard | adversarial | guard |');
+  lines.push('|---|---|---|---|---|---|---|');
+  for (const c of rep.configs) {
+    const guard = c.regressionGuard ? (c.regressionGuard.pass ? 'PASS' : 'FAIL') : '–';
+    lines.push(`| ${c.id} | \`${c.model}\` | ${c.present ? 'yes' : 'no'} | ${fmt(c.overall)} | ${fmt(c.standardMean)} | ${fmt(c.adversarialMean)} | ${guard} |`);
+  }
+  lines.push('');
+  const cols = rep.configs.filter((c) => c.evaluated).map((c) => c.id);
+  if (cols.length) {
+    lines.push('#### By task');
+    lines.push('');
+    lines.push(`| task | ${cols.join(' | ')} |`);
+    lines.push(`|---|${cols.map(() => '---').join('|')}|`);
+    for (const t of rep.taskTypes) {
+      lines.push(`| ${t} | ${cols.map((id) => fmt(rep.comparison[t] ? rep.comparison[t][id] : null)).join(' | ')} |`);
+    }
+    lines.push('');
+  }
+  return lines.join('\n');
+}
+if (WANT_MARKDOWN) {
+  const md = toMarkdown(report);
+  fs.writeFileSync(path.join(OUT_DIR, 'ollama-eval-compare-configs.md'), md + '\n', 'utf8');
+  console.log(md);
+  console.log('');
+}
 
 // Console summary (file-per-cycle discipline captures this into the cycle .out file).
 console.log('EVAL_COMPARE_DONE evalItems=' + items.length + ' floor=' + FLOOR);
