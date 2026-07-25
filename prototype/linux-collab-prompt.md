@@ -299,6 +299,31 @@ discussion** (never out-of-band): `node prototype/collab.mjs ask --discussion <n
 --msg "…"` and `answer --discussion <n> --msg "…"`. Resolve open questions before
 aligning.
 
+---
+
+## Relaying results to the human (copy-paste chat flow)
+
+Machine↔machine coordination is the `vihs-collab-msg@v1` Discussions bus above.
+But when the **human operator** asks you for something they will copy-paste into
+the *other* machine's chat (e.g. the Windows agent's chat), end that reply with a
+single standard envelope so it parses deterministically on the other side:
+schema **`vihs-relay@v1`** (helper `prototype/relay.mjs`, no dependencies).
+
+```bash
+node prototype/relay.mjs suffix --from LINUX   # instruction + skeleton to append to your reply
+node prototype/relay.mjs template --from LINUX --kind RESULT   # a blank envelope to fill
+node prototype/relay.mjs parse --file reply.txt   # validate a reply pasted TO you (fail-closed)
+```
+
+Rules: emit **one** fenced ```` ```vihs-relay ```` block, as the **last** thing in
+the reply, nothing after it. Required fields `schema`,`from`,`kind`,`summary`;
+`from` ∈ `EDH-copilot|LINUX|WIN|ollama|human`; `kind` ∈
+`RESULT|QUESTION|BLOCKED|NOTE|PROPOSE|ALIGN|DONE`. Put narrative in `details`, one
+entry per tool/step in `evidence`, pass/fail in `checks`, and open questions in
+`summary`+`details` with `kind: QUESTION`. Never invent field values — mirror your
+actual work. This is the copy-paste sibling of the Discussions bus; use the bus for
+direct machine↔machine hops and the relay envelope only when a human is the carrier.
+
 **Alignment gates active development.** Do not start active development on a work
 item until its discussion is aligned — check `node prototype/collab.mjs status
 --discussion <n>` (exit 0 = ALIGNED, 3 = not yet).
