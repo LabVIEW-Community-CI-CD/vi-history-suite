@@ -1,0 +1,40 @@
+{
+  "schema": "vi-history-suite/ollama-vichange-eval@v1",
+  "generatedAt": "2026-07-25T15:42:45.563Z",
+  "model": "llama3.1:8b",
+  "task": "grounded-vi-change-faithful-summarization",
+  "datasetFiles": {
+    "finetune": "prototype/ml/dataset/vichange-finetune-v1.jsonl",
+    "eval": "prototype/ml/dataset/vichange-eval-v1.jsonl"
+  },
+  "sampleCount": 2,
+  "baselineMeanFaithfulness": 0.75,
+  "results": [
+    {
+      "vi": "MouseDown.vi",
+      "labviewSource": "robust-parser",
+      "faithfulness": 0.75,
+      "parts": {
+        "statesStructuralCount": true,
+        "noFalseNoChange": true,
+        "mentionsCosmetic": false,
+        "noInventedNumbers": true
+      },
+      "invented": [],
+      "output": "There were 6 STRUCTURAL changes to the VI \"MouseDown.vi\"."
+    },
+    {
+      "vi": "PictureControl_MouseUp.vi",
+      "labviewSource": "prototype-dataset",
+      "faithfulness": 0.75,
+      "parts": {
+        "statesStructuralCount": true,
+        "noFalseNoChange": true,
+        "mentionsCosmetic": false,
+        "noInventedNumbers": true
+      },
+      "invented": [],
+      "output": "There were 13 STRUCTURAL changes to the VI \"PictureControl_MouseUp.vi\"."
+    }
+  ]
+}
