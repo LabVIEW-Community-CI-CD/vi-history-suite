@@ -410,6 +410,7 @@
     "perfmon:labview:e2e": "node scripts/validatePerfmonLabviewCorrelation.cjs",
     "perfmon:labview:container:e2e": "node scripts/validatePerfmonLabviewContainerE2E.cjs",
     "mcp:container:e2e": "node scripts/validateMcpContainerE2E.mjs",
+    "mcp:pr-review:e2e": "node scripts/validateMcpPrReviewContainerE2E.mjs",
     "devtools:release": "node scripts/buildDevToolsRelease.js",
     "devtools:release:verify": "node scripts/verifyDevToolsRelease.js",
     "supply-chain:state": "node scripts/buildSupplyChainState.js",

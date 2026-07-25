@@ -474,6 +474,35 @@ write the typed evidence JSON. It exits `0` on a full pass and `1` on any assert
 failure. This is the container sibling of the LabVIEW-free
 `scripts/lvkitMcpAgentValidation.mjs` MCP agent validation.
 
+### MCP PR review of a real change surface in a container
+
+`scripts/validateMcpPrReviewContainerE2E.mjs` proves the MCP **pull-request
+review** workflow end-to-end against real LabVIEW in a Windows LabVIEW container,
+targeting a real PR change surface (default: `ni/labview-icon-editor` PR #537). It
+drives the shipped MCP server as a real stdio client and exercises the sequence an
+agent follows to review a PR: `list_changed_vis` (the PR's changed VIs),
+the `review_pull_request` guided prompt, `build_vi_pr_review` over the container
+(a real multi-VI review producing the `vi-history-suite/vi-semantic-pr-review@v1`
+model), the Markdown form (the sticky PR-comment body), and a focused
+`compare_vi_revisions` on one changed VI (cold then warm — a byte-identical
+cache hit) that is schema-validated. The reviewed-VI count is bounded by
+`maxVis` because each reviewed VI is a fresh cold container comparison.
+
+Prerequisites: Docker in **Windows-container** mode with the image pulled, and a
+local Git clone of the target repo with the PR commits fetched
+(`git fetch origin pull/<N>/head`). Run it from the repo root after
+`npm run compile`:
+
+```powershell
+npm run compile
+npm run mcp:pr-review:e2e
+```
+
+Point it at any PR change surface with `VIHS_MCP_REPO`, `VIHS_MCP_BASE`, and
+`VIHS_MCP_SEL`; raise `VIHS_MCP_MAX_VIS` (tool ceiling 200) to review more of the
+PR, and set `VIHS_MCP_OUT` to write the typed evidence JSON. It exits `0` on a full
+pass and `1` on any assertion failure.
+
 ## Linux/LabVIEW Runner
 
 The Linux maintainer runner is the sibling of the Windows runner above: a
