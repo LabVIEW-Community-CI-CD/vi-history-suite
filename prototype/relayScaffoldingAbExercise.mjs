@@ -24,6 +24,9 @@
 //   VIHS_OLLAMA_MODEL (default llama3.1:8b), VIHS_AB_OUT (evidence JSON path),
 //   VIHS_AB_REFRESH=1 (re-stage), VIHS_AB_SET (path to a JSON array overriding
 //   the default VI set: [{viPath,base,selected,label}]).
+//   VIHS_BLANK_VI (path to a blank/empty .vi): a set entry with base "BLANK"
+//   diffs that blank VI against `selected` — the "born from scratch" / first-commit
+//   initial-construction diff (a first commit has no parent to diff otherwise).
 
 import path from 'node:path';
 import fs from 'node:fs';
@@ -65,17 +68,34 @@ function loadCompiled(rel) {
 }
 
 function stageLvkitInContainer(viPath, base, selected) {
+  // "Born from scratch" mode: base === 'BLANK' diffs a blank VI (the host file at
+  // VIHS_BLANK_VI, mounted read-only) against the selected revision — recovering
+  // the INITIAL-construction changes that a first commit otherwise hides (no
+  // parent to diff). Realizes the "blank base commit -> first commit" idea as a
+  // direct lvkit two-file diff (lvkit is file-based, so no synthetic git tree is
+  // needed). Otherwise base is a normal git revision.
+  const blank = base === 'BLANK';
+  const baseCmd = blank
+    ? 'cp /blank.vi /work/base.vi'
+    : `git -C /repo cat-file -p ${base}:'${viPath}' > /work/base.vi`;
   const script = [
     'git config --global --add safe.directory /repo',
     'mkdir -p /work && cd /work',
-    `git -C /repo cat-file -p ${base}:'${viPath}' > /work/base.vi`,
+    baseCmd,
     `git -C /repo cat-file -p ${selected}:'${viPath}' > /work/sel.vi`,
     'lvkit diff /work/base.vi /work/sel.vi --format json --load-mode minimal --no-auto-vilib'
   ].join('; ');
-  return execFileSync('docker', ['run', '--rm', '-v', `${CORPUS}:/repo:ro`, IMAGE, 'sh', '-c', script], {
-    encoding: 'utf8',
-    maxBuffer: 64 * 1024 * 1024
-  });
+  const args = ['run', '--rm', '-v', `${CORPUS}:/repo:ro`];
+  if (blank) {
+    const blankVi = process.env.VIHS_BLANK_VI;
+    if (!blankVi || !fs.existsSync(blankVi)) {
+      log("base 'BLANK' requires VIHS_BLANK_VI to point at an existing empty/blank .vi file.");
+      process.exit(2);
+    }
+    args.push('-v', `${path.resolve(blankVi)}:/blank.vi:ro`);
+  }
+  args.push(IMAGE, 'sh', '-c', script);
+  return execFileSync('docker', args, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
 }
 
 function obtainLvkitJson(vi) {
