@@ -1,7 +1,7 @@
 {
   "schema": "vi-history-suite/ml-datasets-index@v1",
-  "generatedAt": "2026-07-25T16:54:28.843Z",
-  "sourceCommit": "3d1d1246f60ef6fe5d5e024d44e1d33404d6869c",
+  "generatedAt": "2026-07-25T17:02:37.819Z",
+  "sourceCommit": "53745e1885ec98fe8ea90dc4652fba630e9d20af",
   "generator": "prototype/ml/datasetManifest.mjs",
   "task": "grounded-vi-change-faithful-summarization",
   "datasets": [
@@ -216,8 +216,8 @@
     ]
   },
   "lineage": {
-    "previousCommit": "21fbcd7f1e9db0a7487e9f65f5c49ee26b9dd27c",
-    "previousGeneratedAt": "2026-07-25T16:43:24.967Z",
+    "previousCommit": "3d1d1246f60ef6fe5d5e024d44e1d33404d6869c",
+    "previousGeneratedAt": "2026-07-25T16:54:28.843Z",
     "previousSampleCount": 5,
     "newSamplesSincePrevious": [],
     "carriedOverSamples": [
@@ -238,17 +238,17 @@
     "available": true,
     "source": "os.tmpdir()/vihs-cycles",
     "note": "benchmark excludes the manifest-writing cycle (its meta is written after this runs)",
-    "cycleCount": 70,
+    "cycleCount": 74,
     "window": {
       "firstStart": "2026-07-25T15:03:54.804Z",
-      "lastEnd": "2026-07-25T16:53:25.901Z",
-      "wallClockSec": 6571.1
+      "lastEnd": "2026-07-25T16:57:48.333Z",
+      "wallClockSec": 6833.5
     },
-    "activeSec": 1179.8,
-    "deadSec": 5391.3,
-    "deadFraction": 0.82,
+    "activeSec": 1187.2,
+    "deadSec": 5646.3,
+    "deadFraction": 0.826,
     "deadTimeThresholdSec": 20,
-    "encapsulatableDeadSec": 5294.9,
+    "encapsulatableDeadSec": 5549.9,
     "largestGaps": [
       {
         "afterCycle": "c19-env-check",
@@ -363,6 +363,11 @@
         "deadSec": 95.4
       },
       {
+        "afterCycle": "c71-commit-timeline",
+        "beforeCycle": "c72-sync",
+        "deadSec": 93.9
+      },
+      {
         "afterCycle": "c10-commit-fixtures",
         "beforeCycle": "c11-push-and-locations",
         "deadSec": 88
@@ -421,6 +426,16 @@
         "afterCycle": "c66-ml-regen",
         "beforeCycle": "c67-commit-scale",
         "deadSec": 62.4
+      },
+      {
+        "afterCycle": "c69-rebase-regen",
+        "beforeCycle": "c70-recover",
+        "deadSec": 61.9
+      },
+      {
+        "afterCycle": "c72-sync",
+        "beforeCycle": "c73-handoff",
+        "deadSec": 60.4
       },
       {
         "afterCycle": "c66-state",
@@ -491,6 +506,11 @@
         "afterCycle": "c28-commit-and-rebuild-ml",
         "beforeCycle": "c29-post-resolution",
         "deadSec": 39.5
+      },
+      {
+        "afterCycle": "c70-recover",
+        "beforeCycle": "c71-commit-timeline",
+        "deadSec": 38.8
       },
       {
         "afterCycle": "c3-sync",
@@ -1297,21 +1317,61 @@
         "exitCode": 0,
         "hadException": false,
         "deadBeforeSec": 37.5
+      },
+      {
+        "id": "c70-recover",
+        "description": "recover",
+        "startedAt": "2026-07-25T16:54:27.833Z",
+        "endedAt": "2026-07-25T16:54:28.933Z",
+        "elapsedSec": 1.1,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 61.9
+      },
+      {
+        "id": "c71-commit-timeline",
+        "description": "commit timeline",
+        "startedAt": "2026-07-25T16:55:07.757Z",
+        "endedAt": "2026-07-25T16:55:11.057Z",
+        "elapsedSec": 3.3,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 38.8
+      },
+      {
+        "id": "c72-sync",
+        "description": "sync",
+        "startedAt": "2026-07-25T16:56:44.929Z",
+        "endedAt": "2026-07-25T16:56:46.529Z",
+        "elapsedSec": 1.6,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 93.9
+      },
+      {
+        "id": "c73-handoff",
+        "description": "handoff",
+        "startedAt": "2026-07-25T16:57:46.933Z",
+        "endedAt": "2026-07-25T16:57:48.333Z",
+        "elapsedSec": 1.4,
+        "exitCode": 0,
+        "hadException": false,
+        "deadBeforeSec": 60.4
       }
     ],
     "timeline": {
       "purpose": "Fit a constant-FPS screenshot stream to wall-clock: assemble frames into a video with ffmpeg, and let an LLM navigate event -> frame -> screenshot and correlate to a performance-monitor time series (all keyed by epoch ms).",
       "t0": "2026-07-25T15:03:54.804Z",
       "t0EpochMs": 1784991834804,
-      "endEpochMs": 1784998405901,
-      "wallClockSec": 6571.1,
+      "endEpochMs": 1784998668333,
+      "wallClockSec": 6833.5,
       "fpsSupported": [
         12,
         18
       ],
       "frameCounts": {
-        "fps12": 78854,
-        "fps18": 118280
+        "fps12": 82002,
+        "fps18": 123003
       },
       "frameForEpochMs": "frame = round((epochMs - t0EpochMs) / 1000 * fps)  // 0-based, continuous capture from t0",
       "screenshotPattern": "frame_%06d.png",
@@ -1321,7 +1381,17 @@
         "fps18": "ffmpeg -framerate 18 -start_number 0 -i frame_%06d.png -c:v libx264 -pix_fmt yuv420p -vf fps=18 session_18fps.mp4"
       },
       "perfMonitorCorrelation": "each event carries startEpochMs/endEpochMs; bisect a performance-monitor time series by epoch ms to find the sample(s) spanning an event, and map the same epoch ms to a video frame via frameForEpochMs.",
-      "eventCount": 139,
+      "mprrAlignment": {
+        "note": "The AUTHORITATIVE frame<->timestamp fit and perf correlation is the GOVERNED mprr Mirror-Mode pipeline, not this constant-fps cycle-level approximation. 12 fps is the mprr default (MPRR_DEFAULT_FRAME_RATE_HZ); this timeline shares that fps + the epoch-ms axis so it overlays the mprr artifacts.",
+        "governedModules": {
+          "perfSampleSeries": "src/reporting/mirror/perfmonSampleSeries.ts (vi-history-suite/perfmon-sample-series@v1)",
+          "perfFrameSync": "src/reporting/mirror/perfmonMprrSync.ts buildPerfmonMprrSync (vi-history-suite/perfmon-mprr-sync@v1) -- maps each perfmon sample to an mprr frameIndex + stopwatch + 100ns tick + bit-exact strip; authoritative only when calibrated",
+          "groundTruthClock": "src/dev/timingStopwatchSurface.ts renderLiveTimingStopwatchHtml (VHS-REQ-713.6) -- full-viewport 40-bit decodable stopwatch captured at >=12fps; each frame self-encodes centiseconds (decodeMprrStripImage), so frames carry their own timestamp rather than assuming constant fps",
+          "calibration": "src/reporting/syncDiagnostics/mprrCalibrationSurface.ts (vi-history-suite/mprr-calibration-surface@v1)",
+          "driver": "scripts/windows-perfmon-mprr-driver.cjs (E1-E6 real-hardware perfmon->TDMS->mprr-sync->bounded-RAM replay)"
+        }
+      },
+      "eventCount": 147,
       "events": [
         {
           "kind": "cycle",
@@ -3755,6 +3825,146 @@
           "endFrame12": 78853,
           "startFrame18": 118235,
           "endFrame18": 118280
+        },
+        {
+          "kind": "dead-gap",
+          "afterCycle": "c69-rebase-regen",
+          "beforeCycle": "c70-recover",
+          "startAt": "2026-07-25T16:53:25.901Z",
+          "endAt": "2026-07-25T16:54:27.833Z",
+          "startEpochMs": 1784998405901,
+          "endEpochMs": 1784998467833,
+          "tStartSec": 6571.1,
+          "tEndSec": 6633,
+          "deadSec": 61.9,
+          "encapsulationCandidate": true,
+          "startFrame12": 78853,
+          "endFrame12": 79596,
+          "startFrame18": 118280,
+          "endFrame18": 119395
+        },
+        {
+          "kind": "cycle",
+          "id": "c70-recover",
+          "description": "recover",
+          "startAt": "2026-07-25T16:54:27.833Z",
+          "endAt": "2026-07-25T16:54:28.933Z",
+          "startEpochMs": 1784998467833,
+          "endEpochMs": 1784998468933,
+          "tStartSec": 6633,
+          "tEndSec": 6634.1,
+          "durationSec": 1.1,
+          "exitCode": 0,
+          "hadException": false,
+          "startFrame12": 79596,
+          "endFrame12": 79610,
+          "startFrame18": 119395,
+          "endFrame18": 119414
+        },
+        {
+          "kind": "dead-gap",
+          "afterCycle": "c70-recover",
+          "beforeCycle": "c71-commit-timeline",
+          "startAt": "2026-07-25T16:54:28.933Z",
+          "endAt": "2026-07-25T16:55:07.757Z",
+          "startEpochMs": 1784998468933,
+          "endEpochMs": 1784998507757,
+          "tStartSec": 6634.1,
+          "tEndSec": 6673,
+          "deadSec": 38.8,
+          "encapsulationCandidate": true,
+          "startFrame12": 79610,
+          "endFrame12": 80075,
+          "startFrame18": 119414,
+          "endFrame18": 120113
+        },
+        {
+          "kind": "cycle",
+          "id": "c71-commit-timeline",
+          "description": "commit timeline",
+          "startAt": "2026-07-25T16:55:07.757Z",
+          "endAt": "2026-07-25T16:55:11.057Z",
+          "startEpochMs": 1784998507757,
+          "endEpochMs": 1784998511057,
+          "tStartSec": 6673,
+          "tEndSec": 6676.3,
+          "durationSec": 3.3,
+          "exitCode": 0,
+          "hadException": false,
+          "startFrame12": 80075,
+          "endFrame12": 80115,
+          "startFrame18": 120113,
+          "endFrame18": 120173
+        },
+        {
+          "kind": "dead-gap",
+          "afterCycle": "c71-commit-timeline",
+          "beforeCycle": "c72-sync",
+          "startAt": "2026-07-25T16:55:11.057Z",
+          "endAt": "2026-07-25T16:56:44.929Z",
+          "startEpochMs": 1784998511057,
+          "endEpochMs": 1784998604929,
+          "tStartSec": 6676.3,
+          "tEndSec": 6770.1,
+          "deadSec": 93.9,
+          "encapsulationCandidate": true,
+          "startFrame12": 80115,
+          "endFrame12": 81242,
+          "startFrame18": 120173,
+          "endFrame18": 121862
+        },
+        {
+          "kind": "cycle",
+          "id": "c72-sync",
+          "description": "sync",
+          "startAt": "2026-07-25T16:56:44.929Z",
+          "endAt": "2026-07-25T16:56:46.529Z",
+          "startEpochMs": 1784998604929,
+          "endEpochMs": 1784998606529,
+          "tStartSec": 6770.1,
+          "tEndSec": 6771.7,
+          "durationSec": 1.6,
+          "exitCode": 0,
+          "hadException": false,
+          "startFrame12": 81242,
+          "endFrame12": 81261,
+          "startFrame18": 121862,
+          "endFrame18": 121891
+        },
+        {
+          "kind": "dead-gap",
+          "afterCycle": "c72-sync",
+          "beforeCycle": "c73-handoff",
+          "startAt": "2026-07-25T16:56:46.529Z",
+          "endAt": "2026-07-25T16:57:46.933Z",
+          "startEpochMs": 1784998606529,
+          "endEpochMs": 1784998666933,
+          "tStartSec": 6771.7,
+          "tEndSec": 6832.1,
+          "deadSec": 60.4,
+          "encapsulationCandidate": true,
+          "startFrame12": 81261,
+          "endFrame12": 81986,
+          "startFrame18": 121891,
+          "endFrame18": 122978
+        },
+        {
+          "kind": "cycle",
+          "id": "c73-handoff",
+          "description": "handoff",
+          "startAt": "2026-07-25T16:57:46.933Z",
+          "endAt": "2026-07-25T16:57:48.333Z",
+          "startEpochMs": 1784998666933,
+          "endEpochMs": 1784998668333,
+          "tStartSec": 6832.1,
+          "tEndSec": 6833.5,
+          "durationSec": 1.4,
+          "exitCode": 0,
+          "hadException": false,
+          "startFrame12": 81986,
+          "endFrame12": 82002,
+          "startFrame18": 122978,
+          "endFrame18": 123004
         }
       ]
     }

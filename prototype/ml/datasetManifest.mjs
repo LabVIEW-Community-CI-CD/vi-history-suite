@@ -136,6 +136,16 @@ function computeBenchmark() {
       fps18: `ffmpeg -framerate 18 -start_number 0 -i ${framePattern} -c:v libx264 -pix_fmt yuv420p -vf fps=18 session_18fps.mp4`
     },
     perfMonitorCorrelation: 'each event carries startEpochMs/endEpochMs; bisect a performance-monitor time series by epoch ms to find the sample(s) spanning an event, and map the same epoch ms to a video frame via frameForEpochMs.',
+    mprrAlignment: {
+      note: 'The AUTHORITATIVE frame<->timestamp fit and perf correlation is the GOVERNED mprr Mirror-Mode pipeline, not this constant-fps cycle-level approximation. 12 fps is the mprr default (MPRR_DEFAULT_FRAME_RATE_HZ); this timeline shares that fps + the epoch-ms axis so it overlays the mprr artifacts.',
+      governedModules: {
+        perfSampleSeries: 'src/reporting/mirror/perfmonSampleSeries.ts (vi-history-suite/perfmon-sample-series@v1)',
+        perfFrameSync: 'src/reporting/mirror/perfmonMprrSync.ts buildPerfmonMprrSync (vi-history-suite/perfmon-mprr-sync@v1) -- maps each perfmon sample to an mprr frameIndex + stopwatch + 100ns tick + bit-exact strip; authoritative only when calibrated',
+        groundTruthClock: 'src/dev/timingStopwatchSurface.ts renderLiveTimingStopwatchHtml (VHS-REQ-713.6) -- full-viewport 40-bit decodable stopwatch captured at >=12fps; each frame self-encodes centiseconds (decodeMprrStripImage), so frames carry their own timestamp rather than assuming constant fps',
+        calibration: 'src/reporting/syncDiagnostics/mprrCalibrationSurface.ts (vi-history-suite/mprr-calibration-surface@v1)',
+        driver: 'scripts/windows-perfmon-mprr-driver.cjs (E1-E6 real-hardware perfmon->TDMS->mprr-sync->bounded-RAM replay)'
+      }
+    },
     eventCount: events.length,
     events
   };
