@@ -116,6 +116,15 @@ function buildTemplateV2(model, counts) {
   return parts.join(' ');
 }
 
+// TEMPLATE-MIN: the MINIMAL production diff. Take the shipped narrative verbatim and only
+// strip the leading NI ordinal prefixes ("4. ", "53. ") from the section-heading list --
+// i.e. exactly `section.heading.replace(/^\d+\.\s*/, '')` inside renderViSemanticNarrative,
+// a one-line change with no model and no upstream cosmetic enrichment. Isolates whether the
+// entire measured faithfulness gap is closed by ordinal-stripping ALONE.
+function buildTemplateMin(model) {
+  return model.narrative.replace(/(\(|,\s|and\s)\d+\.\s+/g, '$1');
+}
+
 async function main() {
   const dataset = JSON.parse(fs.readFileSync(DATASET, 'utf8'));
   const lvkitBySlug = new Map(dataset.samples.map((s) => [fixtureSlug(s.vi), s]));
@@ -168,6 +177,11 @@ async function main() {
     const templateV2Parts = scoreParts(templateV2Narrative, gt).parts;
     const templateV2Score = taskScoreOf(templateV2Parts, SCORE_KEYS, null);
 
+    // Minimal one-line production diff (ordinal-strip on the shipped narrative).
+    const templateMinNarrative = buildTemplateMin(model);
+    const templateMinParts = scoreParts(templateMinNarrative, gt).parts;
+    const templateMinScore = taskScoreOf(templateMinParts, SCORE_KEYS, null);
+
     let grounded = null;
     if (present) {
       try {
@@ -197,6 +211,7 @@ async function main() {
       cosmetic: counts.cosmetic,
       total: counts.total,
       template: { narrative: templateNarrative, parts: templateParts, score: templateScore },
+      templateMin: { narrative: templateMinNarrative, parts: templateMinParts, score: templateMinScore },
       templateV2: { narrative: templateV2Narrative, parts: templateV2Parts, score: templateV2Score },
       grounded,
       selected,
@@ -211,6 +226,7 @@ async function main() {
     modelPresent: present,
     viCount: scored.length,
     meanTemplateScore: mean(scored.map((r) => r.template.score)),
+    meanTemplateMinScore: mean(scored.map((r) => r.templateMin.score)),
     meanTemplateV2Score: mean(scored.map((r) => r.templateV2.score)),
     meanGroundedScore: present ? mean(scored.filter((r) => r.grounded && r.grounded.score != null).map((r) => r.grounded.score)) : null,
     templateMentionsCosmetic: scored.filter((r) => r.template.parts.mentionsCosmetic).length,
@@ -233,13 +249,13 @@ async function main() {
 
   console.log(`MCP_NARRATIVE_POC_DONE model=${MODEL} present=${present} vis=${summary.viCount}`);
   console.log(
-    `meanTemplate=${summary.meanTemplateScore} meanTemplateV2=${summary.meanTemplateV2Score} meanGrounded=${summary.meanGroundedScore} templateCosmetic=${summary.templateMentionsCosmetic}/${summary.viCount} groundedCosmetic=${summary.groundedMentionsCosmetic}/${summary.viCount} cosmeticGapClosed=${summary.cosmeticGapClosedCount}/${summary.viCount} groundedSelected=${summary.groundedSelectedCount}/${summary.viCount}`
+    `meanTemplate=${summary.meanTemplateScore} meanTemplateMin=${summary.meanTemplateMinScore} meanTemplateV2=${summary.meanTemplateV2Score} meanGrounded=${summary.meanGroundedScore} templateCosmetic=${summary.templateMentionsCosmetic}/${summary.viCount} groundedCosmetic=${summary.groundedMentionsCosmetic}/${summary.viCount} cosmeticGapClosed=${summary.cosmeticGapClosedCount}/${summary.viCount} groundedSelected=${summary.groundedSelectedCount}/${summary.viCount}`
   );
-  console.log('| vi | mcpN | cosmetic | tmplScore | tmplV2Score | grndScore | selected |');
-  console.log('|---|---|---|---|---|---|---|');
+  console.log('| vi | mcpN | cosmetic | tmplScore | tmplMinScore | tmplV2Score | grndScore | selected |');
+  console.log('|---|---|---|---|---|---|---|---|');
   for (const r of scored) {
     console.log(
-      `| ${r.vi} | ${r.mcpStructuralCount} | ${r.cosmetic} | ${r.template.score} | ${r.templateV2.score} | ${
+      `| ${r.vi} | ${r.mcpStructuralCount} | ${r.cosmetic} | ${r.template.score} | ${r.templateMin.score} | ${r.templateV2.score} | ${
         r.grounded && r.grounded.score != null ? r.grounded.score : 'n/a'
       } | ${r.selected} |`
     );
