@@ -412,6 +412,7 @@
     "mcp:container:e2e": "node scripts/validateMcpContainerE2E.mjs",
     "mcp:pr-review:e2e": "node scripts/validateMcpPrReviewContainerE2E.mjs",
     "mcp:worktree:e2e": "node scripts/validateMcpLinuxWorktreeE2E.mjs",
+    "mcp:ollama:review": "node scripts/ollamaMcpOperatorReview.mjs",
     "devtools:release": "node scripts/buildDevToolsRelease.js",
     "devtools:release:verify": "node scripts/verifyDevToolsRelease.js",
     "supply-chain:state": "node scripts/buildSupplyChainState.js",

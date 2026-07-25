@@ -531,6 +531,40 @@ target any repo / VI / edit source (`VIHS_MCP_ALT` supplies the bytes written as
 the uncommitted edit); set `VIHS_MCP_OUT` to write the typed evidence JSON. It
 exits `0` on a full pass and `1` on any assertion failure.
 
+### Local Ollama operator review over the MCP (on-demand, natural language)
+
+`scripts/ollamaMcpOperatorReview.mjs` wires a local Ollama LLM to the shipped MCP
+server so an operator can ask, in plain language, "review my in-progress VI edit"
+and the model autonomously drives the MCP tools against a real LabVIEW comparison
+in a Docker **Linux** container, using the uncommitted working tree as the head.
+It is the groundwork for the same flow on a real Linux host limited to Docker
+Linux containers and Vagrant — only the injected environment policy is host
+specific, not the prompt.
+
+The AI design keeps the model grounded and reliable on a small local model: the
+model owns **intent** (decide to compare, then explain the result to the
+engineer) while the bridge owns **environment and correctness** — it exposes
+slim, intent-only tool specs, injects the runtime policy (`docker` / `linux` /
+the image) and `repositoryRoot`, pins the review frame to committed HEAD → the
+working tree, and compacts large tool outputs so the answer stays faithful to the
+real comparison. Two modes: the default synthesizes a reversible demo edit (and
+restores the working tree); `VIHS_MCP_ALT=none` reviews the operator's own
+uncommitted change without touching the working tree.
+
+Prerequisites: an Ollama server running with a tool-capable model pulled
+(`ollama pull llama3.1:8b`), Docker in Linux-container mode with the image pulled,
+and a local Git clone. Run it from the repo root after `npm run compile`:
+
+```powershell
+npm run compile
+npm run mcp:ollama:review
+```
+
+Override `VIHS_OLLAMA_MODEL`, `VIHS_OLLAMA_URL`, `VIHS_MCP_REPO`, `VIHS_MCP_VI`,
+`VIHS_MCP_BASE`, and `VIHS_MCP_ALT` (`none` for the operator's own edit); set
+`VIHS_OLLAMA_OUT` to write the typed evidence JSON. It exits `0` when the model
+drove a grounded review and `1` otherwise.
+
 ## Linux/LabVIEW Runner
 
 The Linux maintainer runner is the sibling of the Windows runner above: a
