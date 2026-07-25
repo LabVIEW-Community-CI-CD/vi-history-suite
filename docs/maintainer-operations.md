@@ -441,6 +441,39 @@ container spawned from the image and recreates the throwaway workspace before an
 after the run — and exits `0` on a correlated pass, `3` when correlation is
 unavailable, and `4` on a real-capture sanity failure.
 
+### MCP server end-to-end in a container (isolation + idempotency)
+
+`scripts/validateMcpContainerE2E.mjs` proves the shipped VI semantic MCP server
+end-to-end against real LabVIEW inside a Windows LabVIEW container. It drives
+`out/cli/runViSemanticMcpServer.js` as a real Model Context Protocol client over
+stdio (`@modelcontextprotocol/sdk`) — exactly as Copilot agent mode does — and
+steers the runtime-gated tools to the container via `runtime.containerImageVersion`.
+It exercises a broad slice of the surface as an agent would: the protocol surface
+(tools / prompts / schema resources), `get_runtime_health` + `get_preview_diagnostics`
+(container-aware, no render), the pure-Git tools (`index_repository_vis`,
+`list_changed_vis`), a **real container `compare_vi_revisions`**, schema validation
+of the produced model (`validate_vi_semantic_document`), a warm-cache repeat
+comparison that must return a byte-identical model, and the `-32602` argument-error
+contract. Setup isolation and idempotency come from a fresh server process and a
+fresh `docker run --rm` container each run, plus clearing the comparison-model
+cache so the first comparison is cold and the repeat is a cache hit.
+
+Prerequisites: Docker in **Windows-container** mode with the image pulled
+(`docker pull nationalinstruments/labview:2026q1patch2-windows`) and a local Git
+repo holding a tracked VI. Run it from the repo root after `npm run compile`:
+
+```powershell
+npm run compile
+npm run mcp:container:e2e
+```
+
+Override defaults with `VIHS_MCP_IMAGE_VERSION`, `VIHS_MCP_REPO`, `VIHS_MCP_VI`,
+`VIHS_MCP_BASE`, `VIHS_MCP_SEL`, and `VIHS_MCP_COMPARE_TIMEOUT_MS`; set
+`VIHS_MCP_PR_REVIEW=1` to also run `build_vi_pr_review`, and `VIHS_MCP_OUT` to
+write the typed evidence JSON. It exits `0` on a full pass and `1` on any assertion
+failure. This is the container sibling of the LabVIEW-free
+`scripts/lvkitMcpAgentValidation.mjs` MCP agent validation.
+
 ## Linux/LabVIEW Runner
 
 The Linux maintainer runner is the sibling of the Windows runner above: a
