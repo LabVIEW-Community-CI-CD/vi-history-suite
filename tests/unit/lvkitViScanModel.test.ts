@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildLvkitViScanEnvelope,
+  classifyModuleResolution,
   deriveViNameSlug,
   isIsoTimestamp,
+  LVKIT_MODULE_RESOLUTIONS,
   LVKIT_VI_SCAN_SCHEMA,
   LVKIT_VI_SCAN_SCHEMA_VERSION,
+  summarizeModuleResolutions,
   type BuildLvkitViScanEnvelopeInput,
   type LvkitGeneratedModule
 } from '../../src/semantic/lvkit/lvkitViScanModel';
@@ -288,5 +291,72 @@ describe('isIsoTimestamp (VHS-REQ-714)', () => {
   it('rejects a non-string value', () => {
     expect(isIsoTimestamp(undefined)).toBe(false);
     expect(isIsoTimestamp(1_753_356_151_000)).toBe(false);
+  });
+});
+
+describe('classifyModuleResolution (#2376 provenance)', () => {
+  it('classifies a clean module as resolved', () => {
+    expect(
+      classifyModuleResolution({ relativePath: 'pkg/vi.py', python: 'def vi():\n    return 1\n' })
+    ).toBe('resolved');
+  });
+
+  it('classifies an inline PrimitiveResolutionNeeded placeholder as unresolved-primitive (NOT .error.py)', () => {
+    const python =
+      'from lvkit.primitive_resolver import PrimitiveResolutionNeeded\n\n' +
+      "def write_ascii_message():\n    raise PrimitiveResolutionNeeded(prim_id=1926, prim_name='unknown_primitive_1926')\n";
+    const module = { relativePath: 'write_ascii_message/write_ascii_message.py', python };
+    // The module is a normally-named .py -- the coarse errorModule check would
+    // miss it, but the resolution classifier catches the primitive wall.
+    expect(classifyModuleResolution(module)).toBe('unresolved-primitive');
+  });
+
+  it('does not false-positive on the import line alone (no raise statement)', () => {
+    const python = 'from lvkit.primitive_resolver import PrimitiveResolutionNeeded\n\ndef vi():\n    return 1\n';
+    expect(classifyModuleResolution({ relativePath: 'pkg/vi.py', python })).toBe('resolved');
+  });
+
+  it('classifies an inline VILibResolutionNeeded placeholder as unresolved-vilib', () => {
+    const python = 'def open_vi():\n    raise VILibResolutionNeeded(qualified_vi_name="Open VI.vi")\n';
+    expect(classifyModuleResolution({ relativePath: 'pkg/open_vi.py', python })).toBe('unresolved-vilib');
+  });
+
+  it('classifies a .error.py file as error-stub even if it also carries a raise', () => {
+    const module = { relativePath: 'pkg/open_vi.error.py', python: 'raise VILibResolutionNeeded()\n' };
+    expect(classifyModuleResolution(module)).toBe('error-stub');
+  });
+});
+
+describe('summarizeModuleResolutions (#2376 provenance)', () => {
+  it('tallies each resolution kind and the counts sum to the module count', () => {
+    const modules: LvkitGeneratedModule[] = [
+      { relativePath: 'a.py', python: 'def a():\n    return 1\n' },
+      { relativePath: 'b.py', python: 'def b():\n    return 2\n' },
+      { relativePath: 'c.py', python: 'def c():\n    raise PrimitiveResolutionNeeded(prim_id=1926)\n' },
+      { relativePath: 'd.py', python: 'def d():\n    raise VILibResolutionNeeded()\n' },
+      { relativePath: 'e.error.py', python: 'raise VILibResolutionNeeded()\n' }
+    ];
+    const counts = summarizeModuleResolutions(modules);
+    expect(counts).toEqual({ resolved: 2, unresolvedPrimitive: 1, unresolvedVilib: 1, errorStub: 1 });
+    const total = counts.resolved + counts.unresolvedPrimitive + counts.unresolvedVilib + counts.errorStub;
+    expect(total).toBe(modules.length);
+  });
+
+  it('returns all-zero-but-typed for an empty module list', () => {
+    expect(summarizeModuleResolutions([])).toEqual({
+      resolved: 0,
+      unresolvedPrimitive: 0,
+      unresolvedVilib: 0,
+      errorStub: 0
+    });
+  });
+
+  it('exposes the full resolution vocabulary', () => {
+    expect(LVKIT_MODULE_RESOLUTIONS).toEqual([
+      'resolved',
+      'unresolved-primitive',
+      'unresolved-vilib',
+      'error-stub'
+    ]);
   });
 });
