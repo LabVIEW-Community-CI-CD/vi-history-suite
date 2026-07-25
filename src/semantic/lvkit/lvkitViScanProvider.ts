@@ -59,6 +59,15 @@ export interface LvkitViScanInput {
    * legs (verified byte-identical after LF normalization).
    */
   readonly placeholderOnUnresolved?: boolean;
+  /**
+   * #2374 (primitive-mapping pack): optional writable directory whose `.lvkit/`
+   * store lvkit should consult for cleanroom primitive/SubVI mappings, passed as
+   * `--project-root`. Default = an isolated per-run temp store (no external
+   * mappings). Plumbing only: the mappings CONTENT is caller-supplied and
+   * license-scoped (vi.lib-block-diagram-derived mappings must stay gitignored;
+   * cleanroom stubs from raise-diagnostic terminals + public docs are shippable).
+   */
+  readonly projectRoot?: string;
 }
 
 /** Typed outcome of a single-VI lvkit scan (never thrown). */
@@ -216,7 +225,7 @@ export function createLvkitViScanProvider(
         // usable, content-address-stable generate.
         ...(input.placeholderOnUnresolved ? ['--placeholder-on-unresolved'] : []),
         '--project-root',
-        storeDir,
+        input.projectRoot || storeDir,
         '-o',
         outputDir
       ];
