@@ -64,7 +64,41 @@
       ]
     }
   ],
-  "items": [],
+  "items": [
+    {
+      "id": "item-0001",
+      "title": "Phase 1: Linux parity for the container MCP validators (mcp:pr-review:e2e, mcp:container:e2e)",
+      "issueUrl": "https://github.com/LabVIEW-Community-CI-CD/vi-history-suite/issues/2369",
+      "fields": {
+        "status": "Triage",
+        "intakeStage": "Spawned",
+        "sourceDiscussion": 2368,
+        "origin": "collab"
+      },
+      "fieldMeta": {
+        "status": {
+          "ts": "2026-07-25T08:49:07.118Z",
+          "by": "LINUX"
+        },
+        "intakeStage": {
+          "ts": "2026-07-25T08:49:07.118Z",
+          "by": "LINUX"
+        },
+        "sourceDiscussion": {
+          "ts": "2026-07-25T08:49:07.118Z",
+          "by": "LINUX"
+        },
+        "origin": {
+          "ts": "2026-07-25T08:49:07.118Z",
+          "by": "LINUX"
+        }
+      },
+      "remoteItemId": null,
+      "createdAt": "2026-07-25T08:49:07.118Z",
+      "updatedAt": "2026-07-25T08:49:07.118Z",
+      "syncedAt": null
+    }
+  ],
   "sync": {
     "lastSyncedAt": null,
     "lastSyncBy": null,
