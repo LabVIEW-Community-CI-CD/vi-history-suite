@@ -104,6 +104,14 @@ export interface LvkitViScanEnvelope {
    * `.error.py`), this separately surfaces the inline `raise ...ResolutionNeeded`
    * placeholders a `--placeholder-on-unresolved` born-from-scratch generate emits
    * in normally-named modules, so a consumer sees the two walls distinctly.
+   *
+   * Note `resolutionCounts.resolved` is the HONEST clean count -- it EXCLUDES the
+   * inline `unresolved-primitive` placeholders -- so it intentionally differs from
+   * the legacy `resolvedModuleCount` (= `moduleCount - errorModuleCount`), which
+   * counts an inline-primitive-raise module as resolved because `errorModuleCount`
+   * only sees `.error.py`. The legacy counts are retained UNCHANGED for back-compat
+   * and the store guard's consistency check; `resolutionCounts` supersedes them as
+   * the accurate born-from-scratch cleanliness signal (agreed cross-leg, #2376).
    */
   readonly resolutionCounts?: LvkitResolutionCounts;
 }

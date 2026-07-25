@@ -170,6 +170,11 @@ describe('buildLvkitViScanEnvelope (VHS-REQ-714.1, VHS-REQ-714.2)', () => {
       unresolvedVilib: 0,
       errorStub: 0
     });
+    // Intentional divergence (#2376 caveat): legacy resolvedModuleCount OVERCOUNTS
+    // (moduleCount - errorModuleCount = 1, counting the inline-raise module as
+    // resolved), while resolutionCounts.resolved is the honest 0.
+    expect(envelope.resolvedModuleCount).toBe(1);
+    expect(envelope.resolutionCounts!.resolved).toBe(0);
   });
 
   it('is deterministic for identical input', () => {
