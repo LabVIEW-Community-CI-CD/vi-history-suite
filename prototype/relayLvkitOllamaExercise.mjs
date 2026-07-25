@@ -189,8 +189,8 @@ function rungs(groundingText) {
     },
     {
       id: 'r2-fieldlist',
-      note: 'explicit required fields + enums',
-      user: `Review this VI change. End with ONE fenced \`\`\`vihs-relay\`\`\` JSON block. Required fields: schema="${SCHEMA}", from="ollama", kind="RESULT", summary (one line). Optional: ts, topic, details, evidence[], checks{}, next, refs[]. For any optional field you have nothing for, omit it or use "" — never null.${facts}`
+      note: 'explicit required fields + enums + evidence decomposition',
+      user: `Review this VI change. End with ONE fenced \`\`\`vihs-relay\`\`\` JSON block. Required fields: schema="${SCHEMA}", from="ollama", kind="RESULT", summary (one line). Optional: ts, topic, details, evidence[], checks{}, next, refs[]. Populate evidence[] with one entry PER DISTINCT CHANGE in the facts (name = the change kind such as node-added / node-removed / wire-change, result = the grounded count or detail from the facts); do not leave evidence[] empty when the facts list changes. For any other optional field you have nothing for, omit it or use "" — never null.${facts}`
     },
     {
       id: 'r3-skeleton',
