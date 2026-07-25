@@ -199,6 +199,27 @@ export function createFileLvkitViScanStore(
       const normalizedEnvelope =
         normalizedPath === envelope.viPath ? envelope : { ...envelope, viPath: normalizedPath };
       const key = computeLvkitViScanStoreKey(normalizedPath, envelope.contentSignature);
+      // Upgrade-only precedence (#2373, unified cross-leg cache): the store keys by
+      // (viPath, contentSignature), so a LabVIEW-free placeholder generate and a
+      // real-LabVIEW clean generate of the SAME VI bytes share ONE key. A clean
+      // generate must be able to REPLACE a placeholder ("the Windows leg fills in
+      // the placeholders"), but a later placeholder run must NOT clobber a cleaner
+      // generate. So skip the write when an existing envelope for this exact content
+      // address has STRICTLY FEWER unresolved (.error.py) modules. Best-effort read:
+      // a miss/unreadable/mismatched existing entry just proceeds to the write.
+      try {
+        const existing = JSON.parse(await fsDeps.readFile(storeFilePath(key)));
+        if (
+          isLvkitViScanEnvelope(existing) &&
+          existing.viPath === normalizedPath &&
+          existing.contentSignature === envelope.contentSignature &&
+          existing.errorModuleCount < normalizedEnvelope.errorModuleCount
+        ) {
+          return true;
+        }
+      } catch {
+        /* no existing entry (or unreadable) — fall through to write */
+      }
       try {
         await fsDeps.ensureDirectory(options.storeDirectory);
         await fsDeps.writeFile(storeFilePath(key), JSON.stringify(normalizedEnvelope));
