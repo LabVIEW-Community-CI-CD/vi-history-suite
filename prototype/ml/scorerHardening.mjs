@@ -78,15 +78,19 @@ const CASES = [
   }
 ];
 
-let misses = 0;
-console.log('case | N | current | hardened | expected(hardened) | ok');
-for (const c of CASES) {
-  const cur = noFalseNoChangeCurrent(c.output, c.N);
-  const hard = noFalseNoChangeHardened(c.output, c.N);
-  const ok = hard === c.expectHardened;
-  if (!ok) misses += 1;
-  console.log(`- ${c.name} | ${c.N} | ${cur} | ${hard} | ${c.expectHardened} | ${ok ? 'PASS' : 'FAIL'}${c.note ? '  <-- ' + c.note : ''}`);
+// Run the self-test only when executed directly, so the pure functions above stay importable
+// (e.g. by rescoreHardened.mjs) without triggering the console output / process.exit.
+if (import.meta.url === `file://${process.argv[1]}`) {
+  let misses = 0;
+  console.log('case | N | current | hardened | expected(hardened) | ok');
+  for (const c of CASES) {
+    const cur = noFalseNoChangeCurrent(c.output, c.N);
+    const hard = noFalseNoChangeHardened(c.output, c.N);
+    const ok = hard === c.expectHardened;
+    if (!ok) misses += 1;
+    console.log(`- ${c.name} | ${c.N} | ${cur} | ${hard} | ${c.expectHardened} | ${ok ? 'PASS' : 'FAIL'}${c.note ? '  <-- ' + c.note : ''}`);
+  }
+  const divergent = CASES.filter((c) => noFalseNoChangeCurrent(c.output, c.N) !== noFalseNoChangeHardened(c.output, c.N));
+  console.log(`\nSCORER_HARDENING_SELFTEST misses=${misses} divergentFromCurrent=${divergent.length}`);
+  if (misses > 0) process.exit(1);
 }
-const divergent = CASES.filter((c) => noFalseNoChangeCurrent(c.output, c.N) !== noFalseNoChangeHardened(c.output, c.N));
-console.log(`\nSCORER_HARDENING_SELFTEST misses=${misses} divergentFromCurrent=${divergent.length}`);
-if (misses > 0) process.exit(1);
