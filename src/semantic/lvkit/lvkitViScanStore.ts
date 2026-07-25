@@ -20,9 +20,9 @@
 
 import { createHash } from 'node:crypto';
 import { promises as fsp } from 'node:fs';
-import * as os from 'node:os';
 import * as path from 'node:path';
 
+import { resolveVihsCacheDir, ensureVihsCacheDir } from '../../support/cacheKey';
 import {
   isIsoTimestamp,
   LVKIT_SCAN_SOURCES,
@@ -214,25 +214,29 @@ export function createFileLvkitViScanStore(
 }
 
 /**
- * Default file-backed lvkit VI-scan store. Both sides of epic #2348 address the
- * SAME on-disk directory under the OS temp dir: the extension host writes here
- * from the Phase B preview-time trigger (VHS-REQ-717) and the long-lived MCP
- * server process reads here from the read-only `get_vi_generated_code` tool
- * (VHS-REQ-716). They are separate processes, so a fresh instance per process
- * over the shared directory is correct. Defined in this light, dependency-minimal
- * module (only `node:crypto`/`node:fs`/`node:os`/`node:path`) so the extension
- * entrypoint can construct the store without pulling in the MCP/PR-review graph.
+ * Default file-backed lvkit VI-scan store, repo-relative under
+ * `<repositoryRoot>/.vihs/cache/lvkit-vi-scan` (env `VIHS_CACHE_DIR` overrides;
+ * falls back to `<os.tmpdir()>/.vihs/cache/lvkit-vi-scan` when no repository root
+ * is known), mirroring lvkit's `<repo>/.lvkit/cache`. Both sides of epic #2348
+ * address the SAME directory for a given repository: the extension host writes
+ * here from the Phase B preview-time trigger (VHS-REQ-717) resolving the store
+ * from the previewed VI's repository root, and the long-lived MCP server process
+ * reads here from `get_vi_generated_code` (VHS-REQ-716) resolving it from the
+ * tool's `repositoryRoot` argument. They are separate processes, so a fresh
+ * instance per process over the shared repo-relative directory is correct.
+ * Dependency-minimal (only `node:crypto`/`node:fs`/`node:path` + the shared cache
+ * dir resolver) so the extension entrypoint can construct it without the
+ * MCP/PR-review graph. Ensuring the directory also drops a `.gitignore` at the
+ * `.vihs` root so the cache never surfaces as untracked in the analyzed repo.
  */
-export function createDefaultLvkitViScanStore(): LvkitViScanStore {
+export function createDefaultLvkitViScanStore(repositoryRoot?: string): LvkitViScanStore {
   return createFileLvkitViScanStore(
     {
-      storeDirectory: path.join(os.tmpdir(), 'vihs-lvkit-vi-scan-store'),
+      storeDirectory: resolveVihsCacheDir(repositoryRoot, 'lvkit-vi-scan'),
       joinPath: path.join
     },
     {
-      ensureDirectory: async (directory) => {
-        await fsp.mkdir(directory, { recursive: true });
-      },
+      ensureDirectory: (directory) => ensureVihsCacheDir(directory),
       readFile: (filePath) => fsp.readFile(filePath, 'utf8'),
       writeFile: (filePath, data) => fsp.writeFile(filePath, data)
     }

@@ -12,6 +12,7 @@
 
 import * as os from 'node:os';
 import * as path from 'node:path';
+import { promises as fsp } from 'node:fs';
 
 // True when `key` is a 64-character lowercase hex string (a SHA-256 hex digest),
 // the shape used for content-addressed cache keys.
@@ -53,4 +54,28 @@ export function resolveVihsCacheDir(
   env: NodeJS.ProcessEnv = process.env
 ): string {
   return path.join(resolveVihsCacheRoot(repositoryRoot, env), subsystem);
+}
+
+/**
+ * Best-effort mkdir for a vihs cache directory that ALSO keeps the cache out of
+ * the analyzed repo's git status: when the directory is repo-relative
+ * (`<repo>/.vihs/cache/...`), a `.gitignore` containing `*` is dropped at the
+ * `.vihs` root so cache files never surface as untracked (mirroring how lvkit's
+ * `.lvkit/` stays out of the tree). The self-ignore is best-effort and never
+ * throws; the mkdir failure (if any) propagates so a caller's own try/catch can
+ * decide, matching the caches' fail-closed write behavior.
+ */
+export async function ensureVihsCacheDir(directory: string): Promise<void> {
+  await fsp.mkdir(directory, { recursive: true });
+  const marker = `${path.sep}${VIHS_CACHE_ROOT_DIRNAME}${path.sep}`;
+  const idx = directory.indexOf(marker);
+  if (idx < 0) {
+    return; // an explicit VIHS_CACHE_DIR override without a `.vihs` root: leave it alone
+  }
+  const vihsRoot = directory.slice(0, idx + marker.length - 1);
+  try {
+    await fsp.writeFile(path.join(vihsRoot, '.gitignore'), '*\n');
+  } catch {
+    // Best-effort self-ignore; a failure must never fail the cache operation.
+  }
 }

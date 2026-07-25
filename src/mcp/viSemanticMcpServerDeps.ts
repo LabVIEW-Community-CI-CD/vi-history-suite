@@ -17,7 +17,7 @@ import {
   createFileViComparisonModelCache,
   type ViComparisonModelCache
 } from '../semantic/viComparisonModelCache';
-import { resolveVihsCacheDir, VIHS_CACHE_ROOT_DIRNAME } from '../support/cacheKey';
+import { resolveVihsCacheDir, ensureVihsCacheDir } from '../support/cacheKey';
 import {
   createDefaultLvkitViScanStore,
   type LvkitViScanStore
@@ -67,28 +67,6 @@ export type ComparisonModelCacheFactory = (
 ) => ViComparisonModelCache;
 
 /**
- * Best-effort mkdir for a vihs cache directory that ALSO keeps the cache out of
- * the analyzed repo's git status: when the directory is repo-relative
- * (`<repo>/.vihs/cache/...`), a `.gitignore` containing `*` is dropped at the
- * `.vihs` root so cache files never surface as untracked (mirroring how lvkit's
- * `.lvkit/` stays out of the tree). Never throws into a cache op.
- */
-async function ensureVihsCacheDirectory(directory: string): Promise<void> {
-  await fsp.mkdir(directory, { recursive: true });
-  const marker = `${path.sep}${VIHS_CACHE_ROOT_DIRNAME}${path.sep}`;
-  const idx = directory.indexOf(marker);
-  if (idx < 0) {
-    return; // an explicit VIHS_CACHE_DIR override without a `.vihs` root: leave it alone
-  }
-  const vihsRoot = directory.slice(0, idx + marker.length - 1);
-  try {
-    await fsp.writeFile(path.join(vihsRoot, '.gitignore'), '*\n');
-  } catch {
-    // Best-effort self-ignore; a failure must never fail a comparison.
-  }
-}
-
-/**
  * Repo-relative comparison-model cache factory (VHS-REQ-662.8): each cache is
  * stored under `<repositoryRoot>/.vihs/cache/vi-comparison` (env `VIHS_CACHE_DIR`
  * overrides), mirroring lvkit's `<repo>/.lvkit/cache` so the analysis cache lives
@@ -105,7 +83,7 @@ export function createRepoRelativeComparisonModelCacheFactory(
         joinPath: path.join
       },
       {
-        ensureDirectory: (directory) => ensureVihsCacheDirectory(directory),
+        ensureDirectory: (directory) => ensureVihsCacheDir(directory),
         readFile: (filePath) => fsp.readFile(filePath, 'utf8'),
         writeFile: (filePath, data) => fsp.writeFile(filePath, data)
       }
@@ -154,7 +132,6 @@ export function buildViSemanticMcpServerDeps(
   const cacheFactory: ComparisonModelCacheFactory =
     typeof comparisonModelCache === 'function' ? comparisonModelCache : () => comparisonModelCache;
   const previewCacheFs = createDefaultPreviewCacheInspectionFsDeps();
-  const lvkitViScanStore = createDefaultLvkitViScanStore();
   return {
     compareViRevisions: (input: CompareViRevisionsInput) =>
       compareFn(input, { comparisonModelCache: cacheFactory(input.repositoryRoot) }),
@@ -172,7 +149,7 @@ export function buildViSemanticMcpServerDeps(
     collectPreviewDiagnostics: (input: CollectViPreviewDiagnosticsOptions) =>
       collectViPreviewDiagnostics(input),
     listChangedVis: (input) => listChangedVis(input),
-    getViGeneratedCode: (input) => getViGeneratedCode(input, lvkitViScanStore)
+    getViGeneratedCode: (input) => getViGeneratedCode(input)
   };
 }
 
@@ -246,7 +223,7 @@ export async function listChangedVis(
  */
 export async function getViGeneratedCode(
   input: GetViGeneratedCodeInput,
-  store: LvkitViScanStore = createDefaultLvkitViScanStore()
+  store: LvkitViScanStore = createDefaultLvkitViScanStore(input.repositoryRoot)
 ): Promise<GetViGeneratedCodeResult> {
   const envelope = await store.get(input.viPath, input.contentSignature);
   if (envelope) {

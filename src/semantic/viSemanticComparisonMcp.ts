@@ -129,6 +129,13 @@ export interface GetViGeneratedCodeInput {
   viPath: string;
   /** Content signature of the exact VI revision that keyed the stored scan. */
   contentSignature: string;
+  /**
+   * Repository root the scan was captured under. The scan store is repo-relative
+   * (`<repositoryRoot>/.vihs/cache/lvkit-vi-scan`), so this must match the root
+   * the preview-time trigger used when it persisted the scan. Optional and
+   * backward-compatible: when absent the store falls back to the OS temp dir.
+   */
+  repositoryRoot?: string;
 }
 
 /**
@@ -539,6 +546,11 @@ const GET_VI_GENERATED_CODE_INPUT_SCHEMA = {
       type: 'string',
       description:
         'Content signature of the exact VI revision (e.g. a sha256:... digest of the VI bytes) that keyed the stored scan.'
+    },
+    repositoryRoot: {
+      type: 'string',
+      description:
+        'Absolute repository root the scan was captured under. The scan store is repo-relative (<repositoryRoot>/.vihs/cache/lvkit-vi-scan); pass the same root the preview used. Optional: omitted falls back to the OS temp store.'
     }
   },
   required: ['viPath', 'contentSignature']
@@ -1378,6 +1390,17 @@ function requireStringArg(args: Record<string, unknown>, field: string): string 
   return value as string;
 }
 
+function optionalStringArg(args: Record<string, unknown>, field: string): string | undefined {
+  const value = args[field];
+  if (value === undefined) {
+    return undefined;
+  }
+  if (typeof value !== 'string' || value.length === 0) {
+    throwArgumentError(field, 'a non-empty string when provided', value);
+  }
+  return value;
+}
+
 function requireObjectArg(args: Record<string, unknown>, field: string): Record<string, unknown> {
   const value = args[field];
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
@@ -1789,10 +1812,15 @@ function renderPrReviewResult(
 
 function parseGetViGeneratedCodeArguments(rawArguments: unknown): GetViGeneratedCodeInput {
   const args = requireArgumentsObject(rawArguments);
-  return {
+  const parsed: GetViGeneratedCodeInput = {
     viPath: requireStringArg(args, 'viPath'),
     contentSignature: requireStringArg(args, 'contentSignature')
   };
+  const repositoryRoot = optionalStringArg(args, 'repositoryRoot');
+  if (repositoryRoot !== undefined) {
+    parsed.repositoryRoot = repositoryRoot;
+  }
+  return parsed;
 }
 
 function renderGeneratedCodeResult(result: GetViGeneratedCodeResult): unknown {

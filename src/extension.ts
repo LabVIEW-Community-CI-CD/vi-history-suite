@@ -450,12 +450,13 @@ export async function activate(
   const viPreviewCacheWarmer = createViPreviewCacheWarmerService(context, viPreviewSessionManager);
   context.subscriptions.push(viPreviewCacheWarmer);
   // VHS-REQ-717 (epic #2348 Phase B): construct the preview-time lvkit VI-scan
-  // collaborators ONCE. The provider runs `lvkit generate` against the staged
-  // VI; the store is the same on-disk store the MCP `get_vi_generated_code` tool
-  // reads (a separate process), so a fresh instance over the shared temp dir is
-  // correct. The scan is best-effort — failures never surface to the preview.
+  // provider ONCE. The scan store is repo-relative
+  // (`<repositoryRoot>/.vihs/cache/lvkit-vi-scan`, mirroring lvkit's `.lvkit/`),
+  // so it is resolved PER previewed VI from that VI's repository root — the same
+  // root the MCP `get_vi_generated_code` tool (a separate process) resolves from
+  // its `repositoryRoot` argument. The scan is best-effort — failures never
+  // surface to the preview.
   const previewTimeViScan = createLvkitViScanProvider();
-  const previewTimeViScanStore = createDefaultLvkitViScanStore();
   registerViPreviewCustomEditor(context, {
     sessionManager: viPreviewSessionManager,
     onPreviewOpened: (viFsPath) => viPreviewCacheWarmer.notePreviewOpened(viFsPath),
@@ -472,7 +473,10 @@ export async function activate(
         contentSignature
       );
       if (request) {
-        void runPreviewTimeViScan(request, { scan: previewTimeViScan, store: previewTimeViScanStore });
+        void runPreviewTimeViScan(request, {
+          scan: previewTimeViScan,
+          store: createDefaultLvkitViScanStore(request.repositoryRoot)
+        });
       }
     },
     // Test-only: when the integration test sets VIHS_TEST_CAPTURE_PREVIEW=1 (and

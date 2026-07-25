@@ -398,7 +398,9 @@ describe('createDefaultLvkitViScanStore (VHS-REQ-716.2)', () => {
     const envelope = makeEnvelope({ viPath, contentSignature });
     const storeFile = path.join(
       os.tmpdir(),
-      'vihs-lvkit-vi-scan-store',
+      '.vihs',
+      'cache',
+      'lvkit-vi-scan',
       `${computeLvkitViScanStoreKey(viPath, contentSignature)}.json`
     );
     try {
@@ -406,6 +408,30 @@ describe('createDefaultLvkitViScanStore (VHS-REQ-716.2)', () => {
       await expect(created.get(viPath, contentSignature)).resolves.toEqual(envelope);
     } finally {
       await fsp.rm(storeFile, { force: true });
+    }
+  });
+
+  it('is repo-relative under <repo>/.vihs/cache/lvkit-vi-scan and self-ignores (VHS-REQ-716.2)', async () => {
+    const repoRoot = await fsp.mkdtemp(path.join(os.tmpdir(), 'vihs-scan-repo-'));
+    const created = createDefaultLvkitViScanStore(repoRoot);
+    const viPath = 'resource/RepoRelative.vi';
+    const contentSignature = 'sha256:repo-relative';
+    const envelope = makeEnvelope({ viPath, contentSignature });
+    try {
+      await expect(created.put(envelope)).resolves.toBe(true);
+      const storeFile = path.join(
+        repoRoot,
+        '.vihs',
+        'cache',
+        'lvkit-vi-scan',
+        `${computeLvkitViScanStoreKey(viPath, contentSignature)}.json`
+      );
+      await expect(fsp.readFile(storeFile, 'utf8')).resolves.toContain(contentSignature);
+      await expect(created.get(viPath, contentSignature)).resolves.toEqual(envelope);
+      // The `.vihs` root is self-ignored so the analyzed repo never shows it.
+      await expect(fsp.readFile(path.join(repoRoot, '.vihs', '.gitignore'), 'utf8')).resolves.toBe('*\n');
+    } finally {
+      await fsp.rm(repoRoot, { recursive: true, force: true });
     }
   });
 });
