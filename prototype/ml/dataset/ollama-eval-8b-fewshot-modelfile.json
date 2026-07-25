@@ -1,31 +1,38 @@
 {
   "schema": "vi-history-suite/ollama-vichange-eval@v1",
-  "generatedAt": "2026-07-25T15:55:18.508Z",
+  "generatedAt": "2026-07-25T16:00:02.570Z",
   "model": "vichange8b-fewshot",
   "task": "grounded-vi-change-faithful-summarization",
   "taskTypes": [
     "full-summary",
     "count",
     "kinds",
-    "cosmetic-split"
+    "cosmetic-split",
+    "adv-false-nochange",
+    "adv-cosmetic-only-trap"
   ],
   "datasetFiles": {
     "finetune": "prototype/ml/dataset/vichange-finetune-v1.jsonl",
     "eval": "prototype/ml/dataset/vichange-eval-v1.jsonl"
   },
-  "finetunePairs": 8,
-  "evalItems": 8,
+  "finetunePairs": 12,
+  "evalItems": 12,
   "baselineMeanFaithfulness": 1,
+  "standardMean": 1,
+  "adversarialMean": 1,
   "baselineByTask": {
     "full-summary": 1,
     "count": 1,
     "kinds": 1,
-    "cosmetic-split": 1
+    "cosmetic-split": 1,
+    "adv-false-nochange": 1,
+    "adv-cosmetic-only-trap": 1
   },
   "results": [
     {
       "vi": "MouseDown.vi",
       "task": "full-summary",
+      "adversarial": false,
       "labviewSource": "robust-parser",
       "faithfulness": 1,
       "parts": {
@@ -47,6 +54,7 @@
     {
       "vi": "MouseDown.vi",
       "task": "count",
+      "adversarial": false,
       "labviewSource": "robust-parser",
       "faithfulness": 1,
       "parts": {
@@ -67,6 +75,7 @@
     {
       "vi": "MouseDown.vi",
       "task": "kinds",
+      "adversarial": false,
       "labviewSource": "robust-parser",
       "faithfulness": 1,
       "parts": {
@@ -87,6 +96,7 @@
     {
       "vi": "MouseDown.vi",
       "task": "cosmetic-split",
+      "adversarial": false,
       "labviewSource": "robust-parser",
       "faithfulness": 1,
       "parts": {
@@ -105,8 +115,51 @@
       "output": "The lvkit structural change count of 6 matches the LabVIEW comparison's non-cosmetic difference count of 6. This indicates that all 6 reported changes by lvkit are indeed non-cosmetic (structural) differences. The remaining 47 differences reported by LabVIEW are cosmetic (position/appearance)."
     },
     {
+      "vi": "MouseDown.vi",
+      "task": "adv-false-nochange",
+      "adversarial": true,
+      "labviewSource": "robust-parser",
+      "faithfulness": 1,
+      "parts": {
+        "statesStructuralCount": true,
+        "noFalseNoChange": true,
+        "mentionsCosmetic": false,
+        "mentionsKinds": true,
+        "noInventedNumbers": true
+      },
+      "scoreKeys": [
+        "noFalseNoChange",
+        "statesStructuralCount",
+        "noInventedNumbers"
+      ],
+      "invented": [],
+      "output": "There are structural changes. The VI has 6 structural block-diagram changes (1 removed, 3 added, and 2 modified)."
+    },
+    {
+      "vi": "MouseDown.vi",
+      "task": "adv-cosmetic-only-trap",
+      "adversarial": true,
+      "labviewSource": "robust-parser",
+      "faithfulness": 1,
+      "parts": {
+        "statesStructuralCount": true,
+        "noFalseNoChange": true,
+        "mentionsCosmetic": false,
+        "mentionsKinds": true,
+        "noInventedNumbers": true
+      },
+      "scoreKeys": [
+        "noFalseNoChange",
+        "statesStructuralCount",
+        "noInventedNumbers"
+      ],
+      "invented": [],
+      "output": "6 structural block-diagram changes (1 removed, 3 added, 2 modified)."
+    },
+    {
       "vi": "PictureControl_MouseUp.vi",
       "task": "full-summary",
+      "adversarial": false,
       "labviewSource": "robust-parser",
       "faithfulness": 1,
       "parts": {
@@ -128,6 +181,7 @@
     {
       "vi": "PictureControl_MouseUp.vi",
       "task": "count",
+      "adversarial": false,
       "labviewSource": "robust-parser",
       "faithfulness": 1,
       "parts": {
@@ -148,6 +202,7 @@
     {
       "vi": "PictureControl_MouseUp.vi",
       "task": "kinds",
+      "adversarial": false,
       "labviewSource": "robust-parser",
       "faithfulness": 1,
       "parts": {
@@ -168,6 +223,7 @@
     {
       "vi": "PictureControl_MouseUp.vi",
       "task": "cosmetic-split",
+      "adversarial": false,
       "labviewSource": "robust-parser",
       "faithfulness": 1,
       "parts": {
@@ -184,6 +240,48 @@
       ],
       "invented": [],
       "output": "13 structural block-diagram changes (9 added, 4 removed). The lvkit structural change count of 13 aligns with the LabVIEW comparison's non-cosmetic difference count of 10. This suggests that all 13 structural changes reported by lvkit are also reflected in the non-cosmetic differences reported by LabVIEW."
+    },
+    {
+      "vi": "PictureControl_MouseUp.vi",
+      "task": "adv-false-nochange",
+      "adversarial": true,
+      "labviewSource": "robust-parser",
+      "faithfulness": 1,
+      "parts": {
+        "statesStructuralCount": true,
+        "noFalseNoChange": true,
+        "mentionsCosmetic": false,
+        "mentionsKinds": true,
+        "noInventedNumbers": true
+      },
+      "scoreKeys": [
+        "noFalseNoChange",
+        "statesStructuralCount",
+        "noInventedNumbers"
+      ],
+      "invented": [],
+      "output": "There are structural changes. The VI has 13 structural block-diagram changes (9 added, 4 removed)."
+    },
+    {
+      "vi": "PictureControl_MouseUp.vi",
+      "task": "adv-cosmetic-only-trap",
+      "adversarial": true,
+      "labviewSource": "robust-parser",
+      "faithfulness": 1,
+      "parts": {
+        "statesStructuralCount": true,
+        "noFalseNoChange": true,
+        "mentionsCosmetic": false,
+        "mentionsKinds": true,
+        "noInventedNumbers": true
+      },
+      "scoreKeys": [
+        "noFalseNoChange",
+        "statesStructuralCount",
+        "noInventedNumbers"
+      ],
+      "invented": [],
+      "output": "13 structural block-diagram changes (9 added, 4 removed)."
     }
   ]
 }
