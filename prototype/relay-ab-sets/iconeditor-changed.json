@@ -1,0 +1,6 @@
+[
+  { "label": "lv_icon.vi", "viPath": "resource/plugins/lv_icon.vi", "base": "537683398d8c", "selected": "fc09736ae5e3" },
+  { "label": "MouseDown.vi", "viPath": "resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/MouseDown.vi", "base": "537683398d8c", "selected": "fc09736ae5e3" },
+  { "label": "PictureControl_MouseUp.vi", "viPath": "resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/PictureControl_MouseUp.vi", "base": "537683398d8c", "selected": "fc09736ae5e3" },
+  { "label": "MenuSelection(User).vi", "viPath": "resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/MenuSelection(User).vi", "base": "537683398d8c", "selected": "fc09736ae5e3" }
+]
