@@ -148,6 +148,40 @@ describe('lvkitViScanStore (VHS-REQ-716)', () => {
     });
   });
 
+  describe('createFileLvkitViScanStore upgrade-only precedence (#2373 unified cross-leg cache)', () => {
+    function placeholderEnvelope() {
+      return buildLvkitViScanEnvelope({
+        viPath: VI_PATH,
+        contentSignature: CONTENT_SIGNATURE,
+        runtime: 'host-native',
+        generatedAt: '2026-07-24T11:02:31.000Z',
+        lvkitSource: 'path',
+        modules: [
+          {
+            relativePath: 'make_path_absolute/klass/make_path_absolute.error.py',
+            python: 'raise VILibResolutionNeeded()\n'
+          }
+        ]
+      });
+    }
+
+    it('does not let a later placeholder generate clobber a cleaner one for the same content address', async () => {
+      const store = createStore(createFakeFs());
+      expect(await store.put(makeEnvelope())).toBe(true); // clean (errorModuleCount 0)
+      expect(await store.put(placeholderEnvelope())).toBe(true); // later placeholder run
+      const stored = await store.get(VI_PATH, CONTENT_SIGNATURE);
+      expect(stored?.errorModuleCount).toBe(0); // clean generate retained, not downgraded
+    });
+
+    it('lets a clean generate upgrade an existing placeholder for the same content address', async () => {
+      const store = createStore(createFakeFs());
+      expect(await store.put(placeholderEnvelope())).toBe(true); // placeholder (errorModuleCount 1)
+      expect(await store.put(makeEnvelope())).toBe(true); // real-LabVIEW clean fills it in
+      const stored = await store.get(VI_PATH, CONTENT_SIGNATURE);
+      expect(stored?.errorModuleCount).toBe(0); // upgraded to the clean generate
+    });
+  });
+
   describe('createFileLvkitViScanStore fail-closed reads / best-effort writes (VHS-REQ-716.3)', () => {
     it('returns undefined for an absent scan', async () => {
       const store = createStore(createFakeFs());
