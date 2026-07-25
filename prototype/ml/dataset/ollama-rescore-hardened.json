@@ -1,7 +1,7 @@
 {
   "schema": "vi-history-suite/ollama-vichange-rescore-hardened@v1",
-  "generatedAt": "2026-07-25T18:04:58.081Z",
-  "note": "read-only re-scoring of recorded outputs with scorerHardening.noFalseNoChangeHardened; no inference",
+  "generatedAt": "2026-07-25T18:11:04.312Z",
+  "note": "full read-only re-baseline of recorded outputs with scorerHardening.noFalseNoChangeHardened (all 4 noFalseNoChange tasks, real ground-truth N); no inference",
   "sources": {
     "compare": "ollama-eval-compare-configs.json",
     "twoShot": "ollama-2shot-eval.json"
@@ -10,44 +10,120 @@
     {
       "source": "compare",
       "id": "8b-raw",
-      "advItems": 8,
-      "adversarialMeanBefore": 0.917,
-      "adversarialMeanHardened": 1,
+      "overallBefore": 0.896,
+      "overallAfter": 0.92,
+      "standardBefore": 0.888,
+      "standardAfter": 0.888,
+      "adversarialBefore": 0.917,
+      "adversarialAfter": 1,
       "guardBefore": false,
-      "guardHardened": true,
+      "guardAfter": true,
+      "byTaskBefore": {
+        "full-summary": 0.75,
+        "count": 1,
+        "kinds": 1,
+        "cosmetic-split": 0.8,
+        "adv-false-nochange": 0.833,
+        "adv-cosmetic-only-trap": 1
+      },
+      "byTaskAfter": {
+        "full-summary": 0.75,
+        "count": 1,
+        "kinds": 1,
+        "cosmetic-split": 0.8,
+        "adv-false-nochange": 1,
+        "adv-cosmetic-only-trap": 1
+      },
       "flips": [
-        "adv-false-nochange/VisibleTextMarker.vi: noFalseNoChange false->true, faith 0.667->1",
-        "adv-false-nochange/lv_icon.vi: noFalseNoChange false->true, faith 0.667->1"
+        "adv-false-nochange/VisibleTextMarker.vi: false->true, faith 0.667->1",
+        "adv-false-nochange/lv_icon.vi: false->true, faith 0.667->1"
       ]
     },
     {
       "source": "compare",
       "id": "8b-fewshot",
-      "advItems": 8,
-      "adversarialMeanBefore": 1,
-      "adversarialMeanHardened": 1,
+      "overallBefore": 0.946,
+      "overallAfter": 0.946,
+      "standardBefore": 0.925,
+      "standardAfter": 0.925,
+      "adversarialBefore": 1,
+      "adversarialAfter": 1,
       "guardBefore": true,
-      "guardHardened": true,
+      "guardAfter": true,
+      "byTaskBefore": {
+        "full-summary": 0.9,
+        "count": 0.933,
+        "kinds": 0.867,
+        "cosmetic-split": 1,
+        "adv-false-nochange": 1,
+        "adv-cosmetic-only-trap": 1
+      },
+      "byTaskAfter": {
+        "full-summary": 0.9,
+        "count": 0.933,
+        "kinds": 0.867,
+        "cosmetic-split": 1,
+        "adv-false-nochange": 1,
+        "adv-cosmetic-only-trap": 1
+      },
       "flips": []
     },
     {
       "source": "compare",
       "id": "14b",
-      "advItems": 8,
-      "adversarialMeanBefore": 1,
-      "adversarialMeanHardened": 1,
+      "overallBefore": 0.955,
+      "overallAfter": 0.955,
+      "standardBefore": 0.938,
+      "standardAfter": 0.938,
+      "adversarialBefore": 1,
+      "adversarialAfter": 1,
       "guardBefore": true,
-      "guardHardened": true,
+      "guardAfter": true,
+      "byTaskBefore": {
+        "full-summary": 0.95,
+        "count": 1,
+        "kinds": 0.8,
+        "cosmetic-split": 1,
+        "adv-false-nochange": 1,
+        "adv-cosmetic-only-trap": 1
+      },
+      "byTaskAfter": {
+        "full-summary": 0.95,
+        "count": 1,
+        "kinds": 0.8,
+        "cosmetic-split": 1,
+        "adv-false-nochange": 1,
+        "adv-cosmetic-only-trap": 1
+      },
       "flips": []
     },
     {
       "source": "2shot",
       "id": "vichange8b-2shot",
-      "advItems": 8,
-      "adversarialMeanBefore": 1,
-      "adversarialMeanHardened": 1,
+      "overallBefore": 0.958,
+      "overallAfter": 0.958,
+      "standardBefore": 0.942,
+      "standardAfter": 0.942,
+      "adversarialBefore": 1,
+      "adversarialAfter": 1,
       "guardBefore": true,
-      "guardHardened": true,
+      "guardAfter": true,
+      "byTaskBefore": {
+        "full-summary": 0.9,
+        "count": 0.933,
+        "kinds": 1,
+        "cosmetic-split": 0.933,
+        "adv-false-nochange": 1,
+        "adv-cosmetic-only-trap": 1
+      },
+      "byTaskAfter": {
+        "full-summary": 0.9,
+        "count": 0.933,
+        "kinds": 1,
+        "cosmetic-split": 0.933,
+        "adv-false-nochange": 1,
+        "adv-cosmetic-only-trap": 1
+      },
       "flips": []
     }
   ]
