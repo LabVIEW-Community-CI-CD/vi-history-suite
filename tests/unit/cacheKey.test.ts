@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import * as os from 'node:os';
+import * as path from 'node:path';
 
-import { isSha256HexKey } from '../../src/support/cacheKey';
+import { isSha256HexKey, resolveVihsCacheRoot, resolveVihsCacheDir } from '../../src/support/cacheKey';
 
 describe('isSha256HexKey', () => {
   const validKey = 'a'.repeat(64);
@@ -33,5 +35,36 @@ describe('isSha256HexKey', () => {
 
   it('rejects an empty string', () => {
     expect(isSha256HexKey('')).toBe(false);
+  });
+});
+
+describe('resolveVihsCacheRoot', () => {
+  it('is repo-relative under <repo>/.vihs/cache when a repository root is given', () => {
+    expect(resolveVihsCacheRoot('/repo/labview-icon-editor', {})).toBe(
+      path.join('/repo/labview-icon-editor', '.vihs', 'cache')
+    );
+  });
+
+  it('falls back to <os.tmpdir()>/.vihs/cache when no repository root is known', () => {
+    expect(resolveVihsCacheRoot(undefined, {})).toBe(path.join(os.tmpdir(), '.vihs', 'cache'));
+    expect(resolveVihsCacheRoot('   ', {})).toBe(path.join(os.tmpdir(), '.vihs', 'cache'));
+  });
+
+  it('honors an explicit VIHS_CACHE_DIR override over the repo-relative default', () => {
+    expect(resolveVihsCacheRoot('/repo', { VIHS_CACHE_DIR: '/custom/cache' })).toBe('/custom/cache');
+  });
+});
+
+describe('resolveVihsCacheDir', () => {
+  it('appends the subsystem under the repo-relative cache root', () => {
+    expect(resolveVihsCacheDir('/repo', 'vi-comparison', {})).toBe(
+      path.join('/repo', '.vihs', 'cache', 'vi-comparison')
+    );
+  });
+
+  it('appends the subsystem under an explicit override root', () => {
+    expect(resolveVihsCacheDir('/repo', 'vi-comparison', { VIHS_CACHE_DIR: '/custom' })).toBe(
+      path.join('/custom', 'vi-comparison')
+    );
   });
 });

@@ -1,5 +1,4 @@
 import { promises as fsp } from 'node:fs';
-import * as os from 'node:os';
 import * as path from 'node:path';
 
 import { createLvkitCompareViRevisions } from '../semantic/lvkit/lvkitCompareViRevisions';
@@ -18,6 +17,7 @@ import {
   createFileViComparisonModelCache,
   type ViComparisonModelCache
 } from '../semantic/viComparisonModelCache';
+import { resolveVihsCacheDir, VIHS_CACHE_ROOT_DIRNAME } from '../support/cacheKey';
 import {
   createDefaultLvkitViScanStore,
   type LvkitViScanStore
@@ -58,23 +58,71 @@ import {
  */
 
 /**
- * Default file-backed comparison-model cache, shared across tool calls in the
- * long-lived server process and stored under the OS temp directory.
+ * A comparison-model cache bound to a specific repository. The MCP server is a
+ * long-lived process that may serve compares for different repositories, so the
+ * cache is resolved per repository root rather than as one process-global store.
  */
-export function createDefaultComparisonModelCache(): ViComparisonModelCache {
-  return createFileViComparisonModelCache(
-    {
-      cacheDirectory: path.join(os.tmpdir(), 'vihs-vi-comparison-cache'),
-      joinPath: path.join
-    },
-    {
-      ensureDirectory: async (directory) => {
-        await fsp.mkdir(directory, { recursive: true });
+export type ComparisonModelCacheFactory = (
+  repositoryRoot: string | undefined
+) => ViComparisonModelCache;
+
+/**
+ * Best-effort mkdir for a vihs cache directory that ALSO keeps the cache out of
+ * the analyzed repo's git status: when the directory is repo-relative
+ * (`<repo>/.vihs/cache/...`), a `.gitignore` containing `*` is dropped at the
+ * `.vihs` root so cache files never surface as untracked (mirroring how lvkit's
+ * `.lvkit/` stays out of the tree). Never throws into a cache op.
+ */
+async function ensureVihsCacheDirectory(directory: string): Promise<void> {
+  await fsp.mkdir(directory, { recursive: true });
+  const marker = `${path.sep}${VIHS_CACHE_ROOT_DIRNAME}${path.sep}`;
+  const idx = directory.indexOf(marker);
+  if (idx < 0) {
+    return; // an explicit VIHS_CACHE_DIR override without a `.vihs` root: leave it alone
+  }
+  const vihsRoot = directory.slice(0, idx + marker.length - 1);
+  try {
+    await fsp.writeFile(path.join(vihsRoot, '.gitignore'), '*\n');
+  } catch {
+    // Best-effort self-ignore; a failure must never fail a comparison.
+  }
+}
+
+/**
+ * Repo-relative comparison-model cache factory (VHS-REQ-662.8): each cache is
+ * stored under `<repositoryRoot>/.vihs/cache/vi-comparison` (env `VIHS_CACHE_DIR`
+ * overrides), mirroring lvkit's `<repo>/.lvkit/cache` so the analysis cache lives
+ * alongside the repo it describes. Shared across tool calls for the same repo in
+ * the long-lived server process.
+ */
+export function createRepoRelativeComparisonModelCacheFactory(
+  env: NodeJS.ProcessEnv = process.env
+): ComparisonModelCacheFactory {
+  return (repositoryRoot) =>
+    createFileViComparisonModelCache(
+      {
+        cacheDirectory: resolveVihsCacheDir(repositoryRoot, 'vi-comparison', env),
+        joinPath: path.join
       },
-      readFile: (filePath) => fsp.readFile(filePath, 'utf8'),
-      writeFile: (filePath, data) => fsp.writeFile(filePath, data)
-    }
-  );
+      {
+        ensureDirectory: (directory) => ensureVihsCacheDirectory(directory),
+        readFile: (filePath) => fsp.readFile(filePath, 'utf8'),
+        writeFile: (filePath, data) => fsp.writeFile(filePath, data)
+      }
+    );
+}
+
+/**
+ * Repo-unaware default comparison-model cache: the repo-relative factory
+ * resolved with no repository root, so it falls back to
+ * `<os.tmpdir()>/.vihs/cache/vi-comparison`. Retained for callers/tests that do
+ * not thread a repository root; the server entrypoint uses the repo-relative
+ * factory so live compares cache under the analyzed repo.
+ */
+export function createDefaultComparisonModelCache(
+  env: NodeJS.ProcessEnv = process.env
+): ViComparisonModelCache {
+  return createRepoRelativeComparisonModelCacheFactory(env)(undefined);
 }
 
 /**
@@ -100,14 +148,16 @@ export function createDefaultPreviewCacheInspectionFsDeps(): ViPreviewCacheInspe
  * in a unit test without a real comparison.
  */
 export function buildViSemanticMcpServerDeps(
-  comparisonModelCache: ViComparisonModelCache,
+  comparisonModelCache: ComparisonModelCacheFactory | ViComparisonModelCache,
   compareFn: typeof compareViRevisions = compareViRevisions
 ): ViSemanticMcpAsyncDeps {
+  const cacheFactory: ComparisonModelCacheFactory =
+    typeof comparisonModelCache === 'function' ? comparisonModelCache : () => comparisonModelCache;
   const previewCacheFs = createDefaultPreviewCacheInspectionFsDeps();
   const lvkitViScanStore = createDefaultLvkitViScanStore();
   return {
     compareViRevisions: (input: CompareViRevisionsInput) =>
-      compareFn(input, { comparisonModelCache }),
+      compareFn(input, { comparisonModelCache: cacheFactory(input.repositoryRoot) }),
     buildViSemanticHistory,
     buildViRepositoryIndex,
     buildViSemanticPrReview,
@@ -149,7 +199,7 @@ export function resolveSemanticCompareProvider(
  * used. Every other tool is unchanged.
  */
 export function buildViSemanticMcpServerDepsForEnv(
-  comparisonModelCache: ViComparisonModelCache,
+  comparisonModelCache: ComparisonModelCacheFactory | ViComparisonModelCache,
   env: NodeJS.ProcessEnv = process.env
 ): ViSemanticMcpAsyncDeps {
   if (resolveSemanticCompareProvider(env) === 'lvkit') {

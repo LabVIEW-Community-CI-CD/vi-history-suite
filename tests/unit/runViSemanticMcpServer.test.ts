@@ -17,6 +17,7 @@ vi.mock('../../src/semantic/viSemanticComparisonMcp', () => ({
 vi.mock('../../src/mcp/viSemanticMcpServerDeps', () => ({
   buildViSemanticMcpServerDepsForEnv: () => ({ __deps: true }),
   createDefaultComparisonModelCache: () => ({ __cache: true }),
+  createRepoRelativeComparisonModelCacheFactory: () => () => ({ __cache: true }),
 }));
 
 type StdinStub = EventEmitter & {
