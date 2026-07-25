@@ -1,10 +1,10 @@
 {
   "schema": "vi-history-suite/ollama-vichange-eval-compare@v1",
-  "generatedAt": "2026-07-25T16:21:15.579Z",
+  "generatedAt": "2026-07-25T17:14:34.566Z",
   "task": "grounded-vi-change-faithful-summarization",
   "ollamaUrl": "http://localhost:11434",
   "regressionFloor": 1,
-  "evalItems": 12,
+  "evalItems": 28,
   "taskTypes": [
     "full-summary",
     "count",
@@ -20,21 +20,21 @@
       "note": "baseline llama3.1:8b, no few-shot",
       "present": true,
       "evaluated": true,
-      "overall": 0.958,
-      "standardMean": 0.938,
-      "adversarialMean": 1,
+      "overall": 0.896,
+      "standardMean": 0.888,
+      "adversarialMean": 0.917,
       "byTask": {
         "full-summary": 0.75,
         "count": 1,
         "kinds": 1,
-        "cosmetic-split": 1,
-        "adv-false-nochange": 1,
+        "cosmetic-split": 0.8,
+        "adv-false-nochange": 0.833,
         "adv-cosmetic-only-trap": 1
       },
       "regressionGuard": {
         "floor": 1,
-        "adversarialMean": 1,
-        "pass": true
+        "adversarialMean": 0.917,
+        "pass": false
       }
     },
     {
@@ -43,13 +43,13 @@
       "note": "LINUX's CPU few-shot Modelfile (FROM llama3.1:8b + synthetic exemplar)",
       "present": true,
       "evaluated": true,
-      "overall": 1,
-      "standardMean": 1,
+      "overall": 0.946,
+      "standardMean": 0.925,
       "adversarialMean": 1,
       "byTask": {
-        "full-summary": 1,
-        "count": 1,
-        "kinds": 1,
+        "full-summary": 0.9,
+        "count": 0.933,
+        "kinds": 0.867,
         "cosmetic-split": 1,
         "adv-false-nochange": 1,
         "adv-cosmetic-only-trap": 1
@@ -66,13 +66,13 @@
       "note": "reference-ceiling zero-shot; runs on LINUX host",
       "present": true,
       "evaluated": true,
-      "overall": 0.972,
-      "standardMean": 0.958,
+      "overall": 0.955,
+      "standardMean": 0.938,
       "adversarialMean": 1,
       "byTask": {
-        "full-summary": 1,
+        "full-summary": 0.95,
         "count": 1,
-        "kinds": 0.834,
+        "kinds": 0.8,
         "cosmetic-split": 1,
         "adv-false-nochange": 1,
         "adv-cosmetic-only-trap": 1
@@ -87,26 +87,26 @@
   "comparison": {
     "full-summary": {
       "8b-raw": 0.75,
-      "8b-fewshot": 1,
-      "14b": 1
+      "8b-fewshot": 0.9,
+      "14b": 0.95
     },
     "count": {
       "8b-raw": 1,
-      "8b-fewshot": 1,
+      "8b-fewshot": 0.933,
       "14b": 1
     },
     "kinds": {
       "8b-raw": 1,
-      "8b-fewshot": 1,
-      "14b": 0.834
+      "8b-fewshot": 0.867,
+      "14b": 0.8
     },
     "cosmetic-split": {
-      "8b-raw": 1,
+      "8b-raw": 0.8,
       "8b-fewshot": 1,
       "14b": 1
     },
     "adv-false-nochange": {
-      "8b-raw": 1,
+      "8b-raw": 0.833,
       "8b-fewshot": 1,
       "14b": 1
     },
@@ -371,6 +371,347 @@
         ],
         "invented": [],
         "output": "There are 13 structural changes."
+      },
+      {
+        "vi": "LoadTemplates.vi",
+        "task": "full-summary",
+        "adversarial": false,
+        "labviewSource": "robust-parser",
+        "faithfulness": 0.75,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": false,
+          "mentionsKinds": true,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "statesStructuralCount",
+          "noFalseNoChange",
+          "mentionsCosmetic",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "There are 0 STRUCTURAL changes."
+      },
+      {
+        "vi": "LoadTemplates.vi",
+        "task": "count",
+        "adversarial": false,
+        "labviewSource": "robust-parser",
+        "faithfulness": 1,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": false,
+          "mentionsKinds": true,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "statesStructuralCount",
+          "noFalseNoChange",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "The VI has 0 structural changes."
+      },
+      {
+        "vi": "LoadTemplates.vi",
+        "task": "kinds",
+        "adversarial": false,
+        "labviewSource": "robust-parser",
+        "faithfulness": 1,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": true,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "statesStructuralCount",
+          "mentionsKinds",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "Based on the provided data:\n\n* Structural changes: 0 (as reported by lvkit)\n* Cosmetic differences: 1 (reported by LabVIEW, but not structural)"
+      },
+      {
+        "vi": "LoadTemplates.vi",
+        "task": "cosmetic-split",
+        "adversarial": false,
+        "labviewSource": "robust-parser",
+        "faithfulness": 0.333,
+        "parts": {
+          "statesStructuralCount": false,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": false,
+          "mentionsKinds": true,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "statesStructuralCount",
+          "mentionsCosmetic",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "There are 1 structural change."
+      },
+      {
+        "vi": "VisibleTextMarker.vi",
+        "task": "full-summary",
+        "adversarial": false,
+        "labviewSource": "robust-parser",
+        "faithfulness": 0.75,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": false,
+          "mentionsKinds": true,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "statesStructuralCount",
+          "noFalseNoChange",
+          "mentionsCosmetic",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "There were 4 STRUCTURAL changes to the VI \"VisibleTextMarker.vi\", with 2 elements added and 2 elements removed."
+      },
+      {
+        "vi": "VisibleTextMarker.vi",
+        "task": "count",
+        "adversarial": false,
+        "labviewSource": "robust-parser",
+        "faithfulness": 1,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": false,
+          "mentionsKinds": false,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "statesStructuralCount",
+          "noFalseNoChange",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "The VI has 4 structural changes."
+      },
+      {
+        "vi": "VisibleTextMarker.vi",
+        "task": "kinds",
+        "adversarial": false,
+        "labviewSource": "robust-parser",
+        "faithfulness": 1,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": true,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "statesStructuralCount",
+          "mentionsKinds",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "Based on the provided data:\n\n* Structural changes: 4\n\t+ Added: 2\n\t+ Removed: 2\n\nNote that there are no cosmetic differences reported by LabVIEW comparison."
+      },
+      {
+        "vi": "VisibleTextMarker.vi",
+        "task": "cosmetic-split",
+        "adversarial": false,
+        "labviewSource": "robust-parser",
+        "faithfulness": 1,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": true,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "statesStructuralCount",
+          "mentionsCosmetic",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "According to the provided data:\n\n* The VI has 4 lvkit structural changes, with 2 elements added and 2 elements removed.\n* LabVIEW reports a total of 3 differences between the two versions.\n* Of these differences, 2 are non-cosmetic (i.e., related to the structure or content of the VI), while none are cosmetic (i.e., related to appearance or position)."
+      },
+      {
+        "vi": "VisibleTextMarker.vi",
+        "task": "adv-false-nochange",
+        "adversarial": true,
+        "labviewSource": "robust-parser",
+        "faithfulness": 0.667,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": false,
+          "mentionsCosmetic": false,
+          "mentionsKinds": false,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "noFalseNoChange",
+          "statesStructuralCount",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "Based on the provided data:\n\nThere are 4 STRUCTURAL changes in the VI between the two revisions. \n\nNote that I did not say \"no changes\" because the structural change count is greater than 0."
+      },
+      {
+        "vi": "VisibleTextMarker.vi",
+        "task": "adv-cosmetic-only-trap",
+        "adversarial": true,
+        "labviewSource": "robust-parser",
+        "faithfulness": 1,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": false,
+          "mentionsKinds": false,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "noFalseNoChange",
+          "statesStructuralCount",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "There are 4 structural changes."
+      },
+      {
+        "vi": "lv_icon.vi",
+        "task": "full-summary",
+        "adversarial": false,
+        "labviewSource": "robust-parser",
+        "faithfulness": 0.75,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": false,
+          "mentionsKinds": false,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "statesStructuralCount",
+          "noFalseNoChange",
+          "mentionsCosmetic",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "There were 6 STRUCTURAL changes to the VI \"lv_icon.vi\" as reported by lvkit."
+      },
+      {
+        "vi": "lv_icon.vi",
+        "task": "count",
+        "adversarial": false,
+        "labviewSource": "robust-parser",
+        "faithfulness": 1,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": false,
+          "mentionsKinds": false,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "statesStructuralCount",
+          "noFalseNoChange",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "The VI has 6 structural changes."
+      },
+      {
+        "vi": "lv_icon.vi",
+        "task": "kinds",
+        "adversarial": false,
+        "labviewSource": "robust-parser",
+        "faithfulness": 1,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": false,
+          "mentionsKinds": true,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "statesStructuralCount",
+          "mentionsKinds",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "Based on the provided data:\n\n* Structural changes from lvkit: 6 in total, with:\n\t+ 2 added elements.\n\t+ 4 removed elements.\n\nNote that there is no information about modified elements. The LabVIEW comparison differences are not relevant to structural changes and will be ignored for this response."
+      },
+      {
+        "vi": "lv_icon.vi",
+        "task": "cosmetic-split",
+        "adversarial": false,
+        "labviewSource": "robust-parser",
+        "faithfulness": 0.667,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": true,
+          "noInventedNumbers": false
+        },
+        "scoreKeys": [
+          "statesStructuralCount",
+          "mentionsCosmetic",
+          "noInventedNumbers"
+        ],
+        "invented": [
+          20
+        ],
+        "output": "According to the provided data:\n\n* The VI has undergone 6 structural changes as reported by lvkit.\n\t+ Specifically, 2 elements were added and 4 elements were removed.\n* LabVIEW comparison differences report a total of 23 differences between the original and modified VI.\n* Out of these 23 differences, only 3 are non-cosmetic (structural), while the remaining 20 are cosmetic."
+      },
+      {
+        "vi": "lv_icon.vi",
+        "task": "adv-false-nochange",
+        "adversarial": true,
+        "labviewSource": "robust-parser",
+        "faithfulness": 0.667,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": false,
+          "mentionsCosmetic": false,
+          "mentionsKinds": false,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "noFalseNoChange",
+          "statesStructuralCount",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "Based on the provided data:\n\nThere are 6 STRUCTURAL changes in the VI \"lv_icon.vi\" between the two revisions. \n\nNote that I did not say \"no changes\", as per the rules. The structural change count is greater than 0, so it's more accurate to report this fact directly."
+      },
+      {
+        "vi": "lv_icon.vi",
+        "task": "adv-cosmetic-only-trap",
+        "adversarial": true,
+        "labviewSource": "robust-parser",
+        "faithfulness": 1,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": false,
+          "mentionsKinds": false,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "noFalseNoChange",
+          "statesStructuralCount",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "There are 6 structural changes."
       }
     ],
     "8b-fewshot": [
@@ -627,6 +968,347 @@
         ],
         "invented": [],
         "output": "13 structural block-diagram changes (9 added, 4 removed)."
+      },
+      {
+        "vi": "LoadTemplates.vi",
+        "task": "full-summary",
+        "adversarial": false,
+        "labviewSource": "robust-parser",
+        "faithfulness": 0.75,
+        "parts": {
+          "statesStructuralCount": false,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": true,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "statesStructuralCount",
+          "noFalseNoChange",
+          "mentionsCosmetic",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "There are no structural block-diagram changes. LabVIEW's comparison reports a total of 2 differences: 1 non-cosmetic and 1 cosmetic difference."
+      },
+      {
+        "vi": "LoadTemplates.vi",
+        "task": "count",
+        "adversarial": false,
+        "labviewSource": "robust-parser",
+        "faithfulness": 0.667,
+        "parts": {
+          "statesStructuralCount": false,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": false,
+          "mentionsKinds": true,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "statesStructuralCount",
+          "noFalseNoChange",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "The VI has 1 structural change."
+      },
+      {
+        "vi": "LoadTemplates.vi",
+        "task": "kinds",
+        "adversarial": false,
+        "labviewSource": "robust-parser",
+        "faithfulness": 0.667,
+        "parts": {
+          "statesStructuralCount": false,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": true,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "statesStructuralCount",
+          "mentionsKinds",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "There are no structural changes reported by lvkit. LabVIEW's comparison reports 2 total differences: 1 non-cosmetic difference and 1 cosmetic difference. The non-cosmetic difference is the only structural change, but since it's not broken down into removed/added/modified, we can't provide further detail on its nature."
+      },
+      {
+        "vi": "LoadTemplates.vi",
+        "task": "cosmetic-split",
+        "adversarial": false,
+        "labviewSource": "robust-parser",
+        "faithfulness": 1,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": true,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "statesStructuralCount",
+          "mentionsCosmetic",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "Since the lvkit structural change count is 0, it indicates that there are no structural block-diagram changes. This aligns with LabVIEW's report of only 1 non-cosmetic difference and 0 cosmetic differences, as all reported differences are accounted for by a single structural change (the non-cosmetic one)."
+      },
+      {
+        "vi": "VisibleTextMarker.vi",
+        "task": "full-summary",
+        "adversarial": false,
+        "labviewSource": "robust-parser",
+        "faithfulness": 1,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": true,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "statesStructuralCount",
+          "noFalseNoChange",
+          "mentionsCosmetic",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "4 structural block-diagram changes (2 added, 2 removed). LabVIEW's comparison reports 3 total differences: 2 are non-cosmetic (aligning with lvkit's 4), and there are no cosmetic differences."
+      },
+      {
+        "vi": "VisibleTextMarker.vi",
+        "task": "count",
+        "adversarial": false,
+        "labviewSource": "robust-parser",
+        "faithfulness": 1,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": false,
+          "mentionsKinds": false,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "statesStructuralCount",
+          "noFalseNoChange",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "The VI has 4 structural block-diagram changes."
+      },
+      {
+        "vi": "VisibleTextMarker.vi",
+        "task": "kinds",
+        "adversarial": false,
+        "labviewSource": "robust-parser",
+        "faithfulness": 0.667,
+        "parts": {
+          "statesStructuralCount": false,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": true,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "statesStructuralCount",
+          "mentionsKinds",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "2 blocks were added and 2 blocks were removed. The LabVIEW comparison confirms the same structural change count as lvkit, with no cosmetic differences reported."
+      },
+      {
+        "vi": "VisibleTextMarker.vi",
+        "task": "cosmetic-split",
+        "adversarial": false,
+        "labviewSource": "robust-parser",
+        "faithfulness": 1,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": false,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "statesStructuralCount",
+          "mentionsCosmetic",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "The lvkit structural change count of 4 matches the LabVIEW non-cosmetic difference count of 2. This implies that all 4 structural changes reported by lvkit are also counted as non-cosmetic differences in LabVIEW's comparison. The remaining 1 non-cosmetic difference and 1 total difference (making a total of 3) are cosmetic, which aligns with the fact that LabVIEW reports only 0 cosmetic differences"
+      },
+      {
+        "vi": "VisibleTextMarker.vi",
+        "task": "adv-false-nochange",
+        "adversarial": true,
+        "labviewSource": "robust-parser",
+        "faithfulness": 1,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": false,
+          "mentionsKinds": true,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "noFalseNoChange",
+          "statesStructuralCount",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "There are structural changes reported by lvkit. The VI has 4 structural block-diagram changes (2 added, 2 removed)."
+      },
+      {
+        "vi": "VisibleTextMarker.vi",
+        "task": "adv-cosmetic-only-trap",
+        "adversarial": true,
+        "labviewSource": "robust-parser",
+        "faithfulness": 1,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": false,
+          "mentionsKinds": true,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "noFalseNoChange",
+          "statesStructuralCount",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "4 structural block-diagram changes (2 added, 2 removed)."
+      },
+      {
+        "vi": "lv_icon.vi",
+        "task": "full-summary",
+        "adversarial": false,
+        "labviewSource": "robust-parser",
+        "faithfulness": 0.75,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": true,
+          "noInventedNumbers": false
+        },
+        "scoreKeys": [
+          "statesStructuralCount",
+          "noFalseNoChange",
+          "mentionsCosmetic",
+          "noInventedNumbers"
+        ],
+        "invented": [
+          20
+        ],
+        "output": "6 structural block-diagram changes (2 added, 4 removed). LabVIEW's comparison reports 23 total differences, with 3 being non-cosmetic and aligning with lvkit's count. The remaining 20 are cosmetic differences that lvkit omits by design."
+      },
+      {
+        "vi": "lv_icon.vi",
+        "task": "count",
+        "adversarial": false,
+        "labviewSource": "robust-parser",
+        "faithfulness": 1,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": false,
+          "mentionsKinds": false,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "statesStructuralCount",
+          "noFalseNoChange",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "The VI has 6 structural block-diagram changes."
+      },
+      {
+        "vi": "lv_icon.vi",
+        "task": "kinds",
+        "adversarial": false,
+        "labviewSource": "robust-parser",
+        "faithfulness": 1,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": true,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "statesStructuralCount",
+          "mentionsKinds",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "According to the lvkit data, there are 6 structural block-diagram changes. This breaks down into:\n\n* 2 blocks added\n* 4 blocks removed\n\nThe LabVIEW comparison reports 23 total differences, with 3 non-cosmetic (structural) and 19 cosmetic (position/appearance) differences."
+      },
+      {
+        "vi": "lv_icon.vi",
+        "task": "cosmetic-split",
+        "adversarial": false,
+        "labviewSource": "robust-parser",
+        "faithfulness": 1,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": true,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "statesStructuralCount",
+          "mentionsCosmetic",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "The lvkit structural change count of 6 (2 added, 4 removed) corresponds to the LabVIEW non-cosmetic difference count of 3. The remaining changes reported by LabVIEW as cosmetic are not reflected in the lvkit structural change count."
+      },
+      {
+        "vi": "lv_icon.vi",
+        "task": "adv-false-nochange",
+        "adversarial": true,
+        "labviewSource": "robust-parser",
+        "faithfulness": 1,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": false,
+          "mentionsKinds": true,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "noFalseNoChange",
+          "statesStructuralCount",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "There are structural changes reported by lvkit. The VI has 6 structural block-diagram changes (2 added, 4 removed)."
+      },
+      {
+        "vi": "lv_icon.vi",
+        "task": "adv-cosmetic-only-trap",
+        "adversarial": true,
+        "labviewSource": "robust-parser",
+        "faithfulness": 1,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": false,
+          "mentionsKinds": true,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "noFalseNoChange",
+          "statesStructuralCount",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "6 structural block-diagram changes (2 added, 4 removed)."
       }
     ],
     "14b": [
@@ -883,6 +1565,345 @@
         ],
         "invented": [],
         "output": "The VI \"PictureControl_MouseUp.vi\" has 13 structural changes (9 added, 4 removed) according to lvkit. There are additional 10 non-cosmetic differences reported by LabVIEW beyond what lvkit captures."
+      },
+      {
+        "vi": "LoadTemplates.vi",
+        "task": "full-summary",
+        "adversarial": false,
+        "labviewSource": "robust-parser",
+        "faithfulness": 0.75,
+        "parts": {
+          "statesStructuralCount": false,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": true,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "statesStructuralCount",
+          "noFalseNoChange",
+          "mentionsCosmetic",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "For the VI \"LoadTemplates.vi\":\n\n- **Structural Changes**: There are no structural changes reported by lvkit.\n- **Non-Cosmetic Differences**: There is 1 non-cosmetic difference identified by LabVIEW.\n- **Cosmetic Differences**: No cosmetic differences were noted."
+      },
+      {
+        "vi": "LoadTemplates.vi",
+        "task": "count",
+        "adversarial": false,
+        "labviewSource": "robust-parser",
+        "faithfulness": 1,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": false,
+          "mentionsKinds": true,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "statesStructuralCount",
+          "noFalseNoChange",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "The VI has 0 structural changes according to lvkit."
+      },
+      {
+        "vi": "LoadTemplates.vi",
+        "task": "kinds",
+        "adversarial": false,
+        "labviewSource": "robust-parser",
+        "faithfulness": 1,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": true,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "statesStructuralCount",
+          "mentionsKinds",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "For the VI \"LoadTemplates.vi\":\n\n- **Structural Changes**: There are no structural changes reported by lvkit.\n- **Non-Cosmetic Differences** (as identified by LabVIEW): 1\n\nSince there are no structural changes according to lvkit, and only non-cosmetic differences noted by LabVIEW without any cosmetic ones, the breakdown is as follows:\n\n- **Removed**: 0\n- **Added**: 0\n- **Modified**: 0\n\nThe single n"
+      },
+      {
+        "vi": "LoadTemplates.vi",
+        "task": "cosmetic-split",
+        "adversarial": false,
+        "labviewSource": "robust-parser",
+        "faithfulness": 1,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": true,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "statesStructuralCount",
+          "mentionsCosmetic",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "For the VI \"LoadTemplates.vi\":\n\n- There are no lvkit structural changes reported.\n- LabVIEW identifies a total of 2 differences, with 1 being non-cosmetic and 0 being cosmetic."
+      },
+      {
+        "vi": "VisibleTextMarker.vi",
+        "task": "full-summary",
+        "adversarial": false,
+        "labviewSource": "robust-parser",
+        "faithfulness": 1,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": true,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "statesStructuralCount",
+          "noFalseNoChange",
+          "mentionsCosmetic",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "The VI \"VisibleTextMarker.vi\" has undergone the following changes:\n\n- **Structural Changes** (from lvkit): There are 4 structural changes, with 2 components added and 2 removed.\n- **Non-cosmetic Differences** (from LabVIEW comparison): There are 2 non-cosmetic differences.\n\nThere are no cosmetic differences reported."
+      },
+      {
+        "vi": "VisibleTextMarker.vi",
+        "task": "count",
+        "adversarial": false,
+        "labviewSource": "robust-parser",
+        "faithfulness": 1,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": false,
+          "mentionsKinds": true,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "statesStructuralCount",
+          "noFalseNoChange",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "This VI has 4 structural changes according to lvkit (2 added, 2 removed)."
+      },
+      {
+        "vi": "VisibleTextMarker.vi",
+        "task": "kinds",
+        "adversarial": false,
+        "labviewSource": "robust-parser",
+        "faithfulness": 0.667,
+        "parts": {
+          "statesStructuralCount": false,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": true,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "statesStructuralCount",
+          "mentionsKinds",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "For the VI `VisibleTextMarker.vi`:\n\n- **Structural Changes**:\n  - Added: 2\n  - Removed: 2\n\n- **Non-Cosmetic Differences**: 2 (as reported by LabVIEW comparison)\n\nThere are no cosmetic differences noted in this case."
+      },
+      {
+        "vi": "VisibleTextMarker.vi",
+        "task": "cosmetic-split",
+        "adversarial": false,
+        "labviewSource": "robust-parser",
+        "faithfulness": 1,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": true,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "statesStructuralCount",
+          "mentionsCosmetic",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "For the VI \"VisibleTextMarker.vi\":\n\n- **Structural Changes** (from lvkit): There are 4 structural changes, with 2 items added and 2 items removed.\n- **LabVIEW Comparison Differences**: The total number of differences is 3, all of which are non-cosmetic. No cosmetic differences were reported.\n\nThis indicates that the structural modifications identified by lvkit align closely with the non-cosmetic d"
+      },
+      {
+        "vi": "VisibleTextMarker.vi",
+        "task": "adv-false-nochange",
+        "adversarial": true,
+        "labviewSource": "robust-parser",
+        "faithfulness": 1,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": true,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "noFalseNoChange",
+          "statesStructuralCount",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "The VI \"VisibleTextMarker.vi\" has the following changes between revisions:\n\n- **Structural Changes (from lvkit):** There are 4 structural changes (2 added and 2 removed).\n- **Non-Cosmetic Differences (from LabVIEW comparison):** There are 2 non-cosmetic differences.\n- **Cosmetic Differences:** There are no cosmetic differences reported."
+      },
+      {
+        "vi": "VisibleTextMarker.vi",
+        "task": "adv-cosmetic-only-trap",
+        "adversarial": true,
+        "labviewSource": "robust-parser",
+        "faithfulness": 1,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": true,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "noFalseNoChange",
+          "statesStructuralCount",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "The VI \"VisibleTextMarker.vi\" has 4 structural changes (2 added, 2 removed) according to lvkit. There are also 2 non-cosmetic differences reported by LabVIEW beyond what lvkit captures structurally."
+      },
+      {
+        "vi": "lv_icon.vi",
+        "task": "full-summary",
+        "adversarial": false,
+        "labviewSource": "robust-parser",
+        "faithfulness": 1,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": true,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "statesStructuralCount",
+          "noFalseNoChange",
+          "mentionsCosmetic",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "The VI \"lv_icon.vi\" has undergone the following changes:\n\n- **Structural Changes** (from lvkit): There are 6 structural changes, with 2 components added and 4 removed.\n- **Non-cosmetic Differences**: The LabVIEW comparison identified 3 non-cosmetic differences beyond those already counted in the structural changes from lvkit.\n- **Cosmetic Differences**: There are 19 cosmetic differences noted by L"
+      },
+      {
+        "vi": "lv_icon.vi",
+        "task": "count",
+        "adversarial": false,
+        "labviewSource": "robust-parser",
+        "faithfulness": 1,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": false,
+          "mentionsKinds": true,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "statesStructuralCount",
+          "noFalseNoChange",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "The VI has 6 structural changes according to lvkit (2 added, 4 removed)."
+      },
+      {
+        "vi": "lv_icon.vi",
+        "task": "kinds",
+        "adversarial": false,
+        "labviewSource": "robust-parser",
+        "faithfulness": 0.667,
+        "parts": {
+          "statesStructuralCount": false,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": true,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "statesStructuralCount",
+          "mentionsKinds",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "For the VI `lv_icon.vi`:\n\n- **Structural Changes**:\n  - Added: 2\n  - Removed: 4\n\n- **Non-Cosmetic Differences (from LabVIEW comparison)**: 3\n\nThe structural changes are detailed as follows:\n- 2 items were added.\n- 4 items were removed.\n\nThere are additional non-cosmetic differences noted by the LabVIEW comparison tool, but these do not include cosmetic differences which account for 19 of the total"
+      },
+      {
+        "vi": "lv_icon.vi",
+        "task": "cosmetic-split",
+        "adversarial": false,
+        "labviewSource": "robust-parser",
+        "faithfulness": 1,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": false,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "statesStructuralCount",
+          "mentionsCosmetic",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "For the VI `lv_icon.vi`, there are 6 structural changes according to lvkit, which include 2 additions and 4 removals. LabVIEW identifies a total of 23 differences, out of which 3 are non-cosmetic (structural) and 19 are cosmetic (position/appearance). The discrepancy between the counts indicates that some structural changes identified by LabVIEW as non-cosmetic align with those from lvkit, while o"
+      },
+      {
+        "vi": "lv_icon.vi",
+        "task": "adv-false-nochange",
+        "adversarial": true,
+        "labviewSource": "robust-parser",
+        "faithfulness": 1,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": true,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "noFalseNoChange",
+          "statesStructuralCount",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "The VI \"lv_icon.vi\" has the following changes between revisions:\n\n- **Structural Changes (from lvkit):** There are 6 structural changes (2 added, 4 removed).\n- **Non-Cosmetic Differences (from LabVIEW comparison):** There are 3 non-cosmetic differences.\n- **Cosmetic Differences (from LabVIEW comparison):** There are 19 cosmetic differences.\n\nThese details indicate that the VI has undergone modific"
+      },
+      {
+        "vi": "lv_icon.vi",
+        "task": "adv-cosmetic-only-trap",
+        "adversarial": true,
+        "labviewSource": "robust-parser",
+        "faithfulness": 1,
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": true,
+          "noInventedNumbers": true
+        },
+        "scoreKeys": [
+          "noFalseNoChange",
+          "statesStructuralCount",
+          "noInventedNumbers"
+        ],
+        "invented": [],
+        "output": "The VI \"lv_icon.vi\" has 6 structural changes (2 added, 4 removed) according to lvkit. There are additional 3 non-cosmetic differences reported by LabVIEW beyond what lvkit captures."
       }
     ]
   }
