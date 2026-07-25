@@ -1,0 +1,275 @@
+{
+  "schema": "vi-history-suite/mcp-narrative-poc@v1",
+  "generatedAt": "2026-07-25T20:35:25.878Z",
+  "ollama": "http://localhost:11434",
+  "note": "Grounded MCP narrative swap PoC over real NI comparison reports. Template = shipped renderViSemanticNarrative; grounded = 8b-2shot over cosmetic-enriched semantic facts; scorer = shared governed faithfulness rubric; template is the fallback.",
+  "summary": {
+    "model": "vichange8b-2shot",
+    "modelPresent": true,
+    "viCount": 8,
+    "meanTemplateScore": 0.906,
+    "meanGroundedScore": 1,
+    "templateMentionsCosmetic": 8,
+    "groundedMentionsCosmetic": 8,
+    "cosmeticGapClosedCount": 0,
+    "groundedSelectedCount": 8
+  },
+  "rows": [
+    {
+      "vi": "loadtemplates",
+      "lvkitChangeCount": 0,
+      "mcpStructuralCount": 2,
+      "cosmetic": 0,
+      "total": 2,
+      "template": {
+        "narrative": "The block diagram differs. 2 detailed changes across 1 section (1. Block Diagram objects). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute.",
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": false,
+          "noInventedNumbers": true
+        },
+        "score": 1
+      },
+      "grounded": {
+        "narrative": "There are 2 non-cosmetic structural changes between the two VI revisions. There are no cosmetic differences, meaning all 2 total differences reported by LabVIEW are related to the block-diagram's structure or behavior.",
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": false,
+          "noInventedNumbers": true
+        },
+        "score": 1,
+        "error": null
+      },
+      "selected": "grounded",
+      "cosmeticGapClosed": false
+    },
+    {
+      "vi": "lv_icon",
+      "lvkitChangeCount": 6,
+      "mcpStructuralCount": 8,
+      "cosmetic": 19,
+      "total": 23,
+      "template": {
+        "narrative": "The block diagram differs. 8 detailed changes across 3 sections (4. Block Diagram objects, 14. Block Diagram objects, and 18. Block Diagram objects). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute.",
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": false,
+          "noInventedNumbers": false
+        },
+        "score": 0.75
+      },
+      "grounded": {
+        "narrative": "There are 8 non-cosmetic structural changes between the two revisions of the VI. Additionally, there are 19 cosmetic differences in position/appearance that do not affect the VI's functionality or structure.",
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": false,
+          "noInventedNumbers": true
+        },
+        "score": 1,
+        "error": null
+      },
+      "selected": "grounded",
+      "cosmeticGapClosed": false
+    },
+    {
+      "vi": "menuselection(user)",
+      "lvkitChangeCount": 1,
+      "mcpStructuralCount": 2,
+      "cosmetic": 1,
+      "total": 3,
+      "template": {
+        "narrative": "The block diagram differs. 2 detailed changes across 1 section (2. Block Diagram objects). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute.",
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": false,
+          "noInventedNumbers": true
+        },
+        "score": 1
+      },
+      "grounded": {
+        "narrative": "There are 2 non-cosmetic structural changes between the two VI revisions. Additionally, there is 1 cosmetic difference related to position/appearance.",
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": false,
+          "noInventedNumbers": true
+        },
+        "score": 1,
+        "error": null
+      },
+      "selected": "grounded",
+      "cosmeticGapClosed": false
+    },
+    {
+      "vi": "mousedown",
+      "lvkitChangeCount": 6,
+      "mcpStructuralCount": 19,
+      "cosmetic": 47,
+      "total": 53,
+      "template": {
+        "narrative": "The block diagram differs. 19 detailed changes across 6 sections (1. Block Diagram objects, 21. Block Diagram objects, 38. Block Diagram objects, 43. Block Diagram objects, 51. Block Diagram objects, and 53. VI Attribute - Window Size/Appearance (VI Properties)). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute.",
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": false,
+          "noInventedNumbers": false
+        },
+        "score": 0.75
+      },
+      "grounded": {
+        "narrative": "19 non-cosmetic structural changes were made to the VI's block-diagram. There are 47 cosmetic (position/appearance) differences that can be ignored for code review purposes, as they do not affect the VI's functionality or structure.",
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": false,
+          "noInventedNumbers": true
+        },
+        "score": 1,
+        "error": null
+      },
+      "selected": "grounded",
+      "cosmeticGapClosed": false
+    },
+    {
+      "vi": "picturecontrol_mouseup",
+      "lvkitChangeCount": 13,
+      "mcpStructuralCount": 43,
+      "cosmetic": 29,
+      "total": 39,
+      "template": {
+        "narrative": "The front panel and block diagram differ. 43 detailed changes across 10 sections (1. Block Diagram objects, 6. Block Diagram objects, 9. Block Diagram objects, 11. Block Diagram objects, 14. Block Diagram objects, 33. Block Diagram objects, 35. Block Diagram objects, 37. Front Panel objects, 38. Front Panel objects, and 39. VI Attribute - Window Size/Appearance (VI Properties)). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute.",
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": false,
+          "noInventedNumbers": false
+        },
+        "score": 0.75
+      },
+      "grounded": {
+        "narrative": "There are 43 non-cosmetic structural changes. Additionally, there are 29 cosmetic differences in position/appearance.",
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": false,
+          "noInventedNumbers": true
+        },
+        "score": 1,
+        "error": null
+      },
+      "selected": "grounded",
+      "cosmeticGapClosed": false
+    },
+    {
+      "vi": "process template graphics",
+      "lvkitChangeCount": 0,
+      "mcpStructuralCount": 2,
+      "cosmetic": 0,
+      "total": 2,
+      "template": {
+        "narrative": "The block diagram differs. 2 detailed changes across 1 section (1. Block Diagram objects). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute.",
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": false,
+          "noInventedNumbers": true
+        },
+        "score": 1
+      },
+      "grounded": {
+        "narrative": "There are 2 non-cosmetic structural changes between the two VI revisions. There are no cosmetic differences, meaning all 2 total differences reported by LabVIEW are related to the block-diagram's structure or behavior.",
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": false,
+          "noInventedNumbers": true
+        },
+        "score": 1,
+        "error": null
+      },
+      "selected": "grounded",
+      "cosmeticGapClosed": false
+    },
+    {
+      "vi": "vi template",
+      "lvkitChangeCount": 0,
+      "mcpStructuralCount": 2,
+      "cosmetic": 0,
+      "total": 2,
+      "template": {
+        "narrative": "2 detailed changes across 1 section (1. VI Attribute - Miscellaneous). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute.",
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": false,
+          "noInventedNumbers": true
+        },
+        "score": 1
+      },
+      "grounded": {
+        "narrative": "There are 2 non-cosmetic structural changes between the two revisions. There are no cosmetic differences, meaning all 2 reported differences are related to the structure or behavior of the VI.",
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": false,
+          "noInventedNumbers": true
+        },
+        "score": 1,
+        "error": null
+      },
+      "selected": "grounded",
+      "cosmeticGapClosed": false
+    },
+    {
+      "vi": "visibletextmarker",
+      "lvkitChangeCount": 4,
+      "mcpStructuralCount": 6,
+      "cosmetic": 0,
+      "total": 3,
+      "template": {
+        "narrative": "The front panel and block diagram differ. 6 detailed changes across 2 sections (1. Block Diagram objects and 2. Front Panel - Cluster). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute.",
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": false,
+          "noInventedNumbers": true
+        },
+        "score": 1
+      },
+      "grounded": {
+        "narrative": "There are 6 non-cosmetic structural changes between the two revisions of the VI, affecting both the front-panel and block-diagram surfaces. There are no cosmetic (position/appearance) differences.",
+        "parts": {
+          "statesStructuralCount": true,
+          "noFalseNoChange": true,
+          "mentionsCosmetic": true,
+          "mentionsKinds": false,
+          "noInventedNumbers": true
+        },
+        "score": 1,
+        "error": null
+      },
+      "selected": "grounded",
+      "cosmeticGapClosed": false
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 {
   "schema": "vi-history-suite/vichange-shippable-conclusion@v1",
-  "generatedAt": "2026-07-25T20:27:04.730Z",
+  "generatedAt": "2026-07-25T20:38:01.335Z",
   "issue": "#2381",
   "title": "Grounded VI-change faithful summarization -- shippable conclusion",
   "inputsMissing": [],
@@ -128,10 +128,11 @@
       "summarize_vi_history (per-step + aggregate narrative)",
       "build_vi_pr_review (per-VI + aggregate narrative; markdown sticky PR comment)"
     ],
-    "groundingContract": "The model consumes the vi-semantic-comparison@v1 model (changedSurfaces, detailSections, totals.detailItemCount = non-cosmetic count, attributes) and emits its narrative -- a closed loop inside the governed contract.",
-    "gapVsTemplate": "The current MCP narrative is a deterministic template (renderViSemanticNarrative) that reports only the non-cosmetic detail count and DROPS cosmetic sections (verified: a report with 3 non-cosmetic + 2 cosmetic items yields narrative \"The block diagram differs. 3 detailed changes...\" with no mention of the 2 cosmetic changes). A grounded faithful-summarizer surfaces cosmetic-vs-structural, fabricates no counts, and never says \"no changes\" over real changes.",
-    "integrationPoint": "src/semantic/viSemanticModel.ts: renderViSemanticNarrative(model) (defined ~line 309) is called at ~line 264 (`narrative: renderViSemanticNarrative(model)`). A model-backed narrative generator is a drop-in alternative at that swap site -- same input (the semantic model), richer grounded output, with the deterministic template retained as the ungrounded fallback. Surfaced identically in the Source Control hover, PR/CI comment, and MCP tool output.",
-    "qualityGate": "The governed faithfulness scorer (statesStructuralCount / noFalseNoChange / mentionsCosmetic / noInventedNumbers) is the narrative-quality gate for the MCP surface."
+    "groundingContract": "The model consumes the vi-semantic-comparison@v1 model (changedSurfaces, detailSections, totals.detailItemCount = non-cosmetic count, attributes), enriched with the LabVIEW cosmetic tally (labviewDiffReportParser) the model currently drops, and emits its narrative -- a closed loop inside the governed contract.",
+    "gapVsTemplate": "A real-data PoC (mcpNarrativePoc.mjs over 8 real NI comparison reports) scored the shipped template vs a grounded 8b-2shot narrator with the shared faithfulness scorer: grounded 1.0 vs template 0.906, grounded selected by the fallback gate on all 8 VIs. The real template weakness is NUMBER HYGIENE, not cosmetic omission: it enumerates the NI report diff-block ordinal indices verbatim (e.g. \"4. Block Diagram objects, 14. ..., 18. ...\", \"51.\", \"53.\"), which the scorer flags as invented numbers on the 3 high-section VIs (lv_icon / mousedown / picturecontrol_mouseup -> 0.75, noInventedNumbers=false). This CORRECTS an earlier synthetic-probe claim that the template drops cosmetic: on real reports the template surfaces \"Block Diagram Cosmetic\" via the compared-attribute list, so mentionsCosmetic=8/8. The grounded summarizer states only the meaningful counts -- the non-cosmetic structural count plus the cosmetic count as an explicit plain-language split (\"N structural, M cosmetic that can be ignored for review\") -- fabricating no ordinal indices and never saying \"no changes\" over real changes.",
+    "integrationPoint": "src/semantic/viSemanticModel.ts: renderViSemanticNarrative(model) (defined ~line 309) is called at ~line 264 (`narrative: renderViSemanticNarrative(model)`). A model-backed narrative generator is a drop-in alternative at that swap site -- same input (the semantic model, cosmetic-enriched), richer grounded output, with the deterministic template retained as the ungrounded fallback. Surfaced identically in the Source Control hover, PR/CI comment, and MCP tool output.",
+    "qualityGate": "The governed faithfulness scorer (statesStructuralCount / noFalseNoChange / mentionsCosmetic / noInventedNumbers) is the narrative-quality gate for the MCP surface.",
+    "pocEvidence": "prototype/ml/mcpNarrativePoc.mjs -> prototype/ml/dataset/mcp-narrative-poc.json (schema vi-history-suite/mcp-narrative-poc@v1): 8 real fixtures, meanTemplate 0.906, meanGrounded 1.0, template mentionsCosmetic 8/8, grounded selected 8/8. Runs anywhere (template-only fallback when no ollama backend)."
   },
   "recommendation": {
     "localDefault": "8b-2shot (vichange8b-2shot) -- cheapest local, adversarially robust (adv 1.0), most consistent 8b across the held-out VIs, within a small band of 14b on the leakage-free bar.",
