@@ -29,6 +29,44 @@ export interface LvkitGeneratedModule {
   readonly python: string;
 }
 
+/**
+ * #2376 (primitive-mapping-pack) provenance: how lvkit resolved one generated
+ * module, derived purely from its path + content (no lvkit hook needed):
+ *  - `resolved`              clean generate, no unresolved markers.
+ *  - `unresolved-primitive`  inline `raise PrimitiveResolutionNeeded(...)` (the
+ *                            PRIMITIVE wall in `--placeholder-on-unresolved`
+ *                            mode -- note this lives in a NORMALLY-named module,
+ *                            NOT a `.error.py`, so `errorModuleCount` alone
+ *                            undercounts unresolved primitives).
+ *  - `unresolved-vilib`      inline `raise VILibResolutionNeeded(...)` (the
+ *                            vi.lib SubVI wall surfaced inline, mirrors above).
+ *  - `error-stub`            lvkit emitted a `.error.py` hard-failure stub.
+ * A consumer uses this to tell a signature-faithful clean generate from a
+ * placeholder that still needs a cleanroom mapping (fidelity tier), the T1+T2
+ * vs unresolved distinction from the bus ANSWER.
+ */
+export type LvkitModuleResolution =
+  | 'resolved'
+  | 'unresolved-primitive'
+  | 'unresolved-vilib'
+  | 'error-stub';
+
+/** The complete set of valid {@link LvkitModuleResolution} values. */
+export const LVKIT_MODULE_RESOLUTIONS: readonly LvkitModuleResolution[] = [
+  'resolved',
+  'unresolved-primitive',
+  'unresolved-vilib',
+  'error-stub'
+];
+
+/** Per-VI tally of {@link LvkitModuleResolution} outcomes across all modules. */
+export interface LvkitResolutionCounts {
+  readonly resolved: number;
+  readonly unresolvedPrimitive: number;
+  readonly unresolvedVilib: number;
+  readonly errorStub: number;
+}
+
 /** Schema-tagged store envelope for a single-VI lvkit scan. */
 export interface LvkitViScanEnvelope {
   readonly schema: typeof LVKIT_VI_SCAN_SCHEMA;
@@ -183,6 +221,63 @@ function moduleBaseSlug(relativePath: string): string {
 
 function isErrorModule(relativePath: string): boolean {
   return posixBaseName(relativePath).endsWith('.error.py');
+}
+
+// Match the RAISE statement (not the `from ... import ...` line) so the import
+// of the exception class never false-positives a clean module.
+const PRIMITIVE_RAISE = /\braise\s+PrimitiveResolutionNeeded\b/;
+const VILIB_RAISE = /\braise\s+VILibResolutionNeeded\b/;
+
+/**
+ * #2376: classify one generated module's resolution provenance from its path +
+ * content. `.error.py` (the hard SubVI stub) takes precedence over an inline
+ * placeholder raise; a clean module with neither marker is `resolved`. Pure and
+ * deterministic.
+ */
+export function classifyModuleResolution(module: LvkitGeneratedModule): LvkitModuleResolution {
+  if (isErrorModule(module.relativePath)) {
+    return 'error-stub';
+  }
+  const python = typeof module.python === 'string' ? module.python : '';
+  if (PRIMITIVE_RAISE.test(python)) {
+    return 'unresolved-primitive';
+  }
+  if (VILIB_RAISE.test(python)) {
+    return 'unresolved-vilib';
+  }
+  return 'resolved';
+}
+
+/**
+ * #2376: tally {@link classifyModuleResolution} across a module set. The four
+ * counts sum to the module count, giving a per-VI resolution provenance profile
+ * (clean vs primitive-wall vs vilib-wall vs SubVI-stub) beyond the coarse
+ * resolved/error split.
+ */
+export function summarizeModuleResolutions(
+  modules: readonly LvkitGeneratedModule[]
+): LvkitResolutionCounts {
+  let resolved = 0;
+  let unresolvedPrimitive = 0;
+  let unresolvedVilib = 0;
+  let errorStub = 0;
+  for (const module of modules) {
+    switch (classifyModuleResolution(module)) {
+      case 'resolved':
+        resolved += 1;
+        break;
+      case 'unresolved-primitive':
+        unresolvedPrimitive += 1;
+        break;
+      case 'unresolved-vilib':
+        unresolvedVilib += 1;
+        break;
+      case 'error-stub':
+        errorStub += 1;
+        break;
+    }
+  }
+  return { resolved, unresolvedPrimitive, unresolvedVilib, errorStub };
 }
 
 function normalizeModules(
