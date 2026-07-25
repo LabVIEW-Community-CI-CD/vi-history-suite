@@ -229,6 +229,39 @@
       "createdAt": "2026-07-25T15:33:17.369Z",
       "updatedAt": "2026-07-25T15:34:52.548Z",
       "syncedAt": null
+    },
+    {
+      "id": "item-0006",
+      "title": "Ollama ML dataset + faithfulness eval: grounded VI-change summarization",
+      "issueUrl": "https://github.com/LabVIEW-Community-CI-CD/vi-history-suite/issues/2381",
+      "fields": {
+        "status": "In Progress",
+        "intakeStage": "Spawned",
+        "sourceDiscussion": 2380,
+        "origin": "collab"
+      },
+      "fieldMeta": {
+        "status": {
+          "ts": "2026-07-25T15:51:07.320Z",
+          "by": "LINUX"
+        },
+        "intakeStage": {
+          "ts": "2026-07-25T15:50:25.162Z",
+          "by": "LINUX"
+        },
+        "sourceDiscussion": {
+          "ts": "2026-07-25T15:50:25.162Z",
+          "by": "LINUX"
+        },
+        "origin": {
+          "ts": "2026-07-25T15:50:25.162Z",
+          "by": "LINUX"
+        }
+      },
+      "remoteItemId": null,
+      "createdAt": "2026-07-25T15:50:25.162Z",
+      "updatedAt": "2026-07-25T15:51:07.321Z",
+      "syncedAt": null
     }
   ],
   "sync": {
