@@ -1,6 +1,6 @@
 {
   "schema": "vi-history-suite/vichange-shippable-conclusion@v1",
-  "generatedAt": "2026-07-25T20:48:00.130Z",
+  "generatedAt": "2026-07-25T20:49:38.799Z",
   "issue": "#2381",
   "title": "Grounded VI-change faithful summarization -- shippable conclusion",
   "inputsMissing": [],
@@ -140,7 +140,7 @@
     "largerModel": "qwen2.5:14b when a larger model is acceptable -- top generalization on the held-out bar; verify its lone adversarial N=1 miss (MenuSelection(User)).",
     "notRecommended": "1-shot few-shot as the default -- on the wider honest bar (with genuine-no-change VIs) its assert-a-count bias drops it below raw; it is not the robust choice.",
     "loRA": "DEFERRED -- the leakage fix is the held-out split (already honored by raw/few-shot/2-shot); a LoRA is backend-orthogonal to the closed GPU divergence; and the torch/Blackwell-sm_120/gated-HF/disk fine-tune infra is not cheap. A future held-out-trained LoRA is compared to the leakage-free bar above, never to a single-split memorization ceiling.",
-    "mcpNarrative": "MCP narrative surface: ship the DETERMINISTIC template fix as the primary faithfulness improvement -- concretely, in renderViSemanticNarrative strip the NI ordinal prefix from each section heading (section.heading.replace(/^\\d+\\.\\s*/, \"\")) AND dedupe the resulting heading list (or drop the parenthetical when headings repeat). That one change closes the governed-scorer gap on all 8 real fixtures with zero latency/dependency. Treat the grounded 8b-2shot narrator as an OPTIONAL readability layer gated by the same faithfulness scorer, NOT a faithfulness requirement. The durable ML contribution to the MCP surface is the governed faithfulness SCORER as the narrative-quality gate.",
+    "mcpNarrative": "MCP narrative surface: ship the DETERMINISTIC template fix as the primary faithfulness improvement -- concretely, in renderViSemanticNarrative strip the NI ordinal prefix from each section heading (section.heading.replace(/^\\\\d+\\\\.\\\\s*/, \"\")) AND dedupe the resulting heading list (or drop the parenthetical when headings repeat). That one change closes the governed-scorer gap on all 8 real fixtures with zero latency/dependency. Treat the grounded 8b-2shot narrator as an OPTIONAL readability layer gated by the same faithfulness scorer, NOT a faithfulness requirement. The durable ML contribution to the MCP surface is the governed faithfulness SCORER as the narrative-quality gate. Blast radius (turnkey for a develop PR): the change is in src/semantic/viSemanticModel.ts (~line 332, the joinHumanList(model.detailSections.map((s) => s.heading)) call); the only exact-string test to update is tests/unit/viSemanticModel.test.ts (the \"(1. VI Attribute - Miscellaneous)\" assertion). multiReportDashboard.test.ts / viSemanticReviewMarkdown.test.ts assert counts without the heading list and are unaffected.",
     "ungroundedFallback": "Keep the deterministic template narrative as the ungrounded fallback when no model backend is available."
   }
 }
