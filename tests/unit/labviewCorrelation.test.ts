@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { parseLabviewDiffReportCounts } from '../../prototype/labviewDiffReportParser.mjs';
 import { scoreCorrelation, agreementRatio } from '../../prototype/correlationScorer.mjs';
+import { buildCorrelationReport, fixtureSlug } from '../../prototype/correlationReport.mjs';
 
 // #2378 preview+comparison<->lvkit correlation: the shippable LabVIEW-report
 // difference-count parser + granularity-aware correlation scorer, pinned with
@@ -174,6 +175,67 @@ describe('scoreCorrelation k-calibration + WIN benchmark dataset (#2379)', () =>
     });
     expect(score.terms.countAgreement.value).toBe(1);
     expect(score.terms.countAgreement.ratio).toBe(1);
+  });
+});
+
+describe('buildCorrelationReport (#2379)', () => {
+  const FOO_HTML = Array.from({ length: 6 }, (_v, i) =>
+    `<summary class="difference-heading">${i + 1}. Block Diagram objects</summary><div class="difference">x</div>`
+  ).join('\n');
+
+  const dataset = {
+    samples: [
+      {
+        vi: 'A/Foo.vi',
+        lvkit: { changeCount: 6, kinds: ['added', 'added', 'added', 'removed', 'modified', 'modified'] },
+        labview: { differenceBlocks: 53, cosmetic: 48, nonCosmetic: 5 }, // PROTOTYPE (wrong) counts
+        preview: { deltaInlineImages: 1 }
+      },
+      {
+        vi: 'B/Bar.vi',
+        lvkit: { changeCount: 4, kinds: ['added', 'modified', 'modified', 'removed'] },
+        labview: { differenceBlocks: 10, cosmetic: 6, nonCosmetic: 4 },
+        preview: { deltaInlineImages: 2 }
+      }
+    ]
+  };
+
+  const deps = {
+    exists: (p: string) => p.endsWith('foo.labview-diff-report.html'),
+    readFile: (_p: string) => FOO_HTML
+  };
+
+  it('fixtureSlug derives the report-HTML basename from a VI path', () => {
+    expect(fixtureSlug('A/Foo.vi')).toBe('foo');
+    expect(fixtureSlug('resource/plugins/MouseDown.vi')).toBe('mousedown');
+  });
+
+  it('re-parses committed HTML (robust) and overrides prototype counts, else keeps dataset counts', () => {
+    const report = buildCorrelationReport(dataset, '/fx', deps, 1);
+    expect(report.sampleCount).toBe(2);
+
+    const foo = report.samples[0];
+    expect(foo.labviewSource).toBe('robust-parser');
+    // Robust parser -> nonCosmetic 6 (overrides the dataset's prototype 5),
+    // matching lvkit changeCount 6 exactly.
+    expect(foo.labview.nonCosmetic).toBe(6);
+    expect(foo.countAgreement).toBe(1);
+    expect(foo.ratio).toBe(1);
+
+    const bar = report.samples[1];
+    expect(bar.labviewSource).toBe('prototype-dataset');
+    expect(bar.labview.nonCosmetic).toBe(4);
+    expect(bar.ratio).toBe(1);
+
+    expect(report.calibration.verifiedSamples).toBe(1);
+    expect(report.calibration.prototypeSamples).toBe(1);
+    // Both ratios are 1.0 here -> meanRatio (empirical best-fit k) = 1.
+    expect(report.calibration.empiricalBestFitK).toBe(1);
+  });
+
+  it('throws fail-closed on a malformed dataset', () => {
+    // @ts-expect-error deliberate wrong shape
+    expect(() => buildCorrelationReport({}, '/fx', deps)).toThrow(/samples must be an array/);
   });
 });
 
