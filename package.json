@@ -407,6 +407,7 @@
     "mirror:benchmark:record": "node scripts/recordMirrorBenchmark.js",
     "mirror:reconcile": "node scripts/reconcileMirrorParity.js",
     "perfmon:render": "node scripts/renderFirstRunPerfmon.js",
+    "perfmon:labview:e2e": "node scripts/validatePerfmonLabviewCorrelation.cjs",
     "devtools:release": "node scripts/buildDevToolsRelease.js",
     "devtools:release:verify": "node scripts/verifyDevToolsRelease.js",
     "supply-chain:state": "node scripts/buildSupplyChainState.js",

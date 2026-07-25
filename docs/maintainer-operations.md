@@ -377,6 +377,38 @@ cd C:\dev\github-actions-runners\vi-history-suite
 
 Stop it after validation by closing the runner terminal or pressing `Ctrl+C`.
 
+### Perfmon <-> LabVIEW-launch correlation end-to-end (Windows only)
+
+`scripts/validatePerfmonLabviewCorrelation.cjs` proves VHS-REQ-718 on real
+hardware: it captures a real Windows `logman` performance trace around a real
+host-native LabVIEWCLI launch and feeds the captured PDH-CSV, the LabVIEW launch
+log, and the deterministic 12-FPS replay-frame stream through the shipped
+first-run perfmon pipeline. It confirms that perfmon capture timestamps (UTC)
+reconcile with the launch-log markers (local wall-clock) to a correct epoch-ms
+delta, that each marker lands in the expected replay frame index, and that the
+TDMS model is stamped with the launch metadata.
+
+It is a maintainer-only, Windows-only validation step (not a hosted CI gate). It
+kills any leftover `LabVIEW.exe`/`LabVIEWCLI.exe` before and after the run — the
+host guard forbids a host-native render while LabVIEW is already running. A cold
+LabVIEW 2026 launch can take a couple of minutes (FPGA add-on cache
+regeneration), which is itself the launch dead-time the requirement measures;
+subsequent runs are faster once the cache is warm.
+
+Run it from the repo root after `npm run compile`:
+
+```powershell
+npm run compile
+npm run perfmon:labview:e2e
+```
+
+It requires no elevation. Override the defaults with environment variables when
+the host layout differs (`VIHS_LVCLI`, `VIHS_LV_OPDIR`, `VIHS_LV_VI`,
+`VIHS_PERFMON_COLLECTOR`, `VIHS_MARKER_TIMEOUT_MS`, `VIHS_MIN_CAPTURE_MS`), and
+set `VIHS_OUT` to write the typed evidence JSON for attaching to the requirement.
+It exits `0` on a correlated pass, `3` when correlation is unavailable, and `4`
+on a real-capture sanity failure.
+
 ## Linux/LabVIEW Runner
 
 The Linux maintainer runner is the sibling of the Windows runner above: a
