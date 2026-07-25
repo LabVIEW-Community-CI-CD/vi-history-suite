@@ -344,6 +344,41 @@ describe('lvkitViScanStore (VHS-REQ-716)', () => {
       expect(await store.get(VI_PATH, CONTENT_SIGNATURE)).toBeUndefined();
     });
 
+    it('reads an envelope that omits the optional resolutionCounts (back-compat, #2376)', async () => {
+      const store = createStore(
+        createFakeFs({
+          [storeFilePathFor(VI_PATH, CONTENT_SIGNATURE)]: tamperedEnvelopeJson((envelope) => {
+            delete envelope.resolutionCounts;
+          })
+        })
+      );
+      const result = await store.get(VI_PATH, CONTENT_SIGNATURE);
+      expect(result).toBeDefined();
+      expect(result?.resolutionCounts).toBeUndefined();
+    });
+
+    it('rejects an envelope whose resolutionCounts do not sum to the module count (#2376)', async () => {
+      const store = createStore(
+        createFakeFs({
+          [storeFilePathFor(VI_PATH, CONTENT_SIGNATURE)]: tamperedEnvelopeJson((envelope) => {
+            envelope.resolutionCounts = { resolved: 99, unresolvedPrimitive: 0, unresolvedVilib: 0, errorStub: 0 };
+          })
+        })
+      );
+      expect(await store.get(VI_PATH, CONTENT_SIGNATURE)).toBeUndefined();
+    });
+
+    it('rejects an envelope whose resolutionCounts bucket is negative or non-integer (#2376)', async () => {
+      const store = createStore(
+        createFakeFs({
+          [storeFilePathFor(VI_PATH, CONTENT_SIGNATURE)]: tamperedEnvelopeJson((envelope) => {
+            envelope.resolutionCounts = { resolved: -1, unresolvedPrimitive: 2, unresolvedVilib: 0, errorStub: 0 };
+          })
+        })
+      );
+      expect(await store.get(VI_PATH, CONTENT_SIGNATURE)).toBeUndefined();
+    });
+
     it('rejects an envelope with a malformed primary module', async () => {
       const store = createStore(
         createFakeFs({

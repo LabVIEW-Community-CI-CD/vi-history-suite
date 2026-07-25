@@ -133,6 +133,45 @@ describe('buildLvkitViScanEnvelope (VHS-REQ-714.1, VHS-REQ-714.2)', () => {
     expect(envelope.resolvedModuleCount).toBe(2);
   });
 
+  it('populates resolutionCounts from the module set (#2376 provenance)', () => {
+    // MODULES = empty __init__ (resolved) + clean klass module (resolved) +
+    // open_vi.error.py (error-stub).
+    const envelope = buildLvkitViScanEnvelope(baseInput());
+    expect(envelope.resolutionCounts).toEqual({
+      resolved: 2,
+      unresolvedPrimitive: 0,
+      unresolvedVilib: 0,
+      errorStub: 1
+    });
+    const c = envelope.resolutionCounts!;
+    expect(c.resolved + c.unresolvedPrimitive + c.unresolvedVilib + c.errorStub).toBe(envelope.moduleCount);
+  });
+
+  it('surfaces an inline primitive-raise placeholder that errorModuleCount misses (#2376)', () => {
+    // A --placeholder-on-unresolved born-from-scratch generate: the VI's own
+    // module carries an inline raise but is NOT a .error.py, so errorModuleCount
+    // stays 0 while resolutionCounts.unresolvedPrimitive catches it.
+    const envelope = buildLvkitViScanEnvelope(
+      baseInput({
+        modules: [
+          {
+            relativePath: 'write_ascii_message/write_ascii_message.py',
+            python:
+              'from lvkit.primitive_resolver import PrimitiveResolutionNeeded\n\n' +
+              "def write_ascii_message():\n    raise PrimitiveResolutionNeeded(prim_id=1926)\n"
+          }
+        ]
+      })
+    );
+    expect(envelope.errorModuleCount).toBe(0);
+    expect(envelope.resolutionCounts).toEqual({
+      resolved: 0,
+      unresolvedPrimitive: 1,
+      unresolvedVilib: 0,
+      errorStub: 0
+    });
+  });
+
   it('is deterministic for identical input', () => {
     const a = buildLvkitViScanEnvelope(baseInput());
     const b = buildLvkitViScanEnvelope(baseInput());
