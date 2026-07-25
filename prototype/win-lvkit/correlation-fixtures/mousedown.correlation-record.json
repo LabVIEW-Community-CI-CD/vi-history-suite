@@ -34,5 +34,28 @@
   },
   "timings": {
     "compareColdSec": 53.4
+  },
+  "preview": {
+    "source": "rendered from the comparison report STAGED locations (per report HTML: First VI=left-<base>, Second VI=right-<selected>)",
+    "base": {
+      "coldSec": 39,
+      "inlineImageCount": 216,
+      "htmlBytes": 677245
+    },
+    "selected": {
+      "coldSec": 51,
+      "inlineImageCount": 217,
+      "htmlBytes": 680510
+    },
+    "deltaInlineImages": 1
+  },
+  "pipeline": {
+    "principle": "the VI Comparison report is the SINGLE parameter source: its HTML embeds base+head commits AND the on-disk staged paths (left-<base>-*.vi, right-<selected>-*.vi in a full staged tree). Those staged paths feed BOTH the VI Preview render (base + selected) AND lvkit diff/generate -- no separate git checkout.",
+    "stages": [
+      "compareReport(vi,base,selected) -> staged left/right + commits",
+      "preview(leftStaged) + preview(rightStaged) -> inlineImage counts",
+      "lvkitDiff(leftStaged,rightStaged) + lvkitGenerate(each)",
+      "assemble correlation record + score"
+    ]
   }
 }
