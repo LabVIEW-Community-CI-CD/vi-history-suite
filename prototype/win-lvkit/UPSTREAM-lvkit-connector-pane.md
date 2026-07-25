@@ -93,6 +93,50 @@ only the named variable changes.
 - Tier-3 is the ceiling requested here: connector-pane resolution for Class A/B/C
   callees, independent of load-mode.
 
+## Primitive-ID census + the cleanroom `.lvkit/` resolution lever
+
+Beyond the connector-pane residual (Class A/B/C, which are *SubVIs / nodes*), the
+born-from-scratch generate also raises unresolved **primitives** (an inline
+`raise PrimitiveResolutionNeeded(prim_id=…)` in a normally-named module — **not** a
+`.error.py`). Census over the 26 born SPN VIs (terminal signatures captured from
+the raise diagnostics, not vi.lib):
+
+| prim_id | name (from raise terminals) | occurrences | addressable |
+|---|---|---|---|
+| 1925 | VISA Read (pairs with Write) | 15 | yes |
+| 1926 | VISA Write | 12 | yes |
+| 1922 | (identified) | 8 | yes |
+| 1506 | (identified) | 3 | yes |
+| 1187 | (identified) | 3 | yes |
+| 0 | `hiddenFBNode` (Actor feedback node) | 5 | **no** |
+| 0 | `Class018D` (dynamic-dispatch class node) | 2 | **no** |
+
+**Leg-dependent surfacing (depth-gating).** The Windows `--vilib` leg surfaces all
+of the above. The LabVIEW-free leg (no `--vilib`) surfaces only the primitives
+reached **before the first unresolved vi.lib wall** — on SPN that is `1926` (×11)
+plus the `id-0` nodes (×5); the deeper `1925 / 1922 / 1506 / 1187` sit *behind* the
+unresolved VISA vi.lib SubVIs (Class C) and never surface until vi.lib resolves.
+So the primitive **ids are leg-independent, but their surfacing is depth-gated by
+vi.lib resolution** — the LabVIEW-free leg is dependency-shallow.
+
+**The lever (works, both legs).** A project-local cleanroom `.lvkit/primitives.json`
+mapping (authored from the raise-diagnostic terminals + public NI docs, **not**
+vi.lib block diagrams) resolves an addressable primitive: mapping `1926` flips
+`write_ascii_message` from `raise PrimitiveResolutionNeeded(prim_id=1926, …)` to a
+clean passthrough `def write_ascii_message(visa_resource_in, message='') -> …`.
+Verified identical on the Windows real-LabVIEW leg and the LabVIEW-free Linux
+container. lvkit reads `.lvkit/` first, else its shipped cleanroom `data/`. This is
+the intended resolution path — no lvkit change is needed for the addressable ids.
+
+**The primitive-layer ask = `prim_id=0`.** The two `id-0` nodes (`hiddenFBNode`
+Actor feedback node, `Class018D` dynamic-dispatch class node) are **not**
+addressable by a `.lvkit/primitives.json` mapping — `id 0` is a sentinel for an
+*unidentified* node, so lvkit emits no stable id to map against. These are the
+primitive-layer counterpart of Class B (`Call By Reference`): dynamic / Actor
+constructs lvkit cannot yet assign a resolvable identity. Assigning a stable,
+mappable id (or a documented resolution hook) to these nodes is the upstream ask
+for the primitive layer.
+
 ## Ask
 
 Improve LabVIEW-free connector-pane resolution for **called** SubVIs so a callee
