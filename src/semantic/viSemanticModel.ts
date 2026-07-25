@@ -302,6 +302,17 @@ function joinHumanList(values: readonly string[]): string {
 }
 
 /**
+ * Strips the leading NI comparison-report ordinal prefix (e.g. `4. `) from a
+ * detail-section heading for the human narrative. The structured
+ * `detailSections[].heading` model field keeps the original NI label; only the
+ * prose narrative is cleaned so it never reads spurious ordinal indices as
+ * change counts.
+ */
+function stripSectionHeadingOrdinal(heading: string): string {
+  return heading.replace(/^\d+\.\s*/, '');
+}
+
+/**
  * Produces a concise, human- and agent-readable "what changed" narrative. This
  * is the reviewable unit surfaced in the Source Control hover, PR/CI comment,
  * and MCP tool output.
@@ -326,10 +337,13 @@ export function renderViSemanticNarrative(
   if (model.detailSections.length > 0) {
     const detailCount = model.totals.detailItemCount;
     const sectionCount = model.totals.detailSectionCount;
+    const sectionHeadings = [
+      ...new Set(model.detailSections.map((section) => stripSectionHeadingOrdinal(section.heading)))
+    ];
     sentences.push(
       `${detailCount} detailed change${detailCount === 1 ? '' : 's'} across ${sectionCount} section${
         sectionCount === 1 ? '' : 's'
-      } (${joinHumanList(model.detailSections.map((section) => section.heading))}).`
+      } (${joinHumanList(sectionHeadings)}).`
     );
   }
 

@@ -184,9 +184,38 @@ describe('viSemanticModel', () => {
     });
 
     expect(model.narrative).toBe(
-      '2 detailed changes across 1 section (1. VI Attribute - Miscellaneous). ' +
+      '2 detailed changes across 1 section (VI Attribute - Miscellaneous). ' +
         'Compared attributes: Front Panel. Excluded from comparison: VI Attribute.'
     );
+  });
+
+  it('strips NI ordinal prefixes and dedupes repeated section headings in the narrative (VHS-REQ-662.1)', () => {
+    const report = parseNiComparisonReportHtml(
+      `<h1 class="report-title">R</h1>
+       <h2 class="section-header">Detailed Information</h2>
+       <details><summary class="difference-heading">4. Block Diagram objects</summary>
+         <ol><li class="diff-detail">Constant added</li></ol>
+       </details>
+       <details><summary class="difference-heading">14. Block Diagram objects</summary>
+         <ol><li class="diff-detail">Wire rerouted</li></ol>
+       </details>
+       <details><summary class="difference-heading">18. Block Diagram objects</summary>
+         <ol><li class="diff-detail">SubVI added</li></ol>
+       </details>`,
+      'report.html'
+    );
+    const model = buildViSemanticComparisonModel({ report });
+
+    // The structured model keeps the original NI ordinal labels as data ...
+    expect(model.detailSections.map((section) => section.heading)).toEqual([
+      '4. Block Diagram objects',
+      '14. Block Diagram objects',
+      '18. Block Diagram objects'
+    ]);
+    // ... but the human narrative strips the ordinals and dedupes the collapsed
+    // repeats, so it never reads "4.", "14.", "18." as change counts.
+    expect(model.narrative).toContain('3 detailed changes across 3 sections (Block Diagram objects).');
+    expect(model.narrative).not.toMatch(/\b\d+\.\s+Block Diagram objects/);
   });
 
   it('reports no differences for an empty comparison report', () => {
