@@ -26,6 +26,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parseLabviewDiffReportCounts } from '../labviewDiffReportParser.mjs';
 import { buildViSemanticComparisonModelFromHtml } from '../../out/semantic/viSemanticModel.js';
 import { buildViSemanticHistory } from '../../out/semantic/viSemanticHistory.js';
+import { buildViRepositoryIndex } from '../../out/semantic/viRepositoryIndex.js';
+import { buildViSemanticPrReview } from '../../out/semantic/viSemanticPrReview.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURES = path.join(__dirname, '..', 'win-lvkit', 'correlation-fixtures');
@@ -157,8 +159,115 @@ async function auditHistorySurface() {
   };
 }
 
+// --- REPOSITORY-INDEX surface: audit renderIndexNarrative via buildViRepositoryIndex with
+// injected fakes. 3 tracked VIs (+ a non-VI file that must be ignored), ranked by revisions. ---
+async function auditIndexSurface() {
+  const files = ['vis/A.vi', 'vis/B.vi', 'vis/C.vi', 'src/notes.txt'];
+  const counts = { 'vis/A.vi': 5, 'vis/B.vi': 12, 'vis/C.vi': 1 };
+  const latest = {
+    'vis/A.vi': { hash: 'h2', authorDate: '2026-01-01T00:00:00+00:00', authorName: 'Dev', subject: 'A change' },
+    'vis/B.vi': { hash: 'h1', authorDate: '2026-02-02T00:00:00+00:00', authorName: 'Dev', subject: 'B change' },
+    'vis/C.vi': { hash: 'h3', authorDate: '2026-03-03T00:00:00+00:00', authorName: 'Dev', subject: 'C change' }
+  };
+  const deps = {
+    listTrackedFiles: async () => files,
+    getFileHistoryCount: async (_root, rel) => counts[rel] ?? 0,
+    getFileHistoryEntries: async (_root, rel) => (latest[rel] ? [latest[rel]] : [])
+  };
+  const index = await buildViRepositoryIndex({ repositoryRoot: '/repo', maxVis: 10 }, deps);
+  const allowedNumbers = [index.viCount, index.indexedCount, ...index.vis.map((v) => v.revisionCount)];
+  const audit = auditNarrative(index.narrative, {
+    allowedNumbers,
+    hasChanges: index.viCount > 0,
+    headlineCount: index.viCount
+  });
+  return {
+    surface: 'index_repository_vis',
+    tool: 'renderIndexNarrative',
+    rows: [
+      {
+        vi: 'repo (synthetic index)',
+        hasDifferences: index.viCount > 0,
+        detailItemCount: index.viCount,
+        ...audit,
+        narrative: index.narrative
+      }
+    ]
+  };
+}
+
+// --- PR-REVIEW AGGREGATE surface: audit renderPrReviewNarrative via buildViSemanticPrReview,
+// reusing three REAL fixture comparison models as the per-VI entries (highest-visibility
+// narrative -- the sticky PR comment). ---
+async function auditPrReviewSurface() {
+  const modelFor = (fixture) => {
+    const html = fs.readFileSync(path.join(FIXTURES, fixture), 'utf8');
+    return buildViSemanticComparisonModelFromHtml(html, { reportFilePath: fixture });
+  };
+  const models = {
+    'vis/A.vi': modelFor('lv_icon.labview-diff-report.html'),
+    'vis/B.vi': modelFor('mousedown.labview-diff-report.html'),
+    'vis/C.vi': modelFor('visibletextmarker.labview-diff-report.html')
+  };
+  const completed = (model) => ({
+    status: 'completed',
+    hasDifferences: model.hasDifferences,
+    model,
+    runtime: { provider: 'linux-container', state: 'succeeded', reportFilePath: '/tmp/r.html' }
+  });
+  const results = Object.fromEntries(Object.entries(models).map(([k, m]) => [k, completed(m)]));
+  const deps = {
+    listChangedPaths: async () => [...Object.keys(models), 'readme.md'],
+    compareVi: async (input) => results[input.relativePath] ?? { status: 'failed', reason: 'no fixture' }
+  };
+  const review = await buildViSemanticPrReview(
+    { repositoryRoot: '/repo', baseHash: 'a', selectedHash: 'b', maxVis: 10 },
+    deps
+  );
+  const t = review.totals;
+  const riskCounts = { high: 0, medium: 0, low: 0 };
+  for (const e of review.entries) {
+    if (e.status === 'completed' && e.hasDifferences && e.model.riskLevel) {
+      riskCounts[e.model.riskLevel] += 1;
+    }
+  }
+  const allowedNumbers = [
+    review.changedViCount,
+    review.reviewedCount,
+    t.withDifferences,
+    t.withoutDifferences,
+    t.blockedOrFailed,
+    riskCounts.high,
+    riskCounts.medium,
+    riskCounts.low
+  ];
+  const audit = auditNarrative(review.narrative, {
+    allowedNumbers,
+    hasChanges: review.changedViCount > 0,
+    headlineCount: review.changedViCount
+  });
+  return {
+    surface: 'build_vi_pr_review',
+    tool: 'renderPrReviewNarrative',
+    rows: [
+      {
+        vi: 'PR aggregate (3 real fixtures)',
+        hasDifferences: review.changedViCount > 0,
+        detailItemCount: review.changedViCount,
+        ...audit,
+        narrative: review.narrative
+      }
+    ]
+  };
+}
+
 async function main() {
-  const surfaces = [auditComparisonSurface(), await auditHistorySurface()];
+  const surfaces = [
+    auditComparisonSurface(),
+    await auditHistorySurface(),
+    await auditIndexSurface(),
+    await auditPrReviewSurface()
+  ];
   // Follow-up lane (pluggable): history / repository-index / pr-review via their injected builders.
   const surfaceSummaries = surfaces.map((s) => {
     const failing = s.rows.filter((r) => !r.ok);
@@ -181,7 +290,7 @@ async function main() {
       I3_statesCount: 'a changed narrative states its headline change count'
     },
     auditedSurfaces: surfaceSummaries,
-    pendingSurfaces: ['index_repository_vis', 'build_vi_pr_review', 'vi-preview-comparison-correlation'],
+    pendingSurfaces: ['vi-preview-comparison-correlation'],
     totalFailing,
     surfaces
   };

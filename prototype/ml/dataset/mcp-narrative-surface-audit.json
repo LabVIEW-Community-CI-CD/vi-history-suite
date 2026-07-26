@@ -1,6 +1,6 @@
 {
   "schema": "vi-history-suite/mcp-narrative-surface-audit@v1",
-  "generatedAt": "2026-07-26T03:57:44.706Z",
+  "generatedAt": "2026-07-26T04:01:47.134Z",
   "invariants": {
     "I1_noInventedNumbers": "every integer > 1 in a narrative is a meaningful count the ground truth allows",
     "I2_noFalseNoChange": "a changed-input narrative never claims no changes/differences",
@@ -22,11 +22,25 @@
       "passing": 1,
       "failing": 0,
       "failingVis": []
+    },
+    {
+      "surface": "index_repository_vis",
+      "tool": "renderIndexNarrative",
+      "cases": 1,
+      "passing": 1,
+      "failing": 0,
+      "failingVis": []
+    },
+    {
+      "surface": "build_vi_pr_review",
+      "tool": "renderPrReviewNarrative",
+      "cases": 1,
+      "passing": 1,
+      "failing": 0,
+      "failingVis": []
     }
   ],
   "pendingSurfaces": [
-    "index_repository_vis",
-    "build_vi_pr_review",
     "vi-preview-comparison-correlation"
   ],
   "totalFailing": 0,
@@ -139,6 +153,40 @@
           "statesCount": true,
           "invented": [],
           "narrative": "Across 3 compared revisions of Widget.vi, 1 changed the VI. Surfaces changed: front panel (1), block diagram (1). Most recent change (Dev, \"tweak\"): The front panel and block diagram differ. 1 comparison could not be completed."
+        }
+      ]
+    },
+    {
+      "surface": "index_repository_vis",
+      "tool": "renderIndexNarrative",
+      "rows": [
+        {
+          "vi": "repo (synthetic index)",
+          "hasDifferences": true,
+          "detailItemCount": 3,
+          "ok": true,
+          "noInventedNumbers": true,
+          "noFalseNoChange": true,
+          "statesCount": true,
+          "invented": [],
+          "narrative": "Repository tracks 3 VIs. Most revised: vis/B.vi (12 revisions). Most recently changed: vis/C.vi (\"C change\", Dev)."
+        }
+      ]
+    },
+    {
+      "surface": "build_vi_pr_review",
+      "tool": "renderPrReviewNarrative",
+      "rows": [
+        {
+          "vi": "PR aggregate (3 real fixtures)",
+          "hasDifferences": true,
+          "detailItemCount": 3,
+          "ok": true,
+          "noInventedNumbers": true,
+          "noFalseNoChange": true,
+          "statesCount": true,
+          "invented": [],
+          "narrative": "3 changed VIs. 3 with differences, 0 unchanged. Risk: 3 high-risk."
         }
       ]
     }
