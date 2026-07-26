@@ -64,6 +64,31 @@ function smokeBatch() {
     .map((f) => ({ slug: slugFor('ie', f), repo: 'ie', htmlPath: path.join(FIXTURES, f), cosmeticCount: null }));
 }
 
+/**
+ * CORR_AUTO batch: map EVERY rendered *.labview-diff-report.html in FIXTURES to a manifest slug by
+ * kebab basename, inferring repo from whichever repoTag makes `${repoTag}-${kebab}` a real manifest
+ * slug. A file that matches no slug -- or matches ambiguously across repos -- is skipped (reported as
+ * unmapped), never guessed. This lets each accumulating WIN batch be scored with a single re-run
+ * (grows LORO fold0 toward 102 automatically) with no hand-built batch JSON.
+ */
+function autoDiscoverBatch(foldsManifest) {
+  const slugSet = new Set(foldsManifest.allSlugs || []);
+  const repos = [...new Set((foldsManifest.loro || []).map((f) => f.heldOutRepo))];
+  const batch = [];
+  const unmapped = [];
+  for (const f of fs.readdirSync(FIXTURES).filter((x) => /\.labview-diff-report\.html$/i.test(x)).sort()) {
+    const base = f.replace(/\.labview-diff-report\.html$/i, '');
+    const kebab = base.replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase();
+    const matches = repos.filter((r) => slugSet.has(`${r}-${kebab}`));
+    if (matches.length === 1) {
+      batch.push({ slug: `${matches[0]}-${kebab}`, repo: matches[0], htmlPath: path.join(FIXTURES, f), cosmeticCount: null });
+    } else {
+      unmapped.push({ file: f, kebab, matchedRepos: matches });
+    }
+  }
+  return { batch, unmapped };
+}
+
 /** Score one rendered VI through the SHIPPED grounded path. Never invents grounding. */
 async function evalOneVi(sample, generate) {
   const html = fs.readFileSync(sample.htmlPath, 'utf8');
@@ -123,10 +148,20 @@ async function main() {
     process.exit(2);
   }
   const foldsManifest = JSON.parse(fs.readFileSync(FOLDS_PATH, 'utf8'));
-  const batch = process.env.CORR_BATCH_JSON
-    ? JSON.parse(fs.readFileSync(process.env.CORR_BATCH_JSON, 'utf8'))
-    : smokeBatch();
-  const batchSource = process.env.CORR_BATCH_JSON || `SMOKE (${FIXTURES}/*.labview-diff-report.html, repo=ie in-distribution)`;
+  let batch, batchSource;
+  let unmapped = [];
+  if (process.env.CORR_BATCH_JSON) {
+    batch = JSON.parse(fs.readFileSync(process.env.CORR_BATCH_JSON, 'utf8'));
+    batchSource = process.env.CORR_BATCH_JSON;
+  } else if (process.env.CORR_AUTO === '1') {
+    const disc = autoDiscoverBatch(foldsManifest);
+    batch = disc.batch;
+    unmapped = disc.unmapped;
+    batchSource = `AUTO (${batch.length} rendered reports in ${FIXTURES} mapped to manifest slugs; ${unmapped.length} unmapped-skipped)`;
+  } else {
+    batch = smokeBatch();
+    batchSource = `SMOKE (${FIXTURES}/*.labview-diff-report.html, repo=ie in-distribution)`;
+  }
 
   let present = false;
   try {
@@ -156,6 +191,7 @@ async function main() {
     foldsSource: FOLDS_PATH,
     totalRendered: perVi.filter((r) => !r.error).length,
     errors: perVi.filter((r) => r.error),
+    unmappedFixtures: unmapped,
     loro,
     crossRepoGeneralization: crossRepo
       ? (crossRepo.status === 'pending-render'
@@ -175,6 +211,9 @@ async function main() {
   }
   if (crossRepo && crossRepo.status === 'pending-render') {
     console.log('  CROSS-REPO (train ie / test af): PENDING WIN actor-framework batch (0 AF renders exist).');
+  }
+  if (unmapped.length) {
+    console.log(`  ${unmapped.length} rendered report(s) unmapped to a manifest slug (skipped): ${unmapped.map((u) => u.file).join(', ')}`);
   }
   console.log(`  wrote ${OUT}`);
 }
