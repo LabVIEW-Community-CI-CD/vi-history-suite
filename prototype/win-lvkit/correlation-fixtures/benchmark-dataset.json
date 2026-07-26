@@ -1,8 +1,8 @@
 {
   "schema": "vi-history-suite/preview-compare-lvkit-benchmark@v1",
-  "generatedAt": "2026-07-26T05:42:42.708Z",
+  "generatedAt": "2026-07-26T06:20:34.314Z",
   "image": "nationalinstruments/labview:2026q1patch2-windows",
-  "sampleCount": 22,
+  "sampleCount": 27,
   "pipeline": "compareReport -> staged left/right + commits -> preview(both) + lvkit(diff,generate) -> correlation record",
   "samples": [
     {
@@ -947,16 +947,226 @@
         "previewSelectedCold": 45.3
       },
       "slug": "af-destroy-lv-ini-token"
+    },
+    {
+      "vi": "Tooling/deployment/Modify_VIPB_Display_Information.vi",
+      "repo": "af",
+      "slug": "af-modify-vipb-display-information",
+      "subject": "Can build the AF VI Package locally using only powershell",
+      "revisionPair": {
+        "base": "4a0c7e8",
+        "selected": "e224979579e1f17a0945804a75e326840931cce6"
+      },
+      "lvkit": {
+        "changeCount": 0,
+        "kinds": [],
+        "generateModuleCount": 1
+      },
+      "labview": {
+        "differenceBlocks": 2,
+        "cosmetic": 2,
+        "nonCosmetic": 0,
+        "htmlBytes": 83368,
+        "note": "PROTOTYPE regex parse; robust parser is LINUX #2377 leg"
+      },
+      "preview": {
+        "base": 7,
+        "selected": 7,
+        "deltaInlineImages": 0
+      },
+      "correlation": {
+        "countAgreement_lvkit_vs_nonCosmetic": 1,
+        "lvkitChangeCount": 0,
+        "labviewNonCosmetic": 0,
+        "labviewCosmeticOnly": 2,
+        "structuralCardinality_previewDelta_vs_lvkitCount": 0,
+        "note": "granularity mapping; lvkit structural ~ LabVIEW non-cosmetic; cosmetic = lvkit-omitted axis"
+      },
+      "timingsSec": {
+        "compareCold": 35.6,
+        "lvkitDiff": 1.8,
+        "lvkitGen": 1.8,
+        "previewBaseCold": 31.8,
+        "previewSelectedCold": 32
+      }
+    },
+    {
+      "vi": "Tooling/deployment/NIP Post uninstall.vi",
+      "repo": "af",
+      "slug": "af-nip-post-uninstall",
+      "subject": "Can build the AF VI Package locally using only powershell",
+      "revisionPair": {
+        "base": "4a0c7e8",
+        "selected": "e224979579e1f17a0945804a75e326840931cce6"
+      },
+      "lvkit": {
+        "changeCount": 0,
+        "kinds": [],
+        "generateModuleCount": 1
+      },
+      "labview": {
+        "differenceBlocks": 1,
+        "cosmetic": 1,
+        "nonCosmetic": 0,
+        "htmlBytes": 52866,
+        "note": "PROTOTYPE regex parse; robust parser is LINUX #2377 leg"
+      },
+      "preview": {
+        "base": 14,
+        "selected": 14,
+        "deltaInlineImages": 0
+      },
+      "correlation": {
+        "countAgreement_lvkit_vs_nonCosmetic": 1,
+        "lvkitChangeCount": 0,
+        "labviewNonCosmetic": 0,
+        "labviewCosmeticOnly": 1,
+        "structuralCardinality_previewDelta_vs_lvkitCount": 0,
+        "note": "granularity mapping; lvkit structural ~ LabVIEW non-cosmetic; cosmetic = lvkit-omitted axis"
+      },
+      "timingsSec": {
+        "compareCold": 32.3,
+        "lvkitDiff": 1.6,
+        "lvkitGen": 1.7,
+        "previewBaseCold": 28.6,
+        "previewSelectedCold": 29.2
+      }
+    },
+    {
+      "vi": "Tooling/deployment/VIP_Post-Install Custom Action.vi",
+      "repo": "af",
+      "slug": "af-vip-post-install-custom-action",
+      "subject": "Can build the AF VI Package locally using only powershell",
+      "revisionPair": {
+        "base": "4a0c7e8",
+        "selected": "e224979579e1f17a0945804a75e326840931cce6"
+      },
+      "lvkit": {
+        "changeCount": 0,
+        "kinds": [],
+        "generateModuleCount": 1
+      },
+      "labview": {
+        "differenceBlocks": 1,
+        "cosmetic": 1,
+        "nonCosmetic": 0,
+        "htmlBytes": 244658,
+        "note": "PROTOTYPE regex parse; robust parser is LINUX #2377 leg"
+      },
+      "preview": {
+        "base": 17,
+        "selected": 17,
+        "deltaInlineImages": 0
+      },
+      "correlation": {
+        "countAgreement_lvkit_vs_nonCosmetic": 1,
+        "lvkitChangeCount": 0,
+        "labviewNonCosmetic": 0,
+        "labviewCosmeticOnly": 1,
+        "structuralCardinality_previewDelta_vs_lvkitCount": 0,
+        "note": "granularity mapping; lvkit structural ~ LabVIEW non-cosmetic; cosmetic = lvkit-omitted axis"
+      },
+      "timingsSec": {
+        "compareCold": 49.8,
+        "lvkitDiff": 2.1,
+        "lvkitGen": 1.7,
+        "previewBaseCold": 34.1,
+        "previewSelectedCold": 34
+      }
+    },
+    {
+      "vi": "Tooling/deployment/VIP_Pre-Install Custom Action.vi",
+      "repo": "af",
+      "slug": "af-vip-pre-install-custom-action",
+      "subject": "Can build the AF VI Package locally using only powershell",
+      "revisionPair": {
+        "base": "4a0c7e8",
+        "selected": "e224979579e1f17a0945804a75e326840931cce6"
+      },
+      "lvkit": {
+        "changeCount": 0,
+        "kinds": [],
+        "generateModuleCount": 1
+      },
+      "labview": {
+        "differenceBlocks": 1,
+        "cosmetic": 1,
+        "nonCosmetic": 0,
+        "htmlBytes": 133776,
+        "note": "PROTOTYPE regex parse; robust parser is LINUX #2377 leg"
+      },
+      "preview": {
+        "base": 11,
+        "selected": 11,
+        "deltaInlineImages": 0
+      },
+      "correlation": {
+        "countAgreement_lvkit_vs_nonCosmetic": 1,
+        "lvkitChangeCount": 0,
+        "labviewNonCosmetic": 0,
+        "labviewCosmeticOnly": 1,
+        "structuralCardinality_previewDelta_vs_lvkitCount": 0,
+        "note": "granularity mapping; lvkit structural ~ LabVIEW non-cosmetic; cosmetic = lvkit-omitted axis"
+      },
+      "timingsSec": {
+        "compareCold": 36.5,
+        "lvkitDiff": 1.7,
+        "lvkitGen": 1.5,
+        "previewBaseCold": 35.2,
+        "previewSelectedCold": 34
+      }
+    },
+    {
+      "vi": "Tooling/deployment/VIP_Pre-Uninstall Custom Action.vi",
+      "repo": "af",
+      "slug": "af-vip-pre-uninstall-custom-action",
+      "subject": "Can build the AF VI Package locally using only powershell",
+      "revisionPair": {
+        "base": "4a0c7e8",
+        "selected": "e224979579e1f17a0945804a75e326840931cce6"
+      },
+      "lvkit": {
+        "changeCount": 0,
+        "kinds": [],
+        "generateModuleCount": 1
+      },
+      "labview": {
+        "differenceBlocks": 1,
+        "cosmetic": 1,
+        "nonCosmetic": 0,
+        "htmlBytes": 193724,
+        "note": "PROTOTYPE regex parse; robust parser is LINUX #2377 leg"
+      },
+      "preview": {
+        "base": 16,
+        "selected": 16,
+        "deltaInlineImages": 0
+      },
+      "correlation": {
+        "countAgreement_lvkit_vs_nonCosmetic": 1,
+        "lvkitChangeCount": 0,
+        "labviewNonCosmetic": 0,
+        "labviewCosmeticOnly": 1,
+        "structuralCardinality_previewDelta_vs_lvkitCount": 0,
+        "note": "granularity mapping; lvkit structural ~ LabVIEW non-cosmetic; cosmetic = lvkit-omitted axis"
+      },
+      "timingsSec": {
+        "compareCold": 49.8,
+        "lvkitDiff": 2,
+        "lvkitGen": 1.9,
+        "previewBaseCold": 33,
+        "previewSelectedCold": 46.1
+      }
     }
   ],
   "aggregate": {
     "totalTimingsSec": {
-      "compareCold": 892.0000000000001,
-      "lvkitDiff": 58.90000000000001,
-      "lvkitGen": 205.39999999999995,
-      "previewBaseCold": 845,
-      "previewSelectedCold": 821.3000000000001
+      "compareCold": 1096,
+      "lvkitDiff": 68.10000000000001,
+      "lvkitGen": 213.99999999999994,
+      "previewBaseCold": 1007.7,
+      "previewSelectedCold": 996.6000000000001
     },
-    "countAgreementRate": 0.4090909090909091
+    "countAgreementRate": 0.5185185185185185
   }
 }
