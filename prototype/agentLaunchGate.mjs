@@ -222,6 +222,12 @@ function sleepSync(ms) { try { Atomics.wait(new Int32Array(new SharedArrayBuffer
 function appendLedgerLine(gateDir, record) {
   try { fs.mkdirSync(gateDir, { recursive: true }); fs.appendFileSync(path.join(gateDir, 'contention-ledger.ndjson'), JSON.stringify(record) + '\n'); } catch { /* best effort */ }
 }
+function readLedger(gateDir) {
+  try {
+    const txt = fs.readFileSync(path.join(gateDir, 'contention-ledger.ndjson'), 'utf8');
+    return txt.split('\n').filter(Boolean).map((l) => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean);
+  } catch { return []; }
+}
 
 /** Real default deps: prototype agentGateway lease + diskBenchmark cpu+gpu+disk capability. */
 export function defaultDeps() {
@@ -250,8 +256,19 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
   } else if (sub === 'release') {
     runLaunchRelease(defaultDeps(), { group, token: process.argv[4] || process.env.VIHS_LAUNCH_TOKEN });
     process.exit(0);
+  } else if (sub === 'mark') {
+    const phase = process.argv[3] || 'unknown';
+    appendLedgerLine(resolveGateDir(), { ts: new Date().toISOString(), event: 'phase-marker', phase });
+    console.error('[launch-gate] phase-marker ' + phase + ' recorded.');
+    process.exit(0);
+  } else if (sub === 'analyze') {
+    const entries = readLedger(resolveGateDir());
+    const markers = entries.filter((e) => e.event === 'phase-marker');
+    const buckets = bucketContentionByPhase(entries, markers);
+    console.log(JSON.stringify({ schema: 'vi-history-suite/launch-contention-by-phase@v1', analyzedAt: new Date().toISOString(), markerCount: markers.length, contentionCount: buckets.reduce((s, b) => s + b.total, 0), buckets }, null, 2));
+    process.exit(0);
   } else {
-    console.error('usage: node prototype/agentLaunchGate.mjs [acquire <group> | release <group> <token>]');
+    console.error('usage: node prototype/agentLaunchGate.mjs [acquire <group> | release <group> <token> | mark <phase> | analyze]');
     process.exit(2);
   }
 }
