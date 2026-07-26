@@ -142,3 +142,22 @@ test('safety keys are a strict subset of the scored keys', () => {
   }
   assert.ok(!GROUNDED_NARRATIVE_SAFETY_KEYS.includes('mentionsCosmetic'));
 });
+
+test('falls back when a SAFE grounded candidate scores below the template (regressed-template)', async () => {
+  // Safe (states the count, no false no-change, no invented number) but omits cosmetic entirely
+  // -> 0.75, strictly below the cosmetic-mentioning template at 1.0. The gate must not regress.
+  const res = await selectMcpNarrative({
+    model: fakeModel(),
+    cosmeticCount: COSMETIC,
+    templateNarrative: TEMPLATE,
+    generate: async () => 'There are 8 structural changes between the two VI revisions.'
+  });
+  assert.equal(res.source, 'template');
+  assert.equal(res.reason, 'regressed-template');
+  // The candidate cleared the hard safety keys but lost on the composite (missing cosmetic).
+  assert.equal(res.grounded.parts.noFalseNoChange, true);
+  assert.equal(res.grounded.parts.statesStructuralCount, true);
+  assert.equal(res.grounded.parts.noInventedNumbers, true);
+  assert.equal(res.grounded.parts.mentionsCosmetic, false);
+  assert.ok(res.grounded.score < res.template.score);
+});
