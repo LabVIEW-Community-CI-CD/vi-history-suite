@@ -220,6 +220,28 @@ describe('lvkitViScanStore (VHS-REQ-716)', () => {
       expect(stored?.resolutionCounts?.unresolvedPrimitive).toBe(0);
       expect(stored?.resolutionCounts?.resolved).toBe(1);
     });
+
+    it('does not let a later .error.py hard stub clobber an existing inline placeholder on a total tie (#2376 P2)', async () => {
+      const store = createStore(createFakeFs());
+      expect(await store.put(inlinePlaceholderEnvelope())).toBe(true); // inline: total unresolved 1, errorStub 0
+      expect(await store.put(placeholderEnvelope())).toBe(true); // .error.py hard stub: total unresolved 1, errorStub 1
+      const stored = await store.get(VI_PATH, CONTENT_SIGNATURE);
+      // Totals tie at 1, so the tie-break on fewer .error.py hard stubs keeps the
+      // more-usable inline placeholder instead of downgrading to the bare stub.
+      expect(stored?.errorModuleCount).toBe(0); // inline retained (a .error.py stub would be 1)
+      expect(stored?.resolutionCounts?.unresolvedPrimitive).toBe(1);
+      expect(stored?.resolutionCounts?.errorStub).toBe(0);
+    });
+
+    it('lets an inline placeholder upgrade an existing .error.py hard stub on a total tie (#2376 P2)', async () => {
+      const store = createStore(createFakeFs());
+      expect(await store.put(placeholderEnvelope())).toBe(true); // .error.py hard stub first (errorStub 1)
+      expect(await store.put(inlinePlaceholderEnvelope())).toBe(true); // inline is more usable -> replaces on the tie
+      const stored = await store.get(VI_PATH, CONTENT_SIGNATURE);
+      expect(stored?.errorModuleCount).toBe(0); // upgraded to the inline placeholder
+      expect(stored?.resolutionCounts?.errorStub).toBe(0);
+      expect(stored?.resolutionCounts?.unresolvedPrimitive).toBe(1);
+    });
   });
 
   describe('createFileLvkitViScanStore fail-closed reads / best-effort writes (VHS-REQ-716.3)', () => {
