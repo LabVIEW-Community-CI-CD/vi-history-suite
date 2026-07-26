@@ -30,8 +30,11 @@ import { buildLvkitViScanEnvelope } from '../../src/semantic/lvkit/lvkitViScanMo
 
 // Contract: the human-facing MCP catalog (docs/mcp-server.md) must not drift from the
 // authoritative registered tools, prompts, and resources. Catches the recurring class where
-// an entry is added to a registry but the doc's table/count is not updated.
-describe('docs/mcp-server.md catalog stays in sync with the registered tools, prompts, and resources (VHS-REQ-662.4)', () => {
+// an entry is added to a registry but the doc's table/count is not updated. This is a
+// documentation-parity guard for the whole Agent MCP Surface (the parent VHS-REQ-662), not
+// verification of a single behavioral sub-criterion (the tools-only .4 is cited by the
+// behavioral tests + file header).
+describe('docs/mcp-server.md catalog stays in sync with the registered tools, prompts, and resources (VHS-REQ-662)', () => {
   // Anchor on the test file location (not process.cwd(), which is ambient global state).
   const doc = readFileSync(path.resolve(__dirname, '..', '..', 'docs', 'mcp-server.md'), 'utf8');
   it('gives every registered tool a row in the Tools table', () => {
@@ -62,10 +65,14 @@ describe('docs/mcp-server.md catalog stays in sync with the registered tools, pr
   });
   it('documents every registered resource URI and template', () => {
     for (const resource of VI_SEMANTIC_MCP_RESOURCES) {
-      expect(doc.includes('`' + resource.uri + '`'), `docs/mcp-server.md Resources table is missing '${resource.uri}'`).toBe(true);
+      const escaped = resource.uri.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const row = new RegExp('^\\|\\s*`' + escaped + '`\\s*\\|', 'm');
+      expect(row.test(doc), `docs/mcp-server.md Resources table is missing a row for '${resource.uri}'`).toBe(true);
     }
     for (const template of VI_SEMANTIC_MCP_RESOURCE_TEMPLATES) {
-      expect(doc.includes('`' + template.uriTemplate + '`'), `docs/mcp-server.md is missing the resource template '${template.uriTemplate}'`).toBe(true);
+      const escaped = template.uriTemplate.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const row = new RegExp('^\\|\\s*`' + escaped + '`\\s*\\|', 'm');
+      expect(row.test(doc), `docs/mcp-server.md is missing a table row for the resource template '${template.uriTemplate}'`).toBe(true);
     }
   });
   it('states the schema-resource count matching the registry', () => {
