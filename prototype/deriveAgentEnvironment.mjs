@@ -131,12 +131,17 @@ function detectVagrantWinReal(env = process.env) {
   });
 }
 
-// LINUX-ARM: first-cut per the aligned Q1 findings; LINUX validates empirically.
+// LINUX-ARM: validated empirically on this native host. NOTE: systemd-detect-virt
+// EXITS 1 when it detects "none" (bare metal) while still printing "none" on stdout,
+// so execFileSync throws — we must read the thrown stdout to record the real "none"
+// evidence instead of null (null would falsely imply the tool was absent). A detected
+// hypervisor exits 0; a genuinely absent tool (plain alpine) yields empty stdout -> null.
 function detectVirtReal() {
   try {
     return execFileSync('systemd-detect-virt', [], { encoding: 'utf8' }).trim();
-  } catch {
-    return null; // tool absent (e.g. plain alpine) — not fatal, /.dockerenv is primary
+  } catch (err) {
+    const out = err && err.stdout ? String(err.stdout).trim() : '';
+    return out || null; // "none" on bare metal (exit 1); null only when truly absent
   }
 }
 function readCgroupPid1Real() {
@@ -276,7 +281,7 @@ export function detectFacets(osPlatform, env = process.env, probes = {}) {
     lvCompare: { present: Boolean(cmp), path: cmp },
     lvMerge: { present: Boolean(mrg), path: mrg },
     labviewViaWindowsContainer: false,
-    gpu: { present: false }, // LINUX-ARM: fill nvidia-smi + ollama probe
+    gpu: detectGpu(probes),
     capabilities: { docker: detectDocker(probes) }
   };
 }
@@ -292,6 +297,45 @@ function detectDocker(probes = {}) {
   } catch {
     return { present: false, osType: null };
   }
+}
+
+// LINUX-ARM: GPU + local-LLM facet. nvidia-smi yields the device name + total VRAM
+// (MiB); ollama --version records the local runner. Pure over an injectable probe so
+// the self-test covers it without a real GPU. Shape matches the descriptor@v1 gpu
+// facet: { present, name, vramMiB, ollama:{ present, version } }.
+function detectGpu(probes = {}) {
+  if (probes.gpu) return probes.gpu();
+  let name = null;
+  let vramMiB = null;
+  try {
+    const line = execFileSync(
+      'nvidia-smi',
+      ['--query-gpu=name,memory.total', '--format=csv,noheader,nounits'],
+      { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }
+    )
+      .trim()
+      .split('\n')[0];
+    if (line) {
+      const [n, mem] = line.split(',').map((s) => s.trim());
+      name = n || null;
+      const parsed = Number.parseInt(mem, 10);
+      vramMiB = Number.isFinite(parsed) ? parsed : null;
+    }
+  } catch {
+    /* no NVIDIA GPU / driver absent */
+  }
+  let ollama = { present: false, version: null };
+  try {
+    const out = execFileSync('ollama', ['--version'], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore']
+    }).trim();
+    const m = out.match(/(\d+\.\d+\.\d+)/);
+    ollama = { present: true, version: m ? m[1] : null };
+  } catch {
+    /* ollama not installed */
+  }
+  return { present: Boolean(name), name, vramMiB, ollama };
 }
 
 // ---------------------------------------------------------------------------

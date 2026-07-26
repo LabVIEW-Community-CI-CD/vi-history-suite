@@ -4,8 +4,17 @@
     {
       "machineIdHash": "bfd8d07d0112",
       "teamName": "WIN-vitlt",
-      "planeDefaults": { "plane": "native" },
+      "planeDefaults": {
+        "plane": "native"
+      },
       "notes": "WIN oracle - Windows native, LabVIEW 2026 x64"
+    },
+    {
+      "machineIdHash": "e00a56c8ef87",
+      "teamName": "LINUX-oracle",
+      "planeDefaults": {
+        "plane": "native"
+      }
     }
   ]
 }
