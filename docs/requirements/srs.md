@@ -5219,6 +5219,75 @@ Missing numeric IDs are intentional.
     store constructed once and injected, so the coverage-excluded entrypoint holds
     no scan logic and the pure trigger and mapper stay fully unit-tested.
 
+### VHS-REQ-719: Local Branch-Flow Enforcement and Explicit Prototype Promotion
+
+- Status: Active
+- Parent: VHS-SYS-REQ-011
+- Area: Repository Governance
+- Statement: The toolset shall provide a local pre-push branch-flow enforcement
+  hook and an explicit prototype-to-develop promotion command that together mirror
+  the hosted CI Branch Governance rule on the developer machine — the hook
+  fail-closed and enforce-only over the refs a push would send (it never mutates
+  git and names the acting agent identity, derived from the agent-environment
+  module, in every remedy), and the promotion gating a slice on local validation
+  before it opens a pull request, recording the prototype provenance, and leaving
+  the merge to the develop queue — so an agent catches a branch-flow violation
+  before the disguised hosted-CI failure and never ships a slice a post-merge bot
+  would reject.
+- Acceptance Criteria:
+  - The pre-push enforcement blocks a direct push to a protected branch
+    (`develop`/`main`) with an open-a-PR remedy, requires a develop-flow branch to
+    match an allowed pattern (`feature/<issue#>-*`, `fix/*`, `release/v*`,
+    `hotfix/v*`, or a `dependabot/` branch) else a rename remedy, and blocks a
+    `feature/<issue#>` branch whose referenced issue does not exist; tag refs
+    (non-`refs/heads/`), branch deletions, and the `wip/*`, `spike/*`,
+    `prototype/*` exempt patterns are not enforced.
+  - Every violation carries a stable rule id (`no-direct-protected-push`,
+    `branch-name`, `missing-issue`) and a printed remedy that names the deriving
+    agent identity (`teamName/plane`) and the `git push --no-verify` one-off
+    override, and the branch-flow check runs first in the pre-push hook, before
+    the ADR, agent-delegation, and standards checks.
+  - Issue existence is verified through `gh` only when it is available; on a plane
+    without `gh` the missing-issue rule self-skips and records an audit note
+    instead of blocking, so the check never false-blocks where it cannot verify,
+    while the protected-push and branch-name rules still run.
+  - The explicit promote command creates a `feature/<issue#>-<slug>` branch off
+    develop, applies the slice as either a cherry-pick of specific commits or a
+    reconciled file-set (exactly one mode, and a reconcile requires prototype
+    provenance), runs a pre-promote validation gate (the repository check plus the
+    mapped tests, and the full suite for a reconcile) strictly before opening the
+    PR or arming auto-merge, and aborts — opening and arming nothing — when the
+    gate fails or the target branch already exists.
+  - The promotion records prototype provenance as a `Prototype-Source` commit
+    trailer mirrored in the PR body and leaves the merge to the develop queue, so
+    a promoted slice is always traceable to the prototype commits it derives from
+    and never bypasses queue governance.
+- Agent Work Scope:
+  - Keep the branch-flow evaluator and the promote orchestration pure over
+    injected inputs (parsed push refs plus an issue-existence probe; and
+    git/gate/openPr/arm collaborators) so both unit-test host-free, and keep the
+    two OS detection arms isolated by branching on `osPlatform` first. The local
+    rule set must stay a faithful mirror of the hosted Branch Governance rule so
+    it cannot drift; adding an allowed or exempt pattern must match the documented
+    branch flow. The enforcement is advisory-local — `git push --no-verify`
+    remains the deliberate one-off escape — and never a substitute for the
+    required hosted CI Branch Governance job.
+- Implementation References:
+  - `scripts/branchFlowEnforce.js`
+  - `scripts/collabPromote.js`
+  - `.githooks/pre-push`
+- Verification References:
+  - `tests/unit/branchFlowEnforce.test.ts`
+  - `tests/unit/collabPromote.test.ts`
+- Change Guidance:
+  - Keep the pre-push enforcement fail-closed and enforce-only (never mutate git)
+    and a strict mirror of the hosted Branch Governance rule so the local and
+    hosted checks cannot drift. Keep the promote validation gate strictly before
+    opening/arming so a slice that would draw a post-merge bot finding is caught
+    locally. Keep the missing-issue rule self-skipping with an audit note on a
+    `gh`-less plane rather than false-blocking, and keep both modules pure over
+    injected inputs so they stay fully unit-tested.
+
 ### VHS-REQ-702: VI Semantic Change Classification
 
 - Status: Active
