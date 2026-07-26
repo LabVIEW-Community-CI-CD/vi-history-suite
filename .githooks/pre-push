@@ -3,8 +3,11 @@
 # vi-history-suite pre-push gate.
 #
 # Fails closed before a push on:
-#   1. ADR infrastructure consistency (issue #2028) — npm run adr:check.
-#   2. The repo-standards-review multi-standards audit — npm run standards:audit.
+#   1. Branch-flow enforcement (issue #2392) — scripts/branchFlowEnforce.js (runs FIRST:
+#      cheapest + most common papercut; Branch-Governance parity).
+#   2. ADR infrastructure consistency (issue #2028) — npm run adr:check.
+#   3. Agent-delegation drift — npm run agent:check.
+#   4. The repo-standards-review multi-standards audit — npm run standards:audit.
 #
 # Enable once per clone with:  git config core.hooksPath .githooks
 # Bypass in an emergency with:  git push --no-verify
@@ -12,6 +15,17 @@ set -euo pipefail
 
 repo_root="$(git rev-parse --show-toplevel)"
 cd "$repo_root"
+
+# 1. Branch-flow enforcement (issue #2392) runs FIRST. git passes the push refs on
+#    stdin (<local ref> <local sha> <remote ref> <remote sha> lines); forward them to
+#    the pure evaluator, which fails closed with a clear remedy. Rule C (issue exists)
+#    self-skips with an audit note when gh is unavailable on this plane.
+push_refs="$(cat)"
+echo "[pre-push] Checking branch flow (scripts/branchFlowEnforce.js)…"
+if ! printf '%s' "$push_refs" | node scripts/branchFlowEnforce.js; then
+  echo "[pre-push] Branch-flow enforcement failed. See the remedy above, or push with --no-verify." >&2
+  exit 1
+fi
 
 echo "[pre-push] Checking ADR infrastructure (npm run adr:check)…"
 if ! npm run --silent adr:check; then
