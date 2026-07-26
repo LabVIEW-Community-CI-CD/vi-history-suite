@@ -9,7 +9,8 @@ const gw = require('../../scripts/agentGateway.js');
 // VHS-REQ-719 (VHS #2392 agent-coordination): the shared agent gateway graduated to
 // scripts/. Pure logic (identity, staleness, release-decision, formatting) AND the
 // filesystem lease I/O (acquire/release/read/list) are unit-tested here + mapped +
-// COUNTED toward coverage — only resolveGateDir (git spawn) + the CLI entry stay v8-ignored.
+// COUNTED toward coverage — only resolveGateDir (git spawn), the CLI entry, and one
+// defensive non-EEXIST mkdir rethrow stay v8-ignored.
 
 describe('agentGateway identity (VHS-REQ-719)', () => {
   it('resolveSubagentId precedence: env > cwd-lane > main > pid', () => {

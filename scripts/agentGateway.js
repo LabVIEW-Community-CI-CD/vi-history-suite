@@ -11,7 +11,8 @@
 // Coverage discipline (mirrors branchFlowEnforce/collabPromote, VHS-REQ-719): the
 // pure logic (identity, staleness, release-decision, formatting) AND the filesystem
 // lease I/O (acquire/release/read/list, temp-dir unit-tested) are mapped + counted;
-// only resolveGateDir (git spawn) + the CLI/require.main entry stay v8-ignored.
+// only resolveGateDir (git spawn), the CLI/require.main entry, and one defensive
+// non-EEXIST mkdir rethrow (acquireLease) stay v8-ignored.
 
 const fs = require('fs');
 const path = require('path');
