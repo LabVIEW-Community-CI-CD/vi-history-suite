@@ -41,6 +41,11 @@ const GROUNDED_MODEL = process.env.RV_GROUNDED_MODEL || 'vichange8b-2shot';
 const BASE_MODEL = process.env.RV_BASE_MODEL || 'llama3.1:8b';
 const SWEEP_LABEL = (process.env.VIHS_SWEEP_LABEL || '').replace(/[^a-z0-9._-]/gi, '');
 const OUT = path.join('prototype', 'ml', 'dataset', `reviewer-value-eval${SWEEP_LABEL ? `-${SWEEP_LABEL}` : ''}.json`);
+// RV_ENRICHED_FACTS=1 appends the item-level change detail (e.g. "VI Version : changed from 21.0 to
+// 20.0") to the grounded facts. The shipped buildGroundedNarrativeFacts filters vi-attributes + omits
+// item text, so the model cannot know a diff is a save-version artifact; enriched facts test whether
+// grounded CAN skip-frame version-only diffs once actually shown the version detail (fair re-test).
+const ENRICHED = process.env.RV_ENRICHED_FACTS === '1';
 
 /** Mirrors correlationFoldEval.isVersionOnlyChange: a single VI-Version vi-attributes save artifact. */
 export function isVersionOnlyChange(model) {
@@ -105,6 +110,14 @@ export function parseJudgeReply(text) {
   } catch { return null; }
 }
 
+/** Grounded facts, optionally ENRICHED with the item-level classification detail (the version text). */
+export function buildFacts(model, cosmeticCount, enriched) {
+  const base = buildGroundedNarrativeFacts(model, cosmeticCount);
+  if (!enriched) return base;
+  const items = (model.classification || []).map((c) => `  - ${c.text}`).join('\n');
+  return items ? `${base}\n- change detail (per item):\n${items}` : base;
+}
+
 if (import.meta.url === `file://${process.argv[1]}`) {
   const rawJudge = createOllamaGenerate({ ollamaUrl: OLLAMA, model: JUDGE_MODEL, system: 'You are a terse, strict grader. Output only the requested JSON.' });
   const judge = (prompt) => rawJudge(prompt, '');
@@ -125,7 +138,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     const versionOnly = isVersionOnlyChange(model);
     const meta = { versionOnly, nonCosmetic: model.totals.detailItemCount, changedSurfaces: (model.changedSurfaces || []).filter((s) => s !== 'vi-attributes').concat(versionOnly ? ['vi-attributes'] : []), risk: model.riskLevel || 'low' };
 
-    const facts = buildGroundedNarrativeFacts(model, cosmetic);
+    const facts = buildFacts(model, cosmetic, ENRICHED);
     const sources = {
       template: renderViSemanticNarrative(model),
       grounded8b: await genGrounded(GROUNDED_NARRATIVE_PROMPT, facts).catch(() => ''),
@@ -182,6 +195,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     schema: 'vi-history-suite/reviewer-value-eval@v1',
     generatedAt: new Date().toISOString(),
     host: 'LINUX', backend: 'gpu', ollamaUrl: OLLAMA,
+    enrichedFacts: ENRICHED,
     judgeModel: JUDGE_MODEL, groundedModel: GROUNDED_MODEL, baseModel: BASE_MODEL,
     fixtureCount: rows.length,
     versionOnlyCount: rows.filter((r) => r.versionOnly).length,
