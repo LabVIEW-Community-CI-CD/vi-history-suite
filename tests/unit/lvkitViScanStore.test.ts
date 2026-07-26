@@ -242,6 +242,37 @@ describe('lvkitViScanStore (VHS-REQ-716)', () => {
       expect(stored?.resolutionCounts?.errorStub).toBe(0);
       expect(stored?.resolutionCounts?.unresolvedPrimitive).toBe(1);
     });
+
+    it('keeps the scan with MORE resolved modules even if it carries a hard stub, over a tiny inline placeholder (#2376 P2 coverage)', async () => {
+      const store = createStore(createFakeFs());
+      // Existing: a single-module inline placeholder (resolved 0, total unresolved 1).
+      expect(await store.put(inlinePlaceholderEnvelope())).toBe(true);
+      // Incoming (same content address, a fuller cross-leg scan that resolved a
+      // dependency the placeholder did not): 1 resolved module + 1 .error.py stub
+      // (resolved 1, total unresolved 1). It must NOT be discarded merely because
+      // its one failure is a hard stub -- resolved coverage ranks first.
+      const richer = buildLvkitViScanEnvelope({
+        viPath: VI_PATH,
+        contentSignature: CONTENT_SIGNATURE,
+        runtime: 'host-native',
+        generatedAt: '2026-07-24T11:02:31.000Z',
+        lvkitSource: 'path',
+        modules: [
+          {
+            relativePath: 'make_path_absolute/klass/make_path_absolute.py',
+            python: 'def make_path_absolute():\n    return 1\n'
+          },
+          {
+            relativePath: 'make_path_absolute/klass/helper.error.py',
+            python: 'raise VILibResolutionNeeded()\n'
+          }
+        ]
+      });
+      expect(await store.put(richer)).toBe(true);
+      const stored = await store.get(VI_PATH, CONTENT_SIGNATURE);
+      expect(stored?.resolutionCounts?.resolved).toBe(1); // the fuller scan is retained
+      expect(stored?.moduleCount).toBe(2);
+    });
   });
 
   describe('createFileLvkitViScanStore fail-closed reads / best-effort writes (VHS-REQ-716.3)', () => {

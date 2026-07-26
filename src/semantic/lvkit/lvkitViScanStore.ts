@@ -63,19 +63,28 @@ function resolutionCountsFor(envelope: LvkitViScanEnvelope): LvkitResolutionCoun
 }
 
 /**
- * True when `a` is STRICTLY cleaner (more resolved) than `b` for upgrade-only
- * precedence. Primary key: total UNRESOLVED provenance -- inline
- * `raise PrimitiveResolutionNeeded` / `raise VILibResolutionNeeded` placeholders
- * (which keep `errorModuleCount` at 0) counted alongside `.error.py` stubs, so an
- * inline placeholder is ranked unresolved, not clean. Tie-break on an equal total:
- * FEWER `.error.py` hard stubs, because a hard stub is less usable than an inline
- * placeholder (which keeps the surrounding generated module) -- so a later
- * hard-stub scan never downgrades an existing inline placeholder, and symmetrically
- * an inline result can still upgrade an existing hard stub. Order-independent.
+ * True when `a` is STRICTLY cleaner (more useful) than `b` for upgrade-only
+ * precedence, as a lexicographic "usefulness" ranking so that neither a later
+ * placeholder run nor a less-complete scan can clobber a more useful cached one:
+ *   1. MORE `resolved` modules wins -- a scan that resolved more dependencies is
+ *      strictly more useful, so a fuller generate (even one carrying a hard stub)
+ *      is never discarded for a smaller one that merely has fewer stubs.
+ *   2. On equal resolved coverage, FEWER total UNRESOLVED modules -- inline
+ *      `raise PrimitiveResolutionNeeded` / `raise VILibResolutionNeeded`
+ *      placeholders (which keep `errorModuleCount` at 0) counted alongside
+ *      `.error.py` stubs, so an inline placeholder is ranked unresolved, not clean.
+ *   3. On an equal total too, FEWER `.error.py` hard stubs -- a hard stub is less
+ *      usable than an inline placeholder (which keeps the surrounding generated
+ *      module), so a hard stub never downgrades an inline placeholder.
+ * Order-independent (a strict total order on (resolved DESC, unresolved ASC,
+ * errorStub ASC)).
  */
 function isStrictlyCleaner(a: LvkitViScanEnvelope, b: LvkitViScanEnvelope): boolean {
   const ca = resolutionCountsFor(a);
   const cb = resolutionCountsFor(b);
+  if (ca.resolved !== cb.resolved) {
+    return ca.resolved > cb.resolved;
+  }
   const totalA = ca.unresolvedPrimitive + ca.unresolvedVilib + ca.errorStub;
   const totalB = cb.unresolvedPrimitive + cb.unresolvedVilib + cb.errorStub;
   if (totalA !== totalB) {
