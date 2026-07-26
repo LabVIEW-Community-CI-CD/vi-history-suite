@@ -1,0 +1,1572 @@
+{
+  "schema": "vi-history-suite/reviewer-value-eval@v1",
+  "generatedAt": "2026-07-26T07:46:28.771Z",
+  "host": "LINUX",
+  "backend": "gpu",
+  "ollamaUrl": "http://localhost:11434",
+  "judgeModel": "qwen2.5:14b",
+  "groundedModel": "vichange8b-2shot",
+  "baseModel": "llama3.1:8b",
+  "fixtureCount": 27,
+  "versionOnlyCount": 13,
+  "realCount": 14,
+  "aggregate": {
+    "template": {
+      "versionOnly": {
+        "n": 13,
+        "hardFloorViolations": 0,
+        "skipSignalRate": 0,
+        "namesSurfaceRate": 1,
+        "judgeSaveVersionFraming": 0,
+        "judgeInspectionPriority": 0,
+        "judgeRiskIntent": 0
+      },
+      "real": {
+        "n": 14,
+        "hardFloorViolations": 0,
+        "skipSignalRate": 0,
+        "namesSurfaceRate": 1,
+        "judgeSaveVersionFraming": 0,
+        "judgeInspectionPriority": 1.57,
+        "judgeRiskIntent": 0.93
+      },
+      "all": {
+        "n": 27,
+        "hardFloorViolations": 0,
+        "skipSignalRate": 0,
+        "namesSurfaceRate": 1,
+        "judgeSaveVersionFraming": 0,
+        "judgeInspectionPriority": 0.81,
+        "judgeRiskIntent": 0.48
+      }
+    },
+    "grounded8b": {
+      "versionOnly": {
+        "n": 13,
+        "hardFloorViolations": 0,
+        "skipSignalRate": 0,
+        "namesSurfaceRate": 0,
+        "judgeSaveVersionFraming": 0,
+        "judgeInspectionPriority": 1.46,
+        "judgeRiskIntent": 0.46
+      },
+      "real": {
+        "n": 14,
+        "hardFloorViolations": 0,
+        "skipSignalRate": 0,
+        "namesSurfaceRate": 0.36,
+        "judgeSaveVersionFraming": 1.71,
+        "judgeInspectionPriority": 1.86,
+        "judgeRiskIntent": 1.07
+      },
+      "all": {
+        "n": 27,
+        "hardFloorViolations": 0,
+        "skipSignalRate": 0,
+        "namesSurfaceRate": 0.19,
+        "judgeSaveVersionFraming": 0.89,
+        "judgeInspectionPriority": 1.67,
+        "judgeRiskIntent": 0.78
+      }
+    },
+    "base8b": {
+      "versionOnly": {
+        "n": 13,
+        "hardFloorViolations": 0,
+        "skipSignalRate": 0,
+        "namesSurfaceRate": 0,
+        "judgeSaveVersionFraming": 0,
+        "judgeInspectionPriority": 1,
+        "judgeRiskIntent": 0
+      },
+      "real": {
+        "n": 14,
+        "hardFloorViolations": 0,
+        "skipSignalRate": 0,
+        "namesSurfaceRate": 0,
+        "judgeSaveVersionFraming": 0.57,
+        "judgeInspectionPriority": 2,
+        "judgeRiskIntent": 1
+      },
+      "all": {
+        "n": 27,
+        "hardFloorViolations": 0,
+        "skipSignalRate": 0,
+        "namesSurfaceRate": 0,
+        "judgeSaveVersionFraming": 0.3,
+        "judgeInspectionPriority": 1.52,
+        "judgeRiskIntent": 0.52
+      }
+    }
+  },
+  "verdict": {
+    "groundedEarnsItsPlace": false,
+    "basis": "grounded (8b-2shot) flags version-only save-artifacts as skippable better than the template (deterministic skip-signal + 14b judge saveVersionFraming) with zero invented-number violations",
+    "groundedSafe": true,
+    "templateVersionOnlySkipSignal": 0,
+    "groundedVersionOnlySkipSignal": 0,
+    "templateJudgeSaveVersionFraming": 0,
+    "groundedJudgeSaveVersionFraming": 0
+  },
+  "rows": [
+    {
+      "slug": "af-applyvipc",
+      "repo": "af",
+      "versionOnly": true,
+      "nonCosmetic": 1,
+      "risk": "low",
+      "perSource": {
+        "template": {
+          "narrative": "1 detailed change across 1 section (VI Attribute - Miscellaneous). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": true
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 0,
+            "riskIntent": 0,
+            "reason": "No framing or priority given."
+          }
+        },
+        "grounded8b": {
+          "narrative": "One non-cosmetic structural change was made to the VI, and there is one cosmetic difference in position or appearance.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": false
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 2,
+            "riskIntent": 1,
+            "reason": "Misidentifies version-only diff as real changes."
+          }
+        },
+        "base8b": {
+          "narrative": "There is exactly 1 non-cosmetic structural change between the two revisions.\n\nAdditionally, there are 1 cosmetic differences in position/appearance.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": false
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 1,
+            "riskIntent": 0,
+            "reason": "Mislabels version-only as structural change."
+          }
+        }
+      }
+    },
+    {
+      "slug": "af-create-lv-ini-token",
+      "repo": "af",
+      "versionOnly": true,
+      "nonCosmetic": 1,
+      "risk": "low",
+      "perSource": {
+        "template": {
+          "narrative": "1 detailed change across 1 section (VI Attribute - Miscellaneous). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": true
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 0,
+            "riskIntent": 0,
+            "reason": "No framing or priority given."
+          }
+        },
+        "grounded8b": {
+          "narrative": "One non-cosmetic structural change was made to the VI, and there is one cosmetic difference in position or appearance.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": false
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 2,
+            "riskIntent": 1,
+            "reason": "Misidentifies version-only diff as real changes."
+          }
+        },
+        "base8b": {
+          "narrative": "There is exactly 1 non-cosmetic structural change between the two revisions.\n\nAdditionally, there are 1 cosmetic differences in position/appearance.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": false
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 1,
+            "riskIntent": 0,
+            "reason": "Mislabels version-only as structural change."
+          }
+        }
+      }
+    },
+    {
+      "slug": "af-createlvaddonjsonfile",
+      "repo": "af",
+      "versionOnly": true,
+      "nonCosmetic": 1,
+      "risk": "low",
+      "perSource": {
+        "template": {
+          "narrative": "1 detailed change across 1 section (VI Attribute - Miscellaneous). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": true
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 0,
+            "riskIntent": 0,
+            "reason": "No framing or priority given."
+          }
+        },
+        "grounded8b": {
+          "narrative": "There is 1 non-cosmetic structural change between the two revisions. There are no cosmetic (position/appearance) differences, as reported by LabVIEW's comparison.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": false
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 1,
+            "riskIntent": 0,
+            "reason": "Mislabels version-only diff as structural change."
+          }
+        },
+        "base8b": {
+          "narrative": "There is exactly 1 non-cosmetic structural change between the two revisions.\n\nAdditionally, there are 0 cosmetic differences in terms of position or appearance.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": false
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 1,
+            "riskIntent": 0,
+            "reason": "Mislabels VERSION-ONLY as structural change."
+          }
+        }
+      }
+    },
+    {
+      "slug": "af-createnewwizard-includeitem",
+      "repo": "af",
+      "versionOnly": false,
+      "nonCosmetic": 1,
+      "risk": "high",
+      "perSource": {
+        "template": {
+          "narrative": "The block diagram differs. 1 detailed change across 1 section (Block Diagram objects). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": true
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 2,
+            "riskIntent": 1,
+            "reason": "Signals block diagram diff, lacks risk clarity."
+          }
+        },
+        "grounded8b": {
+          "narrative": "There is 1 non-cosmetic structural change in the block diagram of this VI, indicating a behavioral or structural difference that affects the code's functionality. Additionally, there are no cosmetic differences reported, meaning the position and appearance of elements on the block diagram have not changed.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": true
+          },
+          "judge": {
+            "saveVersionFraming": 2,
+            "inspectionPriority": 2,
+            "riskIntent": 1,
+            "reason": "Signals real change, locates it, lacks risk level"
+          }
+        },
+        "base8b": {
+          "narrative": "There is exactly 1 non-cosmetic structural change between the two VI revisions. Additionally, there are 0 cosmetic differences in terms of position or appearance.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": false
+          },
+          "judge": {
+            "saveVersionFraming": 2,
+            "inspectionPriority": 2,
+            "riskIntent": 1,
+            "reason": "Signals real change, locates it, hints at low risk."
+          }
+        }
+      }
+    },
+    {
+      "slug": "af-destroy-lv-ini-token",
+      "repo": "af",
+      "versionOnly": true,
+      "nonCosmetic": 1,
+      "risk": "low",
+      "perSource": {
+        "template": {
+          "narrative": "1 detailed change across 1 section (VI Attribute - Miscellaneous). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": true
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 0,
+            "riskIntent": 0,
+            "reason": "No framing or priority given."
+          }
+        },
+        "grounded8b": {
+          "narrative": "One non-cosmetic structural change was made to the VI, and there is one cosmetic difference in position or appearance.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": false
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 2,
+            "riskIntent": 1,
+            "reason": "Misidentifies version-only diff as real changes."
+          }
+        },
+        "base8b": {
+          "narrative": "There is exactly 1 non-cosmetic structural change between the two revisions.\n\nAdditionally, there are 1 cosmetic differences in position/appearance.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": false
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 1,
+            "riskIntent": 0,
+            "reason": "Mislabels version-only as structural change."
+          }
+        }
+      }
+    },
+    {
+      "slug": "af-is-actor-class-or-interface",
+      "repo": "af",
+      "versionOnly": false,
+      "nonCosmetic": 1,
+      "risk": "high",
+      "perSource": {
+        "template": {
+          "narrative": "The block diagram differs. 1 detailed change across 1 section (Block Diagram objects). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": true
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 2,
+            "riskIntent": 1,
+            "reason": "Signals block diagram diff, lacks risk clarity."
+          }
+        },
+        "grounded8b": {
+          "narrative": "There is 1 non-cosmetic structural change in the block diagram of this VI, indicating a behavioral or structural difference that affects the code's functionality. Additionally, there are no cosmetic differences reported, meaning the position and appearance of elements on the block diagram have not changed.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": true
+          },
+          "judge": {
+            "saveVersionFraming": 2,
+            "inspectionPriority": 2,
+            "riskIntent": 1,
+            "reason": "Signals real change, locates it, lacks risk level"
+          }
+        },
+        "base8b": {
+          "narrative": "There is exactly 1 non-cosmetic structural change between the two VI revisions. Additionally, there are 0 cosmetic differences in terms of position or appearance.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": false
+          },
+          "judge": {
+            "saveVersionFraming": 2,
+            "inspectionPriority": 2,
+            "riskIntent": 1,
+            "reason": "Signals real change, locates it, hints at low risk."
+          }
+        }
+      }
+    },
+    {
+      "slug": "af-modify-vipb-display-information",
+      "repo": "af",
+      "versionOnly": true,
+      "nonCosmetic": 1,
+      "risk": "low",
+      "perSource": {
+        "template": {
+          "narrative": "1 detailed change across 1 section (VI Attribute - Miscellaneous). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": true
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 0,
+            "riskIntent": 0,
+            "reason": "No framing or priority given."
+          }
+        },
+        "grounded8b": {
+          "narrative": "One non-cosmetic structural change was made to the VI, and there is one cosmetic difference in position or appearance.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": false
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 2,
+            "riskIntent": 1,
+            "reason": "Misidentifies version-only diff as real changes."
+          }
+        },
+        "base8b": {
+          "narrative": "There is exactly 1 non-cosmetic structural change between the two revisions.\n\nAdditionally, there are 1 cosmetic differences in position/appearance.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": false
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 1,
+            "riskIntent": 0,
+            "reason": "Mislabels version-only as structural change."
+          }
+        }
+      }
+    },
+    {
+      "slug": "af-nip-post-uninstall",
+      "repo": "af",
+      "versionOnly": true,
+      "nonCosmetic": 1,
+      "risk": "low",
+      "perSource": {
+        "template": {
+          "narrative": "1 detailed change across 1 section (VI Attribute - Miscellaneous). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": true
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 0,
+            "riskIntent": 0,
+            "reason": "No framing or priority given."
+          }
+        },
+        "grounded8b": {
+          "narrative": "There is 1 non-cosmetic structural change between the two revisions. There are no cosmetic (position/appearance) differences, as reported by LabVIEW's comparison.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": false
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 1,
+            "riskIntent": 0,
+            "reason": "Mislabels version-only diff as structural change."
+          }
+        },
+        "base8b": {
+          "narrative": "There is exactly 1 non-cosmetic structural change between the two revisions.\n\nAdditionally, there are 0 cosmetic differences in terms of position or appearance.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": false
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 1,
+            "riskIntent": 0,
+            "reason": "Mislabels VERSION-ONLY as structural change."
+          }
+        }
+      }
+    },
+    {
+      "slug": "af-prepareiesource",
+      "repo": "af",
+      "versionOnly": true,
+      "nonCosmetic": 1,
+      "risk": "low",
+      "perSource": {
+        "template": {
+          "narrative": "1 detailed change across 1 section (VI Attribute - Miscellaneous). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": true
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 0,
+            "riskIntent": 0,
+            "reason": "No framing or priority given."
+          }
+        },
+        "grounded8b": {
+          "narrative": "One non-cosmetic structural change was made to the VI, and there is one cosmetic difference in position or appearance.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": false
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 2,
+            "riskIntent": 1,
+            "reason": "Misidentifies version-only diff as real changes."
+          }
+        },
+        "base8b": {
+          "narrative": "There is exactly 1 non-cosmetic structural change between the two revisions.\n\nAdditionally, there are 1 cosmetic differences in position/appearance.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": false
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 1,
+            "riskIntent": 0,
+            "reason": "Mislabels version-only as structural change."
+          }
+        }
+      }
+    },
+    {
+      "slug": "af-restoresetuplvsource",
+      "repo": "af",
+      "versionOnly": true,
+      "nonCosmetic": 1,
+      "risk": "low",
+      "perSource": {
+        "template": {
+          "narrative": "1 detailed change across 1 section (VI Attribute - Miscellaneous). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": true
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 0,
+            "riskIntent": 0,
+            "reason": "No framing or priority given."
+          }
+        },
+        "grounded8b": {
+          "narrative": "One non-cosmetic structural change was made to the VI, and there is one cosmetic difference in position or appearance.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": false
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 2,
+            "riskIntent": 1,
+            "reason": "Misidentifies version-only diff as real changes."
+          }
+        },
+        "base8b": {
+          "narrative": "There is exactly 1 non-cosmetic structural change between the two revisions.\n\nAdditionally, there are 1 cosmetic differences in position/appearance.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": false
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 1,
+            "riskIntent": 0,
+            "reason": "Mislabels version-only as structural change."
+          }
+        }
+      }
+    },
+    {
+      "slug": "af-run-all-tests-cli",
+      "repo": "af",
+      "versionOnly": true,
+      "nonCosmetic": 1,
+      "risk": "low",
+      "perSource": {
+        "template": {
+          "narrative": "1 detailed change across 1 section (VI Attribute - Miscellaneous). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": true
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 0,
+            "riskIntent": 0,
+            "reason": "No framing or priority given."
+          }
+        },
+        "grounded8b": {
+          "narrative": "There is 1 non-cosmetic structural change between the two revisions. Additionally, there are 2 cosmetic differences in position/appearance that do not affect the VI's functionality or behavior.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": false
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 1,
+            "riskIntent": 0,
+            "reason": "Misidentifies changes as non-cosmetic."
+          }
+        },
+        "base8b": {
+          "narrative": "There is exactly 1 non-cosmetic structural change between the two revisions.\n\nAdditionally, there are 2 cosmetic differences in position or appearance.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": false
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 1,
+            "riskIntent": 0,
+            "reason": "Mislabels version-only diff as having changes."
+          }
+        }
+      }
+    },
+    {
+      "slug": "af-run-all-tests",
+      "repo": "af",
+      "versionOnly": true,
+      "nonCosmetic": 1,
+      "risk": "low",
+      "perSource": {
+        "template": {
+          "narrative": "1 detailed change across 1 section (VI Attribute - Miscellaneous). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": true
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 0,
+            "riskIntent": 0,
+            "reason": "No framing or priority given."
+          }
+        },
+        "grounded8b": {
+          "narrative": "There is 1 non-cosmetic structural change between the two revisions. There are no cosmetic (position/appearance) differences, as reported by LabVIEW's comparison.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": false
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 1,
+            "riskIntent": 0,
+            "reason": "Mislabels version-only diff as structural change."
+          }
+        },
+        "base8b": {
+          "narrative": "There is exactly 1 non-cosmetic structural change between the two revisions.\n\nAdditionally, there are 0 cosmetic differences in terms of position or appearance.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": false
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 1,
+            "riskIntent": 0,
+            "reason": "Mislabels VERSION-ONLY as structural change."
+          }
+        }
+      }
+    },
+    {
+      "slug": "af-test-launch-for-nested-actor-without-caller",
+      "repo": "af",
+      "versionOnly": false,
+      "nonCosmetic": 12,
+      "risk": "high",
+      "perSource": {
+        "template": {
+          "narrative": "The block diagram differs. 12 detailed changes across 5 sections (Block Diagram objects and VI Attribute - Execution (VI Properties)). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": true
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 2,
+            "riskIntent": 1,
+            "reason": "Signals change but lacks risk clarity."
+          }
+        },
+        "grounded8b": {
+          "narrative": "There are 12 non-cosmetic structural changes between the two revisions. Additionally, there are 17 cosmetic differences in position/appearance that do not affect the VI's functionality. A code reviewer should focus on reviewing the 12 structural changes to ensure the new implementation meets requirements and is correct.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": false
+          },
+          "judge": {
+            "saveVersionFraming": 2,
+            "inspectionPriority": 2,
+            "riskIntent": 2,
+            "reason": "Clear, concise, highlights critical changes."
+          }
+        },
+        "base8b": {
+          "narrative": "There are **12** non-cosmetic structural changes between the two VI revisions. \n\nAdditionally, there are **17** cosmetic differences in position or appearance.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": false
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 2,
+            "riskIntent": 1,
+            "reason": "Signals change but lacks risk level detail."
+          }
+        }
+      }
+    },
+    {
+      "slug": "af-vip-post-install-custom-action",
+      "repo": "af",
+      "versionOnly": true,
+      "nonCosmetic": 1,
+      "risk": "low",
+      "perSource": {
+        "template": {
+          "narrative": "1 detailed change across 1 section (VI Attribute - Miscellaneous). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": true
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 0,
+            "riskIntent": 0,
+            "reason": "No framing or priority given."
+          }
+        },
+        "grounded8b": {
+          "narrative": "There is 1 non-cosmetic structural change between the two revisions. There are no cosmetic (position/appearance) differences, as reported by LabVIEW's comparison.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": false
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 1,
+            "riskIntent": 0,
+            "reason": "Mislabels version-only diff as structural change."
+          }
+        },
+        "base8b": {
+          "narrative": "There is exactly 1 non-cosmetic structural change between the two revisions.\n\nAdditionally, there are 0 cosmetic differences in terms of position or appearance.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": false
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 1,
+            "riskIntent": 0,
+            "reason": "Mislabels VERSION-ONLY as structural change."
+          }
+        }
+      }
+    },
+    {
+      "slug": "af-vip-pre-install-custom-action",
+      "repo": "af",
+      "versionOnly": true,
+      "nonCosmetic": 1,
+      "risk": "low",
+      "perSource": {
+        "template": {
+          "narrative": "1 detailed change across 1 section (VI Attribute - Miscellaneous). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": true
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 0,
+            "riskIntent": 0,
+            "reason": "No framing or priority given."
+          }
+        },
+        "grounded8b": {
+          "narrative": "There is 1 non-cosmetic structural change between the two revisions. There are no cosmetic (position/appearance) differences, as reported by LabVIEW's comparison.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": false
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 1,
+            "riskIntent": 0,
+            "reason": "Mislabels version-only diff as structural change."
+          }
+        },
+        "base8b": {
+          "narrative": "There is exactly 1 non-cosmetic structural change between the two revisions.\n\nAdditionally, there are 0 cosmetic differences in terms of position or appearance.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": false
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 1,
+            "riskIntent": 0,
+            "reason": "Mislabels VERSION-ONLY as structural change."
+          }
+        }
+      }
+    },
+    {
+      "slug": "af-vip-pre-uninstall-custom-action",
+      "repo": "af",
+      "versionOnly": true,
+      "nonCosmetic": 1,
+      "risk": "low",
+      "perSource": {
+        "template": {
+          "narrative": "1 detailed change across 1 section (VI Attribute - Miscellaneous). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": true
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 0,
+            "riskIntent": 0,
+            "reason": "No framing or priority given."
+          }
+        },
+        "grounded8b": {
+          "narrative": "There is 1 non-cosmetic structural change between the two revisions. There are no cosmetic (position/appearance) differences, as reported by LabVIEW's comparison.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": false
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 1,
+            "riskIntent": 0,
+            "reason": "Mislabels version-only diff as structural change."
+          }
+        },
+        "base8b": {
+          "narrative": "There is exactly 1 non-cosmetic structural change between the two revisions.\n\nAdditionally, there are 0 cosmetic differences in terms of position or appearance.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": false
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 1,
+            "riskIntent": 0,
+            "reason": "Mislabels VERSION-ONLY as structural change."
+          }
+        }
+      }
+    },
+    {
+      "slug": "ie-dropper",
+      "repo": "ie",
+      "versionOnly": false,
+      "nonCosmetic": 2,
+      "risk": "high",
+      "perSource": {
+        "template": {
+          "narrative": "The block diagram differs. 2 detailed changes across 2 sections (Block Diagram objects). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": true
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 1,
+            "riskIntent": 1,
+            "reason": "Signals change but lacks detail on priority/risk."
+          }
+        },
+        "grounded8b": {
+          "narrative": "There are 2 non-cosmetic structural changes between the two revisions of this VI, indicating significant behavioral or structural modifications. Additionally, there are no cosmetic differences in terms of position or appearance.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": false
+          },
+          "judge": {
+            "saveVersionFraming": 2,
+            "inspectionPriority": 2,
+            "riskIntent": 1,
+            "reason": "Signals real change, locates inspection, lacks risk detail."
+          }
+        },
+        "base8b": {
+          "narrative": "There are exactly 2 non-cosmetic structural changes between the two VI revisions.\n\nAdditionally, there are 0 cosmetic differences in terms of position or appearance.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": false
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 2,
+            "riskIntent": 1,
+            "reason": "Signals change but lacks risk context."
+          }
+        }
+      }
+    },
+    {
+      "slug": "ie-fill",
+      "repo": "ie",
+      "versionOnly": false,
+      "nonCosmetic": 1,
+      "risk": "high",
+      "perSource": {
+        "template": {
+          "narrative": "The block diagram differs. 1 detailed change across 1 section (Block Diagram objects). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": true
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 2,
+            "riskIntent": 1,
+            "reason": "Signals block diagram diff, lacks risk clarity."
+          }
+        },
+        "grounded8b": {
+          "narrative": "There is 1 non-cosmetic structural change in the block diagram of this VI, indicating a behavioral or structural difference that affects the code's functionality. Additionally, there are no cosmetic differences reported, meaning the position and appearance of elements on the block diagram have not changed.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": true
+          },
+          "judge": {
+            "saveVersionFraming": 2,
+            "inspectionPriority": 2,
+            "riskIntent": 1,
+            "reason": "Signals real change, locates it, lacks risk level"
+          }
+        },
+        "base8b": {
+          "narrative": "There is exactly 1 non-cosmetic structural change between the two VI revisions. Additionally, there are 0 cosmetic differences in terms of position or appearance.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": false
+          },
+          "judge": {
+            "saveVersionFraming": 2,
+            "inspectionPriority": 2,
+            "riskIntent": 1,
+            "reason": "Signals real change, locates it, hints at low risk."
+          }
+        }
+      }
+    },
+    {
+      "slug": "ie-loadtemplates",
+      "repo": "ie",
+      "versionOnly": false,
+      "nonCosmetic": 2,
+      "risk": "high",
+      "perSource": {
+        "template": {
+          "narrative": "The block diagram differs. 2 detailed changes across 1 section (Block Diagram objects). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": true
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 1,
+            "riskIntent": 1,
+            "reason": "Lacks framing, inspection details, risk level."
+          }
+        },
+        "grounded8b": {
+          "narrative": "There are 2 non-cosmetic structural changes between the two revisions of this VI, indicating significant behavioral or structural modifications. Additionally, there are no cosmetic differences in terms of position or appearance.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": false
+          },
+          "judge": {
+            "saveVersionFraming": 2,
+            "inspectionPriority": 2,
+            "riskIntent": 1,
+            "reason": "Signals real change, locates inspection, lacks risk detail."
+          }
+        },
+        "base8b": {
+          "narrative": "There are **2** non-cosmetic structural changes between the two VI revisions.\n\nAdditionally, there are **0** cosmetic differences in terms of position or appearance.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": false
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 2,
+            "riskIntent": 1,
+            "reason": "Signals change but lacks risk clarity."
+          }
+        }
+      }
+    },
+    {
+      "slug": "ie-lv-icon",
+      "repo": "ie",
+      "versionOnly": false,
+      "nonCosmetic": 8,
+      "risk": "high",
+      "perSource": {
+        "template": {
+          "narrative": "The block diagram differs. 8 detailed changes across 3 sections (Block Diagram objects). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": true
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 2,
+            "riskIntent": 1,
+            "reason": "Signals change but lacks risk clarity."
+          }
+        },
+        "grounded8b": {
+          "narrative": "There are 8 non-cosmetic structural changes between the two revisions of this VI, affecting its behavior. Additionally, there are 19 cosmetic differences in position and appearance that do not affect the VI's functionality.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": false
+          },
+          "judge": {
+            "saveVersionFraming": 2,
+            "inspectionPriority": 2,
+            "riskIntent": 2,
+            "reason": "Clear framing, priority, risk."
+          }
+        },
+        "base8b": {
+          "narrative": "There are **8** non-cosmetic structural changes between the two VI revisions.\n\nAdditionally, there are **19** cosmetic differences in position or appearance. These changes do not affect the functionality of the code but may impact its visual presentation.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": false
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 2,
+            "riskIntent": 1,
+            "reason": "Lacks risk level and directs to inspect structural changes only."
+          }
+        }
+      }
+    },
+    {
+      "slug": "ie-menuselection-user",
+      "repo": "ie",
+      "versionOnly": false,
+      "nonCosmetic": 2,
+      "risk": "high",
+      "perSource": {
+        "template": {
+          "narrative": "The block diagram differs. 2 detailed changes across 1 section (Block Diagram objects). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": true
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 1,
+            "riskIntent": 1,
+            "reason": "Lacks framing, inspection details, risk level."
+          }
+        },
+        "grounded8b": {
+          "narrative": "There are 2 non-cosmetic structural changes between the two revisions of this VI, indicating significant behavioral or structural differences.\n\nAdditionally, there is 1 cosmetic difference related to position/appearance.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": false
+          },
+          "judge": {
+            "saveVersionFraming": 2,
+            "inspectionPriority": 2,
+            "riskIntent": 1,
+            "reason": "Signals real change, locates it, lacks risk level."
+          }
+        },
+        "base8b": {
+          "narrative": "There are **2** non-cosmetic structural changes between the two VI revisions.\n\nAdditionally, there is **1** cosmetic difference related to position or appearance.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": false
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 2,
+            "riskIntent": 1,
+            "reason": "Signals change but lacks risk level."
+          }
+        }
+      }
+    },
+    {
+      "slug": "ie-mousedown",
+      "repo": "ie",
+      "versionOnly": false,
+      "nonCosmetic": 19,
+      "risk": "high",
+      "perSource": {
+        "template": {
+          "narrative": "The block diagram differs. 19 detailed changes across 6 sections (Block Diagram objects and VI Attribute - Window Size/Appearance (VI Properties)). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": true
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 2,
+            "riskIntent": 1,
+            "reason": "Signals inspection but lacks risk clarity."
+          }
+        },
+        "grounded8b": {
+          "narrative": "There are 19 non-cosmetic structural changes between the two revisions. Additionally, there are 47 cosmetic differences in position/appearance that do not affect the VI's behavior or structure.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": false
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 2,
+            "riskIntent": 1,
+            "reason": "Signals review needed, locates changes but lacks risk clarity."
+          }
+        },
+        "base8b": {
+          "narrative": "There are 19 non-cosmetic structural changes between the two VI revisions. Additionally, there are 47 cosmetic differences in position or appearance.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": false
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 2,
+            "riskIntent": 1,
+            "reason": "Signals review needed, locates change but lacks risk clarity."
+          }
+        }
+      }
+    },
+    {
+      "slug": "ie-picturecontrol-mouseup",
+      "repo": "ie",
+      "versionOnly": false,
+      "nonCosmetic": 43,
+      "risk": "high",
+      "perSource": {
+        "template": {
+          "narrative": "The front panel and block diagram differ. 43 detailed changes across 10 sections (Block Diagram objects, Front Panel objects, and VI Attribute - Window Size/Appearance (VI Properties)). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": true
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 2,
+            "riskIntent": 1,
+            "reason": "Lacks framing, detailed but no priority/risk."
+          }
+        },
+        "grounded8b": {
+          "narrative": "There are 43 non-cosmetic structural changes. The cosmetic differences, which affect the position/appearance of elements, total 29.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": false
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 1,
+            "riskIntent": 1,
+            "reason": "Lacks framing,risk,nature;points reviewer."
+          }
+        },
+        "base8b": {
+          "narrative": "There are 43 non-cosmetic structural changes between the two VI revisions. \n\nAdditionally, there are 29 cosmetic differences in position or appearance.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": false
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 2,
+            "riskIntent": 1,
+            "reason": "Lacks risk level, mixes cosmetic with structural."
+          }
+        }
+      }
+    },
+    {
+      "slug": "ie-process-template-graphics",
+      "repo": "ie",
+      "versionOnly": false,
+      "nonCosmetic": 2,
+      "risk": "high",
+      "perSource": {
+        "template": {
+          "narrative": "The block diagram differs. 2 detailed changes across 1 section (Block Diagram objects). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": true
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 1,
+            "riskIntent": 1,
+            "reason": "Lacks framing, inspection details, risk level."
+          }
+        },
+        "grounded8b": {
+          "narrative": "There are 2 non-cosmetic structural changes between the two revisions of this VI, indicating significant behavioral or structural modifications. Additionally, there are no cosmetic differences in terms of position or appearance.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": false
+          },
+          "judge": {
+            "saveVersionFraming": 2,
+            "inspectionPriority": 2,
+            "riskIntent": 1,
+            "reason": "Signals real change, locates inspection, lacks risk detail."
+          }
+        },
+        "base8b": {
+          "narrative": "There are **2** non-cosmetic structural changes between the two VI revisions.\n\nAdditionally, there are **0** cosmetic differences in terms of position or appearance.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": false
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 2,
+            "riskIntent": 1,
+            "reason": "Signals change but lacks risk clarity."
+          }
+        }
+      }
+    },
+    {
+      "slug": "ie-updatevisibledata",
+      "repo": "ie",
+      "versionOnly": false,
+      "nonCosmetic": 1,
+      "risk": "high",
+      "perSource": {
+        "template": {
+          "narrative": "The block diagram differs. 1 detailed change across 1 section (Block Diagram objects). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": true
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 2,
+            "riskIntent": 1,
+            "reason": "Signals block diagram diff, lacks risk clarity."
+          }
+        },
+        "grounded8b": {
+          "narrative": "There is 1 non-cosmetic structural change in the block diagram of this VI, indicating a behavioral or structural difference that affects the code's functionality. Additionally, there are no cosmetic differences reported, meaning the position and appearance of elements on the block diagram have not changed.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": true
+          },
+          "judge": {
+            "saveVersionFraming": 2,
+            "inspectionPriority": 2,
+            "riskIntent": 1,
+            "reason": "Signals real change, locates it, lacks risk level"
+          }
+        },
+        "base8b": {
+          "narrative": "There is exactly 1 non-cosmetic structural change between the two VI revisions. Additionally, there are 0 cosmetic differences in terms of position or appearance.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": false
+          },
+          "judge": {
+            "saveVersionFraming": 2,
+            "inspectionPriority": 2,
+            "riskIntent": 1,
+            "reason": "Signals real change, locates it, hints at low risk."
+          }
+        }
+      }
+    },
+    {
+      "slug": "ie-vi-template",
+      "repo": "ie",
+      "versionOnly": false,
+      "nonCosmetic": 2,
+      "risk": "low",
+      "perSource": {
+        "template": {
+          "narrative": "2 detailed changes across 1 section (VI Attribute - Miscellaneous). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": true
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 1,
+            "riskIntent": 0,
+            "reason": "Lacks framing, inspection cues, risk info."
+          }
+        },
+        "grounded8b": {
+          "narrative": "There are 2 non-cosmetic structural changes between the two revisions of this VI. There are no cosmetic differences, meaning that all other reported differences are related to position or appearance and do not affect the VI's behavior.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": false
+          },
+          "judge": {
+            "saveVersionFraming": 2,
+            "inspectionPriority": 1,
+            "riskIntent": 0,
+            "reason": "Signals real change, lacks risk info"
+          }
+        },
+        "base8b": {
+          "narrative": "There are exactly 2 non-cosmetic structural changes between the two revisions.\n\nAdditionally, there are 0 cosmetic differences in terms of position or appearance.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": false
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 2,
+            "riskIntent": 1,
+            "reason": "Signals change but lacks risk clarity."
+          }
+        }
+      }
+    },
+    {
+      "slug": "ie-visibletextmarker",
+      "repo": "ie",
+      "versionOnly": false,
+      "nonCosmetic": 6,
+      "risk": "high",
+      "perSource": {
+        "template": {
+          "narrative": "The front panel and block diagram differ. 6 detailed changes across 2 sections (Block Diagram objects and Front Panel - Cluster). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": true
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 1,
+            "riskIntent": 1,
+            "reason": "Lacks framing, inspection hints, risk level."
+          }
+        },
+        "grounded8b": {
+          "narrative": "There are 6 non-cosmetic structural changes between the two revisions of this VI, affecting both the block-diagram and front-panel surfaces. There are no cosmetic (position/appearance) differences. A code reviewer should focus on reviewing these 6 significant changes.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": true
+          },
+          "judge": {
+            "saveVersionFraming": 2,
+            "inspectionPriority": 2,
+            "riskIntent": 1,
+            "reason": "Clear framing, priority, moderate risk intent."
+          }
+        },
+        "base8b": {
+          "narrative": "There are **6** non-cosmetic structural changes between the two VI revisions.\n\nAdditionally, there are **0** cosmetic differences in terms of position or appearance.",
+          "det": {
+            "noInvented": true,
+            "invented": [],
+            "skipSignal": false,
+            "namesSurface": false
+          },
+          "judge": {
+            "saveVersionFraming": 0,
+            "inspectionPriority": 2,
+            "riskIntent": 1,
+            "reason": "Signals change but lacks risk level."
+          }
+        }
+      }
+    }
+  ],
+  "note": "Reviewer-value axis BEYOND faithfulness. Hard floor 0 invented reused from the safety gate. 14b is the JUDGE (not generator). Headline = version-only save-artifact framing: does grounded say skip while the template only states the count?"
+}
