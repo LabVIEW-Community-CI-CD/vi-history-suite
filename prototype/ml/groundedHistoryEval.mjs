@@ -21,7 +21,13 @@ import { scoreNarrative, selectFaithfulNarrative } from './narrativeQualityGate.
 import { createOllamaGenerate } from './groundedNarrativeProvider.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const OUT = path.join(__dirname, 'dataset', 'ollama-grounded-history-eval.json');
+// Optional VIHS_SWEEP_LABEL host/backend suffix (mirrors groundedProviderSweep) so CPU vs GPU
+// evidence do not clobber: e.g. VIHS_SWEEP_LABEL=win-cpu -> ollama-grounded-history-eval-win-cpu.json.
+// VIHS_EVAL_HOST / VIHS_EVAL_BACKEND record the run host/backend in the report (default LINUX/gpu).
+const SWEEP_LABEL = (process.env.VIHS_SWEEP_LABEL || '').replace(/[^a-z0-9._-]/gi, '');
+const EVAL_HOST = process.env.VIHS_EVAL_HOST || 'LINUX';
+const EVAL_BACKEND = process.env.VIHS_EVAL_BACKEND || 'gpu';
+const OUT = path.join(__dirname, 'dataset', `ollama-grounded-history-eval${SWEEP_LABEL ? `-${SWEEP_LABEL}` : ''}.json`);
 const OLLAMA = process.env.OLLAMA_URL || 'http://localhost:11434';
 const MODEL = process.env.HIST_MODEL || 'vichange8b-2shot';
 const HIST_SCORE_KEYS = ['statesStructuralCount', 'noFalseNoChange', 'noInventedNumbers'];
@@ -105,7 +111,7 @@ async function main() {
   const report = {
     schema: 'vi-history-suite/ollama-grounded-history-eval@v1',
     generatedAt: new Date().toISOString(),
-    host: 'LINUX', backend: 'gpu', ollamaUrl: OLLAMA, model: MODEL, surface: 'summarize_vi_history',
+    host: EVAL_HOST, backend: EVAL_BACKEND, label: SWEEP_LABEL || null, ollamaUrl: OLLAMA, model: MODEL, surface: 'summarize_vi_history',
     timeline: 'synthetic (WIN audit fake: 4 revisions, 1 changing, 1 blocked, 1 no-difference)',
     headlineChangingStepCount: t.changingStepCount,
     allowedNumbers,
