@@ -27,6 +27,12 @@ Work as a **prototype**: iterate with throwaway drivers in a temp dir first, pro
 proven ones into `scripts/*.mjs`/`*.cjs` (these are coverage/inventory-exempt), and
 communicate progress back to the Windows machine via commits on this branch.
 
+**Search tooling — use ripgrep (`rg`):** it is ~10× faster than `grep` and is the
+standard search tool for **both** the Linux and Windows sides of this collaboration.
+Prefer `rg` over `grep`/`findstr`/`Select-String` in every driver and shell step.
+Install: Linux `sudo apt-get install -y ripgrep` (or `cargo install ripgrep`),
+Windows `winget install BurntSushi.ripgrep.MSVC` (on PATH via the WinGet Links dir).
+
 **Hard rules:** Do **NOT** open a pull request. Do **NOT** push to or modify
 `develop`/`main`. Only push to `prototype/ollama-mcp-linux-collab`. **Never
 force-push** this shared branch — always `git pull --rebase` first.
