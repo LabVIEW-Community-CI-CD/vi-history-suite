@@ -260,10 +260,15 @@ guest stdout until exit — use
 [`vagrant/follow-guest-progress.sh`](../vagrant/follow-guest-progress.sh) to tail
 progress):
 
-- **lv_icon closure proof**: `git checkout -f fc09736` in the icon-editor repo,
-  then `node C:\vihs-workspace\out\tooling\viPreviewVerifyCli.js --provider host
-  --labview-version 2026 --sample-vi <lv_icon path> --proof-out <dir>` — lone
-  (isolated copy, no `.lvproj`) vs full-tree (enclosing `lv_icon_editor.lvproj`).
+- **lv_icon closure proof** (one command): `node
+  C:\vihs-workspace\vagrant\verify-closure-proof.cjs`
+  ([`vagrant/verify-closure-proof.cjs`](../vagrant/verify-closure-proof.cjs))
+  checks out the pin, then renders the VI lone (isolated copy, no `.lvproj` ->
+  partial staging) vs full-tree (enclosing `.lvproj` -> full closure) and writes
+  `vagrant/evidence/closure-proof/closure-proof.json` with the inline-image
+  closure delta (lv_icon: lone 553 / full-tree 638, delta 85). Env knobs:
+  `VIHS_CP_PROVIDER` (`host`|`docker`), `VIHS_CP_REPO`, `VIHS_CP_VI`,
+  `VIHS_CP_SELECTED`, `VIHS_CP_LV_VERSION`, `VIHS_CP_CONTAINER_IMAGE`.
 - **af comparison**: run
   [`vagrant/req699-win-hostnative-driver.cjs`](../vagrant/req699-win-hostnative-driver.cjs)
   with `WIN_ICON_REPO=C:\repos\actor-framework` plus the pair's `WIN_VI_PATH` /
