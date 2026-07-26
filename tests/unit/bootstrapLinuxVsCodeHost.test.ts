@@ -53,13 +53,21 @@ describe('bootstrapLinuxVsCodeHost main (VHS-REQ-684.1)', () => {
     return { write: (s: string) => { out += s; }, get: () => out };
   };
 
-  it('prints usage for help/--help/-h WITHOUT reading /etc/os-release', () => {
+  it('help/--help/-h print usage WITHOUT reading /etc/os-release (platform-independent regression guard)', () => {
     for (const arg of ['help', '--help', '-h']) {
+      let readCalls = 0;
+      // Inject an os-release reader that FAILS if called. help must return before any
+      // os-release read, so this holds on Linux CI (where /etc/os-release EXISTS, so a
+      // plain does-not-throw check would pass even with the bug) — not only where the
+      // real read would throw ENOENT.
+      const readOsRelease = () => {
+        readCalls += 1;
+        throw new Error('os-release must not be read for help');
+      };
       const stdout = capture();
-      // No osReleaseText dep: the help guard must return before readOsRelease
-      // (which throws ENOENT off-Linux), so this never throws on any host.
-      expect(() => bootstrap.main([arg], { stdout })).not.toThrow();
+      expect(() => bootstrap.main([arg], { stdout, readOsRelease })).not.toThrow();
       expect(stdout.get()).toContain('print-plan');
+      expect(readCalls).toBe(0);
     }
   });
 
@@ -69,6 +77,18 @@ describe('bootstrapLinuxVsCodeHost main (VHS-REQ-684.1)', () => {
     const plan = JSON.parse(stdout.get());
     expect(plan.packageFamily).toBe('debian');
     expect(plan.packages).toContain('xvfb');
+  });
+
+  it('reads os-release via the injected reader when osReleaseText is absent (non-help action)', () => {
+    let readCalls = 0;
+    const readOsRelease = () => {
+      readCalls += 1;
+      return 'ID=debian\n';
+    };
+    const stdout = capture();
+    bootstrap.main(['print-plan'], { stdout, readOsRelease });
+    expect(readCalls).toBe(1);
+    expect(JSON.parse(stdout.get()).packageFamily).toBe('debian');
   });
 
   it('install (the default action) runs the apt plan via the injected spawnSync', () => {
