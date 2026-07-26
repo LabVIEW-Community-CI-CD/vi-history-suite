@@ -17,8 +17,11 @@ visual LabVIEW comparison report you can read and share.
     CLI (Windows uses this by default), or
   - **Docker** — an NI LabVIEW container image that you select.
 
-The extension only reads your runtime — it never installs LabVIEW, Docker, or
-any other tool for you.
+The extension never installs the comparison runtime for you — you provide
+LabVIEW or Docker. (It can optionally install its own pinned _dev-tools_ release
+— the compiled MCP server and companion tooling — via **Install Pinned
+Dev-Tools Version**, downloaded into global storage, integrity-verified, and run
+only in a trusted workspace.)
 
 ## Install
 
