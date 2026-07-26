@@ -67,10 +67,10 @@ describe('agentLaunchGate.bucketContentionByPhase (VHS-REQ-719)', () => {
   ];
   it('buckets contention by phase, attributing GPU / CPU / DISK pressure and excluding non-contention', () => {
     const records = [
-      { ts: '2026-01-01T00:05:00.000Z', event: 'retry', resources: { gpu: { present: true, util: 80 }, cpu: { loadPerCore: 0.1 }, disk: { present: true, writeMBps: 1500, readMBps: 1800 } } }, // gpu-eval, gpuHeavy
-      { ts: '2026-01-01T00:06:00.000Z', event: 'retry', resources: { gpu: { present: true, util: 5 }, cpu: { loadPerCore: 0.9 }, disk: { present: true, writeMBps: 1500, readMBps: 1800 } } }, // gpu-eval, cpuHeavy
-      { ts: '2026-01-01T00:12:00.000Z', event: 'advisory-degraded', resources: { gpu: { present: false, util: null }, cpu: { loadPerCore: 0.1 }, disk: { present: true, writeMBps: 30, readMBps: 40 } } }, // disk-io, diskHeavy
-      { ts: '2026-01-01T00:13:00.000Z', event: 'retry', resources: { gpu: { present: true, util: 5 }, cpu: { loadPerCore: 0.1 }, disk: { present: true, writeMBps: 1500, readMBps: 1800 } } }, // disk-io, neither
+      { ts: '2026-01-01T00:05:00.000Z', event: 'retry', resource: 'agent-launch:bench', resources: { gpu: { present: true, util: 80 }, cpu: { loadPerCore: 0.1 }, disk: { present: true, writeMBps: 1500, readMBps: 1800 } } }, // gpu-eval, gpuHeavy
+      { ts: '2026-01-01T00:06:00.000Z', event: 'retry', resource: 'agent-launch:bench', resources: { gpu: { present: true, util: 5 }, cpu: { loadPerCore: 0.9 }, disk: { present: true, writeMBps: 1500, readMBps: 1800 } } }, // gpu-eval, cpuHeavy
+      { ts: '2026-01-01T00:12:00.000Z', event: 'advisory-degraded', resource: 'agent-launch:bench', resources: { gpu: { present: false, util: null }, cpu: { loadPerCore: 0.1 }, disk: { present: true, writeMBps: 30, readMBps: 40 } } }, // disk-io, diskHeavy
+      { ts: '2026-01-01T00:13:00.000Z', event: 'retry', resource: 'agent-launch:bench', resources: { gpu: { present: true, util: 5 }, cpu: { loadPerCore: 0.1 }, disk: { present: true, writeMBps: 1500, readMBps: 1800 } } }, // disk-io, neither
       { ts: '2026-01-01T00:14:00.000Z', event: 'acquired', resources: {} }, // excluded (not contention)
       { ts: '2026-01-01T00:15:00.000Z', event: 'phase-marker' } // excluded
     ];
@@ -82,7 +82,7 @@ describe('agentLaunchGate.bucketContentionByPhase (VHS-REQ-719)', () => {
   });
   it('honors a tunable slow-write floor (per-machine disk threshold)', () => {
     const records = [
-      { ts: '2026-01-01T00:12:00.000Z', event: 'retry', resources: { gpu: { present: false }, cpu: { loadPerCore: 0.1 }, disk: { present: true, writeMBps: 100, readMBps: 1800 } } }
+      { ts: '2026-01-01T00:12:00.000Z', event: 'retry', resource: 'agent-launch:bench', resources: { gpu: { present: false }, cpu: { loadPerCore: 0.1 }, disk: { present: true, writeMBps: 100, readMBps: 1800 } } }
     ];
     expect(mod.bucketContentionByPhase(records, markers)[0].diskHeavy).toBe(0); // 100 > default 50
     expect(mod.bucketContentionByPhase(records, markers, { slowWriteMBps: 200 })[0].diskHeavy).toBe(1); // 100 <= 200
@@ -112,6 +112,7 @@ interface AcquireOverrides {
   env?: Record<string, unknown>;
   worktreeCount?: number;
   acquireLease?: (...a: unknown[]) => unknown;
+  sampleCapability?: (...a: unknown[]) => unknown;
 }
 
 function makeAcquireDeps(overrides: AcquireOverrides = {}) {
@@ -235,9 +236,44 @@ describe('agentLaunchGate defensive/fallback branches (VHS-REQ-719)', () => {
       null,
       { event: 'retry' }, // no ts -> skipped
       { ts: '2026-01-01T00:00:00.000Z', event: 'acquired', resources: {} }, // not contention -> skipped
-      { ts: '2026-01-01T00:00:00.000Z', event: 'retry', resources: { gpu: { present: true, util: 10 }, cpu: { loadPerCore: 0.4 }, disk: { present: false } } }
+      { ts: '2026-01-01T00:00:00.000Z', event: 'retry', resource: 'agent-launch:bench', resources: { gpu: { present: true, util: 10 }, cpu: { loadPerCore: 0.4 }, disk: { present: false } } }
     ];
     const buckets = mod.bucketContentionByPhase(records, [], { gpuBusyUtil: 5, cpuBusyLoadPerCore: 0.3, slowWriteMBps: 10, slowReadMBps: 10 });
     expect(buckets).toEqual([{ phase: 'unknown', total: 1, gpuHeavy: 1, cpuHeavy: 1, diskHeavy: 0, neither: 0 }]);
+  });
+});
+
+describe('agentLaunchGate review-sweep fixes (VHS-REQ-719, issue #2453)', () => {
+  it('shouldSerializeLaunch honors the VIHS_LAUNCH_SERIALIZE force for a shared worktree', () => {
+    expect(mod.shouldSerializeLaunch({ VIHS_LAUNCH_SERIALIZE: '1' }, 1)).toBe(true); // force-on with no subagent id / single worktree
+    expect(mod.shouldSerializeLaunch({ VIHS_LAUNCH_SERIALIZE: '0' }, 1)).toBe(false);
+  });
+  it('bucketContentionByPhase falls back to defaults for NaN thresholds (no silent disable)', () => {
+    const records = [
+      { ts: '2026-01-01T00:05:00.000Z', event: 'retry', resource: 'agent-launch:bench', resources: { gpu: { present: true, util: 80 }, cpu: { loadPerCore: 0.9 }, disk: { present: true, writeMBps: 30, readMBps: 40 } } }
+    ];
+    const b = mod.bucketContentionByPhase(records, [], { gpuBusyUtil: NaN, cpuBusyLoadPerCore: NaN, slowWriteMBps: NaN, slowReadMBps: NaN })[0];
+    expect(b).toEqual({ phase: 'unknown', total: 1, gpuHeavy: 1, cpuHeavy: 1, diskHeavy: 1, neither: 0 }); // defaults still classify
+  });
+  it('bucketContentionByPhase excludes non-launch (pre-push-validation) records from the shared ledger', () => {
+    const records = [
+      { ts: '2026-01-01T00:05:00.000Z', event: 'retry', resource: 'pre-push-validation', resources: { gpu: { present: true, util: 80 }, cpu: { loadPerCore: 0.9 }, disk: { present: true, writeMBps: 30 } } }, // excluded (not a launch resource)
+      { ts: '2026-01-01T00:06:00.000Z', event: 'retry', resource: 'agent-launch:bench', resources: { gpu: { present: false }, cpu: { loadPerCore: 0.1 }, disk: { present: false } } } // counted
+    ];
+    expect(mod.bucketContentionByPhase(records, [])).toEqual([{ phase: 'unknown', total: 1, gpuHeavy: 0, cpuHeavy: 0, diskHeavy: 0, neither: 1 }]);
+  });
+  it('runLaunchAcquire is best-effort: a throwing or missing acquireLease degrades to advisory (never hard-blocks)', () => {
+    const throwing = makeAcquireDeps({ acquireLease: () => { throw new Error('gate dir unwritable'); } });
+    const r1 = mod.runLaunchAcquire(throwing.deps, { group: 'bench', maxAttempts: 2 });
+    expect(r1.mode).toBe('advisory-degraded');
+    expect(r1.serialized).toBe(true);
+    const r2 = mod.runLaunchAcquire({ env: { VIHS_SUBAGENT_ID: '1' }, worktreeCount: 1, identity: 'X', log: () => {}, now: () => 1, sleep: () => {} }, { group: 'bench', maxAttempts: 2 }); // no acquireLease at all
+    expect(r2.mode).toBe('advisory-degraded');
+  });
+  it('runLaunchAcquire samples capability at most ONCE across retries (bounded disk benchmark)', () => {
+    let calls = 0;
+    const deps = makeAcquireDeps({ acquireLease: () => ({ granted: false, holder: { owner: 'X' } }), sampleCapability: () => { calls += 1; return { cpu: { loadPerCore: 0.1 }, gpu: { present: false }, disk: { present: false } }; } });
+    mod.runLaunchAcquire(deps.deps, { group: 'bench', maxAttempts: 4 });
+    expect(calls).toBe(1); // one sample reused across all 4 contention records, not 4 fsync benchmarks
   });
 });

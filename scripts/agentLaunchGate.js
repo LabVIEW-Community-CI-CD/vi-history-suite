@@ -39,11 +39,15 @@ function launchResource(group) {
 }
 
 /** Serialize spawns only when more than one agent could spawn on this machine (an explicit
- *  subagent lane, or >1 git worktree). Solo -> skip (advisory, zero friction). Mirrors the
- *  pre-push gate's shouldEnforce so the two gates share one multi-agent-context definition. */
+ *  subagent lane, >1 git worktree, or the explicit VIHS_LAUNCH_SERIALIZE force). Solo -> skip
+ *  (advisory, zero friction). Mirrors the pre-push gate's shouldEnforce so the two gates share
+ *  one multi-agent-context definition. */
 function shouldSerializeLaunch(env, worktreeCount) {
   env = env || {};
-  if (env.VIHS_SUBAGENT_ID) return true;
+  // VIHS_LAUNCH_SERIALIZE=1 forces serialization for a shared-worktree topology where agents spawn
+  // from ONE checkout with no VIHS_SUBAGENT_ID and worktreeCount stays 1 -- the auto-detect
+  // (explicit subagent lane OR >1 worktree) cannot observe that case.
+  if (env.VIHS_LAUNCH_SERIALIZE === '1' || env.VIHS_SUBAGENT_ID) return true;
   return Number(worktreeCount || 0) > 1;
 }
 
@@ -86,19 +90,27 @@ function phaseAt(ts, phaseMarkers) {
  *  'retry'/'advisory-degraded' events are contention; 'acquired'/'phase-marker' are excluded. */
 function bucketContentionByPhase(records, phaseMarkers, opts) {
   opts = opts || {};
-  const gpuBusy = typeof opts.gpuBusyUtil === 'number' ? opts.gpuBusyUtil : GPU_BUSY_UTIL;
-  const cpuBusy = typeof opts.cpuBusyLoadPerCore === 'number' ? opts.cpuBusyLoadPerCore : CPU_BUSY_LOAD_PER_CORE;
+  // Number.isFinite (not typeof === 'number') so a NaN override -- easy from CLI Number() parsing --
+  // falls back to the default instead of silently disabling a classifier (every compare with NaN is false).
+  const gpuBusy = Number.isFinite(opts.gpuBusyUtil) ? opts.gpuBusyUtil : GPU_BUSY_UTIL;
+  const cpuBusy = Number.isFinite(opts.cpuBusyLoadPerCore) ? opts.cpuBusyLoadPerCore : CPU_BUSY_LOAD_PER_CORE;
+  const diskThresholds = {};
+  if (Number.isFinite(opts.slowWriteMBps)) diskThresholds.slowWriteMBps = opts.slowWriteMBps;
+  if (Number.isFinite(opts.slowReadMBps)) diskThresholds.slowReadMBps = opts.slowReadMBps;
   const buckets = new Map();
   for (const r of records || []) {
     if (!r || !r.ts) continue;
     if (r.event !== 'retry' && r.event !== 'advisory-degraded') continue;
+    // Only LAUNCH contention: the contention ledger is SHARED with the pre-push gate, so exclude
+    // pre-push-validation records that would otherwise inflate the launch phase buckets.
+    if (typeof r.resource !== 'string' || !r.resource.startsWith(LAUNCH_RESOURCE_PREFIX)) continue;
     const phase = phaseAt(r.ts, phaseMarkers);
     const res = r.resources || {};
     const gpu = res.gpu || {};
     const cpu = res.cpu || {};
     const gpuHeavy = Boolean(gpu.present) && typeof gpu.util === 'number' && gpu.util >= gpuBusy;
     const cpuHeavy = typeof cpu.loadPerCore === 'number' && cpu.loadPerCore >= cpuBusy;
-    const diskHeavy = classifyDiskPressure(res.disk, { slowWriteMBps: opts.slowWriteMBps, slowReadMBps: opts.slowReadMBps });
+    const diskHeavy = classifyDiskPressure(res.disk, diskThresholds);
     const b = buckets.get(phase) || { phase, total: 0, gpuHeavy: 0, cpuHeavy: 0, diskHeavy: 0, neither: 0 };
     b.total += 1;
     if (gpuHeavy) b.gpuHeavy += 1;
@@ -149,8 +161,22 @@ function runLaunchAcquire(deps, opts) {
     return { serialized: false, mode: 'skipped', resource };
   }
   const start = nowFn();
+  // Sample the cpu+gpu+disk capability at most ONCE per acquire (lazy + cached): the real sampler runs
+  // a synchronous fsync disk micro-benchmark, so re-sampling on every retry could stall a spawn past the
+  // backoff budget on exactly the saturated disk it means to observe. Best-effort (never throws).
+  let capabilitySnapshot;
+  const sampleOnce = () => {
+    if (capabilitySnapshot === undefined) {
+      try { capabilitySnapshot = deps.sampleCapability ? deps.sampleCapability() : null; } catch { capabilitySnapshot = null; }
+    }
+    return capabilitySnapshot;
+  };
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-    const r = deps.acquireLease(resource, identity, { ttlSec }) || {};
+    // Lease I/O is best-effort: a missing or throwing acquireLease (e.g. an unwritable gate dir) must NOT
+    // hard-block a launch -- treat it as not-granted and continue to the advisory-degrade path.
+    let r;
+    try { r = (deps.acquireLease && deps.acquireLease(resource, identity, { ttlSec })) || {}; }
+    catch (e) { r = {}; log('[launch-gate] lease acquire error (advisory): ' + (e && e.message ? e.message : String(e))); }
     const outcome = classifyLaunchOutcome(Boolean(r.granted), attempt, maxAttempts);
     if (r.granted) {
       log('[launch-gate] acquired ' + resource + ' as ' + identity + ' (attempt ' + (attempt + 1) + ').');
@@ -160,7 +186,7 @@ function runLaunchAcquire(deps, opts) {
     const record = buildLaunchRecord({
       event: outcome.mode === 'advisory-degraded' ? 'advisory-degraded' : 'retry',
       resource, identity, attempt, waitedMs: nowFn() - start,
-      capability: deps.sampleCapability ? deps.sampleCapability() : null,
+      capability: sampleOnce(),
       holder: holderOwner, now: nowFn()
     });
     if (deps.appendLedger) deps.appendLedger(record);
@@ -244,7 +270,9 @@ function defaultDeps() {
     log: (m) => console.error(m),
     acquireLease: (resource, owner, o) => gw.acquireLease(gateDir, resource, owner, o),
     releaseLease: (resource, token) => gw.releaseLease(gateDir, resource, { token }),
-    sampleCapability: () => systemCapability.capture({}),
+    // Bounded disk micro-benchmark (4 MiB, not the 16 MiB default) so a contention-path sample on a
+    // saturated disk stays well inside the backoff budget; combined with the sample-once cache above.
+    sampleCapability: () => systemCapability.capture({ bytes: 4 * 1024 * 1024 }),
     appendLedger: (record) => appendLedgerLine(gateDir, record)
   };
 }
@@ -268,8 +296,8 @@ if (require.main === module) {
     const swIdx = process.argv.indexOf('--slow-write');
     const srIdx = process.argv.indexOf('--slow-read');
     const opts = {};
-    if (swIdx >= 0) opts.slowWriteMBps = Number(process.argv[swIdx + 1]);
-    if (srIdx >= 0) opts.slowReadMBps = Number(process.argv[srIdx + 1]);
+    if (swIdx >= 0) { const v = Number(process.argv[swIdx + 1]); if (Number.isFinite(v)) opts.slowWriteMBps = v; }
+    if (srIdx >= 0) { const v = Number(process.argv[srIdx + 1]); if (Number.isFinite(v)) opts.slowReadMBps = v; }
     const entries = readLedger(gw.resolveGateDir());
     const markers = entries.filter((e) => e.event === 'phase-marker');
     const buckets = bucketContentionByPhase(entries, markers, opts);
