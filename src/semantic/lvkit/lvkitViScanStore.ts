@@ -28,6 +28,7 @@ import {
   LVKIT_SCAN_SOURCES,
   LVKIT_VI_SCAN_SCHEMA,
   LVKIT_VI_SCAN_SCHEMA_VERSION,
+  summarizeModuleResolutions,
   type LvkitGeneratedModule,
   type LvkitViScanEnvelope
 } from './lvkitViScanModel';
@@ -49,6 +50,20 @@ export function computeLvkitViScanStoreKey(viPath: string, contentSignature: str
   return createHash('sha256')
     .update(`path:${normalizedPath}\nsignature:${contentSignature}`)
     .digest('hex');
+}
+
+/**
+ * Total UNRESOLVED provenance for the upgrade-only precedence guard (#2373/#2376).
+ * Uses the additive `resolutionCounts` when present, else classifies the always-
+ * present `modules` (legacy envelopes captured before the field existed). Counts
+ * inline `raise PrimitiveResolutionNeeded` / `raise VILibResolutionNeeded`
+ * placeholders (which keep `errorModuleCount` at 0) as unresolved alongside
+ * `.error.py` stubs, so an inline-placeholder generate can never clobber a cleaner
+ * cached one.
+ */
+function unresolvedModuleTotal(envelope: LvkitViScanEnvelope): number {
+  const counts = envelope.resolutionCounts ?? summarizeModuleResolutions(envelope.modules);
+  return counts.unresolvedPrimitive + counts.unresolvedVilib + counts.errorStub;
 }
 
 /** Content-addressed store of single-VI lvkit scan envelopes. */
@@ -243,15 +258,18 @@ export function createFileLvkitViScanStore(
       // generate must be able to REPLACE a placeholder ("the Windows leg fills in
       // the placeholders"), but a later placeholder run must NOT clobber a cleaner
       // generate. So skip the write when an existing envelope for this exact content
-      // address has STRICTLY FEWER unresolved (.error.py) modules. Best-effort read:
-      // a miss/unreadable/mismatched existing entry just proceeds to the write.
+      // address has STRICTLY FEWER UNRESOLVED modules -- counted across ALL unresolved
+      // provenance (inline `raise ...ResolutionNeeded` primitive/vilib placeholders
+      // AND `.error.py` stubs via unresolvedModuleTotal), not `.error.py` alone, so an
+      // inline-placeholder run (errorModuleCount 0) cannot clobber a clean generate.
+      // Best-effort read: a miss/unreadable/mismatched existing entry just writes.
       try {
         const existing = JSON.parse(await fsDeps.readFile(storeFilePath(key)));
         if (
           isLvkitViScanEnvelope(existing) &&
           existing.viPath === normalizedPath &&
           existing.contentSignature === envelope.contentSignature &&
-          existing.errorModuleCount < normalizedEnvelope.errorModuleCount
+          unresolvedModuleTotal(existing) < unresolvedModuleTotal(normalizedEnvelope)
         ) {
           return true;
         }
