@@ -1,0 +1,67 @@
+{
+  "schema": "vi-history-suite/ollama-grounded-aggregate-eval@v1",
+  "generatedAt": "2026-07-26T07:27:35.340Z",
+  "host": "LINUX",
+  "backend": "gpu",
+  "label": "aggmllama31",
+  "ollamaUrl": "http://localhost:11434",
+  "model": "llama3.1:8b",
+  "surface": "pr-review-aggregate",
+  "changedViCount": 27,
+  "risk": {
+    "high": 13,
+    "medium": 0,
+    "low": 14
+  },
+  "allowedNumbers": [
+    27,
+    13,
+    0,
+    14,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    12,
+    1,
+    1,
+    1,
+    2,
+    1,
+    2,
+    8,
+    2,
+    19,
+    43,
+    2,
+    1,
+    2,
+    6
+  ],
+  "template": {
+    "narrative": "27 changed VIs. 27 with differences, 0 unchanged. Risk: 13 high, 14 low.",
+    "score": 1,
+    "failedParts": []
+  },
+  "grounded": {
+    "narrative": "Here is the summary for a code reviewer:\n\n* Total VIs changed: 27\n* Risk breakdown:\n\t+ High-risk VIs: 13 (including af-create-lv-ini-token, af-createnewwizard-includeitem, af-is-actor-class-or-interface, af-test-launch-for-nested-actor-without-caller, ie-dropper, ie-fill, ie-loadtemplates, ie-lv-icon, ie-menuselection-user, ie-mousedown, ie-picturecontrol-mouseup, and ie-visibletextmarker)\n\t+ Medium-risk VIs: 0\n\t+ Low-risk VIs: 14 (including af-applyvipc, af-create-lv-ini-token, af-createlvaddonjsonfile, af-destroy-lv-ini-token, af-modify-vipb-display-information, af-nip-post-uninstall, af-prepareiesource, af-restoresetuplvsource, af-run-all-tests-cli, af-run-all-tests, af-vip-post-install-custom-action, af-vip-pre-install-custom-action, and af-vip-pre-uninstall-custom-action)\n* Highest-risk VIs: \n\t+ ie-picturecontrol-mouseup (43 non-cosmetic structural changes, risk high)",
+    "score": 1,
+    "failedParts": [],
+    "invented": []
+  },
+  "selection": {
+    "source": "candidate",
+    "reason": "candidate-not-less-faithful",
+    "candidateScore": 1,
+    "fallbackScore": 1
+  },
+  "note": "Aggregate (cross-VI) PR-review reviewer summary. allowedNumbers = aggregate rollup + real per-VI counts; any other integer > 1 in the grounded summary is an INVENTED cross-VI number (the higher-stakes hazard). BASELINE SYSTEM only."
+}
