@@ -86,7 +86,13 @@ export function createFakeUri(inputPath: string, scheme = 'file'): FakeUri {
       return `${scheme}:${uriPath}`;
     },
     with(changes) {
-      return createFakeUri(changes.path ?? normalizedFsPath, changes.scheme ?? scheme);
+      // Mirror vscode.Uri.with: unspecified components are preserved. The real
+      // API keeps query/fragment when only scheme/path change (and vice versa),
+      // which the `file`+query preview-revision URI (#2386) relies on.
+      const next = createFakeUri(changes.path ?? normalizedFsPath, changes.scheme ?? scheme);
+      next.query = changes.query ?? this.query;
+      next.fragment = changes.fragment ?? this.fragment;
+      return next;
     }
   };
 }

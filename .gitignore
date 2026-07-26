@@ -41,3 +41,6 @@ control-plane-write-log.jsonl
 # Vendored .NET TDMS infrastructure build outputs (tools/tdms, VHS-REQ-710)
 tools/**/bin/
 tools/**/obj/
+
+# Local lvkit/preview runtime cache (never commit)
+.vihs/

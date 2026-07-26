@@ -1114,9 +1114,19 @@ export function createOpenViHistoryCommand(
             }
           );
 
+          // VHS-REQ-659: the editor re-renders from the scratch tree (a lone VI
+          // there recomputes as the expected `no-siblings`, losing the
+          // materialization-time degraded signal), so carry a degraded staging
+          // outcome (size fallback or scope-reduced step-down) on the URI query
+          // for the editor to recover and surface the degraded notice.
+          const previewUri = materialized.stagingDegraded
+            ? vscode.Uri.file(materialized.viFilePath).with({
+                query: `stagingDegraded=${materialized.stagingDegraded.strategy}:${materialized.stagingDegraded.reason}`
+              })
+            : vscode.Uri.file(materialized.viFilePath);
           await vscode.commands.executeCommand(
             'vscode.openWith',
-            vscode.Uri.file(materialized.viFilePath),
+            previewUri,
             VI_PREVIEW_VIEW_TYPE
           );
           panelTracker?.recordAction({ command, hash, outcome: 'opened-revision-preview' });

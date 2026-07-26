@@ -33,6 +33,7 @@ import {
 } from './viPreviewFramesModel';
 import { buildViPreviewFramesViewerHtml } from './viPreviewFramesViewer';
 import { buildViPreviewWebviewHtml } from './viPreviewWebview';
+import type { ViPreviewStagingDegraded } from './viPreviewStaging';
 
 /** Which preview presentation to produce for a rendered document. */
 export type ViPreviewRenderMode = 'interactive' | 'document';
@@ -59,13 +60,16 @@ export interface SelectViPreviewDocumentOptions {
    */
   coordinateFramesJson?: string | unknown;
   /**
-   * VHS-REQ-659 large-project safeguard: when the render fell back to single-file
-   * because the enclosing project exceeded the staging guard (too-many-files /
-   * too-large), the block diagram may carry unresolved "?" sub-VI placeholders.
-   * When set, the honest flat document is returned with a clear size-degraded
-   * notice (rather than an interactive stepper through "?"-laden frames).
+   * VHS-REQ-659 large-project safeguard: set when the render could not cover the
+   * VI's full dependency set, so the block diagram may carry unresolved "?" sub-VI
+   * placeholders -- either a SIZE fallback (`single-file` + `too-many-files`/
+   * `too-large`) or a SCOPE-REDUCED step-down (`project-scope-reduced`). When set,
+   * the honest flat document is returned with a clear degraded notice (rather than
+   * an interactive stepper through "?"-laden frames). A document request keeps its
+   * `document` mode with no `fallbackReason`; an interactive request is downgraded
+   * to `document` (so `fallbackReason` is set to signal the downgrade).
    */
-  stagingDegraded?: { strategy: 'single-file'; reason: 'too-many-files' | 'too-large' };
+  stagingDegraded?: ViPreviewStagingDegraded;
 }
 
 export interface SelectedViPreviewDocument {
@@ -79,6 +83,26 @@ export interface SelectedViPreviewDocument {
    * the returned mode matches the request or `document` was requested outright.
    */
   fallbackReason?: string;
+}
+
+/**
+ * Builds the user-facing notice for a staging-degraded preview, distinguishing a
+ * SIZE fallback (the project/directory exceeded the staging guard, so only the
+ * lone VI staged) from a SCOPE-REDUCED step-down (the project was too large so
+ * only the VI's directory staged, skipping cross-directory dependencies).
+ */
+function buildStagingDegradedNotice(degraded: ViPreviewStagingDegraded): string {
+  if (degraded.reason === 'project-scope-reduced') {
+    return (
+      "Scope-reduced preview -- the enclosing LabVIEW project was too large to stage fully, so only the VI's own directory was staged. " +
+      'Sub-VI dependencies in other directories were not loaded; the block diagram may show "?" placeholder icons for them, which are unresolved dependencies, not real (empty) content.'
+    );
+  }
+  const reason = degraded.reason === 'too-many-files' ? 'too many files' : 'too large';
+  return (
+    `Size-degraded preview -- the enclosing LabVIEW project exceeds the preview staging limit (${reason}), so sub-VI dependencies were not loaded. ` +
+    'The block diagram may show "?" placeholder icons: those are unresolved dependencies, not real (empty) content.'
+  );
 }
 
 /**
@@ -96,16 +120,19 @@ export function selectViPreviewDocument(
     ...(fallbackReason ? { fallbackReason } : {})
   });
 
-  // VHS-REQ-659 large-project safeguard: a SIZE-degraded single-file fallback was
-  // rendered with unresolved sub-VI deps ("?" placeholders). Present the honest
-  // flat document with a clear notice rather than an interactive stepper through
-  // "?"-laden frames, so the placeholders are not mistaken for real content.
+  // VHS-REQ-659 large-project safeguard: a degraded render (SIZE fallback or
+  // SCOPE-REDUCED step-down) may carry unresolved sub-VI deps ("?" placeholders).
+  // Present the honest flat document with a clear notice rather than an
+  // interactive stepper through "?"-laden frames, so the placeholders are not
+  // mistaken for real content.
   if (options.stagingDegraded) {
-    const reason = options.stagingDegraded.reason === 'too-many-files' ? 'too many files' : 'too large';
-    return documentFallback(
-      'staging-size-degraded',
-      `Size-degraded preview -- the enclosing LabVIEW project exceeds the preview staging limit (${reason}), so sub-VI dependencies were not loaded. The block diagram may show "?" placeholder icons: those are unresolved dependencies, not real (empty) content.`
-    );
+    const notice = buildStagingDegradedNotice(options.stagingDegraded);
+    // Only an INTERACTIVE request is downgraded to the document view here; a
+    // `document` request returns `document` unchanged, so `fallbackReason` stays
+    // undefined (it signals a mode DOWNGRADE, not the presence of a notice). The
+    // notice is surfaced either way.
+    const fallbackReason = options.mode === 'interactive' ? 'staging-size-degraded' : undefined;
+    return documentFallback(fallbackReason, notice);
   }
 
   if (options.mode !== 'interactive') {

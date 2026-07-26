@@ -9,6 +9,7 @@ import {
 } from './viPreviewExecution';
 import {
   planViPreviewStagingWithProjectRoot,
+  type ViPreviewStagingDegraded,
   type ViPreviewStagingEntry
 } from './viPreviewStaging';
 import {
@@ -83,15 +84,17 @@ export interface RenderViPreviewForFileResult {
    */
   contentSignature?: string;
   /**
-   * VHS-REQ-659 large-project safeguard: present ONLY when staging fell back to
-   * single-file for a SIZE reason (the enclosing project tree exceeded the guard:
-   * `too-many-files` >1000 or `too-large` >256MB). The rendered block diagram may
-   * then contain unresolved "?" subVI placeholders because sibling dependencies
-   * were not staged, so the preview is DEGRADED -- a consumer should label it so
-   * the "?" is not mistaken for a real (empty) diagram. Absent for a full
-   * dependency-tree render and for the expected standalone `no-siblings` case.
+   * VHS-REQ-659 large-project safeguard: present when staging could not cover the
+   * VI's full dependency set, so the rendered block diagram may contain unresolved
+   * "?" subVI placeholders. Either a SIZE fallback (`single-file` +
+   * `too-many-files`/`too-large`: even the containing directory exceeded the guard)
+   * or a SCOPE-REDUCED step-down (`project-scope-reduced`: the enclosing project
+   * tripped the guard so only the VI's directory was staged, skipping
+   * cross-directory dependencies). A consumer should label it so the "?" is not
+   * mistaken for a real (empty) diagram. Absent for a full dependency-tree render
+   * and for the expected standalone `no-siblings` case.
    */
-  stagingDegraded?: { strategy: 'single-file'; reason: 'too-many-files' | 'too-large' };
+  stagingDegraded?: ViPreviewStagingDegraded;
 }
 
 export interface RenderViPreviewForFileDeps {
@@ -175,15 +178,20 @@ export async function renderViPreviewForFile(
   }
 
   const selection = planViPreviewStagingWithProjectRoot(viRelativeToBase, entries);
-  // VHS-REQ-659 large-project safeguard: flag a SIZE-degraded fallback so a
-  // consumer can label the preview (its block diagram may carry unresolved "?"
-  // subVI placeholders because sibling deps were not staged). Only the size
-  // reasons degrade; `no-siblings` is the expected standalone-VI case.
+  // VHS-REQ-659 large-project safeguard: flag a degraded fallback so a consumer
+  // can label the preview (its block diagram may carry unresolved "?" subVI
+  // placeholders because deps were not staged). Two degraded shapes: a SIZE
+  // fallback (single-file because even the containing directory tripped the
+  // guard), or a SCOPE-REDUCED step-down (the enclosing project tripped the
+  // guard so only the VI's directory was staged). `no-siblings` is the expected
+  // standalone-VI case and is NOT degraded.
   const stagingDegraded: RenderViPreviewForFileResult['stagingDegraded'] =
     selection.plan.strategy === 'single-file' &&
     (selection.plan.reason === 'too-many-files' || selection.plan.reason === 'too-large')
       ? { strategy: 'single-file', reason: selection.plan.reason }
-      : undefined;
+      : selection.stepDownFromProject
+        ? { strategy: selection.plan.strategy, reason: 'project-scope-reduced' }
+        : undefined;
   // Absolute directory that the selection's relative paths are anchored at.
   const stagingRootDirectory = selection.stagingRoot
     ? path.join(stagingBaseDirectory, ...selection.stagingRoot.split('/'))

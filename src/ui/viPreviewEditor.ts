@@ -20,6 +20,7 @@ import {
   resolvePreviewRuntime
 } from './viPreviewRenderHost';
 import { resolveViPreviewRenderSource } from '../reporting/viPreview/viPreviewRenderSource';
+import type { ViPreviewStagingDegraded } from '../reporting/viPreview/viPreviewStaging';
 import type { ViPreviewSessionManager } from './viPreviewSessionManager';
 
 /**
@@ -32,6 +33,32 @@ import type { ViPreviewSessionManager } from './viPreviewSessionManager';
  */
 
 export const VI_PREVIEW_VIEW_TYPE = 'viHistorySuite.viPreview';
+
+/**
+ * VHS-REQ-659: recovers a revision preview's staging-degraded descriptor from
+ * the `openWith` URI query (see `previewRevision` in `openViHistoryCommand`).
+ * A `previewRevision` temp tree re-renders from a scratch directory that no
+ * longer carries the enclosing project, so the materialization-time degraded
+ * signal is lost unless it is threaded on the URI. Returns undefined when the
+ * query is absent or malformed, so a normally-opened file is unaffected.
+ */
+function parseStagingDegradedFromUri(uri: vscode.Uri): ViPreviewStagingDegraded | undefined {
+  if (!uri.query) {
+    return undefined;
+  }
+  const raw = new URLSearchParams(uri.query).get('stagingDegraded');
+  if (!raw) {
+    return undefined;
+  }
+  const [strategy, reason] = raw.split(':');
+  if (
+    (strategy === 'single-file' || strategy === 'dependency-tree') &&
+    (reason === 'too-many-files' || reason === 'too-large' || reason === 'project-scope-reduced')
+  ) {
+    return { strategy, reason };
+  }
+  return undefined;
+}
 
 /**
  * Whether the interactive block-diagram presentation is enabled
@@ -174,6 +201,14 @@ class ViPreviewEditorProvider implements vscode.CustomReadonlyEditorProvider<ViP
     webviewPanel: vscode.WebviewPanel
   ): Promise<void> {
     const fileName = path.basename(document.uri.fsPath);
+    // VHS-REQ-659: a `previewRevision` temp tree is materialized with the
+    // project-aware staging guard, then opened via `openWith`; when that
+    // materialization was degraded (size fallback or scope-reduced step-down) the
+    // flag is carried on the URI query, because the editor re-renders from the
+    // scratch directory (a lone VI there recomputes as the expected `no-siblings`,
+    // losing the materialization-time signal). Recover it so the degraded notice
+    // still surfaces for a revision preview.
+    const revisionStagingDegraded = parseStagingDegradedFromUri(document.uri);
     webviewPanel.webview.options = { enableScripts: false };
 
     // VHS-REQ-659: VI Preview is opt-in and Docker-only. When the feature is off
@@ -247,7 +282,12 @@ class ViPreviewEditorProvider implements vscode.CustomReadonlyEditorProvider<ViP
             buildViPreviewRenderDeps(this.cache)
           );
           if (cachePeek.outcome === 'rendered' && cachePeek.html) {
-            await this.renderResultToWebview(webviewPanel, cachePeek.html, document.uri.fsPath, cachePeek.stagingDegraded);
+            await this.renderResultToWebview(
+              webviewPanel,
+              cachePeek.html,
+              document.uri.fsPath,
+              cachePeek.stagingDegraded ?? revisionStagingDegraded
+            );
             return;
           }
         }
@@ -298,7 +338,12 @@ class ViPreviewEditorProvider implements vscode.CustomReadonlyEditorProvider<ViP
         }
 
         if (result.outcome === 'rendered' && result.html) {
-          await this.renderResultToWebview(webviewPanel, result.html, document.uri.fsPath, result.stagingDegraded);
+          await this.renderResultToWebview(
+            webviewPanel,
+            result.html,
+            document.uri.fsPath,
+            result.stagingDegraded ?? revisionStagingDegraded
+          );
           // VHS-REQ-717 (epic #2348 Phase B): a VI that just rendered LIVE on the
           // runtime is a scan opportunity. Fire the best-effort preview-time lvkit
           // scan for a directly-opened on-disk `file` VI (its bytes match what the

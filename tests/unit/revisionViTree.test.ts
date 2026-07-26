@@ -98,6 +98,35 @@ describe('materializeRevisionViTree (VHS-REQ-659.15)', () => {
     expect(result.stagingDegraded).toEqual({ strategy: 'single-file', reason: 'too-many-files' });
   });
 
+  it('flags a project-scope-reduced step-down as stagingDegraded (VHS-REQ-659 / #2386)', async () => {
+    const many = Array.from({ length: 1001 }, (_, i) => ({
+      repoRelativePath: `other/Sub${i}.vi`,
+      sizeBytes: 10
+    }));
+    const deps = makeDeps([
+      { repoRelativePath: 'App.lvproj', sizeBytes: 10 },
+      { repoRelativePath: 'lib/Foo.vi', sizeBytes: 10 },
+      { repoRelativePath: 'lib/Sub.vi', sizeBytes: 20 },
+      ...many
+    ]);
+    const result = await materializeRevisionViTree(
+      { revisionId: 'abc123', relativePath: 'lib/Foo.vi', destinationDirectory: '/dest' },
+      deps
+    );
+
+    // The whole revision tree (>1000 files under the enclosing App.lvproj) tripped
+    // the guard, so staging STEPPED DOWN to the VI's directory ('lib') -> a
+    // dependency tree of Foo.vi + Sub.vi. Cross-directory 'other/*' deps were
+    // skipped, so the materialization is flagged scope-reduced.
+    expect(result.strategy).toBe('dependency-tree');
+    expect(result.stagingDegraded).toEqual({
+      strategy: 'dependency-tree',
+      reason: 'project-scope-reduced'
+    });
+    // Only the VI's own directory tree is materialized (2 files).
+    expect(result.stagedFileCount).toBe(2);
+  });
+
   it('does not flag stagingDegraded for a normal dependency-tree materialization', async () => {
     const deps = makeDeps([
       { repoRelativePath: 'lib/Foo.vi', sizeBytes: 10 },
