@@ -1,0 +1,155 @@
+{
+  "schema": "vi-history-suite/correlation-fold-eval@v1",
+  "generatedAt": "2026-07-26T05:10:24.248Z",
+  "host": "LINUX",
+  "backend": "gpu",
+  "label": null,
+  "ollamaUrl": "http://localhost:11434",
+  "model": "vichange8b-2shot",
+  "modelPresent": true,
+  "batchSource": "SMOKE (prototype/win-lvkit/correlation-fixtures/*.labview-diff-report.html, repo=ie in-distribution)",
+  "foldsSource": "prototype/ml/dataset/correlation-heldout-folds.json",
+  "totalRendered": 8,
+  "errors": [],
+  "loro": [
+    {
+      "fold": 0,
+      "heldOutRepo": "af",
+      "trainRepos": [
+        "ie"
+      ],
+      "foldSize": 102,
+      "rendered": 0,
+      "status": "pending-render",
+      "hardSafeRate": null,
+      "acceptRate": null,
+      "invented": [],
+      "inventedHazard": false
+    },
+    {
+      "fold": 1,
+      "heldOutRepo": "ie",
+      "trainRepos": [
+        "af"
+      ],
+      "foldSize": 449,
+      "rendered": 8,
+      "status": "partial",
+      "hardSafeRate": 1,
+      "acceptRate": 1,
+      "invented": [],
+      "inventedHazard": false
+    }
+  ],
+  "crossRepoGeneralization": {
+    "status": "pending-render",
+    "note": "No actor-framework reports rendered yet -- WIN lands the AF batch, then this is the train-icon-editor/test-actor-framework hard-safe rate."
+  },
+  "perVi": [
+    {
+      "slug": "ie-loadtemplates",
+      "repo": "ie",
+      "vi": "loadtemplates.labview-diff-report.html",
+      "nonCosmetic": 2,
+      "cosmetic": 0,
+      "source": "grounded",
+      "reason": "grounded-passed-gate",
+      "hardSafe": true,
+      "groundedScore": 1,
+      "templateScore": 1,
+      "invented": []
+    },
+    {
+      "slug": "ie-lv-icon",
+      "repo": "ie",
+      "vi": "lv_icon.labview-diff-report.html",
+      "nonCosmetic": 8,
+      "cosmetic": 19,
+      "source": "grounded",
+      "reason": "grounded-passed-gate",
+      "hardSafe": true,
+      "groundedScore": 1,
+      "templateScore": 0.75,
+      "invented": []
+    },
+    {
+      "slug": "ie-menuselection-user",
+      "repo": "ie",
+      "vi": "menuselection(user).labview-diff-report.html",
+      "nonCosmetic": 2,
+      "cosmetic": 1,
+      "source": "grounded",
+      "reason": "grounded-passed-gate",
+      "hardSafe": true,
+      "groundedScore": 1,
+      "templateScore": 1,
+      "invented": []
+    },
+    {
+      "slug": "ie-mousedown",
+      "repo": "ie",
+      "vi": "mousedown.labview-diff-report.html",
+      "nonCosmetic": 19,
+      "cosmetic": 47,
+      "source": "grounded",
+      "reason": "grounded-passed-gate",
+      "hardSafe": true,
+      "groundedScore": 1,
+      "templateScore": 0.75,
+      "invented": []
+    },
+    {
+      "slug": "ie-picturecontrol-mouseup",
+      "repo": "ie",
+      "vi": "picturecontrol_mouseup.labview-diff-report.html",
+      "nonCosmetic": 43,
+      "cosmetic": 29,
+      "source": "grounded",
+      "reason": "grounded-passed-gate",
+      "hardSafe": true,
+      "groundedScore": 1,
+      "templateScore": 0.75,
+      "invented": []
+    },
+    {
+      "slug": "ie-process-template-graphics",
+      "repo": "ie",
+      "vi": "process template graphics.labview-diff-report.html",
+      "nonCosmetic": 2,
+      "cosmetic": 0,
+      "source": "grounded",
+      "reason": "grounded-passed-gate",
+      "hardSafe": true,
+      "groundedScore": 1,
+      "templateScore": 1,
+      "invented": []
+    },
+    {
+      "slug": "ie-vi-template",
+      "repo": "ie",
+      "vi": "vi template.labview-diff-report.html",
+      "nonCosmetic": 2,
+      "cosmetic": 0,
+      "source": "grounded",
+      "reason": "grounded-passed-gate",
+      "hardSafe": true,
+      "groundedScore": 1,
+      "templateScore": 1,
+      "invented": []
+    },
+    {
+      "slug": "ie-visibletextmarker",
+      "repo": "ie",
+      "vi": "visibletextmarker.labview-diff-report.html",
+      "nonCosmetic": 6,
+      "cosmetic": 0,
+      "source": "grounded",
+      "reason": "grounded-passed-gate",
+      "hardSafe": true,
+      "groundedScore": 1,
+      "templateScore": 1,
+      "invented": []
+    }
+  ],
+  "note": "LORO hard-safe rate = fraction of held-out-repo grounded narratives clearing the safety floor (no invented number, no false no-change, states the count). A fold with 0 rendered reports is pending-render, never a fabricated score. Grounding is built from the rendered LabVIEW HTML, never invented."
+}
