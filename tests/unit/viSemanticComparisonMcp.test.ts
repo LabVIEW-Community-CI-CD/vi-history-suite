@@ -29,9 +29,9 @@ import {
 import { buildLvkitViScanEnvelope } from '../../src/semantic/lvkit/lvkitViScanModel';
 
 // Contract: the human-facing MCP catalog (docs/mcp-server.md) must not drift from the
-// authoritative registered tool set. Catches the recurring class where a new tool is
-// added to VI_SEMANTIC_MCP_TOOLS but the doc's table/count is not updated.
-describe('docs/mcp-server.md tool catalog stays in sync with VI_SEMANTIC_MCP_TOOLS (VHS-REQ-662.4)', () => {
+// authoritative registered tools, prompts, and resources. Catches the recurring class where
+// an entry is added to a registry but the doc's table/count is not updated.
+describe('docs/mcp-server.md catalog stays in sync with the registered tools, prompts, and resources (VHS-REQ-662.4)', () => {
   // Anchor on the test file location (not process.cwd(), which is ambient global state).
   const doc = readFileSync(path.resolve(__dirname, '..', '..', 'docs', 'mcp-server.md'), 'utf8');
   it('gives every registered tool a row in the Tools table', () => {
@@ -47,6 +47,31 @@ describe('docs/mcp-server.md tool catalog stays in sync with VI_SEMANTIC_MCP_TOO
     const match = /exposes (\d+) tools/.exec(doc);
     expect(match, 'docs/mcp-server.md must state "exposes N tools"').not.toBeNull();
     expect(Number(match?.[1])).toBe(VI_SEMANTIC_MCP_TOOLS.length);
+  });
+  it('gives every registered prompt a row in the Prompts table', () => {
+    for (const prompt of VI_SEMANTIC_MCP_PROMPTS) {
+      const escaped = prompt.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const row = new RegExp('^\\|\\s*`' + escaped + '`\\s*\\|', 'm');
+      expect(row.test(doc), `docs/mcp-server.md Prompts table is missing a row for '${prompt.name}'`).toBe(true);
+    }
+  });
+  it('states the guided-prompt count matching the registry', () => {
+    const match = /(\d+) guided prompts/.exec(doc);
+    expect(match, 'docs/mcp-server.md must state "N guided prompts"').not.toBeNull();
+    expect(Number(match?.[1])).toBe(VI_SEMANTIC_MCP_PROMPTS.length);
+  });
+  it('documents every registered resource URI and template', () => {
+    for (const resource of VI_SEMANTIC_MCP_RESOURCES) {
+      expect(doc.includes('`' + resource.uri + '`'), `docs/mcp-server.md Resources table is missing '${resource.uri}'`).toBe(true);
+    }
+    for (const template of VI_SEMANTIC_MCP_RESOURCE_TEMPLATES) {
+      expect(doc.includes('`' + template.uriTemplate + '`'), `docs/mcp-server.md is missing the resource template '${template.uriTemplate}'`).toBe(true);
+    }
+  });
+  it('states the schema-resource count matching the registry', () => {
+    const match = /(\d+) schema resources/.exec(doc);
+    expect(match, 'docs/mcp-server.md must state "N schema resources"').not.toBeNull();
+    expect(Number(match?.[1])).toBe(VI_SEMANTIC_MCP_RESOURCES.length);
   });
 });
 
