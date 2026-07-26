@@ -9,9 +9,9 @@
 // so one lease spans every worktree + the main clone on a machine.
 //
 // Coverage discipline (mirrors branchFlowEnforce/collabPromote, VHS-REQ-719): the
-// PURE logic below (identity, staleness, release-decision, formatting) is unit-
-// tested and mapped; the filesystem lease I/O shim and the CLI are integration-
-// validated cross-plane and wrapped in v8-ignore ranges (not unit-coverable).
+// pure logic (identity, staleness, release-decision, formatting) AND the filesystem
+// lease I/O (acquire/release/read/list, temp-dir unit-tested) are mapped + counted;
+// only resolveGateDir (git spawn) + the CLI/require.main entry stay v8-ignored.
 
 const fs = require('fs');
 const path = require('path');
