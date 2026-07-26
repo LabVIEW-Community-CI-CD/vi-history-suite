@@ -1,0 +1,529 @@
+{
+  "schema": "vi-history-suite/correlation-fold-eval@v1",
+  "generatedAt": "2026-07-26T07:24:43.832Z",
+  "host": "LINUX",
+  "backend": "gpu",
+  "label": "mqwen14b",
+  "ollamaUrl": "http://localhost:11434",
+  "model": "qwen2.5:14b",
+  "modelPresent": true,
+  "batchSource": "AUTO (27 rendered reports in prototype/win-lvkit/correlation-fixtures mapped to manifest slugs; 0 unmapped-skipped)",
+  "foldsSource": "prototype/ml/dataset/correlation-heldout-folds.json",
+  "totalRendered": 27,
+  "errors": [],
+  "unmappedFixtures": [],
+  "loro": [
+    {
+      "fold": 0,
+      "heldOutRepo": "af",
+      "trainRepos": [
+        "ie"
+      ],
+      "foldSize": 102,
+      "rendered": 16,
+      "versionOnlyRendered": 13,
+      "realStructuralRendered": 3,
+      "status": "partial",
+      "hardSafeRate": 1,
+      "realStructuralHardSafeRate": 1,
+      "acceptRate": 1,
+      "invented": [],
+      "inventedHazard": false
+    },
+    {
+      "fold": 1,
+      "heldOutRepo": "ie",
+      "trainRepos": [
+        "af"
+      ],
+      "foldSize": 449,
+      "rendered": 11,
+      "versionOnlyRendered": 0,
+      "realStructuralRendered": 11,
+      "status": "partial",
+      "hardSafeRate": 0.9090909090909091,
+      "realStructuralHardSafeRate": 0.9090909090909091,
+      "acceptRate": 0.9090909090909091,
+      "invented": [
+        5
+      ],
+      "inventedHazard": true
+    }
+  ],
+  "crossRepoGeneralization": {
+    "status": "partial",
+    "hardSafeRate": 1,
+    "rendered": 16,
+    "foldSize": 102,
+    "invented": []
+  },
+  "perVi": [
+    {
+      "slug": "af-applyvipc",
+      "repo": "af",
+      "vi": "af-applyvipc.labview-diff-report.html",
+      "nonCosmetic": 1,
+      "cosmetic": 1,
+      "source": "grounded",
+      "reason": "grounded-passed-gate",
+      "hardSafe": true,
+      "versionOnly": true,
+      "changedSurfaces": [
+        "vi-attributes"
+      ],
+      "groundedScore": 1,
+      "templateScore": 1,
+      "invented": []
+    },
+    {
+      "slug": "af-create-lv-ini-token",
+      "repo": "af",
+      "vi": "af-create-lv-ini-token.labview-diff-report.html",
+      "nonCosmetic": 1,
+      "cosmetic": 1,
+      "source": "grounded",
+      "reason": "grounded-passed-gate",
+      "hardSafe": true,
+      "versionOnly": true,
+      "changedSurfaces": [
+        "vi-attributes"
+      ],
+      "groundedScore": 1,
+      "templateScore": 1,
+      "invented": []
+    },
+    {
+      "slug": "af-createlvaddonjsonfile",
+      "repo": "af",
+      "vi": "af-createlvaddonjsonfile.labview-diff-report.html",
+      "nonCosmetic": 1,
+      "cosmetic": 0,
+      "source": "grounded",
+      "reason": "grounded-passed-gate",
+      "hardSafe": true,
+      "versionOnly": true,
+      "changedSurfaces": [
+        "vi-attributes"
+      ],
+      "groundedScore": 1,
+      "templateScore": 1,
+      "invented": []
+    },
+    {
+      "slug": "af-createnewwizard-includeitem",
+      "repo": "af",
+      "vi": "af-createnewwizard-includeitem.labview-diff-report.html",
+      "nonCosmetic": 1,
+      "cosmetic": 0,
+      "source": "grounded",
+      "reason": "grounded-passed-gate",
+      "hardSafe": true,
+      "versionOnly": false,
+      "changedSurfaces": [
+        "block-diagram"
+      ],
+      "groundedScore": 1,
+      "templateScore": 1,
+      "invented": []
+    },
+    {
+      "slug": "af-destroy-lv-ini-token",
+      "repo": "af",
+      "vi": "af-destroy-lv-ini-token.labview-diff-report.html",
+      "nonCosmetic": 1,
+      "cosmetic": 1,
+      "source": "grounded",
+      "reason": "grounded-passed-gate",
+      "hardSafe": true,
+      "versionOnly": true,
+      "changedSurfaces": [
+        "vi-attributes"
+      ],
+      "groundedScore": 1,
+      "templateScore": 1,
+      "invented": []
+    },
+    {
+      "slug": "af-is-actor-class-or-interface",
+      "repo": "af",
+      "vi": "af-is-actor-class-or-interface.labview-diff-report.html",
+      "nonCosmetic": 1,
+      "cosmetic": 0,
+      "source": "grounded",
+      "reason": "grounded-passed-gate",
+      "hardSafe": true,
+      "versionOnly": false,
+      "changedSurfaces": [
+        "block-diagram"
+      ],
+      "groundedScore": 1,
+      "templateScore": 1,
+      "invented": []
+    },
+    {
+      "slug": "af-modify-vipb-display-information",
+      "repo": "af",
+      "vi": "af-modify-vipb-display-information.labview-diff-report.html",
+      "nonCosmetic": 1,
+      "cosmetic": 1,
+      "source": "grounded",
+      "reason": "grounded-passed-gate",
+      "hardSafe": true,
+      "versionOnly": true,
+      "changedSurfaces": [
+        "vi-attributes"
+      ],
+      "groundedScore": 1,
+      "templateScore": 1,
+      "invented": []
+    },
+    {
+      "slug": "af-nip-post-uninstall",
+      "repo": "af",
+      "vi": "af-nip-post-uninstall.labview-diff-report.html",
+      "nonCosmetic": 1,
+      "cosmetic": 0,
+      "source": "grounded",
+      "reason": "grounded-passed-gate",
+      "hardSafe": true,
+      "versionOnly": true,
+      "changedSurfaces": [
+        "vi-attributes"
+      ],
+      "groundedScore": 1,
+      "templateScore": 1,
+      "invented": []
+    },
+    {
+      "slug": "af-prepareiesource",
+      "repo": "af",
+      "vi": "af-prepareiesource.labview-diff-report.html",
+      "nonCosmetic": 1,
+      "cosmetic": 1,
+      "source": "grounded",
+      "reason": "grounded-passed-gate",
+      "hardSafe": true,
+      "versionOnly": true,
+      "changedSurfaces": [
+        "vi-attributes"
+      ],
+      "groundedScore": 1,
+      "templateScore": 1,
+      "invented": []
+    },
+    {
+      "slug": "af-restoresetuplvsource",
+      "repo": "af",
+      "vi": "af-restoresetuplvsource.labview-diff-report.html",
+      "nonCosmetic": 1,
+      "cosmetic": 1,
+      "source": "grounded",
+      "reason": "grounded-passed-gate",
+      "hardSafe": true,
+      "versionOnly": true,
+      "changedSurfaces": [
+        "vi-attributes"
+      ],
+      "groundedScore": 1,
+      "templateScore": 1,
+      "invented": []
+    },
+    {
+      "slug": "af-run-all-tests-cli",
+      "repo": "af",
+      "vi": "af-run-all-tests-cli.labview-diff-report.html",
+      "nonCosmetic": 1,
+      "cosmetic": 2,
+      "source": "grounded",
+      "reason": "grounded-passed-gate",
+      "hardSafe": true,
+      "versionOnly": true,
+      "changedSurfaces": [
+        "vi-attributes"
+      ],
+      "groundedScore": 1,
+      "templateScore": 1,
+      "invented": []
+    },
+    {
+      "slug": "af-run-all-tests",
+      "repo": "af",
+      "vi": "af-run-all-tests.labview-diff-report.html",
+      "nonCosmetic": 1,
+      "cosmetic": 0,
+      "source": "grounded",
+      "reason": "grounded-passed-gate",
+      "hardSafe": true,
+      "versionOnly": true,
+      "changedSurfaces": [
+        "vi-attributes"
+      ],
+      "groundedScore": 1,
+      "templateScore": 1,
+      "invented": []
+    },
+    {
+      "slug": "af-test-launch-for-nested-actor-without-caller",
+      "repo": "af",
+      "vi": "af-test-launch-for-nested-actor-without-caller.labview-diff-report.html",
+      "nonCosmetic": 12,
+      "cosmetic": 17,
+      "source": "grounded",
+      "reason": "grounded-passed-gate",
+      "hardSafe": true,
+      "versionOnly": false,
+      "changedSurfaces": [
+        "block-diagram",
+        "vi-attributes"
+      ],
+      "groundedScore": 1,
+      "templateScore": 1,
+      "invented": []
+    },
+    {
+      "slug": "af-vip-post-install-custom-action",
+      "repo": "af",
+      "vi": "af-vip-post-install-custom-action.labview-diff-report.html",
+      "nonCosmetic": 1,
+      "cosmetic": 0,
+      "source": "grounded",
+      "reason": "grounded-passed-gate",
+      "hardSafe": true,
+      "versionOnly": true,
+      "changedSurfaces": [
+        "vi-attributes"
+      ],
+      "groundedScore": 1,
+      "templateScore": 1,
+      "invented": []
+    },
+    {
+      "slug": "af-vip-pre-install-custom-action",
+      "repo": "af",
+      "vi": "af-vip-pre-install-custom-action.labview-diff-report.html",
+      "nonCosmetic": 1,
+      "cosmetic": 0,
+      "source": "grounded",
+      "reason": "grounded-passed-gate",
+      "hardSafe": true,
+      "versionOnly": true,
+      "changedSurfaces": [
+        "vi-attributes"
+      ],
+      "groundedScore": 1,
+      "templateScore": 1,
+      "invented": []
+    },
+    {
+      "slug": "af-vip-pre-uninstall-custom-action",
+      "repo": "af",
+      "vi": "af-vip-pre-uninstall-custom-action.labview-diff-report.html",
+      "nonCosmetic": 1,
+      "cosmetic": 0,
+      "source": "grounded",
+      "reason": "grounded-passed-gate",
+      "hardSafe": true,
+      "versionOnly": true,
+      "changedSurfaces": [
+        "vi-attributes"
+      ],
+      "groundedScore": 1,
+      "templateScore": 1,
+      "invented": []
+    },
+    {
+      "slug": "ie-dropper",
+      "repo": "ie",
+      "vi": "ie-dropper.labview-diff-report.html",
+      "nonCosmetic": 2,
+      "cosmetic": 0,
+      "source": "grounded",
+      "reason": "grounded-passed-gate",
+      "hardSafe": true,
+      "versionOnly": false,
+      "changedSurfaces": [
+        "block-diagram"
+      ],
+      "groundedScore": 1,
+      "templateScore": 1,
+      "invented": []
+    },
+    {
+      "slug": "ie-fill",
+      "repo": "ie",
+      "vi": "ie-fill.labview-diff-report.html",
+      "nonCosmetic": 1,
+      "cosmetic": 0,
+      "source": "grounded",
+      "reason": "grounded-passed-gate",
+      "hardSafe": true,
+      "versionOnly": false,
+      "changedSurfaces": [
+        "block-diagram"
+      ],
+      "groundedScore": 1,
+      "templateScore": 1,
+      "invented": []
+    },
+    {
+      "slug": "ie-loadtemplates",
+      "repo": "ie",
+      "vi": "ie-loadtemplates.labview-diff-report.html",
+      "nonCosmetic": 2,
+      "cosmetic": 0,
+      "source": "grounded",
+      "reason": "grounded-passed-gate",
+      "hardSafe": true,
+      "versionOnly": false,
+      "changedSurfaces": [
+        "block-diagram"
+      ],
+      "groundedScore": 1,
+      "templateScore": 1,
+      "invented": []
+    },
+    {
+      "slug": "ie-lv-icon",
+      "repo": "ie",
+      "vi": "ie-lv-icon.labview-diff-report.html",
+      "nonCosmetic": 8,
+      "cosmetic": 19,
+      "source": "grounded",
+      "reason": "grounded-passed-gate",
+      "hardSafe": true,
+      "versionOnly": false,
+      "changedSurfaces": [
+        "block-diagram"
+      ],
+      "groundedScore": 1,
+      "templateScore": 1,
+      "invented": []
+    },
+    {
+      "slug": "ie-menuselection-user",
+      "repo": "ie",
+      "vi": "ie-menuselection-user.labview-diff-report.html",
+      "nonCosmetic": 2,
+      "cosmetic": 1,
+      "source": "grounded",
+      "reason": "grounded-passed-gate",
+      "hardSafe": true,
+      "versionOnly": false,
+      "changedSurfaces": [
+        "block-diagram"
+      ],
+      "groundedScore": 1,
+      "templateScore": 1,
+      "invented": []
+    },
+    {
+      "slug": "ie-mousedown",
+      "repo": "ie",
+      "vi": "ie-mousedown.labview-diff-report.html",
+      "nonCosmetic": 19,
+      "cosmetic": 47,
+      "source": "grounded",
+      "reason": "grounded-passed-gate",
+      "hardSafe": true,
+      "versionOnly": false,
+      "changedSurfaces": [
+        "block-diagram",
+        "vi-attributes"
+      ],
+      "groundedScore": 1,
+      "templateScore": 1,
+      "invented": []
+    },
+    {
+      "slug": "ie-picturecontrol-mouseup",
+      "repo": "ie",
+      "vi": "ie-picturecontrol-mouseup.labview-diff-report.html",
+      "nonCosmetic": 43,
+      "cosmetic": 29,
+      "source": "grounded",
+      "reason": "grounded-passed-gate",
+      "hardSafe": true,
+      "versionOnly": false,
+      "changedSurfaces": [
+        "front-panel",
+        "block-diagram",
+        "vi-attributes"
+      ],
+      "groundedScore": 1,
+      "templateScore": 1,
+      "invented": []
+    },
+    {
+      "slug": "ie-process-template-graphics",
+      "repo": "ie",
+      "vi": "ie-process-template-graphics.labview-diff-report.html",
+      "nonCosmetic": 2,
+      "cosmetic": 0,
+      "source": "grounded",
+      "reason": "grounded-passed-gate",
+      "hardSafe": true,
+      "versionOnly": false,
+      "changedSurfaces": [
+        "block-diagram"
+      ],
+      "groundedScore": 1,
+      "templateScore": 1,
+      "invented": []
+    },
+    {
+      "slug": "ie-updatevisibledata",
+      "repo": "ie",
+      "vi": "ie-updatevisibledata.labview-diff-report.html",
+      "nonCosmetic": 1,
+      "cosmetic": 0,
+      "source": "grounded",
+      "reason": "grounded-passed-gate",
+      "hardSafe": true,
+      "versionOnly": false,
+      "changedSurfaces": [
+        "block-diagram"
+      ],
+      "groundedScore": 1,
+      "templateScore": 1,
+      "invented": []
+    },
+    {
+      "slug": "ie-vi-template",
+      "repo": "ie",
+      "vi": "ie-vi-template.labview-diff-report.html",
+      "nonCosmetic": 2,
+      "cosmetic": 0,
+      "source": "grounded",
+      "reason": "grounded-passed-gate",
+      "hardSafe": true,
+      "versionOnly": false,
+      "changedSurfaces": [
+        "vi-attributes"
+      ],
+      "groundedScore": 1,
+      "templateScore": 1,
+      "invented": []
+    },
+    {
+      "slug": "ie-visibletextmarker",
+      "repo": "ie",
+      "vi": "ie-visibletextmarker.labview-diff-report.html",
+      "nonCosmetic": 6,
+      "cosmetic": 0,
+      "source": "template",
+      "reason": "failed-safety-gate",
+      "hardSafe": false,
+      "versionOnly": false,
+      "changedSurfaces": [
+        "front-panel",
+        "block-diagram"
+      ],
+      "groundedScore": 0.75,
+      "templateScore": 1,
+      "invented": [
+        5
+      ]
+    }
+  ],
+  "note": "LORO hard-safe rate = fraction of held-out-repo grounded narratives clearing the safety floor (no invented number, no false no-change, states the count). A fold with 0 rendered reports is pending-render, never a fabricated score. Grounding is built from the rendered LabVIEW HTML, never invented."
+}
