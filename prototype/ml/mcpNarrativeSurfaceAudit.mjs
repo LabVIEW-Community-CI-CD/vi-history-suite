@@ -25,6 +25,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parseLabviewDiffReportCounts } from '../labviewDiffReportParser.mjs';
 import { buildViSemanticComparisonModelFromHtml } from '../../out/semantic/viSemanticModel.js';
+import { buildViSemanticHistory } from '../../out/semantic/viSemanticHistory.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURES = path.join(__dirname, '..', 'win-lvkit', 'correlation-fixtures');
@@ -97,8 +98,67 @@ function auditComparisonSurface() {
   return { surface: 'get_vi_semantic_comparison', tool: 'renderViSemanticNarrative', rows };
 }
 
-function main() {
-  const surfaces = [auditComparisonSurface()];
+// --- HISTORY surface: audit renderHistoryNarrative via buildViSemanticHistory with injected
+// fakes (unit-testable in isolation per the SRS). A 4-revision timeline (3 compared steps):
+// one changing step (front-panel + block-diagram), one blocked, one no-difference. ---
+async function auditHistorySurface() {
+  const entries = [
+    { hash: 'r4', authorDate: '2026-01-04T00:00:00+00:00', authorName: 'Dev', subject: 'tweak' },
+    { hash: 'r3', authorDate: '2026-01-03T00:00:00+00:00', authorName: 'Dev', subject: 'refactor' },
+    { hash: 'r2', authorDate: '2026-01-02T00:00:00+00:00', authorName: 'Dev', subject: 'wip' },
+    { hash: 'r1', authorDate: '2026-01-01T00:00:00+00:00', authorName: 'Dev', subject: 'init' }
+  ];
+  const completed = (baseHash, surfaces, narrative) => ({
+    status: 'completed',
+    hasDifferences: surfaces.length > 0,
+    model: { revisions: { baseHash }, changedSurfaces: surfaces, narrative, vi: { title: 'Widget.vi' } }
+  });
+  const resultBySelected = {
+    r4: completed('r3', ['front-panel', 'block-diagram'], 'The front panel and block diagram differ.'),
+    r3: { status: 'blocked', reason: 'labview-unavailable' },
+    r2: completed('r1', [], 'No LabVIEW differences were detected between the two revisions.')
+  };
+  const deps = {
+    getFileHistoryEntries: async () => entries,
+    compareViRevisions: async ({ selectedHash }) => resultBySelected[selectedHash]
+  };
+  const history = await buildViSemanticHistory(
+    { repositoryRoot: '/repo', relativePath: 'vis/Widget.vi', maxRevisions: 10 },
+    deps
+  );
+  const t = history.totals;
+  const allowedNumbers = [
+    history.revisionCount,
+    history.comparedStepCount,
+    t.changingStepCount,
+    t.frontPanelChangeCount,
+    t.blockDiagramChangeCount,
+    t.connectorPaneChangeCount,
+    t.viAttributeChangeCount,
+    t.blockedOrFailedStepCount
+  ];
+  const audit = auditNarrative(history.narrative, {
+    allowedNumbers,
+    hasChanges: t.changingStepCount > 0,
+    headlineCount: t.changingStepCount
+  });
+  return {
+    surface: 'summarize_vi_history',
+    tool: 'renderHistoryNarrative',
+    rows: [
+      {
+        vi: 'Widget.vi (synthetic timeline)',
+        hasDifferences: t.changingStepCount > 0,
+        detailItemCount: t.changingStepCount,
+        ...audit,
+        narrative: history.narrative
+      }
+    ]
+  };
+}
+
+async function main() {
+  const surfaces = [auditComparisonSurface(), await auditHistorySurface()];
   // Follow-up lane (pluggable): history / repository-index / pr-review via their injected builders.
   const surfaceSummaries = surfaces.map((s) => {
     const failing = s.rows.filter((r) => !r.ok);
@@ -121,7 +181,7 @@ function main() {
       I3_statesCount: 'a changed narrative states its headline change count'
     },
     auditedSurfaces: surfaceSummaries,
-    pendingSurfaces: ['summarize_vi_history', 'index_repository_vis', 'build_vi_pr_review', 'vi-preview-comparison-correlation'],
+    pendingSurfaces: ['index_repository_vis', 'build_vi_pr_review', 'vi-preview-comparison-correlation'],
     totalFailing,
     surfaces
   };
@@ -137,5 +197,8 @@ function main() {
 
 // Cross-platform entrypoint check (POSIX file:// vs Windows file:///C:/ ...).
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  main();
+  main().catch((e) => {
+    console.error(e);
+    process.exit(1);
+  });
 }

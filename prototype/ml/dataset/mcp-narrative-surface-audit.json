@@ -1,6 +1,6 @@
 {
   "schema": "vi-history-suite/mcp-narrative-surface-audit@v1",
-  "generatedAt": "2026-07-26T03:54:03.645Z",
+  "generatedAt": "2026-07-26T03:57:44.706Z",
   "invariants": {
     "I1_noInventedNumbers": "every integer > 1 in a narrative is a meaningful count the ground truth allows",
     "I2_noFalseNoChange": "a changed-input narrative never claims no changes/differences",
@@ -14,10 +14,17 @@
       "passing": 8,
       "failing": 0,
       "failingVis": []
+    },
+    {
+      "surface": "summarize_vi_history",
+      "tool": "renderHistoryNarrative",
+      "cases": 1,
+      "passing": 1,
+      "failing": 0,
+      "failingVis": []
     }
   ],
   "pendingSurfaces": [
-    "summarize_vi_history",
     "index_repository_vis",
     "build_vi_pr_review",
     "vi-preview-comparison-correlation"
@@ -115,6 +122,23 @@
           "statesCount": true,
           "invented": [],
           "narrative": "The front panel and block diagram differ. 6 detailed changes across 2 sections (Block Diagram objects and Front Panel - Cluster). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute."
+        }
+      ]
+    },
+    {
+      "surface": "summarize_vi_history",
+      "tool": "renderHistoryNarrative",
+      "rows": [
+        {
+          "vi": "Widget.vi (synthetic timeline)",
+          "hasDifferences": true,
+          "detailItemCount": 1,
+          "ok": true,
+          "noInventedNumbers": true,
+          "noFalseNoChange": true,
+          "statesCount": true,
+          "invented": [],
+          "narrative": "Across 3 compared revisions of Widget.vi, 1 changed the VI. Surfaces changed: front panel (1), block diagram (1). Most recent change (Dev, \"tweak\"): The front panel and block diagram differ. 1 comparison could not be completed."
         }
       ]
     }
