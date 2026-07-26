@@ -67,6 +67,17 @@ ok(gpuPhase && gpuPhase.total === 2 && gpuPhase.gpuHeavy === 2 && gpuPhase.cpuHe
 ok(cpuPhase && cpuPhase.total === 1 && cpuPhase.cpuHeavy === 1 && cpuPhase.gpuHeavy === 0, 'cpu-build phase: 1 contention, CPU-heavy');
 ok(b.reduce((s, x) => s + x.total, 0) === 3, 'acquired event excluded from contention buckets');
 
+// 6b. bucketContentionByPhase classifies DISK-heavy alongside gpu/cpu
+const diskRecs = [
+  { ts: '2026-07-26T00:12:00Z', event: 'retry', resources: { cpu: { loadPerCore: 0.1 }, gpu: { present: true, util: 5 }, disk: { present: true, writeMBps: 30, readMBps: 1800 } } },
+  { ts: '2026-07-26T00:22:00Z', event: 'retry', resources: { cpu: { loadPerCore: 0.1 }, gpu: { present: true, util: 5 }, disk: { present: true, writeMBps: 1500, readMBps: 1800 } } }
+];
+const db = bucketContentionByPhase(diskRecs, markers);
+const dGpu = db.find((x) => x.phase === 'gpu-eval');
+const dCpu = db.find((x) => x.phase === 'cpu-build');
+ok(dGpu && dGpu.diskHeavy === 1 && dGpu.gpuHeavy === 0 && dGpu.cpuHeavy === 0, 'gpu-eval phase: 1 DISK-heavy contention (slow write)');
+ok(dCpu && dCpu.diskHeavy === 0 && dCpu.neither === 1, 'cpu-build phase: fast disk -> not disk-heavy (neither)');
+
 // 7. constants sanity (TTL in the agreed 30-60s envelope)
 ok(constants.DEFAULT_LAUNCH_TTL_SEC >= 30 && constants.DEFAULT_LAUNCH_TTL_SEC <= 60, 'default TTL in 30-60s envelope');
 

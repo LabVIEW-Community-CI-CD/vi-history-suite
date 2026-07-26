@@ -23,7 +23,7 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import * as gw from './agentGateway.mjs';
-import { sampleSystemCapability } from './diskBenchmark.mjs';
+import { sampleSystemCapability, classifyDiskPressure } from './diskBenchmark.mjs';
 
 const LAUNCH_RESOURCE_PREFIX = 'agent-launch:';
 const DEFAULT_LAUNCH_TTL_SEC = 45;      // 30-60s envelope: short so a crashed launcher self-clears
@@ -79,11 +79,13 @@ export function phaseAt(ts, phaseMarkers) {
 }
 
 /** ANALYSIS (the benchmark-phase join, refinement iii): bucket contention records into the
- *  phase active at each record's ts, split by dominant resource pressure (GPU vs CPU). Pure
- *  over already-parsed ledger records + phase markers; reads only the STABLE record shape
- *  { ts, event, resources: { cpu: { loadPerCore }, gpu: { present, util } } } so it is
- *  unaffected by WIN's in-flight summarizeResources internal fixes. Only 'retry' and
- *  'advisory-degraded' events are contention; 'acquired'/'phase-marker' are excluded. */
+ *  phase active at each record's ts, split by dominant resource pressure (GPU, CPU, and DISK).
+ *  Pure over already-parsed ledger records + phase markers; reads only the STABLE record shape
+ *  { ts, event, resources: { cpu: { loadPerCore }, gpu: { present, util }, disk: { present,
+ *  writeMBps, readMBps } } } so it is unaffected by WIN's in-flight summarizeResources internal
+ *  fixes. disk-heavy reuses the disk-benchmark classifier (slow transfer = saturated device).
+ *  Only 'retry' and 'advisory-degraded' events are contention; 'acquired'/'phase-marker' are
+ *  excluded. */
 export function bucketContentionByPhase(records, phaseMarkers, opts) {
   opts = opts || {};
   const gpuBusy = typeof opts.gpuBusyUtil === 'number' ? opts.gpuBusyUtil : GPU_BUSY_UTIL;
@@ -98,11 +100,13 @@ export function bucketContentionByPhase(records, phaseMarkers, opts) {
     const cpu = res.cpu || {};
     const gpuHeavy = Boolean(gpu.present) && typeof gpu.util === 'number' && gpu.util >= gpuBusy;
     const cpuHeavy = typeof cpu.loadPerCore === 'number' && cpu.loadPerCore >= cpuBusy;
-    const b = buckets.get(phase) || { phase, total: 0, gpuHeavy: 0, cpuHeavy: 0, neither: 0 };
+    const diskHeavy = classifyDiskPressure(res.disk, { slowWriteMBps: opts.slowWriteMBps, slowReadMBps: opts.slowReadMBps });
+    const b = buckets.get(phase) || { phase, total: 0, gpuHeavy: 0, cpuHeavy: 0, diskHeavy: 0, neither: 0 };
     b.total += 1;
     if (gpuHeavy) b.gpuHeavy += 1;
     if (cpuHeavy) b.cpuHeavy += 1;
-    if (!gpuHeavy && !cpuHeavy) b.neither += 1;
+    if (diskHeavy) b.diskHeavy += 1;
+    if (!gpuHeavy && !cpuHeavy && !diskHeavy) b.neither += 1;
     buckets.set(phase, b);
   }
   return [...buckets.values()];
