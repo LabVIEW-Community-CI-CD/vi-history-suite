@@ -231,6 +231,48 @@ unless a future plan explicitly promotes it. Use
 [docs/maintainer-operations.md](./maintainer-operations.md) for the current
 maintainer validation model.
 
+## Fixture corpora provisioning (clean-box turnkey)
+
+A clean `vagrant up` from the golden box runs the oracle validations against two
+in-guest fixture corpora. The idempotent `ensure-fixtures` provisioner
+([`vagrant/provision/ensure-fixtures.ps1`](../vagrant/provision/ensure-fixtures.ps1))
+clones and pin-verifies **both**, so no manual guest setup is needed:
+
+| Corpus | Guest path | Role |
+| --- | --- | --- |
+| `ni/labview-icon-editor` | `C:\repos\labview-icon-editor` | `lv_icon.vi` dependency-closure fixture (lone vs full-tree preview image counts) |
+| `ni/actor-framework` | `C:\repos\actor-framework` | af comparison corpus; the peripheral (non-password-protected, non-`GSW.lvlibp`) VIs are the real-structural set |
+
+Force it on demand (it is `run: never`):
+
+```bash
+VAGRANT_CWD=vagrant vagrant provision --provision-with ensure-fixtures
+```
+
+Overridable via `VIHS_FIXTURE_*` (icon-editor: `_REPO_URL` / `_DIR` / `_BASE` /
+`_SELECTED`) and `VIHS_AF_FIXTURE_*` (actor-framework: `_REPO_URL` / `_DIR` /
+`_SHAS`). The af change-pair pins live in
+[`af-change-pairs.json`](../prototype/win-lvkit/correlation-fixtures/af-change-pairs.json);
+a full (unshallowed) clone resolves every pair.
+
+With both corpora staged, drive the host-native oracle over WinRM (it buffers
+guest stdout until exit — use
+[`vagrant/follow-guest-progress.sh`](../vagrant/follow-guest-progress.sh) to tail
+progress):
+
+- **lv_icon closure proof**: `git checkout -f fc09736` in the icon-editor repo,
+  then `node C:\vihs-workspace\out\tooling\viPreviewVerifyCli.js --provider host
+  --labview-version 2026 --sample-vi <lv_icon path> --proof-out <dir>` — lone
+  (isolated copy, no `.lvproj`) vs full-tree (enclosing `lv_icon_editor.lvproj`).
+- **af comparison**: run
+  [`vagrant/req699-win-hostnative-driver.cjs`](../vagrant/req699-win-hostnative-driver.cjs)
+  with `WIN_ICON_REPO=C:\repos\actor-framework` plus the pair's `WIN_VI_PATH` /
+  `WIN_BASE` / `WIN_SELECTED`.
+
+> Prefix vagrant commands with `VAGRANT_CWD=vagrant` (or the absolute `vagrant/`
+> path) rather than `cd vagrant &&` — some non-interactive shells strip a leading
+> `cd`, running vagrant from the repo root where there is no `Vagrantfile`.
+
 ## Lane tooling and tests
 
 The Vagrant lane is driven by a small set of maintainer scripts. The two `.cjs`
