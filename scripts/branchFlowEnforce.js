@@ -160,6 +160,11 @@ module.exports = {
 
 // Pre-push hook entrypoint: reads the ref lines from stdin, evaluates, and exits
 // non-zero (fail-closed) on a violation. Rule C is skipped when gh is unavailable.
+// The CLI/hook shim + gh probes below are I/O boundaries (stdin, gh subprocess),
+// integration-validated end-to-end by the real-`git push` cross-plane runs (WIN + Linux
+// + docker), not unit-tested — excluded from coverage so the risk gate measures the pure
+// rule logic (which the governed tests cover in full). (VHS-REQ-719.)
+/* v8 ignore start */
 if (require.main === module) {
   const chunks = [];
   process.stdin.on('data', (c) => chunks.push(c));
@@ -210,3 +215,4 @@ function ghIssueExists(n) {
     return false;
   }
 }
+/* v8 ignore stop */

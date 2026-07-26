@@ -87,4 +87,45 @@ describe('branchFlowEnforce (issue #2392)', () => {
     expect(text).toMatch(/push BLOCKED \[WIN-vitlt\/native\]/);
     expect(text).toMatch(/no-direct-protected-push/);
   });
+
+  // Branch/edge coverage (VHS-REQ-719): option overrides + helper edges + notes path.
+  it('tolerates no arguments and an empty branch name (defensive defaults)', () => {
+    // options||{} + opts.refs||[] defaults, and the empty-remoteBranch guard (line 92).
+    expect(bf.evaluateBranchFlow().ok).toBe(true);
+    const emptyName = { localRef: 'refs/heads/', localSha: S, remoteRef: 'refs/heads/', remoteSha: Z };
+    expect(bf.evaluateBranchFlow({ refs: [emptyName] }).ok).toBe(true);
+  });
+
+  it('honors explicit protectedBranches/allowedPatterns/exemptBranches/exemptPatterns overrides', () => {
+    const r = bf.evaluateBranchFlow({
+      refs: [ref('trunk'), ref('topic/ok'), ref('skip-me'), ref('exempt-x')],
+      protectedBranches: ['trunk'],
+      allowedPatterns: [/^topic\//],
+      exemptBranches: ['skip-me'],
+      exemptPatterns: [/^exempt-/],
+      issueExists: () => true
+    });
+    // trunk -> protected; topic/ok -> allowed; skip-me/exempt-x -> exempt.
+    expect(r.violations.map((v: { rule: string }) => v.rule)).toEqual(['no-direct-protected-push']);
+  });
+
+  it('branchNameFromRef passes through a falsy or non-heads ref; isDelete honors all forms', () => {
+    expect(bf.branchNameFromRef(undefined)).toBeUndefined();
+    expect(bf.branchNameFromRef('refs/tags/v1')).toBe('refs/tags/v1');
+    // isDelete: all-zero sha, empty sha, and an explicit `(delete)` localRef (non-zero
+    // sha so the `=== '(delete)'` condition is actually evaluated) are all deletions.
+    const zeroSha = { localRef: 'refs/heads/chore/a', localSha: Z, remoteRef: 'refs/heads/chore/a', remoteSha: S };
+    const emptySha = { localRef: 'refs/heads/chore/b', localSha: '', remoteRef: 'refs/heads/chore/b', remoteSha: S };
+    const deleteRef = { localRef: '(delete)', localSha: S, remoteRef: 'refs/heads/chore/c', remoteSha: Z };
+    expect(bf.evaluateBranchFlow({ refs: [zeroSha, emptySha, deleteRef] }).ok).toBe(true);
+  });
+
+  it('formatViolations returns empty for an ok result and tolerates a result without notes', () => {
+    expect(bf.formatViolations({ ok: true, violations: [], notes: [] })).toBe('');
+    // A result lacking a `notes` field must not throw (the `result.notes &&` guard).
+    const noNotes = { ok: false, violations: [{ rule: 'branch-name', branch: 'x', message: 'm' }] };
+    expect(bf.formatViolations(noNotes, {})).toMatch(/branch-name/);
+    const withNotes = { ok: false, violations: [{ rule: 'branch-name', branch: 'x', message: 'm' }], notes: ['note-one'] };
+    expect(bf.formatViolations(withNotes, {})).toMatch(/note-one/);
+  });
 });
