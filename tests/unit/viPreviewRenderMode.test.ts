@@ -40,6 +40,23 @@ describe('selectViPreviewDocument', () => {
     expect(out.html).toContain('id="lvr-frames"');
   });
 
+  it('forces the honest document with a size-degraded notice when staging degraded, overriding interactive (VHS-REQ-659 large-project safeguard)', () => {
+    const out = selectViPreviewDocument({
+      labviewHtml: diagramHtml(),
+      mode: 'interactive',
+      nonce: NONCE,
+      stagingDegraded: { strategy: 'single-file', reason: 'too-many-files' }
+    });
+    // A size-degraded render (sub-VI deps not staged -> "?" placeholders) returns
+    // the honest flat document, NOT the "?"-laden interactive stepper.
+    expect(out.mode).toBe('document');
+    expect(out.fallbackReason).toBe('staging-size-degraded');
+    expect(out.html).not.toContain('id="lvr-frames"');
+    // The notice banner labels the degradation so "?" is not mistaken for content.
+    expect(out.html).toContain('Size-degraded preview');
+    expect(out.html).toContain('too many files');
+  });
+
   it('falls back to the document when interactive mode has no nonce (VHS-REQ-659.19)', () => {
     const out = selectViPreviewDocument({ labviewHtml: diagramHtml(), mode: 'interactive' });
     expect(out.mode).toBe('document');
