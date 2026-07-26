@@ -81,6 +81,15 @@ Run `npm run repo:truth` (or `node scripts/readRepoTruth.js --json`) to read liv
 - Integration with Git via both API and CLI wrappers
 - Branch/PR flow (`fix/* -> feature/<issue#>-* -> develop -> main`) is enforced by the hosted CI Branch Governance step; feature branches MUST reference an issue. See [Branch and PR Flow](./CONTRIBUTING.md#branch-and-pr-flow).
 
+### Parallel Tracks (Two-Plane Merge-Queue Co-Batch)
+When two agents (e.g. the WIN and LINUX planes) work concurrently, run **file-disjoint parallel tracks** so independent PRs co-batch in one merge-queue window instead of paying serial waits. Read the live `develop` queue policy with `npm run repo:truth` (or the branch ruleset): `grouping=ALLGREEN`, `min_entries_to_merge_wait_minutes` ~9, `max_entries_to_merge` 15, `max_entries_to_build` 1, rebase. A lone armed PR still waits the full window, but any PRs armed **and green** within that window merge together as one group.
+- **Ownership:** each agent owns one track (WIN = Track A, LINUX = Track B) and works a **disjoint file set**.
+- **Disjointness rule (crux):** because the queue **rebases** and merges **ALLGREEN**, two PRs touching the same file collide (rebase conflict, or one red entry blocks the whole group). Keep tracks on non-overlapping files and **serialize the collision hotspots** to one active track at a time: `package.json`/`package-lock.json`, `docs/requirements/*.csv` + `srs.md`, `AGENTS.md`, and any shared `src/**` module. Independent directories parallelize freely.
+- **Claim before you start:** claim your track's file set on the collab bus and set the board item `In Progress` with your plane, so the other agent picks a disjoint item. The prototype helper `node prototype/collab.mjs track claim --name X --files a,b,c` flags a live-track file overlap before you branch; `track list` shows live tracks + collisions; `track status` reads the queue policy and classifies open PRs into co-batch-now vs will-follow.
+- **Batch:** arm each PR the moment it is green (see the merge-queue arming guidance below); aim to land both tracks' PRs within one ~9-min window so they co-batch.
+- **Dequeue-red rule:** if a co-batched PR goes **red after arming**, dequeue it promptly (see the merge-queue dequeue recipe below) so it does not hold the partner's green PR hostage in the ALLGREEN group.
+- **Serialize a hotspot handoff:** when both tracks need the same hotspot file, one lands first and **releases** it (e.g. an `AGENTS.md` hotspot freed once a docs PR editing it merges) before the other edits it.
+
 ### Common Pitfalls / Environment Issues
 - Requires Node.js and npm (see [INSTALL.md](./INSTALL.md))
 - On Windows, if `npm` is missing but `winget` is available, install Node.js LTS with `winget install --id OpenJS.NodeJS.LTS --exact --source winget`.
