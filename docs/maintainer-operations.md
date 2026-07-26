@@ -249,7 +249,7 @@ Operational guidance:
 | Diagnostic test VSIX workflow | Reporter retest package from a trusted ref | Diagnostic evidence only |
 | Maintainer Windows/LabVIEW runner | Trusted installed-user validation | Maintainer evidence only |
 | Maintainer Linux/LabVIEW runner | Trusted installed-user validation | Maintainer evidence only |
-| Vagrant | Optional isolated local helper | Not a release gate |
+| Vagrant | Mandatory local release-validation attestation surface (human-run) | Required for Marketplace release readiness evidence (VHS-REQ-666), not a hosted PR merge gate |
 
 ## Activation-Time Runtime Auto-Detect
 
