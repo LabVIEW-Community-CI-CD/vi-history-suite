@@ -145,7 +145,7 @@ async function main() {
       cwd: repoRoot, encoding: 'utf8', windowsHide: false,
       env: {
         ...process.env,
-        WIN_REPO_ROOT: process.env.VIHS_CAP_REPO || 'C:\\repos\\labview-icon-editor',
+        WIN_REPO_ROOT: process.env.VIHS_CAP_REPO || 'C:\\repos\\ni\\labview-icon-editor',
         WIN_VI_PATH: process.env.VIHS_CAP_VI || 'resource/plugins/lv_icon.vi',
         WIN_BASE: process.env.VIHS_CAP_BASE || '5376833',
         WIN_SELECTED: process.env.VIHS_CAP_SELECTED || 'fc09736',

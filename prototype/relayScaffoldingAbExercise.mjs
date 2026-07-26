@@ -39,7 +39,7 @@ import { extractEnvelope, validate, normalizeEnvelope, SCHEMA } from './relay.mj
 const REPO = process.cwd();
 const OLLAMA = process.env.VIHS_OLLAMA_URL || 'http://localhost:11434';
 const MODEL = process.env.VIHS_OLLAMA_MODEL || 'llama3.1:8b';
-const CORPUS = process.env.VIHS_MCP_REPO || (process.platform === 'win32' ? 'C:\\repos\\labview-icon-editor' : path.join(os.homedir(), 'repos', 'labview-icon-editor'));
+const CORPUS = process.env.VIHS_MCP_REPO || (process.platform === 'win32' ? 'C:\\repos\\ni\\labview-icon-editor' : path.join(os.homedir(), 'repos', 'labview-icon-editor'));
 const IMAGE = process.env.LVKIT_DOCKER_IMAGE || '';
 const OUT = process.env.VIHS_AB_OUT || '';
 const CACHE_ROOT = path.join(REPO, '.vihs', 'cache', 'relay-lvkit');

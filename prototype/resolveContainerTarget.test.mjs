@@ -76,7 +76,7 @@ test('osSuffixOfImageVersion parses the suffix', () => {
 });
 
 test('defaultCorpus: per-engine default, VIHS_MCP_REPO override wins', () => {
-  assert.equal(defaultCorpus('windows', {}, '/home/x'), 'C:\\repos\\labview-icon-editor');
+  assert.equal(defaultCorpus('windows', {}, '/home/x'), 'C:\\repos\\ni\\labview-icon-editor');
   assert.equal(defaultCorpus('linux', {}, '/home/x'), '/home/x/repos/labview-icon-editor');
   assert.equal(defaultCorpus('linux', { VIHS_MCP_REPO: '/custom/repo' }, '/home/x'), '/custom/repo');
   assert.equal(defaultCorpus('windows', { VIHS_MCP_REPO: 'D:\\c' }, '/home/x'), 'D:\\c');

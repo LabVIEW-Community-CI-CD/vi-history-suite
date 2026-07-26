@@ -82,6 +82,6 @@ export function resolveContainerTarget(engineOs, env = {}) {
 export function defaultCorpus(engineOs, env = {}, homedir = '') {
   const override = typeof env.VIHS_MCP_REPO === 'string' ? env.VIHS_MCP_REPO.trim() : '';
   if (override) return override;
-  if (engineOs === 'windows') return 'C:\\repos\\labview-icon-editor';
+  if (engineOs === 'windows') return 'C:\\repos\\ni\\labview-icon-editor';
   return path.posix.join(homedir || '', 'repos', 'labview-icon-editor');
 }
