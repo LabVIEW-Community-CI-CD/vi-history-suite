@@ -188,7 +188,15 @@ function analyze(splashDir, ffmpeg, args) {
     }))
     .sort((a, b) => a.frameIndex - b.frameIndex);
 
-  const peak = finite.reduce((best, x) => (x.v > best.v ? x : best), { i: -1, v: -1 });
+  // The LabVIEW splash appears AFTER launch; in a co-capture the intro/calibration
+  // screen and its dismissal also spike mafd, so restrict the primary onset to
+  // post-launch frames when a launch epoch is known (fall back to all frames).
+  const postLaunch = Number.isFinite(capture.launchEpochMs)
+    ? finite.filter((x) => frames[x.i] && Number.isFinite(frames[x.i].epochMs) && frames[x.i].epochMs >= capture.launchEpochMs)
+    : [];
+  const onsetPool = postLaunch.length > 0 ? postLaunch : finite;
+  const onsetSearchScope = postLaunch.length > 0 ? 'post-launch' : 'all-frames';
+  const peak = onsetPool.reduce((best, x) => (x.v > best.v ? x : best), { i: -1, v: -1 });
   const primaryOnset =
     peak.i >= 0
       ? {
@@ -218,6 +226,7 @@ function analyze(splashDir, ffmpeg, args) {
     method: 'ffmpeg-scdet-mafd',
     baselineMafd: Number(baseline.toFixed(3)),
     thresholdMafd: Number(thresholdVal.toFixed(3)),
+    onsetSearchScope,
     primaryOnset,
     launchToSplashMs,
     events,
