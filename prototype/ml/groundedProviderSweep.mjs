@@ -23,11 +23,24 @@ import { fileURLToPath } from 'node:url';
 import { parseLabviewDiffReportCounts } from '../labviewDiffReportParser.mjs';
 import { buildViSemanticComparisonModelFromHtml } from '../../out/semantic/viSemanticModel.js';
 import { selectMcpNarrative, createOllamaGenerate } from './groundedNarrativeProvider.mjs';
+import { SYSTEM } from './vichangeEvalCore.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURES = path.join(__dirname, '..', 'win-lvkit', 'correlation-fixtures');
-const OUT = path.join(__dirname, 'dataset', 'ollama-grounded-provider-sweep.json');
 const OLLAMA = process.env.OLLAMA_URL || 'http://localhost:11434';
+
+// Optional strictness clause appended to the shared SYSTEM (task-2 experiment: does a stricter
+// instruction lift 14b -- which over-elaborates a numeric sub-breakdown -- to full accept-rate
+// WITHOUT regressing 8b-2shot?). Set PROVIDER_SYSTEM_APPEND to enable; blank = shipped SYSTEM.
+const SYSTEM_APPEND = process.env.PROVIDER_SYSTEM_APPEND || '';
+const EFFECTIVE_SYSTEM = SYSTEM_APPEND ? `${SYSTEM}\n${SYSTEM_APPEND}` : undefined;
+
+// Keep the stricter-SYSTEM run in a separate artifact so it never clobbers the baseline sweep.
+const OUT = path.join(
+  __dirname,
+  'dataset',
+  SYSTEM_APPEND ? 'ollama-grounded-provider-sweep-strict.json' : 'ollama-grounded-provider-sweep.json'
+);
 
 // id -> ollama model name. Absent models are skipped (marked present:false).
 const CONFIGS = [
@@ -80,7 +93,9 @@ async function main() {
   const configReports = [];
   for (const cfg of CONFIGS) {
     const configPresent = isPresent(present, cfg.model);
-    const generate = configPresent ? createOllamaGenerate({ ollamaUrl: OLLAMA, model: cfg.model }) : undefined;
+    const generate = configPresent
+      ? createOllamaGenerate({ ollamaUrl: OLLAMA, model: cfg.model, system: EFFECTIVE_SYSTEM })
+      : undefined;
     const rows = [];
     for (const f of scored) {
       const res = await selectMcpNarrative({
@@ -123,6 +138,7 @@ async function main() {
     schema: 'vi-history-suite/grounded-provider-sweep@v1',
     generatedAt: new Date().toISOString(),
     ollama: OLLAMA,
+    systemAppend: SYSTEM_APPEND || null,
     note:
       'Optional grounded MCP narrative provider sweep. Per config: acceptRate = fraction of fixtures where the grounded narrative cleared the faithfulness safety gate without regressing the shipped template; otherwise the provider falls back to the deterministic template.',
     viCount: scored.length,
@@ -131,7 +147,7 @@ async function main() {
   fs.mkdirSync(path.dirname(OUT), { recursive: true });
   fs.writeFileSync(OUT, JSON.stringify(report, null, 2));
 
-  console.log(`GROUNDED_PROVIDER_SWEEP_DONE vis=${scored.length} ollama=${OLLAMA}`);
+  console.log(`GROUNDED_PROVIDER_SWEEP_DONE vis=${scored.length} ollama=${OLLAMA}${SYSTEM_APPEND ? ' systemAppend=on' : ''}`);
   console.log('| config | present | acceptRate | meanGrndScore | reasons |');
   console.log('|---|---|---|---|---|');
   for (const c of configReports) {
