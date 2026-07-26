@@ -262,10 +262,15 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
     console.error('[launch-gate] phase-marker ' + phase + ' recorded.');
     process.exit(0);
   } else if (sub === 'analyze') {
+    const swIdx = process.argv.indexOf('--slow-write');
+    const srIdx = process.argv.indexOf('--slow-read');
+    const opts = {};
+    if (swIdx >= 0) opts.slowWriteMBps = Number(process.argv[swIdx + 1]);
+    if (srIdx >= 0) opts.slowReadMBps = Number(process.argv[srIdx + 1]);
     const entries = readLedger(resolveGateDir());
     const markers = entries.filter((e) => e.event === 'phase-marker');
-    const buckets = bucketContentionByPhase(entries, markers);
-    console.log(JSON.stringify({ schema: 'vi-history-suite/launch-contention-by-phase@v1', analyzedAt: new Date().toISOString(), markerCount: markers.length, contentionCount: buckets.reduce((s, b) => s + b.total, 0), buckets }, null, 2));
+    const buckets = bucketContentionByPhase(entries, markers, opts);
+    console.log(JSON.stringify({ schema: 'vi-history-suite/launch-contention-by-phase@v1', analyzedAt: new Date().toISOString(), thresholds: { slowWriteMBps: opts.slowWriteMBps ?? null, slowReadMBps: opts.slowReadMBps ?? null }, markerCount: markers.length, contentionCount: buckets.reduce((s, b) => s + b.total, 0), buckets }, null, 2));
     process.exit(0);
   } else {
     console.error('usage: node prototype/agentLaunchGate.mjs [acquire <group> | release <group> <token> | mark <phase> | analyze]');
