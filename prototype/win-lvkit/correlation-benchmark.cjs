@@ -43,7 +43,8 @@ const ALL_SAMPLES = [
   { vi: 'resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/MenuSelection(User).vi', base: '537683', selected: 'fc09736', slug: 'menuselection-user' }
 ];
 // CORR_ONLY_SLUGS (comma list) runs a subset; CORR_MERGE keeps prior samples (grow, not replace);
-// CORR_LIMIT caps count. fixtureSlug (HTML fixture name) = basename lowercased, per correlationReport.mjs.
+// CORR_LIMIT caps count. HTML fixture name = the repo-prefixed manifest slug (s.slug, e.g.
+// af-prepareiesource) so fixtures are UNIQUE + discoverable across repos; correlationReport.mjs matches it.
 const ONLY = process.env.CORR_ONLY_SLUGS ? new Set(process.env.CORR_ONLY_SLUGS.split(',').map((x) => x.trim())) : null;
 // FIX: source candidates from the proper per-VI modification enumerator (enumerateViChangePairs.cjs)
 // -- real parent..commit modification pairs -- instead of one hardcoded snapshot pair (which under
@@ -131,14 +132,18 @@ for (const s of SAMPLES) {
   const lv = parseLabviewReport(R.reportFilePath);
   // Copy the report HTML into the committed fixtures so correlationReport.mjs robust-parses it
   // (single-source: this run produces both the dataset entry AND its ground-truth fixture).
-  const fixtureDest = path.join(REPO_ROOT, 'prototype', 'win-lvkit', 'correlation-fixtures', fixtureSlug(s.vi) + '.labview-diff-report.html');
+  // Fixture filename = the repo-prefixed manifest slug (e.g. af-prepareiesource) so fixtures are
+  // UNIQUE + discoverable across repos -- icon-editor vendors actor-framework code, so bare basenames
+  // like `prepareiesource` collide af vs ie. Falls back to the bare basename when no slug (legacy).
+  const fixtureName = (s.slug && String(s.slug).trim()) ? String(s.slug).trim() : fixtureSlug(s.vi);
+  const fixtureDest = path.join(REPO_ROOT, 'prototype', 'win-lvkit', 'correlation-fixtures', fixtureName + '.labview-diff-report.html');
   fs.copyFileSync(R.reportFilePath, fixtureDest);
 
   const countAgreement = lvkitChangeCount != null ? Number(lvkitChangeCount === lv.nonCosmetic) : 0;
   const previewDelta = pBase.inlineImageCount != null && pSel.inlineImageCount != null ? (pSel.inlineImageCount - pBase.inlineImageCount) : null;
 
   samples.push({
-    vi: s.vi, repo: s.repoTag || null, subject: s.subject || null, revisionPair: { base: s.base, selected: s.selected },
+    vi: s.vi, repo: s.repoTag || null, slug: s.slug || null, subject: s.subject || null, revisionPair: { base: s.base, selected: s.selected },
     lvkit: { changeCount: lvkitChangeCount, kinds, generateModuleCount: genModuleCount },
     labview: lv,
     preview: { base: pBase.inlineImageCount, selected: pSel.inlineImageCount, deltaInlineImages: previewDelta },

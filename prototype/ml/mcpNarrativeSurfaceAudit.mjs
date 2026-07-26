@@ -206,9 +206,9 @@ async function auditPrReviewSurface() {
     return buildViSemanticComparisonModelFromHtml(html, { reportFilePath: fixture });
   };
   const models = {
-    'vis/A.vi': modelFor('lv_icon.labview-diff-report.html'),
-    'vis/B.vi': modelFor('mousedown.labview-diff-report.html'),
-    'vis/C.vi': modelFor('visibletextmarker.labview-diff-report.html')
+    'vis/A.vi': modelFor('ie-lv-icon.labview-diff-report.html'),
+    'vis/B.vi': modelFor('ie-mousedown.labview-diff-report.html'),
+    'vis/C.vi': modelFor('ie-visibletextmarker.labview-diff-report.html')
   };
   const completed = (model) => ({
     status: 'completed',
@@ -266,7 +266,7 @@ async function auditPrReviewSurface() {
 // buildViPreviewComparisonCorrelation over a real multi-surface fixture model, previews absent
 // (so every changed surface reports uncorrelated -- exercises the count sentences). ---
 function auditCorrelationSurface() {
-  const fixture = 'picturecontrol_mouseup.labview-diff-report.html';
+  const fixture = 'ie-picturecontrol-mouseup.labview-diff-report.html';
   const html = fs.readFileSync(path.join(FIXTURES, fixture), 'utf8');
   const model = buildViSemanticComparisonModelFromHtml(html, { reportFilePath: fixture });
   const correlation = buildViPreviewComparisonCorrelation(model, {});

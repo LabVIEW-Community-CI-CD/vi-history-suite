@@ -44,7 +44,8 @@ export function buildCorrelationReport(dataset, fixturesDir, deps, calibrationK 
     throw new Error('correlation-report: dataset.samples must be an array');
   }
   const samples = dataset.samples.map((s) => {
-    const htmlPath = path.join(fixturesDir, `${fixtureSlug(s.vi)}.labview-diff-report.html`);
+    // Prefer the repo-prefixed manifest slug (unique across repos); fall back to the bare basename.
+    const htmlPath = path.join(fixturesDir, `${s.slug ? s.slug : fixtureSlug(s.vi)}.labview-diff-report.html`);
     let labview;
     let labviewSource;
     if (deps.exists(htmlPath)) {
