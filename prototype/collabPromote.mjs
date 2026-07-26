@@ -52,8 +52,15 @@ export function validatePromoteSpec(spec) {
   if (!spec.slug || !String(spec.slug).trim()) errors.push('slug required');
   const hasCommits = Array.isArray(spec.commits) && spec.commits.length > 0;
   const hasReconcile = Array.isArray(spec.reconcileFiles) && spec.reconcileFiles.length > 0;
+  const hasProvenance = Array.isArray(spec.provenance) && spec.provenance.length > 0;
   if (hasCommits && hasReconcile) errors.push('specify EITHER commits (cherry-pick) OR reconcileFiles, not both');
   if (!hasCommits && !hasReconcile) errors.push('specify commits (cherry-pick) or reconcileFiles (reconcile)');
+  // reconcile has no cherry-picked shas to source the trailer from, so it MUST carry
+  // explicit `provenance: [<sha>...]` — otherwise the Prototype-Source trailer would be
+  // empty and the slice would lose its prototype lineage. (LINUX review refinement.)
+  if (hasReconcile && !hasProvenance) {
+    errors.push('reconcile mode requires provenance: [<sha>...] so the Prototype-Source trailer is never empty');
+  }
   if (errors.length) throw new Error(`promote: invalid spec — ${errors.join('; ')}`);
   return { mode: hasCommits ? 'cherry-pick' : 'reconcile', base: spec.base || 'develop' };
 }
@@ -87,15 +94,28 @@ export async function runPromote(spec, deps) {
   const branch = promoteBranchName(spec);
   const trailer = buildPrototypeSourceTrailer(spec.commits || spec.provenance || []);
 
+  // Branch-collision precheck: refuse to clobber or diverge from an existing branch
+  // of the same name (a stale prior promote), before any git mutation. (LINUX refinement.)
+  if (deps.git.branchExists && (await deps.git.branchExists(branch))) {
+    return {
+      ok: false,
+      stage: 'branch-collision',
+      branch,
+      message: `Branch "${branch}" already exists. Delete the stale branch or choose a distinct slug before promoting.`
+    };
+  }
+
   log(`promote: creating ${branch} off ${plan.base}`);
   await deps.git.createBranch(branch, plan.base);
 
   if (plan.mode === 'cherry-pick') await deps.git.applyCommits(spec.commits);
   else await deps.git.applyReconcile(spec.reconcileFiles);
 
-  // PRE-PROMOTE VALIDATION GATE — the fix for the post-merge bot chains.
+  // PRE-PROMOTE VALIDATION GATE — the fix for the post-merge bot chains. The mode is
+  // passed so a `reconcile` (arbitrary file-set) can run the FULL suite while a
+  // `cherry-pick` may scope to mapped tests. (LINUX refinement.)
   log('promote: running pre-promote validation gate (check + mapped tests)…');
-  const gate = await deps.runGate();
+  const gate = await deps.runGate({ mode: plan.mode });
   if (!gate || !gate.ok) {
     return {
       ok: false,

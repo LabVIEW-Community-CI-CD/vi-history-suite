@@ -23,19 +23,23 @@ function test(name, fn) {
   return undefined;
 }
 
-function makeDeps(gateOk) {
+function makeDeps(gateOk, branchExists = false) {
   const calls = [];
   return {
     calls,
     log: () => {},
     git: {
+      branchExists: async (b) => {
+        calls.push(`branchExists:${b}`);
+        return branchExists;
+      },
       createBranch: async (b, base) => calls.push(`createBranch:${b}:${base}`),
       applyCommits: async (c) => calls.push(`applyCommits:${c.join('+')}`),
       applyReconcile: async (f) => calls.push(`applyReconcile:${f.join('+')}`),
       push: async (b) => calls.push(`push:${b}`)
     },
-    runGate: async () => {
-      calls.push('runGate');
+    runGate: async (opts) => {
+      calls.push(`runGate:${opts && opts.mode}`);
       return { ok: gateOk, summary: gateOk ? 'green' : 'FAILED' };
     },
     openPr: async (opts) => {
@@ -68,7 +72,14 @@ async function main() {
       /not both/
     );
     assert.deepEqual(validatePromoteSpec({ issue: 1, slug: 'x', commits: ['a'] }), { mode: 'cherry-pick', base: 'develop' });
-    assert.deepEqual(validatePromoteSpec({ issue: 1, slug: 'x', reconcileFiles: ['f'] }), { mode: 'reconcile', base: 'develop' });
+    assert.deepEqual(validatePromoteSpec({ issue: 1, slug: 'x', reconcileFiles: ['f'], provenance: ['sha9'] }), { mode: 'reconcile', base: 'develop' });
+  });
+
+  await test('validatePromoteSpec: reconcile REQUIRES provenance (trailer never empty)', () => {
+    assert.throws(
+      () => validatePromoteSpec({ issue: 1, slug: 'x', reconcileFiles: ['f'] }),
+      /reconcile mode requires provenance/
+    );
   });
 
   await test('buildPromoteBody carries Closes #issue + the provenance trailer', () => {
@@ -85,11 +96,12 @@ async function main() {
     assert.equal(res.stage, 'armed');
     assert.equal(res.branch, 'feature/2392-x');
     assert.equal(res.pr.number, 4242);
-    // Ordering contract: gate strictly precedes push -> openPr -> arm.
+    // Ordering contract: branch-collision precheck -> gate strictly precedes push -> openPr -> arm.
     assert.deepEqual(deps.calls, [
+      'branchExists:feature/2392-x',
       'createBranch:feature/2392-x:develop',
       'applyCommits:sha1+sha2',
-      'runGate',
+      'runGate:cherry-pick',
       'push:feature/2392-x',
       'openPr',
       'arm:4242'
@@ -98,22 +110,31 @@ async function main() {
     assert.match(res.pr._opts.body, /Prototype-Source: sha1,sha2/);
   });
 
+  await test('runPromote BRANCH-COLLISION precheck: aborts before any git mutation', async () => {
+    const deps = makeDeps(true, true); // branchExists -> true
+    const res = await runPromote({ issue: 2392, slug: 'x', commits: ['sha1'] }, deps);
+    assert.equal(res.ok, false);
+    assert.equal(res.stage, 'branch-collision');
+    assert.deepEqual(deps.calls, ['branchExists:feature/2392-x']); // nothing else ran
+  });
+
   await test('runPromote GATE FAILURE: aborts, never opens a PR, never arms', async () => {
     const deps = makeDeps(false);
     const res = await runPromote({ issue: 2392, slug: 'x', commits: ['sha1'] }, deps);
     assert.equal(res.ok, false);
     assert.equal(res.stage, 'validation-gate');
-    assert.ok(deps.calls.includes('runGate'));
+    assert.ok(deps.calls.includes('runGate:cherry-pick'));
     assert.ok(!deps.calls.includes('push:feature/2392-x'), 'must NOT push on gate failure');
     assert.ok(!deps.calls.includes('openPr'), 'must NOT open a PR on gate failure');
     assert.ok(!deps.calls.some((c) => c.startsWith('arm')), 'must NOT arm on gate failure');
   });
 
-  await test('runPromote reconcile mode applies a file-set instead of cherry-pick', async () => {
+  await test('runPromote reconcile mode applies a file-set (with provenance) + runs full-suite gate', async () => {
     const deps = makeDeps(true);
-    await runPromote({ issue: 7, slug: 'y', reconcileFiles: ['a.ts', 'b.ts'] }, deps);
+    await runPromote({ issue: 7, slug: 'y', reconcileFiles: ['a.ts', 'b.ts'], provenance: ['sha9'] }, deps);
     assert.ok(deps.calls.includes('applyReconcile:a.ts+b.ts'));
     assert.ok(!deps.calls.some((c) => c.startsWith('applyCommits')));
+    assert.ok(deps.calls.includes('runGate:reconcile'), 'reconcile passes mode to the gate');
   });
 
   process.stdout.write(`\nAll ${passed} collabPromote self-tests passed.\n`);
