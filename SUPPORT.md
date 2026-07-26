@@ -12,6 +12,7 @@ Before opening an issue, please check:
 - [FIRST-RUN.md](./FIRST-RUN.md) for installed-user and source-evaluation
   expectations
 - [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) for common problems
+- [docs/faq.md](./docs/faq.md) for short, high-frequency setup and fallback answers.
 
 For first-time Marketplace, first-run, or source-evaluation feedback, use the
 onboarding tracker:
