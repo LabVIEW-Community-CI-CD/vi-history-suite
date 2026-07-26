@@ -1,0 +1,41 @@
+{
+  "schema": "vi-history-suite/ollama-grounded-history-eval@v1",
+  "generatedAt": "2026-07-26T04:04:11.112Z",
+  "host": "LINUX",
+  "backend": "gpu",
+  "ollamaUrl": "http://localhost:11434",
+  "model": "vichange8b-2shot",
+  "surface": "summarize_vi_history",
+  "timeline": "synthetic (WIN audit fake: 4 revisions, 1 changing, 1 blocked, 1 no-difference)",
+  "headlineChangingStepCount": 1,
+  "allowedNumbers": [
+    4,
+    3,
+    1,
+    1,
+    1,
+    0,
+    0,
+    1
+  ],
+  "template": {
+    "narrative": "Across 3 compared revisions of Widget.vi, 1 changed the VI. Surfaces changed: front panel (1), block diagram (1). Most recent change (Dev, \"tweak\"): The front panel and block diagram differ. 1 comparison could not be completed.",
+    "score": 1,
+    "failedParts": []
+  },
+  "grounded": {
+    "narrative": "Three revision steps were compared. One of these steps changed the VI, specifically changing the front panel and block diagram. One step was either blocked or failed to compare.",
+    "score": 0.667,
+    "failedParts": [
+      "statesStructuralCount"
+    ],
+    "invented": []
+  },
+  "selection": {
+    "source": "fallback",
+    "reason": "candidate-less-faithful",
+    "candidateScore": 0.667,
+    "fallbackScore": 1
+  },
+  "note": "History TIMELINE (cross-revision) reviewer summary. allowedNumbers = history rollup counts; any other integer > 1 in the grounded summary is an INVENTED cross-revision number. Synthetic timeline reused from WIN mcpNarrativeSurfaceAudit for lane consistency. BASELINE SYSTEM only."
+}
