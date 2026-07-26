@@ -558,9 +558,37 @@ async function main() {
     );
     return;
   }
-  const SPECIAL = ['claim', 'ack', 'done', 'handoff', 'authorize', 'refine', 'post', 'propose', 'align', 'spawn-issue', 'resolve', 'ask', 'answer', 'status', 'board', 'ship', 'tasks', 'run', 'whoami'];
+  if (cmd === 'promote') {
+    // Phase-2 mirror-mode `promote` verb (issue #2392): explicit prototype->develop
+    // slice with a pre-promote validation gate BEFORE opening/arming. --dry-run
+    // validates the orchestration + runs the real gate WITHOUT mutating git or gh.
+    const { runPromote } = await import('./collabPromote.mjs');
+    const dryRun = Boolean(a['dry-run']);
+    const splitList = (v) => (v && v !== true ? String(v).split(',').map((s) => s.trim()).filter(Boolean) : undefined);
+    const spec = {
+      issue: Number(a.issue),
+      slug: a.slug === true ? undefined : a.slug,
+      commits: splitList(a.commits),
+      reconcileFiles: splitList(a['reconcile-files']),
+      provenance: splitList(a.provenance),
+      base: a.base && a.base !== true ? a.base : 'develop',
+      summary: a.summary && a.summary !== true ? a.summary : undefined
+    };
+    let result;
+    try {
+      result = await runPromote(spec, buildPromoteDeps(dryRun));
+    } catch (err) {
+      console.error(`[promote] aborted: ${err && err.message ? err.message : err}`);
+      process.exit(2);
+    }
+    const { pr, gate, ...rest } = result;
+    console.log(JSON.stringify({ dryRun, ...rest, pr: pr ? { number: pr.number, url: pr.url } : undefined }, null, 2));
+    if (!result.ok) process.exit(1);
+    return;
+  }
+  const SPECIAL = ['claim', 'ack', 'done', 'handoff', 'authorize', 'refine', 'post', 'propose', 'align', 'spawn-issue', 'resolve', 'ask', 'answer', 'status', 'board', 'ship', 'tasks', 'run', 'whoami', 'promote'];
   if (!TYPES.has((cmd || '').toUpperCase()) && !SPECIAL.includes(cmd)) {
-    console.error('usage: init | poll [--new|--to-me|--unanswered|--tail N] | whoami [--json|--register] | checkin | tasks [--open] | ship --to X --task Y [--msg-file f] [--no-verify] | run --label X [--eta-min N] -- <cmd> | propose --title X | ask|answer --discussion N --msg X | align|status|resolve|spawn-issue --discussion N | post --type T [--discussion N] | claim|ack|done|handoff|authorize|refine ...\n  message input: --msg "..." | --msg-file <path> | --msg-stdin   (file/stdin avoid shell-quoting corruption)');
+    console.error('usage: init | poll [--new|--to-me|--unanswered|--tail N] | whoami [--json|--register] | promote --issue N --slug X (--commits sha,.. | --reconcile-files f,.. --provenance sha,..) [--base develop] [--dry-run] | checkin | tasks [--open] | ship --to X --task Y [--msg-file f] [--no-verify] | run --label X [--eta-min N] -- <cmd> | propose --title X | ask|answer --discussion N --msg X | align|status|resolve|spawn-issue --discussion N | post --type T [--discussion N] | claim|ack|done|handoff|authorize|refine ...\n  message input: --msg "..." | --msg-file <path> | --msg-stdin   (file/stdin avoid shell-quoting corruption)');
     process.exit(2);
   }
 
@@ -716,6 +744,69 @@ async function main() {
 function req(a, key) {
   if (!a[key] || a[key] === true) { console.error('missing --' + key); process.exit(2); }
   return String(a[key]);
+}
+
+/** Builds the real git/gh side-effect deps for the `promote` verb (issue #2392).
+ *  In --dry-run every MUTATION is skipped + logged; the read-only branch-collision
+ *  check and the validation GATE (npm run check) still run so the plan is real. */
+function buildPromoteDeps(dryRun) {
+  const sh = (bin, args) => spawnSync(bin, args, { encoding: 'utf8' });
+  const log = (m) => console.error(`[promote]${dryRun ? ' (dry-run)' : ''} ${m}`);
+  return {
+    log,
+    git: {
+      branchExists: (b) => {
+        const local = sh('git', ['rev-parse', '--verify', '--quiet', `refs/heads/${b}`]).status === 0;
+        const remote = String(sh('git', ['ls-remote', '--heads', 'origin', b]).stdout || '').trim().length > 0;
+        return local || remote;
+      },
+      createBranch: (b, base) => {
+        if (dryRun) return log(`would create ${b} off origin/${base}`);
+        const r = sh('git', ['checkout', '-b', b, `origin/${base}`]);
+        if (r.status !== 0) throw new Error(`createBranch failed: ${r.stderr}`);
+      },
+      applyCommits: (shas) => {
+        if (dryRun) return log(`would cherry-pick ${shas.join(' ')}`);
+        const r = sh('git', ['cherry-pick', ...shas]);
+        if (r.status !== 0) throw new Error(`cherry-pick failed: ${r.stderr}`);
+      },
+      applyReconcile: (files) => {
+        if (dryRun) return log(`would apply reconciled file-set: ${files.join(', ')}`);
+        throw new Error('reconcile apply is not implemented in the prototype driver (use --dry-run to preview)');
+      },
+      push: (b) => {
+        if (dryRun) return log(`would push ${b} to origin`);
+        const r = sh('git', ['push', '-u', 'origin', b]);
+        if (r.status !== 0) throw new Error(`push failed: ${r.stderr}`);
+      }
+    },
+    runGate: ({ mode }) => {
+      log(`running pre-promote gate (mode=${mode}): npm run check`);
+      // Node 20+/24 on Windows refuses to spawn a `.cmd` (npm.cmd) without a shell
+      // (EINVAL), so run the gate through a shell as a single command string. Found via
+      // the promote --dry-run experiment (a spawn error had looked like a gate failure).
+      const r = spawnSync('npm run --silent check', { encoding: 'utf8', shell: true });
+      if (r.error) log(`gate spawn error: ${r.error.message}`);
+      const ok = r.status === 0;
+      if (!ok) log(`gate FAILED (tail):\n${String(r.stdout || '').slice(-1500)}\n${String(r.stderr || '').slice(-1500)}`);
+      return { ok, summary: ok ? 'check green' : 'check FAILED' };
+    },
+    openPr: (opts) => {
+      if (dryRun) {
+        log(`would open PR base=${opts.base} head=${opts.head} title="${opts.title}"\n--- PR body ---\n${opts.body}\n---------------`);
+        return { number: 0, url: '(dry-run: not opened)' };
+      }
+      const r = sh('gh', ['pr', 'create', '--repo', `${OWNER}/${REPO}`, '--base', opts.base, '--head', opts.head, '--title', opts.title, '--body', opts.body]);
+      if (r.status !== 0) throw new Error(`gh pr create failed: ${r.stderr}`);
+      const url = String(r.stdout).trim();
+      return { number: Number((url.match(/\/pull\/(\d+)/) || [])[1]) || 0, url };
+    },
+    arm: (n) => {
+      if (dryRun) return log(`would arm auto-merge --rebase on PR #${n} (develop queue owns the strategy)`);
+      const r = sh('gh', ['pr', 'merge', String(n), '--auto', '--rebase']);
+      if (r.status !== 0) throw new Error(`gh pr merge failed: ${r.stderr}`);
+    }
+  };
 }
 
 main().catch((e) => { console.error(e.message || e); process.exit(1); });
