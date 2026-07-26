@@ -440,6 +440,95 @@ function cursorPath() { return path.join(os.tmpdir(), 'vihs-collab-cursor-' + AG
 function readCursor() { try { return JSON.parse(fs.readFileSync(cursorPath(), 'utf8')).lastTs || null; } catch { return null; } }
 function writeCursor(ts) { try { fs.writeFileSync(cursorPath(), JSON.stringify({ lastTs: ts, updatedAt: new Date().toISOString() })); } catch { /* best effort */ } }
 
+// Parallel-track coordination (issue #2392 follow-on): claim a DISJOINT file
+// track, list live tracks + flag file collisions, and read the merge-queue
+// co-batch window so both planes make parallel forward progress safely.
+async function trackCommand(rest, a) {
+  const tc = await import('./trackCoordination.mjs');
+  const sub = rest[0] && !rest[0].startsWith('--') ? rest[0] : 'status';
+  const splitFiles = (v) => (v && v !== true ? String(v).split(',').map((s) => s.trim()).filter(Boolean) : []);
+
+  if (sub === 'claim') {
+    const name = req(a, 'name');
+    const files = splitFiles(a.files);
+    if (!files.length) { console.error('track claim: --files "a,b,c" required — declare your DISJOINT file set (dir prefixes allowed: "src/git/**")'); process.exit(2); }
+    const { messages } = readMessages(80);
+    const claims = tc.parseTrackClaims(messages);
+    const conflicts = tc.proposeCollisions(files, claims, { excludeAgent: AGENT });
+    if (conflicts.length) {
+      console.error('CONFLICT: proposed files overlap ' + conflicts.length + ' live track(s) — the queue REBASES, so overlap = a red entry blocks the ALLGREEN group:');
+      for (const c of conflicts) console.error('  track:' + c.track + ' [' + c.agent + ']  overlaps: ' + c.overlap.join(', '));
+      console.error('Pick a disjoint file set or coordinate first (poll/handoff). Re-run with --force to claim anyway.');
+      if (!FORCE_POST) { process.exit(3); }
+    }
+    const note = a.msg && a.msg !== true ? String(a.msg) : (a.issue && a.issue !== true ? 'issue #' + a.issue : 'parallel track');
+    const r = cliPost({ type: 'CLAIM', task: 'track:' + name, msg: 'files=' + files.join(',') + ' | ' + note });
+    if (r) console.log('claimed track:' + name + '  files=[' + files.join(', ') + ']  ' + r.comment.url);
+    return;
+  }
+
+  if (sub === 'release') {
+    const name = req(a, 'name');
+    const r = cliPost({ type: 'DONE', task: 'track:' + name, ref: a.ref && a.ref !== true ? a.ref : undefined, msg: a.msg && a.msg !== true ? a.msg : 'track released' });
+    if (r) console.log('released track:' + name + '  ' + r.comment.url);
+    return;
+  }
+
+  if (sub === 'list') {
+    const { messages } = readMessages(80);
+    const claims = tc.parseTrackClaims(messages);
+    const live = claims.filter((c) => c.live);
+    console.log('# parallel tracks (' + live.length + ' live / ' + claims.length + ' total)');
+    for (const c of claims) console.log('  ' + (c.live ? '[live]' : '[done]') + ' track:' + c.name + '  [' + c.agent + ']  files=[' + c.files.join(', ') + ']' + (c.note ? '  ' + c.note : '') + '  ' + c.ts);
+    const collisions = tc.detectTrackCollisions(claims);
+    if (collisions.length) {
+      console.log('\n! COLLISIONS between live tracks (coordinate — a queue rebase will conflict):');
+      for (const x of collisions) console.log('  track:' + x.a + ' [' + x.aAgent + '] <-> track:' + x.b + ' [' + x.bAgent + ']  overlap: ' + x.overlap.join(', '));
+      process.exitCode = 3;
+    } else if (live.length) {
+      console.log('\nAll live tracks are file-disjoint — safe to parallelize.');
+    }
+    return;
+  }
+
+  if (sub === 'status') {
+    // Read the develop merge-queue policy (best-effort) + open feature PRs, then
+    // classify which PRs co-batch in the current ~9-min ALLGREEN window.
+    let policy = { waitMinutes: 9, grouping: 'ALLGREEN', maxMerge: 15, maxBuild: 1, method: 'REBASE', source: 'default' };
+    try {
+      const rulesets = gh(['api', 'repos/' + OWNER + '/' + REPO + '/rulesets']);
+      for (const rs of rulesets || []) {
+        if (rs.target !== 'branch') continue;
+        const full = gh(['api', 'repos/' + OWNER + '/' + REPO + '/rulesets/' + rs.id]);
+        const mq = (full.rules || []).find((r) => r.type === 'merge_queue');
+        if (mq && mq.parameters) {
+          const p = mq.parameters;
+          policy = { waitMinutes: p.min_entries_to_merge_wait_minutes, grouping: p.grouping_strategy, maxMerge: p.max_entries_to_merge, maxBuild: p.max_entries_to_build, method: p.merge_method, source: full.name || rs.id };
+          break;
+        }
+      }
+    } catch (e) { console.error('track status: could not read merge-queue policy (' + (e.message || e) + '); using defaults'); }
+
+    let prs = [];
+    try {
+      const raw = gh(['pr', 'list', '--repo', OWNER + '/' + REPO, '--state', 'open', '--json', 'number,headRefName,mergeStateStatus,autoMergeRequest,author']);
+      prs = (raw || [])
+        .filter((p) => String(p.headRefName || '').startsWith('feature/'))
+        .map((p) => ({ number: p.number, headRefName: p.headRefName, mergeStateStatus: p.mergeStateStatus, armed: p.autoMergeRequest != null, author: p.author && p.author.login }));
+    } catch (e) { console.error('track status: could not read open PRs (' + (e.message || e) + ')'); }
+
+    const out = tc.classifyCoBatch(prs, policy);
+    console.log('# merge-queue co-batch (policy from ' + policy.source + '): wait~' + out.policy.waitMinutes + 'min  grouping=' + out.policy.grouping + '  maxMerge=' + out.policy.maxMerge + '  maxBuild=' + out.policy.maxBuild + '  method=' + out.policy.method);
+    for (const r of out.rows) console.log('  #' + r.number + ' [' + (r.author || '?') + '] ' + r.head + '  ' + r.state + (r.armed ? ' armed' : '') + '  (mss via green=' + r.green + ')');
+    console.log('co-batch NOW (armed+green): ' + (out.coBatchNow.length ? out.coBatchNow.map((n) => '#' + n).join(', ') : 'none') + '  | will follow (armed, still building): ' + (out.willFollow.length ? out.willFollow.map((n) => '#' + n).join(', ') : 'none'));
+    console.log('note: armed reads can be transiently false for a PR already IN the queue; and maxBuild=1 serializes CI so a still-building PR will not join the current group.');
+    return;
+  }
+
+  console.error('usage: track claim --name X --files a,b,c [--issue N] [--force] | track list | track status | track release --name X');
+  process.exit(2);
+}
+
 function boardCommand(rest, a) {
   const sub = rest[0] && !rest[0].startsWith('--') ? rest[0] : 'show';
   if (sub === 'init') {
@@ -586,9 +675,9 @@ async function main() {
     if (!result.ok) process.exit(1);
     return;
   }
-  const SPECIAL = ['claim', 'ack', 'done', 'handoff', 'authorize', 'refine', 'post', 'propose', 'align', 'spawn-issue', 'resolve', 'ask', 'answer', 'status', 'board', 'ship', 'tasks', 'run', 'whoami', 'promote'];
+  const SPECIAL = ['claim', 'ack', 'done', 'handoff', 'authorize', 'refine', 'post', 'propose', 'align', 'spawn-issue', 'resolve', 'ask', 'answer', 'status', 'board', 'ship', 'tasks', 'run', 'whoami', 'promote', 'track'];
   if (!TYPES.has((cmd || '').toUpperCase()) && !SPECIAL.includes(cmd)) {
-    console.error('usage: init | poll [--new|--to-me|--unanswered|--tail N] | whoami [--json|--register] | promote --issue N --slug X (--commits sha,.. | --reconcile-files f,.. --provenance sha,..) [--base develop] [--dry-run] | checkin | tasks [--open] | ship --to X --task Y [--msg-file f] [--no-verify] | run --label X [--eta-min N] -- <cmd> | propose --title X | ask|answer --discussion N --msg X | align|status|resolve|spawn-issue --discussion N | post --type T [--discussion N] | claim|ack|done|handoff|authorize|refine ...\n  message input: --msg "..." | --msg-file <path> | --msg-stdin   (file/stdin avoid shell-quoting corruption)');
+    console.error('usage: init | poll [--new|--to-me|--unanswered|--tail N] | whoami [--json|--register] | promote --issue N --slug X (--commits sha,.. | --reconcile-files f,.. --provenance sha,..) [--base develop] [--dry-run] | track claim --name X --files a,b,c [--issue N] | track list | track status | track release --name X | checkin | tasks [--open] | ship --to X --task Y [--msg-file f] [--no-verify] | run --label X [--eta-min N] -- <cmd> | propose --title X | ask|answer --discussion N --msg X | align|status|resolve|spawn-issue --discussion N | post --type T [--discussion N] | claim|ack|done|handoff|authorize|refine ...\n  message input: --msg "..." | --msg-file <path> | --msg-stdin   (file/stdin avoid shell-quoting corruption)');
     process.exit(2);
   }
 
@@ -633,6 +722,7 @@ async function main() {
     return;
   }
   if (cmd === 'board') { boardCommand(rest, a); return; }
+  if (cmd === 'track') { await trackCommand(rest, a); return; }
 
   if (cmd === 'ship') {
     // Encode publish-before-push atomically: assert clean + rebased -> publish
