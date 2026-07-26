@@ -1,6 +1,6 @@
 [
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Providers/AddActorInterface/CreateNewWizard_IncludeItem.vi",
     "base": "1dcfb88",
@@ -9,7 +9,7 @@
     "subject": "Recreated changes for the #51 - Cyclic Dependencies (#165)"
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Providers/MessageMakerProvider/_Message Maker/_support/Is Actor Class or Interface.vi",
     "base": "1dcfb88",
@@ -18,7 +18,7 @@
     "subject": "Recreated changes for the #51 - Cyclic Dependencies (#165)"
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/ActorFramework/Testing Support/Test Launch For Nested Actor Without Caller.vi",
     "base": "5fc1fe4",
@@ -27,7 +27,7 @@
     "subject": "Tag VIs for localization: (#164)"
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Tooling/PrepareIESource.vi",
     "base": "4a0c7e8",
@@ -36,7 +36,7 @@
     "subject": "Can build the AF VI Package locally using only powershell"
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Tooling/RestoreSetupLVSource.vi",
     "base": "4a0c7e8",
@@ -45,7 +45,7 @@
     "subject": "Can build the AF VI Package locally using only powershell"
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Tooling/Run all tests CLI.vi",
     "base": "4a0c7e8",
@@ -54,7 +54,7 @@
     "subject": "Can build the AF VI Package locally using only powershell"
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Tooling/Run all tests.vi",
     "base": "4a0c7e8",
@@ -63,7 +63,7 @@
     "subject": "Can build the AF VI Package locally using only powershell"
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Tooling/deployment/ApplyVIPC.vi",
     "base": "4a0c7e8",
@@ -72,7 +72,7 @@
     "subject": "Can build the AF VI Package locally using only powershell"
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Tooling/deployment/CreateLVAddonJSONfile.vi",
     "base": "4a0c7e8",
@@ -81,7 +81,7 @@
     "subject": "Can build the AF VI Package locally using only powershell"
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Tooling/deployment/Create_LV_INI_Token.vi",
     "base": "4a0c7e8",
@@ -90,7 +90,7 @@
     "subject": "Can build the AF VI Package locally using only powershell"
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Tooling/deployment/Destroy_LV_INI_Token.vi",
     "base": "4a0c7e8",
@@ -99,7 +99,7 @@
     "subject": "Can build the AF VI Package locally using only powershell"
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Tooling/deployment/Modify_VIPB_Display_Information.vi",
     "base": "4a0c7e8",
@@ -108,7 +108,7 @@
     "subject": "Can build the AF VI Package locally using only powershell"
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Tooling/deployment/NIP Post uninstall.vi",
     "base": "4a0c7e8",
@@ -117,7 +117,7 @@
     "subject": "Can build the AF VI Package locally using only powershell"
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Tooling/deployment/VIP_Post-Install Custom Action.vi",
     "base": "4a0c7e8",
@@ -126,7 +126,7 @@
     "subject": "Can build the AF VI Package locally using only powershell"
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Tooling/deployment/VIP_Pre-Install Custom Action.vi",
     "base": "4a0c7e8",
@@ -135,7 +135,7 @@
     "subject": "Can build the AF VI Package locally using only powershell"
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Tooling/deployment/VIP_Pre-Uninstall Custom Action.vi",
     "base": "4a0c7e8",
@@ -144,7 +144,7 @@
     "subject": "Can build the AF VI Package locally using only powershell"
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Providers/MessageMakerProvider/AFPP Shared/Resolve Symbolic Paths.vi",
     "base": "42d5acc",
@@ -153,7 +153,7 @@
     "subject": "Debugging.  Build."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Providers/AddActor/CreateNewWizard_IncludeItem.vi",
     "base": "0b1ff88",
@@ -162,7 +162,7 @@
     "subject": "Created Inline SubVI to wrap Inline SubVI node, and protected it with the Message Maker Provider password.  Replaced the relevant section of Replace Diagram Contents.vi, and removed its password.  Removed passwords from items without restricted nodes."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Providers/MessageRescripter/Support/Replace Diagram Contents.vi",
     "base": "0b1ff88",
@@ -171,7 +171,7 @@
     "subject": "Created Inline SubVI to wrap Inline SubVI node, and protected it with the Message Maker Provider password.  Replaced the relevant section of Replace Diagram Contents.vi, and removed its password.  Removed passwords from items without restricted nodes."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Providers/AddActor/Support/Get Default Actor Class Path.vi",
     "base": "c77ead3",
@@ -180,7 +180,7 @@
     "subject": "Created AFPP Shared:Resolve Symbolic Paths.vi to wrap ResolveSymbolicPaths restricted node.  Protected this VI with the password used for Message Maker Provider VIs.  Replaced relevant code in calling VIs, and removed their password protections.  Deleted redundant VI from Message Rescripter."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Providers/AddActor/Support/Get Parent Actor Starting Folder Path.vi",
     "base": "c77ead3",
@@ -189,7 +189,7 @@
     "subject": "Created AFPP Shared:Resolve Symbolic Paths.vi to wrap ResolveSymbolicPaths restricted node.  Protected this VI with the password used for Message Maker Provider VIs.  Replaced relevant code in calling VIs, and removed their password protections.  Deleted redundant VI from Message Rescripter."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Providers/MessageMakerProvider/_Message Maker/_support/Find Item in PPL.vi",
     "base": "c77ead3",
@@ -198,7 +198,7 @@
     "subject": "Created AFPP Shared:Resolve Symbolic Paths.vi to wrap ResolveSymbolicPaths restricted node.  Protected this VI with the password used for Message Maker Provider VIs.  Replaced relevant code in calling VIs, and removed their password protections.  Deleted redundant VI from Message Rescripter."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Providers/MessageRescripter/Support/Find Target Actor.vi",
     "base": "c77ead3",
@@ -207,7 +207,7 @@
     "subject": "Created AFPP Shared:Resolve Symbolic Paths.vi to wrap ResolveSymbolicPaths restricted node.  Protected this VI with the password used for Message Maker Provider VIs.  Replaced relevant code in calling VIs, and removed their password protections.  Deleted redundant VI from Message Rescripter."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Providers/AddActor/Support/CreateNewWizard_Invoke Core.vi",
     "base": "8b81599",
@@ -216,7 +216,7 @@
     "subject": "Replaced relevant protected nodes with Get Project Item from ID.vi.  Removed password protection."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Providers/AddActorInterface/CreateNewWizard_Invoke.vi",
     "base": "8b81599",
@@ -225,7 +225,7 @@
     "subject": "Replaced relevant protected nodes with Get Project Item from ID.vi.  Removed password protection."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Providers/AddActorInterface/Support/Add Interface Dialog.vi",
     "base": "8b81599",
@@ -234,7 +234,7 @@
     "subject": "Replaced relevant protected nodes with Get Project Item from ID.vi.  Removed password protection."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Providers/AddActor/Support/Add Actor.vi",
     "base": "a256102",
@@ -243,7 +243,7 @@
     "subject": "Created Get Project Item from ID to wrap Project.ActiveProject and Project.Item From Item ID.   Protected  Get Project Item from ID with the password for Message Maker Provider files.  Replaced those nodes in Add Actor.vi, and removed password protection."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Providers/MessageMakerProvider/Support/Is Actor Public Method.vi",
     "base": "66299fa",
@@ -252,7 +252,7 @@
     "subject": "Wrapped calls to Read Class Ancestry.vi in a Type Specialization Structure."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Providers/MessageMakerProvider/_Message Maker/_support/Inherits from an Actor.vi",
     "base": "66299fa",
@@ -261,7 +261,7 @@
     "subject": "Wrapped calls to Read Class Ancestry.vi in a Type Specialization Structure."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Providers/MessageMakerProvider/_Message Maker/_support/Is Path to Actor.vi",
     "base": "66299fa",
@@ -270,7 +270,7 @@
     "subject": "Wrapped calls to Read Class Ancestry.vi in a Type Specialization Structure."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/Install Support/Post-Uninstall Custom Action.vi",
     "base": "995f93f",
@@ -279,7 +279,7 @@
     "subject": "Restored Casting Utility For Actors.vim to the framework.  Restored correct file lists to Pre-Install and Post-Uninstall Custom Actions after merge from main.  Deleted incorrect VIP builds.  Added latest VIP build (2.0.0.17)"
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/Install Support/Pre-Install Custom Action.vi",
     "base": "995f93f",
@@ -288,7 +288,7 @@
     "subject": "Restored Casting Utility For Actors.vim to the framework.  Restored correct file lists to Pre-Install and Post-Uninstall Custom Actions after merge from main.  Deleted incorrect VIP builds.  Added latest VIP build (2.0.0.17)"
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/ActorFramework/Batch Msg/Do.vi",
     "base": "768350d",
@@ -297,7 +297,7 @@
     "subject": "Copied speciatly messages to the Specialty Message folder, and added these copies to Actor Framewor.lvlib or AF Specialty Messages.lvlib.  Updated build specification with update information and a product description."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/ActorFramework/Batch Msg/Send Batch.vi",
     "base": "768350d",
@@ -306,7 +306,7 @@
     "subject": "Copied speciatly messages to the Specialty Message folder, and added these copies to Actor Framewor.lvlib or AF Specialty Messages.lvlib.  Updated build specification with update information and a product description."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/ActorFramework/Reply Msg/Do Core.vi",
     "base": "768350d",
@@ -315,7 +315,7 @@
     "subject": "Copied speciatly messages to the Specialty Message folder, and added these copies to Actor Framewor.lvlib or AF Specialty Messages.lvlib.  Updated build specification with update information and a product description."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/ActorFramework/Reply Msg/Do.vi",
     "base": "768350d",
@@ -324,7 +324,7 @@
     "subject": "Copied speciatly messages to the Specialty Message folder, and added these copies to Actor Framewor.lvlib or AF Specialty Messages.lvlib.  Updated build specification with update information and a product description."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/ActorFramework/Reply Msg/Drop Message Core.vi",
     "base": "768350d",
@@ -333,7 +333,7 @@
     "subject": "Copied speciatly messages to the Specialty Message folder, and added these copies to Actor Framewor.lvlib or AF Specialty Messages.lvlib.  Updated build specification with update information and a product description."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/ActorFramework/Reply Msg/Send Message And Wait For Response.vi",
     "base": "768350d",
@@ -342,7 +342,7 @@
     "subject": "Copied speciatly messages to the Specialty Message folder, and added these copies to Actor Framewor.lvlib or AF Specialty Messages.lvlib.  Updated build specification with update information and a product description."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/ActorFramework/Report Error Msg/Do.vi",
     "base": "768350d",
@@ -351,7 +351,7 @@
     "subject": "Copied speciatly messages to the Specialty Message folder, and added these copies to Actor Framewor.lvlib or AF Specialty Messages.lvlib.  Updated build specification with update information and a product description."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/ActorFramework/Report Error Msg/Send Error Report.vi",
     "base": "768350d",
@@ -360,7 +360,7 @@
     "subject": "Copied speciatly messages to the Specialty Message folder, and added these copies to Actor Framewor.lvlib or AF Specialty Messages.lvlib.  Updated build specification with update information and a product description."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/ActorFramework/Self-Addressed Msg/Address Message.vi",
     "base": "768350d",
@@ -369,7 +369,7 @@
     "subject": "Copied speciatly messages to the Specialty Message folder, and added these copies to Actor Framewor.lvlib or AF Specialty Messages.lvlib.  Updated build specification with update information and a product description."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/ActorFramework/Self-Addressed Msg/Do.vi",
     "base": "768350d",
@@ -378,7 +378,7 @@
     "subject": "Copied speciatly messages to the Specialty Message folder, and added these copies to Actor Framewor.lvlib or AF Specialty Messages.lvlib.  Updated build specification with update information and a product description."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/ActorFramework/Self-Addressed Msg/Send Self-Addressed Message.vi",
     "base": "768350d",
@@ -387,7 +387,7 @@
     "subject": "Copied speciatly messages to the Specialty Message folder, and added these copies to Actor Framewor.lvlib or AF Specialty Messages.lvlib.  Updated build specification with update information and a product description."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/AFDebug/Generate Custom Trace.vi",
     "base": "efb27f3",
@@ -396,7 +396,7 @@
     "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/AFDebug/Get Actor Handles.vi",
     "base": "efb27f3",
@@ -405,7 +405,7 @@
     "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/AFDebug/Get Registry Update Event.vi",
     "base": "efb27f3",
@@ -414,7 +414,7 @@
     "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/AFDebug/Protected Actor Handle/Create.vi",
     "base": "efb27f3",
@@ -423,7 +423,7 @@
     "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/AFDebug/Protected Actor Handle/Emergency Stop.vi",
     "base": "efb27f3",
@@ -432,7 +432,7 @@
     "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/AFDebug/Protected Actor Handle/Open Block Diagram.vi",
     "base": "efb27f3",
@@ -441,7 +441,7 @@
     "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/AFDebug/Protected Actor Handle/Open Front Panel.vi",
     "base": "efb27f3",
@@ -450,7 +450,7 @@
     "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/AFDebug/Protected Actor Handle/Ping.vi",
     "base": "efb27f3",
@@ -459,7 +459,7 @@
     "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/AFDebug/Protected Actor Handle/Read Details.vi",
     "base": "efb27f3",
@@ -468,7 +468,7 @@
     "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/AFDebug/Protected Actor Handle/Stop.vi",
     "base": "efb27f3",
@@ -477,7 +477,7 @@
     "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/AFDebug/Register Actor Msg/Do.vi",
     "base": "efb27f3",
@@ -486,7 +486,7 @@
     "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/AFDebug/Register Actor Msg/Send Register Actor.vi",
     "base": "efb27f3",
@@ -495,7 +495,7 @@
     "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/ActorFramework/Actor/Actor Core.vi",
     "base": "efb27f3",
@@ -504,7 +504,7 @@
     "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/ActorFramework/Actor/Actor.vi",
     "base": "efb27f3",
@@ -513,7 +513,7 @@
     "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/ActorFramework/Actor/Receive Message.vi",
     "base": "efb27f3",
@@ -522,7 +522,7 @@
     "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/ActorFramework/Actor/Stop Core.vi",
     "base": "efb27f3",
@@ -531,7 +531,7 @@
     "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/ActorFramework/LastAck/Send Last Ack.vi",
     "base": "efb27f3",
@@ -540,7 +540,7 @@
     "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/ActorFramework/Message Enqueuer/Enqueue Critical.vi",
     "base": "efb27f3",
@@ -549,7 +549,7 @@
     "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/ActorFramework/Message Enqueuer/Enqueue.vi",
     "base": "efb27f3",
@@ -558,7 +558,7 @@
     "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/ActorFramework/Message/Drop Message.vi",
     "base": "efb27f3",
@@ -567,7 +567,7 @@
     "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/ActorFramework/Stop Msg/Send Emergency Stop.vi",
     "base": "efb27f3",
@@ -576,7 +576,7 @@
     "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/ActorFramework/Stop Msg/Send Normal Stop.vi",
     "base": "efb27f3",
@@ -585,7 +585,7 @@
     "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/ActorFramework/Stop Msg/Send Normal or Emergency Stop.vi",
     "base": "efb27f3",
@@ -594,7 +594,7 @@
     "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/ActorFramework/Time-Delayed Send Message/Time-Delayed Send Message Core.vi",
     "base": "efb27f3",
@@ -603,7 +603,7 @@
     "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/ActorFramework/Time-Delayed Send Message/Time-Delayed Send Message.vi",
     "base": "efb27f3",
@@ -612,7 +612,7 @@
     "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/Install Support/Populate Zip File.vi",
     "base": "efb27f3",
@@ -621,7 +621,7 @@
     "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/Install Support/Restore Framework.vi",
     "base": "efb27f3",
@@ -630,7 +630,7 @@
     "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/Install Support/Stash Framework.vi",
     "base": "efb27f3",
@@ -639,7 +639,7 @@
     "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/ActorFramework/tracing/Generate Custom Trace.vi",
     "base": "afdcf2b",
@@ -648,7 +648,7 @@
     "subject": "Created AF Debug wrappers for the Protected Actor Handle class and Generate Custom Trace VI.  Created sample PPL Build projects."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/ActorFramework/tracing/Support/Generate Trace.vi",
     "base": "f35fe96",
@@ -657,7 +657,7 @@
     "subject": "Cleanup"
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/ActorFramework/tracing/Trace Generation/Generate Trace for New Actor.vi",
     "base": "f35fe96",
@@ -666,7 +666,7 @@
     "subject": "Cleanup"
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/Testing/Test Harness/AF Trace Queue/Generate Trace.vi",
     "base": "f35fe96",
@@ -675,7 +675,7 @@
     "subject": "Cleanup"
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/ActorFramework/tracing/Support/Actor Registry.vi",
     "base": "26f5eef",
@@ -684,7 +684,7 @@
     "subject": "Moved code on disk.  Added Init VI to Trace Format."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/ActorFramework/tracing/Support/Get Actor Handles.vi",
     "base": "26f5eef",
@@ -693,7 +693,7 @@
     "subject": "Moved code on disk.  Added Init VI to Trace Format."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/ActorFramework/tracing/Support/Get Clone Name.vi",
     "base": "26f5eef",
@@ -702,7 +702,7 @@
     "subject": "Moved code on disk.  Added Init VI to Trace Format."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/ActorFramework/tracing/Support/Get Registry Update Event.vi",
     "base": "26f5eef",
@@ -711,7 +711,7 @@
     "subject": "Moved code on disk.  Added Init VI to Trace Format."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/ActorFramework/tracing/Support/Localized Strings.vi",
     "base": "26f5eef",
@@ -720,7 +720,7 @@
     "subject": "Moved code on disk.  Added Init VI to Trace Format."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/ActorFramework/tracing/Support/TDM Registry.vi",
     "base": "26f5eef",
@@ -729,7 +729,7 @@
     "subject": "Moved code on disk.  Added Init VI to Trace Format."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/ActorFramework/tracing/Trace Generation/Generate Trace for Dropped Message.vi",
     "base": "26f5eef",
@@ -738,7 +738,7 @@
     "subject": "Moved code on disk.  Added Init VI to Trace Format."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/ActorFramework/tracing/Trace Generation/Generate Trace for Message.vi",
     "base": "26f5eef",
@@ -747,7 +747,7 @@
     "subject": "Moved code on disk.  Added Init VI to Trace Format."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/ActorFramework/tracing/Trace Generation/Generate Trace for New Time Delayed Message.vi",
     "base": "26f5eef",
@@ -756,7 +756,7 @@
     "subject": "Moved code on disk.  Added Init VI to Trace Format."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/ActorFramework/tracing/Trace Generation/Generate Trace for Received Message.vi",
     "base": "26f5eef",
@@ -765,7 +765,7 @@
     "subject": "Moved code on disk.  Added Init VI to Trace Format."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/ActorFramework/tracing/Trace Generation/Generate Trace for Skipped Time-Delayed Message.vi",
     "base": "26f5eef",
@@ -774,7 +774,7 @@
     "subject": "Moved code on disk.  Added Init VI to Trace Format."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/ActorFramework/tracing/Trace Generation/Generate Trace for Stopped Actor.vi",
     "base": "26f5eef",
@@ -783,7 +783,7 @@
     "subject": "Moved code on disk.  Added Init VI to Trace Format."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/ActorFramework/tracing/Trace Generation/Generate Trace for Stopped Time-Delayed Message.vi",
     "base": "26f5eef",
@@ -792,7 +792,7 @@
     "subject": "Moved code on disk.  Added Init VI to Trace Format."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/Testing/Tests/Launch Root Actor_Actor_Generates Actor Traces.vi",
     "base": "26f5eef",
@@ -801,7 +801,7 @@
     "subject": "Moved code on disk.  Added Init VI to Trace Format."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/AFDebug/Actor Registry.vi",
     "base": "fe536de",
@@ -810,7 +810,7 @@
     "subject": "Moved trace generation VIs from AF Debug.lvlib to Actor Framework.lvlib.  Created Trace Format.lvclass and AF Trace Queue.lvclass.  Modified Generate Trace.vi to load and use a specified Trace Format."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/AFDebug/Generate Trace for Dropped Message.vi",
     "base": "fe536de",
@@ -819,7 +819,7 @@
     "subject": "Moved trace generation VIs from AF Debug.lvlib to Actor Framework.lvlib.  Created Trace Format.lvclass and AF Trace Queue.lvclass.  Modified Generate Trace.vi to load and use a specified Trace Format."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/AFDebug/Generate Trace for Message.vi",
     "base": "fe536de",
@@ -828,7 +828,7 @@
     "subject": "Moved trace generation VIs from AF Debug.lvlib to Actor Framework.lvlib.  Created Trace Format.lvclass and AF Trace Queue.lvclass.  Modified Generate Trace.vi to load and use a specified Trace Format."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/AFDebug/Generate Trace for New Actor.vi",
     "base": "fe536de",
@@ -837,7 +837,7 @@
     "subject": "Moved trace generation VIs from AF Debug.lvlib to Actor Framework.lvlib.  Created Trace Format.lvclass and AF Trace Queue.lvclass.  Modified Generate Trace.vi to load and use a specified Trace Format."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/AFDebug/Generate Trace for New Time Delayed Message.vi",
     "base": "fe536de",
@@ -846,7 +846,7 @@
     "subject": "Moved trace generation VIs from AF Debug.lvlib to Actor Framework.lvlib.  Created Trace Format.lvclass and AF Trace Queue.lvclass.  Modified Generate Trace.vi to load and use a specified Trace Format."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/AFDebug/Generate Trace for Received Message.vi",
     "base": "fe536de",
@@ -855,7 +855,7 @@
     "subject": "Moved trace generation VIs from AF Debug.lvlib to Actor Framework.lvlib.  Created Trace Format.lvclass and AF Trace Queue.lvclass.  Modified Generate Trace.vi to load and use a specified Trace Format."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/AFDebug/Generate Trace for Skipped Time-Delayed Message.vi",
     "base": "fe536de",
@@ -864,7 +864,7 @@
     "subject": "Moved trace generation VIs from AF Debug.lvlib to Actor Framework.lvlib.  Created Trace Format.lvclass and AF Trace Queue.lvclass.  Modified Generate Trace.vi to load and use a specified Trace Format."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/AFDebug/Generate Trace for Stopped Actor.vi",
     "base": "fe536de",
@@ -873,7 +873,7 @@
     "subject": "Moved trace generation VIs from AF Debug.lvlib to Actor Framework.lvlib.  Created Trace Format.lvclass and AF Trace Queue.lvclass.  Modified Generate Trace.vi to load and use a specified Trace Format."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/AFDebug/Generate Trace for Stopped Time-Delayed Message.vi",
     "base": "fe536de",
@@ -882,7 +882,7 @@
     "subject": "Moved trace generation VIs from AF Debug.lvlib to Actor Framework.lvlib.  Created Trace Format.lvclass and AF Trace Queue.lvclass.  Modified Generate Trace.vi to load and use a specified Trace Format."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/AFDebug/Generate Trace.vi",
     "base": "fe536de",
@@ -891,7 +891,7 @@
     "subject": "Moved trace generation VIs from AF Debug.lvlib to Actor Framework.lvlib.  Created Trace Format.lvclass and AF Trace Queue.lvclass.  Modified Generate Trace.vi to load and use a specified Trace Format."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/AFDebug/Get Clone Name.vi",
     "base": "fe536de",
@@ -900,7 +900,7 @@
     "subject": "Moved trace generation VIs from AF Debug.lvlib to Actor Framework.lvlib.  Created Trace Format.lvclass and AF Trace Queue.lvclass.  Modified Generate Trace.vi to load and use a specified Trace Format."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/AFDebug/Localized Strings.vi",
     "base": "fe536de",
@@ -909,7 +909,7 @@
     "subject": "Moved trace generation VIs from AF Debug.lvlib to Actor Framework.lvlib.  Created Trace Format.lvclass and AF Trace Queue.lvclass.  Modified Generate Trace.vi to load and use a specified Trace Format."
   },
   {
-    "repo": "C:\\repos\\actor-framework",
+    "repo": "C:\\repos\\ni\\actor-framework",
     "repoTag": "af",
     "vi": "Core/AFDebug/TDM Registry.vi",
     "base": "fe536de",
@@ -918,7 +918,7 @@
     "subject": "Moved trace generation VIs from AF Debug.lvlib to Actor Framework.lvlib.  Created Trace Format.lvclass and AF Trace Queue.lvclass.  Modified Generate Trace.vi to load and use a specified Trace Format."
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/FakedArray/Misc/UpdateVisibleData.vi",
     "base": "a9c9eb9",
@@ -927,7 +927,7 @@
     "subject": "Moved Draw Picture based on Origin.vi into API"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/Tools/Dropper.vi",
     "base": "a9c9eb9",
@@ -936,7 +936,7 @@
     "subject": "Moved Draw Picture based on Origin.vi into API"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/Tools/Fill.vi",
     "base": "a9c9eb9",
@@ -945,7 +945,7 @@
     "subject": "Moved Draw Picture based on Origin.vi into API"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/MenuSelection(User).vi",
     "base": "a9c9eb9",
@@ -954,7 +954,7 @@
     "subject": "Moved Draw Picture based on Origin.vi into API"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Layer/DeleteLayer.vi",
     "base": "a9c9eb9",
@@ -963,7 +963,7 @@
     "subject": "Moved Draw Picture based on Origin.vi into API"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Layer/LayerGraphicManipulation.vi",
     "base": "a9c9eb9",
@@ -972,7 +972,7 @@
     "subject": "Moved Draw Picture based on Origin.vi into API"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Process Temporary View Layers.vi",
     "base": "a9c9eb9",
@@ -981,7 +981,7 @@
     "subject": "Moved Draw Picture based on Origin.vi into API"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Tools/Selection_PrepareIcon.vi",
     "base": "a9c9eb9",
@@ -990,7 +990,7 @@
     "subject": "Moved Draw Picture based on Origin.vi into API"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/Support/Rotate Flip Layer.vi",
     "base": "a9c9eb9",
@@ -999,7 +999,7 @@
     "subject": "Moved Draw Picture based on Origin.vi into API"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Classes/Icon/SET_ActiveLayer.vi",
     "base": "a9c9eb9",
@@ -1008,7 +1008,7 @@
     "subject": "Moved Draw Picture based on Origin.vi into API"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Classes/Layer/UpdateLayerData.vi",
     "base": "a9c9eb9",
@@ -1017,7 +1017,7 @@
     "subject": "Moved Draw Picture based on Origin.vi into API"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Support/Draw Layers.vi",
     "base": "a9c9eb9",
@@ -1026,7 +1026,7 @@
     "subject": "Moved Draw Picture based on Origin.vi into API"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Support/Draw Picture based on Origin.vi",
     "base": "a9c9eb9",
@@ -1035,7 +1035,7 @@
     "subject": "Moved Draw Picture based on Origin.vi into API"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/ni.com_iconlibrary/Download iconlibrary files.vi",
     "base": "9545c48",
@@ -1044,7 +1044,7 @@
     "subject": "Started project cleanup"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/ni.com_iconlibrary/GET HTTP.vi",
     "base": "9545c48",
@@ -1053,7 +1053,7 @@
     "subject": "Started project cleanup"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/ni.com_iconlibrary/ni.com_iconlibrary.vi",
     "base": "9545c48",
@@ -1062,7 +1062,7 @@
     "subject": "Started project cleanup"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/Examples/Advanced Generate LV Icon.vi",
     "base": "9545c48",
@@ -1071,7 +1071,7 @@
     "subject": "Started project cleanup"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Clipboard/IE Read from Clipboard.vi",
     "base": "507c641",
@@ -1080,7 +1080,7 @@
     "subject": "Cleanup of KeyDown.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Key Down Up/KeyDown.vi",
     "base": "507c641",
@@ -1089,7 +1089,7 @@
     "subject": "Cleanup of KeyDown.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/History/Add Data to History.vi",
     "base": "141b502",
@@ -1098,7 +1098,7 @@
     "subject": "Compare current and initial states in check change"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/History/History/Add State.vi",
     "base": "141b502",
@@ -1107,7 +1107,7 @@
     "subject": "Compare current and initial states in check change"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/History/History/Check for Changes.vi",
     "base": "141b502",
@@ -1116,7 +1116,7 @@
     "subject": "Compare current and initial states in check change"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/History/History/Initialize.vi",
     "base": "141b502",
@@ -1125,7 +1125,7 @@
     "subject": "Compare current and initial states in check change"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Tools/Mouse Down.vi",
     "base": "b93a90f",
@@ -1134,7 +1134,7 @@
     "subject": "Corrected Global Data propogation error"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/FakedArray/Misc/Process Template Graphics.vi",
     "base": "0d29227",
@@ -1143,7 +1143,7 @@
     "subject": "Updates from review"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/Icon Library/Initialization/Glyphs Initialization.vi",
     "base": "0d29227",
@@ -1152,7 +1152,7 @@
     "subject": "Updates from review"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Graphics/LoadTemplates.vi",
     "base": "0d29227",
@@ -1161,7 +1161,7 @@
     "subject": "Updates from review"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/lv_icon.vi",
     "base": "0d29227",
@@ -1170,7 +1170,7 @@
     "subject": "Updates from review"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/MouseDown.vi",
     "base": "cf870d0",
@@ -1179,7 +1179,7 @@
     "subject": "Do not enable Add To Undo when starting the eraser"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Tools/VisibleTextMarker.vi",
     "base": "cb4eaea",
@@ -1188,7 +1188,7 @@
     "subject": "Corrected handling of canceling Text Tool"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/PictureControl_MouseUp.vi",
     "base": "f7acbb8",
@@ -1197,7 +1197,7 @@
     "subject": "Completed Undo Redo test"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Test/Templates/VI Template.vi",
     "base": "5dd051b",
@@ -1206,7 +1206,7 @@
     "subject": "Reorganization of test templates"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Support/Extract Icon Data.vi",
     "base": "f7aae3f",
@@ -1215,7 +1215,7 @@
     "subject": "Corrected template name during initialization"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Classes/Icon Framework/CreateBodyText.vi",
     "base": "326881f",
@@ -1224,7 +1224,7 @@
     "subject": "Corrected Layers being updated after Undo"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Classes/Icon/SET_UserLayers.vi",
     "base": "326881f",
@@ -1233,7 +1233,7 @@
     "subject": "Corrected Layers being updated after Undo"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Support/Apply Opacity.vi",
     "base": "326881f",
@@ -1242,7 +1242,7 @@
     "subject": "Corrected Layers being updated after Undo"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Support/Apply Transparency.vi",
     "base": "326881f",
@@ -1251,7 +1251,7 @@
     "subject": "Corrected Layers being updated after Undo"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Support/Deserialize Picture Control Data.vi",
     "base": "326881f",
@@ -1260,7 +1260,7 @@
     "subject": "Corrected Layers being updated after Undo"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/User Dialogs/Verify Cancel.vi",
     "base": "8473cb5",
@@ -1269,7 +1269,7 @@
     "subject": "Made Verify Cancel.vi more debuggable"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Test/Unit Tests/History Tests/Initial States.vi",
     "base": "0e5e34b",
@@ -1278,7 +1278,7 @@
     "subject": "Corrected absolute paths in History Tests.lvclass"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Test/Unit Tests/History Tests/Test Add Clears Redo.vi",
     "base": "0e5e34b",
@@ -1287,7 +1287,7 @@
     "subject": "Corrected absolute paths in History Tests.lvclass"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Test/Unit Tests/History Tests/Test Add and Undo All.vi",
     "base": "0e5e34b",
@@ -1296,7 +1296,7 @@
     "subject": "Corrected absolute paths in History Tests.lvclass"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Test/Unit Tests/History Tests/Test Overflow.vi",
     "base": "0e5e34b",
@@ -1305,7 +1305,7 @@
     "subject": "Corrected absolute paths in History Tests.lvclass"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Test/Unit Tests/History Tests/Test Undo Flag.vi",
     "base": "0e5e34b",
@@ -1314,7 +1314,7 @@
     "subject": "Corrected absolute paths in History Tests.lvclass"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Test/Unit Tests/History Tests/Undo States.vi",
     "base": "0e5e34b",
@@ -1323,7 +1323,7 @@
     "subject": "Corrected absolute paths in History Tests.lvclass"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/History/History/Set Menu Items.vi",
     "base": "c999277",
@@ -1332,7 +1332,7 @@
     "subject": "Debugging of history"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/History/Set to State.vi",
     "base": "c999277",
@@ -1341,7 +1341,7 @@
     "subject": "Debugging of history"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Finalize Text.vi",
     "base": "5ade3e7",
@@ -1350,7 +1350,7 @@
     "subject": "Removed calling of Add Data to History from subVIs"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Glyphs/Glyph_MouseDown.vi",
     "base": "5ade3e7",
@@ -1359,7 +1359,7 @@
     "subject": "Removed calling of Add Data to History from subVIs"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/Icon Initialization.vi",
     "base": "5ade3e7",
@@ -1368,7 +1368,7 @@
     "subject": "Removed calling of Add Data to History from subVIs"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/LayerCluster_ValueChange.vi",
     "base": "5ade3e7",
@@ -1377,7 +1377,7 @@
     "subject": "Removed calling of Add Data to History from subVIs"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/RotateFlip.vi",
     "base": "5ade3e7",
@@ -1386,7 +1386,7 @@
     "subject": "Removed calling of Add Data to History from subVIs"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/Template_MouseDown.vi",
     "base": "5ade3e7",
@@ -1395,7 +1395,7 @@
     "subject": "Removed calling of Add Data to History from subVIs"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Key Down Up/Move Selected Layers.vi",
     "base": "5ade3e7",
@@ -1404,7 +1404,7 @@
     "subject": "Removed calling of Add Data to History from subVIs"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Layer/ViewLayer.vi",
     "base": "5ade3e7",
@@ -1413,7 +1413,7 @@
     "subject": "Removed calling of Add Data to History from subVIs"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/MoveLayers.vi",
     "base": "5ade3e7",
@@ -1422,7 +1422,7 @@
     "subject": "Removed calling of Add Data to History from subVIs"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Tools/Selection_SetNewData.vi",
     "base": "5ade3e7",
@@ -1431,7 +1431,7 @@
     "subject": "Removed calling of Add Data to History from subVIs"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Test/Unit Tests/Undo Redo Core/Initial States.vi",
     "base": "4cc2d4a",
@@ -1440,7 +1440,7 @@
     "subject": "Updated Undo Redo Core unit tests to use class"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Test/Unit Tests/Undo Redo Core/Test Add Clears Redo.vi",
     "base": "4cc2d4a",
@@ -1449,7 +1449,7 @@
     "subject": "Updated Undo Redo Core unit tests to use class"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Test/Unit Tests/Undo Redo Core/Test Add and Undo All.vi",
     "base": "4cc2d4a",
@@ -1458,7 +1458,7 @@
     "subject": "Updated Undo Redo Core unit tests to use class"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Test/Unit Tests/Undo Redo Core/Test Overflow.vi",
     "base": "4cc2d4a",
@@ -1467,7 +1467,7 @@
     "subject": "Updated Undo Redo Core unit tests to use class"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Test/Unit Tests/Undo Redo Core/Undo States.vi",
     "base": "4cc2d4a",
@@ -1476,7 +1476,7 @@
     "subject": "Updated Undo Redo Core unit tests to use class"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/History/Replay Data from History.vi",
     "base": "179cea0",
@@ -1485,7 +1485,7 @@
     "subject": "Added Redo and Undo methods to History class"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Classes Initialization.vi",
     "base": "110f2ad",
@@ -1494,7 +1494,7 @@
     "subject": "Created VI to initialize History class"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Body Text/Apply Body Text.vi",
     "base": "c07b350",
@@ -1503,7 +1503,7 @@
     "subject": "Cleanup of Add Data to History.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/Ants/Initialization/Ants Initialization.vi",
     "base": "c07b350",
@@ -1512,7 +1512,7 @@
     "subject": "Cleanup of Add Data to History.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/FakedArray/Initialization/Initialize FakedArray.vi",
     "base": "c07b350",
@@ -1521,7 +1521,7 @@
     "subject": "Cleanup of Add Data to History.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/FakedArray/Misc/Set active Layer programmatically.vi",
     "base": "c07b350",
@@ -1530,7 +1530,7 @@
     "subject": "Cleanup of Add Data to History.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/Settings/Initialization/Settings Initialization.vi",
     "base": "c07b350",
@@ -1539,7 +1539,7 @@
     "subject": "Cleanup of Add Data to History.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/Tools/Eraser.vi",
     "base": "c07b350",
@@ -1548,7 +1548,7 @@
     "subject": "Cleanup of Add Data to History.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/Tools/Misc/DoubleClick.vi",
     "base": "c07b350",
@@ -1557,7 +1557,7 @@
     "subject": "Cleanup of Add Data to History.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/Tools/Move.vi",
     "base": "c07b350",
@@ -1566,7 +1566,7 @@
     "subject": "Cleanup of Add Data to History.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/History/FGV_Undo Redo.vi",
     "base": "c07b350",
@@ -1575,7 +1575,7 @@
     "subject": "Cleanup of Add Data to History.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Clipboard/IE Write to Clipboard.vi",
     "base": "c07b350",
@@ -1584,7 +1584,7 @@
     "subject": "Cleanup of Add Data to History.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Connector Pane Initialization.vi",
     "base": "c07b350",
@@ -1593,7 +1593,7 @@
     "subject": "Cleanup of Add Data to History.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Create new layer_LayerName_Picture.vi",
     "base": "c07b350",
@@ -1602,7 +1602,7 @@
     "subject": "Cleanup of Add Data to History.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Draw/DrawIcon.vi",
     "base": "c07b350",
@@ -1611,7 +1611,7 @@
     "subject": "Cleanup of Add Data to History.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Extract LV Icon Data.vi",
     "base": "c07b350",
@@ -1620,7 +1620,7 @@
     "subject": "Cleanup of Add Data to History.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Finalize Movement.vi",
     "base": "c07b350",
@@ -1629,7 +1629,7 @@
     "subject": "Cleanup of Add Data to History.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Glyphs/Populate Graphics.vi",
     "base": "c07b350",
@@ -1638,7 +1638,7 @@
     "subject": "Cleanup of Add Data to History.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Glyphs/SET_Glyph.vi",
     "base": "c07b350",
@@ -1647,7 +1647,7 @@
     "subject": "Cleanup of Add Data to History.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Glyphs/SET_ToolGraphic.vi",
     "base": "c07b350",
@@ -1656,7 +1656,7 @@
     "subject": "Cleanup of Add Data to History.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/Add new Layer.vi",
     "base": "c07b350",
@@ -1665,7 +1665,7 @@
     "subject": "Cleanup of Add Data to History.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/Clear User Layers.vi",
     "base": "c07b350",
@@ -1674,7 +1674,7 @@
     "subject": "Cleanup of Add Data to History.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/Delete Selected Layers.vi",
     "base": "c07b350",
@@ -1683,7 +1683,7 @@
     "subject": "Cleanup of Add Data to History.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/Escape.vi",
     "base": "c07b350",
@@ -1692,7 +1692,7 @@
     "subject": "Cleanup of Add Data to History.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/Mouse Down_Glyphs.vi",
     "base": "c07b350",
@@ -1701,7 +1701,7 @@
     "subject": "Cleanup of Add Data to History.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/Mouse Down_Templates.vi",
     "base": "c07b350",
@@ -1710,7 +1710,7 @@
     "subject": "Cleanup of Add Data to History.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/Mouse Down_User Layers.vi",
     "base": "c07b350",
@@ -1719,7 +1719,7 @@
     "subject": "Cleanup of Add Data to History.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/MouseDown_Body Text.vi",
     "base": "c07b350",
@@ -1728,7 +1728,7 @@
     "subject": "Cleanup of Add Data to History.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/MouseMove.vi",
     "base": "c07b350",
@@ -1737,7 +1737,7 @@
     "subject": "Cleanup of Add Data to History.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/Reset layer template selection.vi",
     "base": "c07b350",
@@ -1746,7 +1746,7 @@
     "subject": "Cleanup of Add Data to History.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/Update glyph path string.vi",
     "base": "c07b350",
@@ -1755,7 +1755,7 @@
     "subject": "Cleanup of Add Data to History.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/UpdateLayerView_ScrollbarChanged.vi",
     "base": "c07b350",
@@ -1764,7 +1764,7 @@
     "subject": "Cleanup of Add Data to History.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/Value Change_Top or Bottom Layer.vi",
     "base": "c07b350",
@@ -1773,7 +1773,7 @@
     "subject": "Cleanup of Add Data to History.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Key Down Up/Key Down Up Layers.vi",
     "base": "c07b350",
@@ -1782,7 +1782,7 @@
     "subject": "Cleanup of Add Data to History.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Key Down Up/KeyUp.vi",
     "base": "c07b350",
@@ -1791,7 +1791,7 @@
     "subject": "Cleanup of Add Data to History.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Layer/DeselectLayer.vi",
     "base": "c07b350",
@@ -1800,7 +1800,7 @@
     "subject": "Cleanup of Add Data to History.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/ListGlyphsAndTemplates.vi",
     "base": "c07b350",
@@ -1809,7 +1809,7 @@
     "subject": "Cleanup of Add Data to History.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Load Unload/Export_Clipboard.vi",
     "base": "c07b350",
@@ -1818,7 +1818,7 @@
     "subject": "Cleanup of Add Data to History.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Load Unload/Write INI Tokens and VI Tags.vi",
     "base": "c07b350",
@@ -1827,7 +1827,7 @@
     "subject": "Cleanup of Add Data to History.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Menubar/ShowTerminals.vi",
     "base": "c07b350",
@@ -1836,7 +1836,7 @@
     "subject": "Cleanup of Add Data to History.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/PrepareTemporaryView.vi",
     "base": "c07b350",
@@ -1845,7 +1845,7 @@
     "subject": "Cleanup of Add Data to History.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/SetCursor.vi",
     "base": "c07b350",
@@ -1854,7 +1854,7 @@
     "subject": "Cleanup of Add Data to History.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Settings Init.vi",
     "base": "c07b350",
@@ -1863,7 +1863,7 @@
     "subject": "Cleanup of Add Data to History.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Settings Shutdown.vi",
     "base": "c07b350",
@@ -1872,7 +1872,7 @@
     "subject": "Cleanup of Add Data to History.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Tools/Value Change_Tools.vi",
     "base": "c07b350",
@@ -1881,7 +1881,7 @@
     "subject": "Cleanup of Add Data to History.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Tools/ValueSignalingTool.vi",
     "base": "c07b350",
@@ -1890,7 +1890,7 @@
     "subject": "Cleanup of Add Data to History.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Tools/WriteText.vi",
     "base": "c07b350",
@@ -1899,7 +1899,7 @@
     "subject": "Cleanup of Add Data to History.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Support/ApplyLibIconOverlayToVIIcon.vi",
     "base": "c07b350",
@@ -1908,7 +1908,7 @@
     "subject": "Cleanup of Add Data to History.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/User Dialogs/IconEditorSettings.vi",
     "base": "c07b350",
@@ -1917,7 +1917,7 @@
     "subject": "Cleanup of Add Data to History.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/Alignment Value Change.vi",
     "base": "8305814",
@@ -1926,7 +1926,7 @@
     "subject": "Cleanup of unneeded controls related to undo"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/Icon Editor Init Refs.vi",
     "base": "1c6b783",
@@ -1935,7 +1935,7 @@
     "subject": "Eliminated Body Text Value Signaling property nodes"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/Value Change_Body Text.vi",
     "base": "4fac909",
@@ -1944,7 +1944,7 @@
     "subject": "Cleaned up Value Change_Body Text.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Global Variables/Data.vi",
     "base": "ff396e1",
@@ -1953,7 +1953,7 @@
     "subject": "Moved Undo Redo VIs into History class"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Editor Position/Read Editor Position from INI.vi",
     "base": "7a0c8df",
@@ -1962,7 +1962,7 @@
     "subject": "Moved lv_icon.lvlib into resource/plugins"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Editor Position/Save Editor Position to INI.vi",
     "base": "7a0c8df",
@@ -1971,7 +1971,7 @@
     "subject": "Moved lv_icon.lvlib into resource/plugins"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Editor Position/Set Editor Position.vi",
     "base": "7a0c8df",
@@ -1980,7 +1980,7 @@
     "subject": "Moved lv_icon.lvlib into resource/plugins"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/INI/Read Data From LabVIEW INI.vi",
     "base": "7a0c8df",
@@ -1989,7 +1989,7 @@
     "subject": "Moved lv_icon.lvlib into resource/plugins"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/INI/Write Data to LabVIEW INI.vi",
     "base": "7a0c8df",
@@ -1998,7 +1998,7 @@
     "subject": "Moved lv_icon.lvlib into resource/plugins"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Support/Adjust temporary rotate and flip rectangle.vi",
     "base": "7a0c8df",
@@ -2007,7 +2007,7 @@
     "subject": "Moved lv_icon.lvlib into resource/plugins"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Support/ApplyLVClassIconOverlayToVIIcon.vi",
     "base": "7a0c8df",
@@ -2016,7 +2016,7 @@
     "subject": "Moved lv_icon.lvlib into resource/plugins"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Support/Average Grayscale of Line.vi",
     "base": "7a0c8df",
@@ -2025,7 +2025,7 @@
     "subject": "Moved lv_icon.lvlib into resource/plugins"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Support/Calculate Body Text Position.vi",
     "base": "7a0c8df",
@@ -2034,7 +2034,7 @@
     "subject": "Moved lv_icon.lvlib into resource/plugins"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Support/Check Color.vi",
     "base": "7a0c8df",
@@ -2043,7 +2043,7 @@
     "subject": "Moved lv_icon.lvlib into resource/plugins"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Support/Create Color Array.vi",
     "base": "7a0c8df",
@@ -2052,7 +2052,7 @@
     "subject": "Moved lv_icon.lvlib into resource/plugins"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Support/Create Layer from Image.vi",
     "base": "7a0c8df",
@@ -2061,7 +2061,7 @@
     "subject": "Moved lv_icon.lvlib into resource/plugins"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Support/Create default LV Icon Data.vi",
     "base": "7a0c8df",
@@ -2070,7 +2070,7 @@
     "subject": "Moved lv_icon.lvlib into resource/plugins"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Support/Create default Layer.vi",
     "base": "7a0c8df",
@@ -2079,7 +2079,7 @@
     "subject": "Moved lv_icon.lvlib into resource/plugins"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Support/Extract Data.vi",
     "base": "7a0c8df",
@@ -2088,7 +2088,7 @@
     "subject": "Moved lv_icon.lvlib into resource/plugins"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Support/Fill.vi",
     "base": "7a0c8df",
@@ -2097,7 +2097,7 @@
     "subject": "Moved lv_icon.lvlib into resource/plugins"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Support/FilterEmptyLayerIcons.vi",
     "base": "7a0c8df",
@@ -2106,7 +2106,7 @@
     "subject": "Moved lv_icon.lvlib into resource/plugins"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Support/Find BG Color Peak.vi",
     "base": "7a0c8df",
@@ -2115,7 +2115,7 @@
     "subject": "Moved lv_icon.lvlib into resource/plugins"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Support/Find Neighbours.vi",
     "base": "7a0c8df",
@@ -2124,7 +2124,7 @@
     "subject": "Moved lv_icon.lvlib into resource/plugins"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Support/Find Start and Endpoint Body Text.vi",
     "base": "7a0c8df",
@@ -2133,7 +2133,7 @@
     "subject": "Moved lv_icon.lvlib into resource/plugins"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Support/Flatten Load & Unload.vi",
     "base": "7a0c8df",
@@ -2142,7 +2142,7 @@
     "subject": "Moved lv_icon.lvlib into resource/plugins"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Support/Flood Glyph.vi",
     "base": "7a0c8df",
@@ -2151,7 +2151,7 @@
     "subject": "Moved lv_icon.lvlib into resource/plugins"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Support/Get Grayscale Value.vi",
     "base": "7a0c8df",
@@ -2160,7 +2160,7 @@
     "subject": "Moved lv_icon.lvlib into resource/plugins"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Support/Get Image Data.vi",
     "base": "7a0c8df",
@@ -2169,7 +2169,7 @@
     "subject": "Moved lv_icon.lvlib into resource/plugins"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Support/Get LV Glyph Path.vi",
     "base": "7a0c8df",
@@ -2178,7 +2178,7 @@
     "subject": "Moved lv_icon.lvlib into resource/plugins"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Support/Get SubPicture Coordinate.vi",
     "base": "7a0c8df",
@@ -2187,7 +2187,7 @@
     "subject": "Moved lv_icon.lvlib into resource/plugins"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Support/Get SubPicture Coordinates.vi",
     "base": "7a0c8df",
@@ -2196,7 +2196,7 @@
     "subject": "Moved lv_icon.lvlib into resource/plugins"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Support/Get_VI_Icon.vi",
     "base": "7a0c8df",
@@ -2205,7 +2205,7 @@
     "subject": "Moved lv_icon.lvlib into resource/plugins"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Support/Join Layers.vi",
     "base": "7a0c8df",
@@ -2214,7 +2214,7 @@
     "subject": "Moved lv_icon.lvlib into resource/plugins"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Support/LabVIEW Fonts.vi",
     "base": "7a0c8df",
@@ -2223,7 +2223,7 @@
     "subject": "Moved lv_icon.lvlib into resource/plugins"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Support/Magic Transparent Color Constant.vi",
     "base": "7a0c8df",
@@ -2232,7 +2232,7 @@
     "subject": "Moved lv_icon.lvlib into resource/plugins"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Support/Read Icon Data from Library.vi",
     "base": "7a0c8df",
@@ -2241,7 +2241,7 @@
     "subject": "Moved lv_icon.lvlib into resource/plugins"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Support/Read Icon Data from VI.vi",
     "base": "7a0c8df",
@@ -2250,7 +2250,7 @@
     "subject": "Moved lv_icon.lvlib into resource/plugins"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Support/Remove Duplicates from Color Array.vi",
     "base": "7a0c8df",
@@ -2259,7 +2259,7 @@
     "subject": "Moved lv_icon.lvlib into resource/plugins"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Support/Remove Icon Data from VI.vi",
     "base": "7a0c8df",
@@ -2268,7 +2268,7 @@
     "subject": "Moved lv_icon.lvlib into resource/plugins"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Support/Replace Color.vi",
     "base": "7a0c8df",
@@ -2277,7 +2277,7 @@
     "subject": "Moved lv_icon.lvlib into resource/plugins"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Support/Restore original Coordinates.vi",
     "base": "7a0c8df",
@@ -2286,7 +2286,7 @@
     "subject": "Moved lv_icon.lvlib into resource/plugins"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Support/Return MutationCode Folder.vi",
     "base": "7a0c8df",
@@ -2295,7 +2295,7 @@
     "subject": "Moved lv_icon.lvlib into resource/plugins"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Support/Rotate Flip Image.vi",
     "base": "7a0c8df",
@@ -2304,7 +2304,7 @@
     "subject": "Moved lv_icon.lvlib into resource/plugins"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Support/Serialize Icon Data.vi",
     "base": "7a0c8df",
@@ -2313,7 +2313,7 @@
     "subject": "Moved lv_icon.lvlib into resource/plugins"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Support/Text.vi",
     "base": "7a0c8df",
@@ -2322,7 +2322,7 @@
     "subject": "Moved lv_icon.lvlib into resource/plugins"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Support/Unflatten Load & Unload.vi",
     "base": "7a0c8df",
@@ -2331,7 +2331,7 @@
     "subject": "Moved lv_icon.lvlib into resource/plugins"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Support/Write Icon Data to Library.vi",
     "base": "7a0c8df",
@@ -2340,7 +2340,7 @@
     "subject": "Moved lv_icon.lvlib into resource/plugins"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Support/Write Icon Data to VI.vi",
     "base": "7a0c8df",
@@ -2349,7 +2349,7 @@
     "subject": "Moved lv_icon.lvlib into resource/plugins"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/User Dialogs/SubVIs/Center Dialog on Caller.vi",
     "base": "7b19f1d",
@@ -2358,7 +2358,7 @@
     "subject": "Clean up of Center Dialog on Caller.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Font/Populate Font ComboBox.vi",
     "base": "aee8833",
@@ -2367,7 +2367,7 @@
     "subject": "Refactored Populate Font ComboBox.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Tooling/Build Actions/Pre Build Icon Editor PPL.vi",
     "base": "c188cde",
@@ -2376,7 +2376,7 @@
     "subject": "Forced Debug flag to be FALSE when lv_icon.vi is ran in a PPL"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/lv_icon_launcher.vi",
     "base": "8ecc989",
@@ -2385,7 +2385,7 @@
     "subject": "Corrected error handling in lv_icon_launcher.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Tooling/support/PPL Paths.vi",
     "base": "025c71f",
@@ -2394,7 +2394,7 @@
     "subject": "Run IE from source"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Test/Templates/Many Layers.vi",
     "base": "d17fc26",
@@ -2403,7 +2403,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Test/Templates/Polymorphic Template.vi",
     "base": "d17fc26",
@@ -2412,7 +2412,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Test/Templates/Pyramid Icon Template.vi",
     "base": "d17fc26",
@@ -2421,7 +2421,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Test/Unit Tests/Editor Position/Adjust Position.vi",
     "base": "d17fc26",
@@ -2430,7 +2430,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Test/Unit Tests/Editor Position/Assert Windows Bounds.vi",
     "base": "d17fc26",
@@ -2439,7 +2439,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Test/Unit Tests/Editor Position/Backup INI Data.vi",
     "base": "d17fc26",
@@ -2448,7 +2448,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Test/Unit Tests/Editor Position/INI Position Removed.vi",
     "base": "d17fc26",
@@ -2457,7 +2457,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Test/Unit Tests/Editor Position/INI Use Position Size.vi",
     "base": "d17fc26",
@@ -2466,7 +2466,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Test/Unit Tests/Editor Position/Invalid INI Read.vi",
     "base": "d17fc26",
@@ -2475,7 +2475,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Test/Unit Tests/Editor Position/Position Invalid Test.vi",
     "base": "d17fc26",
@@ -2484,7 +2484,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Test/Unit Tests/Editor Position/Position Out of Bounds Test.vi",
     "base": "d17fc26",
@@ -2493,7 +2493,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Test/Unit Tests/Editor Position/Position Set Test.vi",
     "base": "d17fc26",
@@ -2502,7 +2502,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Test/Unit Tests/Editor Position/Restore INI Data.vi",
     "base": "d17fc26",
@@ -2511,7 +2511,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Test/Unit Tests/Editor Position/Size Test.vi",
     "base": "d17fc26",
@@ -2520,7 +2520,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Test/Unit Tests/Editor Position/Standard INI Write Read.vi",
     "base": "d17fc26",
@@ -2529,7 +2529,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Test/Unit Tests/Editor Position/Test Position INI.vi",
     "base": "d17fc26",
@@ -2538,7 +2538,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Test/Unit Tests/Editor Position/Test Window Position.vi",
     "base": "d17fc26",
@@ -2547,7 +2547,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Test/Unit Tests/INI Settings/Default Settings.vi",
     "base": "d17fc26",
@@ -2556,7 +2556,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Test/Unit Tests/INI Settings/Remove Icon Editor Settings.vi",
     "base": "d17fc26",
@@ -2565,7 +2565,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Test/Unit Tests/INI Settings/Test INI Settings.vi",
     "base": "d17fc26",
@@ -2574,7 +2574,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Test/Unit Tests/INI Settings/Write and Read Settings.vi",
     "base": "d17fc26",
@@ -2583,7 +2583,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Test/Unit Tests/Text-Based VI Icon Tests/Test Split Text into Words.vi",
     "base": "d17fc26",
@@ -2592,7 +2592,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Tooling/Force Icon Editor to Unload.vi",
     "base": "d17fc26",
@@ -2601,7 +2601,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Tooling/GetPathsToIconEditorFilesInLVInstallationCLI.vi",
     "base": "d17fc26",
@@ -2610,7 +2610,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Tooling/MissingIEFilesFromLVInstall.vi",
     "base": "d17fc26",
@@ -2619,7 +2619,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Tooling/Pre Build Icon Editor PPL.vi",
     "base": "d17fc26",
@@ -2628,7 +2628,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Tooling/Prepare LV to Use Icon Editor Source.vi",
     "base": "d17fc26",
@@ -2637,7 +2637,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Tooling/PrepareIESource.vi",
     "base": "d17fc26",
@@ -2646,7 +2646,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Tooling/Remove Icon Editor Settings.vi",
     "base": "d17fc26",
@@ -2655,7 +2655,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Tooling/RestoreSetupLVSource.vi",
     "base": "d17fc26",
@@ -2664,7 +2664,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Tooling/VerifyIEPaths.vi",
     "base": "d17fc26",
@@ -2673,7 +2673,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Tooling/deployment/VIP_Post-Install Custom Action.vi",
     "base": "d17fc26",
@@ -2682,7 +2682,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Tooling/deployment/VIP_Post-Uninstall Custom Action.vi",
     "base": "d17fc26",
@@ -2691,7 +2691,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Tooling/deployment/VIP_Pre-Install Custom Action.vi",
     "base": "d17fc26",
@@ -2700,7 +2700,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Tooling/deployment/VIP_Pre-Uninstall Custom Action.vi",
     "base": "d17fc26",
@@ -2709,7 +2709,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Tooling/support/API Paths.vi",
     "base": "d17fc26",
@@ -2718,7 +2718,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Tooling/support/Add Files to Archive.vi",
     "base": "d17fc26",
@@ -2727,7 +2727,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Tooling/support/Add dev dist if present.vi",
     "base": "d17fc26",
@@ -2736,7 +2736,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Tooling/support/Delete Icon Editor from LV Installation.vi",
     "base": "d17fc26",
@@ -2745,7 +2745,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Tooling/support/Get Paths to Icon Editor Files in LV Installation.vi",
     "base": "d17fc26",
@@ -2754,7 +2754,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Tooling/support/Prompt to Confirm Archival.vi",
     "base": "d17fc26",
@@ -2763,7 +2763,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Tooling/support/Set LibraryPaths to Include Icon Editor.vi",
     "base": "d17fc26",
@@ -2772,7 +2772,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/Ants/GET/GET_AntsLine.vi",
     "base": "d17fc26",
@@ -2781,7 +2781,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/Ants/GET/GET_DelayRestartTL.vi",
     "base": "d17fc26",
@@ -2790,7 +2790,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/Ants/GET/GET_DelayTL.vi",
     "base": "d17fc26",
@@ -2799,7 +2799,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/Ants/GET/GET_Notifier.vi",
     "base": "d17fc26",
@@ -2808,7 +2808,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/Ants/GET/GET_Picture.vi",
     "base": "d17fc26",
@@ -2817,7 +2817,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/Ants/Misc/CheckBoundsAndIncrement.vi",
     "base": "d17fc26",
@@ -2826,7 +2826,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/Ants/Misc/FireAntsEvent.vi",
     "base": "d17fc26",
@@ -2835,7 +2835,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/Ants/Misc/InsideBoundaries.vi",
     "base": "d17fc26",
@@ -2844,7 +2844,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/Ants/Misc/RunningAnts.vi",
     "base": "d17fc26",
@@ -2853,7 +2853,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/FakedArray/GET/GET_ActiveData.vi",
     "base": "d17fc26",
@@ -2862,7 +2862,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/FakedArray/GET/GET_AllData.vi",
     "base": "d17fc26",
@@ -2871,7 +2871,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/FakedArray/GET/GET_Icon.vi",
     "base": "d17fc26",
@@ -2880,7 +2880,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/FakedArray/GET/GET_RowsCols.vi",
     "base": "d17fc26",
@@ -2889,7 +2889,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/FakedArray/GET/GET_Scrollbar Position.vi",
     "base": "d17fc26",
@@ -2898,7 +2898,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/FakedArray/GET/GET_SupportData.vi",
     "base": "d17fc26",
@@ -2907,7 +2907,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/FakedArray/Initialization/ResetColor.vi",
     "base": "d17fc26",
@@ -2916,7 +2916,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/FakedArray/Initialization/SetActiveData_LoadedFromVI.vi",
     "base": "d17fc26",
@@ -2925,7 +2925,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/FakedArray/Misc/ArrowUpDown.vi",
     "base": "d17fc26",
@@ -2934,7 +2934,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/FakedArray/Misc/Ensure Visible.vi",
     "base": "d17fc26",
@@ -2943,7 +2943,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/FakedArray/Misc/Get Cluster Label Number.vi",
     "base": "d17fc26",
@@ -2952,7 +2952,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/FakedArray/Misc/Get Pointer From Label.vi",
     "base": "d17fc26",
@@ -2961,7 +2961,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/FakedArray/Misc/GetReference.vi",
     "base": "d17fc26",
@@ -2970,7 +2970,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/FakedArray/Misc/Layer_Get Active Clusters.vi",
     "base": "d17fc26",
@@ -2979,7 +2979,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/FakedArray/Misc/Layer_Set Active Data BG Color.vi",
     "base": "d17fc26",
@@ -2988,7 +2988,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/FakedArray/Misc/SetActiveGraphic.vi",
     "base": "d17fc26",
@@ -2997,7 +2997,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/FakedArray/Misc/Templates_Set Active Data BG Color.vi",
     "base": "d17fc26",
@@ -3006,7 +3006,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/FakedArray/Misc/UpdateScrollbar.vi",
     "base": "d17fc26",
@@ -3015,7 +3015,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/FakedArray/Misc/UpdateSelectedData.vi",
     "base": "d17fc26",
@@ -3024,7 +3024,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/FakedArray/SET/SET_ActiveData.vi",
     "base": "d17fc26",
@@ -3033,7 +3033,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/FakedArray/SET/SET_Data.vi",
     "base": "d17fc26",
@@ -3042,7 +3042,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/FakedArray/SET/SET_ScrollbarPosition.vi",
     "base": "d17fc26",
@@ -3051,7 +3051,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/FakedArray/ToMoreSpecificClass/ClusterRef_2_DisplayTemplatesRef.vi",
     "base": "d17fc26",
@@ -3060,7 +3060,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/Icon Library/GET/GET_ActiveGlyph.vi",
     "base": "d17fc26",
@@ -3069,7 +3069,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/Icon Library/GET/GET_Glyphs [].vi",
     "base": "d17fc26",
@@ -3078,7 +3078,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/Icon Library/Misc/FilterGlyphs.vi",
     "base": "d17fc26",
@@ -3087,7 +3087,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/Icon Library/Misc/SearchGlyphs.vi",
     "base": "d17fc26",
@@ -3096,7 +3096,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/Icon Library/SET/SET_ActiveGlyph.vi",
     "base": "d17fc26",
@@ -3105,7 +3105,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/Icon Library/SET/SET_Glyphs [].vi",
     "base": "d17fc26",
@@ -3114,7 +3114,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/Settings/GET/GET_3rd party Templates.vi",
     "base": "d17fc26",
@@ -3123,7 +3123,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/Settings/GET/GET_Save_Layers_with_VI.vi",
     "base": "d17fc26",
@@ -3132,7 +3132,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/Settings/GET/GET_Show.vi",
     "base": "d17fc26",
@@ -3141,7 +3141,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/Settings/GET/GET_Text.vi",
     "base": "d17fc26",
@@ -3150,7 +3150,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/Settings/SET/SET_3rdPartyTemplates.vi",
     "base": "d17fc26",
@@ -3159,7 +3159,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/Settings/SET/SET_SaveLayersWithVI.vi",
     "base": "d17fc26",
@@ -3168,7 +3168,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/Settings/SET/SET_Show.vi",
     "base": "d17fc26",
@@ -3177,7 +3177,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/Settings/SET/SET_Text.vi",
     "base": "d17fc26",
@@ -3186,7 +3186,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/Tools/Circle.vi",
     "base": "d17fc26",
@@ -3195,7 +3195,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/Tools/GET/GET_ActiveTool.vi",
     "base": "d17fc26",
@@ -3204,7 +3204,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/Tools/Line.vi",
     "base": "d17fc26",
@@ -3213,7 +3213,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/Tools/Pen.vi",
     "base": "d17fc26",
@@ -3222,7 +3222,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/Tools/Rectangle.vi",
     "base": "d17fc26",
@@ -3231,7 +3231,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/Tools/SET/SET_ActiveTool.vi",
     "base": "d17fc26",
@@ -3240,7 +3240,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Class/Tools/Selection.vi",
     "base": "d17fc26",
@@ -3249,7 +3249,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Delete Icon Editor Source Files.vi",
     "base": "d17fc26",
@@ -3258,7 +3258,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Get Callers of Icon Editor Packed Library.vi",
     "base": "d17fc26",
@@ -3267,7 +3267,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Get Callers of Icon Editor Source Files.vi",
     "base": "d17fc26",
@@ -3276,7 +3276,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Get Icon Editor Source Paths.vi",
     "base": "d17fc26",
@@ -3285,7 +3285,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Launch Icon Editor From String.vi",
     "base": "d17fc26",
@@ -3294,7 +3294,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/AssessRectangle.vi",
     "base": "d17fc26",
@@ -3303,7 +3303,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Buffer for lossless tracking.vi",
     "base": "d17fc26",
@@ -3312,7 +3312,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/CalculateAntsRect.vi",
     "base": "d17fc26",
@@ -3321,7 +3321,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/CoordinatesCorrection.vi",
     "base": "d17fc26",
@@ -3330,7 +3330,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Create new class icon user layers.vi",
     "base": "d17fc26",
@@ -3339,7 +3339,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/DealWithScrollbars.vi",
     "base": "d17fc26",
@@ -3348,7 +3348,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Def FP Updates/Defer_FP_Updates.vi",
     "base": "d17fc26",
@@ -3357,7 +3357,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Draw/Const Temp Coordinate 2 points.vi",
     "base": "d17fc26",
@@ -3366,7 +3366,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Draw/Const Temp Coordinate 4 points.vi",
     "base": "d17fc26",
@@ -3375,7 +3375,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Draw/IsCoordinateConstant.vi",
     "base": "d17fc26",
@@ -3384,7 +3384,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Draw/Origin_or_TempCoordinate.vi",
     "base": "d17fc26",
@@ -3393,7 +3393,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Draw/PixelValue.vi",
     "base": "d17fc26",
@@ -3402,7 +3402,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Flip color refs.vi",
     "base": "d17fc26",
@@ -3411,7 +3411,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Font/Linux.vi",
     "base": "d17fc26",
@@ -3420,7 +3420,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Font/Mac.vi",
     "base": "d17fc26",
@@ -3429,7 +3429,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Font/Windows.vi",
     "base": "d17fc26",
@@ -3438,7 +3438,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Get Monochrome Icon from Caller.vi",
     "base": "d17fc26",
@@ -3447,7 +3447,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/GetComparisonResult4Graphis.vi",
     "base": "d17fc26",
@@ -3456,7 +3456,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Glyphs/Prepare Glyphs for Display.vi",
     "base": "d17fc26",
@@ -3465,7 +3465,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Glyphs/TemporaryGlyphView.vi",
     "base": "d17fc26",
@@ -3474,7 +3474,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Graphics/BuildCategories.vi",
     "base": "d17fc26",
@@ -3483,7 +3483,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Graphics/ChangeRefreshGraphicsState.vi",
     "base": "d17fc26",
@@ -3492,7 +3492,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Graphics/CorruptIconErrorMessage.vi",
     "base": "d17fc26",
@@ -3501,7 +3501,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Graphics/Filter Graphics by File Name.vi",
     "base": "d17fc26",
@@ -3510,7 +3510,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Graphics/Filter Graphics by Folder Name.vi",
     "base": "d17fc26",
@@ -3519,7 +3519,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Graphics/Launch Dynamically Load Graphics.vi",
     "base": "d17fc26",
@@ -3528,7 +3528,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Graphics/LoadGraphics.vi",
     "base": "d17fc26",
@@ -3537,7 +3537,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Graphics/Populate Tree with Categories.vi",
     "base": "d17fc26",
@@ -3546,7 +3546,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Graphics/Pull data from disc.vi",
     "base": "d17fc26",
@@ -3555,7 +3555,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/IEGlyphFolderConstant.vi",
     "base": "d17fc26",
@@ -3564,7 +3564,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/IETemplateLibraryFolderConstant.vi",
     "base": "d17fc26",
@@ -3573,7 +3573,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/IETemplateVIFolderConstant.vi",
     "base": "d17fc26",
@@ -3582,7 +3582,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/Call Keep IE in Memory.vi",
     "base": "d17fc26",
@@ -3591,7 +3591,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/Change Behavior IE window.vi",
     "base": "d17fc26",
@@ -3600,7 +3600,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/Change Mouse Cursor.vi",
     "base": "d17fc26",
@@ -3609,7 +3609,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/Fire Body Text Change event.vi",
     "base": "d17fc26",
@@ -3618,7 +3618,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/Get Icon Editor Context.vi",
     "base": "d17fc26",
@@ -3627,7 +3627,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/IE Save dialog build path.vi",
     "base": "d17fc26",
@@ -3636,7 +3636,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/Icon Editor Help.vi",
     "base": "d17fc26",
@@ -3645,7 +3645,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/Icon Editor Properties Help.vi",
     "base": "d17fc26",
@@ -3654,7 +3654,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/Keep IE in Memory.vi",
     "base": "d17fc26",
@@ -3663,7 +3663,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/Mouse Down_Tree.vi",
     "base": "d17fc26",
@@ -3672,7 +3672,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/Save Graphic Overwrite.vi",
     "base": "d17fc26",
@@ -3681,7 +3681,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/Save Graphic.vi",
     "base": "d17fc26",
@@ -3690,7 +3690,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Icon Editor/populate tree.vi",
     "base": "d17fc26",
@@ -3699,7 +3699,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/ImageDataToIconPreview.vi",
     "base": "d17fc26",
@@ -3708,7 +3708,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/IsAntsRectValid.vi",
     "base": "d17fc26",
@@ -3717,7 +3717,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Key Down Up/Process Active Data Shift Key.vi",
     "base": "d17fc26",
@@ -3726,7 +3726,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Launch_VI_Asynchronously.vi",
     "base": "d17fc26",
@@ -3735,7 +3735,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Layer/Separate Selected Layers.vi",
     "base": "d17fc26",
@@ -3744,7 +3744,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Layer/Split_Layers.vi",
     "base": "d17fc26",
@@ -3753,7 +3753,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Load Glyph from File.vi",
     "base": "d17fc26",
@@ -3762,7 +3762,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Load Unload/Flatten Icon.vi",
     "base": "d17fc26",
@@ -3771,7 +3771,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Load Unload/Flatten Layers.vi",
     "base": "d17fc26",
@@ -3780,7 +3780,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Load Unload/Get Color Icon from Caller.vi",
     "base": "d17fc26",
@@ -3789,7 +3789,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Load Unload/Import_Clipboard.vi",
     "base": "d17fc26",
@@ -3798,7 +3798,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Load Unload/Load.vi",
     "base": "d17fc26",
@@ -3807,7 +3807,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Load Unload/Read Data from Caller.vi",
     "base": "d17fc26",
@@ -3816,7 +3816,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Load Unload/Read Glyphs from  File.vi",
     "base": "d17fc26",
@@ -3825,7 +3825,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Load Unload/Reset Layer VI.vi",
     "base": "d17fc26",
@@ -3834,7 +3834,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Load Unload/Return MutationCode Folder.vi",
     "base": "d17fc26",
@@ -3843,7 +3843,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Load Unload/Unflatten Icon.vi",
     "base": "d17fc26",
@@ -3852,7 +3852,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Load Unload/Unflatten Layers.vi",
     "base": "d17fc26",
@@ -3861,7 +3861,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Load Unload/Write Data to Caller.vi",
     "base": "d17fc26",
@@ -3870,7 +3870,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Load Unload/Write Glyphs to  File.vi",
     "base": "d17fc26",
@@ -3879,7 +3879,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Magic Active Layer Constant.vi",
     "base": "d17fc26",
@@ -3888,7 +3888,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Menubar/EnableDisable Combine Layers.vi",
     "base": "d17fc26",
@@ -3897,7 +3897,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/PrepareData4HTML.vi",
     "base": "d17fc26",
@@ -3906,7 +3906,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Remove invalid characters.vi",
     "base": "d17fc26",
@@ -3915,7 +3915,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Settings Requested Path.vi",
     "base": "d17fc26",
@@ -3924,7 +3924,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Specify Path Enum.vi",
     "base": "d17fc26",
@@ -3933,7 +3933,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Tools/Get Color Not In Image.vi",
     "base": "d17fc26",
@@ -3942,7 +3942,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Truncate string.vi",
     "base": "d17fc26",
@@ -3951,7 +3951,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Undo Redo/Add Data to History.vi",
     "base": "d17fc26",
@@ -3960,7 +3960,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Undo Redo/FGV_Undo Redo.vi",
     "base": "d17fc26",
@@ -3969,7 +3969,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Undo Redo/Replay Data from History.vi",
     "base": "d17fc26",
@@ -3978,7 +3978,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/User Events/Initialization_UserEvents.vi",
     "base": "d17fc26",
@@ -3987,7 +3987,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Write Error to File.vi",
     "base": "d17fc26",
@@ -3996,7 +3996,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/ni.com_iconlibrary/Analyze XML stream.vi",
     "base": "d17fc26",
@@ -4005,7 +4005,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/ni.com_iconlibrary/Check whether installed.vi",
     "base": "d17fc26",
@@ -4014,7 +4014,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/ni.com_iconlibrary/ExtractDataFromXML.vi",
     "base": "d17fc26",
@@ -4023,7 +4023,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/ni.com_iconlibrary/IconlibraryStuffInProgress.vi",
     "base": "d17fc26",
@@ -4032,7 +4032,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/ni.com_iconlibrary/Install Glyphs.vi",
     "base": "d17fc26",
@@ -4041,7 +4041,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/ni.com_iconlibrary/Manual User Input.vi",
     "base": "d17fc26",
@@ -4050,7 +4050,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/ni.com_iconlibrary/ResolveURLbyUsingInfoCode.vi",
     "base": "d17fc26",
@@ -4059,7 +4059,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Support/Call Keep ApplyLib in Memory.vi",
     "base": "d17fc26",
@@ -4068,7 +4068,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Support/Create or Substitute NI_Layer layer.vi",
     "base": "d17fc26",
@@ -4077,7 +4077,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Support/DefaultIconGlyphData.vi",
     "base": "d17fc26",
@@ -4086,7 +4086,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Support/Get 32x32 Image Data.vi",
     "base": "d17fc26",
@@ -4095,7 +4095,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Support/Get VI Library.vi",
     "base": "d17fc26",
@@ -4104,7 +4104,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Support/GetLibIconForVIIconOverlay.vi",
     "base": "d17fc26",
@@ -4113,7 +4113,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Support/GetLibIconForVIIconOverlayFromVI.vi",
     "base": "d17fc26",
@@ -4122,7 +4122,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Support/GetOffsetRWIcon.vi",
     "base": "d17fc26",
@@ -4131,7 +4131,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Support/IE_Open Help Link.vi",
     "base": "d17fc26",
@@ -4140,7 +4140,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Support/IE_Resolve Symbolic Paths.vi",
     "base": "d17fc26",
@@ -4149,7 +4149,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Support/Icon Editor First Call.vi",
     "base": "d17fc26",
@@ -4158,7 +4158,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Support/Keep ApplyLib in Memory.vi",
     "base": "d17fc26",
@@ -4167,7 +4167,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/User Dialogs/SubVIs/Initialize_IconEditorSettings_Tree.vi",
     "base": "d17fc26",
@@ -4176,7 +4176,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/SAMPLE_lv_icon.vi",
     "base": "d17fc26",
@@ -4185,7 +4185,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/Examples/Basic Generate LV Icon Template Layer.vi",
     "base": "d17fc26",
@@ -4194,7 +4194,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/Examples/Basic Generate LV Icon Text Layer.vi",
     "base": "d17fc26",
@@ -4203,7 +4203,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/Examples/Modify VI Icon Template Layer.vi",
     "base": "d17fc26",
@@ -4212,7 +4212,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/Examples/Modify VI Icon Text Layer.vi",
     "base": "d17fc26",
@@ -4221,7 +4221,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/Generate LV Icon Template Layer.vi",
     "base": "d17fc26",
@@ -4230,7 +4230,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/Generate LV Icon Text Layer.vi",
     "base": "d17fc26",
@@ -4239,7 +4239,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/Generate LV Icon User Layers.vi",
     "base": "d17fc26",
@@ -4248,7 +4248,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/Get Flattened Image.vi",
     "base": "d17fc26",
@@ -4257,7 +4257,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/Get Library Icon.vi",
     "base": "d17fc26",
@@ -4266,7 +4266,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/Get VI Icon.vi",
     "base": "d17fc26",
@@ -4275,7 +4275,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/Launch Icon Editor.vi",
     "base": "d17fc26",
@@ -4284,7 +4284,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/Set Library Icon.vi",
     "base": "d17fc26",
@@ -4293,7 +4293,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/Set Text Icon/Adjust Text to Fit Rectangle.vi",
     "base": "d17fc26",
@@ -4302,7 +4302,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/Set Text Icon/Calculate Number of Text Rows.vi",
     "base": "d17fc26",
@@ -4311,7 +4311,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/Set Text Icon/Does the Text Fit.vi",
     "base": "d17fc26",
@@ -4320,7 +4320,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/Set Text Icon/Filter Words.vi",
     "base": "d17fc26",
@@ -4329,7 +4329,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/Set Text Icon/Generate Non Text Layer(s).vi",
     "base": "d17fc26",
@@ -4338,7 +4338,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/Set Text Icon/Generate Pretty Icon Text Layer.vi",
     "base": "d17fc26",
@@ -4347,7 +4347,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/Set Text Icon/Qualify Library Icon Core.vi",
     "base": "d17fc26",
@@ -4356,7 +4356,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/Set Text Icon/Read 1D Strings From Config.vi",
     "base": "d17fc26",
@@ -4365,7 +4365,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/Set Text Icon/Read 2D Strings From Config.vi",
     "base": "d17fc26",
@@ -4374,7 +4374,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/Set Text Icon/Set Icon.vi",
     "base": "d17fc26",
@@ -4383,7 +4383,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/Set Text Icon/Split First and Other Strings.vi",
     "base": "d17fc26",
@@ -4392,7 +4392,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/Set Text Icon/Split Text Into Words.vi",
     "base": "d17fc26",
@@ -4401,7 +4401,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/Set Text Icon/User Visible Strings.vi",
     "base": "d17fc26",
@@ -4410,7 +4410,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/Set VI Icon.vi",
     "base": "d17fc26",
@@ -4419,7 +4419,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/Support/Apply Transparency.vi",
     "base": "d17fc26",
@@ -4428,7 +4428,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/Support/Create Icon Framework.vi",
     "base": "d17fc26",
@@ -4437,7 +4437,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/Support/Draw Template Glyph.vi",
     "base": "d17fc26",
@@ -4446,7 +4446,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/Support/Generate Border User Layer.vi",
     "base": "d17fc26",
@@ -4455,7 +4455,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/Support/Get Data from Icon Class.vi",
     "base": "d17fc26",
@@ -4464,7 +4464,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/Support/Get Icon Class from Data.vi",
     "base": "d17fc26",
@@ -4473,7 +4473,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/Support/Populate Body Text Data.vi",
     "base": "d17fc26",
@@ -4482,7 +4482,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Classes/Icon Framework/Apply Body Text.vi",
     "base": "d17fc26",
@@ -4491,7 +4491,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Classes/Icon Framework/BodyTextCoordinates.vi",
     "base": "d17fc26",
@@ -4500,7 +4500,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Classes/Icon Framework/GET_BodyText.vi",
     "base": "d17fc26",
@@ -4509,7 +4509,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Classes/Icon Framework/GET_Path.vi",
     "base": "d17fc26",
@@ -4518,7 +4518,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Classes/Icon Framework/SET_BodyText.vi",
     "base": "d17fc26",
@@ -4527,7 +4527,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Classes/Icon Framework/SET_Path.vi",
     "base": "d17fc26",
@@ -4536,7 +4536,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Classes/Icon/CreateNewLayer.vi",
     "base": "d17fc26",
@@ -4545,7 +4545,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Classes/Icon/DeleteLayer.vi",
     "base": "d17fc26",
@@ -4554,7 +4554,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Classes/Icon/GET_All User Layers.vi",
     "base": "d17fc26",
@@ -4563,7 +4563,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Classes/Icon/GET_IconTextClass.vi",
     "base": "d17fc26",
@@ -4572,7 +4572,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Classes/Icon/GET_LayersLocked_ActiveLayer.vi",
     "base": "d17fc26",
@@ -4581,7 +4581,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Classes/Icon/GET_TemplateClass.vi",
     "base": "d17fc26",
@@ -4590,7 +4590,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Classes/Icon/GET_UserLayers.vi",
     "base": "d17fc26",
@@ -4599,7 +4599,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Classes/Icon/Get_Active User Layer.vi",
     "base": "d17fc26",
@@ -4608,7 +4608,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Classes/Icon/SET_IconTextClass.vi",
     "base": "d17fc26",
@@ -4617,7 +4617,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Classes/Icon/SET_Locked_ActiveLayer.vi",
     "base": "d17fc26",
@@ -4626,7 +4626,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Classes/Icon/SET_TemplateClass.vi",
     "base": "d17fc26",
@@ -4635,7 +4635,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Classes/Layer/GET_LayerData.vi",
     "base": "d17fc26",
@@ -4644,7 +4644,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Classes/Layer/GET_Origin.vi",
     "base": "d17fc26",
@@ -4653,7 +4653,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Classes/Layer/SET_LayerType.vi",
     "base": "d17fc26",
@@ -4662,7 +4662,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Classes/Layer/SET_Layer_Data.vi",
     "base": "d17fc26",
@@ -4671,7 +4671,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Classes/Layer/SET_Origin.vi",
     "base": "d17fc26",
@@ -4680,7 +4680,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Classes/Layer/Substitute Layer.vi",
     "base": "d17fc26",
@@ -4689,7 +4689,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Classes/Load_Unload/GET Data.vi",
     "base": "d17fc26",
@@ -4698,7 +4698,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Classes/Load_Unload/SET Data.vi",
     "base": "d17fc26",
@@ -4707,7 +4707,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Support/Create Icon Layer.vi",
     "base": "d17fc26",
@@ -4716,7 +4716,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "vi.lib/LabVIEW Icon API/lv_icon/Support/Extract Default Icon Data.vi",
     "base": "d17fc26",
@@ -4725,7 +4725,7 @@
     "subject": "Corrected file paths"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": ".github/actions/missing-in-project/MissingInProjectCLI.vi",
     "base": "111d892",
@@ -4734,7 +4734,7 @@
     "subject": "Cleanup of Missing in Project LabVIEW code."
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": ".github/actions/missing-in-project/MissingInProject.vi",
     "base": "aada288",
@@ -4743,7 +4743,7 @@
     "subject": "Base functionality"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Tooling/deployment/ApplyVIPC.vi",
     "base": "25f1820",
@@ -4752,7 +4752,7 @@
     "subject": "Removed the VIPM close logic"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Tooling/deployment/Modify_VIPB_Display_Information.vi",
     "base": "25f1820",
@@ -4761,7 +4761,7 @@
     "subject": "Removed the VIPM close logic"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Load Unload/ReadDataFromLabVIEWINI.vi",
     "base": "1263fcd",
@@ -4770,7 +4770,7 @@
     "subject": "Started cleaning up ReadDataFromLabVIEWINI.vi"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Tooling/VIP_Post-Install Custom Action.vi",
     "base": "8c98f21",
@@ -4779,7 +4779,7 @@
     "subject": "Correction to VIPM display information"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Test/Unit Tests/Missing in Project/Test Missing Classes.vi",
     "base": "540ddb5",
@@ -4788,7 +4788,7 @@
     "subject": "Exclude \"Dependencies\" in Missing in Project unit tests"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Test/Unit Tests/Missing in Project/Test Missing Libraries.vi",
     "base": "540ddb5",
@@ -4797,7 +4797,7 @@
     "subject": "Exclude \"Dependencies\" in Missing in Project unit tests"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Test/Unit Tests/Missing in Project/Test Missing PPLs.vi",
     "base": "540ddb5",
@@ -4806,7 +4806,7 @@
     "subject": "Exclude \"Dependencies\" in Missing in Project unit tests"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Test/Unit Tests/Missing in Project/Test Missing VIs.vi",
     "base": "540ddb5",
@@ -4815,7 +4815,7 @@
     "subject": "Exclude \"Dependencies\" in Missing in Project unit tests"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Test/Unit Tests/Missing in Project/Get Project MyComputer.vi",
     "base": "9fc2fb7",
@@ -4824,7 +4824,7 @@
     "subject": "Correction to getting the project path for the Missing in Project unit tests"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Tooling/Unit tests/Missing in Project/Test Missing PPLs.vi",
     "base": "90e23d5",
@@ -4833,7 +4833,7 @@
     "subject": "Reinserted Test Missing PPLs.vi to unit tests"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Tooling/PrepareIESourceCore.vi",
     "base": "3322b3f",
@@ -4842,7 +4842,7 @@
     "subject": "This commit adds CI support for LabVIEW 2025"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Tooling/Unit tests/Missing in Project/Test Missing Classes.vi",
     "base": "6137b52",
@@ -4851,7 +4851,7 @@
     "subject": "Modified unit tests by accident"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Tooling/Unit tests/Missing in Project/Test Missing Libraries.vi",
     "base": "6137b52",
@@ -4860,7 +4860,7 @@
     "subject": "Modified unit tests by accident"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "resource/plugins/NIIconEditor/Miscellaneous/Load Unload/WriteDataToLabVIEWINI.vi",
     "base": "6a49bf3",
@@ -4869,7 +4869,7 @@
     "subject": "112 show layers tab permanently remove show layers menu option (#127)"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Tooling/deployment/Modify_VIPB_LabVIEW_Version.vi",
     "base": "1276441",
@@ -4878,7 +4878,7 @@
     "subject": "Uninstall works now"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Tooling/VIP_Pre-Install Custom Action.vi",
     "base": "0ea3ae9",
@@ -4887,7 +4887,7 @@
     "subject": "Adding post install action that creates a backup of the application files being replaced"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Tooling/VIP_Post-Uninstall Custom Action.vi",
     "base": "e4246df",
@@ -4896,7 +4896,7 @@
     "subject": "Bugfix: VIPB now gets switched to the labview version you are trying to build, since previous version was leaving rogue labview executions open. Has been tested on LV2024"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Tooling/deployment/CreateLVAddonJSONfile.vi",
     "base": "e4246df",
@@ -4905,7 +4905,7 @@
     "subject": "Bugfix: VIPB now gets switched to the labview version you are trying to build, since previous version was leaving rogue labview executions open. Has been tested on LV2024"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Tooling/deployment/Create_LV_INI_Token.vi",
     "base": "e4246df",
@@ -4914,7 +4914,7 @@
     "subject": "Bugfix: VIPB now gets switched to the labview version you are trying to build, since previous version was leaving rogue labview executions open. Has been tested on LV2024"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Tooling/deployment/Destroy_LV_INI_Token.vi",
     "base": "e4246df",
@@ -4923,7 +4923,7 @@
     "subject": "Bugfix: VIPB now gets switched to the labview version you are trying to build, since previous version was leaving rogue labview executions open. Has been tested on LV2024"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Tooling/Run all tests.vi",
     "base": "fec82f7",
@@ -4932,7 +4932,7 @@
     "subject": "Revert f6f901c (Merge develop into main)"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Tooling/deployment/NIPackage/DestroyLVINILocalHostKey.vi",
     "base": "fec82f7",
@@ -4941,7 +4941,7 @@
     "subject": "Revert f6f901c (Merge develop into main)"
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Tooling/Run all tests CLI.vi",
     "base": "a678770",
@@ -4950,7 +4950,7 @@
     "subject": "Batch file runs the caraya unit tests before building the PPL."
   },
   {
-    "repo": "C:\\repos\\labview-icon-editor",
+    "repo": "C:\\repos\\ni\\labview-icon-editor",
     "repoTag": "ie",
     "vi": "Tooling/Post Build Icon Editor PPL.vi",
     "base": "71f7e26",

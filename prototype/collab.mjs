@@ -44,7 +44,7 @@ let FORCE_POST = false;
 const OLLAMA = process.env.VIHS_OLLAMA_URL || 'http://localhost:11434';
 const MODEL = process.env.VIHS_OLLAMA_MODEL || 'llama3.1:8b';
 const IMAGE = 'nationalinstruments/labview:' + (process.env.VIHS_MCP_IMAGE_VERSION || '2026q1patch2-linux');
-const CORPUS = process.env.VIHS_MCP_REPO || (process.platform === 'win32' ? 'C:\\repos\\labview-icon-editor' : path.join(os.homedir(), 'repos', 'labview-icon-editor'));
+const CORPUS = process.env.VIHS_MCP_REPO || (process.platform === 'win32' ? 'C:\\repos\\ni\\labview-icon-editor' : path.join(os.homedir(), 'repos', 'labview-icon-editor'));
 const CORPUS_BASE = process.env.VIHS_MCP_BASE || '9545c483f2b947c71de68c7f70aedefaedadabf7';
 const CORPUS_HEAD = process.env.VIHS_MCP_ALT || 'f57c3cfd6494abf1da968ddcc116222e93e953b4';
 
