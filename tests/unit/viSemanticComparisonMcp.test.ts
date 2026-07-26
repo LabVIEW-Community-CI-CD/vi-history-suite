@@ -32,10 +32,15 @@ import { buildLvkitViScanEnvelope } from '../../src/semantic/lvkit/lvkitViScanMo
 // authoritative registered tool set. Catches the recurring class where a new tool is
 // added to VI_SEMANTIC_MCP_TOOLS but the doc's table/count is not updated.
 describe('docs/mcp-server.md tool catalog stays in sync with VI_SEMANTIC_MCP_TOOLS (VHS-REQ-662.4)', () => {
-  const doc = readFileSync(path.resolve(process.cwd(), 'docs/mcp-server.md'), 'utf8');
-  it('documents every registered tool by name', () => {
+  // Anchor on the test file location (not process.cwd(), which is ambient global state).
+  const doc = readFileSync(path.resolve(__dirname, '..', '..', 'docs', 'mcp-server.md'), 'utf8');
+  it('gives every registered tool a row in the Tools table', () => {
     for (const tool of VI_SEMANTIC_MCP_TOOLS) {
-      expect(doc.includes('`' + tool.name + '`'), `docs/mcp-server.md is missing the '${tool.name}' tool`).toBe(true);
+      // Require a Tools-table ROW whose first cell is the backticked tool name — a
+      // document-wide mention (e.g. inside a prompt description) must not satisfy this.
+      const escaped = tool.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const row = new RegExp('^\\|\\s*`' + escaped + '`\\s*\\|', 'm');
+      expect(row.test(doc), `docs/mcp-server.md Tools table is missing a row for '${tool.name}'`).toBe(true);
     }
   });
   it('states the exposed-tool count matching the registry', () => {
