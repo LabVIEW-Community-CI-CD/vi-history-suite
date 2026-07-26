@@ -1,0 +1,59 @@
+name: Agent Launch Gate Smoke
+
+# VHS-REQ-719 (agent-coordination, issue #2457): exercise the agent-launch gate's real CLI on a
+# clean hosted Ubuntu runner -- acquire -> bounded-retry -> advisory-degrade -> ledger + analyze --
+# complementing the dependency-injected unit tests (which fake the lease/disk/clock) and the
+# maintainer real-GPU validation. Non-gating and read-only for the repository: it only writes the
+# local .git/vihs-gate contention ledger inside the ephemeral runner checkout. Path-filtered plus
+# workflow_dispatch so it runs only when the gate scripts change or on a manual trigger (low cost).
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'scripts/agentLaunchGate.js'
+      - 'scripts/agentGateway.js'
+      - 'scripts/systemCapability.js'
+      - 'tests/unit/agentLaunchGate.test.ts'
+      - '.github/workflows/agent-launch-gate-smoke.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  launch-gate-smoke:
+    name: Agent Launch Gate Smoke (hosted Linux)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 20
+
+      - name: Smoke the launch-gate CLI (acquire, advisory-degrade under contention, analyze)
+        env:
+          VIHS_COLLAB_AGENT: LINUX
+        run: |
+          set -euo pipefail
+          # The launch-gate CLIs are dependency-free CommonJS (no npm ci needed).
+          echo "== mark a phase =="
+          node scripts/agentLaunchGate.js mark ci-smoke
+          echo "== lane A acquires and holds the lease =="
+          VIHS_SUBAGENT_ID=ci-laneA node scripts/agentLaunchGate.js acquire cismoke
+          echo "== lane B contends -> must advisory-degrade and exit 0 (never hard-block a launch) =="
+          VIHS_SUBAGENT_ID=ci-laneB node scripts/agentLaunchGate.js acquire cismoke
+          echo "== analyze -> must emit the launch-contention-by-phase schema =="
+          analyze_out="$(node scripts/agentLaunchGate.js analyze)"
+          printf '%s\n' "$analyze_out"
+          printf '%s\n' "$analyze_out" | grep -q 'vi-history-suite/launch-contention-by-phase@v1' \
+            || { echo 'FAIL: analyze did not emit the expected schema'; exit 1; }
+          # No GPU on the hosted runner (gpu.present:false expected); this exercises the CPU +
+          # advisory-degrade + ledger + analyze path that the DI unit tests can only fake.
+          echo "launch-gate smoke passed"

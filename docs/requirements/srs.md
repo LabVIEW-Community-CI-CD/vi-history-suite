@@ -5280,6 +5280,7 @@ Missing numeric IDs are intentional.
   - `scripts/prePushGate.js`
   - `scripts/systemCapability.js`
   - `scripts/agentLaunchGate.js`
+  - `.github/workflows/agent-launch-gate-smoke.yml`
 - Verification References:
   - `tests/unit/branchFlowEnforce.test.ts`
   - `tests/unit/collabPromote.test.ts`
