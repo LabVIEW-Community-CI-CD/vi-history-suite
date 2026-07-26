@@ -84,7 +84,8 @@ function makeLease(resource, owner, opts) {
   };
 }
 
-/* v8 ignore start */ // filesystem lease I/O shim + CLI: integration-validated cross-plane, not unit-coverable
+// Filesystem lease I/O (atomic-mkdir mutex): unit-tested via a temp dir in
+// tests/unit/agentGateway.test.ts, so it COUNTS toward coverage (not v8-ignored).
 function lockDir(gateDir, resource) { return path.join(gateDir, encodeURIComponent(resource) + '.lock'); }
 function ownerFile(gateDir, resource) { return path.join(lockDir(gateDir, resource), 'owner.json'); }
 
@@ -121,6 +122,7 @@ function acquireLease(gateDir, resource, owner, opts) {
   try {
     return tryWrite();
   } catch (e) {
+    /* v8 ignore next */ // defensive: a non-EEXIST mkdir failure (disk/perm) is not unit-triggerable
     if (e.code !== 'EEXIST') throw e;
     const held = readLease(gateDir, resource);
     if (held && isLeaseStale(held, now)) {
@@ -140,6 +142,7 @@ function releaseLease(gateDir, resource, creds) {
   return { released: true, reason: decision.reason, resource };
 }
 
+/* v8 ignore start */ // git-spawn + CLI/require.main entry: the genuinely-untestable process edges.
 /** The shared gate dir under the git common dir (spans all worktrees + main). */
 function resolveGateDir(cwd) {
   const { execFileSync } = require('child_process');

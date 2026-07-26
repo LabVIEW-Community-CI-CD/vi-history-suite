@@ -103,6 +103,8 @@ describe('agentGateway lease I/O mutex (VHS-REQ-719, integration)', () => {
       const names = gw.listLeases(dir).map((l: { resource: string }) => l.resource);
       expect(names).toContain('db');
       expect(names).toContain('worktree:2411');
+      // listLeases on a missing dir returns [] (readdir catch)
+      expect(gw.listLeases(path.join(dir, 'does-not-exist'))).toEqual([]);
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
     }
