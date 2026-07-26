@@ -1,0 +1,35 @@
+{
+  "$schema": "vi-history-suite/linux-oracle-parity@v1",
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-26T09:39:00Z",
+  "deliverable": "D2",
+  "host": "LINUX",
+  "oracle": { "provider": "linux-container", "engine": "labview-cli", "containerImage": "nationalinstruments/labview:2026q1-linux" },
+  "fixture": { "vi": "resource/plugins/lv_icon.vi", "selectedHash": "fc09736ae5e38c2016de081a9c8686256c9f2f9c" },
+  "stagingMechanism": "viPreviewVerifyCli resolveStagingBaseDirectory walks up from the VI for the nearest *.lvproj: found -> full-tree staging (full dependency closure); not found -> lone/partial staging (unresolved subVIs render as cyan '?' placeholders).",
+  "renders": {
+    "lone": {
+      "sampleViPath": "~/tmp/d2-lone/lv_icon.vi (isolated copy, NO enclosing .lvproj)",
+      "stagingBase": "none (partial tree)",
+      "passing": true,
+      "inlineImageCount": 553,
+      "htmlBytes": 1232596
+    },
+    "fullTree": {
+      "sampleViPath": "~/tmp/ie-wt/resource/plugins/lv_icon.vi (git worktree at fc09736; enclosing lv_icon_editor.lvproj at worktree root)",
+      "stagingBase": "worktree root (full dependency closure)",
+      "passing": true,
+      "inlineImageCount": 638,
+      "htmlBytes": 1923239
+    }
+  },
+  "winBaseline": { "lone": { "total": 553, "unique": 114 }, "fullTree": { "total": 638, "unique": 184 } },
+  "parity": {
+    "loneTotalImages": "MATCH (553 == WIN 553)",
+    "fullTreeTotalImages": "MATCH (638 == WIN 638)",
+    "closureDelta": "+85 inline images lone->full-tree (htmlBytes 1.23MB -> 1.92MB) = the resolved dependency renders that were '?' placeholders in the lone/partial staging",
+    "uniqueImageSplit": "NOT MEASURED -- WIN's 114->184 unique-count needs the rendered preview HTML for sha256 dedup, but viPreviewVerifyCli renders into a transient mkdtemp workspace and its proof-out retains only the counts (--operation-dir is the LabVIEW-CLI operation-FILES input dir, not an output). Needs an HTML-retention hook to complete."
+  },
+  "verdict": "D2 REPRODUCES WIN's full-dependency-closure effect cross-platform on the TOTAL inline-image count: lone/partial staging 553 images vs full-tree closure 638 images (EXACT match to WIN's 553->638), with the +85-image / +0.69MB delta = resolved dependency renders. Confirms on Linux that partial staging under-renders (the '?' cause) and full closure fixes it. The unique-count split (114->184) + direct '?' pixel inspection are pending an HTML-retention hook (preview CLI renders transiently).",
+  "followUp": "Add an optional HTML-retention flag to viPreviewVerifyCli (or a thin render wrapper) so the rendered preview HTML lands in proof-out for previewImageInspect --html; then the 114->184 unique split + '?' tile inspection complete D2."
+}
