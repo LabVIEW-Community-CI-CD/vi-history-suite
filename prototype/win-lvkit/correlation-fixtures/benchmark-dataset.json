@@ -1,8 +1,8 @@
 {
   "schema": "vi-history-suite/preview-compare-lvkit-benchmark@v1",
-  "generatedAt": "2026-07-25T19:44:45.106Z",
+  "generatedAt": "2026-07-26T05:19:25.427Z",
   "image": "nationalinstruments/labview:2026q1patch2-windows",
-  "sampleCount": 8,
+  "sampleCount": 14,
   "pipeline": "compareReport -> staged left/right + commits -> preview(both) + lvkit(diff,generate) -> correlation record",
   "samples": [
     {
@@ -351,16 +351,262 @@
         "previewBaseCold": 46.2,
         "previewSelectedCold": 45.4
       }
+    },
+    {
+      "vi": "Providers/AddActorInterface/CreateNewWizard_IncludeItem.vi",
+      "repo": "af",
+      "subject": "Recreated changes for the #51 - Cyclic Dependencies (#165)",
+      "revisionPair": {
+        "base": "1dcfb88",
+        "selected": "d385e02e4cd42fe1c7dfd602163974f05b7ee6bf"
+      },
+      "lvkit": {
+        "changeCount": 0,
+        "kinds": [],
+        "generateModuleCount": 1
+      },
+      "labview": {
+        "differenceBlocks": 2,
+        "cosmetic": 1,
+        "nonCosmetic": 1,
+        "htmlBytes": 108868,
+        "note": "PROTOTYPE regex parse; robust parser is LINUX #2377 leg"
+      },
+      "preview": {
+        "base": 13,
+        "selected": 13,
+        "deltaInlineImages": 0
+      },
+      "correlation": {
+        "countAgreement_lvkit_vs_nonCosmetic": 0,
+        "lvkitChangeCount": 0,
+        "labviewNonCosmetic": 1,
+        "labviewCosmeticOnly": 1,
+        "structuralCardinality_previewDelta_vs_lvkitCount": 0,
+        "note": "granularity mapping; lvkit structural ~ LabVIEW non-cosmetic; cosmetic = lvkit-omitted axis"
+      },
+      "timingsSec": {
+        "compareCold": 40.4,
+        "lvkitDiff": 2.9,
+        "lvkitGen": 1.9,
+        "previewBaseCold": 32.9,
+        "previewSelectedCold": 28.2
+      }
+    },
+    {
+      "vi": "Providers/MessageMakerProvider/_Message Maker/_support/Is Actor Class or Interface.vi",
+      "repo": "af",
+      "subject": "Recreated changes for the #51 - Cyclic Dependencies (#165)",
+      "revisionPair": {
+        "base": "1dcfb88",
+        "selected": "d385e02e4cd42fe1c7dfd602163974f05b7ee6bf"
+      },
+      "lvkit": {
+        "changeCount": 0,
+        "kinds": [],
+        "generateModuleCount": 2
+      },
+      "labview": {
+        "differenceBlocks": 2,
+        "cosmetic": 1,
+        "nonCosmetic": 1,
+        "htmlBytes": 102848,
+        "note": "PROTOTYPE regex parse; robust parser is LINUX #2377 leg"
+      },
+      "preview": {
+        "base": 24,
+        "selected": 24,
+        "deltaInlineImages": 0
+      },
+      "correlation": {
+        "countAgreement_lvkit_vs_nonCosmetic": 0,
+        "lvkitChangeCount": 0,
+        "labviewNonCosmetic": 1,
+        "labviewCosmeticOnly": 1,
+        "structuralCardinality_previewDelta_vs_lvkitCount": 0,
+        "note": "granularity mapping; lvkit structural ~ LabVIEW non-cosmetic; cosmetic = lvkit-omitted axis"
+      },
+      "timingsSec": {
+        "compareCold": 37,
+        "lvkitDiff": 1.7,
+        "lvkitGen": 1.8,
+        "previewBaseCold": 45.7,
+        "previewSelectedCold": 28.8
+      }
+    },
+    {
+      "vi": "Core/ActorFramework/Testing Support/Test Launch For Nested Actor Without Caller.vi",
+      "repo": "af",
+      "subject": "Tag VIs for localization: (#164)",
+      "revisionPair": {
+        "base": "5fc1fe4",
+        "selected": "1dcfb88be46f852f76c1a1808aac414f6dfbe3b8"
+      },
+      "lvkit": {
+        "changeCount": 0,
+        "kinds": [],
+        "generateModuleCount": 8
+      },
+      "labview": {
+        "differenceBlocks": 22,
+        "cosmetic": 18,
+        "nonCosmetic": 4,
+        "htmlBytes": 594948,
+        "note": "PROTOTYPE regex parse; robust parser is LINUX #2377 leg"
+      },
+      "preview": {
+        "base": 33,
+        "selected": 33,
+        "deltaInlineImages": 0
+      },
+      "correlation": {
+        "countAgreement_lvkit_vs_nonCosmetic": 0,
+        "lvkitChangeCount": 0,
+        "labviewNonCosmetic": 4,
+        "labviewCosmeticOnly": 18,
+        "structuralCardinality_previewDelta_vs_lvkitCount": 0,
+        "note": "granularity mapping; lvkit structural ~ LabVIEW non-cosmetic; cosmetic = lvkit-omitted axis"
+      },
+      "timingsSec": {
+        "compareCold": 35.1,
+        "lvkitDiff": 1.8,
+        "lvkitGen": 2.6,
+        "previewBaseCold": 30.6,
+        "previewSelectedCold": 30
+      }
+    },
+    {
+      "vi": "resource/plugins/NIIconEditor/Class/FakedArray/Misc/UpdateVisibleData.vi",
+      "repo": "ie",
+      "subject": "Moved Draw Picture based on Origin.vi into API",
+      "revisionPair": {
+        "base": "a9c9eb9",
+        "selected": "f57c3cfd6494abf1da968ddcc116222e93e953b4"
+      },
+      "lvkit": {
+        "changeCount": 0,
+        "kinds": [],
+        "generateModuleCount": 8
+      },
+      "labview": {
+        "differenceBlocks": 2,
+        "cosmetic": 1,
+        "nonCosmetic": 1,
+        "htmlBytes": 169000,
+        "note": "PROTOTYPE regex parse; robust parser is LINUX #2377 leg"
+      },
+      "preview": {
+        "base": 52,
+        "selected": 52,
+        "deltaInlineImages": 0
+      },
+      "correlation": {
+        "countAgreement_lvkit_vs_nonCosmetic": 0,
+        "lvkitChangeCount": 0,
+        "labviewNonCosmetic": 1,
+        "labviewCosmeticOnly": 1,
+        "structuralCardinality_previewDelta_vs_lvkitCount": 0,
+        "note": "granularity mapping; lvkit structural ~ LabVIEW non-cosmetic; cosmetic = lvkit-omitted axis"
+      },
+      "timingsSec": {
+        "compareCold": 38.9,
+        "lvkitDiff": 2.2,
+        "lvkitGen": 2.1,
+        "previewBaseCold": 36.4,
+        "previewSelectedCold": 33.1
+      }
+    },
+    {
+      "vi": "resource/plugins/NIIconEditor/Class/Tools/Dropper.vi",
+      "repo": "ie",
+      "subject": "Moved Draw Picture based on Origin.vi into API",
+      "revisionPair": {
+        "base": "a9c9eb9",
+        "selected": "f57c3cfd6494abf1da968ddcc116222e93e953b4"
+      },
+      "lvkit": {
+        "changeCount": 0,
+        "kinds": [],
+        "generateModuleCount": 141
+      },
+      "labview": {
+        "differenceBlocks": 3,
+        "cosmetic": 1,
+        "nonCosmetic": 2,
+        "htmlBytes": 402469,
+        "note": "PROTOTYPE regex parse; robust parser is LINUX #2377 leg"
+      },
+      "preview": {
+        "base": 198,
+        "selected": 198,
+        "deltaInlineImages": 0
+      },
+      "correlation": {
+        "countAgreement_lvkit_vs_nonCosmetic": 0,
+        "lvkitChangeCount": 0,
+        "labviewNonCosmetic": 2,
+        "labviewCosmeticOnly": 1,
+        "structuralCardinality_previewDelta_vs_lvkitCount": 0,
+        "note": "granularity mapping; lvkit structural ~ LabVIEW non-cosmetic; cosmetic = lvkit-omitted axis"
+      },
+      "timingsSec": {
+        "compareCold": 39.7,
+        "lvkitDiff": 3.5,
+        "lvkitGen": 21.2,
+        "previewBaseCold": 38.1,
+        "previewSelectedCold": 35.2
+      }
+    },
+    {
+      "vi": "resource/plugins/NIIconEditor/Class/Tools/Fill.vi",
+      "repo": "ie",
+      "subject": "Moved Draw Picture based on Origin.vi into API",
+      "revisionPair": {
+        "base": "a9c9eb9",
+        "selected": "f57c3cfd6494abf1da968ddcc116222e93e953b4"
+      },
+      "lvkit": {
+        "changeCount": 0,
+        "kinds": [],
+        "generateModuleCount": 141
+      },
+      "labview": {
+        "differenceBlocks": 2,
+        "cosmetic": 1,
+        "nonCosmetic": 1,
+        "htmlBytes": 405884,
+        "note": "PROTOTYPE regex parse; robust parser is LINUX #2377 leg"
+      },
+      "preview": {
+        "base": 206,
+        "selected": 206,
+        "deltaInlineImages": 0
+      },
+      "correlation": {
+        "countAgreement_lvkit_vs_nonCosmetic": 0,
+        "lvkitChangeCount": 0,
+        "labviewNonCosmetic": 1,
+        "labviewCosmeticOnly": 1,
+        "structuralCardinality_previewDelta_vs_lvkitCount": 0,
+        "note": "granularity mapping; lvkit structural ~ LabVIEW non-cosmetic; cosmetic = lvkit-omitted axis"
+      },
+      "timingsSec": {
+        "compareCold": 39.5,
+        "lvkitDiff": 3.3,
+        "lvkitGen": 19.5,
+        "previewBaseCold": 39.1,
+        "previewSelectedCold": 36
+      }
     }
   ],
   "aggregate": {
     "totalTimingsSec": {
-      "compareCold": 350.3,
-      "lvkitDiff": 30.5,
-      "lvkitGen": 142.5,
-      "previewBaseCold": 337.1,
-      "previewSelectedCold": 330.70000000000005
+      "compareCold": 580.9,
+      "lvkitDiff": 45.9,
+      "lvkitGen": 191.6,
+      "previewBaseCold": 559.9,
+      "previewSelectedCold": 522
     },
-    "countAgreementRate": 0.125
+    "countAgreementRate": 0.07142857142857142
   }
 }
