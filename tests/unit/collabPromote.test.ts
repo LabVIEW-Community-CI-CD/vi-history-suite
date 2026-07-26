@@ -105,4 +105,41 @@ describe('collabPromote (issue #2392)', () => {
     expect(deps.calls.some((c) => c.startsWith('applyCommits'))).toBe(false);
     expect(deps.calls).toContain('runGate:reconcile');
   });
+
+  // Branch/edge coverage (VHS-REQ-719): defensive defaults + body-shape branches.
+  it('buildPrototypeSourceTrailer returns empty for no shas; normalizeSlug falls back to "change"', () => {
+    expect(cp.buildPrototypeSourceTrailer([])).toBe('');
+    expect(cp.buildPrototypeSourceTrailer(undefined)).toBe('');
+    expect(cp.parsePrototypeSourceTrailer('no trailer here')).toEqual([]);
+    expect(cp.normalizeSlug('')).toBe('change');
+    expect(cp.normalizeSlug('!!!')).toBe('change');
+  });
+
+  it('buildPromoteBody without a summary or trailer is just the Closes line', () => {
+    expect(cp.buildPromoteBody({ issue: 42 }, '')).toBe('Closes #42');
+  });
+
+  it('validatePromoteSpec honors an explicit base override', () => {
+    expect(cp.validatePromoteSpec({ issue: 1, slug: 'x', commits: ['a'], base: 'release/v1' })).toEqual({
+      mode: 'cherry-pick',
+      base: 'release/v1'
+    });
+  });
+
+  it('runPromote uses an explicit title and tolerates a deps without a log fn', async () => {
+    const deps = makeDeps(true);
+    delete (deps as { log?: unknown }).log; // exercise the `deps.log || (() => {})` default
+    const res = await cp.runPromote({ issue: 2392, slug: 'x', commits: ['sha1'], title: 'custom title' }, deps);
+    expect(res.ok).toBe(true);
+    expect(res.pr._opts.title).toBe('custom title');
+  });
+
+  it('runPromote treats a null gate result as a failure (aborts, opens/arms nothing)', async () => {
+    const deps = makeDeps(true);
+    deps.runGate = async () => null as unknown as { ok: boolean };
+    const res = await cp.runPromote({ issue: 2392, slug: 'x', commits: ['sha1'] }, deps);
+    expect(res.ok).toBe(false);
+    expect(res.stage).toBe('validation-gate');
+    expect(deps.calls).not.toContain('openPr');
+  });
 });
