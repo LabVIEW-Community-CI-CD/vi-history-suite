@@ -1,0 +1,8 @@
+[
+  { "slug": "af-createnewwizard-includeitem", "repo": "af", "htmlPath": "prototype/win-lvkit/correlation-fixtures/createnewwizard_includeitem.labview-diff-report.html" },
+  { "slug": "af-is-actor-class-or-interface", "repo": "af", "htmlPath": "prototype/win-lvkit/correlation-fixtures/is actor class or interface.labview-diff-report.html" },
+  { "slug": "af-test-launch-for-nested-actor-without-caller", "repo": "af", "htmlPath": "prototype/win-lvkit/correlation-fixtures/test launch for nested actor without caller.labview-diff-report.html" },
+  { "slug": "ie-updatevisibledata", "repo": "ie", "htmlPath": "prototype/win-lvkit/correlation-fixtures/updatevisibledata.labview-diff-report.html" },
+  { "slug": "ie-dropper", "repo": "ie", "htmlPath": "prototype/win-lvkit/correlation-fixtures/dropper.labview-diff-report.html" },
+  { "slug": "ie-fill", "repo": "ie", "htmlPath": "prototype/win-lvkit/correlation-fixtures/fill.labview-diff-report.html" }
+]

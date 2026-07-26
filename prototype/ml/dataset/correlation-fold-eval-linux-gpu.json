@@ -1,0 +1,132 @@
+{
+  "schema": "vi-history-suite/correlation-fold-eval@v1",
+  "generatedAt": "2026-07-26T05:24:41.736Z",
+  "host": "LINUX",
+  "backend": "gpu",
+  "label": "linux-gpu",
+  "ollamaUrl": "http://localhost:11434",
+  "model": "vichange8b-2shot",
+  "modelPresent": true,
+  "batchSource": "prototype/ml/dataset/correlation-batch-2ebb7380.json",
+  "foldsSource": "prototype/ml/dataset/correlation-heldout-folds.json",
+  "totalRendered": 6,
+  "errors": [],
+  "loro": [
+    {
+      "fold": 0,
+      "heldOutRepo": "af",
+      "trainRepos": [
+        "ie"
+      ],
+      "foldSize": 102,
+      "rendered": 3,
+      "status": "partial",
+      "hardSafeRate": 1,
+      "acceptRate": 1,
+      "invented": [],
+      "inventedHazard": false
+    },
+    {
+      "fold": 1,
+      "heldOutRepo": "ie",
+      "trainRepos": [
+        "af"
+      ],
+      "foldSize": 449,
+      "rendered": 3,
+      "status": "partial",
+      "hardSafeRate": 1,
+      "acceptRate": 1,
+      "invented": [],
+      "inventedHazard": false
+    }
+  ],
+  "crossRepoGeneralization": {
+    "status": "partial",
+    "hardSafeRate": 1,
+    "rendered": 3,
+    "foldSize": 102,
+    "invented": []
+  },
+  "perVi": [
+    {
+      "slug": "af-createnewwizard-includeitem",
+      "repo": "af",
+      "vi": "createnewwizard_includeitem.labview-diff-report.html",
+      "nonCosmetic": 1,
+      "cosmetic": 0,
+      "source": "grounded",
+      "reason": "grounded-passed-gate",
+      "hardSafe": true,
+      "groundedScore": 1,
+      "templateScore": 1,
+      "invented": []
+    },
+    {
+      "slug": "af-is-actor-class-or-interface",
+      "repo": "af",
+      "vi": "is actor class or interface.labview-diff-report.html",
+      "nonCosmetic": 1,
+      "cosmetic": 0,
+      "source": "grounded",
+      "reason": "grounded-passed-gate",
+      "hardSafe": true,
+      "groundedScore": 1,
+      "templateScore": 1,
+      "invented": []
+    },
+    {
+      "slug": "af-test-launch-for-nested-actor-without-caller",
+      "repo": "af",
+      "vi": "test launch for nested actor without caller.labview-diff-report.html",
+      "nonCosmetic": 12,
+      "cosmetic": 17,
+      "source": "grounded",
+      "reason": "grounded-passed-gate",
+      "hardSafe": true,
+      "groundedScore": 1,
+      "templateScore": 0.75,
+      "invented": []
+    },
+    {
+      "slug": "ie-updatevisibledata",
+      "repo": "ie",
+      "vi": "updatevisibledata.labview-diff-report.html",
+      "nonCosmetic": 1,
+      "cosmetic": 0,
+      "source": "grounded",
+      "reason": "grounded-passed-gate",
+      "hardSafe": true,
+      "groundedScore": 1,
+      "templateScore": 1,
+      "invented": []
+    },
+    {
+      "slug": "ie-dropper",
+      "repo": "ie",
+      "vi": "dropper.labview-diff-report.html",
+      "nonCosmetic": 2,
+      "cosmetic": 0,
+      "source": "grounded",
+      "reason": "grounded-passed-gate",
+      "hardSafe": true,
+      "groundedScore": 1,
+      "templateScore": 1,
+      "invented": []
+    },
+    {
+      "slug": "ie-fill",
+      "repo": "ie",
+      "vi": "fill.labview-diff-report.html",
+      "nonCosmetic": 1,
+      "cosmetic": 0,
+      "source": "grounded",
+      "reason": "grounded-passed-gate",
+      "hardSafe": true,
+      "groundedScore": 1,
+      "templateScore": 1,
+      "invented": []
+    }
+  ],
+  "note": "LORO hard-safe rate = fraction of held-out-repo grounded narratives clearing the safety floor (no invented number, no false no-change, states the count). A fold with 0 rendered reports is pending-render, never a fabricated score. Grounding is built from the rendered LabVIEW HTML, never invented."
+}
