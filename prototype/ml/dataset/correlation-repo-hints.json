@@ -1,7 +1,0 @@
-{
-  "note": "Temporary repo overrides for rendered reports whose basename collides across repos. Icon-editor vendors actor-framework code, so BOTH repos contain PrepareIESource.vi and RestoreSetupLVSource.vi (af-* AND ie-* slugs both exist), and the flat rendered-HTML filename cannot say which repo was rendered. These overrides are NOT guesses: af-change-pairs.json maps Tooling/PrepareIESource.vi -> af-prepareiesource and Tooling/RestoreSetupLVSource.vi -> af-restoresetuplvsource, and WIN batch-2 is actor-framework-only. REMOVE each entry once WIN names the rendered HTML by slug (af-*/ie-*) or benchmark-dataset.json includes that render with its repo.",
-  "overrides": {
-    "prepareiesource": "af",
-    "restoresetuplvsource": "af"
-  }
-}
