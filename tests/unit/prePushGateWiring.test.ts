@@ -50,6 +50,11 @@ describe('prePushGate.summarizeResources (VHS-REQ-719)', () => {
     expect(s.cpu.utilPct).toBeNull();
     expect(s.gpu).toEqual({ present: false, util: null });
     expect(pg.summarizeResources(undefined).cpu.load1).toBe(0);
+    // NaN must never leak into a ledger record
+    const nan = pg.summarizeResources({ load1: NaN, cpuUtilPct: NaN, gpuUtil: NaN, cores: 4 });
+    expect(nan.cpu.load1).toBe(0);
+    expect(nan.cpu.utilPct).toBeNull();
+    expect(nan.gpu.util).toBeNull();
   });
 });
 
@@ -62,6 +67,8 @@ describe('prePushGate.resolveMaxAttempts (VHS-REQ-719)', () => {
     expect(pg.resolveMaxAttempts('abc', 6)).toBe(6);
     expect(pg.resolveMaxAttempts('2.5', 6)).toBe(6); // non-integer
     expect(pg.resolveMaxAttempts('4')).toBe(4); // falls back to DEFAULT_MAX_ATTEMPTS internally
+    expect(pg.resolveMaxAttempts('bad', 0)).toBe(6); // a falsy/invalid default cannot disable the loop
+    expect(pg.resolveMaxAttempts('bad', 3)).toBe(3);
   });
 });
 

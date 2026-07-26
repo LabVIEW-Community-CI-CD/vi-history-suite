@@ -48,11 +48,12 @@ function classifyAcquireOutcome(granted, attempt, maxAttempts) {
 }
 
 /** Resolve the acquire-attempt budget from an env value, guarding against a
- *  non-positive/non-integer value silently disabling the acquire loop. */
+ *  non-positive/non-integer value silently disabling the acquire loop. The default
+ *  is itself validated (a bad `def`, e.g. 0, cannot produce a <1 result). */
 function resolveMaxAttempts(rawValue, def) {
-  def = def || DEFAULT_MAX_ATTEMPTS;
+  const fallback = Number.isInteger(def) && def >= 1 ? def : DEFAULT_MAX_ATTEMPTS;
   const n = Number(rawValue);
-  return Number.isInteger(n) && n >= 1 ? n : def;
+  return Number.isInteger(n) && n >= 1 ? n : fallback;
 }
 
 /** Normalize a raw resource sample into a compact, benchmark-correlatable shape.
@@ -61,16 +62,17 @@ function resolveMaxAttempts(rawValue, def) {
 function summarizeResources(raw) {
   raw = raw || {};
   const cores = Number(raw.cores) || 0;
-  const load1 = typeof raw.load1 === 'number' ? raw.load1 : (Array.isArray(raw.loadavg) ? raw.loadavg[0] : 0);
+  const rawLoad = typeof raw.load1 === 'number' ? raw.load1 : (Array.isArray(raw.loadavg) ? raw.loadavg[0] : 0);
+  const load1 = Number.isFinite(rawLoad) ? rawLoad : 0;
   const loadPerCore = cores > 0 ? Number((load1 / cores).toFixed(3)) : null;
   return {
     cpu: {
-      load1: Number((load1 || 0).toFixed(3)),
+      load1: Number(load1.toFixed(3)),
       cores,
       loadPerCore,
-      utilPct: typeof raw.cpuUtilPct === 'number' ? Math.round(raw.cpuUtilPct) : null
+      utilPct: Number.isFinite(raw.cpuUtilPct) ? Math.round(raw.cpuUtilPct) : null
     },
-    gpu: { present: Boolean(raw.gpuPresent), util: typeof raw.gpuUtil === 'number' ? raw.gpuUtil : null }
+    gpu: { present: Boolean(raw.gpuPresent), util: Number.isFinite(raw.gpuUtil) ? raw.gpuUtil : null }
   };
 }
 
