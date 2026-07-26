@@ -5276,9 +5276,11 @@ Missing numeric IDs are intentional.
   - `scripts/branchFlowEnforce.js`
   - `scripts/collabPromote.js`
   - `.githooks/pre-push`
+  - `scripts/agentGateway.js`
 - Verification References:
   - `tests/unit/branchFlowEnforce.test.ts`
   - `tests/unit/collabPromote.test.ts`
+  - `tests/unit/agentGateway.test.ts`
 - Change Guidance:
   - Keep the pre-push enforcement fail-closed and enforce-only (never mutate git)
     and a strict mirror of the hosted Branch Governance rule so the local and
