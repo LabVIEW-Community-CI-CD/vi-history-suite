@@ -105,6 +105,13 @@ const conclusion = {
     mcpNarrative: 'MCP narrative surface: ship the DETERMINISTIC template fix as the primary faithfulness improvement -- concretely, in renderViSemanticNarrative strip the NI ordinal prefix from each section heading (section.heading.replace(/^\\\\d+\\\\.\\\\s*/, "")) AND dedupe the resulting heading list (or drop the parenthetical when headings repeat). That one change closes the governed-scorer gap on all 8 real fixtures with zero latency/dependency. Treat the grounded 8b-2shot narrator as an OPTIONAL readability layer gated by the same faithfulness scorer, NOT a faithfulness requirement. The durable ML contribution to the MCP surface is the governed faithfulness SCORER as the narrative-quality gate. Blast radius (turnkey for a develop PR): the change is in src/semantic/viSemanticModel.ts (~line 332, the joinHumanList(model.detailSections.map((s) => s.heading)) call); the only exact-string test to update is tests/unit/viSemanticModel.test.ts (the "(1. VI Attribute - Miscellaneous)" assertion). multiReportDashboard.test.ts / viSemanticReviewMarkdown.test.ts assert counts without the heading list and are unaffected.',
     ungroundedFallback: 'Keep the deterministic template narrative as the ungrounded fallback when no model backend is available.',
     shippedStatus: 'SHIPPED to develop -- the deterministic strip+dedupe fix was opened as issue #2382 -> PR #2383 (feature/2382-narrative-ordinal-hygiene) and squash-merged to develop @9f5f4c9d on 2026-07-25, issue #2382 closed COMPLETED. renderViSemanticNarrative now strips the NI ordinal prefix and dedupes the heading list, so every MCP narrative, Source Control hover, and PR/CI comment reflects it. Co-signed by the GPU/ollama agent, whose held-out fit-numbers folded in and who independently verified the blast-radius against the shipped source.'
+  },
+  optionalProvider: {
+    status: 'prototyped + validated cross-backend (#2381 next thread)',
+    design: 'groundedNarrativeProvider.selectMcpNarrative is the WIN-owned FLOW (build cosmetic-enriched facts -> injected ollama backend -> hard-safety floor -> deterministic template fallback) on top of narrativeQualityGate.scoreNarrative, the LINUX-owned shared SCORING PRIMITIVE. One scorer, two complementary layers: the hard-safety floor (statesStructuralCount / noFalseNoChange / noInventedNumbers) rejects an unsafe candidate even on a score tie; mentionsCosmetic is a quality lift.',
+    acceptRate: 'Baseline SYSTEM, per config over the 8 real fixtures, backend-robust (GPU == CPU): 8b-raw 1.0, 8b-fewshot 1.0, 8b-2shot 1.0, 14b 0.875. 14b fails the safety gate on visibletextmarker by inventing a per-object sub-count (over-elaboration); reproducible on both backends, not an offload-divergence artifact.',
+    systemStrictnessRejected: 'A stricter SYSTEM (report ONLY the two tallies, no per-object breakdown) is a BACKEND-DEPENDENT tradeoff and is NOT adopted: on CPU it lifts 14b 0.875->1.0 but drops 8b-fewshot 1.0->0.875; on GPU it additionally drops 8b-2shot to 0.75 on the lvkit=0 no-change VIs (loadtemplates, process template graphics), stable across 2 GPU runs. Keep the BASELINE shared SYSTEM.',
+    recommendation: 'If the optional grounded layer is enabled, 8b-2shot is the default: highest accept-rate under the baseline SYSTEM on BOTH backends, cheapest local. The gate guarantees it is never less faithful than the shipped deterministic template (the fallback) -- it can only improve readability.'
   }
 };
 
@@ -137,6 +144,12 @@ md.push('', '## Recommendation', '',
   `- **MCP narrative:** ${conclusion.recommendation.mcpNarrative}`,
   `- **Fallback:** ${conclusion.recommendation.ungroundedFallback}`,
   `- **Shipped:** ${conclusion.recommendation.shippedStatus}`);
+md.push('', '## Optional grounded provider (#2381 next thread)', '',
+  `- **Status:** ${conclusion.optionalProvider.status}`,
+  `- **Design:** ${conclusion.optionalProvider.design}`,
+  `- **Accept-rate:** ${conclusion.optionalProvider.acceptRate}`,
+  `- **Strict SYSTEM (rejected):** ${conclusion.optionalProvider.systemStrictnessRejected}`,
+  `- **Recommendation:** ${conclusion.optionalProvider.recommendation}`);
 fs.writeFileSync(path.join(OUT_DIR, 'vichange-conclusion-2381.md'), md.join('\n') + '\n', 'utf8');
 
 console.log('SHIPPABLE_CONCLUSION_DONE inputsMissing=[' + inputsMissing.join(', ') + ']');
