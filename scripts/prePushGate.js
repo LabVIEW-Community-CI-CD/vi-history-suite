@@ -56,9 +56,22 @@ function resolveMaxAttempts(rawValue, def) {
   return Number.isInteger(n) && n >= 1 ? n : fallback;
 }
 
+/** Normalize a raw disk sample into the shared { present, writeMBps, readMBps } shape,
+ *  matching the launch-gate/diskBenchmark record so the contention ledger has ONE record
+ *  schema (cpu+gpu+disk). The pre-push gate does not run a disk micro-benchmark (too slow
+ *  per push) so its disk is null-shaped; the launch gate populates it. On diskBenchmark
+ *  graduation to scripts/, reconcile to that module's summarizeDisk. */
+function summarizeDisk(rawDisk) {
+  rawDisk = rawDisk || {};
+  const writeMBps = Number.isFinite(rawDisk.writeMBps) ? rawDisk.writeMBps : null;
+  const readMBps = Number.isFinite(rawDisk.readMBps) ? rawDisk.readMBps : null;
+  return { present: writeMBps != null || readMBps != null, writeMBps, readMBps };
+}
+
 /** Normalize a raw resource sample into a compact, benchmark-correlatable shape.
  *  loadPerCore is the CPU-pressure signal (loadavg1 / cores); gpu carries presence
- *  + best-effort utilization so a contention point can be attributed to GPU or CPU. */
+ *  + best-effort utilization; disk carries transfer rates — so a contention point can
+ *  be attributed to CPU, GPU, or DISK pressure in one unified record. */
 function summarizeResources(raw) {
   raw = raw || {};
   const cores = Number(raw.cores) || 0;
@@ -72,7 +85,8 @@ function summarizeResources(raw) {
       loadPerCore,
       utilPct: Number.isFinite(raw.cpuUtilPct) ? Math.round(raw.cpuUtilPct) : null
     },
-    gpu: { present: Boolean(raw.gpuPresent), util: Number.isFinite(raw.gpuUtil) ? raw.gpuUtil : null }
+    gpu: { present: Boolean(raw.gpuPresent), util: Number.isFinite(raw.gpuUtil) ? raw.gpuUtil : null },
+    disk: summarizeDisk(raw.disk)
   };
 }
 
@@ -98,6 +112,7 @@ module.exports = {
   backoffMs,
   classifyAcquireOutcome,
   resolveMaxAttempts,
+  summarizeDisk,
   summarizeResources,
   buildContentionRecord
 };

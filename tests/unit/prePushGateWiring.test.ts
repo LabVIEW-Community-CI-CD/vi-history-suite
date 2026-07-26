@@ -38,23 +38,31 @@ describe('prePushGate.classifyAcquireOutcome (VHS-REQ-719)', () => {
 });
 
 describe('prePushGate.summarizeResources (VHS-REQ-719)', () => {
-  it('computes CPU load-per-core + util%, carries GPU presence/util', () => {
-    const s = pg.summarizeResources({ load1: 4, cores: 8, cpuUtilPct: 42.6, gpuPresent: true, gpuUtil: 73 });
+  it('computes CPU load-per-core + util%, carries GPU + DISK (unified schema)', () => {
+    const s = pg.summarizeResources({ load1: 4, cores: 8, cpuUtilPct: 42.6, gpuPresent: true, gpuUtil: 73, disk: { writeMBps: 1567.6, readMBps: 1822.2 } });
     expect(s.cpu).toEqual({ load1: 4, cores: 8, loadPerCore: 0.5, utilPct: 43 });
     expect(s.gpu).toEqual({ present: true, util: 73 });
+    expect(s.disk).toEqual({ present: true, writeMBps: 1567.6, readMBps: 1822.2 });
   });
-  it('accepts a loadavg array and guards zero cores / absent GPU / absent util', () => {
+  it('accepts a loadavg array and guards zero cores / absent GPU / util / disk', () => {
     const s = pg.summarizeResources({ loadavg: [2, 1, 1], cores: 0 });
     expect(s.cpu.load1).toBe(2);
     expect(s.cpu.loadPerCore).toBeNull(); // no cores -> no per-core signal
     expect(s.cpu.utilPct).toBeNull();
     expect(s.gpu).toEqual({ present: false, util: null });
+    expect(s.disk).toEqual({ present: false, writeMBps: null, readMBps: null }); // pre-push gate: disk null-shaped
     expect(pg.summarizeResources(undefined).cpu.load1).toBe(0);
-    // NaN must never leak into a ledger record
-    const nan = pg.summarizeResources({ load1: NaN, cpuUtilPct: NaN, gpuUtil: NaN, cores: 4 });
+    // NaN must never leak into a ledger record (cpu/gpu/disk)
+    const nan = pg.summarizeResources({ load1: NaN, cpuUtilPct: NaN, gpuUtil: NaN, cores: 4, disk: { writeMBps: NaN, readMBps: NaN } });
     expect(nan.cpu.load1).toBe(0);
     expect(nan.cpu.utilPct).toBeNull();
     expect(nan.gpu.util).toBeNull();
+    expect(nan.disk).toEqual({ present: false, writeMBps: null, readMBps: null });
+  });
+  it('summarizeDisk carries write/read MB/s (unified launch-gate shape) or null-shaped when absent', () => {
+    expect(pg.summarizeDisk({ writeMBps: 954.7, readMBps: 3531.8 })).toEqual({ present: true, writeMBps: 954.7, readMBps: 3531.8 });
+    expect(pg.summarizeDisk({ writeMBps: 900 })).toEqual({ present: true, writeMBps: 900, readMBps: null });
+    expect(pg.summarizeDisk(undefined)).toEqual({ present: false, writeMBps: null, readMBps: null });
   });
 });
 
