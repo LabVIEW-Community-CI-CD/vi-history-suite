@@ -436,6 +436,33 @@ confirm dev dependencies are not being omitted (neither `NODE_ENV` nor
 `npm_config_omit` should be set to `dev` or `production`). See
 [INSTALL.md](./INSTALL.md) for the full source-evaluation setup.
 
+## Pre-commit blocks: "package-lock.json changed since node_modules was last installed"
+
+If a `git commit` is rejected by the pre-commit environment-consistency gate
+(`scripts/checkEnvSync.js`, VHS-REQ-697) with:
+
+```
+[pre-commit] BLOCKING: package-lock.json changed since node_modules was last installed — npm ci
+```
+
+and you did **not** knowingly change any dependency, this is almost always a
+**cross-branch artifact**, not a real dependency problem. Switching branches (or
+a `git checkout` / `git reset`) after you ran `npm install` on a different
+branch leaves `node_modules` reflecting the *other* branch's lockfile, so the
+gate sees the current branch's `package-lock.json` diverge from what was last
+installed and blocks the commit.
+
+The remedy is to resync `node_modules` to the current branch's lockfile:
+
+```bash
+npm ci
+```
+
+Then re-commit. If the commit changes **no** dependencies (for example a
+docs-only or prototype-only change) and you do not want to reinstall, a
+`git commit --no-verify` is acceptable for that commit — the lockfile and
+`node_modules` are unaffected either way.
+
 ## Pre-push `adr:check` fails: "Active requirements not linked into any ADR"
 
 ### Symptom
