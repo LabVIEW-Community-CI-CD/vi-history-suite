@@ -3,8 +3,11 @@ import { describe, expect, it } from 'vitest';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const bf = require('../../scripts/branchFlowEnforce.js');
 
-// VHS #2392 Phase 2: pre-push branch-flow enforcement, at parity with hosted Branch
+// VHS-REQ-719 (VHS #2392 Phase 2): pre-push branch-flow enforcement, at parity with hosted Branch
 // Governance. Pure over parsed refs + an injected issueExists probe, so host-free in CI.
+// Covers VHS-REQ-719.1 (protected-push / branch-name / missing-issue rules + tag and exempt
+// patterns), VHS-REQ-719.2 (stable rule ids + a remedy naming the derived agent identity), and
+// VHS-REQ-719.3 (missing-issue self-skips with an audit note when gh is unavailable).
 const Z = '0000000000000000000000000000000000000000';
 const S = '1111111111111111111111111111111111111111';
 const ref = (branch: string, localSha = S) => ({

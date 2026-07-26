@@ -3,8 +3,11 @@ import { describe, expect, it } from 'vitest';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const cp = require('../../scripts/collabPromote.js');
 
-// VHS #2392 Phase 2: `collab promote` orchestration. The gate-before-open ordering +
+// VHS-REQ-719 (VHS #2392 Phase 2): `collab promote` orchestration. The gate-before-open ordering +
 // gate-failure-abort + branch-collision precheck are verified over injected side effects.
+// Covers VHS-REQ-719.4 (slice apply + pre-promote validation gate strictly before open/arm, aborting
+// on gate failure or branch collision, reconcile requiring provenance) and VHS-REQ-719.5
+// (Prototype-Source provenance trailer + the merge left to the develop queue).
 function makeDeps(gateOk: boolean, branchExists = false) {
   const calls: string[] = [];
   return {
