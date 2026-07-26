@@ -184,7 +184,7 @@ describe('viSemanticModel', () => {
     });
 
     expect(model.narrative).toBe(
-      '2 detailed changes across 1 section (1. VI Attribute - Miscellaneous). ' +
+      '2 detailed changes across 1 section (VI Attribute - Miscellaneous). ' +
         'Compared attributes: Front Panel. Excluded from comparison: VI Attribute.'
     );
   });

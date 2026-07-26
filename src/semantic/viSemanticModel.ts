@@ -302,6 +302,17 @@ function joinHumanList(values: readonly string[]): string {
 }
 
 /**
+ * Strips NI's leading ordinal prefix (e.g. "4. ") from a detail-section
+ * heading. NI numbers difference blocks with positional ordinals that are not
+ * meaningful counts; surfacing them verbatim in the narrative reads as invented
+ * numbers to a faithfulness reviewer, so the narrative states only the real
+ * totals plus the ordinal-free heading names.
+ */
+function stripSectionHeadingOrdinal(heading: string): string {
+  return heading.replace(/^\d+\.\s*/, '');
+}
+
+/**
  * Produces a concise, human- and agent-readable "what changed" narrative. This
  * is the reviewable unit surfaced in the Source Control hover, PR/CI comment,
  * and MCP tool output.
@@ -326,10 +337,21 @@ export function renderViSemanticNarrative(
   if (model.detailSections.length > 0) {
     const detailCount = model.totals.detailItemCount;
     const sectionCount = model.totals.detailSectionCount;
+    // Strip NI's positional ordinal prefixes and dedupe the resulting heading
+    // names: the real counts come from model.totals, and after stripping the
+    // ordinals repeated headings (e.g. three "Block Diagram objects" blocks)
+    // would otherwise render as spurious duplicates.
+    const sectionHeadings = [
+      ...new Set(
+        model.detailSections.map((section) =>
+          stripSectionHeadingOrdinal(section.heading)
+        )
+      )
+    ];
     sentences.push(
       `${detailCount} detailed change${detailCount === 1 ? '' : 's'} across ${sectionCount} section${
         sectionCount === 1 ? '' : 's'
-      } (${joinHumanList(model.detailSections.map((section) => section.heading))}).`
+      } (${joinHumanList(sectionHeadings)}).`
     );
   }
 

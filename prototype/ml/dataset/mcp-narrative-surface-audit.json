@@ -1,6 +1,6 @@
 {
   "schema": "vi-history-suite/mcp-narrative-surface-audit@v1",
-  "generatedAt": "2026-07-26T04:04:25.073Z",
+  "generatedAt": "2026-07-26T05:52:29.634Z",
   "invariants": {
     "I1_noInventedNumbers": "every integer > 1 in a narrative is a meaningful count the ground truth allows",
     "I2_noFalseNoChange": "a changed-input narrative never claims no changes/differences",
@@ -10,8 +10,8 @@
     {
       "surface": "get_vi_semantic_comparison",
       "tool": "renderViSemanticNarrative",
-      "cases": 8,
-      "passing": 8,
+      "cases": 22,
+      "passing": 22,
       "failing": 0,
       "failingVis": []
     },
@@ -56,7 +56,150 @@
       "tool": "renderViSemanticNarrative",
       "rows": [
         {
-          "vi": "loadtemplates",
+          "vi": "af-applyvipc",
+          "hasDifferences": true,
+          "detailItemCount": 1,
+          "ok": true,
+          "noInventedNumbers": true,
+          "noFalseNoChange": true,
+          "statesCount": true,
+          "invented": [],
+          "narrative": "1 detailed change across 1 section (VI Attribute - Miscellaneous). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute."
+        },
+        {
+          "vi": "af-create-lv-ini-token",
+          "hasDifferences": true,
+          "detailItemCount": 1,
+          "ok": true,
+          "noInventedNumbers": true,
+          "noFalseNoChange": true,
+          "statesCount": true,
+          "invented": [],
+          "narrative": "1 detailed change across 1 section (VI Attribute - Miscellaneous). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute."
+        },
+        {
+          "vi": "af-createlvaddonjsonfile",
+          "hasDifferences": true,
+          "detailItemCount": 1,
+          "ok": true,
+          "noInventedNumbers": true,
+          "noFalseNoChange": true,
+          "statesCount": true,
+          "invented": [],
+          "narrative": "1 detailed change across 1 section (VI Attribute - Miscellaneous). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute."
+        },
+        {
+          "vi": "af-createnewwizard-includeitem",
+          "hasDifferences": true,
+          "detailItemCount": 1,
+          "ok": true,
+          "noInventedNumbers": true,
+          "noFalseNoChange": true,
+          "statesCount": true,
+          "invented": [],
+          "narrative": "The block diagram differs. 1 detailed change across 1 section (Block Diagram objects). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute."
+        },
+        {
+          "vi": "af-destroy-lv-ini-token",
+          "hasDifferences": true,
+          "detailItemCount": 1,
+          "ok": true,
+          "noInventedNumbers": true,
+          "noFalseNoChange": true,
+          "statesCount": true,
+          "invented": [],
+          "narrative": "1 detailed change across 1 section (VI Attribute - Miscellaneous). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute."
+        },
+        {
+          "vi": "af-is-actor-class-or-interface",
+          "hasDifferences": true,
+          "detailItemCount": 1,
+          "ok": true,
+          "noInventedNumbers": true,
+          "noFalseNoChange": true,
+          "statesCount": true,
+          "invented": [],
+          "narrative": "The block diagram differs. 1 detailed change across 1 section (Block Diagram objects). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute."
+        },
+        {
+          "vi": "af-prepareiesource",
+          "hasDifferences": true,
+          "detailItemCount": 1,
+          "ok": true,
+          "noInventedNumbers": true,
+          "noFalseNoChange": true,
+          "statesCount": true,
+          "invented": [],
+          "narrative": "1 detailed change across 1 section (VI Attribute - Miscellaneous). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute."
+        },
+        {
+          "vi": "af-restoresetuplvsource",
+          "hasDifferences": true,
+          "detailItemCount": 1,
+          "ok": true,
+          "noInventedNumbers": true,
+          "noFalseNoChange": true,
+          "statesCount": true,
+          "invented": [],
+          "narrative": "1 detailed change across 1 section (VI Attribute - Miscellaneous). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute."
+        },
+        {
+          "vi": "af-run-all-tests-cli",
+          "hasDifferences": true,
+          "detailItemCount": 1,
+          "ok": true,
+          "noInventedNumbers": true,
+          "noFalseNoChange": true,
+          "statesCount": true,
+          "invented": [],
+          "narrative": "1 detailed change across 1 section (VI Attribute - Miscellaneous). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute."
+        },
+        {
+          "vi": "af-run-all-tests",
+          "hasDifferences": true,
+          "detailItemCount": 1,
+          "ok": true,
+          "noInventedNumbers": true,
+          "noFalseNoChange": true,
+          "statesCount": true,
+          "invented": [],
+          "narrative": "1 detailed change across 1 section (VI Attribute - Miscellaneous). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute."
+        },
+        {
+          "vi": "af-test-launch-for-nested-actor-without-caller",
+          "hasDifferences": true,
+          "detailItemCount": 12,
+          "ok": true,
+          "noInventedNumbers": true,
+          "noFalseNoChange": true,
+          "statesCount": true,
+          "invented": [],
+          "narrative": "The block diagram differs. 12 detailed changes across 5 sections (Block Diagram objects and VI Attribute - Execution (VI Properties)). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute."
+        },
+        {
+          "vi": "ie-dropper",
+          "hasDifferences": true,
+          "detailItemCount": 2,
+          "ok": true,
+          "noInventedNumbers": true,
+          "noFalseNoChange": true,
+          "statesCount": true,
+          "invented": [],
+          "narrative": "The block diagram differs. 2 detailed changes across 2 sections (Block Diagram objects). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute."
+        },
+        {
+          "vi": "ie-fill",
+          "hasDifferences": true,
+          "detailItemCount": 1,
+          "ok": true,
+          "noInventedNumbers": true,
+          "noFalseNoChange": true,
+          "statesCount": true,
+          "invented": [],
+          "narrative": "The block diagram differs. 1 detailed change across 1 section (Block Diagram objects). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute."
+        },
+        {
+          "vi": "ie-loadtemplates",
           "hasDifferences": true,
           "detailItemCount": 2,
           "ok": true,
@@ -67,7 +210,7 @@
           "narrative": "The block diagram differs. 2 detailed changes across 1 section (Block Diagram objects). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute."
         },
         {
-          "vi": "lv_icon",
+          "vi": "ie-lv-icon",
           "hasDifferences": true,
           "detailItemCount": 8,
           "ok": true,
@@ -78,7 +221,7 @@
           "narrative": "The block diagram differs. 8 detailed changes across 3 sections (Block Diagram objects). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute."
         },
         {
-          "vi": "menuselection(user)",
+          "vi": "ie-menuselection-user",
           "hasDifferences": true,
           "detailItemCount": 2,
           "ok": true,
@@ -89,7 +232,7 @@
           "narrative": "The block diagram differs. 2 detailed changes across 1 section (Block Diagram objects). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute."
         },
         {
-          "vi": "mousedown",
+          "vi": "ie-mousedown",
           "hasDifferences": true,
           "detailItemCount": 19,
           "ok": true,
@@ -100,7 +243,7 @@
           "narrative": "The block diagram differs. 19 detailed changes across 6 sections (Block Diagram objects and VI Attribute - Window Size/Appearance (VI Properties)). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute."
         },
         {
-          "vi": "picturecontrol_mouseup",
+          "vi": "ie-picturecontrol-mouseup",
           "hasDifferences": true,
           "detailItemCount": 43,
           "ok": true,
@@ -111,7 +254,7 @@
           "narrative": "The front panel and block diagram differ. 43 detailed changes across 10 sections (Block Diagram objects, Front Panel objects, and VI Attribute - Window Size/Appearance (VI Properties)). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute."
         },
         {
-          "vi": "process template graphics",
+          "vi": "ie-process-template-graphics",
           "hasDifferences": true,
           "detailItemCount": 2,
           "ok": true,
@@ -122,7 +265,18 @@
           "narrative": "The block diagram differs. 2 detailed changes across 1 section (Block Diagram objects). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute."
         },
         {
-          "vi": "vi template",
+          "vi": "ie-updatevisibledata",
+          "hasDifferences": true,
+          "detailItemCount": 1,
+          "ok": true,
+          "noInventedNumbers": true,
+          "noFalseNoChange": true,
+          "statesCount": true,
+          "invented": [],
+          "narrative": "The block diagram differs. 1 detailed change across 1 section (Block Diagram objects). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute."
+        },
+        {
+          "vi": "ie-vi-template",
           "hasDifferences": true,
           "detailItemCount": 2,
           "ok": true,
@@ -133,7 +287,7 @@
           "narrative": "2 detailed changes across 1 section (VI Attribute - Miscellaneous). Compared attributes: Front Panel, Front Panel Position/Size, Block Diagram Functional, Block Diagram Cosmetic, and VI Attribute."
         },
         {
-          "vi": "visibletextmarker",
+          "vi": "ie-visibletextmarker",
           "hasDifferences": true,
           "detailItemCount": 6,
           "ok": true,
