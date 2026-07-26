@@ -45,7 +45,15 @@ const ALL_SAMPLES = [
 // CORR_ONLY_SLUGS (comma list) runs a subset; CORR_MERGE keeps prior samples (grow, not replace);
 // CORR_LIMIT caps count. fixtureSlug (HTML fixture name) = basename lowercased, per correlationReport.mjs.
 const ONLY = process.env.CORR_ONLY_SLUGS ? new Set(process.env.CORR_ONLY_SLUGS.split(',').map((x) => x.trim())) : null;
-let SAMPLES = ONLY ? ALL_SAMPLES.filter((s) => ONLY.has(s.slug)) : ALL_SAMPLES;
+// FIX: source candidates from the proper per-VI modification enumerator (enumerateViChangePairs.cjs)
+// -- real parent..commit modification pairs -- instead of one hardcoded snapshot pair (which under
+// diff-filter=M reported VIs added-after-base as A not M and massively undercounted). CORR_PAIRS_JSON
+// points at the enumerator output (each entry has repo/vi/base/selected/slug). Falls back to the
+// hardcoded ALL_SAMPLES when unset. Entries may carry a per-sample `repo` (multi-repo dataset).
+const PAIRS = process.env.CORR_PAIRS_JSON
+  ? JSON.parse(require('node:fs').readFileSync(process.env.CORR_PAIRS_JSON, 'utf8'))
+  : ALL_SAMPLES;
+let SAMPLES = ONLY ? PAIRS.filter((s) => ONLY.has(s.slug)) : PAIRS;
 if (process.env.CORR_LIMIT) SAMPLES = SAMPLES.slice(0, Number(process.env.CORR_LIMIT));
 function fixtureSlug(viPath) { return path.basename(viPath).replace(/\.vi$/i, '').toLowerCase(); }
 
@@ -62,7 +70,7 @@ function dockerLvkit(argsInner) {
 function runCompare(sample, storageRoot) {
   const env = {
     ...process.env,
-    WIN_REPO_ROOT: CORPUS, WIN_VI_PATH: sample.vi, WIN_BASE: sample.base, WIN_SELECTED: sample.selected,
+    WIN_REPO_ROOT: (sample.repo || CORPUS), WIN_VI_PATH: sample.vi, WIN_BASE: sample.base, WIN_SELECTED: sample.selected,
     WIN_PROVIDER: 'docker', WIN_LV_VERSION: '2026', WIN_LV_BITNESS: 'x64', WIN_CONTAINER_IMAGE: IMAGE,
     WIN_LABEL: 'corr-' + sample.slug, WIN_STORAGE_ROOT: storageRoot
   };
@@ -130,7 +138,7 @@ for (const s of SAMPLES) {
   const previewDelta = pBase.inlineImageCount != null && pSel.inlineImageCount != null ? (pSel.inlineImageCount - pBase.inlineImageCount) : null;
 
   samples.push({
-    vi: s.vi, revisionPair: { base: s.base, selected: s.selected },
+    vi: s.vi, repo: s.repoTag || null, subject: s.subject || null, revisionPair: { base: s.base, selected: s.selected },
     lvkit: { changeCount: lvkitChangeCount, kinds, generateModuleCount: genModuleCount },
     labview: lv,
     preview: { base: pBase.inlineImageCount, selected: pSel.inlineImageCount, deltaInlineImages: previewDelta },

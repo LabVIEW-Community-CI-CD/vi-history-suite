@@ -1,0 +1,920 @@
+[
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Providers/AddActorInterface/CreateNewWizard_IncludeItem.vi",
+    "base": "1dcfb88",
+    "selected": "d385e02e4cd42fe1c7dfd602163974f05b7ee6bf",
+    "slug": "af-createnewwizard-includeitem",
+    "subject": "Recreated changes for the #51 - Cyclic Dependencies (#165)"
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Providers/MessageMakerProvider/_Message Maker/_support/Is Actor Class or Interface.vi",
+    "base": "1dcfb88",
+    "selected": "d385e02e4cd42fe1c7dfd602163974f05b7ee6bf",
+    "slug": "af-is-actor-class-or-interface",
+    "subject": "Recreated changes for the #51 - Cyclic Dependencies (#165)"
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/ActorFramework/Testing Support/Test Launch For Nested Actor Without Caller.vi",
+    "base": "5fc1fe4",
+    "selected": "1dcfb88be46f852f76c1a1808aac414f6dfbe3b8",
+    "slug": "af-test-launch-for-nested-actor-without-caller",
+    "subject": "Tag VIs for localization: (#164)"
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Tooling/PrepareIESource.vi",
+    "base": "4a0c7e8",
+    "selected": "e224979579e1f17a0945804a75e326840931cce6",
+    "slug": "af-prepareiesource",
+    "subject": "Can build the AF VI Package locally using only powershell"
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Tooling/RestoreSetupLVSource.vi",
+    "base": "4a0c7e8",
+    "selected": "e224979579e1f17a0945804a75e326840931cce6",
+    "slug": "af-restoresetuplvsource",
+    "subject": "Can build the AF VI Package locally using only powershell"
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Tooling/Run all tests CLI.vi",
+    "base": "4a0c7e8",
+    "selected": "e224979579e1f17a0945804a75e326840931cce6",
+    "slug": "af-run-all-tests-cli",
+    "subject": "Can build the AF VI Package locally using only powershell"
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Tooling/Run all tests.vi",
+    "base": "4a0c7e8",
+    "selected": "e224979579e1f17a0945804a75e326840931cce6",
+    "slug": "af-run-all-tests",
+    "subject": "Can build the AF VI Package locally using only powershell"
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Tooling/deployment/ApplyVIPC.vi",
+    "base": "4a0c7e8",
+    "selected": "e224979579e1f17a0945804a75e326840931cce6",
+    "slug": "af-applyvipc",
+    "subject": "Can build the AF VI Package locally using only powershell"
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Tooling/deployment/CreateLVAddonJSONfile.vi",
+    "base": "4a0c7e8",
+    "selected": "e224979579e1f17a0945804a75e326840931cce6",
+    "slug": "af-createlvaddonjsonfile",
+    "subject": "Can build the AF VI Package locally using only powershell"
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Tooling/deployment/Create_LV_INI_Token.vi",
+    "base": "4a0c7e8",
+    "selected": "e224979579e1f17a0945804a75e326840931cce6",
+    "slug": "af-create-lv-ini-token",
+    "subject": "Can build the AF VI Package locally using only powershell"
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Tooling/deployment/Destroy_LV_INI_Token.vi",
+    "base": "4a0c7e8",
+    "selected": "e224979579e1f17a0945804a75e326840931cce6",
+    "slug": "af-destroy-lv-ini-token",
+    "subject": "Can build the AF VI Package locally using only powershell"
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Tooling/deployment/Modify_VIPB_Display_Information.vi",
+    "base": "4a0c7e8",
+    "selected": "e224979579e1f17a0945804a75e326840931cce6",
+    "slug": "af-modify-vipb-display-information",
+    "subject": "Can build the AF VI Package locally using only powershell"
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Tooling/deployment/NIP Post uninstall.vi",
+    "base": "4a0c7e8",
+    "selected": "e224979579e1f17a0945804a75e326840931cce6",
+    "slug": "af-nip-post-uninstall",
+    "subject": "Can build the AF VI Package locally using only powershell"
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Tooling/deployment/VIP_Post-Install Custom Action.vi",
+    "base": "4a0c7e8",
+    "selected": "e224979579e1f17a0945804a75e326840931cce6",
+    "slug": "af-vip-post-install-custom-action",
+    "subject": "Can build the AF VI Package locally using only powershell"
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Tooling/deployment/VIP_Pre-Install Custom Action.vi",
+    "base": "4a0c7e8",
+    "selected": "e224979579e1f17a0945804a75e326840931cce6",
+    "slug": "af-vip-pre-install-custom-action",
+    "subject": "Can build the AF VI Package locally using only powershell"
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Tooling/deployment/VIP_Pre-Uninstall Custom Action.vi",
+    "base": "4a0c7e8",
+    "selected": "e224979579e1f17a0945804a75e326840931cce6",
+    "slug": "af-vip-pre-uninstall-custom-action",
+    "subject": "Can build the AF VI Package locally using only powershell"
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Providers/MessageMakerProvider/AFPP Shared/Resolve Symbolic Paths.vi",
+    "base": "42d5acc",
+    "selected": "c59f73ad2a6b255027b35a913fba2126b57d1b18",
+    "slug": "af-resolve-symbolic-paths",
+    "subject": "Debugging.  Build."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Providers/AddActor/CreateNewWizard_IncludeItem.vi",
+    "base": "0b1ff88",
+    "selected": "42d5acc78776c6afdb59cc4922369e74d75ece08",
+    "slug": "af-createnewwizard-includeitem-2",
+    "subject": "Created Inline SubVI to wrap Inline SubVI node, and protected it with the Message Maker Provider password.  Replaced the relevant section of Replace Diagram Contents.vi, and removed its password.  Removed passwords from items without restricted nodes."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Providers/MessageRescripter/Support/Replace Diagram Contents.vi",
+    "base": "0b1ff88",
+    "selected": "42d5acc78776c6afdb59cc4922369e74d75ece08",
+    "slug": "af-replace-diagram-contents",
+    "subject": "Created Inline SubVI to wrap Inline SubVI node, and protected it with the Message Maker Provider password.  Replaced the relevant section of Replace Diagram Contents.vi, and removed its password.  Removed passwords from items without restricted nodes."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Providers/AddActor/Support/Get Default Actor Class Path.vi",
+    "base": "c77ead3",
+    "selected": "0b1ff88de83e5ce02dc4f063f81921f8c551d266",
+    "slug": "af-get-default-actor-class-path",
+    "subject": "Created AFPP Shared:Resolve Symbolic Paths.vi to wrap ResolveSymbolicPaths restricted node.  Protected this VI with the password used for Message Maker Provider VIs.  Replaced relevant code in calling VIs, and removed their password protections.  Deleted redundant VI from Message Rescripter."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Providers/AddActor/Support/Get Parent Actor Starting Folder Path.vi",
+    "base": "c77ead3",
+    "selected": "0b1ff88de83e5ce02dc4f063f81921f8c551d266",
+    "slug": "af-get-parent-actor-starting-folder-path",
+    "subject": "Created AFPP Shared:Resolve Symbolic Paths.vi to wrap ResolveSymbolicPaths restricted node.  Protected this VI with the password used for Message Maker Provider VIs.  Replaced relevant code in calling VIs, and removed their password protections.  Deleted redundant VI from Message Rescripter."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Providers/MessageMakerProvider/_Message Maker/_support/Find Item in PPL.vi",
+    "base": "c77ead3",
+    "selected": "0b1ff88de83e5ce02dc4f063f81921f8c551d266",
+    "slug": "af-find-item-in-ppl",
+    "subject": "Created AFPP Shared:Resolve Symbolic Paths.vi to wrap ResolveSymbolicPaths restricted node.  Protected this VI with the password used for Message Maker Provider VIs.  Replaced relevant code in calling VIs, and removed their password protections.  Deleted redundant VI from Message Rescripter."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Providers/MessageRescripter/Support/Find Target Actor.vi",
+    "base": "c77ead3",
+    "selected": "0b1ff88de83e5ce02dc4f063f81921f8c551d266",
+    "slug": "af-find-target-actor",
+    "subject": "Created AFPP Shared:Resolve Symbolic Paths.vi to wrap ResolveSymbolicPaths restricted node.  Protected this VI with the password used for Message Maker Provider VIs.  Replaced relevant code in calling VIs, and removed their password protections.  Deleted redundant VI from Message Rescripter."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Providers/AddActor/Support/CreateNewWizard_Invoke Core.vi",
+    "base": "8b81599",
+    "selected": "c77ead36b284c50e636aa82d1a02a28133f6b80b",
+    "slug": "af-createnewwizard-invoke-core",
+    "subject": "Replaced relevant protected nodes with Get Project Item from ID.vi.  Removed password protection."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Providers/AddActorInterface/CreateNewWizard_Invoke.vi",
+    "base": "8b81599",
+    "selected": "c77ead36b284c50e636aa82d1a02a28133f6b80b",
+    "slug": "af-createnewwizard-invoke",
+    "subject": "Replaced relevant protected nodes with Get Project Item from ID.vi.  Removed password protection."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Providers/AddActorInterface/Support/Add Interface Dialog.vi",
+    "base": "8b81599",
+    "selected": "c77ead36b284c50e636aa82d1a02a28133f6b80b",
+    "slug": "af-add-interface-dialog",
+    "subject": "Replaced relevant protected nodes with Get Project Item from ID.vi.  Removed password protection."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Providers/AddActor/Support/Add Actor.vi",
+    "base": "a256102",
+    "selected": "8b81599d5bcded119df6eb48c946a90674007730",
+    "slug": "af-add-actor",
+    "subject": "Created Get Project Item from ID to wrap Project.ActiveProject and Project.Item From Item ID.   Protected  Get Project Item from ID with the password for Message Maker Provider files.  Replaced those nodes in Add Actor.vi, and removed password protection."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Providers/MessageMakerProvider/Support/Is Actor Public Method.vi",
+    "base": "66299fa",
+    "selected": "179d2f607d3ec0f9dfe7e2a0cc5a2843045ea569",
+    "slug": "af-is-actor-public-method",
+    "subject": "Wrapped calls to Read Class Ancestry.vi in a Type Specialization Structure."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Providers/MessageMakerProvider/_Message Maker/_support/Inherits from an Actor.vi",
+    "base": "66299fa",
+    "selected": "179d2f607d3ec0f9dfe7e2a0cc5a2843045ea569",
+    "slug": "af-inherits-from-an-actor",
+    "subject": "Wrapped calls to Read Class Ancestry.vi in a Type Specialization Structure."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Providers/MessageMakerProvider/_Message Maker/_support/Is Path to Actor.vi",
+    "base": "66299fa",
+    "selected": "179d2f607d3ec0f9dfe7e2a0cc5a2843045ea569",
+    "slug": "af-is-path-to-actor",
+    "subject": "Wrapped calls to Read Class Ancestry.vi in a Type Specialization Structure."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/Install Support/Post-Uninstall Custom Action.vi",
+    "base": "995f93f",
+    "selected": "2c3c054dcba081d546bbddfd5e68733063ee4fc4",
+    "slug": "af-post-uninstall-custom-action",
+    "subject": "Restored Casting Utility For Actors.vim to the framework.  Restored correct file lists to Pre-Install and Post-Uninstall Custom Actions after merge from main.  Deleted incorrect VIP builds.  Added latest VIP build (2.0.0.17)"
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/Install Support/Pre-Install Custom Action.vi",
+    "base": "995f93f",
+    "selected": "2c3c054dcba081d546bbddfd5e68733063ee4fc4",
+    "slug": "af-pre-install-custom-action",
+    "subject": "Restored Casting Utility For Actors.vim to the framework.  Restored correct file lists to Pre-Install and Post-Uninstall Custom Actions after merge from main.  Deleted incorrect VIP builds.  Added latest VIP build (2.0.0.17)"
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/ActorFramework/Batch Msg/Do.vi",
+    "base": "768350d",
+    "selected": "400ea9c53fb7b7372f2dc2806cce384f89df18d9",
+    "slug": "af-do",
+    "subject": "Copied speciatly messages to the Specialty Message folder, and added these copies to Actor Framewor.lvlib or AF Specialty Messages.lvlib.  Updated build specification with update information and a product description."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/ActorFramework/Batch Msg/Send Batch.vi",
+    "base": "768350d",
+    "selected": "400ea9c53fb7b7372f2dc2806cce384f89df18d9",
+    "slug": "af-send-batch",
+    "subject": "Copied speciatly messages to the Specialty Message folder, and added these copies to Actor Framewor.lvlib or AF Specialty Messages.lvlib.  Updated build specification with update information and a product description."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/ActorFramework/Reply Msg/Do Core.vi",
+    "base": "768350d",
+    "selected": "400ea9c53fb7b7372f2dc2806cce384f89df18d9",
+    "slug": "af-do-core",
+    "subject": "Copied speciatly messages to the Specialty Message folder, and added these copies to Actor Framewor.lvlib or AF Specialty Messages.lvlib.  Updated build specification with update information and a product description."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/ActorFramework/Reply Msg/Do.vi",
+    "base": "768350d",
+    "selected": "400ea9c53fb7b7372f2dc2806cce384f89df18d9",
+    "slug": "af-do-2",
+    "subject": "Copied speciatly messages to the Specialty Message folder, and added these copies to Actor Framewor.lvlib or AF Specialty Messages.lvlib.  Updated build specification with update information and a product description."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/ActorFramework/Reply Msg/Drop Message Core.vi",
+    "base": "768350d",
+    "selected": "400ea9c53fb7b7372f2dc2806cce384f89df18d9",
+    "slug": "af-drop-message-core",
+    "subject": "Copied speciatly messages to the Specialty Message folder, and added these copies to Actor Framewor.lvlib or AF Specialty Messages.lvlib.  Updated build specification with update information and a product description."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/ActorFramework/Reply Msg/Send Message And Wait For Response.vi",
+    "base": "768350d",
+    "selected": "400ea9c53fb7b7372f2dc2806cce384f89df18d9",
+    "slug": "af-send-message-and-wait-for-response",
+    "subject": "Copied speciatly messages to the Specialty Message folder, and added these copies to Actor Framewor.lvlib or AF Specialty Messages.lvlib.  Updated build specification with update information and a product description."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/ActorFramework/Report Error Msg/Do.vi",
+    "base": "768350d",
+    "selected": "400ea9c53fb7b7372f2dc2806cce384f89df18d9",
+    "slug": "af-do-3",
+    "subject": "Copied speciatly messages to the Specialty Message folder, and added these copies to Actor Framewor.lvlib or AF Specialty Messages.lvlib.  Updated build specification with update information and a product description."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/ActorFramework/Report Error Msg/Send Error Report.vi",
+    "base": "768350d",
+    "selected": "400ea9c53fb7b7372f2dc2806cce384f89df18d9",
+    "slug": "af-send-error-report",
+    "subject": "Copied speciatly messages to the Specialty Message folder, and added these copies to Actor Framewor.lvlib or AF Specialty Messages.lvlib.  Updated build specification with update information and a product description."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/ActorFramework/Self-Addressed Msg/Address Message.vi",
+    "base": "768350d",
+    "selected": "400ea9c53fb7b7372f2dc2806cce384f89df18d9",
+    "slug": "af-address-message",
+    "subject": "Copied speciatly messages to the Specialty Message folder, and added these copies to Actor Framewor.lvlib or AF Specialty Messages.lvlib.  Updated build specification with update information and a product description."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/ActorFramework/Self-Addressed Msg/Do.vi",
+    "base": "768350d",
+    "selected": "400ea9c53fb7b7372f2dc2806cce384f89df18d9",
+    "slug": "af-do-4",
+    "subject": "Copied speciatly messages to the Specialty Message folder, and added these copies to Actor Framewor.lvlib or AF Specialty Messages.lvlib.  Updated build specification with update information and a product description."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/ActorFramework/Self-Addressed Msg/Send Self-Addressed Message.vi",
+    "base": "768350d",
+    "selected": "400ea9c53fb7b7372f2dc2806cce384f89df18d9",
+    "slug": "af-send-self-addressed-message",
+    "subject": "Copied speciatly messages to the Specialty Message folder, and added these copies to Actor Framewor.lvlib or AF Specialty Messages.lvlib.  Updated build specification with update information and a product description."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/AFDebug/Generate Custom Trace.vi",
+    "base": "efb27f3",
+    "selected": "768350d5bcee09459f3b49f5882cbc2fa5e4d8f4",
+    "slug": "af-generate-custom-trace",
+    "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/AFDebug/Get Actor Handles.vi",
+    "base": "efb27f3",
+    "selected": "768350d5bcee09459f3b49f5882cbc2fa5e4d8f4",
+    "slug": "af-get-actor-handles",
+    "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/AFDebug/Get Registry Update Event.vi",
+    "base": "efb27f3",
+    "selected": "768350d5bcee09459f3b49f5882cbc2fa5e4d8f4",
+    "slug": "af-get-registry-update-event",
+    "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/AFDebug/Protected Actor Handle/Create.vi",
+    "base": "efb27f3",
+    "selected": "768350d5bcee09459f3b49f5882cbc2fa5e4d8f4",
+    "slug": "af-create",
+    "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/AFDebug/Protected Actor Handle/Emergency Stop.vi",
+    "base": "efb27f3",
+    "selected": "768350d5bcee09459f3b49f5882cbc2fa5e4d8f4",
+    "slug": "af-emergency-stop",
+    "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/AFDebug/Protected Actor Handle/Open Block Diagram.vi",
+    "base": "efb27f3",
+    "selected": "768350d5bcee09459f3b49f5882cbc2fa5e4d8f4",
+    "slug": "af-open-block-diagram",
+    "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/AFDebug/Protected Actor Handle/Open Front Panel.vi",
+    "base": "efb27f3",
+    "selected": "768350d5bcee09459f3b49f5882cbc2fa5e4d8f4",
+    "slug": "af-open-front-panel",
+    "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/AFDebug/Protected Actor Handle/Ping.vi",
+    "base": "efb27f3",
+    "selected": "768350d5bcee09459f3b49f5882cbc2fa5e4d8f4",
+    "slug": "af-ping",
+    "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/AFDebug/Protected Actor Handle/Read Details.vi",
+    "base": "efb27f3",
+    "selected": "768350d5bcee09459f3b49f5882cbc2fa5e4d8f4",
+    "slug": "af-read-details",
+    "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/AFDebug/Protected Actor Handle/Stop.vi",
+    "base": "efb27f3",
+    "selected": "768350d5bcee09459f3b49f5882cbc2fa5e4d8f4",
+    "slug": "af-stop",
+    "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/AFDebug/Register Actor Msg/Do.vi",
+    "base": "efb27f3",
+    "selected": "768350d5bcee09459f3b49f5882cbc2fa5e4d8f4",
+    "slug": "af-do-5",
+    "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/AFDebug/Register Actor Msg/Send Register Actor.vi",
+    "base": "efb27f3",
+    "selected": "768350d5bcee09459f3b49f5882cbc2fa5e4d8f4",
+    "slug": "af-send-register-actor",
+    "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/ActorFramework/Actor/Actor Core.vi",
+    "base": "efb27f3",
+    "selected": "768350d5bcee09459f3b49f5882cbc2fa5e4d8f4",
+    "slug": "af-actor-core",
+    "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/ActorFramework/Actor/Actor.vi",
+    "base": "efb27f3",
+    "selected": "768350d5bcee09459f3b49f5882cbc2fa5e4d8f4",
+    "slug": "af-actor",
+    "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/ActorFramework/Actor/Receive Message.vi",
+    "base": "efb27f3",
+    "selected": "768350d5bcee09459f3b49f5882cbc2fa5e4d8f4",
+    "slug": "af-receive-message",
+    "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/ActorFramework/Actor/Stop Core.vi",
+    "base": "efb27f3",
+    "selected": "768350d5bcee09459f3b49f5882cbc2fa5e4d8f4",
+    "slug": "af-stop-core",
+    "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/ActorFramework/LastAck/Send Last Ack.vi",
+    "base": "efb27f3",
+    "selected": "768350d5bcee09459f3b49f5882cbc2fa5e4d8f4",
+    "slug": "af-send-last-ack",
+    "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/ActorFramework/Message Enqueuer/Enqueue Critical.vi",
+    "base": "efb27f3",
+    "selected": "768350d5bcee09459f3b49f5882cbc2fa5e4d8f4",
+    "slug": "af-enqueue-critical",
+    "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/ActorFramework/Message Enqueuer/Enqueue.vi",
+    "base": "efb27f3",
+    "selected": "768350d5bcee09459f3b49f5882cbc2fa5e4d8f4",
+    "slug": "af-enqueue",
+    "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/ActorFramework/Message/Drop Message.vi",
+    "base": "efb27f3",
+    "selected": "768350d5bcee09459f3b49f5882cbc2fa5e4d8f4",
+    "slug": "af-drop-message",
+    "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/ActorFramework/Stop Msg/Send Emergency Stop.vi",
+    "base": "efb27f3",
+    "selected": "768350d5bcee09459f3b49f5882cbc2fa5e4d8f4",
+    "slug": "af-send-emergency-stop",
+    "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/ActorFramework/Stop Msg/Send Normal Stop.vi",
+    "base": "efb27f3",
+    "selected": "768350d5bcee09459f3b49f5882cbc2fa5e4d8f4",
+    "slug": "af-send-normal-stop",
+    "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/ActorFramework/Stop Msg/Send Normal or Emergency Stop.vi",
+    "base": "efb27f3",
+    "selected": "768350d5bcee09459f3b49f5882cbc2fa5e4d8f4",
+    "slug": "af-send-normal-or-emergency-stop",
+    "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/ActorFramework/Time-Delayed Send Message/Time-Delayed Send Message Core.vi",
+    "base": "efb27f3",
+    "selected": "768350d5bcee09459f3b49f5882cbc2fa5e4d8f4",
+    "slug": "af-time-delayed-send-message-core",
+    "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/ActorFramework/Time-Delayed Send Message/Time-Delayed Send Message.vi",
+    "base": "efb27f3",
+    "selected": "768350d5bcee09459f3b49f5882cbc2fa5e4d8f4",
+    "slug": "af-time-delayed-send-message",
+    "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/Install Support/Populate Zip File.vi",
+    "base": "efb27f3",
+    "selected": "768350d5bcee09459f3b49f5882cbc2fa5e4d8f4",
+    "slug": "af-populate-zip-file",
+    "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/Install Support/Restore Framework.vi",
+    "base": "efb27f3",
+    "selected": "768350d5bcee09459f3b49f5882cbc2fa5e4d8f4",
+    "slug": "af-restore-framework",
+    "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/Install Support/Stash Framework.vi",
+    "base": "efb27f3",
+    "selected": "768350d5bcee09459f3b49f5882cbc2fa5e4d8f4",
+    "slug": "af-stash-framework",
+    "subject": "Cherry picking commit \"16d1459a55398bac1d79dcfa127f62c4ea215bcc \""
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/ActorFramework/tracing/Generate Custom Trace.vi",
+    "base": "afdcf2b",
+    "selected": "8ff7a4c6bf79d5a73789fa76d246ebeb73836b75",
+    "slug": "af-generate-custom-trace-2",
+    "subject": "Created AF Debug wrappers for the Protected Actor Handle class and Generate Custom Trace VI.  Created sample PPL Build projects."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/ActorFramework/tracing/Support/Generate Trace.vi",
+    "base": "f35fe96",
+    "selected": "23643f5870e14a70bec008e4a3c7bec41e99e886",
+    "slug": "af-generate-trace",
+    "subject": "Cleanup"
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/ActorFramework/tracing/Trace Generation/Generate Trace for New Actor.vi",
+    "base": "f35fe96",
+    "selected": "23643f5870e14a70bec008e4a3c7bec41e99e886",
+    "slug": "af-generate-trace-for-new-actor",
+    "subject": "Cleanup"
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/Testing/Test Harness/AF Trace Queue/Generate Trace.vi",
+    "base": "f35fe96",
+    "selected": "23643f5870e14a70bec008e4a3c7bec41e99e886",
+    "slug": "af-generate-trace-2",
+    "subject": "Cleanup"
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/ActorFramework/tracing/Support/Actor Registry.vi",
+    "base": "26f5eef",
+    "selected": "f35fe967f35e4b2e242cb622347aa9aec7cb7e93",
+    "slug": "af-actor-registry",
+    "subject": "Moved code on disk.  Added Init VI to Trace Format."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/ActorFramework/tracing/Support/Get Actor Handles.vi",
+    "base": "26f5eef",
+    "selected": "f35fe967f35e4b2e242cb622347aa9aec7cb7e93",
+    "slug": "af-get-actor-handles-2",
+    "subject": "Moved code on disk.  Added Init VI to Trace Format."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/ActorFramework/tracing/Support/Get Clone Name.vi",
+    "base": "26f5eef",
+    "selected": "f35fe967f35e4b2e242cb622347aa9aec7cb7e93",
+    "slug": "af-get-clone-name",
+    "subject": "Moved code on disk.  Added Init VI to Trace Format."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/ActorFramework/tracing/Support/Get Registry Update Event.vi",
+    "base": "26f5eef",
+    "selected": "f35fe967f35e4b2e242cb622347aa9aec7cb7e93",
+    "slug": "af-get-registry-update-event-2",
+    "subject": "Moved code on disk.  Added Init VI to Trace Format."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/ActorFramework/tracing/Support/Localized Strings.vi",
+    "base": "26f5eef",
+    "selected": "f35fe967f35e4b2e242cb622347aa9aec7cb7e93",
+    "slug": "af-localized-strings",
+    "subject": "Moved code on disk.  Added Init VI to Trace Format."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/ActorFramework/tracing/Support/TDM Registry.vi",
+    "base": "26f5eef",
+    "selected": "f35fe967f35e4b2e242cb622347aa9aec7cb7e93",
+    "slug": "af-tdm-registry",
+    "subject": "Moved code on disk.  Added Init VI to Trace Format."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/ActorFramework/tracing/Trace Generation/Generate Trace for Dropped Message.vi",
+    "base": "26f5eef",
+    "selected": "f35fe967f35e4b2e242cb622347aa9aec7cb7e93",
+    "slug": "af-generate-trace-for-dropped-message",
+    "subject": "Moved code on disk.  Added Init VI to Trace Format."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/ActorFramework/tracing/Trace Generation/Generate Trace for Message.vi",
+    "base": "26f5eef",
+    "selected": "f35fe967f35e4b2e242cb622347aa9aec7cb7e93",
+    "slug": "af-generate-trace-for-message",
+    "subject": "Moved code on disk.  Added Init VI to Trace Format."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/ActorFramework/tracing/Trace Generation/Generate Trace for New Time Delayed Message.vi",
+    "base": "26f5eef",
+    "selected": "f35fe967f35e4b2e242cb622347aa9aec7cb7e93",
+    "slug": "af-generate-trace-for-new-time-delayed-message",
+    "subject": "Moved code on disk.  Added Init VI to Trace Format."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/ActorFramework/tracing/Trace Generation/Generate Trace for Received Message.vi",
+    "base": "26f5eef",
+    "selected": "f35fe967f35e4b2e242cb622347aa9aec7cb7e93",
+    "slug": "af-generate-trace-for-received-message",
+    "subject": "Moved code on disk.  Added Init VI to Trace Format."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/ActorFramework/tracing/Trace Generation/Generate Trace for Skipped Time-Delayed Message.vi",
+    "base": "26f5eef",
+    "selected": "f35fe967f35e4b2e242cb622347aa9aec7cb7e93",
+    "slug": "af-generate-trace-for-skipped-time-delayed-message",
+    "subject": "Moved code on disk.  Added Init VI to Trace Format."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/ActorFramework/tracing/Trace Generation/Generate Trace for Stopped Actor.vi",
+    "base": "26f5eef",
+    "selected": "f35fe967f35e4b2e242cb622347aa9aec7cb7e93",
+    "slug": "af-generate-trace-for-stopped-actor",
+    "subject": "Moved code on disk.  Added Init VI to Trace Format."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/ActorFramework/tracing/Trace Generation/Generate Trace for Stopped Time-Delayed Message.vi",
+    "base": "26f5eef",
+    "selected": "f35fe967f35e4b2e242cb622347aa9aec7cb7e93",
+    "slug": "af-generate-trace-for-stopped-time-delayed-message",
+    "subject": "Moved code on disk.  Added Init VI to Trace Format."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/Testing/Tests/Launch Root Actor_Actor_Generates Actor Traces.vi",
+    "base": "26f5eef",
+    "selected": "f35fe967f35e4b2e242cb622347aa9aec7cb7e93",
+    "slug": "af-launch-root-actor-actor-generates-actor-traces",
+    "subject": "Moved code on disk.  Added Init VI to Trace Format."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/AFDebug/Actor Registry.vi",
+    "base": "fe536de",
+    "selected": "8182ebf1b368b7cfdc4ffa19016c090d1ffa0719",
+    "slug": "af-actor-registry-2",
+    "subject": "Moved trace generation VIs from AF Debug.lvlib to Actor Framework.lvlib.  Created Trace Format.lvclass and AF Trace Queue.lvclass.  Modified Generate Trace.vi to load and use a specified Trace Format."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/AFDebug/Generate Trace for Dropped Message.vi",
+    "base": "fe536de",
+    "selected": "8182ebf1b368b7cfdc4ffa19016c090d1ffa0719",
+    "slug": "af-generate-trace-for-dropped-message-2",
+    "subject": "Moved trace generation VIs from AF Debug.lvlib to Actor Framework.lvlib.  Created Trace Format.lvclass and AF Trace Queue.lvclass.  Modified Generate Trace.vi to load and use a specified Trace Format."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/AFDebug/Generate Trace for Message.vi",
+    "base": "fe536de",
+    "selected": "8182ebf1b368b7cfdc4ffa19016c090d1ffa0719",
+    "slug": "af-generate-trace-for-message-2",
+    "subject": "Moved trace generation VIs from AF Debug.lvlib to Actor Framework.lvlib.  Created Trace Format.lvclass and AF Trace Queue.lvclass.  Modified Generate Trace.vi to load and use a specified Trace Format."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/AFDebug/Generate Trace for New Actor.vi",
+    "base": "fe536de",
+    "selected": "8182ebf1b368b7cfdc4ffa19016c090d1ffa0719",
+    "slug": "af-generate-trace-for-new-actor-2",
+    "subject": "Moved trace generation VIs from AF Debug.lvlib to Actor Framework.lvlib.  Created Trace Format.lvclass and AF Trace Queue.lvclass.  Modified Generate Trace.vi to load and use a specified Trace Format."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/AFDebug/Generate Trace for New Time Delayed Message.vi",
+    "base": "fe536de",
+    "selected": "8182ebf1b368b7cfdc4ffa19016c090d1ffa0719",
+    "slug": "af-generate-trace-for-new-time-delayed-message-2",
+    "subject": "Moved trace generation VIs from AF Debug.lvlib to Actor Framework.lvlib.  Created Trace Format.lvclass and AF Trace Queue.lvclass.  Modified Generate Trace.vi to load and use a specified Trace Format."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/AFDebug/Generate Trace for Received Message.vi",
+    "base": "fe536de",
+    "selected": "8182ebf1b368b7cfdc4ffa19016c090d1ffa0719",
+    "slug": "af-generate-trace-for-received-message-2",
+    "subject": "Moved trace generation VIs from AF Debug.lvlib to Actor Framework.lvlib.  Created Trace Format.lvclass and AF Trace Queue.lvclass.  Modified Generate Trace.vi to load and use a specified Trace Format."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/AFDebug/Generate Trace for Skipped Time-Delayed Message.vi",
+    "base": "fe536de",
+    "selected": "8182ebf1b368b7cfdc4ffa19016c090d1ffa0719",
+    "slug": "af-generate-trace-for-skipped-time-delayed-message-2",
+    "subject": "Moved trace generation VIs from AF Debug.lvlib to Actor Framework.lvlib.  Created Trace Format.lvclass and AF Trace Queue.lvclass.  Modified Generate Trace.vi to load and use a specified Trace Format."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/AFDebug/Generate Trace for Stopped Actor.vi",
+    "base": "fe536de",
+    "selected": "8182ebf1b368b7cfdc4ffa19016c090d1ffa0719",
+    "slug": "af-generate-trace-for-stopped-actor-2",
+    "subject": "Moved trace generation VIs from AF Debug.lvlib to Actor Framework.lvlib.  Created Trace Format.lvclass and AF Trace Queue.lvclass.  Modified Generate Trace.vi to load and use a specified Trace Format."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/AFDebug/Generate Trace for Stopped Time-Delayed Message.vi",
+    "base": "fe536de",
+    "selected": "8182ebf1b368b7cfdc4ffa19016c090d1ffa0719",
+    "slug": "af-generate-trace-for-stopped-time-delayed-message-2",
+    "subject": "Moved trace generation VIs from AF Debug.lvlib to Actor Framework.lvlib.  Created Trace Format.lvclass and AF Trace Queue.lvclass.  Modified Generate Trace.vi to load and use a specified Trace Format."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/AFDebug/Generate Trace.vi",
+    "base": "fe536de",
+    "selected": "8182ebf1b368b7cfdc4ffa19016c090d1ffa0719",
+    "slug": "af-generate-trace-3",
+    "subject": "Moved trace generation VIs from AF Debug.lvlib to Actor Framework.lvlib.  Created Trace Format.lvclass and AF Trace Queue.lvclass.  Modified Generate Trace.vi to load and use a specified Trace Format."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/AFDebug/Get Clone Name.vi",
+    "base": "fe536de",
+    "selected": "8182ebf1b368b7cfdc4ffa19016c090d1ffa0719",
+    "slug": "af-get-clone-name-2",
+    "subject": "Moved trace generation VIs from AF Debug.lvlib to Actor Framework.lvlib.  Created Trace Format.lvclass and AF Trace Queue.lvclass.  Modified Generate Trace.vi to load and use a specified Trace Format."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/AFDebug/Localized Strings.vi",
+    "base": "fe536de",
+    "selected": "8182ebf1b368b7cfdc4ffa19016c090d1ffa0719",
+    "slug": "af-localized-strings-2",
+    "subject": "Moved trace generation VIs from AF Debug.lvlib to Actor Framework.lvlib.  Created Trace Format.lvclass and AF Trace Queue.lvclass.  Modified Generate Trace.vi to load and use a specified Trace Format."
+  },
+  {
+    "repo": "C:\\repos\\actor-framework",
+    "repoTag": "af",
+    "vi": "Core/AFDebug/TDM Registry.vi",
+    "base": "fe536de",
+    "selected": "8182ebf1b368b7cfdc4ffa19016c090d1ffa0719",
+    "slug": "af-tdm-registry-2",
+    "subject": "Moved trace generation VIs from AF Debug.lvlib to Actor Framework.lvlib.  Created Trace Format.lvclass and AF Trace Queue.lvclass.  Modified Generate Trace.vi to load and use a specified Trace Format."
+  }
+]
