@@ -16,13 +16,17 @@ export const PROTECTED_BRANCHES = ['develop', 'main'];
 /** Branch-name patterns allowed to target the develop flow (mirrors Branch Governance). */
 export const ALLOWED_BRANCH_PATTERNS = [
   /^feature\/\d+-.+/, // feature/<issue#>-<slug>
+  /^fix\/.+/, // fix/* -> feature/<issue#> per AGENTS.md flow (targets a feature branch, NOT develop)
   /^release\/v.+/,
   /^hotfix\/v.+/,
   /^dependabot\/.+/
 ];
 
-/** Non-develop-flow branches that are legitimately pushed and exempt from the pattern. */
+/** Exact non-develop-flow branches that are legitimately pushed and exempt from Rule B. */
 export const EXEMPT_BRANCHES = ['prototype/ollama-mcp-linux-collab'];
+
+/** Exempt PATTERNS: personal/experimental branches never PR'd to develop. */
+export const EXEMPT_PATTERNS = [/^wip\//, /^spike\//, /^prototype\//];
 
 /** Strips a `refs/heads/` prefix to the bare branch name. */
 export function branchNameFromRef(ref) {
@@ -68,11 +72,18 @@ export function evaluateBranchFlow({
   protectedBranches = PROTECTED_BRANCHES,
   allowedPatterns = ALLOWED_BRANCH_PATTERNS,
   exemptBranches = EXEMPT_BRANCHES,
-  issueExists = () => true
+  exemptPatterns = EXEMPT_PATTERNS,
+  issueExists = () => true,
+  ruleCVerifiable = true
 } = {}) {
   const violations = [];
+  const notes = [];
   for (const ref of refs || []) {
     if (isDelete(ref)) continue; // deletions are not a flow concern
+    // Only branch refs are a branch-flow concern. A tag/note push (refs/tags/*,
+    // refs/notes/*) is NOT under refs/heads/ and must be skipped, else Rule B
+    // false-blocks it with a nonsense rename remedy. (LINUX empirical finding.)
+    if (!ref.remoteRef || !ref.remoteRef.startsWith('refs/heads/')) continue;
     const remoteBranch = branchNameFromRef(ref.remoteRef);
     if (!remoteBranch) continue;
 
@@ -86,8 +97,8 @@ export function evaluateBranchFlow({
       continue;
     }
 
-    // Exempt collaboration branches (e.g. the prototype branch) skip the pattern.
-    if (exemptBranches.includes(remoteBranch)) continue;
+    // Exempt collaboration/personal branches (exact or pattern) skip Rule B/C.
+    if (exemptBranches.includes(remoteBranch) || exemptPatterns.some((p) => p.test(remoteBranch))) continue;
 
     // Rule B: a develop-flow branch must match an allowed pattern (Branch Governance parity).
     if (!allowedPatterns.some((p) => p.test(remoteBranch))) {
@@ -96,23 +107,29 @@ export function evaluateBranchFlow({
         branch: remoteBranch,
         message:
           `Branch "${remoteBranch}" does not match the required flow ` +
-          `(feature/<issue#>-*, release/v*, hotfix/v*, dependabot/*). ` +
+          `(feature/<issue#>-*, fix/*, release/v*, hotfix/v*, dependabot/*). ` +
           `Create a tracking issue, then: git branch -m ${remoteBranch} feature/<issue#>-<slug>.`
       });
       continue;
     }
 
-    // Rule C: a feature/<issue#> branch must reference an issue that exists.
+    // Rule C: a feature/<issue#> branch must reference an issue that exists. Scoped
+    // to feature/ only (fix/* carries no issue#). Skipped-with-audit when the issue
+    // cannot be verified (no gh on this plane) so Rules A+B still run in a container.
     const issue = featureIssueNumber(remoteBranch);
-    if (issue !== null && !issueExists(issue)) {
-      violations.push({
-        rule: 'missing-issue',
-        branch: remoteBranch,
-        message: `Branch "${remoteBranch}" references issue #${issue}, which was not found. Create the issue or fix the branch name.`
-      });
+    if (issue !== null) {
+      if (!ruleCVerifiable) {
+        notes.push(`Rule C skipped: gh unavailable, cannot verify issue #${issue} for "${remoteBranch}".`);
+      } else if (!issueExists(issue)) {
+        violations.push({
+          rule: 'missing-issue',
+          branch: remoteBranch,
+          message: `Branch "${remoteBranch}" references issue #${issue}, which was not found. Create the issue or fix the branch name.`
+        });
+      }
     }
   }
-  return { ok: violations.length === 0, violations };
+  return { ok: violations.length === 0, violations, notes };
 }
 
 /** Renders a fail-closed remedy block for the hook to print on a violation. */

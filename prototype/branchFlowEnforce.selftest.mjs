@@ -93,4 +93,32 @@ test('formatViolations renders a remedy block with the agent identity', () => {
   assert.match(text, /no-direct-protected-push/);
 });
 
+// --- LINUX empirical-review folds (@c7fba13f review) ---
+test('IGNORES a tag push (refs/tags/*) — not a branch-flow concern (tag-bug fix)', () => {
+  const tagRef = { localRef: 'refs/tags/v1.2.3', localSha: S, remoteRef: 'refs/tags/v1.2.3', remoteSha: Z };
+  const r = evaluateBranchFlow({ refs: [tagRef] });
+  assert.equal(r.ok, true);
+  assert.equal(r.violations.length, 0);
+});
+
+test('ALLOWS a fix/* branch (documented flow prefix; targets a feature branch, not develop)', () => {
+  const r = evaluateBranchFlow({ refs: [ref('fix/some-hotpatch')] });
+  assert.equal(r.ok, true);
+});
+
+test('EXEMPTS wip/ and spike/ and any prototype/* via patterns', () => {
+  const r = evaluateBranchFlow({
+    refs: [ref('wip/scratch'), ref('spike/idea'), ref('prototype/another-experiment')]
+  });
+  assert.equal(r.ok, true);
+});
+
+test('Rule C SKIP-when-unverifiable (no gh) records an audit note, does not block', () => {
+  const r = evaluateBranchFlow({ refs: [ref('feature/999999-ghost')], ruleCVerifiable: false });
+  assert.equal(r.ok, true);
+  assert.equal(r.violations.length, 0);
+  assert.equal(r.notes.length, 1);
+  assert.match(r.notes[0], /Rule C skipped: gh unavailable.*#999999/);
+});
+
 process.stdout.write(`\nAll ${passed} branchFlowEnforce self-tests passed.\n`);
