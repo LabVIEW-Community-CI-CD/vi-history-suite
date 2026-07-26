@@ -19,7 +19,7 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import * as fs from 'node:fs';
 import { pathToFileURL } from 'node:url';
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 
 import { renderLiveTimingStopwatchHtml } from './timingStopwatchSurface';
 
@@ -36,6 +36,34 @@ function resolveBrowser(): string | undefined {
     'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe'
   ].filter((candidate): candidate is string => typeof candidate === 'string');
   return candidates.find((candidate) => fs.existsSync(candidate));
+}
+
+/**
+ * Close any dev timing-stopwatch browser window this host launched, matched by its
+ * STABLE profile directory so the user's other Chrome/Edge windows are never
+ * touched. Windows-only (the command is win32-gated) and best-effort/synchronous
+ * so it can run from the extension-deactivate disposable. Kiosk Chrome/Edge forks
+ * child processes and the launcher exits, so a PID kill is unreliable; matching the
+ * unique `--user-data-dir` in the command line is the surgical, safe way to close
+ * exactly the stopwatch window(s) the extension started.
+ */
+function closeStopwatchWindows(profileDir: string): void {
+  if (process.platform !== 'win32') {
+    return;
+  }
+  try {
+    spawnSync(
+      'powershell',
+      [
+        '-NoProfile',
+        '-Command',
+        "$p=$env:VIHS_SW_PROFILE; Get-CimInstance Win32_Process -Filter \"Name='chrome.exe' OR Name='msedge.exe'\" | Where-Object { $_.CommandLine -and $_.CommandLine.Contains($p) } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"
+      ],
+      { env: { ...process.env, VIHS_SW_PROFILE: profileDir }, stdio: 'ignore', timeout: 8000 }
+    );
+  } catch {
+    /* best-effort: leaving a dev window open is not fatal */
+  }
 }
 
 /**
@@ -66,6 +94,14 @@ export function registerDevTimingStopwatch(context: vscode.ExtensionContext): vo
 
   void vscode.commands.executeCommand('setContext', 'viHistorySuite.devMode', true);
 
+  // Stable temp dir + browser profile, resolved once. The extension COORDINATES
+  // the window lifecycle: the stopwatch window is closed when the Extension
+  // Development Host deactivates (F5 stop/reload after the post-build compile) so
+  // it is never left orphaned across dev-host restarts.
+  const dir = path.join(os.tmpdir(), 'vihs-timing-stopwatch');
+  const profileDir = path.join(dir, 'browser-profile');
+  context.subscriptions.push({ dispose: () => closeStopwatchWindows(profileDir) });
+
   context.subscriptions.push(
     vscode.commands.registerCommand(DEV_TIMING_STOPWATCH_COMMAND, async () => {
       const browser = resolveBrowser();
@@ -75,14 +111,12 @@ export function registerDevTimingStopwatch(context: vscode.ExtensionContext): vo
         );
         return;
       }
-      // Reuse one stable temp dir (and browser profile) across runs so a
-      // long-lived hardening host does not accumulate per-launch mkdtemp dirs;
-      // the browser is launched detached so we cannot clean up on exit.
-      const dir = path.join(os.tmpdir(), 'vihs-timing-stopwatch');
+      // Close any window from a previous invocation so re-running does not stack
+      // kiosk windows (single-instance), then (re)write the surface HTML.
+      closeStopwatchWindows(profileDir);
       fs.mkdirSync(dir, { recursive: true });
       const htmlPath = path.join(dir, 'timing-stopwatch.html');
       fs.writeFileSync(htmlPath, renderLiveTimingStopwatchHtml(), 'utf8');
-      const profileDir = path.join(dir, 'browser-profile');
       try {
         const child = spawn(
           browser,
@@ -109,7 +143,7 @@ export function registerDevTimingStopwatch(context: vscode.ExtensionContext): vo
         });
         child.unref();
         void vscode.window.showInformationMessage(
-          'Dev timing stopwatch launched full-screen (kiosk). Press Alt+F4 / close the window to exit.'
+          'Dev timing stopwatch launched full-screen (kiosk). It closes automatically when the Extension Development Host stops or reloads; press Alt+F4 to close it sooner.'
         );
       } catch (err) {
         void vscode.window.showErrorMessage(
