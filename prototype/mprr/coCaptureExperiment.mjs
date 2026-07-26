@@ -90,8 +90,9 @@ async function main() {
   const name = typeof args.name === 'string' ? args.name : 'cocapture';
   const runId = typeof args.runId === 'string' ? args.runId : new Date().toISOString().replace(/[:.]/g, '-');
   const fps = Number(args.fps) || 12;
+  const workload = (typeof args.workload === 'string' ? args.workload : 'launch').toLowerCase();
   const introSec = Number(args.intro) || 6;
-  const launchSec = Number(args.launch) || 30;
+  const launchSec = Number(args.launch) || (workload === 'compare' ? 60 : 30);
   const totalSec = introSec + launchSec;
   const lvPath = typeof args.lv === 'string' ? args.lv : process.env.VIHS_SPLASH_LV || DEFAULT_LV;
 
@@ -153,10 +154,28 @@ async function main() {
   // the user's other Chrome windows.
   if (chrome.pid) spawnSync('taskkill', ['/PID', String(chrome.pid), '/F', '/T'], { stdio: 'ignore' });
   const launchEpoch = Date.now();
-  console.log(`[cc] launching LabVIEW at t=${((launchEpoch - frameZeroEpoch) / 1000).toFixed(1)}s -> ${lvPath}`);
-  spawnSync('cmd', ['/c', 'start', '""', '/B', lvPath], { stdio: 'ignore' });
+  let workloadProc = null;
+  if (workload === 'compare') {
+    console.log(`[cc] driving REAL host-native LabVIEW compare (lv_icon.vi) at t=${((launchEpoch - frameZeroEpoch) / 1000).toFixed(1)}s ...`);
+    workloadProc = spawn(process.execPath, [join('scripts', 'windows-compare-driver.cjs')], {
+      cwd: REPO_ROOT, windowsHide: false,
+      env: {
+        ...process.env,
+        WIN_REPO_ROOT: process.env.VIHS_CC_REPO || 'C:\\repos\\ni\\labview-icon-editor',
+        WIN_VI_PATH: process.env.VIHS_CC_VI || 'resource/plugins/lv_icon.vi',
+        WIN_BASE: process.env.VIHS_CC_BASE || '5376833',
+        WIN_SELECTED: process.env.VIHS_CC_SELECTED || 'fc09736',
+        WIN_PROVIDER: 'host', WIN_LV_VERSION: '2026', WIN_LV_BITNESS: process.env.VIHS_CC_BITNESS || 'x64',
+        WIN_LABEL: name, WIN_STORAGE_ROOT: join(runRoot, 'compare-storage')
+      }
+    });
+  } else {
+    console.log(`[cc] launching LabVIEW at t=${((launchEpoch - frameZeroEpoch) / 1000).toFixed(1)}s -> ${lvPath}`);
+    spawnSync('cmd', ['/c', 'start', '""', '/B', lvPath], { stdio: 'ignore' });
+  }
 
   await Promise.all([tpDone, gdDone]);
+  try { if (workloadProc && !workloadProc.killed) workloadProc.kill(); } catch { /* ignore */ }
   killLabview();
 
   // 4b) Harvest the LabVIEW launch-timing app log (LabVIEW[CLI]_..._cur.txt) written
@@ -279,6 +298,7 @@ async function main() {
     schema: 'vi-history-suite/cocapture-experiment@v1',
     generatedAtIso: new Date().toISOString(),
     experimentName: name, runId, runRoot: rel(runRoot),
+    workload,
     fps, introSeconds: introSec, launchSeconds: launchSec, totalSeconds: totalSec,
     frameZeroEpochMs: frameZeroEpoch, launchEpochMs: launchEpoch,
     launchFrameIndex: Math.round(((launchEpoch - frameZeroEpoch) / 1000) * fps),
