@@ -28,6 +28,7 @@ import { buildViSemanticComparisonModelFromHtml } from '../../out/semantic/viSem
 import { buildViSemanticHistory } from '../../out/semantic/viSemanticHistory.js';
 import { buildViRepositoryIndex } from '../../out/semantic/viRepositoryIndex.js';
 import { buildViSemanticPrReview } from '../../out/semantic/viSemanticPrReview.js';
+import { buildViPreviewComparisonCorrelation } from '../../out/semantic/viPreviewComparisonCorrelation.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURES = path.join(__dirname, '..', 'win-lvkit', 'correlation-fixtures');
@@ -261,12 +262,47 @@ async function auditPrReviewSurface() {
   };
 }
 
+// --- PREVIEW-COMPARISON CORRELATION surface: audit renderCorrelationNarrative via the pure
+// buildViPreviewComparisonCorrelation over a real multi-surface fixture model, previews absent
+// (so every changed surface reports uncorrelated -- exercises the count sentences). ---
+function auditCorrelationSurface() {
+  const fixture = 'picturecontrol_mouseup.labview-diff-report.html';
+  const html = fs.readFileSync(path.join(FIXTURES, fixture), 'utf8');
+  const model = buildViSemanticComparisonModelFromHtml(html, { reportFilePath: fixture });
+  const correlation = buildViPreviewComparisonCorrelation(model, {});
+  const allowedNumbers = [
+    correlation.totals.changedSurfaceCount,
+    correlation.totals.uncorrelatedSurfaceCount,
+    correlation.totals.correlatedSurfaceCount,
+    ...correlation.surfaces.map((s) => s.changeCount)
+  ];
+  const audit = auditNarrative(correlation.narrative, {
+    allowedNumbers,
+    hasChanges: correlation.hasDifferences,
+    headlineCount: null
+  });
+  return {
+    surface: 'vi-preview-comparison-correlation',
+    tool: 'renderCorrelationNarrative',
+    rows: [
+      {
+        vi: 'picturecontrol_mouseup (real, previews absent)',
+        hasDifferences: correlation.hasDifferences,
+        detailItemCount: correlation.totals.changedSurfaceCount,
+        ...audit,
+        narrative: correlation.narrative
+      }
+    ]
+  };
+}
+
 async function main() {
   const surfaces = [
     auditComparisonSurface(),
     await auditHistorySurface(),
     await auditIndexSurface(),
-    await auditPrReviewSurface()
+    await auditPrReviewSurface(),
+    auditCorrelationSurface()
   ];
   // Follow-up lane (pluggable): history / repository-index / pr-review via their injected builders.
   const surfaceSummaries = surfaces.map((s) => {
@@ -290,7 +326,7 @@ async function main() {
       I3_statesCount: 'a changed narrative states its headline change count'
     },
     auditedSurfaces: surfaceSummaries,
-    pendingSurfaces: ['vi-preview-comparison-correlation'],
+    pendingSurfaces: [],
     totalFailing,
     surfaces
   };

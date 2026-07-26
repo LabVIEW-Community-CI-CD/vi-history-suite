@@ -1,6 +1,6 @@
 {
   "schema": "vi-history-suite/mcp-narrative-surface-audit@v1",
-  "generatedAt": "2026-07-26T04:01:47.134Z",
+  "generatedAt": "2026-07-26T04:04:25.073Z",
   "invariants": {
     "I1_noInventedNumbers": "every integer > 1 in a narrative is a meaningful count the ground truth allows",
     "I2_noFalseNoChange": "a changed-input narrative never claims no changes/differences",
@@ -38,11 +38,17 @@
       "passing": 1,
       "failing": 0,
       "failingVis": []
+    },
+    {
+      "surface": "vi-preview-comparison-correlation",
+      "tool": "renderCorrelationNarrative",
+      "cases": 1,
+      "passing": 1,
+      "failing": 0,
+      "failingVis": []
     }
   ],
-  "pendingSurfaces": [
-    "vi-preview-comparison-correlation"
-  ],
+  "pendingSurfaces": [],
   "totalFailing": 0,
   "surfaces": [
     {
@@ -187,6 +193,23 @@
           "statesCount": true,
           "invented": [],
           "narrative": "3 changed VIs. 3 with differences, 0 unchanged. Risk: 3 high-risk."
+        }
+      ]
+    },
+    {
+      "surface": "vi-preview-comparison-correlation",
+      "tool": "renderCorrelationNarrative",
+      "rows": [
+        {
+          "vi": "picturecontrol_mouseup (real, previews absent)",
+          "hasDifferences": true,
+          "detailItemCount": 3,
+          "ok": true,
+          "noInventedNumbers": true,
+          "noFalseNoChange": true,
+          "statesCount": true,
+          "invented": [],
+          "narrative": "high-risk change (low confidence). The front panel has 2 classified changes (structural, dependency) — no preview is available to correlate this surface. The block diagram has 39 classified changes (structural, dependency, behavioral) — no preview is available to correlate this surface. The VI attributes has 2 classified changes (unknown) — no preview is available to correlate this surface. 3 of 3 changed surface(s) could not be correlated to a base+head preview pair."
         }
       ]
     }
