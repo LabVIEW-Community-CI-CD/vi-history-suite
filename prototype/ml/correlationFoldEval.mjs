@@ -109,6 +109,16 @@ function autoDiscoverBatch(foldsManifest) {
   for (const f of fs.readdirSync(FIXTURES).filter((x) => /\.labview-diff-report\.html$/i.test(x)).sort()) {
     const base = f.replace(/\.labview-diff-report\.html$/i, '');
     const kebab = base.replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase();
+    // Fixtures named by their repo-prefixed manifest slug (e.g. af-prepareiesource)
+    // are already unambiguous: the kebab IS a full manifest slug, so use it directly
+    // and infer the repo from the slug's leading repoTag. This retires the af/ie
+    // basename collision at the source. Legacy flat basenames (kebab not a full
+    // slug) fall through to the repo-prepend + disambiguation logic below.
+    if (slugSet.has(kebab)) {
+      const repo = kebab.slice(0, kebab.indexOf('-'));
+      batch.push({ slug: kebab, repo, htmlPath: path.join(FIXTURES, f), cosmeticCount: null });
+      continue;
+    }
     const matches = repos.filter((r) => slugSet.has(`${r}-${kebab}`));
     let repo = null;
     if (matches.length === 1) {
