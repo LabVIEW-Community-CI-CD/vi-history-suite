@@ -30,6 +30,7 @@ import {
   LVKIT_VI_SCAN_SCHEMA_VERSION,
   summarizeModuleResolutions,
   type LvkitGeneratedModule,
+  type LvkitResolutionCounts,
   type LvkitViScanEnvelope
 } from './lvkitViScanModel';
 
@@ -53,17 +54,34 @@ export function computeLvkitViScanStoreKey(viPath: string, contentSignature: str
 }
 
 /**
- * Total UNRESOLVED provenance for the upgrade-only precedence guard (#2373/#2376).
- * Uses the additive `resolutionCounts` when present, else classifies the always-
- * present `modules` (legacy envelopes captured before the field existed). Counts
- * inline `raise PrimitiveResolutionNeeded` / `raise VILibResolutionNeeded`
- * placeholders (which keep `errorModuleCount` at 0) as unresolved alongside
- * `.error.py` stubs, so an inline-placeholder generate can never clobber a cleaner
- * cached one.
+ * Resolution counts for upgrade-only precedence ranking: the additive
+ * `resolutionCounts` when present, else classify the always-present `modules`
+ * (legacy envelopes captured before the field existed).
  */
-function unresolvedModuleTotal(envelope: LvkitViScanEnvelope): number {
-  const counts = envelope.resolutionCounts ?? summarizeModuleResolutions(envelope.modules);
-  return counts.unresolvedPrimitive + counts.unresolvedVilib + counts.errorStub;
+function resolutionCountsFor(envelope: LvkitViScanEnvelope): LvkitResolutionCounts {
+  return envelope.resolutionCounts ?? summarizeModuleResolutions(envelope.modules);
+}
+
+/**
+ * True when `a` is STRICTLY cleaner (more resolved) than `b` for upgrade-only
+ * precedence. Primary key: total UNRESOLVED provenance -- inline
+ * `raise PrimitiveResolutionNeeded` / `raise VILibResolutionNeeded` placeholders
+ * (which keep `errorModuleCount` at 0) counted alongside `.error.py` stubs, so an
+ * inline placeholder is ranked unresolved, not clean. Tie-break on an equal total:
+ * FEWER `.error.py` hard stubs, because a hard stub is less usable than an inline
+ * placeholder (which keeps the surrounding generated module) -- so a later
+ * hard-stub scan never downgrades an existing inline placeholder, and symmetrically
+ * an inline result can still upgrade an existing hard stub. Order-independent.
+ */
+function isStrictlyCleaner(a: LvkitViScanEnvelope, b: LvkitViScanEnvelope): boolean {
+  const ca = resolutionCountsFor(a);
+  const cb = resolutionCountsFor(b);
+  const totalA = ca.unresolvedPrimitive + ca.unresolvedVilib + ca.errorStub;
+  const totalB = cb.unresolvedPrimitive + cb.unresolvedVilib + cb.errorStub;
+  if (totalA !== totalB) {
+    return totalA < totalB;
+  }
+  return ca.errorStub < cb.errorStub;
 }
 
 /** Content-addressed store of single-VI lvkit scan envelopes. */
@@ -257,19 +275,20 @@ export function createFileLvkitViScanStore(
       // real-LabVIEW clean generate of the SAME VI bytes share ONE key. A clean
       // generate must be able to REPLACE a placeholder ("the Windows leg fills in
       // the placeholders"), but a later placeholder run must NOT clobber a cleaner
-      // generate. So skip the write when an existing envelope for this exact content
-      // address has STRICTLY FEWER UNRESOLVED modules -- counted across ALL unresolved
-      // provenance (inline `raise ...ResolutionNeeded` primitive/vilib placeholders
-      // AND `.error.py` stubs via unresolvedModuleTotal), not `.error.py` alone, so an
-      // inline-placeholder run (errorModuleCount 0) cannot clobber a clean generate.
-      // Best-effort read: a miss/unreadable/mismatched existing entry just writes.
+      // generate. So skip the write when the existing envelope for this exact content
+      // address is STRICTLY CLEANER (isStrictlyCleaner): fewer total UNRESOLVED modules
+      // across ALL provenance (inline `raise ...ResolutionNeeded` primitive/vilib
+      // placeholders AND `.error.py` stubs), and on an equal total fewer `.error.py`
+      // hard stubs -- so neither an inline-placeholder run (errorModuleCount 0) nor a
+      // hard-stub run can downgrade a cleaner cached generate. Best-effort read:
+      // a miss/unreadable/mismatched existing entry just writes.
       try {
         const existing = JSON.parse(await fsDeps.readFile(storeFilePath(key)));
         if (
           isLvkitViScanEnvelope(existing) &&
           existing.viPath === normalizedPath &&
           existing.contentSignature === envelope.contentSignature &&
-          unresolvedModuleTotal(existing) < unresolvedModuleTotal(normalizedEnvelope)
+          isStrictlyCleaner(existing, normalizedEnvelope)
         ) {
           return true;
         }
