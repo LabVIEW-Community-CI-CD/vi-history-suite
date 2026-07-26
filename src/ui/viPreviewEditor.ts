@@ -147,14 +147,16 @@ class ViPreviewEditorProvider implements vscode.CustomReadonlyEditorProvider<ViP
   private async renderResultToWebview(
     webviewPanel: vscode.WebviewPanel,
     labviewHtml: string,
-    viFsPath: string
+    viFsPath: string,
+    stagingDegraded?: RenderViPreviewForFileResult['stagingDegraded']
   ): Promise<void> {
     const interactive = isBlockDiagramInteractiveEnabled();
     const nonce = interactive ? randomBytes(16).toString('base64') : undefined;
     const selected = selectViPreviewDocument({
       labviewHtml,
       mode: interactive ? 'interactive' : 'document',
-      nonce
+      nonce,
+      stagingDegraded
     });
     webviewPanel.webview.options = { enableScripts: selected.mode === 'interactive' };
     webviewPanel.webview.html = selected.html;
@@ -245,7 +247,7 @@ class ViPreviewEditorProvider implements vscode.CustomReadonlyEditorProvider<ViP
             buildViPreviewRenderDeps(this.cache)
           );
           if (cachePeek.outcome === 'rendered' && cachePeek.html) {
-            await this.renderResultToWebview(webviewPanel, cachePeek.html, document.uri.fsPath);
+            await this.renderResultToWebview(webviewPanel, cachePeek.html, document.uri.fsPath, cachePeek.stagingDegraded);
             return;
           }
         }
@@ -296,7 +298,7 @@ class ViPreviewEditorProvider implements vscode.CustomReadonlyEditorProvider<ViP
         }
 
         if (result.outcome === 'rendered' && result.html) {
-          await this.renderResultToWebview(webviewPanel, result.html, document.uri.fsPath);
+          await this.renderResultToWebview(webviewPanel, result.html, document.uri.fsPath, result.stagingDegraded);
           // VHS-REQ-717 (epic #2348 Phase B): a VI that just rendered LIVE on the
           // runtime is a scan opportunity. Fire the best-effort preview-time lvkit
           // scan for a directly-opened on-disk `file` VI (its bytes match what the
