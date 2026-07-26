@@ -36,7 +36,7 @@
 //
 // Env (all optional; override to target any repo / VI / edit source):
 //   VIHS_MCP_IMAGE_VERSION   linux image tag suffix (default 2026q1patch2-linux)
-//   VIHS_MCP_REPO            git repo clone (default C:\repos\labview-icon-editor)
+//   VIHS_MCP_REPO            git repo clone (default C:\repos\ni\labview-icon-editor)
 //   VIHS_MCP_VI              repo-relative .vi to edit + review
 //   VIHS_MCP_BASE            committed base revision (default the repo HEAD sha used in the demo)
 //   VIHS_MCP_ALT             revision whose VI bytes become the uncommitted "operator edit"

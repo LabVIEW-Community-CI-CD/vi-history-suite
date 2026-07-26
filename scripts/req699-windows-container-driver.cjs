@@ -13,7 +13,7 @@
 // VIHS_FAIL_ON_RUNTIME_FAILURE=1 to make a runtime failure fail the job).
 //
 // Run from the repo root AFTER `npm run compile` (loads ./out). Env:
-//   WIN_REPO_ROOT      fixture Git repo (default C:\repos\labview-icon-editor)
+//   WIN_REPO_ROOT      fixture Git repo (default C:\repos\ni\labview-icon-editor)
 //   WIN_VI_PATH        repo-relative VI (default resource/plugins/lv_icon.vi)
 //   WIN_BASE / WIN_SELECTED   fixture revisions (defaults = icon-editor pair)
 //   WIN_CONTAINER_IMAGE       default nationalinstruments/labview:2026q1-windows
@@ -38,7 +38,7 @@ const {
 const SCHEMA = 'vi-history-suite/req699-windows-container-evidence@v1';
 
 async function main() {
-  const repoRoot = process.env.WIN_REPO_ROOT || 'C:\\repos\\labview-icon-editor';
+  const repoRoot = process.env.WIN_REPO_ROOT || 'C:\\repos\\ni\\labview-icon-editor';
   const relativePath = process.env.WIN_VI_PATH || 'resource/plugins/lv_icon.vi';
   const baseHash = process.env.WIN_BASE || '537683398d8c5cb73533603b5c06b6eef62a6ac8';
   const selectedHash = process.env.WIN_SELECTED || 'fc09736ae5e38c2016de081a9c8686256c9f2f9c';

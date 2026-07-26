@@ -34,7 +34,7 @@
 //   VIHS_OLLAMA_URL     Ollama base URL (default http://localhost:11434)
 //   VIHS_OLLAMA_MODEL   tool-capable model (default llama3.1:8b)
 //   VIHS_MCP_IMAGE_VERSION  linux image tag suffix (default 2026q1patch2-linux)
-//   VIHS_MCP_REPO       git repo clone (default C:\repos\labview-icon-editor)
+//   VIHS_MCP_REPO       git repo clone (default C:\repos\ni\labview-icon-editor)
 //   VIHS_MCP_VI         repo-relative .vi to review
 //   VIHS_MCP_BASE       committed baseline revision (default the demo HEAD sha)
 //   VIHS_MCP_ALT        revision whose bytes seed the demo edit, or "none" to

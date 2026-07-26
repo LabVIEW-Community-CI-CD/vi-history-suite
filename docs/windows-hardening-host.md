@@ -91,7 +91,7 @@ cd C:\repos\vi-history-suite
 git checkout develop
 npm ci
 npm run compile
-git clone https://github.com/ni/labview-icon-editor C:\repos\labview-icon-editor
+git clone https://github.com/ni/labview-icon-editor C:\repos\ni\labview-icon-editor
 ```
 
 ## Part B — Run the validation matrix
@@ -106,7 +106,7 @@ Use [scripts/windows-compare-driver.cjs](../scripts/windows-compare-driver.cjs)
 once per cell (env-var contract in its header). Example (host-native x64 2026):
 
 ```powershell
-$env:WIN_REPO_ROOT='C:\repos\labview-icon-editor'
+$env:WIN_REPO_ROOT='C:\repos\ni\labview-icon-editor'
 $env:WIN_VI_PATH='resource/plugins/lv_icon.vi'
 $env:WIN_BASE='5376833'; $env:WIN_SELECTED='fc09736'
 $env:WIN_PROVIDER='host'; $env:WIN_LV_VERSION='2026'; $env:WIN_LV_BITNESS='x64'

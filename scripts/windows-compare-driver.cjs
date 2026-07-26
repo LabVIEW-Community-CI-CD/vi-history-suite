@@ -13,7 +13,7 @@
 //
 // Configure via env vars:
 //   WIN_REPO_ROOT      Absolute path to a Git repo containing a tracked .vi
-//                      (e.g. C:\repos\labview-icon-editor)
+//                      (e.g. C:\repos\ni\labview-icon-editor)
 //   WIN_VI_PATH        Repo-relative path of the VI to compare
 //                      (e.g. resource/plugins/lv_icon.vi)
 //   WIN_BASE           Base (older) revision (short or full SHA)
@@ -33,7 +33,7 @@
 // LabVIEW 2026 parity, the bitness the x64-only windows-container cannot cover.
 //
 // Example (PowerShell), host-native x64:
-//   $env:WIN_REPO_ROOT='C:\repos\labview-icon-editor'
+//   $env:WIN_REPO_ROOT='C:\repos\ni\labview-icon-editor'
 //   $env:WIN_VI_PATH='resource/plugins/lv_icon.vi'
 //   $env:WIN_BASE='5376833'; $env:WIN_SELECTED='fc09736'
 //   $env:WIN_PROVIDER='host'; $env:WIN_LV_VERSION='2026'; $env:WIN_LV_BITNESS='x64'

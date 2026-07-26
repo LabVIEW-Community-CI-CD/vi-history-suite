@@ -33,7 +33,7 @@
 //
 // Env (all optional; override BASE/SEL/REPO to target any PR change surface):
 //   VIHS_MCP_IMAGE_VERSION   container image tag suffix (default 2026q1patch2-windows)
-//   VIHS_MCP_REPO            git repo clone (default C:\repos\labview-icon-editor)
+//   VIHS_MCP_REPO            git repo clone (default C:\repos\ni\labview-icon-editor)
 //   VIHS_MCP_BASE            base revision (default PR #537 base 9545c483...)
 //   VIHS_MCP_SEL             head revision (default PR #537 head f57c3cfd...)
 //   VIHS_MCP_MAX_VIS         cap on reviewed VIs (default 3; tool ceiling 200)

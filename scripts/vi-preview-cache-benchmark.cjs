@@ -24,7 +24,7 @@
  * hosted CI. Requires `npm run compile` first (drives `out/`).
  *
  * Env / flags:
- *   VIHS_BENCH_REPO     repo root to scan for *.vi (default: C:\repos\labview-icon-editor)
+ *   VIHS_BENCH_REPO     repo root to scan for *.vi (default: C:\repos\ni\labview-icon-editor)
  *   VIHS_BENCH_SINGLE   VI path (absolute or repo-relative) for benchmark A
  *                       (default: the first *.vi found under the repo)
  *   VIHS_BENCH_LIMIT    max VIs for benchmark B; 0 = ALL (default: 10)
@@ -146,7 +146,7 @@ async function renderOnce(viFilePath, runtime, deps) {
 }
 
 async function main() {
-  const benchRepo = process.env.VIHS_BENCH_REPO || 'C:\\repos\\labview-icon-editor';
+  const benchRepo = process.env.VIHS_BENCH_REPO || 'C:\\repos\\ni\\labview-icon-editor';
   const limit = Number.parseInt(process.env.VIHS_BENCH_LIMIT ?? '10', 10);
   const bitness = (process.env.VIHS_BENCH_BITNESS || 'x86').toLowerCase() === 'x64' ? 'x64' : 'x86';
   const labviewVersion = process.env.VIHS_BENCH_VERSION || '2026';

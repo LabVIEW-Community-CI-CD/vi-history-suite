@@ -30,7 +30,7 @@
 //
 // Evidence lands under `win-validation\` (gitignored). Run from the repo root
 // AFTER `npm run compile` (it loads ./out). Env (all optional):
-//   VIHS_MPRR_REPO_ROOT     fixture repo (default C:\repos\labview-icon-editor)
+//   VIHS_MPRR_REPO_ROOT     fixture repo (default C:\repos\ni\labview-icon-editor)
 //   VIHS_MPRR_VI_PATH       repo-relative VI (default resource/plugins/lv_icon.vi)
 //   VIHS_MPRR_BASE          base rev  (default 5376833)
 //   VIHS_MPRR_SELECTED      selected rev (default fc09736)
@@ -82,7 +82,7 @@ const stripDecoderMod = loadModule(OUT_SYNC, 'mprrStripImageDecoder');
 const stopwatchAccuracyMod = loadModule(OUT_SYNC, 'stopwatchCaptureAccuracy');
 
 const CONFIG = {
-  repoRoot: process.env.VIHS_MPRR_REPO_ROOT || 'C:\\repos\\labview-icon-editor',
+  repoRoot: process.env.VIHS_MPRR_REPO_ROOT || 'C:\\repos\\ni\\labview-icon-editor',
   viPath: process.env.VIHS_MPRR_VI_PATH || 'resource/plugins/lv_icon.vi',
   base: process.env.VIHS_MPRR_BASE || '5376833',
   selected: process.env.VIHS_MPRR_SELECTED || 'fc09736',

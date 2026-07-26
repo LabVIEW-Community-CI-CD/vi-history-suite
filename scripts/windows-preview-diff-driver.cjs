@@ -32,7 +32,7 @@
 //   WIN_WORK_ROOT       scratch root for materialized VIs (default OS temp)
 //
 // Example (PowerShell), docker/windows-container:
-//   $env:WIN_REPO_ROOT='C:\repos\actor-framework'
+//   $env:WIN_REPO_ROOT='C:\repos\ni\actor-framework'
 //   $env:WIN_VI_PATH='Core/Testing/Test Harness/AF Trace Queue/Dequeue Trace.vi'
 //   $env:WIN_PROVIDER='docker'; $env:WIN_CONTAINER_IMAGE='nationalinstruments/labview:2026q1patch2-windows'
 //   node scripts/windows-preview-diff-driver.cjs

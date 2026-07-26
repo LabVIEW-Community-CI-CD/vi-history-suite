@@ -213,7 +213,7 @@ and drive the shipped comparison primitives via the maintainer driver:
 $env:LV_RTE_WIN_HOSTNATIVE_HEADLESS = '1'
 $env:WIN_PROVIDER = 'host'
 $env:WIN_LV_BITNESS = 'x86'
-$env:WIN_REPO_ROOT = 'C:\repos\labview-icon-editor'
+$env:WIN_REPO_ROOT = 'C:\repos\ni\labview-icon-editor'
 $env:WIN_VI_PATH = 'resource/plugins/lv_icon.vi'
 $env:WIN_BASE = '5376833'; $env:WIN_SELECTED = 'fc09736'
 node scripts\windows-compare-driver.cjs

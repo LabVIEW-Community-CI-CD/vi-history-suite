@@ -31,7 +31,7 @@
 // Env (all optional):
 //   VIHS_MCP_IMAGE_VERSION      container image tag suffix
 //                               (default 2026q1patch2-windows)
-//   VIHS_MCP_REPO               git repo holding the VI (default C:\repos\labview-icon-editor)
+//   VIHS_MCP_REPO               git repo holding the VI (default C:\repos\ni\labview-icon-editor)
 //   VIHS_MCP_VI                 repo-relative .vi path (default resource/plugins/lv_icon.vi)
 //   VIHS_MCP_BASE               base git revision (default 5376833)
 //   VIHS_MCP_SEL                selected git revision (default fc09736)
