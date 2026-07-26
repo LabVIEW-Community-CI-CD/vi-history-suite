@@ -66,7 +66,7 @@ Settings live under `viHistorySuite.*` (Settings UI: search "VI History").
 
 | Setting | Type (default) | Purpose |
 | --- | --- | --- |
-| `viHistorySuite.runtimeProvider` | `host` \| `docker` (`host`) | Where comparisons run: installed LabVIEW (Host) or an NI container (Docker). |
+| `viHistorySuite.runtimeProvider` | `host` \| `docker` (auto-detected) | Where comparisons run: installed LabVIEW (Host) or an NI container (Docker). Auto-selected from the detected runtime on first run, then persisted. |
 | `viHistorySuite.semantics.provider` | `labview` \| `lvkit` (`labview`) | Which backend the agent MCP semantic tools use: LabVIEW (needs LabVIEW/Docker) or the LabVIEW-free lvkit VI parser (`uv tool install lvkit`). Preview and comparison report always use LabVIEW/Docker. |
 | `viHistorySuite.labviewVersion` | string | Which LabVIEW year to use (for example `2026`). |
 | `viHistorySuite.labviewBitness` | `x86` \| `x64` | 32-bit or 64-bit LabVIEW to match your install. |
