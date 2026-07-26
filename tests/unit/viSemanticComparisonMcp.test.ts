@@ -2,6 +2,8 @@
 // surface). Verifies the dependency-free JSON-RPC handler (VHS-REQ-662.3) and
 // the exposed agent tool set (VHS-REQ-662.4).
 import { describe, expect, it, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 
 import {
   handleViSemanticMcpMessage,
@@ -25,6 +27,23 @@ import {
   VI_SEMANTIC_COMPARISON_SCHEMA
 } from '../../src/semantic/viSemanticModel';
 import { buildLvkitViScanEnvelope } from '../../src/semantic/lvkit/lvkitViScanModel';
+
+// Contract: the human-facing MCP catalog (docs/mcp-server.md) must not drift from the
+// authoritative registered tool set. Catches the recurring class where a new tool is
+// added to VI_SEMANTIC_MCP_TOOLS but the doc's table/count is not updated.
+describe('docs/mcp-server.md tool catalog stays in sync with VI_SEMANTIC_MCP_TOOLS (VHS-REQ-662.4)', () => {
+  const doc = readFileSync(path.resolve(process.cwd(), 'docs/mcp-server.md'), 'utf8');
+  it('documents every registered tool by name', () => {
+    for (const tool of VI_SEMANTIC_MCP_TOOLS) {
+      expect(doc.includes('`' + tool.name + '`'), `docs/mcp-server.md is missing the '${tool.name}' tool`).toBe(true);
+    }
+  });
+  it('states the exposed-tool count matching the registry', () => {
+    const match = /exposes (\d+) tools/.exec(doc);
+    expect(match, 'docs/mcp-server.md must state "exposes N tools"').not.toBeNull();
+    expect(Number(match?.[1])).toBe(VI_SEMANTIC_MCP_TOOLS.length);
+  });
+});
 
 const REPORT_HTML = `<!DOCTYPE html>
 <html><body>
