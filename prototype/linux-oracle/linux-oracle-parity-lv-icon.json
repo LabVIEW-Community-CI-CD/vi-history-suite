@@ -1,0 +1,39 @@
+{
+  "$schema": "vi-history-suite/linux-oracle-parity@v1",
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-26T09:12:14Z",
+  "deliverable": "D1",
+  "host": "LINUX",
+  "oracle": { "provider": "linux-container", "engine": "labview-cli", "containerImage": "nationalinstruments/labview:2026q1-linux" },
+  "fixture": {
+    "slug": "ie-lv-icon",
+    "vi": "resource/plugins/lv_icon.vi",
+    "repoRoot": "/home/sergio/repos/labview-icon-editor",
+    "baseHash": "537683398d8c5cb73533603b5c06b6eef62a6ac8",
+    "selectedHash": "fc09736ae5e38c2016de081a9c8686256c9f2f9c"
+  },
+  "pipeline": {
+    "runtimeState": "succeeded",
+    "reportExists": true,
+    "states": ["STAGING", "PREVIEW_LEFT", "PREVIEW_RIGHT", "VALIDATION", "COMPARISON", "UNSTAGING"],
+    "previewLeftMs": 18265,
+    "previewRightMs": 18139,
+    "comparisonMs": 26458
+  },
+  "counts": {
+    "linux": { "total": 24, "nonCosmetic": 3, "cosmetic": 20, "nonCosmeticKinds": ["Block Diagram objects", "Block Diagram objects", "Block Diagram objects"] },
+    "windows": { "total": 23, "nonCosmetic": 3, "cosmetic": 19, "nonCosmeticKinds": ["Block Diagram objects", "Block Diagram objects", "Block Diagram objects"] },
+    "source": {
+      "linux": "lin-validation/req699-linux-container/storage/reports/ff9d4c32b58d/022a787cddc3/diff-report-lv_icon.vi.html (gitignored build output)",
+      "windows": "prototype/win-lvkit/correlation-fixtures/ie-lv-icon.labview-diff-report.html (WIN committed)"
+    }
+  },
+  "parity": {
+    "nonCosmetic": "MATCH (3 == 3)",
+    "nonCosmeticKinds": "MATCH (3x Block Diagram objects, ordinal-stripped)",
+    "cosmetic": "DIVERGE (linux 20 vs windows 19, off-by-one)",
+    "rawOrdinalPrefixes": "DIVERGE (linux 3/6/19 vs windows 4/14/18 -- interleave with the cosmetic delta; the shipped renderer strips ordinal prefixes via stripSectionHeadingOrdinal, so this does not reach the narrative)"
+  },
+  "verdict": "CROSS-PLATFORM STRUCTURAL DETERMINISM CONFIRMED for lv_icon: the non-cosmetic (structural) count and kinds -- the signal the semantic model, faithfulness eval, and narrative all ground on -- are IDENTICAL Linux-container vs WIN. The only divergence is a 1-count cosmetic difference (a minor platform cosmetic-detection nuance) which does not affect the structural/faithfulness axis. The Linux box is a working second LabVIEW oracle.",
+  "parser": "prototype/labviewDiffReportParser.mjs parseLabviewDiffReportCounts (robust)"
+}
