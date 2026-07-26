@@ -64,6 +64,62 @@ describe('deriveAgentEnvironment (issue #2392)', () => {
       // cgroupPid1 is recorded evidence, NOT the decision input.
       expect(r.markers.cgroupPid1).toBe('0::/');
     });
+
+    // LINUX-ARM real-fixture cases (mirror the prototype selftest; injectable probes).
+    it('linux: no /.dockerenv, /vagrant mount -> vagrant', () => {
+      const r = derive.detectPlane('linux', {}, {
+        dockerEnvPresent: () => false,
+        vagrantMarker: () => '/vagrant',
+        systemdDetectVirt: () => 'oracle',
+        cgroupPid1: () => '0::/init.scope'
+      });
+      expect(r.plane).toBe('vagrant');
+      expect(r.markers.vagrantMarker).toBe('/vagrant');
+    });
+
+    it('linux: no docker, no vagrant, systemd-detect-virt none -> native', () => {
+      const r = derive.detectPlane('linux', {}, {
+        dockerEnvPresent: () => false,
+        vagrantMarker: () => null,
+        systemdDetectVirt: () => 'none',
+        cgroupPid1: () => '0::/init.scope'
+      });
+      expect(r.plane).toBe('native');
+      // systemd-detect-virt "none" (bare metal) is recorded, not null — the arm reads
+      // the tool's stdout even though it exits 1 on "none".
+      expect(r.markers.systemdDetectVirt).toBe('none');
+    });
+  });
+
+  describe('detectFacets — linux arm (LINUX-owned: GPU + LabVIEW tooling)', () => {
+    it('routes the injected gpu probe into the facet (present, with name/VRAM/ollama)', () => {
+      const f = derive.detectFacets('linux', {}, {
+        gpu: () => ({ present: true, name: 'NVIDIA RTX PRO 1000 Blackwell', vramMiB: 8151, ollama: { present: true, version: '0.32.3' } }),
+        docker: () => ({ present: true, osType: 'linux' })
+      });
+      expect(f.gpu.present).toBe(true);
+      expect(f.gpu.vramMiB).toBe(8151);
+      expect(f.gpu.ollama).toEqual({ present: true, version: '0.32.3' });
+      expect(f.capabilities.docker).toEqual({ present: true, osType: 'linux' });
+    });
+
+    it('reports gpu absent when the probe finds no device', () => {
+      const f = derive.detectFacets('linux', {}, {
+        gpu: () => ({ present: false, name: null, vramMiB: null, ollama: { present: false, version: null } }),
+        docker: () => ({ present: false, osType: null })
+      });
+      expect(f.gpu.present).toBe(false);
+    });
+
+    it('exposes the full linux LabVIEW-tool facet shape (host-independent keys)', () => {
+      const f = derive.detectFacets('linux', {}, {
+        gpu: () => ({ present: false }),
+        docker: () => ({ present: false, osType: null })
+      });
+      for (const k of ['labviewNative', 'labviewCli', 'lvCompare', 'lvMerge', 'labviewViaWindowsContainer', 'gpu', 'capabilities']) {
+        expect(f).toHaveProperty(k);
+      }
+    });
   });
 
   describe('resolveTeamName', () => {
