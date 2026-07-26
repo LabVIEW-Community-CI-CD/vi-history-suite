@@ -1,0 +1,53 @@
+{
+  "$schema": "vi-history-suite/linux-oracle-parity@v1",
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-26T10:50:00Z",
+  "deliverable": "D4",
+  "host": "LINUX",
+  "oracle": {
+    "provider": "host-native",
+    "engine": "labview (LabVIEW 2026 x64)",
+    "environment": "vagrant CLEAN-ROOM Windows 11 guest (box vihs/win11-labview2026) under VirtualBox on the Linux host; provisioned from the golden box, not a dev machine -- a THIRD independent oracle, host-native (NOT docker, NOT WIN's own host)"
+  },
+  "fixture": {
+    "vi": "resource/plugins/lv_icon.vi",
+    "selectedHash": "fc09736ae5e38c2016de081a9c8686256c9f2f9c",
+    "repo": "ni/labview-icon-editor at C:\\repos\\labview-icon-editor (guest)"
+  },
+  "stagingMechanism": "Identical to D2: viPreviewVerifyCli (--provider host --labview-version 2026) resolveStagingBaseDirectory walks up from the VI for the nearest *.lvproj: found -> full-tree staging (full dependency closure); not found -> lone/partial staging (unresolved subVIs render as cyan '?' placeholders).",
+  "renders": {
+    "lone": {
+      "sampleViPath": "C:\\vihs-proof-tmp\\d4-lone\\lv_icon.vi (isolated copy, NO enclosing .lvproj)",
+      "stagingBase": "none (partial tree)",
+      "passing": true,
+      "inlineImageCount": 553,
+      "htmlBytes": 1360680
+    },
+    "fullTree": {
+      "sampleViPath": "C:\\repos\\labview-icon-editor\\resource\\plugins\\lv_icon.vi (fc09736; enclosing lv_icon_editor.lvproj at repo root)",
+      "stagingBase": "repo root (full dependency closure)",
+      "passing": true,
+      "inlineImageCount": 638,
+      "htmlBytes": 2087296
+    }
+  },
+  "winBaseline": { "lone": { "total": 553 }, "fullTree": { "total": 638 } },
+  "d2LinuxDocker": {
+    "lone": { "total": 553, "htmlBytes": 1232596 },
+    "fullTree": { "total": 638, "htmlBytes": 1923239 }
+  },
+  "parity": {
+    "loneTotalImages": "MATCH (553 == WIN 553 == D2 Linux-docker 553)",
+    "fullTreeTotalImages": "MATCH (638 == WIN 638 == D2 Linux-docker 638)",
+    "closureDelta": "+85 inline images lone->full-tree (IDENTICAL to WIN + D2 docker); htmlBytes 1.36MB -> 2.09MB",
+    "htmlBytesNote": "htmlBytes differ across oracles (docker lone 1232596 / full 1923239 vs vagrant host-native lone 1360680 / full 2087296) -- expected backend-specific HTML-size variance. The INLINE IMAGE COUNT (the closure metric) is IDENTICAL across all three oracles."
+  },
+  "verdict": "D4 CLOSED: the full-dependency-closure effect (resolveStagingBaseDirectory .lvproj-walk) is now proven on a THIRD, independent CLEAN-ROOM oracle -- vagrant host-native Windows LabVIEW 2026 -- with lone 553 / full-tree 638 inline images matching WIN's Windows baseline AND my Linux docker D2 EXACTLY. The closure count is oracle-INDEPENDENT (host-native Windows == Linux docker == WIN baseline); only htmlBytes varies by render backend. Partial staging under-renders (the '?' cause); full closure fixes it -- confirmed cross-platform AND cross-runtime.",
+  "provenance": {
+    "vmBox": "vihs/win11-labview2026",
+    "labviewExe": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe",
+    "guestNode": "v22.15.0",
+    "cli": "C:\\vihs-workspace\\out\\tooling\\viPreviewVerifyCli.js (host-compiled, synced)",
+    "proofOut": "C:\\vihs-proof-tmp\\d4-fulltree + C:\\vihs-proof-tmp\\d4-lone-proof (guest)"
+  }
+}
