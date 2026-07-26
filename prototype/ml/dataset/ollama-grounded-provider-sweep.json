@@ -1,0 +1,326 @@
+{
+  "schema": "vi-history-suite/grounded-provider-sweep@v1",
+  "generatedAt": "2026-07-26T03:14:34.620Z",
+  "ollama": "http://localhost:11434",
+  "note": "Optional grounded MCP narrative provider sweep. Per config: acceptRate = fraction of fixtures where the grounded narrative cleared the faithfulness safety gate without regressing the shipped template; otherwise the provider falls back to the deterministic template.",
+  "viCount": 8,
+  "configs": [
+    {
+      "id": "8b-raw",
+      "model": "llama3.1:8b",
+      "present": true,
+      "viCount": 8,
+      "acceptedCount": 8,
+      "acceptRate": 1,
+      "meanAcceptedGroundedScore": 1,
+      "reasons": {
+        "grounded-passed-gate": 8
+      },
+      "sampleAcceptedNarrative": "There are exactly **2** non-cosmetic structural changes between the two VI revisions.\n\nAdditionally, there are **0** cosmetic differences in terms of position or appearance.",
+      "rows": [
+        {
+          "vi": "loadtemplates",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 1,
+          "groundedScore": 1,
+          "groundedNarrative": "There are exactly **2** non-cosmetic structural changes between the two VI revisions.\n\nAdditionally, there are **0** cosmetic differences in terms of position or appearance."
+        },
+        {
+          "vi": "lv_icon",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 1,
+          "groundedScore": 1,
+          "groundedNarrative": "There are **8** non-cosmetic structural changes between the two VI revisions.\n\nAdditionally, there are **19** cosmetic differences in position or appearance. These changes do not affect the functionality of the code but may impact its visual presentation."
+        },
+        {
+          "vi": "menuselection(user)",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 1,
+          "groundedScore": 1,
+          "groundedNarrative": "There are **2** non-cosmetic structural changes between the two VI revisions.\n\nAdditionally, there is **1** cosmetic difference in terms of position/appearance."
+        },
+        {
+          "vi": "mousedown",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 1,
+          "groundedScore": 1,
+          "groundedNarrative": "There are 19 non-cosmetic structural changes between the two VI revisions. \n\nAdditionally, there are 47 cosmetic differences in position or appearance."
+        },
+        {
+          "vi": "picturecontrol_mouseup",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 1,
+          "groundedScore": 1,
+          "groundedNarrative": "There are 43 non-cosmetic structural changes between the two VI revisions. \n\nAdditionally, there are 29 cosmetic differences in position or appearance."
+        },
+        {
+          "vi": "process template graphics",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 1,
+          "groundedScore": 1,
+          "groundedNarrative": "There are exactly **2** non-cosmetic structural changes between the two VI revisions.\n\nAdditionally, there are **0** cosmetic differences in terms of position or appearance."
+        },
+        {
+          "vi": "vi template",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 1,
+          "groundedScore": 1,
+          "groundedNarrative": "There are exactly 2 non-cosmetic structural changes between the two VI revisions.\n\nAdditionally, there are 0 cosmetic differences in terms of position or appearance."
+        },
+        {
+          "vi": "visibletextmarker",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 1,
+          "groundedScore": 1,
+          "groundedNarrative": "There are **6** non-cosmetic structural changes between the two VI revisions.\n\nAdditionally, there are **0** cosmetic differences in terms of position or appearance."
+        }
+      ]
+    },
+    {
+      "id": "8b-fewshot",
+      "model": "vichange8b-fewshot",
+      "present": true,
+      "viCount": 8,
+      "acceptedCount": 8,
+      "acceptRate": 1,
+      "meanAcceptedGroundedScore": 1,
+      "reasons": {
+        "grounded-passed-gate": 8
+      },
+      "sampleAcceptedNarrative": "There are 2 non-cosmetic structural changes between the two VI revisions, specifically in the Block Diagram objects. There are no cosmetic differences (position/appearance) to report.",
+      "rows": [
+        {
+          "vi": "loadtemplates",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 1,
+          "groundedScore": 1,
+          "groundedNarrative": "There are 2 non-cosmetic structural changes between the two VI revisions, specifically in the Block Diagram objects. There are no cosmetic differences (position/appearance) to report."
+        },
+        {
+          "vi": "lv_icon",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 1,
+          "groundedScore": 1,
+          "groundedNarrative": "There are 8 non-cosmetic structural changes between the two VI revisions, indicating significant modifications to the block diagram's behavior. Additionally, there are 19 cosmetic differences in position and appearance that do not affect functionality. A thorough review of the block diagram is recommended due to the high risk classification."
+        },
+        {
+          "vi": "menuselection(user)",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 1,
+          "groundedScore": 1,
+          "groundedNarrative": "There are 2 non-cosmetic structural changes between the two VI revisions, specifically in the Block Diagram surface. Additionally, there is 1 cosmetic difference related to position/appearance."
+        },
+        {
+          "vi": "mousedown",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 1,
+          "groundedScore": 1,
+          "groundedNarrative": "There are 19 non-cosmetic structural changes. The cosmetic differences, which affect the position or appearance of elements, total 47."
+        },
+        {
+          "vi": "picturecontrol_mouseup",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 1,
+          "groundedScore": 1,
+          "groundedNarrative": "There are 43 non-cosmetic structural changes. The cosmetic differences, which affect the position or appearance of elements, total 29."
+        },
+        {
+          "vi": "process template graphics",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 1,
+          "groundedScore": 1,
+          "groundedNarrative": "There are 2 non-cosmetic structural changes between the two VI revisions, specifically in the Block Diagram objects. There are no cosmetic differences (position/appearance) to note."
+        },
+        {
+          "vi": "vi template",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 1,
+          "groundedScore": 1,
+          "groundedNarrative": "There are 2 non-cosmetic structural changes between the two revisions of this VI. There are no cosmetic differences in terms of position or appearance."
+        },
+        {
+          "vi": "visibletextmarker",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 1,
+          "groundedScore": 1,
+          "groundedNarrative": "There are 6 non-cosmetic structural changes between the two VI revisions, indicating significant modifications to the block diagram's behavior. Additionally, there are no cosmetic differences in terms of position or appearance. A code reviewer should focus on reviewing the 6 structural changes, which have a high risk classification."
+        }
+      ]
+    },
+    {
+      "id": "8b-2shot",
+      "model": "vichange8b-2shot",
+      "present": true,
+      "viCount": 8,
+      "acceptedCount": 8,
+      "acceptRate": 1,
+      "meanAcceptedGroundedScore": 1,
+      "reasons": {
+        "grounded-passed-gate": 8
+      },
+      "sampleAcceptedNarrative": "There are 2 non-cosmetic structural changes between the two VI revisions, specifically in the Block Diagram objects. There are no cosmetic differences (position/appearance) to note.",
+      "rows": [
+        {
+          "vi": "loadtemplates",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 1,
+          "groundedScore": 1,
+          "groundedNarrative": "There are 2 non-cosmetic structural changes between the two VI revisions, specifically in the Block Diagram objects. There are no cosmetic differences (position/appearance) to note."
+        },
+        {
+          "vi": "lv_icon",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 1,
+          "groundedScore": 1,
+          "groundedNarrative": "There are 8 non-cosmetic structural changes between the two revisions of the VI, indicating significant behavioral or structural modifications. Additionally, there are 19 cosmetic differences in position and appearance that do not affect the functionality but may impact readability or maintainability. A code reviewer should focus on understanding the implications of these 8 structural changes."
+        },
+        {
+          "vi": "menuselection(user)",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 1,
+          "groundedScore": 1,
+          "groundedNarrative": "There are 2 non-cosmetic structural changes between the two VI revisions. Additionally, there is 1 cosmetic difference related to position/appearance."
+        },
+        {
+          "vi": "mousedown",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 1,
+          "groundedScore": 1,
+          "groundedNarrative": "19 non-cosmetic structural changes were made to the block-diagram. There are 47 cosmetic (position/appearance) differences that can be ignored for code review purposes, as they do not affect the VI's functionality or structure."
+        },
+        {
+          "vi": "picturecontrol_mouseup",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 1,
+          "groundedScore": 1,
+          "groundedNarrative": "43 non-cosmetic structural changes were made between the two revisions. There are 29 cosmetic (position/appearance) differences that do not affect the VI's behavior or structure."
+        },
+        {
+          "vi": "process template graphics",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 1,
+          "groundedScore": 1,
+          "groundedNarrative": "There are 2 non-cosmetic structural changes between the two VI revisions. There are no cosmetic (position/appearance) differences, as reported by LabVIEW's comparison. The changes occurred on the block-diagram surface and affected 2 Block Diagram objects in a detail section with a high risk classification."
+        },
+        {
+          "vi": "vi template",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 1,
+          "groundedScore": 1,
+          "groundedNarrative": "There are 2 non-cosmetic structural changes between the two revisions. There are no cosmetic (position/appearance) differences, as reported by LabVIEW's comparison."
+        },
+        {
+          "vi": "visibletextmarker",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 1,
+          "groundedScore": 1,
+          "groundedNarrative": "There are 6 non-cosmetic structural changes between the two revisions of the VI, indicating significant modifications to its behavior or structure. Additionally, there are no cosmetic differences in terms of position or appearance. A code reviewer should focus on reviewing the 6 non-cosmetic changes, which affect both the block-diagram and front-panel surfaces, with a high risk classification."
+        }
+      ]
+    },
+    {
+      "id": "14b",
+      "model": "qwen2.5:14b",
+      "present": true,
+      "viCount": 8,
+      "acceptedCount": 7,
+      "acceptRate": 0.875,
+      "meanAcceptedGroundedScore": 1,
+      "reasons": {
+        "grounded-passed-gate": 7,
+        "failed-safety-gate": 1
+      },
+      "sampleAcceptedNarrative": "Between the two VI revisions, there are exactly 2 structural changes that affect the behavior of the code. There are no cosmetic differences reported in terms of position or appearance. The changes were identified on the block diagram surface.",
+      "rows": [
+        {
+          "vi": "loadtemplates",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 1,
+          "groundedScore": 1,
+          "groundedNarrative": "Between the two VI revisions, there are exactly 2 structural changes that affect the behavior of the code. There are no cosmetic differences reported in terms of position or appearance. The changes were identified on the block diagram surface."
+        },
+        {
+          "vi": "lv_icon",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 1,
+          "groundedScore": 1,
+          "groundedNarrative": "Between the two revisions of the VI, there are 8 structural changes that affect the behavior of the code. Additionally, there are 19 cosmetic differences related to position and appearance on the block diagram. The structural changes are categorized under different sections of the block diagram objects, with a risk classification indicating potential high-risk modifications."
+        },
+        {
+          "vi": "menuselection(user)",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 1,
+          "groundedScore": 1,
+          "groundedNarrative": "Between the two VI revisions, there are exactly 2 structural changes that affect the behavior of the code. Additionally, there is 1 cosmetic difference related to position or appearance. The block diagram contains these modifications, with a risk level classified as high due to the nature of the changes involved."
+        },
+        {
+          "vi": "mousedown",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 1,
+          "groundedScore": 1,
+          "groundedNarrative": "Between the two VI revisions, there are 19 structural changes that affect the behavior of the code. Additionally, there are 47 cosmetic differences related to position and appearance which do not impact functionality but may alter the visual layout of the block diagram. The structural changes were identified through lvkit analysis, while the cosmetic details were noted by LabVIEW's comparison tool."
+        },
+        {
+          "vi": "picturecontrol_mouseup",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 1,
+          "groundedScore": 1,
+          "groundedNarrative": "Between the two revisions of the VI, there are 43 structural changes that affect the behavior or structure of the code. Additionally, there are 29 cosmetic differences related to position and appearance which do not impact functionality. The changes were observed in both the front panel and block diagram sections."
+        },
+        {
+          "vi": "process template graphics",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 1,
+          "groundedScore": 1,
+          "groundedNarrative": "Between the two VI revisions, there are exactly 2 structural changes that affect the behavior of the code. There are no cosmetic differences reported for position or appearance. The changes were identified in the block diagram section."
+        },
+        {
+          "vi": "vi template",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 1,
+          "groundedScore": 1,
+          "groundedNarrative": "Between the two revisions of the VI, there are exactly 2 structural changes that affect behavior or functionality. There are no cosmetic differences related to position or appearance."
+        },
+        {
+          "vi": "visibletextmarker",
+          "source": "template",
+          "reason": "failed-safety-gate",
+          "templateScore": 1,
+          "groundedScore": 0.75,
+          "groundedNarrative": "Between the two VI revisions, there are exactly 6 structural changes that affect the behavior of the code. There are no cosmetic differences reported in terms of position or appearance.\n\nThe specific changes include:\n- 5 modifications to objects on the Block Diagram.\n- 1 modification to a cluster on the Front Panel.\n\nThese changes have been classified with a risk level of high."
+        }
+      ]
+    }
+  ]
+}
