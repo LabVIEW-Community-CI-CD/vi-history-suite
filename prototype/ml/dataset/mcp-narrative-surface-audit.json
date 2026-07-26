@@ -1,6 +1,6 @@
 {
   "schema": "vi-history-suite/mcp-narrative-surface-audit@v1",
-  "generatedAt": "2026-07-26T06:27:24.615Z",
+  "generatedAt": "2026-07-26T07:16:29.216Z",
   "invariants": {
     "I1_noInventedNumbers": "every integer > 1 in a narrative is a meaningful count the ground truth allows",
     "I2_noFalseNoChange": "a changed-input narrative never claims no changes/differences",

@@ -13,8 +13,9 @@
 //      host staged left/right (docker provider self-mounts) [t_previewBase/Sel]
 //   4. correlate + score; emit correlation-fixtures/benchmark-dataset.json
 //
-// LabVIEW-report difference parsing here is a PROTOTYPE (regex class counts);
-// the robust shippable parser is LINUX's #2377 leg. Maintainer .cjs (inventory-exempt).
+// LabVIEW-report difference counts here MIRROR the shippable robust parser
+// (prototype/labviewDiffReportParser.mjs parseLabviewDiffReportCounts) so
+// benchmark-dataset.json matches the semantic model + LINUX's eval. Maintainer .cjs (inventory-exempt).
 //
 // Run from repo root after `npm run compile`, with the lvkit container up:
 //   node prototype/win-lvkit/correlation-benchmark.cjs
@@ -91,12 +92,25 @@ function preview(hostViPath, proofDir) {
   const proof = fs.existsSync(pf) ? JSON.parse(fs.readFileSync(pf, 'utf8')) : null;
   return { inlineImageCount: proof ? proof.inlineImageCount : null, outcome: proof ? proof.outcome : 'no-proof', tMs: t };
 }
+// Robust difference-count parse, mirroring the shippable parser
+// (prototype/labviewDiffReportParser.mjs parseLabviewDiffReportCounts) so the
+// benchmark counts match the semantic model + LINUX's eval. Kept inline + sync
+// because this .cjs harness cannot require the ESM parser (keep the two in sync).
+// nonCosmetic = numbered `<summary class="difference-heading">` blocks (the one
+// non-numbered heading is the report header, excluded); cosmetic = numbered
+// difference-cosmetic-heading blocks; total = class="difference" blocks. This
+// correctly counts the VI-Version vi-attributes item the old regex missed.
 function parseLabviewReport(htmlPath) {
   const txt = fs.readFileSync(htmlPath, 'utf8');
-  const count = (re) => (txt.match(re) || []).length;
-  const differenceBlocks = count(/class="difference"/g);
-  const cosmetic = count(/difference-cosmetic-heading/g);
-  return { differenceBlocks, cosmetic, nonCosmetic: differenceBlocks - cosmetic, htmlBytes: txt.length, note: 'PROTOTYPE regex parse; robust parser is LINUX #2377 leg' };
+  const total = (txt.match(/class="difference"/g) || []).length;
+  const HEADING_RE = /<summary\b[^>]*\bclass="(difference-heading|difference-cosmetic-heading)"[^>]*>([\s\S]*?)<\/summary>/gi;
+  let cosmetic = 0, nonCosmetic = 0, m;
+  while ((m = HEADING_RE.exec(txt)) !== null) {
+    const label = m[2].replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+    if (!/^\d+\./.test(label)) continue; // report-header summary, not a difference
+    if (m[1] === 'difference-cosmetic-heading') cosmetic += 1; else nonCosmetic += 1;
+  }
+  return { differenceBlocks: total, cosmetic, nonCosmetic, htmlBytes: txt.length, note: 'robust parse (mirrors labviewDiffReportParser.mjs parseLabviewDiffReportCounts)' };
 }
 
 const samples = [];

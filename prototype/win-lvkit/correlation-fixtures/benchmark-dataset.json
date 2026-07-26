@@ -25,10 +25,10 @@
       },
       "labview": {
         "differenceBlocks": 53,
-        "cosmetic": 48,
-        "nonCosmetic": 5,
+        "cosmetic": 47,
+        "nonCosmetic": 6,
         "htmlBytes": 1350283,
-        "note": "PROTOTYPE regex parse; robust parser is LINUX #2377 leg"
+        "note": "robust parse (parseLabviewDiffReportCounts) — authoritative; supersedes prototype regex"
       },
       "preview": {
         "base": 216,
@@ -36,10 +36,10 @@
         "deltaInlineImages": 1
       },
       "correlation": {
-        "countAgreement_lvkit_vs_nonCosmetic": 0,
+        "countAgreement_lvkit_vs_nonCosmetic": 1,
         "lvkitChangeCount": 6,
-        "labviewNonCosmetic": 5,
-        "labviewCosmeticOnly": 48,
+        "labviewNonCosmetic": 6,
+        "labviewCosmeticOnly": 47,
         "structuralCardinality_previewDelta_vs_lvkitCount": 1,
         "note": "granularity mapping; lvkit structural ~ LabVIEW non-cosmetic; cosmetic = lvkit-omitted axis"
       },
@@ -79,10 +79,10 @@
       },
       "labview": {
         "differenceBlocks": 39,
-        "cosmetic": 30,
-        "nonCosmetic": 9,
+        "cosmetic": 29,
+        "nonCosmetic": 10,
         "htmlBytes": 1281307,
-        "note": "PROTOTYPE regex parse; robust parser is LINUX #2377 leg"
+        "note": "robust parse (parseLabviewDiffReportCounts) — authoritative; supersedes prototype regex"
       },
       "preview": {
         "base": 202,
@@ -92,8 +92,8 @@
       "correlation": {
         "countAgreement_lvkit_vs_nonCosmetic": 0,
         "lvkitChangeCount": 13,
-        "labviewNonCosmetic": 9,
-        "labviewCosmeticOnly": 30,
+        "labviewNonCosmetic": 10,
+        "labviewCosmeticOnly": 29,
         "structuralCardinality_previewDelta_vs_lvkitCount": 3,
         "note": "granularity mapping; lvkit structural ~ LabVIEW non-cosmetic; cosmetic = lvkit-omitted axis"
       },
@@ -119,10 +119,10 @@
       },
       "labview": {
         "differenceBlocks": 2,
-        "cosmetic": 1,
+        "cosmetic": 0,
         "nonCosmetic": 1,
         "htmlBytes": 388394,
-        "note": "PROTOTYPE regex parse; robust parser is LINUX #2377 leg"
+        "note": "robust parse (parseLabviewDiffReportCounts) — authoritative; supersedes prototype regex"
       },
       "preview": {
         "base": 203,
@@ -133,7 +133,7 @@
         "countAgreement_lvkit_vs_nonCosmetic": 0,
         "lvkitChangeCount": 0,
         "labviewNonCosmetic": 1,
-        "labviewCosmeticOnly": 1,
+        "labviewCosmeticOnly": 0,
         "structuralCardinality_previewDelta_vs_lvkitCount": 1,
         "note": "granularity mapping; lvkit structural ~ LabVIEW non-cosmetic; cosmetic = lvkit-omitted axis"
       },
@@ -164,10 +164,10 @@
       },
       "labview": {
         "differenceBlocks": 3,
-        "cosmetic": 1,
+        "cosmetic": 0,
         "nonCosmetic": 2,
         "htmlBytes": 440212,
-        "note": "PROTOTYPE regex parse; robust parser is LINUX #2377 leg"
+        "note": "robust parse (parseLabviewDiffReportCounts) — authoritative; supersedes prototype regex"
       },
       "preview": {
         "base": 188,
@@ -178,7 +178,7 @@
         "countAgreement_lvkit_vs_nonCosmetic": 0,
         "lvkitChangeCount": 4,
         "labviewNonCosmetic": 2,
-        "labviewCosmeticOnly": 1,
+        "labviewCosmeticOnly": 0,
         "structuralCardinality_previewDelta_vs_lvkitCount": 0,
         "note": "granularity mapping; lvkit structural ~ LabVIEW non-cosmetic; cosmetic = lvkit-omitted axis"
       },
@@ -211,10 +211,10 @@
       },
       "labview": {
         "differenceBlocks": 23,
-        "cosmetic": 20,
+        "cosmetic": 19,
         "nonCosmetic": 3,
         "htmlBytes": 1058393,
-        "note": "PROTOTYPE regex parse; robust parser is LINUX #2377 leg"
+        "note": "robust parse (parseLabviewDiffReportCounts) — authoritative; supersedes prototype regex"
       },
       "preview": {
         "base": 636,
@@ -225,7 +225,7 @@
         "countAgreement_lvkit_vs_nonCosmetic": 0,
         "lvkitChangeCount": 6,
         "labviewNonCosmetic": 3,
-        "labviewCosmeticOnly": 20,
+        "labviewCosmeticOnly": 19,
         "structuralCardinality_previewDelta_vs_lvkitCount": 2,
         "note": "granularity mapping; lvkit structural ~ LabVIEW non-cosmetic; cosmetic = lvkit-omitted axis"
       },
@@ -251,10 +251,10 @@
       },
       "labview": {
         "differenceBlocks": 2,
-        "cosmetic": 1,
+        "cosmetic": 0,
         "nonCosmetic": 1,
         "htmlBytes": 10650,
-        "note": "PROTOTYPE regex parse; robust parser is LINUX #2377 leg"
+        "note": "robust parse (parseLabviewDiffReportCounts) — authoritative; supersedes prototype regex"
       },
       "preview": {
         "base": 2,
@@ -265,7 +265,7 @@
         "countAgreement_lvkit_vs_nonCosmetic": 0,
         "lvkitChangeCount": 0,
         "labviewNonCosmetic": 1,
-        "labviewCosmeticOnly": 1,
+        "labviewCosmeticOnly": 0,
         "structuralCardinality_previewDelta_vs_lvkitCount": 0,
         "note": "granularity mapping; lvkit structural ~ LabVIEW non-cosmetic; cosmetic = lvkit-omitted axis"
       },
@@ -291,10 +291,10 @@
       },
       "labview": {
         "differenceBlocks": 2,
-        "cosmetic": 1,
+        "cosmetic": 0,
         "nonCosmetic": 1,
         "htmlBytes": 399085,
-        "note": "PROTOTYPE regex parse; robust parser is LINUX #2377 leg"
+        "note": "robust parse (parseLabviewDiffReportCounts) — authoritative; supersedes prototype regex"
       },
       "preview": {
         "base": 216,
@@ -305,7 +305,7 @@
         "countAgreement_lvkit_vs_nonCosmetic": 0,
         "lvkitChangeCount": 0,
         "labviewNonCosmetic": 1,
-        "labviewCosmeticOnly": 1,
+        "labviewCosmeticOnly": 0,
         "structuralCardinality_previewDelta_vs_lvkitCount": 1,
         "note": "granularity mapping; lvkit structural ~ LabVIEW non-cosmetic; cosmetic = lvkit-omitted axis"
       },
@@ -333,10 +333,10 @@
       },
       "labview": {
         "differenceBlocks": 3,
-        "cosmetic": 2,
+        "cosmetic": 1,
         "nonCosmetic": 1,
         "htmlBytes": 529451,
-        "note": "PROTOTYPE regex parse; robust parser is LINUX #2377 leg"
+        "note": "robust parse (parseLabviewDiffReportCounts) — authoritative; supersedes prototype regex"
       },
       "preview": {
         "base": 286,
@@ -347,7 +347,7 @@
         "countAgreement_lvkit_vs_nonCosmetic": 1,
         "lvkitChangeCount": 1,
         "labviewNonCosmetic": 1,
-        "labviewCosmeticOnly": 2,
+        "labviewCosmeticOnly": 1,
         "structuralCardinality_previewDelta_vs_lvkitCount": 0,
         "note": "granularity mapping; lvkit structural ~ LabVIEW non-cosmetic; cosmetic = lvkit-omitted axis"
       },
@@ -375,10 +375,10 @@
       },
       "labview": {
         "differenceBlocks": 2,
-        "cosmetic": 1,
+        "cosmetic": 0,
         "nonCosmetic": 1,
         "htmlBytes": 108868,
-        "note": "PROTOTYPE regex parse; robust parser is LINUX #2377 leg"
+        "note": "robust parse (parseLabviewDiffReportCounts) — authoritative; supersedes prototype regex"
       },
       "preview": {
         "base": 13,
@@ -389,7 +389,7 @@
         "countAgreement_lvkit_vs_nonCosmetic": 0,
         "lvkitChangeCount": 0,
         "labviewNonCosmetic": 1,
-        "labviewCosmeticOnly": 1,
+        "labviewCosmeticOnly": 0,
         "structuralCardinality_previewDelta_vs_lvkitCount": 0,
         "note": "granularity mapping; lvkit structural ~ LabVIEW non-cosmetic; cosmetic = lvkit-omitted axis"
       },
@@ -417,10 +417,10 @@
       },
       "labview": {
         "differenceBlocks": 2,
-        "cosmetic": 1,
+        "cosmetic": 0,
         "nonCosmetic": 1,
         "htmlBytes": 102848,
-        "note": "PROTOTYPE regex parse; robust parser is LINUX #2377 leg"
+        "note": "robust parse (parseLabviewDiffReportCounts) — authoritative; supersedes prototype regex"
       },
       "preview": {
         "base": 24,
@@ -431,7 +431,7 @@
         "countAgreement_lvkit_vs_nonCosmetic": 0,
         "lvkitChangeCount": 0,
         "labviewNonCosmetic": 1,
-        "labviewCosmeticOnly": 1,
+        "labviewCosmeticOnly": 0,
         "structuralCardinality_previewDelta_vs_lvkitCount": 0,
         "note": "granularity mapping; lvkit structural ~ LabVIEW non-cosmetic; cosmetic = lvkit-omitted axis"
       },
@@ -459,10 +459,10 @@
       },
       "labview": {
         "differenceBlocks": 22,
-        "cosmetic": 18,
-        "nonCosmetic": 4,
+        "cosmetic": 17,
+        "nonCosmetic": 5,
         "htmlBytes": 594948,
-        "note": "PROTOTYPE regex parse; robust parser is LINUX #2377 leg"
+        "note": "robust parse (parseLabviewDiffReportCounts) — authoritative; supersedes prototype regex"
       },
       "preview": {
         "base": 33,
@@ -472,8 +472,8 @@
       "correlation": {
         "countAgreement_lvkit_vs_nonCosmetic": 0,
         "lvkitChangeCount": 0,
-        "labviewNonCosmetic": 4,
-        "labviewCosmeticOnly": 18,
+        "labviewNonCosmetic": 5,
+        "labviewCosmeticOnly": 17,
         "structuralCardinality_previewDelta_vs_lvkitCount": 0,
         "note": "granularity mapping; lvkit structural ~ LabVIEW non-cosmetic; cosmetic = lvkit-omitted axis"
       },
@@ -501,10 +501,10 @@
       },
       "labview": {
         "differenceBlocks": 2,
-        "cosmetic": 1,
+        "cosmetic": 0,
         "nonCosmetic": 1,
         "htmlBytes": 169000,
-        "note": "PROTOTYPE regex parse; robust parser is LINUX #2377 leg"
+        "note": "robust parse (parseLabviewDiffReportCounts) — authoritative; supersedes prototype regex"
       },
       "preview": {
         "base": 52,
@@ -515,7 +515,7 @@
         "countAgreement_lvkit_vs_nonCosmetic": 0,
         "lvkitChangeCount": 0,
         "labviewNonCosmetic": 1,
-        "labviewCosmeticOnly": 1,
+        "labviewCosmeticOnly": 0,
         "structuralCardinality_previewDelta_vs_lvkitCount": 0,
         "note": "granularity mapping; lvkit structural ~ LabVIEW non-cosmetic; cosmetic = lvkit-omitted axis"
       },
@@ -543,10 +543,10 @@
       },
       "labview": {
         "differenceBlocks": 3,
-        "cosmetic": 1,
+        "cosmetic": 0,
         "nonCosmetic": 2,
         "htmlBytes": 402469,
-        "note": "PROTOTYPE regex parse; robust parser is LINUX #2377 leg"
+        "note": "robust parse (parseLabviewDiffReportCounts) — authoritative; supersedes prototype regex"
       },
       "preview": {
         "base": 198,
@@ -557,7 +557,7 @@
         "countAgreement_lvkit_vs_nonCosmetic": 0,
         "lvkitChangeCount": 0,
         "labviewNonCosmetic": 2,
-        "labviewCosmeticOnly": 1,
+        "labviewCosmeticOnly": 0,
         "structuralCardinality_previewDelta_vs_lvkitCount": 0,
         "note": "granularity mapping; lvkit structural ~ LabVIEW non-cosmetic; cosmetic = lvkit-omitted axis"
       },
@@ -585,10 +585,10 @@
       },
       "labview": {
         "differenceBlocks": 2,
-        "cosmetic": 1,
+        "cosmetic": 0,
         "nonCosmetic": 1,
         "htmlBytes": 405884,
-        "note": "PROTOTYPE regex parse; robust parser is LINUX #2377 leg"
+        "note": "robust parse (parseLabviewDiffReportCounts) — authoritative; supersedes prototype regex"
       },
       "preview": {
         "base": 206,
@@ -599,7 +599,7 @@
         "countAgreement_lvkit_vs_nonCosmetic": 0,
         "lvkitChangeCount": 0,
         "labviewNonCosmetic": 1,
-        "labviewCosmeticOnly": 1,
+        "labviewCosmeticOnly": 0,
         "structuralCardinality_previewDelta_vs_lvkitCount": 0,
         "note": "granularity mapping; lvkit structural ~ LabVIEW non-cosmetic; cosmetic = lvkit-omitted axis"
       },
@@ -627,10 +627,10 @@
       },
       "labview": {
         "differenceBlocks": 2,
-        "cosmetic": 2,
-        "nonCosmetic": 0,
+        "cosmetic": 1,
+        "nonCosmetic": 1,
         "htmlBytes": 48144,
-        "note": "PROTOTYPE regex parse; robust parser is LINUX #2377 leg"
+        "note": "robust parse (parseLabviewDiffReportCounts) — authoritative; supersedes prototype regex"
       },
       "preview": {
         "base": 5,
@@ -638,10 +638,10 @@
         "deltaInlineImages": 0
       },
       "correlation": {
-        "countAgreement_lvkit_vs_nonCosmetic": 1,
+        "countAgreement_lvkit_vs_nonCosmetic": 0,
         "lvkitChangeCount": 0,
-        "labviewNonCosmetic": 0,
-        "labviewCosmeticOnly": 2,
+        "labviewNonCosmetic": 1,
+        "labviewCosmeticOnly": 1,
         "structuralCardinality_previewDelta_vs_lvkitCount": 0,
         "note": "granularity mapping; lvkit structural ~ LabVIEW non-cosmetic; cosmetic = lvkit-omitted axis"
       },
@@ -669,10 +669,10 @@
       },
       "labview": {
         "differenceBlocks": 2,
-        "cosmetic": 2,
-        "nonCosmetic": 0,
+        "cosmetic": 1,
+        "nonCosmetic": 1,
         "htmlBytes": 49106,
-        "note": "PROTOTYPE regex parse; robust parser is LINUX #2377 leg"
+        "note": "robust parse (parseLabviewDiffReportCounts) — authoritative; supersedes prototype regex"
       },
       "preview": {
         "base": 7,
@@ -680,10 +680,10 @@
         "deltaInlineImages": 0
       },
       "correlation": {
-        "countAgreement_lvkit_vs_nonCosmetic": 1,
+        "countAgreement_lvkit_vs_nonCosmetic": 0,
         "lvkitChangeCount": 0,
-        "labviewNonCosmetic": 0,
-        "labviewCosmeticOnly": 2,
+        "labviewNonCosmetic": 1,
+        "labviewCosmeticOnly": 1,
         "structuralCardinality_previewDelta_vs_lvkitCount": 0,
         "note": "granularity mapping; lvkit structural ~ LabVIEW non-cosmetic; cosmetic = lvkit-omitted axis"
       },
@@ -711,10 +711,10 @@
       },
       "labview": {
         "differenceBlocks": 3,
-        "cosmetic": 3,
-        "nonCosmetic": 0,
+        "cosmetic": 2,
+        "nonCosmetic": 1,
         "htmlBytes": 100626,
-        "note": "PROTOTYPE regex parse; robust parser is LINUX #2377 leg"
+        "note": "robust parse (parseLabviewDiffReportCounts) — authoritative; supersedes prototype regex"
       },
       "preview": {
         "base": 7,
@@ -722,10 +722,10 @@
         "deltaInlineImages": 0
       },
       "correlation": {
-        "countAgreement_lvkit_vs_nonCosmetic": 1,
+        "countAgreement_lvkit_vs_nonCosmetic": 0,
         "lvkitChangeCount": 0,
-        "labviewNonCosmetic": 0,
-        "labviewCosmeticOnly": 3,
+        "labviewNonCosmetic": 1,
+        "labviewCosmeticOnly": 2,
         "structuralCardinality_previewDelta_vs_lvkitCount": 0,
         "note": "granularity mapping; lvkit structural ~ LabVIEW non-cosmetic; cosmetic = lvkit-omitted axis"
       },
@@ -753,10 +753,10 @@
       },
       "labview": {
         "differenceBlocks": 1,
-        "cosmetic": 1,
-        "nonCosmetic": 0,
+        "cosmetic": 0,
+        "nonCosmetic": 1,
         "htmlBytes": 44698,
-        "note": "PROTOTYPE regex parse; robust parser is LINUX #2377 leg"
+        "note": "robust parse (parseLabviewDiffReportCounts) — authoritative; supersedes prototype regex"
       },
       "preview": {
         "base": 11,
@@ -764,10 +764,10 @@
         "deltaInlineImages": 0
       },
       "correlation": {
-        "countAgreement_lvkit_vs_nonCosmetic": 1,
+        "countAgreement_lvkit_vs_nonCosmetic": 0,
         "lvkitChangeCount": 0,
-        "labviewNonCosmetic": 0,
-        "labviewCosmeticOnly": 1,
+        "labviewNonCosmetic": 1,
+        "labviewCosmeticOnly": 0,
         "structuralCardinality_previewDelta_vs_lvkitCount": 0,
         "note": "granularity mapping; lvkit structural ~ LabVIEW non-cosmetic; cosmetic = lvkit-omitted axis"
       },
@@ -795,10 +795,10 @@
       },
       "labview": {
         "differenceBlocks": 2,
-        "cosmetic": 2,
-        "nonCosmetic": 0,
+        "cosmetic": 1,
+        "nonCosmetic": 1,
         "htmlBytes": 54660,
-        "note": "PROTOTYPE regex parse; robust parser is LINUX #2377 leg"
+        "note": "robust parse (parseLabviewDiffReportCounts) — authoritative; supersedes prototype regex"
       },
       "preview": {
         "base": 6,
@@ -806,10 +806,10 @@
         "deltaInlineImages": 0
       },
       "correlation": {
-        "countAgreement_lvkit_vs_nonCosmetic": 1,
+        "countAgreement_lvkit_vs_nonCosmetic": 0,
         "lvkitChangeCount": 0,
-        "labviewNonCosmetic": 0,
-        "labviewCosmeticOnly": 2,
+        "labviewNonCosmetic": 1,
+        "labviewCosmeticOnly": 1,
         "structuralCardinality_previewDelta_vs_lvkitCount": 0,
         "note": "granularity mapping; lvkit structural ~ LabVIEW non-cosmetic; cosmetic = lvkit-omitted axis"
       },
@@ -837,10 +837,10 @@
       },
       "labview": {
         "differenceBlocks": 1,
-        "cosmetic": 1,
-        "nonCosmetic": 0,
+        "cosmetic": 0,
+        "nonCosmetic": 1,
         "htmlBytes": 74192,
-        "note": "PROTOTYPE regex parse; robust parser is LINUX #2377 leg"
+        "note": "robust parse (parseLabviewDiffReportCounts) — authoritative; supersedes prototype regex"
       },
       "preview": {
         "base": 6,
@@ -848,10 +848,10 @@
         "deltaInlineImages": 0
       },
       "correlation": {
-        "countAgreement_lvkit_vs_nonCosmetic": 1,
+        "countAgreement_lvkit_vs_nonCosmetic": 0,
         "lvkitChangeCount": 0,
-        "labviewNonCosmetic": 0,
-        "labviewCosmeticOnly": 1,
+        "labviewNonCosmetic": 1,
+        "labviewCosmeticOnly": 0,
         "structuralCardinality_previewDelta_vs_lvkitCount": 0,
         "note": "granularity mapping; lvkit structural ~ LabVIEW non-cosmetic; cosmetic = lvkit-omitted axis"
       },
@@ -879,10 +879,10 @@
       },
       "labview": {
         "differenceBlocks": 2,
-        "cosmetic": 2,
-        "nonCosmetic": 0,
+        "cosmetic": 1,
+        "nonCosmetic": 1,
         "htmlBytes": 39970,
-        "note": "PROTOTYPE regex parse; robust parser is LINUX #2377 leg"
+        "note": "robust parse (parseLabviewDiffReportCounts) — authoritative; supersedes prototype regex"
       },
       "preview": {
         "base": 8,
@@ -890,10 +890,10 @@
         "deltaInlineImages": 0
       },
       "correlation": {
-        "countAgreement_lvkit_vs_nonCosmetic": 1,
+        "countAgreement_lvkit_vs_nonCosmetic": 0,
         "lvkitChangeCount": 0,
-        "labviewNonCosmetic": 0,
-        "labviewCosmeticOnly": 2,
+        "labviewNonCosmetic": 1,
+        "labviewCosmeticOnly": 1,
         "structuralCardinality_previewDelta_vs_lvkitCount": 0,
         "note": "granularity mapping; lvkit structural ~ LabVIEW non-cosmetic; cosmetic = lvkit-omitted axis"
       },
@@ -921,10 +921,10 @@
       },
       "labview": {
         "differenceBlocks": 2,
-        "cosmetic": 2,
-        "nonCosmetic": 0,
+        "cosmetic": 1,
+        "nonCosmetic": 1,
         "htmlBytes": 39956,
-        "note": "PROTOTYPE regex parse; robust parser is LINUX #2377 leg"
+        "note": "robust parse (parseLabviewDiffReportCounts) — authoritative; supersedes prototype regex"
       },
       "preview": {
         "base": 7,
@@ -932,10 +932,10 @@
         "deltaInlineImages": 0
       },
       "correlation": {
-        "countAgreement_lvkit_vs_nonCosmetic": 1,
+        "countAgreement_lvkit_vs_nonCosmetic": 0,
         "lvkitChangeCount": 0,
-        "labviewNonCosmetic": 0,
-        "labviewCosmeticOnly": 2,
+        "labviewNonCosmetic": 1,
+        "labviewCosmeticOnly": 1,
         "structuralCardinality_previewDelta_vs_lvkitCount": 0,
         "note": "granularity mapping; lvkit structural ~ LabVIEW non-cosmetic; cosmetic = lvkit-omitted axis"
       },
@@ -964,10 +964,10 @@
       },
       "labview": {
         "differenceBlocks": 2,
-        "cosmetic": 2,
-        "nonCosmetic": 0,
+        "cosmetic": 1,
+        "nonCosmetic": 1,
         "htmlBytes": 83368,
-        "note": "PROTOTYPE regex parse; robust parser is LINUX #2377 leg"
+        "note": "robust parse (parseLabviewDiffReportCounts) — authoritative; supersedes prototype regex"
       },
       "preview": {
         "base": 7,
@@ -975,10 +975,10 @@
         "deltaInlineImages": 0
       },
       "correlation": {
-        "countAgreement_lvkit_vs_nonCosmetic": 1,
+        "countAgreement_lvkit_vs_nonCosmetic": 0,
         "lvkitChangeCount": 0,
-        "labviewNonCosmetic": 0,
-        "labviewCosmeticOnly": 2,
+        "labviewNonCosmetic": 1,
+        "labviewCosmeticOnly": 1,
         "structuralCardinality_previewDelta_vs_lvkitCount": 0,
         "note": "granularity mapping; lvkit structural ~ LabVIEW non-cosmetic; cosmetic = lvkit-omitted axis"
       },
@@ -1006,10 +1006,10 @@
       },
       "labview": {
         "differenceBlocks": 1,
-        "cosmetic": 1,
-        "nonCosmetic": 0,
+        "cosmetic": 0,
+        "nonCosmetic": 1,
         "htmlBytes": 52866,
-        "note": "PROTOTYPE regex parse; robust parser is LINUX #2377 leg"
+        "note": "robust parse (parseLabviewDiffReportCounts) — authoritative; supersedes prototype regex"
       },
       "preview": {
         "base": 14,
@@ -1017,10 +1017,10 @@
         "deltaInlineImages": 0
       },
       "correlation": {
-        "countAgreement_lvkit_vs_nonCosmetic": 1,
+        "countAgreement_lvkit_vs_nonCosmetic": 0,
         "lvkitChangeCount": 0,
-        "labviewNonCosmetic": 0,
-        "labviewCosmeticOnly": 1,
+        "labviewNonCosmetic": 1,
+        "labviewCosmeticOnly": 0,
         "structuralCardinality_previewDelta_vs_lvkitCount": 0,
         "note": "granularity mapping; lvkit structural ~ LabVIEW non-cosmetic; cosmetic = lvkit-omitted axis"
       },
@@ -1048,10 +1048,10 @@
       },
       "labview": {
         "differenceBlocks": 1,
-        "cosmetic": 1,
-        "nonCosmetic": 0,
+        "cosmetic": 0,
+        "nonCosmetic": 1,
         "htmlBytes": 244658,
-        "note": "PROTOTYPE regex parse; robust parser is LINUX #2377 leg"
+        "note": "robust parse (parseLabviewDiffReportCounts) — authoritative; supersedes prototype regex"
       },
       "preview": {
         "base": 17,
@@ -1059,10 +1059,10 @@
         "deltaInlineImages": 0
       },
       "correlation": {
-        "countAgreement_lvkit_vs_nonCosmetic": 1,
+        "countAgreement_lvkit_vs_nonCosmetic": 0,
         "lvkitChangeCount": 0,
-        "labviewNonCosmetic": 0,
-        "labviewCosmeticOnly": 1,
+        "labviewNonCosmetic": 1,
+        "labviewCosmeticOnly": 0,
         "structuralCardinality_previewDelta_vs_lvkitCount": 0,
         "note": "granularity mapping; lvkit structural ~ LabVIEW non-cosmetic; cosmetic = lvkit-omitted axis"
       },
@@ -1090,10 +1090,10 @@
       },
       "labview": {
         "differenceBlocks": 1,
-        "cosmetic": 1,
-        "nonCosmetic": 0,
+        "cosmetic": 0,
+        "nonCosmetic": 1,
         "htmlBytes": 133776,
-        "note": "PROTOTYPE regex parse; robust parser is LINUX #2377 leg"
+        "note": "robust parse (parseLabviewDiffReportCounts) — authoritative; supersedes prototype regex"
       },
       "preview": {
         "base": 11,
@@ -1101,10 +1101,10 @@
         "deltaInlineImages": 0
       },
       "correlation": {
-        "countAgreement_lvkit_vs_nonCosmetic": 1,
+        "countAgreement_lvkit_vs_nonCosmetic": 0,
         "lvkitChangeCount": 0,
-        "labviewNonCosmetic": 0,
-        "labviewCosmeticOnly": 1,
+        "labviewNonCosmetic": 1,
+        "labviewCosmeticOnly": 0,
         "structuralCardinality_previewDelta_vs_lvkitCount": 0,
         "note": "granularity mapping; lvkit structural ~ LabVIEW non-cosmetic; cosmetic = lvkit-omitted axis"
       },
@@ -1132,10 +1132,10 @@
       },
       "labview": {
         "differenceBlocks": 1,
-        "cosmetic": 1,
-        "nonCosmetic": 0,
+        "cosmetic": 0,
+        "nonCosmetic": 1,
         "htmlBytes": 193724,
-        "note": "PROTOTYPE regex parse; robust parser is LINUX #2377 leg"
+        "note": "robust parse (parseLabviewDiffReportCounts) — authoritative; supersedes prototype regex"
       },
       "preview": {
         "base": 16,
@@ -1143,10 +1143,10 @@
         "deltaInlineImages": 0
       },
       "correlation": {
-        "countAgreement_lvkit_vs_nonCosmetic": 1,
+        "countAgreement_lvkit_vs_nonCosmetic": 0,
         "lvkitChangeCount": 0,
-        "labviewNonCosmetic": 0,
-        "labviewCosmeticOnly": 1,
+        "labviewNonCosmetic": 1,
+        "labviewCosmeticOnly": 0,
         "structuralCardinality_previewDelta_vs_lvkitCount": 0,
         "note": "granularity mapping; lvkit structural ~ LabVIEW non-cosmetic; cosmetic = lvkit-omitted axis"
       },
@@ -1167,6 +1167,6 @@
       "previewBaseCold": 1007.7,
       "previewSelectedCold": 996.6000000000001
     },
-    "countAgreementRate": 0.5185185185185185
+    "countAgreementRate": 0.07407407407407407
   }
 }
