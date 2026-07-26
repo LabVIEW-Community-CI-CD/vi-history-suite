@@ -80,6 +80,19 @@ describe('docs/mcp-server.md catalog stays in sync with the registered tools, pr
     expect(match, 'docs/mcp-server.md must state "N schema resources"').not.toBeNull();
     expect(Number(match?.[1])).toBe(VI_SEMANTIC_MCP_RESOURCES.length);
   });
+  it('documents every search_preview_cache marker in its Tools-table row', () => {
+    const tool = VI_SEMANTIC_MCP_TOOLS.find((t) => t.name === 'search_preview_cache');
+    expect(tool, 'search_preview_cache tool must be registered').toBeTruthy();
+    const markers = (tool?.inputSchema as { properties?: { marker?: { enum?: string[] } } } | undefined)
+      ?.properties?.marker?.enum ?? [];
+    expect(markers.length, 'search_preview_cache should declare a marker enum').toBeGreaterThan(0);
+    // Row-scoped so a mention elsewhere (e.g. a prompt's "runtime-health fallback") cannot satisfy it.
+    const row = doc.split('\n').find((line) => /^\|\s*`search_preview_cache`\s*\|/.test(line)) ?? '';
+    expect(row, 'search_preview_cache must have a Tools-table row').not.toBe('');
+    for (const marker of markers) {
+      expect(row.includes('`' + marker + '`'), `docs/mcp-server.md search_preview_cache row is missing the '${marker}' marker`).toBe(true);
+    }
+  });
 });
 
 const REPORT_HTML = `<!DOCTYPE html>
