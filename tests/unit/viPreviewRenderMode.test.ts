@@ -57,6 +57,35 @@ describe('selectViPreviewDocument', () => {
     expect(out.html).toContain('too many files');
   });
 
+  it('shows the size-degraded notice for a document request WITHOUT a fallbackReason (no downgrade) (#2386)', () => {
+    const out = selectViPreviewDocument({
+      labviewHtml: diagramHtml(),
+      mode: 'document',
+      stagingDegraded: { strategy: 'single-file', reason: 'too-large' }
+    });
+    // A `document` request returns `document`, so there is no mode DOWNGRADE and
+    // fallbackReason must stay undefined; the size notice is still surfaced.
+    expect(out.mode).toBe('document');
+    expect(out.fallbackReason).toBeUndefined();
+    expect(out.html).toContain('Size-degraded preview');
+    expect(out.html).toContain('too large');
+  });
+
+  it('labels a project-scope-reduced step-down with a scope-reduced notice (#2386)', () => {
+    const out = selectViPreviewDocument({
+      labviewHtml: diagramHtml(),
+      mode: 'interactive',
+      nonce: NONCE,
+      stagingDegraded: { strategy: 'dependency-tree', reason: 'project-scope-reduced' }
+    });
+    // The enclosing project was too large so staging stepped down to the VI's
+    // directory; cross-directory deps may be "?" -> honest flat doc + scope notice.
+    expect(out.mode).toBe('document');
+    expect(out.fallbackReason).toBe('staging-size-degraded');
+    expect(out.html).not.toContain('id="lvr-frames"');
+    expect(out.html).toContain('Scope-reduced preview');
+  });
+
   it('falls back to the document when interactive mode has no nonce (VHS-REQ-659.19)', () => {
     const out = selectViPreviewDocument({ labviewHtml: diagramHtml(), mode: 'interactive' });
     expect(out.mode).toBe('document');

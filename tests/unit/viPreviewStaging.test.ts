@@ -145,6 +145,7 @@ describe('planViPreviewStagingWithProjectRoot', () => {
     // the VI's own directory (2 files) instead of collapsing to single-file.
     expect(selection.stagingRoot).toBe('subsys');
     expect(selection.rootKind).toBe('directory');
+    expect(selection.stepDownFromProject).toBe(true);
     expect(selection.plan.strategy).toBe('dependency-tree');
     expect(selection.plan.viRelativePath).toBe('Main.vi');
     expect(selection.plan.filesToStage).toEqual(['Main.vi', 'Helper.vi']);
@@ -167,6 +168,7 @@ describe('planViPreviewStagingWithProjectRoot', () => {
     // the `too-large` reason arm of the guard, distinct from `too-many-files`.
     expect(selection.stagingRoot).toBe('subsys');
     expect(selection.rootKind).toBe('directory');
+    expect(selection.stepDownFromProject).toBe(true);
     expect(selection.plan.strategy).toBe('dependency-tree');
     expect(selection.plan.filesToStage).toEqual(['Main.vi', 'Helper.vi']);
   });
@@ -181,6 +183,7 @@ describe('planViPreviewStagingWithProjectRoot', () => {
     // 'project'), proving the fallback only fires when the guard trips.
     expect(selection.stagingRoot).toBe('');
     expect(selection.rootKind).toBe('project');
+    expect(selection.stepDownFromProject).toBe(false);
     expect(selection.plan.strategy).toBe('dependency-tree');
     expect(selection.plan.filesToStage).toEqual(['subsys/Main.vi', 'App.lvproj', 'shared/Helper.vi']);
   });

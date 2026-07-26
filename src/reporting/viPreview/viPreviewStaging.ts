@@ -165,6 +165,21 @@ export function selectViPreviewStagingRoot(
   return viDirectory;
 }
 
+/**
+ * VHS-REQ-659 large-project safeguard: a preview whose staging could not cover
+ * the VI's full dependency set, so its block diagram may carry unresolved "?"
+ * sub-VI placeholders. Two shapes:
+ *  - `single-file` + `too-many-files`/`too-large`: the enclosing project (and its
+ *    containing directory) exceeded the staging guard, so only the lone VI staged.
+ *  - `dependency-tree`/`single-file` + `project-scope-reduced`: the enclosing
+ *    project tripped the guard so staging STEPPED DOWN to the VI's containing
+ *    directory; cross-directory dependencies outside that directory were skipped.
+ */
+export interface ViPreviewStagingDegraded {
+  strategy: 'single-file' | 'dependency-tree';
+  reason: 'too-many-files' | 'too-large' | 'project-scope-reduced';
+}
+
 export interface ViPreviewStagingSelection {
   /** Staging root as a POSIX path relative to the scan base (`''` = the base). */
   stagingRoot: string;
@@ -174,6 +189,12 @@ export interface ViPreviewStagingSelection {
   plan: ViPreviewStagingPlan;
   /** Source entries under `stagingRoot`, rebased to it, for render-cache keying. */
   stagedEntries: ViPreviewStagingEntry[];
+  /**
+   * `true` when the enclosing project tripped the size/count guard so staging
+   * stepped DOWN to the VI's containing directory (partial scope) rather than
+   * staging the whole project. Cross-directory dependencies were not staged.
+   */
+  stepDownFromProject: boolean;
 }
 
 /** Rebases `entries` (relative to the base) to `root`, keeping only those under it. */
@@ -227,14 +248,18 @@ export function planViPreviewStagingWithProjectRoot(
     entries.map((entry) => entry.relativePath)
   );
 
-  const buildSelection = (root: string): ViPreviewStagingSelection => {
+  const buildSelection = (
+    root: string,
+    stepDownFromProject = false
+  ): ViPreviewStagingSelection => {
     const stagedEntries = rebaseEntriesUnderRoot(root, entries);
     const plan = planViPreviewStaging(rebaseViPathUnderRoot(root, viPath), stagedEntries, limits);
     return {
       stagingRoot: root,
       rootKind: root !== viDirectory ? 'project' : 'directory',
       plan,
-      stagedEntries
+      stagedEntries,
+      stepDownFromProject
     };
   };
 
@@ -243,7 +268,11 @@ export function planViPreviewStagingWithProjectRoot(
     widened.plan.strategy === 'single-file' &&
     (widened.plan.reason === 'too-many-files' || widened.plan.reason === 'too-large');
   if (trippedGuard && projectRoot !== viDirectory) {
-    return buildSelection(viDirectory);
+    // The enclosing project tripped the size/count guard, so STEP DOWN to the
+    // VI's containing directory (partial scope). Flag it so a consumer can label
+    // the preview scope-reduced: cross-directory dependencies outside this
+    // directory were not staged and may render as "?" placeholders.
+    return buildSelection(viDirectory, true);
   }
   return widened;
 }

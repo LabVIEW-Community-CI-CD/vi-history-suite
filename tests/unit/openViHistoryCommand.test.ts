@@ -2414,6 +2414,41 @@ describe('openViHistoryCommand git-uri, preview, and plain-diff branches (VHS-RE
     });
   });
 
+  it('carries a degraded staging outcome on the preview URI query so the editor can label it (#2386)', async () => {
+    previewState.enabled = true;
+    revisionTreeMock.materialize.mockResolvedValue({
+      viFilePath: '/workspace/preview/Sample.vi',
+      stagingDegraded: { strategy: 'dependency-tree', reason: 'project-scope-reduced' }
+    });
+    const historyService = { load: vi.fn().mockResolvedValue(createEligibleModel()) };
+    const panelTracker = new HistoryPanelTracker();
+    const gitApi = createGitApiStub();
+    const command = createOpenViHistoryCommand(historyService as never, gitApi as never, panelTracker);
+
+    vi.useFakeTimers();
+    try {
+      await command(vscodeHarness.createUri('/workspace/test-repo/src/Sample.vi') as never);
+      await panelTracker.dispatchLastPanelMessage({
+        command: 'previewRevision',
+        hash: 'abc1234567890abcdef1234567890abcdef12345'
+      });
+      vi.runOnlyPendingTimers();
+    } finally {
+      vi.useRealTimers();
+    }
+
+    // The scratch tree re-renders as `no-siblings` (losing the materialization
+    // degraded signal), so the flag rides the URI query for the editor to recover.
+    expect(vscodeHarness.vscode.commands.executeCommand).toHaveBeenCalledWith(
+      'vscode.openWith',
+      expect.objectContaining({
+        fsPath: '/workspace/preview/Sample.vi',
+        query: 'stagingDegraded=dependency-tree:project-scope-reduced'
+      }),
+      'viHistorySuite.viPreview'
+    );
+  });
+
   it('warns and records a failed preview when materialization throws', async () => {
     previewState.enabled = true;
     revisionTreeMock.materialize.mockRejectedValue(new Error('materialize failed'));

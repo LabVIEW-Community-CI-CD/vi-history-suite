@@ -1,6 +1,6 @@
 import * as path from 'node:path';
 
-import { planViPreviewStagingWithProjectRoot, type ViPreviewStagingEntry } from '../reporting/viPreview/viPreviewStaging';
+import { planViPreviewStagingWithProjectRoot, type ViPreviewStagingDegraded, type ViPreviewStagingEntry } from '../reporting/viPreview/viPreviewStaging';
 import { toPosix } from '../support/pathStyle';
 
 /**
@@ -71,15 +71,18 @@ export interface MaterializedRevisionVi {
   stagedFileCount: number;
   strategy: 'dependency-tree' | 'single-file';
   /**
-   * VHS-REQ-659 large-project safeguard: present ONLY when staging fell back to
-   * single-file for a SIZE reason (the revision's project tree exceeded the guard:
-   * too-many-files >1000 / too-large >256MB), so the materialized tree lacks the
-   * sibling dependencies and a comparison of this VI may show unresolved "?"
-   * sub-VI placeholders. A consumer (the comparison report) should label the diff
-   * size-degraded. Absent for a full dependency-tree materialization and for the
+   * VHS-REQ-659 large-project safeguard: present when staging could not cover the
+   * revision VI's full dependency set, so the materialized tree lacks dependencies
+   * and a comparison of this VI may show unresolved "?" sub-VI placeholders.
+   * Either a SIZE fallback (`single-file` + `too-many-files` >1000 / `too-large`
+   * >256MB: even the containing directory exceeded the guard) or a SCOPE-REDUCED
+   * step-down (`project-scope-reduced`: the enclosing project tripped the guard so
+   * only the VI's directory tree was staged, skipping cross-directory deps). A
+   * consumer (the comparison report / revision preview) should label the diff
+   * degraded. Absent for a full dependency-tree materialization and for the
    * expected standalone `no-siblings` case.
    */
-  stagingDegraded?: { strategy: 'single-file'; reason: 'too-many-files' | 'too-large' };
+  stagingDegraded?: ViPreviewStagingDegraded;
 }
 
 /**
@@ -148,7 +151,9 @@ export async function materializeRevisionViTree(
     selection.plan.strategy === 'single-file' &&
     (selection.plan.reason === 'too-many-files' || selection.plan.reason === 'too-large')
       ? { strategy: 'single-file', reason: selection.plan.reason }
-      : undefined;
+      : selection.stepDownFromProject
+        ? { strategy: selection.plan.strategy, reason: 'project-scope-reduced' }
+        : undefined;
 
   return {
     viFilePath: path.join(options.destinationDirectory, ...selection.plan.viRelativePath.split('/')),

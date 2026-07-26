@@ -109,6 +109,36 @@ describe('renderViPreviewForFile', () => {
     expect(deps.copyFile).toHaveBeenCalledTimes(1);
   });
 
+  it('flags a project-scope-reduced step-down as stagingDegraded (VHS-REQ-659 / #2386)', async () => {
+    const many = Array.from({ length: 1001 }, (_, i) => ({ relativePath: `other/Sub${i}.vi`, sizeBytes: 10 }));
+    const deps = {
+      ...makeDeps({ exitCode: 0, stdout: '', stderr: '' }, true, '<HTML>doc</HTML>', [
+        { relativePath: 'App.lvproj', sizeBytes: 10 },
+        { relativePath: 'sub/Foo.vi', sizeBytes: 10 },
+        { relativePath: 'sub/support/Sub.vi', sizeBytes: 20 },
+        ...many
+      ]),
+      // The enclosing project root (with App.lvproj) is the staging base.
+      resolveStagingBaseDirectory: vi.fn().mockResolvedValue('/proj')
+    };
+    const result = await renderViPreviewForFile(
+      { runtime: hostRuntime, viFilePath: '/proj/sub/Foo.vi', operationDirectory: '/ops' },
+      deps
+    );
+
+    expect(result.outcome).toBe('rendered');
+    // The whole PROJECT tree (>1000 files under App.lvproj) tripped the guard, so
+    // staging STEPPED DOWN to the VI's directory ('sub') -> a dependency tree of
+    // just Foo.vi + support/Sub.vi. The 1001 cross-directory 'other/*' deps were
+    // skipped, so the render is flagged scope-reduced (not silently clean).
+    expect(result.stagingDegraded).toEqual({
+      strategy: 'dependency-tree',
+      reason: 'project-scope-reduced'
+    });
+    // Only the VI's own directory tree is staged (2 files), NOT the 1000+ project.
+    expect(deps.copyFile).toHaveBeenCalledTimes(2);
+  });
+
   it('does not flag stagingDegraded for a normal dependency-tree render', async () => {
     const deps = makeDeps({ exitCode: 0, stdout: '', stderr: '' }, true, '<HTML>doc</HTML>', [
       { relativePath: 'Foo.vi', sizeBytes: 10 },
