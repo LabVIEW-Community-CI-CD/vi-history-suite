@@ -17,7 +17,10 @@ Optional next steps:
 
 - Turn on `viHistorySuite.preview.enabled` (Docker runtime) to preview VIs as
   read-only pictures, and `viHistorySuite.preview.blockDiagramInteractive` for
-  an interactive, pannable block diagram. See [README.md](README.md#preview-a-vi).
+  an interactive, pannable block diagram. If you are in a Docker-less
+  host-native LabVIEW environment (for example a Vagrant VM), you can instead
+  opt in to host rendering with `viHistorySuite.preview.allowHostNativeRender`.
+  See [README.md](README.md#preview-a-vi).
 
 If validation reports a blocked runtime, fix that runtime first. The extension
 does not silently switch provider, year, or bitness during compare.
