@@ -38,17 +38,30 @@ describe('prePushGate.classifyAcquireOutcome (VHS-REQ-719)', () => {
 });
 
 describe('prePushGate.summarizeResources (VHS-REQ-719)', () => {
-  it('computes CPU load-per-core and carries GPU presence/util', () => {
-    const s = pg.summarizeResources({ load1: 4, cores: 8, gpuPresent: true, gpuUtil: 73 });
-    expect(s.cpu).toEqual({ load1: 4, cores: 8, loadPerCore: 0.5 });
+  it('computes CPU load-per-core + util%, carries GPU presence/util', () => {
+    const s = pg.summarizeResources({ load1: 4, cores: 8, cpuUtilPct: 42.6, gpuPresent: true, gpuUtil: 73 });
+    expect(s.cpu).toEqual({ load1: 4, cores: 8, loadPerCore: 0.5, utilPct: 43 });
     expect(s.gpu).toEqual({ present: true, util: 73 });
   });
-  it('accepts a loadavg array and guards zero cores / absent GPU', () => {
+  it('accepts a loadavg array and guards zero cores / absent GPU / absent util', () => {
     const s = pg.summarizeResources({ loadavg: [2, 1, 1], cores: 0 });
     expect(s.cpu.load1).toBe(2);
     expect(s.cpu.loadPerCore).toBeNull(); // no cores -> no per-core signal
+    expect(s.cpu.utilPct).toBeNull();
     expect(s.gpu).toEqual({ present: false, util: null });
     expect(pg.summarizeResources(undefined).cpu.load1).toBe(0);
+  });
+});
+
+describe('prePushGate.resolveMaxAttempts (VHS-REQ-719)', () => {
+  it('takes a positive integer, else the default (guards silent loop-disable)', () => {
+    expect(pg.resolveMaxAttempts('3', 6)).toBe(3);
+    expect(pg.resolveMaxAttempts(undefined, 6)).toBe(6);
+    expect(pg.resolveMaxAttempts('0', 6)).toBe(6);
+    expect(pg.resolveMaxAttempts('-2', 6)).toBe(6); // negative would skip the acquire loop
+    expect(pg.resolveMaxAttempts('abc', 6)).toBe(6);
+    expect(pg.resolveMaxAttempts('2.5', 6)).toBe(6); // non-integer
+    expect(pg.resolveMaxAttempts('4')).toBe(4); // falls back to DEFAULT_MAX_ATTEMPTS internally
   });
 });
 
@@ -80,5 +93,8 @@ describe('prePushGate.buildContentionRecord (VHS-REQ-719)', () => {
     expect(rec.resource).toBe(pg.RESOURCE);
     expect(rec.identity).toBe('UNKNOWN/main');
     expect(rec.attempt).toBe(0);
+  });
+  it('preserves a valid epoch-0 timestamp (nullish, not falsy)', () => {
+    expect(pg.buildContentionRecord({ now: 0, event: 'retry' }).ts).toBe('1970-01-01T00:00:00.000Z');
   });
 });
