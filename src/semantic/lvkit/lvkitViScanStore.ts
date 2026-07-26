@@ -76,8 +76,10 @@ function resolutionCountsFor(envelope: LvkitViScanEnvelope): LvkitResolutionCoun
  *   3. On an equal total too, FEWER `.error.py` hard stubs -- a hard stub is less
  *      usable than an inline placeholder (which keeps the surrounding generated
  *      module), so a hard stub never downgrades an inline placeholder.
- * Order-independent (a strict total order on (resolved DESC, unresolved ASC,
- * errorStub ASC)).
+ * Order-independent: a lexicographic ranking over (resolved DESC, unresolved ASC,
+ * errorStub ASC). Two envelopes that tie on all three are equally clean -- neither
+ * is strictly cleaner, so the guard does not skip and the incoming write proceeds
+ * (latest-wins on a genuine tie).
  */
 function isStrictlyCleaner(a: LvkitViScanEnvelope, b: LvkitViScanEnvelope): boolean {
   const ca = resolutionCountsFor(a);
