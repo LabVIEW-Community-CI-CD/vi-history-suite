@@ -529,6 +529,69 @@ async function trackCommand(rest, a) {
   process.exit(2);
 }
 
+// Agent gateway (issue #2392 follow-on): the SINGLE entry point the coordinator
+// and its subagents share for (1) agent identification and (2) deterministic
+// serialization of stateful ops via a lease/mutex under the shared git common
+// dir (so it spans every worktree + the main clone on one machine).
+function resolveGateDir() {
+  let common = sh('git', ['rev-parse', '--git-common-dir']) || '.git';
+  if (!path.isAbsolute(common)) common = path.resolve(process.cwd(), common);
+  return path.join(common, 'vihs-gate');
+}
+function sleepSync(ms) { try { Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms); } catch { /* best effort */ } }
+
+async function gateCommand(rest, a) {
+  const gw = await import('./agentGateway.mjs');
+  const sub = rest[0] && !rest[0].startsWith('--') ? rest[0] : 'status';
+  const gateDir = resolveGateDir();
+  const sa = gw.resolveSubagentId(process.env, { cwdBasename: path.basename(process.cwd()), pid: process.pid, repoBasename: 'vi-history-suite' });
+  const identity = gw.formatIdentity(AGENT, sa.id);
+
+  if (sub === 'whoami') {
+    console.log('identity=' + identity + '  (plane=' + AGENT + ', lane=' + sa.id + ' via ' + sa.source + ')');
+    console.log('gateDir=' + gateDir + '  (shared across all worktrees + the main clone)');
+    return;
+  }
+  if (sub === 'acquire') {
+    const resource = req(a, 'resource');
+    const ttlSec = a.ttl && a.ttl !== true ? Number(a.ttl) : 300;
+    const wait = Boolean(a.wait);
+    const timeoutMs = (a.timeout && a.timeout !== true ? Number(a.timeout) : 120) * 1000;
+    const start = Date.now();
+    for (;;) {
+      const r = gw.acquireLease(gateDir, resource, identity, { ttlSec });
+      if (r.granted) {
+        console.log('GRANTED ' + resource + ' -> ' + identity + '  token=' + r.token + (r.reclaimedFrom ? '  (reclaimed from ' + r.reclaimedFrom + ')' : ''));
+        console.log('release with: node prototype/collab.mjs gate release --resource ' + resource + ' --token ' + r.token);
+        return;
+      }
+      if (!wait || Date.now() - start > timeoutMs) {
+        console.error('BUSY ' + resource + ' -- ' + gw.describeLease(r.holder) + (wait ? ' (wait timed out)' : ''));
+        process.exit(3);
+      }
+      sleepSync(1000);
+    }
+  }
+  if (sub === 'release') {
+    const resource = req(a, 'resource');
+    const token = req(a, 'token');
+    const r = gw.releaseLease(gateDir, resource, token);
+    if (r.released) { console.log('RELEASED ' + resource + ' by ' + identity); return; }
+    console.error('NOT RELEASED ' + resource + ' -- ' + r.reason + (r.holder ? ' (held by ' + r.holder.owner + ')' : ''));
+    process.exit(3);
+  }
+  if (sub === 'status') {
+    if (a.resource && a.resource !== true) { console.log(gw.describeLease(gw.readLease(gateDir, String(a.resource)))); return; }
+    const leases = gw.listLeases(gateDir);
+    console.log('# gate leases (' + leases.length + ') @ ' + gateDir);
+    for (const l of leases) console.log('  ' + gw.describeLease(l));
+    if (!leases.length) console.log('  (none held -- gate is free)');
+    return;
+  }
+  console.error('usage: gate whoami | gate acquire --resource R [--ttl N] [--wait] [--timeout S] | gate release --resource R --token T | gate status [--resource R]');
+  process.exit(2);
+}
+
 function boardCommand(rest, a) {
   const sub = rest[0] && !rest[0].startsWith('--') ? rest[0] : 'show';
   if (sub === 'init') {
@@ -675,9 +738,9 @@ async function main() {
     if (!result.ok) process.exit(1);
     return;
   }
-  const SPECIAL = ['claim', 'ack', 'done', 'handoff', 'authorize', 'refine', 'post', 'propose', 'align', 'spawn-issue', 'resolve', 'ask', 'answer', 'status', 'board', 'ship', 'tasks', 'run', 'whoami', 'promote', 'track'];
+  const SPECIAL = ['claim', 'ack', 'done', 'handoff', 'authorize', 'refine', 'post', 'propose', 'align', 'spawn-issue', 'resolve', 'ask', 'answer', 'status', 'board', 'ship', 'tasks', 'run', 'whoami', 'promote', 'track', 'gate'];
   if (!TYPES.has((cmd || '').toUpperCase()) && !SPECIAL.includes(cmd)) {
-    console.error('usage: init | poll [--new|--to-me|--unanswered|--tail N] | whoami [--json|--register] | promote --issue N --slug X (--commits sha,.. | --reconcile-files f,.. --provenance sha,..) [--base develop] [--dry-run] | track claim --name X --files a,b,c [--issue N] | track list | track status | track release --name X | checkin | tasks [--open] | ship --to X --task Y [--msg-file f] [--no-verify] | run --label X [--eta-min N] -- <cmd> | propose --title X | ask|answer --discussion N --msg X | align|status|resolve|spawn-issue --discussion N | post --type T [--discussion N] | claim|ack|done|handoff|authorize|refine ...\n  message input: --msg "..." | --msg-file <path> | --msg-stdin   (file/stdin avoid shell-quoting corruption)');
+    console.error('usage: init | poll [--new|--to-me|--unanswered|--tail N] | whoami [--json|--register] | promote --issue N --slug X (--commits sha,.. | --reconcile-files f,.. --provenance sha,..) [--base develop] [--dry-run] | track claim --name X --files a,b,c [--issue N] | track list | track status | track release --name X | gate whoami | gate acquire --resource R [--ttl N] [--wait] | gate release --resource R --token T | gate status | checkin | tasks [--open] | ship --to X --task Y [--msg-file f] [--no-verify] | run --label X [--eta-min N] -- <cmd> | propose --title X | ask|answer --discussion N --msg X | align|status|resolve|spawn-issue --discussion N | post --type T [--discussion N] | claim|ack|done|handoff|authorize|refine ...\n  message input: --msg "..." | --msg-file <path> | --msg-stdin   (file/stdin avoid shell-quoting corruption)');
     process.exit(2);
   }
 
@@ -723,6 +786,7 @@ async function main() {
   }
   if (cmd === 'board') { boardCommand(rest, a); return; }
   if (cmd === 'track') { await trackCommand(rest, a); return; }
+  if (cmd === 'gate') { await gateCommand(rest, a); return; }
 
   if (cmd === 'ship') {
     // Encode publish-before-push atomically: assert clean + rebased -> publish
