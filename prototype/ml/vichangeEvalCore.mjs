@@ -11,6 +11,12 @@ import { noFalseNoChangeHardened } from './scorerHardening.mjs';
 
 export const SYSTEM = 'You are a VI-change summarizer for vi-history-suite. Report ONLY facts grounded in the provided lvkit and LabVIEW comparison data. Rules: NEVER say "no changes" when the structural change count is greater than 0; always state the exact structural change count; distinguish STRUCTURAL changes (from lvkit) from COSMETIC differences (position/appearance, reported only by LabVIEW and omitted by lvkit by design); never invent numbers not present in the facts.';
 
+// Small-integer words, so statesStructuralCount accepts a faithfully-spelled small count
+// (e.g. "one change" for N=1) not just the digit. Strict SUPERSET: only ADDS passes, never
+// removes one; the safety part (noInventedNumbers) is unaffected. #2381 scorer polish
+// (WIN-endorsed): removes the spurious small-N digit-vs-word I3 fallback the history eval found.
+const NUMBER_WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
+
 // Score the raw model output against the deterministic ground truth. Boolean parts; the
 // per-item score = fraction of the item's RELEVANT parts (scoreKeys) that are true.
 export function scoreParts(output, gt) {
@@ -19,7 +25,10 @@ export function scoreParts(output, gt) {
   const h = {};
   for (const k of gt.kinds || []) h[k] = (h[k] || 0) + 1;
   const kindWords = Object.keys(h);
-  const statesStructuralCount = new RegExp(`\\b${N}\\b`).test(output);
+  // I3: the narrative states the headline count -- as the DIGIT or (for a small N) the spelled word.
+  const statesStructuralCount =
+    new RegExp(`\\b${N}\\b`).test(output) ||
+    (Number.isInteger(N) && N >= 0 && N <= 12 && new RegExp(`\\b${NUMBER_WORDS[N]}\\b`, 'i').test(output));
   // Hardened: only an ASSERTED no-change is a violation, not a quoted/refuted one (scorerHardening.mjs).
   const noFalseNoChange = noFalseNoChangeHardened(output, N);
   const mentionsCosmetic = /cosmetic/.test(text);

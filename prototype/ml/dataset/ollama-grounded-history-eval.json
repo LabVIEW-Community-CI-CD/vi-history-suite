@@ -1,6 +1,6 @@
 {
   "schema": "vi-history-suite/ollama-grounded-history-eval@v1",
-  "generatedAt": "2026-07-26T04:04:11.112Z",
+  "generatedAt": "2026-07-26T04:13:49.992Z",
   "host": "LINUX",
   "backend": "gpu",
   "ollamaUrl": "http://localhost:11434",
@@ -24,17 +24,15 @@
     "failedParts": []
   },
   "grounded": {
-    "narrative": "Three revision steps were compared. One of these steps changed the VI, specifically changing the front panel and block diagram. One step was either blocked or failed to compare.",
-    "score": 0.667,
-    "failedParts": [
-      "statesStructuralCount"
-    ],
+    "narrative": "This VI has a revision history of 4 revisions. Comparisons were made across 3 consecutive steps. Only 1 of these steps resulted in changes to the VI, affecting both the front panel and block diagram surfaces. One step was either blocked or failed to compare due to unknown reasons.",
+    "score": 1,
+    "failedParts": [],
     "invented": []
   },
   "selection": {
-    "source": "fallback",
-    "reason": "candidate-less-faithful",
-    "candidateScore": 0.667,
+    "source": "candidate",
+    "reason": "candidate-not-less-faithful",
+    "candidateScore": 1,
     "fallbackScore": 1
   },
   "note": "History TIMELINE (cross-revision) reviewer summary. allowedNumbers = history rollup counts; any other integer > 1 in the grounded summary is an INVENTED cross-revision number. Synthetic timeline reused from WIN mcpNarrativeSurfaceAudit for lane consistency. BASELINE SYSTEM only."
