@@ -1,8 +1,8 @@
 {
   "schema": "vi-history-suite/preview-compare-lvkit-benchmark@v1",
-  "generatedAt": "2026-07-26T06:20:34.314Z",
+  "generatedAt": "2026-07-26T07:37:03.931Z",
   "image": "nationalinstruments/labview:2026q1patch2-windows",
-  "sampleCount": 27,
+  "sampleCount": 29,
   "pipeline": "compareReport -> staged left/right + commits -> preview(both) + lvkit(diff,generate) -> correlation record",
   "samples": [
     {
@@ -1157,16 +1157,100 @@
         "previewBaseCold": 33,
         "previewSelectedCold": 46.1
       }
+    },
+    {
+      "vi": "Providers/MessageRescripter/Support/Find Target Actor.vi",
+      "repo": "af",
+      "slug": "af-find-target-actor",
+      "subject": "Created AFPP Shared:Resolve Symbolic Paths.vi to wrap ResolveSymbolicPaths restricted node.  Protected this VI with the password used for Message Maker Provider VIs.  Replaced relevant code in calling VIs, and removed their password protections.  Deleted redundant VI from Message Rescripter.",
+      "revisionPair": {
+        "base": "c77ead3",
+        "selected": "0b1ff88de83e5ce02dc4f063f81921f8c551d266"
+      },
+      "lvkit": {
+        "changeCount": null,
+        "kinds": [],
+        "generateModuleCount": null
+      },
+      "labview": {
+        "differenceBlocks": 8,
+        "cosmetic": 6,
+        "nonCosmetic": 1,
+        "htmlBytes": 243911,
+        "note": "robust parse (mirrors labviewDiffReportParser.mjs parseLabviewDiffReportCounts)"
+      },
+      "preview": {
+        "base": 26,
+        "selected": 26,
+        "deltaInlineImages": 0
+      },
+      "correlation": {
+        "countAgreement_lvkit_vs_nonCosmetic": 0,
+        "lvkitChangeCount": null,
+        "labviewNonCosmetic": 1,
+        "labviewCosmeticOnly": 6,
+        "structuralCardinality_previewDelta_vs_lvkitCount": 0,
+        "note": "granularity mapping; lvkit structural ~ LabVIEW non-cosmetic; cosmetic = lvkit-omitted axis"
+      },
+      "timingsSec": {
+        "compareCold": 34.6,
+        "lvkitDiff": 0,
+        "lvkitGen": 0.1,
+        "previewBaseCold": 33,
+        "previewSelectedCold": 29.5
+      }
+    },
+    {
+      "vi": "Providers/MessageMakerProvider/_Message Maker/_support/Inherits from an Actor.vi",
+      "repo": "af",
+      "slug": "af-inherits-from-an-actor",
+      "subject": "Wrapped calls to Read Class Ancestry.vi in a Type Specialization Structure.",
+      "revisionPair": {
+        "base": "66299fa",
+        "selected": "179d2f607d3ec0f9dfe7e2a0cc5a2843045ea569"
+      },
+      "lvkit": {
+        "changeCount": null,
+        "kinds": [],
+        "generateModuleCount": null
+      },
+      "labview": {
+        "differenceBlocks": 4,
+        "cosmetic": 2,
+        "nonCosmetic": 1,
+        "htmlBytes": 251262,
+        "note": "robust parse (mirrors labviewDiffReportParser.mjs parseLabviewDiffReportCounts)"
+      },
+      "preview": {
+        "base": 17,
+        "selected": 19,
+        "deltaInlineImages": 2
+      },
+      "correlation": {
+        "countAgreement_lvkit_vs_nonCosmetic": 0,
+        "lvkitChangeCount": null,
+        "labviewNonCosmetic": 1,
+        "labviewCosmeticOnly": 2,
+        "structuralCardinality_previewDelta_vs_lvkitCount": 2,
+        "note": "granularity mapping; lvkit structural ~ LabVIEW non-cosmetic; cosmetic = lvkit-omitted axis"
+      },
+      "timingsSec": {
+        "compareCold": 30.7,
+        "lvkitDiff": 0.1,
+        "lvkitGen": 0.1,
+        "previewBaseCold": 28.9,
+        "previewSelectedCold": 30.7
+      }
     }
   ],
   "aggregate": {
     "totalTimingsSec": {
-      "compareCold": 1096,
-      "lvkitDiff": 68.10000000000001,
-      "lvkitGen": 213.99999999999994,
-      "previewBaseCold": 1007.7,
-      "previewSelectedCold": 996.6000000000001
+      "compareCold": 1161.3,
+      "lvkitDiff": 68.2,
+      "lvkitGen": 214.19999999999993,
+      "previewBaseCold": 1069.6000000000001,
+      "previewSelectedCold": 1056.8000000000002
     },
-    "countAgreementRate": 0.07407407407407407
+    "countAgreementRate": 0.06896551724137931
   }
 }
