@@ -83,6 +83,35 @@ describe('materializeRevisionViTree (VHS-REQ-659.15)', () => {
     expect(result.stagedFileCount).toBe(3);
   });
 
+  it('flags a size-degraded single-file fallback (>1000 files) as stagingDegraded (VHS-REQ-659 large-project safeguard)', async () => {
+    const many = Array.from({ length: 1001 }, (_, i) => ({ repoRelativePath: `lib/Sub${i}.vi`, sizeBytes: 10 }));
+    const deps = makeDeps([{ repoRelativePath: 'lib/Foo.vi', sizeBytes: 10 }, ...many]);
+    const result = await materializeRevisionViTree(
+      { revisionId: 'abc123', relativePath: 'lib/Foo.vi', destinationDirectory: '/dest' },
+      deps
+    );
+
+    // The revision's project tree exceeded the 1000-file guard -> single-file
+    // fallback -> the materialized tree lacks sibling deps, so a diff of this VI
+    // may show unresolved "?" placeholders: flagged so the comparison can label it.
+    expect(result.strategy).toBe('single-file');
+    expect(result.stagingDegraded).toEqual({ strategy: 'single-file', reason: 'too-many-files' });
+  });
+
+  it('does not flag stagingDegraded for a normal dependency-tree materialization', async () => {
+    const deps = makeDeps([
+      { repoRelativePath: 'lib/Foo.vi', sizeBytes: 10 },
+      { repoRelativePath: 'lib/Sub.vi', sizeBytes: 20 }
+    ]);
+    const result = await materializeRevisionViTree(
+      { revisionId: 'abc123', relativePath: 'lib/Foo.vi', destinationDirectory: '/dest' },
+      deps
+    );
+
+    expect(result.strategy).toBe('dependency-tree');
+    expect(result.stagingDegraded).toBeUndefined();
+  });
+
   it('falls back to single-file when the tree listing fails, still fetching the VI', async () => {
     const deps = makeDeps([]);
     deps.listTreeFiles.mockRejectedValue(new Error('no tree'));
@@ -92,6 +121,8 @@ describe('materializeRevisionViTree (VHS-REQ-659.15)', () => {
     );
 
     expect(result.strategy).toBe('single-file');
+    // no-siblings is the expected standalone case, NOT a size degradation.
+    expect(result.stagingDegraded).toBeUndefined();
     expect(deps.readBlob).toHaveBeenCalledWith('abc', 'lib/Foo.vi');
     expect(deps.writeFile).toHaveBeenCalledWith(path.join('/dest', 'Foo.vi'), expect.any(Buffer));
     expect(result.stagedFileCount).toBe(1);

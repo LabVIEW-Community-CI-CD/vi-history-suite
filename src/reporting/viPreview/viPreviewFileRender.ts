@@ -82,6 +82,16 @@ export interface RenderViPreviewForFileResult {
    * `sha256:` prefix); best-effort, so a hashing failure leaves it undefined.
    */
   contentSignature?: string;
+  /**
+   * VHS-REQ-659 large-project safeguard: present ONLY when staging fell back to
+   * single-file for a SIZE reason (the enclosing project tree exceeded the guard:
+   * `too-many-files` >1000 or `too-large` >256MB). The rendered block diagram may
+   * then contain unresolved "?" subVI placeholders because sibling dependencies
+   * were not staged, so the preview is DEGRADED -- a consumer should label it so
+   * the "?" is not mistaken for a real (empty) diagram. Absent for a full
+   * dependency-tree render and for the expected standalone `no-siblings` case.
+   */
+  stagingDegraded?: { strategy: 'single-file'; reason: 'too-many-files' | 'too-large' };
 }
 
 export interface RenderViPreviewForFileDeps {
@@ -165,6 +175,15 @@ export async function renderViPreviewForFile(
   }
 
   const selection = planViPreviewStagingWithProjectRoot(viRelativeToBase, entries);
+  // VHS-REQ-659 large-project safeguard: flag a SIZE-degraded fallback so a
+  // consumer can label the preview (its block diagram may carry unresolved "?"
+  // subVI placeholders because sibling deps were not staged). Only the size
+  // reasons degrade; `no-siblings` is the expected standalone-VI case.
+  const stagingDegraded: RenderViPreviewForFileResult['stagingDegraded'] =
+    selection.plan.strategy === 'single-file' &&
+    (selection.plan.reason === 'too-many-files' || selection.plan.reason === 'too-large')
+      ? { strategy: 'single-file', reason: selection.plan.reason }
+      : undefined;
   // Absolute directory that the selection's relative paths are anchored at.
   const stagingRootDirectory = selection.stagingRoot
     ? path.join(stagingBaseDirectory, ...selection.stagingRoot.split('/'))
@@ -182,7 +201,7 @@ export async function renderViPreviewForFile(
   if (deps.cache && cacheKey) {
     const cached = await deps.cache.get(cacheKey).catch(() => undefined);
     if (cached !== undefined) {
-      return { outcome: 'rendered', html: cached, cached: true, cacheKey };
+      return { outcome: 'rendered', html: cached, cached: true, cacheKey, stagingDegraded };
     }
   }
 
@@ -259,7 +278,7 @@ export async function renderViPreviewForFile(
           contentSignature = undefined;
         }
       }
-      return { outcome: 'rendered', html, cached: false, cacheKey, cacheStored, contentSignature };
+      return { outcome: 'rendered', html, cached: false, cacheKey, cacheStored, contentSignature, stagingDegraded };
     }
 
     return {

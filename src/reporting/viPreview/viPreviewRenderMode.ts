@@ -58,6 +58,14 @@ export interface SelectViPreviewDocumentOptions {
    * fallback source. Absent/invalid payloads fall back to the flat-export path.
    */
   coordinateFramesJson?: string | unknown;
+  /**
+   * VHS-REQ-659 large-project safeguard: when the render fell back to single-file
+   * because the enclosing project exceeded the staging guard (too-many-files /
+   * too-large), the block diagram may carry unresolved "?" sub-VI placeholders.
+   * When set, the honest flat document is returned with a clear size-degraded
+   * notice (rather than an interactive stepper through "?"-laden frames).
+   */
+  stagingDegraded?: { strategy: 'single-file'; reason: 'too-many-files' | 'too-large' };
 }
 
 export interface SelectedViPreviewDocument {
@@ -87,6 +95,18 @@ export function selectViPreviewDocument(
     mode: 'document',
     ...(fallbackReason ? { fallbackReason } : {})
   });
+
+  // VHS-REQ-659 large-project safeguard: a SIZE-degraded single-file fallback was
+  // rendered with unresolved sub-VI deps ("?" placeholders). Present the honest
+  // flat document with a clear notice rather than an interactive stepper through
+  // "?"-laden frames, so the placeholders are not mistaken for real content.
+  if (options.stagingDegraded) {
+    const reason = options.stagingDegraded.reason === 'too-many-files' ? 'too many files' : 'too large';
+    return documentFallback(
+      'staging-size-degraded',
+      `Size-degraded preview -- the enclosing LabVIEW project exceeds the preview staging limit (${reason}), so sub-VI dependencies were not loaded. The block diagram may show "?" placeholder icons: those are unresolved dependencies, not real (empty) content.`
+    );
+  }
 
   if (options.mode !== 'interactive') {
     return documentFallback();

@@ -89,6 +89,40 @@ describe('renderViPreviewForFile', () => {
     expect(deps.copyFile).not.toHaveBeenCalledWith(path.join('/repo', 'notes.txt'), expect.anything());
   });
 
+  it('flags a size-degraded single-file fallback (>1000 files) as stagingDegraded (VHS-REQ-659 large-project safeguard)', async () => {
+    const many = Array.from({ length: 1001 }, (_, i) => ({ relativePath: `Sub${i}.vi`, sizeBytes: 10 }));
+    const deps = makeDeps({ exitCode: 0, stdout: '', stderr: '' }, true, '<HTML>doc</HTML>', [
+      { relativePath: 'Foo.vi', sizeBytes: 10 },
+      ...many
+    ]);
+    const result = await renderViPreviewForFile(
+      { runtime: hostRuntime, viFilePath: '/repo/Foo.vi', operationDirectory: '/ops' },
+      deps
+    );
+
+    expect(result.outcome).toBe('rendered');
+    // The project tree exceeded the 1000-file guard -> single-file fallback ->
+    // the block diagram may carry unresolved "?" placeholders, so the render is
+    // flagged size-degraded (not silently returned as a clean render).
+    expect(result.stagingDegraded).toEqual({ strategy: 'single-file', reason: 'too-many-files' });
+    // Only the VI itself is staged in the degraded fallback.
+    expect(deps.copyFile).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not flag stagingDegraded for a normal dependency-tree render', async () => {
+    const deps = makeDeps({ exitCode: 0, stdout: '', stderr: '' }, true, '<HTML>doc</HTML>', [
+      { relativePath: 'Foo.vi', sizeBytes: 10 },
+      { relativePath: 'support/Sub.vi', sizeBytes: 20 }
+    ]);
+    const result = await renderViPreviewForFile(
+      { runtime: hostRuntime, viFilePath: '/repo/Foo.vi', operationDirectory: '/ops' },
+      deps
+    );
+
+    expect(result.outcome).toBe('rendered');
+    expect(result.stagingDegraded).toBeUndefined();
+  });
+
   it('propagates a failure outcome and still removes the workspace', async () => {
     const deps = makeDeps({ exitCode: 1, stdout: '', stderr: 'broke' }, false);
     const result = await renderViPreviewForFile(

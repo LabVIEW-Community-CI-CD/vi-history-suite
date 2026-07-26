@@ -70,6 +70,16 @@ export interface MaterializedRevisionVi {
   viFilePath: string;
   stagedFileCount: number;
   strategy: 'dependency-tree' | 'single-file';
+  /**
+   * VHS-REQ-659 large-project safeguard: present ONLY when staging fell back to
+   * single-file for a SIZE reason (the revision's project tree exceeded the guard:
+   * too-many-files >1000 / too-large >256MB), so the materialized tree lacks the
+   * sibling dependencies and a comparison of this VI may show unresolved "?"
+   * sub-VI placeholders. A consumer (the comparison report) should label the diff
+   * size-degraded. Absent for a full dependency-tree materialization and for the
+   * expected standalone `no-siblings` case.
+   */
+  stagingDegraded?: { strategy: 'single-file'; reason: 'too-many-files' | 'too-large' };
 }
 
 /**
@@ -134,9 +144,16 @@ export async function materializeRevisionViTree(
     stagedFileCount += 1;
   }
 
+  const stagingDegraded: MaterializedRevisionVi['stagingDegraded'] =
+    selection.plan.strategy === 'single-file' &&
+    (selection.plan.reason === 'too-many-files' || selection.plan.reason === 'too-large')
+      ? { strategy: 'single-file', reason: selection.plan.reason }
+      : undefined;
+
   return {
     viFilePath: path.join(options.destinationDirectory, ...selection.plan.viRelativePath.split('/')),
     stagedFileCount,
-    strategy: selection.plan.strategy
+    strategy: selection.plan.strategy,
+    stagingDegraded
   };
 }
