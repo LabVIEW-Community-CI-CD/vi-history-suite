@@ -1,0 +1,42 @@
+{
+  "schema": "vi-history-suite/qwen-lv-icon-context-variance@v1",
+  "generatedAt": "2026-07-26T10:30:00Z",
+  "model": "qwen2.5:14b",
+  "question": "Is lv-icon's invented-number offload-invariant (WIN's read) or genuinely run-context-variant?",
+  "fixedConditions": {
+    "offloadPctGpu": 70,
+    "temperature": 0,
+    "seed": 0,
+    "note": "ALL observations below at the auto 70% GPU load (no num_gpu forcing) unless noted; so any variance is NOT offload-fraction driven"
+  },
+  "observations": [
+    {
+      "context": "tool run 1 (mixed: visibletextmarker, mousedown, THEN lv-icon; lv 3rd in one load)",
+      "lvInvented": [4, 14, 18],
+      "reps": 2,
+      "note": "invented, byte-stable within that load"
+    },
+    {
+      "context": "tool run 2 (isolated lv-icon sweep, auto phases first in a fresh load)",
+      "lvInvented": [],
+      "reps": 2,
+      "note": "CLEAN -- same 70% offload, different load context"
+    },
+    {
+      "context": "SEQ A controlled (lv-icon FIRST in a fresh load, x3)",
+      "lvInvented": [4, 14, 18],
+      "reps": 3,
+      "narrativeLen": 302
+    },
+    {
+      "context": "SEQ B controlled (fresh load, visibletextmarker + mousedown FIRST, THEN lv-icon x3)",
+      "lvPerRep": [[4, 14, 18], [], []],
+      "narrativeLenPerRep": [359, 346, 346],
+      "note": "FLIPS WITHIN ONE LOAD: rep1 invents, rep2/rep3 clean and byte-identical -> settles after the first call"
+    }
+  ],
+  "finding": "lv-icon's invented-number is RUN-CONTEXT NONDETERMINISTIC at fixed 70% offload / temp0 / seed0. Across loads it was observed BOTH [4,14,18] and clean, and within a single load (SEQ B) it flipped from [4,14,18] on the first call to clean on the next two. Output lengths differ (302 vs 346 vs 359) so this is CONTENT-level variance, NOT a scorer reading differently-worded-but-same output.",
+  "contrast": "visibletextmarker's invented [5] is the opposite: byte-stable (len 380 every run) and offload-invariant (0% / 43% / 70% all invent 5). It is a ROBUST model-content hazard; lv-icon is an UNSTABLE borderline whose invented content depends on the model load history.",
+  "reconcileWithWin": "WIN's read was right that this is a run-context (load-history) effect and NOT offload-fraction driven (all these are 70%); but the flip is at the CONTENT level (the numbers 4/14/18 are literally present or absent, lengths differ), not the scorer merely rescoring the same wording. It corrects my earlier 'lv-icon invents deterministically' note.",
+  "verdictImpact": "qwen-as-GENERATOR drop STANDS and is REINFORCED: qwen is unreliable both as a stable inventor (visibletextmarker) and as an unstable run-context flipper (lv-icon). keep-as-JUDGE unaffected. vichange-conclusion-2381 verdict unchanged."
+}

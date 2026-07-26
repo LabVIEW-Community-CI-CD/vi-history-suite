@@ -160,7 +160,9 @@ export function slicePhaseStats(seriesObj, startMs, endMs) {
  * Verdict on the invented-number hazard from the correlated phases (+ optional offload sweep):
  * if inventing and passing phases share the same residency band, and the invented number persists
  * across offload fractions, the hazard is backend-independent model-content (drop-as-generator
- * stands). If it appears only at a particular offload fraction, it is a fixable offload artifact.
+ * stands). If the swept VI invents at some offload points and is clean at others within one run,
+ * a single run cannot separate offload-dependence from run-context nondeterminism, so it is
+ * flagged offload-or-run-context-variant (drop-as-generator still stands; needs multi-run evidence).
  */
 export function buildVerdict(phases, offloadSweep) {
   const inventing = phases.filter((p) => !p.gatedSafe);
@@ -174,31 +176,47 @@ export function buildVerdict(phases, offloadSweep) {
       : null;
   const sweepInventedSet = new Set((offloadSweep?.samples || []).map((s) => (s.invented.length ? 'invents' : 'clean')));
   const sweepInvariant = offloadSweep ? sweepInventedSet.size === 1 && sweepInventedSet.has('invents') : null;
+  // For the swept VI, combine its auto-residency PHASE outcomes with the forced-offload SWEEP
+  // samples into one offload -> invents? map: this is what separates offload-invariance from
+  // an offload-dependent-looking mix (which a single run cannot distinguish from run-context
+  // nondeterminism -- see qwen-lv-icon-context-variance.json).
+  const sweptPoints = offloadSweep
+    ? [
+        ...phases.filter((p) => p.vi === offloadSweep.vi).map((p) => !p.gatedSafe),
+        ...(offloadSweep.samples || []).map((s) => Boolean(s.invented && s.invented.length))
+      ]
+    : [];
+  const sweptOutcomeSet = new Set(sweptPoints);
+  const sweepInvents = (offloadSweep?.samples || []).some((s) => s.invented && s.invented.length);
+  const anyInvent = inventing.length > 0 || sweepInvents;
   let inventedNumberHazard = 'inconclusive';
   const rationale = [];
-  if (inventing.length === 0) {
+  if (!anyInvent) {
     inventedNumberHazard = 'not-reproduced';
-    rationale.push('no phase tripped the noInventedNumbers gate in this run');
-  } else {
-    if (sweepInvariant === true) {
-      inventedNumberHazard = 'backend-independent-model-content';
-      rationale.push('invented number persists across the full feasible offload range (0% GPU CPU-only through max-feasible GPU)');
-    } else if (sweepInvariant === false) {
-      inventedNumberHazard = 'offload-artifact-fixable';
-      rationale.push('invented number appears only at some offload fractions in the sweep');
-    }
+    rationale.push('neither the phases nor the offload sweep tripped the noInventedNumbers gate in this run');
+  } else if (sweptOutcomeSet.size > 1) {
+    // The swept VI invents at some offload points and is clean at others WITHIN this single run.
+    inventedNumberHazard = 'offload-or-run-context-variant';
+    rationale.push('the swept VI invents at some offload points and is clean at others within a single run; a single run cannot separate true offload-dependence from run-context nondeterminism -- gather multi-run evidence (see qwen-lv-icon-context-variance.json, where this VI flips even at a fixed 70% offload)');
+  } else if (sweepInvariant === true) {
+    inventedNumberHazard = 'backend-independent-model-content';
+    rationale.push('invented number persists across the full feasible offload range (0% GPU CPU-only through max-feasible GPU)');
     if (bandsOverlap === true) {
       rationale.push('inventing and passing VIs sampled at the same GPU residency band -> residency does not separate the outcome');
-      if (inventedNumberHazard === 'inconclusive') inventedNumberHazard = 'backend-independent-model-content';
     }
+  } else if (bandsOverlap === true) {
+    inventedNumberHazard = 'backend-independent-model-content';
+    rationale.push('inventing and passing VIs sampled at the same GPU residency band -> residency does not separate the outcome');
   }
   const recommendation =
     inventedNumberHazard === 'backend-independent-model-content'
       ? 'drop qwen2.5:14b as GENERATOR stands (invented-number is model-content, not offload-fixable); keep as JUDGE'
-      : inventedNumberHazard === 'offload-artifact-fixable'
-        ? 'forcing full GPU residency may promote qwen back to a viable generator -- validate before adopting'
-        : 'inconclusive -- gather more offload-sweep points';
-  return { inventedNumberHazard, bandsOverlap, offloadSweepInvariant: sweepInvariant, invBand, passBand, rationale, recommendation };
+      : inventedNumberHazard === 'offload-or-run-context-variant'
+        ? 'drop qwen2.5:14b as GENERATOR stands (unreliable: invented content flips by run context at fixed offload); keep as JUDGE'
+        : inventedNumberHazard === 'not-reproduced'
+          ? 'invented-number hazard did not surface in this run -- re-run or widen fixtures'
+          : 'inconclusive -- gather more offload-sweep points';
+  return { inventedNumberHazard, bandsOverlap, offloadSweepInvariant: sweepInvariant, sweptViOutcomeMixed: sweptOutcomeSet.size > 1, invBand, passBand, rationale, recommendation };
 }
 
 // ---------------------------------------------------------------------------
@@ -350,12 +368,27 @@ async function main() {
       const secs = Math.round((Date.now() - t0) / 1000);
       const res = await ollamaResidency(model);
       const invented = inventedNumbers(narrative, groundTruth.allowedNumbers);
-      samples.push({ numGpu: ng, offloadPctGpu: res.offloadPctGpu, invented, narrativeLen: narrative.length, secs });
-      process.stdout.write(`[qgc] sweep ${sweepSlug} num_gpu=${ng}: invented=${JSON.stringify(invented)} ${res.offloadPctGpu}%GPU ${secs}s\n`);
+      const gate = scoreNarrative(narrative, groundTruth);
+      samples.push({
+        numGpu: ng,
+        offloadPctGpu: res.offloadPctGpu,
+        invented,
+        gatedSafe: !gate.failedParts.includes('noInventedNumbers'),
+        statesStructuralCountOk: !gate.failedParts.includes('statesStructuralCount'),
+        failedParts: gate.failedParts,
+        narrativeLen: narrative.length,
+        secs
+      });
+      process.stdout.write(`[qgc] sweep ${sweepSlug} num_gpu=${ng}: invented=${JSON.stringify(invented)} statesCountOk=${!gate.failedParts.includes('statesStructuralCount')} ${res.offloadPctGpu}%GPU ${secs}s\n`);
     }
     // Re-prime so the sampler tail ends on the steady auto residency.
     await ollamaChat(model, 'ready check', undefined).catch(() => {});
-    offloadSweep = { vi: sweepSlug, samples };
+    // Whether the statesStructuralCount gate part FLIPS across offload fractions (WIN's
+    // lv_icon offload-divergence question); combine the sweep points with the auto-residency
+    // phases of the same VI so the full 0->max feasible range is covered.
+    const autoStates = phases.filter((p) => p.vi === sweepSlug).map((p) => !p.failedParts.includes('statesStructuralCount'));
+    const statesSet = new Set([...samples.map((s) => s.statesStructuralCountOk), ...autoStates]);
+    offloadSweep = { vi: sweepSlug, samples, statesStructuralCountFlipsAcrossOffload: statesSet.size > 1 };
   }
 
   await new Promise((r) => setTimeout(r, 1200)); // capture the tail
@@ -381,7 +414,7 @@ async function main() {
     residency,
     residencyNote:
       residency.offloadPctGpu !== null && residency.offloadPctGpu < 100
-        ? `qwen ${residency.sizeGb}GB exceeds ${(gpuSeries.peaks.memTotalMb / 1024).toFixed(1)}GB VRAM -> PARTIAL offload (${residency.offloadPctGpu}% GPU); full GPU residency is not achievable for this model on this GPU`
+        ? `${model} ${residency.sizeGb}GB exceeds ${(gpuSeries.peaks.memTotalMb / 1024).toFixed(1)}GB VRAM -> PARTIAL offload (${residency.offloadPctGpu}% GPU); full GPU residency is not achievable for this model on this GPU`
         : 'model fully GPU-resident',
     fixtures,
     repeats,
