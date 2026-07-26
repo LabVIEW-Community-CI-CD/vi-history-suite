@@ -6,6 +6,7 @@ const bootstrap = require('../../scripts/bootstrapLinuxVsCodeHost.js') as {
   buildInstallPlan: (family: string) => { packageFamily: string; packages: string[]; commands: string[][] };
   detectPackageFamily: (osReleaseText: string) => string;
   getUsage: () => string;
+  main: (argv?: string[], deps?: Record<string, unknown>) => void;
   parseOsRelease: (text: string) => Record<string, string>;
 };
 
@@ -43,5 +44,44 @@ describe('bootstrapLinuxVsCodeHost (VHS-REQ-684.1)', () => {
       ['sudo', 'apt-get', 'install', '-y', '--no-install-recommends', ...bootstrap.DISTRO_PACKAGES.debian]
     ]);
     expect(bootstrap.getUsage()).toContain('print-plan');
+  });
+});
+
+describe('bootstrapLinuxVsCodeHost main (VHS-REQ-684.1)', () => {
+  const capture = () => {
+    let out = '';
+    return { write: (s: string) => { out += s; }, get: () => out };
+  };
+
+  it('prints usage for help/--help/-h WITHOUT reading /etc/os-release', () => {
+    for (const arg of ['help', '--help', '-h']) {
+      const stdout = capture();
+      // No osReleaseText dep: the help guard must return before readOsRelease
+      // (which throws ENOENT off-Linux), so this never throws on any host.
+      expect(() => bootstrap.main([arg], { stdout })).not.toThrow();
+      expect(stdout.get()).toContain('print-plan');
+    }
+  });
+
+  it('print-plan emits the install-plan JSON for the injected os-release', () => {
+    const stdout = capture();
+    bootstrap.main(['print-plan'], { stdout, osReleaseText: 'ID=debian\n' });
+    const plan = JSON.parse(stdout.get());
+    expect(plan.packageFamily).toBe('debian');
+    expect(plan.packages).toContain('xvfb');
+  });
+
+  it('install (the default action) runs the apt plan via the injected spawnSync', () => {
+    const calls: string[][] = [];
+    const spawnSync = (cmd: string, args: string[]) => { calls.push([cmd, ...args]); return { status: 0 }; };
+    const stdout = capture();
+    bootstrap.main([], { stdout, osReleaseText: 'ID=ubuntu\n', spawnSync });
+    expect(calls[0]).toEqual(['sudo', 'apt-get', 'update']);
+    expect(calls[1]).toContain('xvfb');
+    expect(stdout.get()).toContain('Installing Linux VS Code host packages for ubuntu');
+  });
+
+  it('throws on an unsupported action', () => {
+    expect(() => bootstrap.main(['bogus'], { osReleaseText: 'ID=debian\n', stdout: { write() {} } })).toThrow(/Unsupported action/);
   });
 });
