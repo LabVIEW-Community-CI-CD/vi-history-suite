@@ -111,7 +111,9 @@ const conclusion = {
     design: 'groundedNarrativeProvider.selectMcpNarrative is the WIN-owned FLOW (build cosmetic-enriched facts -> injected ollama backend -> hard-safety floor -> deterministic template fallback) on top of narrativeQualityGate.scoreNarrative, the LINUX-owned shared SCORING PRIMITIVE. One scorer, two complementary layers: the hard-safety floor (statesStructuralCount / noFalseNoChange / noInventedNumbers) rejects an unsafe candidate even on a score tie; mentionsCosmetic is a quality lift.',
     acceptRate: 'Baseline SYSTEM, per config over the 8 real fixtures, backend-robust (GPU == CPU): 8b-raw 1.0, 8b-fewshot 1.0, 8b-2shot 1.0, 14b 0.875. 14b fails the safety gate on visibletextmarker by inventing a per-object sub-count (over-elaboration); reproducible on both backends, not an offload-divergence artifact.',
     systemStrictnessRejected: 'A stricter SYSTEM (report ONLY the two tallies, no per-object breakdown) is a BACKEND-DEPENDENT tradeoff and is NOT adopted: on CPU it lifts 14b 0.875->1.0 but drops 8b-fewshot 1.0->0.875; on GPU it additionally drops 8b-2shot to 0.75 on the lvkit=0 no-change VIs (loadtemplates, process template graphics), stable across 2 GPU runs. Keep the BASELINE shared SYSTEM.',
-    recommendation: 'If the optional grounded layer is enabled, 8b-2shot is the default: highest accept-rate under the baseline SYSTEM on BOTH backends, cheapest local. The gate guarantees it is never less faithful than the shipped deterministic template (the fallback) -- it can only improve readability.'
+    recommendation: 'If the optional grounded layer is enabled, 8b-2shot is the default: highest accept-rate under the baseline SYSTEM on BOTH backends, cheapest local. The gate guarantees it is never less faithful than the shipped deterministic template (the fallback) -- it can only improve readability.',
+    surfaceGeneralization: 'Beyond single-comparison, the grounded 8b-2shot layer was evaluated on the two CROSS-ITEM narrative surfaces (baseline SYSTEM, GPU): PR-REVIEW AGGREGATE -- stably faithful, invented=[], names the high-risk VIs and cites real per-VI counts with NO fabricated cross-VI sum, and the gate PREFERS grounded over the terse template (real readability). HISTORY TIMELINE (tiny headline N) -- invented=[] on all runs (no invented cross-revision number), but statesStructuralCount is nondeterministic when the model spells the count as a word ("one") instead of the digit; on those runs the gate CORRECTLY falls back to the deterministic template. So the optional layer GENERALIZES with no invented-number hazard on either cross-item surface, and the gated design absorbs the small-N digit-vs-word flakiness.',
+    deterministicAudit: 'mcpNarrativeSurfaceAudit.mjs asserts the I1/I2/I3 invariants across ALL 5 MCP narrative surfaces (comparison over 8 real fixtures, history, repo-index, pr-review aggregate, correlation) -- all clean (totalFailing=0). A repeatable, fail-closed governed guard: any future narrative change or optional grounded layer that invents a number, falsely claims no-change, or drops the headline count fails it.'
   }
 };
 
@@ -149,7 +151,9 @@ md.push('', '## Optional grounded provider (#2381 next thread)', '',
   `- **Design:** ${conclusion.optionalProvider.design}`,
   `- **Accept-rate:** ${conclusion.optionalProvider.acceptRate}`,
   `- **Strict SYSTEM (rejected):** ${conclusion.optionalProvider.systemStrictnessRejected}`,
-  `- **Recommendation:** ${conclusion.optionalProvider.recommendation}`);
+  `- **Recommendation:** ${conclusion.optionalProvider.recommendation}`,
+  `- **Surface generalization:** ${conclusion.optionalProvider.surfaceGeneralization}`,
+  `- **Deterministic audit:** ${conclusion.optionalProvider.deterministicAudit}`);
 fs.writeFileSync(path.join(OUT_DIR, 'vichange-conclusion-2381.md'), md.join('\n') + '\n', 'utf8');
 
 console.log('SHIPPABLE_CONCLUSION_DONE inputsMissing=[' + inputsMissing.join(', ') + ']');
