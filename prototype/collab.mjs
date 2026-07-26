@@ -392,20 +392,33 @@ function validateRef(ref) {
   return ref;
 }
 
-// Idempotency guard: skip an identical (agent,type,task,msg) main-bus post within
-// a 10-minute window so a spurious ^C-retried post does not double-post.
-function isDuplicatePost(type, task, msg) {
-  try {
-    const { messages } = readMessages(12);
-    const cutoff = new Date(Date.now() - 10 * 60 * 1000).toISOString();
-    return messages.some((m) => m.agent === AGENT && m.type === type && (m.task || '') === (task || '') && (m.msg || '') === (msg || '') && m.ts >= cutoff);
-  } catch { return false; }
+// Idempotency guard: an identical (agent,type,task,msg) main-bus post within a
+// 10-minute window (a spurious ^C-retried post) is a duplicate.
+function isDuplicatePost(messages, type, task, msg) {
+  const cutoff = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+  return messages.some((m) => m.agent === AGENT && m.type === type && (m.task || '') === (task || '') && (m.msg || '') === (msg || '') && m.ts >= cutoff);
 }
 
-// CLI posting choke point: apply the idempotency guard, then post to the main bus.
+// Check-before-publish rule: surface every comment the OTHER agent posted since
+// our last message, so a publish never talks over an unread reply.
+function otherAgentSinceMyLastPost(messages) {
+  const mine = messages.filter((m) => m.agent === AGENT).map((m) => m.ts).sort();
+  const myLast = mine.length ? mine[mine.length - 1] : '';
+  return messages.filter((m) => m.agent !== AGENT && m.ts > myLast).sort((a, b) => (a.ts < b.ts ? -1 : 1));
+}
+
+// CLI posting choke point: (1) surface any newer other-agent comment (check-before-
+// publish), (2) apply the idempotency guard, then post to the main bus.
 function cliPost(payload) {
-  if (!FORCE_POST && isDuplicatePost(payload.type, payload.task, payload.msg)) {
-    console.error('collab: identical ' + payload.type + (payload.task ? ' ' + payload.task : '') + ' by ' + AGENT + ' within 10m already on the bus — skipping (use --force to repost).');
+  let messages = [];
+  try { messages = readMessages(15).messages; } catch { /* offline: skip guards */ }
+  const newer = otherAgentSinceMyLastPost(messages);
+  if (newer.length) {
+    console.error('collab: NOTE -- the other agent posted ' + newer.length + ' comment(s) since your last message; confirm this post accounts for them:');
+    for (const m of newer.slice(-3)) console.error('  [' + m.ts + '] ' + m.agent + ' ' + m.type + (m.task ? ' ' + m.task : '') + (m.msg ? ' -- ' + String(m.msg).replace(/\s+/g, ' ').slice(0, 180) : ''));
+  }
+  if (!FORCE_POST && isDuplicatePost(messages, payload.type, payload.task, payload.msg)) {
+    console.error('collab: identical ' + payload.type + (payload.task ? ' ' + payload.task : '') + ' by ' + AGENT + ' within 10m already on the bus -- skipping (use --force to repost).');
     return null;
   }
   return post(payload);
