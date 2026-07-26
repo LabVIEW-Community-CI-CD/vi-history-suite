@@ -23,7 +23,7 @@
 //
 // Message types: CLAIM, ACK, PROGRESS, DONE, BLOCKED, HANDOFF, QUESTION, ANSWER, NOTE.
 
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
@@ -37,6 +37,8 @@ const AGENT = (process.env.VIHS_COLLAB_AGENT || (process.platform === 'win32' ? 
 const BRANCH = 'prototype/ollama-mcp-linux-collab';
 const SCHEMA = 'vihs-collab-msg@v1';
 const TYPES = new Set(['CLAIM', 'ACK', 'PROGRESS', 'DONE', 'BLOCKED', 'HANDOFF', 'QUESTION', 'ANSWER', 'NOTE', 'READY', 'AUTHORIZE', 'REFINE', 'PROPOSE', 'ALIGN', 'SPAWNED', 'RESOLVED']);
+// When true, the idempotency guard is bypassed (set from --force in main()).
+let FORCE_POST = false;
 
 // Readiness-probe targets (used by `checkin`), all env-overridable.
 const OLLAMA = process.env.VIHS_OLLAMA_URL || 'http://localhost:11434';
@@ -368,6 +370,52 @@ function prune(o) {
   return r;
 }
 
+// --- P0/P1 collaboration-ergonomics helpers ---------------------------------
+// Resolve a message from --msg-file <path> | --msg-stdin | --msg "...". Reading
+// from a file or stdin sidesteps outer-shell quoting entirely (apostrophes, {},
+// $-interpolation) — the class of message-corruption that bit the bus before.
+function resolveMessageArg(a) {
+  if (a['msg-file'] && a['msg-file'] !== true) return fs.readFileSync(String(a['msg-file']), 'utf8').replace(/\s+$/, '');
+  if (a['msg-stdin']) return fs.readFileSync(0, 'utf8').replace(/\s+$/, '');
+  return a.msg && a.msg !== true ? String(a.msg) : undefined;
+}
+
+// Validate a cited --ref: it must resolve locally (catch typos); we NOTE (not
+// fail) when it is not yet on origin — the expected publish-before-push window.
+// URL/path-like refs (e.g. issue URLs) skip git validation.
+function validateRef(ref) {
+  if (/^https?:\/\//i.test(ref) || ref.includes('/')) return ref;
+  const type = sh('git', ['cat-file', '-t', ref]);
+  if (!type) { console.error('collab: --ref "' + ref + '" is not a valid git object here (typo, or not committed yet). Aborting.'); process.exit(2); }
+  const isAncestor = sh('git', ['merge-base', '--is-ancestor', ref, 'origin/' + BRANCH]);
+  if (isAncestor === null) console.error('collab: note — --ref ' + ref.slice(0, 12) + ' is not yet on origin/' + BRANCH + ' (fine if publishing before push; push right after).');
+  return ref;
+}
+
+// Idempotency guard: skip an identical (agent,type,task,msg) main-bus post within
+// a 10-minute window so a spurious ^C-retried post does not double-post.
+function isDuplicatePost(type, task, msg) {
+  try {
+    const { messages } = readMessages(12);
+    const cutoff = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+    return messages.some((m) => m.agent === AGENT && m.type === type && (m.task || '') === (task || '') && (m.msg || '') === (msg || '') && m.ts >= cutoff);
+  } catch { return false; }
+}
+
+// CLI posting choke point: apply the idempotency guard, then post to the main bus.
+function cliPost(payload) {
+  if (!FORCE_POST && isDuplicatePost(payload.type, payload.task, payload.msg)) {
+    console.error('collab: identical ' + payload.type + (payload.task ? ' ' + payload.task : '') + ' by ' + AGENT + ' within 10m already on the bus — skipping (use --force to repost).');
+    return null;
+  }
+  return post(payload);
+}
+
+// Local (uncommitted) per-agent read cursor for `poll --new`.
+function cursorPath() { return path.join(os.tmpdir(), 'vihs-collab-cursor-' + AGENT + '.json'); }
+function readCursor() { try { return JSON.parse(fs.readFileSync(cursorPath(), 'utf8')).lastTs || null; } catch { return null; } }
+function writeCursor(ts) { try { fs.writeFileSync(cursorPath(), JSON.stringify({ lastTs: ts, updatedAt: new Date().toISOString() })); } catch { /* best effort */ } }
+
 function boardCommand(rest, a) {
   const sub = rest[0] && !rest[0].startsWith('--') ? rest[0] : 'show';
   if (sub === 'init') {
@@ -430,6 +478,13 @@ function boardCommand(rest, a) {
 async function main() {
   const [cmd, ...rest] = process.argv.slice(2);
   const a = parseArgs(rest);
+  // P0: message from file/stdin (shell-quoting-proof) + fail-loud --ref + --force.
+  if (cmd !== 'run') {
+    const resolvedMsg = resolveMessageArg(a);
+    if (resolvedMsg !== undefined) a.msg = resolvedMsg;
+    if (a.ref && a.ref !== true) a.ref = validateRef(String(a.ref));
+    FORCE_POST = Boolean(a.force);
+  }
 
   if (cmd === 'init') {
     const d = ensureDiscussion();
@@ -443,17 +498,26 @@ async function main() {
     if (a.type) out = out.filter((m) => m.type === String(a.type).toUpperCase());
     if (a.agent) out = out.filter((m) => m.agent === String(a.agent).toUpperCase());
     if (a.since) out = out.filter((m) => m.ts >= a.since);
-    console.log('# ' + discussion.url + '  (' + out.length + ' messages)');
+    // P1: --to-me (from the other agent, addressed to me or unaddressed),
+    //     --unanswered (a QUESTION with no later ANSWER on the same task),
+    //     --new (since the local read cursor), --tail N (last N after filters).
+    if (a['to-me']) out = out.filter((m) => m.agent !== AGENT && (!m.to || m.to === AGENT));
+    if (a.unanswered) out = out.filter((m) => m.type === 'QUESTION' && !messages.some((x) => x.type === 'ANSWER' && (x.task || '') === (m.task || '') && x.ts > m.ts));
+    const cursor = a.new ? readCursor() : null;
+    if (a.new && cursor) out = out.filter((m) => m.ts > cursor);
+    if (a.tail && a.tail !== true) out = out.slice(-Number(a.tail));
+    console.log('# ' + discussion.url + '  (' + out.length + ' message' + (out.length === 1 ? '' : 's') + (a.new && cursor ? ' since ' + cursor : '') + ')');
     for (const m of out) console.log(`[${m.ts}] ${m.agent} ${m.type}${m.task ? ' ' + m.task : ''}${m.ref ? ' @' + m.ref : ''}${m.msg ? ' — ' + m.msg : ''}`);
+    if (a.new) { const maxTs = messages.reduce((mx, m) => (m.ts > mx ? m.ts : mx), cursor || ''); if (maxTs) writeCursor(maxTs); }
     return;
   }
   if (cmd === 'checkin') {
     await checkin(a);
     return;
   }
-  const SPECIAL = ['claim', 'ack', 'done', 'handoff', 'authorize', 'refine', 'post', 'propose', 'align', 'spawn-issue', 'resolve', 'ask', 'answer', 'status', 'board'];
+  const SPECIAL = ['claim', 'ack', 'done', 'handoff', 'authorize', 'refine', 'post', 'propose', 'align', 'spawn-issue', 'resolve', 'ask', 'answer', 'status', 'board', 'ship', 'tasks', 'run'];
   if (!TYPES.has((cmd || '').toUpperCase()) && !SPECIAL.includes(cmd)) {
-    console.error('usage: init | poll | checkin | propose --title X [--resolution issue|close|convert] | ask|answer --discussion N --msg X | align --discussion N | status --discussion N | resolve --discussion N | spawn-issue --discussion N | post --type T [--discussion N] | claim|ack|done|handoff|authorize|refine ...');
+    console.error('usage: init | poll [--new|--to-me|--unanswered|--tail N] | checkin | tasks [--open] | ship --to X --task Y [--msg-file f] [--no-verify] | run --label X [--eta-min N] -- <cmd> | propose --title X | ask|answer --discussion N --msg X | align|status|resolve|spawn-issue --discussion N | post --type T [--discussion N] | claim|ack|done|handoff|authorize|refine ...\n  message input: --msg "..." | --msg-file <path> | --msg-stdin   (file/stdin avoid shell-quoting corruption)');
     process.exit(2);
   }
 
@@ -499,6 +563,79 @@ async function main() {
   }
   if (cmd === 'board') { boardCommand(rest, a); return; }
 
+  if (cmd === 'ship') {
+    // Encode publish-before-push atomically: assert clean + rebased -> publish
+    // (citing HEAD) -> push -> confirm the ref landed on origin.
+    const to = a.to && a.to !== true ? String(a.to) : (AGENT === 'WIN' ? 'LINUX' : 'WIN');
+    const task = req(a, 'task');
+    const type = a.type && a.type !== true ? String(a.type).toUpperCase() : 'HANDOFF';
+    if (!['HANDOFF', 'DONE'].includes(type)) { console.error('ship: --type must be HANDOFF or DONE'); process.exit(2); }
+    const dirty = sh('git', ['status', '--porcelain']);
+    if (dirty === null) { console.error('ship: git status failed (not a repo?)'); process.exit(1); }
+    if (dirty !== '') { console.error('ship: working tree is NOT clean — commit or stash first:\n' + dirty); process.exit(3); }
+    sh('git', ['fetch', 'origin', BRANCH]);
+    const behind = sh('git', ['rev-list', '--count', 'HEAD..origin/' + BRANCH]);
+    if (behind === null) { console.error('ship: cannot compare to origin/' + BRANCH); process.exit(1); }
+    if (Number(behind) > 0) { console.error('ship: local is BEHIND origin/' + BRANCH + ' by ' + behind + ' — rebase first: git rebase origin/' + BRANCH); process.exit(3); }
+    const ahead = sh('git', ['rev-list', '--count', 'origin/' + BRANCH + '..HEAD']);
+    if (Number(ahead) === 0) { console.error('ship: nothing to ship (HEAD == origin/' + BRANCH + ')'); process.exit(3); }
+    const head = sh('git', ['rev-parse', 'HEAD']);
+    const r = cliPost({ type, task, to, ref: head, msg: a.msg || undefined, next: a.next || undefined });
+    if (r) console.log('ship: published ' + type + ' (publish-before-push) ' + r.comment.url);
+    else console.log('ship: publish skipped as duplicate; proceeding to push ' + head.slice(0, 12));
+    const pushArgs = ['push']; if (a['no-verify']) pushArgs.push('--no-verify'); pushArgs.push('origin', BRANCH);
+    let pushed = true; let pushErr = '';
+    try { execFileSync('git', pushArgs, { encoding: 'utf8', stdio: 'pipe', timeout: 300000 }); } catch (e) { pushed = false; pushErr = (e.stderr || e.stdout || e.message || '').toString(); }
+    if (!pushed) { console.error('ship: git push FAILED (bus message already posted). If it is the advisory pre-push gate, re-run: git push --no-verify origin ' + BRANCH + '\n' + pushErr.slice(0, 600)); process.exit(1); }
+    sh('git', ['fetch', 'origin', BRANCH]);
+    const stillAhead = sh('git', ['rev-list', '--count', 'origin/' + BRANCH + '..HEAD']);
+    console.log(Number(stillAhead) === 0 ? 'ship: pushed + CONFIRMED origin/' + BRANCH + ' @ ' + head.slice(0, 12) : 'ship: push returned ok but origin still behind — verify manually');
+    return;
+  }
+  if (cmd === 'tasks') {
+    const { discussion, messages } = readMessages(Number(a.limit) || 80);
+    if (!discussion) { console.log('no bus discussion yet; run `node prototype/collab.mjs init`'); return; }
+    const byTask = new Map();
+    for (const m of messages) { const t = m.task || '(none)'; if (!byTask.has(t)) byTask.set(t, []); byTask.get(t).push(m); }
+    const rows = [];
+    for (const [task, msgs] of byTask) {
+      msgs.sort((x, y) => (x.ts < y.ts ? -1 : 1));
+      const last = msgs[msgs.length - 1];
+      const lastRefMsg = [...msgs].reverse().find((m) => m.ref);
+      const openQ = msgs.filter((m) => m.type === 'QUESTION' && !msgs.some((x) => x.type === 'ANSWER' && x.ts > m.ts)).length;
+      const lastHandoff = [...msgs].reverse().find((m) => (m.type === 'HANDOFF' || m.type === 'AUTHORIZE') && m.to);
+      const done = msgs.some((m) => m.type === 'DONE' || m.type === 'RESOLVED');
+      const waitingOn = done ? '-' : (lastHandoff ? lastHandoff.to : last.agent);
+      rows.push({ task, last: last.type, by: last.agent, ts: last.ts, waitingOn, openQ, ref: lastRefMsg ? String(lastRefMsg.ref) : '', done });
+    }
+    rows.sort((x, y) => (x.ts < y.ts ? 1 : -1));
+    const show = a.open ? rows.filter((r) => !r.done) : rows;
+    console.log('# tasks on ' + discussion.url + '  (' + show.length + ')');
+    for (const r of show) console.log('  ' + (r.done ? '[done]' : '[open]') + ' ' + r.task + '  last=' + r.last + ' by ' + r.by + '  waitingOn=' + r.waitingOn + (r.openQ ? '  openQ=' + r.openQ : '') + (r.ref ? '  ref=' + r.ref.slice(0, 12) : '') + '  ' + r.ts);
+    return;
+  }
+  if (cmd === 'run') {
+    // File-per-cycle + ETA discipline in-tool: run a DIRECT executable (not a
+    // shell one-liner), tee combined output to a stable file, stamp actual-vs-ETA.
+    const dd = rest.indexOf('--');
+    const flags = parseArgs(dd >= 0 ? rest.slice(0, dd) : rest);
+    const argv = dd >= 0 ? rest.slice(dd + 1) : [];
+    if (!argv.length) { console.error('usage: run --label X [--eta-min N] -- <command> [args...]   (direct executable, not a shell one-liner)'); process.exit(2); }
+    const label = (flags.label && flags.label !== true ? String(flags.label) : 'run').replace(/[^a-z0-9._-]/gi, '-');
+    const dir = path.join(os.tmpdir(), 'vihs-collab-run'); fs.mkdirSync(dir, { recursive: true });
+    const outPath = path.join(dir, label + '.out.txt'); const metaPath = path.join(dir, label + '.meta.json');
+    const etaMin = flags['eta-min'] && flags['eta-min'] !== true ? Number(flags['eta-min']) : null;
+    const start = new Date();
+    console.log('run [' + label + '] start=' + start.toISOString() + (etaMin != null ? '  eta~' + new Date(start.getTime() + etaMin * 60000).toISOString() + ' (~' + etaMin + ' min)' : '') + '  out=' + outPath);
+    const res = spawnSync(argv[0], argv.slice(1), { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+    const end = new Date(); const elapsedSec = Math.round((end - start) / 1000);
+    fs.writeFileSync(outPath, (res.stdout || '') + (res.stderr || ''));
+    const meta = { label, start: start.toISOString(), end: end.toISOString(), elapsedSec, exitCode: res.status, etaMin, etaAccuracy: etaMin != null ? { estimateSec: etaMin * 60, actualSec: elapsedSec, deltaSec: elapsedSec - etaMin * 60 } : null };
+    fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+    console.log('run [' + label + '] done exit=' + res.status + ' elapsed=' + elapsedSec + 's' + (etaMin != null ? ' (eta ' + (etaMin * 60) + 's, delta ' + (elapsedSec - etaMin * 60) + 's)' : '') + '  meta=' + metaPath);
+    process.exit(typeof res.status === 'number' ? res.status : 0);
+  }
+
   if (cmd === 'claim') {
     // advisory lock: warn if the OTHER agent has a live CLAIM on this task with no later DONE/HANDOFF/ACK from us.
     const task = req(a, 'task');
@@ -509,28 +646,28 @@ async function main() {
     if (otherClaim && !resolvedAfter) {
       console.error(`CONFLICT: ${otherClaim.agent} has a live CLAIM on "${task}" (${otherClaim.ts}). Coordinate before proceeding (poll, then ack/handoff).`);
     }
-    const r = post({ type: 'CLAIM', task, msg: a.msg || undefined });
-    console.log((otherClaim && !resolvedAfter ? 'posted CLAIM (CONFLICT — see above) ' : 'posted CLAIM ') + r.comment.url);
+    const r = cliPost({ type: 'CLAIM', task, msg: a.msg || undefined });
+    if (r) console.log((otherClaim && !resolvedAfter ? 'posted CLAIM (CONFLICT — see above) ' : 'posted CLAIM ') + r.comment.url);
     return;
   }
-  if (cmd === 'ack') { const r = post({ type: 'ACK', task: req(a, 'task'), msg: a.msg || undefined }); console.log('posted ACK ' + r.comment.url); return; }
-  if (cmd === 'done') { const r = post({ type: 'DONE', task: req(a, 'task'), ref: a.ref || undefined, msg: a.msg || undefined, next: a.next || undefined }); console.log('posted DONE ' + r.comment.url); return; }
-  if (cmd === 'handoff') { const r = post({ type: 'HANDOFF', task: req(a, 'task'), to: a.to || undefined, ref: a.ref || undefined, msg: a.msg || undefined }); console.log('posted HANDOFF ' + r.comment.url); return; }
-  if (cmd === 'authorize') { const r = post({ type: 'AUTHORIZE', task: req(a, 'task'), to: a.to || 'LINUX', ref: a.ref || undefined, msg: a.msg || undefined, next: a.next || undefined }); console.log('posted AUTHORIZE ' + r.comment.url); return; }
-  if (cmd === 'refine') { const r = post({ type: 'REFINE', task: req(a, 'task'), ref: req(a, 'ref'), to: a.to || 'LINUX', msg: a.msg || undefined, next: a.next || undefined }); console.log('posted REFINE ' + r.comment.url); return; }
+  if (cmd === 'ack') { const r = cliPost({ type: 'ACK', task: req(a, 'task'), msg: a.msg || undefined }); if (r) console.log('posted ACK ' + r.comment.url); return; }
+  if (cmd === 'done') { const r = cliPost({ type: 'DONE', task: req(a, 'task'), ref: a.ref || undefined, msg: a.msg || undefined, next: a.next || undefined }); if (r) console.log('posted DONE ' + r.comment.url); return; }
+  if (cmd === 'handoff') { const r = cliPost({ type: 'HANDOFF', task: req(a, 'task'), to: a.to || undefined, ref: a.ref || undefined, msg: a.msg || undefined }); if (r) console.log('posted HANDOFF ' + r.comment.url); return; }
+  if (cmd === 'authorize') { const r = cliPost({ type: 'AUTHORIZE', task: req(a, 'task'), to: a.to || 'LINUX', ref: a.ref || undefined, msg: a.msg || undefined, next: a.next || undefined }); if (r) console.log('posted AUTHORIZE ' + r.comment.url); return; }
+  if (cmd === 'refine') { const r = cliPost({ type: 'REFINE', task: req(a, 'task'), ref: req(a, 'ref'), to: a.to || 'LINUX', msg: a.msg || undefined, next: a.next || undefined }); if (r) console.log('posted REFINE ' + r.comment.url); return; }
   if (cmd === 'post') {
     const type = req(a, 'type').toUpperCase();
     if (!TYPES.has(type)) { console.error('unknown --type ' + type + ' (valid: ' + [...TYPES].join(', ') + ')'); process.exit(2); }
     const payload = { type, task: a.task || undefined, ref: a.ref || undefined, msg: a.msg || undefined, next: a.next || undefined, to: a.to || undefined };
-    const r = a.discussion && a.discussion !== true ? postToDiscussion(Number(a.discussion), payload) : post(payload);
-    console.log('posted ' + type + (a.discussion ? ' on #' + a.discussion : '') + '  ' + r.comment.url);
+    const r = a.discussion && a.discussion !== true ? postToDiscussion(Number(a.discussion), payload) : cliPost(payload);
+    if (r) console.log('posted ' + type + (a.discussion ? ' on #' + a.discussion : '') + '  ' + r.comment.url);
     return;
   }
 
   // generic post
   const type = cmd.toUpperCase();
-  const r = post({ type, task: a.task || undefined, ref: a.ref || undefined, msg: a.msg || undefined, next: a.next || undefined, to: a.to || undefined });
-  console.log('posted ' + type + ' ' + r.comment.url);
+  const r = cliPost({ type, task: a.task || undefined, ref: a.ref || undefined, msg: a.msg || undefined, next: a.next || undefined, to: a.to || undefined });
+  if (r) console.log('posted ' + type + ' ' + r.comment.url);
 }
 
 function req(a, key) {
