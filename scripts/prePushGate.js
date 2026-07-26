@@ -18,6 +18,10 @@
 // mapped; the filesystem/probe/loop I/O shim + CLI are v8-ignored (integration-only).
 
 const gw = require('./agentGateway');
+// summarizeDisk is the shared single source of truth (scripts/systemCapability.js,
+// decision A / #2441). It normalizes a raw disk sample into { present, writeMBps,
+// readMBps } so the launch gate + pre-push gate share ONE ledger record schema.
+const { summarizeDisk } = require('./systemCapability');
 
 const RESOURCE = 'pre-push-validation';
 const DEFAULT_MAX_ATTEMPTS = 6;
@@ -56,22 +60,12 @@ function resolveMaxAttempts(rawValue, def) {
   return Number.isInteger(n) && n >= 1 ? n : fallback;
 }
 
-/** Normalize a raw disk sample into the shared { present, writeMBps, readMBps } shape,
- *  matching the launch-gate/diskBenchmark record so the contention ledger has ONE record
- *  schema (cpu+gpu+disk). The pre-push gate does not run a disk micro-benchmark (too slow
- *  per push) so its disk is null-shaped; the launch gate populates it. On diskBenchmark
- *  graduation to scripts/, reconcile to that module's summarizeDisk. */
-function summarizeDisk(rawDisk) {
-  rawDisk = rawDisk || {};
-  const writeMBps = Number.isFinite(rawDisk.writeMBps) ? rawDisk.writeMBps : null;
-  const readMBps = Number.isFinite(rawDisk.readMBps) ? rawDisk.readMBps : null;
-  return { present: writeMBps != null || readMBps != null, writeMBps, readMBps };
-}
-
 /** Normalize a raw resource sample into a compact, benchmark-correlatable shape.
  *  loadPerCore is the CPU-pressure signal (loadavg1 / cores); gpu carries presence
- *  + best-effort utilization; disk carries transfer rates — so a contention point can
- *  be attributed to CPU, GPU, or DISK pressure in one unified record. */
+ *  + best-effort utilization; disk carries transfer rates (via the shared summarizeDisk)
+ *  — so a contention point can be attributed to CPU, GPU, or DISK pressure in one unified
+ *  record. The pre-push gate runs no disk micro-benchmark (too slow per push) so its disk
+ *  is null-shaped; the launch gate populates it. */
 function summarizeResources(raw) {
   raw = raw || {};
   const cores = Number(raw.cores) || 0;
