@@ -26,7 +26,7 @@ configure.
 
 ## Tools
 
-The server exposes 18 tools plus 7 guided prompts and 12 schema resources. Fifteen
+The server exposes 19 tools plus 7 guided prompts and 12 schema resources. Sixteen
 tools operate without running a comparison (Git, supplied data, a local
 preview-cache directory, or read-only runtime/environment probes); three invoke a
 real LabVIEW comparison and therefore need a comparison runtime (host LabVIEW or a
@@ -52,6 +52,7 @@ Docker LabVIEW image) and may take minutes.
 | `get_runtime_health` | Resolves the comparison runtime **without running a comparison** and returns a `vi-history-suite/runtime-health@v1` snapshot (selected provider/engine/container image, or the `blockedReason` when none is available) so an agent can answer "can I compare here, and if not why?" before spending minutes on a real run. | Runtime resolution (never renders) | none (`platform`, `settings` optional) |
 | `get_preview_diagnostics` | Returns a `vi-history-suite/preview-diagnostics@v1` environment snapshot (resolved preview runtime, Docker availability + OS type + LabVIEW images, optional cache statistics) so an agent can answer "is preview generation possible here, and is the cache populated?" in one call. | Runtime + Docker probe (never renders) | none (`cacheDirectory`, `processPlatform`, `settings` optional) |
 | `list_changed_vis` | Lists the VI source files (`.vi`/`.vit`/`.vim`/`.ctl`) changed between two Git revisions — a cheap `vi-history-suite/changed-vis@v1` listing (no comparison runtime) so an agent can scope a review before running the minutes-long `build_vi_pr_review`. | None (pure Git) | `repositoryRoot`, `baseHash`, `selectedHash` |
+| `get_vi_generated_code` | Retrieves the stored lvkit-generated Python for one VI revision — a `vi-history-suite/lvkit-vi-scan@v1` envelope (the LabVIEW-free Python projection + module inventory), addressed by repo-relative path + content signature; returns the stored scan on a cache hit or a not-found result. Never runs lvkit. | None (read-only fs) | `viPath`, `contentSignature` |
 
 ### Tool annotations
 
@@ -62,7 +63,8 @@ and `destructiveHint: false`. `openWorldHint` is `true` only for the tools that
 reach an external system (Git, a LabVIEW comparison runtime, or the preview-cache
 filesystem) — the same set that requires the async server entrypoint — and
 `false` for the pure, in-process tools (`summarize_vi_comparison`,
-`get_vi_semantic_comparison`, `get_vi_semantic_schema`,
+`get_vi_semantic_comparison`, `get_vi_preview_comparison_correlation`,
+`get_vi_preview_region_correlation`, `get_vi_semantic_schema`,
 `validate_vi_semantic_document`). Hints are advisory, not a security boundary;
 they let hosts auto-approve read-only calls and warn before open-world effects.
 
