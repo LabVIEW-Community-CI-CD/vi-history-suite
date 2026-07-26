@@ -1,0 +1,47 @@
+{
+  "schema": "vi-history-suite/ollama-grounded-aggregate-eval@v1",
+  "generatedAt": "2026-07-26T04:00:36.248Z",
+  "host": "LINUX",
+  "backend": "gpu",
+  "ollamaUrl": "http://localhost:11434",
+  "model": "vichange8b-2shot",
+  "surface": "pr-review-aggregate",
+  "changedViCount": 8,
+  "risk": {
+    "high": 7,
+    "medium": 0,
+    "low": 1
+  },
+  "allowedNumbers": [
+    8,
+    7,
+    0,
+    1,
+    2,
+    8,
+    2,
+    19,
+    43,
+    2,
+    2,
+    6
+  ],
+  "template": {
+    "narrative": "8 changed VIs. 8 with differences, 0 unchanged. Risk: 7 high, 1 low.",
+    "score": 1,
+    "failedParts": []
+  },
+  "grounded": {
+    "narrative": "This pull request affects 8 VIs. The risk breakdown is:\n\n* High-risk: 7 VIs (loadtemplates, lv_icon, menuselection(user), mousedown, picturecontrol_mouseup, process template graphics, visibletextmarker)\n* Medium-risk: 0 VIs\n* Low-risk: 1 VI (vi template)\n\nThe highest-risk VIs are picturecontrol_mouseup with 43 non-cosmetic structural changes and lv_icon with 8 non-cosmetic structural changes.",
+    "score": 1,
+    "failedParts": [],
+    "invented": []
+  },
+  "selection": {
+    "source": "candidate",
+    "reason": "candidate-not-less-faithful",
+    "candidateScore": 1,
+    "fallbackScore": 1
+  },
+  "note": "Aggregate (cross-VI) PR-review reviewer summary. allowedNumbers = aggregate rollup + real per-VI counts; any other integer > 1 in the grounded summary is an INVENTED cross-VI number (the higher-stakes hazard). BASELINE SYSTEM only."
+}
