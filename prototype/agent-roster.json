@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "agents": [
+    {
+      "machineIdHash": "bfd8d07d0112",
+      "teamName": "WIN-vitlt",
+      "planeDefaults": { "plane": "native" },
+      "notes": "WIN oracle - Windows native, LabVIEW 2026 x64"
+    }
+  ]
+}

@@ -28,12 +28,23 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import * as board from './boardStore.mjs';
+import { deriveTeamName } from './deriveAgentEnvironment.mjs';
 
 const OWNER = process.env.VIHS_COLLAB_OWNER || 'LabVIEW-Community-CI-CD';
 const REPO = process.env.VIHS_COLLAB_REPO || 'vi-history-suite';
 const CATEGORY = process.env.VIHS_COLLAB_CATEGORY || 'General';
 const TITLE = process.env.VIHS_COLLAB_TITLE || 'Prototype handshake: Ollama × MCP × docker-linux (Windows↔Linux collab)';
-const AGENT = (process.env.VIHS_COLLAB_AGENT || (process.platform === 'win32' ? 'WIN' : 'LINUX')).toUpperCase();
+// Self-identify: env override wins, else DERIVE the unique per-machine team name
+// (issue #2392). Fail-safe to the legacy OS-plane label so identity derivation can
+// never break the bus.
+const AGENT = (() => {
+  if (process.env.VIHS_COLLAB_AGENT) return process.env.VIHS_COLLAB_AGENT.toUpperCase();
+  try {
+    return deriveTeamName().toUpperCase();
+  } catch {
+    return process.platform === 'win32' ? 'WIN' : 'LINUX';
+  }
+})();
 const BRANCH = 'prototype/ollama-mcp-linux-collab';
 const SCHEMA = 'vihs-collab-msg@v1';
 const TYPES = new Set(['CLAIM', 'ACK', 'PROGRESS', 'DONE', 'BLOCKED', 'HANDOFF', 'QUESTION', 'ANSWER', 'NOTE', 'READY', 'AUTHORIZE', 'REFINE', 'PROPOSE', 'ALIGN', 'SPAWNED', 'RESOLVED']);
@@ -528,9 +539,28 @@ async function main() {
     await checkin(a);
     return;
   }
-  const SPECIAL = ['claim', 'ack', 'done', 'handoff', 'authorize', 'refine', 'post', 'propose', 'align', 'spawn-issue', 'resolve', 'ask', 'answer', 'status', 'board', 'ship', 'tasks', 'run'];
+  if (cmd === 'whoami') {
+    // Read-only agent-environment derivation (issue #2392). `--register` persists
+    // the roster row (explicit self-registration); default is side-effect-free.
+    const { deriveAgentEnvironment } = await import('./deriveAgentEnvironment.mjs');
+    const d = deriveAgentEnvironment({ write: Boolean(a.register) });
+    const { machineId, ...safe } = d; // never print the raw machineId (local-only)
+    if (a.json) {
+      console.log(JSON.stringify(safe, null, 2));
+      return;
+    }
+    console.log(
+      `teamName=${d.teamName} (via ${d.source.resolvedBy})  plane=${d.plane}  os=${d.osPlatform}/${d.arch}  host=${d.source.hostname}`
+    );
+    console.log(
+      `machineIdHash=${d.machineIdHash}  labviewNative=${d.facets.labviewNative?.present}  ` +
+        `docker=${d.capabilities.docker?.present}(${d.capabilities.docker?.osType})${a.register ? '  [registered]' : ''}`
+    );
+    return;
+  }
+  const SPECIAL = ['claim', 'ack', 'done', 'handoff', 'authorize', 'refine', 'post', 'propose', 'align', 'spawn-issue', 'resolve', 'ask', 'answer', 'status', 'board', 'ship', 'tasks', 'run', 'whoami'];
   if (!TYPES.has((cmd || '').toUpperCase()) && !SPECIAL.includes(cmd)) {
-    console.error('usage: init | poll [--new|--to-me|--unanswered|--tail N] | checkin | tasks [--open] | ship --to X --task Y [--msg-file f] [--no-verify] | run --label X [--eta-min N] -- <cmd> | propose --title X | ask|answer --discussion N --msg X | align|status|resolve|spawn-issue --discussion N | post --type T [--discussion N] | claim|ack|done|handoff|authorize|refine ...\n  message input: --msg "..." | --msg-file <path> | --msg-stdin   (file/stdin avoid shell-quoting corruption)');
+    console.error('usage: init | poll [--new|--to-me|--unanswered|--tail N] | whoami [--json|--register] | checkin | tasks [--open] | ship --to X --task Y [--msg-file f] [--no-verify] | run --label X [--eta-min N] -- <cmd> | propose --title X | ask|answer --discussion N --msg X | align|status|resolve|spawn-issue --discussion N | post --type T [--discussion N] | claim|ack|done|handoff|authorize|refine ...\n  message input: --msg "..." | --msg-file <path> | --msg-stdin   (file/stdin avoid shell-quoting corruption)');
     process.exit(2);
   }
 
