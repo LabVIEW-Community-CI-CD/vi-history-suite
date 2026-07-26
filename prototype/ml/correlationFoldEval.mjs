@@ -65,25 +65,62 @@ function smokeBatch() {
 }
 
 /**
+ * Collision disambiguation for auto-discovery: fixtureSlug (basename lowercased) -> repo. Icon-editor
+ * vendors actor-framework code, so some basenames (PrepareIESource, RestoreSetupLVSource) exist in BOTH
+ * repos and the flat rendered-HTML filename cannot say which was rendered. Authoritative source =
+ * WIN benchmark-dataset.json (per-sample repo + vi); a committed correlation-repo-hints.json supplies
+ * overrides for renders benchmark does not cover yet. NEVER guesses -- only maps what these state.
+ */
+function loadRepoDisambiguation() {
+  const map = new Map();
+  const benchPath = path.join(FIXTURES, 'benchmark-dataset.json');
+  if (fs.existsSync(benchPath)) {
+    try {
+      const bench = JSON.parse(fs.readFileSync(benchPath, 'utf8'));
+      for (const s of bench.samples || []) {
+        if (s.repo && s.vi) map.set(path.basename(s.vi).replace(/\.vi$/i, '').toLowerCase(), s.repo);
+      }
+    } catch { /* ignore malformed benchmark */ }
+  }
+  const hintsPath = path.join('prototype', 'ml', 'dataset', 'correlation-repo-hints.json');
+  if (fs.existsSync(hintsPath)) {
+    try {
+      const hints = JSON.parse(fs.readFileSync(hintsPath, 'utf8'));
+      for (const [k, v] of Object.entries(hints.overrides || {})) map.set(k.toLowerCase(), v);
+    } catch { /* ignore malformed hints */ }
+  }
+  return map;
+}
+
+/**
  * CORR_AUTO batch: map EVERY rendered *.labview-diff-report.html in FIXTURES to a manifest slug by
  * kebab basename, inferring repo from whichever repoTag makes `${repoTag}-${kebab}` a real manifest
- * slug. A file that matches no slug -- or matches ambiguously across repos -- is skipped (reported as
- * unmapped), never guessed. This lets each accumulating WIN batch be scored with a single re-run
- * (grows LORO fold0 toward 102 automatically) with no hand-built batch JSON.
+ * slug. A basename that matches slugs in MULTIPLE repos (cross-repo collision) is resolved via the
+ * authoritative repo disambiguation (benchmark-dataset.json + committed hints); if still unresolved,
+ * or if it matches no slug, it is skipped (reported in unmappedFixtures with a reason), never guessed.
+ * This lets each accumulating WIN batch be scored with a single re-run (grows LORO fold0 toward 102).
  */
 function autoDiscoverBatch(foldsManifest) {
   const slugSet = new Set(foldsManifest.allSlugs || []);
   const repos = [...new Set((foldsManifest.loro || []).map((f) => f.heldOutRepo))];
+  const disambig = loadRepoDisambiguation();
   const batch = [];
   const unmapped = [];
   for (const f of fs.readdirSync(FIXTURES).filter((x) => /\.labview-diff-report\.html$/i.test(x)).sort()) {
     const base = f.replace(/\.labview-diff-report\.html$/i, '');
     const kebab = base.replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase();
     const matches = repos.filter((r) => slugSet.has(`${r}-${kebab}`));
+    let repo = null;
     if (matches.length === 1) {
-      batch.push({ slug: `${matches[0]}-${kebab}`, repo: matches[0], htmlPath: path.join(FIXTURES, f), cosmeticCount: null });
+      repo = matches[0];
+    } else if (matches.length > 1) {
+      const hint = disambig.get(base.toLowerCase());
+      if (hint && matches.includes(hint)) repo = hint;
+    }
+    if (repo) {
+      batch.push({ slug: `${repo}-${kebab}`, repo, htmlPath: path.join(FIXTURES, f), cosmeticCount: null });
     } else {
-      unmapped.push({ file: f, kebab, matchedRepos: matches });
+      unmapped.push({ file: f, kebab, matchedRepos: matches, reason: matches.length > 1 ? 'collision-unresolved' : 'no-slug' });
     }
   }
   return { batch, unmapped };
