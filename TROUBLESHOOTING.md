@@ -436,6 +436,50 @@ confirm dev dependencies are not being omitted (neither `NODE_ENV` nor
 `npm_config_omit` should be set to `dev` or `production`). See
 [INSTALL.md](./INSTALL.md) for the full source-evaluation setup.
 
+## Pre-push `adr:check` fails: "Active requirements not linked into any ADR"
+
+### Symptom
+
+`git push` (or `npm run adr:check`) fails in the pre-push hook with:
+
+```
+[adr-check] ADR infrastructure check failed:
+  - Active requirements not linked into any ADR (1): VHS-REQ-NNN
+```
+
+even though the requirement's SRS/RTM/id-index/inventory rows are correct and the
+requirements gates (`npm run requirements:integrity`, `traceability:audit`,
+`requirements:linkage`, `requirements:criteria`) all pass.
+
+### Cause
+
+`scripts/checkAdrIndex.js` (the `adr:check` gate) fails closed when a new
+**Active** `VHS-REQ-NNN` row in `docs/requirements/rtm.csv` is not cited verbatim
+in **any** `docs/architecture/adr/*.md` file — every Active software requirement
+must have an Architecture Decision Record behind it. This gate is **not** part of
+the requirements gates, so those can be green while `adr:check` still blocks the
+push. (The gate also requires the requirement's parent `VHS-SYS-REQ-NNN` to be
+cited by some ADR, but an existing system requirement usually already is.)
+
+### Fix
+
+Cite the new requirement in an ADR — extend an existing ADR that covers the same
+decision, or author a new one (copy `docs/architecture/adr/ADR-template.md` and
+take the next sequential number). A new ADR must:
+
+- carry the `# ADR-NNNN: <Title>` heading plus `- Status:`, `- Date:`, and the
+  `## Context` / `## Decision` / `## Consequences` sections;
+- cite the `VHS-REQ-NNN` id (and its parent `VHS-SYS-REQ-NNN`) verbatim, e.g. in
+  a `## Requirements recorded` line;
+- be added to the ADR index table in `docs/architecture/adr/README.md` with a row
+  whose **title exactly matches** the ADR heading title;
+- get an `docs/architecture/adr/ADR-NNNN-*.md` row in
+  `docs/requirements/traceability-inventory.csv` (`asset-doc,No` unless the ADR is
+  itself referenced in the RTM).
+
+Re-run `npm run adr:check` (green when the index, structure, SRS coverage, and
+SYRS coverage are consistent), then push again.
+
 ## Source Evaluation
 
 Inside a devcontainer or Codespace, reset the basic loop with:
