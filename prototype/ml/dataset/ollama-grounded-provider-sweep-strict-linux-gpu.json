@@ -1,0 +1,328 @@
+{
+  "schema": "vi-history-suite/grounded-provider-sweep@v1",
+  "generatedAt": "2026-07-26T03:30:55.563Z",
+  "ollama": "http://localhost:11434",
+  "systemAppend": "Additionally: report ONLY the two tallies -- the non-cosmetic structural count and the cosmetic count. Do NOT enumerate a per-object or per-change numeric breakdown, and introduce no count other than those two tallies.",
+  "note": "Optional grounded MCP narrative provider sweep. Per config: acceptRate = fraction of fixtures where the grounded narrative cleared the faithfulness safety gate without regressing the shipped template; otherwise the provider falls back to the deterministic template.",
+  "viCount": 8,
+  "configs": [
+    {
+      "id": "8b-raw",
+      "model": "llama3.1:8b",
+      "present": true,
+      "viCount": 8,
+      "acceptedCount": 8,
+      "acceptRate": 1,
+      "meanAcceptedGroundedScore": 1,
+      "reasons": {
+        "grounded-passed-gate": 8
+      },
+      "sampleAcceptedNarrative": "There are 2 non-cosmetic structural changes between the two VI revisions.\n\nAdditionally, there are 0 cosmetic differences in terms of position or appearance.",
+      "rows": [
+        {
+          "vi": "loadtemplates",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 1,
+          "groundedScore": 1,
+          "groundedNarrative": "There are 2 non-cosmetic structural changes between the two VI revisions.\n\nAdditionally, there are 0 cosmetic differences in terms of position or appearance."
+        },
+        {
+          "vi": "lv_icon",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 0.75,
+          "groundedScore": 1,
+          "groundedNarrative": "There are 8 non-cosmetic structural changes between the two VI revisions.\n\nAdditionally, there are 19 cosmetic differences in position or appearance."
+        },
+        {
+          "vi": "menuselection(user)",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 1,
+          "groundedScore": 1,
+          "groundedNarrative": "There are 2 non-cosmetic structural changes and 1 cosmetic difference between the two VI revisions."
+        },
+        {
+          "vi": "mousedown",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 0.75,
+          "groundedScore": 1,
+          "groundedNarrative": "There are 19 non-cosmetic structural changes between the two VI revisions. There are also 47 cosmetic differences in position or appearance."
+        },
+        {
+          "vi": "picturecontrol_mouseup",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 0.75,
+          "groundedScore": 1,
+          "groundedNarrative": "There are 43 non-cosmetic structural changes and 29 cosmetic differences."
+        },
+        {
+          "vi": "process template graphics",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 1,
+          "groundedScore": 1,
+          "groundedNarrative": "There are 2 non-cosmetic structural changes between the two VI revisions.\n\nAdditionally, there are 0 cosmetic differences in terms of position or appearance."
+        },
+        {
+          "vi": "vi template",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 1,
+          "groundedScore": 1,
+          "groundedNarrative": "There are 2 non-cosmetic structural changes between the two revisions.\n\nThere are 0 cosmetic differences in terms of position and appearance."
+        },
+        {
+          "vi": "visibletextmarker",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 1,
+          "groundedScore": 1,
+          "groundedNarrative": "There are 6 non-cosmetic structural changes between the two VI revisions.\n\nAdditionally, there are 0 cosmetic differences in terms of position or appearance."
+        }
+      ]
+    },
+    {
+      "id": "8b-fewshot",
+      "model": "vichange8b-fewshot",
+      "present": true,
+      "viCount": 8,
+      "acceptedCount": 7,
+      "acceptRate": 0.875,
+      "meanAcceptedGroundedScore": 1,
+      "reasons": {
+        "grounded-passed-gate": 7,
+        "failed-safety-gate": 1
+      },
+      "sampleAcceptedNarrative": "There are 2 non-cosmetic structural changes between the two VI revisions. There are no cosmetic (position/appearance) differences.",
+      "rows": [
+        {
+          "vi": "loadtemplates",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 1,
+          "groundedScore": 1,
+          "groundedNarrative": "There are 2 non-cosmetic structural changes between the two VI revisions. There are no cosmetic (position/appearance) differences."
+        },
+        {
+          "vi": "lv_icon",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 0.75,
+          "groundedScore": 1,
+          "groundedNarrative": "There are 8 non-cosmetic structural changes between the two VI revisions. Additionally, there are 19 cosmetic differences in position or appearance."
+        },
+        {
+          "vi": "menuselection(user)",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 1,
+          "groundedScore": 1,
+          "groundedNarrative": "There are 2 non-cosmetic structural changes between the two VI revisions. Additionally, there is 1 cosmetic difference related to position/appearance."
+        },
+        {
+          "vi": "mousedown",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 0.75,
+          "groundedScore": 1,
+          "groundedNarrative": "There are 19 non-cosmetic structural changes. There are 47 cosmetic differences related to position and appearance."
+        },
+        {
+          "vi": "picturecontrol_mouseup",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 0.75,
+          "groundedScore": 1,
+          "groundedNarrative": "There are 43 non-cosmetic structural changes. There are 29 cosmetic differences in position/appearance."
+        },
+        {
+          "vi": "process template graphics",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 1,
+          "groundedScore": 1,
+          "groundedNarrative": "There are 2 non-cosmetic structural changes between the two VI revisions. There are no cosmetic (position/appearance) differences."
+        },
+        {
+          "vi": "vi template",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 1,
+          "groundedScore": 1,
+          "groundedNarrative": "There are 2 non-cosmetic structural changes between the two revisions of this VI. There are no cosmetic differences, meaning that any changes in position or appearance do not affect the functionality or behavior of the VI."
+        },
+        {
+          "vi": "visibletextmarker",
+          "source": "template",
+          "reason": "failed-safety-gate",
+          "templateScore": 1,
+          "groundedScore": 0.75,
+          "groundedNarrative": "There are 6 non-cosmetic structural changes between the two VI revisions. There are no cosmetic differences, meaning all 20 reported differences by LabVIEW's comparison are related to position/appearance and not structural in nature."
+        }
+      ]
+    },
+    {
+      "id": "8b-2shot",
+      "model": "vichange8b-2shot",
+      "present": true,
+      "viCount": 8,
+      "acceptedCount": 6,
+      "acceptRate": 0.75,
+      "meanAcceptedGroundedScore": 1,
+      "reasons": {
+        "failed-safety-gate": 2,
+        "grounded-passed-gate": 6
+      },
+      "sampleAcceptedNarrative": "There are 8 non-cosmetic structural changes between the two revisions of this VI, and 19 cosmetic differences in position/appearance.",
+      "rows": [
+        {
+          "vi": "loadtemplates",
+          "source": "template",
+          "reason": "failed-safety-gate",
+          "templateScore": 1,
+          "groundedScore": 0.75,
+          "groundedNarrative": "There are 2 non-cosmetic structural changes between the two revisions of this VI. There are no cosmetic differences, meaning that all 20 reported differences by LabVIEW's comparison are due to position/appearance changes that lvkit omits by design."
+        },
+        {
+          "vi": "lv_icon",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 0.75,
+          "groundedScore": 1,
+          "groundedNarrative": "There are 8 non-cosmetic structural changes between the two revisions of this VI, and 19 cosmetic differences in position/appearance."
+        },
+        {
+          "vi": "menuselection(user)",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 1,
+          "groundedScore": 1,
+          "groundedNarrative": "There are 2 non-cosmetic structural changes between the two revisions of this VI. Additionally, there is 1 cosmetic difference related to position/appearance."
+        },
+        {
+          "vi": "mousedown",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 0.75,
+          "groundedScore": 1,
+          "groundedNarrative": "19 non-cosmetic structural changes. There are 47 cosmetic differences (position/appearance) that do not affect the VI's behavior or structure."
+        },
+        {
+          "vi": "picturecontrol_mouseup",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 0.75,
+          "groundedScore": 1,
+          "groundedNarrative": "There are 43 non-cosmetic structural changes. There are 29 cosmetic differences in position/appearance."
+        },
+        {
+          "vi": "process template graphics",
+          "source": "template",
+          "reason": "failed-safety-gate",
+          "templateScore": 1,
+          "groundedScore": 0.75,
+          "groundedNarrative": "There are 2 non-cosmetic structural changes between the two revisions of this VI. There are no cosmetic differences, meaning that all 9 total reported differences by LabVIEW are non-cosmetic in nature."
+        },
+        {
+          "vi": "vi template",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 1,
+          "groundedScore": 1,
+          "groundedNarrative": "There are 2 non-cosmetic structural changes between the two revisions of this VI. There are no cosmetic differences, meaning that all reported differences are related to the structure or behavior of the VI and not just its position or appearance."
+        },
+        {
+          "vi": "visibletextmarker",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 1,
+          "groundedScore": 1,
+          "groundedNarrative": "There are 6 non-cosmetic structural changes between the two revisions of this VI, with no cosmetic differences in terms of position or appearance."
+        }
+      ]
+    },
+    {
+      "id": "14b",
+      "model": "qwen2.5:14b",
+      "present": true,
+      "viCount": 8,
+      "acceptedCount": 8,
+      "acceptRate": 1,
+      "meanAcceptedGroundedScore": 1,
+      "reasons": {
+        "grounded-passed-gate": 8
+      },
+      "sampleAcceptedNarrative": "There are 2 structural changes and 0 cosmetic differences between the two VI revisions.",
+      "rows": [
+        {
+          "vi": "loadtemplates",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 1,
+          "groundedScore": 1,
+          "groundedNarrative": "There are 2 structural changes and 0 cosmetic differences between the two VI revisions."
+        },
+        {
+          "vi": "lv_icon",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 0.75,
+          "groundedScore": 1,
+          "groundedNarrative": "There are 8 structural changes and 19 cosmetic differences between the two VI revisions."
+        },
+        {
+          "vi": "menuselection(user)",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 1,
+          "groundedScore": 1,
+          "groundedNarrative": "There are 2 structural changes and 1 cosmetic difference between the two VI revisions."
+        },
+        {
+          "vi": "mousedown",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 0.75,
+          "groundedScore": 1,
+          "groundedNarrative": "There are 19 structural changes and 47 cosmetic differences between the two VI revisions."
+        },
+        {
+          "vi": "picturecontrol_mouseup",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 0.75,
+          "groundedScore": 1,
+          "groundedNarrative": "There are 43 structural changes and 29 cosmetic differences between the two VI revisions."
+        },
+        {
+          "vi": "process template graphics",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 1,
+          "groundedScore": 1,
+          "groundedNarrative": "There are 2 structural changes and 0 cosmetic differences between the two VI revisions."
+        },
+        {
+          "vi": "vi template",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 1,
+          "groundedScore": 1,
+          "groundedNarrative": "There are 2 structural changes and 0 cosmetic differences between the two VI revisions."
+        },
+        {
+          "vi": "visibletextmarker",
+          "source": "grounded",
+          "reason": "grounded-passed-gate",
+          "templateScore": 1,
+          "groundedScore": 1,
+          "groundedNarrative": "There are 6 structural changes and 0 cosmetic differences between the two VI revisions."
+        }
+      ]
+    }
+  ]
+}
