@@ -1,0 +1,20 @@
+{
+  "$schema": "vi-history-suite/linux-oracle-parity@v1",
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-26T09:56:00Z",
+  "deliverable": "D3",
+  "host": "LINUX",
+  "oracle": { "provider": "linux-container", "engine": "labview-cli", "containerImage": "nationalinstruments/labview:2026q1-linux" },
+  "repo": "svelderrainruiz/actor-framework (cloned at ~/repos/actor-framework; SHAs also present in ni/ + LabVIEW-Community-CI-CD forks)",
+  "attempted": "5 of WIN's 8 core-framework af VIs (the other 3 -- CreateNewWizard_Invoke_Core, Get Default Actor path, Get Parent Actor path -- are NOT in the one-per-VI af-change-pairs manifest)",
+  "perVi": [
+    { "slug": "af-add-actor", "vi": "Providers/AddActor/Support/Add Actor.vi", "previewLeft": "rendered", "previewRight": "rendered", "comparison": "failed", "diagnosticReason": "linux-headless-recursive-load" },
+    { "slug": "af-createnewwizard-invoke", "vi": "Providers/AddActorInterface/CreateNewWizard_Invoke.vi", "previewLeft": "rendered", "previewRight": "rendered", "comparison": "failed", "diagnosticReason": "linux-headless-recursive-load" },
+    { "slug": "af-add-interface-dialog", "vi": "Providers/AddActorInterface/Support/Add Interface Dialog.vi", "previewLeft": "rendered", "previewRight": "rendered", "comparison": "failed", "diagnosticReason": "linux-headless-recursive-load" },
+    { "slug": "af-is-actor-public-method", "vi": "Providers/MessageMakerProvider/Support/Is Actor Public Method.vi", "previewLeft": "rendered", "previewRight": "rendered", "comparison": "failed", "diagnosticReason": "linux-headless-recursive-load" },
+    { "slug": "af-find-item-in-ppl", "vi": "Providers/MessageMakerProvider/_Message Maker/_support/Find Item in PPL.vi", "previewLeft": "rendered", "previewRight": "rendered", "comparison": "failed", "diagnosticReason": "linux-headless-recursive-load" }
+  ],
+  "commonDiagnostic": "All 5 COMPARISONS failed identically: LabVIEW CLI connected + both single-VI PREVIEWS rendered (~8s each, so the VIs load), but CreateComparisonReport exited nonzero with diagnosticReason 'linux-headless-recursive-load' -- retained Linux-headless status reported a recursive LEIF load while opening resource/dialog/GSW/GSW.lvlibp/.../GSW_MainPanel.vi (a PACKED LIBRARY dialog resource). The CLI diagnostic notes also list possible password-protection as a candidate cause.",
+  "verdict": "D3 did NOT unlock these 5. They are NOT a partial-staging gap (individual previews render fine -> deps load), so WIN option-B deeper dependency-closure staging would NOT help. The blocker is a Linux-headless recursive load of the GSW.lvlibp PACKED LIBRARY at CreateComparisonReport time -- adjacent to (and possibly overlapping) the password-protected class WIN flagged. Distinct failure mode from WIN's Windows partial-staging ENOENT.",
+  "implication": "The real-structural af held-out set is unchanged by these 5. To grow it, target af VIs whose comparison does NOT pull the GSW.lvlibp packed-library dialog (peripheral af that render like af-find-target-actor/af-inherits-from-an-actor did), or resolve the Linux-headless packed-library recursive-load path. Recommend NOT spending option-B staging effort on these 5."
+}
