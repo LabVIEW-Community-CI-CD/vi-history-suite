@@ -27,6 +27,7 @@ argument-hint: 'Optional requirement ID, for example VHS-REQ-610'
    - [docs/requirements/rtm.csv](../../../docs/requirements/rtm.csv)
    - [docs/requirements/id-index.csv](../../../docs/requirements/id-index.csv)
    - [docs/requirements/traceability-inventory.csv](../../../docs/requirements/traceability-inventory.csv)
+   - When the change adds a **new Active requirement**, also cite that requirement in an Architecture Decision Record (see the [ADR index](../../../docs/architecture/adr/README.md)); the pre-push `adr:check` gate fails closed (`Active requirements not linked into any ADR`) until every Active `VHS-REQ`/`VHS-SYS-REQ` id is referenced by an ADR.
 6. Keep out-of-scope boundaries unchanged and explicit in PR evidence.
 
 ## Validation Sequence
@@ -37,7 +38,8 @@ argument-hint: 'Optional requirement ID, for example VHS-REQ-610'
 5. `npm run coverage:map` (after `npm test` when risk mapping is needed)
 6. `npm run requirements:linkage` (a verification test cites the requirement ID; enforced fail-closed in CI) and `npm run requirements:criteria` (acceptance-criteria inventory + criterion-level `VHS-REQ-NNN.M` citation)
 7. `npm run requirements:verify` for the unified requirement-health signal (add `:strict` as a local pre-push gate)
-8. `bash .github/skills/testing-automation/scripts/run-pr-gates.sh --skip-install` (before PR handoff)
+8. `npm run adr:check` (when a new Active requirement was added; a pre-push gate that fails closed until every Active `VHS-REQ`/`VHS-SYS-REQ` id is cited in an ADR)
+9. `bash .github/skills/testing-automation/scripts/run-pr-gates.sh --skip-install` (before PR handoff)
 
 When adding a new requirement or coverage guard script, mirror the advisory-guard pattern in [scripts/auditRequirementVerificationLinkage.js](../../../scripts/auditRequirementVerificationLinkage.js): pure helper functions plus a thin `main(argv, deps)` CLI, `renderSummary`/`renderStepSummary` (GITHUB_STEP_SUMMARY), advisory by default with an opt-in `--enforce`/`--strict`, fixture-injected dependencies for unit tests, and a mapping under VHS-REQ-601 (requirements tooling) or VHS-REQ-613 (coverage/assertion-quality tooling).
 
