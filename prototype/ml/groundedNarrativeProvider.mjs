@@ -16,16 +16,13 @@
 // contract both agents build against; the grounded layer is strictly OPTIONAL because the
 // shipped deterministic template (PR #2383) already clears the faithfulness bar.
 
-import { SYSTEM, scoreParts, taskScoreOf } from './vichangeEvalCore.mjs';
+import { SYSTEM } from './vichangeEvalCore.mjs';
+import { scoreNarrative, MCP_NARRATIVE_SCORE_KEYS } from './narrativeQualityGate.mjs';
 
-// The narrative-quality parts relevant to a free "what changed" MCP narrative. Kinds are
-// an lvkit-only axis absent from the LabVIEW-report-native MCP facts, so they are not scored.
-export const GROUNDED_NARRATIVE_SCORE_KEYS = Object.freeze([
-  'statesStructuralCount',
-  'noFalseNoChange',
-  'mentionsCosmetic',
-  'noInventedNumbers'
-]);
+// The narrative-quality parts relevant to a free "what changed" MCP narrative. Unified on the
+// canonical scored keys from LINUX's narrativeQualityGate (single source of truth); kinds is an
+// lvkit-only axis absent from the LabVIEW-report-native MCP facts, so it is not scored.
+export const GROUNDED_NARRATIVE_SCORE_KEYS = MCP_NARRATIVE_SCORE_KEYS;
 
 // Hard safety parts that a grounded narrative MUST clear before it can be preferred over the
 // template, regardless of score: it must state the count, never falsely claim "no changes",
@@ -102,8 +99,14 @@ export async function selectMcpNarrative({ model, cosmeticCount, templateNarrati
     throw new Error('selectMcpNarrative: templateNarrative string is required');
   }
   const gt = groundTruthForModel(model, cosmeticCount);
-  const templateParts = scoreParts(templateNarrative, gt).parts;
-  const templateScore = taskScoreOf(templateParts, GROUNDED_NARRATIVE_SCORE_KEYS, null);
+  // Score via the canonical gate primitive (LINUX narrativeQualityGate.scoreNarrative). This
+  // provider adds a HARD SAFETY FLOOR on top of the pure score comparison in selectFaithfulNarrative:
+  // a candidate that trips a safety key (false no-change / invented number / missing count) is
+  // rejected even if its composite score ties the fallback -- so an imperfect fallback can never let
+  // an unsafe candidate through.
+  const templateEval = scoreNarrative(templateNarrative, gt, GROUNDED_NARRATIVE_SCORE_KEYS);
+  const templateParts = templateEval.parts;
+  const templateScore = templateEval.score;
 
   let grounded = null;
   if (typeof generate === 'function') {
@@ -111,11 +114,11 @@ export async function selectMcpNarrative({ model, cosmeticCount, templateNarrati
       const facts = buildGroundedNarrativeFacts(model, cosmeticCount);
       const text = await generate(GROUNDED_NARRATIVE_PROMPT, facts);
       if (typeof text === 'string' && text.trim().length > 0) {
-        const parts = scoreParts(text, gt).parts;
+        const ev = scoreNarrative(text, gt, GROUNDED_NARRATIVE_SCORE_KEYS);
         grounded = {
           narrative: text,
-          parts,
-          score: taskScoreOf(parts, GROUNDED_NARRATIVE_SCORE_KEYS, null),
+          parts: ev.parts,
+          score: ev.score,
           error: null
         };
       }
