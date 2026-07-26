@@ -150,9 +150,15 @@ async function main() {
   // 4) intro segment, then dismiss the calibration screen and LAUNCH LabVIEW.
   await sleep(introSec * 1000);
   try { chrome.kill(); } catch { /* ignore */ }
-  // Kill ONLY the spawned kiosk process tree (dedicated --user-data-dir), never
-  // the user's other Chrome windows.
+  // Surgically close the kiosk by its UNIQUE --user-data-dir: Chrome forks and the
+  // launcher process exits, so a PID/tree kill is unreliable and can leave the
+  // window open. Matching the profile dir in the command line closes exactly this
+  // kiosk and never the user's other Chrome windows.
   if (chrome.pid) spawnSync('taskkill', ['/PID', String(chrome.pid), '/F', '/T'], { stdio: 'ignore' });
+  const kioskProfile = join(runRoot, 'chrome-profile');
+  spawnSync('powershell', ['-NoProfile', '-Command',
+    "$p=$env:VIHS_KIOSK_PROFILE; Get-CimInstance Win32_Process -Filter \"Name='chrome.exe'\" | Where-Object { $_.CommandLine -and $_.CommandLine.Contains($p) } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"
+  ], { env: { ...process.env, VIHS_KIOSK_PROFILE: kioskProfile }, stdio: 'ignore', timeout: 8000 });
   const launchEpoch = Date.now();
   let workloadProc = null;
   if (workload === 'compare') {
