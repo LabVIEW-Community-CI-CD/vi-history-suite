@@ -1,0 +1,444 @@
+{
+  "schema": "vi-history-suite/qwen-gpu-capture@v1",
+  "generatedAt": "2026-07-26T10:12:23.847Z",
+  "model": "qwen2.5:14b",
+  "ollamaUrl": "http://localhost:11434",
+  "runRoot": "prototype/gpu-capture/qwen2-5-14b-2026-07-26T10-10-05-061Z",
+  "device": "nvidia (see gpu-sample-series.peaks)",
+  "vramTotalMb": 8151,
+  "residency": {
+    "offloadPctGpu": 70,
+    "vramGb": 6.93,
+    "sizeGb": 9.95
+  },
+  "residencyNote": "qwen 9.95GB exceeds 8.0GB VRAM -> PARTIAL offload (70% GPU); full GPU residency is not achievable for this model on this GPU",
+  "fixtures": [
+    "ie-visibletextmarker",
+    "ie-mousedown",
+    "ie-lv-icon"
+  ],
+  "repeats": 2,
+  "gpuSampleSeriesRef": "gpu-sample-series.json",
+  "gpuSamplesCsvRef": "gpu-samples.csv",
+  "sampleCount": 128,
+  "samplingIntervalMs": 1000,
+  "phases": [
+    {
+      "vi": "ie-visibletextmarker",
+      "repeat": 1,
+      "startMs": 1785060617256,
+      "endMs": 1785060623736,
+      "durationMs": 6480,
+      "detailItemCount": 6,
+      "allowedNumbers": [
+        6,
+        0,
+        2,
+        2
+      ],
+      "invented": [
+        5
+      ],
+      "gatedSafe": false,
+      "failedParts": [
+        "noInventedNumbers"
+      ],
+      "narrativeLen": 326,
+      "offloadPctGpu": 70,
+      "vramGb": 6.93,
+      "gpu": {
+        "sampleCount": 6,
+        "gpuUtilPct": {
+          "mean": 27,
+          "peak": 53,
+          "min": 21,
+          "n": 6
+        },
+        "memUsedMb": {
+          "mean": 6730,
+          "peak": 6730,
+          "min": 6730,
+          "n": 6
+        },
+        "memTotalMb": {
+          "mean": 8151,
+          "peak": 8151,
+          "min": 8151,
+          "n": 6
+        },
+        "tempC": {
+          "mean": 51.67,
+          "peak": 54,
+          "min": 48,
+          "n": 6
+        },
+        "powerW": {
+          "mean": 30.07,
+          "peak": 33.54,
+          "min": 15.94,
+          "n": 6
+        },
+        "clockSmMhz": {
+          "mean": 2488.5,
+          "peak": 2505,
+          "min": 2467,
+          "n": 6
+        }
+      }
+    },
+    {
+      "vi": "ie-visibletextmarker",
+      "repeat": 2,
+      "startMs": 1785060623739,
+      "endMs": 1785060629971,
+      "durationMs": 6232,
+      "detailItemCount": 6,
+      "allowedNumbers": [
+        6,
+        0,
+        2,
+        2
+      ],
+      "invented": [
+        5
+      ],
+      "gatedSafe": false,
+      "failedParts": [
+        "noInventedNumbers"
+      ],
+      "narrativeLen": 326,
+      "offloadPctGpu": 70,
+      "vramGb": 6.93,
+      "gpu": {
+        "sampleCount": 6,
+        "gpuUtilPct": {
+          "mean": 21.67,
+          "peak": 25,
+          "min": 21,
+          "n": 6
+        },
+        "memUsedMb": {
+          "mean": 6730,
+          "peak": 6730,
+          "min": 6730,
+          "n": 6
+        },
+        "memTotalMb": {
+          "mean": 8151,
+          "peak": 8151,
+          "min": 8151,
+          "n": 6
+        },
+        "tempC": {
+          "mean": 53.33,
+          "peak": 56,
+          "min": 51,
+          "n": 6
+        },
+        "powerW": {
+          "mean": 32.9,
+          "peak": 34.43,
+          "min": 30.91,
+          "n": 6
+        },
+        "clockSmMhz": {
+          "mean": 2493.5,
+          "peak": 2505,
+          "min": 2467,
+          "n": 6
+        }
+      }
+    },
+    {
+      "vi": "ie-mousedown",
+      "repeat": 1,
+      "startMs": 1785060629985,
+      "endMs": 1785060637656,
+      "durationMs": 7671,
+      "detailItemCount": 19,
+      "allowedNumbers": [
+        19,
+        47,
+        6,
+        2
+      ],
+      "invented": [],
+      "gatedSafe": true,
+      "failedParts": [],
+      "narrativeLen": 397,
+      "offloadPctGpu": 70,
+      "vramGb": 6.93,
+      "gpu": {
+        "sampleCount": 8,
+        "gpuUtilPct": {
+          "mean": 21,
+          "peak": 21,
+          "min": 21,
+          "n": 8
+        },
+        "memUsedMb": {
+          "mean": 6730,
+          "peak": 6730,
+          "min": 6730,
+          "n": 8
+        },
+        "memTotalMb": {
+          "mean": 8151,
+          "peak": 8151,
+          "min": 8151,
+          "n": 8
+        },
+        "tempC": {
+          "mean": 55.13,
+          "peak": 61,
+          "min": 53,
+          "n": 8
+        },
+        "powerW": {
+          "mean": 33.81,
+          "peak": 38.34,
+          "min": 33.02,
+          "n": 8
+        },
+        "clockSmMhz": {
+          "mean": 2501,
+          "peak": 2670,
+          "min": 2467,
+          "n": 8
+        }
+      }
+    },
+    {
+      "vi": "ie-mousedown",
+      "repeat": 2,
+      "startMs": 1785060637660,
+      "endMs": 1785060645003,
+      "durationMs": 7343,
+      "detailItemCount": 19,
+      "allowedNumbers": [
+        19,
+        47,
+        6,
+        2
+      ],
+      "invented": [],
+      "gatedSafe": true,
+      "failedParts": [],
+      "narrativeLen": 397,
+      "offloadPctGpu": 70,
+      "vramGb": 6.93,
+      "gpu": {
+        "sampleCount": 7,
+        "gpuUtilPct": {
+          "mean": 20.57,
+          "peak": 21,
+          "min": 18,
+          "n": 7
+        },
+        "memUsedMb": {
+          "mean": 6730,
+          "peak": 6730,
+          "min": 6730,
+          "n": 7
+        },
+        "memTotalMb": {
+          "mean": 8151,
+          "peak": 8151,
+          "min": 8151,
+          "n": 7
+        },
+        "tempC": {
+          "mean": 56.14,
+          "peak": 60,
+          "min": 54,
+          "n": 7
+        },
+        "powerW": {
+          "mean": 33.32,
+          "peak": 34.71,
+          "min": 31.5,
+          "n": 7
+        },
+        "clockSmMhz": {
+          "mean": 2482.29,
+          "peak": 2505,
+          "min": 2467,
+          "n": 7
+        }
+      }
+    },
+    {
+      "vi": "ie-lv-icon",
+      "repeat": 1,
+      "startMs": 1785060645016,
+      "endMs": 1785060651884,
+      "durationMs": 6868,
+      "detailItemCount": 8,
+      "allowedNumbers": [
+        8,
+        19,
+        3,
+        1
+      ],
+      "invented": [
+        4,
+        14,
+        18
+      ],
+      "gatedSafe": false,
+      "failedParts": [
+        "noInventedNumbers"
+      ],
+      "narrativeLen": 302,
+      "offloadPctGpu": 70,
+      "vramGb": 6.93,
+      "gpu": {
+        "sampleCount": 7,
+        "gpuUtilPct": {
+          "mean": 21.29,
+          "peak": 23,
+          "min": 21,
+          "n": 7
+        },
+        "memUsedMb": {
+          "mean": 6730,
+          "peak": 6730,
+          "min": 6730,
+          "n": 7
+        },
+        "memTotalMb": {
+          "mean": 8151,
+          "peak": 8151,
+          "min": 8151,
+          "n": 7
+        },
+        "tempC": {
+          "mean": 58.29,
+          "peak": 62,
+          "min": 56,
+          "n": 7
+        },
+        "powerW": {
+          "mean": 33.56,
+          "peak": 34.54,
+          "min": 32.2,
+          "n": 7
+        },
+        "clockSmMhz": {
+          "mean": 2502.43,
+          "peak": 2602,
+          "min": 2467,
+          "n": 7
+        }
+      }
+    },
+    {
+      "vi": "ie-lv-icon",
+      "repeat": 2,
+      "startMs": 1785060651888,
+      "endMs": 1785060659098,
+      "durationMs": 7210,
+      "detailItemCount": 8,
+      "allowedNumbers": [
+        8,
+        19,
+        3,
+        1
+      ],
+      "invented": [
+        4,
+        14,
+        18
+      ],
+      "gatedSafe": false,
+      "failedParts": [
+        "noInventedNumbers"
+      ],
+      "narrativeLen": 359,
+      "offloadPctGpu": 70,
+      "vramGb": 6.93,
+      "gpu": {
+        "sampleCount": 8,
+        "gpuUtilPct": {
+          "mean": 21.13,
+          "peak": 22,
+          "min": 21,
+          "n": 8
+        },
+        "memUsedMb": {
+          "mean": 6730,
+          "peak": 6730,
+          "min": 6730,
+          "n": 8
+        },
+        "memTotalMb": {
+          "mean": 8151,
+          "peak": 8151,
+          "min": 8151,
+          "n": 8
+        },
+        "tempC": {
+          "mean": 58,
+          "peak": 61,
+          "min": 56,
+          "n": 8
+        },
+        "powerW": {
+          "mean": 33.53,
+          "peak": 35.35,
+          "min": 31.7,
+          "n": 8
+        },
+        "clockSmMhz": {
+          "mean": 2485.88,
+          "peak": 2505,
+          "min": 2467,
+          "n": 8
+        }
+      }
+    }
+  ],
+  "offloadSweep": {
+    "vi": "ie-visibletextmarker",
+    "samples": [
+      {
+        "numGpu": 0,
+        "offloadPctGpu": 0,
+        "invented": [
+          5
+        ],
+        "narrativeLen": 424,
+        "secs": 54
+      },
+      {
+        "numGpu": 20,
+        "offloadPctGpu": 43,
+        "invented": [
+          5
+        ],
+        "narrativeLen": 361,
+        "secs": 16
+      }
+    ]
+  },
+  "verdict": {
+    "inventedNumberHazard": "backend-independent-model-content",
+    "bandsOverlap": true,
+    "offloadSweepInvariant": true,
+    "invBand": [
+      70,
+      70,
+      70,
+      70
+    ],
+    "passBand": [
+      70,
+      70
+    ],
+    "rationale": [
+      "invented number persists across the full feasible offload range (0% GPU CPU-only through max-feasible GPU)",
+      "inventing and passing VIs sampled at the same GPU residency band -> residency does not separate the outcome"
+    ],
+    "recommendation": "drop qwen2.5:14b as GENERATOR stands (invented-number is model-content, not offload-fixable); keep as JUDGE"
+  }
+}
