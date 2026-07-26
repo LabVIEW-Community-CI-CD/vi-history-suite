@@ -1,15 +1,15 @@
 {
   "schema": "vi-history-suite/correlation-fold-eval@v1",
-  "generatedAt": "2026-07-26T06:08:19.369Z",
+  "generatedAt": "2026-07-26T06:45:59.600Z",
   "host": "LINUX",
   "backend": "gpu",
   "label": "linux-gpu",
   "ollamaUrl": "http://localhost:11434",
   "model": "vichange8b-2shot",
   "modelPresent": true,
-  "batchSource": "AUTO (22 rendered reports in prototype/win-lvkit/correlation-fixtures mapped to manifest slugs; 0 unmapped-skipped)",
+  "batchSource": "AUTO (27 rendered reports in prototype/win-lvkit/correlation-fixtures mapped to manifest slugs; 0 unmapped-skipped)",
   "foldsSource": "prototype/ml/dataset/correlation-heldout-folds.json",
-  "totalRendered": 22,
+  "totalRendered": 27,
   "errors": [],
   "unmappedFixtures": [],
   "loro": [
@@ -20,9 +20,12 @@
         "ie"
       ],
       "foldSize": 102,
-      "rendered": 11,
+      "rendered": 16,
+      "versionOnlyRendered": 13,
+      "realStructuralRendered": 3,
       "status": "partial",
       "hardSafeRate": 1,
+      "realStructuralHardSafeRate": 1,
       "acceptRate": 1,
       "invented": [],
       "inventedHazard": false
@@ -35,8 +38,11 @@
       ],
       "foldSize": 449,
       "rendered": 11,
+      "versionOnlyRendered": 0,
+      "realStructuralRendered": 11,
       "status": "partial",
       "hardSafeRate": 1,
+      "realStructuralHardSafeRate": 1,
       "acceptRate": 1,
       "invented": [],
       "inventedHazard": false
@@ -45,7 +51,7 @@
   "crossRepoGeneralization": {
     "status": "partial",
     "hardSafeRate": 1,
-    "rendered": 11,
+    "rendered": 16,
     "foldSize": 102,
     "invented": []
   },
@@ -59,6 +65,10 @@
       "source": "grounded",
       "reason": "grounded-passed-gate",
       "hardSafe": true,
+      "versionOnly": true,
+      "changedSurfaces": [
+        "vi-attributes"
+      ],
       "groundedScore": 1,
       "templateScore": 1,
       "invented": []
@@ -72,6 +82,10 @@
       "source": "grounded",
       "reason": "grounded-passed-gate",
       "hardSafe": true,
+      "versionOnly": true,
+      "changedSurfaces": [
+        "vi-attributes"
+      ],
       "groundedScore": 1,
       "templateScore": 1,
       "invented": []
@@ -85,6 +99,10 @@
       "source": "grounded",
       "reason": "grounded-passed-gate",
       "hardSafe": true,
+      "versionOnly": true,
+      "changedSurfaces": [
+        "vi-attributes"
+      ],
       "groundedScore": 1,
       "templateScore": 1,
       "invented": []
@@ -98,6 +116,10 @@
       "source": "grounded",
       "reason": "grounded-passed-gate",
       "hardSafe": true,
+      "versionOnly": false,
+      "changedSurfaces": [
+        "block-diagram"
+      ],
       "groundedScore": 1,
       "templateScore": 1,
       "invented": []
@@ -111,6 +133,10 @@
       "source": "grounded",
       "reason": "grounded-passed-gate",
       "hardSafe": true,
+      "versionOnly": true,
+      "changedSurfaces": [
+        "vi-attributes"
+      ],
       "groundedScore": 1,
       "templateScore": 1,
       "invented": []
@@ -124,6 +150,44 @@
       "source": "grounded",
       "reason": "grounded-passed-gate",
       "hardSafe": true,
+      "versionOnly": false,
+      "changedSurfaces": [
+        "block-diagram"
+      ],
+      "groundedScore": 1,
+      "templateScore": 1,
+      "invented": []
+    },
+    {
+      "slug": "af-modify-vipb-display-information",
+      "repo": "af",
+      "vi": "af-modify-vipb-display-information.labview-diff-report.html",
+      "nonCosmetic": 1,
+      "cosmetic": 1,
+      "source": "grounded",
+      "reason": "grounded-passed-gate",
+      "hardSafe": true,
+      "versionOnly": true,
+      "changedSurfaces": [
+        "vi-attributes"
+      ],
+      "groundedScore": 1,
+      "templateScore": 1,
+      "invented": []
+    },
+    {
+      "slug": "af-nip-post-uninstall",
+      "repo": "af",
+      "vi": "af-nip-post-uninstall.labview-diff-report.html",
+      "nonCosmetic": 1,
+      "cosmetic": 0,
+      "source": "grounded",
+      "reason": "grounded-passed-gate",
+      "hardSafe": true,
+      "versionOnly": true,
+      "changedSurfaces": [
+        "vi-attributes"
+      ],
       "groundedScore": 1,
       "templateScore": 1,
       "invented": []
@@ -137,6 +201,10 @@
       "source": "grounded",
       "reason": "grounded-passed-gate",
       "hardSafe": true,
+      "versionOnly": true,
+      "changedSurfaces": [
+        "vi-attributes"
+      ],
       "groundedScore": 1,
       "templateScore": 1,
       "invented": []
@@ -150,6 +218,10 @@
       "source": "grounded",
       "reason": "grounded-passed-gate",
       "hardSafe": true,
+      "versionOnly": true,
+      "changedSurfaces": [
+        "vi-attributes"
+      ],
       "groundedScore": 1,
       "templateScore": 1,
       "invented": []
@@ -163,6 +235,10 @@
       "source": "grounded",
       "reason": "grounded-passed-gate",
       "hardSafe": true,
+      "versionOnly": true,
+      "changedSurfaces": [
+        "vi-attributes"
+      ],
       "groundedScore": 1,
       "templateScore": 1,
       "invented": []
@@ -176,6 +252,10 @@
       "source": "grounded",
       "reason": "grounded-passed-gate",
       "hardSafe": true,
+      "versionOnly": true,
+      "changedSurfaces": [
+        "vi-attributes"
+      ],
       "groundedScore": 1,
       "templateScore": 1,
       "invented": []
@@ -189,6 +269,62 @@
       "source": "grounded",
       "reason": "grounded-passed-gate",
       "hardSafe": true,
+      "versionOnly": false,
+      "changedSurfaces": [
+        "block-diagram",
+        "vi-attributes"
+      ],
+      "groundedScore": 1,
+      "templateScore": 1,
+      "invented": []
+    },
+    {
+      "slug": "af-vip-post-install-custom-action",
+      "repo": "af",
+      "vi": "af-vip-post-install-custom-action.labview-diff-report.html",
+      "nonCosmetic": 1,
+      "cosmetic": 0,
+      "source": "grounded",
+      "reason": "grounded-passed-gate",
+      "hardSafe": true,
+      "versionOnly": true,
+      "changedSurfaces": [
+        "vi-attributes"
+      ],
+      "groundedScore": 1,
+      "templateScore": 1,
+      "invented": []
+    },
+    {
+      "slug": "af-vip-pre-install-custom-action",
+      "repo": "af",
+      "vi": "af-vip-pre-install-custom-action.labview-diff-report.html",
+      "nonCosmetic": 1,
+      "cosmetic": 0,
+      "source": "grounded",
+      "reason": "grounded-passed-gate",
+      "hardSafe": true,
+      "versionOnly": true,
+      "changedSurfaces": [
+        "vi-attributes"
+      ],
+      "groundedScore": 1,
+      "templateScore": 1,
+      "invented": []
+    },
+    {
+      "slug": "af-vip-pre-uninstall-custom-action",
+      "repo": "af",
+      "vi": "af-vip-pre-uninstall-custom-action.labview-diff-report.html",
+      "nonCosmetic": 1,
+      "cosmetic": 0,
+      "source": "grounded",
+      "reason": "grounded-passed-gate",
+      "hardSafe": true,
+      "versionOnly": true,
+      "changedSurfaces": [
+        "vi-attributes"
+      ],
       "groundedScore": 1,
       "templateScore": 1,
       "invented": []
@@ -202,6 +338,10 @@
       "source": "grounded",
       "reason": "grounded-passed-gate",
       "hardSafe": true,
+      "versionOnly": false,
+      "changedSurfaces": [
+        "block-diagram"
+      ],
       "groundedScore": 1,
       "templateScore": 1,
       "invented": []
@@ -215,6 +355,10 @@
       "source": "grounded",
       "reason": "grounded-passed-gate",
       "hardSafe": true,
+      "versionOnly": false,
+      "changedSurfaces": [
+        "block-diagram"
+      ],
       "groundedScore": 1,
       "templateScore": 1,
       "invented": []
@@ -228,6 +372,10 @@
       "source": "grounded",
       "reason": "grounded-passed-gate",
       "hardSafe": true,
+      "versionOnly": false,
+      "changedSurfaces": [
+        "block-diagram"
+      ],
       "groundedScore": 1,
       "templateScore": 1,
       "invented": []
@@ -241,6 +389,10 @@
       "source": "grounded",
       "reason": "grounded-passed-gate",
       "hardSafe": true,
+      "versionOnly": false,
+      "changedSurfaces": [
+        "block-diagram"
+      ],
       "groundedScore": 1,
       "templateScore": 1,
       "invented": []
@@ -254,6 +406,10 @@
       "source": "grounded",
       "reason": "grounded-passed-gate",
       "hardSafe": true,
+      "versionOnly": false,
+      "changedSurfaces": [
+        "block-diagram"
+      ],
       "groundedScore": 1,
       "templateScore": 1,
       "invented": []
@@ -267,6 +423,11 @@
       "source": "grounded",
       "reason": "grounded-passed-gate",
       "hardSafe": true,
+      "versionOnly": false,
+      "changedSurfaces": [
+        "block-diagram",
+        "vi-attributes"
+      ],
       "groundedScore": 1,
       "templateScore": 1,
       "invented": []
@@ -280,6 +441,12 @@
       "source": "grounded",
       "reason": "grounded-passed-gate",
       "hardSafe": true,
+      "versionOnly": false,
+      "changedSurfaces": [
+        "front-panel",
+        "block-diagram",
+        "vi-attributes"
+      ],
       "groundedScore": 1,
       "templateScore": 1,
       "invented": []
@@ -293,6 +460,10 @@
       "source": "grounded",
       "reason": "grounded-passed-gate",
       "hardSafe": true,
+      "versionOnly": false,
+      "changedSurfaces": [
+        "block-diagram"
+      ],
       "groundedScore": 1,
       "templateScore": 1,
       "invented": []
@@ -306,6 +477,10 @@
       "source": "grounded",
       "reason": "grounded-passed-gate",
       "hardSafe": true,
+      "versionOnly": false,
+      "changedSurfaces": [
+        "block-diagram"
+      ],
       "groundedScore": 1,
       "templateScore": 1,
       "invented": []
@@ -319,6 +494,10 @@
       "source": "grounded",
       "reason": "grounded-passed-gate",
       "hardSafe": true,
+      "versionOnly": false,
+      "changedSurfaces": [
+        "vi-attributes"
+      ],
       "groundedScore": 1,
       "templateScore": 1,
       "invented": []
@@ -332,6 +511,11 @@
       "source": "grounded",
       "reason": "grounded-passed-gate",
       "hardSafe": true,
+      "versionOnly": false,
+      "changedSurfaces": [
+        "front-panel",
+        "block-diagram"
+      ],
       "groundedScore": 1,
       "templateScore": 1,
       "invented": []

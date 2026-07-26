@@ -136,6 +136,20 @@ function autoDiscoverBatch(foldsManifest) {
   return { batch, unmapped };
 }
 
+/**
+ * A "version-only" change is a single VI-attribute detail item that is just the saved LabVIEW version
+ * changing (e.g. "VI Version changed from 21.0 to 20.0") -- a save/recompile artifact, not a semantic
+ * code change. A corpus saved in a different LV version shows this on EVERY VI, so it can dominate a
+ * fold; flagging it keeps the faithfulness number honest (real structural changes vs save artifacts).
+ */
+function isVersionOnlyChange(model) {
+  const surfaces = model.changedSurfaces || [];
+  const firstItem = (model.classification || [])[0];
+  return model.totals.detailItemCount === 1
+    && surfaces.length > 0 && surfaces.every((s) => s === 'vi-attributes')
+    && /\bVI Version\b[\s\S]*\bchanged\b/i.test((firstItem && firstItem.text) || '');
+}
+
 /** Score one rendered VI through the SHIPPED grounded path. Never invents grounding. */
 async function evalOneVi(sample, generate) {
   const html = fs.readFileSync(sample.htmlPath, 'utf8');
@@ -160,6 +174,8 @@ async function evalOneVi(sample, generate) {
     source: sel.source,
     reason: sel.reason,
     hardSafe,
+    versionOnly: isVersionOnlyChange(model),
+    changedSurfaces: model.changedSurfaces || [],
     groundedScore: sel.grounded ? sel.grounded.score : null,
     templateScore: sel.template.score,
     invented
@@ -174,14 +190,20 @@ export function summarizeLoro(perVi, loroFolds) {
     const hardSafeCount = results.filter((r) => r.hardSafe).length;
     const acceptCount = results.filter((r) => r.source === 'grounded').length;
     const invented = results.flatMap((r) => r.invented);
+    // Split save-version-artifact VIs from real semantic changes so the fold number is honest.
+    const realStructural = results.filter((r) => !r.versionOnly);
+    const realStructuralHardSafe = realStructural.filter((r) => r.hardSafe).length;
     return {
       fold: fold.fold,
       heldOutRepo: fold.heldOutRepo,
       trainRepos: fold.trainRepos,
       foldSize: fold.heldOutCount,
       rendered,
+      versionOnlyRendered: results.filter((r) => r.versionOnly).length,
+      realStructuralRendered: realStructural.length,
       status: rendered === 0 ? 'pending-render' : rendered < fold.heldOutCount ? 'partial' : 'complete',
       hardSafeRate: rendered ? hardSafeCount / rendered : null,
+      realStructuralHardSafeRate: realStructural.length ? realStructuralHardSafe / realStructural.length : null,
       acceptRate: rendered ? acceptCount / rendered : null,
       invented,
       inventedHazard: invented.length > 0
