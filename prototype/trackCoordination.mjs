@@ -111,9 +111,12 @@ export function detectTrackCollisions(claims) {
   return collisions;
 }
 
-/** Check a PROPOSED file set against existing live claims (used before claiming). */
-export function proposeCollisions(proposedFiles, claims, { excludeAgent } = {}) {
-  const live = (claims || []).filter((c) => c.live && (!excludeAgent || c.agent !== excludeAgent));
+/** Check a PROPOSED file set against existing live claims (used before claiming).
+ *  Excludes only the same-named track (a legitimate re-claim / update), so a NEW
+ *  track that overlaps ANY other live track -- including one owned by the SAME
+ *  agent (multi-track fan-out with subagents) -- is still flagged. */
+export function proposeCollisions(proposedFiles, claims, { excludeTrack } = {}) {
+  const live = (claims || []).filter((c) => c.live && (!excludeTrack || c.name !== excludeTrack));
   const collisions = [];
   for (const c of live) {
     const overlap = filesOverlap(proposedFiles, c.files);

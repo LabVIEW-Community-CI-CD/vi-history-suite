@@ -454,7 +454,7 @@ async function trackCommand(rest, a) {
     if (!files.length) { console.error('track claim: --files "a,b,c" required — declare your DISJOINT file set (dir prefixes allowed: "src/git/**")'); process.exit(2); }
     const { messages } = readMessages(80);
     const claims = tc.parseTrackClaims(messages);
-    const conflicts = tc.proposeCollisions(files, claims, { excludeAgent: AGENT });
+    const conflicts = tc.proposeCollisions(files, claims, { excludeTrack: name });
     if (conflicts.length) {
       console.error('CONFLICT: proposed files overlap ' + conflicts.length + ' live track(s) — the queue REBASES, so overlap = a red entry blocks the ALLGREEN group:');
       for (const c of conflicts) console.error('  track:' + c.track + ' [' + c.agent + ']  overlaps: ' + c.overlap.join(', '));

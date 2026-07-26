@@ -88,12 +88,17 @@ assert.deepEqual(pcOk, []);
 const pcBad = proposeCollisions(['AGENTS.md'], claims);
 assert.equal(pcBad.length, 1);
 assert.equal(pcBad[0].track, 'docs');
-// excludeAgent lets me re-check my own without self-collision
-const pcSelf = proposeCollisions(['AGENTS.md'], parseTrackClaims([
+// excludeTrack skips only the SAME-named track (a legitimate re-claim)...
+const sameClaims = parseTrackClaims([
   { ts: '2026-01-01T00:00:00Z', agent: 'WIN', type: 'CLAIM', task: 'track:docs', msg: 'files=AGENTS.md' }
-]), { excludeAgent: 'WIN' });
-assert.deepEqual(pcSelf, []);
-ok('proposeCollisions: clean, conflict, excludeAgent(self)');
+]);
+assert.deepEqual(proposeCollisions(['AGENTS.md'], sameClaims, { excludeTrack: 'docs' }), []);
+// ...but a DIFFERENT track overlapping an existing same-agent track IS flagged
+// (multi-track fan-out: one agent's tracks must also stay mutually disjoint).
+const pcOwn = proposeCollisions(['AGENTS.md'], sameClaims, { excludeTrack: 'newtrack' });
+assert.equal(pcOwn.length, 1);
+assert.equal(pcOwn[0].agent, 'WIN');
+ok('proposeCollisions: clean, conflict, excludeTrack(self re-claim), same-agent overlap flagged');
 
 // classifyCoBatch
 const readout = classifyCoBatch(
