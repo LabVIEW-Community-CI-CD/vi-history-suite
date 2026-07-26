@@ -145,14 +145,17 @@ function runCommand(command, args, options = {}) {
 function main(argv = process.argv.slice(2), deps = {}) {
   const action = argv[0] ?? 'install';
   const stdout = deps.stdout ?? process.stdout;
-  const osReleaseText = deps.osReleaseText ?? readOsRelease();
-  const packageFamily = deps.packageFamily ?? detectPackageFamily(osReleaseText);
-  const installPlan = buildInstallPlan(packageFamily);
 
+  // `help` must work on every host: print usage BEFORE reading /etc/os-release
+  // (readOsRelease -> fs.readFileSync throws ENOENT off-Linux) or building a plan.
   if (action === 'help' || action === '--help' || action === '-h') {
     stdout.write(`${getUsage()}\n`);
     return;
   }
+
+  const osReleaseText = deps.osReleaseText ?? readOsRelease();
+  const packageFamily = deps.packageFamily ?? detectPackageFamily(osReleaseText);
+  const installPlan = buildInstallPlan(packageFamily);
 
   if (action === 'print-plan') {
     stdout.write(`${JSON.stringify(installPlan, null, 2)}\n`);
