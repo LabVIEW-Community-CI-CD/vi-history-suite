@@ -42,18 +42,35 @@ jobs:
           VIHS_COLLAB_AGENT: LINUX
         run: |
           set -euo pipefail
-          # The launch-gate CLIs are dependency-free CommonJS (no npm ci needed).
+          # The launch-gate CLIs are dependency-free CommonJS (no npm ci needed). This is a
+          # REGRESSION GUARD, not a bare smoke: `acquire` always exits 0 (the advisory-degrade
+          # contract) and `analyze` always emits the schema, so a passing run alone proves nothing --
+          # we assert the actual behavior (lane A acquired, lane B degraded without acquiring,
+          # contention recorded) so a broken gate fails the job.
           echo "== mark a phase =="
           node scripts/agentLaunchGate.js mark ci-smoke
-          echo "== lane A acquires and holds the lease =="
-          VIHS_SUBAGENT_ID=ci-laneA node scripts/agentLaunchGate.js acquire cismoke
-          echo "== lane B contends -> must advisory-degrade and exit 0 (never hard-block a launch) =="
-          VIHS_SUBAGENT_ID=ci-laneB node scripts/agentLaunchGate.js acquire cismoke
-          echo "== analyze -> must emit the launch-contention-by-phase schema =="
+          echo "== lane A must ACQUIRE (prints LAUNCH-TOKEN; also catches an unwritable gate dir) =="
+          laneA_out="$(VIHS_SUBAGENT_ID=ci-laneA node scripts/agentLaunchGate.js acquire cismoke 2>&1)"
+          printf '%s\n' "$laneA_out"
+          printf '%s\n' "$laneA_out" | grep -q 'LAUNCH-TOKEN' \
+            || { echo 'FAIL: lane A did not acquire the lease (LAUNCH-TOKEN missing)'; exit 1; }
+          echo "== lane B must CONTEND -> ADVISORY-DEGRADE (never hard-block) and must NOT acquire =="
+          laneB_out="$(VIHS_SUBAGENT_ID=ci-laneB node scripts/agentLaunchGate.js acquire cismoke 2>&1)"
+          printf '%s\n' "$laneB_out"
+          printf '%s\n' "$laneB_out" | grep -q 'DEGRADING TO ADVISORY' \
+            || { echo 'FAIL: lane B did not advisory-degrade under contention'; exit 1; }
+          if printf '%s\n' "$laneB_out" | grep -q 'LAUNCH-TOKEN'; then
+            echo 'FAIL: lane B unexpectedly acquired the held lease'; exit 1
+          fi
+          echo "== analyze must emit the schema AND report recorded contention =="
           analyze_out="$(node scripts/agentLaunchGate.js analyze)"
           printf '%s\n' "$analyze_out"
           printf '%s\n' "$analyze_out" | grep -q 'vi-history-suite/launch-contention-by-phase@v1' \
             || { echo 'FAIL: analyze did not emit the expected schema'; exit 1; }
+          contention="$(printf '%s' "$analyze_out" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{process.stdout.write(String((JSON.parse(s).contentionCount)||0));}catch{process.stdout.write("0");}})')"
+          echo "contentionCount=$contention"
+          [ "$contention" -ge 1 ] \
+            || { echo "FAIL: analyze reported no recorded contention (contentionCount=$contention)"; exit 1; }
           # No GPU on the hosted runner (gpu.present:false expected); this exercises the CPU +
           # advisory-degrade + ledger + analyze path that the DI unit tests can only fake.
-          echo "launch-gate smoke passed"
+          echo "launch-gate regression guard passed"
