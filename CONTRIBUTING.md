@@ -28,8 +28,12 @@ npm run hooks:install   # or: git config core.hooksPath .githooks
 
 Hooks:
 
-- **pre-push** — gates on ADR infrastructure (`npm run adr:check`) and the
-  repo-standards-review audit (`npm run standards:audit`).
+- **pre-push** — runs, in order: branch-flow enforcement first
+  (`scripts/branchFlowEnforce.js`, at hosted Branch-Governance parity), then ADR
+  infrastructure (`npm run adr:check`), agent-delegation drift (`npm run agent:check`),
+  and the repo-standards-review audit (`npm run standards:audit`). In a multi-agent
+  context it also takes an advisory agent-gateway lease to serialize the validation
+  phase across concurrent agents (advisory-degrade; it never blocks the push).
 - **pre-commit** — the environment-consistency gate (VHS-REQ-697). Fails closed
   when `node_modules` is out of sync with `package-lock.json` (which breaks the
   toolchain); run `npm ci` and commit again. Stale compiled `out/` and changed
