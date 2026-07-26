@@ -16,17 +16,8 @@ set -euo pipefail
 repo_root="$(git rev-parse --show-toplevel)"
 cd "$repo_root"
 
-# 0. Agent gateway (issue #2392, VHS-REQ-719): serialize the resource-heavy validation
-#    phase (adr/agent/standards) across concurrent agents/subagents on this machine so
-#    N heavy runs do not thrash CPU/GPU at once. Enforced (waits) only in a MULTI-AGENT
-#    context (VIHS_SUBAGENT_ID set or >1 git worktree); advisory + zero-friction for a
-#    solo push; a bounded retry DEGRADES TO ADVISORY (warn + proceed) on timeout — it
-#    NEVER hard-blocks the push. Contended retries are recorded to a contention ledger
-#    (timestamp + CPU/GPU snapshot) for benchmark correlation. Released on any exit.
-node scripts/prePushGate.js acquire || true
-trap 'node scripts/prePushGate.js release >/dev/null 2>&1 || true' EXIT
-
-# 1. Branch-flow enforcement (issue #2392) runs FIRST. git passes the push refs on
+# 1. Branch-flow enforcement (issue #2392) runs FIRST — cheapest + most common papercut,
+#    and it must fail fast BEFORE we wait on the gateway. git passes the push refs on
 #    stdin (<local ref> <local sha> <remote ref> <remote sha> lines); forward them to
 #    the pure evaluator, which fails closed with a clear remedy. Rule C (issue exists)
 #    self-skips with an audit note when gh is unavailable on this plane.
@@ -36,6 +27,17 @@ if ! printf '%s' "$push_refs" | node scripts/branchFlowEnforce.js; then
   echo "[pre-push] Branch-flow enforcement failed. See the remedy above, or push with --no-verify." >&2
   exit 1
 fi
+
+# 2. Agent gateway (issue #2392, VHS-REQ-719): serialize the resource-heavy validation
+#    phase (adr/agent/standards) across concurrent agents/subagents so N heavy runs do
+#    not thrash CPU/GPU at once. Enforced (waits) only in a MULTI-AGENT context
+#    (VIHS_SUBAGENT_ID set or >1 git worktree); advisory + zero-friction for a solo push;
+#    a bounded retry DEGRADES TO ADVISORY (warn + proceed) — it NEVER hard-blocks the
+#    push. Contended retries are recorded to a contention ledger (timestamp + CPU/GPU
+#    snapshot) for benchmark correlation. The release trap is installed BEFORE acquire so
+#    an interrupt during/after acquire still releases; release is per-invocation (token).
+trap 'node scripts/prePushGate.js release >/dev/null 2>&1 || true' EXIT
+node scripts/prePushGate.js acquire || true
 
 echo "[pre-push] Checking ADR infrastructure (npm run adr:check)…"
 if ! npm run --silent adr:check; then
