@@ -153,7 +153,7 @@ function main(argv = process.argv.slice(2), deps = {}) {
     return;
   }
 
-  const osReleaseText = deps.osReleaseText ?? readOsRelease();
+  const osReleaseText = deps.osReleaseText ?? (deps.readOsRelease ?? readOsRelease)();
   const packageFamily = deps.packageFamily ?? detectPackageFamily(osReleaseText);
   const installPlan = buildInstallPlan(packageFamily);
 
