@@ -165,6 +165,25 @@ describe('lvkitViScanStore (VHS-REQ-716)', () => {
       });
     }
 
+    // An INLINE placeholder (#2373 --placeholder-on-unresolved / #2376): a NORMALLY-
+    // named module whose body is `raise PrimitiveResolutionNeeded` -> errorModuleCount
+    // stays 0 (it is not a .error.py) yet resolutionCounts.unresolvedPrimitive is 1.
+    function inlinePlaceholderEnvelope() {
+      return buildLvkitViScanEnvelope({
+        viPath: VI_PATH,
+        contentSignature: CONTENT_SIGNATURE,
+        runtime: 'host-native',
+        generatedAt: '2026-07-24T11:02:31.000Z',
+        lvkitSource: 'path',
+        modules: [
+          {
+            relativePath: 'make_path_absolute/klass/make_path_absolute.py',
+            python: 'raise PrimitiveResolutionNeeded(1926)\n'
+          }
+        ]
+      });
+    }
+
     it('does not let a later placeholder generate clobber a cleaner one for the same content address', async () => {
       const store = createStore(createFakeFs());
       expect(await store.put(makeEnvelope())).toBe(true); // clean (errorModuleCount 0)
@@ -179,6 +198,27 @@ describe('lvkitViScanStore (VHS-REQ-716)', () => {
       expect(await store.put(makeEnvelope())).toBe(true); // real-LabVIEW clean fills it in
       const stored = await store.get(VI_PATH, CONTENT_SIGNATURE);
       expect(stored?.errorModuleCount).toBe(0); // upgraded to the clean generate
+    });
+
+    it('does not let a later INLINE placeholder (errorModuleCount 0) clobber a clean generate (#2376)', async () => {
+      const store = createStore(createFakeFs());
+      expect(await store.put(makeEnvelope())).toBe(true); // clean: unresolvedPrimitive 0
+      expect(await store.put(inlinePlaceholderEnvelope())).toBe(true); // inline placeholder: errorModuleCount 0 but unresolvedPrimitive 1
+      const stored = await store.get(VI_PATH, CONTENT_SIGNATURE);
+      // errorModuleCount is 0 for BOTH, so the guard must rank by resolutionCounts --
+      // the clean generate is retained, not downgraded to the inline placeholder.
+      expect(stored?.errorModuleCount).toBe(0);
+      expect(stored?.resolutionCounts?.unresolvedPrimitive).toBe(0);
+      expect(stored?.resolutionCounts?.resolved).toBe(1);
+    });
+
+    it('lets a clean generate upgrade an existing INLINE placeholder (#2376)', async () => {
+      const store = createStore(createFakeFs());
+      expect(await store.put(inlinePlaceholderEnvelope())).toBe(true); // inline placeholder first
+      expect(await store.put(makeEnvelope())).toBe(true); // clean fills it in
+      const stored = await store.get(VI_PATH, CONTENT_SIGNATURE);
+      expect(stored?.resolutionCounts?.unresolvedPrimitive).toBe(0);
+      expect(stored?.resolutionCounts?.resolved).toBe(1);
     });
   });
 
