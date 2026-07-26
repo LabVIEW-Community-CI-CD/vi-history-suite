@@ -36,10 +36,14 @@ const SYSTEM_APPEND = process.env.PROVIDER_SYSTEM_APPEND || '';
 const EFFECTIVE_SYSTEM = SYSTEM_APPEND ? `${SYSTEM}\n${SYSTEM_APPEND}` : undefined;
 
 // Keep the stricter-SYSTEM run in a separate artifact so it never clobbers the baseline sweep.
+// Optional VIHS_SWEEP_LABEL host/backend suffix (LINUX #2381 suggestion) so CPU vs GPU evidence
+// do not clobber: e.g. VIHS_SWEEP_LABEL=linux-gpu -> ollama-grounded-provider-sweep-linux-gpu.json
+// (combines with -strict). Un-set = the un-suffixed WIN-CPU baseline name (backward-compatible).
+const SWEEP_LABEL = (process.env.VIHS_SWEEP_LABEL || '').replace(/[^a-z0-9._-]/gi, '');
 const OUT = path.join(
   __dirname,
   'dataset',
-  SYSTEM_APPEND ? 'ollama-grounded-provider-sweep-strict.json' : 'ollama-grounded-provider-sweep.json'
+  `ollama-grounded-provider-sweep${SYSTEM_APPEND ? '-strict' : ''}${SWEEP_LABEL ? `-${SWEEP_LABEL}` : ''}.json`
 );
 
 // id -> ollama model name. Absent models are skipped (marked present:false).
@@ -138,6 +142,7 @@ async function main() {
     schema: 'vi-history-suite/grounded-provider-sweep@v1',
     generatedAt: new Date().toISOString(),
     ollama: OLLAMA,
+    label: SWEEP_LABEL || null,
     systemAppend: SYSTEM_APPEND || null,
     note:
       'Optional grounded MCP narrative provider sweep. Per config: acceptRate = fraction of fixtures where the grounded narrative cleared the faithfulness safety gate without regressing the shipped template; otherwise the provider falls back to the deterministic template.',
