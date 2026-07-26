@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -9,8 +9,7 @@ const gw = require('../../scripts/agentGateway.js');
 // VHS-REQ-719 (VHS #2392 agent-coordination): the shared agent gateway graduated to
 // scripts/. Pure logic (identity, staleness, release-decision, formatting) AND the
 // filesystem lease I/O (acquire/release/read/list) are unit-tested here + mapped +
-// COUNTED toward coverage — only resolveGateDir (git spawn), the CLI entry, and one
-// defensive non-EEXIST mkdir rethrow stay v8-ignored.
+// COUNTED toward coverage — only resolveGateDir (git spawn) + the CLI entry stay v8-ignored.
 
 describe('agentGateway identity (VHS-REQ-719)', () => {
   it('resolveSubagentId precedence: env > cwd-lane > main > pid', () => {
@@ -107,6 +106,28 @@ describe('agentGateway lease I/O mutex (VHS-REQ-719, integration)', () => {
       // listLeases on a missing dir returns [] (readdir catch)
       expect(gw.listLeases(path.join(dir, 'does-not-exist'))).toEqual([]);
     } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('rethrows a non-EEXIST mkdir failure during the atomic lock acquire (VHS-REQ-719)', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'vihs-gate-ut-'));
+    // acquireLease first creates the gate dir (recursive) then mkdirs the atomic lock dir.
+    // Let the recursive gate-dir creation succeed but fail the atomic lock mkdir with a
+    // non-EEXIST (disk/perm) error, which acquireLease must PROPAGATE rather than treat as "held".
+    const realMkdir = fs.mkdirSync;
+    const spy = vi.spyOn(fs, 'mkdirSync').mockImplementation(((target: fs.PathLike, options?: fs.MakeDirectoryOptions | fs.Mode | null) => {
+      if (options && typeof options === 'object' && options.recursive) {
+        return realMkdir(target, options);
+      }
+      const err = new Error('permission denied') as NodeJS.ErrnoException;
+      err.code = 'EACCES';
+      throw err;
+    }) as typeof fs.mkdirSync);
+    try {
+      expect(() => gw.acquireLease(dir, 'git', 'WIN/2411', { now: Date.parse('2026-01-01T00:00:00Z') })).toThrow(/permission denied/);
+    } finally {
+      spy.mockRestore();
       fs.rmSync(dir, { recursive: true, force: true });
     }
   });

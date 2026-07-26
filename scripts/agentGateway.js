@@ -11,8 +11,7 @@
 // Coverage discipline (mirrors branchFlowEnforce/collabPromote, VHS-REQ-719): the
 // pure logic (identity, staleness, release-decision, formatting) AND the filesystem
 // lease I/O (acquire/release/read/list, temp-dir unit-tested) are mapped + counted;
-// only resolveGateDir (git spawn), the CLI/require.main entry, and one defensive
-// non-EEXIST mkdir rethrow (acquireLease) stay v8-ignored.
+// only resolveGateDir (git spawn) + the CLI/require.main entry stay v8-ignored.
 
 const fs = require('fs');
 const path = require('path');
@@ -123,7 +122,7 @@ function acquireLease(gateDir, resource, owner, opts) {
   try {
     return tryWrite();
   } catch (e) {
-    /* v8 ignore next */ // defensive: a non-EEXIST mkdir failure (disk/perm) is not unit-triggerable
+    // a non-EEXIST mkdir failure (disk/perm) is rethrown; covered by the fault-injection test
     if (e.code !== 'EEXIST') throw e;
     const held = readLease(gateDir, resource);
     if (held && isLeaseStale(held, now)) {
