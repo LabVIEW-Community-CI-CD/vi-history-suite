@@ -261,7 +261,9 @@ function structuralDiff(baseRegions, headRegions, base, head) {
     headImageCount: hi.length,
     changedImagePositions: changedPositions,
     changedRegions: regionLabels.filter((r) => r.status !== 'unchanged').map((r) => r.region),
-    textShellChanged: sha16(textShell(base.html)) !== sha16(textShell(head.html)),
+    // Exact comparison of the whitespace-normalized, image-stripped shell (a boolean signal) --
+    // avoids the theoretical false-negative of comparing truncated digests.
+    textShellChanged: textShell(base.html) !== textShell(head.html),
     regions: regionLabels
   };
 }
