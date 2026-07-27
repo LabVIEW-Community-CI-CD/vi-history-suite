@@ -106,12 +106,6 @@ function sha16(s) {
   return crypto.createHash('sha256').update(s).digest('hex').slice(0, 16);
 }
 
-// Full (untruncated) sha256 hex -- used for render identity that feeds reportSha256, where a
-// truncated digest would needlessly raise collision risk (render time dominates anyway).
-function sha256hex(s) {
-  return crypto.createHash('sha256').update(s).digest('hex');
-}
-
 // --- capability fingerprint (from-within: host IS the actor) ------------------
 function loadFingerprint() {
   let diskFreeBytes;
@@ -392,10 +386,12 @@ function processOneVi(viRel, changeType, baseWt, selWt, ctx) {
 
   const baseRes =
     changeType === 'added' ? emptyRender() : render(path.join(baseWt, viRel), path.join(outDir, `${safe}.base.html`));
-  baseRes.htmlSha = baseRes.bytes ? sha256hex(baseRes.html) : null;
+  // Digest the CANONICAL (normalized) render so cosmetic CRLF / trailing-whitespace differences
+  // cannot fabricate a cross-actor parity mismatch (same normalization the reconciler uses).
+  baseRes.htmlSha = baseRes.bytes ? digest.deriveReportSha256(baseRes.html) : null;
   const headRes =
     changeType === 'deleted' ? emptyRender() : render(path.join(selWt, viRel), path.join(outDir, `${safe}.selected.html`));
-  headRes.htmlSha = headRes.bytes ? sha256hex(headRes.html) : null;
+  headRes.htmlSha = headRes.bytes ? digest.deriveReportSha256(headRes.html) : null;
 
   const needBase = changeType !== 'added';
   const needHead = changeType !== 'deleted';
@@ -429,7 +425,7 @@ function processOneVi(viRel, changeType, baseWt, selWt, ctx) {
     } else {
       reportSha256 = digest.deriveReportSha256(
         // JSON-encode so a region heading containing "|" or "," cannot create an ambiguous digest.
-        JSON.stringify(['renderDiff', changeType, baseRes.htmlSha, headRes.htmlSha, diff.changedRegions, diff.changedImagePositions])
+        JSON.stringify([RECIPE, changeType, baseRes.htmlSha, headRes.htmlSha, diff.changedRegions, diff.changedImagePositions])
       );
     }
   } else {
@@ -597,7 +593,7 @@ async function main() {
       viRel: r.viRel,
       changeType: r.changeType,
       outcome: r.outcome,
-      parityKey: r.parityKey ? r.parityKey.slice(0, 16) : null,
+      parityKey: r.parityKey ?? null,
       changedRegions: r.changedRegions,
       regionCount: r.regionCount,
       previewImageCount: r.previewImageCount,
