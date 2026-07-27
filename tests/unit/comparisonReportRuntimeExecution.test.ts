@@ -3079,7 +3079,11 @@ describe('Linux host-native VI Server TCP preflight (VHS-REQ-156)', () => {
     );
   });
 
-  it('blocks execution with linux-vi-server-tcp-port-unknown when TCP is enabled but no server.tcp.port is declared (VHS-REQ-156.11)', async () => {
+  it('proceeds without -PortNumber on Linux host-native when TCP is enabled but no server.tcp.port is declared (VHS-REQ-156.7, VHS-REQ-706)', async () => {
+    // VHS-REQ-706: the Linux host-native path no longer passes -PortNumber
+    // (LabVIEWCLI auto-connects), so a declared server.tcp.port is not required.
+    // The prior linux-vi-server-tcp-port-unknown fail-closed block is retired:
+    // TCP enabled + no declared port now proceeds, and no -PortNumber is emitted.
     const record = createReadyRecord();
     record.runtimeSelection.platform = 'linux';
     record.runtimeSelection.bitness = 'x64';
@@ -3102,7 +3106,11 @@ describe('Linux host-native VI Server TCP preflight (VHS-REQ-156)', () => {
       bitness: 'x64'
     };
 
-    const runCommand = vi.fn();
+    const runCommand = vi.fn().mockResolvedValue({
+      exitCode: 0,
+      stdout: 'CreateComparisonReport operation succeeded.',
+      stderr: ''
+    });
     const writePacketRecord = vi.fn().mockResolvedValue(undefined);
     const result = await executeComparisonReport(
       { record, repositoryRoot: '/workspace/repo' },
@@ -3124,8 +3132,10 @@ describe('Linux host-native VI Server TCP preflight (VHS-REQ-156)', () => {
           }
           throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
         }) as never,
-        pathExists: vi.fn().mockResolvedValue(false),
-        runCommand: runCommand as never,
+        pathExists: vi.fn(async (filePath: string) =>
+          typeof filePath === 'string' && filePath.endsWith(record.artifactPlan.reportFilename)
+        ),
+        runCommand,
         nowIso: vi.fn().mockReturnValue('2026-06-02T18:00:00.000Z'),
         nowMs: vi.fn().mockReturnValue(1000),
         writePacketRecord,
@@ -3133,15 +3143,16 @@ describe('Linux host-native VI Server TCP preflight (VHS-REQ-156)', () => {
       }
     );
 
-    expect(runCommand).not.toHaveBeenCalled();
-    expect(result.record.runtimeExecution.state).toBe('not-available');
-    expect(result.record.runtimeExecution.blockedReason).toBe('linux-vi-server-tcp-port-unknown');
-    expect(result.record.runtimeExecution.diagnosticReason).toBe('linux-vi-server-tcp-port-unknown');
-    expect(result.record.runtimeExecution.labviewTcpPort).toBeUndefined();
-    expect(result.record.runtimeExecution.labviewIniPath).toMatch(/labview\.conf$/);
-    expect(result.record.runtimeExecution.diagnosticNotes?.join(' ')).toMatch(
-      /does not declare server\.tcp\.port/
+    expect(runCommand).toHaveBeenCalledTimes(1);
+    expect(result.record.runtimeExecution.blockedReason).not.toBe(
+      'linux-vi-server-tcp-port-unknown'
     );
+    expect(result.record.runtimeExecution.blockedReason).toBeUndefined();
+
+    const launchedPlan = runCommand.mock.calls[0]?.[0] as { args: string[] } | undefined;
+    expect(
+      (launchedPlan?.args ?? []).some((argument) => argument.toLowerCase() === '-portnumber')
+    ).toBe(false);
   });
 
   it('blocks execution with linux-vi-server-tcp-disabled when no labview.conf candidate is readable (VHS-REQ-156.7)', async () => {
@@ -3201,6 +3212,86 @@ describe('Linux host-native VI Server TCP preflight (VHS-REQ-156)', () => {
     expect(result.record.runtimeExecution.diagnosticNotes?.join(' ')).toMatch(
       /No readable Linux LabVIEW config/
     );
+  });
+});
+
+describe('Linux host-native -PortNumber omission (VHS-REQ-706)', () => {
+  it('omits -PortNumber on a successful Linux host-native compare and lets LabVIEWCLI auto-connect (VHS-REQ-156.7, VHS-REQ-706)', async () => {
+    // VHS-REQ-706: passing -PortNumber to LabVIEWCLI on the Linux host-native
+    // path triggers a GSW recursive load (exit 157). The resolved server.tcp.port
+    // is still read from labview.conf so the preflight proceeds, but the launched
+    // CreateComparisonReport invocation must NOT carry -PortNumber; LabVIEWCLI
+    // auto-connects to the running VI Server instead.
+    const record = createReadyRecord();
+    record.runtimeSelection.platform = 'linux';
+    record.runtimeSelection.bitness = 'x64';
+    record.runtimeSelection.provider = 'host-native';
+    record.runtimeSelection.executionMode = 'host-only';
+    record.runtimeSelection.requestedProvider = 'host';
+    record.runtimeSelection.requestedLabviewVersion = '2026';
+    record.runtimeSelection.labviewExe = {
+      kind: 'labview-exe',
+      path: '/usr/local/natinst/LabVIEW-2026-64/labview',
+      source: 'configured',
+      exists: true,
+      bitness: 'x64'
+    };
+    record.runtimeSelection.labviewCli = {
+      kind: 'labview-cli',
+      path: '/usr/local/bin/LabVIEWCLI',
+      source: 'configured',
+      exists: true,
+      bitness: 'x64'
+    };
+
+    const runCommand = vi.fn().mockResolvedValue({
+      exitCode: 0,
+      stdout: 'CreateComparisonReport operation succeeded.',
+      stderr: ''
+    });
+    const writePacketRecord = vi.fn().mockResolvedValue(undefined);
+    const result = await executeComparisonReport(
+      { record, repositoryRoot: '/workspace/repo' },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
+        readdir: vi.fn().mockResolvedValue([]) as never,
+        readFile: vi.fn(async (filePath: string) => {
+          if (typeof filePath === 'string' && filePath.endsWith('labview.conf')) {
+            return 'server.tcp.enabled=True\nserver.tcp.port=3363\n';
+          }
+          throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+        }) as never,
+        pathExists: vi.fn(async (filePath: string) =>
+          typeof filePath === 'string' && filePath.endsWith(record.artifactPlan.reportFilename)
+        ),
+        runCommand,
+        nowIso: vi.fn().mockReturnValue('2026-07-27T18:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord,
+        processPlatform: 'linux'
+      }
+    );
+
+    expect(runCommand).toHaveBeenCalledTimes(1);
+    expect(result.record.runtimeExecution.blockedReason).toBeUndefined();
+
+    const launchedPlan = runCommand.mock.calls[0]?.[0] as { args: string[] } | undefined;
+    expect(launchedPlan?.args).toBeDefined();
+    expect(
+      (launchedPlan?.args ?? []).some((argument) => argument.toLowerCase() === '-portnumber')
+    ).toBe(false);
+
+    const launchedArgs = result.record.runtimeExecution.args ?? [];
+    expect(launchedArgs.some((argument) => argument.toLowerCase() === '-portnumber')).toBe(false);
   });
 });
 

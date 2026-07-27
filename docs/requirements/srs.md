@@ -1641,12 +1641,21 @@ Missing numeric IDs are intentional.
     `requestedLabviewVersion`, the year is inferred from the resolved
     `labviewExe` directory segment (e.g. `LabVIEW-2026-64`) so the preflight
     can still locate the config. The `lvcompare` engine is exempt from this
-    preflight because it does not connect to LabVIEW VI Server. When TCP is
-    enabled, the resolved `server.tcp.port` is passed to LabVIEWCLI as
-    `-PortNumber`; there is no fabricated default port. When VI Server TCP is
-    enabled but no explicit `server.tcp.port` is declared, execution is
-    blocked with `blockedReason: 'linux-vi-server-tcp-port-unknown'` rather
-    than assuming a port (see the dedicated fail-closed criterion below).
+    preflight because it does not connect to LabVIEW VI Server. When VI Server
+    TCP is enabled, the Linux host-native comparison does NOT pass `-PortNumber`
+    to LabVIEWCLI: it lets LabVIEWCLI auto-connect to the running VI Server
+    (LabVIEWCLI resolves the port itself). Passing `-PortNumber` explicitly —
+    even the resolved, disk-declared `server.tcp.port` — drives a divergent
+    LabVIEWCLI VI-Server attach path that recursive-loads the packed Getting
+    Started Window (`GSW.lvlibp/GSW_MainPanel.vi`) on Linux host-native LabVIEW
+    2026 and fails the operation (exit 157 / `linux-headless-recursive-load`);
+    this was proven by a reversible single-variable toggle (present → recursion,
+    absent → success) and generalizes the previously-scoped "fabricated 3363"
+    observation to ANY explicit `-PortNumber` (VHS-REQ-706). Because the Linux
+    host-native path no longer supplies `-PortNumber`, a declared
+    `server.tcp.port` is NOT required to proceed; the prior
+    `linux-vi-server-tcp-port-unknown` fail-closed block is removed for this
+    path (a still-required `server.tcp.enabled=True` remains enforced as above).
   - Linux host-native runs mirror the staged VI inputs and report output
     under a short tmpdir (default `${os.tmpdir()}/vi-history-suite-runtime`,
     overridable via `LVIE_LINUX_RUNTIME_TMPDIR`, opt-out via
@@ -1699,10 +1708,15 @@ Missing numeric IDs are intentional.
 - Change Guidance:
   - Keep the headless decision inside the plan so runtime evidence reflects
     the actual args used. Linux host-native runs are unconditionally headless
-    (criterion above; no opt-out). Host-native comparison requires VI Server
-    TCP/IP enabled with an explicit `server.tcp.port` in `labview.conf`; when
-    the port is not declared the runtime fails closed
-    (`linux-vi-server-tcp-port-unknown`) rather than assuming a default.
+    (criterion above; no opt-out). Linux host-native comparison MUST NOT emit
+    `-PortNumber`; gate `appendLabviewCliPortNumberArg` off for the
+    `platform=linux + engine=labview-cli + provider=host-native` triple so
+    LabVIEWCLI auto-connects to the VI Server declared in `labview.conf`.
+    Passing `-PortNumber` recursive-loads the Getting Started Window on Linux
+    host-native LabVIEW 2026 (VHS-REQ-706). VI Server TCP/IP must still be
+    enabled (`server.tcp.enabled=True`), but a declared `server.tcp.port` is no
+    longer required. Container (Docker) and Windows host-native invocations
+    still append `-PortNumber` as before.
 
 ### VHS-REQ-596: Devcontainer Source Evaluation
 
