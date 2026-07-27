@@ -59,11 +59,14 @@ therefore **fixture-independent and comparison-independent** (a packed-library
 self-recursion at launch, not a fixture dependency cycle and not the comparison
 content). This reorients the hypotheses below.
 
-## Empirical result (2026-07-27) — narrowing the cause
+## Empirical result (2026-07-27) — the cause, empirically resolved
 
 The Linux plane ran the checklist on native **Community** LabVIEW 2026-64 (LabVIEWCLI
-only, `-LabVIEWPath …/LabVIEW-2026-64/labview`). The runs bear on the hypotheses below —
-they establish the render path but leave H2 and H4 open (see the conclusion):
+only, `-LabVIEWPath …/LabVIEW-2026-64/labview`), including the decisive controlled
+host-native `CreateComparisonReport` retest at the current shipped build. The runs
+**resolve** the hypotheses below: the render path is sound headless, but a fully
+version-aware `-Headless` host-native compare **still** recursive-loads GSW — so
+**H2 is refuted as the cure and H4 (packed `GSW.lvlibp`) rises** (see the conclusion):
 
 | Run | Operation | Config | Result |
 | --- | --- | --- | --- |
@@ -71,40 +74,52 @@ they establish the render path but leave H2 and H4 open (see the conclusion):
 | C | `PrintToSingleFileHtml` (same VI) | **with `-Headless`** | **exit 0**, 7 PNGs, no GSW/LEIF recursion |
 | #2480 | `PrintToSingleFileHtml` (`lv_icon.vi`) | host-native | **exit 0**, 638 PNGs |
 | #2472 | **`CreateComparisonReport`** (`lv_icon.vi`) | same box / CLI / plain `labview` | **linux-headless-recursive-load** (GSW self-recursion), exit 157, ~1583 ms at launch |
+| **Retest** | **`CreateComparisonReport`** (`lv_icon.vi`, HEAD~1→HEAD) | shipped runtime, build 1.36.1+0cc9a58, **version-aware `-Headless -LabVIEWPath …/LabVIEW-2026-64/labview -PortNumber 3363`** | **linux-headless-recursive-load** (SAME GSW self-recursion, identical uuids), exit 157, durationMs 623 |
 
-**Conclusion — the render path works headless; the GSW recursion is tied to a specific
-`CreateComparisonReport` launch, not to the operation universally.** A real VI renders
-headlessly in every tested config (no/`-Headless`, plain `labview`, Community) via
-`PrintToSingleFileHtml`, so the render path + headless launch are sound and GSW is not
-loaded at generic launch. The recursion appeared on the **#2472 run only**:
-`CreateComparisonReport` via **plain `labview`** (Community host-native). Crucially,
-`CreateComparisonReport` is **not** uniformly broken — `runtime-validation-ledger.json`
-records **green** `CreateComparisonReport` runs on `lv_icon.vi` for all four Linux
-**container** tracks (in-container `labviewprofull -Headless`) and one Linux
-**host-native** track (1.34.2, 2026-07-19; launch config not recorded). So the failure
-is **config/launch-dependent**, correlating with the plain-`labview` host-native launch,
-not with the operation as such.
+**Conclusion — the render path works headless; a version-aware `-Headless` host-native
+`CreateComparisonReport` STILL recursive-loads GSW, so the launch mechanism is not the
+cure and the packed-lib load rises.** A real VI renders headlessly in every tested config
+(no/`-Headless`, plain `labview`, Community) via `PrintToSingleFileHtml`, so the render
+path + headless launch are sound and GSW is not loaded at generic launch. The **decisive
+retest** ran the *shipped* host-native comparison runtime (build 1.36.1+0cc9a58, core
+byte-identical to develop HEAD) on `lv_icon.vi` with a **fully version-aware**
+`-Headless -LabVIEWPath …/LabVIEW-2026-64/labview -PortNumber 3363` invocation — and it
+reproduced the **same** GSW self-recursion (exit 157, `linux-headless-recursive-load`,
+identical `GSW_MainPanel.vi` uuids). LabVIEW connected (port 3363) then failed at LEIF
+load. So the recursion is **not** cured by a version-aware launch. `CreateComparisonReport`
+is still not *uniformly* broken — `runtime-validation-ledger.json` records **green**
+compares for all four Linux **container** tracks (in-container `labviewprofull -Headless`)
+and one Linux **host-native** track (1.34.2, 2026-07-19); with the version-aware
+host-native retest now RED, that 07-19 green is a **different host/edition/environment**
+(#2486 candidate a), not a since-fixed launch.
 
-What the renders **do** and **do NOT** establish:
-- **Establish:** the `-Headless` flag does not break *rendering*; H1's "suppress GSW at
-  generic launch" is not the lever (the render at the same launch never loads GSW).
-- **Do NOT refute H2 (launch mechanism / version-flag)** — now the *leading* hypothesis:
-  the green compares use `labviewprofull -Headless` (container) while the red used plain
-  `labview`; the renders never exercised `CreateComparisonReport` under a version-aware
-  launch, so the mechanism is untested *for the compare op*.
-- **Do NOT refute H4 (packed `GSW.lvlibp` integrity)** — `PrintToSingleFileHtml` never
-  loads GSW, so it cannot exercise GSW-load integrity; H4 stays open.
-- **Edition** is not cleanly refuted for the compare op: the red compare was *also*
-  Community, and the 07-19 host-native green's edition/launch is unrecorded.
+What the evidence **establishes** (after the retest):
+- **H1 (suppress GSW at generic launch) is not the lever** — the render at the same
+  launch never loads GSW; the `-Headless` flag does not break *rendering*.
+- **H2 (version-aware `-Headless` host-native launch as the CURE) is REFUTED** — the
+  retest issued a fully version-aware `-Headless -LabVIEWPath -PortNumber` compare and it
+  still recursive-loaded GSW, so the launch mechanism was not the trigger and a
+  version-aware launch does not fix it (contrast the container #565/ADR-0004 case, where
+  the wrong-version `-Headless` *was* the cause).
+- **H4 (packed `GSW.lvlibp` integrity / GSW pulled into the headless compare load) RISES**
+  to the leading hypothesis — only `CreateComparisonReport` pulls GSW (`PrintToSingleFileHtml`
+  renders the same VI with 638 imgs and NO GSW load), and a version-aware launch does not
+  avoid it, pointing at the GSW load path intrinsic to the compare op on this install.
+- **Edition** is not the discriminator for the compare op: both the #2472 and the retest
+  compares were Community 2026, and the 07-19 host-native green's edition/host is unrecorded
+  (#2486 candidate a).
 
-**Decisive next test (Linux plane):** a controlled host-native `CreateComparisonReport`
-retest on `lv_icon.vi` at the current comparison-runtime build (which may carry a
-version-aware `-Headless` launch postdating #2472). **Green ⇒ H2** (the plain-`labview`
-launch was the trigger; a version-aware launch fixes it). **Red ⇒ host/edition/packed-lib
-specific** (H4, or a host-specific 07-19 green). Until then the SRS environment-vs-intrinsic
-question resolves as: **container path green (`labviewprofull -Headless`); host-native
-compare config/host-dependent** — not a blanket Linux-environment failure and not an
-empty→rich asymmetry.
+**Decisive test — DONE, RED.** The controlled host-native `CreateComparisonReport` retest
+on `lv_icon.vi` at the current shipped build (a version-aware `-Headless` launch postdating
+#2472) **reproduced** the recursion (exit 157). So the disposition is the **Red ⇒
+host/edition/packed-lib specific** branch: H2 (launch mechanism) is refuted as the cure and
+H4 (packed `GSW.lvlibp`) rises. The SRS environment-vs-intrinsic question resolves as:
+**container path green (`labviewprofull -Headless`); host-native compare on this box RED
+regardless of a version-aware launch** — an install/packed-lib-scoped GSW-load failure, not
+a blanket Linux-environment failure and not an empty→rich asymmetry. The next discriminator
+is the **Windows host-native 2026 cross-check** (does Windows host-native headless also
+recurse ⇒ OS-independent packed-lib/H4; Windows clean ⇒ Linux-specific), now runnable on the
+WIN box (LabVIEW 2026 Q3 x86 + x64).
 
 ### #2315 unblock (does not require resolving the root cause)
 Because a real VI renders headlessly on the decoupled Linux actor
@@ -144,11 +159,12 @@ on the Linux run host and are not committed.
 
 ## Ranked hypotheses (as of the baseline — now largely resolved by the Empirical result above)
 
-> These were the pre-reproduction rankings. The **Empirical result** section above
-> has since NARROWED the cause: the render path is sound (H1's suppress-GSW-at-launch
-> is not the lever), **H2 (launch mechanism / version-flag) is now the leading open
-> hypothesis** pending a controlled compare retest, and **H4 (packed-lib) stays open**
-> (the renders never load GSW). Retained as the record of how the reproduction was scoped.
+> These were the pre-reproduction rankings. The **Empirical result** section above has
+> since RESOLVED the cause via the decisive host-native compare retest: the render path is
+> sound (H1's suppress-GSW-at-launch is not the lever), **H2 (launch mechanism / version-flag)
+> is REFUTED as the cure** (a version-aware `-Headless` host-native compare still recurses),
+> and **H4 (packed `GSW.lvlibp`) is now the leading hypothesis** (only the compare op pulls
+> GSW). Retained as the record of how the reproduction was scoped.
 
 ### H1 — Suppress the GSW (Getting Started Window) load at headless launch (TOP, highest-leverage)
 The recursion is GSW loading itself; if headless launch can start LabVIEW **without**
@@ -169,7 +185,9 @@ the wrong way.
   -Headless` for 2026 x64 (not plain `labview`, not a 2025 path with `-Headless`).
   A mismatch that engages the interactive GSW path is the cause.
 - **Refute:** the invocation is already correct version-aware **and** it still
-  recurses (the baseline suggests this is plausible — pushing weight to H1/H3/H4).
+  recurses. **CONFIRMED REFUTED (2026-07-27 retest):** the shipped runtime issued
+  `labview … -Headless -LabVIEWPath …/LabVIEW-2026-64/labview -PortNumber 3363` and it
+  STILL recursive-loaded GSW — so a version-aware launch is not the cure; weight moves to H4.
 - **Cheapest:** the baseline already captured the invocation; this is an inspection.
 
 ### H3 — Linux-headless / no-display artifact
@@ -189,12 +207,13 @@ this LabVIEW-2026-64 install.
 ### Refuted by the on-box baseline (do NOT spend cycles here)
 - **Fixture-specific GSW dependency** — the recursion is inside the shipped
   `GSW.lvlibp`, not the fixture graph, so it reproduces with ANY comparison
-  (`lv_icon.vi` passing per the ledger is because those runs did not hit this launch
-  path, not because the fixture lacked a GSW dependency).
+  (`lv_icon.vi` passing on the **container** tracks reflects the different
+  environment/build there, not a fixture lacking a GSW dependency; the version-aware
+  host-native retest on `lv_icon.vi` still recurses).
 - **Intrinsic empty→rich asymmetry as the proximate cause** — the failure is at
-  launch (`durationMs 1583`), before comparison content is enumerated, so empty→rich
-  content is not the trigger. (The SRS environment-vs-intrinsic question is now
-  effectively answered "Linux-headless launch environment", pending the Windows
+  launch (`durationMs 623`–`1583`), before comparison content is enumerated, so empty→rich
+  content is not the trigger. (The SRS environment-vs-intrinsic question resolves to a
+  host-native-install-scoped GSW-load failure on this box, pending the Windows
   cross-check in the checklist.)
 
 ## Scoped reproduction checklist (for the native-runtime plane)
@@ -215,17 +234,26 @@ this LabVIEW-2026-64 install.
 
 ## Outcome (empirically resolved 2026-07-27)
 
-See **Empirical result** above. Net: the render path is sound headless; the GSW
-recursion is **config/launch-dependent** (the #2472 plain-`labview` Community
-host-native `CreateComparisonReport`), **not** operation-universal — container
-compares (`labviewprofull -Headless`) and a 07-19 host-native compare are green.
-**H2 (launch mechanism / version-flag) is the leading open hypothesis** and **H4
-(packed-lib) stays open**; a controlled host-native compare retest is the decisive
-test. Forward paths:
+See **Empirical result** above. Net: the render path is sound headless, but the decisive
+host-native `CreateComparisonReport` retest at the current shipped build — with a **fully
+version-aware** `-Headless -LabVIEWPath …/LabVIEW-2026-64/labview -PortNumber 3363`
+invocation — **reproduced** the GSW self-recursion (exit 157, `linux-headless-recursive-load`).
+So **H2 (launch mechanism / version-flag) is REFUTED as the cure** and **H4 (packed
+`GSW.lvlibp` integrity / GSW pulled into the headless compare load) is the leading
+hypothesis** — only `CreateComparisonReport` pulls GSW, and a version-aware launch does not
+avoid it. The #2486 split is confirmed: container compares (`labviewprofull -Headless`) are
+green, host-native compare on this box is red regardless of the launch, so the 07-19
+ledger-green host-native was a different host/edition/environment (candidate a). Forward paths:
 - **Unblock #2315 now** — build the decoupled Linux diff from per-revision
-  `PrintToSingleFileHtml` renders + a structural diff (rendered-output surrogate;
-  ships a present-and-capable per-actor diff signal without the blocker). [Done: #2490.]
-- **Root-cause thread (true comparison parity)** — run the controlled host-native
-  compare retest under a version-aware `-Headless` launch (green ⇒ H2 launch
-  mechanism; red ⇒ host/edition/packed-lib specific), then, if H2, apply the
-  version-aware launch fix host-native (mirrors the container #565/ADR-0004 fix).
+  `PrintToSingleFileHtml` renders + a structural diff (rendered-output surrogate; ships a
+  present-and-capable per-actor diff signal without the blocker). [Done: #2490.] This mirrors
+  NI's **blessed render-then-diff mechanism** — `PrintToSingleFileHtml` + `vidiff`
+  (`resources/labview-cli-operations/vidiff/`, vendored byte-for-byte via #2488 from
+  `ni/labview-for-containers`) — which renders each VI then diffs the outputs, side-stepping
+  `CreateComparisonReport` (and GSW) entirely.
+- **Root-cause thread (true comparison parity)** — the next discriminator is the **Windows
+  host-native 2026 cross-check** (LabVIEW 2026 Q3 x86 + x64 now on the WIN box): if Windows
+  host-native headless *also* recurses on GSW, H4 is OS-independent (packed-lib / compare-op
+  intrinsic); if Windows is clean, the failure is Linux-host-native-specific. Then pursue the
+  packed-`GSW.lvlibp` integrity path (repair/rebuild, or a GSW-load suppression at compare
+  launch) rather than a launch-flag fix, since the version-aware launch is proven not to help.
