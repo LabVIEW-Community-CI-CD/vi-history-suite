@@ -500,7 +500,8 @@ describe('comparisonReportPlan builders (direct option branches)', () => {
     expect(plan.relativeDirectory).toBe('resource/plugins');
     expect(plan.leftFilename.startsWith('left-abcdef123456-')).toBe(true);
     expect(plan.rightFilename.startsWith('right-fedcba098765-')).toBe(true);
-    expect(plan.treeRevisionId).toBe('fedcba0987654321');
+    expect(plan.leftTreeRevisionId).toBe('abcdef1234567890');
+    expect(plan.rightTreeRevisionId).toBe('fedcba0987654321');
   });
 
   it('buildStagedRevisionPlan falls back to flat, bare-side labels for missing/unsafe inputs', () => {
@@ -512,6 +513,7 @@ describe('comparisonReportPlan builders (direct option branches)', () => {
     expect(plan.relativeDirectory).toBe('');
     expect(plan.leftFilename).toBe('left-icon.vi');
     expect(plan.rightFilename).toBe('right-icon.vi');
-    expect(plan.treeRevisionId).toBe('');
+    expect(plan.leftTreeRevisionId).toBe('');
+    expect(plan.rightTreeRevisionId).toBe('');
   });
 });

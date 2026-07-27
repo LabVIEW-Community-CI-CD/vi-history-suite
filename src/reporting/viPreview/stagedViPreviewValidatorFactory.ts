@@ -62,9 +62,17 @@ export function buildNodeViPreviewRenderDeps(
   input: StagedViPreviewValidatorInput,
   cache?: ViPreviewCache
 ): RenderViPreviewForFileDeps {
-  // The staged VI lives inside the materialized selected-revision tree; stage
-  // from that tree root (when known) so cross-directory dependencies resolve.
-  const treeRoot = input.record.stagedRevisionPlan.treeRoot;
+  // VHS-REQ-624: each staged VI lives inside its OWN revision tree (the base VI
+  // in the left tree, the selected VI in the right tree); stage from the matching
+  // tree root so each VI's cross-directory dependencies resolve as they existed
+  // at that VI's revision.
+  const plan = input.record.stagedRevisionPlan;
+  const treeRoot =
+    input.viFilePath === plan.rightFilePath
+      ? plan.rightTreeRoot
+      : input.viFilePath === plan.leftFilePath
+        ? plan.leftTreeRoot
+        : (plan.rightTreeRoot ?? plan.leftTreeRoot);
   return {
     createWorkspaceDirectory: () => fs.mkdtemp(path.join(os.tmpdir(), 'vihs-staged-vi-preview-')),
     listSourceFiles: async (directory) => {
