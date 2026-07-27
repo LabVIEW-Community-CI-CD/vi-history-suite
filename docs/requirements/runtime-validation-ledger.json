@@ -29,9 +29,9 @@
       "provider": "linux-container",
       "image": "nationalinstruments/labview:2026q1patch2-linux",
       "linuxExecutable": true,
-      "lastValidatedVersion": "1.34.2",
-      "lastValidatedCommit": "a3b66859",
-      "evidence": "1.34.2 real-runtime re-validation: lv_icon.vi (5376833..fc09736) CreateComparisonReport succeeded, reportExists=true, 2026-07-19",
+      "lastValidatedVersion": "1.36.1",
+      "lastValidatedCommit": "15e1749",
+      "evidence": "1.36.1 real-runtime re-validation: lv_icon.vi (5376833..fc09736) CreateComparisonReport succeeded in the 2026q1patch2-linux container, reportExists=true, 52 preview images, exit 0, 2026-07-27",
       "fixture": "labview-icon-editor resource/plugins/lv_icon.vi"
     },
     {
