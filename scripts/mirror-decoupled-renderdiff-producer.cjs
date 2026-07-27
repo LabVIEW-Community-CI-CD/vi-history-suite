@@ -52,6 +52,7 @@
  *   VIHS_R_ACTOR          actor id (default linux-host-native-x64)
  *   VIHS_R_LEDGER         ledger path, repo-relative (default docs/requirements/mirror-benchmark-ledger.json)
  *   VIHS_R_LVPATH         LabVIEW path for -LabVIEWPath (default the native 2026-64 install)
+ *   VIHS_R_CLI            LabVIEWCLI path (default /usr/local/bin/LabVIEWCLI)
  *   VIHS_R_CONNECT_TIMEOUT connect timeout seconds (unused placeholder for parity with siblings)
  *   VIHS_R_OUT            optional JSON evidence path
  */
@@ -99,6 +100,12 @@ const capability = need('out/reporting/mirror/mirrorCapabilityFingerprint.js');
 
 function sha16(s) {
   return crypto.createHash('sha256').update(s).digest('hex').slice(0, 16);
+}
+
+// Full (untruncated) sha256 hex -- used for render identity that feeds reportSha256, where a
+// truncated digest would needlessly raise collision risk (render time dominates anyway).
+function sha256hex(s) {
+  return crypto.createHash('sha256').update(s).digest('hex');
 }
 
 // --- capability fingerprint (from-within: host IS the actor) ------------------
@@ -172,7 +179,10 @@ function render(viAbs, outHtml) {
     );
   } catch (error) {
     ok = false;
-    stderr = `${error.stdout || ''}${error.stderr || ''}`;
+    // execFileSync may surface stdout/stderr as Buffers; coerce to utf8 so the recursive-load
+    // regex always sees text (never a "<Buffer …>" rendering).
+    const asUtf8 = (v) => (Buffer.isBuffer(v) ? v.toString('utf8') : String(v || ''));
+    stderr = `${asUtf8(error.stdout)}${asUtf8(error.stderr)}`;
   }
   const ms = Date.now() - started;
   const html = fs.existsSync(outHtml) ? fs.readFileSync(outHtml, 'utf8') : '';
@@ -278,7 +288,7 @@ function buildHtmlDiffSummary(baseRegions, headRegions, diff, meta) {
   };
   const imgCell = (images) =>
     images.length
-      ? images.map((i) => '<img src="' + i.dataUri + '" loading="lazy">').join('')
+      ? images.map((i) => '<img src="' + i.dataUri + '" alt="" loading="lazy">').join('')
       : '<span class="none">(none)</span>';
   const sections = diff.regions
     .map((r) => {
@@ -348,7 +358,9 @@ function enumerateChangedVis(base, selected) {
 // per-VI mirror-benchmark renderDiff row and writes a per-VI region-labeled HTML summary.
 function processOneVi(viRel, changeType, baseWt, selWt, ctx) {
   const { fingerprint, actorRef, sourceRevision, outDir } = ctx;
-  const safe = viRel.replace(/[^a-zA-Z0-9._-]/g, '_');
+  // Append a short hash of the full repo-relative path so distinct VIs that sanitize to the same
+  // string (e.g. "a/b.vi" vs "a_b.vi") never collide on their base/selected/summary output files.
+  const safe = `${viRel.replace(/[^a-zA-Z0-9._-]/g, '_')}.${sha16(viRel).slice(0, 8)}`;
   const presentPath = changeType === 'deleted' ? path.join(baseWt, viRel) : path.join(selWt, viRel);
   if (!isLabviewFile(presentPath)) {
     console.log(`[render-diff]     skipped (not a LabVIEW VI): ${viRel}`);
@@ -357,10 +369,10 @@ function processOneVi(viRel, changeType, baseWt, selWt, ctx) {
 
   const baseRes =
     changeType === 'added' ? emptyRender() : render(path.join(baseWt, viRel), path.join(outDir, `${safe}.base.html`));
-  baseRes.htmlSha = baseRes.bytes ? sha16(baseRes.html) : null;
+  baseRes.htmlSha = baseRes.bytes ? sha256hex(baseRes.html) : null;
   const headRes =
     changeType === 'deleted' ? emptyRender() : render(path.join(selWt, viRel), path.join(outDir, `${safe}.selected.html`));
-  headRes.htmlSha = headRes.bytes ? sha16(headRes.html) : null;
+  headRes.htmlSha = headRes.bytes ? sha256hex(headRes.html) : null;
 
   const needBase = changeType !== 'added';
   const needHead = changeType !== 'deleted';
@@ -384,7 +396,8 @@ function processOneVi(viRel, changeType, baseWt, selWt, ctx) {
     );
     summaryRel = path.basename(summaryAbs);
     reportSha256 = digest.deriveReportSha256(
-      `renderDiff|${changeType}|${baseRes.htmlSha}|${headRes.htmlSha}|${diff.changedRegions.join(',')}|${diff.changedImagePositions}`
+      // JSON-encode so a region heading containing "|" or "," cannot create an ambiguous digest.
+      JSON.stringify(['renderDiff', changeType, baseRes.htmlSha, headRes.htmlSha, diff.changedRegions, diff.changedImagePositions])
     );
     const presentImages = changeType === 'deleted' ? diff.baseImageCount : diff.headImageCount;
     if (presentImages === 0) outcome = 'blocked';
@@ -509,6 +522,13 @@ async function main() {
   } finally {
     removeWorktree(baseWt);
     removeWorktree(selWt);
+  }
+
+  // In single-VI mode the caller explicitly named the target, so a skip (e.g. not a LabVIEW VI)
+  // produces no ledger row -- surface it as a failure instead of a silent no-op success.
+  if (!changeset && results.length === 1 && results[0].outcome === 'skipped') {
+    console.error(`[render-diff] single-VI target skipped (${results[0].reason}); no ledger row recorded.`);
+    process.exit(1);
   }
 
   let indexPath = null;
