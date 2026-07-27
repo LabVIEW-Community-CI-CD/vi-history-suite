@@ -54,6 +54,8 @@
  *   VIHS_R_LVPATH         LabVIEW path for -LabVIEWPath (default the native 2026-64 install)
  *   VIHS_R_CLI            LabVIEWCLI path (default /usr/local/bin/LabVIEWCLI)
  *   VIHS_R_CONNECT_TIMEOUT connect timeout seconds (unused placeholder for parity with siblings)
+ *   VIHS_R_CHANGESET      set to 1 to diff the whole base->selected changeset (else single-VI mode)
+ *   VIHS_R_OUTDIR         output dir for rendered HTML + per-VI summaries (default a fresh temp dir)
  *   VIHS_R_OUT            optional JSON evidence path
  */
 
@@ -175,9 +177,11 @@ function render(viAbs, outHtml) {
         '-VI', viAbs,
         '-OutputPath', outHtml,
         '-LabVIEWPath', lvPath,
-        '-c', '-o'
+        '-c', '-o', '-Headless'
       ],
-      { encoding: 'utf8', stdio: 'pipe' }
+      // Explicit maxBuffer: -LogToConsole TRUE can emit console output beyond execFileSync's ~1MB
+      // default and fail spuriously with ENOBUFS on verbose renders.
+      { encoding: 'utf8', stdio: 'pipe', maxBuffer: 64 * 1024 * 1024 }
     );
   } catch (error) {
     ok = false;
@@ -350,7 +354,7 @@ function enumerateChangedVis(base, selected) {
   const out = execFileSync(
     'git',
     ['-C', fixtureRepo, 'diff', '--name-status', '--no-renames', '-z', base, selected],
-    { encoding: 'utf8' }
+    { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }
   );
   // -z emits NUL-delimited, UNQUOTED tokens (STATUS \0 PATH \0 STATUS \0 PATH ...), so a path with
   // non-ASCII / control chars is preserved verbatim instead of being C-quoted (e.g. "caf\303\251.vi")
@@ -397,6 +401,7 @@ function processOneVi(viRel, changeType, baseWt, selWt, ctx) {
   const baseRegions = baseRes.bytes ? regionData(baseRes.html) : [];
   const headRegions = headRes.bytes ? regionData(headRes.html) : [];
   let outcome = rendersOk ? 'ok' : 'blocked';
+  let reason;
   let diff = null;
   let previewImageCount = 0;
   let reportSha256;
@@ -410,14 +415,21 @@ function processOneVi(viRel, changeType, baseWt, selWt, ctx) {
       buildHtmlDiffSummary(baseRegions, headRegions, diff, { viPath: viRel, baseRev, selectedRev, actor, recipe: RECIPE })
     );
     summaryRel = path.basename(summaryAbs);
-    reportSha256 = digest.deriveReportSha256(
-      // JSON-encode so a region heading containing "|" or "," cannot create an ambiguous digest.
-      JSON.stringify(['renderDiff', changeType, baseRes.htmlSha, headRes.htmlSha, diff.changedRegions, diff.changedImagePositions])
-    );
     const presentImages = changeType === 'deleted' ? diff.baseImageCount : diff.headImageCount;
-    if (presentImages === 0) outcome = 'blocked';
+    if (presentImages === 0) {
+      // Rendered but produced no inline images -> blocked, with a blocked:<reason> digest so this
+      // run is never comparable as a real report artifact (mirror-benchmark ledger contract).
+      outcome = 'blocked';
+      reason = 'no-inline-images';
+      reportSha256 = digest.deriveReportSha256(`blocked:${reason}`);
+    } else {
+      reportSha256 = digest.deriveReportSha256(
+        // JSON-encode so a region heading containing "|" or "," cannot create an ambiguous digest.
+        JSON.stringify(['renderDiff', changeType, baseRes.htmlSha, headRes.htmlSha, diff.changedRegions, diff.changedImagePositions])
+      );
+    }
   } else {
-    const reason = baseRes.recursiveLoad || headRes.recursiveLoad ? 'linux-headless-recursive-load' : 'render-failed';
+    reason = baseRes.recursiveLoad || headRes.recursiveLoad ? 'linux-headless-recursive-load' : 'render-failed';
     reportSha256 = digest.deriveReportSha256(`blocked:${reason}`);
     console.error(`[render-diff]     BLOCKED (${reason}): ${viRel}`);
   }
@@ -463,6 +475,7 @@ function processOneVi(viRel, changeType, baseWt, selWt, ctx) {
     viRel,
     changeType,
     outcome,
+    reason: reason ?? null,
     parityKey,
     previewImageCount,
     wallMs,
