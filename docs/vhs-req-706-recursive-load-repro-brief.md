@@ -98,10 +98,15 @@ each revision checked out in its OWN full git worktree (deps AT their commit-cor
 target VI copied to `left-*`/`right-*`, exits 0 with a real 740 KB report, 94 diff blocks, and
 NO GSW. The ONLY variable between RED and GREEN is whether each revision's VI has its
 dependencies at the paths they were at that commit. `CreateComparisonReport` spawns a headless
-LabVIEW that **loads** each staged VI; with deps missing from their commit-correct paths the
-load fails and surfaces as the GSW recursive LEIF load. **Linux host-native LabVIEW is uniquely
-intolerant** of that broken load, while **Windows host-native (both bitnesses)** and the
-**Linux container** tolerate it — which reconciles the whole matrix. The render path is
+LabVIEW that **loads** each staged VI. The shipped staging
+(`comparisonReportRuntimeExecution.ts` ~L1088, under VHS-REQ-624) materializes **only the
+selected (HEAD) revision tree** and writes **both** renamed VIs into it, so the **base (HEAD~1)**
+VI resolves its dependencies against the *selected* revision's files — any dependency changed,
+moved, or deleted between base and selected is missing/mismatched for the base VI, its load
+fails, and Linux host-native LabVIEW surfaces it as the GSW recursive LEIF load. **Linux
+host-native LabVIEW is uniquely intolerant** of that broken base-side load, while **Windows
+host-native (both bitnesses)** and the **Linux container** tolerate it — which reconciles the
+whole matrix. The render path is
 independently sound (a real VI renders headlessly in every tested config via
 `PrintToSingleFileHtml`, no GSW), so rendering is not implicated.
 
@@ -130,12 +135,16 @@ What the evidence **establishes**:
 - **Linux host-native is not incapable** — `CreateComparisonReport` GREENS on a real
   cross-revision diff on Linux host-native when deps are commit-correct.
 
-**Root fix (runtime owner).** The comparison staging must materialize **each revision's full
-dependency closure at its commit-correct paths** (a git worktree per side, renaming only the
-target VI) instead of one tree at the selected rev + both renamed VIs. This is exactly what the
-render-diff producer (#2490) already does per revision — and why render-diff works host-native
-on Linux. Routing Linux comparisons through the container provider remains a valid
-**workaround**, but the staging fix makes Linux host-native itself green.
+**Root fix (runtime owner).** The comparison staging must materialize **two trees — one per
+revision** — writing each renamed target VI into its own revision tree (base VI into a base-rev
+tree, selected VI into a selected-rev tree) so each side loads its commit-correct dependency
+closure, instead of one selected-rev tree holding both renamed VIs
+(`comparisonReportRuntimeExecution.ts` ~L1088). This is exactly what the render-diff producer
+(#2490) already does per revision — and why it works host-native on Linux. It also updates the
+VHS-REQ-624 single-selected-tree assumption to per-revision-tree materialization (a
+requirements-steward touch). Routing GSW-bearing Linux comparisons through the container
+provider remains a valid **workaround**, but the staging fix makes Linux host-native itself
+green.
 
 ### #2315 unblock (does not require resolving the root cause)
 Because a real VI renders headlessly on the decoupled Linux actor
@@ -282,8 +291,12 @@ host-native and the Linux container tolerate the same broken load. Forward paths
   `ni/labview-for-containers`) — which renders each VI then diffs the outputs, side-stepping
   `CreateComparisonReport` (and GSW) entirely.
 - **Root fix (runtime owner)** — the comparison staging (`materializeSelectedRevisionTreeWithGit`
-  → one tree at the selected rev + both renamed VIs) must instead materialize **each revision's
-  full dependency closure at its commit-correct paths** (a git worktree per side, renaming only
-  the target VI) — exactly what render-diff (#2490) already does per revision, and why it works
-  host-native on Linux. Routing GSW-bearing Linux comparisons through the container provider
-  remains a valid **workaround**, but the staging fix makes Linux host-native itself green.
+  → one tree at the selected rev + both renamed VIs, `comparisonReportRuntimeExecution.ts`
+  ~L1088) must instead materialize **two trees, one per revision**, writing each renamed target
+  VI into its own revision tree (base VI into a base-rev tree, selected VI into a selected-rev
+  tree) so each side loads its commit-correct dependency closure — exactly what render-diff
+  (#2490) already does per revision, and why it works host-native on Linux. This also updates
+  the VHS-REQ-624 single-selected-tree assumption to per-revision-tree materialization (a
+  requirements-steward touch). Routing GSW-bearing Linux comparisons through the container
+  provider remains a valid **workaround**, but the staging fix makes Linux host-native itself
+  green.
