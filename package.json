@@ -222,7 +222,7 @@
             "host",
             "docker"
           ],
-          "description": "Where comparisons run: Host uses the LabVIEW installed on your machine; Docker uses an NI LabVIEW container image. On first run this is auto-selected from the detected runtime (Host when a LabVIEW install is found, otherwise Docker when the Docker CLI is available) and then persisted; if neither is detected it is left unset until you choose. Change it anytime."
+          "description": "Where comparisons run: Host uses the LabVIEW installed on your machine; Docker uses an NI LabVIEW container image. On first run this is auto-selected from the detected runtime (Host when a LabVIEW install is found, otherwise Docker when the Docker CLI is available) and then persisted; while no runtime is detected it stays unset, and a later launch auto-selects once one is available. Change it anytime."
         },
         "viHistorySuite.semantics.provider": {
           "type": "string",
