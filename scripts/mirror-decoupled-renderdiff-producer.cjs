@@ -84,14 +84,16 @@ const viPath = env.VIHS_R_VI || 'ASCII/Terminals/ASCII Intermittent.vi';
 const baseRev = env.VIHS_R_BASE || 'HEAD~1';
 const selectedRev = env.VIHS_R_SELECTED || 'HEAD';
 const version = env.VIHS_R_VERSION || '2026';
-const bitness = env.VIHS_R_BITNESS || 'x64';
+const bitness = (env.VIHS_R_BITNESS || 'x64').toLowerCase() === 'x86' ? 'x86' : 'x64';
 const actor = env.VIHS_R_ACTOR || 'linux-host-native-x64';
 // This producer IS the decoupled host-native render-diff actor -- role/provider/capturedFrom are fixed.
 const role = 'decoupled';
 const provider = 'host-native';
 const ledgerRel = env.VIHS_R_LEDGER || 'docs/requirements/mirror-benchmark-ledger.json';
 const cli = env.VIHS_R_CLI || '/usr/local/bin/LabVIEWCLI';
-const lvPath = env.VIHS_R_LVPATH || `/usr/local/natinst/LabVIEW-${version}-64/labview`;
+// Default the -LabVIEWPath bit-suffix from the declared bitness so an x86 run never silently
+// launches the x64 install (which would mislabel the recorded measurements).
+const lvPath = env.VIHS_R_LVPATH || `/usr/local/natinst/LabVIEW-${version}-${bitness === 'x86' ? '32' : '64'}/labview`;
 // Actor-neutral logical recipe -- a rendered-output delta, distinct from createComparisonReport.
 const RECIPE = 'renderDiff';
 
@@ -321,16 +323,21 @@ function buildHtmlDiffSummary(baseRegions, headRegions, diff, meta) {
 
 // Magic-byte guard: a real LabVIEW VI/CTL has LVIN (VI) or LVCC (CTL/class) at byte offset 8.
 function isLabviewFile(absPath) {
+  let fd;
   try {
-    const fd = fs.openSync(absPath, 'r');
+    fd = fs.openSync(absPath, 'r');
     const buf = Buffer.alloc(4);
     const read = fs.readSync(fd, buf, 0, 4, 8);
-    fs.closeSync(fd);
     if (read < 4) return false;
     const magic = buf.toString('latin1');
     return magic === 'LVIN' || magic === 'LVCC';
   } catch {
     return false;
+  } finally {
+    // Close in finally so a readSync throw after a successful openSync never leaks the descriptor.
+    if (fd !== undefined) {
+      try { fs.closeSync(fd); } catch { /* best-effort */ }
+    }
   }
 }
 
@@ -340,15 +347,23 @@ function emptyRender() {
 
 // Enumerate changed .vi/.ctl between two revisions (renames split into add+delete via --no-renames).
 function enumerateChangedVis(base, selected) {
-  const out = execFileSync('git', ['-C', fixtureRepo, 'diff', '--name-status', '--no-renames', base, selected], {
-    encoding: 'utf8'
-  });
+  const out = execFileSync(
+    'git',
+    ['-C', fixtureRepo, 'diff', '--name-status', '--no-renames', '-z', base, selected],
+    { encoding: 'utf8' }
+  );
+  // -z emits NUL-delimited, UNQUOTED tokens (STATUS \0 PATH \0 STATUS \0 PATH ...), so a path with
+  // non-ASCII / control chars is preserved verbatim instead of being C-quoted (e.g. "caf\303\251.vi")
+  // and silently dropped by the extension check.
+  const tokens = out.split('\0');
   const entries = [];
-  for (const line of out.split('\n')) {
-    const m = line.trim().match(/^([AMD])\s+(.+)$/);
-    if (!m) continue;
-    if (!/\.(vi|ctl)$/i.test(m[2])) continue;
-    entries.push({ file: m[2], changeType: m[1] === 'A' ? 'added' : m[1] === 'D' ? 'deleted' : 'modified' });
+  for (let i = 0; i + 1 < tokens.length; i += 2) {
+    const code = (tokens[i] || '')[0];
+    const file = tokens[i + 1];
+    if (!file) continue;
+    if (code !== 'A' && code !== 'M' && code !== 'D') continue;
+    if (!/\.(vi|ctl)$/i.test(file)) continue;
+    entries.push({ file, changeType: code === 'A' ? 'added' : code === 'D' ? 'deleted' : 'modified' });
   }
   return entries;
 }
@@ -417,27 +432,32 @@ function processOneVi(viRel, changeType, baseWt, selWt, ctx) {
   const fpFile = path.join(repoRoot, fpRel);
   fs.mkdirSync(path.dirname(fpFile), { recursive: true });
   fs.writeFileSync(fpFile, JSON.stringify(fingerprint, null, 2));
-  execFileSync(
-    'node',
-    [
-      'scripts/recordMirrorBenchmark.js',
-      '--parity-key', parityKey,
-      '--actor-ref', actorRef,
-      '--source-revision', sourceRevision,
-      '--vi-path', viRel,
-      '--fixture-sha', pairFixtureSha,
-      '--recipe', RECIPE,
-      '--mode', 'cold',
-      '--outcome', outcome,
-      '--report-sha256', reportSha256,
-      '--preview-image-count', String(previewImageCount),
-      '--wall-ms', String(wallMs),
-      '--fingerprint-file', fpRel,
-      '--ledger', ledgerRel
-    ],
-    { cwd: repoRoot, stdio: 'inherit' }
-  );
-  fs.rmSync(fpFile, { force: true });
+  try {
+    execFileSync(
+      'node',
+      [
+        'scripts/recordMirrorBenchmark.js',
+        '--parity-key', parityKey,
+        '--actor-ref', actorRef,
+        '--source-revision', sourceRevision,
+        '--vi-path', viRel,
+        '--fixture-sha', pairFixtureSha,
+        '--recipe', RECIPE,
+        '--mode', 'cold',
+        '--outcome', outcome,
+        '--report-sha256', reportSha256,
+        '--preview-image-count', String(previewImageCount),
+        '--wall-ms', String(wallMs),
+        '--fingerprint-file', fpRel,
+        '--ledger', ledgerRel
+      ],
+      { cwd: repoRoot, stdio: 'inherit' }
+    );
+  } finally {
+    // Remove the transient fingerprint file even if recordMirrorBenchmark exits non-zero / throws,
+    // so failed runs never accumulate stale files under .mirror-fp/.
+    fs.rmSync(fpFile, { force: true });
+  }
 
   return {
     viRel,
@@ -492,6 +512,14 @@ function buildChangesetIndex(results, meta) {
 }
 
 async function main() {
+  // Fail closed on a bitness/path mismatch so a run can never record measurements from one bitness
+  // labeled as the other (e.g. VIHS_R_BITNESS=x86 while -LabVIEWPath points at the x64 install).
+  const pathBit = /-32(?:[\\/]|$)/.test(lvPath) ? 'x86' : /-64(?:[\\/]|$)/.test(lvPath) ? 'x64' : null;
+  if (pathBit && pathBit !== bitness) {
+    throw new Error(
+      `VIHS_R_BITNESS=${bitness} but -LabVIEWPath points at a ${pathBit} install (${lvPath}); set a matching VIHS_R_LVPATH or VIHS_R_BITNESS.`
+    );
+  }
   const fingerprint = loadFingerprint();
   const actorRef = digest.deriveActorFingerprintId(fingerprint);
   const sourceRevision = execFileSync('git', ['-C', repoRoot, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
