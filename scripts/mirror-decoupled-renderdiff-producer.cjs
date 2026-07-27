@@ -117,8 +117,10 @@ function loadFingerprint() {
   let diskFreeBytes;
   if (env.VIHS_R_DISK_FREE_BYTES !== undefined) {
     diskFreeBytes = Number(env.VIHS_R_DISK_FREE_BYTES);
-    if (!Number.isFinite(diskFreeBytes) || diskFreeBytes <= 0) {
-      throw new Error(`VIHS_R_DISK_FREE_BYTES must be a positive number; received "${env.VIHS_R_DISK_FREE_BYTES}".`);
+    // Allow 0 (a full disk is a valid measurement the fingerprint/ledger schema accept); reject
+    // only negative / non-finite values.
+    if (!Number.isFinite(diskFreeBytes) || diskFreeBytes < 0) {
+      throw new Error(`VIHS_R_DISK_FREE_BYTES must be a non-negative number; received "${env.VIHS_R_DISK_FREE_BYTES}".`);
     }
   } else {
     try {
