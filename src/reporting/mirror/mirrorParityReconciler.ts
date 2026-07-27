@@ -211,10 +211,21 @@ export function reconcileMirrorParity(ledger: MirrorLedger, options: ReconcileOp
     const leftChannelFresh = runs.some((r) => roleOf(ledger, r.actorRef) === requiredLeftRole);
     const rightChannelFresh = runs.some((r) => roleOf(ledger, r.actorRef) === rightRole);
     const rightAdvisory = !rightChannelFresh;
+    // A parityKey group with no tangled channel at all (only `decoupled` actors) is an
+    // independent third-mirror CAPABILITY signal (e.g. `renderViPreview`, `renderDiff`) —
+    // recipe is folded into the parityKey, so these never share a group with a tangled run.
+    // Such a group is not a tangled parity obligation: it is advisory-present and never
+    // contributes a merge failure. The overall `anyLeftEvidence` precondition below still
+    // fail-closes a ledger that carries ONLY decoupled rows (capability never substitutes
+    // for tangled parity at the merge gate).
+    const tangledChannelPresent = leftChannelFresh || rightChannelFresh;
 
     let gate: ParityGate;
     let reason: string;
-    if (!leftChannelFresh) {
+    if (!tangledChannelPresent) {
+      gate = 'advisory';
+      reason = 'decoupled-capability-signal';
+    } else if (!leftChannelFresh) {
       // The hard precondition is absent -> the gate cannot pass.
       gate = 'fail';
       reason = 'left-channel-missing';
@@ -257,7 +268,7 @@ export function reconcileMirrorParity(ledger: MirrorLedger, options: ReconcileOp
   }
   const overall: ParityGate = failures.length > 0
     ? 'fail'
-    : verdicts.some((v) => v.gate === 'advisory')
+    : verdicts.some((v) => v.gate === 'advisory' && v.reason !== 'decoupled-capability-signal')
       ? 'advisory'
       : 'pass';
 

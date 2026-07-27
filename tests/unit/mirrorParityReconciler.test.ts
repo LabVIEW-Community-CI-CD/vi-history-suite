@@ -86,11 +86,37 @@ describe('reconcileMirrorParity (VHS-REQ-707.11)', () => {
     expect(result.verdicts[0].actorsPresent).toEqual([LEFT]);
   });
 
-  it('treats the decoupled Linux actor as neither left nor right by default', () => {
-    // decoupled alone -> left precondition missing -> fail
+  it('treats a decoupled-only group as a capability signal, but a purely-decoupled ledger still fails-closed', () => {
+    // A group with only a decoupled actor is a third-mirror CAPABILITY signal
+    // (renderViPreview/renderDiff), not a tangled parity obligation -> advisory per
+    // group, excluded from failures. But with NO tangled-left evidence anywhere the
+    // overall merge gate still fails-closed (capability never substitutes for parity).
     const result = reconcileMirrorParity(ledger([run(DECOUPLED)]), { queuedRevision: REV });
+    expect(result.verdicts[0].reason).toBe('decoupled-capability-signal');
+    expect(result.verdicts[0].gate).toBe('advisory');
+    expect(result.failures).toEqual(['<no-left-evidence-for-revision>']);
     expect(result.gate).toBe('fail');
-    expect(result.verdicts[0].reason).toBe('left-channel-missing');
+  });
+
+  it('does not red a passing tangled merge when the shared ledger also carries a decoupled capability row (#2490/#2480)', () => {
+    // The decoupled producers write renderViPreview/renderDiff rows to the SAME ledger
+    // under their own recipe-derived parityKey. Those decoupled-only groups must NOT
+    // pollute `failures` or downgrade a clean tangled-parity pass.
+    const CAP_PK = '6'.repeat(64);
+    const result = reconcileMirrorParity(
+      ledger([
+        run(LEFT),
+        run(RIGHT), // tangled parity for PK passes (both-channels-agree)
+        run(DECOUPLED, { parityKey: CAP_PK, reportSha256: SHA_B }) // decoupled capability row, own parityKey
+      ]),
+      { queuedRevision: REV }
+    );
+    expect(result.gate).toBe('pass');
+    expect(result.failures).toEqual([]);
+    const cap = result.verdicts.find((v) => v.parityKey === CAP_PK);
+    expect(cap?.gate).toBe('advisory');
+    expect(cap?.reason).toBe('decoupled-capability-signal');
+    expect(result.verdicts.find((v) => v.parityKey === PK)?.reason).toBe('both-channels-agree');
   });
 
   it('overall gate is the worst across parityKeys', () => {
