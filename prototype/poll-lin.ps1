@@ -28,7 +28,7 @@ for ($i = 1; $i -le $Max; $i++) {
   $out = (& node prototype/collab.mjs poll --new 2>$null) | Where-Object { $_ -notmatch 'origin not a valid' }
   $ts = ($out |
     Where-Object { $_ -match "\]\s$target\s" } |
-    ForEach-Object { if ($_ -match '(20\d{2}-\d{2}-\d{2}T[\d:.]+Z)') { $matches[1] } } |
+    ForEach-Object { if ($_ -match '(20\d{2}-\d{2}-\d{2}T[\d:.]+Z)') { $matches[1] -replace '\.\d+Z$', 'Z' } } |
     Sort-Object | Select-Object -Last 1)
   if ($ts -and ($ts -gt $cutoff)) {
     Write-Host "[poll-lin] $target replied (poll $i, ${ts}):"

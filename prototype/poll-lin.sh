@@ -28,7 +28,7 @@ CUTOFF="${VIHS_POLL_SINCE:-$(date -u -d '6 minutes ago' +%Y-%m-%dT%H:%M:%SZ 2>/d
 echo "[poll-lin] waiting for a ${TARGET} message after ${CUTOFF} (agent=${VIHS_COLLAB_AGENT})"
 for i in $(seq 1 "$MAX"); do
   out=$(node prototype/collab.mjs poll --new 2>/dev/null | grep -v 'origin not a valid')
-  ts=$(printf '%s\n' "$out" | grep -E "\] ${TARGET} " | grep -oE '20[0-9]{2}-[0-9]{2}-[0-9]{2}T[0-9:.]+Z' | sort | tail -1)
+  ts=$(printf '%s\n' "$out" | grep -E "\] ${TARGET} " | grep -oE '20[0-9]{2}-[0-9]{2}-[0-9]{2}T[0-9:.]+Z' | sed -E 's/\.[0-9]+Z$/Z/' | sort | tail -1)
   if [[ -n "$ts" && "$ts" > "$CUTOFF" ]]; then
     echo "[poll-lin] ${TARGET} replied (poll ${i}, ${ts}):"
     printf '%s\n' "$out"
