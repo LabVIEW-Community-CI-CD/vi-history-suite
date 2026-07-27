@@ -1,0 +1,34 @@
+Vendored third-party LabVIEW VIDiff orchestration reference
+===========================================================
+
+Directory: vidiff/  (vidiff.sh, vidiff.ps1)
+Purpose:   NI's reference "VIDiff" orchestration for headless VI comparison in
+           containers/CI. It renders each side of a diff with the sibling custom
+           LabVIEWCLI operation PrintToSingleFileHtml (vendored one level up at
+           resources/labview-cli-operations/PrintToSingleFileHtml) and structurally
+           diffs the rendered outputs. This is NI's supported headless-Linux VI-diff
+           path precisely because the built-in LabVIEWCLI CreateComparisonReport
+           operation does NOT run headless on Linux — it trips a recursive GSW
+           (Getting Started Window) LEIF load (see
+           docs/vhs-req-706-recursive-load-repro-brief.md, VHS-REQ-706).
+
+Role:      REFERENCE ONLY. The VI History Suite does NOT invoke these scripts at
+           runtime; they are the in-repo source-of-truth that the decoupled
+           Linux render-diff producer (#2315) is modeled on (binary-file
+           detection + added/deleted-VI handling per upstream #49). They live in a
+           vidiff/ subdirectory, NOT loose in the labview-cli-operations root, so
+           they are never scanned as a LabVIEWCLI -AdditionalOperationDirectory
+           operation.
+
+Upstream:  https://github.com/ni/labview-for-containers
+Path:      examples/cicd-examples/helper-scripts/vidiff/{vidiff.sh,vidiff.ps1}
+Commit:    1c7eff038232db98d36e8b18161a8f692e140296
+           ("Improve VIDiff: Detect binary files, Add logic for added/deleted VIs", #49)
+
+Integrity: sha256(vidiff.sh)  = d767c381f7374b2d1677204f7b835b913505d959e2fb9e306cfec69084e52b13
+           sha256(vidiff.ps1) = fb44ce0b2b69d0d755ca4673fa3d70f49107c94f94a131eedccfa4489a3953e4
+           (verify with `git hash-object` against the upstream blobs after a refresh)
+
+Notes:     Do NOT edit. Refresh by re-copying from upstream at a pinned commit and
+           updating the commit + sha256 above. Sibling PrintToSingleFileHtml op is
+           vendored separately with its own resources/labview-cli-operations/UPSTREAM.txt.
