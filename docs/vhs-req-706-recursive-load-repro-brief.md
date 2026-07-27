@@ -140,7 +140,10 @@ revision** — writing each renamed target VI into its own revision tree (base V
 tree, selected VI into a selected-rev tree) so each side loads its commit-correct dependency
 closure, instead of one selected-rev tree holding both renamed VIs
 (`comparisonReportRuntimeExecution.ts` ~L1088). This is exactly what the render-diff producer
-(#2490) already does per revision — and why it works host-native on Linux. It also updates the
+(#2490) already does per revision — and why it works host-native on Linux. The two-tree
+approach is proven green on **both** the golden fixture (SerialPortNuggets, 740 KB / 94 diffs)
+and the real dep-heavy field case (`lv_icon.vi`, 965 KB / 14 diffs) — the exact two VIs that
+red through the current single-selected-tree staging. It also updates the
 VHS-REQ-624 single-selected-tree assumption to per-revision-tree materialization (a
 requirements-steward touch). Routing GSW-bearing Linux comparisons through the container
 provider remains a valid **workaround**, but the staging fix makes Linux host-native itself
@@ -295,7 +298,9 @@ host-native and the Linux container tolerate the same broken load. Forward paths
   ~L1088) must instead materialize **two trees, one per revision**, writing each renamed target
   VI into its own revision tree (base VI into a base-rev tree, selected VI into a selected-rev
   tree) so each side loads its commit-correct dependency closure — exactly what render-diff
-  (#2490) already does per revision, and why it works host-native on Linux. This also updates
+  (#2490) already does per revision, and why it works host-native on Linux. Proven green on
+  **both** the golden fixture (SerialPortNuggets, 740 KB / 94 diffs) and the dep-heavy field
+  case (`lv_icon.vi`, 965 KB / 14 diffs). This also updates
   the VHS-REQ-624 single-selected-tree assumption to per-revision-tree materialization (a
   requirements-steward touch). Routing GSW-bearing Linux comparisons through the container
   provider remains a valid **workaround**, but the staging fix makes Linux host-native itself
