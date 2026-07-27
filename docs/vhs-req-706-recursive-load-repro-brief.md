@@ -59,11 +59,11 @@ therefore **fixture-independent and comparison-independent** (a packed-library
 self-recursion at launch, not a fixture dependency cycle and not the comparison
 content). This reorients the hypotheses below.
 
-## Empirical result (2026-07-27) — the spike's answer
+## Empirical result (2026-07-27) — narrowing the cause
 
 The Linux plane ran the checklist on native **Community** LabVIEW 2026-64 (LabVIEWCLI
-only, `-LabVIEWPath …/LabVIEW-2026-64/labview`). The runs resolve the hypotheses
-below by direct test:
+only, `-LabVIEWPath …/LabVIEW-2026-64/labview`). The runs bear on the hypotheses below —
+they establish the render path but leave H2 and H4 open (see the conclusion):
 
 | Run | Operation | Config | Result |
 | --- | --- | --- | --- |
