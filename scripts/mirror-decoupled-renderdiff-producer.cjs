@@ -30,6 +30,13 @@
  * Runtime discipline: LabVIEWCLI ONLY (never the LabVIEW binary directly); on Linux LabVIEWCLI requires
  * an explicit -LabVIEWPath. No CreateComparisonReport is ever invoked by this producer.
  *
+ * Upstream provenance: NI's headless-Linux VIDiff reference is vendored at
+ * resources/labview-cli-operations/vidiff/vidiff.sh (#2488). This producer intentionally diverges from it:
+ * vidiff.sh uses CreateComparisonReport for MODIFIED VIs (in-container, GSW-affected) and
+ * PrintToSingleFileHtml only for added/deleted, whereas this producer renders BOTH sides of a modified VI
+ * via PrintToSingleFileHtml so a modified VI is comparable on a host-native runtime where
+ * CreateComparisonReport is GSW-blocked (VHS-REQ-706).
+ *
  * Maintainer/CI `.cjs` (inventory-exempt like the sibling producers); NOT in `npm test`. Requires
  * `npm run compile` (consumes out/reporting/mirror/*).
  *
