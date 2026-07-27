@@ -52,23 +52,28 @@ A real host-native comparison run captured the current signature (raw artifacts:
   `…/LabVIEW-2026-64/resource/dialog/GSW/GSW.lvlibp/…/GSW_MainPanel.vi` is loading
   `…/GSW_MainPanel.vi/<uuid>.vi` (two distinct UUIDs).
 
-**Decisive implication:** the recursion is **inside the shipped, packed
-`GSW.lvlibp`** — `GSW_MainPanel.vi` recursively loading UUID-suffixed members of
-**itself** while LabVIEW loads the Getting Started Window at headless launch. It is
-therefore **fixture-independent and comparison-independent** (a packed-library
-self-recursion at launch, not a fixture dependency cycle and not the comparison
-content). This reorients the hypotheses below.
+**Decisive implication (refined by the 2026-07-27 root-cause experiment):** the GSW
+recursive LEIF load is the **surface** of a failed VI dependency load, not an intrinsic
+`GSW.lvlibp` defect. `CreateComparisonReport` spawns a headless LabVIEW that **loads** each
+staged revision; when the shipped staging drops a revision's dependencies from their
+commit-correct paths, the load fails and Linux host-native LabVIEW surfaces it as the GSW
+self-recursion. It reproduces with **any** staged compare (both `lv_icon.vi` and the
+SerialPortNuggets golden fixture) and **greens** when each revision's dependencies are
+present at their commit-correct paths — so the trigger is **staging dependency-fidelity**,
+not the fixture graph and not the packed library. This reorients the hypotheses below.
 
-## Empirical result (2026-07-27) — the cause, empirically resolved
+## Empirical result (2026-07-27) — root cause proven
 
-The Linux plane ran the checklist on native **Community** LabVIEW 2026-64 (LabVIEWCLI
-only, `-LabVIEWPath …/LabVIEW-2026-64/labview`), including the decisive controlled
-host-native `CreateComparisonReport` retest at the current shipped build. The runs
-**resolve** the hypotheses below: the render path is sound headless, but a fully
-version-aware `-Headless` host-native compare **still** recursive-loads GSW — so
-**H2 is refuted as the cure**; the Windows host-native cross-check (below) then runs the
-same compare **GREEN** on both bitnesses, which **refutes H4-as-OS-independent-corruption**
-and localizes 706 to the **Linux host-native** cell (see the conclusion):
+The Linux plane ran the checklist on native **Community** LabVIEW 2026-64, the WIN plane
+cross-checked on Windows host-native LabVIEW 2026 Q3 (both bitnesses), and a decisive
+**single-variable staging experiment** isolated the root cause. The runs **resolve** 706:
+the render path is sound headless; a fully version-aware `-Headless` host-native compare
+**still** recursive-loads GSW (the launch mechanism is not the cure, **H2 refuted**); the
+same compare runs **GREEN** on Windows host-native both bitnesses (the packed lib is not
+corrupt, **H4 refuted**); and the single-variable experiment proves the trigger is the
+**shipped staging dropping each revision's dependencies from their commit-correct paths** —
+a **staging dependency-fidelity bug** (fixable, with a proven green), not an OS/cell-intrinsic
+limitation (see the conclusion):
 
 | Run | Operation | Config | Result |
 | --- | --- | --- | --- |
@@ -79,60 +84,58 @@ and localizes 706 to the **Linux host-native** cell (see the conclusion):
 | **Retest** | **`CreateComparisonReport`** (`lv_icon.vi`, HEAD~1→HEAD) | shipped runtime, build 1.36.1+0cc9a58, **version-aware `-Headless -LabVIEWPath …/LabVIEW-2026-64/labview -PortNumber 3363`** | **linux-headless-recursive-load** (SAME GSW self-recursion, identical uuids), exit 157, durationMs 623 |
 | **Win x64** | **`CreateComparisonReport`** (`lv_icon.vi`, 5376833→fc09736) | **Windows host-native LabVIEW 2026 Q3 x64**, shipped runtime at develop HEAD | **exit 0**, `runtimeState=succeeded`, real 1,241,031-byte report, **NO GSW recursion** |
 | **Win x86** | **`CreateComparisonReport`** (`lv_icon.vi`, 5376833→fc09736) | **Windows host-native LabVIEW 2026 Q3 x86**, shipped runtime at develop HEAD | **exit 0**, `runtimeState=succeeded`, identical 1,241,031-byte report, **NO GSW recursion** |
+| **Root-cause RED** | **`CreateComparisonReport`** (SerialPortNuggets `ASCII Intermittent.vi`, HEAD~1→HEAD) | **Linux host-native** Community `labview -Headless`, **shipped single-tree staging** (deps NOT at commit-correct paths) | **exit 157**, GSW recursive LEIF load — reproduced |
+| **Root-cause GREEN** | **`CreateComparisonReport`** (same VI, same revisions) | **Linux host-native** Community `labview -Headless`, **each revision in its own full git worktree** (deps AT commit-correct paths), target VI renamed `left-*`/`right-*` | **exit 0**, real 740 KB report, **94 diff blocks**, **NO GSW** |
 
-**Conclusion — the render path works headless; a version-aware `-Headless` host-native
-`CreateComparisonReport` STILL recursive-loads GSW, so the launch mechanism is not the
-cure; the Windows host-native cross-check (below) then compares GREEN, refuting packed-lib
-corruption and localizing the failure to the Linux host-native cell.** A real VI renders headlessly in every tested config
-(no/`-Headless`, plain `labview`, Community) via `PrintToSingleFileHtml`, so the render
-path + headless launch are sound and GSW is not loaded at generic launch. The **decisive
-retest** ran the *shipped* host-native comparison runtime (build 1.36.1+0cc9a58, core
-byte-identical to develop HEAD) on `lv_icon.vi` with a **fully version-aware**
-`-Headless -LabVIEWPath …/LabVIEW-2026-64/labview -PortNumber 3363` invocation — and it
-reproduced the **same** GSW self-recursion (exit 157, `linux-headless-recursive-load`,
-identical `GSW_MainPanel.vi` uuids). LabVIEW connected (port 3363) then failed at LEIF
-load. So the recursion is **not** cured by a version-aware launch. `CreateComparisonReport`
-is still not *uniformly* broken — `runtime-validation-ledger.json` records **green**
-compares for all four Linux **container** tracks (in-container `labviewprofull -Headless`)
-and one Linux **host-native** track (1.34.2, 2026-07-19); with the version-aware
-host-native retest now RED, that 07-19 green is a **different host/edition/environment**
-(#2486 candidate a), not a since-fixed launch.
+**Conclusion — 706 is a shipped-staging dependency-fidelity bug (fixable, with a proven
+green), not an OS/cell-intrinsic limitation.** A single-variable experiment holding
+everything constant except dependency placement proves the trigger: same VI (SerialPortNuggets
+`ASCII Intermittent.vi`), same cross-revision HEAD~1→HEAD, same Community `labview` binary,
+same `-Headless`, Linux host-native both runs. **RED** — the shipped single-tree staging
+(`materializeSelectedRevisionTreeWithGit`: one tree at the selected rev + both renamed
+left/right VIs, deps NOT at commit-correct paths) recursive-loads GSW (exit 157). **GREEN** —
+each revision checked out in its OWN full git worktree (deps AT their commit-correct paths),
+target VI copied to `left-*`/`right-*`, exits 0 with a real 740 KB report, 94 diff blocks, and
+NO GSW. The ONLY variable between RED and GREEN is whether each revision's VI has its
+dependencies at the paths they were at that commit. `CreateComparisonReport` spawns a headless
+LabVIEW that **loads** each staged VI; with deps missing from their commit-correct paths the
+load fails and surfaces as the GSW recursive LEIF load. **Linux host-native LabVIEW is uniquely
+intolerant** of that broken load, while **Windows host-native (both bitnesses)** and the
+**Linux container** tolerate it — which reconciles the whole matrix. The render path is
+independently sound (a real VI renders headlessly in every tested config via
+`PrintToSingleFileHtml`, no GSW), so rendering is not implicated.
 
-What the evidence **establishes** (after the retest):
-- **H1 (suppress GSW at generic launch) is not the lever** — the render at the same
-  launch never loads GSW; the `-Headless` flag does not break *rendering*.
-- **H2 (version-aware `-Headless` host-native launch as the CURE) is REFUTED** — the
-  retest issued a fully version-aware `-Headless -LabVIEWPath -PortNumber` compare and it
-  still recursive-loaded GSW, so the launch mechanism was not the trigger and a
-  version-aware launch does not fix it (contrast the container #565/ADR-0004 case, where
-  the wrong-version `-Headless` *was* the cause).
-- **H4 (packed `GSW.lvlibp` integrity), refined by the Windows cross-check** — the packed
-  library is **not corrupt**: the same `CreateComparisonReport` on `lv_icon.vi` runs GREEN
-  on Windows host-native LabVIEW 2026 Q3, **both x86 and x64** (real 1.24 MB reports, no GSW
-  recursion), so a corrupt/version-mismatched packed lib would have to fail there too and does
-  not. H4-as-OS-independent-corruption is therefore **refuted**. What remains is a
-  **Linux-host-native-specific packed-library LOAD** behavior — only `CreateComparisonReport`
-  pulls GSW (`PrintToSingleFileHtml` renders the same VI with 638 imgs and NO GSW load), a
-  version-aware launch does not avoid it, and it recurses **only** in the Linux host-native cell.
-- **Edition** is not the discriminator for the compare op: both the #2472 and the retest
-  compares were Community 2026, and the 07-19 host-native green's edition/host is unrecorded
-  (#2486 candidate a).
+This resolves the SRS environment-vs-intrinsic question: 706 is **neither** a blanket
+Linux-environment failure **nor** an intrinsic empty→rich asymmetry — it is a
+**staging-fidelity** defect introduced by the shipped comparison staging, exposed by the
+Linux host-native loader's low tolerance for the resulting broken load.
 
-**Decisive test — DONE, RED.** The controlled host-native `CreateComparisonReport` retest
-on `lv_icon.vi` at the current shipped build (a version-aware `-Headless` launch postdating
-#2472) **reproduced** the recursion (exit 157). So the disposition is the **Red ⇒
-host/edition/packed-lib specific** branch: H2 (launch mechanism) is refuted as the cure, and
-H4-as-OS-independent-corruption is refuted by the Windows-green cross-check below. The SRS environment-vs-intrinsic question resolves as:
-**container path green (`labviewprofull -Headless`); host-native compare on this box RED
-regardless of a version-aware launch** — an install/packed-lib-scoped GSW-load failure, not
-a blanket Linux-environment failure and not an empty→rich asymmetry. **The Windows host-native
-2026 cross-check is now DONE and GREEN** — the same `CreateComparisonReport` on `lv_icon.vi`
-(5376833→fc09736) succeeds on Windows host-native LabVIEW 2026 Q3, **both x86 and x64** (real
-1.24 MB reports, no GSW recursion). So the packed `GSW.lvlibp` loads and compares cleanly off
-Linux: **H4-as-OS-independent-corruption is refuted** and 706 is confirmed
-**Linux-host-native-specific** — the single broken cell is (platform=Linux AND
-provider=host-native), while Windows host-native (either bitness) and the Linux container
-(`labviewprofull -Headless`) are all green.
+What the evidence **establishes**:
+- **H1 (suppress GSW at generic launch) is not the lever** — the render at the same launch
+  never loads GSW; GSW is pulled by the *failing dependency load*, not by generic launch.
+- **H2 (version-aware `-Headless` host-native launch as the CURE) is REFUTED** — the retest
+  issued a fully version-aware `-Headless -LabVIEWPath -PortNumber` compare and it still
+  recursive-loaded GSW, so the launch mechanism is not the trigger (contrast the container
+  #565/ADR-0004 case, where a wrong-version `-Headless` *was* the cause).
+- **H4 (packed `GSW.lvlibp` integrity) is REFUTED** — the same compare runs GREEN on Windows
+  host-native LabVIEW 2026 Q3 (both x86 and x64, real 1.24 MB reports) **and** greens on Linux
+  host-native itself when deps are commit-correct, so the packed library is sound; the GSW
+  recursion is a load-failure surface, not corruption.
+- **Edition is not the discriminator** — per the maintainer, `labviewprofull` ==
+  `labviewcommunity` in capabilities; the same golden VI reds staged and greens deps-correct
+  on the same Community binary.
+- **Fixture is not the discriminator** — the RED/GREEN flip reproduces on the SerialPortNuggets
+  golden fixture and the signature also appears on `lv_icon.vi`; the variable is staging, not
+  the fixture graph.
+- **Linux host-native is not incapable** — `CreateComparisonReport` GREENS on a real
+  cross-revision diff on Linux host-native when deps are commit-correct.
+
+**Root fix (runtime owner).** The comparison staging must materialize **each revision's full
+dependency closure at its commit-correct paths** (a git worktree per side, renaming only the
+target VI) instead of one tree at the selected rev + both renamed VIs. This is exactly what the
+render-diff producer (#2490) already does per revision — and why render-diff works host-native
+on Linux. Routing Linux comparisons through the container provider remains a valid
+**workaround**, but the staging fix makes Linux host-native itself green.
 
 ### #2315 unblock (does not require resolving the root cause)
 Because a real VI renders headlessly on the decoupled Linux actor
@@ -173,13 +176,15 @@ on the Linux run host and are not committed.
 ## Ranked hypotheses (as of the baseline — now largely resolved by the Empirical result above)
 
 > These were the pre-reproduction rankings. The **Empirical result** section above has
-> since RESOLVED the cause via the decisive host-native compare retest plus the Windows
-> host-native cross-check: the render path is
-> sound (H1's suppress-GSW-at-launch is not the lever), **H2 (launch mechanism / version-flag)
-> is REFUTED as the cure** (a version-aware `-Headless` host-native compare still recurses),
-> and **H4-as-OS-independent-corruption is REFUTED** (the same compare runs GREEN on Windows
-> host-native, both bitnesses) — the residual cause is a Linux-host-native-specific packed-lib
-> load. Retained as the record of how the reproduction was scoped.
+> since PROVEN the root cause via a single-variable staging experiment (plus the host-native
+> retest and the Windows both-bitness cross-check): the render path is sound (H1's
+> suppress-GSW-at-launch is not the lever), **H2 (launch mechanism / version-flag) is REFUTED
+> as the cure** (a version-aware `-Headless` host-native compare still recurses), and **H4
+> (packed-lib integrity) is REFUTED** (the same compare greens on Windows host-native both
+> bitnesses AND on Linux host-native when deps are commit-correct). The actual root cause is a
+> **shipped-staging dependency-fidelity bug** — the single-tree staging drops each revision's
+> deps from their commit-correct paths, and Linux host-native LabVIEW is uniquely intolerant of
+> the resulting broken load. Retained as the record of how the reproduction was scoped.
 
 ### H1 — Suppress the GSW (Getting Started Window) load at headless launch (TOP, highest-leverage)
 The recursion is GSW loading itself; if headless launch can start LabVIEW **without**
@@ -212,30 +217,30 @@ it load once.
   it proceeds.
 - **Refute:** it recurses identically with a display present.
 
-### H4 — Packed `GSW.lvlibp` integrity / build mismatch (refined: NOT corruption)
+### H4 — Packed `GSW.lvlibp` integrity / build mismatch — REFUTED
 The packed-lib self-recursion was hypothesized to be a corrupt or version-mismatched
-`GSW.lvlibp`. The **Windows host-native cross-check refutes corruption**: the same packed
-lib loads and compares cleanly on Windows LabVIEW 2026 Q3 (both bitnesses), so the artifact
-is sound. What remains is a **Linux-host-native packed-library LOAD** behavior specific to
-the Linux host-native cell.
-- **Confirm:** the GSW load path differs between Linux host-native and the Linux container
-  (which is green); replicate the container's edition/launch on Linux host-native, or route
-  Linux comparisons through the container provider, and the recursion disappears.
-- **Refute:** an identical container-edition launch on Linux host-native still recurses.
+`GSW.lvlibp`. **Refuted:** the same packed lib loads and compares cleanly on Windows
+host-native LabVIEW 2026 Q3 (both bitnesses) **and** on Linux host-native itself when each
+revision's dependencies are at their commit-correct paths (the single-variable GREEN). The
+GSW recursion is the **surface of a failed dependency load**, not corruption — see the proven
+root cause (staging dependency-fidelity) in the conclusion.
 
 ### Refuted by the on-box baseline (do NOT spend cycles here)
-- **Fixture-specific GSW dependency** — the recursion is inside the shipped
-  `GSW.lvlibp`, not the fixture graph, so it reproduces with ANY comparison
-  (`lv_icon.vi` passing on the **container** tracks reflects the different
-  environment/build there, not a fixture lacking a GSW dependency; the version-aware
-  host-native retest on `lv_icon.vi` still recurses).
-- **Intrinsic empty→rich asymmetry as the proximate cause** — the failure is at
-  launch (`durationMs 623`–`1583`), before comparison content is enumerated, so empty→rich
-  content is not the trigger. (The SRS environment-vs-intrinsic question resolves to a
-  **Linux-host-native-specific** GSW-load failure — the Windows host-native cross-check
-  ran the same compare GREEN on both bitnesses, so it is not OS-independent.)
+- **Fixture-specific GSW dependency** — the recursion is a dependency-load failure surfaced
+  as GSW, not a fixture-graph cycle: the RED/GREEN flip reproduces on the SerialPortNuggets
+  golden fixture (and the signature also appears on `lv_icon.vi`), with staging fidelity the
+  only variable.
+- **Intrinsic empty→rich asymmetry as the proximate cause** — the failure is at launch
+  (`durationMs 623`–`1583`), before comparison content is enumerated, so empty→rich content
+  is not the trigger. (The SRS environment-vs-intrinsic question resolves to a **staging
+  dependency-fidelity** bug — neither an environment-intrinsic nor a content-intrinsic
+  failure.)
 
 ## Scoped reproduction checklist (for the native-runtime plane)
+
+> Historical scoping record — the root cause is now **proven** (staging dependency-fidelity;
+> see the Outcome). Items retained for provenance; H1/H3/H4 steps are moot now that the
+> single-variable experiment isolated the cause.
 
 1. **Confirm the invocation** (H2): from the captured baseline, record the exact
    LabVIEWCLI executable / `-Headless` flag / `EnableCICDFeaturesForLabVIEW` /
@@ -245,28 +250,30 @@ the Linux host-native cell.
 3. **`xvfb` / displayed rerun** (H3): proceeding ⇒ headless-no-display artifact.
 4. **Windows host-native headless cross-check** — **DONE, GREEN (both bitnesses).**
    `CreateComparisonReport` on `lv_icon.vi` (5376833→fc09736) succeeded on Windows
-   host-native LabVIEW 2026 Q3 x64 and x86 (real 1.24 MB reports, no GSW recursion) ⇒
-   the failure is **Linux-host-native-specific**, not an OS-independent packed-lib issue.
+   host-native LabVIEW 2026 Q3 x64 and x86 (real 1.24 MB reports, no GSW recursion) ⇒ the
+   packed lib is sound and the failure is not OS-independent; combined with the Linux
+   deps-correct GREEN, the cause is **staging dependency-fidelity**, not a packed-lib issue.
 5. **`GSW.lvlibp` integrity** (H4): compare/repair the packed lib if H1–H3 do not
    resolve it.
 6. Record each result as honest ledger evidence (present-but-blocked, per the
    decoupled producer pattern) so the spike's conclusion is reproducible.
 
-## Outcome (empirically resolved 2026-07-27)
+## Outcome (root cause proven 2026-07-27)
 
-See **Empirical result** above. Net: the render path is sound headless; the decisive
-host-native `CreateComparisonReport` retest at the current shipped build — with a **fully
-version-aware** `-Headless -LabVIEWPath …/LabVIEW-2026-64/labview -PortNumber 3363`
-invocation — **reproduced** the GSW self-recursion (exit 157, `linux-headless-recursive-load`),
-and the **Windows host-native 2026 Q3 cross-check then ran the same compare GREEN on both
-bitnesses**. So **H2 (launch mechanism / version-flag) is REFUTED as the cure**, and
-**H4-as-OS-independent-corruption is REFUTED** by the Windows-green result — the packed
-`GSW.lvlibp` is not corrupt. The authoritative verdict is that 706 is
-**Linux-host-native-specific**: the single broken cell is (platform=Linux AND
-provider=host-native). The #2486 split is confirmed — Linux container compares
-(`labviewprofull -Headless`) are green, Windows host-native (either bitness) is green,
-and only Linux host-native Community is red regardless of the launch, so the 07-19
-ledger-green host-native was a different host/edition/environment (candidate a). Forward paths:
+See **Empirical result** above. Net: 706 is a **shipped-staging dependency-fidelity bug**. A
+single-variable experiment (same VI, same cross-revision, same Community `labview`, same
+`-Headless`, Linux host-native) flipped RED→GREEN on the one variable of whether each
+revision's dependencies sit at their commit-correct paths: the shipped single-tree staging
+(deps displaced) recursive-loads GSW (exit 157); each revision in its own full git worktree
+(deps commit-correct) exits 0 with a real 740 KB / 94-diff report and no GSW. The host-native
+retest reproduced the recursion with a fully version-aware `-Headless` launch (**H2 refuted as
+the cure**), and the Windows host-native 2026 Q3 cross-check ran the same compare GREEN on both
+bitnesses while Linux host-native also greens deps-correct (**H4 refuted** — the packed
+`GSW.lvlibp` is sound). Edition is not the cause (`labviewprofull` == `labviewcommunity`), nor
+the fixture, nor is Linux host-native intrinsically incapable. `CreateComparisonReport` spawns
+a headless LabVIEW that loads each staged VI; when deps are displaced the load fails and Linux
+host-native LabVIEW is uniquely intolerant of it (surfacing GSW recursion), while Windows
+host-native and the Linux container tolerate the same broken load. Forward paths:
 - **Unblock #2315 now** — build the decoupled Linux diff from per-revision
   `PrintToSingleFileHtml` renders + a structural diff (rendered-output surrogate; ships a
   present-and-capable per-actor diff signal without the blocker). [Done: #2490.] This mirrors
@@ -274,12 +281,9 @@ ledger-green host-native was a different host/edition/environment (candidate a).
   (`resources/labview-cli-operations/vidiff/`, vendored byte-for-byte via #2488 from
   `ni/labview-for-containers`) — which renders each VI then diffs the outputs, side-stepping
   `CreateComparisonReport` (and GSW) entirely.
-- **Root-cause thread (true comparison parity)** — the Windows host-native 2026 Q3 cross-check
-  (x86 + x64) is **DONE and GREEN**, so the failure is **Linux-host-native-specific**, not an
-  OS-independent packed-lib / compare-op-intrinsic defect. The cure is therefore **not**
-  repacking `GSW.lvlibp` (it is not corrupt) and **not** a launch-flag change (the
-  version-aware launch is proven not to help). Since the Linux **container** path is already
-  green, the practical Linux fix is to route GSW-bearing Linux comparisons through the
-  container provider, or to replicate the container's edition/launch on Linux host-native;
-  the remaining root-cause work is isolating why the Linux host-native GSW LOAD path recurses
-  where the container's does not.
+- **Root fix (runtime owner)** — the comparison staging (`materializeSelectedRevisionTreeWithGit`
+  → one tree at the selected rev + both renamed VIs) must instead materialize **each revision's
+  full dependency closure at its commit-correct paths** (a git worktree per side, renaming only
+  the target VI) — exactly what render-diff (#2490) already does per revision, and why it works
+  host-native on Linux. Routing GSW-bearing Linux comparisons through the container provider
+  remains a valid **workaround**, but the staging fix makes Linux host-native itself green.
