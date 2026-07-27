@@ -1,1 +1,6 @@
 *.sh text eol=lf
+
+# Vendored NI VIDiff orchestration reference (byte-for-byte from upstream, a
+# Linux repo → LF); pin EOL so clones/checkouts never CRLF-normalize it and the
+# UPSTREAM.txt sha256 provenance stays valid. See resources/labview-cli-operations/vidiff/UPSTREAM.txt.
+resources/labview-cli-operations/vidiff/* text eol=lf
