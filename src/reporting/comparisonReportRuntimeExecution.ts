@@ -1454,6 +1454,7 @@ async function runHostNativeExecutionWithContext(
       });
       const diagnostics = await captureRuntimeDiagnostics(record, commandResult.stdout, {
         stderr: commandResult.stderr,
+        runFailed: commandResult.timedOut || commandResult.exitCode !== 0,
         commandArgs: effectiveExecutionContext.commandPlan.args,
         pathExists: deps.pathExists,
         copyFile: deps.copyFile,
@@ -1630,6 +1631,11 @@ async function runHostNativeExecutionWithContext(
       await deps.writeFile(record.artifactPlan.runtimeStderrFilePath, processError.stderr, 'utf8');
       const diagnostics = await captureRuntimeDiagnostics(record, processError.stdout, {
         stderr: processError.stderr,
+        // Issue #2513: the catch path is a spawn/finalize error, not a LabVIEW
+        // execution that wrote a relevant this-run LVStatus (a genuine recursion
+        // failure returns a non-zero exit code, not a thrown error), so the
+        // persistent-global LVStatus is stale here and is not captured.
+        runFailed: false,
         commandArgs: effectiveExecutionContext.commandPlan.args,
         pathExists: deps.pathExists,
         copyFile: deps.copyFile,
@@ -2392,6 +2398,7 @@ async function captureRuntimeDiagnostics(
     mkdir: typeof fs.mkdir;
     removePath?: typeof fs.rm;
     processPlatform: NodeJS.Platform;
+    runFailed: boolean;
     expectedLabviewPath?: string;
     diagnosticPathMapping?: RuntimeDiagnosticPathMapping;
   }
@@ -2417,6 +2424,7 @@ async function captureRuntimeDiagnostics(
         mkdir: deps.mkdir,
         removePath: deps.removePath ?? fs.rm,
         processPlatform: deps.processPlatform,
+        runFailed: deps.runFailed,
         diagnosticPathMapping: deps.diagnosticPathMapping
       })
     : {
@@ -2486,6 +2494,7 @@ async function captureLinuxHeadlessDiagnostics(
     mkdir: typeof fs.mkdir;
     removePath: typeof fs.rm;
     processPlatform: NodeJS.Platform;
+    runFailed: boolean;
     diagnosticPathMapping?: RuntimeDiagnosticPathMapping;
   }
 ): Promise<{
@@ -2507,10 +2516,11 @@ async function captureLinuxHeadlessDiagnostics(
   // provider. Reading host /tmp for a container run would let a PRIOR host-native
   // run's stale /tmp/lvrt_*_headless_*_cur.txt bleed into the container run's
   // diagnostics, so only the host-native provider may read /tmp (see issue #270).
-  const sourceRoot =
-    deps.processPlatform === 'linux' && record.runtimeSelection.provider !== 'linux-container'
-      ? '/tmp'
-      : deps.diagnosticPathMapping?.hostRoot ?? path.join(record.artifactPlan.reportDirectory, 'container-temp');
+  const readsHostGlobalTmp =
+    deps.processPlatform === 'linux' && record.runtimeSelection.provider !== 'linux-container';
+  const sourceRoot = readsHostGlobalTmp
+    ? '/tmp'
+    : deps.diagnosticPathMapping?.hostRoot ?? path.join(record.artifactPlan.reportDirectory, 'container-temp');
   const artifactRoot = path.join(record.artifactPlan.reportDirectory, 'headless-diagnostics');
   try {
     await deps.removePath(artifactRoot, {
@@ -2534,7 +2544,16 @@ async function captureLinuxHeadlessDiagnostics(
   const selectedNames = entryNames
     .filter(
       (name) =>
-        name === 'LVStatus.txt' ||
+        // Issue #2513: on host-native Linux, LVStatus.txt is read from the shared
+        // /tmp and is a persistent GLOBAL LabVIEW status file (not per-run) --
+        // LabVIEW leaves the previous run's content in it, so on a SUCCESSFUL run
+        // copying it would carry a STALE "Recursive load" line into this run's
+        // diagnostics. On that path only capture it when this run's LabVIEW
+        // execution failed (its content is then relevant). A linux-container run
+        // reads its own ephemeral container-temp, whose LVStatus.txt is written
+        // fresh each run, so it is always captured. The per-run lvrt/labview
+        // *_cur.txt logs are freshly written each run and are always captured.
+        (name === 'LVStatus.txt' && (deps.runFailed || !readsHostGlobalTmp)) ||
         /^(labview|lvrt)_.+_headless_.+_cur\.txt$/i.test(name)
     )
     .sort((left, right) => left.localeCompare(right));

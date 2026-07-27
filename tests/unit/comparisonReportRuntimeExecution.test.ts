@@ -1488,6 +1488,166 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(readdir).toHaveBeenCalled();
   });
 
+  it('omits the persistent-global LVStatus.txt from a host-native GREEN run so a stale recursion line never rides a green result (issue #2513)', async () => {
+    const record = createReadyRecord();
+    record.runtimeSelection.platform = 'linux';
+    record.runtimeSelection.bitness = 'x64';
+    record.runtimeSelection.provider = 'host-native';
+    record.runtimeSelection.executionMode = 'host-only';
+    record.runtimeSelection.requestedProvider = 'host';
+    record.runtimeSelection.requestedLabviewVersion = '2026';
+    record.runtimeSelection.headlessRequested = true;
+    record.runtimeSelection.labviewExe = {
+      kind: 'labview-exe',
+      path: '/usr/local/natinst/LabVIEW-2026-64/labview',
+      source: 'configured',
+      exists: true,
+      bitness: 'x64'
+    };
+    record.runtimeSelection.labviewCli = {
+      kind: 'labview-cli',
+      path: '/usr/local/bin/LabVIEWCLI',
+      source: 'configured',
+      exists: true,
+      bitness: 'x64'
+    };
+    const lvStatusPath = '/tmp/LVStatus.txt';
+    const curLogPath = '/tmp/lvrt_26.1.1f1_headless_sergio_cur.txt';
+    const readdir = vi.fn(async (dir: string) =>
+      dir === '/tmp' ? ['LVStatus.txt', 'lvrt_26.1.1f1_headless_sergio_cur.txt'] : []
+    );
+
+    const result = await executeComparisonReport(
+      { record, repositoryRoot: '/workspace/repo' },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
+        readdir: readdir as never,
+        readFile: vi.fn(async (filePath: string) => {
+          if (typeof filePath === 'string' && filePath.endsWith('labview.conf')) {
+            return 'server.tcp.enabled=True\nserver.tcp.port=3363\n';
+          }
+          if (filePath === lvStatusPath) {
+            // STALE persistent-global content left from an earlier failed run.
+            return 'Recursive load during LEIF load!';
+          }
+          return 'LabVIEW 2026 started successfully in headless mode.';
+        }) as never,
+        pathExists: vi.fn(async (filePath: string) =>
+          typeof filePath === 'string' &&
+          (filePath.endsWith(record.artifactPlan.reportFilename) ||
+            filePath === lvStatusPath ||
+            filePath === curLogPath)
+        ),
+        runCommand: vi.fn().mockResolvedValue({
+          exitCode: 0,
+          stdout: 'CreateComparisonReport operation succeeded.',
+          stderr: ''
+        }),
+        nowIso: vi.fn().mockReturnValue('2026-07-27T18:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'linux'
+      }
+    );
+
+    expect(result.record.runtimeExecution.state).toBe('succeeded');
+    const headlessPaths = result.record.runtimeExecution.headlessDiagnosticArtifactPaths ?? [];
+    // The stale persistent-global LVStatus.txt is NOT copied on a green run...
+    expect(headlessPaths).not.toEqual(
+      expect.arrayContaining([expect.stringContaining('LVStatus.txt')])
+    );
+    // ...but the per-run cur log is still captured.
+    expect(headlessPaths).toEqual(
+      expect.arrayContaining([expect.stringContaining('lvrt_26.1.1f1_headless_sergio_cur.txt')])
+    );
+    // And the stale recursion line does not leak into the green result.
+    expect(result.record.runtimeExecution.diagnosticReason).toBeUndefined();
+  });
+
+  it('captures the host-native LVStatus.txt on a FAILED run where its content is relevant (issue #2513)', async () => {
+    const record = createReadyRecord();
+    record.runtimeSelection.platform = 'linux';
+    record.runtimeSelection.bitness = 'x64';
+    record.runtimeSelection.provider = 'host-native';
+    record.runtimeSelection.executionMode = 'host-only';
+    record.runtimeSelection.requestedProvider = 'host';
+    record.runtimeSelection.requestedLabviewVersion = '2026';
+    record.runtimeSelection.headlessRequested = true;
+    record.runtimeSelection.labviewExe = {
+      kind: 'labview-exe',
+      path: '/usr/local/natinst/LabVIEW-2026-64/labview',
+      source: 'configured',
+      exists: true,
+      bitness: 'x64'
+    };
+    record.runtimeSelection.labviewCli = {
+      kind: 'labview-cli',
+      path: '/usr/local/bin/LabVIEWCLI',
+      source: 'configured',
+      exists: true,
+      bitness: 'x64'
+    };
+    const lvStatusPath = '/tmp/LVStatus.txt';
+    const curLogPath = '/tmp/lvrt_26.1.1f1_headless_sergio_cur.txt';
+    const readdir = vi.fn(async (dir: string) =>
+      dir === '/tmp' ? ['LVStatus.txt', 'lvrt_26.1.1f1_headless_sergio_cur.txt'] : []
+    );
+
+    const result = await executeComparisonReport(
+      { record, repositoryRoot: '/workspace/repo' },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
+        readdir: readdir as never,
+        readFile: vi.fn(async (filePath: string) => {
+          if (typeof filePath === 'string' && filePath.endsWith('labview.conf')) {
+            return 'server.tcp.enabled=True\nserver.tcp.port=3363\n';
+          }
+          if (filePath === lvStatusPath) {
+            return 'Recursive load during LEIF load!';
+          }
+          return 'Recursive load during LEIF load!';
+        }) as never,
+        pathExists: vi.fn(async (filePath: string) =>
+          typeof filePath === 'string' &&
+          (filePath === lvStatusPath || filePath === curLogPath)
+        ),
+        runCommand: vi.fn().mockResolvedValue({
+          exitCode: 1,
+          stdout: 'LabVIEWCLI operation failed with error.',
+          stderr: 'CreateComparisonReport operation failed.'
+        }),
+        nowIso: vi.fn().mockReturnValue('2026-07-27T18:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'linux'
+      }
+    );
+
+    expect(result.record.runtimeExecution.state).not.toBe('succeeded');
+    // On a failed run the LVStatus.txt content is this-run relevant, so it is captured.
+    expect(result.record.runtimeExecution.headlessDiagnosticArtifactPaths ?? []).toEqual(
+      expect.arrayContaining([expect.stringContaining('LVStatus.txt')])
+    );
+  });
+
   it('routes a SUCCEEDED linux-container run to its own container-temp diagnostics, not host /tmp (Refs #270)', async () => {
     // Regression for issue #270: on a Linux host running the linux-container
     // provider, captureLinuxHeadlessDiagnostics() must read the container's mapped
