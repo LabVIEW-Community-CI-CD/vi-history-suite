@@ -110,6 +110,10 @@ import { selectDiagnosticReason } from './runtime/selectDiagnosticReason';
 import { nowIso } from '../support/clock';
 import { ComparisonCommandPlan, ComparisonReportOptions } from './comparisonReportPlan';
 import {
+  LEFT_TREE_SUBDIRECTORY,
+  RIGHT_TREE_SUBDIRECTORY
+} from './comparisonReportPlan';
+import {
   buildLinuxHostNativeShortPathCommandPlan,
   buildWindowsInteropCommandPlan
 } from './runtime/interopCommandPlanBuilders';
@@ -1028,16 +1032,18 @@ async function pruneRetainedMaterializedTree(
     mkdir: typeof fs.mkdir;
     writeFile: typeof fs.writeFile;
   },
+  leftTreeRoot: string,
+  rightTreeRoot: string,
   leftBlob: Buffer,
   rightBlob: Buffer
 ): Promise<void> {
-  const treeRoot = record.stagedRevisionPlan.treeRoot;
-  if (!treeRoot) {
-    return;
-  }
-
+  // Both per-revision tree roots are always present here: this runs only after a
+  // successful two-tree materialization (the caller guards on `materializedTree`,
+  // which is set only when both roots and revision ids resolved), so the roots are
+  // passed in as definite paths rather than re-derived from the optional plan.
   try {
-    await deps.removePath(treeRoot, { recursive: true, force: true });
+    await deps.removePath(leftTreeRoot, { recursive: true, force: true });
+    await deps.removePath(rightTreeRoot, { recursive: true, force: true });
     await deps.mkdir(path.dirname(record.stagedRevisionPlan.leftFilePath), { recursive: true });
     await deps.writeFile(record.stagedRevisionPlan.leftFilePath, leftBlob);
     await deps.mkdir(path.dirname(record.stagedRevisionPlan.rightFilePath), { recursive: true });
@@ -1085,34 +1091,57 @@ async function runHostNativeExecution(
   await deps.mkdir(record.artifactPlan.reportDirectory, { recursive: true });
   await deps.mkdir(record.artifactPlan.stagingDirectory, { recursive: true });
 
-  // VHS-REQ-624: for the host-native provider, materialize the selected (newest)
-  // revision's tree once so both staged VIs resolve in-repo dependencies at load
-  // time. Fail closed before reading blobs or invoking the runtime when the tree
-  // cannot be materialized. Container/interop providers re-stage from in-memory
-  // buffers and do not use this tree. The Linux short-path staging redirect owns
-  // its own materialization into a cleaned tmp directory, so skip it here to
-  // avoid writing the tree into the retained report directory uselessly.
+  // VHS-REQ-624: for the host-native provider, materialize BOTH revisions'
+  // surrounding trees separately (base -> left tree, selected -> right tree) so
+  // each staged VI resolves the in-repo dependencies as they existed at that
+  // VI's revision. Fail closed before reading blobs or invoking the runtime when
+  // either tree cannot be materialized. Container/interop providers re-stage from
+  // in-memory buffers via stageSelectedRevisionTreeIntoDirectory. The Linux
+  // short-path staging redirect owns its own materialization into a cleaned tmp
+  // directory, so skip it here to avoid writing the trees into the retained
+  // report directory uselessly.
   const stagedPlan = record.stagedRevisionPlan;
   let materializedTree: ComparisonReportRuntimeExecution['materializedTree'];
   if (
     record.runtimeSelection.provider === 'host-native' &&
     deps.materializeSelectedRevisionTree &&
-    stagedPlan.treeRoot &&
-    stagedPlan.treeRevisionId &&
+    stagedPlan.leftTreeRoot &&
+    stagedPlan.rightTreeRoot &&
+    stagedPlan.leftTreeRevisionId &&
+    stagedPlan.rightTreeRevisionId &&
     !shouldUseLinuxHostNativeShortPathStaging(record, deps.processPlatform)
   ) {
     const pathspec = stagedPlan.materializedPathspec?.trim() || '.';
     try {
+      // `git checkout-index --work-tree <root>` only creates the subdirectories
+      // beneath an existing work-tree root, so both per-revision tree roots must
+      // exist before materializing into them; otherwise git fails closed with
+      // "this operation must be run in a work tree".
+      await deps.mkdir(stagedPlan.leftTreeRoot, { recursive: true });
+      await deps.mkdir(stagedPlan.rightTreeRoot, { recursive: true });
       await deps.materializeSelectedRevisionTree({
         repositoryRoot,
-        revisionId: stagedPlan.treeRevisionId,
-        destinationRoot: stagedPlan.treeRoot,
+        revisionId: stagedPlan.leftTreeRevisionId,
+        destinationRoot: stagedPlan.leftTreeRoot,
+        pathspec
+      });
+      await deps.materializeSelectedRevisionTree({
+        repositoryRoot,
+        revisionId: stagedPlan.rightTreeRevisionId,
+        destinationRoot: stagedPlan.rightTreeRoot,
         pathspec
       });
       materializedTree = {
-        root: stagedPlan.treeRoot,
-        revisionId: stagedPlan.treeRevisionId,
-        pathspec
+        left: {
+          root: stagedPlan.leftTreeRoot,
+          revisionId: stagedPlan.leftTreeRevisionId,
+          pathspec
+        },
+        right: {
+          root: stagedPlan.rightTreeRoot,
+          revisionId: stagedPlan.rightTreeRevisionId,
+          pathspec
+        }
       };
     } catch (error) {
       // VHS-REQ-624 (#303): keep the stable failure reason but attach an
@@ -1196,7 +1225,14 @@ async function runHostNativeExecution(
   if (executionContext.outcome === 'blocked') {
     await cleanupPreparedExecutionContext(executionContext, deps.removePath);
     if (materializedTree) {
-      await pruneRetainedMaterializedTree(record, deps, leftBlob, rightBlob);
+      await pruneRetainedMaterializedTree(
+        record,
+        deps,
+        materializedTree.left.root,
+        materializedTree.right.root,
+        leftBlob,
+        rightBlob
+      );
     }
     return {
       state: 'failed',
@@ -1263,7 +1299,14 @@ async function runHostNativeExecution(
     // (pair + tree) and enumerates the real artifacts — so skip the legacy prune
     // (which would re-write the pair back and undo UNSTAGING).
     if (materializedTree && !deps.renderStagedViPreview) {
-      await pruneRetainedMaterializedTree(record, deps, leftBlob, rightBlob);
+      await pruneRetainedMaterializedTree(
+        record,
+        deps,
+        materializedTree.left.root,
+        materializedTree.right.root,
+        leftBlob,
+        rightBlob
+      );
     }
   }
 }
@@ -1724,16 +1767,17 @@ async function runHostNativeExecutionWithContext(
       // staged inputs the pass operated on and enumerate the real artifacts. The
       // reported artifacts are the concrete staged VI FILES (left/right) — the
       // meaningful, stable evidence: once removed they stay gone. The `staging/`
-      // directory (treeRoot) is ALSO removed to clear the materialized dependency
-      // tree (VHS-REQ-624 storage bloat), but the directory itself is NOT reported
-      // as a removed artifact because report finalization may re-create it empty;
-      // reporting a path that reappears would be misleading. The generated report
+      // directory (which now holds both per-side revision trees) is ALSO removed
+      // to clear the materialized dependency trees (VHS-REQ-624 storage bloat),
+      // but the directory itself is NOT reported as a removed artifact because
+      // report finalization may re-create it empty; reporting a path that
+      // reappears would be misleading. The generated report
       // and its metadata are siblings under the report directory and are always
       // retained. The transient per-preview workspaces are removed by the preview
       // renderer itself. (When the validator is wired the outer finally defers its
       // retained-tree prune to this state.)
       unstageInputs: async () => {
-        const stagingDir = record.stagedRevisionPlan.treeRoot ?? record.artifactPlan.stagingDirectory;
+        const stagingDir = record.artifactPlan.stagingDirectory;
         // The staged VI files are the reported artifacts; stat each so removedPaths
         // reflects files that actually existed at unstage time.
         const stagedFiles = [stagedPair.leftPath, stagedPair.rightPath].filter(
@@ -2948,8 +2992,18 @@ function buildLinuxContainerWorkspaceLayout(
     leftFilename,
     rightFilename,
     reportFilename,
-    leftFilePath: joinPreservingExplicitPathStyle(hostLayout.stagingDirectory, relativeDirectory, leftFilename),
-    rightFilePath: joinPreservingExplicitPathStyle(hostLayout.stagingDirectory, relativeDirectory, rightFilename),
+    leftFilePath: joinPreservingExplicitPathStyle(
+      hostLayout.stagingDirectory,
+      LEFT_TREE_SUBDIRECTORY,
+      relativeDirectory,
+      leftFilename
+    ),
+    rightFilePath: joinPreservingExplicitPathStyle(
+      hostLayout.stagingDirectory,
+      RIGHT_TREE_SUBDIRECTORY,
+      relativeDirectory,
+      rightFilename
+    ),
     reportFilePath: joinPreservingExplicitPathStyle(hostLayout.reportDirectory, reportFilename),
     reportIdentityFilenames: [leftFilename, rightFilename],
     reportTextReplacements: replacements
@@ -2967,10 +3021,12 @@ interface StagedTreeResult {
 
 /**
  * VHS-REQ-624: stage both compared VI blobs into `stagingDirectory`, materializing
- * the selected (newest) revision's tree first when a materializer + repository root
- * are supplied so in-repo dependencies sit beside the staged VIs. Shared by the
- * host-interop and Linux-host container branches and the Windows container path so
- * every external provider gets dependency-aware staging. Fails closed when the tree
+ * EACH revision's surrounding tree separately (the base revision into a `left`
+ * subtree and the selected revision into a `right` subtree) when a materializer +
+ * repository root are supplied, so every VI's in-repo dependencies sit beside it
+ * as they existed at that VI's own revision. Shared by the host-interop and
+ * Linux-host container branches and the Windows container path so every external
+ * provider gets per-revision dependency fidelity. Fails closed when either tree
  * cannot be materialized.
  */
 async function stageSelectedRevisionTreeIntoDirectory(
@@ -2987,26 +3043,49 @@ async function stageSelectedRevisionTreeIntoDirectory(
 ): Promise<StagedTreeResult> {
   await deps.mkdir(stagingDirectory, { recursive: true });
 
+  const leftTreeRoot = joinPreservingExplicitPathStyle(stagingDirectory, LEFT_TREE_SUBDIRECTORY);
+  const rightTreeRoot = joinPreservingExplicitPathStyle(stagingDirectory, RIGHT_TREE_SUBDIRECTORY);
+
   let relativeDirectory = '';
   let materializedTree: ComparisonReportRuntimeExecution['materializedTree'];
   if (
     deps.materializeSelectedRevisionTree &&
     deps.repositoryRoot &&
-    record.stagedRevisionPlan.treeRevisionId
+    record.stagedRevisionPlan.leftTreeRevisionId &&
+    record.stagedRevisionPlan.rightTreeRevisionId
   ) {
     relativeDirectory = record.stagedRevisionPlan.relativeDirectory ?? '';
     const pathspec = record.stagedRevisionPlan.materializedPathspec?.trim() || '.';
     try {
+      // `git checkout-index --work-tree <root>` only creates the subdirectories
+      // beneath an existing work-tree root, so both per-revision tree roots must
+      // exist before materializing into them; otherwise git fails closed with
+      // "this operation must be run in a work tree".
+      await deps.mkdir(leftTreeRoot, { recursive: true });
+      await deps.mkdir(rightTreeRoot, { recursive: true });
       await deps.materializeSelectedRevisionTree({
         repositoryRoot: deps.repositoryRoot,
-        revisionId: record.stagedRevisionPlan.treeRevisionId,
-        destinationRoot: stagingDirectory,
+        revisionId: record.stagedRevisionPlan.leftTreeRevisionId,
+        destinationRoot: leftTreeRoot,
+        pathspec
+      });
+      await deps.materializeSelectedRevisionTree({
+        repositoryRoot: deps.repositoryRoot,
+        revisionId: record.stagedRevisionPlan.rightTreeRevisionId,
+        destinationRoot: rightTreeRoot,
         pathspec
       });
       materializedTree = {
-        root: stagingDirectory,
-        revisionId: record.stagedRevisionPlan.treeRevisionId,
-        pathspec
+        left: {
+          root: leftTreeRoot,
+          revisionId: record.stagedRevisionPlan.leftTreeRevisionId,
+          pathspec
+        },
+        right: {
+          root: rightTreeRoot,
+          revisionId: record.stagedRevisionPlan.rightTreeRevisionId,
+          pathspec
+        }
       };
     } catch {
       return {
@@ -3014,11 +3093,11 @@ async function stageSelectedRevisionTreeIntoDirectory(
         failureReason: 'selected-tree-materialize-failed',
         relativeDirectory: '',
         leftFilePath: joinPreservingExplicitPathStyle(
-          stagingDirectory,
+          leftTreeRoot,
           record.stagedRevisionPlan.leftFilename
         ),
         rightFilePath: joinPreservingExplicitPathStyle(
-          stagingDirectory,
+          rightTreeRoot,
           record.stagedRevisionPlan.rightFilename
         )
       };
@@ -3026,16 +3105,17 @@ async function stageSelectedRevisionTreeIntoDirectory(
   }
 
   const leftFilePath = joinPreservingExplicitPathStyle(
-    stagingDirectory,
+    leftTreeRoot,
     relativeDirectory,
     record.stagedRevisionPlan.leftFilename
   );
   const rightFilePath = joinPreservingExplicitPathStyle(
-    stagingDirectory,
+    rightTreeRoot,
     relativeDirectory,
     record.stagedRevisionPlan.rightFilename
   );
   await deps.mkdir(posixDirname(leftFilePath), { recursive: true });
+  await deps.mkdir(posixDirname(rightFilePath), { recursive: true });
   await deps.writeFile(leftFilePath, deps.leftBlob);
   await deps.writeFile(rightFilePath, deps.rightBlob);
 
@@ -3380,18 +3460,21 @@ export function buildWindowsContainerCommandPlan(
     return undefined;
   }
 
-  // VHS-REQ-624: when a dependency tree is materialized, the staged VIs live at
-  // their repo-relative depth inside the staging mount. Prefix the VI filenames
-  // with that depth (Windows-style backslash separators inside the container).
+  // VHS-REQ-624: each revision's tree is materialized into its own `left`/`right`
+  // subtree of the staging mount, and each staged VI sits at its repo-relative
+  // depth inside its OWN revision subtree. Prefix the VI filenames with the side
+  // subtree + that depth (Windows-style backslash separators inside the container).
   const relativeDirectory = (options.relativeDirectory ?? '')
     .replace(/^[\\/]+|[\\/]+$/g, '')
     .replace(/\//g, '\\');
-  const containerLeftFilename = relativeDirectory
-    ? `${relativeDirectory}\\${record.stagedRevisionPlan.leftFilename}`
-    : record.stagedRevisionPlan.leftFilename;
-  const containerRightFilename = relativeDirectory
-    ? `${relativeDirectory}\\${record.stagedRevisionPlan.rightFilename}`
-    : record.stagedRevisionPlan.rightFilename;
+  const leftContainerDirectory = relativeDirectory
+    ? `${LEFT_TREE_SUBDIRECTORY}\\${relativeDirectory}`
+    : LEFT_TREE_SUBDIRECTORY;
+  const rightContainerDirectory = relativeDirectory
+    ? `${RIGHT_TREE_SUBDIRECTORY}\\${relativeDirectory}`
+    : RIGHT_TREE_SUBDIRECTORY;
+  const containerLeftFilename = `${leftContainerDirectory}\\${record.stagedRevisionPlan.leftFilename}`;
+  const containerRightFilename = `${rightContainerDirectory}\\${record.stagedRevisionPlan.rightFilename}`;
 
   const containerArgs =
     record.runtimeSelection.engine === 'labview-cli'
@@ -3466,18 +3549,21 @@ export function buildLinuxContainerCommandPlan(
     return undefined;
   }
 
-  // VHS-REQ-624: when the selected-revision tree is materialized, the staged VIs
-  // live at their repo-relative depth inside /workspace/staging so in-repo
-  // dependencies resolve at load time. Prefix the VI filenames with that depth.
+  // VHS-REQ-624: each revision's tree is materialized into its own `left`/`right`
+  // subtree of /workspace/staging, and each staged VI sits at its repo-relative
+  // depth inside its OWN revision subtree so in-repo dependencies resolve at load
+  // time. Prefix the VI filenames with the side subtree + that depth.
   const relativeDirectory = options.relativeDirectory?.replace(/^\/+|\/+$/g, '') ?? '';
   const baseLeftFilename = options.leftFilename ?? record.stagedRevisionPlan.leftFilename;
   const baseRightFilename = options.rightFilename ?? record.stagedRevisionPlan.rightFilename;
-  const containerLeftFilename = relativeDirectory
-    ? `${relativeDirectory}/${baseLeftFilename}`
-    : baseLeftFilename;
-  const containerRightFilename = relativeDirectory
-    ? `${relativeDirectory}/${baseRightFilename}`
-    : baseRightFilename;
+  const leftContainerDirectory = relativeDirectory
+    ? `${LEFT_TREE_SUBDIRECTORY}/${relativeDirectory}`
+    : LEFT_TREE_SUBDIRECTORY;
+  const rightContainerDirectory = relativeDirectory
+    ? `${RIGHT_TREE_SUBDIRECTORY}/${relativeDirectory}`
+    : RIGHT_TREE_SUBDIRECTORY;
+  const containerLeftFilename = `${leftContainerDirectory}/${baseLeftFilename}`;
+  const containerRightFilename = `${rightContainerDirectory}/${baseRightFilename}`;
 
   // VHS-REQ-657: derive the in-container LabVIEW executable and headless mechanism
   // from the selected image so older images (2025 Q3 and earlier) invoke the

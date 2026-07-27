@@ -86,13 +86,15 @@ export interface ComparisonReportRuntimeExecution {
     reason?: string;
   };
   /**
-   * VHS-REQ-624: manifest of the materialized selected-revision tree both staged
-   * VIs were loaded against. Retained as runtime evidence when staging succeeds.
+   * VHS-REQ-624: manifest of the two per-revision trees materialized for the
+   * comparison — the base (left) tree the left VI was loaded against and the
+   * selected (right) tree the right VI was loaded against. Retained as runtime
+   * evidence when staging succeeds; each VI resolves its own revision's in-repo
+   * dependencies (per-revision dependency fidelity).
    */
   materializedTree?: {
-    root: string;
-    revisionId: string;
-    pathspec: string;
+    left: { root: string; revisionId: string; pathspec: string };
+    right: { root: string; revisionId: string; pathspec: string };
   };
   /**
    * VHS-REQ-699: per-cycle record of the single-pass comparison-preview pipeline
@@ -270,15 +272,13 @@ export function renderComparisonReportPacketHtml(record: ComparisonReportPacketR
   // otherwise carry a misleading past-tense claim.
   const dependencyCaveatMarkup = runtimeExecution.materializedTree
     ? `<div class="note" data-testid="comparison-report-dependency-caveat">
-      <strong>Dependency context:</strong> Both revisions of this VI were loaded against the
-      selected (newest) revision's dependencies. Changes confined to dependencies between the two
-      revisions may not appear in this report, and loading the older revision against newer
-      dependencies may cause LabVIEW to recompile it, so some differences shown here may reflect
-      that recompile rather than the historical state at the base commit. Treat this as a
-      comparison of the selected VI's own changes under current dependencies, not a faithful
-      per-commit diff.
+      <strong>Dependency context:</strong> Each revision of this VI was evaluated against its own
+      revision's in-repository dependencies &mdash; the base VI against the base revision's tree and the
+      selected VI against the selected revision's tree. Dependency changes between the two revisions
+      are reflected in this report rather than masked, and neither VI is recompiled against the other
+      revision's newer dependencies (per-revision dependency fidelity).
       <br /><br />
-      Only files tracked in the repository at the selected revision are staged beside the VI.
+      Only files tracked in the repository at each revision are staged beside the VI.
       Dependencies that live outside the repository &mdash; for example LabVIEW-installed paths such as
       <code>vi.lib</code>, <code>instr.lib</code>, <code>user.lib</code>, or the LabVIEW
       <code>resource</code> directory, and any dependency referenced by an absolute path &mdash; are not

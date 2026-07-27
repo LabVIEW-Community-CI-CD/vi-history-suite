@@ -3904,7 +3904,7 @@ describe('Linux host-native short-path staging (VHS-REQ-156)', () => {
       expect(result.record.runtimeExecution.state).toBe('succeeded');
       const issuedArgs = runCommand.mock.calls[0]?.[0]?.args ?? [];
       expect(issuedArgs).toContain(expectedTmpReportPath);
-      expect(issuedArgs).toContain(`${tmpRoot}/repoid123456/fileid123456/staging/left-111111112222-foo.vi`);
+      expect(issuedArgs).toContain(`${tmpRoot}/repoid123456/fileid123456/staging/left/left-111111112222-foo.vi`);
       expect(copyFile).toHaveBeenCalledWith(
         expectedTmpReportPath,
         record.artifactPlan.reportFilePath
@@ -3979,14 +3979,22 @@ describe('Linux host-native short-path staging (VHS-REQ-156)', () => {
         }
       );
 
-      // The fix: the tree is materialized into the SHORT-PATH staging dir that the
-      // run actually executes against, not the retained report directory.
-      expect(materializeSelectedRevisionTree).toHaveBeenCalledTimes(1);
+      // The fix: BOTH revisions' trees are materialized into the SHORT-PATH
+      // staging dir the run executes against (base -> left subtree, selected ->
+      // right subtree), not the retained report directory.
+      expect(materializeSelectedRevisionTree).toHaveBeenCalledTimes(2);
+      expect(materializeSelectedRevisionTree).toHaveBeenCalledWith(
+        expect.objectContaining({
+          repositoryRoot: '/workspace/repo',
+          revisionId: record.baseHash,
+          destinationRoot: `${expectedShortPathStagingDir}/left`
+        })
+      );
       expect(materializeSelectedRevisionTree).toHaveBeenCalledWith(
         expect.objectContaining({
           repositoryRoot: '/workspace/repo',
           revisionId: record.selectedHash,
-          destinationRoot: expectedShortPathStagingDir
+          destinationRoot: `${expectedShortPathStagingDir}/right`
         })
       );
       // It must NOT materialize into the retained report/staging directory.
@@ -3995,8 +4003,8 @@ describe('Linux host-native short-path staging (VHS-REQ-156)', () => {
         expect(call[0].destinationRoot).not.toBe(retainedStagingDir);
       }
       expect(result.record.runtimeExecution.materializedTree).toMatchObject({
-        revisionId: record.selectedHash,
-        root: expectedShortPathStagingDir
+        left: { revisionId: record.baseHash, root: `${expectedShortPathStagingDir}/left` },
+        right: { revisionId: record.selectedHash, root: `${expectedShortPathStagingDir}/right` }
       });
       expect(result.record.runtimeExecution.state).toBe('succeeded');
     } finally {
@@ -4024,7 +4032,7 @@ describe('newest-revision tree staging (VHS-REQ-624)', () => {
     return record;
   }
 
-  it('materializes one selected-revision tree and stages both VIs at repo-relative depth (VHS-REQ-624.1, VHS-REQ-624.4, VHS-REQ-624.5, VHS-REQ-624.9)', async () => {
+  it('materializes per-revision trees and stages each VI in its own tree at repo-relative depth (VHS-REQ-624.1, VHS-REQ-624.4, VHS-REQ-624.5, VHS-REQ-624.9)', async () => {
     const writeFile = vi.fn().mockResolvedValue(undefined);
     const materializeSelectedRevisionTree = vi.fn().mockResolvedValue(undefined);
     const writePacketRecord = vi.fn().mockResolvedValue(undefined);
@@ -4050,30 +4058,36 @@ describe('newest-revision tree staging (VHS-REQ-624)', () => {
       }
     );
 
-    // Exactly one tree, pinned to the selected (newest) revision, into the staging root.
-    expect(materializeSelectedRevisionTree).toHaveBeenCalledTimes(1);
+    // Two trees: base into the left tree, selected into the right tree.
+    expect(materializeSelectedRevisionTree).toHaveBeenCalledTimes(2);
+    expect(materializeSelectedRevisionTree).toHaveBeenCalledWith(
+      expect.objectContaining({
+        repositoryRoot: '/workspace/repo',
+        revisionId: record.baseHash,
+        destinationRoot: plan.leftTreeRoot
+      })
+    );
     expect(materializeSelectedRevisionTree).toHaveBeenCalledWith(
       expect.objectContaining({
         repositoryRoot: '/workspace/repo',
         revisionId: record.selectedHash,
-        destinationRoot: plan.treeRoot
+        destinationRoot: plan.rightTreeRoot
       })
     );
-    // Both renamed VIs live under the same tree root at the VI's relative depth.
+    // Each renamed VI lives under ITS OWN revision tree at the VI's relative depth.
     // Normalize separators so the containment check holds on win32 hosts, where
     // path.join yields backslashes while the staging-root string keeps forward slashes.
     const toPosix = (value: string): string => value.replace(/\\/g, '/');
     expect(plan.relativeDirectory).toBe('Source/Sub');
-    expect(toPosix(plan.leftFilePath).startsWith(toPosix(plan.treeRoot as string))).toBe(true);
-    expect(toPosix(plan.rightFilePath).startsWith(toPosix(plan.treeRoot as string))).toBe(true);
+    expect(toPosix(plan.leftFilePath).startsWith(toPosix(plan.leftTreeRoot as string))).toBe(true);
+    expect(toPosix(plan.rightFilePath).startsWith(toPosix(plan.rightTreeRoot as string))).toBe(true);
     expect(plan.leftFilePath).toContain('Source');
-    // Base blob -> left filename; selected blob -> right filename.
+    // Base blob -> left filename in the left tree; selected blob -> right filename in the right tree.
     expect(writeFile).toHaveBeenCalledWith(plan.leftFilePath, Buffer.from('base-blob'));
     expect(writeFile).toHaveBeenCalledWith(plan.rightFilePath, Buffer.from('selected-blob'));
     const materializedTree = {
-      root: plan.treeRoot as string,
-      revisionId: record.selectedHash,
-      pathspec: '.'
+      left: { root: plan.leftTreeRoot as string, revisionId: record.baseHash, pathspec: '.' },
+      right: { root: plan.rightTreeRoot as string, revisionId: record.selectedHash, pathspec: '.' }
     };
     expect(result.record.runtimeExecution.materializedTree).toEqual(materializedTree);
     const retainedRecord = writePacketRecord.mock.calls[0]?.[0];
@@ -4133,7 +4147,7 @@ describe('newest-revision tree staging (VHS-REQ-624)', () => {
       expect.objectContaining({
         repositoryRoot: '/workspace/repo',
         revisionId: 'WORKTREE',
-        destinationRoot: record.stagedRevisionPlan.treeRoot
+        destinationRoot: record.stagedRevisionPlan.rightTreeRoot
       })
     );
     const writeTargets = writeFile.mock.calls.map((call) => String(call[0]).replace(/\\/g, '/'));
@@ -4175,9 +4189,13 @@ describe('newest-revision tree staging (VHS-REQ-624)', () => {
       }
     );
 
-    // After the run, the whole-repo tree in the retained staging dir is removed...
+    // After the run, both per-revision trees in the retained staging dir are removed...
     expect(removePath).toHaveBeenCalledWith(
-      plan.treeRoot,
+      plan.leftTreeRoot,
+      expect.objectContaining({ recursive: true, force: true })
+    );
+    expect(removePath).toHaveBeenCalledWith(
+      plan.rightTreeRoot,
       expect.objectContaining({ recursive: true, force: true })
     );
     // ...and the two staged VIs are re-written so retained evidence keeps only them.
@@ -4191,7 +4209,7 @@ describe('newest-revision tree staging (VHS-REQ-624)', () => {
     expect(leftWrites.length).toBeGreaterThanOrEqual(2);
     expect(rightWrites.length).toBeGreaterThanOrEqual(2);
     expect(result.record.runtimeExecution.state).toBe('succeeded');
-    expect(result.record.runtimeExecution.materializedTree?.revisionId).toBe(record.selectedHash);
+    expect(result.record.runtimeExecution.materializedTree?.right.revisionId).toBe(record.selectedHash);
   });
 
   it('does not prune when materialization is skipped (no materializer injected)', async () => {
@@ -4220,7 +4238,11 @@ describe('newest-revision tree staging (VHS-REQ-624)', () => {
     );
 
     expect(removePath).not.toHaveBeenCalledWith(
-      plan.treeRoot,
+      plan.leftTreeRoot,
+      expect.objectContaining({ recursive: true, force: true })
+    );
+    expect(removePath).not.toHaveBeenCalledWith(
+      plan.rightTreeRoot,
       expect.objectContaining({ recursive: true, force: true })
     );
   });
@@ -4396,20 +4418,27 @@ describe('newest-revision tree staging (VHS-REQ-624)', () => {
       }
     );
 
-    // One materialization, pinned to the selected revision, into the container staging dir.
-    expect(materializeSelectedRevisionTree).toHaveBeenCalledTimes(1);
+    // Two materializations, base -> left tree and selected -> right tree, into the container staging dir.
+    expect(materializeSelectedRevisionTree).toHaveBeenCalledTimes(2);
+    expect(materializeSelectedRevisionTree).toHaveBeenCalledWith(
+      expect.objectContaining({
+        repositoryRoot: '/workspace/repo',
+        revisionId: record.baseHash,
+        destinationRoot: `${expectedContainerStagingDir}/left`
+      })
+    );
     expect(materializeSelectedRevisionTree).toHaveBeenCalledWith(
       expect.objectContaining({
         repositoryRoot: '/workspace/repo',
         revisionId: record.selectedHash,
-        destinationRoot: expectedContainerStagingDir
+        destinationRoot: `${expectedContainerStagingDir}/right`
       })
     );
     // Docker mounts the container-out tree and the VI args resolve inside /workspace/staging.
     expect(capturedDockerArgs.join(' ')).toContain('/workspace/staging/');
     expect(result.record.runtimeExecution.materializedTree).toMatchObject({
-      revisionId: record.selectedHash,
-      root: expectedContainerStagingDir
+      left: { revisionId: record.baseHash, root: `${expectedContainerStagingDir}/left` },
+      right: { revisionId: record.selectedHash, root: `${expectedContainerStagingDir}/right` }
     });
   });
 
@@ -4434,7 +4463,15 @@ describe('newest-revision tree staging (VHS-REQ-624)', () => {
       expect(plan.leftFilePath).toBe(
         path.join(
           '/workspace/.storage/reports/repoid/fileid/staging',
+          'left',
           'left-111111112222-main.vi'
+        )
+      );
+      expect(plan.rightFilePath).toBe(
+        path.join(
+          '/workspace/.storage/reports/repoid/fileid/staging',
+          'right',
+          'right-abcdef123456-main.vi'
         )
       );
       expect(plan.leftFilePath).not.toContain('..');
@@ -4493,11 +4530,11 @@ describe('newest-revision tree staging (VHS-REQ-624)', () => {
 
     // The interop branch now materializes the dependency tree into the bind-mounted
     // interop staging directory (was a documented gap before VHS-REQ-624 completion).
-    expect(materializeSelectedRevisionTree).toHaveBeenCalledTimes(1);
+    expect(materializeSelectedRevisionTree).toHaveBeenCalledTimes(2);
     expect(materializeSelectedRevisionTree).toHaveBeenCalledWith(
       expect.objectContaining({ repositoryRoot: 'C:\\repo', revisionId: record.selectedHash })
     );
-    expect(result.record.runtimeExecution.materializedTree?.revisionId).toBe(record.selectedHash);
+    expect(result.record.runtimeExecution.materializedTree?.right.revisionId).toBe(record.selectedHash);
   });
 
   it('materializes the dependency tree for the windows-container provider', async () => {
@@ -4540,11 +4577,11 @@ describe('newest-revision tree staging (VHS-REQ-624)', () => {
       }
     );
 
-    expect(materializeSelectedRevisionTree).toHaveBeenCalledTimes(1);
+    expect(materializeSelectedRevisionTree).toHaveBeenCalledTimes(2);
     expect(materializeSelectedRevisionTree).toHaveBeenCalledWith(
       expect.objectContaining({ repositoryRoot: 'C:\\repo', revisionId: record.selectedHash })
     );
-    expect(result.record.runtimeExecution.materializedTree?.revisionId).toBe(record.selectedHash);
+    expect(result.record.runtimeExecution.materializedTree?.right.revisionId).toBe(record.selectedHash);
   });
 });
 
@@ -5761,7 +5798,8 @@ describe('prepareWindowsContainerExecutionContext ready + build failures (VHS-RE
 
   it('blocks with selected-tree-materialize-failed when the tree materializer throws', async () => {
     const record = createWindowsContainerReadyRecord();
-    record.stagedRevisionPlan.treeRevisionId = record.selectedHash;
+    record.stagedRevisionPlan.leftTreeRevisionId = record.baseHash;
+    record.stagedRevisionPlan.rightTreeRevisionId = record.selectedHash;
 
     const context = await prepareWindowsContainerExecutionContext(
       record,
@@ -5836,7 +5874,8 @@ describe('prepareLinuxContainerExecutionContext ready + build failures (VHS-REQ-
 
   it('blocks with selected-tree-materialize-failed when the tree materializer throws', async () => {
     const record = createLinuxContainerReadyRecord();
-    record.stagedRevisionPlan.treeRevisionId = record.selectedHash;
+    record.stagedRevisionPlan.leftTreeRevisionId = record.baseHash;
+    record.stagedRevisionPlan.rightTreeRevisionId = record.selectedHash;
 
     const context = await prepareLinuxContainerExecutionContext(
       record,
@@ -8553,10 +8592,15 @@ describe('executeComparisonReport full runtime path without a diagnostics record
 
   it('materializes the selected tree with the default pathspec and retains the materialized tree', async () => {
     const record = createReadyRecord();
-    // A tree root + revision (and no explicit pathspec) drives the `|| '.'` default
-    // pathspec and the materialized-tree retention branch.
-    record.stagedRevisionPlan.treeRoot = record.artifactPlan.stagingDirectory;
-    record.stagedRevisionPlan.treeRevisionId = record.selectedHash;
+    // Per-revision tree roots + revisions (and no explicit pathspec) drive the
+    // `|| '.'` default pathspec and the materialized-tree retention branch.
+    record.stagedRevisionPlan = buildStagedRevisionPlan({
+      stagingDirectory: record.artifactPlan.stagingDirectory,
+      fullFilename: record.artifactPlan.fullFilename,
+      leftRevisionId: record.baseHash,
+      rightRevisionId: record.selectedHash,
+      normalizedRelativePath: record.artifactPlan.normalizedRelativePath
+    });
     const materializeSelectedRevisionTree = vi.fn().mockResolvedValue(undefined);
 
     const result = await executeComparisonReport(
@@ -8693,7 +8737,8 @@ describe('prepareWindowsContainerExecutionContext interop-host branches (VHS-REQ
 
   it('blocks in the interop branch when tree materialization fails on a non-win32 host', async () => {
     const record = createWindowsContainerReadyRecord();
-    record.stagedRevisionPlan.treeRevisionId = record.selectedHash;
+    record.stagedRevisionPlan.leftTreeRevisionId = record.baseHash;
+    record.stagedRevisionPlan.rightTreeRevisionId = record.selectedHash;
 
     const context = await prepareWindowsContainerExecutionContext(
       record,

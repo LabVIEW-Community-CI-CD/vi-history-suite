@@ -22,10 +22,10 @@ import type { ComparisonReportPacketRecord } from '../../src/reporting/compariso
 function buildInput(provider: string): StagedViPreviewValidatorInput {
   return {
     side: 'left',
-    viFilePath: '/staged/left.vi',
+    viFilePath: '/staged/left/left.vi',
     record: {
       runtimeSelection: { provider },
-      stagedRevisionPlan: { treeRoot: '/staged/tree' }
+      stagedRevisionPlan: { leftTreeRoot: '/staged/left', leftFilePath: '/staged/left/left.vi' }
     } as unknown as ComparisonReportPacketRecord
   };
 }
@@ -111,12 +111,13 @@ describe('buildStagedViPreviewValidator', () => {
  */
 describe('buildNodeViPreviewRenderDeps', () => {
   function inputWithTree(treeRoot: string | undefined): StagedViPreviewValidatorInput {
+    const viFilePath = path.join(treeRoot ?? '/staged', 'left.vi');
     return {
       side: 'left',
-      viFilePath: path.join(treeRoot ?? '/staged', 'left.vi'),
+      viFilePath,
       record: {
         runtimeSelection: { provider: 'linux-container' },
-        stagedRevisionPlan: { treeRoot }
+        stagedRevisionPlan: { leftTreeRoot: treeRoot, leftFilePath: viFilePath }
       } as unknown as ComparisonReportPacketRecord
     };
   }
@@ -130,6 +131,64 @@ describe('buildNodeViPreviewRenderDeps', () => {
   it('omits the staging-base resolver when no tree root is known', () => {
     const deps = buildNodeViPreviewRenderDeps(inputWithTree(undefined));
     expect(deps.resolveStagingBaseDirectory).toBeUndefined();
+  });
+
+  it('resolves the staging base to the RIGHT tree root for the selected-side VI (VHS-REQ-624)', async () => {
+    // The right (selected) VI must stage from the right tree root, never the
+    // left, so it resolves the selected revision's own dependencies.
+    const input: StagedViPreviewValidatorInput = {
+      side: 'right',
+      viFilePath: '/staged/right/main.vi',
+      record: {
+        runtimeSelection: { provider: 'linux-container' },
+        stagedRevisionPlan: {
+          leftTreeRoot: '/staged/left',
+          leftFilePath: '/staged/left/main.vi',
+          rightTreeRoot: '/staged/right',
+          rightFilePath: '/staged/right/main.vi'
+        }
+      } as unknown as ComparisonReportPacketRecord
+    };
+    const deps = buildNodeViPreviewRenderDeps(input);
+    await expect(deps.resolveStagingBaseDirectory!('/anything')).resolves.toBe('/staged/right');
+  });
+
+  it('falls back to the right tree root when the VI path matches neither staged side', async () => {
+    // Defensive: an input whose viFilePath matches neither staged filename still
+    // resolves to a concrete tree root (right preferred) rather than undefined.
+    const input: StagedViPreviewValidatorInput = {
+      side: 'left',
+      viFilePath: '/staged/elsewhere/x.vi',
+      record: {
+        runtimeSelection: { provider: 'linux-container' },
+        stagedRevisionPlan: {
+          leftTreeRoot: '/staged/left',
+          leftFilePath: '/staged/left/main.vi',
+          rightTreeRoot: '/staged/right',
+          rightFilePath: '/staged/right/main.vi'
+        }
+      } as unknown as ComparisonReportPacketRecord
+    };
+    const deps = buildNodeViPreviewRenderDeps(input);
+    await expect(deps.resolveStagingBaseDirectory!('/anything')).resolves.toBe('/staged/right');
+  });
+
+  it('falls back to the left tree root when neither side matches and no right tree exists', async () => {
+    const input: StagedViPreviewValidatorInput = {
+      side: 'left',
+      viFilePath: '/staged/elsewhere/x.vi',
+      record: {
+        runtimeSelection: { provider: 'linux-container' },
+        stagedRevisionPlan: {
+          leftTreeRoot: '/staged/left',
+          leftFilePath: '/staged/left/main.vi',
+          rightFilePath: '/staged/right/main.vi'
+          // no rightTreeRoot -> the ?? falls through to the left tree root
+        }
+      } as unknown as ComparisonReportPacketRecord
+    };
+    const deps = buildNodeViPreviewRenderDeps(input);
+    await expect(deps.resolveStagingBaseDirectory!('/anything')).resolves.toBe('/staged/left');
   });
 
   it('enumerates only LabVIEW source files with sizes, and cleans up', async () => {

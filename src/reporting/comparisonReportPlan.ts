@@ -74,23 +74,37 @@ export interface StagedRevisionPlan {
   rightFilename: string;
   rightFilePath: string;
   /**
-   * VHS-REQ-624: root of the materialized selected (newest) revision tree that
-   * both staged VIs live inside. The default builder uses the staging directory.
+   * VHS-REQ-624: root of the materialized BASE (left) revision tree the left
+   * staged VI lives inside, so it resolves its in-repo dependencies as they
+   * existed at the base revision. The default builder nests it under the staging
+   * directory.
    */
-  treeRoot?: string;
+  leftTreeRoot?: string;
   /**
-   * VHS-REQ-624: revision whose surrounding tree is materialized once (the
-   * selected/newest revision). Both staged VIs resolve dependencies against it.
+   * VHS-REQ-624: root of the materialized SELECTED (right) revision tree the
+   * right staged VI lives inside, so it resolves its in-repo dependencies as
+   * they existed at the selected revision. The default builder nests it under
+   * the staging directory.
    */
-  treeRevisionId?: string;
+  rightTreeRoot?: string;
   /**
-   * VHS-REQ-624: repo-relative directory (POSIX) of the compared VI within the
-   * tree. Empty string when the VI sits at the repository root.
+   * VHS-REQ-624: base (left) revision whose surrounding tree is materialized so
+   * the left staged VI resolves its own revision's in-repo dependencies.
+   */
+  leftTreeRevisionId?: string;
+  /**
+   * VHS-REQ-624: selected (right) revision whose surrounding tree is materialized
+   * so the right staged VI resolves its own revision's in-repo dependencies.
+   */
+  rightTreeRevisionId?: string;
+  /**
+   * VHS-REQ-624: repo-relative directory (POSIX) of the compared VI within each
+   * revision tree. Empty string when the VI sits at the repository root.
    */
   relativeDirectory?: string;
   /**
-   * VHS-REQ-624: pathspec materialized from the selected revision. Defaults to
-   * the whole repository (`.`) so all in-repo dependencies are present.
+   * VHS-REQ-624: pathspec materialized from each revision. Defaults to the whole
+   * repository (`.`) so all in-repo dependencies are present.
    */
   materializedPathspec?: string;
 }
@@ -130,6 +144,14 @@ export interface LvComparePlanOptions {
 }
 
 const REPORTS_DIRECTORY = 'reports';
+/**
+ * VHS-REQ-624: per-revision staged-tree subdirectories nested under the staging
+ * directory. The base (left) revision tree and the selected (right) revision
+ * tree are materialized separately so each compared VI resolves its own
+ * revision's in-repo dependencies.
+ */
+export const LEFT_TREE_SUBDIRECTORY = 'left';
+export const RIGHT_TREE_SUBDIRECTORY = 'right';
 const METADATA_FILENAME = 'report-metadata.json';
 const PACKET_FILENAME = 'report-packet.html';
 const RUNTIME_STDOUT_FILENAME = 'runtime-stdout.txt';
@@ -192,20 +214,25 @@ export function buildStagedRevisionPlan(options: StagedRevisionPlanOptions): Sta
   const leftFilename = `${leftLabel}-${fullFilename}`;
   const rightFilename = `${rightLabel}-${fullFilename}`;
 
-  // VHS-REQ-624: place the staged VIs at their repo-relative depth inside the
-  // materialized selected-revision tree (rooted at the staging directory) so
-  // sibling dependencies resolve at load time. Falls back to a flat layout when
-  // no relative path is supplied.
+  // VHS-REQ-624: materialize each revision's surrounding tree separately (base
+  // into the left subtree, selected into the right subtree) and place each
+  // staged VI at its repo-relative depth inside its OWN revision tree so each VI
+  // resolves the in-repo dependencies as they existed at that VI's revision.
   const relativeDirectory = deriveRelativeDirectory(options.normalizedRelativePath);
-  const treeRevisionId = options.rightRevisionId?.trim() ?? '';
+  const leftTreeRevisionId = options.leftRevisionId?.trim() ?? '';
+  const rightTreeRevisionId = options.rightRevisionId?.trim() ?? '';
+  const leftTreeRoot = path.join(stagingDirectory, LEFT_TREE_SUBDIRECTORY);
+  const rightTreeRoot = path.join(stagingDirectory, RIGHT_TREE_SUBDIRECTORY);
 
   return {
     leftFilename,
-    leftFilePath: path.join(stagingDirectory, relativeDirectory, leftFilename),
+    leftFilePath: path.join(leftTreeRoot, relativeDirectory, leftFilename),
     rightFilename,
-    rightFilePath: path.join(stagingDirectory, relativeDirectory, rightFilename),
-    treeRoot: stagingDirectory,
-    treeRevisionId,
+    rightFilePath: path.join(rightTreeRoot, relativeDirectory, rightFilename),
+    leftTreeRoot,
+    rightTreeRoot,
+    leftTreeRevisionId,
+    rightTreeRevisionId,
     relativeDirectory,
     materializedPathspec: '.'
   };

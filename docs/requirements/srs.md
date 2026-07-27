@@ -617,52 +617,58 @@ Missing numeric IDs are intentional.
 - Change Guidance:
   - Do not invoke external comparison tooling before content checks pass.
 
-### VHS-REQ-624: Newest-Revision Tree Staging For Comparison
+### VHS-REQ-624: Per-Revision Tree Staging For Comparison
 
 - Status: Active
 - Parent: VHS-SYS-REQ-008
 - Area: Comparison Reports
-- Statement: Comparison staging shall materialize the selected (newest)
-  revision's surrounding tree once and place both compared VI blobs (base and
-  selected) at the compared VI's normalized repository-relative path within that
-  tree, under distinct left and right filenames, so LabVIEW resolves in-repo
-  dependencies at load time when CreateComparisonReport runs.
+- Statement: Comparison staging shall materialize each compared revision's
+  surrounding tree separately — the base revision into a base-side tree and the
+  selected revision into a selected-side tree — and place each revision's
+  compared VI blob at the compared VI's normalized repository-relative path
+  within its own revision tree, under distinct left and right filenames, so
+  LabVIEW resolves each VI's in-repo dependencies as they existed at that VI's
+  revision when CreateComparisonReport runs.
 - Acceptance Criteria:
-  - A single tree is materialized from the selected (newest) revision; the base
-    revision does not receive its own tree.
-  - Tree materialization faithfully reproduces every file tracked at the
-    selected revision, including paths excluded from `git archive` by
-    `.gitattributes export-ignore`, so in-repo dependencies are present beside
-    the staged VIs at load time instead of being dropped.
-  - Contents of submodules recorded at the selected revision are materialized at
-    their repo-relative paths (including nested submodules) on a best-effort
-    basis, so dependencies tracked through a submodule resolve at load time.
-    When a submodule's objects are unavailable, it is skipped without failing
-    the comparison.
-  - Both compared VI blobs are written at the compared VI's normalized
-    repo-relative path inside that tree, under distinct left and right filenames,
-    so the two top-level VIs never collide on qualified name in one LabVIEW
-    session.
-  - The left filename carries the base blob and the right filename carries the
-    selected blob; CreateComparisonReport receives them as VI1 and VI2.
-  - When the selected-revision tree cannot be materialized, the run degrades to a
+  - Two trees are materialized: one from the base revision carrying the left
+    (base) VI, and one from the selected revision carrying the right (selected)
+    VI; neither VI is loaded against the other revision's dependencies.
+  - Each tree materialization faithfully reproduces every file tracked at that
+    revision, including paths excluded from `git archive` by
+    `.gitattributes export-ignore`, so each VI's in-repo dependencies are present
+    beside it at load time instead of being dropped.
+  - Contents of submodules recorded at each revision are materialized at their
+    repo-relative paths (including nested submodules) on a best-effort basis per
+    side, so dependencies tracked through a submodule resolve at load time. When
+    a submodule's objects are unavailable, it is skipped without failing the
+    comparison.
+  - Each compared VI blob is written at the compared VI's normalized
+    repo-relative path inside its own revision's tree, under distinct left and
+    right filenames, so the two top-level VIs never collide on qualified name in
+    one LabVIEW session.
+  - The left filename carries the base blob in the base-revision tree and the
+    right filename carries the selected blob in the selected-revision tree;
+    CreateComparisonReport receives them as VI1 and VI2.
+  - When either revision's tree cannot be materialized, the run degrades to a
     factual blocked state with a recorded reason and the runtime is not invoked.
-  - The report and retained packet disclose that both VIs were evaluated against
-    the selected revision's dependencies, that dependency-only changes between
-    the two revisions may therefore not appear, and that loading the base VI
-    against newer dependencies may recompile it and distort the rendered diff.
-  - When a selected-revision tree was materialized, the report and retained
-    packet also disclose that only files tracked in the repository are staged, so
+  - The report and retained packet disclose that each VI was evaluated against
+    its own revision's in-repo dependencies (per-revision dependency fidelity),
+    so dependency changes between the two revisions are reflected rather than
+    masked, and neither VI is recompiled against the other revision's newer
+    dependencies.
+  - When per-revision trees were materialized, the report and retained packet
+    also disclose that only files tracked in the repository are staged, so
     dependencies outside the repository (for example LabVIEW-installed paths such
     as `vi.lib`, `instr.lib`, `user.lib`, or the `resource` directory, and
     absolute-path references) are not staged and may render as placeholder
     (white) items as a staging limitation rather than a change in the VI.
-  - Staged inputs and a materialized-tree manifest are retained as runtime
-    evidence consistent with VHS-REQ-147 and VHS-REQ-148.
+  - Staged inputs and a per-revision materialized-tree manifest are retained as
+    runtime evidence consistent with VHS-REQ-147 and VHS-REQ-148.
 - Agent Work Scope:
-  - Change staging-plan construction, host-native execution-context preparation,
-    and the report and packet caveat text together; add deterministic unit
-    coverage for the single-tree layout and the fail-closed path.
+  - Change staging-plan construction (per-side tree roots and revisions),
+    host-native execution-context preparation, and the report and packet caveat
+    text together; add deterministic unit coverage for the two-tree layout and
+    the fail-closed path on each side.
 - Implementation References:
   - `src/reporting/comparisonReportPlan.ts`
   - `src/reporting/comparisonReportRuntimeExecution.ts`
@@ -672,15 +678,19 @@ Missing numeric IDs are intentional.
   - `tests/unit/comparisonReportPacket.test.ts`
   - `manual:dependency-harness-newest-tree-staging`
 - Change Guidance:
-  - Optimize for dependency load success and simplicity; do not claim
-    per-revision dependency fidelity or true historical diffing.
-  - Materialize the tree with a faithful working-tree checkout (for example a
+  - Provide true per-revision dependency fidelity: load each VI against its own
+    revision's in-repo dependencies (the base VI is no longer loaded against the
+    selected revision's dependencies). This supersedes the prior
+    newest-revision-only simplification that traded fidelity for a single tree.
+  - Materialize each tree with a faithful working-tree checkout (for example a
     temporary-index `git read-tree` then `git checkout-index`), not
     `git archive`, so files excluded by `.gitattributes export-ignore` are not
-    dropped from the staged tree.
-  - Recurse into submodule gitlinks best-effort (skip on failure) so submodule
-    contents resolve, since `checkout-index` materializes only the
-    superproject's own blobs; keep superproject materialization fail-closed.
+    dropped from either staged tree.
+  - Recurse into submodule gitlinks best-effort per side (skip on failure) so
+    submodule contents resolve; keep each superproject materialization
+    fail-closed.
+  - Rename only the top-level compared VI on each side to avoid the
+    same-qualified-name collision; never rename dependencies.
 
 ### VHS-REQ-625: Library-Member Compared-VI Disclosure
 

@@ -1013,12 +1013,19 @@ describe('comparisonReportPacket retained evidence (VHS-REQ-148)', () => {
 });
 
 describe('comparisonReportPacket dependency caveat (VHS-REQ-624)', () => {
-  it('discloses the newest-tree dependency caveat with the recompile hazard when a tree was materialized (VHS-REQ-624.7, VHS-REQ-624.8)', () => {
+  it('discloses per-revision dependency fidelity and the repo-only staging limitation when the two trees were materialized (VHS-REQ-624.7, VHS-REQ-624.8)', () => {
     const record = createBaseRecord({
       materializedTree: {
-        root: '/workspace/.storage/reports/repoid123456/fileid123456/container-out/staging',
-        revisionId: 'abcdef1234567890',
-        pathspec: '.'
+        left: {
+          root: '/workspace/.storage/reports/repoid123456/fileid123456/staging/left',
+          revisionId: '1111111122222222',
+          pathspec: '.'
+        },
+        right: {
+          root: '/workspace/.storage/reports/repoid123456/fileid123456/staging/right',
+          revisionId: 'abcdef1234567890',
+          pathspec: '.'
+        }
       }
     });
 
@@ -1026,16 +1033,24 @@ describe('comparisonReportPacket dependency caveat (VHS-REQ-624)', () => {
 
     expect(html).toContain('data-testid="comparison-report-dependency-caveat"');
     expect(html).toContain('Dependency context:');
-    // Both VIs evaluated against the selected revision's dependencies.
-    expect(html.toLowerCase()).toContain('selected');
-    // The base-VI recompile-against-newer-dependencies distortion hazard.
-    expect(html.toLowerCase()).toContain('recompile');
-    expect(html.toLowerCase()).toContain('not a faithful');
-    // VHS-REQ-624 (#284): out-of-repo / LabVIEW-install dependencies are not
+    // Normalize whitespace so multi-word phrase assertions are robust to how the
+    // source string literal happens to wrap across lines.
+    const normalized = html.toLowerCase().replace(/\s+/g, ' ');
+    // VHS-REQ-624.7: each VI is evaluated against its OWN revision's in-repo
+    // dependencies (per-revision fidelity); dependency changes between the two
+    // revisions are reflected, not masked, and neither VI is recompiled against
+    // the other revision's newer dependencies.
+    expect(normalized).toContain('own revision');
+    expect(normalized).toContain('per-revision dependency fidelity');
+    expect(normalized).toContain('reflected');
+    expect(normalized).toContain('selected');
+    // The prior single-tree distortion disclosure must be gone.
+    expect(normalized).not.toContain('not a faithful');
+    // VHS-REQ-624.8 (#284): out-of-repo / LabVIEW-install dependencies are not
     // staged and may render as whiteboxes; disclose that as a staging limitation.
-    expect(html.toLowerCase()).toContain('outside the repository');
-    expect(html.toLowerCase()).toContain('staging');
-    expect(html.toLowerCase()).toContain('placeholder (white)');
+    expect(normalized).toContain('outside the repository');
+    expect(normalized).toContain('staging');
+    expect(normalized).toContain('placeholder (white)');
     expect(html).toContain('vi.lib');
   });
 
