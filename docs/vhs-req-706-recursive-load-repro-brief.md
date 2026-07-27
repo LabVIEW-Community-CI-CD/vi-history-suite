@@ -15,9 +15,12 @@ decide. Preview works on the same box; only comparison is blocked.
 
 ## Failure signature (what to match, and what NOT to confuse it with)
 
-- **Observed:** `Recursive load during LEIF load` on GSW / dialog VIs; LabVIEW CLI
-  `CreateComparisonReport operation failed`; surfaced as LabVIEW **Error 66** /
-  exit **-350051** (also reported as `0xFFFAA89D`).
+- **Observed:** `Recursive load during LEIF load` on the GSW (Getting Started
+  Window) dialog; LabVIEW CLI `CreateComparisonReport operation failed`. The
+  process **exit code is 157**; the CLI also surfaces `0xFFFAA89D` (an
+  illegal-arguments hex that is **misleading** — the real cause is the recursive
+  load, not bad arguments). Key on the recursive-load text, not the exit code (see
+  the confirmed baseline below).
 - **Detector (authoritative):** the recursive-load classifier lives in the runtime
   execution path — `src/reporting/comparisonReportRuntimeExecution.ts` (LEIF
   recursive-load detection + `GSW_MainPanel` context extraction), producing the
@@ -32,9 +35,29 @@ decide. Preview works on the same box; only comparison is blocked.
   - Cold-launch connection race — `-350000` / `-350051` from the LabVIEW-CLI
     connect window (see `src/reporting/runtime/headlessLaunchScriptBuilders.ts` and
     `src/reporting/viPreview/viPreviewExecution.ts`, and TROUBLESHOOTING.md's
-    cold-launch section). Note: `-350051` appears in BOTH the cold-launch family and
-    this recursive-load report, so the exit code alone is not decisive — the
-    `Recursive load during LEIF load` / GSW text is what confirms this class.
+    cold-launch section). This recursive-load class exits **157** (not `-350051`;
+    an earlier report mis-attributed `-350051`), so the exit code is not the tell —
+    the `Recursive load during LEIF load` + GSW text is what confirms this class.
+
+## Confirmed on-box baseline (native LabVIEW 2026 x64, Linux host — 2026-07-27)
+
+A real host-native comparison run captured the current signature (raw artifacts:
+`failure-classification.json`, `LVStatus.txt`, `runtime-diagnostic-log.txt`,
+`runtime-stderr.txt`):
+
+- `diagnosticReason: linux-headless-recursive-load`, `failureReason:
+  command-exited-nonzero`, `exitCode: 157`, `durationMs: 1583` (fails fast, at
+  launch — well before any comparison content is enumerated).
+- `LVStatus.txt`: `Recursive load during LEIF load`, then
+  `…/LabVIEW-2026-64/resource/dialog/GSW/GSW.lvlibp/…/GSW_MainPanel.vi` is loading
+  `…/GSW_MainPanel.vi/<uuid>.vi` (two distinct UUIDs).
+
+**Decisive implication:** the recursion is **inside the shipped, packed
+`GSW.lvlibp`** — `GSW_MainPanel.vi` recursively loading UUID-suffixed members of
+**itself** while LabVIEW loads the Getting Started Window at headless launch. It is
+therefore **fixture-independent and comparison-independent** (a packed-library
+self-recursion at launch, not a fixture dependency cycle and not the comparison
+content). This reorients the hypotheses below.
 
 ## What is already known (the priors that rank the hypotheses)
 
@@ -59,69 +82,83 @@ decide. Preview works on the same box; only comparison is blocked.
    in the Linux container … the feasibility spike must resolve this before any
    corpus-scale claim."
 
-## Ranked hypotheses (highest prior first) — each with confirm/refute evidence
+## Ranked hypotheses (reoriented by the on-box baseline) — each with confirm/refute
 
-### H1 — Launch mechanism / version-flag mismatch on the native-Linux path (HIGH prior)
-The native-Linux run engages a headless mechanism that is wrong for the runtime
-version (the ADR-0004 / #565 precedent), so LEIF re-enters the GSW load.
-- **Confirm:** capture the EXACT LabVIEWCLI invocation of the failing native run —
-  executable (`labviewprofull` vs `labview`), the `-Headless` flag, and
-  `EnableCICDFeaturesForLabVIEW`. If a 2026 x64 runtime is NOT launched as
-  `labviewprofull -Headless` (or a 2025 path is used with `-Headless`), that is the
-  cause.
-- **Refute:** the invocation is already the correct version-aware one
-  (`labviewprofull -Headless` for 2026 Q1+) **and** it still trips recursive-load.
-- **Why first:** it is the only hypothesis with a documented prior of causing this
-  precise signature, and it is the cheapest to check (inspect the command, no rerun).
+The baseline shows the fault is the GSW Getting-Started-Window packed-lib
+self-recursion at **headless launch**, so hypotheses about the comparison content
+(empty→rich) or the fixture graph drop, and hypotheses about how/whether GSW loads
+rise.
 
-### H2 — Intrinsic empty→rich comparison asymmetry (the spike's core hypothesis)
-Recursive-load is a property of the empty→rich comparison itself, independent of OS.
-- **Confirm:** run the SAME empty→rich case on host-native **Windows** LabVIEW (the
-  VHS-REQ-706-designed test). If Windows ALSO trips recursive-load, it is intrinsic
-  to empty→rich.
-- **Refute:** the identical empty→rich case PASSES on host-native Windows → the
-  failure is environment-bound (Linux-headless), not intrinsic → pushes weight to
-  H1/H3.
+### H1 — Suppress the GSW (Getting Started Window) load at headless launch (TOP, highest-leverage)
+The recursion is GSW loading itself; if headless launch can start LabVIEW **without**
+loading `GSW_MainPanel`, the recursion never happens.
+- **Confirm:** find a GSW-suppression control — a LabVIEW `.ini` token (e.g. a
+  `showWelcomeOnLaunch=False` / "skip Getting Started" style key), a launch arg, or
+  an env — set it for the headless launch, rerun; comparison proceeds.
+- **Refute:** GSW load cannot be suppressed, or suppressing it still trips the
+  recursion.
+- **Why top:** it targets the proven proximate cause (GSW self-load) and is the most
+  likely durable fix.
 
-### H3 — Linux-headless environment / display artifact (GSW dialog during LEIF load)
-The GSW/dialog VIs pulled in during LEIF load misbehave specifically under Linux
-headless (no display), where a Windows or displayed session would not.
-- **Confirm:** rerun the failing Linux case under a virtual display (`xvfb`, per
-  `docs/maintainer-operations.md`). If `xvfb` (or a real display) makes it pass, the
-  failure is a headless/GSW-dialog interaction.
-- **Refute:** it fails identically with a display present → not a headless-display
-  artifact.
+### H2 — Launch mechanism / version-flag mismatch (HIGH, cheapest check)
+ADR-0004 + CHANGELOG #565 show the exact "recursive GSW LEIF load" is what a
+wrong-version `-Headless` produces; the native run may be engaging the GSW load path
+the wrong way.
+- **Confirm:** from the captured invocation, verify the run uses `labviewprofull
+  -Headless` for 2026 x64 (not plain `labview`, not a 2025 path with `-Headless`).
+  A mismatch that engages the interactive GSW path is the cause.
+- **Refute:** the invocation is already correct version-aware **and** it still
+  recurses (the baseline suggests this is plausible — pushing weight to H1/H3/H4).
+- **Cheapest:** the baseline already captured the invocation; this is an inspection.
 
-### H4 — Fixture-specific GSW/dialog dependency (why lv_icon.vi passes but the icon-editor fixture fails)
-The failing fixture's dependency graph contains a GSW/dialog VI (surfaced as the
-`GSW_MainPanel` context) that `lv_icon.vi` does not, and that VI is what re-enters
-LEIF load.
-- **Confirm:** bisect — a minimal empty→rich comparison of a VI with NO GSW/dialog
-  dependency passes on native Linux, while one WITH such a dependency fails. Capture
-  the exact GSW/dialog VI named in the recursive-load chain (the classifier already
-  extracts `GSW_MainPanel` context).
-- **Refute:** a VI with no GSW/dialog dependency ALSO trips recursive-load → the
-  trigger is not that dependency class.
+### H3 — Linux-headless / no-display artifact
+GSW is a GUI dialog; with no display it may recurse where a real/virtual display lets
+it load once.
+- **Confirm:** rerun under `xvfb` / a display (per `docs/maintainer-operations.md`);
+  it proceeds.
+- **Refute:** it recurses identically with a display present.
+
+### H4 — Packed `GSW.lvlibp` integrity / build mismatch
+The packed-lib self-recursion may be a corrupt or version-mismatched `GSW.lvlibp` in
+this LabVIEW-2026-64 install.
+- **Confirm:** compare the `GSW.lvlibp` build against the LabVIEW 2026-64 install; a
+  repair/reinstall or a clean 2026 build stops the recursion.
+- **Refute:** a known-good `GSW.lvlibp` still recurses headless.
+
+### Refuted by the on-box baseline (do NOT spend cycles here)
+- **Fixture-specific GSW dependency** — the recursion is inside the shipped
+  `GSW.lvlibp`, not the fixture graph, so it reproduces with ANY comparison
+  (`lv_icon.vi` passing per the ledger is because those runs did not hit this launch
+  path, not because the fixture lacked a GSW dependency).
+- **Intrinsic empty→rich asymmetry as the proximate cause** — the failure is at
+  launch (`durationMs 1583`), before comparison content is enumerated, so empty→rich
+  content is not the trigger. (The SRS environment-vs-intrinsic question is now
+  effectively answered "Linux-headless launch environment", pending the Windows
+  cross-check in the checklist.)
 
 ## Scoped reproduction checklist (for the native-runtime plane)
 
-1. **Capture the failing invocation** (H1): record the exact LabVIEWCLI executable,
-   flags, env (`EnableCICDFeaturesForLabVIEW`), runtime version/bitness, and the
-   `<runDir>/diagnostics/diagnostics-manifest.json` (attempt-1, and attempt-2 if a
-   headless-recovery retry fires) with `failureReason` / `diagnosticReason` /
-   `exitCode` / `matchedFragment`.
-2. **Windows host-native rerun of the SAME empty→rich case** (H2): pass ⇒ environment-bound; fail ⇒ intrinsic.
-3. **`xvfb` / displayed rerun on Linux** (H3): pass ⇒ headless-display artifact.
-4. **GSW-dependency bisect** (H4): identify the specific VI in the LEIF re-entry chain.
-5. Record each result as honest ledger evidence (present-but-blocked, per the
+1. **Confirm the invocation** (H2): from the captured baseline, record the exact
+   LabVIEWCLI executable / `-Headless` flag / `EnableCICDFeaturesForLabVIEW` /
+   version / bitness. Cheapest signal first.
+2. **GSW-suppression attempt** (H1): locate + set a GSW/Getting-Started skip
+   (`.ini` token / launch arg / env), rerun; proceeding ⇒ the fix.
+3. **`xvfb` / displayed rerun** (H3): proceeding ⇒ headless-no-display artifact.
+4. **Windows host-native headless cross-check**: does host-native Windows 2026
+   headless ALSO load GSW and recurse? Windows fine ⇒ Linux-specific (H1/H3/H4);
+   Windows also recurses ⇒ a version/packed-lib issue independent of OS.
+5. **`GSW.lvlibp` integrity** (H4): compare/repair the packed lib if H1–H3 do not
+   resolve it.
+6. Record each result as honest ledger evidence (present-but-blocked, per the
    decoupled producer pattern) so the spike's conclusion is reproducible.
 
 ## Expected decision outcomes
 
-- H1 confirmed → fix is a version-aware launch on the native-Linux path (mirrors the
-  #565 / ADR-0004 container fix); likely the fastest unblock.
-- H2 confirmed (Windows also fails) → the empty→rich comparison is intrinsically
-  unsupported; the spike closes with "not a Linux artifact" and the ML corpus path
-  must avoid the empty→rich enumeration.
-- H3/H4 confirmed → a Linux-headless GSW/dialog interaction; unblock is a
-  display/headless-mechanism change scoped to the implicated VI class.
+- H1 confirmed → headless launch suppresses GSW; comparison proceeds. Likely the
+  durable fix, and it applies to any Linux-headless comparison.
+- H2 confirmed → a version-aware launch fix on the native-Linux path (mirrors the
+  #565 / ADR-0004 container fix).
+- H3 confirmed → provide a (virtual) display for headless comparison launch.
+- H4 confirmed → repair/refresh the `GSW.lvlibp` packed library in the install.
+- The Windows cross-check decides the SRS environment-vs-intrinsic question
+  definitively.
