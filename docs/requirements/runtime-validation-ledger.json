@@ -85,8 +85,8 @@
       "provider": "host-native",
       "linuxExecutable": false,
       "lastValidatedVersion": "1.36.1",
-      "lastValidatedCommit": "3f7e5d14",
-      "evidence": "Windows hardening host (#2335, VHS-REQ-713): lv_icon.vi (5376833..fc09736) CreateComparisonReport host-native 2026 x64 runtimeState=succeeded reportExists=true, 2026-07-23",
+      "lastValidatedCommit": "15e1749",
+      "evidence": "706 Windows host-native cross-check (#2502): lv_icon.vi (5376833..fc09736) CreateComparisonReport host-native 2026 Q3 x64 runtimeState=succeeded reportExists=true, real 1.24 MB report (WB-706-host-x64), 2026-07-27",
       "fixture": "labview-icon-editor resource/plugins/lv_icon.vi"
     },
     {
@@ -95,8 +95,8 @@
       "provider": "host-native",
       "linuxExecutable": false,
       "lastValidatedVersion": "1.36.1",
-      "lastValidatedCommit": "3f7e5d14",
-      "evidence": "Windows hardening host (#2335, VHS-REQ-713): lv_icon.vi (5376833..fc09736) CreateComparisonReport host-native 2026 x86 (32-bit) runtimeState=succeeded reportExists=true, 2026-07-23",
+      "lastValidatedCommit": "15e1749",
+      "evidence": "706 Windows host-native cross-check (#2502): lv_icon.vi (5376833..fc09736) CreateComparisonReport host-native 2026 Q3 x86 runtimeState=succeeded reportExists=true, real 1.24 MB report (WB-706-host-x86), 2026-07-27",
       "fixture": "labview-icon-editor resource/plugins/lv_icon.vi"
     },
     {
