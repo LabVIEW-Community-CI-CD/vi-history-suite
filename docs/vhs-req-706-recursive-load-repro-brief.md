@@ -72,26 +72,39 @@ below by direct test:
 | #2480 | `PrintToSingleFileHtml` (`lv_icon.vi`) | host-native | **exit 0**, 638 PNGs |
 | #2472 | **`CreateComparisonReport`** (`lv_icon.vi`) | same box / CLI / plain `labview` | **linux-headless-recursive-load** (GSW self-recursion), exit 157, ~1583 ms at launch |
 
-**Conclusion — the recursive GSW LEIF load is SPECIFIC to the built-in
-`CreateComparisonReport` operation.** A real VI renders headlessly in every config
-(including `-Headless`, plain `labview`, Community edition) via `PrintToSingleFileHtml`;
-only `CreateComparisonReport` pulls in the GSW (Getting Started Window) and recurses.
-This **refutes, by test:**
-- **H1 (suppress GSW at launch)** — GSW is not loaded at generic headless launch; the
-  compare operation loads it specifically (`PrintToSingleFileHtml` at the same launch
-  does not).
-- **H2 (launch mechanism / version-flag)** — renders succeed with and without
-  `-Headless`, on plain `labview`, so the flag/mechanism is not the trigger.
-- **Edition** — Community renders fine (maintainer confirms Community carries the
-  `labviewprofull` feature set), so it is not an edition gap.
-- **Blanket Linux-environment (H3) / packed-lib integrity (H4)** — the same
-  environment and the same `GSW.lvlibp` render fine under `PrintToSingleFileHtml`.
+**Conclusion — the render path works headless; the GSW recursion is tied to a specific
+`CreateComparisonReport` launch, not to the operation universally.** A real VI renders
+headlessly in every tested config (no/`-Headless`, plain `labview`, Community) via
+`PrintToSingleFileHtml`, so the render path + headless launch are sound and GSW is not
+loaded at generic launch. The recursion appeared on the **#2472 run only**:
+`CreateComparisonReport` via **plain `labview`** (Community host-native). Crucially,
+`CreateComparisonReport` is **not** uniformly broken — `runtime-validation-ledger.json`
+records **green** `CreateComparisonReport` runs on `lv_icon.vi` for all four Linux
+**container** tracks (in-container `labviewprofull -Headless`) and one Linux
+**host-native** track (1.34.2, 2026-07-19; launch config not recorded). So the failure
+is **config/launch-dependent**, correlating with the plain-`labview` host-native launch,
+not with the operation as such.
 
-**Narrowed remaining root-cause question:** why does `CreateComparisonReport` load
-the GSW on Linux when `PrintToSingleFileHtml` does not? That is the sole open thread.
-(The SRS environment-vs-intrinsic question is answered: **neither** — it is a
-compare-operation-specific GSW load, not the Linux environment and not an empty→rich
-asymmetry.)
+What the renders **do** and **do NOT** establish:
+- **Establish:** the `-Headless` flag does not break *rendering*; H1's "suppress GSW at
+  generic launch" is not the lever (the render at the same launch never loads GSW).
+- **Do NOT refute H2 (launch mechanism / version-flag)** — now the *leading* hypothesis:
+  the green compares use `labviewprofull -Headless` (container) while the red used plain
+  `labview`; the renders never exercised `CreateComparisonReport` under a version-aware
+  launch, so the mechanism is untested *for the compare op*.
+- **Do NOT refute H4 (packed `GSW.lvlibp` integrity)** — `PrintToSingleFileHtml` never
+  loads GSW, so it cannot exercise GSW-load integrity; H4 stays open.
+- **Edition** is not cleanly refuted for the compare op: the red compare was *also*
+  Community, and the 07-19 host-native green's edition/launch is unrecorded.
+
+**Decisive next test (Linux plane):** a controlled host-native `CreateComparisonReport`
+retest on `lv_icon.vi` at the current comparison-runtime build (which may carry a
+version-aware `-Headless` launch postdating #2472). **Green ⇒ H2** (the plain-`labview`
+launch was the trigger; a version-aware launch fixes it). **Red ⇒ host/edition/packed-lib
+specific** (H4, or a host-specific 07-19 green). Until then the SRS environment-vs-intrinsic
+question resolves as: **container path green (`labviewprofull -Headless`); host-native
+compare config/host-dependent** — not a blanket Linux-environment failure and not an
+empty→rich asymmetry.
 
 ### #2315 unblock (does not require resolving the root cause)
 Because a real VI renders headlessly on the decoupled Linux actor
@@ -101,8 +114,10 @@ outputs — side-stepping `CreateComparisonReport` and the GSW blocker entirely.
 is a rendered-output surrogate (not the semantic `CreateComparisonReport` parity),
 but it makes the decoupled Linux actor a present-and-capable per-actor **diff**
 signal now; true comparison parity stays gated on the narrowed root-cause thread.
-Evidence: `/tmp/vhs-706-baseline/EMPIRICAL-PrintToSingleFileHtml.md` + `spn-A.log` /
-`spn-C.log` (Linux-plane run artifacts).
+Evidence: the Linux-plane run artifacts (`EMPIRICAL-PrintToSingleFileHtml.md`,
+`spn-A.log`, `spn-C.log`, and the #2472 baseline `failure-classification.json` /
+`LVStatus.txt`) are named in the tracking issue #2485 and the collab record; they live
+on the Linux run host and are not committed.
 
 ## What is already known (the priors that rank the hypotheses)
 
@@ -130,9 +145,10 @@ Evidence: `/tmp/vhs-706-baseline/EMPIRICAL-PrintToSingleFileHtml.md` + `spn-A.lo
 ## Ranked hypotheses (as of the baseline — now largely resolved by the Empirical result above)
 
 > These were the pre-reproduction rankings. The **Empirical result** section above
-> has since refuted H1, H2, and the edition/blanket-environment angles by direct
-> test, narrowing the cause to the `CreateComparisonReport` operation. Retained as
-> the record of how the reproduction was scoped.
+> has since NARROWED the cause: the render path is sound (H1's suppress-GSW-at-launch
+> is not the lever), **H2 (launch mechanism / version-flag) is now the leading open
+> hypothesis** pending a controlled compare retest, and **H4 (packed-lib) stays open**
+> (the renders never load GSW). Retained as the record of how the reproduction was scoped.
 
 ### H1 — Suppress the GSW (Getting Started Window) load at headless launch (TOP, highest-leverage)
 The recursion is GSW loading itself; if headless launch can start LabVIEW **without**
@@ -199,15 +215,17 @@ this LabVIEW-2026-64 install.
 
 ## Outcome (empirically resolved 2026-07-27)
 
-See **Empirical result** above. Net: H1, H2, the edition angle, and the blanket
-Linux-environment / packed-lib causes are **refuted by direct test**; the recursive
-GSW LEIF load is **specific to the `CreateComparisonReport` operation**. Two forward
-paths:
+See **Empirical result** above. Net: the render path is sound headless; the GSW
+recursion is **config/launch-dependent** (the #2472 plain-`labview` Community
+host-native `CreateComparisonReport`), **not** operation-universal — container
+compares (`labviewprofull -Headless`) and a 07-19 host-native compare are green.
+**H2 (launch mechanism / version-flag) is the leading open hypothesis** and **H4
+(packed-lib) stays open**; a controlled host-native compare retest is the decisive
+test. Forward paths:
 - **Unblock #2315 now** — build the decoupled Linux diff from per-revision
   `PrintToSingleFileHtml` renders + a structural diff (rendered-output surrogate;
-  ships a present-and-capable per-actor diff signal without the blocker).
-- **Root-cause thread (true comparison parity)** — investigate why
-  `CreateComparisonReport` loads GSW on Linux while `PrintToSingleFileHtml` does not
-  (e.g. a compare-report code path that references a GSW/dialog VI, or a
-  compare-only launch option). Time-box it; a fix here restores real semantic
-  comparison on Linux, but it is deeper LabVIEW-internals work.
+  ships a present-and-capable per-actor diff signal without the blocker). [Done: #2490.]
+- **Root-cause thread (true comparison parity)** — run the controlled host-native
+  compare retest under a version-aware `-Headless` launch (green ⇒ H2 launch
+  mechanism; red ⇒ host/edition/packed-lib specific), then, if H2, apply the
+  version-aware launch fix host-native (mirrors the container #565/ADR-0004 fix).
