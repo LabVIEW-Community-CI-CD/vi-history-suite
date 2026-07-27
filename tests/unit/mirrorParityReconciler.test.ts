@@ -119,6 +119,25 @@ describe('reconcileMirrorParity (VHS-REQ-707.11)', () => {
     expect(result.verdicts.find((v) => v.parityKey === PK)?.reason).toBe('both-channels-agree');
   });
 
+  it('exposes capabilityOnly structurally on a decoupled-only group', () => {
+    const result = reconcileMirrorParity(ledger([run(DECOUPLED)]), { queuedRevision: REV });
+    expect(result.verdicts[0].capabilityOnly).toBe(true);
+    expect(result.verdicts[0].reason).toBe('decoupled-capability-signal');
+  });
+
+  it('does NOT treat a decoupled group as capability when a role override makes decoupled the required-left', () => {
+    // With requiredLeftRole overridden to `decoupled`, a decoupled actor IS the tangled
+    // left parity obligation, not a capability signal (classified by actual role, not by
+    // "neither configured role present").
+    const result = reconcileMirrorParity(ledger([run(DECOUPLED)]), {
+      queuedRevision: REV,
+      requiredLeftRole: 'decoupled'
+    });
+    expect(result.verdicts[0].capabilityOnly).toBe(false);
+    expect(result.gate).toBe('advisory');
+    expect(result.verdicts[0].reason).toBe('right-channel-advisory-absent');
+  });
+
   it('overall gate is the worst across parityKeys', () => {
     const PK2 = '5'.repeat(64);
     const result = reconcileMirrorParity(
