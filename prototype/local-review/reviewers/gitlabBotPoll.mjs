@@ -23,6 +23,17 @@
  * the pure core + shell are unit-testable with fakes with NO live GitLab. The live
  * run needs `glab auth login` (the maintainer re-authenticates; token is currently 401).
  *
+ * TOKEN LOCATION -- shared WIN<->LINUX convention, kept OUTSIDE the repo tree so it can
+ * never be committed (the pre-commit glpat- detector is only a backstop):
+ *   Linux:   ~/.config/vihs/gitlab-token             (chmod 600)
+ *   Windows: %USERPROFILE%\.config\vihs\gitlab-token (restrict the ACL to your user)
+ * Authenticate glab from it ONCE; glab then stores + uses the token and THIS module
+ * never reads the raw token (it only shells glab):
+ *   glab auth login --hostname gitlab.com --stdin < ~/.config/vihs/gitlab-token
+ *   (Windows)  Get-Content $env:USERPROFILE\.config\vihs\gitlab-token | glab auth login --hostname gitlab.com --stdin
+ * Alternatively export it per session (glab honors GITLAB_TOKEN / GITLAB_ACCESS_TOKEN / OAUTH_TOKEN):
+ *   export GITLAB_TOKEN="$(cat ~/.config/vihs/gitlab-token)"
+ *
  * GitLab vs GitHub mapping: MR<->PR, discussion notes<->review comments,
  * position.new_path/new_line<->path/line, diff_refs.head_sha<->headRefOid. GitLab has
  * no "Copilot Code Review workflow run"; the review-ready signal is a bot note
