@@ -305,11 +305,12 @@ Two independent issues can cause this on a Linux host running LabVIEW 2026:
    `~/.config/natinst/LabVIEW-<version>/`, then
    `/etc/natinst/LabVIEW-<version>/`) and blocks the run with
    `runtimeExecution.blockedReason = 'linux-vi-server-tcp-disabled'` when
-   `server.tcp.enabled` is `False` or absent. When enabled, the resolved
-   `server.tcp.port` is passed to LabVIEWCLI as `-PortNumber`. If VI Server
-   TCP is enabled but no explicit `server.tcp.port` is declared, the run is
-   blocked with `linux-vi-server-tcp-port-unknown` (the runtime never assumes
-   a port); set an explicit `server.tcp.port` in `labview.conf`.
+   `server.tcp.enabled` is `False` or absent. When VI Server TCP is enabled,
+   the Linux host-native comparison does **not** pass `-PortNumber` to
+   LabVIEWCLI — it lets LabVIEWCLI auto-connect to the running VI Server.
+   (Passing `-PortNumber` recursive-loads the Getting Started Window on Linux
+   host-native LabVIEW 2026 and fails the run with exit 157; see VHS-REQ-706.)
+   A declared `server.tcp.port` is not required.
 
 2. The comparison invocation runs **headless** on Linux host-native.
    `vi-history-suite` runs Linux host-native comparisons headless
@@ -335,11 +336,6 @@ Check the retained `runtimeExecution.diagnosticReason`:
   (or the file is missing). Enable VI Server in LabVIEW Tools → Options →
   VI Server. The blocked run records the inspected `labviewIniPath` so you
   can see which config file was read.
-- `linux-vi-server-tcp-port-unknown`: VI Server TCP/IP is enabled in
-  `labview.conf` but no explicit `server.tcp.port` is declared. The runtime
-  fails closed rather than assume a port, so it can deterministically supply
-  `-PortNumber`. Add an explicit `server.tcp.port` line to `labview.conf`
-  (the blocked run records the inspected `labviewIniPath`).
 - `labview-cli-create-report-permission-error`: LabVIEW returned error 8.
   Confirm VI Server TCP/IP is enabled and reachable from the extension host.
 - `linux-headless-init-failed`: Your LabVIEW build cannot initialize

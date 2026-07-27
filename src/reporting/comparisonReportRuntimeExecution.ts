@@ -1355,16 +1355,30 @@ async function runHostNativeExecutionWithContext(
   const linuxLabviewTcpSettings = await resolveLinuxLabviewTcpSettings(record, {
     readFile: deps.readFile
   });
+  // VHS-REQ-706: Passing -PortNumber to LabVIEWCLI on the Linux host-native
+  // comparison path triggers a GSW recursive load (exit 157). A reversible
+  // single-variable toggle (same warm session and staged trees, back-to-back)
+  // proved -PortNumber itself is the trigger there, independent of the staging
+  // method or the port value. On that path we omit -PortNumber and let
+  // LabVIEWCLI auto-connect to the running VI Server. Windows host-native and
+  // container paths still pass the resolved port (VHS-REQ-631); they do not
+  // exercise this failing attach path.
+  const isLinuxHostNativeLabviewCli =
+    record.runtimeSelection.platform === 'linux' &&
+    record.runtimeSelection.engine === 'labview-cli' &&
+    record.runtimeSelection.provider === 'host-native';
   const effectivePortFromIni =
     windowsLabviewTcpSettings.labviewTcpPort ?? linuxLabviewTcpSettings.labviewTcpPort;
   const effectiveExecutionContext: PreparedExecutionContext = {
     ...executionContext,
     commandPlan: {
       executable: executionContext.commandPlan.executable,
-      args: appendLabviewCliPortNumberArg(
-        executionContext.commandPlan.args,
-        effectivePortFromIni
-      )
+      args: isLinuxHostNativeLabviewCli
+        ? [...executionContext.commandPlan.args]
+        : appendLabviewCliPortNumberArg(
+            executionContext.commandPlan.args,
+            effectivePortFromIni
+          )
     }
   };
   const linuxHostSurfacePreflight = preflightLinuxHostRuntimeSurface(
@@ -2145,17 +2159,16 @@ export async function resolveLinuxLabviewTcpSettings(
     }
 
     if (!portMatch) {
-      // VHS-REQ-156: VI Server TCP is enabled but no explicit server.tcp.port
-      // is declared. Rather than fabricate a default port (the fabricated 3363
-      // produced a divergent LabVIEWCLI attach path that recursive-loads on
-      // Linux host-native LabVIEW 2026), fail closed as a policy so -PortNumber
-      // is only ever supplied from a value read on disk.
+      // VHS-REQ-156/VHS-REQ-706: VI Server TCP is enabled but no explicit
+      // server.tcp.port is declared. The Linux host-native comparison does not
+      // pass -PortNumber (LabVIEWCLI auto-connects to the running VI Server), so
+      // a declared port is not required; execution proceeds.
       return {
         labviewIniPath: candidate,
         viServerTcpEnabled: true,
         inspectedCandidatePaths: candidates,
         notes: [
-          `Linux LabVIEW config at ${candidate} enables VI Server TCP (server.tcp.enabled=True) but does not declare server.tcp.port. The runtime fails closed as a policy rather than assume a port; set an explicit server.tcp.port in labview.conf so the runtime can deterministically supply -PortNumber.`
+          `Linux LabVIEW config at ${candidate} enables VI Server TCP (server.tcp.enabled=True) but does not declare server.tcp.port. On Linux host-native the runtime does not pass -PortNumber (LabVIEWCLI auto-connects to the running VI Server), so a declared port is not required; execution proceeds.`
         ]
       };
     }
@@ -2168,7 +2181,7 @@ export async function resolveLinuxLabviewTcpSettings(
       viServerTcpEnabled: true,
       inspectedCandidatePaths: candidates,
       notes: [
-        `Derived VI Server TCP port ${String(labviewTcpPort)} from ${candidate} and passed it explicitly to LabVIEWCLI.`
+        `Derived VI Server TCP port ${String(labviewTcpPort)} from ${candidate}. On Linux host-native, -PortNumber is intentionally omitted so LabVIEWCLI auto-connects to the running VI Server; passing -PortNumber triggers a GSW recursive load (VHS-REQ-706).`
       ]
     };
   }
@@ -2196,29 +2209,12 @@ function preflightLinuxHostRuntimeSurface(
   }
 
   if (linuxLabviewTcpSettings.viServerTcpEnabled === true) {
-    // VHS-REQ-156: VI Server TCP is enabled but the port could not be read
-    // from labview.conf. Fail closed as a policy rather than fabricate a
-    // default -PortNumber (the fabricated 3363 recursive-loads on Linux
-    // host-native LabVIEW 2026), so the runtime only supplies -PortNumber
-    // from a value read on disk and never guesses a divergent attach path.
-    if (linuxLabviewTcpSettings.labviewTcpPort === undefined) {
-      return {
-        blockedExecution: {
-          state: 'not-available',
-          attempted: false,
-          reportExists: false,
-          blockedReason: 'linux-vi-server-tcp-port-unknown',
-          diagnosticReason: 'linux-vi-server-tcp-port-unknown',
-          diagnosticNotes: linuxLabviewTcpSettings.notes,
-          labviewIniPath: linuxLabviewTcpSettings.labviewIniPath,
-          labviewTcpPort: linuxLabviewTcpSettings.labviewTcpPort,
-          executable: commandPlan.executable,
-          args: commandPlan.args,
-          stdoutFilePath: record.artifactPlan.runtimeStdoutFilePath,
-          stderrFilePath: record.artifactPlan.runtimeStderrFilePath
-        }
-      };
-    }
+    // VHS-REQ-156/VHS-REQ-706: VI Server TCP is enabled. The Linux host-native
+    // comparison does not pass -PortNumber to LabVIEWCLI (that triggers a GSW
+    // recursive load, exit 157), so LabVIEWCLI auto-connects to the running VI
+    // Server and a declared server.tcp.port is not required to proceed. The
+    // prior linux-vi-server-tcp-port-unknown fail-closed block is retired
+    // because the runtime no longer supplies a port at all.
     return undefined;
   }
 
