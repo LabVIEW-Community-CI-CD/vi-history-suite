@@ -128,7 +128,7 @@ jobs:
         run: npm run docs:gate
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v7
       - name: Prepare lvkit + icon-editor corpus (VHS-REQ-712)
         shell: bash
         run: |
@@ -257,7 +257,7 @@ jobs:
         run: npm run check
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v7
       - name: Prepare lvkit + icon-editor corpus (VHS-REQ-712)
         shell: bash
         run: |
